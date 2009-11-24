@@ -156,6 +156,8 @@ xorg_exa_common_done(struct exa_context *exa)
 
    exa->copy.src = NULL;
    exa->copy.dst = NULL;
+   pipe_surface_reference(&exa->copy.src_surface, NULL);
+   pipe_surface_reference(&exa->copy.dst_surface, NULL);
    exa->transform.has_src = FALSE;
    exa->transform.has_mask = FALSE;
    exa->has_solid_color = FALSE;
@@ -438,6 +440,21 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
+    
+    if (exa->pipe->surface_copy) {
+       exa->copy.src_surface =
+          exa->scrn->get_tex_surface( exa->scrn,
+                                      exa->copy.src->tex,
+                                      0, 0, 0,
+                                      PIPE_BUFFER_USAGE_GPU_READ);
+
+       exa->copy.dst_surface =
+          exa->scrn->get_tex_surface( exa->scrn, 
+                                      exa->copy.dst->tex,
+                                      0, 0, 0, 
+                                      PIPE_BUFFER_USAGE_GPU_WRITE );
+    }
+
 
     return exa->accel;
 }
@@ -458,10 +475,23 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
    debug_assert(priv == exa->copy.dst);
 
-   renderer_copy_pixmap(exa->renderer, exa->copy.dst, dstX, dstY,
-                        exa->copy.src, srcX, srcY,
-                        width, height);
+   if (exa->copy.src_surface && exa->copy.dst_surface) {
+      /* XXX: consider exposing >1 box in surface_copy interface.
+       */
+      exa->pipe->surface_copy( exa->pipe,
+                             exa->copy.dst_surface,
+                             dstX, dstY,
+                             exa->copy.src_surface,
+                             srcX, srcY,
+                             width, height );
+   }
+   else {
+      renderer_copy_pixmap(exa->renderer, exa->copy.dst, dstX, dstY,
+                           exa->copy.src, srcX, srcY,
+                           width, height);
+   }
 }
+
 
 static Bool
 picture_check_formats(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture)

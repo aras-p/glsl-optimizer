@@ -37,6 +37,9 @@ struct exa_context
    struct {
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;
+
+      struct pipe_surface *src_surface;
+      struct pipe_surface *dst_surface;
    } copy;
 };
 
