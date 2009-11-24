@@ -721,21 +721,6 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
-/* XXX This should go to util ... */
-/* Return the number of bits set in the given number. */
-static unsigned bitcount(unsigned n)
-{
-    unsigned bits = 0;
-
-    while (n) {
-        if (n & 1) {
-            bits++;
-        }
-        n >>= 1;
-    }
-
-    return bits;
-}
 
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code)
@@ -745,8 +730,8 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     unsigned instruction_count = code->length / 4;
 
     int vtx_mem_size = r300screen->caps->is_r500 ? 128 : 72;
-    int input_count = MAX2(bitcount(code->InputsRead), 1);
-    int output_count = MAX2(bitcount(code->OutputsWritten), 1);
+    int input_count = MAX2(util_bitcount(code->InputsRead), 1);
+    int output_count = MAX2(util_bitcount(code->OutputsWritten), 1);
     int temp_count = MAX2(code->num_temporaries, 1);
     int pvs_num_slots = MIN3(vtx_mem_size / input_count,
                              vtx_mem_size / output_count, 10);
