@@ -229,10 +229,10 @@ dump_declaration_verbose(
 
    if( decl->Declaration.Semantic ) {
       EOL();
-      TXT( "\nSemanticName : " );
-      ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS );
-      TXT( "\nSemanticIndex: " );
-      UID( decl->Semantic.SemanticIndex );
+      TXT( "\nName : " );
+      ENM( decl->Semantic.Name, TGSI_SEMANTICS );
+      TXT( "\nIndex: " );
+      UID( decl->Semantic.Index );
       if( ignored ) {
          TXT( "\nPadding      : " );
          UIX( decl->Semantic.Padding );
@@ -485,10 +485,10 @@ tgsi_dump_c(
 
    TXT( "tgsi-dump begin -----------------" );
 
-   TXT( "\nMajorVersion: " );
-   UID( parse.FullVersion.Version.MajorVersion );
-   TXT( "\nMinorVersion: " );
-   UID( parse.FullVersion.Version.MinorVersion );
+   TXT( "\nMajor: " );
+   UID( parse.FullVersion.Version.Major );
+   TXT( "\nMinor: " );
+   UID( parse.FullVersion.Version.Minor );
    EOL();
 
    TXT( "\nHeaderSize: " );

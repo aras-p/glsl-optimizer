@@ -39,8 +39,8 @@ tgsi_build_version( void )
 {
    struct tgsi_version  version;
 
-   version.MajorVersion = 1;
-   version.MinorVersion = 1;
+   version.Major = 1;
+   version.Minor = 1;
    version.Padding = 0;
 
    return version;
@@ -223,8 +223,8 @@ tgsi_build_full_declaration(
       size++;
 
       *ds = tgsi_build_declaration_semantic(
-         full_decl->Semantic.SemanticName,
-         full_decl->Semantic.SemanticIndex,
+         full_decl->Semantic.Name,
+         full_decl->Semantic.Index,
          declaration,
          header );
    }
@@ -269,8 +269,8 @@ tgsi_default_declaration_semantic( void )
 {
    struct tgsi_declaration_semantic ds;
 
-   ds.SemanticName = TGSI_SEMANTIC_POSITION;
-   ds.SemanticIndex = 0;
+   ds.Name = TGSI_SEMANTIC_POSITION;
+   ds.Index = 0;
    ds.Padding = 0;
 
    return ds;
@@ -289,8 +289,8 @@ tgsi_build_declaration_semantic(
    assert( semantic_index <= 0xFFFF );
 
    ds = tgsi_default_declaration_semantic();
-   ds.SemanticName = semantic_name;
-   ds.SemanticIndex = semantic_index;
+   ds.Name = semantic_name;
+   ds.Index = semantic_index;
 
    declaration_grow( declaration, header );
 

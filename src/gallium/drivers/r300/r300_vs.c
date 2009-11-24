@@ -77,7 +77,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
         if (decl->Declaration.File != TGSI_FILE_OUTPUT)
             continue;
 
-        switch (decl->Semantic.SemanticName) {
+        switch (decl->Semantic.Name) {
             case TGSI_SEMANTIC_POSITION:
                 c->code->outputs[decl->DeclarationRange.First] = 0;
                 break;
@@ -98,7 +98,7 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
                 break;
             default:
                 debug_printf("r300: vs: Bad semantic declaration %d\n",
-                    decl->Semantic.SemanticName);
+                    decl->Semantic.Name);
                 break;
         }
     }

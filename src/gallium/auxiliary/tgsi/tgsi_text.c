@@ -831,13 +831,13 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                }
                cur2++;
 
-               decl.Semantic.SemanticIndex = index;
+               decl.Semantic.Index = index;
 
                cur = cur2;
             }
 
             decl.Declaration.Semantic = 1;
-            decl.Semantic.SemanticName = i;
+            decl.Semantic.Name = i;
 
             ctx->cur = cur;
             break;

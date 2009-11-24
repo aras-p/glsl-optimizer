@@ -139,8 +139,8 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    struct aa_transform_context *aactx = (struct aa_transform_context *) ctx;
 
    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
-       decl->Semantic.SemanticName == TGSI_SEMANTIC_COLOR &&
-       decl->Semantic.SemanticIndex == 0) {
+       decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
+       decl->Semantic.Index == 0) {
       aactx->colorOutput = decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
@@ -153,9 +153,9 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
       if ((int) decl->DeclarationRange.Last > aactx->maxInput)
          aactx->maxInput = decl->DeclarationRange.Last;
-      if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC &&
-           (int) decl->Semantic.SemanticIndex > aactx->maxGeneric) {
-         aactx->maxGeneric = decl->Semantic.SemanticIndex;
+      if (decl->Semantic.Name == TGSI_SEMANTIC_GENERIC &&
+           (int) decl->Semantic.Index > aactx->maxGeneric) {
+         aactx->maxGeneric = decl->Semantic.Index;
       }
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
@@ -228,8 +228,8 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       /* XXX this could be linear... */
       decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
       decl.Declaration.Semantic = 1;
-      decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
-      decl.Semantic.SemanticIndex = aactx->maxGeneric + 1;
+      decl.Semantic.Name = TGSI_SEMANTIC_GENERIC;
+      decl.Semantic.Index = aactx->maxGeneric + 1;
       decl.DeclarationRange.First = 
       decl.DeclarationRange.Last = aactx->maxInput + 1;
       ctx->emit_declaration(ctx, &decl);

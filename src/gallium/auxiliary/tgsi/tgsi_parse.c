@@ -36,7 +36,7 @@ tgsi_parse_init(
    const struct tgsi_token *tokens )
 {
    ctx->FullVersion.Version = *(struct tgsi_version *) &tokens[0];
-   if( ctx->FullVersion.Version.MajorVersion > 1 ) {
+   if( ctx->FullVersion.Version.Major > 1 ) {
       return TGSI_PARSE_ERROR;
    }
 

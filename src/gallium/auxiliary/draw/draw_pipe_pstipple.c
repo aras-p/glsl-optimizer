@@ -140,7 +140,7 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
       pctx->maxInput = MAX2(pctx->maxInput, (int) decl->DeclarationRange.Last);
-      if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION)
+      if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION)
          pctx->wincoordInput = (int) decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
@@ -226,8 +226,8 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          decl.Declaration.File = TGSI_FILE_INPUT;
          decl.Declaration.Interpolate = TGSI_INTERPOLATE_LINEAR; /* XXX? */
          decl.Declaration.Semantic = 1;
-         decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
-         decl.Semantic.SemanticIndex = 0;
+         decl.Semantic.Name = TGSI_SEMANTIC_POSITION;
+         decl.Semantic.Index = 0;
          decl.DeclarationRange.First = 
             decl.DeclarationRange.Last = wincoordInput;
          ctx->emit_declaration(ctx, &decl);

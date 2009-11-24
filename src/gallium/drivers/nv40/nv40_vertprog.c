@@ -580,16 +580,16 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 	unsigned idx = fdec->DeclarationRange.First;
 	int hw;
 
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = NV40_VP_INST_DEST_POS;
 		vpc->hpos_idx = idx;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV40_VP_INST_DEST_COL0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV40_VP_INST_DEST_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
@@ -597,10 +597,10 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 		}
 		break;
 	case TGSI_SEMANTIC_BCOLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV40_VP_INST_DEST_BFC0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV40_VP_INST_DEST_BFC1;
 		} else {
 			NOUVEAU_ERR("bad bcolour semantic index\n");
@@ -614,8 +614,8 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 		hw = NV40_VP_INST_DEST_PSZ;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		if (fdec->Semantic.SemanticIndex <= 7) {
-			hw = NV40_VP_INST_DEST_TC(fdec->Semantic.SemanticIndex);
+		if (fdec->Semantic.Index <= 7) {
+			hw = NV40_VP_INST_DEST_TC(fdec->Semantic.Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
 			return FALSE;

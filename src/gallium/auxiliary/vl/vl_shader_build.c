@@ -36,8 +36,8 @@ struct tgsi_full_declaration vl_decl_input(unsigned int name, unsigned int index
 
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = name;
-   decl.Semantic.SemanticIndex = index;
+   decl.Semantic.Name = name;
+   decl.Semantic.Index = index;
    decl.DeclarationRange.First = first;
    decl.DeclarationRange.Last = last;
 
@@ -64,8 +64,8 @@ struct tgsi_full_declaration vl_decl_interpolated_input
 
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = name;
-   decl.Semantic.SemanticIndex = index;
+   decl.Semantic.Name = name;
+   decl.Semantic.Index = index;
    decl.Declaration.Interpolate = interpolation;;
    decl.DeclarationRange.First = first;
    decl.DeclarationRange.Last = last;
@@ -79,8 +79,8 @@ struct tgsi_full_declaration vl_decl_constants(unsigned int name, unsigned int i
 
    decl.Declaration.File = TGSI_FILE_CONSTANT;
    decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = name;
-   decl.Semantic.SemanticIndex = index;
+   decl.Semantic.Name = name;
+   decl.Semantic.Index = index;
    decl.DeclarationRange.First = first;
    decl.DeclarationRange.Last = last;
 
@@ -93,8 +93,8 @@ struct tgsi_full_declaration vl_decl_output(unsigned int name, unsigned int inde
 
    decl.Declaration.File = TGSI_FILE_OUTPUT;
    decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = name;
-   decl.Semantic.SemanticIndex = index;
+   decl.Semantic.Name = name;
+   decl.Semantic.Index = index;
    decl.DeclarationRange.First = first;
    decl.DeclarationRange.Last = last;
 

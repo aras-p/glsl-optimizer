@@ -572,15 +572,15 @@ nv30_fragprog_parse_decl_attrib(struct nv30_fpc *fpc,
 {
 	int hw;
 
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = NV30_FP_OP_INPUT_SRC_POSITION;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV30_FP_OP_INPUT_SRC_COL0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV30_FP_OP_INPUT_SRC_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
@@ -591,9 +591,9 @@ nv30_fragprog_parse_decl_attrib(struct nv30_fpc *fpc,
 		hw = NV30_FP_OP_INPUT_SRC_FOGC;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		if (fdec->Semantic.SemanticIndex <= 7) {
+		if (fdec->Semantic.Index <= 7) {
 			hw = NV30_FP_OP_INPUT_SRC_TC(fdec->Semantic.
-						     SemanticIndex);
+						     Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
 			return FALSE;
@@ -612,7 +612,7 @@ static boolean
 nv30_fragprog_parse_decl_output(struct nv30_fpc *fpc,
 				const struct tgsi_full_declaration *fdec)
 {
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		fpc->depth_id = fdec->DeclarationRange.First;
 		break;

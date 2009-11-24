@@ -2558,8 +2558,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				    p->type == PIPE_SHADER_FRAGMENT)
 					break;
 
-				si = d->Semantic.SemanticIndex;
-				switch (d->Semantic.SemanticName) {
+				si = d->Semantic.Index;
+				switch (d->Semantic.Name) {
 				case TGSI_SEMANTIC_BCOLOR:
 					p->cfg.two_side[si].hw = first;
 					if (p->cfg.io_nr > first)

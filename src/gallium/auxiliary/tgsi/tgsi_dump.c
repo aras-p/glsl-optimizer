@@ -232,11 +232,11 @@ iter_declaration(
 
    if (decl->Declaration.Semantic) {
       TXT( ", " );
-      ENM( decl->Semantic.SemanticName, semantic_names );
-      if (decl->Semantic.SemanticIndex != 0 ||
-          decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC) {
+      ENM( decl->Semantic.Name, semantic_names );
+      if (decl->Semantic.Index != 0 ||
+          decl->Semantic.Name == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
-         UID( decl->Semantic.SemanticIndex );
+         UID( decl->Semantic.Index );
          CHR( ']' );
       }
    }
@@ -477,9 +477,9 @@ prolog(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
    ENM( iter->processor.Processor, processor_type_names );
-   UID( iter->version.MajorVersion );
+   UID( iter->version.Major );
    CHR( '.' );
-   UID( iter->version.MinorVersion );
+   UID( iter->version.Minor );
    EOL();
    return TRUE;
 }

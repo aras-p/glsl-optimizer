@@ -37,8 +37,8 @@ extern "C" {
 
 struct tgsi_version
 {
-   unsigned MajorVersion  : 8;
-   unsigned MinorVersion  : 8;
+   unsigned Major  : 8;
+   unsigned Minor  : 8;
    unsigned Padding       : 16;
 };
 
@@ -137,8 +137,8 @@ struct tgsi_declaration_range
 
 struct tgsi_declaration_semantic
 {
-   unsigned SemanticName   : 8;  /**< one of TGSI_SEMANTIC_x */
-   unsigned SemanticIndex  : 16; /**< UINT */
+   unsigned Name           : 8;  /**< one of TGSI_SEMANTIC_x */
+   unsigned Index          : 16; /**< UINT */
    unsigned Padding        : 8;
 };
 

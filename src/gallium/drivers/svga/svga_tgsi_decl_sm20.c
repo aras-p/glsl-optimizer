@@ -46,7 +46,7 @@ static boolean ps20_input( struct svga_shader_emitter *emit,
    dcl.values[0] = 0;
    dcl.values[1] = 0;
 
-   switch (semantic.SemanticName) {
+   switch (semantic.Name) {
    case TGSI_SEMANTIC_POSITION:
       /* Special case:
        */
@@ -55,15 +55,15 @@ static boolean ps20_input( struct svga_shader_emitter *emit,
       break;
    case TGSI_SEMANTIC_COLOR:
       reg = src_register( SVGA3DREG_INPUT, 
-                          semantic.SemanticIndex );
+                          semantic.Index );
       break;
    case TGSI_SEMANTIC_FOG:
-      assert(semantic.SemanticIndex == 0);
+      assert(semantic.Index == 0);
       reg = src_register( SVGA3DREG_TEXTURE, 0 );
       break;
    case TGSI_SEMANTIC_GENERIC:
       reg = src_register( SVGA3DREG_TEXTURE,
-                          semantic.SemanticIndex + 1 );
+                          semantic.Index + 1 );
       break;
    default:
       assert(0);
@@ -90,16 +90,16 @@ static boolean ps20_output( struct svga_shader_emitter *emit,
 {
    SVGA3dShaderDestToken reg;
 
-   switch (semantic.SemanticName) {
+   switch (semantic.Name) {
    case TGSI_SEMANTIC_COLOR:
-      if (semantic.SemanticIndex < PIPE_MAX_COLOR_BUFS) {
-         unsigned cbuf = semantic.SemanticIndex;
+      if (semantic.Index < PIPE_MAX_COLOR_BUFS) {
+         unsigned cbuf = semantic.Index;
 
          emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                                emit->nr_hw_temp++ );
          emit->temp_col[cbuf] = emit->output_map[idx];
          emit->true_col[cbuf] = dst_register( SVGA3DREG_COLOROUT, 
-                                              semantic.SemanticIndex );
+                                              semantic.Index );
       }
       else {
          assert(0);
@@ -111,7 +111,7 @@ static boolean ps20_output( struct svga_shader_emitter *emit,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
       emit->true_pos = dst_register( SVGA3DREG_DEPTHOUT, 
-                                     semantic.SemanticIndex );
+                                     semantic.Index );
       break;
    default:
       assert(0);
@@ -169,9 +169,9 @@ static boolean vs20_output( struct svga_shader_emitter *emit,
 
    /* Just build the register map table: 
     */
-   switch (semantic.SemanticName) {
+   switch (semantic.Name) {
    case TGSI_SEMANTIC_POSITION:
-      assert(semantic.SemanticIndex == 0);
+      assert(semantic.Index == 0);
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
@@ -179,7 +179,7 @@ static boolean vs20_output( struct svga_shader_emitter *emit,
                                      SVGA3DRASTOUT_POSITION);
       break;
    case TGSI_SEMANTIC_PSIZE:
-      assert(semantic.SemanticIndex == 0);
+      assert(semantic.Index == 0);
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_psiz = emit->output_map[idx];
@@ -187,17 +187,17 @@ static boolean vs20_output( struct svga_shader_emitter *emit,
                                       SVGA3DRASTOUT_PSIZE );
       break;
    case TGSI_SEMANTIC_FOG:
-      assert(semantic.SemanticIndex == 0);
+      assert(semantic.Index == 0);
       emit->output_map[idx] = dst_register( SVGA3DREG_TEXCRDOUT, 0 );
       break;
    case TGSI_SEMANTIC_COLOR:
       /* oD0 */
       emit->output_map[idx] = dst_register( SVGA3DREG_ATTROUT,
-                                            semantic.SemanticIndex );
+                                            semantic.Index );
       break;
    case TGSI_SEMANTIC_GENERIC:
       emit->output_map[idx] = dst_register( SVGA3DREG_TEXCRDOUT,
-                                            semantic.SemanticIndex + 1 );
+                                            semantic.Index + 1 );
       break;
    default:
       assert(0);
@@ -237,8 +237,8 @@ boolean svga_translate_decl_sm20( struct svga_shader_emitter *emit,
    unsigned idx;
    
    if (decl->Declaration.Semantic) {
-      semantic = decl->Semantic.SemanticName;
-      semantic_idx = decl->Semantic.SemanticIndex;
+      semantic = decl->Semantic.Name;
+      semantic_idx = decl->Semantic.Index;
    }
 
    for( idx = first; idx <= last; idx++ ) {

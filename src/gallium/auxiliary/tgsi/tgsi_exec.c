@@ -1899,16 +1899,16 @@ exec_declaration(struct tgsi_exec_machine *mach,
          last = decl->DeclarationRange.Last;
          mask = decl->Declaration.UsageMask;
 
-         if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
-            assert(decl->Semantic.SemanticIndex == 0);
+         if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
+            assert(decl->Semantic.Index == 0);
             assert(first == last);
             assert(mask = TGSI_WRITEMASK_XYZW);
 
             mach->Inputs[first] = mach->QuadPos;
-         } else if (decl->Semantic.SemanticName == TGSI_SEMANTIC_FACE) {
+         } else if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
             uint i;
 
-            assert(decl->Semantic.SemanticIndex == 0);
+            assert(decl->Semantic.Index == 0);
             assert(first == last);
 
             for (i = 0; i < QUAD_SIZE; i++) {

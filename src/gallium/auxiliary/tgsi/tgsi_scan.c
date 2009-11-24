@@ -129,21 +129,21 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
                if (file == TGSI_FILE_INPUT) {
-                  info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
+                  info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
                   info->num_inputs++;
                }
                else if (file == TGSI_FILE_OUTPUT) {
-                  info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
+                  info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->num_outputs++;
                }
 
                /* special case */
                if (procType == TGSI_PROCESSOR_FRAGMENT &&
                    file == TGSI_FILE_OUTPUT &&
-                   fulldecl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+                   fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
                   info->writes_z = TRUE;
                }
             }

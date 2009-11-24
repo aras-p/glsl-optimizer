@@ -910,8 +910,8 @@ static void emit_decl( struct ureg_program *ureg,
       out[1].decl_range.Last = index;
 
    out[2].value = 0;
-   out[2].decl_semantic.SemanticName = semantic_name;
-   out[2].decl_semantic.SemanticIndex = semantic_index;
+   out[2].decl_semantic.Name = semantic_name;
+   out[2].decl_semantic.Index = semantic_index;
 
 }
 
@@ -1064,8 +1064,8 @@ emit_header( struct ureg_program *ureg )
 {
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 3 );
 
-   out[0].version.MajorVersion = 1;
-   out[0].version.MinorVersion = 1;
+   out[0].version.Major = 1;
+   out[0].version.Minor = 1;
    out[0].version.Padding = 0;
 
    out[1].header.HeaderSize = 2;
