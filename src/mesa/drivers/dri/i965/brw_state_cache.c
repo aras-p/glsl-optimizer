@@ -71,25 +71,23 @@
 
 
 static GLuint
-hash_key(const void *key, GLuint key_size,
-         dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
+hash_key(struct brw_cache_item *item)
 {
-   GLuint *ikey = (GLuint *)key;
-   GLuint hash = 0, i;
+   GLuint *ikey = (GLuint *)item->key;
+   GLuint hash = item->cache_id, i;
 
-   assert(key_size % 4 == 0);
+   assert(item->key_size % 4 == 0);
 
    /* I'm sure this can be improved on:
     */
-   for (i = 0; i < key_size/4; i++) {
+   for (i = 0; i < item->key_size/4; i++) {
       hash ^= ikey[i];
       hash = (hash << 5) | (hash >> 27);
    }
 
    /* Include the BO pointers as key data as well */
-   ikey = (GLuint *)reloc_bufs;
-   key_size = nr_reloc_bufs * sizeof(dri_bo *);
-   for (i = 0; i < key_size/4; i++) {
+   ikey = (GLuint *)item->reloc_bufs;
+   for (i = 0; i < item->nr_reloc_bufs * sizeof(drm_intel_bo *) / 4; i++) {
       hash ^= ikey[i];
       hash = (hash << 5) | (hash >> 27);
    }
@@ -114,11 +112,22 @@ update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
    cache->brw->state.dirty.cache |= 1 << cache_id;
 }
 
+static int
+brw_cache_item_equals(const struct brw_cache_item *a,
+		      const struct brw_cache_item *b)
+{
+   return a->cache_id == b->cache_id &&
+      a->hash == b->hash &&
+      a->key_size == b->key_size &&
+      (memcmp(a->key, b->key, a->key_size) == 0) &&
+      a->nr_reloc_bufs == b->nr_reloc_bufs &&
+      (memcmp(a->reloc_bufs, b->reloc_bufs,
+	      a->nr_reloc_bufs * sizeof(dri_bo *)) == 0);
+}
 
 static struct brw_cache_item *
-search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
-	     GLuint hash, const void *key, GLuint key_size,
-	     dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
+search_cache(struct brw_cache *cache, GLuint hash,
+	     struct brw_cache_item *lookup)
 {
    struct brw_cache_item *c;
 
@@ -133,13 +142,7 @@ search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
 #endif
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
-      if (c->cache_id == cache_id &&
-	  c->hash == hash &&
-	  c->key_size == key_size &&
-	  memcmp(c->key, key, key_size) == 0 &&
-	  c->nr_reloc_bufs == nr_reloc_bufs &&
-	  memcmp(c->reloc_bufs, reloc_bufs,
-		 nr_reloc_bufs * sizeof(dri_bo *)) == 0)
+      if (brw_cache_item_equals(lookup, c))
 	 return c;
    }
 
@@ -182,10 +185,18 @@ brw_search_cache(struct brw_cache *cache,
                  void *aux_return)
 {
    struct brw_cache_item *item;
-   GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
+   struct brw_cache_item lookup;
+   GLuint hash;
 
-   item = search_cache(cache, cache_id, hash, key, key_size,
-		       reloc_bufs, nr_reloc_bufs);
+   lookup.cache_id = cache_id;
+   lookup.key = key;
+   lookup.key_size = key_size;
+   lookup.reloc_bufs = reloc_bufs;
+   lookup.nr_reloc_bufs = nr_reloc_bufs;
+   hash = hash_key(&lookup);
+   lookup.hash = hash;
+
+   item = search_cache(cache, hash, &lookup);
 
    if (item == NULL)
       return NULL;
@@ -214,11 +225,19 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
 			      void *aux_return)
 {
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
-   GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
+   GLuint hash;
    GLuint relocs_size = nr_reloc_bufs * sizeof(dri_bo *);
    void *tmp;
    dri_bo *bo;
    int i;
+
+   item->cache_id = cache_id;
+   item->key = key;
+   item->key_size = key_size;
+   item->reloc_bufs = reloc_bufs;
+   item->nr_reloc_bufs = nr_reloc_bufs;
+   hash = hash_key(item);
+   item->hash = hash;
 
    /* Create the buffer object to contain the data */
    bo = dri_bo_alloc(cache->brw->intel.bufmgr,
@@ -236,12 +255,8 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
 	 dri_bo_reference(reloc_bufs[i]);
    }
 
-   item->cache_id = cache_id;
    item->key = tmp;
-   item->hash = hash;
-   item->key_size = key_size;
    item->reloc_bufs = tmp + key_size + aux_size;
-   item->nr_reloc_bufs = nr_reloc_bufs;
 
    item->bo = bo;
    dri_bo_reference(bo);
@@ -308,11 +323,18 @@ brw_cache_data(struct brw_cache *cache,
 	       GLuint nr_reloc_bufs)
 {
    dri_bo *bo;
-   struct brw_cache_item *item;
-   GLuint hash = hash_key(data, data_size, reloc_bufs, nr_reloc_bufs);
+   struct brw_cache_item *item, lookup;
+   GLuint hash;
 
-   item = search_cache(cache, cache_id, hash, data, data_size,
-		       reloc_bufs, nr_reloc_bufs);
+   lookup.cache_id = cache_id;
+   lookup.key = data;
+   lookup.key_size = data_size;
+   lookup.reloc_bufs = reloc_bufs;
+   lookup.nr_reloc_bufs = nr_reloc_bufs;
+   hash = hash_key(&lookup);
+   lookup.hash = hash;
+
+   item = search_cache(cache, hash, &lookup);
    if (item) {
       update_cache_last(cache, cache_id, item->bo);
       dri_bo_reference(item->bo);
