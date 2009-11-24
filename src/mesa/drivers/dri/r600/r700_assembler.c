@@ -5663,6 +5663,8 @@ GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
     pAsm->D2.dst2.literal      = 1;
     pAsm->D2.dst2.SaturateMode = SATURATE_OFF;
     pAsm->D.dst.predicated     = 0;
+    /* in reloc where dislink flag init inst, only one slot alu inst is handled. */
+    pAsm->D.dst.math           = 1; /* TODO : not math really, but one channel op, more generic alu assembler needed */
 #if 0
     pAsm->S[0].src.rtype = SRC_REC_LITERAL;
     //pAsm->S[0].src.reg   = 0;
@@ -6457,6 +6459,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
 GLboolean InitShaderProgram(r700_AssemblerBase * pAsm)
 {
     setRetInLoopFlag(pAsm, SQ_SEL_0);
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     return GL_TRUE;
 }
 
@@ -6482,7 +6485,7 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
             if(SIT_CF_ALU == pInst->m_ShaderInstType)
             {
                 pCF_ALU = (R700ControlFlowALUClause *)pInst;
-                if(1 == pCF_ALU->m_Word1.f.count)
+                if(0 == pCF_ALU->m_Word1.f.count)
                 {
                     pCF_ALU->m_Word1.f.cf_inst = SQ_CF_INST_NOP;
                 }
