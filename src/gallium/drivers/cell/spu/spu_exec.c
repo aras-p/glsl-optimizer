@@ -431,22 +431,22 @@ fetch_source(
    index.i[0] =
    index.i[1] =
    index.i[2] =
-   index.i[3] = reg->SrcRegister.Index;
+   index.i[3] = reg->Register.Index;
 
-   if (reg->SrcRegister.Indirect) {
+   if (reg->Register.Indirect) {
       union spu_exec_channel index2;
       union spu_exec_channel indir_index;
 
       index2.i[0] =
       index2.i[1] =
       index2.i[2] =
-      index2.i[3] = reg->SrcRegisterInd.Index;
+      index2.i[3] = reg->Indirect.Index;
 
-      swizzle = tgsi_util_get_src_register_swizzle(&reg->SrcRegisterInd,
+      swizzle = tgsi_util_get_src_register_swizzle(&reg->Indirect,
                                                    CHAN_X);
       fetch_src_file_channel(
          mach,
-         reg->SrcRegisterInd.File,
+         reg->Indirect.File,
          swizzle,
          &index2,
          &indir_index );
@@ -454,8 +454,8 @@ fetch_source(
       index.q = si_a(index.q, indir_index.q);
    }
 
-   if( reg->SrcRegister.Dimension ) {
-      switch( reg->SrcRegister.File ) {
+   if( reg->Register.Dimension ) {
+      switch( reg->Register.File ) {
       case TGSI_FILE_INPUT:
          index.q = si_mpyi(index.q, 17);
          break;
@@ -466,24 +466,24 @@ fetch_source(
          ASSERT( 0 );
       }
 
-      index.i[0] += reg->SrcRegisterDim.Index;
-      index.i[1] += reg->SrcRegisterDim.Index;
-      index.i[2] += reg->SrcRegisterDim.Index;
-      index.i[3] += reg->SrcRegisterDim.Index;
+      index.i[0] += reg->Dimension.Index;
+      index.i[1] += reg->Dimension.Index;
+      index.i[2] += reg->Dimension.Index;
+      index.i[3] += reg->Dimension.Index;
 
-      if (reg->SrcRegisterDim.Indirect) {
+      if (reg->Dimension.Indirect) {
          union spu_exec_channel index2;
          union spu_exec_channel indir_index;
 
          index2.i[0] =
          index2.i[1] =
          index2.i[2] =
-         index2.i[3] = reg->SrcRegisterDimInd.Index;
+         index2.i[3] = reg->DimIndirect.Index;
 
-         swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterDimInd, CHAN_X );
+         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
          fetch_src_file_channel(
             mach,
-            reg->SrcRegisterDimInd.File,
+            reg->DimIndirect.File,
             swizzle,
             &index2,
             &indir_index );
@@ -495,7 +495,7 @@ fetch_source(
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(
       mach,
-      reg->SrcRegister.File,
+      reg->Register.File,
       swizzle,
       &index,
       chan );
@@ -517,7 +517,7 @@ fetch_source(
       break;
    }
 
-   if (reg->SrcRegisterExtMod.Complement) {
+   if (reg->RegisterExtMod.Complement) {
       chan->q = si_fs(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, chan->q);
    }
 }
@@ -677,7 +677,7 @@ exec_tex(struct spu_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
          boolean biasLod, boolean projected)
 {
-   const uint unit = inst->Src[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    union spu_exec_channel r[8];
    uint chan_index;
    float lodBias;

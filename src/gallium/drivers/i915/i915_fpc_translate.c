@@ -143,12 +143,12 @@ static uint
 src_vector(struct i915_fp_compile *p,
            const struct tgsi_full_src_register *source)
 {
-   uint index = source->SrcRegister.Index;
+   uint index = source->Register.Index;
    uint src = 0, sem_name, sem_ind;
 
-   switch (source->SrcRegister.File) {
+   switch (source->Register.File) {
    case TGSI_FILE_TEMPORARY:
-      if (source->SrcRegister.Index >= I915_MAX_TEMPORARY) {
+      if (source->Register.Index >= I915_MAX_TEMPORARY) {
          i915_program_error(p, "Exceeded max temporary reg");
          return 0;
       }
@@ -215,17 +215,17 @@ src_vector(struct i915_fp_compile *p,
    }
 
    src = swizzle(src,
-		 source->SrcRegister.SwizzleX,
-		 source->SrcRegister.SwizzleY,
-		 source->SrcRegister.SwizzleZ,
-		 source->SrcRegister.SwizzleW);
+		 source->Register.SwizzleX,
+		 source->Register.SwizzleY,
+		 source->Register.SwizzleZ,
+		 source->Register.SwizzleW);
 
 
    /* There's both negate-all-components and per-component negation.
     * Try to handle both here.
     */
    {
-      int n = source->SrcRegister.Negate;
+      int n = source->Register.Negate;
       src = negate(src, n, n, n, n);
    }
 
@@ -233,7 +233,7 @@ src_vector(struct i915_fp_compile *p,
 #if 0
    /* XXX assertions disabled to allow arbfplight.c to run */
    /* XXX enable these assertions, or fix things */
-   assert(!source->SrcRegister.Absolute);
+   assert(!source->Register.Absolute);
 #endif
    return src;
 }
@@ -339,7 +339,7 @@ emit_tex(struct i915_fp_compile *p,
          uint opcode)
 {
    uint texture = inst->Texture.Texture;
-   uint unit = inst->Src[1].SrcRegister.Index;
+   uint unit = inst->Src[1].Register.Index;
    uint tex = translate_tex_src_target( p, texture );
    uint sampler = i915_emit_decl(p, REG_TYPE_S, unit, tex);
    uint coord = src_vector( p, &inst->Src[0]);

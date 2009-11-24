@@ -201,15 +201,15 @@ static void transform_srcreg(
     struct rc_src_register * dst,
     struct tgsi_full_src_register * src)
 {
-    dst->File = translate_register_file(src->SrcRegister.File);
-    dst->Index = translate_register_index(ttr, src->SrcRegister.File, src->SrcRegister.Index);
-    dst->RelAddr = src->SrcRegister.Indirect;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->RelAddr = src->Register.Indirect;
     dst->Swizzle = tgsi_util_get_full_src_register_swizzle(src, 0);
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 1) << 3;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
-    dst->Abs = src->SrcRegister.Absolute;
-    dst->Negate = src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
+    dst->Abs = src->Register.Absolute;
+    dst->Negate = src->Register.Negate ? RC_MASK_XYZW : 0;
 }
 
 static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_texture src)
@@ -261,8 +261,8 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
         transform_dstreg(ttr, &dst->U.I.DstReg, &src->Dst[0]);
 
     for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
-        if (src->Src[i].SrcRegister.File == TGSI_FILE_SAMPLER)
-            dst->U.I.TexSrcUnit = src->Src[i].SrcRegister.Index;
+        if (src->Src[i].Register.File == TGSI_FILE_SAMPLER)
+            dst->U.I.TexSrcUnit = src->Src[i].Register.Index;
         else
             transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->Src[i]);
     }

@@ -392,78 +392,78 @@ dump_instruction_verbose(
 
       EOL();
       TXT( "\nFile     : ");
-      ENM( src->SrcRegister.File, TGSI_FILES );
-      if( deflt || fs->SrcRegister.SwizzleX != src->SrcRegister.SwizzleX ) {
+      ENM( src->Register.File, TGSI_FILES );
+      if( deflt || fs->Register.SwizzleX != src->Register.SwizzleX ) {
          TXT( "\nSwizzleX : " );
-         ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleX, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleY != src->SrcRegister.SwizzleY ) {
+      if( deflt || fs->Register.SwizzleY != src->Register.SwizzleY ) {
          TXT( "\nSwizzleY : " );
-         ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleY, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleZ != src->SrcRegister.SwizzleZ ) {
+      if( deflt || fs->Register.SwizzleZ != src->Register.SwizzleZ ) {
          TXT( "\nSwizzleZ : " );
-         ENM( src->SrcRegister.SwizzleZ, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleZ, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleW != src->SrcRegister.SwizzleW ) {
+      if( deflt || fs->Register.SwizzleW != src->Register.SwizzleW ) {
          TXT( "\nSwizzleW : " );
-         ENM( src->SrcRegister.SwizzleW, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleW, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.Negate != src->SrcRegister.Negate ) {
+      if( deflt || fs->Register.Negate != src->Register.Negate ) {
          TXT( "\nNegate   : " );
-         UID( src->SrcRegister.Negate );
+         UID( src->Register.Negate );
       }
       if( ignored ) {
-         if( deflt || fs->SrcRegister.Indirect != src->SrcRegister.Indirect ) {
+         if( deflt || fs->Register.Indirect != src->Register.Indirect ) {
             TXT( "\nIndirect : " );
-            UID( src->SrcRegister.Indirect );
+            UID( src->Register.Indirect );
          }
-         if( deflt || fs->SrcRegister.Dimension != src->SrcRegister.Dimension ) {
+         if( deflt || fs->Register.Dimension != src->Register.Dimension ) {
             TXT( "\nDimension: " );
-            UID( src->SrcRegister.Dimension );
+            UID( src->Register.Dimension );
          }
       }
-      if( deflt || fs->SrcRegister.Index != src->SrcRegister.Index ) {
+      if( deflt || fs->Register.Index != src->Register.Index ) {
          TXT( "\nIndex    : " );
-         SID( src->SrcRegister.Index );
+         SID( src->Register.Index );
       }
       if( ignored ) {
-         if( deflt || fs->SrcRegister.Extended != src->SrcRegister.Extended ) {
+         if( deflt || fs->Register.Extended != src->Register.Extended ) {
             TXT( "\nExtended : " );
-            UID( src->SrcRegister.Extended );
+            UID( src->Register.Extended );
          }
       }
 
-      if( deflt || tgsi_compare_src_register_ext_mod( src->SrcRegisterExtMod, fs->SrcRegisterExtMod ) ) {
+      if( deflt || tgsi_compare_src_register_ext_mod( src->RegisterExtMod, fs->RegisterExtMod ) ) {
          EOL();
          TXT( "\nType     : " );
-         ENM( src->SrcRegisterExtMod.Type, TGSI_SRC_REGISTER_EXTS );
-         if( deflt || fs->SrcRegisterExtMod.Complement != src->SrcRegisterExtMod.Complement ) {
+         ENM( src->RegisterExtMod.Type, TGSI_SRC_REGISTER_EXTS );
+         if( deflt || fs->RegisterExtMod.Complement != src->RegisterExtMod.Complement ) {
             TXT( "\nComplement: " );
-            UID( src->SrcRegisterExtMod.Complement );
+            UID( src->RegisterExtMod.Complement );
          }
-         if( deflt || fs->SrcRegisterExtMod.Bias != src->SrcRegisterExtMod.Bias ) {
+         if( deflt || fs->RegisterExtMod.Bias != src->RegisterExtMod.Bias ) {
             TXT( "\nBias     : " );
-            UID( src->SrcRegisterExtMod.Bias );
+            UID( src->RegisterExtMod.Bias );
          }
-         if( deflt || fs->SrcRegisterExtMod.Scale2X != src->SrcRegisterExtMod.Scale2X ) {
+         if( deflt || fs->RegisterExtMod.Scale2X != src->RegisterExtMod.Scale2X ) {
             TXT( "\nScale2X   : " );
-            UID( src->SrcRegisterExtMod.Scale2X );
+            UID( src->RegisterExtMod.Scale2X );
          }
-         if( deflt || fs->SrcRegisterExtMod.Absolute != src->SrcRegisterExtMod.Absolute ) {
+         if( deflt || fs->RegisterExtMod.Absolute != src->RegisterExtMod.Absolute ) {
             TXT( "\nAbsolute  : " );
-            UID( src->SrcRegisterExtMod.Absolute );
+            UID( src->RegisterExtMod.Absolute );
          }
-         if( deflt || fs->SrcRegisterExtMod.Negate != src->SrcRegisterExtMod.Negate ) {
+         if( deflt || fs->RegisterExtMod.Negate != src->RegisterExtMod.Negate ) {
             TXT( "\nNegate   : " );
-            UID( src->SrcRegisterExtMod.Negate );
+            UID( src->RegisterExtMod.Negate );
          }
          if( ignored ) {
             TXT( "\nPadding   : " );
-            UIX( src->SrcRegisterExtMod.Padding );
-            if( deflt || fs->SrcRegisterExtMod.Extended != src->SrcRegisterExtMod.Extended ) {
+            UIX( src->RegisterExtMod.Padding );
+            if( deflt || fs->RegisterExtMod.Extended != src->RegisterExtMod.Extended ) {
                TXT( "\nExtended  : " );
-               UID( src->SrcRegisterExtMod.Extended );
+               UID( src->RegisterExtMod.Extended );
             }
          }
       }

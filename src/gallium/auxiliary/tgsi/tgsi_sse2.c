@@ -1267,23 +1267,23 @@ emit_fetch(
    case TGSI_SWIZZLE_Y:
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle,
-            reg->SrcRegister.Indirect,
-            reg->SrcRegisterInd.File,
-            reg->SrcRegisterInd.Index );
+            reg->Register.Indirect,
+            reg->Indirect.File,
+            reg->Indirect.Index );
          break;
 
       case TGSI_FILE_IMMEDIATE:
          emit_immediate(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1291,7 +1291,7 @@ emit_fetch(
          emit_inputf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1299,7 +1299,7 @@ emit_fetch(
          emit_tempf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1459,7 +1459,7 @@ emit_tex( struct x86_function *func,
           boolean lodbias,
           boolean projected)
 {
-   const uint unit = inst->Src[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    struct x86_reg args[2];
    unsigned count;
    unsigned i;
@@ -1721,8 +1721,8 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       const struct tgsi_full_src_register *reg = &inst->Src[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {

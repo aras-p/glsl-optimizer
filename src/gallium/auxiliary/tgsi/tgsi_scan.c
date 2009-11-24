@@ -97,13 +97,13 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
                   const struct tgsi_full_src_register *src =
                      &fullinst->Src[i];
-                  if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-                     const int ind = src->SrcRegister.Index;
+                  if (src->Register.File == TGSI_FILE_INPUT) {
+                     const int ind = src->Register.Index;
                      if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_X) {
+                        if (src->Register.SwizzleX == TGSI_SWIZZLE_X) {
                            info->uses_fogcoord = TRUE;
                         }
-                        else if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_Y) {
+                        else if (src->Register.SwizzleX == TGSI_SWIZZLE_Y) {
                            info->uses_frontfacing = TRUE;
                         }
                      }
@@ -211,17 +211,17 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
 
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
-                src->SrcRegister.File != TGSI_FILE_INPUT ||
+                src->Register.File != TGSI_FILE_INPUT ||
                 dst->Register.File != TGSI_FILE_OUTPUT ||
-                src->SrcRegister.Index != dst->Register.Index ||
+                src->Register.Index != dst->Register.Index ||
 
-                src->SrcRegister.Negate ||
-                src->SrcRegister.Absolute ||
+                src->Register.Negate ||
+                src->Register.Absolute ||
 
-                src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-                src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-                src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-                src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ||
+                src->Register.SwizzleX != TGSI_SWIZZLE_X ||
+                src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
+                src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
+                src->Register.SwizzleW != TGSI_SWIZZLE_W ||
 
                 dst->Register.WriteMask != TGSI_WRITEMASK_XYZW)
             {

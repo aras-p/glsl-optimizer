@@ -565,41 +565,41 @@ parse_src_operand(
    if (*ctx->cur == '-') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
-      src->SrcRegister.Negate = 1;
+      src->Register.Negate = 1;
    }
    
    if (*ctx->cur == '|') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
-      src->SrcRegister.Absolute = 1;
+      src->Register.Absolute = 1;
    }
 
    if (!parse_register_src(ctx, &file, &index, &ind_file, &ind_index, &ind_comp))
       return FALSE;
-   src->SrcRegister.File = file;
-   src->SrcRegister.Index = index;
+   src->Register.File = file;
+   src->Register.Index = index;
    if (ind_file != TGSI_FILE_NULL) {
-      src->SrcRegister.Indirect = 1;
-      src->SrcRegisterInd.File = ind_file;
-      src->SrcRegisterInd.Index = ind_index;
-      src->SrcRegisterInd.SwizzleX = ind_comp;
-      src->SrcRegisterInd.SwizzleY = ind_comp;
-      src->SrcRegisterInd.SwizzleZ = ind_comp;
-      src->SrcRegisterInd.SwizzleW = ind_comp;
+      src->Register.Indirect = 1;
+      src->Indirect.File = ind_file;
+      src->Indirect.Index = ind_index;
+      src->Indirect.SwizzleX = ind_comp;
+      src->Indirect.SwizzleY = ind_comp;
+      src->Indirect.SwizzleZ = ind_comp;
+      src->Indirect.SwizzleW = ind_comp;
    }
 
    /* Parse optional swizzle.
     */
    if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle )) {
       if (parsed_swizzle) {
-         src->SrcRegister.SwizzleX = swizzle[0];
-         src->SrcRegister.SwizzleY = swizzle[1];
-         src->SrcRegister.SwizzleZ = swizzle[2];
-         src->SrcRegister.SwizzleW = swizzle[3];
+         src->Register.SwizzleX = swizzle[0];
+         src->Register.SwizzleY = swizzle[1];
+         src->Register.SwizzleZ = swizzle[2];
+         src->Register.SwizzleW = swizzle[3];
       }
    }
 
-   if (src->SrcRegister.Absolute) {
+   if (src->Register.Absolute) {
       eat_opt_white( &ctx->cur );
       if (*ctx->cur != '|') {
          report_error( ctx, "Expected `|'" );

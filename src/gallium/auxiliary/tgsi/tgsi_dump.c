@@ -386,42 +386,42 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      if (src->SrcRegister.Negate)
+      if (src->Register.Negate)
          TXT( "-(" );
-      if (src->SrcRegister.Absolute)
+      if (src->Register.Absolute)
          CHR( '|' );
 
-      if (src->SrcRegister.Indirect) {
+      if (src->Register.Indirect) {
          _dump_register_ind(
             ctx,
-            src->SrcRegister.File,
-            src->SrcRegister.Index,
-            src->SrcRegisterInd.File,
-            src->SrcRegisterInd.Index,
-            src->SrcRegisterInd.SwizzleX );
+            src->Register.File,
+            src->Register.Index,
+            src->Indirect.File,
+            src->Indirect.Index,
+            src->Indirect.SwizzleX );
       }
       else {
          _dump_register(
             ctx,
-            src->SrcRegister.File,
-            src->SrcRegister.Index,
-            src->SrcRegister.Index );
+            src->Register.File,
+            src->Register.Index,
+            src->Register.Index );
       }
 
-      if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-          src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-          src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-          src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
+      if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
+          src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
+          src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
+          src->Register.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
-         ENM( src->SrcRegister.SwizzleX, swizzle_names );
-         ENM( src->SrcRegister.SwizzleY, swizzle_names );
-         ENM( src->SrcRegister.SwizzleZ, swizzle_names );
-         ENM( src->SrcRegister.SwizzleW, swizzle_names );
+         ENM( src->Register.SwizzleX, swizzle_names );
+         ENM( src->Register.SwizzleY, swizzle_names );
+         ENM( src->Register.SwizzleZ, swizzle_names );
+         ENM( src->Register.SwizzleW, swizzle_names );
       }
 
-      if (src->SrcRegister.Absolute)
+      if (src->Register.Absolute)
          CHR( '|' );
-      if (src->SrcRegister.Negate)
+      if (src->Register.Negate)
          CHR( ')' );
 
       first_reg = FALSE;

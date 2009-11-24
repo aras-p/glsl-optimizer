@@ -220,16 +220,16 @@ iter_instruction(
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       check_register_usage(
          ctx,
-         inst->Src[i].SrcRegister.File,
-         inst->Src[i].SrcRegister.Index,
+         inst->Src[i].Register.File,
+         inst->Src[i].Register.Index,
          "source",
-         (boolean)inst->Src[i].SrcRegister.Indirect );
-      if (inst->Src[i].SrcRegister.Indirect) {
+         (boolean)inst->Src[i].Register.Indirect );
+      if (inst->Src[i].Register.Indirect) {
          uint file;
          int index;
 
-         file = inst->Src[i].SrcRegisterInd.File;
-         index = inst->Src[i].SrcRegisterInd.Index;
+         file = inst->Src[i].Indirect.File;
+         index = inst->Src[i].Indirect.Index;
          check_register_usage(
             ctx,
             file,
@@ -254,8 +254,8 @@ iter_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_BGNFOR:
-      if (inst->Src[0].SrcRegister.File != TGSI_FILE_CONSTANT &&
-          inst->Src[0].SrcRegister.File != TGSI_FILE_IMMEDIATE) {
+      if (inst->Src[0].Register.File != TGSI_FILE_CONSTANT &&
+          inst->Src[0].Register.File != TGSI_FILE_IMMEDIATE) {
          report_error(ctx, "Source register file must be either CONST or IMM");
       }
       break;

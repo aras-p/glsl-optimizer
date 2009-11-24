@@ -53,10 +53,10 @@ struct tgsi_full_dst_register
 
 struct tgsi_full_src_register
 {
-   struct tgsi_src_register         SrcRegister;
-   struct tgsi_src_register         SrcRegisterInd;
-   struct tgsi_dimension            SrcRegisterDim;
-   struct tgsi_src_register         SrcRegisterDimInd;
+   struct tgsi_src_register         Register;
+   struct tgsi_src_register         Indirect;
+   struct tgsi_dimension            Dimension;
+   struct tgsi_src_register         DimIndirect;
 };
 
 struct tgsi_full_declaration

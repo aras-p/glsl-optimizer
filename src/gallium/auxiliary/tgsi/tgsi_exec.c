@@ -200,9 +200,9 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
 
    /* loop over src regs */
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      if ((inst->Src[i].SrcRegister.File ==
+      if ((inst->Src[i].Register.File ==
            inst->Dst[0].Register.File) &&
-          (inst->Src[i].SrcRegister.Index ==
+          (inst->Src[i].Register.Index ==
            inst->Dst[0].Register.Index)) {
          /* loop over dest channels */
          uint channelsWritten = 0x0;
@@ -1233,13 +1233,13 @@ fetch_source(
     *
     *    file[1],
     *    where:
-    *       file = SrcRegister.File
-    *       [1] = SrcRegister.Index
+    *       file = Register.File
+    *       [1] = Register.Index
     */
    index.i[0] =
    index.i[1] =
    index.i[2] =
-   index.i[3] = reg->SrcRegister.Index;
+   index.i[3] = reg->Register.Index;
 
    /* There is an extra source register that indirectly subscripts
     * a register file. The direct index now becomes an offset
@@ -1247,11 +1247,11 @@ fetch_source(
     *
     *    file[ind[2].x+1],
     *    where:
-    *       ind = SrcRegisterInd.File
-    *       [2] = SrcRegisterInd.Index
-    *       .x = SrcRegisterInd.SwizzleX
+    *       ind = Indirect.File
+    *       [2] = Indirect.Index
+    *       .x = Indirect.SwizzleX
     */
-   if (reg->SrcRegister.Indirect) {
+   if (reg->Register.Indirect) {
       union tgsi_exec_channel index2;
       union tgsi_exec_channel indir_index;
       const uint execmask = mach->ExecMask;
@@ -1261,13 +1261,13 @@ fetch_source(
       index2.i[0] =
       index2.i[1] =
       index2.i[2] =
-      index2.i[3] = reg->SrcRegisterInd.Index;
+      index2.i[3] = reg->Indirect.Index;
 
       /* get current value of address register[swizzle] */
-      swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterInd, CHAN_X );
+      swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
       fetch_src_file_channel(
          mach,
-         reg->SrcRegisterInd.File,
+         reg->Indirect.File,
          swizzle,
          &index2,
          &indir_index );
@@ -1293,14 +1293,14 @@ fetch_source(
     *
     *    file[1][3] == file[1*sizeof(file[1])+3],
     *    where:
-    *       [3] = SrcRegisterDim.Index
+    *       [3] = Dimension.Index
     */
-   if (reg->SrcRegister.Dimension) {
+   if (reg->Register.Dimension) {
       /* The size of the first-order array depends on the register file type.
        * We need to multiply the index to the first array to get an effective,
        * "flat" index that points to the beginning of the second-order array.
        */
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
          index.i[0] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
          index.i[1] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
@@ -1317,10 +1317,10 @@ fetch_source(
          assert( 0 );
       }
 
-      index.i[0] += reg->SrcRegisterDim.Index;
-      index.i[1] += reg->SrcRegisterDim.Index;
-      index.i[2] += reg->SrcRegisterDim.Index;
-      index.i[3] += reg->SrcRegisterDim.Index;
+      index.i[0] += reg->Dimension.Index;
+      index.i[1] += reg->Dimension.Index;
+      index.i[2] += reg->Dimension.Index;
+      index.i[3] += reg->Dimension.Index;
 
       /* Again, the second subscript index can be addressed indirectly
        * identically to the first one.
@@ -1329,11 +1329,11 @@ fetch_source(
        *
        *    file[1][ind[4].y+3],
        *    where:
-       *       ind = SrcRegisterDimInd.File
-       *       [4] = SrcRegisterDimInd.Index
-       *       .y = SrcRegisterDimInd.SwizzleX
+       *       ind = DimIndirect.File
+       *       [4] = DimIndirect.Index
+       *       .y = DimIndirect.SwizzleX
        */
-      if (reg->SrcRegisterDim.Indirect) {
+      if (reg->Dimension.Indirect) {
          union tgsi_exec_channel index2;
          union tgsi_exec_channel indir_index;
          const uint execmask = mach->ExecMask;
@@ -1342,12 +1342,12 @@ fetch_source(
          index2.i[0] =
          index2.i[1] =
          index2.i[2] =
-         index2.i[3] = reg->SrcRegisterDimInd.Index;
+         index2.i[3] = reg->DimIndirect.Index;
 
-         swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterDimInd, CHAN_X );
+         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
          fetch_src_file_channel(
             mach,
-            reg->SrcRegisterDimInd.File,
+            reg->DimIndirect.File,
             swizzle,
             &index2,
             &indir_index );
@@ -1367,7 +1367,7 @@ fetch_source(
       }
 
       /* If by any chance there was a need for a 3D array of register
-       * files, we would have to check whether SrcRegisterDim is followed
+       * files, we would have to check whether Dimension is followed
        * by a dimension register and continue the saga.
        */
    }
@@ -1375,7 +1375,7 @@ fetch_source(
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(
       mach,
-      reg->SrcRegister.File,
+      reg->Register.File,
       swizzle,
       &index,
       chan );
@@ -1668,7 +1668,7 @@ exec_tex(struct tgsi_exec_machine *mach,
          boolean biasLod,
          boolean projected)
 {
-   const uint unit = inst->Src[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    union tgsi_exec_channel r[4];
    uint chan_index;
    float lodBias;
@@ -1765,7 +1765,7 @@ static void
 exec_txd(struct tgsi_exec_machine *mach,
          const struct tgsi_full_instruction *inst)
 {
-   const uint unit = inst->Src[3].SrcRegister.Index;
+   const uint unit = inst->Src[3].Register.Index;
    union tgsi_exec_channel r[4];
    uint chan_index;
 

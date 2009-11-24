@@ -237,8 +237,8 @@ is_register_src(struct codegen *gen, int channel,
    if (swizzle > TGSI_SWIZZLE_W || sign_op != TGSI_UTIL_SIGN_KEEP) {
       return FALSE;
    }
-   if (src->SrcRegister.File == TGSI_FILE_TEMPORARY ||
-       src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
+   if (src->Register.File == TGSI_FILE_TEMPORARY ||
+       src->Register.File == TGSI_FILE_IMMEDIATE) {
       return TRUE;
    }
    return FALSE;
@@ -279,15 +279,15 @@ get_src_reg(struct codegen *gen,
    assert(swizzle <= TGSI_SWIZZLE_W);
 
    {
-      int index = src->SrcRegister.Index;
+      int index = src->Register.Index;
 
       assert(swizzle < 4);
 
-      if (src->SrcRegister.Indirect) {
+      if (src->Register.Indirect) {
          /* XXX unfinished */
       }
 
-      switch (src->SrcRegister.File) {
+      switch (src->Register.File) {
       case TGSI_FILE_TEMPORARY:
          reg = gen->temp_regs[index][swizzle];
          break;
@@ -1352,7 +1352,7 @@ static boolean
 emit_TEX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const uint target = inst->InstructionExtTexture.Texture;
-   const uint unit = inst->Src[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    uint addr;
    int ch;
    int coord_regs[4], d_regs[4];
@@ -1373,7 +1373,7 @@ emit_TEX(struct codegen *gen, const struct tgsi_full_instruction *inst)
       return FALSE;
    }
 
-   assert(inst->Src[1].SrcRegister.File == TGSI_FILE_SAMPLER);
+   assert(inst->Src[1].Register.File == TGSI_FILE_SAMPLER);
 
    spe_comment(gen->f, -4, "CALL tex:");
 

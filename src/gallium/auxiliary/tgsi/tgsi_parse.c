@@ -190,34 +190,34 @@ tgsi_parse_token(
 
       for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
 
-         next_token( ctx, &inst->Src[i].SrcRegister );
+         next_token( ctx, &inst->Src[i].Register );
 
-         if( inst->Src[i].SrcRegister.Indirect ) {
-            next_token( ctx, &inst->Src[i].SrcRegisterInd );
+         if( inst->Src[i].Register.Indirect ) {
+            next_token( ctx, &inst->Src[i].Indirect );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->Src[i].SrcRegisterInd.Indirect );
-            assert( !inst->Src[i].SrcRegisterInd.Dimension );
+            assert( !inst->Src[i].Indirect.Indirect );
+            assert( !inst->Src[i].Indirect.Dimension );
          }
 
-         if( inst->Src[i].SrcRegister.Dimension ) {
-            next_token( ctx, &inst->Src[i].SrcRegisterDim );
+         if( inst->Src[i].Register.Dimension ) {
+            next_token( ctx, &inst->Src[i].Dimension );
 
             /*
              * No support for multi-dimensional addressing.
              */
-            assert( !inst->Src[i].SrcRegisterDim.Dimension );
+            assert( !inst->Src[i].Dimension.Dimension );
 
-            if( inst->Src[i].SrcRegisterDim.Indirect ) {
-               next_token( ctx, &inst->Src[i].SrcRegisterDimInd );
+            if( inst->Src[i].Dimension.Indirect ) {
+               next_token( ctx, &inst->Src[i].DimIndirect );
 
                /*
                * No support for indirect or multi-dimensional addressing.
                */
-               assert( !inst->Src[i].SrcRegisterInd.Indirect );
-               assert( !inst->Src[i].SrcRegisterInd.Dimension );
+               assert( !inst->Src[i].Indirect.Indirect );
+               assert( !inst->Src[i].Indirect.Dimension );
             }
          }
       }

@@ -529,8 +529,8 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
                                  const struct tgsi_full_src_register *src ) 
 {
    struct x86_reg arg0 = aos_get_shader_reg(cp, 
-                                            src->SrcRegister.File, 
-                                            src->SrcRegister.Index);
+                                            src->Register.File, 
+                                            src->Register.Index);
    unsigned i;
    ubyte swz = 0;
    unsigned negs = 0;
@@ -620,8 +620,8 @@ static void x87_fld_src( struct aos_compilation *cp,
                          unsigned channel ) 
 {
    struct x86_reg arg0 = aos_get_shader_reg_ptr(cp, 
-                                                src->SrcRegister.File, 
-                                                src->SrcRegister.Index);
+                                                src->Register.File, 
+                                                src->Register.Index);
 
    unsigned swizzle = tgsi_util_get_full_src_register_swizzle( src, channel );
    unsigned neg = tgsi_util_get_full_src_register_sign_mode( src, channel );

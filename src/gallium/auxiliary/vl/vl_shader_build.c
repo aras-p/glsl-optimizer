@@ -141,8 +141,8 @@ struct tgsi_full_instruction vl_inst2
    inst.Dst[0].Register.File = dst_file;
    inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 1;
-   inst.Src[0].SrcRegister.File = src_file;
-   inst.Src[0].SrcRegister.Index = src_index;
+   inst.Src[0].Register.File = src_file;
+   inst.Src[0].Register.Index = src_index;
 
    return inst;
 }
@@ -165,10 +165,10 @@ struct tgsi_full_instruction vl_inst3
    inst.Dst[0].Register.File = dst_file;
    inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 2;
-   inst.Src[0].SrcRegister.File = src1_file;
-   inst.Src[0].SrcRegister.Index = src1_index;
-   inst.Src[1].SrcRegister.File = src2_file;
-   inst.Src[1].SrcRegister.Index = src2_index;
+   inst.Src[0].Register.File = src1_file;
+   inst.Src[0].Register.Index = src1_index;
+   inst.Src[1].Register.File = src2_file;
+   inst.Src[1].Register.Index = src2_index;
 
    return inst;
 }
@@ -193,10 +193,10 @@ struct tgsi_full_instruction vl_tex
    inst.Instruction.NumSrcRegs = 2;
    inst.Instruction.Texture = 1;
    inst.Texture.Texture = tex;
-   inst.Src[0].SrcRegister.File = src1_file;
-   inst.Src[0].SrcRegister.Index = src1_index;
-   inst.Src[1].SrcRegister.File = src2_file;
-   inst.Src[1].SrcRegister.Index = src2_index;
+   inst.Src[0].Register.File = src1_file;
+   inst.Src[0].Register.Index = src1_index;
+   inst.Src[1].Register.File = src2_file;
+   inst.Src[1].Register.Index = src2_index;
 
    return inst;
 }
@@ -221,12 +221,12 @@ struct tgsi_full_instruction vl_inst4
    inst.Dst[0].Register.File = dst_file;
    inst.Dst[0].Register.Index = dst_index;
    inst.Instruction.NumSrcRegs = 3;
-   inst.Src[0].SrcRegister.File = src1_file;
-   inst.Src[0].SrcRegister.Index = src1_index;
-   inst.Src[1].SrcRegister.File = src2_file;
-   inst.Src[1].SrcRegister.Index = src2_index;
-   inst.Src[2].SrcRegister.File = src3_file;
-   inst.Src[2].SrcRegister.Index = src3_index;
+   inst.Src[0].Register.File = src1_file;
+   inst.Src[0].Register.Index = src1_index;
+   inst.Src[1].Register.File = src2_file;
+   inst.Src[1].Register.Index = src2_index;
+   inst.Src[2].Register.File = src3_file;
+   inst.Src[2].Register.Index = src3_index;
 
    return inst;
 }

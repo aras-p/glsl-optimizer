@@ -76,7 +76,7 @@ tgsi_util_get_full_src_register_swizzle(
    unsigned component )
 {
    return tgsi_util_get_src_register_swizzle(
-      &reg->SrcRegister,
+      &reg->Register,
       component );
 }
 
@@ -111,10 +111,10 @@ tgsi_util_get_full_src_register_sign_mode(
 {
    unsigned sign_mode;
 
-   if( reg->SrcRegister.Absolute ) {
+   if( reg->Register.Absolute ) {
       /* Consider only the post-abs negation. */
 
-      if( reg->SrcRegister.Negate ) {
+      if( reg->Register.Negate ) {
          sign_mode = TGSI_UTIL_SIGN_SET;
       }
       else {
@@ -122,7 +122,7 @@ tgsi_util_get_full_src_register_sign_mode(
       }
    }
    else {
-      if( reg->SrcRegister.Negate ) {
+      if( reg->Register.Negate ) {
          sign_mode = TGSI_UTIL_SIGN_TOGGLE;
       }
       else {
@@ -141,23 +141,23 @@ tgsi_util_set_full_src_register_sign_mode(
    switch (sign_mode)
    {
    case TGSI_UTIL_SIGN_CLEAR:
-      reg->SrcRegister.Negate = 0;
-      reg->SrcRegister.Absolute = 1;
+      reg->Register.Negate = 0;
+      reg->Register.Absolute = 1;
       break;
 
    case TGSI_UTIL_SIGN_SET:
-      reg->SrcRegister.Absolute = 1;
-      reg->SrcRegister.Negate = 1;
+      reg->Register.Absolute = 1;
+      reg->Register.Negate = 1;
       break;
 
    case TGSI_UTIL_SIGN_TOGGLE:
-      reg->SrcRegister.Negate = 1;
-      reg->SrcRegister.Absolute = 0;
+      reg->Register.Negate = 1;
+      reg->Register.Absolute = 0;
       break;
 
    case TGSI_UTIL_SIGN_KEEP:
-      reg->SrcRegister.Negate = 0;
-      reg->SrcRegister.Absolute = 0;
+      reg->Register.Negate = 0;
+      reg->Register.Absolute = 0;
       break;
 
    default:

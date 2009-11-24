@@ -167,9 +167,9 @@ emit_fetch(
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
 
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT: {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->SrcRegister.Index*4 + swizzle, 0);
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
          LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
          LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
          res = lp_build_broadcast_scalar(&bld->base, scalar);
@@ -177,17 +177,17 @@ emit_fetch(
       }
 
       case TGSI_FILE_IMMEDIATE:
-         res = bld->immediates[reg->SrcRegister.Index][swizzle];
+         res = bld->immediates[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_INPUT:
-         res = bld->inputs[reg->SrcRegister.Index][swizzle];
+         res = bld->inputs[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_TEMPORARY:
-         res = bld->temps[reg->SrcRegister.Index][swizzle];
+         res = bld->temps[reg->Register.Index][swizzle];
          if(!res)
             return bld->base.undef;
          break;
@@ -319,7 +319,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           boolean projected,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->Src[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    LLVMValueRef lodbias;
    LLVMValueRef oow;
    LLVMValueRef coords[3];
@@ -424,8 +424,8 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       const struct tgsi_full_src_register *reg = &inst->Src[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {

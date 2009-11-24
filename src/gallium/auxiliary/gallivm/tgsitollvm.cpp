@@ -238,22 +238,22 @@ translate_instruction(llvm::Module *module,
       llvm::Value *val = 0;
       llvm::Value *indIdx = 0;
 
-      if (src->SrcRegister.Indirect) {
-         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
+      if (src->Register.Indirect) {
+         indIdx = storage->addrElement(src->Indirect.Index);
          indIdx = storage->extractIndex(indIdx);
       }
-      if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->constElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->inputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         val = storage->tempElement(src->SrcRegister.Index);
-      } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
-         val = storage->outputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
-         val = storage->immediateElement(src->SrcRegister.Index);
+      if (src->Register.File == TGSI_FILE_CONSTANT) {
+         val = storage->constElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_INPUT) {
+         val = storage->inputElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_TEMPORARY) {
+         val = storage->tempElement(src->Register.Index);
+      } else if (src->Register.File == TGSI_FILE_OUTPUT) {
+         val = storage->outputElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_IMMEDIATE) {
+         val = storage->immediateElement(src->Register.Index);
       } else {
-         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
+         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->Register.File);
          return;
       }
 
@@ -688,11 +688,11 @@ translate_instructionir(llvm::Module *module,
       llvm::Value *indIdx = 0;
       int swizzle = swizzleInt(src);
 
-      if (src->SrcRegister.Indirect) {
-         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
+      if (src->Register.Indirect) {
+         indIdx = storage->addrElement(src->Indirect.Index);
       }
-      val = storage->load((enum tgsi_file_type)src->SrcRegister.File,
-                          src->SrcRegister.Index, swizzle, instr->getIRBuilder(), indIdx);
+      val = storage->load((enum tgsi_file_type)src->Register.File,
+                          src->Register.Index, swizzle, instr->getIRBuilder(), indIdx);
 
       inputs[i] = val;
    }

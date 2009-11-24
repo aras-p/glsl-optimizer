@@ -270,10 +270,10 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Instruction.Texture = TRUE;
       newInst.Texture.Texture = TGSI_TEXTURE_2D;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.Src[0].SrcRegister.Index = aactx->maxInput + 1;
-      newInst.Src[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.Src[1].SrcRegister.Index = aactx->freeSampler;
+      newInst.Src[0].Register.File = TGSI_FILE_INPUT;
+      newInst.Src[0].Register.Index = aactx->maxInput + 1;
+      newInst.Src[1].Register.File = TGSI_FILE_SAMPLER;
+      newInst.Src[1].Register.Index = aactx->freeSampler;
 
       ctx->emit_instruction(ctx, &newInst);
 
@@ -285,8 +285,8 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Dst[0].Register.Index = aactx->colorOutput;
       newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZ;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
+      newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].Register.Index = aactx->colorTemp;
       ctx->emit_instruction(ctx, &newInst);
 
       /* MUL alpha */
@@ -297,10 +297,10 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Dst[0].Register.Index = aactx->colorOutput;
       newInst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_W;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Src[0].SrcRegister.Index = aactx->colorTemp;
-      newInst.Src[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Src[1].SrcRegister.Index = aactx->texTemp;
+      newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].Register.Index = aactx->colorTemp;
+      newInst.Src[1].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[1].Register.Index = aactx->texTemp;
       ctx->emit_instruction(ctx, &newInst);
 
       /* END */

@@ -283,10 +283,10 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Dst[0].Register.File = TGSI_FILE_TEMPORARY;
       newInst.Dst[0].Register.Index = pctx->texTemp;
       newInst.Instruction.NumSrcRegs = 2;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_INPUT;
-      newInst.Src[0].SrcRegister.Index = wincoordInput;
-      newInst.Src[1].SrcRegister.File = TGSI_FILE_IMMEDIATE;
-      newInst.Src[1].SrcRegister.Index = pctx->numImmed;
+      newInst.Src[0].Register.File = TGSI_FILE_INPUT;
+      newInst.Src[0].Register.Index = wincoordInput;
+      newInst.Src[1].Register.File = TGSI_FILE_IMMEDIATE;
+      newInst.Src[1].Register.Index = pctx->numImmed;
       ctx->emit_instruction(ctx, &newInst);
 
       /* TEX texTemp, texTemp, sampler; */
@@ -298,10 +298,10 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Instruction.NumSrcRegs = 2;
       newInst.Instruction.Texture = TRUE;
       newInst.Texture.Texture = TGSI_TEXTURE_2D;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Src[0].SrcRegister.Index = pctx->texTemp;
-      newInst.Src[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.Src[1].SrcRegister.Index = pctx->freeSampler;
+      newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].Register.Index = pctx->texTemp;
+      newInst.Src[1].Register.File = TGSI_FILE_SAMPLER;
+      newInst.Src[1].Register.Index = pctx->freeSampler;
       ctx->emit_instruction(ctx, &newInst);
 
       /* KIL -texTemp;   # if -texTemp < 0, KILL fragment */
@@ -309,9 +309,9 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
-      newInst.Src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-      newInst.Src[0].SrcRegister.Index = pctx->texTemp;
-      newInst.Src[0].SrcRegister.Negate = 1;
+      newInst.Src[0].Register.File = TGSI_FILE_TEMPORARY;
+      newInst.Src[0].Register.Index = pctx->texTemp;
+      newInst.Src[0].Register.Negate = 1;
       ctx->emit_instruction(ctx, &newInst);
    }
 

@@ -1535,10 +1535,10 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	for (s = 0; s < insn->Instruction.NumSrcRegs; ++s) {
 		if (s == i)
 			continue;
-		if ((insn->Src[s].SrcRegister.Index ==
-		     insn->Src[i].SrcRegister.Index) &&
-		    (insn->Src[s].SrcRegister.File ==
-		     insn->Src[i].SrcRegister.File))
+		if ((insn->Src[s].Register.Index ==
+		     insn->Src[i].Register.Index) &&
+		    (insn->Src[s].Register.File ==
+		     insn->Src[i].Register.File))
 			return FALSE;
 	}
 
@@ -1644,8 +1644,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	struct nv50_reg *temp;
 	unsigned sgn, c, swz;
 
-	if (src->SrcRegister.File != TGSI_FILE_CONSTANT)
-		assert(!src->SrcRegister.Indirect);
+	if (src->Register.File != TGSI_FILE_CONSTANT)
+		assert(!src->Register.Indirect);
 
 	sgn = tgsi_util_get_full_src_register_sign_mode(src, chan);
 
@@ -1655,16 +1655,16 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	case TGSI_SWIZZLE_Y:
 	case TGSI_SWIZZLE_Z:
 	case TGSI_SWIZZLE_W:
-		switch (src->SrcRegister.File) {
+		switch (src->Register.File) {
 		case TGSI_FILE_INPUT:
-			r = &pc->attr[src->SrcRegister.Index * 4 + c];
+			r = &pc->attr[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_TEMPORARY:
-			r = &pc->temp[src->SrcRegister.Index * 4 + c];
+			r = &pc->temp[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_CONSTANT:
-			if (!src->SrcRegister.Indirect) {
-				r = &pc->param[src->SrcRegister.Index * 4 + c];
+			if (!src->Register.Indirect) {
+				r = &pc->param[src->Register.Index * 4 + c];
 				break;
 			}
 			/* Indicate indirection by setting r->acc < 0 and
@@ -1672,19 +1672,19 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			 */
 			r = MALLOC_STRUCT(nv50_reg);
 			swz = tgsi_util_get_src_register_swizzle(
-						 &src->SrcRegisterInd, 0);
+						 &src->Indirect, 0);
 			ctor_reg(r, P_CONST,
-				 src->SrcRegisterInd.Index * 4 + swz,
-				 src->SrcRegister.Index * 4 + c);
+				 src->Indirect.Index * 4 + swz,
+				 src->Register.Index * 4 + c);
 			r->acc = -1;
 			break;
 		case TGSI_FILE_IMMEDIATE:
-			r = &pc->immd[src->SrcRegister.Index * 4 + c];
+			r = &pc->immd[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_SAMPLER:
 			break;
 		case TGSI_FILE_ADDRESS:
-			r = pc->addr[src->SrcRegister.Index * 4 + c];
+			r = pc->addr[src->Register.Index * 4 + c];
 			assert(r);
 			break;
 		default:
@@ -1871,8 +1871,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		src_mask = nv50_tgsi_src_mask(inst, i);
 		neg_supp = negate_supported(inst, i);
 
-		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
-			unit = fs->SrcRegister.Index;
+		if (fs->Register.File == TGSI_FILE_SAMPLER)
+			unit = fs->Register.Index;
 
 		for (c = 0; c < 4; c++)
 			if (src_mask & (1 << c))
@@ -2284,10 +2284,10 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	for (i = 0; i < insn->Instruction.NumSrcRegs; i++) {
 		src = &insn->Src[i];
 
-		if (src->SrcRegister.File == TGSI_FILE_TEMPORARY)
+		if (src->Register.File == TGSI_FILE_TEMPORARY)
 			reg = pc->temp;
 		else
-		if (src->SrcRegister.File == TGSI_FILE_INPUT)
+		if (src->Register.File == TGSI_FILE_INPUT)
 			reg = pc->attr;
 		else
 			continue;
@@ -2299,7 +2299,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 				continue;
 			k = tgsi_util_get_full_src_register_swizzle(src, c);
 
-			reg[src->SrcRegister.Index * 4 + k].acc = pc->insn_nr;
+			reg[src->Register.Index * 4 + k].acc = pc->insn_nr;
 		}
 	}
 }
@@ -2391,8 +2391,8 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 		boolean neg_supp = negate_supported(insn, i);
 
 		fs = &insn->Src[i];
-		if (fs->SrcRegister.File != fd->Register.File ||
-		    fs->SrcRegister.Index != fd->Register.Index)
+		if (fs->Register.File != fd->Register.File ||
+		    fs->Register.Index != fd->Register.Index)
 			continue;
 
 		for (chn = 0; chn < 4; ++chn) {

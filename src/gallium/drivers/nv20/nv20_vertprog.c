@@ -253,32 +253,32 @@ static INLINE struct nv20_sreg
 tgsi_src(struct nv20_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	struct nv20_sreg src;
 
-	switch (fsrc->SrcRegister.File) {
+	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nv20_sr(NV30SR_INPUT, fsrc->SrcRegister.Index);
+		src = nv20_sr(NV30SR_INPUT, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src = constant(vpc, fsrc->SrcRegister.Index, 0, 0, 0, 0);
+		src = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
 		break;
 	case TGSI_FILE_IMMEDIATE:
-		src = vpc->imm[fsrc->SrcRegister.Index];
+		src = vpc->imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		if (vpc->high_temp < fsrc->SrcRegister.Index)
-			vpc->high_temp = fsrc->SrcRegister.Index;
-		src = nv20_sr(NV30SR_TEMP, fsrc->SrcRegister.Index);
+		if (vpc->high_temp < fsrc->Register.Index)
+			vpc->high_temp = fsrc->Register.Index;
+		src = nv20_sr(NV30SR_TEMP, fsrc->Register.Index);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
 		break;
 	}
 
-	src.abs = fsrc->SrcRegister.Absolute;
-	src.negate = fsrc->SrcRegister.Negate;
-	src.swz[0] = fsrc->SrcRegister.SwizzleX;
-	src.swz[1] = fsrc->SrcRegister.SwizzleY;
-	src.swz[2] = fsrc->SrcRegister.SwizzleZ;
-	src.swz[3] = fsrc->SrcRegister.SwizzleW;
+	src.abs = fsrc->Register.Absolute;
+	src.negate = fsrc->Register.Negate;
+	src.swz[0] = fsrc->Register.SwizzleX;
+	src.swz[1] = fsrc->Register.SwizzleY;
+	src.swz[2] = fsrc->Register.SwizzleZ;
+	src.swz[3] = fsrc->Register.SwizzleW;
 	return src;
 }
 
@@ -335,7 +335,7 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 		const struct tgsi_full_src_register *fsrc;
 
 		fsrc = &finst->Src[i];
-		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
+		if (fsrc->Register.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(vpc, fsrc);
 		}
 	}
@@ -344,10 +344,10 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 		const struct tgsi_full_src_register *fsrc;
 
 		fsrc = &finst->Src[i];
-		switch (fsrc->SrcRegister.File) {
+		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
-			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
-				ai = fsrc->SrcRegister.Index;
+			if (ai == -1 || ai == fsrc->Register.Index) {
+				ai = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
@@ -360,8 +360,8 @@ nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 		 */
 		case TGSI_FILE_CONSTANT:
 		case TGSI_FILE_IMMEDIATE:
-			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
-				ci = fsrc->SrcRegister.Index;
+			if (ci == -1 || ci == fsrc->Register.Index) {
+				ci = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);

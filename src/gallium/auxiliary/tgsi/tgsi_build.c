@@ -623,21 +623,21 @@ tgsi_build_full_instruction(
       size++;
 
       *src_register = tgsi_build_src_register(
-         reg->SrcRegister.File,
-         reg->SrcRegister.SwizzleX,
-         reg->SrcRegister.SwizzleY,
-         reg->SrcRegister.SwizzleZ,
-         reg->SrcRegister.SwizzleW,
-         reg->SrcRegister.Negate,
-         reg->SrcRegister.Absolute,
-         reg->SrcRegister.Indirect,
-         reg->SrcRegister.Dimension,
-         reg->SrcRegister.Index,
+         reg->Register.File,
+         reg->Register.SwizzleX,
+         reg->Register.SwizzleY,
+         reg->Register.SwizzleZ,
+         reg->Register.SwizzleW,
+         reg->Register.Negate,
+         reg->Register.Absolute,
+         reg->Register.Indirect,
+         reg->Register.Dimension,
+         reg->Register.Index,
          instruction,
          header );
       prev_token = (struct tgsi_token  *) src_register;
 
-      if( reg->SrcRegister.Indirect ) {
+      if( reg->Register.Indirect ) {
          struct  tgsi_src_register *ind;
 
          if( maxsize <= size )
@@ -646,24 +646,24 @@ tgsi_build_full_instruction(
          size++;
 
          *ind = tgsi_build_src_register(
-            reg->SrcRegisterInd.File,
-            reg->SrcRegisterInd.SwizzleX,
-            reg->SrcRegisterInd.SwizzleY,
-            reg->SrcRegisterInd.SwizzleZ,
-            reg->SrcRegisterInd.SwizzleW,
-            reg->SrcRegisterInd.Negate,
-            reg->SrcRegisterInd.Absolute,
-            reg->SrcRegisterInd.Indirect,
-            reg->SrcRegisterInd.Dimension,
-            reg->SrcRegisterInd.Index,
+            reg->Indirect.File,
+            reg->Indirect.SwizzleX,
+            reg->Indirect.SwizzleY,
+            reg->Indirect.SwizzleZ,
+            reg->Indirect.SwizzleW,
+            reg->Indirect.Negate,
+            reg->Indirect.Absolute,
+            reg->Indirect.Indirect,
+            reg->Indirect.Dimension,
+            reg->Indirect.Index,
             instruction,
             header );
       }
 
-      if( reg->SrcRegister.Dimension ) {
+      if( reg->Register.Dimension ) {
          struct  tgsi_dimension *dim;
 
-         assert( !reg->SrcRegisterDim.Dimension );
+         assert( !reg->Dimension.Dimension );
 
          if( maxsize <= size )
             return 0;
@@ -671,12 +671,12 @@ tgsi_build_full_instruction(
          size++;
 
          *dim = tgsi_build_dimension(
-            reg->SrcRegisterDim.Indirect,
-            reg->SrcRegisterDim.Index,
+            reg->Dimension.Indirect,
+            reg->Dimension.Index,
             instruction,
             header );
 
-         if( reg->SrcRegisterDim.Indirect ) {
+         if( reg->Dimension.Indirect ) {
             struct tgsi_src_register *ind;
 
             if( maxsize <= size )
@@ -685,16 +685,16 @@ tgsi_build_full_instruction(
             size++;
 
             *ind = tgsi_build_src_register(
-               reg->SrcRegisterDimInd.File,
-               reg->SrcRegisterDimInd.SwizzleX,
-               reg->SrcRegisterDimInd.SwizzleY,
-               reg->SrcRegisterDimInd.SwizzleZ,
-               reg->SrcRegisterDimInd.SwizzleW,
-               reg->SrcRegisterDimInd.Negate,
-               reg->SrcRegisterDimInd.Absolute,
-               reg->SrcRegisterDimInd.Indirect,
-               reg->SrcRegisterDimInd.Dimension,
-               reg->SrcRegisterDimInd.Index,
+               reg->DimIndirect.File,
+               reg->DimIndirect.SwizzleX,
+               reg->DimIndirect.SwizzleY,
+               reg->DimIndirect.SwizzleZ,
+               reg->DimIndirect.SwizzleW,
+               reg->DimIndirect.Negate,
+               reg->DimIndirect.Absolute,
+               reg->DimIndirect.Indirect,
+               reg->DimIndirect.Dimension,
+               reg->DimIndirect.Index,
                instruction,
                header );
          }
@@ -894,10 +894,10 @@ tgsi_default_full_src_register( void )
 {
    struct tgsi_full_src_register full_src_register;
 
-   full_src_register.SrcRegister = tgsi_default_src_register();
-   full_src_register.SrcRegisterInd = tgsi_default_src_register();
-   full_src_register.SrcRegisterDim = tgsi_default_dimension();
-   full_src_register.SrcRegisterDimInd = tgsi_default_src_register();
+   full_src_register.Register = tgsi_default_src_register();
+   full_src_register.Indirect = tgsi_default_src_register();
+   full_src_register.Dimension = tgsi_default_dimension();
+   full_src_register.DimIndirect = tgsi_default_src_register();
 
    return full_src_register;
 }

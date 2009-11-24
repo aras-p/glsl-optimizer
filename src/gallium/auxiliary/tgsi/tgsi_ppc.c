@@ -156,8 +156,8 @@ init_gen_context(struct gen_context *gen, struct ppc_function *func)
 static boolean
 is_ppc_vec_temporary(const struct tgsi_full_src_register *reg)
 {
-   return (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-           reg->SrcRegister.Index < MAX_PPC_TEMPS);
+   return (reg->Register.File == TGSI_FILE_TEMPORARY &&
+           reg->Register.Index < MAX_PPC_TEMPS);
 }
 
 
@@ -291,10 +291,10 @@ emit_fetch(struct gen_context *gen,
    case TGSI_SWIZZLE_Y:
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
+            int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
@@ -303,11 +303,11 @@ emit_fetch(struct gen_context *gen,
       case TGSI_FILE_TEMPORARY:
          if (is_ppc_vec_temporary(reg)) {
             /* use PPC vec register */
-            dst_vec = gen->temps_map[reg->SrcRegister.Index][swizzle];
+            dst_vec = gen->temps_map[reg->Register.Index][swizzle];
          }
          else {
             /* use memory-based temp register "file" */
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
+            int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->temps_reg, offset_reg);
@@ -315,7 +315,7 @@ emit_fetch(struct gen_context *gen,
          break;
       case TGSI_FILE_IMMEDIATE:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
+            int offset = (reg->Register.Index * 4 + swizzle) * 4;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             /* Load 4-byte word into vector register.
@@ -331,7 +331,7 @@ emit_fetch(struct gen_context *gen,
          break;
       case TGSI_FILE_CONSTANT:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
+            int offset = (reg->Register.Index * 4 + swizzle) * 4;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             /* Load 4-byte word into vector register.
@@ -404,9 +404,9 @@ equal_src_locs(const struct tgsi_full_src_register *a, uint chan_a,
 {
    int swz_a, swz_b;
    int sign_a, sign_b;
-   if (a->SrcRegister.File != b->SrcRegister.File)
+   if (a->Register.File != b->Register.File)
       return FALSE;
-   if (a->SrcRegister.Index != b->SrcRegister.Index)
+   if (a->Register.Index != b->Register.Index)
       return FALSE;
    swz_a = tgsi_util_get_full_src_register_swizzle(a, chan_a);
    swz_b = tgsi_util_get_full_src_register_swizzle(b, chan_b);
