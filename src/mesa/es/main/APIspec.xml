@@ -4041,7 +4041,7 @@
 	<function name="BindRenderbufferOES" template="BindRenderbuffer"/>
 	<function name="DeleteRenderbuffersOES" template="DeleteRenderbuffers"/>
 	<function name="GenRenderbuffersOES" template="GenRenderbuffers"/>
-	<function name="RenderbufferStorageOES" template="RenderbufferStorage"/>
+	<function name="RenderbufferStorageOES" external="true" template="RenderbufferStorage"/>
 	<function name="FramebufferRenderbufferOES" template="FramebufferRenderbuffer"/>
 	<function name="FramebufferTexture2DOES" template="FramebufferTexture2D"/>
 	<function name="CheckFramebufferStatusOES" template="CheckFramebufferStatus"/>

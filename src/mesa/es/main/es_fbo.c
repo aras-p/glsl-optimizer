@@ -10,6 +10,11 @@
 #include "GLES2/gl2ext.h"
 
 
+#ifndef GL_RGB5
+#define GL_RGB5					0x8050
+#endif
+
+
 extern void GL_APIENTRY _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
 
 extern void GL_APIENTRY _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height);
@@ -20,18 +25,13 @@ _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
                            GLsizei width, GLsizei height)
 {
    switch (internalFormat) {
-   case GL_RGBA4:
-   case GL_RGB5_A1:
    case GL_RGB565:
-      internalFormat = GL_RGBA;
-      break;
-   case GL_STENCIL_INDEX1_OES:
-   case GL_STENCIL_INDEX4_OES:
-   case GL_STENCIL_INDEX8:
-      internalFormat = GL_STENCIL_INDEX;
+      /* XXX this confuses GL_RENDERBUFFER_INTERNAL_FORMAT_OES */
+      /* choose a closest format */
+      internalFormat = GL_RGB5;
       break;
    default:
-      ; /* no op */
+      break;
    }
    _mesa_RenderbufferStorageEXT(target, internalFormat, width, height);
 }
