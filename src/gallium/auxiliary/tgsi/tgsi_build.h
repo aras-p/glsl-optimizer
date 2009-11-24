@@ -143,6 +143,7 @@ struct tgsi_instruction
 tgsi_build_instruction(
    unsigned opcode,
    unsigned saturate,
+   unsigned predicate,
    unsigned num_dst_regs,
    unsigned num_src_regs,
    struct tgsi_header *header );
@@ -156,6 +157,19 @@ tgsi_build_full_instruction(
    struct tgsi_token *tokens,
    struct tgsi_header *header,
    unsigned maxsize );
+
+struct tgsi_instruction_predicate
+tgsi_default_instruction_predicate(void);
+
+struct tgsi_instruction_predicate
+tgsi_build_instruction_predicate(int index,
+                                 unsigned negate,
+                                 unsigned swizzleX,
+                                 unsigned swizzleY,
+                                 unsigned swizzleZ,
+                                 unsigned swizzleW,
+                                 struct tgsi_instruction *instruction,
+                                 struct tgsi_header *header);
 
 struct tgsi_instruction_ext_label
 tgsi_default_instruction_ext_label( void );
@@ -186,24 +200,6 @@ tgsi_build_instruction_ext_texture(
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );
-
-struct tgsi_instruction_ext_predicate
-tgsi_default_instruction_ext_predicate(void);
-
-unsigned
-tgsi_compare_instruction_ext_predicate(struct tgsi_instruction_ext_predicate a,
-                                       struct tgsi_instruction_ext_predicate b);
-
-struct tgsi_instruction_ext_predicate
-tgsi_build_instruction_ext_predicate(unsigned index,
-                                     unsigned negate,
-                                     unsigned swizzleX,
-                                     unsigned swizzleY,
-                                     unsigned swizzleZ,
-                                     unsigned swizzleW,
-                                     struct tgsi_token *prev_token,
-                                     struct tgsi_instruction *instruction,
-                                     struct tgsi_header *header);
 
 struct tgsi_src_register
 tgsi_default_src_register( void );

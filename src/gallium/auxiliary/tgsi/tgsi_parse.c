@@ -175,6 +175,10 @@ tgsi_parse_token(
       copy_token(&inst->Instruction, &token);
       extended = inst->Instruction.Extended;
 
+      if (inst->Instruction.Predicate) {
+         next_token(ctx, &inst->InstructionPredicate);
+      }
+
       while( extended ) {
          struct tgsi_src_register_ext token;
 
@@ -187,10 +191,6 @@ tgsi_parse_token(
 
          case TGSI_INSTRUCTION_EXT_TYPE_TEXTURE:
             copy_token(&inst->InstructionExtTexture, &token);
-            break;
-
-         case TGSI_INSTRUCTION_EXT_TYPE_PREDICATE:
-            copy_token(&inst->InstructionExtPredicate, &token);
             break;
 
          default:
