@@ -30,13 +30,13 @@
  * @author Michal Krol <michal@vmware.com>
  */
 
-#ifndef ST_SHADER_SVGA_DUMP_H
-#define ST_SHADER_SVGA_DUMP_H
+#ifndef SVGA_SHADER_DUMP_H
+#define SVGA_SHADER_DUMP_H
 
 void
-sh_svga_dump(
+svga_shader_dump(
    const unsigned *assem,
    unsigned dwords,
    unsigned do_binary );
 
-#endif /* ST_SHADER_SVGA_DUMP_H */
+#endif /* SVGA_SHADER_DUMP_H */

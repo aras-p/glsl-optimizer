@@ -140,7 +140,7 @@ static struct sh_opcode_info opcode_info[] =
    { "breakp",       1, 1, SVGA3DOP_INVALID,     },
 };
 
-const struct sh_opcode_info *sh_svga_opcode_info( uint op )
+const struct sh_opcode_info *svga_opcode_info( uint op )
 {
    struct sh_opcode_info *info;
 
