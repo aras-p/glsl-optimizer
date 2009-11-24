@@ -23,16 +23,23 @@ LIBS = \
 DRIVER_DEFINES = \
 	-DHAVE_CONFIG_H
 
+TARGET_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
 
 #############################################
 
 
 
-all default: $(TARGET)
+all default: $(TARGET) $(TARGET_STAGING)
 
 $(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
 	$(TOP)/bin/mklib -noprefix -o $@ \
 	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_intel
+
+$(TOP)/$(LIB_DIR)/gallium:
+	mkdir -p $@
+
+$(TARGET_STAGING): $(TARGET) $(TOP)/$(LIB_DIR)/gallium
+	$(INSTALL) $(TARGET) $(TOP)/$(LIB_DIR)/gallium
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
