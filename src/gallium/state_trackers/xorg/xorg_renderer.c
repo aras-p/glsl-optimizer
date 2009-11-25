@@ -454,101 +454,6 @@ setup_fs_constant_buffer(struct xorg_renderer *r)
                           fs_consts, param_bytes);
 }
 
-static INLINE void shift_rectx(float coords[4],
-                               const float *bounds,
-                               const float shift)
-{
-   coords[0] += shift;
-   coords[2] -= shift;
-   if (bounds) {
-      coords[2] = MIN2(coords[2], bounds[2]);
-      /* bound x/y + width/height */
-      if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
-         coords[2] = (bounds[0] + bounds[2]) - coords[0];
-      }
-   }
-}
-
-static INLINE void shift_recty(float coords[4],
-                               const float *bounds,
-                               const float shift)
-{
-   coords[1] += shift;
-   coords[3] -= shift;
-   if (bounds) {
-      coords[3] = MIN2(coords[3], bounds[3]);
-      if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
-         coords[3] = (bounds[1] + bounds[3]) - coords[1];
-      }
-   }
-}
-
-static INLINE void bound_rect(float coords[4],
-                              const float bounds[4],
-                              float shift[4])
-{
-   /* if outside the bounds */
-   if (coords[0] > (bounds[0] + bounds[2]) ||
-       coords[1] > (bounds[1] + bounds[3]) ||
-       (coords[0] + coords[2]) < bounds[0] ||
-       (coords[1] + coords[3]) < bounds[1]) {
-      coords[0] = 0.f;
-      coords[1] = 0.f;
-      coords[2] = 0.f;
-      coords[3] = 0.f;
-      shift[0] = 0.f;
-      shift[1] = 0.f;
-      return;
-   }
-
-   /* bound x */
-   if (coords[0] < bounds[0]) {
-      shift[0] = bounds[0] - coords[0];
-      coords[2] -= shift[0];
-      coords[0] = bounds[0];
-   } else
-      shift[0] = 0.f;
-
-   /* bound y */
-   if (coords[1] < bounds[1]) {
-      shift[1] = bounds[1] - coords[1];
-      coords[3] -= shift[1];
-      coords[1] = bounds[1];
-   } else
-      shift[1] = 0.f;
-
-   shift[2] = bounds[2] - coords[2];
-   shift[3] = bounds[3] - coords[3];
-   /* bound width/height */
-   coords[2] = MIN2(coords[2], bounds[2]);
-   coords[3] = MIN2(coords[3], bounds[3]);
-
-   /* bound x/y + width/height */
-   if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
-      coords[2] = (bounds[0] + bounds[2]) - coords[0];
-   }
-   if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
-      coords[3] = (bounds[1] + bounds[3]) - coords[1];
-   }
-
-   /* if outside the bounds */
-   if ((coords[0] + coords[2]) < bounds[0] ||
-       (coords[1] + coords[3]) < bounds[1]) {
-      coords[0] = 0.f;
-      coords[1] = 0.f;
-      coords[2] = 0.f;
-      coords[3] = 0.f;
-      return;
-   }
-}
-
-static INLINE void sync_size(float *src_loc, float *dst_loc)
-{
-   src_loc[2] = MIN2(src_loc[2], dst_loc[2]);
-   src_loc[3] = MIN2(src_loc[3], dst_loc[3]);
-   dst_loc[2] = src_loc[2];
-   dst_loc[3] = src_loc[3];
-}
 
 static void renderer_copy_texture(struct xorg_renderer *r,
                                   struct pipe_texture *src,
@@ -740,36 +645,11 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    dst_loc[1] = dy;
    dst_loc[2] = width;
    dst_loc[3] = height;
-   dst_bounds[0] = 0.f;
-   dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width[0];
-   dst_bounds[3] = dst->height[0];
 
    src_loc[0] = sx;
    src_loc[1] = sy;
    src_loc[2] = width;
    src_loc[3] = height;
-   src_bounds[0] = 0.f;
-   src_bounds[1] = 0.f;
-   src_bounds[2] = src->width[0];
-   src_bounds[3] = src->height[0];
-
-   bound_rect(src_loc, src_bounds, src_shift);
-   bound_rect(dst_loc, dst_bounds, dst_shift);
-   shift[0] = src_shift[0] - dst_shift[0];
-   shift[1] = src_shift[1] - dst_shift[1];
-
-   if (shift[0] < 0)
-      shift_rectx(src_loc, src_bounds, -shift[0]);
-   else
-      shift_rectx(dst_loc, dst_bounds, shift[0]);
-
-   if (shift[1] < 0)
-      shift_recty(src_loc, src_bounds, -shift[1]);
-   else
-      shift_recty(dst_loc, dst_bounds, shift[1]);
-
-   sync_size(src_loc, dst_loc);
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
