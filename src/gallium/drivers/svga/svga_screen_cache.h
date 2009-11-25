@@ -58,10 +58,10 @@ struct svga_screen;
  */
 struct svga_host_surface_cache_key
 {
+   SVGA3dSurfaceFlags flags;
+   SVGA3dSurfaceFormat format;
    SVGA3dSize size;
-   uint32_t flags:8;
-   uint32_t format:8;
-   uint32_t numFaces:8;
+   uint32_t numFaces:24;
    uint32_t numMipLevels:7;
    uint32_t cachable:1;         /* False if this is a shared surface */
 };
