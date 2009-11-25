@@ -595,16 +595,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                       0));
 
-   /* save state (restored below) */
-   cso_save_blend(r->cso);
-   cso_save_samplers(r->cso);
-   cso_save_sampler_textures(r->cso);
-   cso_save_framebuffer(r->cso);
-   cso_save_fragment_shader(r->cso);
-   cso_save_vertex_shader(r->cso);
-
-   cso_save_viewport(r->cso);
-
 
    /* set misc state we care about */
    {
@@ -664,15 +654,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
 
       pipe_buffer_reference(&buf, NULL);
    }
-
-   /* restore state we changed */
-   cso_restore_blend(r->cso);
-   cso_restore_samplers(r->cso);
-   cso_restore_sampler_textures(r->cso);
-   cso_restore_framebuffer(r->cso);
-   cso_restore_vertex_shader(r->cso);
-   cso_restore_fragment_shader(r->cso);
-   cso_restore_viewport(r->cso);
 
    pipe_surface_reference(&dst_surf, NULL);
 }
