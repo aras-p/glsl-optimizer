@@ -111,6 +111,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_env_crossbar",	NULL},
   {"GL_ARB_texture_env_dot3",		NULL},
   {"GL_ARB_texture_mirrored_repeat",	NULL},
+  {"GL_ARB_texture_non_power_of_two",   NULL},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
@@ -327,7 +328,6 @@ static void r600InitGLExtensions(GLcontext *ctx)
     ctx->Extensions.ARB_shader_objects = GL_TRUE;
     ctx->Extensions.ARB_vertex_shader = GL_TRUE;
     ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
     ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
     ctx->Extensions.ATI_separate_stencil = GL_TRUE;
 

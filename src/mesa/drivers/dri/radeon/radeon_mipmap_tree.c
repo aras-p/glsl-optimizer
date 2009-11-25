@@ -68,6 +68,19 @@ static unsigned get_compressed_image_size(
 	return rowStride * ((height + blockHeight - 1) / blockHeight);
 }
 
+static int find_next_power_of_two(GLuint value)
+{
+	int i, tmp;
+
+	i = 0;
+	tmp = value - 1;
+	while (tmp) {
+		tmp >>= 1;
+		i++;
+	}
+	return (1 << i);
+}
+
 /**
  * Compute sizes and fill in offset and blit information for the given
  * image (determined by \p face and \p level).
@@ -80,25 +93,28 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 {
 	radeon_mipmap_level *lvl = &mt->levels[level];
 	uint32_t row_align;
+	GLuint height;
+
+	height = find_next_power_of_two(lvl->height);
 
 	/* Find image size in bytes */
 	if (_mesa_is_format_compressed(mt->mesaFormat)) {
 		lvl->rowstride = get_aligned_compressed_row_stride(mt->mesaFormat, lvl->width, rmesa->texture_compressed_row_align);
-		lvl->size = get_compressed_image_size(mt->mesaFormat, lvl->rowstride, lvl->height);
+		lvl->size = get_compressed_image_size(mt->mesaFormat, lvl->rowstride, height);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
 		row_align = rmesa->texture_rect_row_align - 1;
 		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
-		lvl->size = lvl->rowstride * lvl->height;
+		lvl->size = lvl->rowstride * height;
 	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
 		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
 		 * though the actual offset may be different (if texture is less than
 		 * 32 bytes width) to the untiled case */
 		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) * 2 + 31) & ~31;
-		lvl->size = lvl->rowstride * ((lvl->height + 1) / 2) * lvl->depth;
+		lvl->size = lvl->rowstride * ((height + 1) / 2) * lvl->depth;
 	} else {
 		row_align = rmesa->texture_row_align - 1;
 		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
-		lvl->size = lvl->rowstride * lvl->height * lvl->depth;
+		lvl->size = lvl->rowstride * height * lvl->depth;
 	}
 	assert(lvl->size > 0);
 
@@ -110,7 +126,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	if (RADEON_DEBUG & RADEON_TEXTURE)
 	  fprintf(stderr,
 		  "level %d, face %d: rs:%d %dx%d at %d\n",
-		  level, face, lvl->rowstride, lvl->width, lvl->height, lvl->faces[face].offset);
+		  level, face, lvl->rowstride, lvl->width, height, lvl->faces[face].offset);
 }
 
 static GLuint minify(GLuint size, GLuint levels)
