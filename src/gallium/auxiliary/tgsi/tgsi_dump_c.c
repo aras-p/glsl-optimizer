@@ -113,13 +113,6 @@ static const char *TGSI_SATS[] =
    "SAT_MINUS_PLUS_ONE"
 };
 
-static const char *TGSI_INSTRUCTION_EXTS[] =
-{
-   "",
-   "INSTRUCTION_EXT_TYPE_LABEL",
-   "INSTRUCTION_EXT_TYPE_TEXTURE"
-};
-
 static const char *TGSI_SWIZZLES[] =
 {
    "SWIZZLE_X",
@@ -141,12 +134,6 @@ static const char *TGSI_TEXTURES[] =
    "TEXTURE_SHADOWRECT"
 };
 
-static const char *TGSI_SRC_REGISTER_EXTS[] =
-{
-   "",
-   "SRC_REGISTER_EXT_TYPE_MOD"
-};
-
 static const char *TGSI_WRITEMASKS[] =
 {
    "0",
@@ -165,23 +152,6 @@ static const char *TGSI_WRITEMASKS[] =
    "WRITEMASK_XZW",
    "WRITEMASK_YZW",
    "WRITEMASK_XYZW"
-};
-
-static const char *TGSI_DST_REGISTER_EXTS[] =
-{
-   "",
-   "DST_REGISTER_EXT_TYPE_MODULATE"
-};
-
-static const char *TGSI_MODULATES[] =
-{
-   "MODULATE_1X",
-   "MODULATE_2X",
-   "MODULATE_4X",
-   "MODULATE_8X",
-   "MODULATE_HALF",
-   "MODULATE_QUARTER",
-   "MODULATE_EIGHTH"
 };
 
 static void
@@ -215,6 +185,14 @@ dump_declaration_verbose(
    if( deflt || fd->Declaration.Semantic != decl->Declaration.Semantic ) {
       TXT( "\nSemantic   : " );
       UID( decl->Declaration.Semantic );
+   }
+   if (deflt || fd->Declaration.Centroid != decl->Declaration.Centroid) {
+      TXT("\nCentroid   : ");
+      UID(decl->Declaration.Centroid);
+   }
+   if (deflt || fd->Declaration.Invariant != decl->Declaration.Invariant) {
+      TXT("\nInvariant  : ");
+      UID(decl->Declaration.Invariant);
    }
    if( ignored ) {
       TXT( "\nPadding    : " );
@@ -292,44 +270,44 @@ dump_instruction_verbose(
       TXT( "\nNumSrcRegs : " );
       UID( inst->Instruction.NumSrcRegs );
    }
+   if (deflt || fi->Instruction.Predicate != inst->Instruction.Predicate) {
+      TXT("\nPredicate  : ");
+      UID(inst->Instruction.Predicate);
+   }
+   if (deflt || fi->Instruction.Label != inst->Instruction.Label) {
+      TXT("\nLabel      : ");
+      UID(inst->Instruction.Label);
+   }
+   if (deflt || fi->Instruction.Texture != inst->Instruction.Texture) {
+      TXT("\nTexture    : ");
+      UID(inst->Instruction.Texture);
+   }
    if( ignored ) {
       TXT( "\nPadding    : " );
       UIX( inst->Instruction.Padding );
    }
 
-   if( deflt || tgsi_compare_instruction_ext_label( inst->InstructionExtLabel, fi->InstructionExtLabel ) ) {
+   if (deflt || inst->Instruction.Label) {
       EOL();
-      TXT( "\nType    : " );
-      ENM( inst->InstructionExtLabel.Type, TGSI_INSTRUCTION_EXTS );
-      if( deflt || fi->InstructionExtLabel.Label != inst->InstructionExtLabel.Label ) {
+      if (deflt || fi->Label.Label != inst->Label.Label) {
          TXT( "\nLabel   : " );
-         UID( inst->InstructionExtLabel.Label );
+         UID(inst->Label.Label);
       }
       if( ignored ) {
          TXT( "\nPadding : " );
-         UIX( inst->InstructionExtLabel.Padding );
-         if( deflt || fi->InstructionExtLabel.Extended != inst->InstructionExtLabel.Extended ) {
-            TXT( "\nExtended: " );
-            UID( inst->InstructionExtLabel.Extended );
-         }
+         UIX(inst->Label.Padding);
       }
    }
 
-   if( deflt || tgsi_compare_instruction_ext_texture( inst->InstructionExtTexture, fi->InstructionExtTexture ) ) {
+   if (deflt || inst->Instruction.Texture) {
       EOL();
-      TXT( "\nType    : " );
-      ENM( inst->InstructionExtTexture.Type, TGSI_INSTRUCTION_EXTS );
-      if( deflt || fi->InstructionExtTexture.Texture != inst->InstructionExtTexture.Texture ) {
+      if (deflt || fi->Texture.Texture != inst->Texture.Texture) {
          TXT( "\nTexture : " );
-         ENM( inst->InstructionExtTexture.Texture, TGSI_TEXTURES );
+         ENM(inst->Texture.Texture, TGSI_TEXTURES);
       }
       if( ignored ) {
          TXT( "\nPadding : " );
-         UIX( inst->InstructionExtTexture.Padding );
-         if( deflt || fi->InstructionExtTexture.Extended != inst->InstructionExtTexture.Extended ) {
-            TXT( "\nExtended: " );
-            UID( inst->InstructionExtTexture.Extended );
-         }
+         UIX(inst->Texture.Padding);
       }
    }
 
@@ -361,28 +339,6 @@ dump_instruction_verbose(
       if( ignored ) {
          TXT( "\nPadding  : " );
          UIX( dst->Register.Padding );
-         if( deflt || fd->Register.Extended != dst->Register.Extended ) {
-            TXT( "\nExtended : " );
-            UID( dst->Register.Extended );
-         }
-      }
-
-      if( deflt || tgsi_compare_dst_register_ext_modulate( dst->RegisterExtModulate, fd->RegisterExtModulate ) ) {
-         EOL();
-         TXT( "\nType    : " );
-         ENM( dst->RegisterExtModulate.Type, TGSI_DST_REGISTER_EXTS );
-         if( deflt || fd->RegisterExtModulate.Modulate != dst->RegisterExtModulate.Modulate ) {
-            TXT( "\nModulate: " );
-            ENM( dst->RegisterExtModulate.Modulate, TGSI_MODULATES );
-         }
-         if( ignored ) {
-            TXT( "\nPadding : " );
-            UIX( dst->RegisterExtModulate.Padding );
-            if( deflt || fd->RegisterExtModulate.Extended != dst->RegisterExtModulate.Extended ) {
-               TXT( "\nExtended: " );
-               UID( dst->RegisterExtModulate.Extended );
-            }
-         }
       }
    }
 
@@ -409,6 +365,10 @@ dump_instruction_verbose(
          TXT( "\nSwizzleW : " );
          ENM( src->Register.SwizzleW, TGSI_SWIZZLES );
       }
+      if (deflt || fs->Register.Absolute != src->Register.Absolute) {
+         TXT("\nAbsolute : ");
+         UID(src->Register.Absolute);
+      }
       if( deflt || fs->Register.Negate != src->Register.Negate ) {
          TXT( "\nNegate   : " );
          UID( src->Register.Negate );
@@ -426,46 +386,6 @@ dump_instruction_verbose(
       if( deflt || fs->Register.Index != src->Register.Index ) {
          TXT( "\nIndex    : " );
          SID( src->Register.Index );
-      }
-      if( ignored ) {
-         if( deflt || fs->Register.Extended != src->Register.Extended ) {
-            TXT( "\nExtended : " );
-            UID( src->Register.Extended );
-         }
-      }
-
-      if( deflt || tgsi_compare_src_register_ext_mod( src->RegisterExtMod, fs->RegisterExtMod ) ) {
-         EOL();
-         TXT( "\nType     : " );
-         ENM( src->RegisterExtMod.Type, TGSI_SRC_REGISTER_EXTS );
-         if( deflt || fs->RegisterExtMod.Complement != src->RegisterExtMod.Complement ) {
-            TXT( "\nComplement: " );
-            UID( src->RegisterExtMod.Complement );
-         }
-         if( deflt || fs->RegisterExtMod.Bias != src->RegisterExtMod.Bias ) {
-            TXT( "\nBias     : " );
-            UID( src->RegisterExtMod.Bias );
-         }
-         if( deflt || fs->RegisterExtMod.Scale2X != src->RegisterExtMod.Scale2X ) {
-            TXT( "\nScale2X   : " );
-            UID( src->RegisterExtMod.Scale2X );
-         }
-         if( deflt || fs->RegisterExtMod.Absolute != src->RegisterExtMod.Absolute ) {
-            TXT( "\nAbsolute  : " );
-            UID( src->RegisterExtMod.Absolute );
-         }
-         if( deflt || fs->RegisterExtMod.Negate != src->RegisterExtMod.Negate ) {
-            TXT( "\nNegate   : " );
-            UID( src->RegisterExtMod.Negate );
-         }
-         if( ignored ) {
-            TXT( "\nPadding   : " );
-            UIX( src->RegisterExtMod.Padding );
-            if( deflt || fs->RegisterExtMod.Extended != src->RegisterExtMod.Extended ) {
-               TXT( "\nExtended  : " );
-               UID( src->RegisterExtMod.Extended );
-            }
-         }
       }
    }
 }
@@ -510,10 +430,6 @@ tgsi_dump_c(
       if( ignored ) {
          TXT( "\nSize       : " );
          UID( parse.FullToken.Token.NrTokens );
-         if( deflt || parse.FullToken.Token.Extended ) {
-            TXT( "\nExtended   : " );
-            UID( parse.FullToken.Token.Extended );
-         }
       }
 
       switch( parse.FullToken.Token.Type ) {
