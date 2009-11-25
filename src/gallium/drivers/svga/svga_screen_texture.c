@@ -397,9 +397,6 @@ svga_texture_blanket(struct pipe_screen * screen,
 
    tex->base = *base;
    
-   /* We don't own this storage, so don't try to cache it.
-    */
-   tex->key.cachable = 0;
 
    if (sbuf->key.format == 1)
       tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
@@ -410,6 +407,11 @@ svga_texture_blanket(struct pipe_screen * screen,
    tex->base.screen = screen;
 
    SVGA_DBG(DEBUG_DMA, "blanket sid %p\n", sbuf->handle);
+
+   /* We don't own this storage, so don't try to cache it.
+    */
+   assert(sbuf->key.cachable == 0);
+   tex->key.cachable = 0;
    sws->surface_reference(sws, &tex->handle, sbuf->handle);
 
    return &tex->base;
@@ -549,13 +551,17 @@ svga_texture_view_surface(struct pipe_context *pipe,
       key->numFaces = 1;
    }
 
-   if(key->format == SVGA3D_FORMAT_INVALID)
+   if(key->format == SVGA3D_FORMAT_INVALID) {
+      key->cachable = 0;
       return NULL;
+   }
 
    SVGA_DBG(DEBUG_DMA, "surface_create for texture view\n", handle);
    handle = svga_screen_surface_create(ss, key);
-   if (!handle)
+   if (!handle) {
+      key->cachable = 0;
       return NULL;
+   }
 
    SVGA_DBG(DEBUG_DMA, " --> got sid %p (texture view)\n", handle);
 
@@ -656,11 +662,11 @@ svga_get_tex_surface(struct pipe_screen *screen,
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface view: no %p, level %u, face %u, z %u, %p\n",
                pt, level, face, zslice, s);
 
+      memset(&s->key, 0, sizeof s->key);
       sws->surface_reference(sws, &s->handle, tex->handle);
       s->real_face = face;
       s->real_level = level;
       s->real_zslice = zslice;
-      memset(&s->key, 0, sizeof s->key);
    }
 
    return &s->base;
@@ -674,6 +680,7 @@ svga_tex_surface_destroy(struct pipe_surface *surf)
    struct svga_screen *ss = svga_screen(surf->texture->screen);
 
    SVGA_DBG(DEBUG_DMA, "unref sid %p (tex surface)\n", s->handle);
+   assert(s->key.cachable == 0);
    svga_screen_surface_destroy(ss, &s->key, &s->handle);
    pipe_texture_reference(&surf->texture, NULL);
    FREE(surf);
@@ -968,6 +975,7 @@ svga_get_tex_sampler_view(struct pipe_context *pipe, struct pipe_texture *pt,
                pt->height[0],
                pt->depth[0],
                pt->last_level);
+      sv->key.cachable = 0;
       sws->surface_reference(sws, &sv->handle, tex->handle);
       return sv;
    }
@@ -990,6 +998,7 @@ svga_get_tex_sampler_view(struct pipe_context *pipe, struct pipe_texture *pt,
 
    if (!sv->handle) {
       assert(0);
+      sv->key.cachable = 0;
       sws->surface_reference(sws, &sv->handle, tex->handle);
       return sv;
    }
@@ -1072,6 +1081,8 @@ svga_screen_texture_get_winsys_surface(struct pipe_texture *texture)
    struct svga_winsys_screen *sws = svga_winsys_screen(texture->screen);
    struct svga_winsys_surface *vsurf = NULL;
 
+   assert(svga_texture(texture)->key.cachable == 0);
+   svga_texture(texture)->key.cachable = 0;
    sws->surface_reference(sws, &vsurf, svga_texture(texture)->handle);
    return vsurf;
 }

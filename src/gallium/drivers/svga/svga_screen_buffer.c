@@ -796,6 +796,8 @@ svga_screen_buffer_get_winsys_surface(struct pipe_buffer *buffer)
    struct svga_winsys_screen *sws = svga_winsys_screen(buffer->screen);
    struct svga_winsys_surface *vsurf = NULL;
 
+   assert(svga_buffer(buffer)->key.cachable == 0);
+   svga_buffer(buffer)->key.cachable = 0;
    sws->surface_reference(sws, &vsurf, svga_buffer(buffer)->handle);
    return vsurf;
 }
