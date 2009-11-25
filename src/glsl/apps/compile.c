@@ -33,6 +33,13 @@
 #include "../cl/sl_cl_parse.h"
 
 
+static void
+usage(void)
+{
+   printf("Usage:\n");
+   printf("  compile fragment|vertex <source> <output>\n");
+}
+
 int
 main(int argc,
      char *argv[])
@@ -55,6 +62,7 @@ main(int argc,
    unsigned int shader_type;
 
    if (argc != 4) {
+      usage();
       return 1;
    }
 
@@ -63,11 +71,14 @@ main(int argc,
    } else if (!strcmp(argv[1], "vertex")) {
       shader_type = 2;
    } else {
+      usage();
       return 1;
    }
 
    in = fopen(argv[2], "rb");
    if (!in) {
+      printf("Could not open `%s' for read.\n", argv[2]);
+      usage();
       return 1;
    }
 
@@ -78,6 +89,8 @@ main(int argc,
    out = fopen(argv[3], "w");
    if (!out) {
       fclose(in);
+      printf("Could not open `%s' for write.\n", argv[3]);
+      usage();
       return 1;
    }
 
@@ -87,7 +100,8 @@ main(int argc,
 
       fclose(out);
       fclose(in);
-      return 1;
+      printf("Out of memory.\n");
+      return 0;
    }
 
    if (fread(inbuf, 1, size, in) != size) {
@@ -96,7 +110,8 @@ main(int argc,
       free(inbuf);
       fclose(out);
       fclose(in);
-      return 1;
+      printf("Could not read from `%s'.\n", argv[2]);
+      return 0;
    }
    inbuf[size] = '\0';
 
@@ -110,16 +125,18 @@ main(int argc,
 
       free(inbuf);
       fclose(out);
-      return 1;
+      printf("Could not create parse context.\n");
+      return 0;
    }
 
    if (sl_pp_tokenise(context, inbuf, &options, &tokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
+      printf("Error: %s.\n", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
       free(inbuf);
       fclose(out);
-      return 1;
+      return 0;
    }
 
    free(inbuf);
@@ -127,19 +144,21 @@ main(int argc,
    if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
+      printf("Error: %s\n", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
       free(tokens);
       fclose(out);
-      return -1;
+      return 0;
    }
 
    if (sl_pp_process(context, &tokens[tokens_eaten], &outtokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
+      printf("Error: %s\n", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
       free(tokens);
       fclose(out);
-      return -1;
+      return 0;
    }
 
    free(tokens);
@@ -194,12 +213,12 @@ main(int argc,
       free(outbytes);
    } else {
       fprintf(out, "$SYNTAXERROR: `%s'\n", errmsg);
-      return -1;
+
+      printf("Error: %s\n", errmsg);
    }
 
    sl_pp_context_destroy(context);
    free(outtokens);
    fclose(out);
-
    return 0;
 }
