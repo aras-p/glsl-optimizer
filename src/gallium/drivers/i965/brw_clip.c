@@ -81,10 +81,6 @@ compile_clip_prog( struct brw_context *brw,
    else
        delta = REG_SIZE;
 
-   /* XXX: c.nr_attrs is very redundant:
-    */
-   c.nr_attrs = c.key.nr_attrs;
-
    c.offset_hpos = delta + c.key.output_hpos * ATTR_SIZE;
 
    if (c.key.output_color0)
@@ -103,9 +99,9 @@ compile_clip_prog( struct brw_context *brw,
       c.offset_edgeflag = delta + c.key.output_edgeflag * ATTR_SIZE;
    
    if (BRW_IS_IGDNG(brw))
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
+       c.nr_regs = (c.key.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+       c.nr_regs = (c.key.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 

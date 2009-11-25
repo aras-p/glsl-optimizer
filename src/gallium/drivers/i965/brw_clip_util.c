@@ -140,7 +140,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       
    /* Iterate over each attribute (could be done in pairs?)
     */
-   for (i = 0; i < c->nr_attrs; i++) {
+   for (i = 0; i < c->key.nr_attrs; i++) {
       GLuint delta = i*16 + 32;
 
       if (c->chipset.is_igdng)

@@ -66,12 +66,12 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       i += c->nr_regs;
    }
 
-   if (c->nr_attrs & 1) {
+   if (c->key.nr_attrs & 1) {
       for (j = 0; j < 3; j++) {
-	 GLuint delta = c->nr_attrs*16 + 32;
+	 GLuint delta = c->key.nr_attrs*16 + 32;
 
          if (c->chipset.is_igdng)
-             delta = c->nr_attrs * 16 + 32 * 3;
+             delta = c->key.nr_attrs * 16 + 32 * 3;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
       }

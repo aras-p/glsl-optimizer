@@ -115,9 +115,9 @@ struct brw_clip_compile {
       struct brw_reg ff_sync;
    } reg;
 
-   /* 3 different ways of expressing vertex size:
+   /* 3 different ways of expressing vertex size, including
+    * key.nr_attrs.
     */
-   GLuint nr_attrs;
    GLuint nr_regs;
    GLuint nr_bytes;
 
