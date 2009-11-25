@@ -421,18 +421,6 @@ bind_samplers(struct exa_context *exa, int op,
                             exa->bound_textures);
 }
 
-static void
-setup_vs_constant_buffer(struct exa_context *exa,
-                         int width, int height)
-{
-   const int param_bytes = 8 * sizeof(float);
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-   renderer_set_constants(exa->renderer, PIPE_SHADER_VERTEX,
-                          vs_consts, param_bytes);
-}
 
 
 static void
@@ -449,10 +437,6 @@ setup_fs_constant_buffer(struct exa_context *exa)
 static void
 setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
-   int width = pDst->tex->width[0];
-   int height = pDst->tex->height[0];
-
-   setup_vs_constant_buffer(exa, width, height);
    setup_fs_constant_buffer(exa);
 }
 
@@ -503,8 +487,10 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                                   struct exa_pixmap_priv *pMask,
                                   struct exa_pixmap_priv *pDst)
 {
-   renderer_bind_framebuffer(exa->renderer, pDst);
-   renderer_bind_viewport(exa->renderer, pDst);
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pDst);
+
+   renderer_bind_destination(exa->renderer, dst_surf);
+
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture, pDstPicture);
    renderer_bind_rasterizer(exa->renderer);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture, pDstPicture, pSrc, pMask);
@@ -556,6 +542,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
                               struct exa_pixmap_priv *pixmap,
                               Pixel fg)
 {
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pixmap);
    unsigned vs_traits, fs_traits;
    struct xorg_shader shader;
 
@@ -573,8 +560,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    vs_traits = VS_SOLID_FILL;
    fs_traits = FS_SOLID_FILL;
 
-   renderer_bind_framebuffer(exa->renderer, pixmap);
-   renderer_bind_viewport(exa->renderer, pixmap);
+   renderer_bind_destination(exa->renderer, dst_surf);
    renderer_bind_rasterizer(exa->renderer);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
    cso_set_samplers(exa->renderer->cso, 0, NULL);

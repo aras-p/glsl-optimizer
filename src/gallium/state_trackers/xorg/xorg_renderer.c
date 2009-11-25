@@ -79,6 +79,7 @@ renderer_draw(struct xorg_renderer *r)
                               r->attrs_per_vertex); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
+      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    }
 }
 
@@ -322,15 +323,28 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
 
 
 
-static void
-set_viewport(struct xorg_renderer *r, int width, int height,
-             enum AxisOrientation orientation)
+/* Set up framebuffer, viewport and vertex shader constant buffer
+ * state for a particular destinaton surface.  In all our rendering,
+ * these concepts are linked.
+ */
+void renderer_bind_destination(struct xorg_renderer *r,
+                               struct pipe_surface *surface )
 {
+
+   struct pipe_framebuffer_state fb;
    struct pipe_viewport_state viewport;
-   float y_scale = (orientation == Y0_BOTTOM) ? -2.f : 2.f;
+   int width = surface->width;
+   int height = surface->height;
+
+   memset(&fb, 0, sizeof fb);
+   fb.width  = width;
+   fb.height = height;
+   fb.nr_cbufs = 1;
+   fb.cbufs[0] = surface;
+   fb.zsbuf = 0;
 
    viewport.scale[0] =  width / 2.f;
-   viewport.scale[1] =  height / y_scale;
+   viewport.scale[1] =  height / 2.f;
    viewport.scale[2] =  1.0;
    viewport.scale[3] =  1.0;
    viewport.translate[0] = width / 2.f;
@@ -338,9 +352,24 @@ set_viewport(struct xorg_renderer *r, int width, int height,
    viewport.translate[2] = 0.0;
    viewport.translate[3] = 0.0;
 
+   if (r->fb_width != width ||
+       r->fb_height != height) 
+   {
+      float vs_consts[8] = {
+         2.f/width, 2.f/height, 1, 1,
+         -1, -1, 0, 0
+      };
+
+      r->fb_width = width;
+      r->fb_height = height;
+
+      renderer_set_constants(r, PIPE_SHADER_VERTEX,
+                             vs_consts, sizeof vs_consts);
+   }
+
+   cso_set_framebuffer(r->cso, &fb);
    cso_set_viewport(r->cso, &viewport);
 }
-
 
 
 struct xorg_renderer * renderer_create(struct pipe_context *pipe)
@@ -379,41 +408,9 @@ void renderer_destroy(struct xorg_renderer *r)
    }
 }
 
-void renderer_bind_framebuffer(struct xorg_renderer *r,
-                               struct exa_pixmap_priv *priv)
-{
-   unsigned i;
-   struct pipe_framebuffer_state state;
-   struct pipe_surface *surface = xorg_gpu_surface(r->pipe->screen, priv);
-   memset(&state, 0, sizeof(struct pipe_framebuffer_state));
 
-   state.width  = priv->tex->width[0];
-   state.height = priv->tex->height[0];
 
-   state.nr_cbufs = 1;
-   state.cbufs[0] = surface;
-   for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-      state.cbufs[i] = 0;
 
-   /* currently we don't use depth/stencil */
-   state.zsbuf = 0;
-
-   cso_set_framebuffer(r->cso, &state);
-
-   /* we do fire and forget for the framebuffer, this is the forget part */
-   pipe_surface_reference(&surface, NULL);
-}
-
-void renderer_bind_viewport(struct xorg_renderer *r,
-                            struct exa_pixmap_priv *dst)
-{
-   int width = dst->tex->width[0];
-   int height = dst->tex->height[0];
-
-   /*debug_printf("Bind viewport (%d, %d)\n", width, height);*/
-
-   set_viewport(r, width, height, Y0_TOP);
-}
 
 void renderer_bind_rasterizer(struct xorg_renderer *r)
 {
@@ -444,19 +441,6 @@ void renderer_set_constants(struct xorg_renderer *r,
                         0, param_bytes, params);
    }
    r->pipe->set_constant_buffer(r->pipe, shader_type, 0, cbuf);
-}
-
-static void
-setup_vs_constant_buffer(struct xorg_renderer *r,
-                         int width, int height)
-{
-   const int param_bytes = 8 * sizeof(float);
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-   renderer_set_constants(r, PIPE_SHADER_VERTEX,
-                          vs_consts, param_bytes);
 }
 
 static void
@@ -580,7 +564,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    struct pipe_surface *dst_surf = screen->get_tex_surface(
       screen, dst, 0, 0, 0,
       PIPE_BUFFER_USAGE_GPU_WRITE);
-   struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    struct xorg_shader shader;
 
@@ -650,7 +633,7 @@ static void renderer_copy_texture(struct xorg_renderer *r,
       cso_single_sampler_done(r->cso);
    }
 
-   set_viewport(r, dst_surf->width, dst_surf->height, Y0_TOP);
+   renderer_bind_destination(r, dst_surf);
 
    /* texture */
    cso_set_sampler_textures(r->cso, 1, &src);
@@ -664,19 +647,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    cso_set_vertex_shader_handle(r->cso, shader.vs);
    cso_set_fragment_shader_handle(r->cso, shader.fs);
 
-   /* drawing dest */
-   memset(&fb, 0, sizeof(fb));
-   fb.width = dst_surf->width;
-   fb.height = dst_surf->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst_surf;
-   {
-      int i;
-      for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-         fb.cbufs[i] = 0;
-   }
-   cso_set_framebuffer(r->cso, &fb);
-   setup_vs_constant_buffer(r, fb.width, fb.height);
    setup_fs_constant_buffer(r);
 
    /* draw quad */

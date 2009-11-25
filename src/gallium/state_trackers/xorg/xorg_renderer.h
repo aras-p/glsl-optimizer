@@ -21,6 +21,8 @@ struct xorg_renderer {
    struct cso_context *cso;
    struct xorg_shaders *shaders;
 
+   int fb_width;
+   int fb_height;
    struct pipe_constant_buffer vs_const_buffer;
    struct pipe_constant_buffer fs_const_buffer;
 
@@ -34,6 +36,9 @@ struct xorg_renderer {
 
 struct xorg_renderer *renderer_create(struct pipe_context *pipe);
 void renderer_destroy(struct xorg_renderer *renderer);
+
+void renderer_bind_destination(struct xorg_renderer *r,
+                               struct pipe_surface *surface );
 
 void renderer_bind_framebuffer(struct xorg_renderer *r,
                                struct exa_pixmap_priv *priv);

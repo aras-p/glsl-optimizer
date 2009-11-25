@@ -441,7 +441,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
     
-    if (exa->pipe->surface_copy) {
+    if (0 && exa->pipe->surface_copy) {
        exa->copy.src_surface =
           exa->scrn->get_tex_surface( exa->scrn,
                                       exa->copy.src->tex,
