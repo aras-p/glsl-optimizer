@@ -335,7 +335,9 @@ if env['platform'] != 'winddk':
 		# Add the dir containing the generated header (somewhere inside  the
 		# build dir) to the include path  
 		env.Append(CPPPATH = [matypes[0].dir])
-	
+
+	SConscript('shader/slang/library/SConscript')
+
 	#
 	# Libraries
 	# 

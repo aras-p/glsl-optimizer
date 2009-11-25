@@ -29,7 +29,8 @@ env.Program(
     source = ['process.c'],
 )
 
-env.Program(
+glsl_compile = env.Program(
     target = 'compile',
     source = ['compile.c'],
 )
+Export('glsl_compile')

@@ -1,9 +1,9 @@
 Import('*')
 
-SConscript('gallium/SConscript')
 SConscript('glsl/pp/SConscript')
 SConscript('glsl/cl/SConscript')
 SConscript('glsl/apps/SConscript')
+SConscript('gallium/SConscript')
 
 if 'mesa' in env['statetrackers']:
 	SConscript('mesa/SConscript')
