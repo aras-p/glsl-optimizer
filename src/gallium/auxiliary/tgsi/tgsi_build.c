@@ -531,9 +531,7 @@ tgsi_build_full_instruction(
                                           header);
    }
 
-   if( tgsi_compare_instruction_label(
-         full_inst->Label,
-         tgsi_default_instruction_label() ) ) {
+   if (full_inst->Instruction.Label) {
       struct tgsi_instruction_label *instruction_label;
 
       if( maxsize <= size )
@@ -550,9 +548,7 @@ tgsi_build_full_instruction(
       prev_token = (struct tgsi_token  *) instruction_label;
    }
 
-   if( tgsi_compare_instruction_texture(
-         full_inst->Texture,
-         tgsi_default_instruction_texture() ) ) {
+   if (full_inst->Instruction.Texture) {
       struct tgsi_instruction_texture *instruction_texture;
 
       if( maxsize <= size )
@@ -745,13 +741,6 @@ tgsi_build_instruction_predicate(int index,
    return instruction_predicate;
 }
 
-/** test for inequality of 32-bit values pointed to by a and b */
-static INLINE boolean
-compare32(const void *a, const void *b)
-{
-   return *((uint32_t *) a) != *((uint32_t *) b);
-}
-
 struct tgsi_instruction_label
 tgsi_default_instruction_label( void )
 {
@@ -761,15 +750,6 @@ tgsi_default_instruction_label( void )
    instruction_label.Padding = 0;
 
    return instruction_label;
-}
-
-unsigned
-tgsi_compare_instruction_label(
-   struct tgsi_instruction_label a,
-   struct tgsi_instruction_label b )
-{
-   a.Padding = b.Padding = 0;
-   return compare32(&a, &b);
 }
 
 struct tgsi_instruction_label
@@ -799,15 +779,6 @@ tgsi_default_instruction_texture( void )
    instruction_texture.Padding = 0;
 
    return instruction_texture;
-}
-
-unsigned
-tgsi_compare_instruction_texture(
-   struct tgsi_instruction_texture a,
-   struct tgsi_instruction_texture b )
-{
-   a.Padding = b.Padding = 0;
-   return compare32(&a, &b);
 }
 
 struct tgsi_instruction_texture

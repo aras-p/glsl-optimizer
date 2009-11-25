@@ -174,11 +174,6 @@ tgsi_build_instruction_predicate(int index,
 struct tgsi_instruction_label
 tgsi_default_instruction_label( void );
 
-unsigned
-tgsi_compare_instruction_label(
-   struct tgsi_instruction_label a,
-   struct tgsi_instruction_label b );
-
 struct tgsi_instruction_label
 tgsi_build_instruction_label(
    unsigned label,
@@ -188,11 +183,6 @@ tgsi_build_instruction_label(
 
 struct tgsi_instruction_texture
 tgsi_default_instruction_texture( void );
-
-unsigned
-tgsi_compare_instruction_texture(
-   struct tgsi_instruction_texture a,
-   struct tgsi_instruction_texture b );
 
 struct tgsi_instruction_texture
 tgsi_build_instruction_texture(
