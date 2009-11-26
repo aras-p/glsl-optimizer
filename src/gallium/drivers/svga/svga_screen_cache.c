@@ -41,7 +41,7 @@
 static INLINE unsigned
 svga_screen_cache_bucket(const struct svga_host_surface_cache_key *key)
 {
-   return util_hash_crc32( key, sizeof key ) % SVGA_HOST_SURFACE_CACHE_BUCKETS;
+   return util_hash_crc32( key, sizeof *key ) % SVGA_HOST_SURFACE_CACHE_BUCKETS;
 }
 
 
@@ -95,8 +95,8 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
    pipe_mutex_unlock(cache->mutex);
    
    if (SVGA_DEBUG & DEBUG_DMA)
-      debug_printf("%s: cache %s after %u tries\n", __FUNCTION__, 
-                   handle ? "hit" : "miss", tries);
+      debug_printf("%s: cache %s after %u tries (bucket %d)\n", __FUNCTION__, 
+                   handle ? "hit" : "miss", tries, bucket);
    
    return handle;
 }
