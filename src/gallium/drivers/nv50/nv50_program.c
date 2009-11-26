@@ -1440,19 +1440,25 @@ emit_ddx(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 static void
 emit_ddy(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
+	struct nv50_reg *r = src;
 	struct nv50_program_exec *e = exec(pc);
 
 	assert(src->type == P_TEMP);
 
-	if (!(src->mod & NV50_MOD_NEG)) /* ! double negation */
-		emit_neg(pc, src, src);
+	if (!(src->mod & NV50_MOD_NEG)) { /* ! double negation */
+		r = alloc_temp(pc, NULL);
+		emit_neg(pc, r, src);
+	}
 
 	e->inst[0] = 0xc0150000;
 	e->inst[1] = 0x8a400000;
 	set_long(pc, e);
 	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
-	set_src_2(pc, src, e);
+	set_src_0(pc, r, e);
+	set_src_2(pc, r, e);
+
+	if (r != src)
+		free_temp(pc, r);
 
 	emit(pc, e);
 }
