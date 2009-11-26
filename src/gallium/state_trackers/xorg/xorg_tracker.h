@@ -63,6 +63,8 @@ typedef struct
     ScrnInfoPtr pScrn_2;
 } EntRec, *EntPtr;
 
+#define XORG_NR_FENCES 3
+
 typedef struct _modesettingRec
 {
     /* drm */
@@ -86,6 +88,8 @@ typedef struct _modesettingRec
     unsigned int SaveGeneration;
 
     void (*blockHandler)(int, pointer, pointer, pointer);
+    struct pipe_fence_handle *fence[XORG_NR_FENCES];
+
     CreateScreenResourcesProcPtr createScreenResources;
 
     /* for frontbuffer backing store */

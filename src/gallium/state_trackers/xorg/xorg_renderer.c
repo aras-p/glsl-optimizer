@@ -13,11 +13,6 @@
 
 #include <math.h>
 
-enum AxisOrientation {
-   Y0_BOTTOM,
-   Y0_TOP
-};
-
 #define floatsEqual(x, y) (fabs(x - y) <= 0.00001f * MIN2(fabs(x), fabs(y)))
 #define floatIsZero(x) (floatsEqual((x) + 1, 1))
 
