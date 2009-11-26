@@ -154,6 +154,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 #if 0
    /* For simulating less capable machines */
    util_cpu_caps.has_sse3 = 0;
+   util_cpu_caps.has_ssse3 = 0;
    util_cpu_caps.has_sse4_1 = 0;
 #endif
 
