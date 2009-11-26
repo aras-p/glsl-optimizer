@@ -511,6 +511,23 @@ util_bitcount(unsigned n)
 
 
 /**
+ * Reverse byte order of a 32 bit word.
+ */
+static INLINE uint32_t
+util_bswap32(uint32_t n)
+{
+#if defined(PIPE_CC_GCC)
+   return __builtin_bswap32(n);
+#else
+   return (n >> 24) |
+          ((n >> 8) & 0x0000ff00) |
+          ((n << 8) & 0x00ff0000) |
+          (n << 24);
+#endif
+}
+
+
+/**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
  */
