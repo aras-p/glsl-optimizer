@@ -1,5 +1,4 @@
 /*
- * Copyright 2009 Corbin Simpson <MostAwesomeDude@gmail.com>
  * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -21,34 +20,45 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_VS_H
-#define R300_VS_H
+#ifndef R300_SHADER_SEMANTICS_H
+#define R300_SHADER_SEMANTICS_H
 
-#include "pipe/p_state.h"
-#include "tgsi/tgsi_scan.h"
-#include "radeon_code.h"
+#define ATTR_UNUSED             (-1)
+#define ATTR_COLOR_COUNT        2
+#define ATTR_GENERIC_COUNT      16
 
-#include "r300_shader_semantics.h"
-
-struct r300_context;
-
-struct r300_vertex_shader {
-    /* Parent class */
-    struct pipe_shader_state state;
-
-    struct tgsi_shader_info info;
-    struct r300_shader_semantics outputs;
-    int output_stream_loc_swtcl[16];
-    uint hwfmt[4];
-
-    /* Has this shader been translated yet? */
-    boolean translated;
-
-    /* Machine code (if translated) */
-    struct r300_vertex_program_code code;
+/* This structure contains information about what attributes are written by VS
+ * or read by FS. (but not both) It's much easier to work with than
+ * tgsi_shader_info.
+ *
+ * The variables contain indices to tgsi_shader_info semantics and those
+ * indices are nothing else than input/output register numbers. */
+struct r300_shader_semantics {
+    int pos;
+    int psize;
+    int color[ATTR_COLOR_COUNT];
+    int bcolor[ATTR_COLOR_COUNT];
+    int generic[ATTR_GENERIC_COUNT];
+    int fog;
 };
 
-void r300_translate_vertex_shader(struct r300_context* r300,
-                                  struct r300_vertex_shader* vs);
+static INLINE void r300_shader_semantics_reset(
+    struct r300_shader_semantics* info)
+{
+    int i;
 
-#endif /* R300_VS_H */
+    info->pos = ATTR_UNUSED;
+    info->psize = ATTR_UNUSED;
+    info->fog = ATTR_UNUSED;
+
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        info->color[i] = ATTR_UNUSED;
+        info->bcolor[i] = ATTR_UNUSED;
+    }
+
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        info->generic[i] = ATTR_UNUSED;
+    }
+}
+
+#endif
