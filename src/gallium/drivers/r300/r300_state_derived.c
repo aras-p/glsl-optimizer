@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +36,25 @@
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
+#define ATTR_UNUSED             (-1)
+#define ATTR_COLOR_COUNT        2
+#define ATTR_GENERIC_COUNT      16
+
+/* This structure contains information about what attributes are written by VS
+ * or read by FS. (but not both) It's much easier to work with than
+ * tgsi_shader_info.
+ *
+ * The variables basically means used/unused and may optionally contain
+ * indices to tgsi_shader_info semantics which we need to know for Draw. */
+struct r300_shader_info {
+    int pos;
+    int psize;
+    int color[ATTR_COLOR_COUNT];
+    int bcolor[ATTR_COLOR_COUNT];
+    int generic[ATTR_GENERIC_COUNT];
+    int fog;
+};
+
 struct r300_shader_key {
     struct r300_vertex_shader* vs;
     struct r300_fragment_shader* fs;
@@ -61,51 +81,184 @@ int r300_shader_key_compare(void* key1, void* key2) {
         (shader_key1->fs == shader_key2->fs);
 }
 
-/* Set up the vs_output_tab and routes. */
-static void r300_vs_output_tab_routes(struct r300_context* r300,
-                                      int* vs_output_tab)
+static void r300_draw_emit_attrib(struct r300_context* r300,
+                                  enum attrib_emit emit,
+                                  enum interp_mode interp,
+                                  int index)
 {
-    struct vertex_info* vinfo = &r300->vertex_info->vinfo;
-    boolean pos = FALSE, psize = FALSE, fog = FALSE;
-    int i, texs = 0, cols = 0;
-    struct tgsi_shader_info* info = &r300->fs->info;
+    struct tgsi_shader_info* info = &r300->vs->info;
+    int output;
 
-    /* XXX One day we should figure out how to handle a different number of
-     * VS outputs and FS inputs, as well as a different number of vertex streams
-     * and VS inputs. It's definitely one of the sources of hardlocks. */
+    if (r300->draw) {
+        output = draw_find_vs_output(r300->draw,
+                                     info->output_semantic_name[index],
+                                     info->output_semantic_index[index]);
+        draw_emit_vertex_attr(&r300->vertex_info->vinfo, emit, interp, output);
+    }
+}
 
-    for (i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
+static void r300_shader_info_reset(struct r300_shader_info* info)
+{
+    int i;
+
+    info->pos = ATTR_UNUSED;
+    info->psize = ATTR_UNUSED;
+    info->fog = ATTR_UNUSED;
+
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        info->color[i] = ATTR_UNUSED;
+        info->bcolor[i] = ATTR_UNUSED;
+    }
+
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        info->generic[i] = ATTR_UNUSED;
+    }
+}
+
+/* Convert info about VS output semantics to r300_shader_info. */
+static void r300_shader_read_vs_outputs(struct tgsi_shader_info* info,
+                                        struct r300_shader_info* vs_outputs)
+{
+    int i;
+    unsigned index;
+
+    r300_shader_info_reset(vs_outputs);
+
+    for (i = 0; i < info->num_outputs; i++) {
+        index = info->output_semantic_index[i];
+
+        switch (info->output_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
-                pos = TRUE;
-                vs_output_tab[i] = 0;
+                assert(index == 0);
+                vs_outputs->pos = i;
                 break;
-            case TGSI_SEMANTIC_COLOR:
-                vs_output_tab[i] = 2 + cols;
-                cols++;
-                break;
+
             case TGSI_SEMANTIC_PSIZE:
-                assert(psize == FALSE);
-                psize = TRUE;
-                vs_output_tab[i] = 15;
+                assert(index == 0);
+                vs_outputs->psize = i;
                 break;
-            case TGSI_SEMANTIC_FOG:
-                assert(fog == FALSE);
-                fog = TRUE;
-                /* Fall through */
+
+            case TGSI_SEMANTIC_COLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                vs_outputs->color[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_BCOLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                vs_outputs->bcolor[index] = i;
+                break;
+
             case TGSI_SEMANTIC_GENERIC:
-                vs_output_tab[i] = 6 + texs;
-                texs++;
+                assert(index <= ATTR_GENERIC_COUNT);
+                vs_outputs->generic[index] = i;
                 break;
+
+            case TGSI_SEMANTIC_FOG:
+                assert(index == 0);
+                vs_outputs->fog = i;
+                break;
+
             default:
-                debug_printf("r300: Unknown vertex input %d\n",
-                    info->input_semantic_name[i]);
-                break;
+                assert(0);
+        }
+    }
+}
+
+/* Set VS output stream locations for SWTCL. */
+static void r300_stream_locations_swtcl(struct r300_shader_info* vs_outputs,
+                                        int* vs_output_tab)
+{
+    int i, tabi = 0, gen_count;
+
+    /* XXX Check whether the numbers (0, 1, 2+i, etc.) are correct.
+     * These should go to VAP_PROG_STREAM_CNTL/DST_VEC_LOC. */
+
+    /* Position. */
+    vs_output_tab[tabi++] = 0;
+
+    /* Point size. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        vs_output_tab[tabi++] = 1;
+    }
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            vs_output_tab[tabi++] = 2 + i;
         }
     }
 
+    /* Back-face colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
+            vs_output_tab[tabi++] = 4 + i;
+        }
+    }
+
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
+            assert(tabi < 16);
+            vs_output_tab[tabi++] = 6 + gen_count;
+            gen_count++;
+        }
+    }
+
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        assert(tabi < 16);
+        vs_output_tab[tabi++] = 6 + gen_count;
+        gen_count++;
+    }
+
     /* XXX magic */
-    assert(texs <= 8);
+    assert(gen_count <= 8);
+
+    for (; tabi < 16;) {
+        vs_output_tab[tabi++] = -1;
+    }
+}
+
+/* Convert info about FS input semantics to r300_shader_info. */
+static void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
+                                       struct r300_shader_info* fs_inputs)
+{
+    int i;
+    unsigned index;
+
+    r300_shader_info_reset(fs_inputs);
+
+    for (i = 0; i < info->num_inputs; i++) {
+        index = info->input_semantic_index[i];
+
+        switch (info->input_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                fs_inputs->color[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_GENERIC:
+                assert(index <= ATTR_GENERIC_COUNT);
+                fs_inputs->generic[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_FOG:
+                assert(index == 0);
+                fs_inputs->fog = i;
+                break;
+
+            default:
+                assert(0);
+        }
+    }
+}
+
+static void r300_update_vap_output_fmt(struct r300_context* r300,
+                                       struct r300_shader_info* vs_outputs)
+{
+    struct vertex_info* vinfo = &r300->vertex_info->vinfo;
+    int i, gen_count;
 
     /* Do the actual vertex_info setup.
      *
@@ -117,68 +270,58 @@ static void r300_vs_output_tab_routes(struct r300_context* r300,
 
     vinfo->hwfmt[0] = 0x5555; /* XXX this is classic Mesa bonghits */
 
-    /* We need to add vertex position attribute only for SW TCL case,
-     * for HW TCL case it could be generated by vertex shader */
-    if (!pos) {
-        /* Make room for the position attribute
-         * at the beginning of the vs_output_tab. */
-        for (i = 15; i > 0; i--) {
-            vs_output_tab[i] = vs_output_tab[i-1];
-        }
-        vs_output_tab[0] = 0;
-    }
-
     /* Position. */
-    if (r300->draw) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+    if (vs_outputs->pos != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->pos);
+        vinfo->hwfmt[1] |= R300_INPUT_CNTL_POS;
+        vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+    } else {
+        assert(0);
     }
-    vinfo->hwfmt[1] |= R300_INPUT_CNTL_POS;
-    vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
     /* Point size. */
-    if (psize) {
-        if (r300->draw) {
-            draw_emit_vertex_attr(vinfo, EMIT_1F_PSIZE, INTERP_POS,
-                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_PSIZE, 0));
-        }
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_1F_PSIZE, INTERP_POS,
+                              vs_outputs->psize);
         vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
     }
 
     /* Colors. */
-    for (i = 0; i < cols; i++) {
-        if (r300->draw) {
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR,
-                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_COLOR, i));
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_LINEAR,
+                                  vs_outputs->color[i]);
+            vinfo->hwfmt[1] |= R300_INPUT_CNTL_COLOR;
+            vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
         }
-        vinfo->hwfmt[1] |= R300_INPUT_CNTL_COLOR;
-        vinfo->hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
     }
 
-    /* Init i right here, increment it if fog is enabled.
-     * This gets around a double-increment problem. */
-    i = 0;
+    /* XXX Back-face colors. */
 
-    /* Fog. This is a special-cased texcoord. */
-    if (fog) {
-        i++;
-        if (r300->draw) {
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                                  vs_outputs->generic[i]);
+            vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
+            vinfo->hwfmt[3] |= (4 << (3 * gen_count));
+            gen_count++;
         }
-        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
-        vinfo->hwfmt[3] |= (4 << (3 * i));
     }
 
-    /* Texcoords. */
-    for (; i < texs; i++) {
-        if (r300->draw) {
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-                draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
-        }
-        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
-        vinfo->hwfmt[3] |= (4 << (3 * i));
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->fog);
+        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
+        vinfo->hwfmt[3] |= (4 << (3 * gen_count));
+        gen_count++;
     }
+
+    /* XXX magic */
+    assert(gen_count <= 8);
 
     draw_compute_vertex_size(vinfo);
 }
@@ -279,109 +422,191 @@ static void r300_swtcl_vertex_psc(struct r300_context* r300,
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
 }
 
-/* Set up the RS block. This is the part of the chipset that actually does
- * the rasterization of vertices into fragments. This is also the part of the
- * chipset that locks up if any part of it is even slightly wrong. */
-static void r300_update_rs_block(struct r300_context* r300)
+static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_0001)
+{
+    rs->ip[id] |= R300_RS_COL_PTR(ptr);
+    if (swizzle_0001) {
+        rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+    } else {
+        rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+    }
+    rs->inst[id] |= R300_RS_INST_COL_ID(id);
+}
+
+static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
+                    R300_RS_INST_COL_ADDR(fp_offset);
+}
+
+static void r300_rs_tex(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_X001)
+{
+    if (swizzle_X001) {
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+                      R300_RS_SEL_S(R300_RS_SEL_C0) |
+                      R300_RS_SEL_T(R300_RS_SEL_K0) |
+                      R300_RS_SEL_R(R300_RS_SEL_K0) |
+                      R300_RS_SEL_Q(R300_RS_SEL_K1);
+    } else {
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+                      R300_RS_SEL_S(R300_RS_SEL_C0) |
+                      R300_RS_SEL_T(R300_RS_SEL_C1) |
+                      R300_RS_SEL_R(R300_RS_SEL_C2) |
+                      R300_RS_SEL_Q(R300_RS_SEL_C3);
+    }
+    rs->inst[id] |= R300_RS_INST_TEX_ID(id);
+}
+
+static void r300_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R300_RS_INST_TEX_CN_WRITE |
+                    R300_RS_INST_TEX_ADDR(fp_offset);
+}
+
+static void r500_rs_col(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_0001)
+{
+    rs->ip[id] |= R500_RS_COL_PTR(ptr);
+    if (swizzle_0001) {
+        rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+    } else {
+        rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+    }
+    rs->inst[id] |= R500_RS_INST_COL_ID(id);
+}
+
+static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
+                    R500_RS_INST_COL_ADDR(fp_offset);
+}
+
+static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_X001)
+{
+    int rs_tex_comp = ptr*4;
+
+    if (swizzle_X001) {
+        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+                      R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
+    } else {
+        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+                      R500_RS_SEL_T(rs_tex_comp + 1) |
+                      R500_RS_SEL_R(rs_tex_comp + 2) |
+                      R500_RS_SEL_Q(rs_tex_comp + 3);
+    }
+    rs->inst[id] |= R500_RS_INST_TEX_ID(id);
+}
+
+static void r500_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R500_RS_INST_TEX_CN_WRITE |
+                    R500_RS_INST_TEX_ADDR(fp_offset);
+}
+
+/* Set up the RS block.
+ *
+ * This is the part of the chipset that actually does the rasterization
+ * of vertices into fragments. This is also the part of the chipset that
+ * locks up if any part of it is even slightly wrong. */
+static void r300_update_rs_block(struct r300_context* r300,
+                                 struct r300_shader_info* vs_outputs,
+                                 struct r300_shader_info* fs_inputs)
 {
     struct r300_rs_block* rs = r300->rs_block;
-    struct tgsi_shader_info* info = &r300->fs->info;
-    int col_count = 0, fp_offset = 0, i, tex_count = 0;
-    int rs_tex_comp = 0;
+    int i, col_count = 0, tex_count = 0, fp_offset = 0;
+    void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
+    void (*rX00_rs_tex)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
-        for (i = 0; i < info->num_inputs; i++) {
-            switch (info->input_semantic_name[i]) {
-                case TGSI_SEMANTIC_COLOR:
-                    rs->ip[col_count] |=
-                        R500_RS_COL_PTR(col_count) |
-                        R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
-                    col_count++;
-                    break;
-                case TGSI_SEMANTIC_GENERIC:
-                    rs->ip[tex_count] |=
-                        R500_RS_SEL_S(rs_tex_comp) |
-                        R500_RS_SEL_T(rs_tex_comp + 1) |
-                        R500_RS_SEL_R(rs_tex_comp + 2) |
-                        R500_RS_SEL_Q(rs_tex_comp + 3);
-                    tex_count++;
-                    rs_tex_comp += 4;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        /* Rasterize at least one color, or bad things happen. */
-        if ((col_count == 0) && (tex_count == 0)) {
-            rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
-            col_count++;
-        }
-
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R500_RS_INST_COL_ID(i) |
-                R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_offset);
-            fp_offset++;
-        }
-
-        for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R500_RS_INST_TEX_ID(i) |
-                R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_offset);
-            fp_offset++;
-        }
-
+        rX00_rs_col       = r500_rs_col;
+        rX00_rs_col_write = r500_rs_col_write;
+        rX00_rs_tex       = r500_rs_tex;
+        rX00_rs_tex_write = r500_rs_tex_write;
     } else {
-        for (i = 0; i < info->num_inputs; i++) {
-            switch (info->input_semantic_name[i]) {
-                case TGSI_SEMANTIC_COLOR:
-                    rs->ip[col_count] |=
-                        R300_RS_COL_PTR(col_count) |
-                        R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
-                    col_count++;
-                    break;
-                case TGSI_SEMANTIC_GENERIC:
-                    rs->ip[tex_count] |=
-                        R300_RS_TEX_PTR(rs_tex_comp) |
-                        R300_RS_SEL_S(R300_RS_SEL_C0) |
-                        R300_RS_SEL_T(R300_RS_SEL_C1) |
-                        R300_RS_SEL_R(R300_RS_SEL_C2) |
-                        R300_RS_SEL_Q(R300_RS_SEL_C3);
-                    tex_count++;
-                    rs_tex_comp+=4;
-                    break;
-                default:
-                    break;
+        rX00_rs_col       = r300_rs_col;
+        rX00_rs_col_write = r300_rs_col_write;
+        rX00_rs_tex       = r300_rs_tex;
+        rX00_rs_tex_write = r300_rs_tex_write;
+    }
+
+    /* Rasterize colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            /* Always rasterize if it's written by the VS,
+             * otherwise it locks up. */
+            rX00_rs_col(rs, col_count, i, FALSE);
+
+            /* Write it to the FS input register if it's used by the FS. */
+            if (fs_inputs->color[i] != ATTR_UNUSED) {
+                rX00_rs_col_write(rs, col_count, fp_offset);
+                fp_offset++;
+            }
+            col_count++;
+        } else {
+            /* Skip the FS input register, leave it uninitialized. */
+            /* If we try to set it to (0,0,0,1), it will lock up. */
+            if (fs_inputs->color[i] != ATTR_UNUSED) {
+                fp_offset++;
             }
         }
+    }
 
-        /* Rasterize at least one color, or bad things happen. */
-        if (col_count == 0) {
-            rs->ip[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
-            col_count++;
+    /* Rasterize texture coordinates. */
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            /* Always rasterize if it's written by the VS,
+             * otherwise it locks up. */
+            rX00_rs_tex(rs, tex_count, tex_count, FALSE);
+
+            /* Write it to the FS input register if it's used by the FS. */
+            if (fs_inputs->generic[i] != ATTR_UNUSED) {
+                rX00_rs_tex_write(rs, tex_count, fp_offset);
+                fp_offset++;
+            }
+            tex_count++;
+        } else {
+            /* Skip the FS input register, leave it uninitialized. */
+            /* If we try to set it to (0,0,0,1), it will lock up. */
+            if (fs_inputs->generic[i] != ATTR_UNUSED) {
+                fp_offset++;
+            }
         }
+    }
 
-        if (tex_count == 0) {
-            rs->ip[0] |=
-                R300_RS_SEL_S(R300_RS_SEL_K0) |
-                R300_RS_SEL_T(R300_RS_SEL_K0) |
-                R300_RS_SEL_R(R300_RS_SEL_K0) |
-                R300_RS_SEL_Q(R300_RS_SEL_K1);
-        }
+    /* Rasterize fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        /* Always rasterize if it's written by the VS,
+         * otherwise it locks up. */
+        rX00_rs_tex(rs, tex_count, tex_count, TRUE);
 
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R300_RS_INST_COL_ID(i) |
-                R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_offset);
+        /* Write it to the FS input register if it's used by the FS. */
+        if (fs_inputs->fog != ATTR_UNUSED) {
+            rX00_rs_tex_write(rs, tex_count, fp_offset);
             fp_offset++;
         }
-
-        for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R300_RS_INST_TEX_ID(i) |
-                R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_offset);
+        tex_count++;
+    } else {
+        /* Skip the FS input register, leave it uninitialized. */
+        /* If we try to set it to (0,0,0,1), it will lock up. */
+        if (fs_inputs->fog != ATTR_UNUSED) {
             fp_offset++;
         }
     }
 
-    rs->count = (rs_tex_comp) | (col_count << R300_IC_COUNT_SHIFT) |
+    /* Rasterize at least one color, or bad things happen. */
+    if (col_count == 0 && tex_count == 0) {
+        rX00_rs_col(rs, 0, 0, TRUE);
+        col_count++;
+    }
+
+    rs->count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
     rs->inst_count = MAX3(col_count - 1, tex_count - 1, 0);
@@ -391,9 +616,8 @@ static void r300_update_rs_block(struct r300_context* r300)
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_shader_info vs_outputs, fs_inputs;
     int vs_output_tab[16];
-    int i;
-
 
     /*
     struct r300_shader_key* key;
@@ -425,20 +649,18 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     memset(r300->rs_block, 0, sizeof(struct r300_rs_block));
     memset(r300->vertex_info, 0, sizeof(struct r300_vertex_info));
 
-    for (i = 0; i < 16; i++) {
-        vs_output_tab[i] = -1;
-    }
+    r300_shader_read_vs_outputs(&r300->vs->info, &vs_outputs);
+    r300_shader_read_fs_inputs(&r300->fs->info, &fs_inputs);
 
-    /* Update states */
-    r300_vs_output_tab_routes(r300, vs_output_tab);
+    r300_update_vap_output_fmt(r300, &vs_outputs);
+    r300_update_rs_block(r300, &vs_outputs, &fs_inputs);
 
     if (r300screen->caps->has_tcl) {
         r300_vertex_psc(r300);
     } else {
+        r300_stream_locations_swtcl(&vs_outputs, vs_output_tab);
         r300_swtcl_vertex_psc(r300, vs_output_tab);
     }
-
-    r300_update_rs_block(r300);
 
     r300->dirty_state |= R300_NEW_RS_BLOCK;
 }
