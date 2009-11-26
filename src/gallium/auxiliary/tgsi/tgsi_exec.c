@@ -501,7 +501,7 @@ micro_ddy(
    dst->f[0] =
    dst->f[1] =
    dst->f[2] =
-   dst->f[3] = src->f[TILE_TOP_LEFT] - src->f[TILE_BOTTOM_LEFT];
+   dst->f[3] = src->f[TILE_BOTTOM_LEFT] - src->f[TILE_TOP_LEFT];
 }
 
 static void
