@@ -149,20 +149,6 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_
     }
 }
 
-static void
-xorg_exa_common_done(struct exa_context *exa)
-{
-   renderer_draw_flush(exa->renderer);
-
-   exa->copy.src = NULL;
-   exa->copy.dst = NULL;
-   pipe_surface_reference(&exa->copy.src_surface, NULL);
-   pipe_surface_reference(&exa->copy.dst_surface, NULL);
-   exa->transform.has_src = FALSE;
-   exa->transform.has_mask = FALSE;
-   exa->has_solid_color = FALSE;
-   exa->num_bound_samplers = 0;
-}
 
 /*
  * Static exported EXA functions
@@ -179,6 +165,11 @@ ExaMarkSync(ScreenPtr pScreen)
 {
    return 1;
 }
+
+
+/***********************************************************************
+ * Screen upload/download
+ */
 
 static Bool
 ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
@@ -329,29 +320,9 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     }
 }
 
-static void
-ExaDone(PixmapPtr pPixmap)
-{
-    ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
-    struct exa_context *exa = ms->exa;
-
-    if (!priv)
-	return;
-
-    xorg_exa_common_done(exa);
-}
-
-static void
-ExaDoneComposite(PixmapPtr pPixmap)
-{
-   ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
-   modesettingPtr ms = modesettingPTR(pScrn);
-   struct exa_context *exa = ms->exa;
-
-   xorg_exa_common_done(exa);
-}
+/***********************************************************************
+ * Solid Fills
+ */
 
 static Bool
 ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
@@ -399,6 +370,25 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
 
     xorg_solid(exa, priv, x0, y0, x1, y1) ;
 }
+
+
+static void
+ExaDoneSolid(PixmapPtr pPixmap)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    modesettingPtr ms = modesettingPTR(pScrn);
+    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
+    struct exa_context *exa = ms->exa;
+
+    if (!priv)
+	return;
+   
+    xorg_composite_done(exa);
+}
+
+/***********************************************************************
+ * Copy Blits
+ */
 
 static Bool
 ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
@@ -492,6 +482,26 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
    }
 }
 
+static void
+ExaDoneCopy(PixmapPtr pPixmap)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
+    modesettingPtr ms = modesettingPTR(pScrn);
+    struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
+    struct exa_context *exa = ms->exa;
+
+    if (!priv)
+	return;
+
+   renderer_draw_flush(exa->renderer);
+
+   exa->copy.src = NULL;
+   exa->copy.dst = NULL;
+   pipe_surface_reference(&exa->copy.src_surface, NULL);
+   pipe_surface_reference(&exa->copy.dst_surface, NULL);
+}
+
+
 
 static Bool
 picture_check_formats(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture)
@@ -527,6 +537,30 @@ picture_check_formats(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture)
    }
    return FALSE;
 }
+
+/***********************************************************************
+ * Composite entrypoints
+ */
+
+static Bool
+ExaCheckComposite(int op,
+		  PicturePtr pSrcPicture, PicturePtr pMaskPicture,
+		  PicturePtr pDstPicture)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
+   modesettingPtr ms = modesettingPTR(pScrn);
+   struct exa_context *exa = ms->exa;
+   boolean accelerated = xorg_composite_accelerated(op,
+                                                    pSrcPicture,
+                                                    pMaskPicture,
+                                                    pDstPicture);
+#if DEBUG_PRINT
+   debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
+                op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
+#endif
+   return exa->accel && accelerated;
+}
+
 
 static Bool
 ExaPrepareComposite(int op, PicturePtr pSrcPicture,
@@ -624,24 +658,22 @@ ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
                   dstX, dstY, width, height);
 }
 
-static Bool
-ExaCheckComposite(int op,
-		  PicturePtr pSrcPicture, PicturePtr pMaskPicture,
-		  PicturePtr pDstPicture)
+
+
+static void
+ExaDoneComposite(PixmapPtr pPixmap)
 {
-   ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
-   boolean accelerated = xorg_composite_accelerated(op,
-                                                    pSrcPicture,
-                                                    pMaskPicture,
-                                                    pDstPicture);
-#if DEBUG_PRINT
-   debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
-                op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
-#endif
-   return exa->accel && accelerated;
+
+   xorg_composite_done(exa);
 }
+
+
+/***********************************************************************
+ * Pixmaps
+ */
 
 static void *
 ExaCreatePixmap(ScreenPtr pScreen, int size, int align)
@@ -935,10 +967,10 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    pExa->MarkSync           = ExaMarkSync;
    pExa->PrepareSolid       = ExaPrepareSolid;
    pExa->Solid              = ExaSolid;
-   pExa->DoneSolid          = ExaDone;
+   pExa->DoneSolid          = ExaDoneSolid;
    pExa->PrepareCopy        = ExaPrepareCopy;
    pExa->Copy               = ExaCopy;
-   pExa->DoneCopy           = ExaDone;
+   pExa->DoneCopy           = ExaDoneCopy;
    pExa->CheckComposite     = ExaCheckComposite;
    pExa->PrepareComposite   = ExaPrepareComposite;
    pExa->Composite          = ExaComposite;

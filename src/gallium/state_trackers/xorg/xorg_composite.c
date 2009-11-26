@@ -582,3 +582,13 @@ void xorg_solid(struct exa_context *exa,
                   x0, y0, x1, y1, exa->solid_color);
 }
 
+void
+xorg_composite_done(struct exa_context *exa)
+{
+   renderer_draw_flush(exa->renderer);
+
+   exa->transform.has_src = FALSE;
+   exa->transform.has_mask = FALSE;
+   exa->has_solid_color = FALSE;
+   exa->num_bound_samplers = 0;
+}
