@@ -871,15 +871,15 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	    dst_surf = exa->scrn->get_tex_surface(
 		exa->scrn, texture, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
 	    src_surf = xorg_gpu_surface(exa->pipe->screen, priv);
-        if (exa->pipe->surface_copy) {
-            exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
-                        0, 0, min(width, texture->width[0]),
-                        min(height, texture->height[0]));
-        } else {
-            util_surface_copy(exa->pipe, FALSE, dst_surf, 0, 0, src_surf,
-                        0, 0, min(width, texture->width[0]),
-                        min(height, texture->height[0]));
-        }
+            if (exa->pipe->surface_copy) {
+               exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
+                                       0, 0, min(width, texture->width[0]),
+                                       min(height, texture->height[0]));
+            } else {
+               util_surface_copy(exa->pipe, FALSE, dst_surf, 0, 0, src_surf,
+                                 0, 0, min(width, texture->width[0]),
+                                 min(height, texture->height[0]));
+            }
 	    exa->scrn->tex_surface_destroy(dst_surf);
 	    exa->scrn->tex_surface_destroy(src_surf);
 	}
