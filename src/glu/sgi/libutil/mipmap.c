@@ -4108,6 +4108,7 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	  glPixelStorei(GL_UNPACK_SKIP_PIXELS, psm.unpack_skip_pixels);
 	  glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 	  glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
+	  free(srcImage);
 	  return GLU_OUT_OF_MEMORY;
 	}
 	/* level userLevel+1 is in srcImage; level userLevel already saved */
