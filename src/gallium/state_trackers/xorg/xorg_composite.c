@@ -423,22 +423,7 @@ bind_samplers(struct exa_context *exa, int op,
 
 
 
-static void
-setup_fs_constant_buffer(struct exa_context *exa)
-{
-   const int param_bytes = 4 * sizeof(float);
-   const float fs_consts[8] = {
-      0, 0, 0, 1,
-   };
-   renderer_set_constants(exa->renderer, PIPE_SHADER_FRAGMENT,
-                          fs_consts, param_bytes);
-}
 
-static void
-setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
-{
-   setup_fs_constant_buffer(exa);
-}
 
 static INLINE boolean matrix_from_pict_transform(PictTransform *trans, float *matrix)
 {
@@ -495,7 +480,6 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
    bind_shaders(exa, op, pSrcPicture, pMaskPicture, pDstPicture, pSrc, pMask);
    bind_samplers(exa, op, pSrcPicture, pMaskPicture,
                  pDstPicture, pSrc, pMask, pDst);
-   setup_constant_buffers(exa, pDst);
 
    setup_transforms(exa, pSrcPicture, pMaskPicture);
 
@@ -563,7 +547,6 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
    cso_set_samplers(exa->renderer->cso, 0, NULL);
    cso_set_sampler_textures(exa->renderer->cso, 0, NULL);
-   setup_constant_buffers(exa, pixmap);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
    cso_set_vertex_shader_handle(exa->renderer->cso, shader.vs);

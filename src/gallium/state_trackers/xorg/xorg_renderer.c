@@ -441,17 +441,6 @@ void renderer_set_constants(struct xorg_renderer *r,
    r->pipe->set_constant_buffer(r->pipe, shader_type, 0, cbuf);
 }
 
-static void
-setup_fs_constant_buffer(struct xorg_renderer *r)
-{
-   const int param_bytes = 4 * sizeof(float);
-   const float fs_consts[8] = {
-      0, 0, 0, 1,
-   };
-   renderer_set_constants(r, PIPE_SHADER_FRAGMENT,
-                          fs_consts, param_bytes);
-}
-
 
 static void renderer_copy_texture(struct xorg_renderer *r,
                                   struct pipe_texture *src,
@@ -537,8 +526,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
                              FS_COMPOSITE);
    cso_set_vertex_shader_handle(r->cso, shader.vs);
    cso_set_fragment_shader_handle(r->cso, shader.fs);
-
-   setup_fs_constant_buffer(r);
 
    /* draw quad */
    buf = setup_vertex_data_tex(r,
