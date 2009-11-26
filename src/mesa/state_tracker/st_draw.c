@@ -573,7 +573,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->vp->state;
+   vs = &ctx->st->vp_varient->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {

@@ -49,6 +49,36 @@
 #include "st_mesa_to_tgsi.h"
 #include "cso_cache/cso_context.h"
 
+   /* Clean out any old compilations:
+    */
+void
+st_vp_release_varients( struct st_context *st,
+                        struct st_vertex_program *stvp )
+{
+   struct st_vp_varient *vpv;
+
+   for (vpv = stvp->varients; vpv; ) {
+      struct st_vp_varient *next = vpv->next;
+
+      if (vpv->driver_shader) 
+         cso_delete_vertex_shader(st->cso_context, vpv->driver_shader);
+      
+      if (vpv->draw_shader)
+         draw_delete_vertex_shader( st->draw, vpv->draw_shader );
+      
+      if (vpv->state.tokens)
+         st_free_tokens(vpv->state.tokens);
+      
+      FREE( vpv );
+
+      vpv = next;
+   }
+
+   stvp->varients = NULL;
+}
+
+
+
 
 /**
  * Translate a Mesa vertex shader into a TGSI shader.
@@ -58,31 +88,13 @@
  * \return  pointer to cached pipe_shader object.
  */
 void
-st_translate_vertex_program(struct st_context *st,
-                            struct st_vertex_program *stvp,
-                            const GLuint outputMapping[],
-                            const ubyte *outputSemanticName,
-                            const ubyte *outputSemanticIndex)
+st_prepare_vertex_program(struct st_context *st,
+                            struct st_vertex_program *stvp)
 {
-   struct pipe_context *pipe = st->pipe;
-   GLuint defaultOutputMapping[VERT_RESULT_MAX];
-   GLuint attr, i;
-   GLuint num_generic = 0;
+   GLuint attr;
 
-   ubyte vs_input_semantic_name[PIPE_MAX_SHADER_INPUTS];
-   ubyte vs_input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-   uint vs_num_inputs = 0;
-
-   ubyte vs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
-   ubyte vs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
-   uint vs_num_outputs = 0;
-
-   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
-   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
-
-   /*memset(&vs, 0, sizeof(vs));*/
-   memset(input_flags, 0, sizeof(input_flags));
-   memset(output_flags, 0, sizeof(output_flags));
+   stvp->num_inputs = 0;
+   stvp->num_outputs = 0;
 
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(st->ctx, &stvp->Base);
@@ -93,162 +105,56 @@ st_translate_vertex_program(struct st_context *st,
     */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       if (stvp->Base.Base.InputsRead & (1 << attr)) {
-         const GLuint slot = vs_num_inputs;
-
-         vs_num_inputs++;
-
-         stvp->input_to_index[attr] = slot;
-         stvp->index_to_input[slot] = attr;
-
-         switch (attr) {
-         case VERT_ATTRIB_POS:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_WEIGHT:
-            /* fall-through */
-         case VERT_ATTRIB_NORMAL:
-            /* just label as a generic */
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_COLOR0:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_COLOR1:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_input_semantic_index[slot] = 1;
-            break;
-         case VERT_ATTRIB_FOG:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_POINT_SIZE:
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
-            vs_input_semantic_index[slot] = 0;
-            break;
-         case VERT_ATTRIB_TEX0:
-         case VERT_ATTRIB_TEX1:
-         case VERT_ATTRIB_TEX2:
-         case VERT_ATTRIB_TEX3:
-         case VERT_ATTRIB_TEX4:
-         case VERT_ATTRIB_TEX5:
-         case VERT_ATTRIB_TEX6:
-         case VERT_ATTRIB_TEX7:
-            assert(slot < Elements(vs_input_semantic_name));
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = num_generic++;
-            break;
-         case VERT_ATTRIB_GENERIC0:
-         case VERT_ATTRIB_GENERIC1:
-         case VERT_ATTRIB_GENERIC2:
-         case VERT_ATTRIB_GENERIC3:
-         case VERT_ATTRIB_GENERIC4:
-         case VERT_ATTRIB_GENERIC5:
-         case VERT_ATTRIB_GENERIC6:
-         case VERT_ATTRIB_GENERIC7:
-         case VERT_ATTRIB_GENERIC8:
-         case VERT_ATTRIB_GENERIC9:
-         case VERT_ATTRIB_GENERIC10:
-         case VERT_ATTRIB_GENERIC11:
-         case VERT_ATTRIB_GENERIC12:
-         case VERT_ATTRIB_GENERIC13:
-         case VERT_ATTRIB_GENERIC14:
-         case VERT_ATTRIB_GENERIC15:
-            assert(attr < VERT_ATTRIB_MAX);
-            assert(slot < Elements(vs_input_semantic_name));
-            vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs_input_semantic_index[slot] = num_generic++;
-            break;
-         default:
-            assert(0);
-         }
-
-         input_flags[slot] = stvp->Base.Base.InputFlags[attr];
+         stvp->input_to_index[attr] = stvp->num_inputs;
+         stvp->index_to_input[stvp->num_inputs] = attr;
+         stvp->num_inputs++;
       }
    }
 
-#if 0
-   if (outputMapping && outputSemanticName) {
-      printf("VERT_RESULT  written  out_slot  semantic_name  semantic_index\n");
-      for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-         printf("    %-2d          %c       %3d          %2d              %2d\n",
-                attr, 
-                ((stvp->Base.Base.OutputsWritten & (1 << attr)) ? 'Y' : ' '),
-                outputMapping[attr],
-                outputSemanticName[attr],
-                outputSemanticIndex[attr]);
-      }
-   }
-#endif
-
-   /* initialize output semantics to defaults */
-   for (i = 0; i < PIPE_MAX_SHADER_OUTPUTS; i++) {
-      assert(i < Elements(vs_output_semantic_name));
-      vs_output_semantic_name[i] = TGSI_SEMANTIC_GENERIC;
-      vs_output_semantic_index[i] = 0;
-      output_flags[i] = 0x0;
-   }
-
-   num_generic = 0;
-   /*
-    * Determine number of outputs, the (default) output register
-    * mapping and the semantic information for each output.
+   /* Compute mapping of vertex program outputs to slots.
     */
    for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-      if (stvp->Base.Base.OutputsWritten & (1 << attr)) {
-         GLuint slot;
+      if ((stvp->Base.Base.OutputsWritten & (1 << attr)) == 0) {
+         stvp->result_to_output[attr] = ~0;
+      }
+      else {
+         unsigned slot = stvp->num_outputs++;
 
-         /* XXX
-          * Pass in the fragment program's input's semantic info.
-          * Use the generic semantic indexes from there, instead of
-          * guessing below.
-          */
-
-         if (outputMapping) {
-            slot = outputMapping[attr];
-            assert(slot != ~0);
-         }
-         else {
-            slot = vs_num_outputs;
-            vs_num_outputs++;
-            defaultOutputMapping[attr] = slot;
-         }
+         stvp->result_to_output[attr] = slot;
 
          switch (attr) {
          case VERT_RESULT_HPOS:
-            assert(slot == 0);
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
-            vs_output_semantic_index[slot] = 0;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            stvp->output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_COL0:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_output_semantic_index[slot] = 0;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            stvp->output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_COL1:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            vs_output_semantic_index[slot] = 1;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            stvp->output_semantic_index[slot] = 1;
             break;
          case VERT_RESULT_BFC0:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
-            vs_output_semantic_index[slot] = 0;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
+            stvp->output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_BFC1:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
-            vs_output_semantic_index[slot] = 1;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
+            stvp->output_semantic_index[slot] = 1;
             break;
          case VERT_RESULT_FOGC:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_FOG;
-            vs_output_semantic_index[slot] = 0;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            stvp->output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_PSIZ:
-            vs_output_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
-            vs_output_semantic_index[slot] = 0;
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
+            stvp->output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_EDGE:
             assert(0);
             break;
+
          case VERT_RESULT_TEX0:
          case VERT_RESULT_TEX1:
          case VERT_RESULT_TEX2:
@@ -257,92 +163,50 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_RESULT_TEX5:
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
-            /* fall-through */
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            stvp->output_semantic_index[slot] = attr - VERT_RESULT_TEX0;
+            break;
+
          case VERT_RESULT_VAR0:
-            /* fall-through */
          default:
-            assert(slot < Elements(vs_output_semantic_name));
-            if (outputSemanticName) {
-               /* use provided semantic into */
-               assert(outputSemanticName[attr] != TGSI_SEMANTIC_COUNT);
-               vs_output_semantic_name[slot] = outputSemanticName[attr];
-               vs_output_semantic_index[slot] = outputSemanticIndex[attr];
-            }
-            else {
-               /* use default semantic info */
-               vs_output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-               vs_output_semantic_index[slot] = num_generic++;
-            }
-         }
-
-         assert(slot < Elements(output_flags));
-         output_flags[slot] = stvp->Base.Base.OutputFlags[attr];
-      }
-   }
-
-   if (outputMapping) {
-      /* find max output slot referenced to compute vs_num_outputs */
-      GLuint maxSlot = 0;
-      for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-         if (outputMapping[attr] != ~0 && outputMapping[attr] > maxSlot)
-            maxSlot = outputMapping[attr];
-      }
-      vs_num_outputs = maxSlot + 1;
-   }
-   else {
-      outputMapping = defaultOutputMapping;
-   }
-
-#if 0 /* debug */
-   {
-      GLuint i;
-      printf("outputMapping? %d\n", outputMapping ? 1 : 0);
-      if (outputMapping) {
-         printf("attr -> slot\n");
-         for (i = 0; i < 16;  i++) {
-            printf(" %2d       %3d\n", i, outputMapping[i]);
+            assert(attr < VERT_RESULT_MAX);
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            stvp->output_semantic_index[slot] = (FRAG_ATTRIB_VAR0 - 
+                                                FRAG_ATTRIB_TEX0 +
+                                                attr - 
+                                                VERT_RESULT_VAR0);
+            break;
          }
       }
-      printf("slot    sem_name  sem_index\n");
-      for (i = 0; i < vs_num_outputs; i++) {
-         printf(" %2d         %d         %d\n",
-                i,
-                vs_output_semantic_name[i],
-                vs_output_semantic_index[i]);
-      }
    }
-#endif
+}
 
-   /* free old shader state, if any */
-   if (stvp->state.tokens) {
-      st_free_tokens(stvp->state.tokens);
-      stvp->state.tokens = NULL;
-   }
-   if (stvp->driver_shader) {
-      cso_delete_vertex_shader(st->cso_context, stvp->driver_shader);
-      stvp->driver_shader = NULL;
-   }
 
-   stvp->state.tokens = 
+struct st_vp_varient *
+st_translate_vertex_program(struct st_context *st,
+                            struct st_vertex_program *stvp,
+                            const struct st_vp_varient_key *key)
+{
+   struct st_vp_varient *vpv = CALLOC_STRUCT(st_vp_varient);
+   struct pipe_context *pipe = st->pipe;
+
+   vpv->state.tokens = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
                                 &stvp->Base.Base,
                                 /* inputs */
-                                vs_num_inputs,
+                                stvp->num_inputs,
                                 stvp->input_to_index,
-                                vs_input_semantic_name,
-                                vs_input_semantic_index,
+                                NULL, /* input semantic name */
+                                NULL, /* input semantic index */
                                 NULL,
-                                input_flags,
                                 /* outputs */
-                                vs_num_outputs,
-                                outputMapping,
-                                vs_output_semantic_name,
-                                vs_output_semantic_index,
-                                output_flags );
+                                stvp->num_outputs,
+                                stvp->result_to_output,
+                                stvp->output_semantic_name,
+                                stvp->output_semantic_index );
 
-   stvp->num_inputs = vs_num_inputs;
-   stvp->driver_shader = pipe->create_vs_state(pipe, &stvp->state);
+   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stvp->Base.Base);
@@ -350,9 +214,11 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( stvp->state.tokens, 0 );
+      tgsi_dump( vpv->state.tokens, 0 );
       debug_printf("\n");
    }
+
+   return vpv;
 }
 
 
@@ -375,20 +241,12 @@ st_translate_fragment_program(struct st_context *st,
    GLuint attr;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
    GLuint vslot = 0;
-   GLuint num_generic = 0;
 
    uint fs_num_inputs = 0;
 
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
-
-   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
-   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
-
-   /*memset(&fs, 0, sizeof(fs));*/
-   memset(input_flags, 0, sizeof(input_flags));
-   memset(output_flags, 0, sizeof(output_flags));
 
    /* which vertex output goes to the first fragment input: */
    if (inputsRead & FRAG_BIT_WPOS)
@@ -432,14 +290,25 @@ st_translate_fragment_program(struct st_context *st,
             break;
          case FRAG_ATTRIB_FACE:
             stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
-            stfp->input_semantic_index[slot] = num_generic++;
+            stfp->input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
-         case FRAG_ATTRIB_PNTC:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stfp->input_semantic_index[slot] = num_generic++;
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
-            break;
+
+            /* In most cases, there is nothing special about these
+             * inputs, so adopt a convention to use the generic
+             * semantic name and the mesa FRAG_ATTRIB_ number as the
+             * index. 
+             * 
+             * All that is required is that the vertex shader labels
+             * its own outputs similarly, and that the vertex shader
+             * generates at least every output required by the
+             * fragment shader plus fixed-function hardware (such as
+             * BFC).
+             * 
+             * There is no requirement that semantic indexes start at
+             * zero or be restricted to a particular range -- nobody
+             * should be building tables based on semantic index.
+             */
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:
          case FRAG_ATTRIB_TEX2:
@@ -448,19 +317,18 @@ st_translate_fragment_program(struct st_context *st,
          case FRAG_ATTRIB_TEX5:
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
+         case FRAG_ATTRIB_PNTC:
+         case FRAG_ATTRIB_VAR0:
+         default:
+            /* Actually, let's try and zero-base this just for
+             * readability of the generated TGSI.
+             */
+            assert(attr >= FRAG_ATTRIB_TEX0);
+            stfp->input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
             stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stfp->input_semantic_index[slot] = num_generic++;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
-         case FRAG_ATTRIB_VAR0:
-            /* fall-through */
-         default:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stfp->input_semantic_index[slot] = num_generic++;
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
-
-         input_flags[slot] = stfp->Base.Base.InputFlags[attr];
       }
    }
 
@@ -498,8 +366,6 @@ st_translate_fragment_program(struct st_context *st,
                break;
             }
 
-            output_flags[fs_num_outputs] = stfp->Base.Base.OutputFlags[attr];
-
             fs_num_outputs++;
          }
       }
@@ -518,13 +384,11 @@ st_translate_fragment_program(struct st_context *st,
                                 stfp->input_semantic_name,
                                 stfp->input_semantic_index,
                                 interpMode,
-                                input_flags,
                                 /* outputs */
                                 fs_num_outputs,
                                 outputMapping,
                                 fs_output_semantic_name,
-                                fs_output_semantic_index,
-                                output_flags );
+                                fs_output_semantic_index );
 
    stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
 

@@ -704,12 +704,10 @@ st_translate_mesa_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   const GLbitfield inputFlags[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   const GLbitfield outputFlags[] )
+   const ubyte outputSemanticIndex[] )
 {
    struct st_translate translate, *t;
    struct ureg_program *ureg;
