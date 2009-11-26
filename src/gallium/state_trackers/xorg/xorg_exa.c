@@ -811,34 +811,7 @@ xorg_exa_set_shared_usage(PixmapPtr pPixmap)
     return 0;
 }
 
-unsigned
-xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
-{
-    ScreenPtr pScreen = pPixmap->drawable.pScreen;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct exa_pixmap_priv *priv;
-    unsigned handle;
-    unsigned stride;
 
-    if (!ms->exa) {
-	FatalError("NO MS->EXA\n");
-	return 0;
-    }
-
-    priv = exaGetPixmapDriverPrivate(pPixmap);
-
-    if (!priv) {
-	FatalError("NO PIXMAP PRIVATE\n");
-	return 0;
-    }
-
-    ms->api->local_handle_from_texture(ms->api, ms->screen, priv->tex, &stride, &handle);
-    if (stride_out)
-	*stride_out = stride;
-
-    return handle;
-}
 
 static Bool
 size_match( int width, int tex_width )
