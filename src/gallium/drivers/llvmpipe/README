@@ -51,9 +51,13 @@ Requirements
 
  - Linux
  
- - A x86 or amd64 processor with support for sse2, sse3, and sse4.1 SIMD
-   instructions. This is necessary because we emit several SSE intrinsics for
-   convenience. See /proc/cpuinfo to know what your CPU supports.
+ - A x86 or amd64 processor.  64bit mode is preferred.
+ 
+   Support for sse2 is strongly encouraged.  Support for ssse3, and sse4.1 will
+   yield the most efficient code.  The less features the CPU has the more
+   likely is that you ran into underperforming, buggy, or incomplete code.  
+   
+   See /proc/cpuinfo to know what your CPU supports.
  
  - LLVM 2.5 or greater. LLVM 2.6 is preferred.
  
