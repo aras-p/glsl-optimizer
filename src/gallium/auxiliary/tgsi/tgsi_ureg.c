@@ -352,6 +352,7 @@ struct ureg_src ureg_DECL_constant(struct ureg_program *ureg,
       i = ureg->nr_constant_ranges++;
       ureg->constant_range[i].first = index;
       ureg->constant_range[i].last = index;
+      goto out;
    }
 
    /* Collapse all ranges down to one:
