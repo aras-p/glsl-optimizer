@@ -68,9 +68,9 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
    templ.target = PIPE_TEXTURE_1D;
    templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
    templ.last_level = 0;
-   templ.width[0] = color_data_len;
-   templ.height[0] = 1;
-   templ.depth[0] = 1;
+   templ.width0 = color_data_len;
+   templ.height0 = 1;
+   templ.depth0 = 1;
    pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
@@ -81,7 +81,7 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
          screen->get_tex_transfer(screen, tex,
                                   0, 0, 0,
                                   PIPE_TRANSFER_READ_WRITE ,
-                                  0, 0, tex->width[0], tex->height[0]);
+                                  0, 0, tex->width0, tex->height0);
       void *map = screen->transfer_map(screen, transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       screen->transfer_unmap(screen, transfer);

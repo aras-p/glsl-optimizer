@@ -1214,12 +1214,12 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       
       srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
-                                          pt->width[srcLevel],
-                                          pt->height[srcLevel]);
+                                          u_minify(pt->width0, srcLevel),
+                                          u_minify(pt->height0, srcLevel));
       dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
-                                          pt->width[dstLevel],
-                                          pt->height[dstLevel]);
+                                          u_minify(pt->width0, dstLevel),
+                                          u_minify(pt->height0, dstLevel));
 
       srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);

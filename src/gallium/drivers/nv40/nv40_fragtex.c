@@ -117,11 +117,11 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
 	so_data  (so, ps->filt | tf->sign | 0x2000 /*voodoo*/);
-	so_data  (so, (pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) |
-		       pt->height[0]);
+	so_data  (so, (pt->width0 << NV40TCL_TEX_SIZE0_W_SHIFT) |
+		       pt->height0);
 	so_data  (so, ps->bcol);
 	so_method(so, nv40->screen->curie, NV40TCL_TEX_SIZE1(unit), 1);
-	so_data  (so, (pt->depth[0] << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
+	so_data  (so, (pt->depth0 << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
 
 	return so;
 }

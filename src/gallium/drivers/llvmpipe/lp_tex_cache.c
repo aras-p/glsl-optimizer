@@ -36,6 +36,7 @@
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "util/u_format.h"
+#include "util/u_math.h"
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -270,8 +271,8 @@ lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
                                      addr.bits.level, 
                                      addr.bits.z, 
                                      PIPE_TRANSFER_READ, 0, 0,
-                                     tc->texture->width[addr.bits.level],
-                                     tc->texture->height[addr.bits.level]);
+                                     u_minify(tc->texture->width0, addr.bits.level),
+                                     u_minify(tc->texture->height0, addr.bits.level));
 
          tc->tex_trans_map = screen->transfer_map(screen, tc->tex_trans);
 

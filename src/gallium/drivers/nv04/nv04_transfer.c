@@ -2,6 +2,7 @@
 #include <pipe/p_defines.h>
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_math.h>
 #include <nouveau/nouveau_winsys.h>
 #include "nv04_context.h"
 #include "nv04_screen.h"
@@ -20,9 +21,9 @@ nv04_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
 	memset(template, 0, sizeof(struct pipe_texture));
 	template->target = pt->target;
 	template->format = pt->format;
-	template->width[0] = pt->width[level];
-	template->height[0] = pt->height[level];
-	template->depth[0] = 1;
+	template->width0 = u_minify(pt->width0, level);
+	template->height0 = u_minify(pt->height0, level);
+	template->depth0 = 1;
 	template->block = pt->block;
 	template->nblocksx[0] = pt->nblocksx[level];
 	template->nblocksy[0] = pt->nblocksx[level];

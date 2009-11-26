@@ -93,8 +93,8 @@ static void vg_copy_texture(struct vg_context *ctx,
    dst_loc[3] = height;
    dst_bounds[0] = 0.f;
    dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width[0];
-   dst_bounds[3] = dst->height[0];
+   dst_bounds[2] = dst->width0;
+   dst_bounds[3] = dst->height0;
 
    src_loc[0] = sx;
    src_loc[1] = sy;
@@ -102,8 +102,8 @@ static void vg_copy_texture(struct vg_context *ctx,
    src_loc[3] = height;
    src_bounds[0] = 0.f;
    src_bounds[1] = 0.f;
-   src_bounds[2] = src->width[0];
-   src_bounds[3] = src->height[0];
+   src_bounds[2] = src->width0;
+   src_bounds[3] = src->height0;
 
    vg_bound_rect(src_loc, src_bounds, src_shift);
    vg_bound_rect(dst_loc, dst_bounds, dst_shift);
@@ -272,9 +272,9 @@ struct vg_image * image_create(VGImageFormat format,
    pt.format = pformat;
    pf_get_block(pformat, &pt.block);
    pt.last_level = 0;
-   pt.width[0] = width;
-   pt.height[0] = height;
-   pt.depth[0] = 1;
+   pt.width0 = width;
+   pt.height0 = height;
+   pt.depth0 = 1;
    pt.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    newtex = screen->texture_create(screen, &pt);
@@ -414,7 +414,7 @@ void image_sub_data(struct vg_image *image,
    { /* upload color_data */
       struct pipe_transfer *transfer = screen->get_tex_transfer(
          screen, texture, 0, 0, 0,
-         PIPE_TRANSFER_WRITE, 0, 0, texture->width[0], texture->height[0]);
+         PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
          _vega_unpack_float_span_rgba(ctx, width, xoffset, src, dataFormat, temp);

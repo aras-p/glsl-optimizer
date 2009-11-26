@@ -61,8 +61,8 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
 	struct pipe_texture *pt = &mt->base.base;
-	unsigned width = tmp->width[0], height = tmp->height[0];
-	unsigned depth = tmp->depth[0], image_alignment;
+	unsigned width = tmp->width0, height = tmp->height0;
+	unsigned depth = tmp->depth0, image_alignment;
 	uint32_t tile_flags;
 	int ret, i, l;
 
@@ -92,9 +92,6 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	for (l = 0; l <= pt->last_level; l++) {
 		struct nv50_miptree_level *lvl = &mt->level[l];
 
-		pt->width[l] = width;
-		pt->height[l] = height;
-		pt->depth[l] = depth;
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
@@ -102,9 +99,9 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		lvl->pitch = align(pt->nblocksx[l] * pt->block.size, 64);
 		lvl->tile_mode = get_tile_mode(pt->nblocksy[l], depth);
 
-		width = MAX2(1, width >> 1);
-		height = MAX2(1, height >> 1);
-		depth = MAX2(1, depth >> 1);
+		width = u_minify(width, 1);
+		height = u_minify(height, 1);
+		depth = u_minify(depth, 1);
 	}
 
 	image_alignment  = get_tile_height(mt->level[0].tile_mode) * 64;
@@ -122,7 +119,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 			size  = lvl->pitch;
 			size *= align(pt->nblocksy[l], tile_h);
-			size *= align(pt->depth[l], tile_d);
+			size *= align(u_minify(pt->depth0, l), tile_d);
 
 			lvl->image_offset[i] = mt->total_size;
 
@@ -151,7 +148,7 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
-	    pt->depth[0] != 1)
+	    pt->depth0 != 1)
 		return NULL;
 
 	mt = CALLOC_STRUCT(nv50_miptree);
@@ -202,8 +199,8 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
 	ps->format = pt->format;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
+	ps->width = u_minify(pt->width0, level);
+	ps->height = u_minify(pt->height0, level);
 	ps->usage = flags;
 	pipe_reference_init(&ps->reference, 1);
 	ps->face = face;

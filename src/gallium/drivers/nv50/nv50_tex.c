@@ -131,9 +131,9 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 		 NOUVEAU_BO_RD, 0, 0);
 	so_data (so, mode);
 	so_data (so, 0x00300000);
-	so_data (so, mt->base.base.width[0] | (1 << 31));
+	so_data (so, mt->base.base.width0 | (1 << 31));
 	so_data (so, (mt->base.base.last_level << 28) |
-		 (mt->base.base.depth[0] << 16) | mt->base.base.height[0]);
+		 (mt->base.base.depth0 << 16) | mt->base.base.height0);
 	so_data (so, 0x03000000);
 	so_data (so, mt->base.base.last_level << 4);
 

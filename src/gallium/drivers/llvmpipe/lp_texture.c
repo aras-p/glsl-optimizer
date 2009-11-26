@@ -57,9 +57,9 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 {
    struct pipe_texture *pt = &lpt->base;
    unsigned level;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned depth = pt->depth[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned depth = pt->depth0;
 
    unsigned buffer_size = 0;
 
@@ -68,9 +68,6 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    for (level = 0; level <= pt->last_level; level++) {
       unsigned nblocksx, nblocksy;
 
-      pt->width[level] = width;
-      pt->height[level] = height;
-      pt->depth[level] = depth;
       pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
       pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);
 
@@ -87,9 +84,9 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
                       ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
                       lpt->stride[level]);
 
-      width  = minify(width);
-      height = minify(height);
-      depth = minify(depth);
+      width  = u_minify(width, 1);
+      height = u_minify(height, 1);
+      depth = u_minify(depth, 1);
    }
 
    lpt->data = align_malloc(buffer_size, 16);
@@ -104,13 +101,13 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    struct llvmpipe_winsys *winsys = screen->winsys;
 
    pf_get_block(lpt->base.format, &lpt->base.block);
-   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
-   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
+   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width0);  
+   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height0);  
 
    lpt->dt = winsys->displaytarget_create(winsys,
                                           lpt->base.format,
-                                          lpt->base.width[0],
-                                          lpt->base.height[0],
+                                          lpt->base.width0,
+                                          lpt->base.height0,
                                           16,
                                           &lpt->stride[0] );
 
@@ -183,8 +180,8 @@ llvmpipe_texture_blanket(struct pipe_screen * screen,
    lpt->base = *base;
    pipe_reference_init(&lpt->base.reference, 1);
    lpt->base.screen = screen;
-   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width[0]);  
-   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height[0]);  
+   lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width0);  
+   lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height0);  
    lpt->stride[0] = stride[0];
 
    pipe_buffer_reference(&lpt->buffer, buffer);
@@ -229,8 +226,8 @@ llvmpipe_get_tex_surface(struct pipe_screen *screen,
       pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->width = pt->width[level];
-      ps->height = pt->height[level];
+      ps->width = u_minify(pt->width0, level);
+      ps->height = u_minify(pt->height0, level);
       ps->offset = lpt->level_offset[level];
       ps->usage = usage;
 

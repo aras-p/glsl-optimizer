@@ -187,10 +187,10 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 	templat.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
-	templat.depth[0] = 1;
+	templat.depth0 = 1;
 	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-	templat.width[0] = 64;
-	templat.height[0] = 64;
+	templat.width0 = 64;
+	templat.height0 = 64;
 	pf_get_block(templat.format, &templat.block);
 
 	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,

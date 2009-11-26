@@ -317,9 +317,9 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
     memset(&tmpl, 0, sizeof(tmpl));
     tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
     tmpl.target = PIPE_TEXTURE_2D;
-    tmpl.width[0] = w;
-    tmpl.height[0] = h;
-    tmpl.depth[0] = 1;
+    tmpl.width0 = w;
+    tmpl.height0 = h;
+    tmpl.depth0 = 1;
     tmpl.format = format;
     pf_get_block(tmpl.format, &tmpl.block);
     tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);

@@ -166,9 +166,9 @@ create_component_texture(struct pipe_context *pipe,
    templ.target = PIPE_TEXTURE_2D;
    templ.format = PIPE_FORMAT_L8_UNORM;
    templ.last_level = 0;
-   templ.width[0] = width;
-   templ.height[0] = height;
-   templ.depth[0] = 1;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
    pf_get_block(PIPE_FORMAT_L8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
@@ -182,18 +182,18 @@ check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
 {
    struct pipe_texture **dst = priv->yuv[priv->current_set];
    if (!dst[0] ||
-       dst[0]->width[0] != width ||
-       dst[0]->height[0] != height) {
+       dst[0]->width0 != width ||
+       dst[0]->height0 != height) {
       pipe_texture_reference(&dst[0], NULL);
    }
    if (!dst[1] ||
-       dst[1]->width[0] != width ||
-       dst[1]->height[0] != height) {
+       dst[1]->width0 != width ||
+       dst[1]->height0 != height) {
       pipe_texture_reference(&dst[1], NULL);
    }
    if (!dst[2] ||
-       dst[2]->width[0] != width ||
-       dst[2]->height[0] != height) {
+       dst[2]->width0 != width ||
+       dst[2]->height0 != height) {
       pipe_texture_reference(&dst[2], NULL);
    }
 
@@ -320,8 +320,8 @@ copy_packed_data(ScrnInfoPtr pScrn,
 static void
 setup_vs_video_constants(struct xorg_renderer *r, struct exa_pixmap_priv *dst)
 {
-   int width = dst->tex->width[0];
-   int height = dst->tex->height[0];
+   int width = dst->tex->width0;
+   int height = dst->tex->height0;
    const int param_bytes = 8 * sizeof(float);
    float vs_consts[8] = {
       2.f/width, 2.f/height, 1, 1,

@@ -279,9 +279,9 @@ class Screen(Object):
     def texture_create(self, templat):
         return self.real.texture_create(
             format = templat.format,
-            width = templat.width[0],
-            height = templat.height[0],
-            depth = templat.depth[0],
+            width = templat.width0,
+            height = templat.height0,
+            depth = templat.depth0,
             last_level = templat.last_level,
             target = templat.target,
             tex_usage = templat.tex_usage,
