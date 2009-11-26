@@ -368,6 +368,12 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     debug_printf("\tExaSolid(%d, %d, %d, %d)\n", x0, y0, x1, y1);
 #endif
 
+    if (x0 == 0 && y0 == 0 &&
+        x1 == pPixmap->drawable.width && y1 == pPixmap->drawable.height) {
+       exa->pipe->clear(exa->pipe, PIPE_CLEAR_COLOR, exa->solid_color, 0.0, 0);
+       return;
+    }
+
     xorg_solid(exa, priv, x0, y0, x1, y1) ;
 }
 
