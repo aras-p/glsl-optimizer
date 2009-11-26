@@ -491,6 +491,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                               exa->num_bound_samplers);
    }
 
+
+   pipe_surface_reference(&dst_surf, NULL);
    return TRUE;
 }
 
@@ -554,6 +556,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
 
    renderer_begin_solid(exa->renderer);
 
+   pipe_surface_reference(&dst_surf, NULL);
    return TRUE;
 }
 

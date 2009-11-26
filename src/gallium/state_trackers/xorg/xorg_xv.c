@@ -488,6 +488,8 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    }
    DamageRegionProcessPending(&pPixmap->drawable);
 
+   pipe_surface_reference(&dst_surf, NULL);
+
    return TRUE;
 }
 
