@@ -285,7 +285,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		so = so_new(33, 0);
 		so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
-			so_data(so, nv50->stipple.stipple[i]);
+			so_data(so, util_bswap32(nv50->stipple.stipple[i]));
 		so_ref(so, &nv50->state.stipple);
 		so_ref(NULL, &so);
 	}
