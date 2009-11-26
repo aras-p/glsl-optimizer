@@ -97,10 +97,18 @@ static void
 renderer_init_state(struct xorg_renderer *r)
 {
    struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_rasterizer_state raster;
 
    /* set common initial clip state */
    memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
    cso_set_depth_stencil_alpha(r->cso, &dsa);
+
+
+   /* XXX: move to renderer_init_state? */
+   memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
+   raster.gl_rasterization_rules = 1;
+   cso_set_rasterizer(r->cso, &raster);
+
 }
 
 
@@ -412,16 +420,6 @@ void renderer_destroy(struct xorg_renderer *r)
 
 
 
-void renderer_bind_rasterizer(struct xorg_renderer *r)
-{
-   struct pipe_rasterizer_state raster;
-
-   /* XXX: move to renderer_init_state? */
-   memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
-   raster.gl_rasterization_rules = 1;
-   cso_set_rasterizer(r->cso, &raster);
-}
-
 void renderer_set_constants(struct xorg_renderer *r,
                             int shader_type,
                             const float *params,
@@ -533,8 +531,6 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    /* texture */
    cso_set_sampler_textures(r->cso, 1, &src);
 
-   renderer_bind_rasterizer(r);
-
    /* shaders */
    shader = xorg_shaders_get(r->shaders,
                              VS_COMPOSITE,
@@ -632,8 +628,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
                           int width, int height)
 {
    float dst_loc[4], src_loc[4];
-   float dst_bounds[4], src_bounds[4];
-   float src_shift[4], dst_shift[4], shift[4];
    struct pipe_texture *dst = dst_priv->tex;
    struct pipe_texture *src = src_priv->tex;
 

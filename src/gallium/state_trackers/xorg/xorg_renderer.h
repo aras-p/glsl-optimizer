@@ -44,7 +44,6 @@ void renderer_bind_framebuffer(struct xorg_renderer *r,
                                struct exa_pixmap_priv *priv);
 void renderer_bind_viewport(struct xorg_renderer *r,
                             struct exa_pixmap_priv *dst);
-void renderer_bind_rasterizer(struct xorg_renderer *r);
 void renderer_set_constants(struct xorg_renderer *r,
                             int shader_type,
                             const float *buffer,
