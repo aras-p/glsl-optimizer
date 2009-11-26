@@ -74,7 +74,6 @@ renderer_draw(struct xorg_renderer *r)
                               r->attrs_per_vertex); /* attribs/vert */
 
       pipe_buffer_reference(&buf, NULL);
-      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    }
 }
 
