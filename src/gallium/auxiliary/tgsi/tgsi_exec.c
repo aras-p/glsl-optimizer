@@ -3217,7 +3217,28 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ENDSUB:
-      /* no-op */
+      /*
+       * XXX: This really should be a no-op. We should never reach this opcode.
+       */
+
+      assert(mach->CallStackTop > 0);
+      mach->CallStackTop--;
+
+      mach->CondStackTop = mach->CallStack[mach->CallStackTop].CondStackTop;
+      mach->CondMask = mach->CondStack[mach->CondStackTop];
+
+      mach->LoopStackTop = mach->CallStack[mach->CallStackTop].LoopStackTop;
+      mach->LoopMask = mach->LoopStack[mach->LoopStackTop];
+
+      mach->ContStackTop = mach->CallStack[mach->CallStackTop].ContStackTop;
+      mach->ContMask = mach->ContStack[mach->ContStackTop];
+
+      assert(mach->FuncStackTop > 0);
+      mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
+
+      *pc = mach->CallStack[mach->CallStackTop].ReturnAddr;
+
+      UPDATE_EXEC_MASK(mach);
       break;
 
    case TGSI_OPCODE_NOP:
@@ -3346,6 +3367,11 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
          mach->Outputs[0].xyzw[2].f[i] *= ctx->DrawBuffer->_DepthMaxF;
    }
 #endif
+
+   assert(mach->CondStackTop == 0);
+   assert(mach->LoopStackTop == 0);
+   assert(mach->ContStackTop == 0);
+   assert(mach->CallStackTop == 0);
 
    return ~mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0];
 }
