@@ -556,7 +556,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
       return NULL;
    }
 
-   SVGA_DBG(DEBUG_DMA, "surface_create for texture view\n", handle);
+   SVGA_DBG(DEBUG_DMA, "surface_create for texture view\n");
    handle = svga_screen_surface_create(ss, key);
    if (!handle) {
       key->cachable = 0;
