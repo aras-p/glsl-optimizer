@@ -272,8 +272,8 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
     modesettingPtr ms = modesettingPTR(pScrn);
     BufferPrivatePtr dst_priv = pDestBuffer->driverPrivate;
     BufferPrivatePtr src_priv = pSrcBuffer->driverPrivate;
-    PixmapPtr src_pixmap;
-    PixmapPtr dst_pixmap;
+    DrawablePtr src_draw;
+    DrawablePtr dst_draw;
     GCPtr gc;
     RegionPtr copy_clip;
     Bool save_accel;
@@ -284,12 +284,10 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
      * We need to use the real drawable in CopyArea
      * so that cliprects and offsets are correct.
      */
-    src_pixmap = src_priv->pPixmap;
-    dst_pixmap = dst_priv->pPixmap;
-    if (pSrcBuffer->attachment == DRI2BufferFrontLeft)
-	src_pixmap = (PixmapPtr)pDraw;
-    if (pDestBuffer->attachment == DRI2BufferFrontLeft)
-	dst_pixmap = (PixmapPtr)pDraw;
+    src_draw = (pSrcBuffer->attachment == DRI2BufferFrontLeft) ? pDraw :
+       &src_priv->pPixmap->drawable;
+    dst_draw = (pDestBuffer->attachment == DRI2BufferFrontLeft) ? pDraw :
+       &dst_priv->pPixmap->drawable;
 
     /*
      * The clients implements glXWaitX with a copy front to fake and then
@@ -308,7 +306,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
      * must in the glXWaitGL case but we don't know if this is a glXWaitGL
      * or a glFlush/glFinish call.
      */
-    if (dst_pixmap == src_pixmap) {
+    if (dst_priv->pPixmap == src_priv->pPixmap) {
 	/* pixmap glXWaitX */
 	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
 	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
@@ -329,7 +327,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
     copy_clip = REGION_CREATE(pScreen, NULL, 0);
     REGION_COPY(pScreen, copy_clip, pRegion);
     (*gc->funcs->ChangeClip) (gc, CT_REGION, copy_clip, 0);
-    ValidateGC(&dst_pixmap->drawable, gc);
+    ValidateGC(dst_draw, gc);
 
     /* If this is a full buffer swap, throttle on the previous one */
     if (dst_priv->fence && REGION_NUM_RECTS(pRegion) == 1) {
@@ -342,9 +340,19 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 	}
     }
 
+    /* Try to make sure the blit will be accelerated */
     save_accel = ms->exa->accel;
     ms->exa->accel = TRUE;
-    (*gc->ops->CopyArea)(&src_pixmap->drawable, &dst_pixmap->drawable, gc,
+
+    /* In case it won't be though, make sure the GPU copy contents of the
+     * source pixmap will be used for the software fallback - presumably the
+     * client modified them before calling in here.
+     */
+    exaMoveInPixmap(src_priv->pPixmap);
+    DamageRegionAppend(src_draw, pRegion);
+    DamageRegionProcessPending(src_draw);
+
+    (*gc->ops->CopyArea)(src_draw, dst_draw, gc,
 			 0, 0, pDraw->width, pDraw->height, 0, 0);
     ms->exa->accel = save_accel;
 
