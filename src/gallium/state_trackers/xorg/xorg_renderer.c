@@ -195,23 +195,6 @@ add_vertex_data1(struct xorg_renderer *r,
    add_vertex_1tex(r, dstX, dstY + height, s3, t3);
 }
 
-static struct pipe_buffer *
-setup_vertex_data_tex(struct xorg_renderer *r,
-                      float x0, float y0, float x1, float y1,
-                      float s0, float t0, float s1, float t1,
-                      float z)
-{
-   /* 1st vertex */
-   add_vertex_1tex(r, x0, y0, s0, t0);
-   /* 2nd vertex */
-   add_vertex_1tex(r, x1, y0, s1, t0);
-   /* 3rd vertex */
-   add_vertex_1tex(r, x1, y1, s1, t1);
-   /* 4th vertex */
-   add_vertex_1tex(r, x0, y1, s0, t1);
-
-   return renderer_buffer_create(r);
-}
 
 static INLINE void
 add_vertex_2tex(struct xorg_renderer *r,
@@ -442,47 +425,15 @@ void renderer_set_constants(struct xorg_renderer *r,
 }
 
 
-static void renderer_copy_texture(struct xorg_renderer *r,
-                                  struct pipe_texture *src,
-                                  float sx1, float sy1,
-                                  float sx2, float sy2,
-                                  struct pipe_texture *dst,
-                                  float dx1, float dy1,
-                                  float dx2, float dy2)
+void renderer_copy_prepare(struct xorg_renderer *r,
+                           struct pipe_surface *dst_surface,
+                           struct pipe_texture *src_texture)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_buffer *buf;
-   struct pipe_surface *dst_surf = screen->get_tex_surface(
-      screen, dst, 0, 0, 0,
-      PIPE_BUFFER_USAGE_GPU_WRITE);
-   float s0, t0, s1, t1;
    struct xorg_shader shader;
 
-   assert(src->width[0] != 0);
-   assert(src->height[0] != 0);
-   assert(dst->width[0] != 0);
-   assert(dst->height[0] != 0);
-
-#if 1
-   s0 = sx1 / src->width[0];
-   s1 = sx2 / src->width[0];
-   t0 = sy1 / src->height[0];
-   t1 = sy2 / src->height[0];
-#else
-   s0 = 0;
-   s1 = 1;
-   t0 = 0;
-   t1 = 1;
-#endif
-
-#if 0
-   debug_printf("copy texture src=[%f, %f, %f, %f], dst=[%f, %f, %f, %f], tex=[%f, %f, %f, %f]\n",
-                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2,
-                s0, t0, s1, t1);
-#endif
-
-   assert(screen->is_format_supported(screen, dst_surf->format,
+   assert(screen->is_format_supported(screen, dst_surface->format,
                                       PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                       0));
@@ -515,10 +466,10 @@ static void renderer_copy_texture(struct xorg_renderer *r,
       cso_single_sampler_done(r->cso);
    }
 
-   renderer_bind_destination(r, dst_surf);
+   renderer_bind_destination(r, dst_surface);
 
    /* texture */
-   cso_set_sampler_textures(r->cso, 1, &src);
+   cso_set_sampler_textures(r->cso, 1, &src_texture);
 
    /* shaders */
    shader = xorg_shaders_get(r->shaders,
@@ -527,27 +478,12 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    cso_set_vertex_shader_handle(r->cso, shader.vs);
    cso_set_fragment_shader_handle(r->cso, shader.fs);
 
-   /* draw quad */
-   buf = setup_vertex_data_tex(r,
-                               dx1, dy1,
-                               dx2, dy2,
-                               s0, t0, s1, t1,
-                               0.0f);
-
-   if (buf) {
-      util_draw_vertex_buffer(r->pipe, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_buffer_reference(&buf, NULL);
-   }
-
-   pipe_surface_reference(&dst_surf, NULL);
+   r->buffer_size = 0;
+   r->attrs_per_vertex = 2;
 }
 
-static struct pipe_texture *
-create_sampler_texture(struct xorg_renderer *r,
+struct pipe_texture *
+renderer_clone_texture(struct xorg_renderer *r,
                        struct pipe_texture *src)
 {
    enum pipe_format format;
@@ -556,7 +492,9 @@ create_sampler_texture(struct xorg_renderer *r,
    struct pipe_texture *pt;
    struct pipe_texture templ;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   if (pipe->is_texture_referenced(pipe, src, 0, 0) &
+       PIPE_REFERENCED_FOR_WRITE)
+      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
@@ -610,51 +548,39 @@ create_sampler_texture(struct xorg_renderer *r,
 
 
 void renderer_copy_pixmap(struct xorg_renderer *r,
-                          struct exa_pixmap_priv *dst_priv, int dx, int dy,
-                          struct exa_pixmap_priv *src_priv, int sx, int sy,
-                          int width, int height)
+                          int dx, int dy,
+                          int sx, int sy,
+                          int width, int height,
+                          float src_width,
+                          float src_height)
 {
-   float dst_loc[4], src_loc[4];
-   struct pipe_texture *dst = dst_priv->tex;
-   struct pipe_texture *src = src_priv->tex;
+   float s0, t0, s1, t1;
+   float x0, y0, x1, y1;
 
-   if (r->pipe->is_texture_referenced(r->pipe, src, 0, 0) &
-       PIPE_REFERENCED_FOR_WRITE)
-      r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   dst_loc[0] = dx;
-   dst_loc[1] = dy;
-   dst_loc[2] = width;
-   dst_loc[3] = height;
+   /* XXX: could put the texcoord scaling calculation into the vertex
+    * shader.
+    */
+   s0 = sx            / src_width;
+   s1 = (sx + width)  / src_width;
+   t0 = sy            / src_height;
+   t1 = (sy + height) / src_height;
 
-   src_loc[0] = sx;
-   src_loc[1] = sy;
-   src_loc[2] = width;
-   src_loc[3] = height;
+   x0 = dx;
+   x1 = dx + width;
+   y0 = dy;
+   y1 = dy + height;
 
-   if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
-       dst_loc[2] >= 0 && dst_loc[3] >= 0) {
-      struct pipe_texture *temp_src = src;
-
-      if (src == dst)
-         temp_src = create_sampler_texture(r, src);
-
-      renderer_copy_texture(r,
-                            temp_src,
-                            src_loc[0],
-                            src_loc[1],
-                            src_loc[0] + src_loc[2],
-                            src_loc[1] + src_loc[3],
-                            dst,
-                            dst_loc[0],
-                            dst_loc[1],
-                            dst_loc[0] + dst_loc[2],
-                            dst_loc[1] + dst_loc[3]);
-
-      if (src == dst)
-         pipe_texture_reference(&temp_src, NULL);
-   }
+   /* draw quad */
+   renderer_draw_conditional(r, 4*8);
+   add_vertex_1tex(r, x0, y0, s0, t0);
+   add_vertex_1tex(r, x1, y0, s1, t0);
+   add_vertex_1tex(r, x1, y1, s1, t1);
+   add_vertex_1tex(r, x0, y1, s0, t1);
 }
+
+
+
 
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,

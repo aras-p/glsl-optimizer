@@ -430,8 +430,17 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
-    
-    if (0 && exa->pipe->surface_copy) {
+
+    /* For same-surface copies, the pipe->surface_copy path is clearly
+     * superior, providing it is implemented.  In other cases it's not
+     * clear what the better path would be, and eventually we'd
+     * probably want to gather timings and choose dynamically.
+     */
+    if (exa->pipe->surface_copy &&
+        exa->copy.src == exa->copy.dst) {
+
+       exa->copy.use_surface_copy = TRUE;
+       
        exa->copy.src_surface =
           exa->scrn->get_tex_surface( exa->scrn,
                                       exa->copy.src->tex,
@@ -443,6 +452,27 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
                                       exa->copy.dst->tex,
                                       0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
+    }
+    else {
+       exa->copy.use_surface_copy = FALSE;
+
+       if (exa->copy.dst == exa->copy.src)
+          exa->copy.src_texture = renderer_clone_texture( exa->renderer,
+                                                          exa->copy.src->tex );
+       else
+          pipe_texture_reference(&exa->copy.src_texture,
+                                 exa->copy.src->tex);
+
+       exa->copy.dst_surface =
+          exa->scrn->get_tex_surface(exa->scrn,
+                                     exa->copy.dst->tex,
+                                     0, 0, 0,
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+
+       renderer_copy_prepare(exa->renderer, 
+                             exa->copy.dst_surface,
+                             exa->copy.src_texture );
     }
 
 
@@ -465,7 +495,7 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
    debug_assert(priv == exa->copy.dst);
 
-   if (exa->copy.src_surface && exa->copy.dst_surface) {
+   if (exa->copy.use_surface_copy) {
       /* XXX: consider exposing >1 box in surface_copy interface.
        */
       exa->pipe->surface_copy( exa->pipe,
@@ -476,9 +506,12 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
                              width, height );
    }
    else {
-      renderer_copy_pixmap(exa->renderer, exa->copy.dst, dstX, dstY,
-                           exa->copy.src, srcX, srcY,
-                           width, height);
+      renderer_copy_pixmap(exa->renderer, 
+                           dstX, dstY,
+                           srcX, srcY,
+                           width, height,
+                           exa->copy.src_texture->width[0],
+                           exa->copy.src_texture->height[0]);
    }
 }
 
@@ -499,6 +532,7 @@ ExaDoneCopy(PixmapPtr pPixmap)
    exa->copy.dst = NULL;
    pipe_surface_reference(&exa->copy.src_surface, NULL);
    pipe_surface_reference(&exa->copy.dst_surface, NULL);
+   pipe_texture_reference(&exa->copy.src_texture, NULL);
 }
 
 

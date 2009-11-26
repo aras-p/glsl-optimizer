@@ -48,10 +48,6 @@ void renderer_set_constants(struct xorg_renderer *r,
                             int shader_type,
                             const float *buffer,
                             int size);
-void renderer_copy_pixmap(struct xorg_renderer *r,
-                          struct exa_pixmap_priv *dst_priv, int dx, int dy,
-                          struct exa_pixmap_priv *src_priv, int sx, int sy,
-                          int width, int height);
 
 
 void renderer_draw_yuv(struct xorg_renderer *r,
@@ -77,6 +73,21 @@ void renderer_texture(struct xorg_renderer *r,
                       float *mask_matrix);
 
 void renderer_draw_flush(struct xorg_renderer *r);
+
+struct pipe_texture *
+renderer_clone_texture(struct xorg_renderer *r,
+                       struct pipe_texture *src);
+
+void renderer_copy_prepare(struct xorg_renderer *r,
+                           struct pipe_surface *dst_surface,
+                           struct pipe_texture *src_texture);
+
+void renderer_copy_pixmap(struct xorg_renderer *r,
+                          int dx, int dy,
+                          int sx, int sy,
+                          int width, int height,
+                          float src_width,
+                          float src_height);
 
 
 #endif

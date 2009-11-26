@@ -453,7 +453,6 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
 
    renderer_bind_destination(pPriv->r, dst_surf);
    bind_blend_state(pPriv);
-   renderer_bind_rasterizer(pPriv->r);
    bind_shaders(pPriv);
    bind_samplers(pPriv);
    setup_fs_video_constants(pPriv->r, hdtv);
