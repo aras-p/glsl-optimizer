@@ -200,7 +200,12 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
          }
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         if (ctx->Extensions.ARB_point_sprite || ctx->Extensions.NV_point_sprite) {
+	 /* This is not completely correct.  GL_POINT_SPRITE_COORD_ORIGIN was
+	  * added to point sprites when the extension was merged into OpenGL
+	  * 2.0.  It is expected that an implementation supporting OpenGL 1.4
+	  * and GL_ARB_point_sprite will generate an error here.
+	  */
+         if (ctx->Extensions.ARB_point_sprite) {
             GLenum value = (GLenum) params[0];
             if (value != GL_LOWER_LEFT && value != GL_UPPER_LEFT) {
                _mesa_error(ctx, GL_INVALID_VALUE,
