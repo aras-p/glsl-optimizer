@@ -95,6 +95,7 @@ const struct brw_tracked_state gen6_blend_state;
 const struct brw_tracked_state gen6_cc_state_pointers;
 const struct brw_tracked_state gen6_color_calc_state;
 const struct brw_tracked_state gen6_depth_stencil_state;
+const struct brw_tracked_state gen6_gs_state;
 const struct brw_tracked_state gen6_vs_state;
 
 /**
