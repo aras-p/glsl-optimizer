@@ -222,6 +222,20 @@ svga_tgsi_translate( const struct svga_shader *shader,
    result->nr_tokens = (emit.ptr - emit.buf) / sizeof(unsigned);
    memcpy(&result->key, &key, sizeof key);
 
+   if (SVGA_DEBUG & DEBUG_TGSI) 
+   {
+      debug_printf( "#####################################\n" );
+      debug_printf( "Shader %u below\n", shader->id );
+      tgsi_dump( shader->tokens, 0 );
+      if (SVGA_DEBUG & DEBUG_TGSI) {
+         debug_printf( "Shader %u compiled below\n", shader->id );
+         svga_shader_dump( result->tokens,
+                           result->nr_tokens ,
+                           FALSE );
+      }
+      debug_printf( "#####################################\n" );
+   }
+
    return result;
 
 fail:
