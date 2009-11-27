@@ -530,9 +530,9 @@ align(int value, int alignment)
 }
 
 static INLINE unsigned
-minify(unsigned value)
+u_minify(unsigned value, unsigned levels)
 {
-    return MAX2(1, value >> 1);
+    return MAX2(1, value >> levels);
 }
 
 #ifndef COPY_4V

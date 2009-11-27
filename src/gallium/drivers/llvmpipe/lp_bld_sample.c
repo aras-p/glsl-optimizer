@@ -59,9 +59,9 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
    state->format            = texture->format;
    state->target            = texture->target;
-   state->pot_width         = util_is_pot(texture->width[0]);
-   state->pot_height        = util_is_pot(texture->height[0]);
-   state->pot_depth         = util_is_pot(texture->depth[0]);
+   state->pot_width         = util_is_pot(texture->width0);
+   state->pot_height        = util_is_pot(texture->height0);
+   state->pot_depth         = util_is_pot(texture->depth0);
 
    state->wrap_s            = sampler->wrap_s;
    state->wrap_t            = sampler->wrap_t;

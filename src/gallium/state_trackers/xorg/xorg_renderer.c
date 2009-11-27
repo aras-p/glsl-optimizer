@@ -167,14 +167,14 @@ add_vertex_data1(struct xorg_renderer *r,
       map_point(src_matrix, pt3[0], pt3[1], &pt3[0], &pt3[1]);
    }
 
-   s0 =  pt0[0] / src->width[0];
-   s1 =  pt1[0] / src->width[0];
-   s2 =  pt2[0] / src->width[0];
-   s3 =  pt3[0] / src->width[0];
-   t0 =  pt0[1] / src->height[0];
-   t1 =  pt1[1] / src->height[0];
-   t2 =  pt2[1] / src->height[0];
-   t3 =  pt3[1] / src->height[0];
+   s0 =  pt0[0] / src->width0;
+   s1 =  pt1[0] / src->width0;
+   s2 =  pt2[0] / src->width0;
+   s3 =  pt3[0] / src->width0;
+   t0 =  pt0[1] / src->height0;
+   t1 =  pt1[1] / src->height0;
+   t2 =  pt2[1] / src->height0;
+   t3 =  pt3[1] / src->height0;
 
    /* 1st vertex */
    add_vertex_1tex(r, dstX, dstY, s0, t0);
@@ -262,15 +262,15 @@ add_vertex_data2(struct xorg_renderer *r,
       map_point(mask_matrix, mpt1[0], mpt1[1], &mpt1[0], &mpt1[1]);
    }
 
-   src_s0 = spt0[0] / src->width[0];
-   src_t0 = spt0[1] / src->height[0];
-   src_s1 = spt1[0] / src->width[0];
-   src_t1 = spt1[1] / src->height[0];
+   src_s0 = spt0[0] / src->width0;
+   src_t0 = spt0[1] / src->height0;
+   src_s1 = spt1[0] / src->width0;
+   src_t1 = spt1[1] / src->height0;
 
-   mask_s0 = mpt0[0] / mask->width[0];
-   mask_t0 = mpt0[1] / mask->height[0];
-   mask_s1 = mpt1[0] / mask->width[0];
-   mask_t1 = mpt1[1] / mask->height[0];
+   mask_s0 = mpt0[0] / mask->width0;
+   mask_t0 = mpt0[1] / mask->height0;
+   mask_s1 = mpt1[0] / mask->width0;
+   mask_t1 = mpt1[1] / mask->height0;
 
    /* 1st vertex */
    add_vertex_2tex(r, dstX, dstY,
@@ -300,10 +300,10 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
    spt1[0] = srcX + srcW;
    spt1[1] = srcY + srcH;
 
-   s0 = spt0[0] / tex[0]->width[0];
-   t0 = spt0[1] / tex[0]->height[0];
-   s1 = spt1[0] / tex[0]->width[0];
-   t1 = spt1[1] / tex[0]->height[0];
+   s0 = spt0[0] / tex[0]->width0;
+   t0 = spt0[1] / tex[0]->height0;
+   s1 = spt1[0] / tex[0]->width0;
+   t1 = spt1[1] / tex[0]->height0;
 
    /* 1st vertex */
    add_vertex_1tex(r, dstX, dstY, s0, t0);
@@ -387,8 +387,8 @@ void renderer_bind_framebuffer(struct xorg_renderer *r,
    struct pipe_surface *surface = xorg_gpu_surface(r->pipe->screen, priv);
    memset(&state, 0, sizeof(struct pipe_framebuffer_state));
 
-   state.width  = priv->tex->width[0];
-   state.height = priv->tex->height[0];
+   state.width  = priv->tex->width0;
+   state.height = priv->tex->height0;
 
    state.nr_cbufs = 1;
    state.cbufs[0] = surface;
@@ -407,8 +407,8 @@ void renderer_bind_framebuffer(struct xorg_renderer *r,
 void renderer_bind_viewport(struct xorg_renderer *r,
                             struct exa_pixmap_priv *dst)
 {
-   int width = dst->tex->width[0];
-   int height = dst->tex->height[0];
+   int width = dst->tex->width0;
+   int height = dst->tex->height0;
 
    /*debug_printf("Bind viewport (%d, %d)\n", width, height);*/
 
@@ -584,16 +584,16 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    float s0, t0, s1, t1;
    struct xorg_shader shader;
 
-   assert(src->width[0] != 0);
-   assert(src->height[0] != 0);
-   assert(dst->width[0] != 0);
-   assert(dst->height[0] != 0);
+   assert(src->width0 != 0);
+   assert(src->height0 != 0);
+   assert(dst->width0 != 0);
+   assert(dst->height0 != 0);
 
 #if 1
-   s0 = sx1 / src->width[0];
-   s1 = sx2 / src->width[0];
-   t0 = sy1 / src->height[0];
-   t1 = sy2 / src->height[0];
+   s0 = sx1 / src->width0;
+   s1 = sx2 / src->width0;
+   t0 = sy1 / src->height0;
+   t1 = sy2 / src->height0;
 #else
    s0 = 0;
    s1 = 1;
@@ -730,9 +730,9 @@ create_sampler_texture(struct xorg_renderer *r,
    templ.target = PIPE_TEXTURE_2D;
    templ.format = format;
    templ.last_level = 0;
-   templ.width[0] = src->width[0];
-   templ.height[0] = src->height[0];
-   templ.depth[0] = 1;
+   templ.width0 = src->width0;
+   templ.height0 = src->height0;
+   templ.depth0 = 1;
    pf_get_block(format, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
@@ -754,13 +754,13 @@ create_sampler_texture(struct xorg_renderer *r,
                 ps_tex, /* dest */
                 0, 0, /* destx/y */
                 ps_read,
-                0, 0, src->width[0], src->height[0]);
+                0, 0, src->width0, src->height0);
       } else {
           util_surface_copy(pipe, FALSE,
                 ps_tex, /* dest */
                 0, 0, /* destx/y */
                 ps_read,
-                0, 0, src->width[0], src->height[0]);
+                0, 0, src->width0, src->height0);
       }
       pipe_surface_reference(&ps_read, NULL);
       pipe_surface_reference(&ps_tex, NULL);
@@ -791,8 +791,8 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    dst_loc[3] = height;
    dst_bounds[0] = 0.f;
    dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width[0];
-   dst_bounds[3] = dst->height[0];
+   dst_bounds[2] = dst->width0;
+   dst_bounds[3] = dst->height0;
 
    src_loc[0] = sx;
    src_loc[1] = sy;
@@ -800,8 +800,8 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    src_loc[3] = height;
    src_bounds[0] = 0.f;
    src_bounds[1] = 0.f;
-   src_bounds[2] = src->width[0];
-   src_bounds[3] = src->height[0];
+   src_bounds[2] = src->width0;
+   src_bounds[3] = src->height0;
 
    bound_rect(src_loc, src_bounds, src_shift);
    bound_rect(dst_loc, dst_bounds, dst_shift);

@@ -40,6 +40,7 @@
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
 #include "util/u_rect.h"
+#include "util/u_math.h"
 
 
 
@@ -64,8 +65,8 @@ update_renderbuffer_surface(struct st_context *st,
       GLuint level;
       /* find matching mipmap level size */
       for (level = 0; level <= texture->last_level; level++) {
-         if (texture->width[level] == rtt_width &&
-             texture->height[level] == rtt_height) {
+         if (u_minify(texture->width0, level) == rtt_width &&
+             u_minify(texture->height0, level) == rtt_height) {
 
             pipe_surface_reference(&strb->surface, NULL);
 

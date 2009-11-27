@@ -427,9 +427,9 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.target = PIPE_TEXTURE_2D;
    texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = 0;
-   texTemp.width[0] = 32;
-   texTemp.height[0] = 32;
-   texTemp.depth[0] = 1;
+   texTemp.width0 = 32;
+   texTemp.height0 = 32;
+   texTemp.depth0 = 1;
    pf_get_block(texTemp.format, &texTemp.block);
 
    pstip->texture = screen->texture_create(screen, &texTemp);

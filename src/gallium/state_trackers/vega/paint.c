@@ -151,9 +151,9 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
    templ.target = PIPE_TEXTURE_1D;
    templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
    templ.last_level = 0;
-   templ.width[0] = 1024;
-   templ.height[0] = 1;
-   templ.depth[0] = 1;
+   templ.width0 = 1024;
+   templ.height0 = 1;
+   templ.depth0 = 1;
    pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
@@ -328,8 +328,8 @@ static INLINE void  paint_pattern_buffer(struct vg_paint *paint, void *buffer)
 
    map[4] = 0.f;
    map[5] = 1.f;
-   map[6] = paint->pattern.texture->width[0];
-   map[7] = paint->pattern.texture->height[0];
+   map[6] = paint->pattern.texture->width0;
+   map[7] = paint->pattern.texture->height0;
    {
       struct matrix mat;
       memcpy(&mat, &ctx->state.vg.fill_paint_to_user_matrix,

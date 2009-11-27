@@ -343,9 +343,9 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned width[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned height[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned width0;
+   unsigned height0;
+   unsigned depth0;
 
    struct pipe_format_block block;
    unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */

@@ -49,9 +49,9 @@ cell_texture_layout(struct cell_texture *ct)
 {
    struct pipe_texture *pt = &ct->base;
    unsigned level;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned depth = pt->depth[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned depth = pt->depth0;
 
    ct->buffer_size = 0;
 
@@ -65,9 +65,6 @@ cell_texture_layout(struct cell_texture *ct)
       w_tile = align(width, TILE_SIZE);
       h_tile = align(height, TILE_SIZE);
 
-      pt->width[level] = width;
-      pt->height[level] = height;
-      pt->depth[level] = depth;
       pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w_tile);  
       pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h_tile);  
 
@@ -83,9 +80,9 @@ cell_texture_layout(struct cell_texture *ct)
 
       ct->buffer_size += size;
 
-      width = minify(width);
-      height = minify(height);
-      depth = minify(depth);
+      width = u_minify(width, 1);
+      height = u_minify(height, 1);
+      depth = u_minify(depth, 1);
    }
 }
 
@@ -276,8 +273,8 @@ cell_get_tex_surface(struct pipe_screen *screen,
       pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->width = pt->width[level];
-      ps->height = pt->height[level];
+      ps->width = u_minify(pt->width0, level);
+      ps->height = u_minify(pt->height0, level);
       ps->offset = ct->level_offset[level];
       /* XXX may need to override usage flags (see sp_texture.c) */
       ps->usage = usage;
@@ -386,8 +383,8 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
    struct pipe_texture *pt = transfer->texture;
    struct cell_texture *ct = cell_texture(pt);
    const uint level = ctrans->base.level;
-   const uint texWidth = pt->width[level];
-   const uint texHeight = pt->height[level];
+   const uint texWidth = u_minify(pt->width0, level);
+   const uint texHeight = u_minify(pt->height0, level);
    const uint stride = ct->stride[level];
    unsigned size;
 
@@ -440,8 +437,8 @@ cell_transfer_unmap(struct pipe_screen *screen,
    struct pipe_texture *pt = transfer->texture;
    struct cell_texture *ct = cell_texture(pt);
    const uint level = ctrans->base.level;
-   const uint texWidth = pt->width[level];
-   const uint texHeight = pt->height[level];
+   const uint texWidth = u_minify(pt->width0, level);
+   const uint texHeight = u_minify(pt->height0, level);
    const uint stride = ct->stride[level];
 
    if (!ct->mapped) {

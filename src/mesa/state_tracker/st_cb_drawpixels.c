@@ -601,8 +601,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y1 = y + height * ctx->Pixel.ZoomY;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-	     (GLfloat) width / pt->width[0],
-	     (GLfloat) height / pt->height[0]);
+	     (GLfloat) width / pt->width0,
+	     (GLfloat) height / pt->height0);
 
    /* restore state */
    cso_restore_rasterizer(cso);

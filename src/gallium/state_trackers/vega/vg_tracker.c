@@ -51,9 +51,9 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
 
    templ.target = PIPE_TEXTURE_2D;
    pf_get_block(templ.format, &templ.block);
-   templ.width[0] = width;
-   templ.height[0] = height;
-   templ.depth[0] = 1;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
    templ.last_level = 0;
 
    if (pf_get_component_bits(format, PIPE_FORMAT_COMP_S)) {

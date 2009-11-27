@@ -439,8 +439,8 @@ setup_fs_constant_buffer(struct exa_context *exa)
 static void
 setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
 {
-   int width = pDst->tex->width[0];
-   int height = pDst->tex->height[0];
+   int width = pDst->tex->width0;
+   int height = pDst->tex->height0;
 
    setup_vs_constant_buffer(exa, width, height);
    setup_fs_constant_buffer(exa);

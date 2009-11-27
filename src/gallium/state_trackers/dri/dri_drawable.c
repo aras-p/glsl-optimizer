@@ -46,7 +46,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_rect.h"
-
+ 
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,
 			struct pipe_screen *screen,
@@ -62,10 +62,10 @@ dri_surface_from_handle(struct drm_api *api,
    templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
    templat.target = PIPE_TEXTURE_2D;
    templat.last_level = 0;
-   templat.depth[0] = 1;
+   templat.depth0 = 1;
    templat.format = format;
-   templat.width[0] = width;
-   templat.height[0] = height;
+   templat.width0 = width;
+   templat.height0 = height;
    pf_get_block(templat.format, &templat.block);
 
    texture = api->texture_from_shared_handle(api, screen, &templat,

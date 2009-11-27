@@ -1,6 +1,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
 
 #include "nv50_context.h"
 
@@ -156,9 +157,9 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->base.block = pt->block;
 	if (!pt->nblocksx[level]) {
 		tx->base.nblocksx = pf_get_nblocksx(&pt->block,
-						    pt->width[level]);
+						    u_minify(pt->width0, level));
 		tx->base.nblocksy = pf_get_nblocksy(&pt->block,
-						    pt->height[level]);
+						    u_minify(pt->height0, level));
 	} else {
 		tx->base.nblocksx = pt->nblocksx[level];
 		tx->base.nblocksy = pt->nblocksy[level];
@@ -167,9 +168,9 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
-	tx->level_width = mt->base.base.width[level];
-	tx->level_height = mt->base.base.height[level];
-	tx->level_depth = mt->base.base.depth[level];
+	tx->level_width = u_minify(mt->base.base.width0, level);
+	tx->level_height = u_minify(mt->base.base.height0, level);
+	tx->level_depth = u_minify(mt->base.base.depth0, level);
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
 	tx->level_x = pf_get_nblocksx(&tx->base.block, x);

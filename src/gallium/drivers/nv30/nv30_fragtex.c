@@ -74,9 +74,9 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 
 	txf  = tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
-	txf |= log2i(pt->width[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
-	txf |= log2i(pt->height[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
-	txf |= log2i(pt->depth[0]) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
+	txf |= log2i(pt->width0) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
+	txf |= log2i(pt->height0) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
+	txf |= log2i(pt->depth0) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
 	txf |= NV34TCL_TX_FORMAT_NO_BORDER | 0x10000;
 
 	switch (pt->target) {
@@ -115,8 +115,8 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	so_data  (so, NV34TCL_TX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
 	so_data  (so, ps->filt | 0x2000 /*voodoo*/);
-	so_data  (so, (pt->width[0] << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
-		       pt->height[0]);
+	so_data  (so, (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
+		       pt->height0);
 	so_data  (so, ps->bcol);
 
 	return so;

@@ -521,7 +521,7 @@ compute_lambda_1d(const struct sp_sampler_varient *samp,
    const struct pipe_sampler_state *sampler = samp->sampler;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
-   float rho = MAX2(dsdx, dsdy) * texture->width[0];
+   float rho = MAX2(dsdx, dsdy) * texture->width0;
    float lambda;
 
    lambda = util_fast_log2(rho);
@@ -545,8 +545,8 @@ compute_lambda_2d(const struct sp_sampler_varient *samp,
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
    float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
-   float maxx = MAX2(dsdx, dsdy) * texture->width[0];
-   float maxy = MAX2(dtdx, dtdy) * texture->height[0];
+   float maxx = MAX2(dsdx, dsdy) * texture->width0;
+   float maxy = MAX2(dtdx, dtdy) * texture->height0;
    float rho  = MAX2(maxx, maxy);
    float lambda;
 
@@ -573,9 +573,9 @@ compute_lambda_3d(const struct sp_sampler_varient *samp,
    float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
    float dpdx = fabsf(p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT]);
    float dpdy = fabsf(p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT]);
-   float maxx = MAX2(dsdx, dsdy) * texture->width[0];
-   float maxy = MAX2(dtdx, dtdy) * texture->height[0];
-   float maxz = MAX2(dpdx, dpdy) * texture->depth[0];
+   float maxx = MAX2(dsdx, dsdy) * texture->width0;
+   float maxy = MAX2(dtdx, dtdy) * texture->height0;
+   float maxz = MAX2(dpdx, dpdy) * texture->depth0;
    float rho, lambda;
 
    rho = MAX2(maxx, maxy);
@@ -644,8 +644,8 @@ get_texel_2d(const struct sp_sampler_varient *samp,
    const struct pipe_texture *texture = samp->texture;
    unsigned level = addr.bits.level;
 
-   if (x < 0 || x >= (int) texture->width[level] ||
-       y < 0 || y >= (int) texture->height[level]) {
+   if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
+       y < 0 || y >= (int) u_minify(texture->height0, level)) {
       return samp->sampler->border_color;
    }
    else {
@@ -737,9 +737,9 @@ get_texel_3d(const struct sp_sampler_varient *samp,
    const struct pipe_texture *texture = samp->texture;
    unsigned level = addr.bits.level;
 
-   if (x < 0 || x >= (int) texture->width[level] ||
-       y < 0 || y >= (int) texture->height[level] ||
-       z < 0 || z >= (int) texture->depth[level]) {
+   if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
+       y < 0 || y >= (int) u_minify(texture->height0, level) ||
+       z < 0 || z >= (int) u_minify(texture->depth0, level)) {
       return samp->sampler->border_color;
    }
    else {
@@ -925,7 +925,7 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
+   width = u_minify(texture->width0, level0);
 
    assert(width > 0);
 
@@ -961,8 +961,8 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1008,8 +1008,8 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1046,9 +1046,9 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
-   depth = texture->depth[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
+   depth = u_minify(texture->depth0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1088,7 +1088,7 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
+   width = u_minify(texture->width0, level0);
 
    assert(width > 0);
 
@@ -1127,8 +1127,8 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1174,8 +1174,8 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1221,9 +1221,9 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
 
    level0 = samp->level;
-   width = texture->width[level0];
-   height = texture->height[level0];
-   depth = texture->depth[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
+   depth = u_minify(texture->depth0, level0);
 
    addr.value = 0;
    addr.bits.level = level0;
@@ -1778,8 +1778,8 @@ sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
 
    samp->texture = texture;
    samp->cache = tex_cache;
-   samp->xpot = util_unsigned_logbase2( texture->width[0] );
-   samp->ypot = util_unsigned_logbase2( texture->height[0] );
+   samp->xpot = util_unsigned_logbase2( texture->width0 );
+   samp->ypot = util_unsigned_logbase2( texture->height0 );
    samp->level = CLAMP((int) sampler->min_lod, 0, (int) texture->last_level);
 }
 

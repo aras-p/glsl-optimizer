@@ -681,7 +681,7 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
       (
          r->pipe->screen, r->textures.all[i],
          0, 0, 0, PIPE_TRANSFER_WRITE, 0, 0,
-         r->textures.all[i]->width[0], r->textures.all[i]->height[0]
+         r->textures.all[i]->width0, r->textures.all[i]->height0
       );
 
       r->texels[i] = r->pipe->screen->transfer_map(r->pipe->screen, r->tex_transfer[i]);
@@ -835,26 +835,26 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
    template.format = PIPE_FORMAT_R16_SNORM;
    template.last_level = 0;
-   template.width[0] = r->pot_buffers ?
+   template.width0 = r->pot_buffers ?
       util_next_power_of_two(r->picture_width) : r->picture_width;
-   template.height[0] = r->pot_buffers ?
+   template.height0 = r->pot_buffers ?
       util_next_power_of_two(r->picture_height) : r->picture_height;
-   template.depth[0] = 1;
+   template.depth0 = 1;
    pf_get_block(template.format, &template.block);
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 
    r->textures.individual.y = r->pipe->screen->texture_create(r->pipe->screen, &template);
 
    if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      template.width[0] = r->pot_buffers ?
+      template.width0 = r->pot_buffers ?
          util_next_power_of_two(r->picture_width / 2) :
          r->picture_width / 2;
-      template.height[0] = r->pot_buffers ?
+      template.height0 = r->pot_buffers ?
          util_next_power_of_two(r->picture_height / 2) :
          r->picture_height / 2;
    }
    else if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422)
-      template.height[0] = r->pot_buffers ?
+      template.height0 = r->pot_buffers ?
          util_next_power_of_two(r->picture_height / 2) :
          r->picture_height / 2;
 
@@ -1283,8 +1283,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
    );
 
-   vs_consts->denorm.x = r->surface->width[0];
-   vs_consts->denorm.y = r->surface->height[0];
+   vs_consts->denorm.x = r->surface->width0;
+   vs_consts->denorm.y = r->surface->height0;
 
    pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf.buffer);
 
@@ -1633,8 +1633,8 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       renderer->past = past;
       renderer->future = future;
       renderer->fence = fence;
-      renderer->surface_tex_inv_size.x = 1.0f / surface->width[0];
-      renderer->surface_tex_inv_size.y = 1.0f / surface->height[0];
+      renderer->surface_tex_inv_size.x = 1.0f / surface->width0;
+      renderer->surface_tex_inv_size.y = 1.0f / surface->height0;
    }
 
    while (num_macroblocks) {

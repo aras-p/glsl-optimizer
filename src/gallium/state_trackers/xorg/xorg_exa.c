@@ -284,7 +284,7 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 					PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
 					PIPE_TRANSFER_READ_WRITE,
-					0, 0, priv->tex->width[0], priv->tex->height[0]);
+					0, 0, priv->tex->width0, priv->tex->height0);
 	if (!priv->map_transfer)
 #ifdef EXA_MIXED_PIXMAPS
 	    return FALSE;
@@ -752,8 +752,8 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     /* Deal with screen resize */
     if ((exa->accel || priv->flags) &&
         (!priv->tex ||
-         (priv->tex->width[0] != width ||
-          priv->tex->height[0] != height ||
+         (priv->tex->width0 != width ||
+          priv->tex->height0 != height ||
           priv->tex_flags != priv->flags))) {
 	struct pipe_texture *texture = NULL;
 	struct pipe_texture template;
@@ -762,9 +762,9 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	template.target = PIPE_TEXTURE_2D;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
 	pf_get_block(template.format, &template.block);
-	template.width[0] = width;
-	template.height[0] = height;
-	template.depth[0] = 1;
+	template.width0 = width;
+	template.height0 = height;
+	template.depth0 = 1;
 	template.last_level = 0;
 	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
 	priv->tex_flags = priv->flags;
@@ -779,12 +779,12 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	    src_surf = xorg_gpu_surface(exa->pipe->screen, priv);
         if (exa->pipe->surface_copy) {
             exa->pipe->surface_copy(exa->pipe, dst_surf, 0, 0, src_surf,
-                        0, 0, min(width, texture->width[0]),
-                        min(height, texture->height[0]));
+                        0, 0, min(width, texture->width0),
+                        min(height, texture->height0));
         } else {
             util_surface_copy(exa->pipe, FALSE, dst_surf, 0, 0, src_surf,
-                        0, 0, min(width, texture->width[0]),
-                        min(height, texture->height[0]));
+                        0, 0, min(width, texture->width0),
+                        min(height, texture->height0));
         }
 	    exa->scrn->tex_surface_destroy(dst_surf);
 	    exa->scrn->tex_surface_destroy(src_surf);
@@ -817,8 +817,8 @@ xorg_exa_set_texture(PixmapPtr pPixmap, struct  pipe_texture *tex)
     if (!priv)
 	return FALSE;
 
-    if (pPixmap->drawable.width != tex->width[0] ||
-	pPixmap->drawable.height != tex->height[0])
+    if (pPixmap->drawable.width != tex->width0 ||
+	pPixmap->drawable.height != tex->height0)
 	return FALSE;
 
     pipe_texture_reference(&priv->tex, tex);
@@ -841,9 +841,9 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     template.target = PIPE_TEXTURE_2D;
     exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &dummy);
     pf_get_block(template.format, &template.block);
-    template.width[0] = width;
-    template.height[0] = height;
-    template.depth[0] = 1;
+    template.width0 = width;
+    template.height0 = height;
+    template.depth0 = 1;
     template.last_level = 0;
     template.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
     template.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
