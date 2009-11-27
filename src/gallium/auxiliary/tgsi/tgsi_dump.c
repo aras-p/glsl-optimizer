@@ -477,9 +477,6 @@ prolog(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
    ENM( iter->processor.Processor, processor_type_names );
-   UID( iter->version.Major );
-   CHR( '.' );
-   UID( iter->version.Minor );
    EOL();
    return TRUE;
 }

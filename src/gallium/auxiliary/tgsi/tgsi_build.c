@@ -30,21 +30,6 @@
 #include "tgsi_build.h"
 #include "tgsi_parse.h"
 
-/*
- * version
- */
-
-struct tgsi_version
-tgsi_build_version( void )
-{
-   struct tgsi_version  version;
-
-   version.Major = 1;
-   version.Minor = 1;
-   version.Padding = 0;
-
-   return version;
-}
 
 /*
  * header

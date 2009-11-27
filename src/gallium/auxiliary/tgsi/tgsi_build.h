@@ -36,12 +36,6 @@ struct tgsi_token;
 extern "C" {
 #endif
 
-/*
- * version
- */
-
-struct tgsi_version
-tgsi_build_version( void );
 
 /*
  * header

@@ -34,11 +34,6 @@
 extern "C" {
 #endif
 
-struct tgsi_full_version
-{
-   struct tgsi_version  Version;
-};
-
 struct tgsi_full_header
 {
    struct tgsi_header      Header;
@@ -97,7 +92,6 @@ struct tgsi_parse_context
 {
    const struct tgsi_token    *Tokens;
    unsigned                   Position;
-   struct tgsi_full_version   FullVersion;
    struct tgsi_full_header    FullHeader;
    union tgsi_full_token      FullToken;
 };

@@ -35,21 +35,16 @@ tgsi_parse_init(
    struct tgsi_parse_context *ctx,
    const struct tgsi_token *tokens )
 {
-   ctx->FullVersion.Version = *(struct tgsi_version *) &tokens[0];
-   if( ctx->FullVersion.Version.Major > 1 ) {
-      return TGSI_PARSE_ERROR;
-   }
-
-   ctx->FullHeader.Header = *(struct tgsi_header *) &tokens[1];
+   ctx->FullHeader.Header = *(struct tgsi_header *) &tokens[0];
    if( ctx->FullHeader.Header.HeaderSize >= 2 ) {
-      ctx->FullHeader.Processor = *(struct tgsi_processor *) &tokens[2];
+      ctx->FullHeader.Processor = *(struct tgsi_processor *) &tokens[1];
    }
    else {
       return TGSI_PARSE_ERROR;
    }
 
    ctx->Tokens = tokens;
-   ctx->Position = 1 + ctx->FullHeader.Header.HeaderSize;
+   ctx->Position = ctx->FullHeader.Header.HeaderSize;
 
    return TGSI_PARSE_OK;
 }

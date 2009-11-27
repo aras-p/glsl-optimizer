@@ -405,12 +405,6 @@ tgsi_dump_c(
 
    TXT( "tgsi-dump begin -----------------" );
 
-   TXT( "\nMajor: " );
-   UID( parse.FullVersion.Version.Major );
-   TXT( "\nMinor: " );
-   UID( parse.FullVersion.Version.Minor );
-   EOL();
-
    TXT( "\nHeaderSize: " );
    UID( parse.FullHeader.Header.HeaderSize );
    TXT( "\nBodySize  : " );

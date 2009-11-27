@@ -172,28 +172,24 @@ static void report_error( struct translate_ctx *ctx, const char *msg )
 
 /* Parse shader header.
  * Return TRUE for one of the following headers.
- *    FRAG1.1
- *    GEOM1.1
- *    VERT1.1
+ *    FRAG
+ *    GEOM
+ *    VERT
  */
 static boolean parse_header( struct translate_ctx *ctx )
 {
    uint processor;
 
-   if (str_match_no_case( &ctx->cur, "FRAG1.1" ))
+   if (str_match_no_case( &ctx->cur, "FRAG" ))
       processor = TGSI_PROCESSOR_FRAGMENT;
-   else if (str_match_no_case( &ctx->cur, "VERT1.1" ))
+   else if (str_match_no_case( &ctx->cur, "VERT" ))
       processor = TGSI_PROCESSOR_VERTEX;
-   else if (str_match_no_case( &ctx->cur, "GEOM1.1" ))
+   else if (str_match_no_case( &ctx->cur, "GEOM" ))
       processor = TGSI_PROCESSOR_GEOMETRY;
    else {
       report_error( ctx, "Unknown header" );
       return FALSE;
    }
-
-   if (ctx->tokens_cur >= ctx->tokens_end)
-      return FALSE;
-   *(struct tgsi_version *) ctx->tokens_cur++ = tgsi_build_version();
 
    if (ctx->tokens_cur >= ctx->tokens_end)
       return FALSE;

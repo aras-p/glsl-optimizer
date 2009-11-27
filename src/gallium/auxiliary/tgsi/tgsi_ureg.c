@@ -37,7 +37,6 @@
 #include "util/u_math.h"
 
 union tgsi_any_token {
-   struct tgsi_version version;
    struct tgsi_header header;
    struct tgsi_processor processor;
    struct tgsi_token token;
@@ -1062,17 +1061,13 @@ fixup_header_size(struct ureg_program *ureg)
 static void
 emit_header( struct ureg_program *ureg )
 {
-   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 3 );
+   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 2 );
 
-   out[0].version.Major = 1;
-   out[0].version.Minor = 1;
-   out[0].version.Padding = 0;
+   out[0].header.HeaderSize = 2;
+   out[0].header.BodySize = 0;
 
-   out[1].header.HeaderSize = 2;
-   out[1].header.BodySize = 0;
-
-   out[2].processor.Processor = ureg->processor;
-   out[2].processor.Padding = 0;
+   out[1].processor.Processor = ureg->processor;
+   out[1].processor.Padding = 0;
 }
 
 
