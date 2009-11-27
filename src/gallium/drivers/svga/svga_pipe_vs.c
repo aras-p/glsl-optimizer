@@ -48,7 +48,7 @@ static const struct tgsi_token *substitute_vs(
    static struct tgsi_token tokens[300];
 
    const char *text = 
-      "VERT1.1\n"
+      "VERT\n"
       "DCL IN[0]\n"
       "DCL IN[1]\n"
       "DCL IN[2]\n"
