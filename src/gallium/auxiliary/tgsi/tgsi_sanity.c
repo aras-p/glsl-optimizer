@@ -34,7 +34,7 @@ typedef uint reg_flag;
 
 #define BITS_IN_REG_FLAG (sizeof( reg_flag ) * 8)
 
-#define MAX_REGISTERS 256
+#define MAX_REGISTERS 1024
 #define MAX_REG_FLAGS ((MAX_REGISTERS + BITS_IN_REG_FLAG - 1) / BITS_IN_REG_FLAG)
 
 struct sanity_check_ctx
