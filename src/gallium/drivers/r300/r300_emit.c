@@ -145,8 +145,8 @@ static const float * get_shader_constant(
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
                     tex = &r300->textures[constant->u.State[1]]->tex;
-                    vec[0] = 1.0 / tex->width[0];
-                    vec[1] = 1.0 / tex->height[0];
+                    vec[0] = 1.0 / tex->width0;
+                    vec[1] = 1.0 / tex->height0;
                     break;
 
                 default:
