@@ -66,6 +66,7 @@ static void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
     }
 }
 
+
 static void find_output_registers(struct r300_fragment_program_compiler * compiler,
                                   struct r300_fragment_shader * fs)
 {
@@ -93,37 +94,23 @@ static void allocate_hardware_inputs(
     void (*allocate)(void * data, unsigned input, unsigned hwreg),
     void * mydata)
 {
-    struct tgsi_shader_info* info = &((struct r300_fragment_shader*)c->UserData)->info;
-    int total_colors = 0;
-    int colors = 0;
-    int total_generic = 0;
-    int generic = 0;
-    int i;
+    struct r300_shader_semantics* inputs =
+        &((struct r300_fragment_shader*)c->UserData)->inputs;
+    int i, reg = 0;
 
-    for (i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
-            case TGSI_SEMANTIC_COLOR:
-                total_colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                total_generic++;
-                break;
+    /* Allocate input registers. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (inputs->color[i] != ATTR_UNUSED) {
+            allocate(mydata, inputs->color[i], reg++);
         }
     }
-
-    for(i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
-            case TGSI_SEMANTIC_COLOR:
-                allocate(mydata, i, colors);
-                colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                allocate(mydata, i, total_colors + generic);
-                generic++;
-                break;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (inputs->generic[i] != ATTR_UNUSED) {
+            allocate(mydata, inputs->generic[i], reg++);
         }
+    }
+    if (inputs->fog != ATTR_UNUSED) {
+        allocate(mydata, inputs->fog, reg++);
     }
 }
 
