@@ -287,23 +287,20 @@ svga_texture_create(struct pipe_screen *screen,
    if(templat->last_level >= SVGA_MAX_TEXTURE_LEVELS)
       goto error2;
    
-   width = templat->width[0];
-   height = templat->height[0];
-   depth = templat->depth[0];
+   width = templat->width0;
+   height = templat->height0;
+   depth = templat->depth0;
    for(level = 0; level <= templat->last_level; ++level) {
-      tex->base.width[level] = width;
-      tex->base.height[level] = height;
-      tex->base.depth[level] = depth;
       tex->base.nblocksx[level] = pf_get_nblocksx(&tex->base.block, width);  
       tex->base.nblocksy[level] = pf_get_nblocksy(&tex->base.block, height);  
-      width  = minify(width);
-      height = minify(height);
-      depth = minify(depth);
+      width = u_minify(width, 1);
+      height = u_minify(height, 1);
+      depth = u_minify(depth, 1);
    }
    
-   size.width = templat->width[0];
-   size.height = templat->height[0];
-   size.depth = templat->depth[0];
+   size.width = templat->width0;
+   size.height = templat->height0;
+   size.depth = templat->depth0;
    
    if(templat->target == PIPE_TEXTURE_CUBE) {
       flags |= SVGA3D_SURFACE_CUBEMAP;
@@ -367,7 +364,7 @@ svga_texture_blanket(struct pipe_screen * screen,
    /* Only supports one type */
    if (base->target != PIPE_TEXTURE_2D ||
        base->last_level != 0 ||
-       base->depth[0] != 1) {
+       base->depth0 != 1) {
       return NULL;
    }
 
@@ -534,9 +531,9 @@ svga_texture_view_surface(struct pipe_context *pipe,
             "svga: Create surface view: face %d zslice %d mips %d..%d\n",
             face_pick, zslice_pick, start_mip, start_mip+num_mip-1);
 
-   size.width = tex->base.width[start_mip];
-   size.height = tex->base.height[start_mip];
-   size.depth = zslice_pick < 0 ? tex->base.depth[start_mip] : 1;
+   size.width = u_minify(tex->base.width0, start_mip);
+   size.height = u_minify(tex->base.height0, start_mip);
+   size.depth = zslice_pick < 0 ? u_minify(tex->base.depth0, start_mip) : 1;
    assert(size.depth == 1);
    
    if(tex->base.target == PIPE_TEXTURE_CUBE && face_pick < 0) {
@@ -565,11 +562,12 @@ svga_texture_view_surface(struct pipe_context *pipe,
    for (i = 0; i < num_mip; i++) {
       for (j = 0; j < numFaces; j++) {
          if(tex->defined[j + face_pick][i + start_mip]) {
-            unsigned depth = zslice_pick < 0 ? tex->base.depth[i + start_mip] : 1;
+            unsigned depth = zslice_pick < 0 ? u_minify(tex->base.depth0, i + start_mip) : 1;
             svga_texture_copy_handle(svga_context(pipe), ss,
                                      tex->handle, 0, 0, z_offset, i + start_mip, j + face_pick,
                                      handle, 0, 0, 0, i, j,
-                                     tex->base.width[i + start_mip], tex->base.height[i + start_mip], depth);
+                                     u_minify(tex->base.width0, i + start_mip),
+                                     u_minify(tex->base.height0, i + start_mip), depth);
          }
       }
    }
@@ -599,8 +597,8 @@ svga_get_tex_surface(struct pipe_screen *screen,
    pipe_reference_init(&ps->reference, 1);
    pipe_texture_reference(&ps->texture, pt);
    ps->format = pt->format;
-   ps->width = pt->width[level];
-   ps->height = pt->height[level];
+   ps->width = u_minify(pt->width0, level);
+   ps->height = u_minify(pt->height0, level);
    ps->usage = flags;
    ps->level = level;
    ps->face = face;
@@ -723,7 +721,8 @@ svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
       svga_texture_copy_handle(svga_context(pipe), ss,
                                s->handle, 0, 0, 0, s->real_level, s->real_face,
                                tex->handle, 0, 0, surf->zslice, surf->level, surf->face,
-                               tex->base.width[surf->level], tex->base.height[surf->level], 1);
+                               u_minify(tex->base.width0, surf->level),
+                               u_minify(tex->base.height0, surf->level), 1);
       tex->defined[surf->face][surf->level] = TRUE;
    }
 }
@@ -953,9 +952,9 @@ svga_get_tex_sampler_view(struct pipe_context *pipe, struct pipe_texture *pt,
                "svga: Sampler view: no %p, mips %u..%u, nr %u, size (%ux%ux%u), last %u\n",
                pt, min_lod, max_lod,
                max_lod - min_lod + 1,
-               pt->width[0],
-               pt->height[0],
-               pt->depth[0],
+               pt->width0,
+               pt->height0,
+               pt->depth0,
                pt->last_level);
       sws->surface_reference(sws, &sv->handle, tex->handle);
       return sv;
@@ -965,9 +964,9 @@ svga_get_tex_sampler_view(struct pipe_context *pipe, struct pipe_texture *pt,
             "svga: Sampler view: yes %p, mips %u..%u, nr %u, size (%ux%ux%u), last %u\n",
             pt, min_lod, max_lod,
             max_lod - min_lod + 1,
-            pt->width[0],
-            pt->height[0],
-            pt->depth[0],
+            pt->width0,
+            pt->height0,
+            pt->depth0,
             pt->last_level);
 
    sv->age = tex->age;
@@ -1015,9 +1014,9 @@ svga_validate_sampler_view(struct svga_context *svga, struct svga_sampler_view *
             svga_texture_copy_handle(svga, NULL,
                                      tex->handle, 0, 0, 0, i, k,
                                      v->handle, 0, 0, 0, i - v->min_lod, k,
-                                     tex->base.width[i],
-                                     tex->base.height[i],
-                                     tex->base.depth[i]);
+                                     u_minify(tex->base.width0, i),
+                                     u_minify(tex->base.height0, i),
+                                     u_minify(tex->base.depth0, i));
       }
    }
 
@@ -1047,7 +1046,7 @@ svga_screen_buffer_from_texture(struct pipe_texture *texture,
        svga_translate_format(texture->format),
        stex->handle);
 
-   *stride = pf_get_nblocksx(&texture->block, texture->width[0]) *
+   *stride = pf_get_nblocksx(&texture->block, texture->width0) *
       texture->block.size;
 
    return *buffer != NULL;

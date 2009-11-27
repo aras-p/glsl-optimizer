@@ -140,8 +140,8 @@ static int emit_fs_consts( struct svga_context *svga,
             struct pipe_texture *tex = svga->curr.texture[i];
             float data[4];
 
-            data[0] = 1.0 / (float)tex->width[0];
-            data[1] = 1.0 / (float)tex->height[0];
+            data[0] = 1.0 / (float)tex->width0;
+            data[1] = 1.0 / (float)tex->height0;
             data[2] = 1.0;
             data[3] = 1.0;
 
