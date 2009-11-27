@@ -203,76 +203,46 @@ static void r300_stream_locations_swtcl(
 static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
 {
     struct r300_vertex_shader * vs = c->UserData;
+    struct r300_shader_semantics* outputs = &vs->outputs;
     struct tgsi_shader_info* info = &vs->info;
-    struct tgsi_parse_context parser;
-    struct tgsi_full_declaration * decl;
-    boolean pointsize = FALSE;
-    int out_colors = 0;
-    int colors = 0;
-    int out_generic = 0;
-    int generic = 0;
-    int i;
+    int i, reg = 0;
 
     /* Fill in the input mapping */
     for (i = 0; i < info->num_inputs; i++)
         c->code->inputs[i] = i;
 
-    /* Fill in the output mapping */
-    for (i = 0; i < info->num_outputs; i++) {
-        switch (info->output_semantic_name[i]) {
-            case TGSI_SEMANTIC_PSIZE:
-                pointsize = TRUE;
-                break;
-            case TGSI_SEMANTIC_COLOR:
-                out_colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                out_generic++;
-                break;
+    /* Position. */
+    if (outputs->pos != ATTR_UNUSED) {
+        c->code->outputs[outputs->pos] = reg++;
+    } else {
+        assert(0);
+    }
+
+    /* Point size. */
+    if (outputs->psize != ATTR_UNUSED) {
+        c->code->outputs[outputs->psize] = reg++;
+    }
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (outputs->color[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->color[i]] = reg++;
         }
     }
 
-    tgsi_parse_init(&parser, vs->state.tokens);
+    /* XXX Back-face colors. */
 
-    while (!tgsi_parse_end_of_tokens(&parser)) {
-        tgsi_parse_token(&parser);
-
-        if (parser.FullToken.Token.Type != TGSI_TOKEN_TYPE_DECLARATION)
-            continue;
-
-        decl = &parser.FullToken.FullDeclaration;
-
-        if (decl->Declaration.File != TGSI_FILE_OUTPUT)
-            continue;
-
-        switch (decl->Semantic.SemanticName) {
-            case TGSI_SEMANTIC_POSITION:
-                c->code->outputs[decl->DeclarationRange.First] = 0;
-                break;
-            case TGSI_SEMANTIC_PSIZE:
-                c->code->outputs[decl->DeclarationRange.First] = 1;
-                break;
-            case TGSI_SEMANTIC_COLOR:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
-                    (pointsize ? 1 : 0) +
-                    colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
-                    (pointsize ? 1 : 0) +
-                    out_colors +
-                    generic++;
-                break;
-            default:
-                debug_printf("r300: vs: Bad semantic declaration %d\n",
-                    decl->Semantic.SemanticName);
-                assert(0);
+    /* Texture coordinates. */
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (outputs->generic[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->generic[i]] = reg++;
         }
     }
 
-    tgsi_parse_free(&parser);
+    /* Fog coordinates. */
+    if (outputs->fog != ATTR_UNUSED) {
+        c->code->outputs[outputs->fog] = reg++;
+    }
 }
 
 void r300_translate_vertex_shader(struct r300_context* r300,
