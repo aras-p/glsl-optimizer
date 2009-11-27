@@ -313,21 +313,25 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
  * these concepts are linked.
  */
 void renderer_bind_destination(struct xorg_renderer *r,
-                               struct pipe_surface *surface )
+                               struct pipe_surface *surface,
+                               int width,
+                               int height )
 {
 
    struct pipe_framebuffer_state fb;
    struct pipe_viewport_state viewport;
-   int width = surface->width;
-   int height = surface->height;
 
+   /* Framebuffer uses actual surface width/height
+    */
    memset(&fb, 0, sizeof fb);
-   fb.width  = width;
-   fb.height = height;
+   fb.width  = surface->width;
+   fb.height = surface->height;
    fb.nr_cbufs = 1;
    fb.cbufs[0] = surface;
    fb.zsbuf = 0;
 
+   /* Viewport sets us up to just touch the bit we're interested in:
+    */
    viewport.scale[0] =  width / 2.f;
    viewport.scale[1] =  height / 2.f;
    viewport.scale[2] =  1.0;
@@ -337,6 +341,8 @@ void renderer_bind_destination(struct xorg_renderer *r,
    viewport.translate[2] = 0.0;
    viewport.translate[3] = 0.0;
 
+   /* Constant buffer set up to match viewport dimensions:
+    */
    if (r->fb_width != width ||
        r->fb_height != height) 
    {

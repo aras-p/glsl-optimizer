@@ -48,6 +48,7 @@
 #include "util/u_debug.h"
 
 #define DEBUG_PRINT 0
+#define ROUND_UP_TEXTURES 1
 
 /*
  * Helper functions
@@ -273,13 +274,18 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 	    PIPE_REFERENCED_FOR_WRITE)
 	    exa->pipe->flush(exa->pipe, 0, NULL);
 
+        assert(pPix->drawable.width <= priv->tex->width[0]);
+        assert(pPix->drawable.height <= priv->tex->height[0]);
+
 	priv->map_transfer =
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
 #ifdef EXA_MIXED_PIXMAPS
 					PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
 					PIPE_TRANSFER_READ_WRITE,
-					0, 0, priv->tex->width[0], priv->tex->height[0]);
+					0, 0, 
+                                        pPix->drawable.width,
+                                        pPix->drawable.height );
 	if (!priv->map_transfer)
 #ifdef EXA_MIXED_PIXMAPS
 	    return FALSE;
@@ -820,6 +826,22 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
 }
 
 static Bool
+size_match( int width, int tex_width )
+{
+#if ROUND_UP_TEXTURES
+   if (width > tex_width)
+      return FALSE;
+
+   if (width * 2 < tex_width)
+      return FALSE;
+
+   return TRUE;
+#else
+   return width == tex_width;
+#endif
+}
+
+static Bool
 ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 		      int depth, int bitsPerPixel, int devKind,
 		      pointer pPixData)
@@ -865,9 +887,9 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     /* Deal with screen resize */
     if ((exa->accel || priv->flags) &&
         (!priv->tex ||
-         (priv->tex->width[0] != width ||
-          priv->tex->height[0] != height ||
-          priv->tex_flags != priv->flags))) {
+         !size_match(priv->tex->width[0], width) ||
+         !size_match(priv->tex->height[0], height) ||
+         priv->tex_flags != priv->flags)) {
 	struct pipe_texture *texture = NULL;
 	struct pipe_texture template;
 
@@ -875,7 +897,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	template.target = PIPE_TEXTURE_2D;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
 	pf_get_block(template.format, &template.block);
-#if 1
+#if ROUND_UP_TEXTURES
 	template.width[0] = util_next_power_of_two(width);
 	template.height[0] = util_next_power_of_two(height);
 #else
