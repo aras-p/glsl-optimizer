@@ -474,7 +474,9 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
 {
    struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pDst);
 
-   renderer_bind_destination(exa->renderer, dst_surf);
+   renderer_bind_destination(exa->renderer, dst_surf,
+                             pDst->width,
+                             pDst->height);
 
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture, pDstPicture);
    bind_shaders(exa, op, pSrcPicture, pMaskPicture, pDstPicture, pSrc, pMask);
@@ -545,7 +547,8 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    vs_traits = VS_SOLID_FILL;
    fs_traits = FS_SOLID_FILL;
 
-   renderer_bind_destination(exa->renderer, dst_surf);
+   renderer_bind_destination(exa->renderer, dst_surf, 
+                             pixmap->width, pixmap->height);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
    cso_set_samplers(exa->renderer->cso, 0, NULL);
    cso_set_sampler_textures(exa->renderer->cso, 0, NULL);

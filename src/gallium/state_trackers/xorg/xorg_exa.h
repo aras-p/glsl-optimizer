@@ -49,6 +49,8 @@ struct exa_context
 
 struct exa_pixmap_priv
 {
+   int width, height;
+
    int flags;
    int tex_flags;
 

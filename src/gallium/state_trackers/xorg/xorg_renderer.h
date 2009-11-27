@@ -38,7 +38,9 @@ struct xorg_renderer *renderer_create(struct pipe_context *pipe);
 void renderer_destroy(struct xorg_renderer *renderer);
 
 void renderer_bind_destination(struct xorg_renderer *r,
-                               struct pipe_surface *surface );
+                               struct pipe_surface *surface,
+                               int width,
+                               int height );
 
 void renderer_bind_framebuffer(struct xorg_renderer *r,
                                struct exa_pixmap_priv *priv);
