@@ -466,6 +466,10 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
           ms->screen->fence_reference(ms->screen,
                                       &ms->fence[j],
                                       ms->fence[j+1]);
+
+       ms->screen->fence_reference(ms->screen,
+                                   &ms->fence[XORG_NR_FENCES-1],
+                                   NULL);
     }
         
 
