@@ -2914,7 +2914,7 @@ nv50_fp_move_results(struct nv50_pc *pc)
 static void
 nv50_program_fixup_insns(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e, *prev = NULL, **bra_list;
+	struct nv50_program_exec *e, **bra_list;
 	unsigned i, n, pos;
 
 	bra_list = CALLOC(pc->p->exec_size, sizeof(struct nv50_program_exec *));
@@ -2925,6 +2925,16 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 	for (n = 0, e = pc->p->exec_head; e; e = e->next)
 		if (e->param.index >= 0 && !e->param.mask)
 			bra_list[n++] = e;
+
+	/* last instruction must be long so it can have the exit bit set */
+	if (!is_long(pc->p->exec_tail))
+		convert_to_long(pc, pc->p->exec_tail);
+	/* set exit bit */
+	pc->p->exec_tail->inst[1] |= 1;
+
+	/* !immd on exit insn simultaneously means !join */
+	assert(!is_immd(pc->p->exec_head));
+	assert(!is_immd(pc->p->exec_tail));
 
 	/* Make sure we don't have any single 32 bit instructions. */
 	for (e = pc->p->exec_head, pos = 0; e; e = e->next) {
@@ -2937,22 +2947,7 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 			convert_to_long(pc, e);
 			++pos;
 		}
-		if (e->next)
-			prev = e;
 	}
-
-	assert(!is_immd(pc->p->exec_head));
-	assert(!is_immd(pc->p->exec_tail));
-
-	/* last instruction must be long so it can have the end bit set */
-	if (!is_long(pc->p->exec_tail)) {
-		convert_to_long(pc, pc->p->exec_tail);
-		if (prev)
-			convert_to_long(pc, prev);
-	}
-	assert(!(pc->p->exec_tail->inst[1] & 2));
-	/* set the end-bit */
-	pc->p->exec_tail->inst[1] |= 1;
 
 	FREE(bra_list);
 }
