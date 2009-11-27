@@ -35,12 +35,6 @@ extern "C" {
 
 #include "p_compiler.h"
 
-struct tgsi_version
-{
-   unsigned Major  : 8;
-   unsigned Minor  : 8;
-   unsigned Padding       : 16;
-};
 
 struct tgsi_header
 {
