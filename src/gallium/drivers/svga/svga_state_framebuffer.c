@@ -54,6 +54,9 @@ static int emit_framebuffer( struct svga_context *svga,
    
    for(i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {
       if (curr->cbufs[i] != hw->cbufs[i]) {
+         if (svga->curr.nr_fbs++ > 8)
+            return PIPE_ERROR_OUT_OF_MEMORY;
+
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i, curr->cbufs[i]);
          if (ret != PIPE_OK)
             return ret;

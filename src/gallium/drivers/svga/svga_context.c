@@ -230,7 +230,9 @@ void svga_context_flush( struct svga_context *svga,
                          struct pipe_fence_handle **pfence )
 {
    struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
-   
+
+   svga->curr.nr_fbs = 0;
+
    /* Unmap upload manager buffers: 
     */
    u_upload_flush(svga->upload_vb);
