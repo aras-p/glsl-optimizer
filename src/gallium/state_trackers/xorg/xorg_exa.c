@@ -44,6 +44,8 @@
 #include "pipe/p_inlines.h"
 
 #include "util/u_rect.h"
+#include "util/u_math.h"
+#include "util/u_debug.h"
 
 #define DEBUG_PRINT 0
 
@@ -831,6 +833,17 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     if (!priv || pPixData)
 	return FALSE;
 
+    if (0) {
+       debug_printf("%s pixmap %p sz %dx%dx%d devKind %d\n",
+                    __FUNCTION__, pPixmap, width, height, bitsPerPixel, devKind);
+       
+       if (priv->tex)
+          debug_printf("  ==> old texture %dx%d\n",
+                       priv->tex->width[0], 
+                       priv->tex->height[0]);
+    }
+
+
     if (depth <= 0)
 	depth = pPixmap->drawable.depth;
 
@@ -862,8 +875,13 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	template.target = PIPE_TEXTURE_2D;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
 	pf_get_block(template.format, &template.block);
+#if 1
+	template.width[0] = util_next_power_of_two(width);
+	template.height[0] = util_next_power_of_two(height);
+#else
 	template.width[0] = width;
 	template.height[0] = height;
+#endif
 	template.depth[0] = 1;
 	template.last_level = 0;
 	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | priv->flags;
