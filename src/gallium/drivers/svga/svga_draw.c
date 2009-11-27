@@ -29,10 +29,13 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
+#include "svga_context.h"
 #include "svga_draw.h"
 #include "svga_draw_private.h"
+#include "svga_debug.h"
 #include "svga_screen.h"
 #include "svga_screen_buffer.h"
+#include "svga_screen_texture.h"
 #include "svga_winsys.h"
 #include "svga_cmd.h"
 
@@ -159,6 +162,10 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
 
          ib_handle[i] = handle;
       }
+
+      SVGA_DBG(DEBUG_DMA, "draw to sid %p, %d prims\n",
+               svga_surface(svga->curr.framebuffer.cbufs[0])->handle,
+               hwtnl->cmd.prim_count);
 
       ret = SVGA3D_BeginDrawPrimitives(swc, 
                                        &vdecl, 

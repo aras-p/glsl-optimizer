@@ -57,6 +57,7 @@ static const struct debug_named_value svga_debug_flags[] = {
    { "perf",     DEBUG_PERF },
    { "flush",    DEBUG_FLUSH },
    { "sync",     DEBUG_SYNC },
+   { "cache",    DEBUG_CACHE },
    {NULL, 0}
 };
 #endif
@@ -297,6 +298,10 @@ svga_fence_finish(struct pipe_screen *screen,
                   unsigned flag)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
+
+   SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s fence_ptr %p\n",
+            __FUNCTION__, fence);
+
    return sws->fence_finish(sws, fence, flag);
 }
 

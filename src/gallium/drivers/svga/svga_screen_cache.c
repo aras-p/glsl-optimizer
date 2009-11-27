@@ -134,7 +134,8 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    else if(!LIST_IS_EMPTY(&cache->unused)) {
       /* free the last used buffer and reuse its entry */
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->unused.prev, head);
-      SVGA_DBG(DEBUG_DMA, "unref sid %p (make space)\n", entry->handle);
+      SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+               "unref sid %p (make space)\n", entry->handle);
       sws->surface_reference(sws, &entry->handle, NULL);
 
       LIST_DEL(&entry->bucket_head);
@@ -146,11 +147,14 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
       entry->handle = handle;
       memcpy(&entry->key, key, sizeof entry->key);
    
+      SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+               "cache sid %p\n", entry->handle);
       LIST_ADD(&entry->head, &cache->validated);
    }
    else {
       /* Couldn't cache the buffer -- this really shouldn't happen */
-      SVGA_DBG(DEBUG_DMA, "unref sid %p (couldn't find space)\n", handle);
+      SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+               "unref sid %p (couldn't find space)\n", handle);
       sws->surface_reference(sws, &handle, NULL);
    }
    
@@ -209,7 +213,8 @@ svga_screen_cache_cleanup(struct svga_screen *svgascreen)
    
    for(i = 0; i < SVGA_HOST_SURFACE_CACHE_SIZE; ++i) {
       if(cache->entries[i].handle) {
-	 SVGA_DBG(DEBUG_DMA, "unref sid %p (shutdown)\n", cache->entries[i].handle);
+	 SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+                  "unref sid %p (shutdown)\n", cache->entries[i].handle);
 	 sws->surface_reference(sws, &cache->entries[i].handle, NULL);
       }
 
@@ -252,7 +257,8 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
    struct svga_winsys_surface *handle = NULL;
    boolean cachable = SVGA_SURFACE_CACHE_ENABLED && key->cachable;
 
-   SVGA_DBG(DEBUG_DMA, "%s sz %dx%dx%d mips %d faces %d cachable %d\n", 
+   SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+            "%s sz %dx%dx%d mips %d faces %d cachable %d\n", 
             __FUNCTION__,
             key->size.width,
             key->size.height,
@@ -276,10 +282,12 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
       handle = svga_screen_cache_lookup(svgascreen, key);
       if (handle) {
          if (key->format == SVGA3D_BUFFER)
-            SVGA_DBG(DEBUG_DMA, "  reuse sid %p sz %d (buffer)\n", handle, 
+            SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+                     "reuse sid %p sz %d (buffer)\n", handle, 
                      key->size.width);
          else
-            SVGA_DBG(DEBUG_DMA, "  reuse sid %p sz %dx%dx%d mips %d faces %d\n", handle, 
+            SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+                     "reuse sid %p sz %dx%dx%d mips %d faces %d\n", handle, 
                      key->size.width,
                      key->size.height,
                      key->size.depth,
@@ -296,7 +304,12 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
                                    key->numFaces, 
                                    key->numMipLevels);
       if (handle)
-         SVGA_DBG(DEBUG_DMA, "create sid %p sz %d\n", handle, key->size);
+         SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
+                  "  CREATE sid %p sz %dx%dx%d\n", 
+                  handle, 
+                  key->size.width,
+                  key->size.height,
+                  key->size.depth);
    }
 
    return handle;
@@ -318,7 +331,8 @@ svga_screen_surface_destroy(struct svga_screen *svgascreen,
       svga_screen_cache_add(svgascreen, key, p_handle);
    }
    else {
-      SVGA_DBG(DEBUG_DMA, "unref sid %p (uncachable)\n", *p_handle);
+      SVGA_DBG(DEBUG_DMA,
+               "unref sid %p (uncachable)\n", *p_handle);
       sws->surface_reference(sws, p_handle, NULL);
    }
 }

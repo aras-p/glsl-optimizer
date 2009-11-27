@@ -447,7 +447,7 @@ svga_buffer_map_range( struct pipe_screen *screen,
             enum pipe_error ret;
             struct pipe_fence_handle *fence = NULL;
             
-            SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p, bytes %u - %u\n", 
+            SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p (buffer), bytes %u - %u\n", 
                      sbuf->handle, 0, sbuf->base.size);
 
             memset(&flags, 0, sizeof flags);
