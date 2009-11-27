@@ -115,12 +115,11 @@ create_intra_vert_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0              ; Vertex pos
@@ -185,12 +184,11 @@ create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0                      ; Luma texcoords
@@ -278,12 +276,11 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0              ; Vertex pos
@@ -361,12 +358,11 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0                      ; Luma texcoords
@@ -470,12 +466,11 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0              ; Vertex pos
@@ -561,12 +556,11 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    tokens = (struct tgsi_token *) malloc(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header *) &tokens[1];
+   header = (struct tgsi_header *) &tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor *) &tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+   *(struct tgsi_processor *) &tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0                      ; Luma texcoords

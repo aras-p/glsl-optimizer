@@ -95,12 +95,11 @@ create_vert_shader(struct vl_compositor *c)
    assert(c);
 
    tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
+   header = (struct tgsi_header*)&tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
+   *(struct tgsi_processor*)&tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0             ; Vertex pos
@@ -172,12 +171,11 @@ create_frag_shader(struct vl_compositor *c)
    assert(c);
 
    tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
+   header = (struct tgsi_header*)&tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+   *(struct tgsi_processor*)&tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
 
-   ti = 3;
+   ti = 2;
 
    /* decl i0             ; Texcoords for s0 */
    decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
