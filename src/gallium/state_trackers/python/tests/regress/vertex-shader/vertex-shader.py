@@ -135,7 +135,7 @@ def test(dev, name):
 
     # fragment shader
     fs = Shader('''
-        FRAG1.1
+        FRAG
         DCL IN[0], COLOR, LINEAR
         DCL OUT[0], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]

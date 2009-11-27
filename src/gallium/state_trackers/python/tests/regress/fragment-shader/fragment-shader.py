@@ -131,7 +131,7 @@ def test(dev, name):
 
     # vertex shader
     vs = Shader('''
-        VERT1.1
+        VERT
         DCL IN[0], POSITION
         DCL IN[1], COLOR
         DCL OUT[0], POSITION
