@@ -35,7 +35,7 @@ all default: $(TARGET)
 
 $(TARGET): $(OBJECTS) Makefile $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a $(LIBS)
 	$(TOP)/bin/mklib -noprefix -o $@ \
-	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_i965
+	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_intel
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
