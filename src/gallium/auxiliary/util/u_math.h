@@ -499,11 +499,15 @@ util_bitcount(unsigned n)
 #if defined(PIPE_CC_GCC)
    return __builtin_popcount(n);
 #else
-   /* XXX there are more clever ways of doing this */
+   /* K&R classic bitcount.
+    *
+    * For each iteration, clear the LSB from the bitfield.
+    * Requires only one iteration per set bit, instead of
+    * one iteration per bit less than highest set bit.
+    */
    unsigned bits = 0;
-   while (n) {
-      bits += (n & 1);
-      n = n >> 1;
+   for (bits, n, bits++) {
+      n &= n - 1;
    }
    return bits;
 #endif
