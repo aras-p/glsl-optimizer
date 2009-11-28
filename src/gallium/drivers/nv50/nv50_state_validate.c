@@ -201,7 +201,8 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
 		so_emit(chan, nv50->state.fragprog);
-	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+				 NV50_NEW_RASTERIZER))
 		so_emit(chan, nv50->state.programs);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
 		so_emit(chan, nv50->state.rast);
@@ -264,7 +265,8 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
 		nv50_fragprog_validate(nv50);
 
-	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+			   NV50_NEW_RASTERIZER))
 		nv50_linkage_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
