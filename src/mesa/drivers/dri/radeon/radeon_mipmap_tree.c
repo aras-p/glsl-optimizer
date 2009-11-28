@@ -594,6 +594,10 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 				if (RADEON_DEBUG & RADEON_TEXTURE) {
 					fprintf(stderr, "MIGRATING\n");
 				}
+				struct radeon_bo *src_bo = (img->mt) ? img->mt->bo : img->bo;
+				if (src_bo && radeon_bo_is_referenced_by_cs(src_bo, rmesa->cmdbuf.cs)) {
+					radeon_firevertices(rmesa);
+				}
 				migrate_image_to_miptree(dst_miptree, img, face, radeon_gl_level_to_miptree_level(texObj, level));
 			} else if (RADEON_DEBUG & RADEON_TEXTURE) {
 				fprintf(stderr, "OK\n");
