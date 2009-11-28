@@ -506,7 +506,7 @@ util_bitcount(unsigned n)
     * one iteration per bit less than highest set bit.
     */
    unsigned bits = 0;
-   for (bits, n, bits++) {
+   for (bits; n; bits++) {
       n &= n - 1;
    }
    return bits;
