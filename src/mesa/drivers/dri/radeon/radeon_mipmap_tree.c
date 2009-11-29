@@ -576,6 +576,11 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 		radeon_miptree_unreference(&t->mt);
 		radeon_try_alloc_miptree(rmesa, t);
 		dst_miptree = t->mt;
+		if (RADEON_DEBUG & RADEON_TEXTURE) {
+			fprintf(stderr, "%s: No matching miptree found, allocated new one %p\n", __FUNCTION__, t->mt);
+		}
+	} else if (RADEON_DEBUG & RADEON_TEXTURE) {
+		fprintf(stderr, "%s: Using miptree %p\n", __FUNCTION__, t->mt);
 	}
 
 	const unsigned faces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
