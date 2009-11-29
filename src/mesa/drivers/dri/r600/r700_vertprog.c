@@ -631,14 +631,12 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     paramList = vp->mesa_program->Base.Parameters;
 
     if(NULL != paramList) {
-        //vp->mesa_program was cloned, not updated by glsl shader api.
-        //_mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current
-        // so, use ctx->VertexProgem._Current        
+        /* vp->mesa_program was cloned, not updated by glsl shader api. */
+        /* _mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current */
+        /* so, use ctx->VertexProgem._Current */       
         struct gl_program_parameter_list *paramListOrginal = 
                          paramListOrginal = ctx->VertexProgram._Current->Base.Parameters;
-            
-        //---------------------------
-
+         
 	    _mesa_load_state_parameters(ctx, paramList);
 
 	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)

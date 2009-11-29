@@ -50,13 +50,13 @@ struct r700_fragment_program
 /* Internal */
 void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 			  struct gl_fragment_program *mesa_fp,
-              GLcontext *ctx); //richard glsl nov.27
+                          GLcontext *ctx); 
 GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
 					   struct gl_fragment_program   *mesa_fp);
 
 GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 				      struct gl_fragment_program   *mesa_vp,
-                      GLcontext *ctx); //richard glsl nov.27
+                                      GLcontext *ctx); 
 
 /* Interface */
 extern void r700SelectFragmentShader(GLcontext *ctx);
