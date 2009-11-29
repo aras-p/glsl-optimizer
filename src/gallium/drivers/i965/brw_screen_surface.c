@@ -245,6 +245,7 @@ static void brw_tex_surface_destroy( struct pipe_surface *surf )
 
    /* Unreference texture, shared buffer:
     */
+   remove_from_list(surface);
    bo_reference(&surface->bo, NULL);
    pipe_texture_reference( &surface->base.texture, NULL );
 
