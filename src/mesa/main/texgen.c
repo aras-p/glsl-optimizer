@@ -206,7 +206,10 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
-   _mesa_TexGenfv(coord, pname, &param);
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0F;
+   _mesa_TexGenfv(coord, pname, p);
 }
 
 
