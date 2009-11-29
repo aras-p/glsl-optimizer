@@ -167,11 +167,12 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;
+    __DRIscreenPrivate *psp;
 
     /* Bind the drawable to the context */
 
     if (pcp) {
+	psp = pcp->driScreenPriv;
 	pcp->driDrawablePriv = pdp;
 	pcp->driReadablePriv = prp;
 	if (pdp) {
