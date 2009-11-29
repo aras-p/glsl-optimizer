@@ -506,7 +506,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		if (!img)
 			break;
 
-		if (!img->mt || !radeon_miptree_matches_texture(img->mt, &texObj->base))
+		if (!img->mt)
 			continue;
 
 		for (int i = 0; i < mtCount; ++i) {
@@ -517,8 +517,8 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 			}
 		}
 
-		if (!found) {
-			mtSizes[mtCount] += img->mt->levels[img->mtlevel].size;
+		if (!found && radeon_miptree_matches_texture(img->mt, &texObj->base)) {
+			mtSizes[mtCount] = img->mt->levels[img->mtlevel].size;
 			mts[mtCount] = img->mt;
 			mtCount++;
 		}
