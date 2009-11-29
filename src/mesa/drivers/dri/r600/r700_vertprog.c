@@ -631,6 +631,14 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     paramList = vp->mesa_program->Base.Parameters;
 
     if(NULL != paramList) {
+        //vp->mesa_program was cloned, not updated by glsl shader api.
+        //_mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current
+        // so, use ctx->VertexProgem._Current        
+        struct gl_program_parameter_list *paramListOrginal = 
+                         paramListOrginal = ctx->VertexProgram._Current->Base.Parameters;
+            
+        //---------------------------
+
 	    _mesa_load_state_parameters(ctx, paramList);
 
 	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
@@ -643,10 +651,20 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		    r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		    r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		    r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		    r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
+            {
+                r700->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
+            }
+            else
+            {
+		        r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            }
 	    }
     } else
 	    r700->vs.num_consts = 0;

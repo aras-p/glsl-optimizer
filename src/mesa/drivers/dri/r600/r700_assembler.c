@@ -1038,7 +1038,8 @@ GLboolean checkop2(r700_AssemblerBase* pAsm)
 
     checkop_init(pAsm);
 
-    if( (pILInst->SrcReg[0].File == PROGRAM_CONSTANT)    ||
+    if( (pILInst->SrcReg[0].File == PROGRAM_UNIFORM)     || 
+        (pILInst->SrcReg[0].File == PROGRAM_CONSTANT)    ||
         (pILInst->SrcReg[0].File == PROGRAM_LOCAL_PARAM) ||
         (pILInst->SrcReg[0].File == PROGRAM_ENV_PARAM)   ||
         (pILInst->SrcReg[0].File == PROGRAM_STATE_VAR) )
@@ -1049,7 +1050,8 @@ GLboolean checkop2(r700_AssemblerBase* pAsm)
     {
         bSrcConst[0] = GL_FALSE;
     }
-    if( (pILInst->SrcReg[1].File == PROGRAM_CONSTANT)    ||
+    if( (pILInst->SrcReg[1].File == PROGRAM_UNIFORM)     || 
+        (pILInst->SrcReg[1].File == PROGRAM_CONSTANT)    ||
         (pILInst->SrcReg[1].File == PROGRAM_LOCAL_PARAM) ||
         (pILInst->SrcReg[1].File == PROGRAM_ENV_PARAM)   ||
         (pILInst->SrcReg[1].File == PROGRAM_STATE_VAR) )
@@ -1082,7 +1084,8 @@ GLboolean checkop3(r700_AssemblerBase* pAsm)
 
     checkop_init(pAsm);
 
-    if( (pILInst->SrcReg[0].File == PROGRAM_CONSTANT)    ||
+    if( (pILInst->SrcReg[0].File == PROGRAM_UNIFORM)     || 
+        (pILInst->SrcReg[0].File == PROGRAM_CONSTANT)    ||
         (pILInst->SrcReg[0].File == PROGRAM_LOCAL_PARAM) ||
         (pILInst->SrcReg[0].File == PROGRAM_ENV_PARAM)   ||
         (pILInst->SrcReg[0].File == PROGRAM_STATE_VAR) )
@@ -1093,7 +1096,8 @@ GLboolean checkop3(r700_AssemblerBase* pAsm)
     {
         bSrcConst[0] = GL_FALSE;
     }
-    if( (pILInst->SrcReg[1].File == PROGRAM_CONSTANT)    ||
+    if( (pILInst->SrcReg[1].File == PROGRAM_UNIFORM)     || 
+        (pILInst->SrcReg[1].File == PROGRAM_CONSTANT)    ||
         (pILInst->SrcReg[1].File == PROGRAM_LOCAL_PARAM) ||
         (pILInst->SrcReg[1].File == PROGRAM_ENV_PARAM)   ||
         (pILInst->SrcReg[1].File == PROGRAM_STATE_VAR) )
@@ -1104,7 +1108,8 @@ GLboolean checkop3(r700_AssemblerBase* pAsm)
     {
         bSrcConst[1] = GL_FALSE;
     }
-    if( (pILInst->SrcReg[2].File == PROGRAM_CONSTANT)    ||
+    if( (pILInst->SrcReg[2].File == PROGRAM_UNIFORM)     || 
+        (pILInst->SrcReg[2].File == PROGRAM_CONSTANT)    ||
         (pILInst->SrcReg[2].File == PROGRAM_LOCAL_PARAM) ||
         (pILInst->SrcReg[2].File == PROGRAM_ENV_PARAM)   ||
         (pILInst->SrcReg[2].File == PROGRAM_STATE_VAR) )
@@ -1218,7 +1223,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             pAsm->S[fld].src.reg   = pILInst->SrcReg[src].Index;
             break;      
         case PROGRAM_INPUT:
-            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE); 
             pAsm->S[fld].src.rtype = SRC_REG_INPUT;
             switch (pAsm->currentShaderType)
             {
@@ -1346,6 +1351,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
     else
     {
     switch (pILInst->SrcReg[0].File) {
+        case PROGRAM_UNIFORM: 
         case PROGRAM_CONSTANT:
         case PROGRAM_LOCAL_PARAM:
         case PROGRAM_ENV_PARAM:
@@ -2117,7 +2123,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
         if( is_gpr(sel) ) 
         {
             if( GL_FALSE == cycle_for_vector_bank_swizzle(bank_swizzle, src, &cycle) )
-            {
+            {             
                 return GL_FALSE;
             }
 
@@ -2129,7 +2135,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
             else 
             {
                 if( GL_FALSE == reserve_gpr(pAsm, sel, chan, cycle) )
-                {
+                {                    
                     return GL_FALSE;
                 }
             }
@@ -2141,7 +2147,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
             if( is_cfile(sel) ) 
             {        
                 if( GL_FALSE == reserve_cfile(pAsm, sel, chan) )
-                {
+                {                    
                     return GL_FALSE;
                 }
             }
@@ -2244,7 +2250,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                                          current_source_index,
                                          pcurrent_source, 
                                          scalar_channel_index) )     
-        {
+        {            
             return GL_FALSE;
         }
    
@@ -2258,7 +2264,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                                              current_source_index,
                                              pcurrent_source, 
                                              scalar_channel_index) ) 
-            {
+            {                
                 return GL_FALSE;
             }
         }
@@ -2287,7 +2293,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             alu_instruction_ptr->m_Word1.f.dst_gpr  = pAsm->D.dst.reg;
         }
         else 
-        {
+        {            
             radeon_error("Only temp destination registers supported for ALU dest regs.\n");
             return GL_FALSE;
         }
@@ -2401,7 +2407,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         }
 
         if(GL_FALSE == add_alu_instruction(pAsm, alu_instruction_ptr, contiguous_slots_needed) )
-        {
+        {            
             return GL_FALSE;
         }
 
@@ -2412,15 +2418,15 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         if (is_single_scalar_operation) 
         {
             if(GL_FALSE == check_scalar(pAsm, alu_instruction_ptr) )
-            {
+            {                
                 return GL_FALSE;
             }
         }
         else 
         {
             if(GL_FALSE == check_vector(pAsm, alu_instruction_ptr) )
-            {
-                return 1;
+            {                
+                return GL_FALSE; 
             }
         }
 
@@ -2667,7 +2673,7 @@ GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm)
         {
             if(GL_FALSE == check_vector(pAsm, alu_instruction_ptr) )
             {
-                return 1;
+                return GL_FALSE; 
             }
         }
 
@@ -3642,6 +3648,7 @@ GLboolean assemble_LRP(r700_AssemblerBase *pAsm)
     {
         return GL_FALSE;
     }
+
     if( GL_FALSE == assemble_src(pAsm, 2, -1) ) 
     {
         return GL_FALSE;
@@ -4598,6 +4605,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
     
     switch (pAsm->pILInst[pAsm->uiCurInst].SrcReg[0].File)
     {
+    case PROGRAM_UNIFORM: 
     case PROGRAM_CONSTANT:
     case PROGRAM_LOCAL_PARAM:
     case PROGRAM_ENV_PARAM:
@@ -6867,7 +6875,7 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
             export_starting_index++;
 		}
 	}
-
+    
     for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
 	{
         unBit = 1 << i;
@@ -6879,7 +6887,7 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
                                           1, 
                                           pR700AsmCode->ucVP_OutputMap[i],
                                           GL_FALSE) )
-            {
+            {                
                 return GL_FALSE;
             }
 
