@@ -2643,7 +2643,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
 			p->cfg.io[i].hw = rid;
-			p->cfg.io[i].id_vp = i;
+			p->cfg.io[i].id = i;
 
 			for (c = 0; c < 4; ++c) {
 				int n = i * 4 + c;
@@ -2675,14 +2675,12 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		 * the lower hardware IDs, so sort them:
 		 */
 		for (i = 0; i < pc->attr_nr; i++) {
-			if (pc->interp_mode[i] == INTERP_FLAT) {
-				p->cfg.io[m].id_vp = i + base;
-				p->cfg.io[m++].id_fp = i;
-			} else {
+			if (pc->interp_mode[i] == INTERP_FLAT)
+				p->cfg.io[m++].id = i;
+			else {
 				if (!(pc->interp_mode[i] & INTERP_PERSPECTIVE))
 					p->cfg.io[n].linear = TRUE;
-				p->cfg.io[n].id_vp = i + base;
-				p->cfg.io[n++].id_fp = i;
+				p->cfg.io[n++].id = i;
 			}
 		}
 
@@ -2694,7 +2692,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (n = 0; n < pc->attr_nr; ++n) {
 			p->cfg.io[n].hw = rid = aid;
-			i = p->cfg.io[n].id_fp;
+			i = p->cfg.io[n].id;
 
 			if (p->info.input_semantic_name[n] ==
 			    TGSI_SEMANTIC_FACE) {
@@ -2734,8 +2732,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		for (i = 0; i < pc->attr_nr; i++) {
 			ubyte si, sn;
 
-			sn = p->info.input_semantic_name[p->cfg.io[i].id_fp];
-			si = p->info.input_semantic_index[p->cfg.io[i].id_fp];
+			sn = p->info.input_semantic_name[p->cfg.io[i].id];
+			si = p->info.input_semantic_index[p->cfg.io[i].id];
 
 			if (sn == TGSI_SEMANTIC_COLOR) {
 				p->cfg.two_side[si] = p->cfg.io[i];
@@ -3237,15 +3235,15 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 	struct nv50_program *vp = nv50->vertprog;
 	unsigned i, c, m = base;
 
-	/* XXX: This can't work correctly in all cases yet, we either
-	 * have to create TGSI_SEMANTIC_PNTC or sprite_coord_mode has
-	 * to be per FP input instead of per VP output
+	/* XXX: this might not work correctly in all cases yet - we'll
+	 * just assume that an FP generic input that is not written in
+	 * the VP is PointCoord.
 	 */
 	memset(pntc, 0, 8 * sizeof(uint32_t));
 
 	for (i = 0; i < fp->cfg.io_nr; i++) {
 		uint8_t sn, si;
-		uint8_t j = fp->cfg.io[i].id_vp, k = fp->cfg.io[i].id_fp;
+		uint8_t j, k = fp->cfg.io[i].id;
 		unsigned n = popcnt4(fp->cfg.io[i].mask);
 
 		if (fp->info.input_semantic_name[k] != TGSI_SEMANTIC_GENERIC) {
@@ -3253,10 +3251,16 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 			continue;
 		}
 
-		sn = vp->info.input_semantic_name[j];
-		si = vp->info.input_semantic_index[j];
+		for (j = 0; j < vp->info.num_outputs; ++j) {
+			sn = vp->info.output_semantic_name[j];
+			si = vp->info.output_semantic_index[j];
 
-		if (j < fp->cfg.io_nr && sn == TGSI_SEMANTIC_GENERIC) {
+			if (sn == fp->info.input_semantic_name[k] &&
+			    si == fp->info.input_semantic_index[k])
+				break;
+		}
+
+		if (j < vp->info.num_outputs) {
 			ubyte mode =
 				nv50->rasterizer->pipe.sprite_coord_mode[si];
 
@@ -3344,20 +3348,24 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	reg[0] += m - 4; /* adjust FFC0 id */
 	reg[4] |= m << 8; /* set mid where 'normal' FP inputs start */
 
-	i = 0;
-	if (fp->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION)
-		i = 1;
-	for (; i < fp->cfg.io_nr; i++) {
-		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id_fp];
-		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id_fp];
+	for (i = 0; i < fp->cfg.io_nr; i++) {
+		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id];
+		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id];
 
-		n = fp->cfg.io[i].id_vp;
-		if (n >= vp->cfg.io_nr ||
-		    vp->info.output_semantic_name[n] != sn ||
-		    vp->info.output_semantic_index[n] != si)
-			vpo = &dummy;
-		else
-			vpo = &vp->cfg.io[n];
+		/* position must be mapped first */
+		assert(i == 0 || sn != TGSI_SEMANTIC_POSITION);
+
+		/* maybe even remove these from cfg.io */
+		if (sn == TGSI_SEMANTIC_POSITION || sn == TGSI_SEMANTIC_FACE)
+			continue;
+
+		/* VP outputs and vp->cfg.io are in the same order */
+		for (n = 0; n < vp->info.num_outputs; ++n) {
+			if (vp->info.output_semantic_name[n] == sn &&
+			    vp->info.output_semantic_index[n] == si)
+				break;
+		}
+		vpo = (n < vp->info.num_outputs) ? &vp->cfg.io[n] : &dummy;
 
 		m = nv50_sreg4_map(map, m, lin, &fp->cfg.io[i], vpo);
 	}
