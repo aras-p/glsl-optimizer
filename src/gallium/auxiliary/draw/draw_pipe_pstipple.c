@@ -430,7 +430,6 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width0 = 32;
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
-   pf_get_block(texTemp.format, &texTemp.block);
 
    pstip->texture = screen->texture_create(screen, &texTemp);
    if (pstip->texture == NULL)
