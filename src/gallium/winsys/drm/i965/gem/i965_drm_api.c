@@ -198,8 +198,7 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD,
    idws->gem = drm_intel_bufmgr_gem_init(idws->fd, BRW_BATCH_SIZE);
    drm_intel_bufmgr_gem_enable_reuse(idws->gem);
 
-   idws->dump_cmd = debug_get_bool_option("I965_DUMP_CMD", FALSE);
-   idws->send_cmd = debug_get_bool_option("I965_SEND_CMD", FALSE);
+   idws->send_cmd = !debug_get_bool_option("BRW_NO_HW", FALSE);
 
    return brw_create_screen(&idws->base, deviceID);
 }

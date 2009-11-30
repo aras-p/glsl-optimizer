@@ -19,7 +19,6 @@ struct i965_libdrm_winsys
    struct brw_winsys_screen base;
    drm_intel_bufmgr *gem;
 
-   boolean dump_cmd;
    boolean send_cmd;
 
    int fd; /**< Drm file discriptor */
