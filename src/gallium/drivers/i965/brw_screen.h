@@ -72,9 +72,6 @@ struct brw_buffer
    void *ptr;
 };
 
-#define BRW_TILING_NONE  0
-#define BRW_TILING_Y     1
-#define BRW_TILING_X     2
 
 union brw_surface_id {
    struct {

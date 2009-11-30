@@ -42,7 +42,7 @@ i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
                                const char* name, unsigned handle)
 {
    struct i965_libdrm_buffer *buf = CALLOC_STRUCT(i965_libdrm_buffer);
-   uint32_t tile = 0, swizzle = 0;
+   uint32_t swizzle = 0;
 
    if (BRW_DUMP)
       debug_printf("%s\n", __FUNCTION__);
@@ -60,8 +60,8 @@ i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
    if (!buf->bo)
       goto err;
 
-   drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
-   if (tile != 0)
+   drm_intel_bo_get_tiling(buf->bo, &buf->tiling, &swizzle);
+   if (buf->tiling != 0)
       buf->map_gtt = TRUE;
 
    return buf;
@@ -100,7 +100,9 @@ i965_libdrm_texture_from_shared_handle(struct drm_api *api,
    if (!buffer)
       return NULL;
 
-   return brw_texture_blanket_winsys_buffer(screen, template, pitch, &buffer->base);
+   return brw_texture_blanket_winsys_buffer(screen, template, pitch,
+					    buffer->tiling,
+					    &buffer->base);
 }
 
 

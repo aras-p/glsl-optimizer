@@ -111,6 +111,12 @@ enum brw_buffer_data_type {
 };
 
 
+/* Matches the i915_drm definitions:
+ */
+#define BRW_TILING_NONE  0
+#define BRW_TILING_X     1
+#define BRW_TILING_Y     2
+
 
 /* Relocations to be applied with subdata in a call to sws->bo_subdata, below.
  *
@@ -271,7 +277,8 @@ boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
 struct pipe_texture * 
 brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
                                   const struct pipe_texture *template,
-                                  const unsigned pitch,
+                                  unsigned pitch,
+				  unsigned tiling,
                                   struct brw_winsys_buffer *buffer);
 
 

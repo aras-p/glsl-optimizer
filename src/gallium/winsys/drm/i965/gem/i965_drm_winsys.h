@@ -46,14 +46,12 @@ struct i965_libdrm_buffer {
 
    void *ptr;
    unsigned map_count;
-   boolean map_gtt;
+   unsigned data_type;		/* valid while mapped */
+   unsigned tiling;
 
+   boolean map_gtt;
    boolean flinked;
    unsigned flink;
-
-   unsigned data_type;		/* valid while mapped */
-
-   unsigned cheesy_refcount;
 };
 
 static INLINE struct i965_libdrm_buffer *

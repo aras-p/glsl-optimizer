@@ -32,6 +32,7 @@
 
 #include "brw_screen.h"
 #include "brw_debug.h"
+#include "brw_winsys.h"
 
 /* Code to layout images in a mipmap tree for i965.
  */

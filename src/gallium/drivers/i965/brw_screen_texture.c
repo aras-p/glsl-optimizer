@@ -472,7 +472,8 @@ boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
 struct pipe_texture * 
 brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
                                   const struct pipe_texture *templ,
-                                  const unsigned pitch,
+                                  unsigned pitch,
+				  unsigned tiling,
                                   struct brw_winsys_buffer *buffer)
 {
    struct brw_screen *bscreen = brw_screen(screen);
@@ -495,17 +496,10 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
    tex->base.screen = screen;
 
    tex->cpp = pf_get_size(tex->base.format);
+   tex->tiling = tiling;
 
    make_empty_list(&tex->views[0]);
    make_empty_list(&tex->views[1]);
-
-   if (1)
-      tex->tiling = BRW_TILING_NONE;
-   else if (bscreen->chipset.is_965 &&
-            pf_is_depth_or_stencil(templ->format))
-      tex->tiling = BRW_TILING_Y;
-   else
-      tex->tiling = BRW_TILING_X;
 
    if (!brw_texture_layout(bscreen, tex))
       goto fail;
