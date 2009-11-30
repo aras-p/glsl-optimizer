@@ -87,6 +87,7 @@ struct setup_context {
    struct cmd_block_list tile[TILES_X][TILES_Y];
    struct data_block_list data;
 
+   /* size of framebuffer, in tiles */
    unsigned tiles_x;
    unsigned tiles_y;
    
@@ -154,6 +155,11 @@ void lp_setup_choose_point( struct setup_context *setup );
 void lp_setup_new_data_block( struct data_block_list *list );
 void lp_setup_new_cmd_block( struct cmd_block_list *list );
 
+
+/**
+ * Allocate space for a command/data in the given block list.
+ * Grow the block list if needed.
+ */
 static INLINE void *get_data( struct data_block_list *list,
                               unsigned size)
 {

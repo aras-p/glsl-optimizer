@@ -79,6 +79,7 @@ struct lp_rast_shader_inputs {
  * plus inputs to run the shader:
  */
 struct lp_rast_triangle {
+   /* bounding box of tri (in pixels) */
    int minx;
    int maxx;
    int miny;
@@ -94,12 +95,12 @@ struct lp_rast_triangle {
    int eo2;
    int eo3;
 
-   /* y deltas for vertex pairs */
+   /* y deltas for vertex pairs (in fixed pt) */
    int dy12;
    int dy23;
    int dy31;
 
-   /* x deltas for vertex pairs */
+   /* x deltas for vertex pairs (in fixed pt) */
    int dx12;
    int dx23;
    int dx31;

@@ -51,6 +51,10 @@ struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
 }
 
 
+/**
+ * Begin the rasterization phase.
+ * Map the framebuffer surfaces.  Initialize the 'rast' state.
+ */
 boolean lp_rast_begin( struct lp_rasterizer *rast,
                        struct pipe_surface *cbuf,
                        struct pipe_surface *zsbuf,
@@ -95,6 +99,10 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
 }
 
 
+/**
+ * Finish the rasterization phase.
+ * Unmap framebuffer surfaces.
+ */
 void lp_rast_end( struct lp_rasterizer *rast )
 {
    struct pipe_screen *screen = rast->screen;
@@ -120,7 +128,10 @@ void lp_rast_end( struct lp_rasterizer *rast )
 
 
 
-/* Begining of each tile:
+/**
+ * Begining rasterization of a tile.
+ * \param x  window X position of the tile, in pixels
+ * \param y  window Y position of the tile, in pixels
  */
 void lp_rast_start_tile( struct lp_rasterizer *rast,
 			 unsigned x,
@@ -132,6 +143,10 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
    rast->y = y;
 }
 
+
+/**
+ * Clear the rasterizer's current color tile.
+ */
 void lp_rast_clear_color( struct lp_rasterizer *rast,
                           const union lp_rast_cmd_arg arg )
 {
@@ -157,6 +172,10 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
    }
 }
 
+
+/**
+ * Clear the rasterizer's current z/stencil tile.
+ */
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              const union lp_rast_cmd_arg arg)
 {
@@ -307,6 +326,9 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
  */
 
 
+/**
+ * Write the rasterizer's color tile to the framebuffer.
+ */
 static void lp_rast_store_color( struct lp_rasterizer *rast )
 {
    const unsigned x = rast->x;
@@ -331,6 +353,9 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
 }
 
 
+/**
+ * Write the rasterizer's z/stencil tile to the framebuffer.
+ */
 static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
 {
    RAST_DEBUG("%s\n", __FUNCTION__);
@@ -339,6 +364,9 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
 }
 
 
+/**
+ * Write the rasterizer's tiles to the framebuffer.
+ */
 void lp_rast_end_tile( struct lp_rasterizer *rast )
 {
    RAST_DEBUG("%s\n", __FUNCTION__);

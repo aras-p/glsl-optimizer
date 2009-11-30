@@ -230,6 +230,11 @@ static inline int subpixel_snap( float a )
 #define MIN3(a,b,c) MIN2(MIN2(a,b),c)
 #define MAX3(a,b,c) MAX2(MAX2(a,b),c)
 
+/**
+ * Do basic setup for triangle rasterization and determine which
+ * framebuffer tiles are touched.  Put the triangle in the bins for the
+ * tiles which we overlap.
+ */
 static void 
 do_triangle_ccw(struct setup_context *setup,
 		const float (*v1)[4],
@@ -237,15 +242,14 @@ do_triangle_ccw(struct setup_context *setup,
 		const float (*v3)[4],
 		boolean frontfacing )
 {
-
+   /* x/y positions in fixed point */
+   const int x1 = subpixel_snap(v1[0][0]);
+   const int x2 = subpixel_snap(v2[0][0]);
+   const int x3 = subpixel_snap(v3[0][0]);
    const int y1 = subpixel_snap(v1[0][1]);
    const int y2 = subpixel_snap(v2[0][1]);
    const int y3 = subpixel_snap(v3[0][1]);
 
-   const int x1 = subpixel_snap(v1[0][0]);
-   const int x2 = subpixel_snap(v2[0][0]);
-   const int x3 = subpixel_snap(v3[0][0]);
-   
    struct lp_rast_triangle *tri = get_data( &setup->data, sizeof *tri );
    float area;
    int minx, maxx, miny, maxy;
@@ -270,7 +274,7 @@ do_triangle_ccw(struct setup_context *setup,
       return;
    }
 
-   // Bounding rectangle
+   /* Bounding rectangle (in pixels) */
    tri->minx = (MIN3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
    tri->maxx = (MAX3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
    tri->miny = (MIN3(y1, y2, y3) + 0xf) >> FIXED_ORDER;
@@ -372,13 +376,14 @@ do_triangle_ccw(struct setup_context *setup,
       }
    }
 
+   /* Convert to tile coordinates:
+    */
    minx = tri->minx / TILE_SIZE;
    miny = tri->miny / TILE_SIZE;
    maxx = tri->maxx / TILE_SIZE;
    maxy = tri->maxy / TILE_SIZE;
 
-
-   /* Convert to tile coordinates:
+   /* Determine which tile(s) intersect the triangle's bounding box
     */
    if (miny == maxy && minx == maxx)
    {
@@ -442,8 +447,9 @@ do_triangle_ccw(struct setup_context *setup,
 		     cx3 + ei3 > 0) 
 	    {
 	       in = 1;
-               /* shade whole tile */
-               bin_command( &setup->tile[x][y], lp_rast_shade_tile,
+               /* triangle covers the whole tile- shade whole tile */
+               bin_command( &setup->tile[x][y],
+                            lp_rast_shade_tile,
                             lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
