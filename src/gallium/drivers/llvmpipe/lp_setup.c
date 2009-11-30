@@ -170,13 +170,35 @@ static void bin_everywhere( struct setup_context *setup,
 }
 
 
+/** Rasterize commands for a single bin */
+static void
+rasterize_bin( struct lp_rasterizer *rast,
+               struct cmd_block_list *commands,
+               int x, int y)
+{
+   struct cmd_block *block;
+   unsigned k;
+
+   lp_rast_start_tile( rast, x, y );
+
+   /* simply execute each of the commands in the block list */
+   for (block = commands->head; block; block = block->next) {
+      for (k = 0; k < block->count; k++) {
+         block->cmd[k]( rast, block->arg[k] );
+      }
+   }
+
+   lp_rast_end_tile( rast );
+}
+
+
+/** Rasterize all tile's bins */
 static void
 rasterize_bins( struct setup_context *setup,
                 boolean write_depth )
 {
    struct lp_rasterizer *rast = setup->rast;
-   struct cmd_block *block;
-   unsigned i,j,k;
+   unsigned i, j;
 
    SETUP_DEBUG("%s\n", __FUNCTION__);
 
@@ -187,23 +209,13 @@ rasterize_bins( struct setup_context *setup,
                   setup->fb.zsbuf != NULL && write_depth,
                   setup->fb.width,
                   setup->fb.height );
-
                        
-
+   /* loop over tile bins, rasterize each */
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
-
-         lp_rast_start_tile( rast, 
-                             i * TILE_SIZE,
-                             j * TILE_SIZE );
-
-         for (block = setup->tile[i][j].head; block; block = block->next) {
-            for (k = 0; k < block->count; k++) {
-               block->cmd[k]( rast, block->arg[k] );
-            }
-         }
-
-         lp_rast_end_tile( rast );
+         rasterize_bin( rast, &setup->tile[i][j], 
+                        i * TILE_SIZE,
+                        j * TILE_SIZE );
       }
    }
 
