@@ -191,7 +191,6 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	templat.width0 = 64;
 	templat.height0 = 64;
-	pf_get_block(templat.format, &templat.block);
 
 	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
 						       &templat);
@@ -207,7 +206,7 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 					    PIPE_TRANSFER_WRITE,
 					    0, 0, 64, 64);
     ptr = ms->screen->transfer_map(ms->screen, transfer);
-    util_copy_rect(ptr, &crtcp->cursor_tex->block,
+    util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ms->screen->transfer_unmap(ms->screen, transfer);

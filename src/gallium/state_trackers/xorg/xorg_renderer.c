@@ -733,7 +733,6 @@ create_sampler_texture(struct xorg_renderer *r,
    templ.width0 = src->width0;
    templ.height0 = src->height0;
    templ.depth0 = 1;
-   pf_get_block(format, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    pt = screen->texture_create(screen, &templ);
