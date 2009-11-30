@@ -1137,6 +1137,7 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->LineWidth = i915LineWidth;
    functions->LogicOpcode = i915LogicOp;
    functions->PointSize = i915PointSize;
+   functions->PointParameterfv = i915PointParameterfv;
    functions->PolygonStipple = i915PolygonStipple;
    functions->Scissor = i915Scissor;
    functions->ShadeModel = i915ShadeModel;
