@@ -585,7 +585,7 @@ i915PointSize(GLcontext * ctx, GLfloat size)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_POINT_WIDTH_MASK;
-   GLint point_size = (int) size;
+   GLint point_size = (int) round(size);
 
    DBG("%s\n", __FUNCTION__);
    
