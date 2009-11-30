@@ -33,7 +33,10 @@ C_SOURCES = \
 	lp_flush.c \
 	lp_jit.c \
 	lp_prim_vbuf.c \
+	lp_rast.c \
+	lp_rast_tri.c \
 	lp_setup.c \
+	lp_setup_tri.c \
 	lp_query.c \
 	lp_screen.c \
 	lp_state_blend.c \
@@ -46,8 +49,6 @@ C_SOURCES = \
 	lp_state_vertex.c \
 	lp_state_vs.c \
 	lp_surface.c \
-	lp_tex_cache.c \
-	lp_tex_sample_c.c \
 	lp_tex_sample_llvm.c \
 	lp_texture.c \
 	lp_tile_soa.c
