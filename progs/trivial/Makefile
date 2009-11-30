@@ -90,6 +90,8 @@ SOURCES = \
 	quadstrip-flat.c \
 	quadstrip.c \
 	readpixels.c \
+	sub-tex.c \
+	tex-quads.c \
 	tri-alpha.c \
 	tri-alpha-tex.c \
 	tri-array-interleaved.c \

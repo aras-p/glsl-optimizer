@@ -77,6 +77,8 @@ progs = [
 	'quadstrip-cont',
 	'quadstrip-flat',
 	'quadstrip',
+	'sub-tex',
+	'tex-quads',
 	'tri-alpha',
 	'tri-blend-color',
 	'tri-blend-max',
