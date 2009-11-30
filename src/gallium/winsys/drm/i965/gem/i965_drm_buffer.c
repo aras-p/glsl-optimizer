@@ -71,7 +71,8 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
    struct i965_libdrm_buffer *buf;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("%s type %s sz %d align %d\n",
+		   __FUNCTION__, names[type], size, alignment );
 
    buf = CALLOC_STRUCT(i965_libdrm_buffer);
    if (!buf)
@@ -213,7 +214,7 @@ i965_libdrm_bo_exec(struct brw_winsys_buffer *buffer,
    int ret;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("execute buffer %p, bytes %d\n", (void *)buffer, bytes_used);
 
    if (idws->send_cmd) {
       ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
@@ -240,7 +241,11 @@ i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
    (void)data_type;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("%s buf %p off %d sz %d %s relocs: %d\n", 
+		   __FUNCTION__, 
+		   (void *)buffer, offset, size, 
+		   data_types[data_type],
+		   nr_reloc);
 
    if (BRW_DUMP)
       brw_dump_data( idws->id,
@@ -266,11 +271,17 @@ static boolean
 i965_libdrm_bo_is_busy(struct brw_winsys_buffer *buffer)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   boolean ret;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("%s %p\n", __FUNCTION__, (void *)buffer);
 
-   return drm_intel_bo_busy(buf->bo);
+   ret = drm_intel_bo_busy(buf->bo);
+
+   if (BRW_DUMP)
+      debug_printf("  --> %d\n", ret);
+
+   return ret;
 }
 
 static boolean 
@@ -279,13 +290,17 @@ i965_libdrm_bo_references(struct brw_winsys_buffer *a,
 {
    struct i965_libdrm_buffer *bufa = i965_libdrm_buffer(a);
    struct i965_libdrm_buffer *bufb = i965_libdrm_buffer(b);
+   boolean ret;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("%s %p %p\n", __FUNCTION__, (void *)a, (void *)b);
 
-   /* XXX: can't find this func:
-    */
-   return drm_intel_bo_references(bufa->bo, bufb->bo);
+   ret = drm_intel_bo_references(bufa->bo, bufb->bo);
+
+   if (BRW_DUMP)
+      debug_printf("  --> %d\n", ret);
+
+   return ret;
 }
 
 /* XXX: couldn't this be handled by returning true/false on
@@ -298,6 +313,7 @@ i965_libdrm_check_aperture_space(struct brw_winsys_screen *iws,
 {
    static drm_intel_bo *bos[128];
    int i;
+   int ret;
 
    if (BRW_DUMP)
       debug_printf("%s\n", __FUNCTION__);
@@ -310,7 +326,14 @@ i965_libdrm_check_aperture_space(struct brw_winsys_screen *iws,
    for (i = 0; i < count; i++)
       bos[i] = i965_libdrm_buffer(buffers[i])->bo;
 
-   return dri_bufmgr_check_aperture_space(bos, count);
+   /* XXX: converting from ??? to pipe_error:
+    */
+   ret = dri_bufmgr_check_aperture_space(bos, count);
+
+   if (BRW_DUMP)
+      debug_printf("  --> %d (ok == %d)\n", ret, PIPE_OK);
+
+   return ret;
 }
 
 static void *
@@ -358,7 +381,9 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(buffer->sws);
 
    if (BRW_DUMP)
-      debug_printf("%s offset %d len %d\n", __FUNCTION__, offset, length);
+      debug_printf("%s %s offset %d len %d\n", __FUNCTION__,
+		   data_types[buf->data_type],
+		   offset, length);
 
    if (BRW_DUMP)
       brw_dump_data( idws->id,

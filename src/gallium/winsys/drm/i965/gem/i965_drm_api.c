@@ -93,7 +93,8 @@ i965_libdrm_texture_from_shared_handle(struct drm_api *api,
    struct i965_libdrm_buffer *buffer;
 
    if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
+      debug_printf("%s %s pitch %d handle 0x%x\n", __FUNCTION__,
+		   name, pitch, handle);
 
    buffer = i965_libdrm_buffer_from_handle(idws, name, handle);
    if (!buffer)
@@ -128,6 +129,9 @@ i965_libdrm_shared_handle_from_texture(struct drm_api *api,
 
    *handle = buf->flink;
 
+   if (BRW_DUMP)
+      debug_printf("   -> pitch %d handle 0x%x\n", *pitch, *handle);
+
    return TRUE;
 }
 
@@ -147,6 +151,9 @@ i965_libdrm_local_handle_from_texture(struct drm_api *api,
       return FALSE;
 
    *handle = i965_libdrm_buffer(buffer)->bo->handle;
+
+   if (BRW_DUMP)
+      debug_printf("   -> pitch %d handle 0x%x\n", *pitch, *handle);
 
    return TRUE;
 }
