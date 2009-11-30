@@ -45,6 +45,7 @@ struct brw_screen
    struct pipe_screen base;
    struct brw_chipset chipset;
    struct brw_winsys_screen *sws;
+   boolean no_tiling;
 };
 
 /**

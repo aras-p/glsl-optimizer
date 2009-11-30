@@ -209,14 +209,11 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 
    /* XXX: No tiling with compressed textures??
     */
-   if (tex->compressed == 0 
-       /* && bscreen->use_texture_tiling */
-       /* && bscreen->kernel_exec_fencing */) 
+   if (tex->compressed == 0 &&
+       !bscreen->no_tiling) 
    {
-      if (1)
-         tex->tiling = BRW_TILING_NONE;
-      else if (bscreen->chipset.is_965 &&
-               pf_is_depth_or_stencil(templ->format))
+      if (bscreen->chipset.is_965 &&
+	  pf_is_depth_or_stencil(templ->format))
 	 tex->tiling = BRW_TILING_Y;
       else
 	 tex->tiling = BRW_TILING_X;

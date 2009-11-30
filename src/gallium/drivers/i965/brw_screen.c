@@ -396,5 +396,8 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
    brw_screen_tex_surface_init(bscreen);
    brw_screen_buffer_init(bscreen);
 
+   bscreen->no_tiling = debug_get_option("BRW_NO_TILING", FALSE);
+   
+   
    return &bscreen->base;
 }
