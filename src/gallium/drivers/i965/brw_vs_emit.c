@@ -41,6 +41,7 @@
 #include "brw_context.h"
 #include "brw_vs.h"
 #include "brw_debug.h"
+#include "brw_disasm.h"
 
 /* Choose one of the 4 vec4's which can be packed into each 16-wide reg.
  */

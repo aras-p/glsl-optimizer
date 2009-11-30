@@ -65,7 +65,16 @@ static const struct debug_named_value debug_names[] = {
    { NULL,    0 }
 };
 
+static const struct debug_named_value dump_names[] = {
+   { "asm",   DUMP_ASM},
+   { "state", DUMP_STATE},
+   { "batch", DUMP_BATCH},
+   { NULL, 0 }
+};
+
 int BRW_DEBUG = 0;
+int BRW_DUMP = 0;
+
 #endif
 
 
@@ -327,6 +336,8 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
    BRW_DEBUG = debug_get_flags_option("BRW_DEBUG", debug_names, 0);
    BRW_DEBUG |= debug_get_flags_option("INTEL_DEBUG", debug_names, 0);
    BRW_DEBUG |= DEBUG_STATS | DEBUG_MIN_URB | DEBUG_WM;
+
+   BRW_DUMP = debug_get_flags_option("BRW_DUMP", dump_names, 0);
 #endif
 
    memset(&chipset, 0, sizeof chipset);

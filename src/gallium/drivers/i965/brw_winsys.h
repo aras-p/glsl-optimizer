@@ -111,6 +111,7 @@ enum brw_buffer_data_type {
 };
 
 
+
 /* Relocations to be applied with subdata in a call to sws->bo_subdata, below.
  *
  * Effectively this encodes:
@@ -274,6 +275,26 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
                                   struct brw_winsys_buffer *buffer);
 
 
+/*************************************************************************
+ * Cooperative dumping between winsys and driver.  TODO: make this
+ * driver-only by wrapping calls to winsys->bo_subdata().
+ */
+
+#ifdef DEBUG
+extern int BRW_DUMP;
+#else
+#define BRW_DUMP 0
+#endif 
+
+#define DUMP_ASM	        0x1
+#define DUMP_STATE	        0x2
+#define DUMP_BATCH	        0x4
+
+void brw_dump_data( unsigned pci_id,
+		    enum brw_buffer_data_type data_type,
+		    unsigned offset,
+		    const void *data,
+		    size_t size );
 
 
 #endif

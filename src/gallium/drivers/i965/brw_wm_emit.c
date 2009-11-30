@@ -35,6 +35,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_debug.h"
+#include "brw_disasm.h"
 
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.

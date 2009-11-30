@@ -28,12 +28,10 @@
 #include "util/u_memory.h"
 
 #include "brw_batchbuffer.h"
-//#include "brw_decode.h"
 #include "brw_reg.h"
 #include "brw_winsys.h"
 #include "brw_debug.h"
 #include "brw_structs.h"
-#include "intel_decode.h"
 
 #define ALWAYS_EMIT_MI_FLUSH 1
 

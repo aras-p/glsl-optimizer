@@ -52,6 +52,8 @@ struct i965_libdrm_buffer {
    boolean flinked;
    unsigned flink;
 
+   unsigned data_type;		/* valid while mapped */
+
    unsigned cheesy_refcount;
 };
 

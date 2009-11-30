@@ -5,16 +5,59 @@
 #include "i915_drm.h"
 #include "intel_bufmgr.h"
 
+
+
 const char *names[BRW_BUFFER_TYPE_MAX] = {
-   "texture",
-   "scanout",
-   "vertex",
-   "curbe",
-   "query",
-   "shader_constants",
-   "wm_scratch",
-   "batch",
-   "state_cache",
+   "TEXTURE",
+   "SCANOUT",
+   "VERTEX",
+   "CURBE",
+   "QUERY",
+   "SHADER_CONSTANTS",
+   "WM_SCRATCH",
+   "BATCH",
+   "GENERAL_STATE",
+   "SURFACE_STATE",
+   "PIXEL",
+   "GENERIC",
+};
+
+const char *usages[BRW_USAGE_MAX] = {
+   "STATE",
+   "QUERY_RESULT",
+   "RENDER_TARGET",
+   "DEPTH_BUFFER",
+   "BLIT_SOURCE",
+   "BLIT_DEST",
+   "SAMPLER",
+   "VERTEX",
+   "SCRATCH"
+};
+
+
+const char *data_types[BRW_DATA_MAX] =
+{
+   "GS: CC_VP",
+   "GS: CC_UNIT",
+   "GS: WM_PROG",
+   "GS: SAMPLER_DEFAULT_COLOR",
+   "GS: SAMPLER",
+   "GS: WM_UNIT",
+   "GS: SF_PROG",
+   "GS: SF_VP",
+   "GS: SF_UNIT",
+   "GS: VS_UNIT",
+   "GS: VS_PROG",
+   "GS: GS_UNIT",
+   "GS: GS_PROG",
+   "GS: CLIP_VP",
+   "GS: CLIP_UNIT",
+   "GS: CLIP_PROG",
+   "SS: SURFACE",
+   "SS: SURF_BIND",
+   "CONSTANT DATA",
+   "BATCH DATA",
+   "(untyped)"
 };
 
 static enum pipe_error 
@@ -26,6 +69,9 @@ i965_libdrm_bo_alloc(struct brw_winsys_screen *sws,
 {
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(sws);
    struct i965_libdrm_buffer *buf;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
    buf = CALLOC_STRUCT(i965_libdrm_buffer);
    if (!buf)
@@ -79,6 +125,9 @@ i965_libdrm_bo_destroy(struct brw_winsys_buffer *buffer)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
 
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    drm_intel_bo_unreference(buf->bo);
    FREE(buffer);
 }
@@ -95,6 +144,12 @@ i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
    int read, write;
    int ret;
 
+   if (BRW_DUMP)
+      debug_printf("%s buf %p offset %x delta %x buf2 %p/%s/%s\n",
+		   __FUNCTION__, (void *)buffer, 
+		   offset, delta,
+		   (void *)buffer2, names[buf2->data_type], usages[usage]);
+
    switch (usage) {
    case BRW_USAGE_STATE:
       read = I915_GEM_DOMAIN_INSTRUCTION;
@@ -104,7 +159,11 @@ i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
       read = I915_GEM_DOMAIN_INSTRUCTION;
       write = I915_GEM_DOMAIN_INSTRUCTION;
       break;
-   case BRW_USAGE_BLIT_DEST:
+   case BRW_USAGE_RENDER_TARGET:
+      read = I915_GEM_DOMAIN_RENDER;
+      write = 0;
+      break;
+   case BRW_USAGE_DEPTH_BUFFER:
       read = I915_GEM_DOMAIN_RENDER;
       write = I915_GEM_DOMAIN_RENDER;
       break;
@@ -112,11 +171,7 @@ i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
       read = 0;
       write = I915_GEM_DOMAIN_RENDER;
       break;
-   case BRW_USAGE_RENDER_TARGET:
-      read = I915_GEM_DOMAIN_RENDER;
-      write = 0;
-      break;
-   case BRW_USAGE_DEPTH_BUFFER:
+   case BRW_USAGE_BLIT_DEST:
       read = I915_GEM_DOMAIN_RENDER;
       write = I915_GEM_DOMAIN_RENDER;
       break;
@@ -137,6 +192,11 @@ i965_libdrm_bo_emit_reloc(struct brw_winsys_buffer *buffer,
       return -1;
    }
 
+   /* Needed??
+   ((uint32_t *)buf->bo->virtual)[offset/4] = (delta +
+					       buf2->bo->offset);
+    */
+
    ret = dri_bo_emit_reloc( buf->bo, read, write, delta, offset, buf2->bo );
    if (ret)
       return -1;
@@ -151,6 +211,9 @@ i965_libdrm_bo_exec(struct brw_winsys_buffer *buffer,
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(buffer->sws);
    int ret;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
    if (idws->send_cmd) {
       ret = dri_bo_exec(buf->bo, bytes_used, NULL, 0, 0);
@@ -171,9 +234,19 @@ i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
                        unsigned nr_reloc)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(buffer->sws);
    int ret, i;
 
    (void)data_type;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
+   if (BRW_DUMP)
+      brw_dump_data( idws->id,
+		     data_type,
+		     buf->bo->offset + offset, 
+		     data, size );
 
    /* XXX: use bo_map_gtt/memcpy/unmap_gtt under some circumstances???
     */
@@ -194,6 +267,9 @@ i965_libdrm_bo_is_busy(struct brw_winsys_buffer *buffer)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
 
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    return drm_intel_bo_busy(buf->bo);
 }
 
@@ -203,6 +279,9 @@ i965_libdrm_bo_references(struct brw_winsys_buffer *a,
 {
    struct i965_libdrm_buffer *bufa = i965_libdrm_buffer(a);
    struct i965_libdrm_buffer *bufb = i965_libdrm_buffer(b);
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
    /* XXX: can't find this func:
     */
@@ -219,6 +298,9 @@ i965_libdrm_check_aperture_space(struct brw_winsys_screen *iws,
 {
    static drm_intel_bo *bos[128];
    int i;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
    if (count > Elements(bos)) {
       assert(0);
@@ -243,6 +325,12 @@ i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
    int ret;
 
+
+   if (BRW_DUMP)
+      debug_printf("%s %p %s %s\n", __FUNCTION__, (void *)buffer, 
+		   write ? "read/write" : "read",
+		   write ? data_types[data_type] : "");
+
    if (!buf->map_count) {
       if (buf->map_gtt) {
          ret = drm_intel_gem_bo_map_gtt(buf->bo);
@@ -256,6 +344,7 @@ i965_libdrm_bo_map(struct brw_winsys_buffer *buffer,
       }
    }
 
+   buf->data_type = data_type;
    buf->map_count++;
    return buf->bo->virtual;
 }
@@ -265,13 +354,27 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
                            unsigned offset,
                            unsigned length)
 {
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(buffer->sws);
 
+   if (BRW_DUMP)
+      debug_printf("%s offset %d len %d\n", __FUNCTION__, offset, length);
+
+   if (BRW_DUMP)
+      brw_dump_data( idws->id,
+		     buf->data_type,
+		     buf->bo->offset + offset, 
+		     buf->bo->virtual + offset, 
+		     length );
 }
 
 static void 
 i965_libdrm_bo_unmap(struct brw_winsys_buffer *buffer)
 {
    struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
    if (--buf->map_count > 0)
       return;

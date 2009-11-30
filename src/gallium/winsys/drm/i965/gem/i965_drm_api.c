@@ -44,6 +44,9 @@ i965_libdrm_buffer_from_handle(struct i965_libdrm_winsys *idws,
    struct i965_libdrm_buffer *buf = CALLOC_STRUCT(i965_libdrm_buffer);
    uint32_t tile = 0, swizzle = 0;
 
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    if (!buf)
       return NULL;
    pipe_reference_init(&buf->base.reference, 1);
@@ -89,6 +92,9 @@ i965_libdrm_texture_from_shared_handle(struct drm_api *api,
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(brw_screen(screen)->sws);
    struct i965_libdrm_buffer *buffer;
 
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    buffer = i965_libdrm_buffer_from_handle(idws, name, handle);
    if (!buffer)
       return NULL;
@@ -106,6 +112,10 @@ i965_libdrm_shared_handle_from_texture(struct drm_api *api,
 {
    struct i965_libdrm_buffer *buf = NULL;
    struct brw_winsys_buffer *buffer = NULL;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    if (!brw_texture_get_winsys_buffer(texture, &buffer, pitch))
       return FALSE;
 
@@ -129,6 +139,10 @@ i965_libdrm_local_handle_from_texture(struct drm_api *api,
                                       unsigned *handle)
 {
    struct brw_winsys_buffer *buffer = NULL;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    if (!brw_texture_get_winsys_buffer(texture, &buffer, pitch))
       return FALSE;
 
@@ -142,6 +156,9 @@ i965_libdrm_winsys_destroy(struct brw_winsys_screen *iws)
 {
    struct i965_libdrm_winsys *idws = i965_libdrm_winsys(iws);
 
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
    drm_intel_bufmgr_destroy(idws->gem);
 
    FREE(idws);
@@ -153,6 +170,8 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD,
 {
    struct i965_libdrm_winsys *idws;
    unsigned int deviceID;
+
+   debug_printf("%s\n", __FUNCTION__);
 
    if (arg != NULL) {
       switch(arg->mode) {
@@ -194,6 +213,8 @@ i965_libdrm_create_context(struct drm_api *api, struct pipe_screen *screen)
 static void
 destroy(struct drm_api *api)
 {
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
 
 }
 

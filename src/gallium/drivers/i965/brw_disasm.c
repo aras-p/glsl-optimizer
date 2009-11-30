@@ -27,7 +27,9 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "brw_context.h"
+#include "brw_disasm.h"
+#include "brw_structs.h"
+#include "brw_reg.h"
 #include "brw_defines.h"
 
 struct {

@@ -34,6 +34,7 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 #include "brw_debug.h"
+#include "brw_disasm.h"
 
 
 
