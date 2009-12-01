@@ -143,10 +143,16 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
          for (k = 0; k < tr_ctx->curr.nr_cbufs; k++)
             if (tr_ctx->draw_rule.surf == tr_ctx->curr.cbufs[k])
                block = TRUE;
-      if (tr_ctx->draw_rule.tex)
+      if (tr_ctx->draw_rule.tex) {
          for (k = 0; k < tr_ctx->curr.num_texs; k++)
             if (tr_ctx->draw_rule.tex == tr_ctx->curr.tex[k])
                block = TRUE;
+         for (k = 0; k < tr_ctx->curr.num_vert_texs; k++) {
+            if (tr_ctx->draw_rule.tex == tr_ctx->curr.vert_tex[k]) {
+               block = TRUE;
+            }
+         }
+      }
 
       if (block)
          tr_ctx->draw_blocked |= (flag | 4);
@@ -480,8 +486,9 @@ trace_context_create_sampler_state(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_bind_sampler_states(struct pipe_context *_pipe,
-                                  unsigned num_states, void **states)
+trace_context_bind_fragment_sampler_states(struct pipe_context *_pipe,
+                                           unsigned num_states,
+                                           void **states)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
@@ -493,6 +500,26 @@ trace_context_bind_sampler_states(struct pipe_context *_pipe,
    trace_dump_arg_array(ptr, states, num_states);
 
    pipe->bind_fragment_sampler_states(pipe, num_states, states);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
+trace_context_bind_vertex_sampler_states(struct pipe_context *_pipe,
+                                         unsigned num_states,
+                                         void **states)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "bind_vertex_sampler_states");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, num_states);
+   trace_dump_arg_array(ptr, states, num_states);
+
+   pipe->bind_vertex_sampler_states(pipe, num_states, states);
 
    trace_dump_call_end();
 }
@@ -941,9 +968,9 @@ trace_context_set_viewport_state(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_set_sampler_textures(struct pipe_context *_pipe,
-                                   unsigned num_textures,
-                                   struct pipe_texture **textures)
+trace_context_set_fragment_sampler_textures(struct pipe_context *_pipe,
+                                            unsigned num_textures,
+                                            struct pipe_texture **textures)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct trace_texture *tr_tex;
@@ -966,6 +993,37 @@ trace_context_set_sampler_textures(struct pipe_context *_pipe,
    trace_dump_arg_array(ptr, textures, num_textures);
 
    pipe->set_fragment_sampler_textures(pipe, num_textures, textures);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
+trace_context_set_vertex_sampler_textures(struct pipe_context *_pipe,
+                                          unsigned num_textures,
+                                          struct pipe_texture **textures)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex;
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_texture *unwrapped_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned i;
+
+   tr_ctx->curr.num_vert_texs = num_textures;
+   for(i = 0; i < num_textures; ++i) {
+      tr_tex = trace_texture(textures[i]);
+      tr_ctx->curr.vert_tex[i] = tr_tex;
+      unwrapped_textures[i] = tr_tex ? tr_tex->texture : NULL;
+   }
+   textures = unwrapped_textures;
+
+   trace_dump_call_begin("pipe_context", "set_vertex_sampler_textures");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, num_textures);
+   trace_dump_arg_array(ptr, textures, num_textures);
+
+   pipe->set_vertex_sampler_textures(pipe, num_textures, textures);
 
    trace_dump_call_end();
 }
@@ -1253,7 +1311,8 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.bind_blend_state = trace_context_bind_blend_state;
    tr_ctx->base.delete_blend_state = trace_context_delete_blend_state;
    tr_ctx->base.create_sampler_state = trace_context_create_sampler_state;
-   tr_ctx->base.bind_fragment_sampler_states = trace_context_bind_sampler_states;
+   tr_ctx->base.bind_fragment_sampler_states = trace_context_bind_fragment_sampler_states;
+   tr_ctx->base.bind_vertex_sampler_states = trace_context_bind_vertex_sampler_states;
    tr_ctx->base.delete_sampler_state = trace_context_delete_sampler_state;
    tr_ctx->base.create_rasterizer_state = trace_context_create_rasterizer_state;
    tr_ctx->base.bind_rasterizer_state = trace_context_bind_rasterizer_state;
@@ -1274,7 +1333,8 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.set_polygon_stipple = trace_context_set_polygon_stipple;
    tr_ctx->base.set_scissor_state = trace_context_set_scissor_state;
    tr_ctx->base.set_viewport_state = trace_context_set_viewport_state;
-   tr_ctx->base.set_fragment_sampler_textures = trace_context_set_sampler_textures;
+   tr_ctx->base.set_fragment_sampler_textures = trace_context_set_fragment_sampler_textures;
+   tr_ctx->base.set_vertex_sampler_textures = trace_context_set_vertex_sampler_textures;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_vertex_elements = trace_context_set_vertex_elements;
    if (pipe->surface_copy)

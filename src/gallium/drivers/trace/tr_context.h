@@ -54,6 +54,9 @@ struct trace_context
       struct trace_texture *tex[PIPE_MAX_SAMPLERS];
       unsigned num_texs;
 
+      struct trace_texture *vert_tex[PIPE_MAX_VERTEX_SAMPLERS];
+      unsigned num_vert_texs;
+
       unsigned nr_cbufs;
       struct trace_texture *cbufs[PIPE_MAX_COLOR_BUFS];
       struct trace_texture *zsbuf;
