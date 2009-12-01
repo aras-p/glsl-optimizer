@@ -754,8 +754,8 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pstip->driver_bind_fs_state = pipe->bind_fs_state;
    pstip->driver_delete_fs_state = pipe->delete_fs_state;
 
-   pstip->driver_bind_sampler_states = pipe->bind_sampler_states;
-   pstip->driver_set_sampler_textures = pipe->set_sampler_textures;
+   pstip->driver_bind_sampler_states = pipe->bind_fragment_sampler_states;
+   pstip->driver_set_sampler_textures = pipe->set_fragment_sampler_textures;
    pstip->driver_set_polygon_stipple = pipe->set_polygon_stipple;
 
    /* override the driver's functions */
@@ -763,8 +763,8 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->bind_fs_state = pstip_bind_fs_state;
    pipe->delete_fs_state = pstip_delete_fs_state;
 
-   pipe->bind_sampler_states = pstip_bind_sampler_states;
-   pipe->set_sampler_textures = pstip_set_sampler_textures;
+   pipe->bind_fragment_sampler_states = pstip_bind_sampler_states;
+   pipe->set_fragment_sampler_textures = pstip_set_sampler_textures;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
 
    return TRUE;

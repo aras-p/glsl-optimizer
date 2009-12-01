@@ -896,16 +896,16 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    aaline->driver_bind_fs_state = pipe->bind_fs_state;
    aaline->driver_delete_fs_state = pipe->delete_fs_state;
 
-   aaline->driver_bind_sampler_states = pipe->bind_sampler_states;
-   aaline->driver_set_sampler_textures = pipe->set_sampler_textures;
+   aaline->driver_bind_sampler_states = pipe->bind_fragment_sampler_states;
+   aaline->driver_set_sampler_textures = pipe->set_fragment_sampler_textures;
 
    /* override the driver's functions */
    pipe->create_fs_state = aaline_create_fs_state;
    pipe->bind_fs_state = aaline_bind_fs_state;
    pipe->delete_fs_state = aaline_delete_fs_state;
 
-   pipe->bind_sampler_states = aaline_bind_sampler_states;
-   pipe->set_sampler_textures = aaline_set_sampler_textures;
+   pipe->bind_fragment_sampler_states = aaline_bind_sampler_states;
+   pipe->set_fragment_sampler_textures = aaline_set_sampler_textures;
    
    /* Install once everything is known to be OK:
     */
