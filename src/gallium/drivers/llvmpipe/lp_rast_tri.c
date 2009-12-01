@@ -120,22 +120,22 @@ do_block_16( struct lp_rasterizer *rast,
 {
    int ix, iy, i = 0;
 
-   int ei1 = tri->ei1 << 2;
-   int ei2 = tri->ei2 << 2;
-   int ei3 = tri->ei3 << 2;
+   int ei1 = tri->ei1 * 4;
+   int ei2 = tri->ei2 * 4;
+   int ei3 = tri->ei3 * 4;
 
-   int eo1 = tri->eo1 << 2;
-   int eo2 = tri->eo2 << 2;
-   int eo3 = tri->eo3 << 2;
+   int eo1 = tri->eo1 * 4;
+   int eo2 = tri->eo2 * 4;
+   int eo3 = tri->eo3 * 4;
 
    assert(x % 16 == 0);
    assert(y % 16 == 0);
 
    for (iy = 0; iy < 16; iy+=4) {
       for (ix = 0; ix < 16; ix+=4, i++) {
-	 int cx1 = c1 + (tri->step[0][i] << 2);
-	 int cx2 = c2 + (tri->step[1][i] << 2);
-	 int cx3 = c3 + (tri->step[2][i] << 2);
+	 int cx1 = c1 + (tri->step[0][i] * 4);
+	 int cx2 = c2 + (tri->step[1][i] * 4);
+	 int cx3 = c3 + (tri->step[2][i] * 4);
 	 
 	 if (cx1 + eo1 < 0 ||
 	     cx2 + eo2 < 0 ||
@@ -176,13 +176,13 @@ lp_rast_triangle( struct lp_rasterizer *rast,
    int c2 = tri->c2 + tri->dx23 * y - tri->dy23 * x;
    int c3 = tri->c3 + tri->dx31 * y - tri->dy31 * x;
 
-   int ei1 = tri->ei1 << 4;
-   int ei2 = tri->ei2 << 4;
-   int ei3 = tri->ei3 << 4;
+   int ei1 = tri->ei1 * 16;
+   int ei2 = tri->ei2 * 16;
+   int ei3 = tri->ei3 * 16;
 
-   int eo1 = tri->eo1 << 4;
-   int eo2 = tri->eo2 << 4;
-   int eo3 = tri->eo3 << 4;
+   int eo1 = tri->eo1 * 16;
+   int eo2 = tri->eo2 * 16;
+   int eo3 = tri->eo3 * 16;
 
    debug_printf("%s\n", __FUNCTION__);
 
@@ -194,9 +194,9 @@ lp_rast_triangle( struct lp_rasterizer *rast,
     */
    for (iy = 0; iy < TILE_SIZE; iy += 16) {
       for (ix = 0; ix < TILE_SIZE; ix += 16, i++) {
-	 int cx1 = c1 + (tri->step[0][i] << 4);
-	 int cx2 = c2 + (tri->step[1][i] << 4);
-	 int cx3 = c3 + (tri->step[2][i] << 4);
+	 int cx1 = c1 + (tri->step[0][i] * 16);
+	 int cx2 = c2 + (tri->step[1][i] * 16);
+	 int cx3 = c3 + (tri->step[2][i] * 16);
 	 
 	 if (cx1 + eo1 < 0 ||
 	     cx2 + eo2 < 0 ||
