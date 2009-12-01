@@ -79,7 +79,11 @@ try_clear( struct brw_context *brw,
       BR13 |= BR13_565;
    }
 
-   assert(surface->tiling != BRW_TILING_Y);
+   /* XXX: nasty hack for clearing depth buffers
+    */
+   if (surface->tiling == BRW_TILING_Y) {
+      x2 = pitch;
+   }
 
    if (surface->tiling == BRW_TILING_X) {
       CMD |= XY_DST_TILED;
