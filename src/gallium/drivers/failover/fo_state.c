@@ -339,10 +339,10 @@ failover_bind_sampler_states(struct pipe_context *pipe,
    }
    failover->dirty |= FO_NEW_SAMPLER;
    failover->num_samplers = num;
-   failover->sw->bind_sampler_states(failover->sw, num,
-                                     failover->sw_sampler_state);
-   failover->hw->bind_sampler_states(failover->hw, num,
-                                     failover->hw_sampler_state);
+   failover->sw->bind_fragment_sampler_states(failover->sw, num,
+                                              failover->sw_sampler_state);
+   failover->hw->bind_fragment_sampler_states(failover->hw, num,
+                                              failover->hw_sampler_state);
 }
 
 static void
@@ -381,8 +381,8 @@ failover_set_sampler_textures(struct pipe_context *pipe,
                              NULL);
    failover->dirty |= FO_NEW_TEXTURE;
    failover->num_textures = num;
-   failover->sw->set_sampler_textures( failover->sw, num, texture );
-   failover->hw->set_sampler_textures( failover->hw, num, texture );
+   failover->sw->set_fragment_sampler_textures( failover->sw, num, texture );
+   failover->hw->set_fragment_sampler_textures( failover->hw, num, texture );
 }
 
 
@@ -453,7 +453,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.bind_blend_state   = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.create_sampler_state = failover_create_sampler_state;
-   failover->pipe.bind_sampler_states  = failover_bind_sampler_states;
+   failover->pipe.bind_fragment_sampler_states  = failover_bind_sampler_states;
    failover->pipe.delete_sampler_state = failover_delete_sampler_state;
    failover->pipe.create_depth_stencil_alpha_state = failover_create_depth_stencil_state;
    failover->pipe.bind_depth_stencil_alpha_state   = failover_bind_depth_stencil_state;
@@ -473,7 +473,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
-   failover->pipe.set_sampler_textures = failover_set_sampler_textures;
+   failover->pipe.set_fragment_sampler_textures = failover_set_sampler_textures;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffers = failover_set_vertex_buffers;
    failover->pipe.set_vertex_elements = failover_set_vertex_elements;

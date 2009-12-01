@@ -92,13 +92,13 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_viewport_state( failover->sw, &failover->viewport );
 
    if (failover->dirty & FO_NEW_SAMPLER) {
-      failover->sw->bind_sampler_states( failover->sw, failover->num_samplers,
-                                         failover->sw_sampler_state );
+      failover->sw->bind_fragment_sampler_states( failover->sw, failover->num_samplers,
+                                                  failover->sw_sampler_state );
    }
 
    if (failover->dirty & FO_NEW_TEXTURE) {
-      failover->sw->set_sampler_textures( failover->sw, failover->num_textures, 
-                                          failover->texture );
+      failover->sw->set_fragment_sampler_textures( failover->sw, failover->num_textures, 
+                                                   failover->texture );
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
