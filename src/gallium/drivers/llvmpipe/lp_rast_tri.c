@@ -34,9 +34,6 @@
 #include "lp_tile_soa.h"
 
 
-#define BLOCKSIZE 4
-
-
 /**
  * Add a 4x4 block of pixels to the block list.
  * All pixels are known to be inside the triangle's bounds.
@@ -186,6 +183,8 @@ lp_rast_triangle( struct lp_rasterizer *rast,
    int eo2 = tri->eo2 * 16;
    int eo3 = tri->eo3 * 16;
 
+   assert(Elements(rast->blocks) == (TILE_SIZE * TILE_SIZE) / (4*4));
+
    debug_printf("%s\n", __FUNCTION__);
 
    rast->nr_blocks = 0;
@@ -217,6 +216,8 @@ lp_rast_triangle( struct lp_rasterizer *rast,
 	 }
       }
    }
+
+   assert(rast->nr_blocks <= Elements(rast->blocks));
 
    /* Shade the 4x4 pixel blocks */
    for (i = 0; i < rast->nr_blocks; i++) 
