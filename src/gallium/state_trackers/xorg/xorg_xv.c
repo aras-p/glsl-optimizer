@@ -319,21 +319,6 @@ copy_packed_data(ScrnInfoPtr pScrn,
 
 
 static void
-setup_vs_video_constants(struct xorg_renderer *r, struct exa_pixmap_priv *dst)
-{
-   int width = dst->tex->width0;
-   int height = dst->tex->height0;
-   const int param_bytes = 8 * sizeof(float);
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-
-   renderer_set_constants(r, PIPE_SHADER_VERTEX,
-                          vs_consts, param_bytes);
-}
-
-static void
 setup_fs_video_constants(struct xorg_renderer *r, boolean hdtv)
 {
    const int param_bytes = 12 * sizeof(float);
@@ -446,6 +431,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    Bool hdtv;
    int x, y, w, h;
    struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
+   struct pipe_surface *dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
 
    if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
@@ -466,13 +452,12 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    pbox = REGION_RECTS(dstRegion);
    nbox = REGION_NUM_RECTS(dstRegion);
 
-   renderer_bind_framebuffer(pPriv->r, dst);
-   renderer_bind_viewport(pPriv->r, dst);
+   renderer_bind_destination(pPriv->r, dst_surf, 
+                             dst_surf->width, dst_surf->height);
+
    bind_blend_state(pPriv);
-   renderer_bind_rasterizer(pPriv->r);
    bind_shaders(pPriv);
    bind_samplers(pPriv);
-   setup_vs_video_constants(pPriv->r, dst);
    setup_fs_video_constants(pPriv->r, hdtv);
 
    exaMoveInPixmap(pPixmap);
@@ -505,6 +490,8 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       pbox++;
    }
    DamageRegionProcessPending(&pPixmap->drawable);
+
+   pipe_surface_reference(&dst_surf, NULL);
 
    return TRUE;
 }
@@ -689,7 +676,7 @@ xorg_setup_textured_adapter(ScreenPtr pScreen)
 }
 
 void
-xorg_init_video(ScreenPtr pScreen)
+xorg_xv_init(ScreenPtr pScreen)
 {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    /*modesettingPtr ms = modesettingPTR(pScrn);*/

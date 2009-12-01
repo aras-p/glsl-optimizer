@@ -35,13 +35,22 @@ struct exa_context
    } transform;
 
    struct {
+      boolean use_surface_copy;
+
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;
+
+      struct pipe_surface *src_surface;
+      struct pipe_surface *dst_surface;
+
+      struct pipe_texture *src_texture;
    } copy;
 };
 
 struct exa_pixmap_priv
 {
+   int width, height;
+
    int flags;
    int tex_flags;
 

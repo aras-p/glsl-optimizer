@@ -24,12 +24,14 @@
  **********************************************************/
 
 #include "svga_cmd.h"
+#include "svga_debug.h"
 
 #include "pipe/p_defines.h"
 #include "util/u_pack_color.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
+#include "svga_screen_texture.h"
 
 
 static enum pipe_error
@@ -98,6 +100,10 @@ svga_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 {
    struct svga_context *svga = svga_context( pipe );
    int ret;
+   
+   if (buffers & PIPE_CLEAR_COLOR)
+      SVGA_DBG(DEBUG_DMA, "clear sid %p\n",
+               svga_surface(svga->curr.framebuffer.cbufs[0])->handle);
 
    ret = try_clear( svga, buffers, rgba, depth, stencil );
 

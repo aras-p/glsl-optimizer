@@ -4,7 +4,7 @@ TOP = ..
 
 include $(TOP)/configs/current
 
-SUBDIRS = $(PROGRAM_DIRS)
+SUBDIRS = "$(strip "$(PROGRAM_DIRS)")"
 
 
 default: message subdirs

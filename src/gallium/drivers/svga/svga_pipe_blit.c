@@ -25,6 +25,7 @@
 
 #include "svga_screen_texture.h"
 #include "svga_context.h"
+#include "svga_debug.h"
 #include "svga_cmd.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
@@ -42,6 +43,13 @@ static void svga_surface_copy(struct pipe_context *pipe,
    enum pipe_error ret;
 
    svga_hwtnl_flush_retry( svga );
+
+   SVGA_DBG(DEBUG_DMA, "blit to sid %p (%d,%d), from sid %p (%d,%d) sz %dx%d\n",
+            svga_surface(dest)->handle,
+            destx, desty,
+            svga_surface(src)->handle,
+            srcx, srcy,
+            width, height);
 
    ret = SVGA3D_BeginSurfaceCopy(svga->swc,
                                  src,

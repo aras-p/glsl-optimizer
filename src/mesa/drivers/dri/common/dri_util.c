@@ -167,11 +167,12 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;
+    __DRIscreenPrivate *psp;
 
     /* Bind the drawable to the context */
 
     if (pcp) {
+	psp = pcp->driScreenPriv;
 	pcp->driDrawablePriv = pdp;
 	pcp->driReadablePriv = prp;
 	if (pdp) {
@@ -498,11 +499,11 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 {
     __DRIscreenPrivate *psp;
 
-    pdp->refcount--;
-    if (pdp->refcount)
-	return;
-
     if (pdp) {
+	pdp->refcount--;
+	if (pdp->refcount)
+	    return;
+
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if (pdp->pClipRects) {

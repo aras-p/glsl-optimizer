@@ -232,15 +232,25 @@ bind_blend_state(struct exa_context *exa, int op,
 }
 
 static unsigned
-picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, boolean mask)
+picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, boolean mask,
+                      PicturePtr pDstPicture)
 {
    boolean set_alpha = FALSE;
    boolean swizzle = FALSE;
    unsigned ret = 0;
 
    if (pSrc->picture_format == pSrcPicture->format) {
-      if (pSrc->picture_format == PICT_a8)
-         return mask ? FS_MASK_LUMINANCE : FS_SRC_LUMINANCE;
+      if (pSrc->picture_format == PICT_a8) {
+         if (mask)
+            return FS_MASK_LUMINANCE;
+         else if (pDstPicture->format != PICT_a8) {
+            /* if both dst and src are luminance then
+             * we don't want to swizzle the alpha (X) of the
+             * source into W component of the dst because
+             * it will break our destination */
+            return FS_SRC_LUMINANCE;
+         }
+      }
       return 0;
    }
 
@@ -285,7 +295,7 @@ picture_format_fixups(struct exa_pixmap_priv *pSrc, PicturePtr pSrcPicture, bool
 
 static void
 bind_shaders(struct exa_context *exa, int op,
-             PicturePtr pSrcPicture, PicturePtr pMaskPicture,
+             PicturePtr pSrcPicture, PicturePtr pMaskPicture, PicturePtr pDstPicture,
              struct exa_pixmap_priv *pSrc, struct exa_pixmap_priv *pMask)
 {
    unsigned vs_traits = 0, fs_traits = 0;
@@ -313,7 +323,7 @@ bind_shaders(struct exa_context *exa, int op,
          vs_traits |= VS_COMPOSITE;
       }
 
-      fs_traits |= picture_format_fixups(pSrc, pSrcPicture, FALSE);
+      fs_traits |= picture_format_fixups(pSrc, pSrcPicture, FALSE, pDstPicture);
    }
 
    if (pMaskPicture) {
@@ -331,7 +341,7 @@ bind_shaders(struct exa_context *exa, int op,
             fs_traits |= FS_CA_FULL;
       }
 
-      fs_traits |= picture_format_fixups(pMask, pMaskPicture, TRUE);
+      fs_traits |= picture_format_fixups(pMask, pMaskPicture, TRUE, pDstPicture);
    }
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
@@ -411,40 +421,7 @@ bind_samplers(struct exa_context *exa, int op,
                             exa->bound_textures);
 }
 
-static void
-setup_vs_constant_buffer(struct exa_context *exa,
-                         int width, int height)
-{
-   const int param_bytes = 8 * sizeof(float);
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-   renderer_set_constants(exa->renderer, PIPE_SHADER_VERTEX,
-                          vs_consts, param_bytes);
-}
 
-
-static void
-setup_fs_constant_buffer(struct exa_context *exa)
-{
-   const int param_bytes = 4 * sizeof(float);
-   const float fs_consts[8] = {
-      0, 0, 0, 1,
-   };
-   renderer_set_constants(exa->renderer, PIPE_SHADER_FRAGMENT,
-                          fs_consts, param_bytes);
-}
-
-static void
-setup_constant_buffers(struct exa_context *exa, struct exa_pixmap_priv *pDst)
-{
-   int width = pDst->tex->width0;
-   int height = pDst->tex->height0;
-
-   setup_vs_constant_buffer(exa, width, height);
-   setup_fs_constant_buffer(exa);
-}
 
 static INLINE boolean matrix_from_pict_transform(PictTransform *trans, float *matrix)
 {
@@ -493,14 +470,16 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                                   struct exa_pixmap_priv *pMask,
                                   struct exa_pixmap_priv *pDst)
 {
-   renderer_bind_framebuffer(exa->renderer, pDst);
-   renderer_bind_viewport(exa->renderer, pDst);
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pDst);
+
+   renderer_bind_destination(exa->renderer, dst_surf,
+                             pDst->width,
+                             pDst->height);
+
    bind_blend_state(exa, op, pSrcPicture, pMaskPicture, pDstPicture);
-   renderer_bind_rasterizer(exa->renderer);
-   bind_shaders(exa, op, pSrcPicture, pMaskPicture, pSrc, pMask);
+   bind_shaders(exa, op, pSrcPicture, pMaskPicture, pDstPicture, pSrc, pMask);
    bind_samplers(exa, op, pSrcPicture, pMaskPicture,
                  pDstPicture, pSrc, pMask, pDst);
-   setup_constant_buffers(exa, pDst);
 
    setup_transforms(exa, pSrcPicture, pMaskPicture);
 
@@ -512,6 +491,8 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                               exa->num_bound_samplers);
    }
 
+
+   pipe_surface_reference(&dst_surf, NULL);
    return TRUE;
 }
 
@@ -546,6 +527,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
                               struct exa_pixmap_priv *pixmap,
                               Pixel fg)
 {
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pixmap);
    unsigned vs_traits, fs_traits;
    struct xorg_shader shader;
 
@@ -563,13 +545,11 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    vs_traits = VS_SOLID_FILL;
    fs_traits = FS_SOLID_FILL;
 
-   renderer_bind_framebuffer(exa->renderer, pixmap);
-   renderer_bind_viewport(exa->renderer, pixmap);
-   renderer_bind_rasterizer(exa->renderer);
+   renderer_bind_destination(exa->renderer, dst_surf, 
+                             pixmap->width, pixmap->height);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
    cso_set_samplers(exa->renderer->cso, 0, NULL);
    cso_set_sampler_textures(exa->renderer->cso, 0, NULL);
-   setup_constant_buffers(exa, pixmap);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
    cso_set_vertex_shader_handle(exa->renderer->cso, shader.vs);
@@ -577,6 +557,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
 
    renderer_begin_solid(exa->renderer);
 
+   pipe_surface_reference(&dst_surf, NULL);
    return TRUE;
 }
 
@@ -588,3 +569,13 @@ void xorg_solid(struct exa_context *exa,
                   x0, y0, x1, y1, exa->solid_color);
 }
 
+void
+xorg_composite_done(struct exa_context *exa)
+{
+   renderer_draw_flush(exa->renderer);
+
+   exa->transform.has_src = FALSE;
+   exa->transform.has_mask = FALSE;
+   exa->has_solid_color = FALSE;
+   exa->num_bound_samplers = 0;
+}

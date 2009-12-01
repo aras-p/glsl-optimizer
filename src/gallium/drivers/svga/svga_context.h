@@ -191,6 +191,11 @@ struct svga_state
    struct pipe_framebuffer_state framebuffer;
    float depthscale;
 
+   /* Hack to limit the number of different render targets between
+    * flushes.  Helps avoid blowing out our surface cache in EXA.
+    */
+   int nr_fbs;
+
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_blend_color blend_color;

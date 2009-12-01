@@ -62,8 +62,6 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	__DRIdrawablePrivate *const readable = radeon_get_readable(rmesa);
 	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
 
-	assert(drawable != NULL);
-
 	drmGetLock(rmesa->dri.fd, rmesa->dri.hwContext, flags);
 
 	/* The window might have moved, so we might need to get new clip
@@ -74,12 +72,13 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	 * Since the hardware state depends on having the latest drawable
 	 * clip rects, all state checking must be done _after_ this call.
 	 */
-	DRI_VALIDATE_DRAWABLE_INFO(sPriv, drawable);
-	if (drawable != readable) {
+	if (drawable)
+		DRI_VALIDATE_DRAWABLE_INFO(sPriv, drawable);
+	if (readable && drawable != readable) {
 		DRI_VALIDATE_DRAWABLE_INFO(sPriv, readable);
 	}
 
-	if (rmesa->lastStamp != drawable->lastStamp) {
+	if (drawable && (rmesa->lastStamp != drawable->lastStamp)) {
 		radeon_window_moved(rmesa);
 		rmesa->lastStamp = drawable->lastStamp;
 	}

@@ -598,7 +598,10 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 void GLAPIENTRY
 _mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param )
 {
-   _mesa_TexEnvfv( target, pname, &param );
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0;
+   _mesa_TexEnvfv( target, pname, p );
 }
 
 

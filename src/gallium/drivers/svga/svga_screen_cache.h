@@ -36,10 +36,18 @@
 #include "util/u_double_list.h"
 
 
-/* TODO: Reduce this once we don't allocate an index buffer per draw call */ 
+/* Guess the storage size of cached surfaces and try and keep it under
+ * this amount:
+ */ 
+#define SVGA_HOST_SURFACE_CACHE_BYTES 16*1024*1024
+
+/* Maximum number of discrete surfaces in the cache:
+ */
 #define SVGA_HOST_SURFACE_CACHE_SIZE 1024
 
-#define SVGA_HOST_SURFACE_CACHE_BUCKETS 64
+/* Number of hash buckets:
+ */
+#define SVGA_HOST_SURFACE_CACHE_BUCKETS 256
 
 
 struct svga_winsys_surface;
@@ -53,8 +61,9 @@ struct svga_host_surface_cache_key
    SVGA3dSurfaceFlags flags;
    SVGA3dSurfaceFormat format;
    SVGA3dSize size;
-   uint32_t numFaces;
-   uint32_t numMipLevels;
+   uint32_t numFaces:24;
+   uint32_t numMipLevels:7;
+   uint32_t cachable:1;         /* False if this is a shared surface */
 };
 
 

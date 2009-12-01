@@ -13,11 +13,6 @@
 
 #include <math.h>
 
-enum AxisOrientation {
-   Y0_BOTTOM,
-   Y0_TOP
-};
-
 #define floatsEqual(x, y) (fabs(x - y) <= 0.00001f * MIN2(fabs(x), fabs(y)))
 #define floatIsZero(x) (floatsEqual((x) + 1, 1))
 
@@ -96,10 +91,18 @@ static void
 renderer_init_state(struct xorg_renderer *r)
 {
    struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_rasterizer_state raster;
 
    /* set common initial clip state */
    memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
    cso_set_depth_stencil_alpha(r->cso, &dsa);
+
+
+   /* XXX: move to renderer_init_state? */
+   memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
+   raster.gl_rasterization_rules = 1;
+   cso_set_rasterizer(r->cso, &raster);
+
 }
 
 
@@ -186,23 +189,6 @@ add_vertex_data1(struct xorg_renderer *r,
    add_vertex_1tex(r, dstX, dstY + height, s3, t3);
 }
 
-static struct pipe_buffer *
-setup_vertex_data_tex(struct xorg_renderer *r,
-                      float x0, float y0, float x1, float y1,
-                      float s0, float t0, float s1, float t1,
-                      float z)
-{
-   /* 1st vertex */
-   add_vertex_1tex(r, x0, y0, s0, t0);
-   /* 2nd vertex */
-   add_vertex_1tex(r, x1, y0, s1, t0);
-   /* 3rd vertex */
-   add_vertex_1tex(r, x1, y1, s1, t1);
-   /* 4th vertex */
-   add_vertex_1tex(r, x0, y1, s0, t1);
-
-   return renderer_buffer_create(r);
-}
 
 static INLINE void
 add_vertex_2tex(struct xorg_renderer *r,
@@ -322,15 +308,32 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
 
 
 
-static void
-set_viewport(struct xorg_renderer *r, int width, int height,
-             enum AxisOrientation orientation)
+/* Set up framebuffer, viewport and vertex shader constant buffer
+ * state for a particular destinaton surface.  In all our rendering,
+ * these concepts are linked.
+ */
+void renderer_bind_destination(struct xorg_renderer *r,
+                               struct pipe_surface *surface,
+                               int width,
+                               int height )
 {
-   struct pipe_viewport_state viewport;
-   float y_scale = (orientation == Y0_BOTTOM) ? -2.f : 2.f;
 
+   struct pipe_framebuffer_state fb;
+   struct pipe_viewport_state viewport;
+
+   /* Framebuffer uses actual surface width/height
+    */
+   memset(&fb, 0, sizeof fb);
+   fb.width  = surface->width;
+   fb.height = surface->height;
+   fb.nr_cbufs = 1;
+   fb.cbufs[0] = surface;
+   fb.zsbuf = 0;
+
+   /* Viewport just touches the bit we're interested in:
+    */
    viewport.scale[0] =  width / 2.f;
-   viewport.scale[1] =  height / y_scale;
+   viewport.scale[1] =  height / 2.f;
    viewport.scale[2] =  1.0;
    viewport.scale[3] =  1.0;
    viewport.translate[0] = width / 2.f;
@@ -338,9 +341,26 @@ set_viewport(struct xorg_renderer *r, int width, int height,
    viewport.translate[2] = 0.0;
    viewport.translate[3] = 0.0;
 
+   /* Constant buffer set up to match viewport dimensions:
+    */
+   if (r->fb_width != width ||
+       r->fb_height != height) 
+   {
+      float vs_consts[8] = {
+         2.f/width, 2.f/height, 1, 1,
+         -1, -1, 0, 0
+      };
+
+      r->fb_width = width;
+      r->fb_height = height;
+
+      renderer_set_constants(r, PIPE_SHADER_VERTEX,
+                             vs_consts, sizeof vs_consts);
+   }
+
+   cso_set_framebuffer(r->cso, &fb);
    cso_set_viewport(r->cso, &viewport);
 }
-
 
 
 struct xorg_renderer * renderer_create(struct pipe_context *pipe)
@@ -379,51 +399,9 @@ void renderer_destroy(struct xorg_renderer *r)
    }
 }
 
-void renderer_bind_framebuffer(struct xorg_renderer *r,
-                               struct exa_pixmap_priv *priv)
-{
-   unsigned i;
-   struct pipe_framebuffer_state state;
-   struct pipe_surface *surface = xorg_gpu_surface(r->pipe->screen, priv);
-   memset(&state, 0, sizeof(struct pipe_framebuffer_state));
 
-   state.width  = priv->tex->width0;
-   state.height = priv->tex->height0;
 
-   state.nr_cbufs = 1;
-   state.cbufs[0] = surface;
-   for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-      state.cbufs[i] = 0;
 
-   /* currently we don't use depth/stencil */
-   state.zsbuf = 0;
-
-   cso_set_framebuffer(r->cso, &state);
-
-   /* we do fire and forget for the framebuffer, this is the forget part */
-   pipe_surface_reference(&surface, NULL);
-}
-
-void renderer_bind_viewport(struct xorg_renderer *r,
-                            struct exa_pixmap_priv *dst)
-{
-   int width = dst->tex->width0;
-   int height = dst->tex->height0;
-
-   /*debug_printf("Bind viewport (%d, %d)\n", width, height);*/
-
-   set_viewport(r, width, height, Y0_TOP);
-}
-
-void renderer_bind_rasterizer(struct xorg_renderer *r)
-{
-   struct pipe_rasterizer_state raster;
-
-   /* XXX: move to renderer_init_state? */
-   memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
-   raster.gl_rasterization_rules = 1;
-   cso_set_rasterizer(r->cso, &raster);
-}
 
 void renderer_set_constants(struct xorg_renderer *r,
                             int shader_type,
@@ -446,181 +424,19 @@ void renderer_set_constants(struct xorg_renderer *r,
    r->pipe->set_constant_buffer(r->pipe, shader_type, 0, cbuf);
 }
 
-static void
-setup_vs_constant_buffer(struct xorg_renderer *r,
-                         int width, int height)
-{
-   const int param_bytes = 8 * sizeof(float);
-   float vs_consts[8] = {
-      2.f/width, 2.f/height, 1, 1,
-      -1, -1, 0, 0
-   };
-   renderer_set_constants(r, PIPE_SHADER_VERTEX,
-                          vs_consts, param_bytes);
-}
 
-static void
-setup_fs_constant_buffer(struct xorg_renderer *r)
-{
-   const int param_bytes = 4 * sizeof(float);
-   const float fs_consts[8] = {
-      0, 0, 0, 1,
-   };
-   renderer_set_constants(r, PIPE_SHADER_FRAGMENT,
-                          fs_consts, param_bytes);
-}
-
-static INLINE void shift_rectx(float coords[4],
-                               const float *bounds,
-                               const float shift)
-{
-   coords[0] += shift;
-   coords[2] -= shift;
-   if (bounds) {
-      coords[2] = MIN2(coords[2], bounds[2]);
-      /* bound x/y + width/height */
-      if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
-         coords[2] = (bounds[0] + bounds[2]) - coords[0];
-      }
-   }
-}
-
-static INLINE void shift_recty(float coords[4],
-                               const float *bounds,
-                               const float shift)
-{
-   coords[1] += shift;
-   coords[3] -= shift;
-   if (bounds) {
-      coords[3] = MIN2(coords[3], bounds[3]);
-      if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
-         coords[3] = (bounds[1] + bounds[3]) - coords[1];
-      }
-   }
-}
-
-static INLINE void bound_rect(float coords[4],
-                              const float bounds[4],
-                              float shift[4])
-{
-   /* if outside the bounds */
-   if (coords[0] > (bounds[0] + bounds[2]) ||
-       coords[1] > (bounds[1] + bounds[3]) ||
-       (coords[0] + coords[2]) < bounds[0] ||
-       (coords[1] + coords[3]) < bounds[1]) {
-      coords[0] = 0.f;
-      coords[1] = 0.f;
-      coords[2] = 0.f;
-      coords[3] = 0.f;
-      shift[0] = 0.f;
-      shift[1] = 0.f;
-      return;
-   }
-
-   /* bound x */
-   if (coords[0] < bounds[0]) {
-      shift[0] = bounds[0] - coords[0];
-      coords[2] -= shift[0];
-      coords[0] = bounds[0];
-   } else
-      shift[0] = 0.f;
-
-   /* bound y */
-   if (coords[1] < bounds[1]) {
-      shift[1] = bounds[1] - coords[1];
-      coords[3] -= shift[1];
-      coords[1] = bounds[1];
-   } else
-      shift[1] = 0.f;
-
-   shift[2] = bounds[2] - coords[2];
-   shift[3] = bounds[3] - coords[3];
-   /* bound width/height */
-   coords[2] = MIN2(coords[2], bounds[2]);
-   coords[3] = MIN2(coords[3], bounds[3]);
-
-   /* bound x/y + width/height */
-   if ((coords[0] + coords[2]) > (bounds[0] + bounds[2])) {
-      coords[2] = (bounds[0] + bounds[2]) - coords[0];
-   }
-   if ((coords[1] + coords[3]) > (bounds[1] + bounds[3])) {
-      coords[3] = (bounds[1] + bounds[3]) - coords[1];
-   }
-
-   /* if outside the bounds */
-   if ((coords[0] + coords[2]) < bounds[0] ||
-       (coords[1] + coords[3]) < bounds[1]) {
-      coords[0] = 0.f;
-      coords[1] = 0.f;
-      coords[2] = 0.f;
-      coords[3] = 0.f;
-      return;
-   }
-}
-
-static INLINE void sync_size(float *src_loc, float *dst_loc)
-{
-   src_loc[2] = MIN2(src_loc[2], dst_loc[2]);
-   src_loc[3] = MIN2(src_loc[3], dst_loc[3]);
-   dst_loc[2] = src_loc[2];
-   dst_loc[3] = src_loc[3];
-}
-
-static void renderer_copy_texture(struct xorg_renderer *r,
-                                  struct pipe_texture *src,
-                                  float sx1, float sy1,
-                                  float sx2, float sy2,
-                                  struct pipe_texture *dst,
-                                  float dx1, float dy1,
-                                  float dx2, float dy2)
+void renderer_copy_prepare(struct xorg_renderer *r,
+                           struct pipe_surface *dst_surface,
+                           struct pipe_texture *src_texture)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_buffer *buf;
-   struct pipe_surface *dst_surf = screen->get_tex_surface(
-      screen, dst, 0, 0, 0,
-      PIPE_BUFFER_USAGE_GPU_WRITE);
-   struct pipe_framebuffer_state fb;
-   float s0, t0, s1, t1;
    struct xorg_shader shader;
 
-   assert(src->width0 != 0);
-   assert(src->height0 != 0);
-   assert(dst->width0 != 0);
-   assert(dst->height0 != 0);
-
-#if 1
-   s0 = sx1 / src->width0;
-   s1 = sx2 / src->width0;
-   t0 = sy1 / src->height0;
-   t1 = sy2 / src->height0;
-#else
-   s0 = 0;
-   s1 = 1;
-   t0 = 0;
-   t1 = 1;
-#endif
-
-#if 0
-   debug_printf("copy texture src=[%f, %f, %f, %f], dst=[%f, %f, %f, %f], tex=[%f, %f, %f, %f]\n",
-                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2,
-                s0, t0, s1, t1);
-#endif
-
-   assert(screen->is_format_supported(screen, dst_surf->format,
+   assert(screen->is_format_supported(screen, dst_surface->format,
                                       PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                       0));
-
-   /* save state (restored below) */
-   cso_save_blend(r->cso);
-   cso_save_samplers(r->cso);
-   cso_save_sampler_textures(r->cso);
-   cso_save_framebuffer(r->cso);
-   cso_save_fragment_shader(r->cso);
-   cso_save_vertex_shader(r->cso);
-
-   cso_save_viewport(r->cso);
 
 
    /* set misc state we care about */
@@ -650,12 +466,12 @@ static void renderer_copy_texture(struct xorg_renderer *r,
       cso_single_sampler_done(r->cso);
    }
 
-   set_viewport(r, dst_surf->width, dst_surf->height, Y0_TOP);
+   renderer_bind_destination(r, dst_surface, 
+                             dst_surface->width,
+                             dst_surface->height);
 
    /* texture */
-   cso_set_sampler_textures(r->cso, 1, &src);
-
-   renderer_bind_rasterizer(r);
+   cso_set_sampler_textures(r->cso, 1, &src_texture);
 
    /* shaders */
    shader = xorg_shaders_get(r->shaders,
@@ -664,51 +480,12 @@ static void renderer_copy_texture(struct xorg_renderer *r,
    cso_set_vertex_shader_handle(r->cso, shader.vs);
    cso_set_fragment_shader_handle(r->cso, shader.fs);
 
-   /* drawing dest */
-   memset(&fb, 0, sizeof(fb));
-   fb.width = dst_surf->width;
-   fb.height = dst_surf->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst_surf;
-   {
-      int i;
-      for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-         fb.cbufs[i] = 0;
-   }
-   cso_set_framebuffer(r->cso, &fb);
-   setup_vs_constant_buffer(r, fb.width, fb.height);
-   setup_fs_constant_buffer(r);
-
-   /* draw quad */
-   buf = setup_vertex_data_tex(r,
-                               dx1, dy1,
-                               dx2, dy2,
-                               s0, t0, s1, t1,
-                               0.0f);
-
-   if (buf) {
-      util_draw_vertex_buffer(r->pipe, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_buffer_reference(&buf, NULL);
-   }
-
-   /* restore state we changed */
-   cso_restore_blend(r->cso);
-   cso_restore_samplers(r->cso);
-   cso_restore_sampler_textures(r->cso);
-   cso_restore_framebuffer(r->cso);
-   cso_restore_vertex_shader(r->cso);
-   cso_restore_fragment_shader(r->cso);
-   cso_restore_viewport(r->cso);
-
-   pipe_surface_reference(&dst_surf, NULL);
+   r->buffer_size = 0;
+   r->attrs_per_vertex = 2;
 }
 
-static struct pipe_texture *
-create_sampler_texture(struct xorg_renderer *r,
+struct pipe_texture *
+renderer_clone_texture(struct xorg_renderer *r,
                        struct pipe_texture *src)
 {
    enum pipe_format format;
@@ -717,7 +494,9 @@ create_sampler_texture(struct xorg_renderer *r,
    struct pipe_texture *pt;
    struct pipe_texture templ;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   if (pipe->is_texture_referenced(pipe, src, 0, 0) &
+       PIPE_REFERENCED_FOR_WRITE)
+      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
@@ -771,16 +550,16 @@ create_sampler_texture(struct xorg_renderer *r,
 
 
 void renderer_copy_pixmap(struct xorg_renderer *r,
-                          struct exa_pixmap_priv *dst_priv, int dx, int dy,
-                          struct exa_pixmap_priv *src_priv, int sx, int sy,
-                          int width, int height)
+                          int dx, int dy,
+                          int sx, int sy,
+                          int width, int height,
+                          float src_width,
+                          float src_height)
 {
-   float dst_loc[4], src_loc[4];
-   float dst_bounds[4], src_bounds[4];
-   float src_shift[4], dst_shift[4], shift[4];
-   struct pipe_texture *dst = dst_priv->tex;
-   struct pipe_texture *src = src_priv->tex;
+   float s0, t0, s1, t1;
+   float x0, y0, x1, y1;
 
+<<<<<<< HEAD:src/gallium/state_trackers/xorg/xorg_renderer.c
    if (r->pipe->is_texture_referenced(r->pipe, src, 0, 0) &
        PIPE_REFERENCED_FOR_WRITE)
       r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -842,7 +621,32 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
       if (src == dst)
          pipe_texture_reference(&temp_src, NULL);
    }
+=======
+
+   /* XXX: could put the texcoord scaling calculation into the vertex
+    * shader.
+    */
+   s0 = sx            / src_width;
+   s1 = (sx + width)  / src_width;
+   t0 = sy            / src_height;
+   t1 = (sy + height) / src_height;
+
+   x0 = dx;
+   x1 = dx + width;
+   y0 = dy;
+   y1 = dy + height;
+
+   /* draw quad */
+   renderer_draw_conditional(r, 4*8);
+   add_vertex_1tex(r, x0, y0, s0, t0);
+   add_vertex_1tex(r, x1, y0, s1, t0);
+   add_vertex_1tex(r, x1, y1, s1, t1);
+   add_vertex_1tex(r, x0, y1, s0, t1);
+>>>>>>> origin/mesa_7_7_branch:src/gallium/state_trackers/xorg/xorg_renderer.c
 }
+
+
+
 
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,

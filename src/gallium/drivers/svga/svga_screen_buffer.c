@@ -71,7 +71,10 @@ svga_buffer_create_host_surface(struct svga_screen *ss,
       
       sbuf->key.numFaces = 1;
       sbuf->key.numMipLevels = 1;
+      sbuf->key.cachable = 1;
       
+      SVGA_DBG(DEBUG_DMA, "surface_create for buffer sz %d\n", sbuf->base.size);
+
       sbuf->handle = svga_screen_surface_create(ss, &sbuf->key);
       if(!sbuf->handle)
          return PIPE_ERROR_OUT_OF_MEMORY;
@@ -82,7 +85,7 @@ svga_buffer_create_host_surface(struct svga_screen *ss,
        */
       sbuf->hw.flags.discard = TRUE;
 
-      SVGA_DBG(DEBUG_DMA, "   grab sid %p sz %d\n", sbuf->handle, sbuf->base.size);
+      SVGA_DBG(DEBUG_DMA, "   --> got sid %p sz %d (buffer)\n", sbuf->handle, sbuf->base.size);
    }
    
    return PIPE_OK;
@@ -444,7 +447,7 @@ svga_buffer_map_range( struct pipe_screen *screen,
             enum pipe_error ret;
             struct pipe_fence_handle *fence = NULL;
             
-            SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p, bytes %u - %u\n", 
+            SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p (buffer), bytes %u - %u\n", 
                      sbuf->handle, 0, sbuf->base.size);
 
             memset(&flags, 0, sizeof flags);
@@ -776,12 +779,11 @@ svga_screen_buffer_wrap_surface(struct pipe_screen *screen,
 
    /*
     * We are not the creator of this surface and therefore we must not
-    * cache it for reuse. The caching code only caches SVGA3D_BUFFER surfaces
-    * so make sure this isn't one of those.
+    * cache it for reuse. Set the cacheable flag to zero in the key to
+    * prevent this.
     */
-
-   assert(format != SVGA3D_BUFFER);
    sbuf->key.format = format;
+   sbuf->key.cachable = 0;
    sws->surface_reference(sws, &sbuf->handle, srf);
 
    return buf;
@@ -794,6 +796,8 @@ svga_screen_buffer_get_winsys_surface(struct pipe_buffer *buffer)
    struct svga_winsys_screen *sws = svga_winsys_screen(buffer->screen);
    struct svga_winsys_surface *vsurf = NULL;
 
+   assert(svga_buffer(buffer)->key.cachable == 0);
+   svga_buffer(buffer)->key.cachable = 0;
    sws->surface_reference(sws, &vsurf, svga_buffer(buffer)->handle);
    return vsurf;
 }

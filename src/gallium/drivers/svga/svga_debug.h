@@ -43,6 +43,7 @@
 #define DEBUG_FLUSH    0x1000   /* flush after every draw */
 #define DEBUG_SYNC     0x2000   /* sync after every flush */
 #define DEBUG_QUERY    0x4000
+#define DEBUG_CACHE    0x8000
 
 #ifdef DEBUG
 extern int SVGA_DEBUG;

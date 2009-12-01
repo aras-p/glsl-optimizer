@@ -509,6 +509,27 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	return MESA_FORMAT_NONE;		/* never get here */
 }
 
+/** Check if given image is valid within current texture object.
+ */
+static int image_matches_texture_obj(struct gl_texture_object *texObj,
+	struct gl_texture_image *texImage,
+	unsigned level)
+{
+	const struct gl_texture_image *baseImage = texObj->Image[0][level];
+
+	if (level < texObj->BaseLevel || level > texObj->MaxLevel)
+		return 0;
+
+	const unsigned levelDiff = level - texObj->BaseLevel;
+	const unsigned refWidth = baseImage->Width >> levelDiff;
+	const unsigned refHeight = baseImage->Height >> levelDiff;
+	const unsigned refDepth = baseImage->Depth >> levelDiff;
+
+	return (texImage->Width == refWidth &&
+			texImage->Height == refHeight &&
+			texImage->Depth == refDepth);
+}
+
 static void teximage_assign_miptree(radeonContextPtr rmesa,
 	struct gl_texture_object *texObj,
 	struct gl_texture_image *texImage,
@@ -518,18 +539,28 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
+	/* Since miptree holds only images for levels <BaseLevel..MaxLevel>
+	 * don't allocate the miptree if the teximage won't fit.
+	 */
+	if (!image_matches_texture_obj(texObj, texImage, level))
+		return;
+
 	/* Try using current miptree, or create new if there isn't any */
-	if (!t->mt || !radeon_miptree_matches_image(t->mt, texImage, face,
-					radeon_gl_level_to_miptree_level(texObj, level))) {
+	if (!t->mt || !radeon_miptree_matches_image(t->mt, texImage, face, level)) {
 		radeon_miptree_unreference(&t->mt);
 		radeon_try_alloc_miptree(rmesa, t);
+		if (RADEON_DEBUG & RADEON_TEXTURE) {
+			fprintf(stderr, "%s: texObj %p, texImage %p, face %d, level %d, "
+				"texObj miptree doesn't match, allocated new miptree %p\n",
+				__FUNCTION__, texObj, texImage, face, level, t->mt);
+		}
 	}
 
 	/* Miptree alocation may have failed,
 	 * when there was no image for baselevel specified */
 	if (t->mt) {
 		image->mtface = face;
-		image->mtlevel = radeon_gl_level_to_miptree_level(texObj, level);
+		image->mtlevel = level;
 		radeon_miptree_reference(t->mt, &image->mt);
 	}
 }
@@ -584,6 +615,8 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 	} else {
 		dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 	}
+
+	assert(dstRowStride);
 
 	if (dims == 3) {
 		unsigned alignedWidth = dstRowStride/_mesa_get_format_bytes(texImage->TexFormat);
@@ -670,6 +703,11 @@ static void radeon_teximage(
 		}
 	}
 
+	if (RADEON_DEBUG & RADEON_TEXTURE) {
+		fprintf(stderr, "radeon_teximage%dd: texObj %p, texImage %p, face %d, level %d\n",
+				dims, texObj, texImage, face, level);
+	}
+
 	t->validated = GL_FALSE;
 
 	if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
@@ -694,12 +732,17 @@ static void radeon_teximage(
 
 	if (!t->bo) {
 		teximage_assign_miptree(rmesa, texObj, texImage, face, level);
-		if (!t->mt) {
+		if (!image->mt) {
 			int size = _mesa_format_image_size(texImage->TexFormat,
 								texImage->Width,
 								texImage->Height,
 								texImage->Depth);
 			texImage->Data = _mesa_alloc_texmemory(size);
+			if (RADEON_DEBUG & RADEON_TEXTURE) {
+				fprintf(stderr, "radeon_teximage%dd: texObj %p, texImage %p, "
+					" no miptree assigned, using local memory %p\n",
+					dims, texObj, texImage, texImage->Data);
+			}
 		}
 	}
 
@@ -799,6 +842,11 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
 			radeon_firevertices(rmesa);
 		}
+	}
+
+	if (RADEON_DEBUG & RADEON_TEXTURE) {
+		fprintf(stderr, "radeon_texsubimage%dd: texObj %p, texImage %p, face %d, level %d\n",
+				dims, texObj, texImage, radeon_face_for_target(target), level);
 	}
 
 	t->validated = GL_FALSE;

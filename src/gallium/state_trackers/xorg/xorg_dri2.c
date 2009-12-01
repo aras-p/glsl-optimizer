@@ -55,7 +55,7 @@ typedef struct {
 } *BufferPrivatePtr;
 
 static Bool
-driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
+dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
 {
     struct pipe_texture *tex = NULL;
     ScreenPtr pScreen = pDraw->pScreen;
@@ -157,7 +157,7 @@ driDoCreateBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
 }
 
 static void
-driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
+dri2_do_destroy_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
 {
     ScreenPtr pScreen = pDraw->pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -174,7 +174,7 @@ driDoDestroyBuffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
 #if DRI2INFOREC_VERSION >= 2
 
 static DRI2Buffer2Ptr
-driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
+dri2_create_buffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
 {
     DRI2Buffer2Ptr buffer;
     BufferPrivatePtr private;
@@ -192,7 +192,7 @@ driCreateBuffer(DrawablePtr pDraw, unsigned int attachment, unsigned int format)
     buffer->driverPrivate = private;
 
     /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
-    if (driDoCreateBuffer(pDraw, (DRI2BufferPtr)buffer, format))
+    if (dri2_do_create_buffer(pDraw, (DRI2BufferPtr)buffer, format))
 	return buffer;
 
     xfree(private);
@@ -202,10 +202,10 @@ fail:
 }
 
 static void
-driDestroyBuffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
+dri2_destroy_buffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
 {
     /* So far it is safe to downcast a DRI2Buffer2Ptr to DRI2BufferPtr */
-    driDoDestroyBuffer(pDraw, (DRI2BufferPtr)buffer);
+    dri2_do_destroy_buffer(pDraw, (DRI2BufferPtr)buffer);
 
     xfree(buffer->driverPrivate);
     xfree(buffer);
@@ -214,7 +214,7 @@ driDestroyBuffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
 #else /* DRI2INFOREC_VERSION < 2 */
 
 static DRI2BufferPtr
-driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
+dri2_create_buffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 {
     BufferPrivatePtr privates;
     DRI2BufferPtr buffers;
@@ -232,7 +232,7 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	buffers[i].attachment = attachments[i];
 	buffers[i].driverPrivate = &privates[i];
 
-	if (!driDoCreateBuffer(pDraw, &buffers[i], 0))
+	if (!dri2_do_create_buffer(pDraw, &buffers[i], 0))
 	    goto fail;
     }
 
@@ -247,12 +247,12 @@ fail_buffers:
 }
 
 static void
-driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
+dri2_destroy_buffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 {
     int i;
 
     for (i = 0; i < count; i++) {
-	driDoDestroyBuffer(pDraw, &buffers[i]);
+	dri2_do_destroy_buffer(pDraw, &buffers[i]);
     }
 
     if (buffers) {
@@ -264,16 +264,16 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 #endif /* DRI2INFOREC_VERSION >= 2 */
 
 static void
-driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
-              DRI2BufferPtr pDestBuffer, DRI2BufferPtr pSrcBuffer)
+dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
+                 DRI2BufferPtr pDestBuffer, DRI2BufferPtr pSrcBuffer)
 {
     ScreenPtr pScreen = pDraw->pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     BufferPrivatePtr dst_priv = pDestBuffer->driverPrivate;
     BufferPrivatePtr src_priv = pSrcBuffer->driverPrivate;
-    PixmapPtr src_pixmap;
-    PixmapPtr dst_pixmap;
+    DrawablePtr src_draw;
+    DrawablePtr dst_draw;
     GCPtr gc;
     RegionPtr copy_clip;
     Bool save_accel;
@@ -284,12 +284,10 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
      * We need to use the real drawable in CopyArea
      * so that cliprects and offsets are correct.
      */
-    src_pixmap = src_priv->pPixmap;
-    dst_pixmap = dst_priv->pPixmap;
-    if (pSrcBuffer->attachment == DRI2BufferFrontLeft)
-	src_pixmap = (PixmapPtr)pDraw;
-    if (pDestBuffer->attachment == DRI2BufferFrontLeft)
-	dst_pixmap = (PixmapPtr)pDraw;
+    src_draw = (pSrcBuffer->attachment == DRI2BufferFrontLeft) ? pDraw :
+       &src_priv->pPixmap->drawable;
+    dst_draw = (pDestBuffer->attachment == DRI2BufferFrontLeft) ? pDraw :
+       &dst_priv->pPixmap->drawable;
 
     /*
      * The clients implements glXWaitX with a copy front to fake and then
@@ -308,7 +306,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
      * must in the glXWaitGL case but we don't know if this is a glXWaitGL
      * or a glFlush/glFinish call.
      */
-    if (dst_pixmap == src_pixmap) {
+    if (dst_priv->pPixmap == src_priv->pPixmap) {
 	/* pixmap glXWaitX */
 	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
 	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
@@ -329,7 +327,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
     copy_clip = REGION_CREATE(pScreen, NULL, 0);
     REGION_COPY(pScreen, copy_clip, pRegion);
     (*gc->funcs->ChangeClip) (gc, CT_REGION, copy_clip, 0);
-    ValidateGC(&dst_pixmap->drawable, gc);
+    ValidateGC(dst_draw, gc);
 
     /* If this is a full buffer swap, throttle on the previous one */
     if (dst_priv->fence && REGION_NUM_RECTS(pRegion) == 1) {
@@ -342,9 +340,19 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 	}
     }
 
+    /* Try to make sure the blit will be accelerated */
     save_accel = ms->exa->accel;
     ms->exa->accel = TRUE;
-    (*gc->ops->CopyArea)(&src_pixmap->drawable, &dst_pixmap->drawable, gc,
+
+    /* In case it won't be though, make sure the GPU copy contents of the
+     * source pixmap will be used for the software fallback - presumably the
+     * client modified them before calling in here.
+     */
+    exaMoveInPixmap(src_priv->pPixmap);
+    DamageRegionAppend(src_draw, pRegion);
+    DamageRegionProcessPending(src_draw);
+
+    (*gc->ops->CopyArea)(src_draw, dst_draw, gc,
 			 0, 0, pDraw->width, pDraw->height, 0, 0);
     ms->exa->accel = save_accel;
 
@@ -356,7 +364,7 @@ driCopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
 }
 
 Bool
-driScreenInit(ScreenPtr pScreen)
+xorg_dri2_init(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
@@ -373,13 +381,13 @@ driScreenInit(ScreenPtr pScreen)
     dri2info.deviceName = "/dev/dri/card0"; /* FIXME */
 
 #if DRI2INFOREC_VERSION >= 2
-    dri2info.CreateBuffer = driCreateBuffer;
-    dri2info.DestroyBuffer = driDestroyBuffer;
+    dri2info.CreateBuffer = dri2_create_buffer;
+    dri2info.DestroyBuffer = dri2_destroy_buffer;
 #else
-    dri2info.CreateBuffers = driCreateBuffers;
-    dri2info.DestroyBuffers = driDestroyBuffers;
+    dri2info.CreateBuffers = dri2_create_buffers;
+    dri2info.DestroyBuffers = dri2_destroy_buffers;
 #endif
-    dri2info.CopyRegion = driCopyRegion;
+    dri2info.CopyRegion = dri2_copy_region;
     dri2info.Wait = NULL;
 
     ms->d_depth_bits_last =
@@ -395,7 +403,7 @@ driScreenInit(ScreenPtr pScreen)
 }
 
 void
-driCloseScreen(ScreenPtr pScreen)
+xorg_dri2_close(ScreenPtr pScreen)
 {
     DRI2CloseScreen(pScreen);
 }

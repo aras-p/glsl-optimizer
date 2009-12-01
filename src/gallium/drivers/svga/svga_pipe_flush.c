@@ -59,6 +59,9 @@ static void svga_flush( struct pipe_context *pipe,
    /* Flush command queue.
     */
    svga_context_flush(svga, fence);
+
+   SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s flags %x fence_ptr %p\n",
+            __FUNCTION__, flags, fence ? *fence : 0x0);
 }
 
 

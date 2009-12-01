@@ -547,13 +547,20 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    case GL_DEPTH_TEXTURE_MODE_ARB:
       {
          /* convert float param to int */
-         GLint p = (GLint) param;
-         need_update = set_tex_parameteri(ctx, texObj, pname, &p);
+         GLint p[4];
+         p[0] = (GLint) param;
+         p[1] = p[2] = p[3] = 0;
+         need_update = set_tex_parameteri(ctx, texObj, pname, p);
       }
       break;
    default:
-      /* this will generate an error if pname is illegal */
-      need_update = set_tex_parameterf(ctx, texObj, pname, &param);
+      {
+         /* this will generate an error if pname is illegal */
+         GLfloat p[4];
+         p[0] = param;
+         p[1] = p[2] = p[3] = 0.0F;
+         need_update = set_tex_parameterf(ctx, texObj, pname, p);
+      }
    }
 
    if (ctx->Driver.TexParameter && need_update) {
