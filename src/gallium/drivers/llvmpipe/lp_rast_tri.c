@@ -89,10 +89,12 @@ do_block_4( struct lp_rasterizer *rast,
    assert(x % 4 == 0);
    assert(y % 4 == 0);
 
-   for (i = 0; i < 16; i++)
-      mask |= (~(((c1 + tri->step[0][i]) | 
-		  (c2 + tri->step[1][i]) | 
-		  (c3 + tri->step[2][i])) >> 31)) & (1 << i);
+   for (i = 0; i < 16; i++) {
+      int any_negative = ((c1 + tri->step[0][i]) | 
+                          (c2 + tri->step[1][i]) | 
+                          (c3 + tri->step[2][i])) >> 31;
+      mask |= (~any_negative) & (1 << i);
+   }
    
    /* As we do trivial reject already, masks should rarely be all zero:
     */
