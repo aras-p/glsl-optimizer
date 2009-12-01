@@ -690,9 +690,9 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.delete_blend_state = nv30_blend_state_delete;
 
 	nv30->pipe.create_sampler_state = nv30_sampler_state_create;
-	nv30->pipe.bind_sampler_states = nv30_sampler_state_bind;
+	nv30->pipe.bind_fragment_sampler_states = nv30_sampler_state_bind;
 	nv30->pipe.delete_sampler_state = nv30_sampler_state_delete;
-	nv30->pipe.set_sampler_textures = nv30_set_sampler_texture;
+	nv30->pipe.set_fragment_sampler_textures = nv30_set_sampler_texture;
 
 	nv30->pipe.create_rasterizer_state = nv30_rasterizer_state_create;
 	nv30->pipe.bind_rasterizer_state = nv30_rasterizer_state_bind;

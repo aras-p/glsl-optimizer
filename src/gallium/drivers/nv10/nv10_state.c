@@ -553,9 +553,9 @@ nv10_init_state_functions(struct nv10_context *nv10)
 	nv10->pipe.delete_blend_state = nv10_blend_state_delete;
 
 	nv10->pipe.create_sampler_state = nv10_sampler_state_create;
-	nv10->pipe.bind_sampler_states = nv10_sampler_state_bind;
+	nv10->pipe.bind_fragment_sampler_states = nv10_sampler_state_bind;
 	nv10->pipe.delete_sampler_state = nv10_sampler_state_delete;
-	nv10->pipe.set_sampler_textures = nv10_set_sampler_texture;
+	nv10->pipe.set_fragment_sampler_textures = nv10_set_sampler_texture;
 
 	nv10->pipe.create_rasterizer_state = nv10_rasterizer_state_create;
 	nv10->pipe.bind_rasterizer_state = nv10_rasterizer_state_bind;
