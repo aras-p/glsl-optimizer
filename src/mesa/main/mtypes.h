@@ -2319,6 +2319,7 @@ struct gl_constants
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
+   GLuint MaxCombinedTextureImageUnits;
    GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */

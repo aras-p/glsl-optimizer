@@ -1876,7 +1876,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
          CHECK_EXT1(ARB_shader_objects, "GetBooleanv");
@@ -3711,7 +3711,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
-         params[0] = (GLfloat)(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+         params[0] = (GLfloat)(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
          CHECK_EXT1(ARB_shader_objects, "GetFloatv");
@@ -5546,7 +5546,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
-         params[0] = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+         params[0] = ctx->Const.MaxCombinedTextureImageUnits;
          break;
       case GL_CURRENT_PROGRAM:
          CHECK_EXT1(ARB_shader_objects, "GetIntegerv");
@@ -7382,7 +7382,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
-         params[0] = (GLint64)(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+         params[0] = (GLint64)(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
          CHECK_EXT1(ARB_shader_objects, "GetInteger64v");

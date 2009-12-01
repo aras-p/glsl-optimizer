@@ -575,6 +575,7 @@ _mesa_init_constants(GLcontext *ctx)
 
 #if FEATURE_ARB_vertex_shader
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 

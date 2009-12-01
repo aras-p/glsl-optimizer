@@ -111,6 +111,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
                                      ctx->Const.MaxTextureImageUnits);
    ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
+   ctx->Const.MaxCombinedTextureImageUnits = 0;
 
    /* Mesa limits textures to 4kx4k; it would be nice to fix that someday
     */

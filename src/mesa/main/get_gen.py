@@ -1006,7 +1006,7 @@ StateVars = [
 	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
 	  ["ctx->Const.MaxVertexTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
-	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxCombinedTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 
 	# GL_ARB_shader_objects
 	# Actually, this token isn't part of GL_ARB_shader_objects, but is
