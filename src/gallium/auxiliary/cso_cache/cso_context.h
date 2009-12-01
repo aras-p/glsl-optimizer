@@ -84,6 +84,20 @@ enum pipe_error cso_single_sampler( struct cso_context *cso,
 
 void cso_single_sampler_done( struct cso_context *cso );
 
+void
+cso_save_vertex_samplers(struct cso_context *cso);
+
+void
+cso_restore_vertex_samplers(struct cso_context *cso);
+
+enum pipe_error
+cso_single_vertex_sampler(struct cso_context *cso,
+                          unsigned nr,
+                          const struct pipe_sampler_state *states);
+
+void
+cso_single_vertex_sampler_done(struct cso_context *cso);
+
 
 
 enum pipe_error cso_set_sampler_textures( struct cso_context *cso,
@@ -91,6 +105,17 @@ enum pipe_error cso_set_sampler_textures( struct cso_context *cso,
                                           struct pipe_texture **textures );
 void cso_save_sampler_textures( struct cso_context *cso );
 void cso_restore_sampler_textures( struct cso_context *cso );
+
+
+
+enum pipe_error
+cso_set_vertex_sampler_textures(struct cso_context *cso,
+                                uint count,
+                                struct pipe_texture **textures);
+void
+cso_save_vertex_sampler_textures(struct cso_context *cso);
+void
+ cso_restore_sampler_textures(struct cso_context *cso);
 
 
 
