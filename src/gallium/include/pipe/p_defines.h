@@ -390,6 +390,8 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_BLEND_EQUATION_SEPARATE 28
 #define PIPE_CAP_SM3                     29  /*< Shader Model 3 supported */
 #define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
+#define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
+                                                 and fragment shaders combined */
 
 
 /**

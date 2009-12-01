@@ -60,6 +60,7 @@ extern "C" {
 #define PIPE_MAX_COLOR_BUFS        8
 #define PIPE_MAX_CONSTANT         32
 #define PIPE_MAX_SAMPLERS         16
+#define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
