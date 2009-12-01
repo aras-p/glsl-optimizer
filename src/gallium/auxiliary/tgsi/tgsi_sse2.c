@@ -58,7 +58,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -1267,23 +1267,23 @@ emit_fetch(
    case TGSI_SWIZZLE_Y:
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle,
-            reg->SrcRegister.Indirect,
-            reg->SrcRegisterInd.File,
-            reg->SrcRegisterInd.Index );
+            reg->Register.Indirect,
+            reg->Indirect.File,
+            reg->Indirect.Index );
          break;
 
       case TGSI_FILE_IMMEDIATE:
          emit_immediate(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1291,7 +1291,7 @@ emit_fetch(
          emit_inputf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1299,7 +1299,7 @@ emit_fetch(
          emit_tempf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1331,7 +1331,7 @@ emit_fetch(
 }
 
 #define FETCH( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_fetch( FUNC, XMM, &(INST).FullSrcRegisters[INDEX], CHAN )
+   emit_fetch( FUNC, XMM, &(INST).Src[INDEX], CHAN )
 
 /**
  * Register store.
@@ -1371,12 +1371,12 @@ emit_store(
    }
 
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
       emit_output(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1384,7 +1384,7 @@ emit_store(
       emit_temps(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1392,7 +1392,7 @@ emit_store(
       emit_addrs(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1402,7 +1402,7 @@ emit_store(
 }
 
 #define STORE( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
+   emit_store( FUNC, XMM, &(INST).Dst[INDEX], &(INST), CHAN )
 
 
 static void PIPE_CDECL
@@ -1459,12 +1459,13 @@ emit_tex( struct x86_function *func,
           boolean lodbias,
           boolean projected)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    struct x86_reg args[2];
    unsigned count;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   assert(inst->Instruction.Texture);
+   switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       count = 1;
       break;
@@ -1719,15 +1720,15 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 {
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      const struct tgsi_full_src_register *reg = &inst->Src[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
-      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->DstRegister.Indirect)
+      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    return FALSE;
@@ -2243,7 +2244,7 @@ emit_instruction(
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
-      emit_kil( func, &inst->FullSrcRegisters[0] );
+      emit_kil( func, &inst->Src[0] );
       break;
 
    case TGSI_OPCODE_PK2H:
@@ -2636,8 +2637,8 @@ emit_declaration(
       unsigned first, last, mask;
       unsigned i, j;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {

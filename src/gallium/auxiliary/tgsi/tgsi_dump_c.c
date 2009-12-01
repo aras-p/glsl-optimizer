@@ -113,13 +113,6 @@ static const char *TGSI_SATS[] =
    "SAT_MINUS_PLUS_ONE"
 };
 
-static const char *TGSI_INSTRUCTION_EXTS[] =
-{
-   "",
-   "INSTRUCTION_EXT_TYPE_LABEL",
-   "INSTRUCTION_EXT_TYPE_TEXTURE"
-};
-
 static const char *TGSI_SWIZZLES[] =
 {
    "SWIZZLE_X",
@@ -141,12 +134,6 @@ static const char *TGSI_TEXTURES[] =
    "TEXTURE_SHADOWRECT"
 };
 
-static const char *TGSI_SRC_REGISTER_EXTS[] =
-{
-   "",
-   "SRC_REGISTER_EXT_TYPE_MOD"
-};
-
 static const char *TGSI_WRITEMASKS[] =
 {
    "0",
@@ -165,23 +152,6 @@ static const char *TGSI_WRITEMASKS[] =
    "WRITEMASK_XZW",
    "WRITEMASK_YZW",
    "WRITEMASK_XYZW"
-};
-
-static const char *TGSI_DST_REGISTER_EXTS[] =
-{
-   "",
-   "DST_REGISTER_EXT_TYPE_MODULATE"
-};
-
-static const char *TGSI_MODULATES[] =
-{
-   "MODULATE_1X",
-   "MODULATE_2X",
-   "MODULATE_4X",
-   "MODULATE_8X",
-   "MODULATE_HALF",
-   "MODULATE_QUARTER",
-   "MODULATE_EIGHTH"
 };
 
 static void
@@ -216,6 +186,14 @@ dump_declaration_verbose(
       TXT( "\nSemantic   : " );
       UID( decl->Declaration.Semantic );
    }
+   if (deflt || fd->Declaration.Centroid != decl->Declaration.Centroid) {
+      TXT("\nCentroid   : ");
+      UID(decl->Declaration.Centroid);
+   }
+   if (deflt || fd->Declaration.Invariant != decl->Declaration.Invariant) {
+      TXT("\nInvariant  : ");
+      UID(decl->Declaration.Invariant);
+   }
    if( ignored ) {
       TXT( "\nPadding    : " );
       UIX( decl->Declaration.Padding );
@@ -223,16 +201,16 @@ dump_declaration_verbose(
 
    EOL();
    TXT( "\nFirst: " );
-   UID( decl->DeclarationRange.First );
+   UID( decl->Range.First );
    TXT( "\nLast : " );
-   UID( decl->DeclarationRange.Last );
+   UID( decl->Range.Last );
 
    if( decl->Declaration.Semantic ) {
       EOL();
-      TXT( "\nSemanticName : " );
-      ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS );
-      TXT( "\nSemanticIndex: " );
-      UID( decl->Semantic.SemanticIndex );
+      TXT( "\nName : " );
+      ENM( decl->Semantic.Name, TGSI_SEMANTICS );
+      TXT( "\nIndex: " );
+      UID( decl->Semantic.Index );
       if( ignored ) {
          TXT( "\nPadding      : " );
          UIX( decl->Semantic.Padding );
@@ -292,180 +270,122 @@ dump_instruction_verbose(
       TXT( "\nNumSrcRegs : " );
       UID( inst->Instruction.NumSrcRegs );
    }
+   if (deflt || fi->Instruction.Predicate != inst->Instruction.Predicate) {
+      TXT("\nPredicate  : ");
+      UID(inst->Instruction.Predicate);
+   }
+   if (deflt || fi->Instruction.Label != inst->Instruction.Label) {
+      TXT("\nLabel      : ");
+      UID(inst->Instruction.Label);
+   }
+   if (deflt || fi->Instruction.Texture != inst->Instruction.Texture) {
+      TXT("\nTexture    : ");
+      UID(inst->Instruction.Texture);
+   }
    if( ignored ) {
       TXT( "\nPadding    : " );
       UIX( inst->Instruction.Padding );
    }
 
-   if( deflt || tgsi_compare_instruction_ext_label( inst->InstructionExtLabel, fi->InstructionExtLabel ) ) {
+   if (deflt || inst->Instruction.Label) {
       EOL();
-      TXT( "\nType    : " );
-      ENM( inst->InstructionExtLabel.Type, TGSI_INSTRUCTION_EXTS );
-      if( deflt || fi->InstructionExtLabel.Label != inst->InstructionExtLabel.Label ) {
+      if (deflt || fi->Label.Label != inst->Label.Label) {
          TXT( "\nLabel   : " );
-         UID( inst->InstructionExtLabel.Label );
+         UID(inst->Label.Label);
       }
       if( ignored ) {
          TXT( "\nPadding : " );
-         UIX( inst->InstructionExtLabel.Padding );
-         if( deflt || fi->InstructionExtLabel.Extended != inst->InstructionExtLabel.Extended ) {
-            TXT( "\nExtended: " );
-            UID( inst->InstructionExtLabel.Extended );
-         }
+         UIX(inst->Label.Padding);
       }
    }
 
-   if( deflt || tgsi_compare_instruction_ext_texture( inst->InstructionExtTexture, fi->InstructionExtTexture ) ) {
+   if (deflt || inst->Instruction.Texture) {
       EOL();
-      TXT( "\nType    : " );
-      ENM( inst->InstructionExtTexture.Type, TGSI_INSTRUCTION_EXTS );
-      if( deflt || fi->InstructionExtTexture.Texture != inst->InstructionExtTexture.Texture ) {
+      if (deflt || fi->Texture.Texture != inst->Texture.Texture) {
          TXT( "\nTexture : " );
-         ENM( inst->InstructionExtTexture.Texture, TGSI_TEXTURES );
+         ENM(inst->Texture.Texture, TGSI_TEXTURES);
       }
       if( ignored ) {
          TXT( "\nPadding : " );
-         UIX( inst->InstructionExtTexture.Padding );
-         if( deflt || fi->InstructionExtTexture.Extended != inst->InstructionExtTexture.Extended ) {
-            TXT( "\nExtended: " );
-            UID( inst->InstructionExtTexture.Extended );
-         }
+         UIX(inst->Texture.Padding);
       }
    }
 
    for( i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-      struct tgsi_full_dst_register *fd = &fi->FullDstRegisters[i];
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
+      struct tgsi_full_dst_register *fd = &fi->Dst[i];
 
       EOL();
       TXT( "\nFile     : " );
-      ENM( dst->DstRegister.File, TGSI_FILES );
-      if( deflt || fd->DstRegister.WriteMask != dst->DstRegister.WriteMask ) {
+      ENM( dst->Register.File, TGSI_FILES );
+      if( deflt || fd->Register.WriteMask != dst->Register.WriteMask ) {
          TXT( "\nWriteMask: " );
-         ENM( dst->DstRegister.WriteMask, TGSI_WRITEMASKS );
+         ENM( dst->Register.WriteMask, TGSI_WRITEMASKS );
       }
       if( ignored ) {
-         if( deflt || fd->DstRegister.Indirect != dst->DstRegister.Indirect ) {
+         if( deflt || fd->Register.Indirect != dst->Register.Indirect ) {
             TXT( "\nIndirect : " );
-            UID( dst->DstRegister.Indirect );
+            UID( dst->Register.Indirect );
          }
-         if( deflt || fd->DstRegister.Dimension != dst->DstRegister.Dimension ) {
+         if( deflt || fd->Register.Dimension != dst->Register.Dimension ) {
             TXT( "\nDimension: " );
-            UID( dst->DstRegister.Dimension );
+            UID( dst->Register.Dimension );
          }
       }
-      if( deflt || fd->DstRegister.Index != dst->DstRegister.Index ) {
+      if( deflt || fd->Register.Index != dst->Register.Index ) {
          TXT( "\nIndex    : " );
-         SID( dst->DstRegister.Index );
+         SID( dst->Register.Index );
       }
       if( ignored ) {
          TXT( "\nPadding  : " );
-         UIX( dst->DstRegister.Padding );
-         if( deflt || fd->DstRegister.Extended != dst->DstRegister.Extended ) {
-            TXT( "\nExtended : " );
-            UID( dst->DstRegister.Extended );
-         }
-      }
-
-      if( deflt || tgsi_compare_dst_register_ext_modulate( dst->DstRegisterExtModulate, fd->DstRegisterExtModulate ) ) {
-         EOL();
-         TXT( "\nType    : " );
-         ENM( dst->DstRegisterExtModulate.Type, TGSI_DST_REGISTER_EXTS );
-         if( deflt || fd->DstRegisterExtModulate.Modulate != dst->DstRegisterExtModulate.Modulate ) {
-            TXT( "\nModulate: " );
-            ENM( dst->DstRegisterExtModulate.Modulate, TGSI_MODULATES );
-         }
-         if( ignored ) {
-            TXT( "\nPadding : " );
-            UIX( dst->DstRegisterExtModulate.Padding );
-            if( deflt || fd->DstRegisterExtModulate.Extended != dst->DstRegisterExtModulate.Extended ) {
-               TXT( "\nExtended: " );
-               UID( dst->DstRegisterExtModulate.Extended );
-            }
-         }
+         UIX( dst->Register.Padding );
       }
    }
 
    for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
-      struct tgsi_full_src_register *fs = &fi->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
+      struct tgsi_full_src_register *fs = &fi->Src[i];
 
       EOL();
       TXT( "\nFile     : ");
-      ENM( src->SrcRegister.File, TGSI_FILES );
-      if( deflt || fs->SrcRegister.SwizzleX != src->SrcRegister.SwizzleX ) {
+      ENM( src->Register.File, TGSI_FILES );
+      if( deflt || fs->Register.SwizzleX != src->Register.SwizzleX ) {
          TXT( "\nSwizzleX : " );
-         ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleX, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleY != src->SrcRegister.SwizzleY ) {
+      if( deflt || fs->Register.SwizzleY != src->Register.SwizzleY ) {
          TXT( "\nSwizzleY : " );
-         ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleY, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleZ != src->SrcRegister.SwizzleZ ) {
+      if( deflt || fs->Register.SwizzleZ != src->Register.SwizzleZ ) {
          TXT( "\nSwizzleZ : " );
-         ENM( src->SrcRegister.SwizzleZ, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleZ, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.SwizzleW != src->SrcRegister.SwizzleW ) {
+      if( deflt || fs->Register.SwizzleW != src->Register.SwizzleW ) {
          TXT( "\nSwizzleW : " );
-         ENM( src->SrcRegister.SwizzleW, TGSI_SWIZZLES );
+         ENM( src->Register.SwizzleW, TGSI_SWIZZLES );
       }
-      if( deflt || fs->SrcRegister.Negate != src->SrcRegister.Negate ) {
+      if (deflt || fs->Register.Absolute != src->Register.Absolute) {
+         TXT("\nAbsolute : ");
+         UID(src->Register.Absolute);
+      }
+      if( deflt || fs->Register.Negate != src->Register.Negate ) {
          TXT( "\nNegate   : " );
-         UID( src->SrcRegister.Negate );
+         UID( src->Register.Negate );
       }
       if( ignored ) {
-         if( deflt || fs->SrcRegister.Indirect != src->SrcRegister.Indirect ) {
+         if( deflt || fs->Register.Indirect != src->Register.Indirect ) {
             TXT( "\nIndirect : " );
-            UID( src->SrcRegister.Indirect );
+            UID( src->Register.Indirect );
          }
-         if( deflt || fs->SrcRegister.Dimension != src->SrcRegister.Dimension ) {
+         if( deflt || fs->Register.Dimension != src->Register.Dimension ) {
             TXT( "\nDimension: " );
-            UID( src->SrcRegister.Dimension );
+            UID( src->Register.Dimension );
          }
       }
-      if( deflt || fs->SrcRegister.Index != src->SrcRegister.Index ) {
+      if( deflt || fs->Register.Index != src->Register.Index ) {
          TXT( "\nIndex    : " );
-         SID( src->SrcRegister.Index );
-      }
-      if( ignored ) {
-         if( deflt || fs->SrcRegister.Extended != src->SrcRegister.Extended ) {
-            TXT( "\nExtended : " );
-            UID( src->SrcRegister.Extended );
-         }
-      }
-
-      if( deflt || tgsi_compare_src_register_ext_mod( src->SrcRegisterExtMod, fs->SrcRegisterExtMod ) ) {
-         EOL();
-         TXT( "\nType     : " );
-         ENM( src->SrcRegisterExtMod.Type, TGSI_SRC_REGISTER_EXTS );
-         if( deflt || fs->SrcRegisterExtMod.Complement != src->SrcRegisterExtMod.Complement ) {
-            TXT( "\nComplement: " );
-            UID( src->SrcRegisterExtMod.Complement );
-         }
-         if( deflt || fs->SrcRegisterExtMod.Bias != src->SrcRegisterExtMod.Bias ) {
-            TXT( "\nBias     : " );
-            UID( src->SrcRegisterExtMod.Bias );
-         }
-         if( deflt || fs->SrcRegisterExtMod.Scale2X != src->SrcRegisterExtMod.Scale2X ) {
-            TXT( "\nScale2X   : " );
-            UID( src->SrcRegisterExtMod.Scale2X );
-         }
-         if( deflt || fs->SrcRegisterExtMod.Absolute != src->SrcRegisterExtMod.Absolute ) {
-            TXT( "\nAbsolute  : " );
-            UID( src->SrcRegisterExtMod.Absolute );
-         }
-         if( deflt || fs->SrcRegisterExtMod.Negate != src->SrcRegisterExtMod.Negate ) {
-            TXT( "\nNegate   : " );
-            UID( src->SrcRegisterExtMod.Negate );
-         }
-         if( ignored ) {
-            TXT( "\nPadding   : " );
-            UIX( src->SrcRegisterExtMod.Padding );
-            if( deflt || fs->SrcRegisterExtMod.Extended != src->SrcRegisterExtMod.Extended ) {
-               TXT( "\nExtended  : " );
-               UID( src->SrcRegisterExtMod.Extended );
-            }
-         }
+         SID( src->Register.Index );
       }
    }
 }
@@ -484,12 +404,6 @@ tgsi_dump_c(
    tgsi_parse_init( &parse, tokens );
 
    TXT( "tgsi-dump begin -----------------" );
-
-   TXT( "\nMajorVersion: " );
-   UID( parse.FullVersion.Version.MajorVersion );
-   TXT( "\nMinorVersion: " );
-   UID( parse.FullVersion.Version.MinorVersion );
-   EOL();
 
    TXT( "\nHeaderSize: " );
    UID( parse.FullHeader.Header.HeaderSize );
@@ -510,10 +424,6 @@ tgsi_dump_c(
       if( ignored ) {
          TXT( "\nSize       : " );
          UID( parse.FullToken.Token.NrTokens );
-         if( deflt || parse.FullToken.Token.Extended ) {
-            TXT( "\nExtended   : " );
-            UID( parse.FullToken.Token.Extended );
-         }
       }
 
       switch( parse.FullToken.Token.Type ) {

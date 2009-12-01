@@ -212,24 +212,24 @@ iter_instruction(
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
       check_register_usage(
          ctx,
-         inst->FullDstRegisters[i].DstRegister.File,
-         inst->FullDstRegisters[i].DstRegister.Index,
+         inst->Dst[i].Register.File,
+         inst->Dst[i].Register.Index,
          "destination",
          FALSE );
    }
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       check_register_usage(
          ctx,
-         inst->FullSrcRegisters[i].SrcRegister.File,
-         inst->FullSrcRegisters[i].SrcRegister.Index,
+         inst->Src[i].Register.File,
+         inst->Src[i].Register.Index,
          "source",
-         (boolean)inst->FullSrcRegisters[i].SrcRegister.Indirect );
-      if (inst->FullSrcRegisters[i].SrcRegister.Indirect) {
+         (boolean)inst->Src[i].Register.Indirect );
+      if (inst->Src[i].Register.Indirect) {
          uint file;
          int index;
 
-         file = inst->FullSrcRegisters[i].SrcRegisterInd.File;
-         index = inst->FullSrcRegisters[i].SrcRegisterInd.Index;
+         file = inst->Src[i].Indirect.File;
+         index = inst->Src[i].Indirect.Index;
          check_register_usage(
             ctx,
             file,
@@ -245,8 +245,8 @@ iter_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_BGNFOR:
    case TGSI_OPCODE_ENDFOR:
-      if (inst->FullDstRegisters[0].DstRegister.File != TGSI_FILE_LOOP ||
-          inst->FullDstRegisters[0].DstRegister.Index != 0) {
+      if (inst->Dst[0].Register.File != TGSI_FILE_LOOP ||
+          inst->Dst[0].Register.Index != 0) {
          report_error(ctx, "Destination register must be LOOP[0]");
       }
       break;
@@ -254,8 +254,8 @@ iter_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_BGNFOR:
-      if (inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_CONSTANT &&
-          inst->FullSrcRegisters[0].SrcRegister.File != TGSI_FILE_IMMEDIATE) {
+      if (inst->Src[0].Register.File != TGSI_FILE_CONSTANT &&
+          inst->Src[0].Register.File != TGSI_FILE_IMMEDIATE) {
          report_error(ctx, "Source register file must be either CONST or IMM");
       }
       break;
@@ -286,7 +286,7 @@ iter_declaration(
    file = decl->Declaration.File;
    if (!check_file_name( ctx, file ))
       return TRUE;
-   for (i = decl->DeclarationRange.First; i <= decl->DeclarationRange.Last; i++) {
+   for (i = decl->Range.First; i <= decl->Range.Last; i++) {
       if (is_register_declared( ctx, file, i ))
          report_error( ctx, "%s[%u]: The same register declared more than once", file_names[file], i );
       ctx->regs_decl[file][i / BITS_IN_REG_FLAG] |= (1 << (i % BITS_IN_REG_FLAG));

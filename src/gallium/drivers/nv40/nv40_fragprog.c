@@ -255,50 +255,50 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 {
 	struct nv40_sreg src;
 
-	switch (fsrc->SrcRegister.File) {
+	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
 		src = nv40_sr(NV40SR_INPUT,
-			      fpc->attrib_map[fsrc->SrcRegister.Index]);
+			      fpc->attrib_map[fsrc->Register.Index]);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src = constant(fpc, fsrc->SrcRegister.Index, NULL);
+		src = constant(fpc, fsrc->Register.Index, NULL);
 		break;
 	case TGSI_FILE_IMMEDIATE:
-		assert(fsrc->SrcRegister.Index < fpc->nr_imm);
-		src = fpc->imm[fsrc->SrcRegister.Index];
+		assert(fsrc->Register.Index < fpc->nr_imm);
+		src = fpc->imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		src = fpc->r_temp[fsrc->SrcRegister.Index];
+		src = fpc->r_temp[fsrc->Register.Index];
 		break;
 	/* NV40 fragprog result regs are just temps, so this is simple */
 	case TGSI_FILE_OUTPUT:
-		src = fpc->r_result[fsrc->SrcRegister.Index];
+		src = fpc->r_result[fsrc->Register.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
 		break;
 	}
 
-	src.abs = fsrc->SrcRegisterExtMod.Absolute;
-	src.negate = fsrc->SrcRegister.Negate;
-	src.swz[0] = fsrc->SrcRegister.SwizzleX;
-	src.swz[1] = fsrc->SrcRegister.SwizzleY;
-	src.swz[2] = fsrc->SrcRegister.SwizzleZ;
-	src.swz[3] = fsrc->SrcRegister.SwizzleW;
+	src.abs = fsrc->Register.Absolute;
+	src.negate = fsrc->Register.Negate;
+	src.swz[0] = fsrc->Register.SwizzleX;
+	src.swz[1] = fsrc->Register.SwizzleY;
+	src.swz[2] = fsrc->Register.SwizzleZ;
+	src.swz[3] = fsrc->Register.SwizzleW;
 	return src;
 }
 
 static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
-		return fpc->r_result[fdst->DstRegister.Index];
+		return fpc->r_result[fdst->Register.Index];
 	case TGSI_FILE_TEMPORARY:
-		return fpc->r_temp[fdst->DstRegister.Index];
+		return fpc->r_temp[fdst->Register.Index];
 	case TGSI_FILE_NULL:
 		return nv40_sr(NV40SR_NONE, 0);
 	default:
-		NOUVEAU_ERR("bad dst file %d\n", fdst->DstRegister.File);
+		NOUVEAU_ERR("bad dst file %d\n", fdst->Register.File);
 		return nv40_sr(NV40SR_NONE, 0);
 	}
 }
@@ -364,8 +364,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
-		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
+		fsrc = &finst->Src[i];
+		if (fsrc->Register.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(fpc, fsrc);
 		}
 	}
@@ -373,9 +373,9 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
+		fsrc = &finst->Src[i];
 
-		switch (fsrc->SrcRegister.File) {
+		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
 		case TGSI_FILE_CONSTANT:
 		case TGSI_FILE_TEMPORARY:
@@ -386,10 +386,10 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			break;
 		}
 
-		switch (fsrc->SrcRegister.File) {
+		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
-			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
-				ai = fsrc->SrcRegister.Index;
+			if (ai == -1 || ai == fsrc->Register.Index) {
+				ai = fsrc->Register.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
@@ -399,8 +399,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			break;
 		case TGSI_FILE_CONSTANT:
 			if ((ci == -1 && ii == -1) ||
-			    ci == fsrc->SrcRegister.Index) {
-				ci = fsrc->SrcRegister.Index;
+			    ci == fsrc->Register.Index) {
+				ci = fsrc->Register.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
@@ -410,8 +410,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			break;
 		case TGSI_FILE_IMMEDIATE:
 			if ((ci == -1 && ii == -1) ||
-			    ii == fsrc->SrcRegister.Index) {
-				ii = fsrc->SrcRegister.Index;
+			    ii == fsrc->Register.Index) {
+				ii = fsrc->Register.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
@@ -423,7 +423,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			/* handled above */
 			break;
 		case TGSI_FILE_SAMPLER:
-			unit = fsrc->SrcRegister.Index;
+			unit = fsrc->Register.Index;
 			break;
 		case TGSI_FILE_OUTPUT:
 			break;
@@ -433,8 +433,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		}
 	}
 
-	dst  = tgsi_dst(fpc, &finst->FullDstRegisters[0]);
-	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+	dst  = tgsi_dst(fpc, &finst->Dst[0]);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 	sat  = (finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE);
 
 	switch (finst->Instruction.Opcode) {
@@ -644,15 +644,15 @@ nv40_fragprog_parse_decl_attrib(struct nv40_fpc *fpc,
 {
 	int hw;
 
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = NV40_FP_OP_INPUT_SRC_POSITION;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV40_FP_OP_INPUT_SRC_COL0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV40_FP_OP_INPUT_SRC_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
@@ -663,9 +663,9 @@ nv40_fragprog_parse_decl_attrib(struct nv40_fpc *fpc,
 		hw = NV40_FP_OP_INPUT_SRC_FOGC;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		if (fdec->Semantic.SemanticIndex <= 7) {
+		if (fdec->Semantic.Index <= 7) {
 			hw = NV40_FP_OP_INPUT_SRC_TC(fdec->Semantic.
-						     SemanticIndex);
+						     Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
 			return FALSE;
@@ -676,7 +676,7 @@ nv40_fragprog_parse_decl_attrib(struct nv40_fpc *fpc,
 		return FALSE;
 	}
 
-	fpc->attrib_map[fdec->DeclarationRange.First] = hw;
+	fpc->attrib_map[fdec->Range.First] = hw;
 	return TRUE;
 }
 
@@ -684,15 +684,15 @@ static boolean
 nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 				const struct tgsi_full_declaration *fdec)
 {
-	unsigned idx = fdec->DeclarationRange.First;
+	unsigned idx = fdec->Range.First;
 	unsigned hw;
 
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = 1;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		switch (fdec->Semantic.SemanticIndex) {
+		switch (fdec->Semantic.Index) {
 		case 0: hw = 0; break;
 		case 1: hw = 2; break;
 		case 2: hw = 3; break;
@@ -738,9 +738,9 @@ nv40_fragprog_prepare(struct nv40_fpc *fpc)
 					goto out_err;
 				break;
 			case TGSI_FILE_TEMPORARY:
-				if (fdec->DeclarationRange.Last > high_temp) {
+				if (fdec->Range.Last > high_temp) {
 					high_temp =
-						fdec->DeclarationRange.Last;
+						fdec->Range.Last;
 				}
 				break;
 			default:

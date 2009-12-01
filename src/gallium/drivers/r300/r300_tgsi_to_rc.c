@@ -190,10 +190,10 @@ static void transform_dstreg(
     struct rc_dst_register * dst,
     struct tgsi_full_dst_register * src)
 {
-    dst->File = translate_register_file(src->DstRegister.File);
-    dst->Index = translate_register_index(ttr, src->DstRegister.File, src->DstRegister.Index);
-    dst->WriteMask = src->DstRegister.WriteMask;
-    dst->RelAddr = src->DstRegister.Indirect;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->WriteMask = src->Register.WriteMask;
+    dst->RelAddr = src->Register.Indirect;
 }
 
 static void transform_srcreg(
@@ -201,18 +201,18 @@ static void transform_srcreg(
     struct rc_src_register * dst,
     struct tgsi_full_src_register * src)
 {
-    dst->File = translate_register_file(src->SrcRegister.File);
-    dst->Index = translate_register_index(ttr, src->SrcRegister.File, src->SrcRegister.Index);
-    dst->RelAddr = src->SrcRegister.Indirect;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->RelAddr = src->Register.Indirect;
     dst->Swizzle = tgsi_util_get_full_src_register_swizzle(src, 0);
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 1) << 3;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
     dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
-    dst->Abs = src->SrcRegisterExtMod.Absolute;
-    dst->Negate = src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
+    dst->Abs = src->Register.Absolute;
+    dst->Negate = src->Register.Negate ? RC_MASK_XYZW : 0;
 }
 
-static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_ext_texture src)
+static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_texture src)
 {
     switch(src.Texture) {
         case TGSI_TEXTURE_1D:
@@ -258,17 +258,18 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
 
     if (src->Instruction.NumDstRegs)
-        transform_dstreg(ttr, &dst->U.I.DstReg, &src->FullDstRegisters[0]);
+        transform_dstreg(ttr, &dst->U.I.DstReg, &src->Dst[0]);
 
     for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
-        if (src->FullSrcRegisters[i].SrcRegister.File == TGSI_FILE_SAMPLER)
-            dst->U.I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
+        if (src->Src[i].Register.File == TGSI_FILE_SAMPLER)
+            dst->U.I.TexSrcUnit = src->Src[i].Register.Index;
         else
-            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->FullSrcRegisters[i]);
+            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->Src[i]);
     }
 
     /* Texturing. */
-    transform_texture(dst, src->InstructionExtTexture);
+    if (src->Instruction.Texture)
+       transform_texture(dst, src->Texture);
 }
 
 static void handle_immediate(struct tgsi_to_rc * ttr, struct tgsi_full_immediate * imm)

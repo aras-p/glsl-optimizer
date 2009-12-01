@@ -130,15 +130,13 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
    /**
     **  Setup output shader
     **/
-   *(struct tgsi_version *) &tokens_out[0] = tgsi_build_version();
-
-   ctx->header = (struct tgsi_header *) (tokens_out + 1);
+   ctx->header = (struct tgsi_header *)tokens_out;
    *ctx->header = tgsi_build_header();
 
-   processor = (struct tgsi_processor *) (tokens_out + 2);
+   processor = (struct tgsi_processor *) (tokens_out + 1);
    *processor = tgsi_build_processor( procType, ctx->header );
 
-   ctx->ti = 3;
+   ctx->ti = 2;
 
 
    /**
@@ -215,7 +213,7 @@ tgsi_transform_foo( struct tgsi_token *tokens_out,
                     uint max_tokens_out )
 {
    const char *text = 
-      "FRAG1.1\n"
+      "FRAG\n"
       "DCL IN[0], COLOR, CONSTANT\n"
       "DCL OUT[0], COLOR\n"
       "  0: MOV OUT[0], IN[0]\n"

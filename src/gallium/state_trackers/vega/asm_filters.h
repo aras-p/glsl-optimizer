@@ -28,7 +28,7 @@
 #define ASM_FILTERS_H
 
 static const char color_matrix_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
    "DCL CONST[0..4], CONSTANT\n"
@@ -51,7 +51,7 @@ static const char color_matrix_asm[] =
    "END\n";
 
 static const char convolution_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
    "DCL TEMP[0..4], CONSTANT\n"
@@ -78,7 +78,7 @@ static const char convolution_asm[] =
 
 
 static const char lookup_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
    "DCL TEMP[0..2], CONSTANT\n"
@@ -103,7 +103,7 @@ static const char lookup_asm[] =
 
 
 static const char lookup_single_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
    "DCL TEMP[0..2], CONSTANT\n"

@@ -61,7 +61,6 @@ struct tgsi_iterate_context
       struct tgsi_iterate_context *ctx );
 
    struct tgsi_processor processor;
-   struct tgsi_version version;
 };
 
 boolean

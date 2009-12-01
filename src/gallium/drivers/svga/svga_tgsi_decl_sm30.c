@@ -35,35 +35,35 @@ static boolean translate_vs_ps_semantic( struct tgsi_declaration_semantic semant
                                          unsigned *usage,
                                          unsigned *idx )
 {
-   switch (semantic.SemanticName) {
+   switch (semantic.Name) {
    case TGSI_SEMANTIC_POSITION:  
-      *idx = semantic.SemanticIndex;
+      *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_POSITION;
       break;
    case TGSI_SEMANTIC_COLOR:     
 
-      *idx = semantic.SemanticIndex;
+      *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_COLOR;
       break;
    case TGSI_SEMANTIC_BCOLOR:
-      *idx = semantic.SemanticIndex + 2; /* sharing with COLOR */
+      *idx = semantic.Index + 2; /* sharing with COLOR */
       *usage = SVGA3D_DECLUSAGE_COLOR;
       break;
    case TGSI_SEMANTIC_FOG:       
       *idx = 0;
-      assert(semantic.SemanticIndex == 0);
+      assert(semantic.Index == 0);
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
    case TGSI_SEMANTIC_PSIZE:     
-      *idx = semantic.SemanticIndex;
+      *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_PSIZE;
       break;
    case TGSI_SEMANTIC_GENERIC:   
-      *idx = semantic.SemanticIndex + 1; /* texcoord[0] is reserved for fog */
+      *idx = semantic.Index + 1; /* texcoord[0] is reserved for fog */
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
    case TGSI_SEMANTIC_NORMAL:    
-      *idx = semantic.SemanticIndex;
+      *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_NORMAL;
       break;
    default:
@@ -120,7 +120,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    unsigned usage, index;
    SVGA3dShaderDestToken reg;
 
-   if (semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+   if (semantic.Name == TGSI_SEMANTIC_POSITION) {
       emit->input_map[idx] = src_register( SVGA3DREG_MISCTYPE,
                                            SVGA3DMISCREG_POSITION );
 
@@ -135,7 +135,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
       return emit_decl( emit, reg, 0, 0 );
    }
    else if (emit->key.fkey.light_twoside &&
-            (semantic.SemanticName == TGSI_SEMANTIC_COLOR)) {
+            (semantic.Name == TGSI_SEMANTIC_COLOR)) {
 
       if (!translate_vs_ps_semantic( semantic, &usage, &index ))
          return FALSE;
@@ -150,7 +150,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
       if (!emit_decl( emit, reg, usage, index ))
          return FALSE;
 
-      semantic.SemanticName = TGSI_SEMANTIC_BCOLOR;
+      semantic.Name = TGSI_SEMANTIC_BCOLOR;
       if (!translate_vs_ps_semantic( semantic, &usage, &index ))
          return FALSE;
 
@@ -164,7 +164,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
 
       return TRUE;
    }
-   else if (semantic.SemanticName == TGSI_SEMANTIC_FACE) {
+   else if (semantic.Name == TGSI_SEMANTIC_FACE) {
       if (!emit_vface_decl( emit ))
          return FALSE;
       emit->emit_frontface = TRUE;
@@ -193,17 +193,17 @@ static boolean ps30_output( struct svga_shader_emitter *emit,
 {
    SVGA3dShaderDestToken reg;
 
-   switch (semantic.SemanticName) {
+   switch (semantic.Name) {
    case TGSI_SEMANTIC_COLOR:
       emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 
-                                            semantic.SemanticIndex );
+                                            semantic.Index );
       break;
    case TGSI_SEMANTIC_POSITION:
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
       emit->true_pos = dst_register( SVGA3DREG_DEPTHOUT, 
-                                     semantic.SemanticIndex );
+                                     semantic.Index );
       break;
    default:
       assert(0);
@@ -283,14 +283,14 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
    dcl.index = index;
    dcl.values[0] |= 1<<31;
 
-   if (semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+   if (semantic.Name == TGSI_SEMANTIC_POSITION) {
       assert(idx == 0);
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
       emit->true_pos = dcl.dst;
    }
-   else if (semantic.SemanticName == TGSI_SEMANTIC_PSIZE) {
+   else if (semantic.Name == TGSI_SEMANTIC_PSIZE) {
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_psiz = emit->output_map[idx];
@@ -335,15 +335,15 @@ static boolean ps30_sampler( struct svga_shader_emitter *emit,
 boolean svga_translate_decl_sm30( struct svga_shader_emitter *emit,
                              const struct tgsi_full_declaration *decl )
 {
-   unsigned first = decl->DeclarationRange.First;
-   unsigned last = decl->DeclarationRange.Last;
+   unsigned first = decl->Range.First;
+   unsigned last = decl->Range.Last;
    unsigned semantic = 0;
    unsigned semantic_idx = 0;
    unsigned idx;
 
    if (decl->Declaration.Semantic) {
-      semantic = decl->Semantic.SemanticName;
-      semantic_idx = decl->Semantic.SemanticIndex;
+      semantic = decl->Semantic.Name;
+      semantic_idx = decl->Semantic.Index;
    }
 
    for( idx = first; idx <= last; idx++ ) {

@@ -39,7 +39,6 @@ tgsi_iterate_shader(
       return FALSE;
 
    ctx->processor = parse.FullHeader.Processor;
-   ctx->version = parse.FullVersion.Version;
 
    if (ctx->prolog)
       if (!ctx->prolog( ctx ))
