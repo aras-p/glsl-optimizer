@@ -94,11 +94,17 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_SAMPLER) {
       failover->sw->bind_fragment_sampler_states( failover->sw, failover->num_samplers,
                                                   failover->sw_sampler_state );
+      failover->sw->bind_vertex_sampler_states(failover->sw,
+                                               failover->num_vertex_samplers,
+                                               failover->sw_vertex_sampler_state);
    }
 
    if (failover->dirty & FO_NEW_TEXTURE) {
       failover->sw->set_fragment_sampler_textures( failover->sw, failover->num_textures, 
                                                    failover->texture );
+      failover->sw->set_vertex_sampler_textures(failover->sw,
+                                                failover->num_vertex_textures, 
+                                                failover->vertex_textures);
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
