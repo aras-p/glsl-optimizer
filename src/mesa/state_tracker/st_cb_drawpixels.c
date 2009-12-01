@@ -585,10 +585,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_texture *textures[2];
       textures[0] = pt;
       textures[1] = st->pixel_xfer.pixelmap_texture;
-      pipe->set_sampler_textures(pipe, 2, textures);
+      pipe->set_fragment_sampler_textures(pipe, 2, textures);
    }
    else {
-      pipe->set_sampler_textures(pipe, 1, &pt);
+      pipe->set_fragment_sampler_textures(pipe, 1, &pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
