@@ -32,7 +32,7 @@
 #define MESA_MAJOR 7
 #define MESA_MINOR 7
 #define MESA_PATCH 0
-#define MESA_VERSION_STRING "7.7-devel"
+#define MESA_VERSION_STRING "7.7-rc1"
 
 /* To make version comparison easy */
 #define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
