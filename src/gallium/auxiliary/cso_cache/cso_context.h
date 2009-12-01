@@ -115,7 +115,7 @@ cso_set_vertex_sampler_textures(struct cso_context *cso,
 void
 cso_save_vertex_sampler_textures(struct cso_context *cso);
 void
- cso_restore_sampler_textures(struct cso_context *cso);
+cso_restore_vertex_sampler_textures(struct cso_context *cso);
 
 
 
