@@ -38,10 +38,14 @@
 
 #include "state_trackers/xorg/xorg_tracker.h"
 
+struct vmw_dma_buffer;
+
 struct vmw_driver
 {
     int fd;
 
+    /* vmw_video.c */
+    void *video_priv;
 };
 
 static INLINE struct vmw_driver *
@@ -50,6 +54,33 @@ vmw_driver(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     return ms ? (struct vmw_driver *)ms->winsys_priv : NULL;
 }
+
+
+/***********************************************************************
+ * vmw_video.c
+ */
+
+Bool vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+
+Bool vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+
+
+/***********************************************************************
+ * vmw_ioctl.c
+ */
+
+struct vmw_dma_buffer * vmw_ioctl_buffer_create(struct vmw_driver *vmw,
+						uint32_t size,
+						unsigned *handle);
+
+void * vmw_ioctl_buffer_map(struct vmw_driver *vmw,
+			    struct vmw_dma_buffer *buf);
+
+void vmw_ioctl_buffer_unmap(struct vmw_driver *vmw,
+			    struct vmw_dma_buffer *buf);
+
+void vmw_ioctl_buffer_destroy(struct vmw_driver *vmw,
+			      struct vmw_dma_buffer *buf);
 
 
 #endif

@@ -6,6 +6,8 @@ TARGET = vmwgfx_drv.so
 
 CFILES = \
 	vmw_xorg.c \
+	vmw_video.c \
+	vmw_ioctl.c \
 	vmw_screen.c
 
 OBJECTS = $(patsubst %.c,%.o,$(CFILES))
@@ -29,6 +31,7 @@ LINKS = \
 	$(shell pkg-config --libs libdrm)
 
 DRIVER_DEFINES = \
+	-std=gnu99 \
 	-DHAVE_CONFIG_H
 
 TARGET_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)

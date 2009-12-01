@@ -50,6 +50,8 @@ vmw_screen_init(ScrnInfoPtr pScrn)
     vmw->fd = ms->fd;
     ms->winsys_priv = vmw;
 
+    vmw_video_init(pScrn, vmw);
+
     return TRUE;
 }
 
@@ -61,6 +63,8 @@ vmw_screen_close(ScrnInfoPtr pScrn)
 
     if (!vmw)
 	return TRUE;
+
+    vmw_video_close(pScrn, vmw);
 
     ms->winsys_priv = NULL;
     xfree(vmw);
