@@ -25,7 +25,11 @@ GLboolean
 ShadersSupported(void)
 {
    const char *version = (const char *) glGetString(GL_VERSION);
-   if (version[0] == '2' && version[1] == '.') {
+
+   /* NVIDIA binary drivers will return "3.0.0", and they clearly support
+    * shaders.
+    */
+   if (version[0] >= '2' && version[1] == '.') {
       return GL_TRUE;
    }
    else if (glutExtensionSupported("GL_ARB_vertex_shader")
