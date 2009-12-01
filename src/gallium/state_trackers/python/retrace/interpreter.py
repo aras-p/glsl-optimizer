@@ -388,7 +388,7 @@ class Context(Object):
     def delete_sampler_state(self, state):
         pass
 
-    def bind_sampler_states(self, num_states, states):
+    def bind_fragment_sampler_states(self, num_states, states):
         for i in range(num_states):
             self.real.set_sampler(i, states[i])
         
@@ -486,7 +486,7 @@ class Context(Object):
     def set_viewport_state(self, state):
         self.real.set_viewport(state)
 
-    def set_sampler_textures(self, num_textures, textures):
+    def set_fragment_sampler_textures(self, num_textures, textures):
         for i in range(num_textures):
             self.real.set_sampler_texture(i, textures[i])
 

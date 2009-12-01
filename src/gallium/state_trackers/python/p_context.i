@@ -147,9 +147,9 @@ struct st_context {
       if(!texture)
          texture = $self->default_texture;
       pipe_texture_reference(&$self->sampler_textures[index], texture);
-      $self->pipe->set_sampler_textures($self->pipe, 
-                                        PIPE_MAX_SAMPLERS,
-                                        $self->sampler_textures);
+      $self->pipe->set_fragment_sampler_textures($self->pipe, 
+                                                 PIPE_MAX_SAMPLERS,
+                                                 $self->sampler_textures);
    }
 
    void set_vertex_buffer(unsigned index,
