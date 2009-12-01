@@ -283,13 +283,9 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 					PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
 					PIPE_TRANSFER_READ_WRITE,
-<<<<<<< HEAD:src/gallium/state_trackers/xorg/xorg_exa.c
-					0, 0, priv->tex->width0, priv->tex->height0);
-=======
 					0, 0, 
                                         pPix->drawable.width,
                                         pPix->drawable.height );
->>>>>>> origin/mesa_7_7_branch:src/gallium/state_trackers/xorg/xorg_exa.c
 	if (!priv->map_transfer)
 #ifdef EXA_MIXED_PIXMAPS
 	    return FALSE;

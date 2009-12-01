@@ -559,69 +559,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    float s0, t0, s1, t1;
    float x0, y0, x1, y1;
 
-<<<<<<< HEAD:src/gallium/state_trackers/xorg/xorg_renderer.c
-   if (r->pipe->is_texture_referenced(r->pipe, src, 0, 0) &
-       PIPE_REFERENCED_FOR_WRITE)
-      r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   dst_loc[0] = dx;
-   dst_loc[1] = dy;
-   dst_loc[2] = width;
-   dst_loc[3] = height;
-   dst_bounds[0] = 0.f;
-   dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width0;
-   dst_bounds[3] = dst->height0;
-
-   src_loc[0] = sx;
-   src_loc[1] = sy;
-   src_loc[2] = width;
-   src_loc[3] = height;
-   src_bounds[0] = 0.f;
-   src_bounds[1] = 0.f;
-   src_bounds[2] = src->width0;
-   src_bounds[3] = src->height0;
-
-   bound_rect(src_loc, src_bounds, src_shift);
-   bound_rect(dst_loc, dst_bounds, dst_shift);
-   shift[0] = src_shift[0] - dst_shift[0];
-   shift[1] = src_shift[1] - dst_shift[1];
-
-   if (shift[0] < 0)
-      shift_rectx(src_loc, src_bounds, -shift[0]);
-   else
-      shift_rectx(dst_loc, dst_bounds, shift[0]);
-
-   if (shift[1] < 0)
-      shift_recty(src_loc, src_bounds, -shift[1]);
-   else
-      shift_recty(dst_loc, dst_bounds, shift[1]);
-
-   sync_size(src_loc, dst_loc);
-
-   if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
-       dst_loc[2] >= 0 && dst_loc[3] >= 0) {
-      struct pipe_texture *temp_src = src;
-
-      if (src == dst)
-         temp_src = create_sampler_texture(r, src);
-
-      renderer_copy_texture(r,
-                            temp_src,
-                            src_loc[0],
-                            src_loc[1],
-                            src_loc[0] + src_loc[2],
-                            src_loc[1] + src_loc[3],
-                            dst,
-                            dst_loc[0],
-                            dst_loc[1],
-                            dst_loc[0] + dst_loc[2],
-                            dst_loc[1] + dst_loc[3]);
-
-      if (src == dst)
-         pipe_texture_reference(&temp_src, NULL);
-   }
-=======
 
    /* XXX: could put the texcoord scaling calculation into the vertex
     * shader.
@@ -642,7 +579,6 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    add_vertex_1tex(r, x1, y0, s1, t0);
    add_vertex_1tex(r, x1, y1, s1, t1);
    add_vertex_1tex(r, x0, y1, s0, t1);
->>>>>>> origin/mesa_7_7_branch:src/gallium/state_trackers/xorg/xorg_renderer.c
 }
 
 
