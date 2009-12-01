@@ -876,9 +876,8 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 
 #ifdef DEBUG
    /* debug check: make sure we don't get called recursively */
-   static GLuint callDepth = 0;
-   callDepth++;
-   assert(callDepth == 1);
+   exec->flush_call_depth++;
+   assert(exec->flush_call_depth == 1);
 #endif
 
    if (0) _mesa_printf("%s\n", __FUNCTION__);
@@ -886,7 +885,8 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
    if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       if (0) _mesa_printf("%s - inside begin/end\n", __FUNCTION__);
 #ifdef DEBUG
-      callDepth--;
+      exec->flush_call_depth--;
+      assert(exec->flush_call_depth == 0);
 #endif
       return;
    }
@@ -903,7 +903,8 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
    exec->ctx->Driver.NeedFlush &= ~flags;
 
 #ifdef DEBUG
-   callDepth--;
+   exec->flush_call_depth--;
+   assert(exec->flush_call_depth == 0);
 #endif
 }
 
