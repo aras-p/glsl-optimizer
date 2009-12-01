@@ -1462,7 +1462,8 @@ static void emit_insn(struct brw_vs_compile *c,
       emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
       break;
    case TGSI_OPCODE_RSQ:
-      emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
+      emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, 
+                 brw_swizzle(args[0], 0,0,0,0), BRW_MATH_PRECISION_FULL);
       break;
    case TGSI_OPCODE_SEQ:
       emit_seq(p, dst, args[0], args[1]);
@@ -1618,7 +1619,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction *inst;
 
-   if (BRW_DEBUG & DEBUG_VS)
+//   if (BRW_DEBUG & DEBUG_VS)
       tgsi_dump(c->vp->tokens, 0); 
 
    c->stack_index = brw_indirect(0, 0);
