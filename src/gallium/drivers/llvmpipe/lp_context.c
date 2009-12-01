@@ -180,7 +180,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
 
    llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
-   llvmpipe->pipe.bind_sampler_states  = llvmpipe_bind_sampler_states;
+   llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
    llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
 
    llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
@@ -205,7 +205,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_sampler_textures = llvmpipe_set_sampler_textures;
+   llvmpipe->pipe.set_fragment_sampler_textures = llvmpipe_set_sampler_textures;
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
