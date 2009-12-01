@@ -486,13 +486,13 @@ trace_context_bind_sampler_states(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_dump_call_begin("pipe_context", "bind_sampler_states");
+   trace_dump_call_begin("pipe_context", "bind_fragment_sampler_states");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, num_states);
    trace_dump_arg_array(ptr, states, num_states);
 
-   pipe->bind_sampler_states(pipe, num_states, states);;
+   pipe->bind_fragment_sampler_states(pipe, num_states, states);
 
    trace_dump_call_end();
 }
@@ -959,13 +959,13 @@ trace_context_set_sampler_textures(struct pipe_context *_pipe,
    }
    textures = unwrapped_textures;
 
-   trace_dump_call_begin("pipe_context", "set_sampler_textures");
+   trace_dump_call_begin("pipe_context", "set_fragment_sampler_textures");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, num_textures);
    trace_dump_arg_array(ptr, textures, num_textures);
 
-   pipe->set_sampler_textures(pipe, num_textures, textures);;
+   pipe->set_fragment_sampler_textures(pipe, num_textures, textures);
 
    trace_dump_call_end();
 }
@@ -1253,7 +1253,7 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.bind_blend_state = trace_context_bind_blend_state;
    tr_ctx->base.delete_blend_state = trace_context_delete_blend_state;
    tr_ctx->base.create_sampler_state = trace_context_create_sampler_state;
-   tr_ctx->base.bind_sampler_states = trace_context_bind_sampler_states;
+   tr_ctx->base.bind_fragment_sampler_states = trace_context_bind_sampler_states;
    tr_ctx->base.delete_sampler_state = trace_context_delete_sampler_state;
    tr_ctx->base.create_rasterizer_state = trace_context_create_rasterizer_state;
    tr_ctx->base.bind_rasterizer_state = trace_context_bind_rasterizer_state;
@@ -1274,7 +1274,7 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.set_polygon_stipple = trace_context_set_polygon_stipple;
    tr_ctx->base.set_scissor_state = trace_context_set_scissor_state;
    tr_ctx->base.set_viewport_state = trace_context_set_viewport_state;
-   tr_ctx->base.set_sampler_textures = trace_context_set_sampler_textures;
+   tr_ctx->base.set_fragment_sampler_textures = trace_context_set_sampler_textures;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_vertex_elements = trace_context_set_vertex_elements;
    if (pipe->surface_copy)
