@@ -55,6 +55,9 @@ softpipe_flush( struct pipe_context *pipe,
       for (i = 0; i < softpipe->num_textures; i++) {
          sp_flush_tex_tile_cache(softpipe->tex_cache[i]);
       }
+      for (i = 0; i < softpipe->num_vertex_textures; i++) {
+         sp_flush_tex_tile_cache(softpipe->vertex_tex_cache[i]);
+      }
    }
 
    if (flags & PIPE_FLUSH_SWAPBUFFERS) {

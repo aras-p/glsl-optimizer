@@ -107,6 +107,11 @@ softpipe_destroy( struct pipe_context *pipe )
       pipe_texture_reference(&softpipe->texture[i], NULL);
    }
 
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      sp_destroy_tex_tile_cache(softpipe->vertex_tex_cache[i]);
+      pipe_texture_reference(&softpipe->vertex_textures[i], NULL);
+   }
+
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
          pipe_buffer_reference(&softpipe->constants[i].buffer, NULL);
@@ -153,6 +158,11 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
           softpipe->tex_cache[i]->texture == texture)
          return PIPE_REFERENCED_FOR_READ;
    }
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      if (softpipe->vertex_tex_cache[i] &&
+          softpipe->vertex_tex_cache[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ;
+   }
    
    return PIPE_UNREFERENCED;
 }
@@ -192,7 +202,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
 
    softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_sampler_states  = softpipe_bind_sampler_states;
+   softpipe->pipe.bind_fragment_sampler_states  = softpipe_bind_sampler_states;
+   softpipe->pipe.bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
 
    softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
@@ -217,7 +228,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_sampler_textures = softpipe_set_sampler_textures;
+   softpipe->pipe.set_fragment_sampler_textures = softpipe_set_sampler_textures;
+   softpipe->pipe.set_vertex_sampler_textures = softpipe_set_vertex_sampler_textures;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
@@ -247,7 +259,9 @@ softpipe_create( struct pipe_screen *screen )
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       softpipe->tex_cache[i] = sp_create_tex_tile_cache( screen );
-
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache(screen);
+   }
 
    /* setup quad rendering stages */
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
@@ -263,7 +277,7 @@ softpipe_create( struct pipe_screen *screen )
       goto fail;
 
    draw_texture_samplers(softpipe->draw,
-                         PIPE_MAX_SAMPLERS,
+                         PIPE_MAX_VERTEX_SAMPLERS,
                          (struct tgsi_sampler **)
                             softpipe->tgsi.vert_samplers_list);
 

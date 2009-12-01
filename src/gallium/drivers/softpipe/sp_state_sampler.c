@@ -94,6 +94,34 @@ softpipe_bind_sampler_states(struct pipe_context *pipe,
 
 
 void
+softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
+                                    unsigned num_samplers,
+                                    void **samplers)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   unsigned i;
+
+   assert(num_samplers <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_samplers == softpipe->num_vertex_samplers &&
+       !memcmp(softpipe->vertex_samplers, samplers, num_samplers * sizeof(void *)))
+      return;
+
+   draw_flush(softpipe->draw);
+
+   for (i = 0; i < num_samplers; ++i)
+      softpipe->vertex_samplers[i] = samplers[i];
+   for (i = num_samplers; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+      softpipe->vertex_samplers[i] = NULL;
+
+   softpipe->num_vertex_samplers = num_samplers;
+
+   softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
+
+void
 softpipe_set_sampler_textures(struct pipe_context *pipe,
                               unsigned num, struct pipe_texture **texture)
 {
@@ -117,6 +145,37 @@ softpipe_set_sampler_textures(struct pipe_context *pipe,
    }
 
    softpipe->num_textures = num;
+
+   softpipe->dirty |= SP_NEW_TEXTURE;
+}
+
+
+void
+softpipe_set_vertex_sampler_textures(struct pipe_context *pipe,
+                                     unsigned num_textures,
+                                     struct pipe_texture **textures)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
+
+   assert(num_textures <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_textures == softpipe->num_vertex_textures &&
+       !memcmp(softpipe->vertex_textures, textures, num_textures * sizeof(struct pipe_texture *))) {
+      return;
+   }
+
+   draw_flush(softpipe->draw);
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct pipe_texture *tex = i < num_textures ? textures[i] : NULL;
+
+      pipe_texture_reference(&softpipe->vertex_textures[i], tex);
+      sp_tex_tile_cache_set_texture(softpipe->vertex_tex_cache[i], tex);
+   }
+
+   softpipe->num_vertex_textures = num_textures;
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
@@ -185,16 +244,16 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
     * fragment programs.
     */
    for (i = 0; i <= softpipe->vs->max_sampler; i++) {
-      if (softpipe->sampler[i]) {
+      if (softpipe->vertex_samplers[i]) {
          softpipe->tgsi.vert_samplers_list[i] = 
             get_sampler_varient( i,
-                                 sp_sampler(softpipe->sampler[i]),
-                                 softpipe->texture[i],
+                                sp_sampler(softpipe->vertex_samplers[i]),
+                                softpipe->vertex_textures[i],
                                  TGSI_PROCESSOR_VERTEX );
 
          sp_sampler_varient_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
-                                          softpipe->tex_cache[i],
-                                          softpipe->texture[i] );
+                                         softpipe->vertex_tex_cache[i],
+                                         softpipe->vertex_textures[i] );
       }
    }
 

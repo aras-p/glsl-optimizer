@@ -213,6 +213,19 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
          }
       }
    }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct softpipe_tex_tile_cache *tc = softpipe->vertex_tex_cache[i];
+
+      if (tc->texture) {
+         struct softpipe_texture *spt = softpipe_texture(tc->texture);
+
+         if (spt->timestamp != tc->timestamp) {
+	    sp_tex_tile_cache_validate_texture(tc);
+            tc->timestamp = spt->timestamp;
+         }
+      }
+   }
 }
 
 
