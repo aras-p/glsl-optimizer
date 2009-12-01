@@ -1053,7 +1053,7 @@ static void copy_instructions( struct ureg_program *ureg )
 static void
 fixup_header_size(struct ureg_program *ureg)
 {
-   union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_DECL, 1 );
+   union tgsi_any_token *out = retrieve_token( ureg, DOMAIN_DECL, 0 );
 
    out->header.BodySize = ureg->domain[DOMAIN_DECL].count - 3;
 }
