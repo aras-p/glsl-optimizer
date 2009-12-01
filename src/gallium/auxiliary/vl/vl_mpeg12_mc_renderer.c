@@ -1296,8 +1296,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 4, r->vertex_elems);
-      r->pipe->set_sampler_textures(r->pipe, 3, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 3, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 3, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 3, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->i_vs);
       r->pipe->bind_fs_state(r->pipe, r->i_fs);
 
@@ -1310,8 +1310,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
-      r->pipe->set_sampler_textures(r->pipe, 4, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 4, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
@@ -1324,8 +1324,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
-      r->pipe->set_sampler_textures(r->pipe, 4, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 4, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
@@ -1338,8 +1338,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->future;
-      r->pipe->set_sampler_textures(r->pipe, 4, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 4, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
 
@@ -1352,8 +1352,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
       r->textures.individual.ref[0] = r->future;
-      r->pipe->set_sampler_textures(r->pipe, 4, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 4, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
 
@@ -1367,8 +1367,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
       r->textures.individual.ref[1] = r->future;
-      r->pipe->set_sampler_textures(r->pipe, 5, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 5, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[0]);
 
@@ -1382,8 +1382,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
       r->textures.individual.ref[0] = r->past;
       r->textures.individual.ref[1] = r->future;
-      r->pipe->set_sampler_textures(r->pipe, 5, r->textures.all);
-      r->pipe->bind_sampler_states(r->pipe, 5, r->samplers.all);
+      r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
+      r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[1]);
 

@@ -479,8 +479,8 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
    compositor->pipe->set_scissor_state(compositor->pipe, &compositor->scissor);
-   compositor->pipe->bind_sampler_states(compositor->pipe, 1, &compositor->sampler);
-   compositor->pipe->set_sampler_textures(compositor->pipe, 1, &src_surface);
+   compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 1, &compositor->sampler);
+   compositor->pipe->set_fragment_sampler_textures(compositor->pipe, 1, &src_surface);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 2, compositor->vertex_bufs);
