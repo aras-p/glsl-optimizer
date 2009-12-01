@@ -75,7 +75,7 @@ struct lp_rasterizer {
       char clear_stencil;
    } state;
 
-   int nr_blocks;
+   unsigned nr_blocks;
    struct {
       unsigned x;
       unsigned y;

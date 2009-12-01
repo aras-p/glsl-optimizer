@@ -44,7 +44,7 @@
 static void
 block_full_4( struct lp_rasterizer *rast, int x, int y )
 {
-   int i = rast->nr_blocks;
+   const unsigned i = rast->nr_blocks;
    assert(x % 4 == 0);
    assert(y % 4 == 0);
    rast->blocks[i].x = x;
@@ -97,7 +97,7 @@ do_block_4( struct lp_rasterizer *rast,
    /* As we do trivial reject already, masks should rarely be all zero:
     */
    if (mask) {
-      int i = rast->nr_blocks;
+      const unsigned i = rast->nr_blocks;
       rast->blocks[i].x = x;
       rast->blocks[i].y = y;
       rast->blocks[i].mask = mask;
@@ -169,7 +169,8 @@ lp_rast_triangle( struct lp_rasterizer *rast,
 
    int x = rast->x;
    int y = rast->y;
-   int ix, iy, i = 0;
+   int ix, iy;
+   unsigned i = 0;
 
    int c1 = tri->c1 + tri->dx12 * y - tri->dy12 * x;
    int c2 = tri->c2 + tri->dx23 * y - tri->dy23 * x;
