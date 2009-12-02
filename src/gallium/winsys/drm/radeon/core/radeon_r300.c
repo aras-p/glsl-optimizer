@@ -52,8 +52,9 @@ static boolean radeon_validate(struct radeon_winsys* winsys)
 
 static boolean radeon_check_cs(struct radeon_winsys* winsys, int size)
 {
-    /* XXX check size here, lazy ass! */
-    return radeon_validate(winsys);
+    struct radeon_cs* cs = winsys->priv->cs;
+
+    return radeon_validate(winsys) && cs->cdw + size <= cs->ndw;
 }
 
 static void radeon_begin_cs(struct radeon_winsys* winsys,

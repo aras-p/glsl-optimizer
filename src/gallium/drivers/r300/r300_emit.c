@@ -871,10 +871,17 @@ void r300_emit_dirty_state(struct r300_context* r300)
         return;
     }
 
+    /* Check size of CS. */
+    /* Make sure we have at least 8*1024 spare dwords. */
+    /* XXX It would be nice to know the number of dwords we really need to
+     * XXX emit. */
+    if (!r300->winsys->check_cs(r300->winsys, 8*1024)) {
+        r300->context.flush(&r300->context, 0, NULL);
+    }
+
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
-    /* XXX check size */
 validate:
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {

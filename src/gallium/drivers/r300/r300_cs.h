@@ -55,7 +55,7 @@
     int cs_count = 0;
 
 #define CHECK_CS(size) \
-    cs_winsys->check_cs(cs_winsys, (size))
+    assert(cs_winsys->check_cs(cs_winsys, (size)))
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
