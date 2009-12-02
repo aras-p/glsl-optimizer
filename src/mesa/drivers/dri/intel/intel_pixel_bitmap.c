@@ -336,6 +336,8 @@ out:
                               unpack->BufferObj);
    }
 
+   intel_check_front_buffer_rendering(intel);
+
    return GL_TRUE;
 }
 
