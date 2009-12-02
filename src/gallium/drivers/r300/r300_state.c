@@ -566,6 +566,12 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     r300->sampler_count = count;
 }
 
+static void r300_lacks_vertex_textures(struct pipe_context* pipe,
+                                       unsigned count,
+                                       void** states)
+{
+}
+
 static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
 {
     FREE(state);
@@ -823,6 +829,7 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.create_sampler_state = r300_create_sampler_state;
     r300->context.bind_fragment_sampler_states = r300_bind_sampler_states;
+    r300->context.bind_vertex_sampler_states = r300_lacks_vertex_textures;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
     r300->context.set_fragment_sampler_textures = r300_set_sampler_textures;
