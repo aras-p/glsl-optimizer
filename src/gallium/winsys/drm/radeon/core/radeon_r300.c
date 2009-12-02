@@ -154,27 +154,20 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
 
     info.value = (unsigned long)&target;
 
-    /* First, get the number of pixel pipes */
-    info.request = RADEON_INFO_NUM_GB_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, "
-                "error number %d\n", __FUNCTION__, retval);
-        exit(1);
-    }
-    winsys->gb_pipes = target;
-
-    /* get Z pipes */
-    info.request = RADEON_INFO_NUM_Z_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, "
-                "error number %d\n", __FUNCTION__, retval);
-        exit(1);
-    }
-    winsys->z_pipes = target;
-
-    /* Then, get PCI ID */
+    /* We do things in a specific order here.
+     *
+     * First, the PCI ID. This is essential and should return usable numbers
+     * for all Radeons. If this fails, we probably got handed an FD for some
+     * non-Radeon card.
+     *
+     * The GB and Z pipe requests should always succeed, but they might not
+     * return sensical values for all chipsets, but that's alright because
+     * the pipe drivers already know that.
+     *
+     * The GEM info is actually bogus on the kernel side, as well as our side
+     * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
+     * we don't actually use the info for anything yet.
+     * XXX update the above when we can safely use vram_size instead of vram_visible */
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
@@ -184,7 +177,24 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     }
     winsys->pci_id = target;
 
-    /* Finally, retrieve MM info */
+    info.request = RADEON_INFO_NUM_GB_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get GB pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->gb_pipes = target;
+
+    info.request = RADEON_INFO_NUM_Z_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get Z pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->z_pipes = target;
+
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
