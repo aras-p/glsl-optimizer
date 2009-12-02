@@ -278,7 +278,7 @@ static struct ureg_src swizzle_4v( struct ureg_src src,
 
 
 /**
- * Translate SWZ instructions into a single MAD.  EG:
+ * Translate a SWZ instruction into a MOV, MUL or MAD instruction.  EG:
  *
  *   SWZ dst, src.x-y10 
  * 

@@ -652,6 +652,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 
+    if (ms->winsys_screen_init)
+	ms->winsys_screen_init(pScrn);
+
     return drv_enter_vt(scrnIndex, 1);
 }
 
@@ -767,6 +770,9 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     if (pScrn->vtSema) {
 	drv_leave_vt(scrnIndex, 0);
     }
+
+    if (ms->winsys_screen_close)
+	ms->winsys_screen_close(pScrn);
 
 #ifdef DRI2
     if (ms->screen)

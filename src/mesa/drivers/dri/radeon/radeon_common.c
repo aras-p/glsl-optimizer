@@ -257,9 +257,7 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
-		if (!radeon->radeonScreen->kernel_mm) {
-			radeon_firevertices(radeon);
-		}
+		radeon_firevertices(radeon);
 		radeonUpdateScissor(ctx);
 	}
 }

@@ -15,8 +15,6 @@
 
 #define DEPTH 5.0f
 
-static PFNGLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
-
 static GLfloat camz;
 
 static GLint fogMode;
