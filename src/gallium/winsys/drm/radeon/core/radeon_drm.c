@@ -94,6 +94,14 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
     winsys->vram_size = gem_info.vram_visible;
 }
 
+/* Guess at whether this chipset should use r300g.
+ *
+ * I believe that this check is valid, but I haven't been exhaustive. */
+static boolean is_r3xx(int pciid)
+{
+    return (pciid > 0x3150) && (pciid < 0x796f);
+}
+
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
