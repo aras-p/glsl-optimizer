@@ -237,7 +237,7 @@ struct r300_context {
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct r300_winsys* winsys;
+    struct radeon_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
 

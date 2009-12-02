@@ -32,7 +32,8 @@
 #include "r300_context.h"
 #include "r300_state_inlines.h"
 #include "r300_reg.h"
-#include "r300_winsys.h"
+
+#include "radeon_winsys.h"
 
 static INLINE int get_buffer_offset(struct r300_context *r300,
                                     unsigned int buf_nr,

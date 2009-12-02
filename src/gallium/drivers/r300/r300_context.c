@@ -36,7 +36,8 @@
 #include "r300_screen.h"
 #include "r300_state_derived.h"
 #include "r300_state_invariant.h"
-#include "r300_winsys.h"
+
+#include "radeon_winsys.h"
 
 static enum pipe_error r300_clear_hash_table(void* key, void* value,
                                              void* data)
@@ -105,7 +106,7 @@ static void r300_flush_cb(void *data)
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct r300_winsys* r300_winsys)
+                                         struct radeon_winsys* radeon_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
@@ -113,9 +114,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
-    r300->winsys = r300_winsys;
+    r300->winsys = radeon_winsys;
 
-    r300->context.winsys = (struct pipe_winsys*)r300_winsys;
+    r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
 
     r300_init_debug(r300);

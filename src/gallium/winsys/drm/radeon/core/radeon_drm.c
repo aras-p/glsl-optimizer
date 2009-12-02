@@ -41,9 +41,8 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
     if (debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
         return softpipe_create_screen((struct pipe_winsys*)winsys);
     } else {
-        struct r300_winsys* r300 = radeon_create_r300_winsys(drmFB, winsys);
-        FREE(winsys);
-        return r300_create_screen(r300);
+        radeon_setup_winsys(drmFB, winsys);
+        return r300_create_screen(winsys);
     }
 }
 
@@ -55,7 +54,7 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
         return radeon_create_softpipe(screen->winsys);
     } else {
         return r300_create_context(screen,
-                                   (struct r300_winsys*)screen->winsys);
+                                   (struct radeon_winsys*)screen->winsys);
     }
 }
 

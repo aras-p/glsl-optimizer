@@ -27,7 +27,8 @@
 #include "r300_context.h"
 #include "r300_screen.h"
 #include "r300_texture.h"
-#include "r300_winsys.h"
+
+#include "radeon_winsys.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -372,7 +373,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
 {
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
@@ -380,14 +381,14 @@ struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
     if (!r300screen || !caps)
         return NULL;
 
-    caps->pci_id = r300_winsys->pci_id;
-    caps->num_frag_pipes = r300_winsys->gb_pipes;
-    caps->num_z_pipes = r300_winsys->z_pipes;
+    caps->pci_id = radeon_winsys->pci_id;
+    caps->num_frag_pipes = radeon_winsys->gb_pipes;
+    caps->num_z_pipes = radeon_winsys->z_pipes;
 
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->screen.winsys = (struct pipe_winsys*)r300_winsys;
+    r300screen->screen.winsys = (struct pipe_winsys*)radeon_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;
