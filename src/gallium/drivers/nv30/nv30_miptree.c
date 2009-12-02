@@ -9,7 +9,7 @@ static void
 nv30_miptree_layout(struct nv30_miptree *nv30mt)
 {
 	struct pipe_texture *pt = &nv30mt->base;
-	uint width = pt->width0, height = pt->height0, depth = pt->depth0;
+	uint width = pt->width0;
 	uint offset = 0;
 	int nr_faces, l, f;
 	uint wide_pitch = pt->tex_usage & (PIPE_TEXTURE_USAGE_SAMPLER |
@@ -28,20 +28,15 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 	}
 
 	for (l = 0; l <= pt->last_level; l++) {
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
-
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			nv30mt->level[l].pitch = align(pt->width0 * pt->block.size, 64);
+			nv30mt->level[l].pitch = align(pf_get_stride(pt->format, pt->width0), 64);
 		else
-			nv30mt->level[l].pitch = u_minify(pt->width0, l) * pt->block.size;
+			nv30mt->level[l].pitch = pf_get_stride(pt->format, width);
 
 		nv30mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = u_minify(width, 1);
-		height = u_minify(height, 1);
-		depth  = u_minify(depth, 1);
 	}
 
 	for (f = 0; f < nr_faces; f++) {

@@ -24,9 +24,6 @@ nv20_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
 	template->width0 = u_minify(pt->width0, level);
 	template->height0 = u_minify(pt->height0, level);
 	template->depth0 = 1;
-	template->block = pt->block;
-	template->nblocksx[0] = pt->nblocksx[level];
-	template->nblocksy[0] = pt->nblocksx[level];
 	template->last_level = 0;
 	template->nr_samples = pt->nr_samples;
 
@@ -49,14 +46,10 @@ nv20_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 
 	pipe_texture_reference(&tx->base.texture, pt);
-	tx->base.format = pt->format;
 	tx->base.x = x;
 	tx->base.y = y;
 	tx->base.width = w;
 	tx->base.height = h;
-	tx->base.block = pt->block;
-	tx->base.nblocksx = pt->nblocksx[level];
-	tx->base.nblocksy = pt->nblocksy[level];
 	tx->base.stride = mt->level[level].pitch;
 	tx->base.usage = usage;
 	tx->base.face = face;
@@ -158,7 +151,7 @@ nv20_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 	                            pipe_transfer_buffer_flags(ptx));
 
 	return map + ns->base.offset +
-	       ptx->y * ns->pitch + ptx->x * ptx->block.size;
+	       ptx->y * ns->pitch + ptx->x * pf_get_blocksize(ptx->texture->format);
 }
 
 static void

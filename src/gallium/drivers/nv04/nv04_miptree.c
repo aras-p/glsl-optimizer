@@ -10,28 +10,21 @@ static void
 nv04_miptree_layout(struct nv04_miptree *nv04mt)
 {
 	struct pipe_texture *pt = &nv04mt->base;
-	uint width = pt->width0, height = pt->height0;
 	uint offset = 0;
 	int nr_faces, l;
 
 	nr_faces = 1;
 
 	for (l = 0; l <= pt->last_level; l++) {
-
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
-		
 		nv04mt->level[l].pitch = pt->width0;
 		nv04mt->level[l].pitch = (nv04mt->level[l].pitch + 63) & ~63;
-
-		width  = u_minify(width, 1);
-		height = u_minify(height, 1);
 	}
 
 	for (l = 0; l <= pt->last_level; l++) {
-
 		nv04mt->level[l].image_offset = 
 			CALLOC(nr_faces, sizeof(unsigned));
+		/* XXX guess was obviously missing */
+		nv04mt->level[l].image_offset[0] = offset;
 		offset += nv04mt->level[l].pitch * u_minify(pt->height0, l);
 	}
 
@@ -128,7 +121,7 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ns->base.zslice = zslice;
 	ns->pitch = nv04mt->level[level].pitch;
 
-	ns->base.offset = nv04mt->level[level].image_offset;
+	ns->base.offset = nv04mt->level[level].image_offset[0];
 
 	return &ns->base;
 }
