@@ -131,6 +131,9 @@ struct nv50_pc {
 	struct nv50_reg *r_brdc;
 	struct nv50_reg *r_dst[4];
 
+	struct nv50_reg reg_instances[16];
+	unsigned reg_instance_nr;
+
 	unsigned interp_mode[32];
 	/* perspective interpolation registers */
 	struct nv50_reg *iv_p;
@@ -149,6 +152,19 @@ struct nv50_pc {
 
 	boolean allow32;
 };
+
+static INLINE struct nv50_reg *
+reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
+{
+	struct nv50_reg *dup = NULL;
+	if (reg) {
+		assert(pc->reg_instance_nr < 16);
+		dup = &pc->reg_instances[pc->reg_instance_nr++];
+		*dup = *reg;
+		reg->mod = 0;
+	}
+	return dup;
+}
 
 static INLINE void
 ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
@@ -898,7 +914,6 @@ static INLINE void
 emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
-	assert(src0 != src1);
 	src1->mod ^= NV50_MOD_NEG;
 	emit_add(pc, dst, src0, src1);
 	src1->mod ^= NV50_MOD_NEG;
@@ -967,7 +982,6 @@ static INLINE void
 emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
-	assert(src2 != src0 && src2 != src1);
 	src2->mod ^= NV50_MOD_NEG;
 	emit_mad(pc, dst, src0, src1, src2);
 	src2->mod ^= NV50_MOD_NEG;
@@ -1515,8 +1529,6 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
-	int s;
-
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
@@ -1526,29 +1538,14 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_ADD:
 	case TGSI_OPCODE_SUB:
 	case TGSI_OPCODE_MAD:
-		break;
+		return TRUE;
 	case TGSI_OPCODE_POW:
 		if (i == 1)
-			break;
+			return TRUE;
 		return FALSE;
 	default:
 		return FALSE;
 	}
-
-	/* Watch out for possible multiple uses of an nv50_reg, we
-	 * can't use nv50_reg::neg in these cases.
-	 */
-	for (s = 0; s < insn->Instruction.NumSrcRegs; ++s) {
-		if (s == i)
-			continue;
-		if ((insn->Src[s].Register.Index ==
-		     insn->Src[i].Register.Index) &&
-		    (insn->Src[s].Register.File ==
-		     insn->Src[i].Register.File))
-			return FALSE;
-	}
-
-	return TRUE;
 }
 
 /* Return a read mask for source registers deduced from opcode & write mask. */
@@ -1882,7 +1879,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 
 		for (c = 0; c < 4; c++)
 			if (src_mask & (1 << c))
-				src[i][c] = tgsi_src(pc, c, fs, neg_supp);
+				src[i][c] = reg_instance(pc,
+					tgsi_src(pc, c, fs, neg_supp));
 	}
 
 	brdc = temp = pc->r_brdc;
@@ -2249,16 +2247,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!src[i][c])
 				continue;
-			src[i][c]->mod = 0;
-			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
-				FREE(src[i][c]);
-			else
 			if (src[i][c]->acc < 0 && src[i][c]->type == P_CONST)
 				FREE(src[i][c]); /* indirect constant */
 		}
 	}
 
 	kill_temp_temp(pc);
+	pc->reg_instance_nr = 0;
+
 	return TRUE;
 }
 
