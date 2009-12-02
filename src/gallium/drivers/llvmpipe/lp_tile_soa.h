@@ -44,7 +44,7 @@ struct pipe_transfer;
  * Cache tile size (width and height). This needs to be a power of two.
  */
 #define TILE_ORDER 6
-#define TILE_SIZE (1<<TILE_ORDER)
+#define TILE_SIZE (1 << TILE_ORDER)
 
 
 #define TILE_VECTOR_HEIGHT 4
@@ -53,14 +53,14 @@ struct pipe_transfer;
 extern const unsigned char
 tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 
-#define TILE_C_STRIDE (TILE_VECTOR_HEIGHT*TILE_VECTOR_WIDTH)
-#define TILE_X_STRIDE (NUM_CHANNELS*TILE_C_STRIDE)
-#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT*TILE_SIZE*NUM_CHANNELS)
+#define TILE_C_STRIDE (TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH)
+#define TILE_X_STRIDE (NUM_CHANNELS * TILE_C_STRIDE)
+#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS)
 
 #define TILE_PIXEL(_p, _x, _y, _c) \
-   ((_p)[((_y)/TILE_VECTOR_HEIGHT)*TILE_Y_STRIDE + \
-         ((_x)/TILE_VECTOR_WIDTH)*TILE_X_STRIDE + \
-         (_c)*TILE_C_STRIDE + \
+   ((_p)[((_y) / TILE_VECTOR_HEIGHT) * TILE_Y_STRIDE + \
+         ((_x) / TILE_VECTOR_WIDTH) * TILE_X_STRIDE + \
+         (_c) * TILE_C_STRIDE + \
          tile_offset[(_y) % TILE_VECTOR_HEIGHT][(_x) % TILE_VECTOR_WIDTH]])
 
 
