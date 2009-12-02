@@ -515,7 +515,10 @@ static int image_matches_texture_obj(struct gl_texture_object *texObj,
 	struct gl_texture_image *texImage,
 	unsigned level)
 {
-	const struct gl_texture_image *baseImage = texObj->Image[0][level];
+	const struct gl_texture_image *baseImage = texObj->Image[0][texObj->BaseLevel];
+
+	if (!baseImage)
+		return 0;
 
 	if (level < texObj->BaseLevel || level > texObj->MaxLevel)
 		return 0;
