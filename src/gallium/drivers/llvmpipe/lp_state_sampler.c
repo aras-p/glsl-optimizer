@@ -78,9 +78,8 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
 
 
 void
-llvmpipe_set_fragment_sampler_textures(struct pipe_context *pipe,
-                                       unsigned num,
-                                       struct pipe_texture **texture)
+llvmpipe_set_sampler_textures(struct pipe_context *pipe,
+                              unsigned num, struct pipe_texture **texture)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    uint i;
@@ -114,15 +113,6 @@ llvmpipe_set_fragment_sampler_textures(struct pipe_context *pipe,
    llvmpipe->num_textures = num;
 
    llvmpipe->dirty |= LP_NEW_TEXTURE;
-}
-
-
-void
-llvmpipe_set_vertex_sampler_textures(struct pipe_context *pipe,
-                                     unsigned num,
-                                     struct pipe_texture **texture)
-{
-   /* XXX to do */
 }
 
 

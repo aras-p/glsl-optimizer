@@ -168,13 +168,9 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *,
 void llvmpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 
-void llvmpipe_set_fragment_sampler_textures( struct pipe_context *,
-                                             unsigned num,
-                                             struct pipe_texture ** );
-
-void llvmpipe_set_vertex_sampler_textures( struct pipe_context *,
-                                           unsigned num,
-                                           struct pipe_texture ** );
+void llvmpipe_set_sampler_textures( struct pipe_context *,
+                                    unsigned num,
+                                    struct pipe_texture ** );
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
