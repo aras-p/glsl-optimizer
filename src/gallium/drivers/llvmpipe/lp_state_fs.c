@@ -358,6 +358,9 @@ generate_blend(const struct pipe_blend_state *blend,
 
 /**
  * Generate the runtime callable function for the whole fragment pipeline.
+ * Note that the function which we generate operates on a block of 16
+ * pixels at at time.  The block contains 2x2 quads.  Each quad contains
+ * 2x2 pixels.
  */
 static struct lp_fragment_shader_variant *
 generate_fragment(struct llvmpipe_context *lp,
@@ -437,8 +440,8 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_type.sign = TRUE;     /* values are signed */
    fs_type.norm = FALSE;    /* values are not limited to [0,1] or [-1,1] */
    fs_type.width = 32;      /* 32-bit float */
-   fs_type.length = 4;      /* 4 element per vector */
-   num_fs = 4;
+   fs_type.length = 4;      /* 4 elements per vector */
+   num_fs = 4;              /* number of quads per block */
 
    memset(&blend_type, 0, sizeof blend_type);
    blend_type.floating = FALSE; /* values are integers */
@@ -509,18 +512,19 @@ generate_fragment(struct llvmpipe_context *lp,
 
    lp_build_interp_soa_init(&interp, shader->base.tokens, builder, fs_type,
                             a0_ptr, dadx_ptr, dady_ptr,
-                            x0, y0, 2, 0);
+                            x0, y0);
 
    /* code generated texture sampling */
    sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);
 
+   /* loop over quads in the block */
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       LLVMValueRef out_color[NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
 
       if(i != 0)
-         lp_build_interp_soa_update(&interp);
+         lp_build_interp_soa_update(&interp, i);
 
       fs_mask[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, mask_ptr, &index, 1, ""), "");
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");

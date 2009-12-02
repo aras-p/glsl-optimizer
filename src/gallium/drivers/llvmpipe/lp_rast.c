@@ -126,8 +126,6 @@ void lp_rast_end( struct lp_rasterizer *rast )
 }
 
 
-
-
 /**
  * Begining rasterization of a tile.
  * \param x  window X position of the tile, in pixels
@@ -152,7 +150,7 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 {
    const uint8_t *clear_color = arg.clear_color;
    
-   RAST_DEBUG("%s %x,%x,%x,%x\n", __FUNCTION__, 
+   RAST_DEBUG("%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
               clear_color[0],
               clear_color[1],
               clear_color[2],
@@ -181,7 +179,7 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
 {
    unsigned i, j;
    
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   RAST_DEBUG("%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
    for (i = 0; i < TILE_SIZE; i++)
       for (j = 0; j < TILE_SIZE; j++)
@@ -225,6 +223,9 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
 }
 
 
+/**
+ * Compute shading for a 4x4 block of pixels.
+ */
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
@@ -237,6 +238,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    void *depth;
    uint32_t ALIGN16_ATTRIB masks[2][2][2][2];
    unsigned ix, iy;
+   int block_offset;
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);
@@ -275,16 +277,20 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    masks[1][1][1][1] = mask & (1 << (1*8+1*4+1*2+1)) ? ~0 : 0;
 #endif
 
+   assert((x % 2) == 0);
+   assert((y % 2) == 0);
+
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
 
+   /* offset of the 16x16 pixel block within the tile */
+   block_offset = ((iy/4)*(16*16) + (ix/4)*16);
+
    /* color buffer */
-   color = &TILE_PIXEL(tile->color, ix, iy, 0);
+   color = tile->color + 4 * block_offset;
 
    /* depth buffer */
-   assert((x % 2) == 0);
-   assert((y % 2) == 0);
-   depth = tile->depth + (iy/4)*(16*16) + (ix/4)*16;
+   depth = tile->depth + block_offset;
 
    /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
    assert(lp_check_alignment(masks, 16));

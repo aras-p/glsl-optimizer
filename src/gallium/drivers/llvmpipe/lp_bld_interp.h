@@ -63,9 +63,6 @@ struct lp_build_interp_soa_context
    LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
-   int xstep;
-   int ystep;
-
    /* Attribute values before perspective divide */
    LLVMValueRef attribs_pre[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 
@@ -88,12 +85,11 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
                          LLVMValueRef x0,
-                         LLVMValueRef y0,
-                         int xstep,
-                         int ystep);
+                         LLVMValueRef y0);
 
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld);
+lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
+                           int quad_index);
 
 
 #endif /* LP_BLD_INTERP_H */
