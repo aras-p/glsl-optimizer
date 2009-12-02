@@ -260,7 +260,8 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
       ctx->pipe->bind_fragment_sampler_states( ctx->pipe, 0, NULL );
-      ctx->pipe->bind_vertex_sampler_states(ctx->pipe, 0, NULL);
+      if (ctx->pipe->bind_vertex_sampler_states)
+         ctx->pipe->bind_vertex_sampler_states(ctx->pipe, 0, NULL);
       ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
