@@ -1351,7 +1351,7 @@ emit_function_call(struct codegen *gen,
 static boolean
 emit_TEX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   const uint target = inst->InstructionExtTexture.Texture;
+   const uint target = inst->Texture.Texture;
    const uint unit = inst->Src[1].Register.Index;
    uint addr;
    int ch;
