@@ -158,7 +158,8 @@ svga_transfer_dma_band(struct svga_transfer *st,
                 st->base.x + st->base.width,
                 y + h,
                 st->base.zslice + 1,
-                texture->base.block.size*8/(texture->base.block.width*texture->base.block.height));
+                pf_get_blocksize(texture->base.format)*8/
+                (pf_get_blockwidth(texture->base.format)*pf_get_blockheight(texture->base.format)));
    
    box.x = st->base.x;
    box.y = y;
@@ -208,7 +209,8 @@ svga_transfer_dma(struct svga_transfer *st,
    }
    else {
       unsigned y, h, srcy;
-      h = st->hw_nblocksy * st->base.block.height;
+      unsigned blockheight = pf_get_blockheight(st->base.texture->format);
+      h = st->hw_nblocksy * blockheight;
       srcy = 0;
       for(y = 0; y < st->base.height; y += h) {
          unsigned offset, length;
@@ -218,11 +220,11 @@ svga_transfer_dma(struct svga_transfer *st,
             h = st->base.height - y;
 
          /* Transfer band must be aligned to pixel block boundaries */
-         assert(y % st->base.block.height == 0);
-         assert(h % st->base.block.height == 0);
+         assert(y % blockheight == 0);
+         assert(h % blockheight == 0);
          
-         offset = y * st->base.stride / st->base.block.height;
-         length = h * st->base.stride / st->base.block.height;
+         offset = y * st->base.stride / blockheight;
+         length = h * st->base.stride / blockheight;
 
          sw = (uint8_t *)st->swbuf + offset;
          
@@ -291,8 +293,6 @@ svga_texture_create(struct pipe_screen *screen,
    height = templat->height0;
    depth = templat->depth0;
    for(level = 0; level <= templat->last_level; ++level) {
-      tex->base.nblocksx[level] = pf_get_nblocksx(&tex->base.block, width);  
-      tex->base.nblocksy[level] = pf_get_nblocksy(&tex->base.block, height);  
       width = u_minify(width, 1);
       height = u_minify(height, 1);
       depth = u_minify(depth, 1);
@@ -750,6 +750,8 @@ svga_get_tex_transfer(struct pipe_screen *screen,
    struct svga_screen *ss = svga_screen(screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st;
+   unsigned nblocksx = pf_get_nblocksx(texture->format, w);
+   unsigned nblocksy = pf_get_nblocksy(texture->format, h);
 
    /* We can't map texture storage directly */
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
@@ -759,21 +761,17 @@ svga_get_tex_transfer(struct pipe_screen *screen,
    if (!st)
       return NULL;
    
-   st->base.format = texture->format;
-   st->base.block = texture->block;
    st->base.x = x;
    st->base.y = y;
    st->base.width = w;
    st->base.height = h;
-   st->base.nblocksx = pf_get_nblocksx(&texture->block, w);
-   st->base.nblocksy = pf_get_nblocksy(&texture->block, h);
-   st->base.stride = st->base.nblocksx*st->base.block.size;
+   st->base.stride = nblocksx*pf_get_blocksize(texture->format);
    st->base.usage = usage;
    st->base.face = face;
    st->base.level = level;
    st->base.zslice = zslice;
 
-   st->hw_nblocksy = st->base.nblocksy;
+   st->hw_nblocksy = nblocksy;
    
    st->hwbuf = svga_winsys_buffer_create(ss, 
                                          1, 
@@ -789,15 +787,15 @@ svga_get_tex_transfer(struct pipe_screen *screen,
    if(!st->hwbuf)
       goto no_hwbuf;
 
-   if(st->hw_nblocksy < st->base.nblocksy) {
+   if(st->hw_nblocksy < nblocksy) {
       /* We couldn't allocate a hardware buffer big enough for the transfer, 
        * so allocate regular malloc memory instead */
       debug_printf("%s: failed to allocate %u KB of DMA, splitting into %u x %u KB DMA transfers\n",
                    __FUNCTION__,
-                   (st->base.nblocksy*st->base.stride + 1023)/1024,
-                   (st->base.nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
+                   (nblocksy*st->base.stride + 1023)/1024,
+                   (nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
                    (st->hw_nblocksy*st->base.stride + 1023)/1024);
-      st->swbuf = MALLOC(st->base.nblocksy*st->base.stride);
+      st->swbuf = MALLOC(nblocksy*st->base.stride);
       if(!st->swbuf)
          goto no_swbuf;
    }
@@ -1046,8 +1044,7 @@ svga_screen_buffer_from_texture(struct pipe_texture *texture,
        svga_translate_format(texture->format),
        stex->handle);
 
-   *stride = pf_get_nblocksx(&texture->block, texture->width0) *
-      texture->block.size;
+   *stride = pf_get_stride(texture->format, texture->width0);
 
    return *buffer != NULL;
 }
