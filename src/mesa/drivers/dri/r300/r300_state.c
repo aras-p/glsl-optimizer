@@ -1741,8 +1741,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		r300SetPolygonOffsetState(ctx, state);
 		break;
 	case GL_SCISSOR_TEST:
-		if (!rmesa->radeon.radeonScreen->kernel_mm)
-			radeon_firevertices(&rmesa->radeon);
+		radeon_firevertices(&rmesa->radeon);
 		rmesa->radeon.state.scissor.enabled = state;
 		radeonUpdateScissor( ctx );
 		break;
