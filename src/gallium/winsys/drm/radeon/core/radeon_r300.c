@@ -53,8 +53,7 @@ static boolean radeon_validate(struct radeon_winsys* winsys)
 static boolean radeon_check_cs(struct radeon_winsys* winsys, int size)
 {
     /* XXX check size here, lazy ass! */
-    /* XXX also validate buffers */
-    return TRUE;
+    return radeon_validate(winsys);
 }
 
 static void radeon_begin_cs(struct radeon_winsys* winsys,
@@ -123,16 +122,11 @@ static void radeon_flush_cs(struct radeon_winsys* winsys)
 void
 radeon_setup_winsys(int fd, struct radeon_winsys* winsys)
 {
-    /* XXX is this check needed now? */
-    if (winsys == NULL) {
-        return;
-    }
-
     struct radeon_winsys_priv* priv = winsys->priv;
 
     priv->csm = radeon_cs_manager_gem_ctor(fd);
 
-    /* XXX there *is* a definite size limit, can't remember it right now */
+    /* Size limit on IBs is 64 kibibytes. */
     priv->cs = radeon_cs_create(priv->csm, 1024 * 64 / 4);
     radeon_cs_set_limit(priv->cs,
             RADEON_GEM_DOMAIN_GTT, winsys->gart_size);
