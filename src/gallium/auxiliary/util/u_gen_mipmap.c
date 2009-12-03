@@ -41,6 +41,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_draw_quad.h"
 #include "util/u_gen_mipmap.h"
@@ -996,7 +997,7 @@ reduce_2d(enum pipe_format pformat,
 {
    enum dtype datatype;
    uint comps;
-   const int bpt = pf_get_size(pformat);
+   const int bpt = util_format_get_size(pformat);
    const ubyte *srcA, *srcB;
    ubyte *dst;
    int row;
@@ -1035,7 +1036,7 @@ reduce_3d(enum pipe_format pformat,
           int dstWidth, int dstHeight, int dstDepth,
           int dstRowStride, ubyte *dstPtr)
 {
-   const int bpt = pf_get_size(pformat);
+   const int bpt = util_format_get_size(pformat);
    const int border = 0;
    int img, row;
    int bytesPerSrcImage, bytesPerDstImage;

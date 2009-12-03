@@ -284,10 +284,10 @@ gdi_softpipe_present(struct pipe_screen *screen,
 
     memset(&bmi, 0, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = texture->stride[surface->level] / pf_get_size(surface->format);
+    bmi.bmiHeader.biWidth = texture->stride[surface->level] / util_format_get_size(surface->format);
     bmi.bmiHeader.biHeight= -(long)surface->height;
     bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = pf_get_bits(surface->format);
+    bmi.bmiHeader.biBitCount = util_format_get_bits(surface->format);
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biSizeImage = 0;
     bmi.bmiHeader.biXPelsPerMeter = 0;

@@ -183,6 +183,35 @@ util_format_get_block(enum pipe_format format,
    block->height = desc->block.height;
 }
 
+/**
+ * Return total bits needed for the pixel format.
+ */
+static INLINE uint
+util_format_get_bits(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return 0;
+   }
+
+   return desc->block.bits / (desc->block.width * desc->block.height);
+}
+
+/**
+ * Return bytes per pixel for the given format.
+ */
+static INLINE uint
+util_format_get_size(enum pipe_format format)
+{
+   uint bits = util_format_get_bits(format);
+
+   assert(bits % 8 == 0);
+
+   return bits / 8;
+}
+
 
 /*
  * Format access functions.

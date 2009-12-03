@@ -35,6 +35,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/internal/p_winsys_screen.h"
+
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -408,7 +410,7 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
 
    if (transfer->usage & PIPE_TRANSFER_READ) {
       /* need to untwiddle the texture to make a linear version */
-      const uint bpp = pf_get_size(ct->base.format);
+      const uint bpp = util_format_get_size(ct->base.format);
       if (bpp == 4) {
          const uint *src = (uint *) (ct->mapped + ctrans->offset);
          uint *dst = ctrans->map;
@@ -451,7 +453,7 @@ cell_transfer_unmap(struct pipe_screen *screen,
       /* The user wrote new texture data into the mapped buffer.
        * We need to convert the new linear data into the twiddled/tiled format.
        */
-      const uint bpp = pf_get_size(ct->base.format);
+      const uint bpp = util_format_get_size(ct->base.format);
       if (bpp == 4) {
          const uint *src = ctrans->map;
          uint *dst = (uint *) (ct->mapped + ctrans->offset);

@@ -22,6 +22,7 @@
 
 /* r300_emit: Functions for emitting state. */
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 #include "r300_context.h"
@@ -631,10 +632,10 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     for (i = 0; i < aos_count - 1; i += 2) {
         int buf_num1 = velem[i].vertex_buffer_index;
         int buf_num2 = velem[i+1].vertex_buffer_index;
-        assert(vbuf[buf_num1].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
-        assert(vbuf[buf_num2].stride % 4 == 0 && pf_get_size(velem[i+1].src_format) % 4 == 0);
-        OUT_CS((pf_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
-               (pf_get_size(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
+        assert(vbuf[buf_num1].stride % 4 == 0 && util_format_get_size(velem[i].src_format) % 4 == 0);
+        assert(vbuf[buf_num2].stride % 4 == 0 && util_format_get_size(velem[i+1].src_format) % 4 == 0);
+        OUT_CS((util_format_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
+               (util_format_get_size(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
         OUT_CS(vbuf[buf_num1].buffer_offset + velem[i].src_offset +
                offset * vbuf[buf_num1].stride);
         OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
@@ -642,8 +643,8 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     }
     if (aos_count & 1) {
         int buf_num = velem[i].vertex_buffer_index;
-        assert(vbuf[buf_num].stride % 4 == 0 && pf_get_size(velem[i].src_format) % 4 == 0);
-        OUT_CS((pf_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
+        assert(vbuf[buf_num].stride % 4 == 0 && util_format_get_size(velem[i].src_format) % 4 == 0);
+        OUT_CS((util_format_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
         OUT_CS(vbuf[buf_num].buffer_offset + velem[i].src_offset +
                offset * vbuf[buf_num].stride);
     }

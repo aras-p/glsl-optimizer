@@ -834,7 +834,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    /* copy/pack data into user buffer */
    if (st_equal_formats(stImage->pt->format, format, type)) {
       /* memcpy */
-      const uint bytesPerRow = width * pf_get_size(stImage->pt->format);
+      const uint bytesPerRow = width * util_format_get_size(stImage->pt->format);
       ubyte *map = screen->transfer_map(screen, tex_xfer);
       GLuint row;
       for (row = 0; row < height; row++) {

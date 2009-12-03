@@ -423,42 +423,6 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
 }
 
 /**
- * Return total bits needed for the pixel format.
- */
-static INLINE uint pf_get_bits( enum pipe_format format )
-{
-   switch (pf_layout(format)) {
-   case PIPE_FORMAT_LAYOUT_RGBAZS:
-   case PIPE_FORMAT_LAYOUT_MIXED:
-      return
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_0 ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_1 ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_R ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_G ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_B ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_A ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
-         pf_get_component_bits( format, PIPE_FORMAT_COMP_S );
-   case PIPE_FORMAT_LAYOUT_YCBCR:
-      assert( format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV );
-      /* return effective bits per pixel */
-      return 16; 
-   default:
-      assert( 0 );
-      return 0;
-   }
-}
-
-/**
- * Return bytes per pixel for the given format.
- */
-static INLINE uint pf_get_size( enum pipe_format format )
-{
-   assert(pf_get_bits(format) % 8 == 0);
-   return pf_get_bits(format) / 8;
-}
-
-/**
  * Describe accurately the pixel format.
  * 
  * The chars-per-pixel concept falls apart with compressed and yuv images, where
