@@ -369,6 +369,12 @@ radeon_framebuffer_renderbuffer(GLcontext * ctx,
 }
 
 
+/* TODO: According to EXT_fbo spec internal format of texture image
+ * once set during glTexImage call, should be preserved when
+ * attaching image to renderbuffer. When HW doesn't support
+ * rendering to format of attached image, set framebuffer
+ * completeness accordingly in radeon_validate_framebuffer (issue #79).
+ */
 static GLboolean
 radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb, 
 		     struct gl_texture_image *texImage)
