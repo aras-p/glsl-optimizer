@@ -4467,7 +4467,7 @@ GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode)
     }
 
     pAsm->D.dst.opcode = opcode;
-    pAsm->D.dst.math   = 1;
+    //pAsm->D.dst.math   = 1;
 
     if( GL_FALSE == assemble_dst(pAsm) )
     {
