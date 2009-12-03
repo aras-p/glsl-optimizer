@@ -112,11 +112,6 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
    return (f >> shift) & mask;
 }
 
-#define pf_swizzle_x(f)       pf_get(f, 2, 0x7)  /**< PIPE_FORMAT_COMP_ */
-#define pf_swizzle_y(f)       pf_get(f, 5, 0x7)  /**< PIPE_FORMAT_COMP_ */
-#define pf_swizzle_z(f)       pf_get(f, 8, 0x7)  /**< PIPE_FORMAT_COMP_ */
-#define pf_swizzle_w(f)       pf_get(f, 11, 0x7) /**< PIPE_FORMAT_COMP_ */
-#define pf_swizzle_xyzw(f,i)  pf_get(f, 2+((i)*3), 0x7)
 #define pf_size_x(f)          pf_get(f, 14, 0x7) /**< Size of X */
 #define pf_size_y(f)          pf_get(f, 17, 0x7) /**< Size of Y */
 #define pf_size_z(f)          pf_get(f, 20, 0x7) /**< Size of Z */

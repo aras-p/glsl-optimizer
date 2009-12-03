@@ -24,6 +24,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
+
 #include "nv50_context.h"
 
 static boolean
@@ -131,7 +133,7 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 		return 0x24e80000;
 	}
 
-	if (pf_swizzle_x(pf) == 2) /* BGRA */
+	if (util_format_description(pf)->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z) /* BGRA */
 		hw_size |= (1 << 31); /* no real swizzle bits :-( */
 
 	return (hw_type | hw_size);

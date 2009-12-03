@@ -28,6 +28,8 @@
 
 #include "pipe/p_format.h"
 
+#include "util/u_format.h"
+
 #include "r300_reg.h"
 
 /* Some maths. These should probably find their way to u_math, if needed. */
@@ -534,6 +536,9 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 
 static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
+    const struct util_format_description *desc = util_format_description(format);
+
+    assert(format);
 
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
         debug_printf("r300: Bad format %s in %s:%d\n",
@@ -541,10 +546,10 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
         return 0;
     }
 
-    return ((pf_swizzle_x(format) << R300_SWIZZLE_SELECT_X_SHIFT) |
-        (pf_swizzle_y(format) << R300_SWIZZLE_SELECT_Y_SHIFT) |
-        (pf_swizzle_z(format) << R300_SWIZZLE_SELECT_Z_SHIFT) |
-        (pf_swizzle_w(format) << R300_SWIZZLE_SELECT_W_SHIFT) |
+    return ((desc->swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
+        (desc->swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
+        (desc->swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
+        (desc->swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
         (0xf << R300_WRITE_ENA_SHIFT));
 }
 

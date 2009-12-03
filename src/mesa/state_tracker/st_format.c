@@ -81,7 +81,10 @@ GLboolean
 st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 {
    if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
+      const struct util_format_description *desc = util_format_description(format);
       pipe_format_rgbazs_t info;
+
+      assert(desc);
 
       info = format;
 
@@ -133,10 +136,10 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       pinfo->size = format_size( info ) / 8;
 
       /* Luminance & Intensity bits */
-      if( pf_swizzle_x(info) == PIPE_FORMAT_COMP_R &&
-          pf_swizzle_y(info) == PIPE_FORMAT_COMP_R &&
-          pf_swizzle_z(info) == PIPE_FORMAT_COMP_R ) {
-         if( pf_swizzle_w(info) == PIPE_FORMAT_COMP_R ) {
+      if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_X &&
+          desc->swizzle[1] == UTIL_FORMAT_SWIZZLE_X &&
+          desc->swizzle[2] == UTIL_FORMAT_SWIZZLE_X) {
+         if (desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_X) {
             pinfo->intensity_bits = pinfo->red_bits;
          }
          else {
