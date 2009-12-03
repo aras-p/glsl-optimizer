@@ -235,6 +235,8 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
 void lp_rast_set_state( struct lp_rasterizer *rast,
                         const union lp_rast_cmd_arg arg )
 {
+   const struct lp_rast_state *state = arg.set_state;
+
    RAST_DEBUG("%s\n", __FUNCTION__);
 
    /* XXX to do */

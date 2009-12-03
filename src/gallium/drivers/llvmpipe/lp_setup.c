@@ -594,14 +594,24 @@ lp_setup_update_shader_state( struct setup_context *setup )
          memcmp(setup->fs.stored,
                 &setup->fs.current,
                 sizeof setup->fs.current) != 0) {
-         struct lp_rast_state *stored;
-
-         stored = get_data(&setup->data, sizeof *stored);
+         /* The fs state that's been stored in the bins is different from
+          * the new, current state.  So allocate a new lp_rast_state object
+          * and append it to the bin's setup data buffer.
+          */
+         struct lp_rast_state *stored =
+            (struct lp_rast_state *) get_data(&setup->data, sizeof *stored);
          if(stored) {
             memcpy(stored,
                    &setup->fs.current,
                    sizeof setup->fs.current);
             setup->fs.stored = stored;
+
+#if 0
+            /* put the state-set command into all bins */
+            bin_everywhere( setup, 
+                            lp_rast_set_state, 
+                            *setup->fs.stored );
+#endif
          }
       }
    }
