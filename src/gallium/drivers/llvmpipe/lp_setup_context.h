@@ -103,8 +103,8 @@ struct setup_context {
 
    struct {
       unsigned flags;
-      union lp_rast_cmd_arg color;
-      union lp_rast_cmd_arg zstencil;
+      union lp_rast_cmd_arg color;    /**< lp_rast_clear_color() cmd */
+      union lp_rast_cmd_arg zstencil; /**< lp_rast_clear_zstencil() cmd */
    } clear;
 
    enum {
@@ -117,8 +117,8 @@ struct setup_context {
       struct lp_shader_input input[PIPE_MAX_ATTRIBS];
       unsigned nr_inputs;
 
-      const struct lp_rast_state *stored;
-      struct lp_rast_state current;
+      const struct lp_rast_state *stored; /**< what's in the bins */
+      struct lp_rast_state current;  /**< currently set state */
    } fs;
 
    struct {
