@@ -39,6 +39,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_inlines.h"
 #include "util/u_blit.h"
+#include "util/u_format.h"
 #include "util/u_tile.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
@@ -270,7 +271,7 @@ struct vg_image * image_create(VGImageFormat format,
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;
    pt.format = pformat;
-   pf_get_block(pformat, &pt.block);
+   util_format_get_block(pformat, &pt.block);
    pt.last_level = 0;
    pt.width0 = width;
    pt.height0 = height;

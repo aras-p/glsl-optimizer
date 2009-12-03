@@ -44,6 +44,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
@@ -331,7 +332,7 @@ xm_displaytarget_create(struct llvmpipe_winsys *winsys,
    xm_dt->width = width;
    xm_dt->height = height;
 
-   pf_get_block(format, &xm_dt->block);
+   util_format_get_block(format, &xm_dt->block);
    nblocksx = pf_get_nblocksx(&xm_dt->block, width);
    nblocksy = pf_get_nblocksy(&xm_dt->block, height);
    xm_dt->stride = align(nblocksx * xm_dt->block.size, alignment);

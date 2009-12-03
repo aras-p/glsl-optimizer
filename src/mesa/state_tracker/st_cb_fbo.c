@@ -105,7 +105,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       _mesa_free(strb->data);
 
       assert(strb->format != PIPE_FORMAT_NONE);
-      pf_get_block(strb->format, &block);
+      util_format_get_block(strb->format, &block);
       
       strb->stride = pf_get_stride(&block, width);
       size = pf_get_2d_size(&block, strb->stride, height);
@@ -128,7 +128,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       memset(&template, 0, sizeof(template));
       template.target = PIPE_TEXTURE_2D;
       template.format = format;
-      pf_get_block(format, &template.block);
+      util_format_get_block(format, &template.block);
       template.width0 = width;
       template.height0 = height;
       template.depth0 = 1;

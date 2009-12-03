@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 #include "nouveau_drm_api.h"
@@ -28,7 +29,7 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	tmpl.format = format;
 	tmpl.width0 = width;
 	tmpl.height0 = height;
-	pf_get_block(tmpl.format, &tmpl.block);
+	util_format_get_block(tmpl.format, &tmpl.block);
 
 	pt = api->texture_from_shared_handle(api, pscreen, &tmpl,
 					     "front buffer", pitch, handle);

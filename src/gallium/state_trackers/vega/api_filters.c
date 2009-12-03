@@ -38,6 +38,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 
@@ -71,7 +72,7 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
    templ.width0 = color_data_len;
    templ.height0 = 1;
    templ.depth0 = 1;
-   pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
+   util_format_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    tex = screen->texture_create(screen, &templ);

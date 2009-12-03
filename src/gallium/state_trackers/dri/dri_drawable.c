@@ -44,6 +44,7 @@
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
  
@@ -66,7 +67,7 @@ dri_surface_from_handle(struct drm_api *api,
    templat.format = format;
    templat.width0 = width;
    templat.height0 = height;
-   pf_get_block(templat.format, &templat.block);
+   util_format_get_block(templat.format, &templat.block);
 
    texture = api->texture_from_shared_handle(api, screen, &templat,
                                              "dri2 buffer", pitch, handle);

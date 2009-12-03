@@ -35,6 +35,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
+
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -402,7 +404,7 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.width0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.height0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.depth0 = 1;
-   pf_get_block(texTemp.format, &texTemp.block);
+   util_format_get_block(texTemp.format, &texTemp.block);
 
    aaline->texture = screen->texture_create(screen, &texTemp);
    if (!aaline->texture)

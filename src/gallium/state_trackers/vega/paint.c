@@ -34,6 +34,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
@@ -154,7 +155,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
    templ.width0 = 1024;
    templ.height0 = 1;
    templ.depth0 = 1;
-   pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
+   util_format_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    tex = screen->texture_create(screen, &templ);

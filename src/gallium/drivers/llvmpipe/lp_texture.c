@@ -34,6 +34,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/internal/p_winsys_screen.h"
+
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -63,7 +65,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
    unsigned buffer_size = 0;
 
-   pf_get_block(lpt->base.format, &lpt->base.block);
+   util_format_get_block(lpt->base.format, &lpt->base.block);
 
    for (level = 0; level <= pt->last_level; level++) {
       unsigned nblocksx, nblocksy;
@@ -100,7 +102,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
 {
    struct llvmpipe_winsys *winsys = screen->winsys;
 
-   pf_get_block(lpt->base.format, &lpt->base.block);
+   util_format_get_block(lpt->base.format, &lpt->base.block);
    lpt->base.nblocksx[0] = pf_get_nblocksx(&lpt->base.block, lpt->base.width0);  
    lpt->base.nblocksy[0] = pf_get_nblocksy(&lpt->base.block, lpt->base.height0);  
 

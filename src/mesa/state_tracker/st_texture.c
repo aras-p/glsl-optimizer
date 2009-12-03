@@ -43,6 +43,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
 
@@ -104,7 +105,7 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
-   pf_get_block(format, &pt.block);
+   util_format_get_block(format, &pt.block);
    pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);

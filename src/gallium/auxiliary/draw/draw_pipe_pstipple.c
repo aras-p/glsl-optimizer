@@ -38,6 +38,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -431,7 +432,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width0 = 32;
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
-   pf_get_block(texTemp.format, &texTemp.block);
+   util_format_get_block(texTemp.format, &texTemp.block);
 
    pstip->texture = screen->texture_create(screen, &texTemp);
    if (pstip->texture == NULL)

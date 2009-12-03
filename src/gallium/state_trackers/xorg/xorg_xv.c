@@ -13,6 +13,8 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
+
 /*XXX get these from pipe's texture limits */
 #define IMAGE_MAX_WIDTH		2048
 #define IMAGE_MAX_HEIGHT	2048
@@ -170,7 +172,7 @@ create_component_texture(struct pipe_context *pipe,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
-   pf_get_block(PIPE_FORMAT_L8_UNORM, &templ.block);
+   util_format_get_block(PIPE_FORMAT_L8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    tex = screen->texture_create(screen, &templ);

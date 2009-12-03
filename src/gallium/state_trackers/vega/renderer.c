@@ -35,6 +35,7 @@
 #include "pipe/p_shader_tokens.h"
 
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
@@ -448,7 +449,7 @@ void renderer_copy_surface(struct renderer *ctx,
    texTemp.width0 = srcW;
    texTemp.height0 = srcH;
    texTemp.depth0 = 1;
-   pf_get_block(src->format, &texTemp.block);
+   util_format_get_block(src->format, &texTemp.block);
 
    tex = screen->texture_create(screen, &texTemp);
    if (!tex)

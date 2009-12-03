@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <pipe/p_context.h>
 #include <pipe/p_inlines.h>
+#include <util/u_format.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>
 #include <tgsi/tgsi_parse.h>
@@ -834,7 +835,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    template.height0 = r->pot_buffers ?
       util_next_power_of_two(r->picture_height) : r->picture_height;
    template.depth0 = 1;
-   pf_get_block(template.format, &template.block);
+   util_format_get_block(template.format, &template.block);
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 
    r->textures.individual.y = r->pipe->screen->texture_create(r->pipe->screen, &template);

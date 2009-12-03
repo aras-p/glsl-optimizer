@@ -50,7 +50,7 @@ struct util_format_block
    /** Block height in pixels */
    unsigned height;
 
-   /** Block size in bytes */
+   /** Block size in bits */
    unsigned bits;
 };
 
@@ -157,6 +157,30 @@ util_format_is_depth_and_stencil(enum pipe_format format)
 
    return (desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE &&
            desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
+}
+
+/**
+ * Describe pixel format's block.   
+ * 
+ * @sa http://msdn2.microsoft.com/en-us/library/ms796147.aspx
+ */
+static INLINE void 
+util_format_get_block(enum pipe_format format,
+                      struct pipe_format_block *block)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      block->size = 0;
+      block->width = 1;
+      block->height = 1;
+      return;
+   }
+
+   block->size = desc->block.bits / 8;
+   block->width = desc->block.width;
+   block->height = desc->block.height;
 }
 
 

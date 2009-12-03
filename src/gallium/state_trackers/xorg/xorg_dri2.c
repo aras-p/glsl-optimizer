@@ -109,7 +109,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    else
 		template.format = ms->ds_depth_bits_last ?
 		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
-	    pf_get_block(template.format, &template.block);
+	    util_format_get_block(template.format, &template.block);
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;

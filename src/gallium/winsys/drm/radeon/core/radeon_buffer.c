@@ -36,6 +36,8 @@
 #include "softpipe/sp_texture.h"
 #include "r300_context.h"
 #include <X11/Xutil.h>
+#include "util/u_format.h"
+
 struct radeon_vl_context
 {
     Display *display;
@@ -116,7 +118,7 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
     struct pipe_format_block block;
     unsigned nblocksx, nblocksy, size;
 
-    pf_get_block(format, &block);
+    util_format_get_block(format, &block);
 
     nblocksx = pf_get_nblocksx(&block, width);
     nblocksy = pf_get_nblocksy(&block, height);
@@ -321,7 +323,7 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
     tmpl.height0 = h;
     tmpl.depth0 = 1;
     tmpl.format = format;
-    pf_get_block(tmpl.format, &tmpl.block);
+    util_format_get_block(tmpl.format, &tmpl.block);
     tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
     tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
 

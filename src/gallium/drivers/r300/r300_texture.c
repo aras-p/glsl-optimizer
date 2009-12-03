@@ -22,6 +22,7 @@
 
 #include "pipe/p_screen.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -283,7 +284,7 @@ r300_video_surface_create(struct pipe_screen *screen,
     template.width0 = util_next_power_of_two(width);
     template.height0 = util_next_power_of_two(height);
     template.depth0 = 1;
-    pf_get_block(template.format, &template.block);
+    util_format_get_block(template.format, &template.block);
     template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER |
                          PIPE_TEXTURE_USAGE_RENDER_TARGET;
 

@@ -43,6 +43,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_debug.h"
@@ -899,7 +900,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
-	pf_get_block(template.format, &template.block);
+	util_format_get_block(template.format, &template.block);
         if (ROUND_UP_TEXTURES && priv->flags == 0) {
            template.width0 = util_next_power_of_two(width);
            template.height0 = util_next_power_of_two(height);
@@ -985,7 +986,7 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     memset(&template, 0, sizeof(template));
     template.target = PIPE_TEXTURE_2D;
     exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &dummy);
-    pf_get_block(template.format, &template.block);
+    util_format_get_block(template.format, &template.block);
     template.width0 = width;
     template.height0 = height;
     template.depth0 = 1;

@@ -479,45 +479,6 @@ struct pipe_format_block
    unsigned height;
 };
 
-/**
- * Describe pixel format's block.   
- * 
- * @sa http://msdn2.microsoft.com/en-us/library/ms796147.aspx
- */
-static INLINE void 
-pf_get_block(enum pipe_format format, struct pipe_format_block *block)
-{
-   switch(format) {
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_SRGBA:
-   case PIPE_FORMAT_DXT1_SRGB:
-      block->size = 8;
-      block->width = 4;
-      block->height = 4;
-      break;
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-   case PIPE_FORMAT_DXT3_SRGBA:
-   case PIPE_FORMAT_DXT5_SRGBA:
-      block->size = 16;
-      block->width = 4;
-      block->height = 4;
-      break;
-   case PIPE_FORMAT_YCBCR:
-   case PIPE_FORMAT_YCBCR_REV:
-      block->size = 4; /* 2*cpp */
-      block->width = 2;
-      block->height = 1;
-      break;
-   default:
-      block->size = pf_get_size(format);
-      block->width = 1;
-      block->height = 1;
-      break;
-   }
-}
-
 static INLINE unsigned
 pf_get_nblocksx(const struct pipe_format_block *block, unsigned x)
 {

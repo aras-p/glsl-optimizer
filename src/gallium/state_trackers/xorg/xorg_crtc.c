@@ -50,6 +50,7 @@
 #endif
 
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 #ifdef HAVE_LIBKMS
@@ -200,7 +201,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	templat.width0 = 64;
 	templat.height0 = 64;
-	pf_get_block(templat.format, &templat.block);
+	util_format_get_block(templat.format, &templat.block);
 
 	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
 						       &templat);

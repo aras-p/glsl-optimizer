@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
+#include "util/u_format.h"
 #include "util/u_surface.h"
 
 
@@ -82,7 +83,7 @@ util_create_rgba_surface(struct pipe_screen *screen,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
-   pf_get_block(format, &templ.block);
+   util_format_get_block(format, &templ.block);
    templ.tex_usage = usage;
 
    *textureOut = screen->texture_create(screen, &templ);

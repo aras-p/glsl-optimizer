@@ -36,6 +36,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 struct vg_mask_layer {
@@ -491,7 +492,7 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       memset(&pt, 0, sizeof(pt));
       pt.target = PIPE_TEXTURE_2D;
       pt.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &pt.block);
+      util_format_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &pt.block);
       pt.last_level = 0;
       pt.width0 = width;
       pt.height0 = height;

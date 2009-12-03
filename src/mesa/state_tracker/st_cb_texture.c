@@ -406,7 +406,7 @@ compress_with_blit(GLcontext * ctx,
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
    templ.format = st_mesa_format_to_pipe_format(mesa_format);
-   pf_get_block(templ.format, &templ.block);
+   util_format_get_block(templ.format, &templ.block);
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
