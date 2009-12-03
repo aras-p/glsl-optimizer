@@ -41,6 +41,10 @@
 #include "lp_bld_logic.h"
 
 
+/**
+ * Build code to compare two values 'a' and 'b' using the given func.
+ * \parm func  one of PIPE_FUNC_x
+ */
 LLVMValueRef
 lp_build_cmp(struct lp_build_context *bld,
              unsigned func,
@@ -56,6 +60,9 @@ lp_build_cmp(struct lp_build_context *bld,
    LLVMValueRef res;
    unsigned i;
 
+   assert(func >= PIPE_FUNC_NEVER);
+   assert(func <= PIPE_FUNC_ALWAYS);
+
    if(func == PIPE_FUNC_NEVER)
       return zeros;
    if(func == PIPE_FUNC_ALWAYS)
@@ -68,6 +75,7 @@ lp_build_cmp(struct lp_build_context *bld,
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating && util_cpu_caps.has_sse) {
+         /* float[4] comparison */
          LLVMValueRef args[3];
          unsigned cc;
          boolean swap;
@@ -117,6 +125,7 @@ lp_build_cmp(struct lp_build_context *bld,
          return res;
       }
       else if(util_cpu_caps.has_sse2) {
+         /* int[4] comparison */
          static const struct {
             unsigned swap:1;
             unsigned eq:1;
