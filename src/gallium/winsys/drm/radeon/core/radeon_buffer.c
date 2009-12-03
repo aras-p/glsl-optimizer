@@ -113,17 +113,13 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
                                                         unsigned tex_usage,
                                                         unsigned *stride)
 {
-    struct pipe_format_block block;
-    unsigned nblocksx, nblocksy, size;
-
-    pf_get_block(format, &block);
-
-    nblocksx = pf_get_nblocksx(&block, width);
-    nblocksy = pf_get_nblocksy(&block, height);
-
     /* Radeons enjoy things in multiples of 32. */
     /* XXX this can be 32 when POT */
-    *stride = (nblocksx * block.size + 63) & ~63;
+    const unsigned alignment = 64;
+    unsigned nblocksy, size;
+
+    nblocksy = pf_get_nblocksy(format, height);
+    *stride = align(pf_get_stride(format, width), alignment);
     size = *stride * nblocksy;
 
     return radeon_buffer_create(ws, 64, usage, size);
@@ -321,9 +317,6 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
     tmpl.height0 = h;
     tmpl.depth0 = 1;
     tmpl.format = format;
-    pf_get_block(tmpl.format, &tmpl.block);
-    tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
-    tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {

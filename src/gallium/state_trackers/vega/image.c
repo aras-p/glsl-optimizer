@@ -270,7 +270,6 @@ struct vg_image * image_create(VGImageFormat format,
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;
    pt.format = pformat;
-   pf_get_block(pformat, &pt.block);
    pt.last_level = 0;
    pt.width0 = width;
    pt.height0 = height;

@@ -202,7 +202,7 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
                  x, y, w, h, dst_pitch);
 #endif
 
-    util_copy_rect((unsigned char*)dst, &priv->tex->block, dst_pitch, 0, 0,
+    util_copy_rect((unsigned char*)dst, priv->tex->format, dst_pitch, 0, 0,
 		   w, h, exa->scrn->transfer_map(exa->scrn, transfer),
 		   transfer->stride, 0, 0);
 
@@ -242,7 +242,7 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
 #endif
 
     util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
-		   &priv->tex->block, transfer->stride, 0, 0, w, h,
+		   priv->tex->format, transfer->stride, 0, 0, w, h,
 		   (unsigned char*)src, src_pitch, 0, 0);
 
     exa->scrn->transfer_unmap(exa->scrn, transfer);
@@ -899,7 +899,6 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &priv->picture_format);
-	pf_get_block(template.format, &template.block);
         if (ROUND_UP_TEXTURES && priv->flags == 0) {
            template.width0 = util_next_power_of_two(width);
            template.height0 = util_next_power_of_two(height);
@@ -985,7 +984,6 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     memset(&template, 0, sizeof(template));
     template.target = PIPE_TEXTURE_2D;
     exa_get_pipe_format(depth, &template.format, &bitsPerPixel, &dummy);
-    pf_get_block(template.format, &template.block);
     template.width0 = width;
     template.height0 = height;
     template.depth0 = 1;

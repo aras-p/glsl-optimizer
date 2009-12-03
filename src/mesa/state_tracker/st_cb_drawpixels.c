@@ -701,7 +701,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             }
 
             /* now pack the stencil (and Z) values in the dest format */
-            switch (pt->format) {
+            switch (pt->texture->format) {
             case PIPE_FORMAT_S8_UNORM:
                {
                   ubyte *dest = stmap + spanY * pt->stride + spanX;
@@ -856,8 +856,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					   usage, dstx, dsty,
 					   width, height);
 
-   assert(ptDraw->block.width == 1);
-   assert(ptDraw->block.height == 1);
+   assert(pf_get_blockwidth(ptDraw->texture->format) == 1);
+   assert(pf_get_blockheight(ptDraw->texture->format) == 1);
 
    /* map the stencil buffer */
    drawMap = screen->transfer_map(screen, ptDraw);
@@ -878,7 +878,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       dst = drawMap + y * ptDraw->stride;
       src = buffer + i * width;
 
-      switch (ptDraw->format) {
+      switch (ptDraw->texture->format) {
       case PIPE_FORMAT_S8Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;

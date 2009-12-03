@@ -66,7 +66,6 @@ dri_surface_from_handle(struct drm_api *api,
    templat.format = format;
    templat.width0 = width;
    templat.height0 = height;
-   pf_get_block(templat.format, &templat.block);
 
    texture = api->texture_from_shared_handle(api, screen, &templat,
                                              "dri2 buffer", pitch, handle);

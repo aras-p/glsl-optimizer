@@ -422,10 +422,11 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
    return size << (pf_mixed_scale8( format ) * 3);
 }
 
+
 /**
- * Return total bits needed for the pixel format.
+ * Return total bits needed for the pixel format per block.
  */
-static INLINE uint pf_get_bits( enum pipe_format format )
+static INLINE uint pf_get_blocksizebits( enum pipe_format format )
 {
    switch (pf_layout(format)) {
    case PIPE_FORMAT_LAYOUT_RGBAZS:
@@ -441,8 +442,24 @@ static INLINE uint pf_get_bits( enum pipe_format format )
          pf_get_component_bits( format, PIPE_FORMAT_COMP_S );
    case PIPE_FORMAT_LAYOUT_YCBCR:
       assert( format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV );
-      /* return effective bits per pixel */
-      return 16; 
+      return 32;
+   case PIPE_FORMAT_LAYOUT_DXT:
+        switch(format) {
+        case PIPE_FORMAT_DXT1_RGBA:
+        case PIPE_FORMAT_DXT1_RGB:
+        case PIPE_FORMAT_DXT1_SRGBA:
+        case PIPE_FORMAT_DXT1_SRGB:
+           return 64;
+        case PIPE_FORMAT_DXT3_RGBA:
+        case PIPE_FORMAT_DXT5_RGBA:
+        case PIPE_FORMAT_DXT3_SRGBA:
+        case PIPE_FORMAT_DXT5_SRGBA:
+           return 128;
+        default:
+           assert( 0 );
+           return 0;
+        }
+
    default:
       assert( 0 );
       return 0;
@@ -450,102 +467,66 @@ static INLINE uint pf_get_bits( enum pipe_format format )
 }
 
 /**
- * Return bytes per pixel for the given format.
+ * Return bytes per element for the given format.
  */
-static INLINE uint pf_get_size( enum pipe_format format )
+static INLINE uint pf_get_blocksize( enum pipe_format format )
 {
-   assert(pf_get_bits(format) % 8 == 0);
-   return pf_get_bits(format) / 8;
+   assert(pf_get_blocksizebits(format) % 8 == 0);
+   return pf_get_blocksizebits(format) / 8;
 }
 
-/**
- * Describe accurately the pixel format.
- * 
- * The chars-per-pixel concept falls apart with compressed and yuv images, where
- * more than one pixel are coded in a single data block. This structure 
- * describes that block.
- * 
- * Simple pixel formats are effectively a 1x1xcpp block.
- */
-struct pipe_format_block
+static INLINE uint pf_get_blockwidth( enum pipe_format format )
 {
-   /** Block size in bytes */
-   unsigned size;
-   
-   /** Block width in pixels */
-   unsigned width;
-   
-   /** Block height in pixels */
-   unsigned height;
-};
-
-/**
- * Describe pixel format's block.   
- * 
- * @sa http://msdn2.microsoft.com/en-us/library/ms796147.aspx
- */
-static INLINE void 
-pf_get_block(enum pipe_format format, struct pipe_format_block *block)
-{
-   switch(format) {
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_SRGBA:
-   case PIPE_FORMAT_DXT1_SRGB:
-      block->size = 8;
-      block->width = 4;
-      block->height = 4;
-      break;
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-   case PIPE_FORMAT_DXT3_SRGBA:
-   case PIPE_FORMAT_DXT5_SRGBA:
-      block->size = 16;
-      block->width = 4;
-      block->height = 4;
-      break;
-   case PIPE_FORMAT_YCBCR:
-   case PIPE_FORMAT_YCBCR_REV:
-      block->size = 4; /* 2*cpp */
-      block->width = 2;
-      block->height = 1;
-      break;
+   switch (pf_layout(format)) {
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      return 2;
+   case PIPE_FORMAT_LAYOUT_DXT:
+      return 4;
    default:
-      block->size = pf_get_size(format);
-      block->width = 1;
-      block->height = 1;
-      break;
+      return 1;
+   }
+}
+
+static INLINE uint pf_get_blockheight( enum pipe_format format )
+{
+   switch (pf_layout(format)) {
+   case PIPE_FORMAT_LAYOUT_DXT:
+      return 4;
+   default:
+      return 1;
    }
 }
 
 static INLINE unsigned
-pf_get_nblocksx(const struct pipe_format_block *block, unsigned x)
+pf_get_nblocksx(enum pipe_format format, unsigned x)
 {
-   return (x + block->width - 1)/block->width;
+   unsigned blockwidth = pf_get_blockwidth(format);
+   return (x + blockwidth - 1) / blockwidth;
 }
 
 static INLINE unsigned
-pf_get_nblocksy(const struct pipe_format_block *block, unsigned y)
+pf_get_nblocksy(enum pipe_format format, unsigned y)
 {
-   return (y + block->height - 1)/block->height;
+   unsigned blockheight = pf_get_blockheight(format);
+   return (y + blockheight - 1) / blockheight;
 }
 
 static INLINE unsigned
-pf_get_nblocks(const struct pipe_format_block *block, unsigned width, unsigned height)
+pf_get_nblocks(enum pipe_format format, unsigned width, unsigned height)
 {
-   return pf_get_nblocksx(block, width)*pf_get_nblocksy(block, height);
+   return pf_get_nblocksx(format, width) * pf_get_nblocksy(format, height);
 }
 
 static INLINE size_t
-pf_get_stride(const struct pipe_format_block *block, unsigned width)
+pf_get_stride(enum pipe_format format, unsigned width)
 {
-   return pf_get_nblocksx(block, width)*block->size;
+   return pf_get_nblocksx(format, width) * pf_get_blocksize(format);
 }
 
 static INLINE size_t
-pf_get_2d_size(const struct pipe_format_block *block, size_t stride, unsigned height)
+pf_get_2d_size(enum pipe_format format, size_t stride, unsigned height)
 {
-   return pf_get_nblocksy(block, height)*stride;
+   return pf_get_nblocksy(format, height) * stride;
 }
 
 static INLINE boolean 

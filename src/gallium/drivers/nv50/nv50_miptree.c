@@ -91,13 +91,11 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		struct nv50_miptree_level *lvl = &mt->level[l];
-
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
+		unsigned nblocksy = pf_get_nblocksy(pt->format, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-		lvl->pitch = align(pt->nblocksx[l] * pt->block.size, 64);
-		lvl->tile_mode = get_tile_mode(pt->nblocksy[l], depth);
+		lvl->pitch = align(pf_get_stride(pt->format, width), 64);
+		lvl->tile_mode = get_tile_mode(nblocksy, depth);
 
 		width = u_minify(width, 1);
 		height = u_minify(height, 1);
@@ -118,7 +116,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 			unsigned tile_d = get_tile_depth(lvl->tile_mode);
 
 			size  = lvl->pitch;
-			size *= align(pt->nblocksy[l], tile_h);
+			size *= align(pf_get_nblocksy(pt->format, u_minify(pt->height0, l)), tile_h);
 			size *= align(u_minify(pt->depth0, l), tile_d);
 
 			lvl->image_offset[i] = mt->total_size;

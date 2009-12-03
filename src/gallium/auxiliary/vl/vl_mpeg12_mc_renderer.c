@@ -834,7 +834,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    template.height0 = r->pot_buffers ?
       util_next_power_of_two(r->picture_height) : r->picture_height;
    template.depth0 = 1;
-   pf_get_block(template.format, &template.block);
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 
    r->textures.individual.y = r->pipe->screen->texture_create(r->pipe->screen, &template);
@@ -1444,7 +1443,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    assert(r);
    assert(blocks);
 
-   tex_pitch = r->tex_transfer[0]->stride / r->tex_transfer[0]->block.size;
+   tex_pitch = r->tex_transfer[0]->stride / pf_get_blocksize(r->tex_transfer[0]->texture->format);
    texels = r->texels[0] + mbpy * tex_pitch + mbpx;
 
    for (y = 0; y < 2; ++y) {
@@ -1483,7 +1482,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    mbpy /= 2;
 
    for (tb = 0; tb < 2; ++tb) {
-      tex_pitch = r->tex_transfer[tb + 1]->stride / r->tex_transfer[tb + 1]->block.size;
+      tex_pitch = r->tex_transfer[tb + 1]->stride / pf_get_blocksize(r->tex_transfer[tb + 1]->texture->format);
       texels = r->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
       if ((cbp >> (1 - tb)) & 1) {

@@ -402,7 +402,6 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.width0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.height0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.depth0 = 1;
-   pf_get_block(texTemp.format, &texTemp.block);
 
    aaline->texture = screen->texture_create(screen, &texTemp);
    if (!aaline->texture)

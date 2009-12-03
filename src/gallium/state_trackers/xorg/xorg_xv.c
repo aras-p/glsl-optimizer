@@ -170,7 +170,6 @@ create_component_texture(struct pipe_context *pipe,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
-   pf_get_block(PIPE_FORMAT_L8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    tex = screen->texture_create(screen, &templ);

@@ -52,7 +52,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
+      dst_stride = pf_get_stride(pt->texture->format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -62,7 +62,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    if(!src)
       return;
 
-   util_copy_rect(dst, &pt->block, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
+   util_copy_rect(dst, pt->texture->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
    screen->transfer_unmap(screen, pt);
 }
@@ -78,9 +78,10 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
 {
    struct pipe_screen *screen = pt->texture->screen;
    void *dst;
+   enum pipe_format format = pt->texture->format;
 
    if (src_stride == 0)
-      src_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
+      src_stride = pf_get_stride(format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -90,7 +91,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
    if(!dst)
       return;
 
-   util_copy_rect(dst, &pt->block, pt->stride, x, y, w, h, src, src_stride, 0, 0);
+   util_copy_rect(dst, format, pt->stride, x, y, w, h, src, src_stride, 0, 0);
 
    screen->transfer_unmap(screen, pt);
 }
@@ -1219,21 +1220,22 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
 {
    unsigned dst_stride = w * 4;
    void *packed;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
+   packed = MALLOC(pf_get_nblocks(format, w, h) * pf_get_blocksize(format));
 
    if (!packed)
       return;
 
-   if(pt->format == PIPE_FORMAT_YCBCR || pt->format == PIPE_FORMAT_YCBCR_REV)
+   if(format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV)
       assert((x & 1) == 0);
 
    pipe_get_tile_raw(pt, x, y, w, h, packed, 0);
 
-   pipe_tile_raw_to_rgba(pt->format, packed, w, h, p, dst_stride);
+   pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
    FREE(packed);
 }
@@ -1246,16 +1248,17 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
 {
    unsigned src_stride = w * 4;
    void *packed;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
+   packed = MALLOC(pf_get_nblocks(format, w, h) * pf_get_blocksize(format));
 
    if (!packed)
       return;
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
@@ -1322,7 +1325,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    default:
-      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(pt->format));
+      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(format));
    }
 
    pipe_put_tile_raw(pt, x, y, w, h, packed, 0);
@@ -1344,6 +1347,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
    ubyte *map;
    uint *pDest = z;
    uint i, j;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -1354,7 +1358,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
       return;
    }
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
          const uint *ptrc
@@ -1428,6 +1432,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
    const uint *ptrc = zSrc;
    ubyte *map;
    uint i, j;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -1438,7 +1443,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
       return;
    }
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);

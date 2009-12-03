@@ -669,10 +669,10 @@ void debug_dump_surface(const char *prefix,
       goto error;
    
    debug_dump_image(prefix, 
-                    transfer->format,
-                    transfer->block.size, 
-                    transfer->nblocksx,
-                    transfer->nblocksy,
+                    texture->format,
+                    pf_get_blocksize(texture->format), 
+                    pf_get_nblocksx(texture->format, transfer->width),
+                    pf_get_nblocksy(texture->format, transfer->height),
                     transfer->stride,
                     data);
    

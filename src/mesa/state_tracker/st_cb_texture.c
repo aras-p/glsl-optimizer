@@ -405,7 +405,6 @@ compress_with_blit(GLcontext * ctx,
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
    templ.format = st_mesa_format_to_pipe_format(mesa_format);
-   pf_get_block(templ.format, &templ.block);
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
@@ -833,7 +832,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    /* copy/pack data into user buffer */
    if (st_equal_formats(stImage->pt->format, format, type)) {
       /* memcpy */
-      const uint bytesPerRow = width * pf_get_size(stImage->pt->format);
+      const uint bytesPerRow = width * pf_get_blocksize(stImage->pt->format);
       ubyte *map = screen->transfer_map(screen, tex_xfer);
       GLuint row;
       for (row = 0; row < height; row++) {
@@ -915,7 +914,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                                             PIPE_TRANSFER_READ, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
-      texImage->RowStride = stImage->transfer->stride / stImage->pt->block.size;
+      texImage->RowStride = stImage->transfer->stride / pf_get_blocksize(stImage->pt->format);
    }
    else {
       /* Otherwise, the image should actually be stored in
@@ -1163,10 +1162,10 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                            struct gl_texture_image *texImage)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
-   struct pipe_format_block block;
    int srcBlockStride;
    int dstBlockStride;
    int y;
+   enum pipe_format pformat= stImage->pt->format;
 
    if (stImage->pt) {
       unsigned face = _mesa_tex_target_to_face(target);
@@ -1178,8 +1177,7 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                             xoffset, yoffset,
                                             width, height);
       
-      block = stImage->pt->block;
-      srcBlockStride = pf_get_stride(&block, width);
+      srcBlockStride = pf_get_stride(pformat, width);
       dstBlockStride = stImage->transfer->stride;
    } else {
       assert(stImage->pt);
@@ -1193,16 +1191,16 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   assert(xoffset % block.width == 0);
-   assert(yoffset % block.height == 0);
-   assert(width % block.width == 0);
-   assert(height % block.height == 0);
+   assert(xoffset % pf_get_blockwidth(pformat) == 0);
+   assert(yoffset % pf_get_blockheight(pformat) == 0);
+   assert(width % pf_get_blockwidth(pformat) == 0);
+   assert(height % pf_get_blockheight(pformat) == 0);
 
-   for (y = 0; y < height; y += block.height) {
+   for (y = 0; y < height; y += pf_get_blockheight(pformat)) {
       /* don't need to adjust for xoffset and yoffset as st_texture_image_map does that */
-      const char *src = (const char*)data + srcBlockStride * pf_get_nblocksy(&block, y);
-      char *dst = (char*)texImage->Data + dstBlockStride * pf_get_nblocksy(&block, y);
-      memcpy(dst, src, pf_get_stride(&block, width));
+      const char *src = (const char*)data + srcBlockStride * pf_get_nblocksy(pformat, y);
+      char *dst = (char*)texImage->Data + dstBlockStride * pf_get_nblocksy(pformat, y);
+      memcpy(dst, src, pf_get_stride(pformat, width));
    }
 
    if (stImage->pt) {
@@ -1692,10 +1690,10 @@ copy_image_data_to_texture(struct st_context *st,
                             dstLevel,
                             stImage->base.Data,
                             stImage->base.RowStride * 
-                            stObj->pt->block.size,
+                            pf_get_blocksize(stObj->pt->format),
                             stImage->base.RowStride *
                             stImage->base.Height *
-                            stObj->pt->block.size);
+                            pf_get_blocksize(stObj->pt->format));
       _mesa_align_free(stImage->base.Data);
       stImage->base.Data = NULL;
    }
@@ -1763,8 +1761,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->last_level < stObj->lastLevel ||
           stObj->pt->width0 != firstImage->base.Width2 ||
           stObj->pt->height0 != firstImage->base.Height2 ||
-          stObj->pt->depth0 != firstImage->base.Depth2 ||
-          stObj->pt->block.size != blockSize)
+          stObj->pt->depth0 != firstImage->base.Depth2)
       {
          pipe_texture_reference(&stObj->pt, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;

@@ -43,19 +43,6 @@ void trace_dump_format(enum pipe_format format)
 }
 
 
-void trace_dump_block(const struct pipe_format_block *block)
-{
-   if (!trace_dumping_enabled_locked())
-      return;
-
-   trace_dump_struct_begin("pipe_format_block");
-   trace_dump_member(uint, block, size);
-   trace_dump_member(uint, block, width);
-   trace_dump_member(uint, block, height);
-   trace_dump_struct_end();
-}
-
-
 static void trace_dump_reference(const struct pipe_reference *reference)
 {
    if (!trace_dumping_enabled_locked())
@@ -92,10 +79,6 @@ void trace_dump_template(const struct pipe_texture *templat)
 
    trace_dump_member_begin("depth");
    trace_dump_uint(templat->depth0);
-   trace_dump_member_end();
-
-   trace_dump_member_begin("block");
-   trace_dump_block(&templat->block);
    trace_dump_member_end();
 
    trace_dump_member(uint, templat, last_level);
@@ -483,16 +466,9 @@ void trace_dump_transfer(const struct pipe_transfer *state)
 
    trace_dump_struct_begin("pipe_transfer");
 
-   trace_dump_member(format, state, format);
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
 
-   trace_dump_member_begin("block");
-   trace_dump_block(&state->block);
-   trace_dump_member_end();
-
-   trace_dump_member(uint, state, nblocksx);
-   trace_dump_member(uint, state, nblocksy);
    trace_dump_member(uint, state, stride);
    trace_dump_member(uint, state, usage);
 

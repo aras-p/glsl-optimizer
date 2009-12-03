@@ -118,7 +118,6 @@ drm_create_texture(_EGLDisplay *dpy,
 	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	templat.width0 = w;
 	templat.height0 = h;
-	pf_get_block(templat.format, &templat.block);
 
 	texture = screen->texture_create(dev->screen,
 	                                 &templat);

@@ -254,10 +254,10 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
    {
       if (xm_buf->tempImage == NULL) 
       {
-         assert(surf->texture->block.width == 1);
-         assert(surf->texture->block.height == 1);
+         assert(pf_get_blockwidth(surf->texture->format) == 1);
+         assert(pf_get_blockheight(surf->texture->format) == 1);
          alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
-                          surf->texture->block.size, surf->height);
+                          pf_get_blocksize(surf->texture->format), surf->height);
       }
 
       ximage = xm_buf->tempImage;
@@ -360,13 +360,10 @@ xm_surface_buffer_create(struct pipe_winsys *winsys,
                          unsigned *stride)
 {
    const unsigned alignment = 64;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy, size;
+   unsigned nblocksy, size;
 
-   pf_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = align(nblocksx * block.size, alignment);
+   nblocksy = pf_get_nblocksy(format, height);
+   *stride = align(pf_get_stride(format, width), alignment);
    size = *stride * nblocksy;
 
 #ifdef USE_XSHM
