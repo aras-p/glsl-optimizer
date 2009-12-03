@@ -238,11 +238,6 @@ typedef uint pipe_format_ycbcr_t;
    (PIPE_FORMAT_LAYOUT_YCBCR << 0) |\
    ((REV) << 2) )
 
-static INLINE uint pf_rev(pipe_format_ycbcr_t f)
-{
-   return (f >> 2) & 0x1;
-}
-
 
 /**
   * Compresssed format layouts (this will probably change)
