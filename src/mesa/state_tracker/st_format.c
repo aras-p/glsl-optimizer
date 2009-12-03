@@ -42,28 +42,22 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "st_context.h"
 #include "st_format.h"
 
-static GLuint
-format_bits(
-   pipe_format_rgbazs_t  info,
-   GLuint comp )
-{
-   return pf_get_component_bits( (enum pipe_format) info, comp );
-}
 
 static GLuint
 format_max_bits(
    pipe_format_rgbazs_t  info )
 {
-   GLuint   size = format_bits( info, PIPE_FORMAT_COMP_R );
+   GLuint size = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 0);
 
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_G ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_B ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_A ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_Z ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_S ) );
+   size = MAX2(size, util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 1));
+   size = MAX2(size, util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 2));
+   size = MAX2(size, util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 3));
+   size = MAX2(size, util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 0));
+   size = MAX2(size, util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 1));
    return size;
 }
 
@@ -72,12 +66,12 @@ format_size(
    pipe_format_rgbazs_t  info )
 {
    return
-      format_bits( info, PIPE_FORMAT_COMP_R ) +
-      format_bits( info, PIPE_FORMAT_COMP_G ) +
-      format_bits( info, PIPE_FORMAT_COMP_B ) +
-      format_bits( info, PIPE_FORMAT_COMP_A ) +
-      format_bits( info, PIPE_FORMAT_COMP_Z ) +
-      format_bits( info, PIPE_FORMAT_COMP_S );
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 0) +
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 1) +
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 2) +
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 3) +
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 0) +
+      util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 1);
 }
 
 /*
@@ -126,12 +120,12 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       }
 
       /* Component bits */
-      pinfo->red_bits = format_bits( info, PIPE_FORMAT_COMP_R );
-      pinfo->green_bits = format_bits( info, PIPE_FORMAT_COMP_G );
-      pinfo->blue_bits = format_bits( info, PIPE_FORMAT_COMP_B );
-      pinfo->alpha_bits = format_bits( info, PIPE_FORMAT_COMP_A );
-      pinfo->depth_bits = format_bits( info, PIPE_FORMAT_COMP_Z );
-      pinfo->stencil_bits = format_bits( info, PIPE_FORMAT_COMP_S );
+      pinfo->red_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 0);
+      pinfo->green_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 1);
+      pinfo->blue_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 2);
+      pinfo->alpha_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_RGB, 3);
+      pinfo->depth_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 0);
+      pinfo->stencil_bits = util_format_get_component_bits((enum pipe_format)info, UTIL_FORMAT_COLORSPACE_ZS, 1);
       pinfo->luminance_bits = 0;
       pinfo->intensity_bits = 0;
 

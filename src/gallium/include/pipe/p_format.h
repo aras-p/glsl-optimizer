@@ -394,33 +394,6 @@ enum pipe_format {
  */
 extern const char *pf_name( enum pipe_format format );
 
-/**
- * Return bits for a particular component.
- * \param comp  component index, starting at 0
- */
-static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
-{
-   uint size;
-
-   if (pf_swizzle_x(format) == comp) {
-      size = pf_size_x(format);
-   }
-   else if (pf_swizzle_y(format) == comp) {
-      size = pf_size_y(format);
-   }
-   else if (pf_swizzle_z(format) == comp) {
-      size = pf_size_z(format);
-   }
-   else if (pf_swizzle_w(format) == comp) {
-      size = pf_size_w(format);
-   }
-   else {
-      size = 0;
-   }
-   if (pf_layout( format ) == PIPE_FORMAT_LAYOUT_RGBAZS)
-      return size << pf_exp2( format );
-   return size << (pf_mixed_scale8( format ) * 3);
-}
 
 /**
  * Describe accurately the pixel format.
