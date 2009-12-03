@@ -293,11 +293,8 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    if(buf) {
       LIST_DEL(&buf->head);
       pipe_mutex_unlock(mgr->mutex);
-#if 0
-      /* XXX this didn't do anything right??? */
       /* Increase refcount */
-      pb_reference((struct pb_buffer**)&buf, &buf->base);
-#endif
+      pipe_reference(NULL, &buf->base.base.reference);
       return &buf->base;
    }
    
