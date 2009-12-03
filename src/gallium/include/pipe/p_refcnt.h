@@ -59,30 +59,28 @@ pipe_is_referenced(struct pipe_reference *reference)
 
 
 /**
- * Set 'ptr' to point to 'reference' and update reference counting.
- * The old thing pointed to, if any, will be unreferenced first.
- * 'reference' may be NULL.
+ * Update reference counting.
+ * The old thing pointed to, if any, will be unreferenced.
+ * Both 'ptr' and 'reference' may be NULL.
  */
 static INLINE bool
-pipe_reference(struct pipe_reference **ptr, struct pipe_reference *reference)
+pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 {
    bool destroy = FALSE;
 
-   if(*ptr != reference) {
+   if(ptr != reference) {
       /* bump the reference.count first */
       if (reference) {
          assert(pipe_is_referenced(reference));
          p_atomic_inc(&reference->count);
       }
    
-      if (*ptr) {
-         assert(pipe_is_referenced(*ptr));
-         if (p_atomic_dec_zero(&(*ptr)->count)) {
+      if (ptr) {
+         assert(pipe_is_referenced(ptr));
+         if (p_atomic_dec_zero(&ptr->count)) {
             destroy = TRUE;
          }
       }
-   
-      *ptr = reference;
    }
 
    return destroy;
