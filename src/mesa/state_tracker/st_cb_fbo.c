@@ -49,6 +49,7 @@
 #include "st_public.h"
 #include "st_texture.h"
 
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 
@@ -133,7 +134,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
-      if (pf_is_depth_stencil(format)) {
+      if (util_format_is_depth_or_stencil(format)) {
          template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
       }
       else {

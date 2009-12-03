@@ -128,6 +128,19 @@ util_format_is_compressed(enum pipe_format format)
    return desc->layout == UTIL_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
 }
 
+static INLINE boolean 
+util_format_is_depth_or_stencil(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return FALSE;
+   }
+
+   return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ? TRUE : FALSE;
+}
+
 
 /*
  * Format access functions.

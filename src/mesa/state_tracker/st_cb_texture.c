@@ -205,7 +205,7 @@ static GLuint
 default_usage(enum pipe_format fmt)
 {
    GLuint usage = PIPE_TEXTURE_USAGE_SAMPLER;
-   if (pf_is_depth_stencil(fmt))
+   if (util_format_is_depth_or_stencil(fmt))
       usage |= PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    else
       usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
