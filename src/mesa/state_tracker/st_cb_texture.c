@@ -635,7 +635,7 @@ st_TexImage(GLcontext * ctx,
 
    if (stImage->pt) {
       if (format == GL_DEPTH_COMPONENT &&
-          pf_is_depth_and_stencil(stImage->pt->format))
+          util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
@@ -1042,7 +1042,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       unsigned face = _mesa_tex_target_to_face(target);
 
       if (format == GL_DEPTH_COMPONENT &&
-          pf_is_depth_and_stencil(stImage->pt->format))
+          util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
@@ -1267,7 +1267,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 
    if ((baseFormat == GL_DEPTH_COMPONENT ||
         baseFormat == GL_DEPTH_STENCIL) &&
-       pf_is_depth_and_stencil(stImage->pt->format))
+       util_format_is_depth_and_stencil(stImage->pt->format))
       transfer_usage = PIPE_TRANSFER_READ_WRITE;
    else
       transfer_usage = PIPE_TRANSFER_WRITE;

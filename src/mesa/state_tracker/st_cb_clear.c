@@ -52,6 +52,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
@@ -341,7 +342,7 @@ static INLINE GLboolean
 check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
+   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -365,7 +366,7 @@ static INLINE GLboolean
 check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
+   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
    const GLuint stencilMax = 0xff;
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;

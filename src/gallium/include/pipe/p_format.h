@@ -548,13 +548,6 @@ pf_get_2d_size(const struct pipe_format_block *block, size_t stride, unsigned he
    return pf_get_nblocksy(block, height)*stride;
 }
 
-static INLINE boolean 
-pf_is_depth_and_stencil( enum pipe_format format )
-{
-   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) != 0 &&
-           pf_get_component_bits( format, PIPE_FORMAT_COMP_S ) != 0);
-}
-
 enum pipe_video_chroma_format
 {
    PIPE_VIDEO_CHROMA_FORMAT_420,

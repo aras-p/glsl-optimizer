@@ -141,6 +141,24 @@ util_format_is_depth_or_stencil(enum pipe_format format)
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ? TRUE : FALSE;
 }
 
+static INLINE boolean 
+util_format_is_depth_and_stencil(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return FALSE;
+   }
+
+   if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) {
+      return FALSE;
+   }
+
+   return (desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE &&
+           desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
+}
+
 
 /*
  * Format access functions.

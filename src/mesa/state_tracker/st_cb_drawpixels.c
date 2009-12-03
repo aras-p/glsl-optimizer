@@ -63,6 +63,7 @@
 #include "tgsi/tgsi_ureg.h"
 #include "util/u_tile.h"
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_rect.h"
 #include "shader/prog_instruction.h"
@@ -1083,7 +1084,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (ST_DEBUG & DEBUG_FALLBACK)
          debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-      if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
+      if (type == GL_DEPTH && util_format_is_depth_and_stencil(pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
