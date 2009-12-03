@@ -111,6 +111,28 @@ const struct util_format_description *
 util_format_description(enum pipe_format format);
 
 
+/*
+ * Format query functions.
+ */
+
+static INLINE boolean 
+util_format_is_compressed(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return FALSE;
+   }
+
+   return desc->layout == UTIL_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
+}
+
+
+/*
+ * Format access functions.
+ */
+
 void
 util_format_read_4f(enum pipe_format format,
                     float *dst, unsigned dst_stride, 

@@ -569,12 +569,6 @@ pf_is_depth_stencil( enum pipe_format format )
    return pf_is_depth_or_stencil( format );
 }
 
-static INLINE boolean 
-pf_is_compressed( enum pipe_format format )
-{
-   return pf_layout(format) == PIPE_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
-}
-
 enum pipe_video_chroma_format
 {
    PIPE_VIDEO_CHROMA_FORMAT_420,

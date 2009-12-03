@@ -29,6 +29,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_thread.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -319,7 +320,7 @@ svga_texture_create(struct pipe_screen *screen,
     */
 #if 0
    if((templat->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) &&
-      !pf_is_compressed(templat->format))
+      !util_format_is_compressed(templat->format))
       tex->key.flags |= SVGA3D_SURFACE_HINT_RENDERTARGET;
 #endif
    
@@ -933,7 +934,7 @@ svga_get_tex_sampler_view(struct pipe_context *pipe, struct pipe_texture *pt,
       if (min_lod == 0 && max_lod >= pt->last_level)
          view = FALSE;
 
-      if (pf_is_compressed(pt->format) && view) {
+      if (util_format_is_compressed(pt->format) && view) {
          format = svga_translate_format_render(pt->format);
       }
 

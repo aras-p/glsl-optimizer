@@ -62,6 +62,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_tile.h"
 #include "util/u_blit.h"
+#include "util/u_format.h"
 #include "util/u_surface.h"
 #include "util/u_math.h"
 
@@ -890,7 +891,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
    GLubyte *dest;
 
    if (stImage->pt &&
-       pf_is_compressed(stImage->pt->format) &&
+       util_format_is_compressed(stImage->pt->format) &&
        !compressed_dst) {
       /* Need to decompress the texture.
        * We'll do this by rendering a textured quad.
