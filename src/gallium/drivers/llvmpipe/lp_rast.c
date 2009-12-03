@@ -95,6 +95,23 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
          return FALSE;
    }
 
+   if (zsbuf) {
+      rast->zsbuf_transfer = screen->get_tex_transfer(rast->screen,
+                                                     zsbuf->texture,
+                                                     zsbuf->face,
+                                                     zsbuf->level,
+                                                     zsbuf->zslice,
+                                                     PIPE_TRANSFER_READ_WRITE,
+                                                     0, 0, width, height);
+      if (!rast->zsbuf_transfer)
+         return FALSE;
+
+      rast->zsbuf_map = screen->transfer_map(rast->screen, 
+                                            rast->zsbuf_transfer);
+      if (!rast->zsbuf_map)
+         return FALSE;
+   }
+
    return TRUE;
 }
 
@@ -117,7 +134,7 @@ void lp_rast_end( struct lp_rasterizer *rast )
       screen->tex_transfer_destroy(rast->cbuf_transfer);
 
    if (rast->zsbuf_transfer)
-      screen->tex_transfer_destroy(rast->cbuf_transfer);
+      screen->tex_transfer_destroy(rast->zsbuf_transfer);
 
    rast->cbuf_transfer = NULL;
    rast->zsbuf_transfer = NULL;
@@ -359,14 +376,44 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
 }
 
 
+static void
+lp_tile_write_z32(const uint32_t *src, uint8_t *dst, unsigned dst_stride,
+                  unsigned x0, unsigned y0, unsigned w, unsigned h)
+{
+   unsigned x, y;
+   uint8_t *dst_row = dst + y0*dst_stride;
+   for (y = 0; y < h; ++y) {
+      uint32_t *dst_pixel = (uint32_t *)(dst_row + x0*4);
+      for (x = 0; x < w; ++x) {
+         *dst_pixel++ = *src++;
+      }
+      dst_row += dst_stride;
+   }
+}
+
 /**
  * Write the rasterizer's z/stencil tile to the framebuffer.
  */
 static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   const unsigned x = rast->x;
+   const unsigned y = rast->y;
+   unsigned w = TILE_SIZE;
+   unsigned h = TILE_SIZE;
 
-   /* FIXME: call u_tile func to store depth/stencil to surface */
+   if (x + w > rast->width)
+      w -= x + w - rast->width;
+
+   if (y + h > rast->height)
+      h -= y + h - rast->height;
+
+   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+
+   assert(rast->zsbuf_transfer->format == PIPE_FORMAT_Z32_UNORM);
+   lp_tile_write_z32(rast->tile.depth,
+                     rast->zsbuf_map, 
+                     rast->zsbuf_transfer->stride,
+                     x, y, w, h);
 }
 
 
