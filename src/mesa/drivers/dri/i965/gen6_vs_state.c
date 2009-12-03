@@ -31,12 +31,20 @@
 #include "brw_util.h"
 #include "main/macros.h"
 #include "main/enums.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
 
 static void
 upload_vs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   GLcontext *ctx = &intel->ctx;
+   const struct brw_vertex_program *vp =
+      brw_vertex_program_const(brw->vertex_program);
+   unsigned int nr_params = vp->program.Base.Parameters->NumParameters;
+   drm_intel_bo *constant_bo;
+   int i;
 
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_3D_VS_STATE << 16 | (6 - 2));
@@ -52,19 +60,54 @@ upload_vs_state(struct brw_context *brw)
 	     GEN6_VS_STATISTICS_ENABLE);
    ADVANCE_BATCH();
 
-   /* Disable all the constant buffers. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(CMD_3D_CONSTANT_VS_STATE | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (vp->use_const_buffer || nr_params == 0) {
+      /* Disable the push constant buffers. */
+      BEGIN_BATCH(5);
+      OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 | (5 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      if (brw->vertex_program->IsNVProgram)
+	 _mesa_load_tracked_matrices(ctx);
+
+      /* Updates the ParamaterValues[i] pointers for all parameters of the
+       * basic type of PROGRAM_STATE_VAR.
+       */
+      _mesa_load_state_parameters(ctx, vp->program.Base.Parameters);
+
+      constant_bo = drm_intel_bo_alloc(intel->bufmgr, "VS constant_bo",
+				       nr_params * 4 * sizeof(float),
+				       4096);
+      intel_bo_map_gtt_preferred(intel, constant_bo, GL_TRUE);
+      for (i = 0; i < nr_params; i++) {
+	 memcpy((char *)constant_bo->virtual + i * 4 * sizeof(float),
+		vp->program.Base.Parameters->ParameterValues[i],
+		4 * sizeof(float));
+      }
+      intel_bo_unmap_gtt_preferred(intel, constant_bo);
+
+      BEGIN_BATCH(5);
+      OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 |
+		GEN6_CONSTANT_BUFFER_0_ENABLE |
+		(5 - 2));
+      OUT_RELOC(constant_bo,
+		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
+		ALIGN(nr_params, 2) / 2 - 1);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+
+      drm_intel_bo_unreference(constant_bo);
+   }
 }
 
 const struct brw_tracked_state gen6_vs_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM,
+      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
                 BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE |
