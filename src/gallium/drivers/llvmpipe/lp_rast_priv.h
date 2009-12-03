@@ -33,8 +33,10 @@
 struct pipe_transfer;
 struct pipe_screen;
 
-/* We can choose whatever layout for the internal tile storage we
- * prefer:
+
+/**
+ * A tile's color and depth memory.
+ * We can choose whatever layout for the internal tile storage we prefer.
  */
 struct lp_rast_tile
 {
@@ -44,21 +46,22 @@ struct lp_rast_tile
 };
 
 
-struct lp_rasterizer {
+/**
+ * This is the state required while rasterizing a tile.
+ * The tile size is TILE_SIZE x TILE_SIZE pixels.
+ */
+struct lp_rasterizer
+{
+   struct lp_rast_tile tile;   /** Tile color/z/stencil memory */
 
-   /* We can choose whatever layout for the internal tile storage we
-    * prefer:
-    */
-   struct lp_rast_tile tile;
+   unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
+   unsigned width, height; /**< Size of framebuffer, in pixels */
 
-   unsigned x;
-   unsigned y;
    boolean clipped_tile;
-
    boolean check_for_clipped_tiles;
-   unsigned width;
-   unsigned height;
 
+   /* Framebuffer stuff
+    */
    struct pipe_screen *screen;
    struct pipe_transfer *cbuf_transfer;
    struct pipe_transfer *zsbuf_transfer;
@@ -75,6 +78,8 @@ struct lp_rasterizer {
       char clear_stencil;
    } state;
 
+   /* Pixel blocks produced during rasterization
+    */
    unsigned nr_blocks;
    struct {
       unsigned x;
