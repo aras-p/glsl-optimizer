@@ -161,6 +161,7 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
 
 /**
  * Clear the rasterizer's current color tile.
+ * This is a bin command called during bin processing.
  */
 void lp_rast_clear_color( struct lp_rasterizer *rast,
                           const union lp_rast_cmd_arg arg )
@@ -190,6 +191,7 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 
 /**
  * Clear the rasterizer's current z/stencil tile.
+ * This is a bin command called during bin processing.
  */
 void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              const union lp_rast_cmd_arg arg)
@@ -204,6 +206,10 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
 }
 
 
+/**
+ * Load tile color from the framebuffer surface.
+ * This is a bin command called during bin processing.
+ */
 void lp_rast_load_color( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg)
 {
@@ -212,6 +218,11 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
    /* call u_tile func to load colors from surface */
 }
 
+
+/**
+ * Load tile z/stencil from the framebuffer surface.
+ * This is a bin command called during bin processing.
+ */
 void lp_rast_load_zstencil( struct lp_rasterizer *rast,
                             const union lp_rast_cmd_arg arg )
 {
@@ -220,9 +231,25 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
    /* call u_tile func to load depth (and stencil?) from surface */
 }
 
+
+void lp_rast_set_state( struct lp_rasterizer *rast,
+                        const union lp_rast_cmd_arg arg )
+{
+   RAST_DEBUG("%s\n", __FUNCTION__);
+
+   /* XXX to do */
+}
+
+
+
 /* Within a tile:
  */
 
+/**
+ * Run the shader on all blocks in a tile.  This is used when a tile is
+ * completely contained inside a triangle.
+ * This is a bin command called during bin processing.
+ */
 void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
 {
@@ -242,6 +269,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
 
 /**
  * Compute shading for a 4x4 block of pixels.
+ * This is a bin command called during bin processing.
  */
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
