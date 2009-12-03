@@ -38,19 +38,33 @@ upload_gs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(6);
-   OUT_BATCH(CMD_3D_GS_STATE << 16 | (6 - 2));
-   OUT_BATCH(0); /* prog_bo */
-   /* OUT_RELOC(brw->gs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0); */
-   OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-	     (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-   OUT_BATCH(0); /* scratch space base offset */
-   OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-	     (brw->gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-	     (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-   OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-	     GEN6_GS_STATISTICS_ENABLE);
-   ADVANCE_BATCH();
+   if (brw->gs.prog_bo) {
+      BEGIN_BATCH(6);
+      OUT_BATCH(CMD_3D_GS_STATE << 16 | (6 - 2));
+      OUT_RELOC(brw->gs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+      OUT_BATCH(0); /* scratch space base offset */
+      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+		(brw->gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT) |
+		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
+      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
+		GEN6_GS_STATISTICS_ENABLE);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(6);
+      OUT_BATCH(CMD_3D_GS_STATE << 16 | (6 - 2));
+      OUT_BATCH(0); /* prog_bo */
+      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+      OUT_BATCH(0); /* scratch space base offset */
+      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+		(0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
+		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
+      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
+		GEN6_GS_STATISTICS_ENABLE);
+      ADVANCE_BATCH();
+   }
 
    /* Disable all the constant buffers. */
    BEGIN_BATCH(5);

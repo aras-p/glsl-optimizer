@@ -106,10 +106,10 @@ const struct brw_tracked_state *gen6_atoms[] =
 {
    &brw_check_fallback,
 
-#if 0
    &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog,
+#if 0
    &brw_sf_prog,
    &brw_wm_prog,
 
