@@ -3450,22 +3450,6 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 	    need_barrier = GL_TRUE;
     }
 
-    switch (pAsm->pILInst[pAsm->uiCurInst].Opcode)
-    {
-        case OPCODE_TEX:
-            break;
-        case OPCODE_TXB:
-            radeon_error("do not support TXB yet\n");
-            return GL_FALSE;
-            break;
-        case OPCODE_TXP:
-            break;
-        default:
-            radeon_error("Internal error: bad texture op (not TEX)\n");
-            return GL_FALSE;
-            break;
-    }
-
     if (pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_TXP)
     {
         GLuint tmp = gethelpr(pAsm);
@@ -3644,7 +3628,15 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 
     }
 
-    pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
+    if(pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_TXB)
+    {
+        pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
+    }
+
     pAsm->is_tex = GL_TRUE;
     if ( GL_TRUE == need_barrier )
     {
