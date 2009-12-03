@@ -222,6 +222,8 @@ rasterize_bins( struct setup_context *setup,
    lp_rast_end( rast );
 
    reset_context( setup );
+
+   SETUP_DEBUG("%s done \n", __FUNCTION__);
 }
 
 
@@ -273,6 +275,8 @@ begin_binning( struct setup_context *setup )
       else
          bin_everywhere( setup, lp_rast_load_zstencil, lp_rast_arg_null() );
    }
+
+   SETUP_DEBUG("%s done\n", __FUNCTION__);
 }
 
 
@@ -422,7 +426,7 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         const struct lp_shader_input *input,
                         unsigned nr )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   SETUP_DEBUG("%s %p %u\n", __FUNCTION__, (void *) input, nr);
 
    memcpy( setup->fs.input, input, nr * sizeof input[0] );
    setup->fs.nr_inputs = nr;
@@ -432,7 +436,7 @@ void
 lp_setup_set_fs( struct setup_context *setup,
                  struct lp_fragment_shader *fs )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   SETUP_DEBUG("%s %p\n", __FUNCTION__, (void *) fs);
    /* FIXME: reference count */
 
    setup->fs.current.jit_function = fs ? fs->current->jit_function : NULL;
@@ -442,7 +446,7 @@ void
 lp_setup_set_fs_constants(struct setup_context *setup,
                           struct pipe_buffer *buffer)
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   SETUP_DEBUG("%s %p\n", __FUNCTION__, (void *) buffer);
 
    pipe_buffer_reference(&setup->constants.current, buffer);
 
@@ -454,7 +458,7 @@ void
 lp_setup_set_alpha_ref_value( struct setup_context *setup,
                               float alpha_ref_value )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   SETUP_DEBUG("%s %f\n", __FUNCTION__, alpha_ref_value);
 
    if(setup->fs.current.jit_context.alpha_ref_value != alpha_ref_value) {
       setup->fs.current.jit_context.alpha_ref_value = alpha_ref_value;
