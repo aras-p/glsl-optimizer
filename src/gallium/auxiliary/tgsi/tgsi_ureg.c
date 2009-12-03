@@ -554,9 +554,7 @@ void
 ureg_emit_src( struct ureg_program *ureg,
                struct ureg_src src )
 {
-   unsigned size = (1 + 
-                    (src.Absolute ? 1 : 0) +
-                    (src.Indirect ? 1 : 0));
+   unsigned size = 1 + (src.Indirect ? 1 : 0);
 
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_INSN, size );
    unsigned n = 0;
