@@ -169,17 +169,6 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 
 typedef uint pipe_format_mixed_t;
 
-/* NOTE: Use pf_swizzle_* and pf_size_* macros for swizzles and sizes.
- */
-
-#define pf_mixed_sign_x(f)       pf_get( f, 26, 0x1 )       /*< Sign of X */
-#define pf_mixed_sign_y(f)       pf_get( f, 27, 0x1 )       /*< Sign of Y */
-#define pf_mixed_sign_z(f)       pf_get( f, 28, 0x1 )       /*< Sign of Z */
-#define pf_mixed_sign_w(f)       pf_get( f, 29, 0x1 )       /*< Sign of W */
-#define pf_mixed_sign_xyzw(f, i) pf_get( f, 26 + (i), 0x1 )
-#define pf_mixed_normalized(f)   pf_get( f, 30, 0x1 )       /*< Type is NORM (1) or SCALED (0) */
-#define pf_mixed_scale8(f)       pf_get( f, 31, 0x1 )       /*< Scale size by either one (0) or eight (1) */
-
 /**
  * Helper macro to encode the above structure into a 32-bit value.
  */
