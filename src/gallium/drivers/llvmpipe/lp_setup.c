@@ -440,6 +440,7 @@ lp_setup_set_fs( struct setup_context *setup,
    /* FIXME: reference count */
 
    setup->fs.current.jit_function = fs ? fs->current->jit_function : NULL;
+   setup->dirty |= LP_SETUP_NEW_FS;
 }
 
 void
