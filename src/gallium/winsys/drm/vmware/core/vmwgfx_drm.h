@@ -46,6 +46,7 @@
 #define DRM_VMW_FIFO_DEBUG           11
 #define DRM_VMW_FENCE_WAIT           12
 #define DRM_VMW_OVERLAY              13
+#define DRM_VMW_CURSOR_BYPASS        14
 
 /*************************************************************************/
 /**
@@ -501,6 +502,37 @@ struct drm_vmw_overlay_arg {
 	uint32_t pad64;
 	struct drm_vmw_rect src;
 	struct drm_vmw_rect dst;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_CURSOR_BYPASS - Give extra information about cursor bypass.
+ *
+ */
+
+#define DRM_VMW_CURSOR_BYPASS_ALL    (1 << 0)
+#define DRM_VMW_CURSOR_BYPASS_FLAGS       (1)
+
+/**
+ * struct drm_vmw_cursor_bypass_arg
+ *
+ * @flags: Flags.
+ * @crtc_id: Crtc id, only used if DMR_CURSOR_BYPASS_ALL isn't passed.
+ * @xpos: X position of cursor.
+ * @ypos: Y position of cursor.
+ * @xhot: X hotspot.
+ * @yhot: Y hotspot.
+ *
+ * Argument to the DRM_VMW_CURSOR_BYPASS Ioctl.
+ */
+
+struct drm_vmw_cursor_bypass_arg {
+	uint32_t flags;
+	uint32_t crtc_id;
+	int32_t xpos;
+	int32_t ypos;
+	int32_t xhot;
+	int32_t yhot;
 };
 
 #endif
