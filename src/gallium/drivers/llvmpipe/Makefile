@@ -37,6 +37,8 @@ C_SOURCES = \
 	lp_rast.c \
 	lp_rast_tri.c \
 	lp_setup.c \
+	lp_setup_line.c \
+	lp_setup_point.c \
 	lp_setup_tri.c \
 	lp_query.c \
 	lp_screen.c \
