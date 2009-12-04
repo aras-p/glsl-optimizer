@@ -342,6 +342,8 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     debug_printf("%s: enter\n", __func__);
 
     video = vmw->video_priv;
+    if (!video)
+	return TRUE;
 
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
         vmw_video_port_cleanup(pScrn, &video->port[i]);
