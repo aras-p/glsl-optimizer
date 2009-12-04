@@ -262,29 +262,6 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	}
 }
 
-void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
-{
-   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-   GLuint i;
-   drm_radeon_stipple_t stipple;
-
-   /* Must flip pattern upside down.
-   */
-   for ( i = 0 ; i < 32 ; i++ ) {
-      stipple.mask[31 - i] = ((GLuint *) mask)[i];
-   }
-
-   /* TODO: push this into cmd mechanism
-   */
-   radeon_firevertices(radeon);
-   LOCK_HARDWARE( radeon );
-
-   drmCommandWrite( radeon->dri.fd, DRM_RADEON_STIPPLE,
-	 &stipple, sizeof(stipple) );
-   UNLOCK_HARDWARE( radeon );
-}
-
-
 /* ================================================================
  * SwapBuffers with client-side throttling
  */
