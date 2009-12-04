@@ -57,7 +57,7 @@ nv40_state_emit(struct nv40_context *nv40)
 	struct nouveau_channel *chan = nv40->screen->base.channel;
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
-	unsigned i, samplers;
+	unsigned i;
 	uint64_t states;
 
 	if (nv40->pctx_id != screen->cur_pctx) {
@@ -87,6 +87,14 @@ nv40_state_emit(struct nv40_context *nv40)
 	}
 
 	state->dirty = 0;
+}
+
+void
+nv40_state_flush_notify(struct nouveau_channel *chan)
+{
+	struct nv40_context *nv40 = chan->user_private;
+	struct nv40_state *state = &nv40->state;
+	unsigned i, samplers;
 
 	so_emit_reloc_markers(chan, state->hw[NV40_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {

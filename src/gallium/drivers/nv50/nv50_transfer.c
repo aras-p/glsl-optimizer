@@ -82,7 +82,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 	while (height) {
 		int line_count = height > 2047 ? 2047 : height;
 
-		WAIT_RING (chan, 15);
+		MARK_RING (chan, 15, 4); /* flush on lack of space or relocs */
 		BEGIN_RING(chan, m2mf,
 			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN_HIGH, 2);
 		OUT_RELOCh(chan, src_bo, src_offset, src_reloc);
@@ -265,7 +265,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 	reloc |= NOUVEAU_BO_WR;
 
-	WAIT_RING (chan, 32);
+	MARK_RING (chan, 32, 2); /* flush on lack of space or relocs */
 
 	if (bo->tile_flags) {
 		BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 5);

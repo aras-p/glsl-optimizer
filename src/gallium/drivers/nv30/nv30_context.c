@@ -58,6 +58,9 @@ nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv30->pipe.is_texture_referenced = nouveau_is_texture_referenced;
 	nv30->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
+	screen->base.channel->user_private = nv30;
+	screen->base.channel->flush_notify = nv30_state_flush_notify;
+
 	nv30_init_query_functions(nv30);
 	nv30_init_surface_functions(nv30);
 	nv30_init_state_functions(nv30);

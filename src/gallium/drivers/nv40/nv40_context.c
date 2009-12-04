@@ -58,6 +58,9 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv40->pipe.is_texture_referenced = nouveau_is_texture_referenced;
 	nv40->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
+	screen->base.channel->user_private = nv40;
+	screen->base.channel->flush_notify = nv40_state_flush_notify;
+
 	nv40_init_query_functions(nv40);
 	nv40_init_surface_functions(nv40);
 	nv40_init_state_functions(nv40);

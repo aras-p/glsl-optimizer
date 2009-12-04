@@ -133,6 +133,9 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	assert(sub_w == w || util_is_pot(sub_w));
 	assert(sub_h == h || util_is_pot(sub_h));
 
+	MARK_RING (chan, 8 + ((w+sub_w)/sub_w)*((h+sub_h)/sub_h)*17, 2 +
+			 ((w+sub_w)/sub_w)*((h+sub_h)/sub_h)*2);
+
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -202,7 +205,7 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 	unsigned src_offset = src->offset + sy * src_pitch +
 	                      sx * pf_get_blocksize(src->texture->format);
 
-	WAIT_RING (chan, 3 + ((h / 2047) + 1) * 9);
+	MARK_RING (chan, 3 + ((h / 2047) + 1) * 9, 2 + ((h / 2047) + 1) * 2);
 	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
 	OUT_RELOCo(chan, src_bo,
 		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -250,7 +253,7 @@ nv04_surface_copy_blit(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	if (format < 0)
 		return 1;
 
-	WAIT_RING (chan, 12);
+	MARK_RING (chan, 12, 4);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(chan, src_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -315,7 +318,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	gdirect_format = nv04_rect_format(dst->format);
 	assert(gdirect_format >= 0);
 
-	WAIT_RING (chan, 16);
+	MARK_RING (chan, 16, 4);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
