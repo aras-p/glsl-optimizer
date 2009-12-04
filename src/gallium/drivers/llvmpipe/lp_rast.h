@@ -75,8 +75,11 @@ struct lp_rast_shader_inputs {
 };
 
 
-/* Rasterization information for a triangle known to be in this bin,
+/**
+ * Rasterization information for a triangle known to be in this bin,
  * plus inputs to run the shader:
+ * These fields are tile- and bin-independent.
+ * Objects of this type are put into the setup_context::data buffer.
  */
 struct lp_rast_triangle {
    /* bounding box of tri (in pixels) */
