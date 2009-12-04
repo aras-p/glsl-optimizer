@@ -3557,7 +3557,7 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
     checkop2(pAsm);
 
     pAsm->D.dst.opcode = opcode;  
-    pAsm->D.dst.math = 1;
+    //pAsm->D.dst.math = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype = DST_REG_TEMPORARY;
@@ -3567,17 +3567,23 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
     pAsm->D.dst.writez = 0;
     pAsm->D.dst.writew = 0;
 
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg = 0;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_0);
+    noneg_PVSSRC(&(pAsm->S[0].src));
+
+    if( GL_FALSE == assemble_src(pAsm, 0, 1) )
     {
         return GL_FALSE;
     }
 
-    if( GL_FALSE == assemble_src(pAsm, 1, -1) )
+    /*if( GL_FALSE == assemble_src(pAsm, 1, -1) )
     {
         return GL_FALSE;
     }
-  
-    if ( GL_FALSE == next_ins2(pAsm) )
+    */ 
+    if ( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }
@@ -4494,30 +4500,32 @@ GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode)
 
 GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode) 
 {
-    if( GL_FALSE == checkop2(pAsm) )
-    {
-	    return GL_FALSE;
-    }
+    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
 
     pAsm->D.dst.opcode = opcode;
     pAsm->D.dst.math   = 1;
     pAsm->D.dst.predicated = 1;
-    pAsm->D2.dst2.SaturateMode = pAsm->pILInst[pAsm->uiCurInst].SaturateMode;
 
-    if( GL_FALSE == assemble_dst(pAsm) )
-    {
-	    return GL_FALSE;
-    }
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg = pAsm->uHelpReg;
+    pAsm->D.dst.writex = 1;
+    pAsm->D.dst.writey = pAsm->D.dst.writez = pAsm->D.dst.writew = 0;
 
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-	    return GL_FALSE;
-    }
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg = pAsm->last_cond_register + pAsm->starting_temp_register_number;
+    pAsm->S[0].src.swizzlex = pILInst->DstReg.CondSwizzle & 0x7;
+    noneg_PVSSRC(&(pAsm->S[0].src));
 
-    if( GL_FALSE == assemble_src(pAsm, 1, -1) )
-    {
-	    return GL_FALSE;
-    }
+    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[1].src.reg   = pAsm->uHelpReg;
+    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+    noneg_PVSSRC(&(pAsm->S[1].src));
+    pAsm->S[1].src.swizzlex = SQ_SEL_0;
+    pAsm->S[1].src.swizzley = SQ_SEL_0;
+    pAsm->S[1].src.swizzlez = SQ_SEL_0;
+    pAsm->S[1].src.swizzlew = SQ_SEL_0;
 
     if( GL_FALSE == next_ins2(pAsm) ) 
     {
@@ -5098,6 +5106,11 @@ GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops)
 
 GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse)
 {
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
+
+    assemble_LOGIC_PRED(pAsm, SQ_OP2_INST_PRED_SETNE);
+
+
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
         return GL_FALSE;
@@ -5242,6 +5255,11 @@ GLboolean assemble_BGNLOOP(r700_AssemblerBase *pAsm)
 GLboolean assemble_BRK(r700_AssemblerBase *pAsm)
 {
 #ifdef USE_CF_FOR_CONTINUE_BREAK
+
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
+
+    assemble_LOGIC_PRED(pAsm, SQ_OP2_INST_PRED_SETNE);
+    
     unsigned int unFCSP;
     for(unFCSP=pAsm->FCSP; unFCSP>0; unFCSP--)
     {
@@ -5308,6 +5326,10 @@ GLboolean assemble_BRK(r700_AssemblerBase *pAsm)
 GLboolean assemble_CONT(r700_AssemblerBase *pAsm)
 {
 #ifdef USE_CF_FOR_CONTINUE_BREAK
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
+
+    assemble_LOGIC_PRED(pAsm, SQ_OP2_INST_PRED_SETNE);
+
     unsigned int unFCSP;
     for(unFCSP=pAsm->FCSP; unFCSP>0; unFCSP--)
     {
@@ -5848,6 +5870,12 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             }
         }
 #endif
+        if(pILInst[i].CondUpdate == 1)
+        {
+            /* remember dest register used for cond evaluation */
+            /* XXX also handle PROGRAM_OUTPUT registers here? */
+            pR700AsmCode->last_cond_register = pILInst[i].DstReg.Index; 
+        }
 
         switch (pILInst[i].Opcode)
         {
@@ -5918,9 +5946,8 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
 
         case OPCODE_KIL: 
         case OPCODE_KIL_NV: 
-            /* done at OPCODE_SE/SGT...etc. */
-            /* if ( GL_FALSE == assemble_KIL(pR700AsmCode) ) 
-                return GL_FALSE; */
+            if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGT) ) 
+                return GL_FALSE;
             break;
         case OPCODE_LG2: 
             if ( GL_FALSE == assemble_LG2(pR700AsmCode) ) 
@@ -5983,151 +6010,23 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             break; 
             
         case OPCODE_SEQ:
-            if(OPCODE_IF == pILInst[i+1].Opcode)
+            if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETE) ) 
             {
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_BRK == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_CONT == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif                
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-            {
-                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else
-            {
-                if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETE) ) 
-                {
-                    return GL_FALSE;
-                }
+                return GL_FALSE;
             }
             break;
 
         case OPCODE_SGT: 
-            if(OPCODE_IF == pILInst[i+1].Opcode)
+            if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGT) ) 
             {
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_BRK == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_CONT == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif
-
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-            {
-                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGT) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else
-            {
-                if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGT) ) 
-                {
-                    return GL_FALSE;
-                }
+                return GL_FALSE;
             }
             break;
 
         case OPCODE_SGE: 
-            if(OPCODE_IF == pILInst[i+1].Opcode)
-            {
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_BRK == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_CONT == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif
-
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-            {
-                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else
-            {
-                if ( GL_FALSE == assemble_SGE(pR700AsmCode) ) 
-                {
-                    return GL_FALSE;
-                }
+            if ( GL_FALSE == assemble_SGE(pR700AsmCode) ) 
+            { 
+                return GL_FALSE;
             }
             break;
         
@@ -6139,61 +6038,12 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 SrcRegSave[1] = pILInst[i].SrcReg[1];
                 pILInst[i].SrcReg[0] = SrcRegSave[1];
                 pILInst[i].SrcReg[1] = SrcRegSave[0];
-                if(OPCODE_IF == pILInst[i+1].Opcode)
+                if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGT) ) 
                 {
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
+                    pILInst[i].SrcReg[0] = SrcRegSave[0];
+                    pILInst[i].SrcReg[1] = SrcRegSave[1];
+                    return GL_FALSE;
                 }
-                else if(OPCODE_BRK == pILInst[i+1].Opcode)
-                {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                }
-                else if(OPCODE_CONT == pILInst[i+1].Opcode)
-                {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif
-
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGT) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                }
-                else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-                {
-                    if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGT) ) 
-                    {
-                        return GL_FALSE;
-                    }
-                }
-                else
-                {
-                    if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGT) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                } 
                 pILInst[i].SrcReg[0] = SrcRegSave[0];
                 pILInst[i].SrcReg[1] = SrcRegSave[1];
             }
@@ -6206,60 +6056,11 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 SrcRegSave[1] = pILInst[i].SrcReg[1];
                 pILInst[i].SrcReg[0] = SrcRegSave[1];
                 pILInst[i].SrcReg[1] = SrcRegSave[0];
-                if(OPCODE_IF == pILInst[i+1].Opcode)
+                if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGE) ) 
                 {
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                }
-                else if(OPCODE_BRK == pILInst[i+1].Opcode)
-                {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                }
-                else if(OPCODE_CONT == pILInst[i+1].Opcode)
-                {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                    pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif
-
-                    if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETGE) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
-                }
-                else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-                {
-                    if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLGE) ) 
-                    {
-                        return GL_FALSE;
-                    }
-                }
-                else
-                {
-                    if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETGE) ) 
-                    {
-                        pILInst[i].SrcReg[0] = SrcRegSave[0];
-                        pILInst[i].SrcReg[1] = SrcRegSave[1];
-                        return GL_FALSE;
-                    }
+                    pILInst[i].SrcReg[0] = SrcRegSave[0];
+                    pILInst[i].SrcReg[1] = SrcRegSave[1];
+                    return GL_FALSE;
                 }
                 pILInst[i].SrcReg[0] = SrcRegSave[0];
                 pILInst[i].SrcReg[1] = SrcRegSave[1];
@@ -6267,51 +6068,9 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             break;
 
         case OPCODE_SNE: 
-            if(OPCODE_IF == pILInst[i+1].Opcode)
+            if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETNE) ) 
             {
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETNE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_BRK == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_BREAK;
-#endif
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETNE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if(OPCODE_CONT == pILInst[i+1].Opcode)
-            {
-#ifdef USE_CF_FOR_CONTINUE_BREAK
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_PUSH_BEFORE;
-#else
-                pR700AsmCode->alu_x_opcode = SQ_CF_INST_ALU_CONTINUE;
-#endif
-                if ( GL_FALSE == assemble_LOGIC_PRED(pR700AsmCode, SQ_OP2_INST_PRED_SETNE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else if((OPCODE_KIL == pILInst[i+1].Opcode)||(OPCODE_KIL_NV == pILInst[i+1].Opcode))
-            {
-                if ( GL_FALSE == assemble_KIL(pR700AsmCode, SQ_OP2_INST_KILLNE) ) 
-                {
-                    return GL_FALSE;
-                }
-            }
-            else
-            {
-                if ( GL_FALSE == assemble_LOGIC(pR700AsmCode, SQ_OP2_INST_SETNE) ) 
-                {
-                    return GL_FALSE;
-                }
+                return GL_FALSE;
             }
             break;
 

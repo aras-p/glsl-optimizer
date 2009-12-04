@@ -345,6 +345,7 @@ typedef struct r700_AssemblerBase
 	PVSDWORD S[3];
 
 	unsigned int uLastPosUpdate;
+	unsigned int last_cond_register;
 
 	OUT_FRAGMENT_FMT_0     fp_stOutFmt0;
 
