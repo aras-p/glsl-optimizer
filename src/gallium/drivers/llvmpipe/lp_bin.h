@@ -35,7 +35,17 @@
 #ifndef LP_BIN_H
 #define LP_BIN_H
 
+#include "lp_tile_soa.h"
 #include "lp_rast.h"
+
+
+/* We're limited to 2K by 2K for 32bit fixed point rasterization.
+ * Will need a 64-bit version for larger framebuffers.
+ */
+#define MAXHEIGHT 2048
+#define MAXWIDTH 2048
+#define TILES_X (MAXWIDTH / TILE_SIZE)
+#define TILES_Y (MAXHEIGHT / TILE_SIZE)
 
 
 #define CMD_BLOCK_MAX 128
@@ -84,19 +94,40 @@ struct data_block_list {
 };
 
 
+/**
+ * All bins and bin data are contained here.
+ * Per-bin data goes into the 'tile' bins.
+ * Shared bin data goes into the 'data' buffer.
+ * When there are multiple threads, will want to double-buffer the
+ * bin arrays:
+ */
+struct lp_bins {
+   struct cmd_bin tile[TILES_X][TILES_Y];
+   struct data_block_list data;
+};
 
-extern void lp_bin_new_data_block( struct data_block_list *list );
 
-extern void lp_bin_new_cmd_block( struct cmd_block_list *list );
+
+void lp_init_bins(struct lp_bins *bins);
+
+void lp_reset_bins(struct lp_bins *bins, unsigned tiles_x, unsigned tiles_y);
+
+void lp_free_bin_data(struct lp_bins *bins);
+
+void lp_bin_new_data_block( struct data_block_list *list );
+
+void lp_bin_new_cmd_block( struct cmd_block_list *list );
 
 
 /**
- * Allocate space for a command/data in the given block list.
+ * Allocate space for a command/data in the bin's data buffer.
  * Grow the block list if needed.
  */
 static INLINE void *
-lp_bin_alloc( struct data_block_list *list, unsigned size)
+lp_bin_alloc( struct lp_bins *bins, unsigned size)
 {
+   struct data_block_list *list = &bins->data;
+
    if (list->tail->used + size > DATA_BLOCK_SIZE) {
       lp_bin_new_data_block( list );
    }
@@ -114,9 +145,11 @@ lp_bin_alloc( struct data_block_list *list, unsigned size)
  * As above, but with specific alignment.
  */
 static INLINE void *
-lp_bin_alloc_aligned( struct data_block_list *list, unsigned size,
+lp_bin_alloc_aligned( struct lp_bins *bins, unsigned size,
                       unsigned alignment )
 {
+   struct data_block_list *list = &bins->data;
+
    if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
       lp_bin_new_data_block( list );
    }
@@ -134,20 +167,32 @@ lp_bin_alloc_aligned( struct data_block_list *list, unsigned size,
 /* Put back data if we decide not to use it, eg. culled triangles.
  */
 static INLINE void
-lp_bin_putback_data( struct data_block_list *list, unsigned size)
+lp_bin_putback_data( struct lp_bins *bins, unsigned size)
 {
+   struct data_block_list *list = &bins->data;
    assert(list->tail->used >= size);
    list->tail->used -= size;
 }
 
 
-/* Add a command to a given bin.
+/** Return pointer to a particular tile's bin. */
+static INLINE struct cmd_bin *
+lp_get_bin(struct lp_bins *bins, unsigned x, unsigned y)
+{
+   return &bins->tile[x][y];
+}
+
+
+
+/* Add a command to bin[x][y].
  */
 static INLINE void
-lp_bin_command( struct cmd_bin *bin,
+lp_bin_command( struct lp_bins *bins,
+                unsigned x, unsigned y,
                 lp_rast_cmd cmd,
                 union lp_rast_cmd_arg arg )
 {
+   struct cmd_bin *bin = lp_get_bin(bins, x, y);
    struct cmd_block_list *list = &bin->commands;
 
    if (list->tail->count == CMD_BLOCK_MAX) {

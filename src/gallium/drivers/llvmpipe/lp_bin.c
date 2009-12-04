@@ -30,6 +30,84 @@
 
 
 void
+lp_init_bins(struct lp_bins *bins)
+{
+   unsigned i, j;
+   for (i = 0; i < TILES_X; i++)
+      for (j = 0; j < TILES_Y; j++) {
+         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         bin->commands.head = bin->commands.tail = CALLOC_STRUCT(cmd_block);
+      }
+
+   bins->data.head =
+      bins->data.tail = CALLOC_STRUCT(data_block);
+}
+
+
+void
+lp_reset_bins(struct lp_bins *bins, unsigned tiles_x, unsigned tiles_y)
+{
+   unsigned i, j;
+
+   /* Free all but last binner command lists:
+    */
+   for (i = 0; i < tiles_x; i++) {
+      for (j = 0; j < tiles_y; j++) {
+         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         struct cmd_block_list *list = &bin->commands;
+         struct cmd_block *block;
+         struct cmd_block *tmp;
+         
+         for (block = list->head; block != list->tail; block = tmp) {
+            tmp = block->next;
+            FREE(block);
+         }
+         
+         assert(list->tail->next == NULL);
+         list->head = list->tail;
+         list->head->count = 0;
+      }
+   }
+
+   /* Free all but last binned data block:
+    */
+   {
+      struct data_block_list *list = &bins->data;
+      struct data_block *block, *tmp;
+
+      for (block = list->head; block != list->tail; block = tmp) {
+         tmp = block->next;
+         FREE(block);
+      }
+         
+      assert(list->tail->next == NULL);
+      list->head = list->tail;
+      list->head->used = 0;
+   }
+}
+
+
+void
+lp_free_bin_data(struct lp_bins *bins)
+{
+   unsigned i, j;
+
+   for (i = 0; i < TILES_X; i++)
+      for (j = 0; j < TILES_Y; j++) {
+         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         /* lp_reset_bins() should have been already called */
+         assert(bin->commands.head == bin->commands.tail);
+         FREE(bin->commands.head);
+         bin->commands.head = NULL;
+         bin->commands.tail = NULL;
+      }
+
+   FREE(bins->data.head);
+   bins->data.head = NULL;
+}
+
+
+void
 lp_bin_new_cmd_block( struct cmd_block_list *list )
 {
    struct cmd_block *block = MALLOC_STRUCT(cmd_block);

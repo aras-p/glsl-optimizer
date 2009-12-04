@@ -40,14 +40,6 @@
 #include "lp_tile_soa.h"        /* for TILE_SIZE */
 #include "lp_bin.h"
 
-/* We're limited to 2K by 2K for 32bit fixed point rasterization.
- * Will need a 64-bit version for larger framebuffers.
- */
-#define MAXHEIGHT 2048
-#define MAXWIDTH 2048
-#define TILES_X (MAXWIDTH / TILE_SIZE)
-#define TILES_Y (MAXHEIGHT / TILE_SIZE)
-
 
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
@@ -63,14 +55,7 @@ struct setup_context {
 
    struct lp_rasterizer *rast;
 
-   /**
-    * Per-bin data goes into the 'tile' bins.
-    * Shared bin data goes into the 'data' buffer.
-    * When there are multiple threads, will want to double-buffer the
-    * bin arrays:
-    */
-   struct cmd_bin tile[TILES_X][TILES_Y];
-   struct data_block_list data;
+   struct lp_bins bins;
 
    /* size of framebuffer, in tiles */
    unsigned tiles_x;

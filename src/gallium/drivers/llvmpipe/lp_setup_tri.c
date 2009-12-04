@@ -185,9 +185,9 @@ static void setup_tri_coefficients( struct setup_context *setup,
    {
       unsigned bytes;
       bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
-      tri->inputs.a0   = lp_bin_alloc_aligned( &setup->data, bytes, 16 );
-      tri->inputs.dadx = lp_bin_alloc_aligned( &setup->data, bytes, 16 );
-      tri->inputs.dady = lp_bin_alloc_aligned( &setup->data, bytes, 16 );
+      tri->inputs.a0   = lp_bin_alloc_aligned( &setup->bins, bytes, 16 );
+      tri->inputs.dadx = lp_bin_alloc_aligned( &setup->bins, bytes, 16 );
+      tri->inputs.dady = lp_bin_alloc_aligned( &setup->bins, bytes, 16 );
    }
 
    /* The internal position input is in slot zero:
@@ -263,7 +263,7 @@ do_triangle_ccw(struct setup_context *setup,
    const int y2 = subpixel_snap(v2[0][1]);
    const int y3 = subpixel_snap(v3[0][1]);
 
-   struct lp_rast_triangle *tri = lp_bin_alloc( &setup->data, sizeof *tri );
+   struct lp_rast_triangle *tri = lp_bin_alloc( &setup->bins, sizeof *tri );
    float area, oneoverarea;
    int minx, maxx, miny, maxy;
 
@@ -283,7 +283,7 @@ do_triangle_ccw(struct setup_context *setup,
     * XXX: subject to overflow??
     */
    if (area <= 0) {
-      lp_bin_putback_data( &setup->data, sizeof *tri );
+      lp_bin_putback_data( &setup->bins, sizeof *tri );
       return;
    }
 
@@ -295,7 +295,7 @@ do_triangle_ccw(struct setup_context *setup,
    
    if (tri->miny == tri->maxy || 
        tri->minx == tri->maxx) {
-      lp_bin_putback_data( &setup->data, sizeof *tri );
+      lp_bin_putback_data( &setup->bins, sizeof *tri );
       return;
    }
 
@@ -405,7 +405,7 @@ do_triangle_ccw(struct setup_context *setup,
    {
       /* Triangle is contained in a single tile:
        */
-      lp_bin_command( &setup->tile[minx][miny], lp_rast_triangle, 
+      lp_bin_command( &setup->bins, minx, miny, lp_rast_triangle, 
                    lp_rast_arg_triangle(tri) );
    }
    else 
@@ -464,17 +464,17 @@ do_triangle_ccw(struct setup_context *setup,
 	    {
 	       in = 1;
                /* triangle covers the whole tile- shade whole tile */
-               lp_bin_command( &setup->tile[x][y],
-                            lp_rast_shade_tile,
-                            lp_rast_arg_inputs(&tri->inputs) );
+               lp_bin_command( &setup->bins, x, y,
+                               lp_rast_shade_tile,
+                               lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
 	    { 
 	       in = 1;
                /* shade partial tile */
-               lp_bin_command( &setup->tile[x][y], 
-                            lp_rast_triangle, 
-                            lp_rast_arg_triangle(tri) );
+               lp_bin_command( &setup->bins, x, y,
+                               lp_rast_triangle, 
+                               lp_rast_arg_triangle(tri) );
 	    }
 
 	    /* Iterate cx values across the region:

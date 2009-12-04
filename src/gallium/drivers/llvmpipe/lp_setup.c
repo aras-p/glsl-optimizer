@@ -80,8 +80,6 @@ first_point( struct setup_context *setup,
 
 static void reset_context( struct setup_context *setup )
 {
-   unsigned i, j;
-
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    /* Reset derived state */
@@ -90,40 +88,7 @@ static void reset_context( struct setup_context *setup )
    setup->fs.stored = NULL;
    setup->dirty = ~0;
 
-   /* Free all but last binner command lists:
-    */
-   for (i = 0; i < setup->tiles_x; i++) {
-      for (j = 0; j < setup->tiles_y; j++) {
-         struct cmd_block_list *list = &setup->tile[i][j].commands;
-         struct cmd_block *block;
-         struct cmd_block *tmp;
-         
-         for (block = list->head; block != list->tail; block = tmp) {
-            tmp = block->next;
-            FREE(block);
-         }
-         
-         assert(list->tail->next == NULL);
-         list->head = list->tail;
-         list->head->count = 0;
-      }
-   }
-
-   /* Free all but last binned data block:
-    */
-   {
-      struct data_block_list *list = &setup->data;
-      struct data_block *block, *tmp;
-
-      for (block = list->head; block != list->tail; block = tmp) {
-         tmp = block->next;
-         FREE(block);
-      }
-         
-      assert(list->tail->next == NULL);
-      list->head = list->tail;
-      list->head->used = 0;
-   }
+   lp_reset_bins(&setup->bins, setup->tiles_x, setup->tiles_y);
 
    /* Reset some state:
     */
@@ -177,7 +142,7 @@ static void bin_everywhere( struct setup_context *setup,
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++)
       for (j = 0; j < setup->tiles_y; j++)
-         lp_bin_command( &setup->tile[i][j], cmd, arg );
+         lp_bin_command( &setup->bins, i, j, cmd, arg );
 }
 
 
@@ -194,13 +159,13 @@ bin_state_command( struct setup_context *setup,
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
-         struct cmd_bin *bin = &setup->tile[i][j];
+         struct cmd_bin *bin = &setup->bins.tile[i][j];
          lp_rast_cmd last_cmd = lp_get_last_command(bin);
          if (last_cmd == cmd) {
             lp_replace_last_command_arg(bin, arg);
          }
          else {
-            lp_bin_command( bin, cmd, arg );
+            lp_bin_command( &setup->bins, i, j, cmd, arg );
          }
       }
    }
@@ -212,29 +177,10 @@ static void
 rasterize_bins( struct setup_context *setup,
                 boolean write_depth )
 {
-   struct lp_rasterizer *rast = setup->rast;
-   unsigned i, j;
-
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-
-   lp_rast_begin( rast,
-                  setup->fb->cbufs[0], 
-                  setup->fb->zsbuf,
-                  setup->fb->cbufs[0] != NULL,
-                  setup->fb->zsbuf != NULL && write_depth,
-                  setup->fb->width,
-                  setup->fb->height );
-                       
-   /* loop over tile bins, rasterize each */
-   for (i = 0; i < setup->tiles_x; i++) {
-      for (j = 0; j < setup->tiles_y; j++) {
-         lp_rasterize_bin( rast, &setup->tile[i][j], 
-                           i * TILE_SIZE,
-                           j * TILE_SIZE );
-      }
-   }
-
-   lp_rast_end( rast );
+   lp_rasterize_bins(setup->rast,
+                     &setup->bins, setup->tiles_x, setup->tiles_y,
+                     setup->fb,
+                     write_depth);
 
    reset_context( setup );
 
@@ -559,7 +505,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
       uint8_t *stored;
       unsigned i, j;
 
-      stored = lp_bin_alloc_aligned(&setup->data, 4 * 16, 16);
+      stored = lp_bin_alloc_aligned(&setup->bins, 4 * 16, 16);
 
       /* smear each blend color component across 16 ubyte elements */
       for (i = 0; i < 4; ++i) {
@@ -591,7 +537,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
                    current_size) != 0) {
             void *stored;
 
-            stored = lp_bin_alloc(&setup->data, current_size);
+            stored = lp_bin_alloc(&setup->bins, current_size);
             if(stored) {
                memcpy(stored,
                       current_data,
@@ -621,7 +567,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
           * and append it to the bin's setup data buffer.
           */
          struct lp_rast_state *stored =
-            (struct lp_rast_state *) lp_bin_alloc(&setup->data, sizeof *stored);
+            (struct lp_rast_state *) lp_bin_alloc(&setup->bins, sizeof *stored);
          if(stored) {
             memcpy(stored,
                    &setup->fs.current,
@@ -677,17 +623,11 @@ lp_setup_tri(struct setup_context *setup,
 void 
 lp_setup_destroy( struct setup_context *setup )
 {
-   unsigned i, j;
-
    reset_context( setup );
 
    pipe_buffer_reference(&setup->constants.current, NULL);
 
-   for (i = 0; i < TILES_X; i++)
-      for (j = 0; j < TILES_Y; j++)
-         FREE(setup->tile[i][j].commands.head);
-
-   FREE(setup->data.head);
+   lp_free_bin_data(&setup->bins);
 
    lp_rast_destroy( setup->rast );
    FREE( setup );
@@ -702,19 +642,12 @@ struct setup_context *
 lp_setup_create( struct pipe_screen *screen )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
-   unsigned i, j;
 
    setup->rast = lp_rast_create( screen );
    if (!setup->rast) 
       goto fail;
 
-   for (i = 0; i < TILES_X; i++)
-      for (j = 0; j < TILES_Y; j++)
-         setup->tile[i][j].commands.head = 
-            setup->tile[i][j].commands.tail = CALLOC_STRUCT(cmd_block);
-
-   setup->data.head =
-      setup->data.tail = CALLOC_STRUCT(data_block);
+   lp_init_bins(&setup->bins);
 
    setup->triangle = first_triangle;
    setup->line     = first_line;

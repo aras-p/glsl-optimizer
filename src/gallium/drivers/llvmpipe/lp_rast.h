@@ -47,6 +47,7 @@
  * individual function calls like this.
  */
 struct lp_rasterizer;
+struct lp_bins;
 struct cmd_bin;
 struct pipe_screen;
 
@@ -133,22 +134,12 @@ struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen );
 
 void lp_rast_destroy( struct lp_rasterizer * );
 
+void lp_rasterize_bins( struct lp_rasterizer *rast,
+                        struct lp_bins *bins,
+                        unsigned tiles_x, unsigned tiles_y,
+                        const struct pipe_framebuffer_state *fb,
+                        bool write_depth );
 
-boolean lp_rast_begin( struct lp_rasterizer *rast,
-                       struct pipe_surface *cbuf,
-                       struct pipe_surface *zsbuf,
-                       boolean write_color,
-                       boolean write_zstencil,
-                       unsigned width,
-                       unsigned height );
-
-void
-lp_rasterize_bin( struct lp_rasterizer *rast,
-                  const struct cmd_bin *bin,
-                  int x, int y);
-
-
-void lp_rast_end( struct lp_rasterizer * );
 
 
 union lp_rast_cmd_arg {

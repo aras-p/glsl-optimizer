@@ -56,7 +56,8 @@ struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
  * Begin the rasterization phase.
  * Map the framebuffer surfaces.  Initialize the 'rast' state.
  */
-boolean lp_rast_begin( struct lp_rasterizer *rast,
+static boolean
+lp_rast_begin( struct lp_rasterizer *rast,
                        struct pipe_surface *cbuf,
                        struct pipe_surface *zsbuf,
                        boolean write_color,
@@ -121,7 +122,8 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
  * Finish the rasterization phase.
  * Unmap framebuffer surfaces.
  */
-void lp_rast_end( struct lp_rasterizer *rast )
+static void
+lp_rast_end( struct lp_rasterizer *rast )
 {
    struct pipe_screen *screen = rast->screen;
 
@@ -469,12 +471,13 @@ lp_rast_end_tile( struct lp_rasterizer *rast )
 
 /**
  * Rasterize commands for a single bin.
+ * \param x, y  position of the bin's tile in the framebuffer
  * Must be called between lp_rast_begin() and lp_rast_end().
  */
-void
-lp_rasterize_bin( struct lp_rasterizer *rast,
-                  const struct cmd_bin *bin,
-                  int x, int y)
+static void
+rasterize_bin( struct lp_rasterizer *rast,
+               const struct cmd_bin *bin,
+               int x, int y)
 {
    const struct cmd_block_list *commands = &bin->commands;
    struct cmd_block *block;
@@ -490,6 +493,42 @@ lp_rasterize_bin( struct lp_rasterizer *rast,
    }
 
    lp_rast_end_tile( rast );
+}
+
+
+/**
+ * Rasterize/execute all bins.
+ */
+void
+lp_rasterize_bins( struct lp_rasterizer *rast,
+                   struct lp_bins *bins,
+                   unsigned tiles_x, unsigned tiles_y,
+                   const struct pipe_framebuffer_state *fb,
+                   bool write_depth )
+{
+   unsigned i, j;
+
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   lp_rast_begin( rast,
+                  fb->cbufs[0], 
+                  fb->zsbuf,
+                  fb->cbufs[0] != NULL,
+                  fb->zsbuf != NULL && write_depth,
+                  fb->width,
+                  fb->height );
+                       
+   /* loop over tile bins, rasterize each */
+   for (i = 0; i < tiles_x; i++) {
+      for (j = 0; j < tiles_y; j++) {
+         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         rasterize_bin( rast, bin, i * TILE_SIZE, j * TILE_SIZE );
+      }
+   }
+
+   lp_rast_end( rast );
+
+   LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
 }
 
 
