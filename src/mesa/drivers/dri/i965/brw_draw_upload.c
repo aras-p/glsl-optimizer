@@ -503,10 +503,17 @@ static void brw_emit_vertices(struct brw_context *brw)
    if (brw->vb.nr_enabled == 0) {
       BEGIN_BATCH(3);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
-      OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
-		BRW_VE0_VALID |
-		(BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
-		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      if (IS_GEN6(intel->intelScreen->deviceID)) {
+	 OUT_BATCH((0 << GEN6_VE0_INDEX_SHIFT) |
+		   GEN6_VE0_VALID |
+		   (BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
+		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      } else {
+	 OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
+		   BRW_VE0_VALID |
+		   (BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
+		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      }
       OUT_BATCH((BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_0_SHIFT) |
 		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
 		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
@@ -527,9 +534,17 @@ static void brw_emit_vertices(struct brw_context *brw)
 
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
+      uint32_t dw0;
 
-      OUT_BATCH((i << BRW_VB0_INDEX_SHIFT) |
-		BRW_VB0_ACCESS_VERTEXDATA |
+      if (IS_GEN6(intel->intelScreen->deviceID)) {
+	 dw0 = GEN6_VB0_ACCESS_VERTEXDATA |
+	    (i << GEN6_VB0_INDEX_SHIFT);
+      } else {
+	 dw0 = BRW_VB0_ACCESS_VERTEXDATA |
+	    (i << BRW_VB0_INDEX_SHIFT);
+      }
+
+      OUT_BATCH(dw0 |
 		(input->stride << BRW_VB0_PITCH_SHIFT));
       OUT_RELOC(input->bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
@@ -565,10 +580,17 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 break;
       }
 
-      OUT_BATCH((i << BRW_VE0_INDEX_SHIFT) |
-		BRW_VE0_VALID |
-		(format << BRW_VE0_FORMAT_SHIFT) |
-		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      if (IS_GEN6(intel->intelScreen->deviceID)) {
+	 OUT_BATCH((i << GEN6_VE0_INDEX_SHIFT) |
+		   GEN6_VE0_VALID |
+		   (format << BRW_VE0_FORMAT_SHIFT) |
+		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      } else {
+	 OUT_BATCH((i << BRW_VE0_INDEX_SHIFT) |
+		   BRW_VE0_VALID |
+		   (format << BRW_VE0_FORMAT_SHIFT) |
+		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      }
 
       if (intel->is_ironlake)
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |

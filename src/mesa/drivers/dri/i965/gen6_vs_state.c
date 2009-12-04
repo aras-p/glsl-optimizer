@@ -54,8 +54,7 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH(0); /* scratch space base offset */
    OUT_BATCH((1 << GEN6_VS_DISPATCH_START_GRF_SHIFT) |
 	     (brw->vs.prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
-	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT) |
-	     GEN6_VS_ENABLE);
+	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));
    OUT_BATCH((0 << GEN6_VS_MAX_THREADS_SHIFT) |
 	     GEN6_VS_STATISTICS_ENABLE);
    ADVANCE_BATCH();

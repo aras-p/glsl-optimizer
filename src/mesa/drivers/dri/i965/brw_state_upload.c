@@ -163,12 +163,11 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_psp_urb_cbs,
 
    &brw_drawing_rect,
+#endif
+
    &brw_indices,
    &brw_index_buffer,
    &brw_vertices,
-
-   &brw_constant_buffer
-#endif
 };
 
 void brw_init_state( struct brw_context *brw )
