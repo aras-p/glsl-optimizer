@@ -67,7 +67,7 @@ softpipe_texture_layout(struct pipe_screen *screen,
 
       spt->level_offset[level] = buffer_size;
 
-      buffer_size += (pf_get_nblocksy(pt->format, u_minify(height, level)) *
+      buffer_size += (pf_get_nblocksy(pt->format, height) *
                       ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
                       spt->stride[level]);
 
