@@ -416,6 +416,7 @@ typedef struct r700_AssemblerBase
     SHADER_PIPE_TYPE currentShaderType;
     struct prog_instruction * pILInst;
     GLuint             uiCurInst;
+    GLubyte SamplerUnits[MAX_SAMPLERS];
     GLboolean   bR6xx;
     /* helper to decide which type of instruction to assemble */
     GLboolean is_tex;

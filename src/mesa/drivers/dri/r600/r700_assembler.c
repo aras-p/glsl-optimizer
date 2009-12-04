@@ -4840,7 +4840,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         pAsm->need_tex_barrier = GL_TRUE;
     }
     // Set src1 to tex unit id
-    pAsm->S[1].src.reg   = pAsm->pILInst[pAsm->uiCurInst].TexSrcUnit;
+    pAsm->S[1].src.reg   = pAsm->SamplerUnits[pAsm->pILInst[pAsm->uiCurInst].TexSrcUnit];
     pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
 
     //No sw info from mesa compiler, so hard code here.

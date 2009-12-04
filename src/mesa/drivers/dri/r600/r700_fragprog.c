@@ -308,6 +308,7 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
 	GLuint    unBit;
+	int i;
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
@@ -320,6 +321,10 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 
     InitShaderProgram(&(fp->r700AsmCode));
 	
+    for(i=0; i < MAX_SAMPLERS; i++)
+    {
+         fp->r700AsmCode.SamplerUnits[i] = fp->mesa_program.Base.SamplerUnits[i];
+    }
 	if( GL_FALSE == AssembleInstr(0,
                                   mesa_fp->Base.NumInstructions,
                                   &(mesa_fp->Base.Instructions[0]), 

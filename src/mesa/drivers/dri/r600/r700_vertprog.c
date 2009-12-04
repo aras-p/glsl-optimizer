@@ -337,6 +337,10 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 
     InitShaderProgram(&(vp->r700AsmCode));
 
+    for(i=0; i < MAX_SAMPLERS; i++)
+    {
+        vp->r700AsmCode.SamplerUnits[i] = vp->mesa_program->Base.SamplerUnits[i];
+    }
 	if(GL_FALSE == AssembleInstr(0,
                                  vp->mesa_program->Base.NumInstructions,
                                  &(vp->mesa_program->Base.Instructions[0]),
