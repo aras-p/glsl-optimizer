@@ -108,11 +108,6 @@ struct lp_rast_triangle {
 
    int step[3][16];
 
-   /* XXX: this is only used inside lp_setup_tri.c, don't really
-    * need it here:
-    */
-   float oneoverarea;
-
    /* inputs for the shader */
    struct lp_rast_shader_inputs inputs;
 };

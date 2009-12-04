@@ -54,6 +54,7 @@ static void constant_coef( struct lp_rast_triangle *tri,
  * for a triangle.
  */
 static void linear_coef( struct lp_rast_triangle *tri,
+                         float oneoverarea,
                          unsigned slot,
                          const float (*v1)[4],
                          const float (*v2)[4],
@@ -67,8 +68,8 @@ static void linear_coef( struct lp_rast_triangle *tri,
 
    float da12 = a1 - a2;
    float da31 = a3 - a1;
-   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
-   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
+   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * oneoverarea;
+   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * oneoverarea;
 
    tri->inputs.dadx[slot][i] = dadx;
    tri->inputs.dady[slot][i] = dady;
@@ -100,6 +101,7 @@ static void linear_coef( struct lp_rast_triangle *tri,
  * divide the interpolated value by the interpolated W at that fragment.
  */
 static void perspective_coef( struct lp_rast_triangle *tri,
+                              float oneoverarea,
                               unsigned slot,
 			      const float (*v1)[4],
 			      const float (*v2)[4],
@@ -114,8 +116,8 @@ static void perspective_coef( struct lp_rast_triangle *tri,
    float a3 = v3[vert_attr][i] * v3[0][3];
    float da12 = a1 - a2;
    float da31 = a3 - a1;
-   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
-   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
+   float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * oneoverarea;
+   float dady = (da31 * tri->dx12 - tri->dx31 * da12) * oneoverarea;
 
    tri->inputs.dadx[slot][i] = dadx;
    tri->inputs.dady[slot][i] = dady;
@@ -133,6 +135,7 @@ static void perspective_coef( struct lp_rast_triangle *tri,
  */
 static void
 setup_fragcoord_coef(struct lp_rast_triangle *tri,
+                     float oneoverarea,
                      unsigned slot,
                      const float (*v1)[4],
                      const float (*v2)[4],
@@ -147,9 +150,9 @@ setup_fragcoord_coef(struct lp_rast_triangle *tri,
    tri->inputs.dadx[slot][1] = 0.0;
    tri->inputs.dady[slot][1] = 1.0;
    /*Z*/
-   linear_coef(tri, slot, v1, v2, v3, 0, 2);
+   linear_coef(tri, oneoverarea, slot, v1, v2, v3, 0, 2);
    /*W*/
-   linear_coef(tri, slot, v1, v2, v3, 0, 3);
+   linear_coef(tri, oneoverarea, slot, v1, v2, v3, 0, 3);
 }
 
 
@@ -169,10 +172,11 @@ static void setup_facing_coef( struct lp_rast_triangle *tri,
  */
 static void setup_tri_coefficients( struct setup_context *setup,
 				    struct lp_rast_triangle *tri,
+                                    float oneoverarea,
 				    const float (*v1)[4],
 				    const float (*v2)[4],
 				    const float (*v3)[4],
-				    boolean frontface )
+				    boolean frontface)
 {
    unsigned slot;
 
@@ -188,7 +192,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   setup_fragcoord_coef(tri, 0, v1, v2, v3);
+   setup_fragcoord_coef(tri, oneoverarea, 0, v1, v2, v3);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -204,18 +208,18 @@ static void setup_tri_coefficients( struct setup_context *setup,
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
-            linear_coef(tri, slot+1, v1, v2, v3, vert_attr, i);
+            linear_coef(tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
-            perspective_coef(tri, slot+1, v1, v2, v3, vert_attr, i);
+            perspective_coef(tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_POSITION:
          /* XXX: fix me - duplicates the values in slot zero.
           */
-         setup_fragcoord_coef(tri, slot+1, v1, v2, v3);
+         setup_fragcoord_coef(tri, oneoverarea, slot+1, v1, v2, v3);
          break;
 
       case LP_INTERP_FACING:
@@ -260,7 +264,7 @@ do_triangle_ccw(struct setup_context *setup,
    const int y3 = subpixel_snap(v3[0][1]);
 
    struct lp_rast_triangle *tri = get_data( &setup->data, sizeof *tri );
-   float area;
+   float area, oneoverarea;
    int minx, maxx, miny, maxy;
 
    tri->dx12 = x1 - x2;
@@ -297,11 +301,11 @@ do_triangle_ccw(struct setup_context *setup,
 
    /* 
     */
-   tri->oneoverarea = ((float)FIXED_ONE) / (float)area;
+   oneoverarea = ((float)FIXED_ONE) / (float)area;
 
    /* Setup parameter interpolants:
     */
-   setup_tri_coefficients( setup, tri, v1, v2, v3, frontfacing );
+   setup_tri_coefficients( setup, tri, oneoverarea, v1, v2, v3, frontfacing );
 
    /* half-edge constants, will be interated over the whole
     * rendertarget.
