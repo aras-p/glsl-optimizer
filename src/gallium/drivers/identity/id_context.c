@@ -742,7 +742,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_state = identity_set_scissor_state;
    id_pipe->base.set_viewport_state = identity_set_viewport_state;
-   id_pipe->base.set_fragment_sampler_textures = identity_set_vertex_sampler_textures;
+   id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
    id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.set_vertex_elements = identity_set_vertex_elements;
