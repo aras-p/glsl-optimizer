@@ -382,8 +382,6 @@ static void r300_emit_query_start(struct r300_context *r300)
     if (!query)
 	return;
 
-    /* XXX This will almost certainly not return good results
-     * for overlapping queries. */
     BEGIN_CS(4);
     if (caps->family == CHIP_FAMILY_RV530) {
         OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
