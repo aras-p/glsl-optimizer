@@ -36,8 +36,8 @@
 #include "r300_screen.h"
 #include "r300_state_derived.h"
 #include "r300_state_invariant.h"
-
-#include "radeon_winsys.h"
+#include "r300_texture.h"
+#include "r300_winsys.h"
 
 static enum pipe_error r300_clear_hash_table(void* key, void* value,
                                              void* data)

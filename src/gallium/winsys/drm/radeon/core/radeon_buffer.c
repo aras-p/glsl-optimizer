@@ -35,7 +35,9 @@
 #include "radeon_bo_gem.h"
 #include "softpipe/sp_texture.h"
 #include "r300_context.h"
+#include "util/u_math.h"
 #include <X11/Xutil.h>
+
 struct radeon_vl_context
 {
     Display *display;
