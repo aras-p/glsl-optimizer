@@ -31,6 +31,7 @@
 #include "lp_setup.h"
 #include "lp_rast.h"
 #include "lp_tile_soa.h"        /* for TILE_SIZE */
+#include "lp_bin.h"
 
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
@@ -40,54 +41,10 @@
 #define TILES_X (MAXWIDTH / TILE_SIZE)
 #define TILES_Y (MAXHEIGHT / TILE_SIZE)
 
-#define CMD_BLOCK_MAX 128
-#define DATA_BLOCK_SIZE (16 * 1024 - sizeof(unsigned) - sizeof(void *))
-   
 
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
-
-
-/* switch to a non-pointer value for this:
- */
-typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg );
-
-struct cmd_block {
-   lp_rast_cmd cmd[CMD_BLOCK_MAX];
-   union lp_rast_cmd_arg arg[CMD_BLOCK_MAX];
-   unsigned count;
-   struct cmd_block *next;
-};
-
-struct data_block {
-   ubyte data[DATA_BLOCK_SIZE];
-   unsigned used;
-   struct data_block *next;
-};
-
-struct cmd_block_list {
-   struct cmd_block *head;
-   struct cmd_block *tail;
-};
-
-/**
- * For each screen tile we have one of these bins.
- */
-struct cmd_bin {
-   struct cmd_block_list commands;
-};
-   
-
-/**
- * This stores bulk data which is shared by all bins.
- * Examples include triangle data and state data.  The commands in
- * the per-tile bins will point to chunks of data in this structure.
- */
-struct data_block_list {
-   struct data_block *head;
-   struct data_block *tail;
-};
 
 
 /**
@@ -172,77 +129,6 @@ struct setup_context {
 void lp_setup_choose_triangle( struct setup_context *setup );
 void lp_setup_choose_line( struct setup_context *setup );
 void lp_setup_choose_point( struct setup_context *setup );
-
-
-void lp_setup_new_data_block( struct data_block_list *list );
-void lp_setup_new_cmd_block( struct cmd_block_list *list );
-
-
-/**
- * Allocate space for a command/data in the given block list.
- * Grow the block list if needed.
- */
-static INLINE void *get_data( struct data_block_list *list,
-                              unsigned size)
-{
-   if (list->tail->used + size > DATA_BLOCK_SIZE) {
-      lp_setup_new_data_block( list );
-   }
-
-   {
-      struct data_block *tail = list->tail;
-      ubyte *data = tail->data + tail->used;
-      tail->used += size;
-      return data;
-   }
-}
-
-/* Put back data if we decide not to use it, eg. culled triangles.
- */
-static INLINE void putback_data( struct data_block_list *list,
-                                 unsigned size)
-{
-   list->tail->used -= size;
-}
-
-
-static INLINE void *get_data_aligned( struct data_block_list *list,
-                                      unsigned size,
-                                      unsigned alignment )
-{
-   if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
-      lp_setup_new_data_block( list );
-   }
-
-   {
-      struct data_block *tail = list->tail;
-      ubyte *data = tail->data + tail->used;
-      unsigned offset = (((uintptr_t)data + alignment - 1) & ~(alignment - 1)) - (uintptr_t)data;
-      tail->used += offset + size;
-      return data + offset;
-   }
-}
-
-/* Add a command to a given bin.
- */
-static INLINE void bin_command( struct cmd_bin *bin,
-                                lp_rast_cmd cmd,
-                                union lp_rast_cmd_arg arg )
-{
-   struct cmd_block_list *list = &bin->commands;
-
-   if (list->tail->count == CMD_BLOCK_MAX) {
-      lp_setup_new_cmd_block( list );
-   }
-
-   {
-      struct cmd_block *tail = list->tail;
-      unsigned i = tail->count;
-      tail->cmd[i] = cmd;
-      tail->arg[i] = arg;
-      tail->count++;
-   }
-}
 
 
 #endif

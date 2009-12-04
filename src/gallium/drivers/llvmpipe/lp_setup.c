@@ -46,23 +46,6 @@
 
 static void set_state( struct setup_context *, unsigned );
 
-void lp_setup_new_cmd_block( struct cmd_block_list *list )
-{
-   struct cmd_block *block = MALLOC_STRUCT(cmd_block);
-   list->tail->next = block;
-   list->tail = block;
-   block->next = NULL;
-   block->count = 0;
-}
-
-void lp_setup_new_data_block( struct data_block_list *list )
-{
-   struct data_block *block = MALLOC_STRUCT(data_block);
-   list->tail->next = block;
-   list->tail = block;
-   block->next = NULL;
-   block->used = 0;
-}
 
 
 static void
@@ -194,7 +177,7 @@ static void bin_everywhere( struct setup_context *setup,
    unsigned i, j;
    for (i = 0; i < setup->tiles_x; i++)
       for (j = 0; j < setup->tiles_y; j++)
-         bin_command( &setup->tile[i][j], cmd, arg );
+         lp_bin_command( &setup->tile[i][j], cmd, arg );
 }
 
 
@@ -217,7 +200,7 @@ bin_state_command( struct setup_context *setup,
             lp_replace_last_command_arg(bin, arg);
          }
          else {
-            bin_command( bin, cmd, arg );
+            lp_bin_command( bin, cmd, arg );
          }
       }
    }
@@ -594,7 +577,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
       uint8_t *stored;
       unsigned i, j;
 
-      stored = get_data_aligned(&setup->data, 4 * 16, 16);
+      stored = lp_bin_alloc_aligned(&setup->data, 4 * 16, 16);
 
       /* smear each blend color component across 16 ubyte elements */
       for (i = 0; i < 4; ++i) {
@@ -626,7 +609,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
                    current_size) != 0) {
             void *stored;
 
-            stored = get_data(&setup->data, current_size);
+            stored = lp_bin_alloc(&setup->data, current_size);
             if(stored) {
                memcpy(stored,
                       current_data,
@@ -656,7 +639,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
           * and append it to the bin's setup data buffer.
           */
          struct lp_rast_state *stored =
-            (struct lp_rast_state *) get_data(&setup->data, sizeof *stored);
+            (struct lp_rast_state *) lp_bin_alloc(&setup->data, sizeof *stored);
          if(stored) {
             memcpy(stored,
                    &setup->fs.current,

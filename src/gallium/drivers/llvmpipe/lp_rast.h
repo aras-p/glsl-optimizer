@@ -43,6 +43,11 @@ struct pipe_screen;
 #define FIXED_ONE (1<<FIXED_ORDER)
 
 
+/**
+ * Rasterization state.
+ * Objects of this type are put into the shared data bin and pointed
+ * to by commands in the per-tile bins.
+ */
 struct lp_rast_state {
    /* State for the shader:
     */

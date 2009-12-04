@@ -19,6 +19,7 @@ env.CodeGenerate(
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
+		'lp_bin.c',
 		'lp_bld_alpha.c',
 		'lp_bld_arit.c',
 		'lp_bld_blend_aos.c',
@@ -46,7 +47,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_flush.c',
 		'lp_jit.c',
 		'lp_prim_vbuf.c',
-        'lp_query.c',
+		'lp_query.c',
 		'lp_setup.c',
 		'lp_setup_tri.c',
 		'lp_setup_line.c',
@@ -62,8 +63,8 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_state_vertex.c',
 		'lp_state_vs.c',
 		'lp_surface.c',
-        'lp_rast.c',
-        'lp_rast_tri.c',
+		'lp_rast.c',
+		'lp_rast_tri.c',
 		'lp_tex_sample_llvm.c',
 		'lp_texture.c',
 		'lp_tile_soa.c',
