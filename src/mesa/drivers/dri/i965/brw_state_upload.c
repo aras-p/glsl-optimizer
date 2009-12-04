@@ -118,11 +118,11 @@ const struct brw_tracked_state *gen6_atoms[] =
     * layout.
     */
    &brw_curbe_offsets,
-   &brw_recalculate_urb_fence,
 
    &brw_cc_vp,
 
 #endif
+   &gen6_urb,
    &gen6_blend_state,		/* must do before cc unit */
    &gen6_color_calc_state,	/* must do before cc unit */
    &gen6_depth_stencil_state,	/* must do before cc unit */

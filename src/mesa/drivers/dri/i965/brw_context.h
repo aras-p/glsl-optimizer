@@ -544,7 +544,8 @@ struct brw_context
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
 
-/*       GLuint vs_size; */
+      /* gen6 */
+      GLuint vs_size;
 /*       GLuint gs_size; */
 /*       GLuint clip_size; */
 /*       GLuint sf_size; */

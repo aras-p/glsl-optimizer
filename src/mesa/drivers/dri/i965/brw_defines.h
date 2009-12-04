@@ -812,6 +812,12 @@
 #define CMD_VF_STATISTICS_GM45        0x680b
 #define CMD_3D_CC_STATE_POINTERS      0x780e /* GEN6+ */
 
+#define CMD_URB					0x7805 /* GEN6+ */
+# define GEN6_URB_VS_SIZE_SHIFT				16
+# define GEN6_URB_VS_ENTRIES_SHIFT			0
+# define GEN6_URB_GS_SIZE_SHIFT				8
+# define GEN6_URB_GS_ENTRIES_SHIFT			0
+
 #define CMD_3D_VS_STATE		      0x7810 /* GEN6+ */
 /* DW2 */
 # define GEN6_VS_SPF_MODE				(1 << 31)
