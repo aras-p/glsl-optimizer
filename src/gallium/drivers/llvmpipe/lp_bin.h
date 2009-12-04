@@ -104,15 +104,25 @@ struct data_block_list {
 struct lp_bins {
    struct cmd_bin tile[TILES_X][TILES_Y];
    struct data_block_list data;
+
+   /**
+    * Number of active tiles in each dimension.
+    * This basically the framebuffer size divided by tile size
+    */
+   unsigned tiles_x, tiles_y;
 };
 
 
 
 void lp_init_bins(struct lp_bins *bins);
 
-void lp_reset_bins(struct lp_bins *bins, unsigned tiles_x, unsigned tiles_y);
+void lp_reset_bins(struct lp_bins *bins );
 
 void lp_free_bin_data(struct lp_bins *bins);
+
+void
+lp_bin_set_num_bins( struct lp_bins *bins,
+                     unsigned tiles_x, unsigned tiles_y );
 
 void lp_bin_new_data_block( struct data_block_list *list );
 
@@ -207,6 +217,26 @@ lp_bin_command( struct lp_bins *bins,
       tail->count++;
    }
 }
+
+
+/* Add a command to all active bins.
+ */
+static INLINE void
+lp_bin_everywhere( struct lp_bins *bins,
+                   lp_rast_cmd cmd,
+                   const union lp_rast_cmd_arg arg )
+{
+   unsigned i, j;
+   for (i = 0; i < bins->tiles_x; i++)
+      for (j = 0; j < bins->tiles_y; j++)
+         lp_bin_command( bins, i, j, cmd, arg );
+}
+
+
+void
+lp_bin_state_command( struct lp_bins *bins,
+                      lp_rast_cmd cmd,
+                      const union lp_rast_cmd_arg arg );
 
 
 #endif /* LP_BIN_H */

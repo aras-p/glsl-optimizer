@@ -136,7 +136,6 @@ void lp_rast_destroy( struct lp_rasterizer * );
 
 void lp_rasterize_bins( struct lp_rasterizer *rast,
                         struct lp_bins *bins,
-                        unsigned tiles_x, unsigned tiles_y,
                         const struct pipe_framebuffer_state *fb,
                         bool write_depth );
 

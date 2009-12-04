@@ -45,14 +45,14 @@ lp_init_bins(struct lp_bins *bins)
 
 
 void
-lp_reset_bins(struct lp_bins *bins, unsigned tiles_x, unsigned tiles_y)
+lp_reset_bins(struct lp_bins *bins )
 {
    unsigned i, j;
 
    /* Free all but last binner command lists:
     */
-   for (i = 0; i < tiles_x; i++) {
-      for (j = 0; j < tiles_y; j++) {
+   for (i = 0; i < bins->tiles_x; i++) {
+      for (j = 0; j < bins->tiles_y; j++) {
          struct cmd_bin *bin = lp_get_bin(bins, i, j);
          struct cmd_block_list *list = &bin->commands;
          struct cmd_block *block;
@@ -108,6 +108,14 @@ lp_free_bin_data(struct lp_bins *bins)
 
 
 void
+lp_bin_set_num_bins( struct lp_bins *bins,
+                     unsigned tiles_x, unsigned tiles_y )
+{
+   bins->tiles_x = tiles_x;
+   bins->tiles_y = tiles_y;
+}
+
+void
 lp_bin_new_cmd_block( struct cmd_block_list *list )
 {
    struct cmd_block *block = MALLOC_STRUCT(cmd_block);
@@ -126,4 +134,60 @@ lp_bin_new_data_block( struct data_block_list *list )
    list->tail = block;
    block->next = NULL;
    block->used = 0;
+}
+
+
+/**
+ * Return last command in the bin
+ */
+static lp_rast_cmd
+lp_get_last_command( const struct cmd_bin *bin )
+{
+   const struct cmd_block *tail = bin->commands.tail;
+   const unsigned i = tail->count;
+   if (i > 0)
+      return tail->cmd[i - 1];
+   else
+      return NULL;
+}
+
+
+/**
+ * Replace the arg of the last command in the bin.
+ */
+static void
+lp_replace_last_command_arg( struct cmd_bin *bin,
+                             const union lp_rast_cmd_arg arg )
+{
+   struct cmd_block *tail = bin->commands.tail;
+   const unsigned i = tail->count;
+   assert(i > 0);
+   tail->arg[i - 1] = arg;
+}
+
+
+
+/**
+ * Put a state-change command into all bins.
+ * If we find that the last command in a bin was also a state-change
+ * command, we can simply replace that one with the new one.
+ */
+void
+lp_bin_state_command( struct lp_bins *bins,
+                      lp_rast_cmd cmd,
+                      const union lp_rast_cmd_arg arg )
+{
+   unsigned i, j;
+   for (i = 0; i < bins->tiles_x; i++) {
+      for (j = 0; j < bins->tiles_y; j++) {
+         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         lp_rast_cmd last_cmd = lp_get_last_command(bin);
+         if (last_cmd == cmd) {
+            lp_replace_last_command_arg(bin, arg);
+         }
+         else {
+            lp_bin_command( bins, i, j, cmd, arg );
+         }
+      }
+   }
 }

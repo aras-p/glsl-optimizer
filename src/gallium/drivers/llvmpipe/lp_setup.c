@@ -88,7 +88,7 @@ static void reset_context( struct setup_context *setup )
    setup->fs.stored = NULL;
    setup->dirty = ~0;
 
-   lp_reset_bins(&setup->bins, setup->tiles_x, setup->tiles_y);
+   lp_reset_bins( &setup->bins );
 
    /* Reset some state:
     */
@@ -103,82 +103,13 @@ static void reset_context( struct setup_context *setup )
 }
 
 
-/**
- * Return last command in the bin
- */
-static lp_rast_cmd
-lp_get_last_command( const struct cmd_bin *bin )
-{
-   const struct cmd_block *tail = bin->commands.tail;
-   const unsigned i = tail->count;
-   if (i > 0)
-      return tail->cmd[i - 1];
-   else
-      return NULL;
-}
-
-
-/**
- * Replace the arg of the last command in the bin.
- */
-static void
-lp_replace_last_command_arg( struct cmd_bin *bin,
-                             const union lp_rast_cmd_arg arg )
-{
-   struct cmd_block *tail = bin->commands.tail;
-   const unsigned i = tail->count;
-   assert(i > 0);
-   tail->arg[i - 1] = arg;
-}
-
-
-
-/* Add a command to all active bins.
- */
-static void bin_everywhere( struct setup_context *setup,
-                            lp_rast_cmd cmd,
-                            const union lp_rast_cmd_arg arg )
-{
-   unsigned i, j;
-   for (i = 0; i < setup->tiles_x; i++)
-      for (j = 0; j < setup->tiles_y; j++)
-         lp_bin_command( &setup->bins, i, j, cmd, arg );
-}
-
-
-/**
- * Put a state-change command into all bins.
- * If we find that the last command in a bin was also a state-change
- * command, we can simply replace that one with the new one.
- */
-static void
-bin_state_command( struct setup_context *setup,
-                   lp_rast_cmd cmd,
-                   const union lp_rast_cmd_arg arg )
-{
-   unsigned i, j;
-   for (i = 0; i < setup->tiles_x; i++) {
-      for (j = 0; j < setup->tiles_y; j++) {
-         struct cmd_bin *bin = &setup->bins.tile[i][j];
-         lp_rast_cmd last_cmd = lp_get_last_command(bin);
-         if (last_cmd == cmd) {
-            lp_replace_last_command_arg(bin, arg);
-         }
-         else {
-            lp_bin_command( &setup->bins, i, j, cmd, arg );
-         }
-      }
-   }
-}
-
-
 /** Rasterize all tile's bins */
 static void
 rasterize_bins( struct setup_context *setup,
                 boolean write_depth )
 {
    lp_rasterize_bins(setup->rast,
-                     &setup->bins, setup->tiles_x, setup->tiles_y,
+                     &setup->bins,
                      setup->fb,
                      write_depth);
 
@@ -196,20 +127,24 @@ begin_binning( struct setup_context *setup )
 
    if (setup->fb->cbufs[0]) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
-         bin_everywhere( setup, 
-                         lp_rast_clear_color, 
-                         setup->clear.color );
+         lp_bin_everywhere( &setup->bins, 
+                            lp_rast_clear_color, 
+                            setup->clear.color );
       else
-         bin_everywhere( setup, lp_rast_load_color, lp_rast_arg_null() );
+         lp_bin_everywhere( &setup->bins,
+                            lp_rast_load_color,
+                            lp_rast_arg_null() );
    }
 
    if (setup->fb->zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         bin_everywhere( setup, 
-                         lp_rast_clear_zstencil, 
-                         setup->clear.zstencil );
+         lp_bin_everywhere( &setup->bins, 
+                            lp_rast_clear_zstencil, 
+                            setup->clear.zstencil );
       else
-         bin_everywhere( setup, lp_rast_load_zstencil, lp_rast_arg_null() );
+         lp_bin_everywhere( &setup->bins,
+                            lp_rast_load_zstencil,
+                            lp_rast_arg_null() );
    }
 
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);
@@ -280,13 +215,18 @@ void
 lp_setup_bind_framebuffer( struct setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
+   unsigned tiles_x, tiles_y;
+
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    set_state( setup, SETUP_FLUSHED );
 
    setup->fb = fb;
-   setup->tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
-   setup->tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
+
+   tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
+   tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
+
+   lp_bin_set_num_bins(&setup->bins, tiles_x, tiles_y);
 }
 
 
@@ -321,14 +261,14 @@ lp_setup_clear( struct setup_context *setup,
        * don't see that as being a common usage.
        */
       if (flags & PIPE_CLEAR_COLOR)
-         bin_everywhere( setup, 
-                         lp_rast_clear_color, 
-                         setup->clear.color );
+         lp_bin_everywhere( &setup->bins, 
+                            lp_rast_clear_color, 
+                            setup->clear.color );
 
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         bin_everywhere( setup, 
-                         lp_rast_clear_zstencil, 
-                         setup->clear.zstencil );
+         lp_bin_everywhere( &setup->bins, 
+                            lp_rast_clear_zstencil, 
+                            setup->clear.zstencil );
    }
    else {
       /* Put ourselves into the 'pre-clear' state, specifically to try
@@ -545,9 +485,9 @@ lp_setup_update_shader_state( struct setup_context *setup )
             setup->fs.stored = stored;
 
             /* put the state-set command into all bins */
-            bin_state_command( setup, 
-                               lp_rast_set_state, 
-                               lp_rast_arg_state(setup->fs.stored) );
+            lp_bin_state_command( &setup->bins,
+                                  lp_rast_set_state, 
+                                  lp_rast_arg_state(setup->fs.stored) );
          }
       }
    }

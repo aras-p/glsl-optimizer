@@ -57,10 +57,6 @@ struct setup_context {
 
    struct lp_bins bins;
 
-   /* size of framebuffer, in tiles */
-   unsigned tiles_x;
-   unsigned tiles_y;
-   
    boolean ccw_is_frontface;
    unsigned cullmode;
 
