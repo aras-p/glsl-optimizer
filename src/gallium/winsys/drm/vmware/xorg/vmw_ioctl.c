@@ -65,8 +65,8 @@ vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot)
     arg.xhot = xhot;
     arg.yhot = yhot;
 
-    ret = drmCommandWriteRead(vmw->fd, DRM_VMW_CURSOR_BYPASS,
-			      &arg, sizeof(arg));
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CURSOR_BYPASS,
+			  &arg, sizeof(arg));
 
     return ret;
 }
