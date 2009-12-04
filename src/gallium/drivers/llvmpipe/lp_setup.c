@@ -284,39 +284,9 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    set_state( setup, SETUP_FLUSHED );
 
-#if 0
-   pipe_surface_reference( &setup->fb.cbuf, color );
-   pipe_surface_reference( &setup->fb.zsbuf, zstencil );
-
-   if (!setup->fb.cbuf && !setup->fb.zsbuf) {
-      setup->fb.width = 0;
-      setup->fb.height = 0;
-   }
-   else if (!setup->fb.zsbuf) {
-      setup->fb.width = setup->fb.cbuf->width;
-      setup->fb.height = setup->fb.cbuf->height;
-   }
-   else if (!setup->fb.cbuf) {
-      setup->fb.width = setup->fb.zsbuf->width;
-      setup->fb.height = setup->fb.zsbuf->height;
-   }
-   else {
-      /* XXX: not sure what we're really supposed to do for
-       * mis-matched color & depth buffer sizes.
-       */
-      setup->fb.width = MIN2(setup->fb.cbuf->width,
-                             setup->fb.zsbuf->width);
-      setup->fb.height = MIN2(setup->fb.cbuf->height,
-                              setup->fb.zsbuf->height);
-   }
-   setup->tiles_x = align(setup->fb.width, TILE_SIZE) / TILE_SIZE;
-   setup->tiles_y = align(setup->fb.height, TILE_SIZE) / TILE_SIZE;
-#else
    setup->fb = fb;
    setup->tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
    setup->tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
-#endif
-
 }
 
 
