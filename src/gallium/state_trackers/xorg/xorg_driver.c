@@ -687,6 +687,9 @@ drv_leave_vt(int scrnIndex, int flags)
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
     int o;
 
+    if (ms->winsys_leave_vt)
+	ms->winsys_leave_vt(pScrn);
+
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
 
@@ -748,6 +751,9 @@ drv_enter_vt(int scrnIndex, int flags)
 
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
+
+    if (ms->winsys_enter_vt)
+	ms->winsys_enter_vt(pScrn);
 
     return TRUE;
 }
