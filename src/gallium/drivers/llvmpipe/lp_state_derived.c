@@ -198,10 +198,14 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    unsigned i;
 
    /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->sampler[i];
-      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->texture[i];
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->vertex_samplers[i];
+      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->vertex_textures[i];
+      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      lp_tex_tile_cache_validate_texture( llvmpipe->vertex_tex_cache[i] );
    }
 
    /* fragment shader samplers */

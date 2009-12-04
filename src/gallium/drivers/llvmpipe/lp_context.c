@@ -118,6 +118,11 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       pipe_texture_reference(&llvmpipe->texture[i], NULL);
    }
 
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      lp_destroy_tex_tile_cache(llvmpipe->vertex_tex_cache[i]);
+      pipe_texture_reference(&llvmpipe->vertex_textures[i], NULL);
+   }
+
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       if (llvmpipe->constants[i].buffer) {
          pipe_buffer_reference(&llvmpipe->constants[i].buffer, NULL);
@@ -144,6 +149,11 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
       if(llvmpipe->framebuffer.zsbuf && 
          llvmpipe->framebuffer.zsbuf->texture == texture)
          return PIPE_REFERENCED_FOR_WRITE;
+   }
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      if (llvmpipe->vertex_tex_cache[i] &&
+          llvmpipe->vertex_tex_cache[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ;
    }
    
    return PIPE_UNREFERENCED;
@@ -181,6 +191,7 @@ llvmpipe_create( struct pipe_screen *screen )
 
    llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
    llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
+   llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
    llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
 
    llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
@@ -206,6 +217,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
    llvmpipe->pipe.set_fragment_sampler_textures = llvmpipe_set_sampler_textures;
+   llvmpipe->pipe.set_vertex_sampler_textures = llvmpipe_set_vertex_sampler_textures;
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
@@ -234,13 +246,15 @@ llvmpipe_create( struct pipe_screen *screen )
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+      llvmpipe->vertex_tex_cache[i] = lp_create_tex_tile_cache(screen);
 
 
    /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
       llvmpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
-      llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->tex_cache[i];
+      llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->vertex_tex_cache[i];
       llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
    }
 
@@ -260,7 +274,7 @@ llvmpipe_create( struct pipe_screen *screen )
       goto fail;
 
    draw_texture_samplers(llvmpipe->draw,
-                         PIPE_MAX_SAMPLERS,
+                         PIPE_MAX_VERTEX_SAMPLERS,
                          (struct tgsi_sampler **)
                             llvmpipe->tgsi.vert_samplers_list);
 
