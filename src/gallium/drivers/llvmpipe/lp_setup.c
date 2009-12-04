@@ -540,6 +540,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
 
       stored = get_data_aligned(&setup->data, 4 * 16, 16);
 
+      /* smear each blend color component across 16 ubyte elements */
       for (i = 0; i < 4; ++i) {
          uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
          for (j = 0; j < 16; ++j)
