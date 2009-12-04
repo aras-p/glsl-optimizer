@@ -543,7 +543,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
       for (i = 0; i < 4; ++i) {
          uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
          for (j = 0; j < 16; ++j)
-            stored[i*4 + j] = c;
+            stored[i*16 + j] = c;
       }
 
       setup->blend_color.stored = stored;
