@@ -1143,7 +1143,14 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        test "x$enable_egl" = xyes && GALLIUM_STATE_TRACKERS_DIRS=egl
+        GALLIUM_STATE_TRACKERS_DIRS="dri"
+        if test "x$enable_egl" = xyes; then
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+        fi
+        # Have only tested st/xorg on 1.6.0 servers
+        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
+            HAVE_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
+            HAVE_XORG="no")
         ;;
     esac
     ;;
