@@ -3554,7 +3554,10 @@ GLboolean assemble_FRC(r700_AssemblerBase *pAsm)
  
 GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
 {  
-    checkop2(pAsm);
+    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
+
+    if(pILInst->Opcode == OPCODE_KIL)
+        checkop1(pAsm);
 
     pAsm->D.dst.opcode = opcode;  
     //pAsm->D.dst.math = 1;
@@ -3573,16 +3576,23 @@ GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode)
     setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_0);
     noneg_PVSSRC(&(pAsm->S[0].src));
 
-    if( GL_FALSE == assemble_src(pAsm, 0, 1) )
+    if(pILInst->Opcode == OPCODE_KIL_NV)
     {
-        return GL_FALSE;
+        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[1].src.reg = 0;
+        setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_1);
+        neg_PVSSRC(&(pAsm->S[1].src));
+    }
+    else
+    {
+        if( GL_FALSE == assemble_src(pAsm, 0, 1) )
+        {
+            return GL_FALSE;
+        }
+
     }
 
-    /*if( GL_FALSE == assemble_src(pAsm, 1, -1) )
-    {
-        return GL_FALSE;
-    }
-    */ 
     if ( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
