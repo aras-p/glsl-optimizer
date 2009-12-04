@@ -241,12 +241,12 @@ rasterize_bins( struct setup_context *setup,
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    lp_rast_begin( rast,
-                  setup->fb.cbuf, 
-                  setup->fb.zsbuf,
-                  setup->fb.cbuf != NULL,
-                  setup->fb.zsbuf != NULL && write_depth,
-                  setup->fb.width,
-                  setup->fb.height );
+                  setup->fb->cbufs[0], 
+                  setup->fb->zsbuf,
+                  setup->fb->cbufs[0] != NULL,
+                  setup->fb->zsbuf != NULL && write_depth,
+                  setup->fb->width,
+                  setup->fb->height );
                        
    /* loop over tile bins, rasterize each */
    for (i = 0; i < setup->tiles_x; i++) {
@@ -271,7 +271,7 @@ begin_binning( struct setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   if (setup->fb.cbuf) {
+   if (setup->fb->cbufs[0]) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          bin_everywhere( setup, 
                          lp_rast_clear_color, 
@@ -280,7 +280,7 @@ begin_binning( struct setup_context *setup )
          bin_everywhere( setup, lp_rast_load_color, lp_rast_arg_null() );
    }
 
-   if (setup->fb.zsbuf) {
+   if (setup->fb->zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          bin_everywhere( setup, 
                          lp_rast_clear_zstencil, 
@@ -355,13 +355,13 @@ lp_setup_flush( struct setup_context *setup,
 
 void
 lp_setup_bind_framebuffer( struct setup_context *setup,
-                           struct pipe_surface *color,
-                           struct pipe_surface *zstencil )
+                           const struct pipe_framebuffer_state *fb )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    set_state( setup, SETUP_FLUSHED );
 
+#if 0
    pipe_surface_reference( &setup->fb.cbuf, color );
    pipe_surface_reference( &setup->fb.zsbuf, zstencil );
 
@@ -386,9 +386,14 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
       setup->fb.height = MIN2(setup->fb.cbuf->height,
                               setup->fb.zsbuf->height);
    }
-
    setup->tiles_x = align(setup->fb.width, TILE_SIZE) / TILE_SIZE;
    setup->tiles_y = align(setup->fb.height, TILE_SIZE) / TILE_SIZE;
+#else
+   setup->fb = fb;
+   setup->tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
+   setup->tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
+#endif
+
 }
 
 
@@ -411,7 +416,7 @@ lp_setup_clear( struct setup_context *setup,
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
       setup->clear.zstencil.clear_zstencil = 
-         util_pack_z_stencil(setup->fb.zsbuf->format, 
+         util_pack_z_stencil(setup->fb->zsbuf->format, 
                              depth,
                              stencil);
    }

@@ -79,12 +79,7 @@ struct setup_context {
    boolean ccw_is_frontface;
    unsigned cullmode;
 
-   struct {
-      struct pipe_surface *cbuf;
-      struct pipe_surface *zsbuf;
-      unsigned width;
-      unsigned height;
-   } fb;
+   const struct pipe_framebuffer_state *fb;
 
    struct {
       unsigned flags;

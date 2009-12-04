@@ -53,7 +53,7 @@ struct pipe_surface;
 struct pipe_buffer;
 struct pipe_blend_color;
 struct pipe_screen;
-struct setup_context;
+struct pipe_framebuffer_state;
 struct lp_fragment_shader;
 struct lp_jit_context;
 
@@ -90,8 +90,7 @@ lp_setup_flush( struct setup_context *setup,
 
 void
 lp_setup_bind_framebuffer( struct setup_context *setup,
-                           struct pipe_surface *color,
-                           struct pipe_surface *zstencil );
+                           const struct pipe_framebuffer_state *fb );
 
 void 
 lp_setup_set_triangle_state( struct setup_context *setup,
