@@ -117,7 +117,6 @@ static void perspective_coef( struct lp_rast_triangle *tri,
    float dadx = (da12 * tri->dy31 - tri->dy12 * da31) * tri->oneoverarea;
    float dady = (da31 * tri->dx12 - tri->dx31 * da12) * tri->oneoverarea;
 
-
    tri->inputs.dadx[slot][i] = dadx;
    tri->inputs.dady[slot][i] = dady;
    tri->inputs.a0[slot][i] = (a1 -
@@ -191,7 +190,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
     */
    setup_fragcoord_coef(tri, 0, v1, v2, v3);
 
-   /* setup interpolation for all the remaining attrbutes:
+   /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
       unsigned vert_attr = setup->fs.input[slot].src_index;
