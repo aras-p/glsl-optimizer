@@ -257,7 +257,7 @@ crtc_load_cursor_argb_kms(xf86CrtcPtr crtc, CARD32 * image)
     return;
 
 err_bo_destroy:
-    kms_bo_destroy(crtcp->cursor_bo);
+    kms_bo_destroy(&crtcp->cursor_bo);
 }
 #endif
 
@@ -305,7 +305,7 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
 	pipe_texture_reference(&crtcp->cursor_tex, NULL);
 #ifdef HAVE_LIBKMS
     if (crtcp->cursor_bo)
-	kms_bo_destroy(crtcp->cursor_bo);
+	kms_bo_destroy(&crtcp->cursor_bo);
 #endif
 
     xfree(crtcp);

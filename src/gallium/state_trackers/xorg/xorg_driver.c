@@ -260,8 +260,7 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 
 #ifdef HAVE_LIBKMS
     if (ms->kms)
-	kms_destroy(ms->kms);
-    ms->kms = NULL;
+	kms_destroy(&ms->kms);
 #endif
 
     return TRUE;
@@ -898,8 +897,7 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
 	return TRUE;
 
     kms_bo_unmap(ms->root_bo);
-    kms_bo_destroy(ms->root_bo);
-    ms->root_bo = NULL;
+    kms_bo_destroy(&ms->root_bo);
     return TRUE;
 }
 
@@ -945,7 +943,7 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     return TRUE;
 
 err_destroy:
-    kms_bo_destroy(bo);
+    kms_bo_destroy(&bo);
     return FALSE;
 }
 
