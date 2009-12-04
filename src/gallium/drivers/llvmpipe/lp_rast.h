@@ -64,14 +64,12 @@ struct lp_rast_shader_inputs {
    const struct lp_rast_state *state;
 
    /* Attribute interpolation:
-    *
     * First coefficient is position.
-    *
-    * FIXME: reduce memory waste!
+    * These pointers point into the bin data buffer.
     */
-   float a0[1 + PIPE_MAX_SHADER_INPUTS][4];
-   float dadx[1 + PIPE_MAX_SHADER_INPUTS][4];
-   float dady[1 + PIPE_MAX_SHADER_INPUTS][4];
+   float (*a0)[4];
+   float (*dadx)[4];
+   float (*dady)[4];
 };
 
 

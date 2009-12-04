@@ -177,6 +177,16 @@ static void setup_tri_coefficients( struct setup_context *setup,
 {
    unsigned slot;
 
+   /* Allocate space for the a0, dadx and dady arrays
+    */
+   {
+      unsigned bytes;
+      bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
+      tri->inputs.a0   = get_data_aligned( &setup->data, bytes, 16 );
+      tri->inputs.dadx = get_data_aligned( &setup->data, bytes, 16 );
+      tri->inputs.dady = get_data_aligned( &setup->data, bytes, 16 );
+   }
+
    /* The internal position input is in slot zero:
     */
    setup_fragcoord_coef(tri, 0, v1, v2, v3);
