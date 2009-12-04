@@ -346,7 +346,8 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 	return TRUE;
 
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
-        vmw_video_port_cleanup(pScrn, &video->port[i]);
+	/* make sure the port is stoped as well */
+	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
     }
 
     /* XXX: I'm sure this function is missing code for turning off Xv */
