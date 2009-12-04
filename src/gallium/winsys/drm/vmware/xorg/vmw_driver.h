@@ -66,6 +66,8 @@ Bool vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
 
 Bool vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
 
+void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+
 
 /***********************************************************************
  * vmw_ioctl.c

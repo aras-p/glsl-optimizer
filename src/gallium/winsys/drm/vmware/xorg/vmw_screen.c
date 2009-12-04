@@ -124,6 +124,26 @@ vmw_screen_close(ScrnInfoPtr pScrn)
     return TRUE;
 }
 
+static Bool
+vmw_screen_enter_vt(ScrnInfoPtr pScrn)
+{
+    debug_printf("%s: enter\n", __func__);
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_leave_vt(ScrnInfoPtr pScrn)
+{
+    struct vmw_driver *vmw = vmw_driver(pScrn);
+
+    debug_printf("%s: enter\n", __func__);
+
+    vmw_video_stop_all(pScrn, vmw);
+
+    return TRUE;
+}
+
 /*
  * Functions for setting up hooks into the xorg state tracker
  */
@@ -142,6 +162,8 @@ vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
     ms = modesettingPTR(pScrn);
     ms->winsys_screen_init = vmw_screen_init;
     ms->winsys_screen_close = vmw_screen_close;
+    ms->winsys_enter_vt = vmw_screen_enter_vt;
+    ms->winsys_leave_vt = vmw_screen_leave_vt;
 
     return TRUE;
 }

@@ -361,6 +361,38 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 /*
  *-----------------------------------------------------------------------------
  *
+ * vmw_video_stop_all --
+ *
+ *    Stop all video streams from playing.
+ *
+ * Results:
+ *    None.
+ *
+ * Side effects:
+ *    All buffers are freed.
+ *
+ *-----------------------------------------------------------------------------
+ */
+
+void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+{
+    struct vmw_video_private *video = vmw->video_priv;
+    int i;
+
+    debug_printf("%s: enter\n", __func__);
+
+    if (!video)
+	return;
+
+    for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
+	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
+    }
+}
+
+
+/*
+ *-----------------------------------------------------------------------------
+ *
  * vmw_video_init_adaptor --
  *
  *    Initializes a XF86VideoAdaptor structure with the capabilities and
