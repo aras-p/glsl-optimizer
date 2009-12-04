@@ -1206,12 +1206,14 @@ dnl
 dnl Gallium Intel configuration
 dnl
 AC_ARG_ENABLE([gallium-intel],
-    [AS_HELP_STRING([--disable-gallium-intel],
-        [build gallium intel @<:@default=enabled@:>@])],
+    [AS_HELP_STRING([--enable-gallium-intel],
+        [build gallium intel @<:@default=disabled@:>@])],
     [enable_gallium_intel="$enableval"],
-    [enable_gallium_intel=yes])
+    [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+elif test "x$enable_gallium_intel" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
 fi
 
