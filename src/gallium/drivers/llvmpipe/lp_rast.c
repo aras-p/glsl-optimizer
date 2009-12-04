@@ -27,13 +27,13 @@
 
 #include "util/u_memory.h"
 
+#include "lp_debug.h"
 #include "lp_state.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 #include "lp_bld_debug.h"
 
-#define RAST_DEBUG debug_printf
 
 struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
 {
@@ -65,7 +65,7 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
 {
    struct pipe_screen *screen = rast->screen;
 
-   RAST_DEBUG("%s %dx%d\n", __FUNCTION__, width, height);
+   LP_DBG(DEBUG_RAST, "%s %dx%d\n", __FUNCTION__, width, height);
 
    pipe_surface_reference(&rast->state.cbuf, cbuf);
    pipe_surface_reference(&rast->state.zsbuf, zsbuf);
@@ -152,7 +152,7 @@ void lp_rast_start_tile( struct lp_rasterizer *rast,
 			 unsigned x,
 			 unsigned y )
 {
-   RAST_DEBUG("%s %d,%d\n", __FUNCTION__, x, y);
+   LP_DBG(DEBUG_RAST, "%s %d,%d\n", __FUNCTION__, x, y);
 
    rast->x = x;
    rast->y = y;
@@ -168,7 +168,7 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
 {
    const uint8_t *clear_color = arg.clear_color;
    
-   RAST_DEBUG("%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
+   LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
               clear_color[0],
               clear_color[1],
               clear_color[2],
@@ -198,7 +198,7 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
 {
    unsigned i, j;
    
-   RAST_DEBUG("%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
+   LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
    for (i = 0; i < TILE_SIZE; i++)
       for (j = 0; j < TILE_SIZE; j++)
@@ -213,7 +213,7 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
 void lp_rast_load_color( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg)
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    /* call u_tile func to load colors from surface */
 }
@@ -226,7 +226,7 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 void lp_rast_load_zstencil( struct lp_rasterizer *rast,
                             const union lp_rast_cmd_arg arg )
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    /* call u_tile func to load depth (and stencil?) from surface */
 }
@@ -237,7 +237,7 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
 {
    const struct lp_rast_state *state = arg.set_state;
 
-   RAST_DEBUG("%s %p\n", __FUNCTION__, (void *) state);
+   LP_DBG(DEBUG_RAST, "%s %p\n", __FUNCTION__, (void *) state);
 
    /* just set the current state pointer for this rasterizer */
    rast->current_state = state;
@@ -260,7 +260,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
    const unsigned mask = ~0;
    unsigned x, y;
 
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    /* Use the existing preference for 4x4 (four quads) shading:
     */
@@ -398,7 +398,7 @@ static void lp_rast_store_color( struct lp_rasterizer *rast )
    if (y + h > rast->height)
       h -= y + h - rast->height;
 
-   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    lp_tile_write_4ub(rast->cbuf_transfer->format,
                      rast->tile.color,
@@ -440,7 +440,7 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
    if (y + h > rast->height)
       h -= y + h - rast->height;
 
-   RAST_DEBUG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    assert(rast->zsbuf_transfer->format == PIPE_FORMAT_Z32_UNORM);
    lp_tile_write_z32(rast->tile.depth,
@@ -455,7 +455,7 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
  */
 void lp_rast_end_tile( struct lp_rasterizer *rast )
 {
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    if (rast->state.write_color)
       lp_rast_store_color(rast);

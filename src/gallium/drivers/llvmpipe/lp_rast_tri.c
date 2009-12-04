@@ -30,6 +30,7 @@
  */
 
 #include "util/u_math.h"
+#include "lp_debug.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 
@@ -185,7 +186,7 @@ lp_rast_triangle( struct lp_rasterizer *rast,
 
    assert(Elements(rast->blocks) == (TILE_SIZE * TILE_SIZE) / (4*4));
 
-   debug_printf("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_RAST, "lp_rast_triangle\n");
 
    rast->nr_blocks = 0;
 

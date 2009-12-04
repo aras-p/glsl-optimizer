@@ -37,12 +37,12 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "lp_debug.h"
 #include "lp_state.h"
 #include "lp_buffer.h"
 #include "lp_texture.h"
 #include "lp_setup_context.h"
 
-#define SETUP_DEBUG debug_printf
 
 static void set_state( struct setup_context *, unsigned );
 
@@ -82,7 +82,7 @@ static void reset_context( struct setup_context *setup )
 {
    unsigned i, j;
 
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    /* Reset derived state */
    setup->constants.stored_size = 0;
@@ -238,7 +238,7 @@ rasterize_bins( struct setup_context *setup,
    struct lp_rasterizer *rast = setup->rast;
    unsigned i, j;
 
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    lp_rast_begin( rast,
                   setup->fb.cbuf, 
@@ -261,7 +261,7 @@ rasterize_bins( struct setup_context *setup,
 
    reset_context( setup );
 
-   SETUP_DEBUG("%s done \n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
 }
 
 
@@ -269,7 +269,7 @@ rasterize_bins( struct setup_context *setup,
 static void
 begin_binning( struct setup_context *setup )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
@@ -289,7 +289,7 @@ begin_binning( struct setup_context *setup )
          bin_everywhere( setup, lp_rast_load_zstencil, lp_rast_arg_null() );
    }
 
-   SETUP_DEBUG("%s done\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);
 }
 
 
@@ -301,7 +301,7 @@ begin_binning( struct setup_context *setup )
 static void
 execute_clears( struct setup_context *setup )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    begin_binning( setup );
    rasterize_bins( setup, TRUE );
@@ -317,7 +317,7 @@ set_state( struct setup_context *setup,
    if (old_state == new_state)
       return;
        
-   SETUP_DEBUG("%s old %d new %d\n", __FUNCTION__, old_state, new_state);
+   LP_DBG(DEBUG_SETUP, "%s old %d new %d\n", __FUNCTION__, old_state, new_state);
 
    switch (new_state) {
    case SETUP_ACTIVE:
@@ -347,7 +347,7 @@ void
 lp_setup_flush( struct setup_context *setup,
                 unsigned flags )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    set_state( setup, SETUP_FLUSHED );
 }
@@ -358,7 +358,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
                            struct pipe_surface *color,
                            struct pipe_surface *zstencil )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    set_state( setup, SETUP_FLUSHED );
 
@@ -401,7 +401,7 @@ lp_setup_clear( struct setup_context *setup,
 {
    unsigned i;
 
-   SETUP_DEBUG("%s state %d\n", __FUNCTION__, setup->state);
+   LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
 
 
    if (flags & PIPE_CLEAR_COLOR) {
@@ -451,7 +451,7 @@ lp_setup_set_triangle_state( struct setup_context *setup,
                              unsigned cull_mode,
                              boolean ccw_is_frontface)
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;
@@ -465,7 +465,7 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         const struct lp_shader_input *input,
                         unsigned nr )
 {
-   SETUP_DEBUG("%s %p %u\n", __FUNCTION__, (void *) input, nr);
+   LP_DBG(DEBUG_SETUP, "%s %p %u\n", __FUNCTION__, (void *) input, nr);
 
    memcpy( setup->fs.input, input, nr * sizeof input[0] );
    setup->fs.nr_inputs = nr;
@@ -475,7 +475,7 @@ void
 lp_setup_set_fs( struct setup_context *setup,
                  struct lp_fragment_shader *fs )
 {
-   SETUP_DEBUG("%s %p\n", __FUNCTION__, (void *) fs);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) fs);
    /* FIXME: reference count */
 
    setup->fs.current.jit_function = fs ? fs->current->jit_function : NULL;
@@ -486,7 +486,7 @@ void
 lp_setup_set_fs_constants(struct setup_context *setup,
                           struct pipe_buffer *buffer)
 {
-   SETUP_DEBUG("%s %p\n", __FUNCTION__, (void *) buffer);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) buffer);
 
    pipe_buffer_reference(&setup->constants.current, buffer);
 
@@ -498,7 +498,7 @@ void
 lp_setup_set_alpha_ref_value( struct setup_context *setup,
                               float alpha_ref_value )
 {
-   SETUP_DEBUG("%s %f\n", __FUNCTION__, alpha_ref_value);
+   LP_DBG(DEBUG_SETUP, "%s %f\n", __FUNCTION__, alpha_ref_value);
 
    if(setup->fs.current.jit_context.alpha_ref_value != alpha_ref_value) {
       setup->fs.current.jit_context.alpha_ref_value = alpha_ref_value;
@@ -510,7 +510,7 @@ void
 lp_setup_set_blend_color( struct setup_context *setup,
                           const struct pipe_blend_color *blend_color )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    assert(blend_color);
 
@@ -527,7 +527,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
    struct pipe_texture *dummy;
    unsigned i;
 
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
 
    assert(num <= PIPE_MAX_SAMPLERS);
@@ -569,7 +569,7 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 static INLINE void
 lp_setup_update_shader_state( struct setup_context *setup )
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    assert(setup->fs.current.jit_function);
 
@@ -685,7 +685,7 @@ lp_setup_tri(struct setup_context *setup,
              const float (*v1)[4],
              const float (*v2)[4])
 {
-   SETUP_DEBUG("%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    lp_setup_update_shader_state(setup);
    setup->triangle( setup, v0, v1, v2 );
