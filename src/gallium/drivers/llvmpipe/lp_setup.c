@@ -207,29 +207,6 @@ bin_state_command( struct setup_context *setup,
 }
 
 
-/** Rasterize commands for a single bin */
-static void
-rasterize_bin( struct lp_rasterizer *rast,
-               const struct cmd_bin *bin,
-               int x, int y)
-{
-   const struct cmd_block_list *commands = &bin->commands;
-   struct cmd_block *block;
-   unsigned k;
-
-   lp_rast_start_tile( rast, x, y );
-
-   /* simply execute each of the commands in the block list */
-   for (block = commands->head; block; block = block->next) {
-      for (k = 0; k < block->count; k++) {
-         block->cmd[k]( rast, block->arg[k] );
-      }
-   }
-
-   lp_rast_end_tile( rast );
-}
-
-
 /** Rasterize all tile's bins */
 static void
 rasterize_bins( struct setup_context *setup,
@@ -251,9 +228,9 @@ rasterize_bins( struct setup_context *setup,
    /* loop over tile bins, rasterize each */
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
-         rasterize_bin( rast, &setup->tile[i][j], 
-                        i * TILE_SIZE,
-                        j * TILE_SIZE );
+         lp_rasterize_bin( rast, &setup->tile[i][j], 
+                           i * TILE_SIZE,
+                           j * TILE_SIZE );
       }
    }
 

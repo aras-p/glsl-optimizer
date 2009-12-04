@@ -33,6 +33,7 @@
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 #include "lp_bld_debug.h"
+#include "lp_bin.h"
 
 
 struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
@@ -148,9 +149,9 @@ void lp_rast_end( struct lp_rasterizer *rast )
  * \param x  window X position of the tile, in pixels
  * \param y  window Y position of the tile, in pixels
  */
-void lp_rast_start_tile( struct lp_rasterizer *rast,
-			 unsigned x,
-			 unsigned y )
+static void
+lp_rast_start_tile( struct lp_rasterizer *rast,
+                    unsigned x, unsigned y )
 {
    LP_DBG(DEBUG_RAST, "%s %d,%d\n", __FUNCTION__, x, y);
 
@@ -453,7 +454,8 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast )
 /**
  * Write the rasterizer's tiles to the framebuffer.
  */
-void lp_rast_end_tile( struct lp_rasterizer *rast )
+static void
+lp_rast_end_tile( struct lp_rasterizer *rast )
 {
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
@@ -463,6 +465,33 @@ void lp_rast_end_tile( struct lp_rasterizer *rast )
    if (rast->state.write_zstencil)
       lp_rast_store_zstencil(rast);
 }
+
+
+/**
+ * Rasterize commands for a single bin.
+ * Must be called between lp_rast_begin() and lp_rast_end().
+ */
+void
+lp_rasterize_bin( struct lp_rasterizer *rast,
+                  const struct cmd_bin *bin,
+                  int x, int y)
+{
+   const struct cmd_block_list *commands = &bin->commands;
+   struct cmd_block *block;
+   unsigned k;
+
+   lp_rast_start_tile( rast, x, y );
+
+   /* simply execute each of the commands in the block list */
+   for (block = commands->head; block; block = block->next) {
+      for (k = 0; k < block->count; k++) {
+         block->cmd[k]( rast, block->arg[k] );
+      }
+   }
+
+   lp_rast_end_tile( rast );
+}
+
 
 
 /* Shutdown:

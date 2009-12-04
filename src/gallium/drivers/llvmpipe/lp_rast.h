@@ -47,6 +47,7 @@
  * individual function calls like this.
  */
 struct lp_rasterizer;
+struct cmd_bin;
 struct pipe_screen;
 
 #define FIXED_ORDER 4
@@ -141,14 +142,13 @@ boolean lp_rast_begin( struct lp_rasterizer *rast,
                        unsigned width,
                        unsigned height );
 
+void
+lp_rasterize_bin( struct lp_rasterizer *rast,
+                  const struct cmd_bin *bin,
+                  int x, int y);
+
+
 void lp_rast_end( struct lp_rasterizer * );
-
-/* Begining of each tile:
- */
-void lp_rast_start_tile( struct lp_rasterizer *,
-			 unsigned x,
-			 unsigned y );
-
 
 
 union lp_rast_cmd_arg {
@@ -222,12 +222,6 @@ void lp_rast_triangle( struct lp_rasterizer *,
 
 void lp_rast_shade_tile( struct lp_rasterizer *,
                          const union lp_rast_cmd_arg );
-
-
-/* End of tile:
- */
-
-void lp_rast_end_tile( struct lp_rasterizer *rast );
 
 
 #endif
