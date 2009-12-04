@@ -376,6 +376,11 @@ do_triangle_ccw(struct setup_context *setup,
       }
    }
 
+   /*
+    * All fields of 'tri' are now set.  The remaining code here is
+    * concerned with binning.
+    */
+
    /* Convert to tile coordinates:
     */
    minx = tri->minx / TILE_SIZE;
