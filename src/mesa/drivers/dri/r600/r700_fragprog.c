@@ -93,7 +93,7 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 			pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i] = pAsm->number_used_registers++;
 		}
 	}
-
+ 
 /* order has been taken care of */ 
 #if 1
     for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
@@ -149,6 +149,11 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
         pAsm->number_used_registers += unMaxVarying + 1;
     }
 #endif
+    unBit = 1 << FRAG_ATTRIB_FACE;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+        pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE] = pAsm->number_used_registers++;
+    }
 
 /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
@@ -451,6 +456,20 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
     }
 
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_FACE))
+    {
+        ui += 1;
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ALL_BITS_bit);
+        SETfield(r700->SPI_PS_IN_CONTROL_1.u32All, pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE], FRONT_FACE_ADDR_shift, FRONT_FACE_ADDR_mask);
+    }
+    else
+    {
+        CLEARbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+    }
+
+
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
@@ -533,6 +552,19 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 			     SEMANTIC_shift, SEMANTIC_mask);
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    }
+    }
+
+    unBit = 1 << FRAG_ATTRIB_FACE;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
