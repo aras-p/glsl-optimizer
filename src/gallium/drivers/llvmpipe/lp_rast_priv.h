@@ -86,6 +86,8 @@ struct lp_rasterizer
       unsigned y;
       unsigned mask;
    } blocks[256];
+
+   const struct lp_rast_state *current_state;
 };
 
 

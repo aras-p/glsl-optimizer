@@ -237,9 +237,10 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
 {
    const struct lp_rast_state *state = arg.set_state;
 
-   RAST_DEBUG("%s\n", __FUNCTION__);
+   RAST_DEBUG("%s %p\n", __FUNCTION__, (void *) state);
 
-   /* XXX to do */
+   /* just set the current state pointer for this rasterizer */
+   rast->current_state = state;
 }
 
 
@@ -279,13 +280,15 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned mask)
 {
 #if 1
-   const struct lp_rast_state *state = inputs->state;
+   const struct lp_rast_state *state = rast->current_state;
    struct lp_rast_tile *tile = &rast->tile;
    void *color;
    void *depth;
    uint32_t ALIGN16_ATTRIB masks[2][2][2][2];
    unsigned ix, iy;
    int block_offset;
+
+   assert(state);
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);

@@ -155,6 +155,34 @@ static void reset_context( struct setup_context *setup )
 }
 
 
+/**
+ * Return last command in the bin
+ */
+static lp_rast_cmd
+lp_get_last_command( const struct cmd_bin *bin )
+{
+   const struct cmd_block *tail = bin->commands.tail;
+   const unsigned i = tail->count;
+   if (i > 0)
+      return tail->cmd[i - 1];
+   else
+      return NULL;
+}
+
+
+/**
+ * Replace the arg of the last command in the bin.
+ */
+static void
+lp_replace_last_command_arg( struct cmd_bin *bin,
+                             const union lp_rast_cmd_arg arg )
+{
+   struct cmd_block *tail = bin->commands.tail;
+   const unsigned i = tail->count;
+   assert(i > 0);
+   tail->arg[i - 1] = arg;
+}
+
 
 
 /* Add a command to all active bins.
@@ -167,6 +195,32 @@ static void bin_everywhere( struct setup_context *setup,
    for (i = 0; i < setup->tiles_x; i++)
       for (j = 0; j < setup->tiles_y; j++)
          bin_command( &setup->tile[i][j], cmd, arg );
+}
+
+
+/**
+ * Put a state-change command into all bins.
+ * If we find that the last command in a bin was also a state-change
+ * command, we can simply replace that one with the new one.
+ */
+static void
+bin_state_command( struct setup_context *setup,
+                   lp_rast_cmd cmd,
+                   const union lp_rast_cmd_arg arg )
+{
+   unsigned i, j;
+   for (i = 0; i < setup->tiles_x; i++) {
+      for (j = 0; j < setup->tiles_y; j++) {
+         struct cmd_bin *bin = &setup->tile[i][j];
+         lp_rast_cmd last_cmd = lp_get_last_command(bin);
+         if (last_cmd == cmd) {
+            lp_replace_last_command_arg(bin, arg);
+         }
+         else {
+            bin_command( bin, cmd, arg );
+         }
+      }
+   }
 }
 
 
@@ -233,31 +287,6 @@ static void
 begin_binning( struct setup_context *setup )
 {
    SETUP_DEBUG("%s\n", __FUNCTION__);
-
-   if (!setup->fb.cbuf && !setup->fb.zsbuf) {
-      setup->fb.width = 0;
-      setup->fb.height = 0;
-   }
-   else if (!setup->fb.zsbuf) {
-      setup->fb.width = setup->fb.cbuf->width;
-      setup->fb.height = setup->fb.cbuf->height;
-   }
-   else if (!setup->fb.cbuf) {
-      setup->fb.width = setup->fb.zsbuf->width;
-      setup->fb.height = setup->fb.zsbuf->height;
-   }
-   else {
-      /* XXX: not sure what we're really supposed to do for
-       * mis-matched color & depth buffer sizes.
-       */
-      setup->fb.width = MIN2(setup->fb.cbuf->width,
-                             setup->fb.zsbuf->width);
-      setup->fb.height = MIN2(setup->fb.cbuf->height,
-                              setup->fb.zsbuf->height);
-   }
-
-   setup->tiles_x = align(setup->fb.width, TILE_SIZE) / TILE_SIZE;
-   setup->tiles_y = align(setup->fb.height, TILE_SIZE) / TILE_SIZE;
 
    if (setup->fb.cbuf) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
@@ -352,7 +381,33 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    pipe_surface_reference( &setup->fb.cbuf, color );
    pipe_surface_reference( &setup->fb.zsbuf, zstencil );
+
+   if (!setup->fb.cbuf && !setup->fb.zsbuf) {
+      setup->fb.width = 0;
+      setup->fb.height = 0;
+   }
+   else if (!setup->fb.zsbuf) {
+      setup->fb.width = setup->fb.cbuf->width;
+      setup->fb.height = setup->fb.cbuf->height;
+   }
+   else if (!setup->fb.cbuf) {
+      setup->fb.width = setup->fb.zsbuf->width;
+      setup->fb.height = setup->fb.zsbuf->height;
+   }
+   else {
+      /* XXX: not sure what we're really supposed to do for
+       * mis-matched color & depth buffer sizes.
+       */
+      setup->fb.width = MIN2(setup->fb.cbuf->width,
+                             setup->fb.zsbuf->width);
+      setup->fb.height = MIN2(setup->fb.cbuf->height,
+                              setup->fb.zsbuf->height);
+   }
+
+   setup->tiles_x = align(setup->fb.width, TILE_SIZE) / TILE_SIZE;
+   setup->tiles_y = align(setup->fb.height, TILE_SIZE) / TILE_SIZE;
 }
+
 
 void
 lp_setup_clear( struct setup_context *setup,
@@ -608,12 +663,10 @@ lp_setup_update_shader_state( struct setup_context *setup )
                    sizeof setup->fs.current);
             setup->fs.stored = stored;
 
-#if 0
             /* put the state-set command into all bins */
-            bin_everywhere( setup, 
-                            lp_rast_set_state, 
-                            *setup->fs.stored );
-#endif
+            bin_state_command( setup, 
+                               lp_rast_set_state, 
+                               lp_rast_arg_state(setup->fs.stored) );
          }
       }
    }

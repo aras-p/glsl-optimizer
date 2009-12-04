@@ -295,8 +295,6 @@ do_triangle_ccw(struct setup_context *setup,
       return;
    }
 
-   tri->inputs.state = setup->fs.stored;
-
    /* 
     */
    tri->oneoverarea = ((float)FIXED_ONE) / (float)area;

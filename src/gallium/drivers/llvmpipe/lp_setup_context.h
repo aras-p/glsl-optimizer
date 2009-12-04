@@ -76,10 +76,14 @@ struct cmd_block_list {
  */
 struct cmd_bin {
    struct cmd_block_list commands;
-   struct lp_rast_state *curr_state;
 };
    
 
+/**
+ * This stores bulk data which is shared by all bins.
+ * Examples include triangle data and state data.  The commands in
+ * the per-tile bins will point to chunks of data in this structure.
+ */
 struct data_block_list {
    struct data_block *head;
    struct data_block *tail;
@@ -239,7 +243,6 @@ static INLINE void bin_command( struct cmd_bin *bin,
       tail->count++;
    }
 }
-
 
 
 #endif

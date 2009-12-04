@@ -55,18 +55,13 @@ struct lp_rast_state {
 
 };
 
-/* Coefficients necessary to run the shader at a given location:
+
+/**
+ * Coefficients necessary to run the shader at a given location.
+ * First coefficient is position.
+ * These pointers point into the bin data buffer.
  */
 struct lp_rast_shader_inputs {
-
-   /* Current rasterizer state:
-    */
-   const struct lp_rast_state *state;
-
-   /* Attribute interpolation:
-    * First coefficient is position.
-    * These pointers point into the bin data buffer.
-    */
    float (*a0)[4];
    float (*dadx)[4];
    float (*dady)[4];
