@@ -77,11 +77,19 @@ struct data_block_list {
 };
    
 
+/**
+ * Point/line/triangle setup context.
+ * Note: "stored" below indicates data which is stored in the bins,
+ * not arbitrary malloc'd memory.
+ */
 struct setup_context {
 
    struct lp_rasterizer *rast;
 
-   /* When there are multiple threads, will want to double-buffer the
+   /**
+    * Per-bin data goes into the 'tile' cmd_block_lists.
+    * Shared bin data goes into the 'data' buffer.
+    * When there are multiple threads, will want to double-buffer the
     * bin arrays:
     */
    struct cmd_block_list tile[TILES_X][TILES_Y];
@@ -121,6 +129,7 @@ struct setup_context {
       struct lp_rast_state current;  /**< currently set state */
    } fs;
 
+   /** fragment shader constants */
    struct {
       struct pipe_buffer *current;
       unsigned stored_size;
@@ -132,7 +141,7 @@ struct setup_context {
       uint8_t *stored;
    } blend_color;
 
-   unsigned dirty;
+   unsigned dirty;   /**< bitmask of LP_SETUP_x bits */
 
    void (*point)( struct setup_context *,
                   const float (*v0)[4]);
@@ -163,7 +172,6 @@ void lp_setup_new_cmd_block( struct cmd_block_list *list );
 static INLINE void *get_data( struct data_block_list *list,
                               unsigned size)
 {
-
    if (list->tail->used + size > DATA_BLOCK_SIZE) {
       lp_setup_new_data_block( list );
    }
@@ -189,7 +197,6 @@ static INLINE void *get_data_aligned( struct data_block_list *list,
                                       unsigned size,
                                       unsigned alignment )
 {
-
    if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
       lp_setup_new_data_block( list );
    }
