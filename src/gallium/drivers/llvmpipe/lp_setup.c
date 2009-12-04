@@ -111,7 +111,7 @@ static void reset_context( struct setup_context *setup )
     */
    for (i = 0; i < setup->tiles_x; i++) {
       for (j = 0; j < setup->tiles_y; j++) {
-         struct cmd_block_list *list = &setup->tile[i][j];
+         struct cmd_block_list *list = &setup->tile[i][j].commands;
          struct cmd_block *block;
          struct cmd_block *tmp;
          
@@ -173,9 +173,10 @@ static void bin_everywhere( struct setup_context *setup,
 /** Rasterize commands for a single bin */
 static void
 rasterize_bin( struct lp_rasterizer *rast,
-               struct cmd_block_list *commands,
+               const struct cmd_bin *bin,
                int x, int y)
 {
+   const struct cmd_block_list *commands = &bin->commands;
    struct cmd_block *block;
    unsigned k;
 
@@ -666,7 +667,7 @@ lp_setup_destroy( struct setup_context *setup )
 
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++)
-         FREE(setup->tile[i][j].head);
+         FREE(setup->tile[i][j].commands.head);
 
    FREE(setup->data.head);
 
@@ -691,8 +692,8 @@ lp_setup_create( struct pipe_screen *screen )
 
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++)
-         setup->tile[i][j].head = 
-            setup->tile[i][j].tail = CALLOC_STRUCT(cmd_block);
+         setup->tile[i][j].commands.head = 
+            setup->tile[i][j].commands.tail = CALLOC_STRUCT(cmd_block);
 
    setup->data.head =
       setup->data.tail = CALLOC_STRUCT(data_block);

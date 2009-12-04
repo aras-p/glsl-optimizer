@@ -71,11 +71,20 @@ struct cmd_block_list {
    struct cmd_block *tail;
 };
 
+/**
+ * For each screen tile we have one of these bins.
+ */
+struct cmd_bin {
+   struct cmd_block_list commands;
+   struct lp_rast_state *curr_state;
+};
+   
+
 struct data_block_list {
    struct data_block *head;
    struct data_block *tail;
 };
-   
+
 
 /**
  * Point/line/triangle setup context.
@@ -87,12 +96,12 @@ struct setup_context {
    struct lp_rasterizer *rast;
 
    /**
-    * Per-bin data goes into the 'tile' cmd_block_lists.
+    * Per-bin data goes into the 'tile' bins.
     * Shared bin data goes into the 'data' buffer.
     * When there are multiple threads, will want to double-buffer the
     * bin arrays:
     */
-   struct cmd_block_list tile[TILES_X][TILES_Y];
+   struct cmd_bin tile[TILES_X][TILES_Y];
    struct data_block_list data;
 
    /* size of framebuffer, in tiles */
@@ -212,10 +221,12 @@ static INLINE void *get_data_aligned( struct data_block_list *list,
 
 /* Add a command to a given bin.
  */
-static INLINE void bin_command( struct cmd_block_list *list,
+static INLINE void bin_command( struct cmd_bin *bin,
                                 lp_rast_cmd cmd,
                                 union lp_rast_cmd_arg arg )
 {
+   struct cmd_block_list *list = &bin->commands;
+
    if (list->tail->count == CMD_BLOCK_MAX) {
       lp_setup_new_cmd_block( list );
    }
