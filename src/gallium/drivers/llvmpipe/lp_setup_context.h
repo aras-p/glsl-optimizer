@@ -25,6 +25,13 @@
  *
  **************************************************************************/
 
+
+/**
+ * The setup code is concerned with point/line/triangle setup and
+ * putting commands/data into the bins.
+ */
+
+
 #ifndef LP_SETUP_CONTEXT_H
 #define LP_SETUP_CONTEXT_H
 

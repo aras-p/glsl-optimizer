@@ -25,11 +25,21 @@
  *
  **************************************************************************/
 
+/**
+ * The rast code is concerned with rasterization of command bins.
+ * Each screen tile has a bin associated with it.  To render the
+ * scene we iterate over the tile bins and execute the commands
+ * in each bin.
+ * We'll do that with multiple threads...
+ */
+
+
 #ifndef LP_RAST_H
 #define LP_RAST_H
 
 #include "pipe/p_compiler.h"
 #include "lp_jit.h"
+
 
 /* Initially create and program a single rasterizer directly.  Later
  * will want multiple of these, one or two per core.  At that stage
@@ -57,7 +67,6 @@ struct lp_rast_state {
     * the tile color/z/stencil data somehow:
     */
    lp_jit_frag_func jit_function;
-
 };
 
 
@@ -121,6 +130,9 @@ struct lp_rast_triangle {
 
 struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen );
 
+void lp_rast_destroy( struct lp_rasterizer * );
+
+
 boolean lp_rast_begin( struct lp_rasterizer *rast,
                        struct pipe_surface *cbuf,
                        struct pipe_surface *zsbuf,
@@ -146,6 +158,7 @@ union lp_rast_cmd_arg {
    uint8_t clear_color[4];
    unsigned clear_zstencil;
 };
+
 
 /* Cast wrappers.  Hopefully these compile to noops!
  */
@@ -183,10 +196,12 @@ lp_rast_arg_null( void )
 
 
 
-
-
-/* Binnable Commands:
+/**
+ * Binnable Commands.
+ * These get put into bins by the setup code and are called when
+ * the bins are executed.
  */
+
 void lp_rast_clear_color( struct lp_rasterizer *, 
                           const union lp_rast_cmd_arg );
 
@@ -213,10 +228,6 @@ void lp_rast_shade_tile( struct lp_rasterizer *,
  */
 
 void lp_rast_end_tile( struct lp_rasterizer *rast );
-
-/* Shutdown:
- */
-void lp_rast_destroy( struct lp_rasterizer * );
 
 
 #endif
