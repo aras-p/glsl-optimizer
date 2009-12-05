@@ -309,6 +309,9 @@ static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
             (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
             (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
     }
+
+    scissor->empty_area = state->minx >= state->maxx ||
+                          state->miny >= state->maxy;
 }
 
 static void

@@ -70,6 +70,12 @@ uint32_t r300_translate_primitive(unsigned prim)
     }
 }
 
+static boolean r300_nothing_to_draw(struct r300_context *r300)
+{
+    return r300->rs_state->rs.scissor &&
+           r300->scissor_state->scissor.empty_area;
+}
+
 static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned mode,
                                   unsigned count)
@@ -173,8 +179,13 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
         return FALSE;
     }
 
+
     if (count > 65535) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     r300_update_derived_state(r300);
@@ -218,6 +229,10 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         return FALSE;
     }
 
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
+    }
+
     r300_update_derived_state(r300);
 
     if (!r300_setup_vertex_buffers(r300)) {
@@ -249,6 +264,10 @@ boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
@@ -290,6 +309,10 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
