@@ -589,7 +589,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 
 void radeonCleanupContext(radeonContextPtr radeon);
 GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
-void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
+void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
+				 GLboolean front_only);
 GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			    __DRIdrawablePrivate * driDrawPriv,
 			    __DRIdrawablePrivate * driReadPriv);

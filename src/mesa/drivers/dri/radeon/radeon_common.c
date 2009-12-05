@@ -840,7 +840,7 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
        */
 		if (!was_front_buffer_rendering && radeon->is_front_buffer_rendering) {
 			radeon_update_renderbuffers(radeon->dri.context,
-				radeon->dri.context->driDrawablePriv);
+				radeon->dri.context->driDrawablePriv, GL_FALSE);
       }
 	}
 
@@ -857,7 +857,7 @@ void radeonReadBuffer( GLcontext *ctx, GLenum mode )
 
 		if (!was_front_buffer_reading && rmesa->is_front_buffer_reading) {
 			radeon_update_renderbuffers(rmesa->dri.context,
-						    rmesa->dri.context->driReadablePriv);
+						    rmesa->dri.context->driReadablePriv, GL_FALSE);
 	 	}
 	}
 	/* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
@@ -908,9 +908,9 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 		if (radeon->is_front_buffer_rendering) {
 			ctx->Driver.Flush(ctx);
 		}
-		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv, GL_FALSE);
 		if (driContext->driDrawablePriv != driContext->driReadablePriv)
-			radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+			radeon_update_renderbuffers(driContext, driContext->driReadablePriv, GL_FALSE);
 	}
 
 	old_viewport = ctx->Driver.Viewport;
