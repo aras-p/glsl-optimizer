@@ -86,7 +86,8 @@ static ImageRec *ImageOpen(char *fileName)
         exit(1);
     }
     if ((image->file = fopen(fileName, "rb")) == NULL) {
-	return NULL;
+        free(image);
+        return NULL;
     }
 
     fread(image, 1, 12, image->file);
