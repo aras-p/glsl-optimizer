@@ -563,21 +563,26 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_scissor_state(struct r300_context* r300,
-                             struct r300_scissor_state* scissor)
+static void r300_emit_scissor_regs(struct r300_context* r300,
+                                   struct r300_scissor_regs* scissor)
 {
     CS_LOCALS(r300);
 
     BEGIN_CS(3);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    if (r300->rs_state->rs.scissor) {
-       OUT_CS(scissor->scissor_top_left);
-       OUT_CS(scissor->scissor_bottom_right);
-    } else {
-       OUT_CS(scissor->no_scissor_top_left);
-       OUT_CS(scissor->no_scissor_bottom_right);
-    }
+    OUT_CS(scissor->top_left);
+    OUT_CS(scissor->bottom_right);
     END_CS;
+}
+
+void r300_emit_scissor_state(struct r300_context* r300,
+                             struct r300_scissor_state* scissor)
+{
+    if (r300->rs_state->rs.scissor) {
+        r300_emit_scissor_regs(r300, &scissor->scissor);
+    } else {
+        r300_emit_scissor_regs(r300, &scissor->framebuffer);
+    }
 }
 
 void r300_emit_texture(struct r300_context* r300,

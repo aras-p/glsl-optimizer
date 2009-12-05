@@ -289,11 +289,34 @@ static void r300_set_edgeflags(struct pipe_context* pipe,
     /* XXX and even worse, I have no idea WTF the bitfield is */
 }
 
+static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
+                                  struct r300_scissor_regs *scissor,
+                                  boolean is_r500)
+{
+    if (is_r500) {
+        scissor->top_left =
+            (state->minx << R300_SCISSORS_X_SHIFT) |
+            (state->miny << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
+            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        scissor->top_left =
+            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_scissor_state scissor;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -301,26 +324,17 @@ static void
 
     r300->framebuffer_state = *state;
 
-    r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
+    scissor.minx = scissor.miny = 0;
+    scissor.maxx = state->width;
+    scissor.maxy = state->height;
+    r300_set_scissor_regs(&scissor, &r300->scissor_state->framebuffer,
+                          r300_screen(r300->context.screen)->caps->is_r500);
 
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
-        r300->scissor_state->no_scissor_top_left =
-            (0 << R300_SCISSORS_X_SHIFT) |
-            (0 << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->no_scissor_bottom_right =
-            ((state->width - 1) << R300_SCISSORS_X_SHIFT) |
-            ((state->height - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        r300->scissor_state->no_scissor_top_left =
-            ((0 + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((0 + 1440) << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->no_scissor_bottom_right =
-            (((state->width - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((state->height - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || !r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
     }
-
-    r300->dirty_state |= R300_NEW_SCISSOR;
+    r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
 }
 
 /* Create fragment shader state. */
@@ -642,24 +656,13 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
-        r300->scissor_state->scissor_top_left =
-            (state->minx << R300_SCISSORS_X_SHIFT) |
-            (state->miny << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
-            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        r300->scissor_state->scissor_top_left =
-            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
-    }
+    r300_set_scissor_regs(state, &r300->scissor_state->scissor,
+                          r300_screen(r300->context.screen)->caps->is_r500);
 
-    r300->dirty_state |= R300_NEW_SCISSOR;
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
+    }
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
