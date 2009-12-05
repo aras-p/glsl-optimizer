@@ -71,14 +71,14 @@ class decl_dumper_t(decl_visitor.decl_visitor_t):
             print '   switch(%s) {' % ("(*cmd)" + self._instance,)
             for name, value in self.decl.values:
                 print '   case %s:' % (name,)
-                print '      debug_printf("\\t\\t%s = %s\\n");' % (self._instance, name)
+                print '      _debug_printf("\\t\\t%s = %s\\n");' % (self._instance, name)
                 print '      break;'
             print '   default:'
-            print '      debug_printf("\\t\\t%s = %%i\\n", %s);' % (self._instance, "(*cmd)" + self._instance)
+            print '      _debug_printf("\\t\\t%s = %%i\\n", %s);' % (self._instance, "(*cmd)" + self._instance)
             print '      break;'
             print '   }'
         else:
-            print '   debug_printf("\\t\\t%s = %%i\\n", %s);' % (self._instance, "(*cmd)" + self._instance)
+            print '   _debug_printf("\\t\\t%s = %%i\\n", %s);' % (self._instance, "(*cmd)" + self._instance)
 
 
 def dump_decl(instance, decl):
@@ -154,7 +154,7 @@ class type_dumper_t(type_visitor.type_visitor_t):
         dump_decl(self.instance, decl)
 
     def print_instance(self, format):
-        print '   debug_printf("\\t\\t%s = %s\\n", %s);' % (self.instance, format, "(*cmd)" + self.instance)
+        print '   _debug_printf("\\t\\t%s = %s\\n", %s);' % (self.instance, format, "(*cmd)" + self.instance)
 
 
 def dump_type(instance, type_):
@@ -230,7 +230,7 @@ svga_dump_commands(const void *commands, uint32_t size)
     indexes = 'ijklmn'
     for id, header, body, footer in cmds:
         print '         case %s:' % id
-        print '            debug_printf("\\t%s\\n");' % id
+        print '            _debug_printf("\\t%s\\n");' % id
         print '            {'
         print '               const %s *cmd = (const %s *)body;' % (header, header)
         if len(body):
@@ -255,25 +255,25 @@ svga_dump_commands(const void *commands, uint32_t size)
         print '            }'
         print '            break;'
     print '         default:'
-    print '            debug_printf("\\t0x%08x\\n", cmd_id);'
+    print '            _debug_printf("\\t0x%08x\\n", cmd_id);'
     print '            break;'
     print '         }'
             
     print r'''
          while(body + sizeof(uint32_t) <= next) {
-            debug_printf("\t\t0x%08x\n", *(const uint32_t *)body);
+            _debug_printf("\t\t0x%08x\n", *(const uint32_t *)body);
             body += sizeof(uint32_t);
          }
          while(body + sizeof(uint32_t) <= next)
-            debug_printf("\t\t0x%02x\n", *body++);
+            _debug_printf("\t\t0x%02x\n", *body++);
       }
       else if(cmd_id == SVGA_CMD_FENCE) {
-         debug_printf("\tSVGA_CMD_FENCE\n");
-         debug_printf("\t\t0x%08x\n", ((const uint32_t *)next)[1]);
+         _debug_printf("\tSVGA_CMD_FENCE\n");
+         _debug_printf("\t\t0x%08x\n", ((const uint32_t *)next)[1]);
          next += 2*sizeof(uint32_t);
       }
       else {
-         debug_printf("\t0x%08x\n", cmd_id);
+         _debug_printf("\t0x%08x\n", cmd_id);
          next += sizeof(uint32_t);
       }
    }
