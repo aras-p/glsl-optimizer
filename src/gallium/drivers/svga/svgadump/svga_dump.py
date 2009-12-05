@@ -202,6 +202,7 @@ cmds = [
     ('SVGA_3D_CMD_END_QUERY', 'SVGA3dCmdEndQuery', (), None),
     ('SVGA_3D_CMD_WAIT_FOR_QUERY', 'SVGA3dCmdWaitForQuery', (), None),
     #('SVGA_3D_CMD_PRESENT_READBACK', None, (), None),
+    ('SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN', 'SVGA3dCmdBlitSurfaceToScreen', (), 'SVGASignedRect'),
 ]
 
 def dump_cmds():
@@ -294,18 +295,18 @@ def main():
     print '#include "svga_shader_dump.h"'
     print '#include "svga3d_reg.h"'
     print
-    print '#include "pipe/p_debug.h"'
+    print '#include "util/u_debug.h"'
     print '#include "svga_dump.h"'
     print
 
     config = parser.config_t(
-        include_paths = ['include'],
+        include_paths = ['../../../include', '../include'],
         compiler = 'gcc',
     )
 
     headers = [
-        'include/svga_types.h', 
-        'include/svga3d_reg.h', 
+        'svga_types.h', 
+        'svga3d_reg.h', 
     ]
 
     decls = parser.parse(headers, config, parser.COMPILATION_MODE.ALL_AT_ONCE)

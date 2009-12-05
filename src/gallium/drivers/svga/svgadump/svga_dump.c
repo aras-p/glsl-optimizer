@@ -1416,6 +1416,32 @@ dump_SVGA3dCmdDefineSurface(const SVGA3dCmdDefineSurface *cmd)
    _debug_printf("\t\t.face[5].numMipLevels = %u\n", (*cmd).face[5].numMipLevels);
 }
 
+static void
+dump_SVGASignedRect(const SVGASignedRect *cmd)
+{
+   _debug_printf("\t\t.left = %i\n", (*cmd).left);
+   _debug_printf("\t\t.top = %i\n", (*cmd).top);
+   _debug_printf("\t\t.right = %i\n", (*cmd).right);
+   _debug_printf("\t\t.bottom = %i\n", (*cmd).bottom);
+}
+
+static void
+dump_SVGA3dCmdBlitSurfaceToScreen(const SVGA3dCmdBlitSurfaceToScreen *cmd)
+{
+   _debug_printf("\t\t.srcImage.sid = %u\n", (*cmd).srcImage.sid);
+   _debug_printf("\t\t.srcImage.face = %u\n", (*cmd).srcImage.face);
+   _debug_printf("\t\t.srcImage.mipmap = %u\n", (*cmd).srcImage.mipmap);
+   _debug_printf("\t\t.srcRect.left = %i\n", (*cmd).srcRect.left);
+   _debug_printf("\t\t.srcRect.top = %i\n", (*cmd).srcRect.top);
+   _debug_printf("\t\t.srcRect.right = %i\n", (*cmd).srcRect.right);
+   _debug_printf("\t\t.srcRect.bottom = %i\n", (*cmd).srcRect.bottom);
+   _debug_printf("\t\t.destScreenId = %u\n", (*cmd).destScreenId);
+   _debug_printf("\t\t.destRect.left = %i\n", (*cmd).destRect.left);
+   _debug_printf("\t\t.destRect.top = %i\n", (*cmd).destRect.top);
+   _debug_printf("\t\t.destRect.right = %i\n", (*cmd).destRect.right);
+   _debug_printf("\t\t.destRect.bottom = %i\n", (*cmd).destRect.bottom);
+}
+
 
 void            
 svga_dump_commands(const void *commands, uint32_t size)
@@ -1708,6 +1734,18 @@ svga_dump_commands(const void *commands, uint32_t size)
                const SVGA3dCmdWaitForQuery *cmd = (const SVGA3dCmdWaitForQuery *)body;
                dump_SVGA3dCmdWaitForQuery(cmd);
                body = (const uint8_t *)&cmd[1];
+            }
+            break;
+         case SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN:
+            _debug_printf("\tSVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN\n");
+            {
+               const SVGA3dCmdBlitSurfaceToScreen *cmd = (const SVGA3dCmdBlitSurfaceToScreen *)body;
+               dump_SVGA3dCmdBlitSurfaceToScreen(cmd);
+               body = (const uint8_t *)&cmd[1];
+               while(body + sizeof(SVGASignedRect) <= next) {
+                  dump_SVGASignedRect((const SVGASignedRect *)body);
+                  body += sizeof(SVGASignedRect);
+               }
             }
             break;
          default:
