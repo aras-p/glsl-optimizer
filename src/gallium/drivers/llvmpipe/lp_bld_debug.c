@@ -115,7 +115,8 @@ lp_disassemble(const void* func)
          }
       }
 
-      if (ud_insn_off(&ud_obj) >= max_jmp_pc && ud_obj.mnemonic == UD_Iret)
+      if ((ud_insn_off(&ud_obj) >= max_jmp_pc && ud_obj.mnemonic == UD_Iret) ||
+           ud_obj.mnemonic == UD_Iinvalid)
          break;
    }
    debug_printf("\n");
