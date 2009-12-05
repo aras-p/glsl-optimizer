@@ -98,6 +98,7 @@ SOURCES = \
 	texdown \
 	texfilt.c \
 	texgenmix.c \
+	texleak.c \
 	texline.c \
 	texobj.c \
 	texobjshare.c \
