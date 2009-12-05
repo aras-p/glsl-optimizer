@@ -101,6 +101,8 @@ struct r300_sampler_state {
 struct r300_scissor_state {
     uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
     uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+    uint32_t no_scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
+    uint32_t no_scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
 struct r300_texture_state {

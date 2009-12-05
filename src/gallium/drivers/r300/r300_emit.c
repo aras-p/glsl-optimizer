@@ -570,8 +570,13 @@ void r300_emit_scissor_state(struct r300_context* r300,
 
     BEGIN_CS(3);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS(scissor->scissor_top_left);
-    OUT_CS(scissor->scissor_bottom_right);
+    if (r300->rs_state->rs.scissor) {
+       OUT_CS(scissor->scissor_top_left);
+       OUT_CS(scissor->scissor_bottom_right);
+    } else {
+       OUT_CS(scissor->no_scissor_top_left);
+       OUT_CS(scissor->no_scissor_bottom_right);
+    }
     END_CS;
 }
 

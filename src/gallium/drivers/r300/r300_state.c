@@ -302,6 +302,25 @@ static void
     r300->framebuffer_state = *state;
 
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
+
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        r300->scissor_state->no_scissor_top_left =
+            (0 << R300_SCISSORS_X_SHIFT) |
+            (0 << R300_SCISSORS_Y_SHIFT);
+        r300->scissor_state->no_scissor_bottom_right =
+            ((state->width - 1) << R300_SCISSORS_X_SHIFT) |
+            ((state->height - 1) << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        r300->scissor_state->no_scissor_top_left =
+            ((0 + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((0 + 1440) << R300_SCISSORS_Y_SHIFT);
+        r300->scissor_state->no_scissor_bottom_right =
+            (((state->width - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((state->height - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
+
+    r300->dirty_state |= R300_NEW_SCISSOR;
 }
 
 /* Create fragment shader state. */
