@@ -225,6 +225,7 @@ read_rgb_texture(char *name, int *width, int *height)
       if (gbuf) free(gbuf);
       if (bbuf) free(bbuf);
       if (abuf) free(abuf);
+      ImageClose(image); 
       return NULL;
     }
     ptr = base;
