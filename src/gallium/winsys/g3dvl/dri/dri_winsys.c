@@ -238,27 +238,29 @@ vl_dri_flush_frontbuffer(struct pipe_screen *screen,
 
    vl_dri_update_drawables_locked(vl_dri_ctx);
 
-   src_bbox.x1 = 0;
-   src_bbox.x2 = vl_dri_ctx->drawable->w;
-   src_bbox.y1 = 0;
-   src_bbox.y2 = vl_dri_ctx->drawable->h;
+   if (vl_dri_ctx->drawable->cliprects) {
+      src_bbox.x1 = 0;
+      src_bbox.x2 = vl_dri_ctx->drawable->w;
+      src_bbox.y1 = 0;
+      src_bbox.y2 = vl_dri_ctx->drawable->h;
 
 #if 0
-   if (vl_dri_scrn->_api_hooks->present_locked)
-      vl_dri_scrn->api_hooks->present_locked(pipe, surf,
-                                             vl_dri_ctx->drawable->cliprects,
-                                             vl_dri_ctx->drawable->num_cliprects,
-                                             vl_dri_ctx->drawable->x, vl_dri_drawable->y,
-                                             &bbox, NULL /*fence*/);
-   else
+      if (vl_dri_scrn->_api_hooks->present_locked)
+         vl_dri_scrn->api_hooks->present_locked(pipe, surf,
+                                                vl_dri_ctx->drawable->cliprects,
+                                                vl_dri_ctx->drawable->num_cliprects,
+                                                vl_dri_ctx->drawable->x, vl_dri_drawable->y,
+                                                &bbox, NULL /*fence*/);
+      else
 #endif
-   if (vl_dri_scrn->api_hooks->front_srf_locked) {
-      struct pipe_surface *front = vl_dri_scrn->api_hooks->front_srf_locked(screen);
+      if (vl_dri_scrn->api_hooks->front_srf_locked) {
+         struct pipe_surface *front = vl_dri_scrn->api_hooks->front_srf_locked(screen);
 
-      if (front)
-         vl_clip_copy(vl_dri_ctx, front, surf, &src_bbox);
+         if (front)
+            vl_clip_copy(vl_dri_ctx, front, surf, &src_bbox);
 
-      //st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
+         //st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
+      }
    }
 
    vl_dri_ctx->lost_lock = save_lost_lock;
