@@ -462,6 +462,31 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     r300->dirty_state |= R300_NEW_RS_BLOCK;
 }
 
+static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when a new depth or stencil value
+     * can be written and changed. */
+
+    /* We might optionally check for [Z func: never] and inspect the stencil
+     * state in a similar fashion, but it's not terribly important. */
+    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE)
+           ||
+           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK)
+           ||
+           ((dsa->z_buffer_control & R500_STENCIL_REFMASK_FRONT_BACK) &&
+            (dsa->stencil_ref_bf & R300_STENCILWRITEMASK_MASK));
+}
+
+static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when alpha testing can kill
+     * a fragment. */
+    uint32_t af = dsa->alpha_function;
+
+    return (af & R300_FG_ALPHA_FUNC_ENABLE) &&
+           (af & R300_FG_ALPHA_FUNC_ALWAYS) != R300_FG_ALPHA_FUNC_ALWAYS;
+}
+
 static void r300_update_ztop(struct r300_context* r300)
 {
     r300->ztop_state.z_buffer_top = R300_ZTOP_ENABLE;
@@ -484,13 +509,13 @@ static void r300_update_ztop(struct r300_context* r300)
      *
      * ~C.
      */
-    if (r300->dsa_state->alpha_function) {
+
+    if (r300->query_current ||
+        r300_fragment_shader_writes_depth(r300->fs)) {
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->fs->info.uses_kill) {
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300_fragment_shader_writes_depth(r300->fs)) {
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->query_current) {
+    } else if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
+               (r300->fs->info.uses_kill ||
+                r300_dsa_alpha_test_enabled(r300->dsa_state))) {
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
     }
 }
