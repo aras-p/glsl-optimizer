@@ -77,10 +77,10 @@ lp_disassemble(const void* func)
    while (ud_disassemble(&ud_obj)) {
 
 #ifdef PIPE_ARCH_X86
-      debug_printf("%08lx: ", (unsigned long)ud_insn_off(&ud_obj));
+      debug_printf("0x%08lx:\t", (unsigned long)ud_insn_off(&ud_obj));
 #endif
 #ifdef PIPE_ARCH_X86_64
-      debug_printf("%016llx: ", (unsigned long long)ud_insn_off(&ud_obj));
+      debug_printf("0x%016llx:\t", (unsigned long long)ud_insn_off(&ud_obj));
 #endif
 
 #if 0
@@ -119,6 +119,12 @@ lp_disassemble(const void* func)
            ud_obj.mnemonic == UD_Iinvalid)
          break;
    }
+
+#if 0
+   /* Print GDB command, useful to verify udis86 output */
+   debug_printf("disassemble %p %p\n", func, (void*)(uintptr_t)ud_obj.pc);
+#endif
+
    debug_printf("\n");
 #else
    (void)func;
