@@ -74,6 +74,9 @@ static const int step_offsets[6][2] = {
    {-1, 1}
 };
 
+/* XXX really need twice the size if x is already pot?
+   Otherwise just use util_next_power_of_two?
+*/
 static unsigned
 power_of_two(unsigned x)
 {
@@ -82,13 +85,6 @@ power_of_two(unsigned x)
       value = value << 1;
    return value;
 }
-
-static unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
 
 /*
  * More advanced helper funcs
@@ -101,16 +97,7 @@ i915_miptree_set_level_info(struct i915_texture *tex,
                              unsigned nr_images,
                              unsigned w, unsigned h, unsigned d)
 {
-   struct pipe_texture *pt = &tex->base;
-
    assert(level < PIPE_MAX_TEXTURE_LEVELS);
-
-   pt->width[level] = w;
-   pt->height[level] = h;
-   pt->depth[level] = d;
-   
-   pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w);
-   pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h);
 
    tex->nr_images[level] = nr_images;
 
@@ -142,7 +129,7 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
 
    assert(img < tex->nr_images[level]);
 
-   tex->image_offset[level][img] = y * tex->stride + x * tex->base.block.size;
+   tex->image_offset[level][img] = y * tex->stride + x * pf_get_blocksize(tex->base.format);
 
    /*
    printf("%s level %d img %d pos %d,%d image_offset %x\n",
@@ -164,28 +151,28 @@ i915_scanout_layout(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
 
-   if (pt->last_level > 0 || pt->block.size != 4)
+   if (pt->last_level > 0 || pf_get_blocksize(pt->format) != 4)
       return FALSE;
 
    i915_miptree_set_level_info(tex, 0, 1,
-                               tex->base.width[0],
-                               tex->base.height[0],
+                               pt->width0,
+                               pt->height0,
                                1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-   if (tex->base.width[0] >= 240) {
-      tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
-      tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
+   if (pt->width0 >= 240) {
+      tex->stride = power_of_two(pf_get_stride(pt->format, pt->width0));
+      tex->total_nblocksy = align(pf_get_nblocksy(pt->format, pt->height0), 8);
       tex->hw_tiled = INTEL_TILE_X;
-   } else if (tex->base.width[0] == 64 && tex->base.height[0] == 64) {
-      tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
-      tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
+   } else if (pt->width0 == 64 && pt->height0 == 64) {
+      tex->stride = power_of_two(pf_get_stride(pt->format, pt->width0));
+      tex->total_nblocksy = align(pf_get_nblocksy(pt->format, pt->height0), 8);
    } else {
       return FALSE;
    }
 
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-      tex->base.width[0], tex->base.height[0], pt->block.size,
+      pt->width0, pt->height0, pf_get_blocksize(pt->format),
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
 
    return TRUE;
@@ -199,25 +186,25 @@ i915_display_target_layout(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
 
-   if (pt->last_level > 0 || pt->block.size != 4)
+   if (pt->last_level > 0 || pf_get_blocksize(pt->format) != 4)
       return FALSE;
 
    /* fallback to normal textures for small textures */
-   if (tex->base.width[0] < 240)
+   if (pt->width0 < 240)
       return FALSE;
 
    i915_miptree_set_level_info(tex, 0, 1,
-                               tex->base.width[0],
-                               tex->base.height[0],
+                               pt->width0,
+                               pt->height0,
                                1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-   tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
-   tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
+   tex->stride = power_of_two(pf_get_stride(pt->format, pt->width0));
+   tex->total_nblocksy = align(pf_get_nblocksy(pt->format, pt->height0), 8);
    tex->hw_tiled = INTEL_TILE_X;
 
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-      tex->base.width[0], tex->base.height[0], pt->block.size,
+      pt->width0, pt->height0, pf_get_blocksize(pt->format),
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
 
    return TRUE;
@@ -228,36 +215,34 @@ i915_miptree_layout_2d(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
    unsigned level;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned nblocksx = pt->nblocksx[0];
-   unsigned nblocksy = pt->nblocksy[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned nblocksy = pf_get_nblocksy(pt->format, pt->width0);
 
    /* used for scanouts that need special layouts */
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+   if (pt->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
       if (i915_scanout_layout(tex))
          return;
 
    /* for shared buffers we use some very like scanout */
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+   if (pt->tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
       if (i915_display_target_layout(tex))
          return;
 
-   tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
+   tex->stride = align(pf_get_stride(pt->format, pt->width0), 4);
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       i915_miptree_set_level_info(tex, level, 1, width, height, 1);
       i915_miptree_set_image_offset(tex, level, 0, 0, tex->total_nblocksy);
 
-      nblocksy = round_up(MAX2(2, nblocksy), 2);
+      nblocksy = align(MAX2(2, nblocksy), 2);
 
       tex->total_nblocksy += nblocksy;
 
-      width = minify(width);
-      height = minify(height);
-      nblocksx = pf_get_nblocksx(&pt->block, width);
-      nblocksy = pf_get_nblocksy(&pt->block, height);
+      width = u_minify(width, 1);
+      height = u_minify(height, 1);
+      nblocksy = pf_get_nblocksy(pt->format, height);
    }
 }
 
@@ -267,16 +252,15 @@ i915_miptree_layout_3d(struct i915_texture *tex)
    struct pipe_texture *pt = &tex->base;
    unsigned level;
 
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned depth = pt->depth[0];
-   unsigned nblocksx = pt->nblocksx[0];
-   unsigned nblocksy = pt->nblocksy[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned depth = pt->depth0;
+   unsigned nblocksy = pf_get_nblocksy(pt->format, pt->height0);
    unsigned stack_nblocksy = 0;
 
    /* Calculate the size of a single slice. 
     */
-   tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
+   tex->stride = align(pf_get_stride(pt->format, pt->width0), 4);
 
    /* XXX: hardware expects/requires 9 levels at minimum.
     */
@@ -285,44 +269,41 @@ i915_miptree_layout_3d(struct i915_texture *tex)
 
       stack_nblocksy += MAX2(2, nblocksy);
 
-      width = minify(width);
-      height = minify(height);
-      depth = minify(depth);
-      nblocksx = pf_get_nblocksx(&pt->block, width);
-      nblocksy = pf_get_nblocksy(&pt->block, height);
+      width = u_minify(width, 1);
+      height = u_minify(height, 1);
+      nblocksy = pf_get_nblocksy(pt->format, height);
    }
 
    /* Fixup depth image_offsets: 
     */
-   depth = pt->depth[0];
    for (level = 0; level <= pt->last_level; level++) {
       unsigned i;
       for (i = 0; i < depth; i++) 
          i915_miptree_set_image_offset(tex, level, i, 0, i * stack_nblocksy);
 
-      depth = minify(depth);
+      depth = u_minify(depth, 1);
    }
 
    /* Multiply slice size by texture depth for total size.  It's
     * remarkable how wasteful of memory the i915 texture layouts
     * are.  They are largely fixed in the i945.
     */
-   tex->total_nblocksy = stack_nblocksy * pt->depth[0];
+   tex->total_nblocksy = stack_nblocksy * pt->depth0;
 }
 
 static void
 i915_miptree_layout_cube(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
-   unsigned width = pt->width[0], height = pt->height[0];
-   const unsigned nblocks = pt->nblocksx[0];
+   unsigned width = pt->width0, height = pt->height0;
+   const unsigned nblocks = pf_get_nblocksx(pt->format, pt->width0);
    unsigned level;
    unsigned face;
 
    assert(width == height); /* cubemap images are square */
 
    /* double pitch for cube layouts */
-   tex->stride = round_up(nblocks * pt->block.size * 2, 4);
+   tex->stride = align(nblocks * pf_get_blocksize(pt->format) * 2, 4);
    tex->total_nblocksy = nblocks * 4;
 
    for (level = 0; level <= pt->last_level; level++) {
@@ -383,10 +364,10 @@ i945_miptree_layout_2d(struct i915_texture *tex)
    unsigned level;
    unsigned x = 0;
    unsigned y = 0;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned nblocksx = pt->nblocksx[0];
-   unsigned nblocksy = pt->nblocksy[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned nblocksx = pf_get_nblocksx(pt->format, pt->width0);
+   unsigned nblocksy = pf_get_nblocksy(pt->format, pt->height0);
 
    /* used for scanouts that need special layouts */
    if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
@@ -398,7 +379,7 @@ i945_miptree_layout_2d(struct i915_texture *tex)
       if (i915_display_target_layout(tex))
          return;
 
-   tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
+   tex->stride = align(pf_get_stride(pt->format, pt->width0), 4);
 
    /* May need to adjust pitch to accomodate the placement of
     * the 2nd mipmap level.  This occurs when the alignment
@@ -407,11 +388,11 @@ i945_miptree_layout_2d(struct i915_texture *tex)
     */
    if (pt->last_level > 0) {
       unsigned mip1_nblocksx 
-         = align(pf_get_nblocksx(&pt->block, minify(width)), align_x)
-         + pf_get_nblocksx(&pt->block, minify(minify(width)));
+         = align(pf_get_nblocksx(pt->format, u_minify(width, 1)), align_x)
+         + pf_get_nblocksx(pt->format, u_minify(width, 2));
 
       if (mip1_nblocksx > nblocksx)
-         tex->stride = mip1_nblocksx * pt->block.size;
+         tex->stride = mip1_nblocksx * pf_get_blocksize(pt->format);
    }
 
    /* Pitch must be a whole number of dwords
@@ -439,10 +420,10 @@ i945_miptree_layout_2d(struct i915_texture *tex)
          y += nblocksy;
       }
 
-      width  = minify(width);
-      height = minify(height);
-      nblocksx = pf_get_nblocksx(&pt->block, width);
-      nblocksy = pf_get_nblocksy(&pt->block, height);
+      width  = u_minify(width, 1);
+      height = u_minify(height, 1);
+      nblocksx = pf_get_nblocksx(pt->format, width);
+      nblocksy = pf_get_nblocksy(pt->format, height);
    }
 }
 
@@ -450,20 +431,19 @@ static void
 i945_miptree_layout_3d(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
-   unsigned depth = pt->depth[0];
-   unsigned nblocksx = pt->nblocksx[0];
-   unsigned nblocksy = pt->nblocksy[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
+   unsigned depth = pt->depth0;
+   unsigned nblocksy = pf_get_nblocksy(pt->format, pt->width0);
    unsigned pack_x_pitch, pack_x_nr;
    unsigned pack_y_pitch;
    unsigned level;
 
-   tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
+   tex->stride = align(pf_get_stride(pt->format, pt->width0), 4);
    tex->total_nblocksy = 0;
 
-   pack_y_pitch = MAX2(pt->nblocksy[0], 2);
-   pack_x_pitch = tex->stride / pt->block.size;
+   pack_y_pitch = MAX2(nblocksy, 2);
+   pack_x_pitch = tex->stride / pf_get_blocksize(pt->format);
    pack_x_nr = 1;
 
    for (level = 0; level <= pt->last_level; level++) {
@@ -488,18 +468,17 @@ i945_miptree_layout_3d(struct i915_texture *tex)
       if (pack_x_pitch > 4) {
          pack_x_pitch >>= 1;
          pack_x_nr <<= 1;
-         assert(pack_x_pitch * pack_x_nr * pt->block.size <= tex->stride);
+         assert(pack_x_pitch * pack_x_nr * pf_get_blocksize(pt->format) <= tex->stride);
       }
 
       if (pack_y_pitch > 2) {
          pack_y_pitch >>= 1;
       }
 
-      width = minify(width);
-      height = minify(height);
-      depth = minify(depth);
-      nblocksx = pf_get_nblocksx(&pt->block, width);
-      nblocksy = pf_get_nblocksy(&pt->block, height);
+      width = u_minify(width, 1);
+      height = u_minify(height, 1);
+      depth = u_minify(depth, 1);
+      nblocksy = pf_get_nblocksy(pt->format, height);
    }
 }
 
@@ -509,13 +488,13 @@ i945_miptree_layout_cube(struct i915_texture *tex)
    struct pipe_texture *pt = &tex->base;
    unsigned level;
 
-   const unsigned nblocks = pt->nblocksx[0];
+   const unsigned nblocks = pf_get_nblocksx(pt->format, pt->width0);
    unsigned face;
-   unsigned width = pt->width[0];
-   unsigned height = pt->height[0];
+   unsigned width = pt->width0;
+   unsigned height = pt->height0;
 
    /*
-   printf("%s %i, %i\n", __FUNCTION__, pt->width[0], pt->height[0]);
+   printf("%s %i, %i\n", __FUNCTION__, pt->width0, pt->height0);
    */
 
    assert(width == height); /* cubemap images are square */
@@ -529,9 +508,9 @@ i945_miptree_layout_cube(struct i915_texture *tex)
     * or the final row of 4x4, 2x2 and 1x1 faces below this.
     */
    if (nblocks > 32)
-      tex->stride = round_up(nblocks * pt->block.size * 2, 4);
+      tex->stride = align(nblocks * pf_get_blocksize(pt->format) * 2, 4);
    else
-      tex->stride = 14 * 8 * pt->block.size;
+      tex->stride = 14 * 8 * pf_get_blocksize(pt->format);
 
    tex->total_nblocksy = nblocks * 4;
 
@@ -651,9 +630,6 @@ i915_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
 
-   tex->base.nblocksx[0] = pf_get_nblocksx(&tex->base.block, tex->base.width[0]);
-   tex->base.nblocksy[0] = pf_get_nblocksy(&tex->base.block, tex->base.height[0]);
-   
    if (is->is_i945) {
       if (!i945_miptree_layout(tex))
          goto fail;
@@ -667,7 +643,7 @@ i915_texture_create(struct pipe_screen *screen,
 
 
    /* for scanouts and cursors, cursors arn't scanouts */
-   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY && templat->width[0] != 64)
+   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY && templat->width0 != 64)
       buf_usage = INTEL_NEW_SCANOUT;
    else
       buf_usage = INTEL_NEW_TEXTURE;
@@ -710,7 +686,7 @@ i915_texture_blanket(struct pipe_screen * screen,
    /* Only supports one type */
    if (base->target != PIPE_TEXTURE_2D ||
        base->last_level != 0 ||
-       base->depth[0] != 1) {
+       base->depth0 != 1) {
       return NULL;
    }
 
@@ -724,7 +700,7 @@ i915_texture_blanket(struct pipe_screen * screen,
 
    tex->stride = stride[0];
 
-   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
+   i915_miptree_set_level_info(tex, 0, 1, base->width0, base->height0, 1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
    pipe_buffer_reference(&tex->buffer, buffer);
@@ -788,8 +764,8 @@ i915_get_tex_surface(struct pipe_screen *screen,
       pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->width = pt->width[level];
-      ps->height = pt->height[level];
+      ps->width = u_minify(pt->width0, level);
+      ps->height = u_minify(pt->height0, level);
       ps->offset = offset;
       ps->usage = flags;
    }
@@ -835,14 +811,10 @@ i915_get_tex_transfer(struct pipe_screen *screen,
    trans = CALLOC_STRUCT(i915_transfer);
    if (trans) {
       pipe_texture_reference(&trans->base.texture, texture);
-      trans->base.format = trans->base.format;
       trans->base.x = x;
       trans->base.y = y;
       trans->base.width = w;
       trans->base.height = h;
-      trans->base.block = texture->block;
-      trans->base.nblocksx = texture->nblocksx[level];
-      trans->base.nblocksy = texture->nblocksy[level];
       trans->base.stride = tex->stride;
       trans->offset = offset;
       trans->base.usage = usage;
@@ -858,6 +830,7 @@ i915_transfer_map(struct pipe_screen *screen,
    struct intel_winsys *iws = i915_screen(tex->base.screen)->iws;
    char *map;
    boolean write = FALSE;
+   enum pipe_format format = tex->base.format;
 
    if (transfer->usage & PIPE_TRANSFER_WRITE)
       write = TRUE;
@@ -867,8 +840,8 @@ i915_transfer_map(struct pipe_screen *screen,
       return NULL;
 
    return map + i915_transfer(transfer)->offset +
-      transfer->y / transfer->block.height * transfer->stride +
-      transfer->x / transfer->block.width * transfer->block.size;
+      transfer->y / pf_get_blockheight(format) * transfer->stride +
+      transfer->x / pf_get_blockwidth(format) * pf_get_blocksize(format);
 }
 
 static void
@@ -919,7 +892,7 @@ i915_texture_blanket_intel(struct pipe_screen *screen,
    /* Only supports one type */
    if (base->target != PIPE_TEXTURE_2D ||
        base->last_level != 0 ||
-       base->depth[0] != 1) {
+       base->depth0 != 1) {
       return NULL;
    }
 
@@ -933,7 +906,7 @@ i915_texture_blanket_intel(struct pipe_screen *screen,
 
    tex->stride = stride;
 
-   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
+   i915_miptree_set_level_info(tex, 0, 1, base->width0, base->height0, 1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
    tex->buffer = buffer;

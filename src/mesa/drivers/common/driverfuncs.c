@@ -183,19 +183,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexParameter = NULL;
    driver->Viewport = NULL;
 
-   /* vertex arrays */
-   driver->VertexPointer = NULL;
-   driver->NormalPointer = NULL;
-   driver->ColorPointer = NULL;
-   driver->FogCoordPointer = NULL;
-   driver->IndexPointer = NULL;
-   driver->SecondaryColorPointer = NULL;
-   driver->TexCoordPointer = NULL;
-   driver->EdgeFlagPointer = NULL;
-   driver->VertexAttribPointer = NULL;
-   driver->LockArraysEXT = NULL;
-   driver->UnlockArraysEXT = NULL;
-
    /* state queries */
    driver->GetBooleanv = NULL;
    driver->GetDoublev = NULL;

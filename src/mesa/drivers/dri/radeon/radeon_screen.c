@@ -390,12 +390,14 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    screen->device_id = device_id;
    screen->chip_flags = 0;
    switch ( device_id ) {
+   case PCI_CHIP_RN50_515E:
+   case PCI_CHIP_RN50_5969:
+	return -1;
+
    case PCI_CHIP_RADEON_LY:
    case PCI_CHIP_RADEON_LZ:
    case PCI_CHIP_RADEON_QY:
    case PCI_CHIP_RADEON_QZ:
-   case PCI_CHIP_RN50_515E:
-   case PCI_CHIP_RN50_5969:
       screen->chip_family = CHIP_FAMILY_RV100;
       break;
 
@@ -1482,11 +1484,11 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     _mesa_initialize_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->redBits == 5)
-        rgbFormat = MESA_FORMAT_RGB565;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;
     else if (mesaVis->alphaBits == 0)
-        rgbFormat = MESA_FORMAT_XRGB8888;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_XRGB8888 : MESA_FORMAT_XRGB8888_REV;
     else
-        rgbFormat = MESA_FORMAT_ARGB8888;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB8888_REV;
 
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);

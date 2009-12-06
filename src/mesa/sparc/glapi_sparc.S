@@ -1272,6 +1272,7 @@ gl_dispatch_functions_start:
 	GL_STUB_ALIAS(glGetAttribLocation, glGetAttribLocationARB)
 	GL_STUB_ALIAS(glDrawBuffers, glDrawBuffersARB)
 	GL_STUB_ALIAS(glDrawBuffersATI, glDrawBuffersARB)
+	GL_STUB_ALIAS(glRenderbufferStorageMultisampleEXT, glRenderbufferStorageMultisample)
 	GL_STUB_ALIAS(glPointParameterf, glPointParameterfEXT)
 	GL_STUB_ALIAS(glPointParameterfARB, glPointParameterfEXT)
 	GL_STUB_ALIAS(glPointParameterfSGIS, glPointParameterfEXT)

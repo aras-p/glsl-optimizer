@@ -190,7 +190,7 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
-   const GLbitfield outputsWritten = program->Base.OutputsWritten;
+   const GLbitfield64 outputsWritten = program->Base.OutputsWritten;
    struct gl_program_machine *machine = &swrast->FragProgMachine;
    GLuint i;
 
@@ -201,7 +201,7 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
          if (_mesa_execute_program(ctx, &program->Base, machine)) {
 
             /* Store result color */
-            if (outputsWritten & (1 << FRAG_RESULT_COLOR)) {
+	    if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) {
                COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
                        machine->Outputs[FRAG_RESULT_COLOR]);
             }
@@ -212,7 +212,7 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
                 */
                GLuint buf;
                for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
-                  if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + buf))) {
+                  if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0 + buf)) {
                      COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0 + buf][i],
                              machine->Outputs[FRAG_RESULT_DATA0 + buf]);
                   }
@@ -220,7 +220,7 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
             }
 
             /* Store result depth/z */
-            if (outputsWritten & (1 << FRAG_RESULT_DEPTH)) {
+            if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
                const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPTH][2];
                if (depth <= 0.0)
                   span->array->z[i] = 0;
@@ -256,12 +256,12 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    run_program(ctx, span, 0, span->end);
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR)) {
+   if (program->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) {
       span->interpMask &= ~SPAN_RGBA;
       span->arrayMask |= SPAN_RGBA;
    }
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) {
+   if (program->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
       span->interpMask &= ~SPAN_Z;
       span->arrayMask |= SPAN_Z;
    }

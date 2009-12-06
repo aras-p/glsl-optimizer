@@ -143,6 +143,8 @@ enum {
 //  SQ_TEX_SAMPLER_MISC_0                                 = 0x0003d03c,
 	R7xx_TRUNCATE_COORD_bit                           = 1 << 9,
 	R7xx_DISABLE_CUBE_WRAP_bit                        = 1 << 10,
+//  DB_RENDER_CONTROL                                     = 0x00028d0c,
+	PERFECT_ZPASS_COUNTS_bit                          = 1 << 15,
 
 } ;
 

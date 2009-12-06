@@ -167,7 +167,7 @@ typedef unsigned char boolean;
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
 #define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
 #define ALIGN8_ATTRIB  __attribute__(( aligned( 8 ) ))
-#if __GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)) && !defined(PIPE_ARCH_X86_64)
 #define ALIGN_STACK __attribute__((force_align_arg_pointer))
 #else
 #define ALIGN_STACK

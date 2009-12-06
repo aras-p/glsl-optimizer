@@ -171,7 +171,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    if (vp) {
       GLuint i;
       for (i = 0; i < MAX_VARYING; i++) {
-         if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+	 if (vp->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_VAR0 + i)) {
             RENDERINPUTS_SET(tnl->render_inputs_bitset,
                              _TNL_ATTRIB_GENERIC(i));
          }

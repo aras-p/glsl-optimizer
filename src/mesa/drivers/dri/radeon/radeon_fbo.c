@@ -90,7 +90,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      rb->Format = MESA_FORMAT_RGB565;
+      rb->Format = _dri_texformat_rgb565;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 2;
       break;
@@ -99,7 +99,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->Format = MESA_FORMAT_ARGB8888;
+      rb->Format = _dri_texformat_argb8888;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
@@ -111,7 +111,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      rb->Format = MESA_FORMAT_ARGB8888;
+      rb->Format = _dri_texformat_argb8888;
       rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
@@ -261,14 +261,32 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawablePrivate *driDrawPriv)
 
     switch (format) {
         case MESA_FORMAT_RGB565:
+	    assert(_mesa_little_endian());
+	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGB;
+	    break;
+        case MESA_FORMAT_RGB565_REV:
+	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
         case MESA_FORMAT_XRGB8888:
+	    assert(_mesa_little_endian());
+	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGB;
+	    break;
+        case MESA_FORMAT_XRGB8888_REV:
+	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGB;
 	    break;
 	case MESA_FORMAT_ARGB8888:
+	    assert(_mesa_little_endian());
+	    rrb->base.DataType = GL_UNSIGNED_BYTE;
+            rrb->base._BaseFormat = GL_RGBA;
+	    break;
+	case MESA_FORMAT_ARGB8888_REV:
+	    assert(!_mesa_little_endian());
 	    rrb->base.DataType = GL_UNSIGNED_BYTE;
             rrb->base._BaseFormat = GL_RGBA;
 	    break;
@@ -359,21 +377,21 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 	gl_format texFormat;
 
 restart:
-	if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
+	if (texImage->TexFormat == _dri_texformat_argb8888) {
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGBA8 texture OK\n");
 	}
-	else if (texImage->TexFormat == MESA_FORMAT_RGB565) {
+	else if (texImage->TexFormat == _dri_texformat_rgb565) {
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to RGB5 texture OK\n");
 	}
-	else if (texImage->TexFormat == MESA_FORMAT_ARGB1555) {
+	else if (texImage->TexFormat == _dri_texformat_argb1555) {
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
 		DBG("Render to ARGB1555 texture OK\n");
 	}
-	else if (texImage->TexFormat == MESA_FORMAT_ARGB4444) {
+	else if (texImage->TexFormat == _dri_texformat_argb4444) {
 		rrb->base.DataType = GL_UNSIGNED_BYTE;
-		DBG("Render to ARGB1555 texture OK\n");
+		DBG("Render to ARGB4444 texture OK\n");
 	}
 	else if (texImage->TexFormat == MESA_FORMAT_Z16) {
 		rrb->base.DataType = GL_UNSIGNED_SHORT;

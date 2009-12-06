@@ -191,7 +191,7 @@ struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register
 
 static inline void reset_srcreg(struct rc_src_register* reg)
 {
-	memset(reg, 0, sizeof(reg));
+	memset(reg, 0, sizeof(struct rc_src_register));
 	reg->Swizzle = RC_SWIZZLE_XYZW;
 }
 

@@ -74,6 +74,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
+//#define R600_ENABLE_GLSL_TEST 1
+
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
@@ -109,6 +111,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_env_crossbar",	NULL},
   {"GL_ARB_texture_env_dot3",		NULL},
   {"GL_ARB_texture_mirrored_repeat",	NULL},
+  {"GL_ARB_texture_non_power_of_two",   NULL},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
@@ -155,7 +158,11 @@ static const struct dri_extension mm_extensions[] = {
  * functions added by GL_ATI_separate_stencil.
  */
 static const struct dri_extension gl_20_extension[] = {
+#ifdef R600_ENABLE_GLSL_TEST
+    {"GL_ARB_shading_language_100",			GL_VERSION_2_0_functions },
+#else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
+#endif /* R600_ENABLE_GLSL_TEST */
 };
 
 static const struct tnl_pipeline_stage *r600_pipeline[] = {
@@ -307,6 +314,26 @@ static void r600InitGLExtensions(GLcontext *ctx)
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	if (r600->radeon.radeonScreen->kernel_mm)
 	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
+
+#ifdef R600_ENABLE_GLSL_TEST
+    driInitExtensions(ctx, gl_20_extension, GL_TRUE);
+    //_mesa_enable_2_0_extensions(ctx);
+    //1.5
+    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
+    //2.0
+    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+    ctx->Extensions.ARB_point_sprite = GL_TRUE;
+    ctx->Extensions.ARB_shader_objects = GL_TRUE;
+    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
+    ctx->Extensions.ATI_separate_stencil = GL_TRUE;
+
+    /* glsl compiler has problem if this is not GL_TRUE */
+    ctx->Shader.EmitCondCodes = GL_TRUE;
+#endif /* R600_ENABLE_GLSL_TEST */
 
 	if (driQueryOptionb
 	    (&r600->radeon.optionCache, "disable_stencil_two_side"))

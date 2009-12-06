@@ -50,19 +50,34 @@ struct cso_context {
    struct {
       void *samplers[PIPE_MAX_SAMPLERS];
       unsigned nr_samplers;
+
+      void *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+      unsigned nr_vertex_samplers;
    } hw;
 
    void *samplers[PIPE_MAX_SAMPLERS];
    unsigned nr_samplers;
 
+   void *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned nr_vertex_samplers;
+
    unsigned nr_samplers_saved;
    void *samplers_saved[PIPE_MAX_SAMPLERS];
+
+   unsigned nr_vertex_samplers_saved;
+   void *vertex_samplers_saved[PIPE_MAX_VERTEX_SAMPLERS];
 
    struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
    uint nr_textures;
 
+   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   uint nr_vertex_textures;
+
    uint nr_textures_saved;
    struct pipe_texture *textures_saved[PIPE_MAX_SAMPLERS];
+
+   uint nr_vertex_textures_saved;
+   struct pipe_texture *vertex_textures_saved[PIPE_MAX_SAMPLERS];
 
    /** Current and saved state.
     * The saved state is used as a 1-deep stack.
@@ -244,7 +259,9 @@ void cso_release_all( struct cso_context *ctx )
    if (ctx->pipe) {
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
-      ctx->pipe->bind_sampler_states( ctx->pipe, 0, NULL );
+      ctx->pipe->bind_fragment_sampler_states( ctx->pipe, 0, NULL );
+      if (ctx->pipe->bind_vertex_sampler_states)
+         ctx->pipe->bind_vertex_sampler_states(ctx->pipe, 0, NULL);
       ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
@@ -253,6 +270,11 @@ void cso_release_all( struct cso_context *ctx )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&ctx->textures[i], NULL);
       pipe_texture_reference(&ctx->textures_saved[i], NULL);
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      pipe_texture_reference(&ctx->vertex_textures[i], NULL);
+      pipe_texture_reference(&ctx->vertex_textures_saved[i], NULL);
    }
 
    free_framebuffer_state(&ctx->fb);
@@ -378,6 +400,46 @@ enum pipe_error cso_single_sampler(struct cso_context *ctx,
    return PIPE_OK;
 }
 
+enum pipe_error
+cso_single_vertex_sampler(struct cso_context *ctx,
+                          unsigned idx,
+                          const struct pipe_sampler_state *templ)
+{
+   void *handle = NULL;
+
+   if (templ != NULL) {
+      unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_sampler_state));
+      struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
+                                                          hash_key, CSO_SAMPLER,
+                                                          (void*)templ);
+
+      if (cso_hash_iter_is_null(iter)) {
+         struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
+         if (!cso)
+            return PIPE_ERROR_OUT_OF_MEMORY;
+
+         memcpy(&cso->state, templ, sizeof(*templ));
+         cso->data = ctx->pipe->create_sampler_state(ctx->pipe, &cso->state);
+         cso->delete_state = (cso_state_callback)ctx->pipe->delete_sampler_state;
+         cso->context = ctx->pipe;
+
+         iter = cso_insert_state(ctx->cache, hash_key, CSO_SAMPLER, cso);
+         if (cso_hash_iter_is_null(iter)) {
+            FREE(cso);
+            return PIPE_ERROR_OUT_OF_MEMORY;
+         }
+
+         handle = cso->data;
+      }
+      else {
+         handle = ((struct cso_sampler *)cso_hash_iter_data(iter))->data;
+      }
+   }
+
+   ctx->vertex_samplers[idx] = handle;
+   return PIPE_OK;
+}
+
 void cso_single_sampler_done( struct cso_context *ctx )
 {
    unsigned i;
@@ -398,7 +460,36 @@ void cso_single_sampler_done( struct cso_context *ctx )
       memcpy(ctx->hw.samplers, ctx->samplers, ctx->nr_samplers * sizeof(void *));
       ctx->hw.nr_samplers = ctx->nr_samplers;
 
-      ctx->pipe->bind_sampler_states(ctx->pipe, ctx->nr_samplers, ctx->samplers);
+      ctx->pipe->bind_fragment_sampler_states(ctx->pipe, ctx->nr_samplers, ctx->samplers);
+   }
+}
+
+void
+cso_single_vertex_sampler_done(struct cso_context *ctx)
+{
+   unsigned i;
+
+   /* find highest non-null sampler */
+   for (i = PIPE_MAX_VERTEX_SAMPLERS; i > 0; i--) {
+      if (ctx->vertex_samplers[i - 1] != NULL)
+         break;
+   }
+
+   ctx->nr_vertex_samplers = i;
+
+   if (ctx->hw.nr_vertex_samplers != ctx->nr_vertex_samplers ||
+       memcmp(ctx->hw.vertex_samplers,
+              ctx->vertex_samplers,
+              ctx->nr_vertex_samplers * sizeof(void *)) != 0) 
+   {
+      memcpy(ctx->hw.vertex_samplers,
+             ctx->vertex_samplers,
+             ctx->nr_vertex_samplers * sizeof(void *));
+      ctx->hw.nr_vertex_samplers = ctx->nr_vertex_samplers;
+
+      ctx->pipe->bind_vertex_sampler_states(ctx->pipe,
+                                            ctx->nr_vertex_samplers,
+                                            ctx->vertex_samplers);
    }
 }
 
@@ -447,6 +538,21 @@ void cso_restore_samplers(struct cso_context *ctx)
    cso_single_sampler_done( ctx );
 }
 
+void
+cso_save_vertex_samplers(struct cso_context *ctx)
+{
+   ctx->nr_vertex_samplers_saved = ctx->nr_vertex_samplers;
+   memcpy(ctx->vertex_samplers_saved, ctx->vertex_samplers, sizeof(ctx->vertex_samplers));
+}
+
+void
+cso_restore_vertex_samplers(struct cso_context *ctx)
+{
+   ctx->nr_vertex_samplers = ctx->nr_vertex_samplers_saved;
+   memcpy(ctx->vertex_samplers, ctx->vertex_samplers_saved, sizeof(ctx->vertex_samplers));
+   cso_single_vertex_sampler_done(ctx);
+}
+
 
 enum pipe_error cso_set_sampler_textures( struct cso_context *ctx,
                                           uint count,
@@ -461,7 +567,7 @@ enum pipe_error cso_set_sampler_textures( struct cso_context *ctx,
    for ( ; i < PIPE_MAX_SAMPLERS; i++)
       pipe_texture_reference(&ctx->textures[i], NULL);
 
-   ctx->pipe->set_sampler_textures(ctx->pipe, count, textures);
+   ctx->pipe->set_fragment_sampler_textures(ctx->pipe, count, textures);
 
    return PIPE_OK;
 }
@@ -491,9 +597,67 @@ void cso_restore_sampler_textures( struct cso_context *ctx )
    for ( ; i < PIPE_MAX_SAMPLERS; i++)
       pipe_texture_reference(&ctx->textures[i], NULL);
 
-   ctx->pipe->set_sampler_textures(ctx->pipe, ctx->nr_textures, ctx->textures);
+   ctx->pipe->set_fragment_sampler_textures(ctx->pipe, ctx->nr_textures, ctx->textures);
 
    ctx->nr_textures_saved = 0;
+}
+
+
+
+enum pipe_error
+cso_set_vertex_sampler_textures(struct cso_context *ctx,
+                                uint count,
+                                struct pipe_texture **textures)
+{
+   uint i;
+
+   ctx->nr_vertex_textures = count;
+
+   for (i = 0; i < count; i++) {
+      pipe_texture_reference(&ctx->vertex_textures[i], textures[i]);
+   }
+   for ( ; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      pipe_texture_reference(&ctx->vertex_textures[i], NULL);
+   }
+
+   ctx->pipe->set_vertex_sampler_textures(ctx->pipe, count, textures);
+
+   return PIPE_OK;
+}
+
+void
+cso_save_vertex_sampler_textures(struct cso_context *ctx)
+{
+   uint i;
+
+   ctx->nr_vertex_textures_saved = ctx->nr_vertex_textures;
+   for (i = 0; i < ctx->nr_vertex_textures; i++) {
+      assert(!ctx->vertex_textures_saved[i]);
+      pipe_texture_reference(&ctx->vertex_textures_saved[i], ctx->vertex_textures[i]);
+   }
+}
+
+void
+cso_restore_vertex_sampler_textures(struct cso_context *ctx)
+{
+   uint i;
+
+   ctx->nr_vertex_textures = ctx->nr_vertex_textures_saved;
+
+   for (i = 0; i < ctx->nr_vertex_textures; i++) {
+      pipe_texture_reference(&ctx->vertex_textures[i], NULL);
+      ctx->vertex_textures[i] = ctx->vertex_textures_saved[i];
+      ctx->vertex_textures_saved[i] = NULL;
+   }
+   for ( ; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      pipe_texture_reference(&ctx->vertex_textures[i], NULL);
+   }
+
+   ctx->pipe->set_vertex_sampler_textures(ctx->pipe,
+                                          ctx->nr_vertex_textures,
+                                          ctx->vertex_textures);
+
+   ctx->nr_vertex_textures_saved = 0;
 }
 
 

@@ -209,10 +209,23 @@ intel_bufferobj_subdata(GLcontext * ctx,
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
    else {
       /* Flush any existing batchbuffer that might reference this data. */
-      if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
-	 intelFlush(ctx);
+      if (drm_intel_bo_busy(intel_obj->buffer) ||
+	  drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
+	 drm_intel_bo *temp_bo;
 
-      dri_bo_subdata(intel_obj->buffer, offset, size, data);
+	 temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
+
+	 drm_intel_bo_subdata(temp_bo, 0, size, data);
+
+	 intel_emit_linear_blit(intel,
+				intel_obj->buffer, offset,
+				temp_bo, 0,
+				size);
+
+	 drm_intel_bo_unreference(temp_bo);
+      } else {
+	 dri_bo_subdata(intel_obj->buffer, offset, size, data);
+      }
    }
 }
 
@@ -255,6 +268,8 @@ intel_bufferobj_map(GLcontext * ctx,
 
    if (intel_obj->sys_buffer) {
       obj->Pointer = intel_obj->sys_buffer;
+      obj->Length = obj->Size;
+      obj->Offset = 0;
       return obj->Pointer;
    }
 

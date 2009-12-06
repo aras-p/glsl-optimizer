@@ -152,16 +152,16 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
        * Use combined ModelProject to avoid some depth artifacts
        */
       if (ctx->ModelviewMatrixStack.Top->type == MATRIX_IDENTITY)
-	 VB->EyePtr = VB->ObjPtr;
+	 VB->EyePtr = VB->AttribPtr[_TNL_ATTRIB_POS];
       else
 	 VB->EyePtr = TransformRaw( &store->eye,
 				    ctx->ModelviewMatrixStack.Top,
-				    VB->ObjPtr);
+				    VB->AttribPtr[_TNL_ATTRIB_POS]);
    }
 
    VB->ClipPtr = TransformRaw( &store->clip,
 			       &ctx->_ModelProjectMatrix,
-			       VB->ObjPtr );
+			       VB->AttribPtr[_TNL_ATTRIB_POS] );
 
    /* Drivers expect this to be clean to element 4...
     */

@@ -826,11 +826,11 @@ _mesa_print_program(const struct gl_program *prog)
  * XXX move to imports.[ch] if useful elsewhere.
  */
 static const char *
-binary(GLbitfield val)
+binary(GLbitfield64 val)
 {
-   static char buf[50];
+   static char buf[80];
    GLint i, len = 0;
-   for (i = 31; i >= 0; --i) {
+   for (i = 63; i >= 0; --i) {
       if (val & (1 << i))
          buf[len++] = '1';
       else if (len > 0 || i == 0)

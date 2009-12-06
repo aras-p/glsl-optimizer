@@ -228,10 +228,9 @@ do_blit_bitmap( GLcontext *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
    if (dst->cpp == 2)
-      color = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
    else
-      color = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1],
-				  ubcolor[2], ubcolor[3]);
+      color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
@@ -335,6 +334,8 @@ out:
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
    }
+
+   intel_check_front_buffer_rendering(intel);
 
    return GL_TRUE;
 }

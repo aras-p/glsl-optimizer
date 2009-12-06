@@ -115,11 +115,13 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_LUMINANCE_ALPHA:
       case GL_LUMINANCE4_ALPHA4:
       case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+         return MESA_FORMAT_AL88;
+
       case GL_LUMINANCE12_ALPHA4:
       case GL_LUMINANCE12_ALPHA12:
       case GL_LUMINANCE16_ALPHA16:
-      case GL_LUMINANCE8_ALPHA8:
-         return MESA_FORMAT_AL88;
+         return MESA_FORMAT_AL1616;
 
       case GL_INTENSITY:
       case GL_INTENSITY4:

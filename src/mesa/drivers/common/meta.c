@@ -2464,7 +2464,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
                GLenum internalFormat, GLint x, GLint y,
                GLsizei width, GLsizei height, GLint border)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
@@ -2472,8 +2471,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    GLint bpp;
    void *buf;
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 
    format = _mesa_base_tex_format(ctx, internalFormat);
@@ -2583,15 +2581,13 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLenum format, type;
    GLint bpp;
    void *buf;
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
    format = _mesa_get_format_base_format(texImage->TexFormat);

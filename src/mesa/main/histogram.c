@@ -189,16 +189,17 @@ pack_histogram( GLcontext *ctx,
          {
             /* temporarily store as GLuints */
             GLuint temp[4*HISTOGRAM_TABLE_SIZE];
-            GLhalfARB *dst = (GLhalfARB *) destination;
+            GLuint *dst = temp;
+            GLhalfARB *half = (GLhalfARB *) destination;
             GLuint i;
             /* get GLuint values */
             PACK_MACRO(GLuint);
             /* convert to GLhalf */
             for (i = 0; i < n * comps; i++) {
-               dst[i] = _mesa_float_to_half((GLfloat) temp[i]);
+               half[i] = _mesa_float_to_half((GLfloat) temp[i]);
             }
             if (packing->SwapBytes) {
-               _mesa_swap2((GLushort *) dst, n * comps);
+               _mesa_swap2((GLushort *) half, n * comps);
             }
          }
          break;

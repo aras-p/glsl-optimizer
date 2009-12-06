@@ -42,7 +42,7 @@ intel_calculate_first_last_level(struct intel_context *intel,
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-	 if (!IS_9XX(intel->intelScreen->deviceID)) {
+	 if (intel->gen == 2) {
 	    firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
 	    firstLevel = MAX2(firstLevel, tObj->BaseLevel);
 	    firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
@@ -138,8 +138,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* What levels must the tree include at a minimum?
     */
    intel_calculate_first_last_level(intel, intelObj);
-   firstImage =
-      intel_texture_image(intelObj->base.Image[0][intelObj->firstLevel]);
+   firstImage = intel_texture_image(tObj->Image[0][intelObj->firstLevel]);
 
    /* Fallback case:
     */
@@ -223,8 +222,13 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
             intel_texture_image(intelObj->base.Image[face][i]);
 
          /* Need to import images in main memory or held in other trees.
+	  * If it's a render target, then its data isn't needed to be in
+	  * the object tree (otherwise we'd be FBO incomplete), and we need
+	  * to keep track of the image's MT as needing to be pulled in still,
+	  * or we'll lose the rendering that's done to it.
           */
-         if (intelObj->mt != intelImage->mt) {
+         if (intelObj->mt != intelImage->mt &&
+	     !intelImage->used_as_render_target) {
             copy_image_data_to_tree(intel, intelObj, intelImage);
          }
       }

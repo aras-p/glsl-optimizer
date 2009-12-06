@@ -181,6 +181,18 @@ static void ReInit( GLenum TC, TEXTURE *Tx )
                                GL_TEXTURE_INTERNAL_FORMAT, &v);
       printf("Requested internal format = 0x%x, actual = 0x%x\n", TC, v);
 
+      if (0) {
+         GLint r, g, b, a, l, i;
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_LUMINANCE_SIZE, &l);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTENSITY_SIZE, &i);
+         printf("Compressed Bits per R: %d  G: %d  B: %d  A: %d  L: %d  I: %d\n",
+                r, g, b, a, l, i);
+      }
+
       /* okay, now cache the compressed texture */
       Tx->TC = TC;
       if (Tx->cData != NULL) {

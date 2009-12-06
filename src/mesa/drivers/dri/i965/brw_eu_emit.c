@@ -55,7 +55,8 @@ static void guess_execution_size( struct brw_instruction *insn,
 static void brw_set_dest( struct brw_instruction *insn,
 			  struct brw_reg dest )
 {
-   if (dest.type != BRW_ARCHITECTURE_REGISTER_FILE)
+   if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
+       dest.file != BRW_MESSAGE_REGISTER_FILE)
       assert(dest.nr < 128);
 
    insn->bits1.da1.dest_reg_file = dest.file;

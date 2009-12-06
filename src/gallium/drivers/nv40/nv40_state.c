@@ -705,9 +705,9 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.delete_blend_state = nv40_blend_state_delete;
 
 	nv40->pipe.create_sampler_state = nv40_sampler_state_create;
-	nv40->pipe.bind_sampler_states = nv40_sampler_state_bind;
+	nv40->pipe.bind_fragment_sampler_states = nv40_sampler_state_bind;
 	nv40->pipe.delete_sampler_state = nv40_sampler_state_delete;
-	nv40->pipe.set_sampler_textures = nv40_set_sampler_texture;
+	nv40->pipe.set_fragment_sampler_textures = nv40_set_sampler_texture;
 
 	nv40->pipe.create_rasterizer_state = nv40_rasterizer_state_create;
 	nv40->pipe.bind_rasterizer_state = nv40_rasterizer_state_bind;

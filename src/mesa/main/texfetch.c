@@ -376,6 +376,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_xrgb8888
    },
    {
+      MESA_FORMAT_XRGB8888_REV,
+      fetch_texel_1d_f_xrgb8888_rev,
+      fetch_texel_2d_f_xrgb8888_rev,
+      fetch_texel_3d_f_xrgb8888_rev,
+      store_texel_xrgb8888_rev,
+   },
+   {
       MESA_FORMAT_RGB888,
       fetch_texel_1d_f_rgb888,
       fetch_texel_2d_f_rgb888,
@@ -451,6 +458,20 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_2d_f_al88_rev,
       fetch_texel_3d_f_al88_rev,
       store_texel_al88_rev
+   },
+   {
+      MESA_FORMAT_AL1616,
+      fetch_texel_1d_f_al1616,
+      fetch_texel_2d_f_al1616,
+      fetch_texel_3d_f_al1616,
+      store_texel_al1616
+   },
+   {
+      MESA_FORMAT_AL1616_REV,
+      fetch_texel_1d_f_al1616_rev,
+      fetch_texel_2d_f_al1616_rev,
+      fetch_texel_3d_f_al1616_rev,
+      store_texel_al1616_rev
    },
    {
       MESA_FORMAT_RGB332,
@@ -549,7 +570,7 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
 static FetchTexelFuncF
 _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
 {
-   FetchTexelFuncF f;
+   FetchTexelFuncF f = NULL;
    GLuint i;
    /* XXX replace loop with direct table lookup */
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {

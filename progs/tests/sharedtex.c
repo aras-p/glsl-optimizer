@@ -424,13 +424,13 @@ main(int argc, char *argv[])
 {
    const char *dpyName = XDisplayName(NULL);
 
-   struct window *h0, *h1, *h2, *h3;
+   struct window *h0;
 
    /* four windows and contexts sharing display lists and texture objects */
    h0 = AddWindow(dpyName,  10,  10, NULL);
-   h1 = AddWindow(dpyName, 330,  10, h0);
-   h2 = AddWindow(dpyName,  10, 350, h0);
-   h3 = AddWindow(dpyName, 330, 350, h0);
+   (void) AddWindow(dpyName, 330,  10, h0);
+   (void) AddWindow(dpyName,  10, 350, h0);
+   (void) AddWindow(dpyName, 330, 350, h0);
 
    InitGLstuff(h0);
 

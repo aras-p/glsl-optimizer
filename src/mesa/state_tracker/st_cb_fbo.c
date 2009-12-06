@@ -98,16 +98,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->defined = GL_FALSE;  /* undefined contents now */
 
    if(strb->software) {
-      struct pipe_format_block block;
       size_t size;
       
       _mesa_free(strb->data);
 
       assert(strb->format != PIPE_FORMAT_NONE);
-      pf_get_block(strb->format, &block);
       
-      strb->stride = pf_get_stride(&block, width);
-      size = pf_get_2d_size(&block, strb->stride, height);
+      strb->stride = pf_get_stride(strb->format, width);
+      size = pf_get_2d_size(strb->format, strb->stride, height);
       
       strb->data = _mesa_malloc(size);
       
@@ -127,10 +125,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       memset(&template, 0, sizeof(template));
       template.target = PIPE_TEXTURE_2D;
       template.format = format;
-      pf_get_block(format, &template.block);
-      template.width[0] = width;
-      template.height[0] = height;
-      template.depth[0] = 1;
+      template.width0 = width;
+      template.height0 = height;
+      template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (pf_is_depth_stencil(format)) {
@@ -376,7 +373,7 @@ st_render_texture(GLcontext *ctx,
    rb->_BaseFormat = texImage->_BaseFormat;
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
-   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
+   /*printf("***** pipe texture %d x %d\n", pt->width0, pt->height0);*/
 
    pipe_texture_reference( &strb->texture, pt );
 

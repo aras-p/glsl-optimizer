@@ -116,7 +116,10 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_Z24X8_UNORM:
 			return TRUE;
 		case PIPE_FORMAT_Z16_UNORM:
-			return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			if (front) {
+				return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			}
+			return TRUE;
 		default:
 			break;
 		}

@@ -37,13 +37,14 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned i, w, h, gw = 0;
 
-	/* Set nr of active RTs. Don't know what 0xfac6880 does, but
-	 * at least 0x880 was required to draw to more than 1 RT.
-	 * In some special cases, 0xfac6880 is not used, we probably
-	 * don't hit any of these though.
+	/* Set nr of active RTs and select RT for each colour output.
+	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.
+	 * Ambiguous assignment results in no rendering (no DATA_ERROR).
 	 */
 	so_method(so, tesla, 0x121c, 1);
-	so_data  (so, 0x0fac6880 | fb->nr_cbufs);
+	so_data  (so, fb->nr_cbufs |
+		  (0 <<  4) | (1 <<  7) | (2 << 10) | (3 << 13) |
+		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct pipe_texture *pt = fb->cbufs[i]->texture;
@@ -200,7 +201,8 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
 		so_emit(chan, nv50->state.fragprog);
-	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+				 NV50_NEW_RASTERIZER))
 		so_emit(chan, nv50->state.programs);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
 		so_emit(chan, nv50->state.rast);
@@ -263,7 +265,8 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
 		nv50_fragprog_validate(nv50);
 
-	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+			   NV50_NEW_RASTERIZER))
 		nv50_linkage_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
@@ -284,7 +287,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		so = so_new(33, 0);
 		so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
-			so_data(so, nv50->stipple.stipple[i]);
+			so_data(so, util_bswap32(nv50->stipple.stipple[i]));
 		so_ref(so, &nv50->state.stipple);
 		so_ref(NULL, &so);
 	}

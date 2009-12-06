@@ -192,7 +192,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
                 prim, start, count);
 
    for (i = 0; i < count; i++) {
-      uint ii, j;
+      uint ii = 0;
+      uint j;
 
       if (draw->pt.user.elts) {
          /* indexed arrays */

@@ -191,6 +191,42 @@ static INLINE uint32_t r300_translate_alpha_function(int alpha_func)
     return 0;
 }
 
+static INLINE uint32_t
+r300_translate_polygon_mode_front(unsigned mode) {
+    switch (mode)
+    {
+        case PIPE_POLYGON_MODE_FILL:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
+        case PIPE_POLYGON_MODE_LINE:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_LINE;
+        case PIPE_POLYGON_MODE_POINT:
+            return R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
+
+        default:
+            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+                __FUNCTION__);
+            return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
+    }
+}
+
+static INLINE uint32_t
+r300_translate_polygon_mode_back(unsigned mode) {
+    switch (mode)
+    {
+        case PIPE_POLYGON_MODE_FILL:
+            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
+        case PIPE_POLYGON_MODE_LINE:
+            return R300_GA_POLY_MODE_BACK_PTYPE_LINE;
+        case PIPE_POLYGON_MODE_POINT:
+            return R300_GA_POLY_MODE_BACK_PTYPE_POINT;
+
+        default:
+            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+                __FUNCTION__);
+            return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
+    }
+}
+
 /* Texture sampler state. */
 
 static INLINE uint32_t r300_translate_wrap(int wrap)
@@ -434,9 +470,9 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     unsigned components = pf_component_count(format);
 
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
-        debug_printf("r300: Bad format %s in %s\n", pf_name(format),
-            __FUNCTION__);
-        return 0;
+        debug_printf("r300: Bad format %s in %s:%d\n", pf_name(format),
+            __FUNCTION__, __LINE__);
+        assert(0);
     }
 
     switch (pf_type(format)) {
@@ -447,6 +483,8 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     result = R300_DATA_TYPE_FLOAT_1 + (components - 1);
                     break;
                 default:
+                    debug_printf("r300: Bad format %s in %s:%d\n",
+                        pf_name(format), __FUNCTION__, __LINE__);
                     assert(0);
             }
             break;
@@ -470,10 +508,16 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     }
                     break;
                 default:
+                    debug_printf("r300: Bad format %s in %s:%d\n",
+                        pf_name(format), __FUNCTION__, __LINE__);
+                    debug_printf("r300: pf_size_x(format) == %d\n",
+                        pf_size_x(format));
                     assert(0);
             }
             break;
         default:
+            debug_printf("r300: Bad format %s in %s:%d\n",
+                pf_name(format), __FUNCTION__, __LINE__);
             assert(0);
     }
 
@@ -492,8 +536,8 @@ static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
 
     if (pf_layout(format) != PIPE_FORMAT_LAYOUT_RGBAZS) {
-        debug_printf("r300: Bad format %s in %s\n", pf_name(format),
-            __FUNCTION__);
+        debug_printf("r300: Bad format %s in %s:%d\n",
+            pf_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 

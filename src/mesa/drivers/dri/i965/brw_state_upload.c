@@ -34,6 +34,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which
@@ -142,7 +143,7 @@ static void xor_states( struct brw_state_flags *result,
    result->cache = a->cache ^ b->cache;
 }
 
-static void
+void
 brw_clear_validated_bos(struct brw_context *brw)
 {
    int i;
@@ -323,6 +324,8 @@ void brw_validate_state( struct brw_context *brw )
         }
       }
    }
+
+   intel_check_front_buffer_rendering(intel);
 
    /* Make sure that the textures which are referenced by the current
     * brw fragment program are actually present/valid.

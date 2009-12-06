@@ -30302,6 +30302,7 @@ GL_PREFIX(_dispatch_stub_794):
 	.globl GL_PREFIX(GetAttribLocation) ; .set GL_PREFIX(GetAttribLocation), GL_PREFIX(GetAttribLocationARB)
 	.globl GL_PREFIX(DrawBuffers) ; .set GL_PREFIX(DrawBuffers), GL_PREFIX(DrawBuffersARB)
 	.globl GL_PREFIX(DrawBuffersATI) ; .set GL_PREFIX(DrawBuffersATI), GL_PREFIX(DrawBuffersARB)
+	.globl GL_PREFIX(RenderbufferStorageMultisampleEXT) ; .set GL_PREFIX(RenderbufferStorageMultisampleEXT), GL_PREFIX(RenderbufferStorageMultisample)
 	.globl GL_PREFIX(PointParameterf) ; .set GL_PREFIX(PointParameterf), GL_PREFIX(PointParameterfEXT)
 	.globl GL_PREFIX(PointParameterfARB) ; .set GL_PREFIX(PointParameterfARB), GL_PREFIX(PointParameterfEXT)
 	.globl GL_PREFIX(PointParameterfv) ; .set GL_PREFIX(PointParameterfv), GL_PREFIX(PointParameterfvEXT)

@@ -115,7 +115,8 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
     */
    if ((intelObj->base.MinFilter == GL_NEAREST ||
         intelObj->base.MinFilter == GL_LINEAR) &&
-       intelImage->level == firstLevel) {
+       intelImage->level == firstLevel &&
+       (intel->gen < 4 || firstLevel == 0)) {
       lastLevel = firstLevel;
    }
    else {
@@ -368,8 +369,7 @@ intelTexImage(GLcontext * ctx,
        intelObj->mt->first_level == level &&
        intelObj->mt->last_level == level &&
        intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !intel_miptree_match_image(intelObj->mt, &intelImage->base,
-                                  intelImage->face, intelImage->level)) {
+       !intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 
       DBG("release it\n");
       intel_miptree_release(intel, &intelObj->mt);
@@ -386,8 +386,7 @@ intelTexImage(GLcontext * ctx,
    assert(!intelImage->mt);
 
    if (intelObj->mt &&
-       intel_miptree_match_image(intelObj->mt, &intelImage->base,
-                                 intelImage->face, intelImage->level)) {
+       intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 
       intel_miptree_reference(&intelImage->mt, intelObj->mt);
       assert(intelImage->mt);
@@ -735,17 +734,16 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
+   GLcontext *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
    struct intel_texture_image *intelImage;
    struct intel_mipmap_tree *mt;
    struct intel_renderbuffer *rb;
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    int level = 0, internalFormat;
 
-   texUnit = &intel->ctx.Texture.Unit[intel->ctx.Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(&intel->ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    intelObj = intel_texture_object(texObj);
 
    if (!intelObj)
@@ -797,8 +795,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
-   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base,
-				  intelImage->face, intelImage->level)) {
+   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
 	   fprintf(stderr, "miptree doesn't match image\n");
    }
 

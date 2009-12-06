@@ -249,12 +249,9 @@ st_context_create(struct st_device *st_dev)
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
       templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      templat.block.size = 4;
-      templat.block.width = 1;
-      templat.block.height = 1;
-      templat.width[0] = 1;
-      templat.height[0] = 1;
-      templat.depth[0] = 1;
+      templat.width0 = 1;
+      templat.height0 = 1;
+      templat.depth0 = 1;
       templat.last_level = 0;
    
       st_ctx->default_texture = screen->texture_create( screen, &templat );
@@ -264,8 +261,8 @@ st_context_create(struct st_device *st_dev)
                                              0, 0, 0,
                                              PIPE_TRANSFER_WRITE,
                                              0, 0,
-                                             st_ctx->default_texture->width[0],
-                                             st_ctx->default_texture->height[0]);
+                                             st_ctx->default_texture->width0,
+                                             st_ctx->default_texture->height0);
          if (transfer) {
             uint32_t *map;
             map = (uint32_t *) screen->transfer_map(screen, transfer);

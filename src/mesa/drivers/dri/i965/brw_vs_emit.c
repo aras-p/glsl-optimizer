@@ -147,7 +147,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
        mrf = 4;
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c->prog_data.outputs_written & (1 << i)) {
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
 	 c->nr_outputs++;
          assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
 	 if (i == VERT_RESULT_HPOS) {
@@ -331,63 +331,65 @@ static void unalias3( struct brw_vs_compile *c,
    }
 }
 
-static void emit_sop( struct brw_compile *p,
+static void emit_sop( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1, 
 		      GLuint cond)
 {
+   struct brw_compile *p = &c->func;
+
    brw_MOV(p, dst, brw_imm_f(0.0f));
    brw_CMP(p, brw_null_reg(), cond, arg0, arg1);
    brw_MOV(p, dst, brw_imm_f(1.0f));
    brw_set_predicate_control_flag_value(p, 0xff);
 }
 
-static void emit_seq( struct brw_compile *p,
+static void emit_seq( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_EQ);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_EQ);
 }
 
-static void emit_sne( struct brw_compile *p,
+static void emit_sne( struct brw_vs_compile *c,
                       struct brw_reg dst,
                       struct brw_reg arg0,
                       struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_NEQ);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_NEQ);
 }
-static void emit_slt( struct brw_compile *p, 
+static void emit_slt( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_L);
-}
-
-static void emit_sle( struct brw_compile *p, 
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1 )
-{
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_LE);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_L);
 }
 
-static void emit_sgt( struct brw_compile *p, 
+static void emit_sle( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_G);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_LE);
 }
 
-static void emit_sge( struct brw_compile *p, 
+static void emit_sgt( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-  emit_sop(p, dst, arg0, arg1, BRW_CONDITIONAL_GE);
+   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_G);
+}
+
+static void emit_sge( struct brw_vs_compile *c,
+		      struct brw_reg dst,
+		      struct brw_reg arg0,
+		      struct brw_reg arg1 )
+{
+  emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_GE);
 }
 
 static void emit_max( struct brw_compile *p, 
@@ -912,6 +914,7 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
    case PROGRAM_ENV_PARAM:
+   case PROGRAM_LOCAL_PARAM:
       if (c->vp->use_const_buffer) {
          return get_constant(c, inst, argIndex);
       }
@@ -930,7 +933,6 @@ get_src_reg( struct brw_vs_compile *c,
       /* this is a normal case since we loop over all three src args */
       return brw_null_reg();
 
-   case PROGRAM_LOCAL_PARAM: 
    case PROGRAM_WRITE_ONLY:
    default:
       assert(0);
@@ -1122,7 +1124,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
     */
-   if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
+   if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
        c->key.nr_userclip || BRW_IS_965(p->brw))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
@@ -1132,7 +1134,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
       brw_set_access_mode(p, BRW_ALIGN_16);	
 
-      if (c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) {
+      if (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 struct brw_reg psiz = c->regs[PROGRAM_OUTPUT][VERT_RESULT_PSIZ];
 	 brw_MUL(p, brw_writemask(header1, WRITEMASK_W), brw_swizzle1(psiz, 0), brw_imm_f(1<<11));
 	 brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
@@ -1222,7 +1224,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        */
       GLuint i, mrf = 0;
       for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
-         if (c->prog_data.outputs_written & (1 << i)) {
+         if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
             /* move from GRF to MRF */
             brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
             mrf++;
@@ -1266,6 +1268,38 @@ post_vs_emit( struct brw_vs_compile *c,
       brw_set_src1(end_inst, brw_imm_d(offset * 16));
    } else {
       end_inst->header.opcode = BRW_OPCODE_NOP;
+   }
+}
+
+static GLboolean
+accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_instruction *prev_insn = &p->store[p->nr_insn - 1];
+
+   if (p->nr_insn == 0)
+      return GL_FALSE;
+
+   if (val.address_mode != BRW_ADDRESS_DIRECT)
+      return GL_FALSE;
+
+   switch (prev_insn->header.opcode) {
+   case BRW_OPCODE_MOV:
+   case BRW_OPCODE_MAC:
+   case BRW_OPCODE_MUL:
+      if (prev_insn->header.access_mode == BRW_ALIGN_16 &&
+	  prev_insn->header.execution_size == val.width &&
+	  prev_insn->bits1.da1.dest_reg_file == val.file &&
+	  prev_insn->bits1.da1.dest_reg_type == val.type &&
+	  prev_insn->bits1.da1.dest_address_mode == val.address_mode &&
+	  prev_insn->bits1.da1.dest_reg_nr == val.nr &&
+	  prev_insn->bits1.da16.dest_subreg_nr == val.subnr / 16 &&
+	  prev_insn->bits1.da16.dest_writemask == 0xf)
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   default:
+      return GL_FALSE;
    }
 }
 
@@ -1447,7 +1481,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 unalias3(c, dst, args[0], args[1], args[2], emit_lrp_noalias);
 	 break;
       case OPCODE_MAD:
-	 brw_MOV(p, brw_acc_reg(), args[2]);
+	 if (!accumulator_contains(c, args[2]))
+	    brw_MOV(p, brw_acc_reg(), args[2]);
 	 brw_MAC(p, dst, args[0], args[1]);
 	 break;
       case OPCODE_MAX:
@@ -1473,25 +1508,25 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
 
       case OPCODE_SEQ:
-         emit_seq(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_seq);
          break;
       case OPCODE_SIN:
 	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_SNE:
-         emit_sne(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sne);
          break;
       case OPCODE_SGE:
-	 emit_sge(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sge);
 	 break;
       case OPCODE_SGT:
-         emit_sgt(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sgt);
          break;
       case OPCODE_SLT:
-	 emit_slt(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_slt);
 	 break;
       case OPCODE_SLE:
-         emit_sle(p, dst, args[0], args[1]);
+         unalias2(c, dst, args[0], args[1], emit_sle);
          break;
       case OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));

@@ -124,7 +124,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	}
 
 	if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
-		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->ColorPtr[1];
+		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->BackfaceColorPtr;
 		OutputsWritten |= 1 << VERT_RESULT_BFC0;
 #if MESA_LITTLE_ENDIAN
 		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_RGBA );
@@ -134,7 +134,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		ADD_ATTR(VERT_ATTRIB_GENERIC0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW, 1);
 #endif
 		if (fp_reads & FRAG_BIT_COL1) {
-			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->SecondaryColorPtr[1];
+			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->BackfaceSecondaryColorPtr;
 			GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 			OutputsWritten |= 1 << VERT_RESULT_BFC1;
 #if MESA_LITTLE_ENDIAN
@@ -159,7 +159,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		int tex_id = rmesa->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
-		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
+		VB->AttribPtr[_TNL_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
 		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
@@ -167,7 +167,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		int tex_id = rmesa->selected_fp->fog_attr - FRAG_ATTRIB_TEX0;
 
 		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
-		VB->TexCoordPtr[tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
+		VB->AttribPtr[_TNL_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
 		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
@@ -180,7 +180,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		GLuint swiz, format, hw_format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 			if (fp_reads & FRAG_BIT_TEX(i)) {
-				switch (VB->TexCoordPtr[i]->size) {
+				switch (VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size) {
 					case 1:
 						format = EMIT_1F;
 						hw_format = R300_DATA_TYPE_FLOAT_1;
@@ -665,11 +665,11 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 	r300EmitCacheFlush(rmesa);
 
 	radeonEmitState(&rmesa->radeon);
-    r300_emit_scissor(ctx);
+	r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
-			rmesa->radeon.swtcl.vertex_size,
-			first_elem(&rmesa->radeon.dma.reserved)->bo,
-			current_offset);
+			  rmesa->radeon.swtcl.vertex_size,
+			  rmesa->radeon.swtcl.bo,
+			  current_offset);
 
 	r300EmitVbufPrim(rmesa,
 		   rmesa->radeon.swtcl.hw_primitive,

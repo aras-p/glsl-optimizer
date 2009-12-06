@@ -170,11 +170,11 @@ static INLINE struct brw_reg brw_reg( GLuint file,
                                       GLuint writemask )
 {
    struct brw_reg reg;
-   if (type == BRW_GENERAL_REGISTER_FILE)
+   if (file == BRW_GENERAL_REGISTER_FILE)
       assert(nr < BRW_MAX_GRF);
-   else if (type == BRW_MESSAGE_REGISTER_FILE)
-      assert(nr < BRW_MAX_MRF);
-   else if (type == BRW_ARCHITECTURE_REGISTER_FILE)
+   else if (file == BRW_MESSAGE_REGISTER_FILE)
+      assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
+   else if (file == BRW_ARCHITECTURE_REGISTER_FILE)
       assert(nr <= BRW_ARF_IP);
 
    reg.type = type;
@@ -538,7 +538,7 @@ static INLINE struct brw_reg brw_mask_reg( GLuint subnr )
 
 static INLINE struct brw_reg brw_message_reg( GLuint nr )
 {
-   assert(nr < BRW_MAX_MRF);
+   assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
    return brw_vec8_reg(BRW_MESSAGE_REGISTER_FILE,
 		       nr,
 		       0);

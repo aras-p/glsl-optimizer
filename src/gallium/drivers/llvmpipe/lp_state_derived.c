@@ -65,26 +65,19 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct lp_fragment_shader *lpfs = llvmpipe->fs;
-      const enum interp_mode colorInterp
-         = llvmpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
+      const uint num = draw_num_vs_outputs(llvmpipe->draw);
       uint i;
 
-      if (llvmpipe->vbuf) {
-         /* if using the post-transform vertex buffer, tell draw_vbuf to
-          * simply emit the whole post-xform vertex as-is:
-          */
-         struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
-         const uint num = draw_num_vs_outputs(llvmpipe->draw);
-         uint i;
-
-         /* No longer any need to try and emit draw vertex_header info.
-          */
-         vinfo_vbuf->num_attribs = 0;
-         for (i = 0; i < num; i++) {
-            draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
-         }
-         draw_compute_vertex_size(vinfo_vbuf);
+      /* Tell draw_vbuf to simply emit the whole post-xform vertex
+       * as-is.  No longer any need to try and emit draw vertex_header
+       * info.
+       */
+      vinfo_vbuf->num_attribs = 0;
+      for (i = 0; i < num; i++) {
+	 draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
       }
+      draw_compute_vertex_size(vinfo_vbuf);
 
       /*
        * Loop over fragment shader inputs, searching for the matching output
@@ -112,33 +105,21 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
 
          switch (lpfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
-            src = draw_find_vs_output(llvmpipe->draw,
-                                      TGSI_SEMANTIC_POSITION, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
+            interp = INTERP_POS;
             break;
 
          case TGSI_SEMANTIC_COLOR:
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_COLOR, 
-                                 lpfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+            if (llvmpipe->rasterizer->flatshade) {
+               interp = INTERP_CONSTANT;
+            }
             break;
-
-         case TGSI_SEMANTIC_FOG:
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         case TGSI_SEMANTIC_GENERIC:
-         case TGSI_SEMANTIC_FACE:
-            /* this includes texcoords and varying vars */
-            src = draw_find_vs_output(llvmpipe->draw, TGSI_SEMANTIC_GENERIC,
-                                      lpfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         default:
-            assert(0);
          }
+
+         /* this includes texcoords and varying vars */
+         src = draw_find_vs_output(llvmpipe->draw,
+                                   lpfs->info.input_semantic_name[i],
+                                   lpfs->info.input_semantic_index[i]);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
       llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,
@@ -217,10 +198,14 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
    unsigned i;
 
    /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->sampler[i];
-      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->texture[i];
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->vertex_samplers[i];
+      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->vertex_textures[i];
+      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      lp_tex_tile_cache_validate_texture( llvmpipe->vertex_tex_cache[i] );
    }
 
    /* fragment shader samplers */

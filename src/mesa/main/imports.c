@@ -108,8 +108,8 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 {
 #if defined(HAVE_POSIX_MEMALIGN)
    void *mem;
-
-   (void) posix_memalign(& mem, alignment, bytes);
+   int err = posix_memalign(& mem, alignment, bytes);
+   (void) err;
    return mem;
 #elif defined(_WIN32) && defined(_MSC_VER)
    return _aligned_malloc(bytes, alignment);
@@ -629,11 +629,15 @@ _mesa_ffsll(int64_t val)
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
+#if defined(__GNUC__)
+   return __builtin_popcount(n);
+#else
    unsigned int bits;
    for (bits = 0; n > 0; n = n >> 1) {
       bits += (n & 1);
    }
    return bits;
+#endif
 }
 
 

@@ -76,12 +76,14 @@ static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 
    /* Emit the data
     */
+   radeon_bo_map(aos->bo, 1);
    out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
    for (i = 0; i < count; i++) {
       out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
       out++;
       data += stride;
    }
+   radeon_bo_unmap(aos->bo);
 }
 
 static void emit_s0_vec(uint32_t *out, GLvoid *data, int stride, int count)
@@ -151,6 +153,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
 
    /* Emit the data
     */
+   radeon_bo_map(aos->bo, 1);
    out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
    switch (size) {
    case 1:
@@ -170,6 +173,7 @@ static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
       exit(1);
       break;
    }
+   radeon_bo_unmap(aos->bo);
 }
 
 
@@ -196,12 +200,12 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.obj.buf) 
 	rcommon_emit_vector( ctx, 
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->ObjPtr->data,
-			     VB->ObjPtr->size,
-			     VB->ObjPtr->stride,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_POS]->data,
+			     VB->AttribPtr[_TNL_ATTRIB_POS]->size,
+			     VB->AttribPtr[_TNL_ATTRIB_POS]->stride,
 			     count);
 
-      switch( VB->ObjPtr->size ) {
+      switch( VB->AttribPtr[_TNL_ATTRIB_POS]->size ) {
       case 4: vfmt |= RADEON_CP_VC_FRMT_W0;
       case 3: vfmt |= RADEON_CP_VC_FRMT_Z;
       case 2: vfmt |= RADEON_CP_VC_FRMT_XY;
@@ -216,9 +220,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.norm.buf)
 	 rcommon_emit_vector( ctx, 
 			      &(rmesa->tcl.aos[nr]),
-			      (char *)VB->NormalPtr->data,
+			      (char *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data,
 			      3,
-			      VB->NormalPtr->stride,
+			      VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride,
 			      count);
 
       vfmt |= RADEON_CP_VC_FRMT_N0;
@@ -227,9 +231,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_COLOR0) {
       int emitsize;
-      if (VB->ColorPtr[0]->size == 4 &&
-	  (VB->ColorPtr[0]->stride != 0 ||
-	   VB->ColorPtr[0]->data[0][3] != 1.0)) {
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size == 4 &&
+	  (VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride != 0 ||
+	   VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data[0][3] != 1.0)) {
 	 vfmt |= RADEON_CP_VC_FRMT_FPCOLOR | RADEON_CP_VC_FRMT_FPALPHA;
 	 emitsize = 4;
       }
@@ -242,9 +246,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.rgba.buf)
 	rcommon_emit_vector( ctx,
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->ColorPtr[0]->data,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data,
 			     emitsize,
-			     VB->ColorPtr[0]->stride,
+			     VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride,
 			     count);
 
       nr++;
@@ -256,9 +260,9 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 	rcommon_emit_vector( ctx,
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->SecondaryColorPtr[0]->data,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data,
 			     3,
-			     VB->SecondaryColorPtr[0]->stride,
+			     VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride,
 			     count);
       }
 
@@ -273,8 +277,8 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.fog.buf)
 	 emit_vecfog( ctx,
 		      &(rmesa->tcl.aos[nr]),
-		      (char *)VB->FogCoordPtr->data,
-		      VB->FogCoordPtr->stride,
+		      (char *)VB->AttribPtr[_TNL_ATTRIB_FOG]->data,
+		      VB->AttribPtr[_TNL_ATTRIB_FOG]->stride,
 		      count);
 
       vfmt |= RADEON_CP_VC_FRMT_FPFOG;
@@ -290,24 +294,24 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 if (!rmesa->tcl.tex[unit].buf)
 	    emit_tex_vector( ctx,
 			     &(rmesa->tcl.aos[nr]),
-			     (char *)VB->TexCoordPtr[unit]->data,
-			     VB->TexCoordPtr[unit]->size,
-			     VB->TexCoordPtr[unit]->stride,
+			     (char *)VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->data,
+			     VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size,
+			     VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->stride,
 			     count );
 	 nr++;
 
 	 vfmt |= RADEON_ST_BIT(unit);
          /* assume we need the 3rd coord if texgen is active for r/q OR at least
 	    3 coords are submitted. This may not be 100% correct */
-         if (VB->TexCoordPtr[unit]->size >= 3) {
+         if (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) {
 	    vtx |= RADEON_Q_BIT(unit);
 	    vfmt |= RADEON_Q_BIT(unit);
 	 }
 	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
 	    vtx |= RADEON_Q_BIT(unit);
-	 else if ((VB->TexCoordPtr[unit]->size >= 3) &&
+	 else if ((VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) &&
 	          ((ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_CUBE_BIT)) == 0)) {
-	    GLuint swaptexmatcol = (VB->TexCoordPtr[unit]->size - 3);
+	    GLuint swaptexmatcol = (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size - 3);
 	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))
 	       radeonUploadTexMatrix( rmesa, unit, swaptexmatcol ) ;

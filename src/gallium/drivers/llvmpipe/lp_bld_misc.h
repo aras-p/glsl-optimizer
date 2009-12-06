@@ -30,16 +30,22 @@
 #define LP_BLD_MISC_H
 
 
+#include "llvm/Config/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
+#ifndef LLVM_NATIVE_ARCH
+
 void
 LLVMLinkInJIT(void);
 
-void
+int
 LLVMInitializeNativeTarget(void);
+
+#endif /* !LLVM_NATIVE_ARCH */
 
 
 #ifdef __cplusplus

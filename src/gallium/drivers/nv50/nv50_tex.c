@@ -96,19 +96,44 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	if (i == NV50_TEX_FORMAT_LIST_SIZE)
                 return 1;
 
-	mode = (nv50->sampler[unit]->normalized ? 0xd0005000 : 0x5001d000) |
-	       (mt->base.bo->tile_mode << 22);
+	if (nv50->sampler[unit]->normalized)
+		mode = 0x50001000 | (1 << 31);
+	else {
+		mode = 0x50001000 | (7 << 14);
+		assert(mt->base.base.target == PIPE_TEXTURE_2D);
+	}
+
+	mode |= ((mt->base.bo->tile_mode & 0x0f) << 22) |
+		((mt->base.bo->tile_mode & 0xf0) << 21);
+
 	if (pf_type(mt->base.base.format) == PIPE_FORMAT_TYPE_SRGB)
 		mode |= 0x0400;
 
+	switch (mt->base.base.target) {
+	case PIPE_TEXTURE_1D:
+		break;
+	case PIPE_TEXTURE_2D:
+		mode |= (1 << 14);
+		break;
+	case PIPE_TEXTURE_3D:
+		mode |= (2 << 14);
+		break;
+	case PIPE_TEXTURE_CUBE:
+		mode |= (3 << 14);
+		break;
+	default:
+		assert(!"unsupported texture target");
+		break;
+	}
+
 	so_data (so, nv50_tex_format_list[i].hw);
 	so_reloc(so, mt->base.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
-		     NOUVEAU_BO_RD, 0, 0);
+		 NOUVEAU_BO_RD, 0, 0);
 	so_data (so, mode);
 	so_data (so, 0x00300000);
-	so_data (so, mt->base.base.width[0]);
+	so_data (so, mt->base.base.width0 | (1 << 31));
 	so_data (so, (mt->base.base.last_level << 28) |
-		     (mt->base.base.depth[0] << 16) | mt->base.base.height[0]);
+		 (mt->base.base.depth0 << 16) | mt->base.base.height0);
 	so_data (so, 0x03000000);
 	so_data (so, mt->base.base.last_level << 4);
 
@@ -124,7 +149,7 @@ nv50_tex_validate(struct nv50_context *nv50)
 	unsigned i, unit, push;
 
 	push = MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2 + 23 + 6;
-	so = so_new(nv50->miptree_nr * 9 + push, nv50->miptree_nr + 2);
+	so = so_new(nv50->miptree_nr * 9 + push, nv50->miptree_nr * 2 + 2);
 
 	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
 			  nv50->miptree_nr * 8 * 4);

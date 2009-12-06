@@ -24,6 +24,8 @@ struct exa_context
    float solid_color[4];
    boolean has_solid_color;
 
+   boolean accel;
+
    /* float[9] projective matrix bound to pictures */
    struct {
       float    src[9];
@@ -33,15 +35,26 @@ struct exa_context
    } transform;
 
    struct {
+      boolean use_surface_copy;
+
       struct exa_pixmap_priv *src;
       struct exa_pixmap_priv *dst;
+
+      struct pipe_surface *src_surface;
+      struct pipe_surface *dst_surface;
+
+      struct pipe_texture *src_texture;
    } copy;
 };
 
 struct exa_pixmap_priv
 {
+   int width, height;
+
    int flags;
    int tex_flags;
+
+   int picture_format;
 
    struct pipe_texture *tex;
    struct pipe_texture *depth_stencil_tex;

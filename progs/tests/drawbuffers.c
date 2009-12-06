@@ -43,6 +43,8 @@ Display(void)
 
    glUseProgram_func(Program);
 
+   glEnable(GL_DEPTH_TEST);
+
    /* draw to user framebuffer */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, FBobject);
 
@@ -68,18 +70,23 @@ Display(void)
    glPopMatrix();
 
    /* read from user framebuffer */
-   /* bottom half = colorbuffer 0 */
+   /* left half = colorbuffer 0 */
    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-   glReadPixels(0, 0, Width, Height / 2, GL_RGBA, GL_UNSIGNED_BYTE,
+   glPixelStorei(GL_PACK_ROW_LENGTH, Width);
+   glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+   glReadPixels(0, 0, Width / 2, Height, GL_RGBA, GL_UNSIGNED_BYTE,
                 buffer);
-   /* top half = colorbuffer 1 */
+
+   /* right half = colorbuffer 1 */
    glReadBuffer(GL_COLOR_ATTACHMENT1_EXT);
-   glReadPixels(0, Height/2, Width, Height - Height / 2,
+   glPixelStorei(GL_PACK_SKIP_PIXELS, Width / 2);
+   glReadPixels(Width / 2, 0, Width - Width / 2, Height,
                 GL_RGBA, GL_UNSIGNED_BYTE,
-                buffer + Width * (Height / 2) * 4);
+                buffer);
 
    /* draw to window */
    glUseProgram_func(0);
+   glDisable(GL_DEPTH_TEST);
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
    glWindowPos2iARB(0, 0);
    glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);

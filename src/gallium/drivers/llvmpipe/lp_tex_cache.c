@@ -36,6 +36,7 @@
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "util/u_format.h"
+#include "util/u_math.h"
 #include "lp_context.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -154,7 +155,6 @@ lp_tex_tile_cache_validate_texture(struct llvmpipe_tex_tile_cache *tc)
       if (lpt->timestamp != tc->timestamp) {
          /* texture was modified, invalidate all cached tiles */
          uint i;
-         debug_printf("INV %d %d\n", tc->timestamp, lpt->timestamp);
          for (i = 0; i < NUM_ENTRIES; i++) {
             tc->entries[i].addr.bits.invalid = 1;
          }
@@ -270,8 +270,8 @@ lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
                                      addr.bits.level, 
                                      addr.bits.z, 
                                      PIPE_TRANSFER_READ, 0, 0,
-                                     tc->texture->width[addr.bits.level],
-                                     tc->texture->height[addr.bits.level]);
+                                     u_minify(tc->texture->width0, addr.bits.level),
+                                     u_minify(tc->texture->height0, addr.bits.level));
 
          tc->tex_trans_map = screen->transfer_map(screen, tc->tex_trans);
 
@@ -290,7 +290,7 @@ lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
             assert(0);
          }
 
-         util_format_read_4ub(tc->tex_trans->format,
+         util_format_read_4ub(tc->tex_trans->texture->format,
                               (uint8_t *)tile->color, sizeof tile->color[0],
                               tc->tex_trans_map, tc->tex_trans->stride,
                               x, y, w, h);

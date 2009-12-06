@@ -148,6 +148,20 @@ generate_depth(LLVMBuilderRef builder,
    format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
 
+   /*
+    * Depths are expected to be between 0 and 1, even if they are stored in
+    * floats. Setting these bits here will ensure that the lp_build_conv() call
+    * below won't try to unnecessarily clamp the incoming values.
+    */
+   if(src_type.floating) {
+      src_type.sign = FALSE;
+      src_type.norm = TRUE;
+   }
+   else {
+      assert(!src_type.sign);
+      assert(src_type.norm);
+   }
+
    /* Pick the depth type. */
    dst_type = lp_depth_type(format_desc, src_type.width*src_type.length);
 
@@ -155,14 +169,11 @@ generate_depth(LLVMBuilderRef builder,
    assert(dst_type.width == src_type.width);
    assert(dst_type.length == src_type.length);
 
-#if 1
-   src = lp_build_clamped_float_to_unsigned_norm(builder,
-                                                 src_type,
-                                                 dst_type.width,
-                                                 src);
-#else
    lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
-#endif
+
+   dst_ptr = LLVMBuildBitCast(builder,
+                              dst_ptr,
+                              LLVMPointerType(lp_build_vec_type(dst_type), 0), "");
 
    lp_build_depth_test(builder,
                        &key->depth,
@@ -611,10 +622,12 @@ generate_fragment(struct llvmpipe_context *lp,
     * Translate the LLVM IR into machine code.
     */
 
+#ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
       LLVMDumpValue(variant->function);
-      abort();
+      assert(0);
    }
+#endif
 
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 

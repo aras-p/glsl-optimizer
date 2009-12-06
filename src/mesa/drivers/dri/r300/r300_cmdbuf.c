@@ -46,14 +46,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 #include "r300_ioctl.h"
-#include "radeon_reg.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_mipmap_tree.h"
 #include "r300_state.h"
-#include "radeon_reg.h"
 #include "radeon_queryobj.h"
 
 /** # of dwords reserved for additional instructions that may need to be written
@@ -171,7 +169,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		if (t && !t->image_override) {
 			BEGIN_BATCH_NO_AUTOSTATE(4);
 			OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-			OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+			OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 					RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 			END_BATCH();
 		} else if (!t) {
@@ -281,12 +279,27 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
 	else switch (rrb->base.Format) {
         case MESA_FORMAT_RGB565:
+		assert(_mesa_little_endian());
+		cbpitch |= R300_COLOR_FORMAT_RGB565;
+		break;
+        case MESA_FORMAT_RGB565_REV:
+		assert(!_mesa_little_endian());
 		cbpitch |= R300_COLOR_FORMAT_RGB565;
 		break;
         case MESA_FORMAT_ARGB4444:
+		assert(_mesa_little_endian());
+		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
+		break;
+        case MESA_FORMAT_ARGB4444_REV:
+		assert(!_mesa_little_endian());
 		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
 		break;
 	case MESA_FORMAT_ARGB1555:
+		assert(_mesa_little_endian());
+		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+		break;
+	case MESA_FORMAT_ARGB1555_REV:
+		assert(!_mesa_little_endian());
 		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
 		break;
 	default:

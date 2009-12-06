@@ -27,6 +27,7 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
@@ -58,7 +59,9 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_SAMPLERS;
+      return PIPE_MAX_VERTEX_SAMPLERS;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -131,16 +134,16 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct llvmpipe_winsys *winsys = screen->winsys;
+   const struct util_format_description *format_desc;
+
+   format_desc = util_format_description(format);
+   if(!format_desc)
+      return FALSE;
 
    assert(target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
-
-   if(format == PIPE_FORMAT_Z16_UNORM)
-      return FALSE;
-   if(format == PIPE_FORMAT_S8_UNORM)
-      return FALSE;
 
    switch(format) {
    case PIPE_FORMAT_DXT1_RGB:
@@ -152,8 +155,51 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       break;
    }
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
-      return winsys->is_displaytarget_format_supported(winsys, format);
+   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+      if(format_desc->block.width != 1 ||
+         format_desc->block.height != 1)
+         return FALSE;
+
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
+         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
+         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+         return FALSE;
+
+      if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
+         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB)
+         return FALSE;
+   }
+
+   if(tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if(!winsys->is_displaytarget_format_supported(winsys, format))
+         return FALSE;
+   }
+
+   if(tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+      if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+
+      /* FIXME: Temporary restriction. See lp_state_fs.c. */
+      if(format_desc->block.bits != 32)
+         return FALSE;
+   }
+
+   /* FIXME: Temporary restrictions. See lp_bld_sample_soa.c */
+   if(tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) {
+      if(format_desc->block.width != 1 ||
+         format_desc->block.height != 1)
+         return FALSE;
+
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
+         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
+         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+         return FALSE;
+
+      if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
+         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB &&
+         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+   }
 
    return TRUE;
 }

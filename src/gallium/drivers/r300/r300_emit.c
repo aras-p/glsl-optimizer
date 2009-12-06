@@ -38,10 +38,11 @@ void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend)
 {
     CS_LOCALS(r300);
-    BEGIN_CS(7);
-    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 2);
+    BEGIN_CS(8);
+    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
     OUT_CS(blend->blend_control);
     OUT_CS(blend->alpha_blend_control);
+    OUT_CS(blend->color_channel_mask);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
     END_CS;
@@ -128,7 +129,9 @@ static const float * get_shader_constant(
     struct rc_constant * constant,
     struct r300_constant_buffer * externals)
 {
-    static const float zero[4] = { 0.0, 0.0, 0.0, 0.0 };
+    static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
+    struct pipe_texture *tex;
+
     switch(constant->Type) {
         case RC_CONSTANT_EXTERNAL:
             return externals->constants[constant->u.External];
@@ -136,11 +139,31 @@ static const float * get_shader_constant(
         case RC_CONSTANT_IMMEDIATE:
             return constant->u.Immediate;
 
+        case RC_CONSTANT_STATE:
+            switch (constant->u.State[0]) {
+                /* Factor for converting rectangle coords to
+                 * normalized coords. Should only show up on non-r500. */
+                case RC_STATE_R300_TEXRECT_FACTOR:
+                    tex = &r300->textures[constant->u.State[1]]->tex;
+                    vec[0] = 1.0 / tex->width0;
+                    vec[1] = 1.0 / tex->height0;
+                    break;
+
+                default:
+                    debug_printf("r300: Implementation error: "
+                        "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
+            }
+            break;
+
         default:
-            debug_printf("r300: Implementation error: Unhandled constant type %i\n",
-                constant->Type);
-            return zero;
+            debug_printf("r300: Implementation error: "
+                "Unhandled constant type %d\n", constant->Type);
     }
+
+    /* This should either be (0, 0, 0, 1), which should be a relatively safe
+     * RGBA or STRQ value, or it could be one of the RC_CONSTANT_STATE
+     * state factors. */
+    return vec;
 }
 
 /* Convert a normal single-precision float into the 7.16 format
@@ -284,7 +307,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     if (constants->Count == 0)
         return;
 
-    BEGIN_CS(constants->Count * 4 + 2);
+    BEGIN_CS(constants->Count * 4 + 3);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->Count * 4);
     for (i = 0; i < constants->Count; i++) {
@@ -308,14 +331,20 @@ void r300_emit_fb_state(struct r300_context* r300,
     CS_LOCALS(r300);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 4);
+    OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
+        R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+        R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
+        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+
     for (i = 0; i < fb->nr_cbufs; i++) {
         surf = fb->cbufs[i];
         tex = (struct r300_texture*)surf->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
 
-        /* XXX I still need to figure out how to set the mipmap level here */
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level] |
@@ -332,7 +361,7 @@ void r300_emit_fb_state(struct r300_context* r300,
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_ZB_FORMAT, r300_translate_zsformat(tex->tex.format));
 
@@ -341,12 +370,6 @@ void r300_emit_fb_state(struct r300_context* r300,
                      RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
-    OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
-        R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
-        R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
     END_CS;
 }
 
@@ -359,8 +382,6 @@ static void r300_emit_query_start(struct r300_context *r300)
     if (!query)
 	return;
 
-    /* XXX This will almost certainly not return good results
-     * for overlapping queries. */
     BEGIN_CS(4);
     if (caps->family == CHIP_FAMILY_RV530) {
         OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
@@ -482,7 +503,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(20);
+    BEGIN_CS(22);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
@@ -498,6 +519,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
     OUT_CS_REG(R300_GA_COLOR_CONTROL, rs->color_control);
+    OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
     END_CS;
 }
 
@@ -508,6 +530,8 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
+    DBG(r300, DBG_DRAW, "r300: RS emit:\n");
+
     BEGIN_CS(21);
     if (r300screen->caps->is_r500) {
         OUT_CS_REG_SEQ(R500_RS_IP_0, 8);
@@ -516,7 +540,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->ip[i]);
-        /* debug_printf("ip %d: 0x%08x\n", i, rs->ip[i]); */
+        DBG(r300, DBG_DRAW, "    : ip %d: 0x%08x\n", i, rs->ip[i]);
     }
 
     OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
@@ -530,25 +554,35 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->inst[i]);
-        /* debug_printf("inst %d: 0x%08x\n", i, rs->inst[i]); */
+        DBG(r300, DBG_DRAW, "    : inst %d: 0x%08x\n", i, rs->inst[i]);
     }
 
-    /* debug_printf("count: 0x%08x inst_count: 0x%08x\n", rs->count,
-     *        rs->inst_count); */
+    DBG(r300, DBG_DRAW, "    : count: 0x%08x inst_count: 0x%08x\n",
+        rs->count, rs->inst_count);
 
+    END_CS;
+}
+
+static void r300_emit_scissor_regs(struct r300_context* r300,
+                                   struct r300_scissor_regs* scissor)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(3);
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    OUT_CS(scissor->top_left);
+    OUT_CS(scissor->bottom_right);
     END_CS;
 }
 
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {
-    CS_LOCALS(r300);
-
-    BEGIN_CS(3);
-    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS(scissor->scissor_top_left);
-    OUT_CS(scissor->scissor_bottom_right);
-    END_CS;
+    if (r300->rs_state->rs.scissor) {
+        r300_emit_scissor_regs(r300, &scissor->scissor);
+    } else {
+        r300_emit_scissor_regs(r300, &scissor->framebuffer);
+    }
 }
 
 void r300_emit_texture(struct r300_context* r300,
@@ -557,6 +591,8 @@ void r300_emit_texture(struct r300_context* r300,
                        unsigned offset)
 {
     uint32_t filter0 = sampler->filter0;
+    uint32_t format0 = tex->state.format0;
+    unsigned min_level, max_level;
     CS_LOCALS(r300);
 
     /* to emulate 1D textures through 2D ones correctly */
@@ -565,13 +601,20 @@ void r300_emit_texture(struct r300_context* r300,
         filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
     }
 
+    /* determine min/max levels */
+    /* the MAX_MIP level is the largest (finest) one */
+    max_level = MIN2(sampler->max_lod, tex->tex.last_level);
+    min_level = MIN2(sampler->min_lod, max_level);
+    format0 |= R300_TX_NUM_LEVELS(max_level);
+    filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+
     BEGIN_CS(16);
     OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
         (offset << 28));
     OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
     OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
 
-    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), tex->state.format0);
+    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), format0);
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
     OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);
@@ -580,7 +623,52 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_vertex_buffer(struct r300_context* r300)
+/* XXX I can't read this and that's not good */
+void r300_emit_aos(struct r300_context* r300, unsigned offset)
+{
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    CS_LOCALS(r300);
+    int i;
+    unsigned aos_count = r300->vertex_element_count;
+
+    unsigned packet_size = (aos_count * 3 + 1) / 2;
+    BEGIN_CS(2 + packet_size + aos_count * 2);
+    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
+    OUT_CS(aos_count);
+    for (i = 0; i < aos_count - 1; i += 2) {
+        int buf_num1 = velem[i].vertex_buffer_index;
+        int buf_num2 = velem[i+1].vertex_buffer_index;
+        assert(vbuf[buf_num1].stride % 4 == 0 && pf_get_blocksize(velem[i].src_format) % 4 == 0);
+        assert(vbuf[buf_num2].stride % 4 == 0 && pf_get_blocksize(velem[i+1].src_format) % 4 == 0);
+        OUT_CS((pf_get_blocksize(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
+               (pf_get_blocksize(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
+        OUT_CS(vbuf[buf_num1].buffer_offset + velem[i].src_offset +
+               offset * vbuf[buf_num1].stride);
+        OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
+               offset * vbuf[buf_num2].stride);
+    }
+    if (aos_count & 1) {
+        int buf_num = velem[i].vertex_buffer_index;
+        assert(vbuf[buf_num].stride % 4 == 0 && pf_get_blocksize(velem[i].src_format) % 4 == 0);
+        OUT_CS((pf_get_blocksize(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
+        OUT_CS(vbuf[buf_num].buffer_offset + velem[i].src_offset +
+               offset * vbuf[buf_num].stride);
+    }
+
+    /* XXX bare CS reloc */
+    for (i = 0; i < aos_count; i++) {
+        cs_winsys->write_cs_reloc(cs_winsys,
+                                  vbuf[velem[i].vertex_buffer_index].buffer,
+                                  RADEON_GEM_DOMAIN_GTT,
+                                  0,
+                                  0);
+        cs_count -= 2;
+    }
+    END_CS;
+}
+#if 0
+void r300_emit_draw_packet(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
@@ -603,11 +691,14 @@ void r300_emit_vertex_buffer(struct r300_context* r300)
     OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
 }
+#endif
 
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
     int i;
     CS_LOCALS(r300);
+
+    DBG(r300, DBG_DRAW, "r300: VAP/PSC emit:\n");
 
     BEGIN_CS(26);
     OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info->vinfo.size);
@@ -618,25 +709,26 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
     OUT_CS(r300->vertex_info->vinfo.hwfmt[2]);
     OUT_CS(r300->vertex_info->vinfo.hwfmt[3]);
-    /* for (i = 0; i < 4; i++) {
-     *    debug_printf("hwfmt%d: 0x%08x\n", i,
-     *            r300->vertex_info->vinfo.hwfmt[i]);
-     * } */
+    for (i = 0; i < 4; i++) {
+       DBG(r300, DBG_DRAW, "    : hwfmt%d: 0x%08x\n", i,
+               r300->vertex_info->vinfo.hwfmt[i]);
+    }
 
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
     for (i = 0; i < 8; i++) {
         OUT_CS(r300->vertex_info->vap_prog_stream_cntl[i]);
-        /* debug_printf("prog_stream_cntl%d: 0x%08x\n", i,
-         *        r300->vertex_info->vap_prog_stream_cntl[i]); */
+        DBG(r300, DBG_DRAW, "    : prog_stream_cntl%d: 0x%08x\n", i,
+               r300->vertex_info->vap_prog_stream_cntl[i]);
     }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
     for (i = 0; i < 8; i++) {
         OUT_CS(r300->vertex_info->vap_prog_stream_cntl_ext[i]);
-        /* debug_printf("prog_stream_cntl_ext%d: 0x%08x\n", i,
-         *        r300->vertex_info->vap_prog_stream_cntl_ext[i]); */
+        DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
+               r300->vertex_info->vap_prog_stream_cntl_ext[i]);
     }
     END_CS;
 }
+
 
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code)
@@ -644,6 +736,15 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     unsigned instruction_count = code->length / 4;
+
+    int vtx_mem_size = r300screen->caps->is_r500 ? 128 : 72;
+    int input_count = MAX2(util_bitcount(code->InputsRead), 1);
+    int output_count = MAX2(util_bitcount(code->OutputsWritten), 1);
+    int temp_count = MAX2(code->num_temporaries, 1);
+    int pvs_num_slots = MIN3(vtx_mem_size / input_count,
+                             vtx_mem_size / output_count, 10);
+    int pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
+
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
@@ -656,8 +757,7 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1
-     * See the r5xx docs for instructions on how to use these.
-     * XXX these could be optimized to select better values... */
+     * See the r5xx docs for instructions on how to use these. */
     OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
     OUT_CS(R300_PVS_FIRST_INST(0) |
             R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
@@ -670,10 +770,11 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
     for (i = 0; i < code->length; i++)
         OUT_CS(code->body.d[i]);
 
-    OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(10) |
-            R300_PVS_NUM_CNTLRS(5) |
+    OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(pvs_num_slots) |
+            R300_PVS_NUM_CNTLRS(pvs_num_controllers) |
             R300_PVS_NUM_FPUS(r300screen->caps->num_vert_fpus) |
-            R300_PVS_VF_MAX_VTX_NUM(12));
+            R300_PVS_VF_MAX_VTX_NUM(12) |
+            (r300screen->caps->is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
     END_CS;
 }
 
@@ -738,13 +839,22 @@ void r300_emit_viewport_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_texture_count(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    END_CS;
+
+}
+
 void r300_flush_textures(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(4);
+    BEGIN_CS(2);
     OUT_CS_REG(R300_TX_INVALTAGS, 0);
-    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
     END_CS;
 }
 
@@ -769,12 +879,17 @@ void r300_emit_dirty_state(struct r300_context* r300)
         return;
     }
 
-    r300_update_derived_state(r300);
+    /* Check size of CS. */
+    /* Make sure we have at least 8*1024 spare dwords. */
+    /* XXX It would be nice to know the number of dwords we really need to
+     * XXX emit. */
+    if (!r300->winsys->check_cs(r300->winsys, 8*1024)) {
+        r300->context.flush(&r300->context, 0, NULL);
+    }
 
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
-    /* XXX check size */
 validate:
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
@@ -821,7 +936,7 @@ validate:
             goto validate;
         }
     } else {
-        debug_printf("No VBO while emitting dirty state!\n");
+        // debug_printf("No VBO while emitting dirty state!\n");
     }
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
@@ -900,6 +1015,8 @@ validate:
     /* Samplers and textures are tracked separately but emitted together. */
     if (r300->dirty_state &
             (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
+        r300_emit_texture_count(r300);
+
         for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
   	    if (r300->dirty_state &
 		((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
@@ -949,7 +1066,7 @@ validate:
     */
 
     /* Finally, emit the VBO. */
-    r300_emit_vertex_buffer(r300);
+    //r300_emit_vertex_buffer(r300);
 
     r300->dirty_hw++;
 }

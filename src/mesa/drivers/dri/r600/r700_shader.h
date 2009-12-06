@@ -109,6 +109,7 @@ typedef struct R700_Shader
     GLuint  uStackSize;
     GLuint  uMaxCallDepth;
 
+    TypedShaderList * plstCFInstructions_active;
 	TypedShaderList lstCFInstructions;
 	TypedShaderList lstALUInstructions;
 	TypedShaderList lstTEXInstructions;
@@ -132,13 +133,13 @@ void TakeInstOutFromList(TypedShaderList * plstCFInstructions, R700ShaderInstruc
 void ResolveLinks(R700_Shader *pShader);
 void Assemble(R700_Shader *pShader);
 
-
 //Interface
 void Init_R700_Shader(R700_Shader * pShader);
 void AddCFInstruction(R700_Shader *pShader, R700ControlFlowInstruction *pCFInst);
 void AddVTXInstruction(R700_Shader *pShader, R700VertexInstruction *pVTXInst);
 void AddTEXInstruction(R700_Shader *pShader, R700TextureInstruction *pTEXInst);
 void AddALUInstruction(R700_Shader *pShader, R700ALUInstruction *pALUInst);
+void SetActiveCFlist(R700_Shader *pShader, TypedShaderList * plstCF);
 
 void LoadProgram(R700_Shader *pShader);
 void UpdateShaderRegisters(R700_Shader *pShader);

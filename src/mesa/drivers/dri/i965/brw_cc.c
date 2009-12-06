@@ -55,7 +55,8 @@ static void prepare_cc_vp( struct brw_context *brw )
    }
 
    dri_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
+   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
+				  NULL, 0);
 }
 
 const struct brw_tracked_state brw_cc_vp = {

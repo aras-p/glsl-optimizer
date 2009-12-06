@@ -15,22 +15,18 @@ message:
 
 
 subdirs:
-	@if test -n "$(SUBDIRS)" ; then \
-		for dir in $(SUBDIRS) ; do \
-			if [ -d $$dir ] ; then \
-				(cd $$dir && $(MAKE)) || exit 1 ; \
-			fi \
-		done \
-	fi
+	@list='$(SUBDIRS)'; for dir in $$list ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE)) || exit 1 ; \
+		fi \
+	done
 
 # Dummy install target
 install:
 
 clean:
-	-@if test -n "$(SUBDIRS)" ; then \
-		for dir in $(SUBDIRS) tests ; do \
-			if [ -d $$dir ] ; then \
-				(cd $$dir && $(MAKE) clean) ; \
-			fi \
-		done \
-	fi
+	@list='$(SUBDIRS)'; for dir in $$list tests ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) clean) ; \
+		fi \
+	done

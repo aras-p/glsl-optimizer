@@ -88,11 +88,15 @@ struct nv50_reg {
 	int index;
 
 	int hw;
-	int neg;
+	int mod;
 
 	int rhw; /* result hw for FP outputs, or interpolant index */
 	int acc; /* instruction where this reg is last read (first insn == 1) */
 };
+
+#define NV50_MOD_NEG 1
+#define NV50_MOD_ABS 2
+#define NV50_MOD_SAT 4
 
 /* arbitrary limits */
 #define MAX_IF_DEPTH 4
@@ -152,7 +156,7 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->type = type;
 	reg->index = index;
 	reg->hw = hw;
-	reg->neg = 0;
+	reg->mod = 0;
 	reg->rhw = -1;
 	reg->acc = 0;
 }
@@ -460,8 +464,12 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
+	unsigned val;
 	float f = pc->immd_buf[imm->hw];
-	unsigned val = fui(imm->neg ? -f : f);
+
+	if (imm->mod & NV50_MOD_ABS)
+		f = fabsf(f);
+	val = fui((imm->mod & NV50_MOD_NEG) ? -f : f);
 
 	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
@@ -801,12 +809,12 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
 	if (src1->type == P_IMMD && !is_long(e)) {
-		if (src0->neg)
+		if (src0->mod & NV50_MOD_NEG)
 			e->inst[0] |= 0x00008000;
 		set_immd(pc, src1, e);
 	} else {
 		set_src_1(pc, src1, e);
-		if (src0->neg ^ src1->neg) {
+		if ((src0->mod ^ src1->mod) & NV50_MOD_NEG) {
 			if (is_long(e))
 				e->inst[1] |= 0x08000000;
 			else
@@ -828,9 +836,10 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 	alloc_reg(pc, src1);
 	check_swap_src_0_1(pc, &src0, &src1);
 
-	if (!pc->allow32 || (src0->neg | src1->neg) || src1->hw > 63) {
+	if (!pc->allow32 || (src0->mod | src1->mod) || src1->hw > 63) {
 		set_long(pc, e);
-		e->inst[1] |= (src0->neg << 26) | (src1->neg << 27);
+		e->inst[1] |= ((src0->mod & NV50_MOD_NEG) << 26) |
+			      ((src1->mod & NV50_MOD_NEG) << 27);
 	}
 
 	set_dst(pc, dst, e);
@@ -877,6 +886,11 @@ emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	set_src_0(pc, src0, e);
 	set_src_1(pc, src1, e);
 
+	if (src0->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
+	if (src1->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00080000;
+
 	emit(pc, e);
 }
 
@@ -885,9 +899,9 @@ emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
 	assert(src0 != src1);
-	src1->neg ^= 1;
+	src1->mod ^= NV50_MOD_NEG;
 	emit_add(pc, dst, src0, src1);
-	src1->neg ^= 1;
+	src1->mod ^= NV50_MOD_NEG;
 }
 
 static void
@@ -941,9 +955,9 @@ emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_src_1(pc, src1, e);
 	set_src_2(pc, src2, e);
 
-	if (src0->neg ^ src1->neg)
+	if ((src0->mod ^ src1->mod) & NV50_MOD_NEG)
 		e->inst[1] |= 0x04000000;
-	if (src2->neg)
+	if (src2->mod & NV50_MOD_NEG)
 		e->inst[1] |= 0x08000000;
 
 	emit(pc, e);
@@ -954,9 +968,9 @@ emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
 	assert(src2 != src0 && src2 != src1);
-	src2->neg ^= 1;
+	src2->mod ^= NV50_MOD_NEG;
 	emit_mad(pc, dst, src0, src1, src2);
-	src2->neg ^= 1;
+	src2->mod ^= NV50_MOD_NEG;
 }
 
 static void
@@ -1230,7 +1244,7 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	const int r_pred = 1;
 	unsigned cvn = CVT_F32_F32;
 
-	if (src->neg)
+	if (src->mod & NV50_MOD_NEG)
 		cvn |= CVT_NEG;
 	/* write predicate reg */
 	emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
@@ -1244,10 +1258,36 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static void
+load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
+		     struct nv50_reg **src, boolean proj)
+{
+	int mod[3] = { src[0]->mod, src[1]->mod, src[2]->mod };
+
+	src[0]->mod |= NV50_MOD_ABS;
+	src[1]->mod |= NV50_MOD_ABS;
+	src[2]->mod |= NV50_MOD_ABS;
+
+	emit_minmax(pc, 4, t[2], src[0], src[1]);
+	emit_minmax(pc, 4, t[2], src[2], t[2]);
+
+	src[0]->mod = mod[0];
+	src[1]->mod = mod[1];
+	src[2]->mod = mod[2];
+
+	if (proj && 0 /* looks more correct without this */)
+		emit_mul(pc, t[2], t[2], src[3]);
+	emit_flop(pc, 0, t[2], t[2]);
+
+	emit_mul(pc, t[0], src[0], t[2]);
+	emit_mul(pc, t[1], src[1], t[2]);
+	emit_mul(pc, t[2], src[2], t[2]);
+}
+
+static void
 emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	 struct nv50_reg **src, unsigned unit, unsigned type, boolean proj)
 {
-	struct nv50_reg *temp, *t[4];
+	struct nv50_reg *t[4];
 	struct nv50_program_exec *e;
 
 	unsigned c, mode, dim;
@@ -1276,6 +1316,9 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	/* some cards need t[0]'s hw index to be a multiple of 4 */
 	alloc_temp4(pc, t, 0);
 
+	if (type == TGSI_TEXTURE_CUBE) {
+		load_cube_tex_coords(pc, t, src, proj);
+	} else
 	if (proj) {
 		if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
 			mode = pc->interp_mode[src[0]->index];
@@ -1300,17 +1343,8 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			 */
 		}
 	} else {
-		if (type == TGSI_TEXTURE_CUBE) {
-			temp = temp_temp(pc);
-			emit_minmax(pc, 4, temp, src[0], src[1]);
-			emit_minmax(pc, 4, temp, temp, src[2]);
-			emit_flop(pc, 0, temp, temp);
-			for (c = 0; c < 3; c++)
-				emit_mul(pc, t[c], src[c], temp);
-		} else {
-			for (c = 0; c < dim; c++)
-				emit_mov(pc, t[c], src[c]);
-		}
+		for (c = 0; c < dim; c++)
+			emit_mov(pc, t[c], src[c]);
 	}
 
 	e = exec(pc);
@@ -1323,14 +1357,16 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	if (dim == 2)
 		e->inst[0] |= 0x00400000;
 	else
-	if (dim == 3)
+	if (dim == 3) {
 		e->inst[0] |= 0x00800000;
+		if (type == TGSI_TEXTURE_CUBE)
+			e->inst[0] |= 0x08000000;
+	}
 
 	e->inst[0] |= (mask & 0x3) << 25;
 	e->inst[1] |= (mask & 0xc) << 12;
 
 	emit(pc, e);
-
 #if 1
 	c = 0;
 	if (mask & 1) emit_mov(pc, dst[0], t[c++]);
@@ -1404,19 +1440,25 @@ emit_ddx(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 static void
 emit_ddy(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
+	struct nv50_reg *r = src;
 	struct nv50_program_exec *e = exec(pc);
 
 	assert(src->type == P_TEMP);
 
-	if (!src->neg) /* ! double negation */
-		emit_neg(pc, src, src);
+	if (!(src->mod & NV50_MOD_NEG)) { /* ! double negation */
+		r = alloc_temp(pc, NULL);
+		emit_neg(pc, r, src);
+	}
 
 	e->inst[0] = 0xc0150000;
 	e->inst[1] = 0x8a400000;
 	set_long(pc, e);
 	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
-	set_src_2(pc, src, e);
+	set_src_0(pc, r, e);
+	set_src_2(pc, r, e);
+
+	if (r != src)
+		free_temp(pc, r);
 
 	emit(pc, e);
 }
@@ -1499,10 +1541,10 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	for (s = 0; s < insn->Instruction.NumSrcRegs; ++s) {
 		if (s == i)
 			continue;
-		if ((insn->FullSrcRegisters[s].SrcRegister.Index ==
-		     insn->FullSrcRegisters[i].SrcRegister.Index) &&
-		    (insn->FullSrcRegisters[s].SrcRegister.File ==
-		     insn->FullSrcRegisters[i].SrcRegister.File))
+		if ((insn->Src[s].Register.Index ==
+		     insn->Src[i].Register.Index) &&
+		    (insn->Src[s].Register.File ==
+		     insn->Src[i].Register.File))
 			return FALSE;
 	}
 
@@ -1513,7 +1555,7 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 static unsigned
 nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 {
-	unsigned x, mask = insn->FullDstRegisters[0].DstRegister.WriteMask;
+	unsigned x, mask = insn->Dst[0].Register.WriteMask;
 
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_COS:
@@ -1539,10 +1581,10 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_TEX:
 	case TGSI_OPCODE_TXP:
 	{
-		const struct tgsi_instruction_ext_texture *tex;
+		const struct tgsi_instruction_texture *tex;
 
-		assert(insn->Instruction.Extended);
-		tex = &insn->InstructionExtTexture;
+		assert(insn->Instruction.Texture);
+		tex = &insn->Texture;
 
 		mask = 0x7;
 		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
@@ -1576,17 +1618,17 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
-	switch (dst->DstRegister.File) {
+	switch (dst->Register.File) {
 	case TGSI_FILE_TEMPORARY:
-		return &pc->temp[dst->DstRegister.Index * 4 + c];
+		return &pc->temp[dst->Register.Index * 4 + c];
 	case TGSI_FILE_OUTPUT:
-		return &pc->result[dst->DstRegister.Index * 4 + c];
+		return &pc->result[dst->Register.Index * 4 + c];
 	case TGSI_FILE_ADDRESS:
 	{
-		struct nv50_reg *r = pc->addr[dst->DstRegister.Index * 4 + c];
+		struct nv50_reg *r = pc->addr[dst->Register.Index * 4 + c];
 		if (!r) {
 			r = alloc_addr(pc, NULL);
-			pc->addr[dst->DstRegister.Index * 4 + c] = r;
+			pc->addr[dst->Register.Index * 4 + c] = r;
 		}
 		assert(r);
 		return r;
@@ -1608,8 +1650,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	struct nv50_reg *temp;
 	unsigned sgn, c, swz;
 
-	if (src->SrcRegister.File != TGSI_FILE_CONSTANT)
-		assert(!src->SrcRegister.Indirect);
+	if (src->Register.File != TGSI_FILE_CONSTANT)
+		assert(!src->Register.Indirect);
 
 	sgn = tgsi_util_get_full_src_register_sign_mode(src, chan);
 
@@ -1619,16 +1661,16 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	case TGSI_SWIZZLE_Y:
 	case TGSI_SWIZZLE_Z:
 	case TGSI_SWIZZLE_W:
-		switch (src->SrcRegister.File) {
+		switch (src->Register.File) {
 		case TGSI_FILE_INPUT:
-			r = &pc->attr[src->SrcRegister.Index * 4 + c];
+			r = &pc->attr[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_TEMPORARY:
-			r = &pc->temp[src->SrcRegister.Index * 4 + c];
+			r = &pc->temp[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_CONSTANT:
-			if (!src->SrcRegister.Indirect) {
-				r = &pc->param[src->SrcRegister.Index * 4 + c];
+			if (!src->Register.Indirect) {
+				r = &pc->param[src->Register.Index * 4 + c];
 				break;
 			}
 			/* Indicate indirection by setting r->acc < 0 and
@@ -1636,19 +1678,19 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			 */
 			r = MALLOC_STRUCT(nv50_reg);
 			swz = tgsi_util_get_src_register_swizzle(
-						 &src->SrcRegisterInd, 0);
+						 &src->Indirect, 0);
 			ctor_reg(r, P_CONST,
-				 src->SrcRegisterInd.Index * 4 + swz,
-				 src->SrcRegister.Index * 4 + c);
+				 src->Indirect.Index * 4 + swz,
+				 src->Register.Index * 4 + c);
 			r->acc = -1;
 			break;
 		case TGSI_FILE_IMMEDIATE:
-			r = &pc->immd[src->SrcRegister.Index * 4 + c];
+			r = &pc->immd[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_SAMPLER:
 			break;
 		case TGSI_FILE_ADDRESS:
-			r = pc->addr[src->SrcRegister.Index * 4 + c];
+			r = pc->addr[src->Register.Index * 4 + c];
 			assert(r);
 			break;
 		default:
@@ -1671,7 +1713,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	case TGSI_UTIL_SIGN_TOGGLE:
 		if (neg)
-			r->neg = 1;
+			r->mod = NV50_MOD_NEG;
 		else {
 			temp = temp_temp(pc);
 			emit_neg(pc, temp, r);
@@ -1814,29 +1856,29 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	unsigned mask, sat, unit;
 	int i, c;
 
-	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
+	mask = inst->Dst[0].Register.WriteMask;
 	sat = inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE;
 
 	memset(src, 0, sizeof(src));
 
 	for (c = 0; c < 4; c++) {
 		if ((mask & (1 << c)) && !pc->r_dst[c])
-			dst[c] = tgsi_dst(pc, c, &inst->FullDstRegisters[0]);
+			dst[c] = tgsi_dst(pc, c, &inst->Dst[0]);
 		else
 			dst[c] = pc->r_dst[c];
 		rdst[c] = dst[c];
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-		const struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
+		const struct tgsi_full_src_register *fs = &inst->Src[i];
 		unsigned src_mask;
 		boolean neg_supp;
 
 		src_mask = nv50_tgsi_src_mask(inst, i);
 		neg_supp = negate_supported(inst, i);
 
-		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
-			unit = fs->SrcRegister.Index;
+		if (fs->Register.File == TGSI_FILE_SAMPLER)
+			unit = fs->Register.Index;
 
 		for (c = 0; c < 4; c++)
 			if (src_mask & (1 << c))
@@ -2145,11 +2187,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_TEX:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->InstructionExtTexture.Texture, FALSE);
+			 inst->Texture.Texture, FALSE);
 		break;
 	case TGSI_OPCODE_TXP:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->InstructionExtTexture.Texture, TRUE);
+			 inst->Texture.Texture, TRUE);
 		break;
 	case TGSI_OPCODE_TRUNC:
 		for (c = 0; c < 4; c++) {
@@ -2207,7 +2249,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!src[i][c])
 				continue;
-			src[i][c]->neg = 0;
+			src[i][c]->mod = 0;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
 			else
@@ -2228,7 +2270,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	const struct tgsi_dst_register *dst;
 	unsigned i, c, k, mask;
 
-	dst = &insn->FullDstRegisters[0].DstRegister;
+	dst = &insn->Dst[0].Register;
 	mask = dst->WriteMask;
 
         if (dst->File == TGSI_FILE_TEMPORARY)
@@ -2246,12 +2288,12 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	}
 
 	for (i = 0; i < insn->Instruction.NumSrcRegs; i++) {
-		src = &insn->FullSrcRegisters[i];
+		src = &insn->Src[i];
 
-		if (src->SrcRegister.File == TGSI_FILE_TEMPORARY)
+		if (src->Register.File == TGSI_FILE_TEMPORARY)
 			reg = pc->temp;
 		else
-		if (src->SrcRegister.File == TGSI_FILE_INPUT)
+		if (src->Register.File == TGSI_FILE_INPUT)
 			reg = pc->attr;
 		else
 			continue;
@@ -2263,7 +2305,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 				continue;
 			k = tgsi_util_get_full_src_register_swizzle(src, c);
 
-			reg[src->SrcRegister.Index * 4 + k].acc = pc->insn_nr;
+			reg[src->Register.Index * 4 + k].acc = pc->insn_nr;
 		}
 	}
 }
@@ -2323,13 +2365,13 @@ static struct nv50_reg *
 tgsi_broadcast_dst(struct nv50_pc *pc,
 		   const struct tgsi_full_dst_register *fd, unsigned mask)
 {
-	if (fd->DstRegister.File == TGSI_FILE_TEMPORARY) {
-		int c = ffs(~mask & fd->DstRegister.WriteMask);
+	if (fd->Register.File == TGSI_FILE_TEMPORARY) {
+		int c = ffs(~mask & fd->Register.WriteMask);
 		if (c)
 			return tgsi_dst(pc, c - 1, fd);
 	} else {
-		int c = ffs(fd->DstRegister.WriteMask) - 1;
-		if ((1 << c) == fd->DstRegister.WriteMask)
+		int c = ffs(fd->Register.WriteMask) - 1;
+		if ((1 << c) == fd->Register.WriteMask)
 			return tgsi_dst(pc, c, fd);
 	}
 
@@ -2343,7 +2385,7 @@ static unsigned
 nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 		       unsigned rdep[4])
 {
-	const struct tgsi_full_dst_register *fd = &insn->FullDstRegisters[0];
+	const struct tgsi_full_dst_register *fd = &insn->Dst[0];
 	const struct tgsi_full_src_register *fs;
 	unsigned i, deqs = 0;
 
@@ -2354,9 +2396,9 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 		unsigned chn, mask = nv50_tgsi_src_mask(insn, i);
 		boolean neg_supp = negate_supported(insn, i);
 
-		fs = &insn->FullSrcRegisters[i];
-		if (fs->SrcRegister.File != fd->DstRegister.File ||
-		    fs->SrcRegister.Index != fd->DstRegister.Index)
+		fs = &insn->Src[i];
+		if (fs->Register.File != fd->Register.File ||
+		    fs->Register.Index != fd->Register.Index)
 			continue;
 
 		for (chn = 0; chn < 4; ++chn) {
@@ -2367,7 +2409,7 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 			c = tgsi_util_get_full_src_register_swizzle(fs, chn);
 			s = tgsi_util_get_full_src_register_sign_mode(fs, chn);
 
-			if (!(fd->DstRegister.WriteMask & (1 << c)))
+			if (!(fd->Register.WriteMask & (1 << c)))
 				continue;
 
 			/* no danger if src is copied to TEMP first */
@@ -2391,7 +2433,7 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	const struct tgsi_full_dst_register *fd;
 	unsigned i, deqs, rdep[4], m[4];
 
-	fd = &tok->FullInstruction.FullDstRegisters[0];
+	fd = &tok->FullInstruction.Dst[0];
 	deqs = nv50_tgsi_scan_swizzle(&insn, rdep);
 
 	if (is_scalar_op(insn.Instruction.Opcode)) {
@@ -2410,10 +2452,10 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	for (i = 0; i < 4; ++i) {
 		assert(pc->r_dst[m[i]] == NULL);
 
-		insn.FullDstRegisters[0].DstRegister.WriteMask =
-			fd->DstRegister.WriteMask & (1 << m[i]);
+		insn.Dst[0].Register.WriteMask =
+			fd->Register.WriteMask & (1 << m[i]);
 
-		if (!insn.FullDstRegisters[0].DstRegister.WriteMask)
+		if (!insn.Dst[0].Register.WriteMask)
 			continue;
 
 		if (deqs & (1 << i))
@@ -2511,8 +2553,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			unsigned si, last, first, mode;
 
 			d = &tp.FullToken.FullDeclaration;
-			first = d->DeclarationRange.First;
-			last = d->DeclarationRange.Last;
+			first = d->Range.First;
+			last = d->Range.Last;
 
 			switch (d->Declaration.File) {
 			case TGSI_FILE_TEMPORARY:
@@ -2522,8 +2564,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				    p->type == PIPE_SHADER_FRAGMENT)
 					break;
 
-				si = d->Semantic.SemanticIndex;
-				switch (d->Semantic.SemanticName) {
+				si = d->Semantic.Index;
+				switch (d->Semantic.Name) {
 				case TGSI_SEMANTIC_BCOLOR:
 					p->cfg.two_side[si].hw = first;
 					if (p->cfg.io_nr > first)
@@ -2601,7 +2643,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
 			p->cfg.io[i].hw = rid;
-			p->cfg.io[i].id_vp = i;
+			p->cfg.io[i].id = i;
 
 			for (c = 0; c < 4; ++c) {
 				int n = i * 4 + c;
@@ -2633,14 +2675,12 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		 * the lower hardware IDs, so sort them:
 		 */
 		for (i = 0; i < pc->attr_nr; i++) {
-			if (pc->interp_mode[i] == INTERP_FLAT) {
-				p->cfg.io[m].id_vp = i + base;
-				p->cfg.io[m++].id_fp = i;
-			} else {
+			if (pc->interp_mode[i] == INTERP_FLAT)
+				p->cfg.io[m++].id = i;
+			else {
 				if (!(pc->interp_mode[i] & INTERP_PERSPECTIVE))
 					p->cfg.io[n].linear = TRUE;
-				p->cfg.io[n].id_vp = i + base;
-				p->cfg.io[n++].id_fp = i;
+				p->cfg.io[n++].id = i;
 			}
 		}
 
@@ -2652,7 +2692,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (n = 0; n < pc->attr_nr; ++n) {
 			p->cfg.io[n].hw = rid = aid;
-			i = p->cfg.io[n].id_fp;
+			i = p->cfg.io[n].id;
 
 			if (p->info.input_semantic_name[n] ==
 			    TGSI_SEMANTIC_FACE) {
@@ -2692,8 +2732,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		for (i = 0; i < pc->attr_nr; i++) {
 			ubyte si, sn;
 
-			sn = p->info.input_semantic_name[p->cfg.io[i].id_fp];
-			si = p->info.input_semantic_index[p->cfg.io[i].id_fp];
+			sn = p->info.input_semantic_name[p->cfg.io[i].id];
+			si = p->info.input_semantic_index[p->cfg.io[i].id];
 
 			if (sn == TGSI_SEMANTIC_COLOR) {
 				p->cfg.two_side[si] = p->cfg.io[i];
@@ -2878,7 +2918,7 @@ nv50_fp_move_results(struct nv50_pc *pc)
 static void
 nv50_program_fixup_insns(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e, *prev = NULL, **bra_list;
+	struct nv50_program_exec *e, **bra_list;
 	unsigned i, n, pos;
 
 	bra_list = CALLOC(pc->p->exec_size, sizeof(struct nv50_program_exec *));
@@ -2889,6 +2929,16 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 	for (n = 0, e = pc->p->exec_head; e; e = e->next)
 		if (e->param.index >= 0 && !e->param.mask)
 			bra_list[n++] = e;
+
+	/* last instruction must be long so it can have the exit bit set */
+	if (!is_long(pc->p->exec_tail))
+		convert_to_long(pc, pc->p->exec_tail);
+	/* set exit bit */
+	pc->p->exec_tail->inst[1] |= 1;
+
+	/* !immd on exit insn simultaneously means !join */
+	assert(!is_immd(pc->p->exec_head));
+	assert(!is_immd(pc->p->exec_tail));
 
 	/* Make sure we don't have any single 32 bit instructions. */
 	for (e = pc->p->exec_head, pos = 0; e; e = e->next) {
@@ -2901,22 +2951,7 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 			convert_to_long(pc, e);
 			++pos;
 		}
-		if (e->next)
-			prev = e;
 	}
-
-	assert(!is_immd(pc->p->exec_head));
-	assert(!is_immd(pc->p->exec_tail));
-
-	/* last instruction must be long so it can have the end bit set */
-	if (!is_long(pc->p->exec_tail)) {
-		convert_to_long(pc, pc->p->exec_tail);
-		if (prev)
-			convert_to_long(pc, prev);
-	}
-	assert(!(pc->p->exec_tail->inst[1] & 2));
-	/* set the end-bit */
-	pc->p->exec_tail->inst[1] |= 1;
 
 	FREE(bra_list);
 }
@@ -3200,15 +3235,15 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 	struct nv50_program *vp = nv50->vertprog;
 	unsigned i, c, m = base;
 
-	/* XXX: This can't work correctly in all cases yet, we either
-	 * have to create TGSI_SEMANTIC_PNTC or sprite_coord_mode has
-	 * to be per FP input instead of per VP output
+	/* XXX: this might not work correctly in all cases yet - we'll
+	 * just assume that an FP generic input that is not written in
+	 * the VP is PointCoord.
 	 */
 	memset(pntc, 0, 8 * sizeof(uint32_t));
 
 	for (i = 0; i < fp->cfg.io_nr; i++) {
 		uint8_t sn, si;
-		uint8_t j = fp->cfg.io[i].id_vp, k = fp->cfg.io[i].id_fp;
+		uint8_t j, k = fp->cfg.io[i].id;
 		unsigned n = popcnt4(fp->cfg.io[i].mask);
 
 		if (fp->info.input_semantic_name[k] != TGSI_SEMANTIC_GENERIC) {
@@ -3216,10 +3251,16 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 			continue;
 		}
 
-		sn = vp->info.input_semantic_name[j];
-		si = vp->info.input_semantic_index[j];
+		for (j = 0; j < vp->info.num_outputs; ++j) {
+			sn = vp->info.output_semantic_name[j];
+			si = vp->info.output_semantic_index[j];
 
-		if (j < fp->cfg.io_nr && sn == TGSI_SEMANTIC_GENERIC) {
+			if (sn == fp->info.input_semantic_name[k] &&
+			    si == fp->info.input_semantic_index[k])
+				break;
+		}
+
+		if (j < vp->info.num_outputs) {
 			ubyte mode =
 				nv50->rasterizer->pipe.sprite_coord_mode[si];
 
@@ -3307,20 +3348,24 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	reg[0] += m - 4; /* adjust FFC0 id */
 	reg[4] |= m << 8; /* set mid where 'normal' FP inputs start */
 
-	i = 0;
-	if (fp->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION)
-		i = 1;
-	for (; i < fp->cfg.io_nr; i++) {
-		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id_fp];
-		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id_fp];
+	for (i = 0; i < fp->cfg.io_nr; i++) {
+		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id];
+		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id];
 
-		n = fp->cfg.io[i].id_vp;
-		if (n >= vp->cfg.io_nr ||
-		    vp->info.output_semantic_name[n] != sn ||
-		    vp->info.output_semantic_index[n] != si)
-			vpo = &dummy;
-		else
-			vpo = &vp->cfg.io[n];
+		/* position must be mapped first */
+		assert(i == 0 || sn != TGSI_SEMANTIC_POSITION);
+
+		/* maybe even remove these from cfg.io */
+		if (sn == TGSI_SEMANTIC_POSITION || sn == TGSI_SEMANTIC_FACE)
+			continue;
+
+		/* VP outputs and vp->cfg.io are in the same order */
+		for (n = 0; n < vp->info.num_outputs; ++n) {
+			if (vp->info.output_semantic_name[n] == sn &&
+			    vp->info.output_semantic_index[n] == si)
+				break;
+		}
+		vpo = (n < vp->info.num_outputs) ? &vp->cfg.io[n] : &dummy;
 
 		m = nv50_sreg4_map(map, m, lin, &fp->cfg.io[i], vpo);
 	}

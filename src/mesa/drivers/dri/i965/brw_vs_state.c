@@ -109,10 +109,39 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw))
-       vs.thread4.nr_urb_entries = key->nr_urb_entries >> 2;
-   else
-       vs.thread4.nr_urb_entries = key->nr_urb_entries;
+   if (BRW_IS_IGDNG(brw)) {
+      switch (key->nr_urb_entries) {
+      case 8:
+      case 12:
+      case 16:
+      case 32:
+      case 64:
+      case 96:
+      case 128:
+      case 168:
+      case 192:
+      case 224:
+      case 256:
+	 vs.thread4.nr_urb_entries = key->nr_urb_entries >> 2;
+	 break;
+      default:
+	 assert(0);
+      }
+   } else {
+      switch (key->nr_urb_entries) {
+      case 8:
+      case 12:
+      case 16:
+      case 32:
+	 break;
+      case 64:
+	 assert(BRW_IS_G4X(brw));
+	 break;
+      default:
+	 assert(0);
+      }
+      vs.thread4.nr_urb_entries = key->nr_urb_entries;
+   }
 
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
 

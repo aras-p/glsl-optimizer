@@ -22,6 +22,8 @@ void* driDriverAPI;
  * Exported functions
  */
 
+/** Called by libEGL just prior to unloading/closing the driver.
+ */
 static void
 drm_unload(_EGLDriver *drv)
 {
@@ -31,6 +33,8 @@ drm_unload(_EGLDriver *drv)
 /**
  * The bootstrap function.  Return a new drm_driver object and
  * plug in API functions.
+ * libEGL finds this function with dlopen()/dlsym() and calls it from
+ * "load driver" function.
  */
 _EGLDriver *
 _eglMain(const char *args)
@@ -84,11 +88,11 @@ drm_get_device_id(struct drm_device *device)
 	}
 
 	ret = fgets(path, sizeof( path ), file);
+	fclose(file);
 	if (!ret)
 		return;
 
 	sscanf(path, "%x", &device->deviceID);
-	fclose(file);
 }
 
 static void

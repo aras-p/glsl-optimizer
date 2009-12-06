@@ -34,6 +34,7 @@
 
 #include "pipe/p_thread.h"
 
+struct pipe_surface;
 struct stw_pixelformat_info;
 
 /**
@@ -140,7 +141,7 @@ stw_framebuffer_allocate(
 BOOL
 stw_framebuffer_present_locked(HDC hdc,
                                struct stw_framebuffer *fb,
-                               unsigned surface_index);
+                               struct pipe_surface *surface);
 
 void
 stw_framebuffer_update(

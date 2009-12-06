@@ -72,7 +72,8 @@ typedef enum SrcRegisterType
     SRC_REG_INPUT          = 1,
     SRC_REG_CONSTANT       = 2,
     SRC_REG_ALT_TEMPORARY  = 3,
-    NUMBER_OF_SRC_REG_TYPE = 4
+    SRC_REC_LITERAL        = 4, 
+    NUMBER_OF_SRC_REG_TYPE = 5
 } SrcRegisterType;
 
 typedef enum DstRegisterType 
@@ -111,6 +112,12 @@ typedef struct PVSDSTtag
 	BITS addrmode1:1; //32
 } PVSDST;
 
+typedef struct PVSINSTtag
+{
+    BITS literal      :2; 
+    BITS SaturateMode :2; 
+} PVSINST;
+
 typedef struct PVSSRCtag 
 {
 	BITS rtype:4;            
@@ -148,6 +155,7 @@ typedef union PVSDWORDtag
 {
 	BITS    bits;
 	PVSDST  dst;
+    PVSINST dst2;
 	PVSSRC  src;
 	PVSMATH math;
 	float   f;
@@ -251,6 +259,8 @@ enum
     FC_IF = 1,
     FC_LOOP = 2,
     FC_REP = 3,
+    FC_PUSH_VPM = 4,
+    FC_PUSH_WQM = 5,
 
     COND_NONE = 0,
     COND_BOOL = 1,
@@ -263,21 +273,51 @@ enum
 
 typedef struct FC_LEVEL 
 {
-	unsigned int           first; ///< first fc instruction on level (if, rep, loop)
-	unsigned int*          mid; ///< middle instructions - else or all breaks on this level
-	unsigned int           midLen;
-	unsigned int           type;
-	unsigned int           cond;
-	unsigned int           inv;
-	unsigned int           bpush; ///< 1 if first instruction does branch stack push
-			 int           id; ///< id of bool or int variable
+    R700ControlFlowGenericClause *  first;
+    R700ControlFlowGenericClause ** mid;
+    unsigned int unNumMid;
+    unsigned int midLen;
+    unsigned int type;
+    unsigned int cond;
+    unsigned int inv;
+    int id; ///< id of bool or int variable
 } FC_LEVEL;
 
 typedef struct VTX_FETCH_METHOD 
 {
-	GLboolean bEnableMini;
-	GLuint mega_fetch_remainder;
+    GLboolean bEnableMini;
+    GLuint mega_fetch_remainder;
 } VTX_FETCH_METHOD;
+
+typedef struct SUB_OFFSET
+{
+    GLint  subIL_Offset;
+    GLuint unCFoffset;
+    GLuint unStackDepthMax;
+    TypedShaderList lstCFInstructions_local;
+} SUB_OFFSET;
+
+typedef struct CALLER_POINTER
+{
+    GLint  subIL_Offset;
+    GLint  subDescIndex;
+    R700ControlFlowGenericClause* cf_ptr;
+} CALLER_POINTER;
+
+#define SQ_MAX_CALL_DEPTH 0x00000020
+
+typedef struct CALL_LEVEL
+{
+    unsigned int      FCSP_BeforeEntry;
+    GLint             subDescIndex;
+    GLushort          current;
+    GLushort          max;
+    TypedShaderList * plstCFInstructions_local;
+} CALL_LEVEL;
+
+#define HAS_CURRENT_LOOPRET 0x1L
+#define HAS_LOOPRET         0x2L
+#define LOOPRET_FLAGS       HAS_LOOPRET | HAS_CURRENT_LOOPRET
 
 typedef struct r700_AssemblerBase 
 {
@@ -294,11 +334,14 @@ typedef struct r700_AssemblerBase
 	// No clause has been created yet
 	CF_CLAUSE_TYPE cf_current_clause_type;
 
+    BITS alu_x_opcode;
+
 	GLuint number_of_exports;
 	GLuint number_of_colorandz_exports;
 	GLuint number_of_export_opcodes;
 
 	PVSDWORD D;
+    PVSDWORD D2;
 	PVSDWORD S[3];
 
 	unsigned int uLastPosUpdate;
@@ -309,6 +352,8 @@ typedef struct r700_AssemblerBase
 	unsigned int uOIns;
 	unsigned int number_used_registers;
 	unsigned int uUsedConsts; 
+
+    unsigned int flag_reg_index;
 
 	// Fragment programs
 	unsigned int uiFP_AttributeMap[FRAG_ATTRIB_MAX];
@@ -329,9 +374,6 @@ typedef struct r700_AssemblerBase
 	//-----------------------------------------------------------------------------------
 	unsigned int FCSP;
 	FC_LEVEL fc_stack[32];
-
-	unsigned int branch_depth;
-	unsigned int max_branch_depth;
 
 	//-----------------------------------------------------------------------------------
 	// ArgSubst used in Assemble_Source() function
@@ -378,6 +420,18 @@ typedef struct r700_AssemblerBase
     GLboolean is_tex;
     /* we inserted helper intructions and need barrier on next TEX ins */ 
     GLboolean need_tex_barrier; 
+
+    SUB_OFFSET     * subs;
+    GLuint           unSubArraySize;
+    GLuint           unSubArrayPointer;
+    CALLER_POINTER * callers;
+    GLuint           unCallerArraySize;
+    GLuint           unCallerArrayPointer;
+    unsigned int     CALLSP;
+    CALL_LEVEL       CALLSTACK[SQ_MAX_CALL_DEPTH];
+
+    GLuint unCFflags;
+
 } r700_AssemblerBase;
 
 //Internal use
@@ -446,6 +500,10 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
 GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
                               R700ALUInstruction* alu_instruction_ptr,
                               GLuint              contiguous_slots_needed);
+
+GLboolean add_cf_instruction(r700_AssemblerBase* pAsm);
+void add_return_inst(r700_AssemblerBase *pAsm);
+
 void get_src_properties(R700ALUInstruction*  alu_instruction_ptr,
                         int                  source_index,
                         BITS*                psrc_sel,
@@ -467,6 +525,21 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
                        R700ALUInstruction* alu_instruction_ptr);
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm);
 GLboolean next_ins(r700_AssemblerBase *pAsm);
+
+GLboolean next_ins2(r700_AssemblerBase *pAsm);
+GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm);
+
+/* TODO : merge next_ins/2/literal, assemble_alu_instruction/2/literal */
+GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
+GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
+
+GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops);
+GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset);
+GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue);
+GLboolean testFlag(r700_AssemblerBase *pAsm);
+GLboolean breakLoopOnFlag(r700_AssemblerBase *pAsm, GLuint unFCSP);
+GLboolean returnOnFlag(r700_AssemblerBase *pAsm, GLuint unIF);
+
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode);
 GLboolean assemble_ABS(r700_AssemblerBase *pAsm);
 GLboolean assemble_ADD(r700_AssemblerBase *pAsm);
@@ -477,12 +550,14 @@ GLboolean assemble_COS(r700_AssemblerBase *pAsm);
 GLboolean assemble_DOT(r700_AssemblerBase *pAsm);
 GLboolean assemble_DST(r700_AssemblerBase *pAsm);
 GLboolean assemble_EX2(r700_AssemblerBase *pAsm);
+GLboolean assemble_EXP(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR(r700_AssemblerBase *pAsm);
 GLboolean assemble_FLR_INT(r700_AssemblerBase *pAsm);
 GLboolean assemble_FRC(r700_AssemblerBase *pAsm);
-GLboolean assemble_KIL(r700_AssemblerBase *pAsm);
+GLboolean assemble_KIL(r700_AssemblerBase *pAsm, GLuint opcode);
 GLboolean assemble_LG2(r700_AssemblerBase *pAsm);
 GLboolean assemble_LRP(r700_AssemblerBase *pAsm);
+GLboolean assemble_LOG(r700_AssemblerBase *pAsm);
 GLboolean assemble_MAD(r700_AssemblerBase *pAsm);
 GLboolean assemble_LIT(r700_AssemblerBase *pAsm);
 GLboolean assemble_MAX(r700_AssemblerBase *pAsm);
@@ -495,13 +570,31 @@ GLboolean assemble_RSQ(r700_AssemblerBase *pAsm);
 GLboolean assemble_SIN(r700_AssemblerBase *pAsm);
 GLboolean assemble_SCS(r700_AssemblerBase *pAsm);
 GLboolean assemble_SGE(r700_AssemblerBase *pAsm);
+
+GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode);
+GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode); 
+
 GLboolean assemble_SLT(r700_AssemblerBase *pAsm);
 GLboolean assemble_STP(r700_AssemblerBase *pAsm);
 GLboolean assemble_TEX(r700_AssemblerBase *pAsm);
 GLboolean assemble_XPD(r700_AssemblerBase *pAsm);
 GLboolean assemble_EXPORT(r700_AssemblerBase *pAsm);
-GLboolean assemble_IF(r700_AssemblerBase *pAsm);
+GLboolean assemble_IF(r700_AssemblerBase *pAsm, GLboolean bHasElse);
+GLboolean assemble_ELSE(r700_AssemblerBase *pAsm);
 GLboolean assemble_ENDIF(r700_AssemblerBase *pAsm);
+
+GLboolean assemble_BGNLOOP(r700_AssemblerBase *pAsm);
+GLboolean assemble_BRK(r700_AssemblerBase *pAsm);
+GLboolean assemble_COND(r700_AssemblerBase *pAsm);
+GLboolean assemble_ENDLOOP(r700_AssemblerBase *pAsm);
+
+GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex);
+GLboolean assemble_ENDSUB(r700_AssemblerBase *pAsm);
+GLboolean assemble_RET(r700_AssemblerBase *pAsm);
+GLboolean assemble_CAL(r700_AssemblerBase *pAsm, 
+                       GLint nILindex,
+                       GLuint uiNumberInsts,
+                       struct prog_instruction *pILInst);
 
 GLboolean Process_Export(r700_AssemblerBase* pAsm,
                          GLuint type, 
@@ -514,11 +607,15 @@ GLboolean Move_Depth_Exports_To_Correct_Channels(r700_AssemblerBase *pAsm,
 
 
 //Interface
-GLboolean AssembleInstr(GLuint uiNumberInsts,
+GLboolean AssembleInstr(GLuint uiFirstInst,
+                        GLuint uiNumberInsts,
                         struct prog_instruction *pILInst, 
 						r700_AssemblerBase *pR700AsmCode);
 GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode, GLbitfield OutputsWritten);  
 GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode, GLbitfield OutputsWritten);
+
+GLboolean RelocProgram(r700_AssemblerBase * pAsm);
+GLboolean InitShaderProgram(r700_AssemblerBase * pAsm);
 
 int       Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700_Shader* pShader);
 GLboolean Clean_Up_Assembler(r700_AssemblerBase *pR700AsmCode);

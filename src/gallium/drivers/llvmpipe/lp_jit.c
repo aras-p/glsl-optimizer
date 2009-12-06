@@ -154,6 +154,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 #if 0
    /* For simulating less capable machines */
    util_cpu_caps.has_sse3 = 0;
+   util_cpu_caps.has_ssse3 = 0;
    util_cpu_caps.has_sse4_1 = 0;
 #endif
 
@@ -167,7 +168,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
       _debug_printf("%s\n", error);
       LLVMDisposeMessage(error);
-      abort();
+      assert(0);
    }
 
    screen->target = LLVMGetExecutionEngineTargetData(screen->engine);

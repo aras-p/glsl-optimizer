@@ -73,15 +73,14 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
    template.last_level = 0;
    if (vpipe->screen->get_param(vpipe->screen, PIPE_CAP_NPOT_TEXTURES)) {
-      template.width[0] = width;
-      template.height[0] = height;
+      template.width0 = width;
+      template.height0 = height;
    }
    else {
-      template.width[0] = util_next_power_of_two(width);
-      template.height[0] = util_next_power_of_two(height);
+      template.width0 = util_next_power_of_two(width);
+      template.height0 = util_next_power_of_two(height);
    }
-   template.depth[0] = 1;
-   pf_get_block(template.format, &template.block);
+   template.depth0 = 1;
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
    subpicture_priv->context = context;

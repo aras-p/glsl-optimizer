@@ -92,5 +92,6 @@ llvmpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
       (struct lp_vertex_shader *)vs;
 
    draw_delete_vertex_shader(llvmpipe->draw, state->draw_data);
+   FREE( (void *)state->shader.tokens );
    FREE( state );
 }

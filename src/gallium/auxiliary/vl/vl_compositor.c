@@ -401,7 +401,7 @@ static unsigned gen_verts(struct vl_compositor *c,
                         PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD);
 
    if (c->dirty_bg) {
-      struct vertex2f bg_inv_size = {1.0f / c->bg->width[0], 1.0f / c->bg->height[0]};
+      struct vertex2f bg_inv_size = {1.0f / c->bg->width0, 1.0f / c->bg->height0};
       gen_rect_verts(num_rects++, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
       c->dirty_bg = false;
    }
@@ -413,7 +413,7 @@ static unsigned gen_verts(struct vl_compositor *c,
       assert(i < VL_COMPOSITOR_MAX_LAYERS);
 
       if (c->dirty_layers & (1 << i)) {
-         struct vertex2f layer_inv_size = {1.0f / c->layers[i]->width[0], 1.0f / c->layers[i]->height[0]};
+         struct vertex2f layer_inv_size = {1.0f / c->layers[i]->width0, 1.0f / c->layers[i]->height0};
          gen_rect_verts(num_rects++, &c->layer_src_rects[i], &layer_inv_size,
                         &c->layer_dst_rects[i], &c->fb_inv_size, vb);
          c->dirty_layers &= ~(1 << i);
@@ -446,13 +446,13 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    assert(dst_area);
    assert(picture_type == PIPE_MPEG12_PICTURE_TYPE_FRAME);
 
-   if (compositor->fb_state.width != dst_surface->width[0]) {
-      compositor->fb_inv_size.x = 1.0f / dst_surface->width[0];
-      compositor->fb_state.width = dst_surface->width[0];
+   if (compositor->fb_state.width != dst_surface->width0) {
+      compositor->fb_inv_size.x = 1.0f / dst_surface->width0;
+      compositor->fb_state.width = dst_surface->width0;
    }
-   if (compositor->fb_state.height != dst_surface->height[0]) {
-      compositor->fb_inv_size.y = 1.0f / dst_surface->height[0];
-      compositor->fb_state.height = dst_surface->height[0];
+   if (compositor->fb_state.height != dst_surface->height0) {
+      compositor->fb_inv_size.y = 1.0f / dst_surface->height0;
+      compositor->fb_state.height = dst_surface->height0;
    }
 
    compositor->fb_state.cbufs[0] = compositor->pipe->screen->get_tex_surface
@@ -473,8 +473,8 @@ void vl_compositor_render(struct vl_compositor          *compositor,
 
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
-   compositor->pipe->bind_sampler_states(compositor->pipe, 1, &compositor->sampler);
-   compositor->pipe->set_sampler_textures(compositor->pipe, 1, &src_surface);
+   compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 1, &compositor->sampler);
+   compositor->pipe->set_fragment_sampler_textures(compositor->pipe, 1, &src_surface);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 1, &compositor->vertex_buf);
@@ -482,7 +482,7 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->set_constant_buffer(compositor->pipe, PIPE_SHADER_FRAGMENT, 0, &compositor->fs_const_buf);
 
    {
-      struct vertex2f src_inv_size = {1.0f / src_surface->width[0], 1.0f / src_surface->height[0]};
+      struct vertex2f src_inv_size = {1.0f / src_surface->width0, 1.0f / src_surface->height0};
       num_rects = gen_verts(compositor, src_area, &src_inv_size, dst_area);
    }
 

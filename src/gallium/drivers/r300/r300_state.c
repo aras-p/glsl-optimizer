@@ -100,6 +100,20 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
     }
 
+    /* Color Channel Mask */
+    if (state->colormask & PIPE_MASK_R) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_RED_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_G) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_B) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_A) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0;
+    }
+
     if (state->dither) {
         blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
                 R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT;
@@ -275,11 +289,37 @@ static void r300_set_edgeflags(struct pipe_context* pipe,
     /* XXX and even worse, I have no idea WTF the bitfield is */
 }
 
+static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
+                                  struct r300_scissor_regs *scissor,
+                                  boolean is_r500)
+{
+    if (is_r500) {
+        scissor->top_left =
+            (state->minx << R300_SCISSORS_X_SHIFT) |
+            (state->miny << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
+            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        scissor->top_left =
+            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
+
+    scissor->empty_area = state->minx >= state->maxx ||
+                          state->miny >= state->maxy;
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_scissor_state scissor;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -287,6 +327,16 @@ static void
 
     r300->framebuffer_state = *state;
 
+    scissor.minx = scissor.miny = 0;
+    scissor.maxx = state->width;
+    scissor.maxy = state->height;
+    r300_set_scissor_regs(&scissor, &r300->scissor_state->framebuffer,
+                          r300_screen(r300->context.screen)->caps->is_r500);
+
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || !r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
+    }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
 }
 
@@ -384,24 +434,51 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
+    /* XXX I think there is something wrong with the polygon mode,
+     * XXX re-test when r300g is in a better shape */
+
+    /* Enable polygon mode */
+    if (state->fill_cw != PIPE_POLYGON_MODE_FILL ||
+        state->fill_ccw != PIPE_POLYGON_MODE_FILL) {
+        rs->polygon_mode = R300_GA_POLY_MODE_DUAL;
+    }
+
     /* Radeons don't think in "CW/CCW", they think in "front/back". */
     if (state->front_winding == PIPE_WINDING_CW) {
         rs->cull_mode = R300_FRONT_FACE_CW;
 
+        /* Polygon offset */
         if (state->offset_cw) {
             rs->polygon_offset_enable |= R300_FRONT_ENABLE;
         }
         if (state->offset_ccw) {
             rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+
+        /* Polygon mode */
+        if (rs->polygon_mode) {
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_front(state->fill_cw);
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_back(state->fill_ccw);
         }
     } else {
         rs->cull_mode = R300_FRONT_FACE_CCW;
 
+        /* Polygon offset */
         if (state->offset_ccw) {
             rs->polygon_offset_enable |= R300_FRONT_ENABLE;
         }
         if (state->offset_cw) {
             rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+
+        /* Polygon mode */
+        if (rs->polygon_mode) {
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_front(state->fill_ccw);
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_back(state->fill_cw);
         }
     }
     if (state->front_winding & state->cull_mode) {
@@ -482,6 +559,11 @@ static void*
                                                    state->mag_img_filter,
                                                    state->min_mip_filter);
 
+    /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
+    /* We must pass these to the emit function to clamp them properly. */
+    sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
+    sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
+
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
@@ -520,6 +602,12 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     r300->sampler_count = count;
 }
 
+static void r300_lacks_vertex_textures(struct pipe_context* pipe,
+                                       unsigned count,
+                                       void** states)
+{
+}
+
 static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
 {
     FREE(state);
@@ -530,18 +618,28 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
                                       struct pipe_texture** texture)
 {
     struct r300_context* r300 = r300_context(pipe);
+    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     int i;
 
     /* XXX magic num */
     if (count > 8) {
         return;
     }
+    
+    r300->context.flush(&r300->context, 0, NULL);
 
     for (i = 0; i < count; i++) {
         if (r300->textures[i] != (struct r300_texture*)texture[i]) {
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
                 texture[i]);
             r300->dirty_state |= (R300_NEW_TEXTURE << i);
+
+            /* R300-specific - set the texrect factor in a fragment shader */
+            if (!is_r500 && r300->textures[i]->is_npot) {
+                /* XXX It would be nice to re-emit just 1 constant,
+                 * XXX not all of them */
+                r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+            }
         }
     }
 
@@ -561,24 +659,13 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
-        r300->scissor_state->scissor_top_left =
-            (state->minx << R300_SCISSORS_X_SHIFT) |
-            (state->miny << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
-            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        r300->scissor_state->scissor_top_left =
-            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
-    }
+    r300_set_scissor_regs(state, &r300->scissor_state->scissor,
+                          r300_screen(r300->context.screen)->caps->is_r500);
 
-    r300->dirty_state |= R300_NEW_SCISSOR;
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
+    }
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
@@ -623,15 +710,16 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    memcpy(r300->vertex_buffers, buffers,
+    memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
-
     r300->vertex_buffer_count = count;
 
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
+
+    r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
 }
 
 static void r300_set_vertex_elements(struct pipe_context* pipe,
@@ -640,9 +728,9 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    memcpy(r300->vertex_elements, elements,
-        sizeof(struct pipe_vertex_element) * count);
-
+    memcpy(r300->vertex_element,
+           elements,
+           sizeof(struct pipe_vertex_element) * count);
     r300->vertex_element_count = count;
 
     if (r300->draw) {
@@ -664,9 +752,6 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 
         tgsi_scan_shader(shader->tokens, &vs->info);
 
-        /* Appease Draw. */
-        vs->draw = draw_create_vertex_shader(r300->draw, shader);
-
         return (void*)vs;
     } else {
         return draw_create_vertex_shader(r300->draw, shader);
@@ -676,8 +761,6 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
-
-    draw_flush(r300->draw);
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
@@ -689,10 +772,10 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
             r300_translate_vertex_shader(r300, vs);
         }
 
-        draw_bind_vertex_shader(r300->draw, vs->draw);
         r300->vs = vs;
         r300->dirty_state |= R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS;
     } else {
+        draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)shader);
     }
@@ -706,7 +789,6 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
         rc_constants_destroy(&vs->code.constants);
-        draw_delete_vertex_shader(r300->draw, vs->draw);
         FREE((void*)vs->state.tokens);
         FREE(shader);
     } else {
@@ -771,10 +853,11 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.delete_rasterizer_state = r300_delete_rs_state;
 
     r300->context.create_sampler_state = r300_create_sampler_state;
-    r300->context.bind_sampler_states = r300_bind_sampler_states;
+    r300->context.bind_fragment_sampler_states = r300_bind_sampler_states;
+    r300->context.bind_vertex_sampler_states = r300_lacks_vertex_textures;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
-    r300->context.set_sampler_textures = r300_set_sampler_textures;
+    r300->context.set_fragment_sampler_textures = r300_set_sampler_textures;
 
     r300->context.set_scissor_state = r300_set_scissor_state;
 

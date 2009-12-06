@@ -104,8 +104,9 @@ static const struct {
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
    { ON,  "GL_EXT_draw_range_elements",        F(EXT_draw_range_elements) },
-   { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
    { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
+   { OFF, "GL_EXT_framebuffer_multisample",    F(EXT_framebuffer_multisample) },
+   { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_gpu_program_parameters",     F(EXT_gpu_program_parameters) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
@@ -169,6 +170,7 @@ static const struct {
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { OFF, "GL_NV_fragment_program_option",     F(NV_fragment_program_option) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
+   { OFF, "GL_NV_packed_depth_stencil",        F(EXT_packed_depth_stencil) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
    { OFF, "GL_NV_texture_env_combine4",        F(NV_texture_env_combine4) },
    { OFF, "GL_NV_texture_rectangle",           F(NV_texture_rectangle) },
@@ -273,6 +275,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
 #if FEATURE_EXT_framebuffer_blit
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
+#endif
+#if FEATURE_ARB_framebuffer_object
+   ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
 #endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
    /*ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;*/

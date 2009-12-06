@@ -27,6 +27,7 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
+#include "main/colormac.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -311,11 +312,10 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor[2]);
    CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor[3]);
 
-   state[I830_TEXREG_TM0S4] = INTEL_PACKCOLOR8888(border[0],
-                                                  border[1],
-                                                  border[2],
-                                                  border[3]);
-
+   state[I830_TEXREG_TM0S4] = PACK_COLOR_8888(border[3],
+					      border[0],
+					      border[1],
+					      border[2]);
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(unit), GL_TRUE);
    /* memcmp was already disabled, but definitely won't work as the

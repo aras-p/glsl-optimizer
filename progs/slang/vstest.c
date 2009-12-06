@@ -220,6 +220,12 @@ static void load_test_file (const char *filename)
 
    fseek (f, 0, SEEK_END);
    size = ftell (f);
+
+   if (size == -1) {
+      fclose (f);
+      return;
+   }
+
    fseek (f, 0, SEEK_SET);
 
    code = (char *) (malloc (size));

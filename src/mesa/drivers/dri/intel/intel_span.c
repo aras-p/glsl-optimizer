@@ -292,7 +292,6 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
-/* XXX with GEM, these need to tell the kernel */
 #define HW_LOCK()
 
 #define HW_UNLOCK()
@@ -501,6 +500,8 @@ intel_map_unmap_framebuffer(struct intel_context *intel,
       else
          intel_renderbuffer_unmap(intel, fb->_StencilBuffer->Wrapped);
    }
+
+   intel_check_front_buffer_rendering(intel);
 }
 
 /**
@@ -612,15 +613,7 @@ intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   uint32_t tiling;
-
-   /* If in GEM mode, we need to do the tile address swizzling ourselves,
-    * instead of the fence registers handling it.
-    */
-   if (intel->ttm)
-      tiling = irb->region->tiling;
-   else
-      tiling = I915_TILING_NONE;
+   uint32_t tiling = irb->region->tiling;
 
    if (intel->intelScreen->kernel_exec_fencing) {
       switch (irb->texformat) {
@@ -672,6 +665,9 @@ intel_set_span_functions(struct intel_context *intel,
       return;
    }
 
+   /* If in GEM mode, we need to do the tile address swizzling ourselves,
+    * instead of the fence registers handling it.
+    */
    switch (irb->texformat) {
    case MESA_FORMAT_RGB565:
       switch (tiling) {

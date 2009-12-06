@@ -69,6 +69,18 @@ struct nv50_sampler_stateobj {
 	unsigned tsc[8];
 };
 
+static INLINE unsigned
+get_tile_height(uint32_t tile_mode)
+{
+        return 1 << ((tile_mode & 0xf) + 2);
+}
+
+static INLINE unsigned
+get_tile_depth(uint32_t tile_mode)
+{
+        return 1 << (tile_mode >> 4);
+}
+
 struct nv50_miptree_level {
 	int *image_offset;
 	unsigned pitch;

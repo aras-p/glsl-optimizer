@@ -133,6 +133,25 @@ intel_get_cliprects(struct intel_context *intel,
 
 
 /**
+ * Check if we're about to draw into the front color buffer.
+ * If so, set the intel->front_buffer_dirty field to true.
+ */
+void
+intel_check_front_buffer_rendering(struct intel_context *intel)
+{
+   const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
+   if (fb->Name == 0) {
+      /* drawing to window system buffer */
+      if (fb->_NumColorDrawBuffers > 0) {
+         if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+	    intel->front_buffer_dirty = GL_TRUE;
+	 }
+      }
+   }
+}
+
+
+/**
  * Update the hardware state for drawing into a window or framebuffer object.
  *
  * Called by glDrawBuffer, glBindFramebufferEXT, MakeCurrent, and other
@@ -202,8 +221,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	       intel_batchbuffer_flush(intel->batch);
 	    intel->front_cliprects = GL_TRUE;
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-
-	    intel->front_buffer_dirty = GL_TRUE;
 	 }
 	 else {
 	    if (!intel->constant_cliprect && intel->front_cliprects)

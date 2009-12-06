@@ -35,7 +35,6 @@
 
 void 
 st_sample_pixel_block(enum pipe_format format,
-                      const struct pipe_format_block *block,
                       void *raw,
                       float *rgba, unsigned rgba_stride,
                       unsigned w, unsigned h);

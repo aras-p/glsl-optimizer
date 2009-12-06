@@ -138,7 +138,6 @@ static struct prog_dst_register dst_reg(GLuint file, GLuint idx)
    reg.CondMask = COND_TR;
    reg.CondSwizzle = 0;
    reg.CondSrc = 0;
-   reg.pad = 0;
    return reg;
 }
 
@@ -182,6 +181,8 @@ static void release_temp( struct brw_wm_compile *c, struct prog_dst_register tem
 static struct prog_instruction *get_fp_inst(struct brw_wm_compile *c)
 {
    assert(c->nr_fp_insns < BRW_WM_MAX_INSN);
+   memset(&c->prog_instructions[c->nr_fp_insns], 0,
+	  sizeof(*c->prog_instructions));
    return &c->prog_instructions[c->nr_fp_insns++];
 }
 
@@ -448,7 +449,6 @@ static void emit_interp( struct brw_wm_compile *c,
       break;
 
    case FRAG_ATTRIB_FACE:
-      /* XXX review/test this case */
       emit_op(c,
               WM_FRONTFACING,
               dst_mask(dst, WRITEMASK_X),
@@ -957,7 +957,7 @@ static void precalc_txp( struct brw_wm_compile *c,
 
 
 
-static void emit_fb_write( struct brw_wm_compile *c )
+static void emit_render_target_writes( struct brw_wm_compile *c )
 {
    struct prog_src_register payload_r0_depth = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
    struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPTH);
@@ -985,7 +985,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
    }
    else {
       /* if gl_FragData[0] is written, use it, else use gl_FragColor */
-      if (c->fp->program.Base.OutputsWritten & (1 << FRAG_RESULT_DATA0))
+      if (c->fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0))
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0);
       else 
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
@@ -1154,7 +1154,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 out->DstReg.WriteMask = 0;
 	 break;
       case OPCODE_END:
-	 emit_fb_write(c);
+	 emit_render_target_writes(c);
 	 break;
       case OPCODE_PRINT:
 	 break;

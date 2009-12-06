@@ -60,6 +60,7 @@ extern "C" {
 #define PIPE_MAX_COLOR_BUFS        8
 #define PIPE_MAX_CONSTANT         32
 #define PIPE_MAX_SAMPLERS         16
+#define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
@@ -315,14 +316,10 @@ struct pipe_surface
  */
 struct pipe_transfer
 {
-   enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned x;                   /**< x offset from start of texture image */
    unsigned y;                   /**< y offset from start of texture image */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
-   struct pipe_format_block block;
-   unsigned nblocksx;            /**< allocated width in blocks */
-   unsigned nblocksy;            /**< allocated height in blocks */
    unsigned stride;              /**< stride in bytes between rows of blocks */
    enum pipe_transfer_usage usage; /**< PIPE_TRANSFER_*  */
 
@@ -343,13 +340,9 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned width[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned height[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
-
-   struct pipe_format_block block;
-   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */
-   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated height in blocks */
+   unsigned width0;
+   unsigned height0;
+   unsigned depth0;
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
 

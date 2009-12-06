@@ -120,7 +120,7 @@ static void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
 }
 
 
-void brw_gs_quads( struct brw_gs_compile *c )
+void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
 {
    brw_gs_alloc_regs(c, 4);
    
@@ -128,23 +128,39 @@ void brw_gs_quads( struct brw_gs_compile *c )
     * is the PV for quads, but vertex 0 for polygons:
     */
    if (c->need_ff_sync)
-	   brw_gs_ff_sync(c, 1);    
-   brw_gs_emit_vue(c, c->reg.vertex[3], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
-   brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2));
-   brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_POLYGON << 2)); 
-   brw_gs_emit_vue(c, c->reg.vertex[2], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+	   brw_gs_ff_sync(c, 1);
+   if (key->pv_first) {
+      brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
+      brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[2], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[3], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+   }
+   else {
+      brw_gs_emit_vue(c, c->reg.vertex[3], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
+      brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[2], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+   }
 }
 
-void brw_gs_quad_strip( struct brw_gs_compile *c )
+void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
 {
    brw_gs_alloc_regs(c, 4);
    
    if (c->need_ff_sync)
 	   brw_gs_ff_sync(c, 1);      
-   brw_gs_emit_vue(c, c->reg.vertex[2], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
-   brw_gs_emit_vue(c, c->reg.vertex[3], 0, (_3DPRIM_POLYGON << 2));
-   brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2)); 
-   brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+   if (key->pv_first) {
+      brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
+      brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[2], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[3], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+   }
+   else {
+      brw_gs_emit_vue(c, c->reg.vertex[2], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
+      brw_gs_emit_vue(c, c->reg.vertex[3], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2));
+      brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_POLYGON << 2) | R02_PRIM_END));
+   }
 }
 
 void brw_gs_tris( struct brw_gs_compile *c )

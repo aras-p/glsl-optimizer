@@ -80,7 +80,6 @@
 %rename(Stencil) pipe_stencil_state;
 %rename(Alpha) pipe_alpha_state;
 %rename(DepthStencilAlpha) pipe_depth_stencil_alpha_state;
-%rename(FormatBlock) pipe_format_block;
 %rename(Framebuffer) pipe_framebuffer_state;
 %rename(PolyStipple) pipe_poly_stipple;
 %rename(Rasterizer) pipe_rasterizer_state;

@@ -80,7 +80,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   if (!batch->buffer && intel->ttm == GL_TRUE)
+   if (!batch->buffer)
       batch->buffer = malloc (intel->maxBatchSize);
 
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
@@ -210,10 +210,10 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
 
+   batch->reserved_space = 0;
    /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (intel->always_flush_cache || !intel->ttm) {
-      *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
-      batch->ptr += 4;
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(batch);
       used = batch->ptr - batch->map;
    }
 
@@ -243,6 +243,11 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    if (intel->vtbl.finish_batch)
       intel->vtbl.finish_batch(intel);
+
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!intel->no_batch_wrap);
+
+   batch->reserved_space = BATCH_RESERVED;
 
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
@@ -298,4 +303,32 @@ intel_batchbuffer_data(struct intel_batchbuffer *batch,
    intel_batchbuffer_require_space(batch, bytes, cliprect_mode);
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
+}
+
+/* Emit a pipelined flush to either flush render and texture cache for
+ * reading from a FBO-drawn texture, or flush so that frontbuffer
+ * render appears on the screen in DRI1.
+ *
+ * This is also used for the always_flush_cache driconf debug option.
+ */
+void
+intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
+{
+   struct intel_context *intel = batch->intel;
+
+   if (intel->gen >= 4) {
+      BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		PIPE_CONTROL_INSTRUCTION_FLUSH |
+		PIPE_CONTROL_WRITE_FLUSH |
+		PIPE_CONTROL_NO_WRITE);
+      OUT_BATCH(0); /* write address */
+      OUT_BATCH(0); /* write data */
+      OUT_BATCH(0); /* write data */
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(MI_FLUSH);
+      ADVANCE_BATCH();
+   }
 }

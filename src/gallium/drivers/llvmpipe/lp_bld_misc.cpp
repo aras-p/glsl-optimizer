@@ -26,8 +26,6 @@
  **************************************************************************/
 
 
-#include "llvm/Config/config.h"
-
 #include "pipe/p_config.h"
 
 #include "lp_bld_misc.h"
@@ -50,12 +48,13 @@ LLVMLinkInJIT(void)
 extern "C" int X86TargetMachineModule;
 
 
-void
+int
 LLVMInitializeNativeTarget(void)
 {
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   X86TargetMachineModule = 1;			
+   X86TargetMachineModule = 1;
 #endif
+   return 0;
 }
 
 

@@ -1410,7 +1410,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
           dstFormat == MESA_FORMAT_ARGB8888_REV ||
-          dstFormat == MESA_FORMAT_XRGB8888);
+          dstFormat == MESA_FORMAT_XRGB8888 ||
+          dstFormat == MESA_FORMAT_XRGB8888_REV );
    ASSERT(texelBytes == 4);
 
    if (!ctx->_ImageTransferState &&
@@ -1431,7 +1432,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
    }
    else if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_ARGB8888_REV &&
+       (dstFormat == MESA_FORMAT_ARGB8888_REV ||
+        dstFormat == MESA_FORMAT_XRGB8888_REV) &&
        baseInternalFormat == GL_RGBA &&
        srcFormat == GL_BGRA &&
        ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
@@ -1524,7 +1526,8 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
        */
       if ((littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
           (littleEndian && dstFormat == MESA_FORMAT_XRGB8888) ||
-	  (!littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV)) {
+	  (!littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV) ||
+	  (!littleEndian && dstFormat == MESA_FORMAT_XRGB8888_REV)) {
 	 dstmap[3] = 3;		/* alpha */
 	 dstmap[2] = 0;		/* red */
 	 dstmap[1] = 1;		/* green */
@@ -1533,6 +1536,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       else {
 	 assert((littleEndian && dstFormat == MESA_FORMAT_ARGB8888_REV) ||
 		(!littleEndian && dstFormat == MESA_FORMAT_ARGB8888) ||
+		(littleEndian && dstFormat == MESA_FORMAT_XRGB8888_REV) ||
 		(!littleEndian && dstFormat == MESA_FORMAT_XRGB8888));
 	 dstmap[3] = 2;
 	 dstmap[2] = 1;
@@ -2134,6 +2138,81 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
                  dstUS[col] = PACK_COLOR_88_REV( CHAN_TO_UBYTE(src[1]),
                                                  CHAN_TO_UBYTE(src[0]) );
                  src += 2;
+               }
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      _mesa_free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+
+static GLboolean
+_mesa_texstore_al1616(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_AL1616 ||
+          dstFormat == MESA_FORMAT_AL1616_REV);
+   ASSERT(texelBytes == 4);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       dstFormat == MESA_FORMAT_AL1616 &&
+       baseInternalFormat == GL_LUMINANCE_ALPHA &&
+       srcFormat == GL_LUMINANCE_ALPHA &&
+       srcType == GL_UNSIGNED_SHORT &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+            if (dstFormat == MESA_FORMAT_AL1616) {
+               for (col = 0; col < srcWidth; col++) {
+		  GLushort l, a;
+
+		  UNCLAMPED_FLOAT_TO_USHORT(l, src[0]);
+		  UNCLAMPED_FLOAT_TO_USHORT(a, src[1]);
+		  dstUI[col] = PACK_COLOR_1616(a, l);
+		  src += 2;
+               }
+            }
+            else {
+               for (col = 0; col < srcWidth; col++) {
+		  GLushort l, a;
+
+		  UNCLAMPED_FLOAT_TO_USHORT(l, src[0]);
+		  UNCLAMPED_FLOAT_TO_USHORT(a, src[1]);
+		  dstUI[col] = PACK_COLOR_1616_REV(a, l);
+		  src += 2;
                }
             }
             dstRow += dstRowStride;
@@ -3050,7 +3129,7 @@ _mesa_texstore_sla8(TEXSTORE_PARAMS)
  * Table mapping MESA_FORMAT_8 to _mesa_texstore_*()
  * XXX this is somewhat temporary.
  */
-const static struct {
+static const struct {
    gl_format Name;
    StoreTexImageFunc Store;
 }
@@ -3062,6 +3141,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_ARGB8888, _mesa_texstore_argb8888 },
    { MESA_FORMAT_ARGB8888_REV, _mesa_texstore_argb8888 },
    { MESA_FORMAT_XRGB8888, _mesa_texstore_argb8888 },
+   { MESA_FORMAT_XRGB8888_REV, _mesa_texstore_argb8888 },
    { MESA_FORMAT_RGB888, _mesa_texstore_rgb888 },
    { MESA_FORMAT_BGR888, _mesa_texstore_bgr888 },
    { MESA_FORMAT_RGB565, _mesa_texstore_rgb565 },
@@ -3073,6 +3153,8 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_ARGB1555_REV, _mesa_texstore_argb1555 },
    { MESA_FORMAT_AL88, _mesa_texstore_al88 },
    { MESA_FORMAT_AL88_REV, _mesa_texstore_al88 },
+   { MESA_FORMAT_AL1616, _mesa_texstore_al1616 },
+   { MESA_FORMAT_AL1616_REV, _mesa_texstore_al1616 },
    { MESA_FORMAT_RGB332, _mesa_texstore_rgb332 },
    { MESA_FORMAT_A8, _mesa_texstore_a8 },
    { MESA_FORMAT_L8, _mesa_texstore_a8 },

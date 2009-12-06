@@ -45,7 +45,7 @@
 #define SF_UNFILLED_TRIS   3
 
 struct brw_sf_prog_key {
-   GLuint attrs:32;
+   GLbitfield64 attrs;
    GLuint primitive:2;
    GLuint do_twoside_color:1;
    GLuint do_flat_shading:1;

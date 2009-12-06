@@ -709,34 +709,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /**
-    * \name Vertex array functions
-    *
-    * Called by the corresponding OpenGL functions.
-    */
-   /*@{*/
-   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*NormalPointer)(GLcontext *ctx, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*FogCoordPointer)(GLcontext *ctx, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*IndexPointer)(GLcontext *ctx, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-				 GLsizei stride, const GLvoid *ptr);
-   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
-   void (*VertexAttribPointer)(GLcontext *ctx, GLuint index, GLint size,
-                               GLenum type, GLsizei stride, const GLvoid *ptr);
-   void (*LockArraysEXT)( GLcontext *ctx, GLint first, GLsizei count );
-   void (*UnlockArraysEXT)( GLcontext *ctx );
-   /*@}*/
-
-
    /** 
     * \name State-query functions
     *

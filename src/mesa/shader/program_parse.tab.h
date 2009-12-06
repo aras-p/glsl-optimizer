@@ -1,24 +1,23 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,9 +28,10 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -146,120 +146,16 @@
      DOT = 362
    };
 #endif
-/* Tokens.  */
-#define ARBvp_10 258
-#define ARBfp_10 259
-#define ADDRESS 260
-#define ALIAS 261
-#define ATTRIB 262
-#define OPTION 263
-#define OUTPUT 264
-#define PARAM 265
-#define TEMP 266
-#define END 267
-#define BIN_OP 268
-#define BINSC_OP 269
-#define SAMPLE_OP 270
-#define SCALAR_OP 271
-#define TRI_OP 272
-#define VECTOR_OP 273
-#define ARL 274
-#define KIL 275
-#define SWZ 276
-#define TXD_OP 277
-#define INTEGER 278
-#define REAL 279
-#define AMBIENT 280
-#define ATTENUATION 281
-#define BACK 282
-#define CLIP 283
-#define COLOR 284
-#define DEPTH 285
-#define DIFFUSE 286
-#define DIRECTION 287
-#define EMISSION 288
-#define ENV 289
-#define EYE 290
-#define FOG 291
-#define FOGCOORD 292
-#define FRAGMENT 293
-#define FRONT 294
-#define HALF 295
-#define INVERSE 296
-#define INVTRANS 297
-#define LIGHT 298
-#define LIGHTMODEL 299
-#define LIGHTPROD 300
-#define LOCAL 301
-#define MATERIAL 302
-#define MAT_PROGRAM 303
-#define MATRIX 304
-#define MATRIXINDEX 305
-#define MODELVIEW 306
-#define MVP 307
-#define NORMAL 308
-#define OBJECT 309
-#define PALETTE 310
-#define PARAMS 311
-#define PLANE 312
-#define POINT_TOK 313
-#define POINTSIZE 314
-#define POSITION 315
-#define PRIMARY 316
-#define PROGRAM 317
-#define PROJECTION 318
-#define RANGE 319
-#define RESULT 320
-#define ROW 321
-#define SCENECOLOR 322
-#define SECONDARY 323
-#define SHININESS 324
-#define SIZE_TOK 325
-#define SPECULAR 326
-#define SPOT 327
-#define STATE 328
-#define TEXCOORD 329
-#define TEXENV 330
-#define TEXGEN 331
-#define TEXGEN_Q 332
-#define TEXGEN_R 333
-#define TEXGEN_S 334
-#define TEXGEN_T 335
-#define TEXTURE 336
-#define TRANSPOSE 337
-#define TEXTURE_UNIT 338
-#define TEX_1D 339
-#define TEX_2D 340
-#define TEX_3D 341
-#define TEX_CUBE 342
-#define TEX_RECT 343
-#define TEX_SHADOW1D 344
-#define TEX_SHADOW2D 345
-#define TEX_SHADOWRECT 346
-#define TEX_ARRAY1D 347
-#define TEX_ARRAY2D 348
-#define TEX_ARRAYSHADOW1D 349
-#define TEX_ARRAYSHADOW2D 350
-#define VERTEX 351
-#define VTXATTRIB 352
-#define WEIGHT 353
-#define IDENTIFIER 354
-#define USED_IDENTIFIER 355
-#define MASK4 356
-#define MASK3 357
-#define MASK2 358
-#define MASK1 359
-#define SWIZZLE 360
-#define DOT_DOT 361
-#define DOT 362
-
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 122 "program_parse.y"
 {
+
+/* Line 1676 of yacc.c  */
+#line 122 "program_parse.y"
+
    struct asm_instruction *inst;
    struct asm_symbol *sym;
    struct asm_symbol temp_sym;
@@ -283,13 +179,15 @@ typedef union YYSTYPE
       unsigned xyzw_valid:1;
       unsigned negate:1;
    } ext_swizzle;
-}
-/* Line 1489 of yacc.c.  */
-#line 289 "program_parse.tab.h"
-	YYSTYPE;
+
+
+
+/* Line 1676 of yacc.c  */
+#line 187 "program_parse.tab.h"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
@@ -306,5 +204,6 @@ typedef struct YYLTYPE
 # define YYLTYPE_IS_DECLARED 1
 # define YYLTYPE_IS_TRIVIAL 1
 #endif
+
 
 

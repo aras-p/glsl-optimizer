@@ -252,13 +252,13 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
                case LP_TILE_STATUS_CLEAR:
                   /* Actually clear the tiles which were flagged as being in a
                    * clear state. */
-                  util_fill_rect(tc->transfer_map, &pt->block, pt->stride,
+                  util_fill_rect(tc->transfer_map, pt->texture->format, pt->stride,
                                  x, y, w, h,
                                  tc->clear_val);
                   break;
 
                case LP_TILE_STATUS_DEFINED:
-                  lp_tile_write_4ub(pt->format,
+                  lp_tile_write_4ub(pt->texture->format,
                                     tile->color,
                                     tc->transfer_map, pt->stride,
                                     x, y, w, h);
@@ -290,6 +290,10 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
    
    assert(tc->surface);
    assert(tc->transfer);
+   assert(tc->transfer_map);
+
+   if(!tc->transfer_map)
+      lp_tile_cache_map_transfers(tc);
 
    switch(tile->status) {
    case LP_TILE_STATUS_CLEAR:
@@ -306,7 +310,7 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
       y &= ~(TILE_SIZE - 1);
 
       if (!pipe_clip_tile(x, y, &w, &h, tc->transfer))
-         lp_tile_read_4ub(pt->format,
+         lp_tile_read_4ub(pt->texture->format,
                           tile->color,
                           tc->transfer_map, tc->transfer->stride,
                           x, y, w, h);

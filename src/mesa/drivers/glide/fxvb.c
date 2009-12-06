@@ -104,24 +104,24 @@ static void interp_extras( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
-   if (VB->ColorPtr[1]) {
-      /* If stride is zero, ColorPtr[1] is constant across the VB, so
+   if (VB->BackfaceColorPtr) {
+      /* If stride is zero, BackfaceColorPtr is constant across the VB, so
        * there is no point interpolating between two values as they will
        * be identical.  This case is handled in t_dd_tritmp.h
        */
-      if (VB->ColorPtr[1]->stride) {
-	 assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+      if (VB->BackfaceColorPtr->stride) {
+	 assert(VB->BackfaceColorPtr->stride == 4 * sizeof(GLfloat));
 	 INTERP_4F( t,
-		    GET_COLOR(VB->ColorPtr[1], dst),
-		    GET_COLOR(VB->ColorPtr[1], out),
-		    GET_COLOR(VB->ColorPtr[1], in) );
+		    GET_COLOR(VB->BackfaceColorPtr, dst),
+		    GET_COLOR(VB->BackfaceColorPtr, out),
+		    GET_COLOR(VB->BackfaceColorPtr, in) );
       }
 
-      if (VB->SecondaryColorPtr[1]) {
+      if (VB->BackfaceSecondaryColorPtr) {
 	 INTERP_3F( t,
-		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
-		    GET_COLOR(VB->SecondaryColorPtr[1], out),
-		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
+		    GET_COLOR(VB->BackfaceSecondaryColorPtr, dst),
+		    GET_COLOR(VB->BackfaceSecondaryColorPtr, out),
+		    GET_COLOR(VB->BackfaceSecondaryColorPtr, in) );
       }
    }
 
@@ -137,13 +137,13 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
-   if (VB->ColorPtr[1]) {
-	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst),
-		   GET_COLOR(VB->ColorPtr[1], src) );
+   if (VB->BackfaceColorPtr) {
+	 COPY_4FV( GET_COLOR(VB->BackfaceColorPtr, dst),
+		   GET_COLOR(VB->BackfaceColorPtr, src) );
 
-	 if (VB->SecondaryColorPtr[1]) {
-	    COPY_3FV( GET_COLOR(VB->SecondaryColorPtr[1], dst),
-		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	 if (VB->BackfaceSecondaryColorPtr) {
+	    COPY_3FV( GET_COLOR(VB->BackfaceSecondaryColorPtr, dst),
+		      GET_COLOR(VB->BackfaceSecondaryColorPtr, src) );
 	 }
    }
 

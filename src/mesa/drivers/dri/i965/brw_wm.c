@@ -152,8 +152,21 @@ static void do_wm_prog( struct brw_context *brw,
           */
          return;
       }
+      c->instruction = _mesa_calloc(BRW_WM_MAX_INSN * sizeof(*c->instruction));
+      c->prog_instructions = _mesa_calloc(BRW_WM_MAX_INSN *
+					  sizeof(*c->prog_instructions));
+      c->vreg = _mesa_calloc(BRW_WM_MAX_VREG * sizeof(*c->vreg));
+      c->refs = _mesa_calloc(BRW_WM_MAX_REF * sizeof(*c->refs));
    } else {
+      void *instruction = c->instruction;
+      void *prog_instructions = c->prog_instructions;
+      void *vreg = c->vreg;
+      void *refs = c->refs;
       memset(c, 0, sizeof(*brw->wm.compile_data));
+      c->instruction = instruction;
+      c->prog_instructions = prog_instructions;
+      c->vreg = vreg;
+      c->refs = refs;
    }
    memcpy(&c->key, key, sizeof(*key));
 
@@ -217,7 +230,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
        ctx->Color.AlphaEnabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
-   if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPTH))
+   if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH))
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
    /* _NEW_DEPTH */
@@ -333,7 +346,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->nr_color_regions = brw->state.nr_color_regions;
 
    /* CACHE_NEW_VS_PROG */
-   key->vp_outputs_written = brw->vs.prog_data->outputs_written & DO_SETUP_BITS;
+   key->vp_outputs_written = brw->vs.prog_data->outputs_written;
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;

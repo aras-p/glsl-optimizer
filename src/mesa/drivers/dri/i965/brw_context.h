@@ -172,8 +172,8 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
 
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
@@ -231,7 +231,7 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint outputs_written;
+   GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
@@ -320,7 +320,6 @@ struct brw_cache_item {
    GLuint nr_reloc_bufs;
 
    dri_bo *bo;
-   GLuint data_size;
 
    struct brw_cache_item *next;
 };   
@@ -333,7 +332,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
@@ -413,23 +411,6 @@ struct brw_vertex_info {
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 
-
-
-
-/* Cache for TNL programs.
- */
-struct brw_tnl_cache_item {
-   GLuint hash;
-   void *key;
-   void *data;
-   struct brw_tnl_cache_item *next;
-};
-
-struct brw_tnl_cache {
-   struct brw_tnl_cache_item **items;
-   GLuint size, n_items;
-};
-
 struct brw_query_object {
    struct gl_query_object Base;
 
@@ -457,7 +438,6 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean no_batch_wrap;
 
    struct {
       struct brw_state_flags dirty;
@@ -760,10 +740,6 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
 }
-
-
-
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 #endif
 

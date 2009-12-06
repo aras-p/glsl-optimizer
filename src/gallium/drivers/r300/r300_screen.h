@@ -27,6 +27,8 @@
 
 #include "r300_chipset.h"
 
+struct radeon_winsys;
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
@@ -56,6 +58,6 @@ r300_transfer(struct pipe_transfer* transfer)
 }
 
 /* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys);
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 #endif /* R300_SCREEN_H */

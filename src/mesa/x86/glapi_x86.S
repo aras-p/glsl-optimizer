@@ -1226,6 +1226,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(GetAttribLocation, _gloffset_GetAttribLocationARB, GetAttribLocation@8, GetAttribLocationARB, GetAttribLocationARB@8)
 	GL_STUB_ALIAS(DrawBuffers, _gloffset_DrawBuffersARB, DrawBuffers@8, DrawBuffersARB, DrawBuffersARB@8)
 	GL_STUB_ALIAS(DrawBuffersATI, _gloffset_DrawBuffersARB, DrawBuffersATI@8, DrawBuffersARB, DrawBuffersARB@8)
+	GL_STUB_ALIAS(RenderbufferStorageMultisampleEXT, _gloffset_RenderbufferStorageMultisample, RenderbufferStorageMultisampleEXT@20, RenderbufferStorageMultisample, RenderbufferStorageMultisample@20)
 	GL_STUB_ALIAS(PointParameterf, _gloffset_PointParameterfEXT, PointParameterf@8, PointParameterfEXT, PointParameterfEXT@8)
 	GL_STUB_ALIAS(PointParameterfARB, _gloffset_PointParameterfEXT, PointParameterfARB@8, PointParameterfEXT, PointParameterfEXT@8)
 	GL_STUB_ALIAS(PointParameterfSGIS, _gloffset_PointParameterfEXT, PointParameterfSGIS@8, PointParameterfEXT, PointParameterfEXT@8)

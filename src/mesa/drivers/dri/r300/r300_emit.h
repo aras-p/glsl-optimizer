@@ -42,7 +42,6 @@
 #include "main/glheader.h"
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
-#include "radeon_reg.h"
 
 static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
                                   int reg, int count)

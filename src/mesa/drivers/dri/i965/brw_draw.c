@@ -145,7 +145,7 @@ static void brw_emit_prim(struct brw_context *brw,
    prim_packet.base_vert_location = prim->basevertex;
 
    /* Can't wrap here, since we rely on the validated state. */
-   brw->no_batch_wrap = GL_TRUE;
+   intel->no_batch_wrap = GL_TRUE;
 
    /* If we're set to always flush, do it before and after the primitive emit.
     * We want to catch both missed flushes that hurt instruction/state cache
@@ -153,21 +153,17 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
-      OUT_BATCH(intel->vtbl.flush_cmd());
-      ADVANCE_BATCH();
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
    if (intel->always_flush_cache) {
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
-      OUT_BATCH(intel->vtbl.flush_cmd());
-      ADVANCE_BATCH();
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
 
-   brw->no_batch_wrap = GL_FALSE;
+   intel->no_batch_wrap = GL_FALSE;
 }
 
 static void brw_merge_inputs( struct brw_context *brw,

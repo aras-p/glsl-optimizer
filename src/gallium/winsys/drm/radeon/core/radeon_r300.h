@@ -34,9 +34,6 @@
 
 #include "radeon_buffer.h"
 
-struct radeon_winsys;
-
-struct r300_winsys*
-radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys);
+void radeon_setup_winsys(int fd, struct radeon_winsys* winsys);
 
 #endif /* RADEON_R300_H */

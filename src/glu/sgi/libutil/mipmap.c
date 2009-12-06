@@ -3526,6 +3526,8 @@ gluScaleImage(GLenum format, GLsizei widthin, GLsizei heightin,
     afterImage =
 	malloc(image_size(widthout, heightout, format, GL_UNSIGNED_SHORT));
     if (beforeImage == NULL || afterImage == NULL) {
+	free(beforeImage);
+	free(afterImage);
 	return GLU_OUT_OF_MEMORY;
     }
 
@@ -3606,6 +3608,7 @@ int gluBuild1DMipmapLevelsCore(GLenum target, GLint internalFormat,
 		    glPixelStorei(GL_UNPACK_SKIP_PIXELS,psm.unpack_skip_pixels);
 		    glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 		    glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
+		    free(newImage);
 		    return GLU_OUT_OF_MEMORY;
 		}
 	    }
@@ -3760,6 +3763,7 @@ static int bitmapBuild2DMipmaps(GLenum target, GLint internalFormat,
 		    glPixelStorei(GL_UNPACK_SKIP_PIXELS,psm.unpack_skip_pixels);
 		    glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 		    glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
+		    free(newImage);
 		    return GLU_OUT_OF_MEMORY;
 		}
 	    }
@@ -4104,6 +4108,7 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	  glPixelStorei(GL_UNPACK_SKIP_PIXELS, psm.unpack_skip_pixels);
 	  glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 	  glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
+	  free(srcImage);
 	  return GLU_OUT_OF_MEMORY;
 	}
 	/* level userLevel+1 is in srcImage; level userLevel already saved */
@@ -4346,6 +4351,7 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, psm.unpack_skip_pixels);
 	    glPixelStorei(GL_UNPACK_ROW_LENGTH, psm.unpack_row_length);
 	    glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
+	    free(srcImage);
 	    return GLU_OUT_OF_MEMORY;
 	  }
 	}
@@ -7382,6 +7388,8 @@ int gluScaleImage3D(GLenum format,
    afterImage = malloc(imageSize3D(widthOut, heightOut, depthOut, format,
 				   GL_UNSIGNED_SHORT));
    if (beforeImage == NULL || afterImage == NULL) {
+       free(beforeImage);
+       free(afterImage);
        return GLU_OUT_OF_MEMORY;
    }
    retrieveStoreModes3D(&psm);
@@ -8093,6 +8101,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	 glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
 	 glPixelStorei(GL_UNPACK_SKIP_IMAGES, psm.unpack_skip_images);
 	 glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, psm.unpack_image_height);
+	 free(srcImage);
 	 return GLU_OUT_OF_MEMORY;
        }
        /* level userLevel+1 is in srcImage; level userLevel already saved */
@@ -8227,6 +8236,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
 	   glPixelStorei(GL_UNPACK_SWAP_BYTES, psm.unpack_swap_bytes);
 	   glPixelStorei(GL_UNPACK_SKIP_IMAGES, psm.unpack_skip_images);
 	   glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, psm.unpack_image_height);
+	   free(srcImage);
 	   return GLU_OUT_OF_MEMORY;
 	 }
        }

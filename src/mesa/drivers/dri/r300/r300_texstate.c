@@ -83,6 +83,7 @@ static const struct tx_table {
 	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
 #endif
+	_ASSIGN(XRGB8888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
@@ -202,9 +203,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 {
 	const struct gl_texture_image *firstImage;
-	int firstlevel = t->mt ? t->mt->firstLevel : 0;
-	    
-	firstImage = t->base.Image[0][firstlevel];
+	firstImage = t->base.Image[0][t->minLod];
 
 	if (!t->image_override
 	    && VALID_FORMAT(firstImage->TexFormat)) {
@@ -227,7 +226,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	t->pp_txsize = (((R300_TX_WIDTHMASK_MASK & ((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)))
 			| ((R300_TX_HEIGHTMASK_MASK & ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)))
 			| ((R300_TX_DEPTHMASK_MASK & ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)))
-			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
+			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->maxLod - t->minLod) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
 
 	t->tile_bits = 0;
 
@@ -238,7 +237,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
-		unsigned int align = (64 / t->mt->bpp) - 1;
+		unsigned int align = (64 / _mesa_get_format_bytes(firstImage->TexFormat)) - 1;
 		t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 		if (!t->image_override)
 			t->pp_txpitch = ((firstImage->Width + align) & ~align) - 1;
@@ -410,18 +409,7 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
     	    return;
     	}
 
-	radeon_update_renderbuffers(pDRICtx, dPriv);
-	/* back & depth buffer are useless free them right away */
-	rb = (void*)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-	}
-	rb = (void*)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
+	radeon_update_renderbuffers(pDRICtx, dPriv, GL_TRUE);
 	rb = rfb->color_rb[0];
 	if (rb->bo == NULL) {
 		/* Failed to BO for the buffer */
@@ -437,14 +425,10 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;

@@ -58,7 +58,6 @@
 struct xm_displaytarget
 {
    enum pipe_format format;
-   struct pipe_format_block block;
    unsigned width;
    unsigned height;
    unsigned stride;
@@ -262,10 +261,10 @@ xm_llvmpipe_display(struct xmesa_buffer *xm_buffer,
    {
       if (xm_dt->tempImage == NULL)
       {
-         assert(xm_dt->block.width == 1);
-         assert(xm_dt->block.height == 1);
+         assert(pf_get_blockwidth(xm_dt->format) == 1);
+         assert(pf_get_blockheight(xm_dt->format) == 1);
          alloc_shm_ximage(xm_dt, xm_buffer,
-                          xm_dt->stride / xm_dt->block.size,
+                          xm_dt->stride / pf_get_blocksize(xm_dt->format),
                           xm_dt->height);
       }
 
@@ -321,7 +320,7 @@ xm_displaytarget_create(struct llvmpipe_winsys *winsys,
                         unsigned *stride)
 {
    struct xm_displaytarget *xm_dt = CALLOC_STRUCT(xm_displaytarget);
-   unsigned nblocksx, nblocksy, size;
+   unsigned nblocksy, size;
 
    xm_dt = CALLOC_STRUCT(xm_displaytarget);
    if(!xm_dt)
@@ -331,10 +330,8 @@ xm_displaytarget_create(struct llvmpipe_winsys *winsys,
    xm_dt->width = width;
    xm_dt->height = height;
 
-   pf_get_block(format, &xm_dt->block);
-   nblocksx = pf_get_nblocksx(&xm_dt->block, width);
-   nblocksy = pf_get_nblocksy(&xm_dt->block, height);
-   xm_dt->stride = align(nblocksx * xm_dt->block.size, alignment);
+   nblocksy = pf_get_nblocksy(format, height);
+   xm_dt->stride = align(pf_get_stride(format, width), alignment);
    size = xm_dt->stride * nblocksy;
 
 #ifdef USE_XSHM

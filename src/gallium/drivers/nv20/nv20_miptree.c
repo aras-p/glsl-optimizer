@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
@@ -9,7 +10,7 @@ static void
 nv20_miptree_layout(struct nv20_miptree *nv20mt)
 {
 	struct pipe_texture *pt = &nv20mt->base;
-	uint width = pt->width[0], height = pt->height[0];
+	uint width = pt->width0;
 	uint offset = 0;
 	int nr_faces, l, f;
 	uint wide_pitch = pt->tex_usage & (PIPE_TEXTURE_USAGE_SAMPLER |
@@ -25,21 +26,15 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 	}
 	
 	for (l = 0; l <= pt->last_level; l++) {
-		pt->width[l] = width;
-		pt->height[l] = height;
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
-
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			nv20mt->level[l].pitch = align(pt->width[0] * pt->block.size, 64);
+			nv20mt->level[l].pitch = align(pf_get_stride(pt->format, pt->width0), 64);
 		else
-			nv20mt->level[l].pitch = pt->width[l] * pt->block.size;
+			nv20mt->level[l].pitch = pf_get_stride(pt->format, width);
 
 		nv20mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
-		width  = MAX2(1, width  >> 1);
-		height = MAX2(1, height >> 1);
+		width  = u_minify(width, 1);
 	}
 
 	for (f = 0; f < nr_faces; f++) {
@@ -47,14 +42,14 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 			nv20mt->level[l].image_offset[f] = offset;
 
 			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR) &&
-			    pt->width[l + 1] > 1 && pt->height[l + 1] > 1)
-				offset += align(nv20mt->level[l].pitch * pt->height[l], 64);
+			    u_minify(pt->width0, l + 1) > 1 && u_minify(pt->height0, l + 1) > 1)
+				offset += align(nv20mt->level[l].pitch * u_minify(pt->height0, l), 64);
 			else
-				offset += nv20mt->level[l].pitch * pt->height[l];
+				offset += nv20mt->level[l].pitch * u_minify(pt->height0, l);
 		}
 
 		nv20mt->level[l].image_offset[f] = offset;
-		offset += nv20mt->level[l].pitch * pt->height[l];
+		offset += nv20mt->level[l].pitch * u_minify(pt->height0, l);
 	}
 
 	nv20mt->total_size = offset;
@@ -68,7 +63,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
-	    pt->depth[0] != 1)
+	    pt->depth0 != 1)
 		return NULL;
 
 	mt = CALLOC_STRUCT(nv20_miptree);
@@ -82,6 +77,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
 	pipe_buffer_reference(&mt->buffer, pb);
+	mt->bo = nouveau_bo(mt->buffer);
 	return &mt->base;
 }
 
@@ -100,8 +96,8 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 	mt->base.screen = screen;
 
 	/* Swizzled textures must be POT */
-	if (pt->width[0] & (pt->width[0] - 1) ||
-	    pt->height[0] & (pt->height[0] - 1))
+	if (pt->width0 & (pt->width0 - 1) ||
+	    pt->height0 & (pt->height0 - 1))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
@@ -137,6 +133,7 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 		FREE(mt);
 		return NULL;
 	}
+	mt->bo = nouveau_bo(mt->buffer);
 	
 	return &mt->base;
 }
@@ -167,8 +164,8 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		return NULL;
 	pipe_texture_reference(&ns->base.texture, pt);
 	ns->base.format = pt->format;
-	ns->base.width = pt->width[level];
-	ns->base.height = pt->height[level];
+	ns->base.width = u_minify(pt->width0, level);
+	ns->base.height = u_minify(pt->height0, level);
 	ns->base.usage = flags;
 	pipe_reference_init(&ns->base.reference, 1);
 	ns->base.face = face;

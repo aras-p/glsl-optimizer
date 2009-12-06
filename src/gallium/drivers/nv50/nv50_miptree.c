@@ -26,14 +26,33 @@
 
 #include "nv50_context.h"
 
+/* The restrictions in tile mode selection probably aren't necessary. */
 static INLINE uint32_t
-get_tile_mode(unsigned ny)
+get_tile_mode(unsigned ny, unsigned d)
 {
-	if (ny > 32) return 4;
-	if (ny > 16) return 3;
-	if (ny >  8) return 2;
-	if (ny >  4) return 1;
-	return 0;
+	uint32_t tile_mode = 0x00;
+
+	if (ny > 32) tile_mode = 0x04; /* height 64 tiles */
+	else
+	if (ny > 16) tile_mode = 0x03; /* height 32 tiles */
+	else
+	if (ny >  8) tile_mode = 0x02; /* height 16 tiles */
+	else
+	if (ny >  4) tile_mode = 0x01; /* height 8 tiles */
+
+	if (d == 1)
+		return tile_mode;
+	else
+	if (tile_mode > 0x02)
+		tile_mode = 0x02;
+
+	if (d > 16 && tile_mode < 0x02)
+		return tile_mode | 0x50; /* depth 32 tiles */
+	if (d >  8) return tile_mode | 0x40; /* depth 16 tiles */
+	if (d >  4) return tile_mode | 0x30; /* depth 8 tiles */
+	if (d >  2) return tile_mode | 0x20; /* depth 4 tiles */
+
+	return tile_mode | 0x10;
 }
 
 static struct pipe_texture *
@@ -42,8 +61,8 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
 	struct pipe_texture *pt = &mt->base.base;
-	unsigned width = tmp->width[0], height = tmp->height[0];
-	unsigned depth = tmp->depth[0];
+	unsigned width = tmp->width0, height = tmp->height0;
+	unsigned depth = tmp->depth0, image_alignment;
 	uint32_t tile_flags;
 	int ret, i, l;
 
@@ -67,49 +86,44 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		break;
 	}
 
-	switch (pt->target) {
-	case PIPE_TEXTURE_3D:
-		mt->image_nr = pt->depth[0];
-		break;
-	case PIPE_TEXTURE_CUBE:
-		mt->image_nr = 6;
-		break;
-	default:
-		mt->image_nr = 1;
-		break;
-	}
+	/* XXX: texture arrays */
+	mt->image_nr = (pt->target == PIPE_TEXTURE_CUBE) ? 6 : 1;
 
 	for (l = 0; l <= pt->last_level; l++) {
 		struct nv50_miptree_level *lvl = &mt->level[l];
-
-		pt->width[l] = width;
-		pt->height[l] = height;
-		pt->depth[l] = depth;
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
+		unsigned nblocksy = pf_get_nblocksy(pt->format, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-		lvl->pitch = align(pt->nblocksx[l] * pt->block.size, 64);
-		lvl->tile_mode = get_tile_mode(pt->nblocksy[l]);
+		lvl->pitch = align(pf_get_stride(pt->format, width), 64);
+		lvl->tile_mode = get_tile_mode(nblocksy, depth);
 
-		width = MAX2(1, width >> 1);
-		height = MAX2(1, height >> 1);
-		depth = MAX2(1, depth >> 1);
+		width = u_minify(width, 1);
+		height = u_minify(height, 1);
+		depth = u_minify(depth, 1);
 	}
 
+	image_alignment  = get_tile_height(mt->level[0].tile_mode) * 64;
+	image_alignment *= get_tile_depth(mt->level[0].tile_mode);
+
+	/* NOTE the distinction between arrays of mip-mapped 2D textures and
+	 * mip-mapped 3D textures. We can't use image_nr == depth for 3D mip.
+	 */
 	for (i = 0; i < mt->image_nr; i++) {
 		for (l = 0; l <= pt->last_level; l++) {
 			struct nv50_miptree_level *lvl = &mt->level[l];
 			int size;
-			unsigned tile_ny = 1 << (lvl->tile_mode + 2);
+			unsigned tile_h = get_tile_height(lvl->tile_mode);
+			unsigned tile_d = get_tile_depth(lvl->tile_mode);
 
-			size  = align(pt->nblocksx[l] * pt->block.size, 64);
-			size *= align(pt->nblocksy[l], tile_ny);
+			size  = lvl->pitch;
+			size *= align(pf_get_nblocksy(pt->format, u_minify(pt->height0, l)), tile_h);
+			size *= align(u_minify(pt->depth0, l), tile_d);
 
 			lvl->image_offset[i] = mt->total_size;
 
 			mt->total_size += size;
 		}
+		mt->total_size = align(mt->total_size, image_alignment);
 	}
 
 	ret = nouveau_bo_new_tile(dev, NOUVEAU_BO_VRAM, 256, mt->total_size,
@@ -132,7 +146,7 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
-	    pt->depth[0] != 1)
+	    pt->depth0 != 1)
 		return NULL;
 
 	mt = CALLOC_STRUCT(nv50_miptree);
@@ -183,8 +197,8 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
 	ps->format = pt->format;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
+	ps->width = u_minify(pt->width0, level);
+	ps->height = u_minify(pt->height0, level);
 	ps->usage = flags;
 	pipe_reference_init(&ps->reference, 1);
 	ps->face = face;

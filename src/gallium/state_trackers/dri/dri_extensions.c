@@ -55,6 +55,7 @@
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_stencil_two_side
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
 #define need_GL_VERSION_2_0
@@ -84,6 +85,7 @@ static const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_env_combine", NULL},
    {"GL_ARB_texture_env_dot3", NULL},
    {"GL_ARB_texture_mirrored_repeat", NULL},
+   {"GL_ARB_texture_non_power_of_two", NULL},
    {"GL_ARB_texture_rectangle", NULL},
    {"GL_ARB_vertex_array_object", GL_ARB_vertex_array_object_functions},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
@@ -103,6 +105,7 @@ static const struct dri_extension card_extensions[] = {
    {"GL_EXT_pixel_buffer_object", NULL},
    {"GL_EXT_provoking_vertex", GL_EXT_provoking_vertex_functions},
    {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
+   {"GL_EXT_stencil_two_side", GL_EXT_stencil_two_side_functions},
    {"GL_EXT_stencil_wrap", NULL},
    {"GL_EXT_texture_edge_clamp", NULL},
    {"GL_EXT_texture_env_combine", NULL},

@@ -36,12 +36,6 @@ struct tgsi_token;
 extern "C" {
 #endif
 
-/*
- * version
- */
-
-struct tgsi_version
-tgsi_build_version( void );
 
 /*
  * header
@@ -143,6 +137,7 @@ struct tgsi_instruction
 tgsi_build_instruction(
    unsigned opcode,
    unsigned saturate,
+   unsigned predicate,
    unsigned num_dst_regs,
    unsigned num_src_regs,
    struct tgsi_header *header );
@@ -157,55 +152,34 @@ tgsi_build_full_instruction(
    struct tgsi_header *header,
    unsigned maxsize );
 
-struct tgsi_instruction_ext_nv
-tgsi_default_instruction_ext_nv( void );
+struct tgsi_instruction_predicate
+tgsi_default_instruction_predicate(void);
 
-unsigned
-tgsi_compare_instruction_ext_nv(
-   struct tgsi_instruction_ext_nv a,
-   struct tgsi_instruction_ext_nv b );
+struct tgsi_instruction_predicate
+tgsi_build_instruction_predicate(int index,
+                                 unsigned negate,
+                                 unsigned swizzleX,
+                                 unsigned swizzleY,
+                                 unsigned swizzleZ,
+                                 unsigned swizzleW,
+                                 struct tgsi_instruction *instruction,
+                                 struct tgsi_header *header);
 
-struct tgsi_instruction_ext_nv
-tgsi_build_instruction_ext_nv(
-   unsigned precision,
-   unsigned cond_dst_index,
-   unsigned cond_flow_index,
-   unsigned cond_mask,
-   unsigned cond_swizzle_x,
-   unsigned cond_swizzle_y,
-   unsigned cond_swizzle_z,
-   unsigned cond_swizzle_w,
-   unsigned cond_dst_update,
-   unsigned cond_flow_enable,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
+struct tgsi_instruction_label
+tgsi_default_instruction_label( void );
 
-struct tgsi_instruction_ext_label
-tgsi_default_instruction_ext_label( void );
-
-unsigned
-tgsi_compare_instruction_ext_label(
-   struct tgsi_instruction_ext_label a,
-   struct tgsi_instruction_ext_label b );
-
-struct tgsi_instruction_ext_label
-tgsi_build_instruction_ext_label(
+struct tgsi_instruction_label
+tgsi_build_instruction_label(
    unsigned label,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );
 
-struct tgsi_instruction_ext_texture
-tgsi_default_instruction_ext_texture( void );
+struct tgsi_instruction_texture
+tgsi_default_instruction_texture( void );
 
-unsigned
-tgsi_compare_instruction_ext_texture(
-   struct tgsi_instruction_ext_texture a,
-   struct tgsi_instruction_ext_texture b );
-
-struct tgsi_instruction_ext_texture
-tgsi_build_instruction_ext_texture(
+struct tgsi_instruction_texture
+tgsi_build_instruction_texture(
    unsigned texture,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
@@ -222,6 +196,7 @@ tgsi_build_src_register(
    unsigned swizzle_z,
    unsigned swizzle_w,
    unsigned negate,
+   unsigned absolute,
    unsigned indirect,
    unsigned dimension,
    int index,
@@ -231,24 +206,6 @@ tgsi_build_src_register(
 struct tgsi_full_src_register
 tgsi_default_full_src_register( void );
 
-struct tgsi_src_register_ext_mod
-tgsi_default_src_register_ext_mod( void );
-
-unsigned
-tgsi_compare_src_register_ext_mod(
-   struct tgsi_src_register_ext_mod a,
-   struct tgsi_src_register_ext_mod b );
-
-struct tgsi_src_register_ext_mod
-tgsi_build_src_register_ext_mod(
-   unsigned complement,
-   unsigned bias,
-   unsigned scale_2x,
-   unsigned absolute,
-   unsigned negate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
 
 struct tgsi_dimension
 tgsi_default_dimension( void );
@@ -275,40 +232,6 @@ tgsi_build_dst_register(
 struct tgsi_full_dst_register
 tgsi_default_full_dst_register( void );
 
-struct tgsi_dst_register_ext_concode
-tgsi_default_dst_register_ext_concode( void );
-
-unsigned
-tgsi_compare_dst_register_ext_concode(
-   struct tgsi_dst_register_ext_concode a,
-   struct tgsi_dst_register_ext_concode b );
-
-struct tgsi_dst_register_ext_concode
-tgsi_build_dst_register_ext_concode(
-   unsigned cc,
-   unsigned swizzle_x,
-   unsigned swizzle_y,
-   unsigned swizzle_z,
-   unsigned swizzle_w,
-   int index,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
-
-struct tgsi_dst_register_ext_modulate
-tgsi_default_dst_register_ext_modulate( void );
-
-unsigned
-tgsi_compare_dst_register_ext_modulate(
-   struct tgsi_dst_register_ext_modulate a,
-   struct tgsi_dst_register_ext_modulate b );
-
-struct tgsi_dst_register_ext_modulate
-tgsi_build_dst_register_ext_modulate(
-   unsigned modulate,
-   struct tgsi_token *prev_token,
-   struct tgsi_instruction *instruction,
-   struct tgsi_header *header );
 
 #if defined __cplusplus
 }

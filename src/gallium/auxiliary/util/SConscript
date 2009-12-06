@@ -28,7 +28,6 @@ util = env.ConvenienceLibrary(
 		'u_debug.c',
 		'u_debug_dump.c',
 		'u_debug_memory.c',
-		'u_debug_profile.c',
 		'u_debug_stack.c',
 		'u_debug_symbol.c',
 		'u_draw_quad.c',

@@ -35,7 +35,9 @@
 #include "radeon_bo_gem.h"
 #include "softpipe/sp_texture.h"
 #include "r300_context.h"
+#include "util/u_math.h"
 #include <X11/Xutil.h>
+
 struct radeon_vl_context
 {
     Display *display;
@@ -113,17 +115,13 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
                                                         unsigned tex_usage,
                                                         unsigned *stride)
 {
-    struct pipe_format_block block;
-    unsigned nblocksx, nblocksy, size;
-
-    pf_get_block(format, &block);
-
-    nblocksx = pf_get_nblocksx(&block, width);
-    nblocksy = pf_get_nblocksy(&block, height);
-
     /* Radeons enjoy things in multiples of 32. */
     /* XXX this can be 32 when POT */
-    *stride = (nblocksx * block.size + 63) & ~63;
+    const unsigned alignment = 64;
+    unsigned nblocksy, size;
+
+    nblocksy = pf_get_nblocksy(format, height);
+    *stride = align(pf_get_stride(format, width), alignment);
     size = *stride * nblocksy;
 
     return radeon_buffer_create(ws, 64, usage, size);
@@ -142,9 +140,14 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
                                struct pipe_buffer *buffer,
                                unsigned flags)
 {
+    struct radeon_winsys_priv *priv = ((struct radeon_winsys *)ws)->priv;
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
+
+    if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
+        priv->cs->space_flush_fn(priv->cs->space_flush_data);
+    }
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -317,13 +320,10 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
     memset(&tmpl, 0, sizeof(tmpl));
     tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
     tmpl.target = PIPE_TEXTURE_2D;
-    tmpl.width[0] = w;
-    tmpl.height[0] = h;
-    tmpl.depth[0] = 1;
+    tmpl.width0 = w;
+    tmpl.height0 = h;
+    tmpl.depth0 = 1;
     tmpl.format = format;
-    pf_get_block(tmpl.format, &tmpl.block);
-    tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
-    tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {

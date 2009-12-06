@@ -50,7 +50,7 @@ struct util_format_block
    /** Block height in pixels */
    unsigned height;
 
-   /** Block size in bytes */
+   /** Block size in bits */
    unsigned bits;
 };
 
