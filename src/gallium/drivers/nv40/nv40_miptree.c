@@ -5,6 +5,8 @@
 
 #include "nv40_context.h"
 
+
+
 static void
 nv40_miptree_layout(struct nv40_miptree *mt)
 {
@@ -109,7 +111,7 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		FREE(mt);
 		return NULL;
 	}
-
+	mt->bo = nouveau_bo(mt->buffer);
 	return &mt->base;
 }
 
@@ -138,6 +140,7 @@ nv40_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 
 	pipe_buffer_reference(&mt->buffer, pb);
+	mt->bo = nouveau_bo(mt->buffer);
 	return &mt->base;
 }
 

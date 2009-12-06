@@ -77,6 +77,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
 	pipe_buffer_reference(&mt->buffer, pb);
+	mt->bo = nouveau_bo(mt->buffer);
 	return &mt->base;
 }
 
@@ -132,6 +133,7 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 		FREE(mt);
 		return NULL;
 	}
+	mt->bo = nouveau_bo(mt->buffer);
 	
 	return &mt->base;
 }
