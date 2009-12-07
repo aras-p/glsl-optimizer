@@ -109,14 +109,15 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
                                          struct drm_create_screen_arg *arg)
 {
-    struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
-    do_ioctls(drmFB, winsys);
+    struct radeon_winsys* rwinsys = radeon_pipe_winsys(drmFB);
+    do_ioctls(drmFB, rwinsys);
 
-    if (debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
-        return softpipe_create_screen((struct pipe_winsys*)winsys);
+    if (!is_r3xx(rwinsys->pci_id) ||
+        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
+        return softpipe_create_screen((struct pipe_winsys*)rwinsys);
     } else {
-        radeon_setup_winsys(drmFB, winsys);
-        return r300_create_screen(winsys);
+        radeon_setup_winsys(drmFB, rwinsys);
+        return r300_create_screen(rwinsys);
     }
 }
 
@@ -124,11 +125,13 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
 struct pipe_context* radeon_create_context(struct drm_api* api,
                                            struct pipe_screen* screen)
 {
-    if (debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
+    struct radeon_winsys* rwinsys = (struct radeon_winsys*)screen->winsys;
+
+    if (!is_r3xx(rwinsys->pci_id) ||
+        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
         return softpipe_create(screen);
     } else {
-        return r300_create_context(screen,
-                                   (struct radeon_winsys*)screen->winsys);
+        return r300_create_context(screen, rwinsys);
     }
 }
 
