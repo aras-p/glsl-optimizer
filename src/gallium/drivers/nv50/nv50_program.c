@@ -1573,6 +1573,8 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_RSQ:
 	case TGSI_OPCODE_SCS:
 		return 0x1;
+	case TGSI_OPCODE_IF:
+		return 0x1;
 	case TGSI_OPCODE_LIT:
 		return 0xb;
 	case TGSI_OPCODE_TEX:
