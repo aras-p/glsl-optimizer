@@ -531,10 +531,6 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm);
 GLboolean next_ins(r700_AssemblerBase *pAsm);
 
-/* TODO : merge next_ins/literal, assemble_alu_instruction/literal */
-GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
-GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
-
 GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops);
 GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset);
 GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue);

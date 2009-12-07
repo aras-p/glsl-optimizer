@@ -2477,260 +2477,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 
     return GL_TRUE;
 }
-#if 0
-GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral)
-{
-    R700ALUInstruction            * alu_instruction_ptr;
-    R700ALUInstructionHalfLiteral * alu_instruction_ptr_hl;
-    R700ALUInstructionFullLiteral * alu_instruction_ptr_fl;
 
-    GLuint    number_of_scalar_operations;
-    GLboolean is_single_scalar_operation;
-    GLuint    scalar_channel_index;
-
-    GLuint   contiguous_slots_needed;
-    GLuint   lastInstruction;
-    GLuint   not_masked[4];
-
-    GLuint    uNumSrc = r700GetNumOperands(pAsm);
-    
-    GLboolean bSplitInst = GL_FALSE;
-
-    number_of_scalar_operations = 0;
-    contiguous_slots_needed     = 0;
-
-    if(1 == pAsm->D.dst.writew)
-    {
-        lastInstruction = 3;
-        number_of_scalar_operations++;
-        not_masked[3] = 1;
-    }
-    else
-    {
-        not_masked[3] = 0;
-    }
-    if(1 == pAsm->D.dst.writez)
-    {
-        lastInstruction = 2;
-        number_of_scalar_operations++;
-        not_masked[2] = 1;
-    }
-    else
-    {
-        not_masked[2] = 0;
-    }
-    if(1 == pAsm->D.dst.writey)
-    {
-        lastInstruction = 1;
-        number_of_scalar_operations++;
-        not_masked[1] = 1;
-    }
-    else
-    {
-        not_masked[1] = 0;
-    }
-    if(1 == pAsm->D.dst.writex)
-    {
-        lastInstruction = 0;
-        number_of_scalar_operations++;
-        not_masked[0] = 1;
-    }
-    else
-    {
-        not_masked[0] = 0;
-    }
-    
-    if(GL_TRUE == is_reduction_opcode(&(pAsm->D)) ) 
-    {
-        contiguous_slots_needed = 4;
-    }
-    else
-    {
-        contiguous_slots_needed = number_of_scalar_operations;
-    }
-
-    if(1 == pAsm->D2.dst2.literal)
-    {
-        contiguous_slots_needed += 1;
-    }
-    else if(2 == pAsm->D2.dst2.literal)
-    {
-        contiguous_slots_needed += 2;
-    }
-
-    initialize(pAsm);    
-
-    for (scalar_channel_index=0; scalar_channel_index < 4; scalar_channel_index++) 
-    {
-        if(0 == not_masked[scalar_channel_index])
-        {
-            continue;
-        }
-
-        if(scalar_channel_index == lastInstruction)
-        {
-            switch (pAsm->D2.dst2.literal)
-            {
-            case 0:
-                alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
-                if (alu_instruction_ptr == NULL) 
-		        {
-			        return GL_FALSE;
-		        }
-                Init_R700ALUInstruction(alu_instruction_ptr);
-                break;
-            case 1:
-                alu_instruction_ptr_hl = (R700ALUInstructionHalfLiteral*) CALLOC_STRUCT(R700ALUInstructionHalfLiteral);
-                if (alu_instruction_ptr_hl == NULL) 
-		        {
-			        return GL_FALSE;
-		        }
-                Init_R700ALUInstructionHalfLiteral(alu_instruction_ptr_hl, pLiteral[0], pLiteral[1]);
-                alu_instruction_ptr = (R700ALUInstruction*)alu_instruction_ptr_hl;
-                break;
-            case 2:
-                alu_instruction_ptr_fl = (R700ALUInstructionFullLiteral*) CALLOC_STRUCT(R700ALUInstructionFullLiteral);
-                if (alu_instruction_ptr_fl == NULL) 
-		        {
-			        return GL_FALSE;
-		        }
-                Init_R700ALUInstructionFullLiteral(alu_instruction_ptr_fl, pLiteral[0], pLiteral[1], pLiteral[2], pLiteral[3]);
-                alu_instruction_ptr = (R700ALUInstruction*)alu_instruction_ptr_fl;
-                break;
-            default:
-                break;
-            };
-        }
-        else
-        {
-            alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
-            if (alu_instruction_ptr == NULL) 
-		    {
-			    return GL_FALSE;
-		    }
-            Init_R700ALUInstruction(alu_instruction_ptr);
-        }
-
-        //src 0
-        if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                         0,
-                                         &(pAsm->S[0].src), 
-                                         scalar_channel_index) )     
-        {
-            return GL_FALSE;
-        }
-   
-        if (uNumSrc > 1) 
-        {            
-            // Process source 1            
-            if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                             1,
-                                             &(pAsm->S[1].src), 
-                                             scalar_channel_index) ) 
-            {
-                return GL_FALSE;
-            }
-        }
-
-        //other bits
-        alu_instruction_ptr->m_Word0.f.index_mode = SQ_INDEX_LOOP;
-
-        if(scalar_channel_index == lastInstruction)
-        {
-            alu_instruction_ptr->m_Word0.f.last = 1;
-        }
-
-        alu_instruction_ptr->m_Word0.f.pred_sel = 0x0;
-        if(1 == pAsm->D.dst.predicated)
-        {            
-            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x1;  
-            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x1; 
-        }
-        else
-        {
-            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0;  
-            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0; 
-        }
-
-        // dst
-        if( (pAsm->D.dst.rtype == DST_REG_TEMPORARY) || 
-            (pAsm->D.dst.rtype == DST_REG_OUT) ) 
-        {
-            alu_instruction_ptr->m_Word1.f.dst_gpr  = pAsm->D.dst.reg;
-        }
-        else 
-        {
-            radeon_error("Only temp destination registers supported for ALU dest regs.\n");
-            return GL_FALSE;
-        }
-
-        alu_instruction_ptr->m_Word1.f.dst_rel  = SQ_ABSOLUTE;  //D.rtype
-
-        alu_instruction_ptr->m_Word1.f.dst_chan = scalar_channel_index;
-
-        alu_instruction_ptr->m_Word1.f.clamp    = pAsm->D2.dst2.SaturateMode;
-
-        if (pAsm->D.dst.op3) 
-        {            
-            //op3
-            alu_instruction_ptr->m_Word1_OP3.f.alu_inst = pAsm->D.dst.opcode;
-
-            //There's 3rd src for op3
-            if ( GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                              2,
-                                              &(pAsm->S[2].src), 
-                                              scalar_channel_index) ) 
-            {
-                return GL_FALSE;
-            }
-        }
-        else 
-        {
-            //op2
-            if (pAsm->bR6xx)
-            {
-                alu_instruction_ptr->m_Word1_OP2.f6.alu_inst   = pAsm->D.dst.opcode;
-                alu_instruction_ptr->m_Word1_OP2.f6.src0_abs   = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f6.src1_abs   = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f6.write_mask = 1;           
-                alu_instruction_ptr->m_Word1_OP2.f6.omod       = SQ_ALU_OMOD_OFF;
-            }
-            else
-            {
-                alu_instruction_ptr->m_Word1_OP2.f.alu_inst    = pAsm->D.dst.opcode;
-                alu_instruction_ptr->m_Word1_OP2.f.src0_abs    = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f.src1_abs    = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f.write_mask  = 1;                        
-                alu_instruction_ptr->m_Word1_OP2.f.omod        = SQ_ALU_OMOD_OFF;
-            }
-        }
-
-        if(GL_FALSE == add_alu_instruction(pAsm, alu_instruction_ptr, contiguous_slots_needed) )
-        {
-            return GL_FALSE;
-        }
-  
-        if (1 == number_of_scalar_operations) 
-        {
-            if(GL_FALSE == check_scalar(pAsm, alu_instruction_ptr) )
-            {
-                return GL_FALSE;
-            }
-        }
-        else 
-        {
-            if(GL_FALSE == check_vector(pAsm, alu_instruction_ptr) )
-            {
-                return GL_FALSE;
-            }
-        }
-
-        contiguous_slots_needed -= 2;
-    }
-
-    return GL_TRUE;
-}
-#endif
 GLboolean next_ins(r700_AssemblerBase *pAsm)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
@@ -2787,29 +2534,6 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-#if 0/* not work yet */
-GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral)
-{
-    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
-
-    //ALU      
-    if( GL_FALSE == assemble_alu_instruction_literal(pAsm, pLiteral) ) 
-    {
-        radeon_error("Error assembling ALU instruction\n");
-        return GL_FALSE;
-    }
-    
-    //reset for next inst.
-    pAsm->D.bits    = 0;
-    pAsm->D2.bits   = 0;
-    pAsm->S[0].bits = 0;
-    pAsm->S[1].bits = 0;
-    pAsm->S[2].bits = 0;
-    pAsm->is_tex = GL_FALSE;
-    pAsm->need_tex_barrier = GL_FALSE;
-    return GL_TRUE;
-}
-#endif
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode)
 {
     BITS tmp;
@@ -4533,8 +4257,6 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
         pAsm->D.dst.reg   = tmp2;
-        pAsm->D2.dst2.literal_slots = 1;
-        pAsm->C[0].f = 1.5F;
 
         setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
         pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
@@ -4546,33 +4268,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_Z);
         setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
         /* immediate c 1.5 */
+        pAsm->D2.dst2.literal_slots = 1;
+        pAsm->C[0].f = 1.5F;
         pAsm->S[2].src.rtype = SRC_REC_LITERAL;
         pAsm->S[2].src.reg   = tmp1;
         setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X);
 
         next_ins(pAsm);
-#if 0
-        /* ADD the remaining .5 */
-        pAsm->D.dst.opcode = SQ_OP2_INST_ADD;
-        setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-        pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-        pAsm->D.dst.reg   = tmp2;
-        pAsm->D.dst.writex = 1;
-        pAsm->D.dst.writey = 1;
-        pAsm->D.dst.writez = 0;
-        pAsm->D.dst.writew = 0;
 
-        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-        pAsm->S[0].src.reg   = tmp2;
-        noswizzle_PVSSRC(&(pAsm->S[0].src));
-        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-        pAsm->S[1].src.reg   = 252; // SQ_ALU_SRC_0_5 
-        noswizzle_PVSSRC(&(pAsm->S[1].src));
-
-        next_ins(pAsm);
-#endif
         /* tmp1.xy = temp2.xy */
         pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
