@@ -408,7 +408,7 @@ static void emit_ddy( struct st_translate *t,
 {
    struct ureg_program *ureg = t->ureg;
    struct ureg_src src = translate_src( t, SrcReg );
-   if(1)   src = ureg_negate( src );
+   src = ureg_negate( src );
    ureg_DDY( ureg, dst, src );
 }
 
