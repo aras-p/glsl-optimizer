@@ -3041,7 +3041,42 @@ GLboolean assemble_CMP(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_COS(r700_AssemblerBase *pAsm)
 {
-    return assemble_math_function(pAsm, SQ_OP2_INST_COS);
+    int tmp;
+    //return assemble_math_function(pAsm, SQ_OP2_INST_COS);
+    checkop1(pAsm);
+
+    tmp = gethelpr(pAsm);
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
+
+    assemble_src(pAsm, 0, -1);
+
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+    pAsm->D2.dst2.literal_slots = 1;
+    pAsm->C[0].f = 1/(3.1415926535 * 2);
+    pAsm->C[1].f = 0.0F;
+    next_ins(pAsm);
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_COS;
+    pAsm->D.dst.math = 1;
+
+    assemble_dst(pAsm);
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+    noneg_PVSSRC(&(pAsm->S[0].src));
+
+    next_ins(pAsm);
+
+    return GL_TRUE;
+
 }
  
 GLboolean assemble_DOT(r700_AssemblerBase *pAsm)
