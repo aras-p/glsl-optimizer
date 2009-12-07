@@ -2237,7 +2237,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 
     contiguous_slots_needed = 0;
 
-    if(GL_TRUE == is_reduction_opcode(&(pAsm->D)) ) 
+    if(!is_single_scalar_operation) 
     {
         contiguous_slots_needed = 4;
     }
@@ -3920,68 +3920,63 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
 {
     BITS tmp;
 
-	checkop1(pAsm);
+    checkop1(pAsm);
 
-	tmp = gethelpr(pAsm);
+    tmp = gethelpr(pAsm);
+    /* tmp.x = src /2*PI */
+    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
 
-	// COS tmp.x,    a.x
-	pAsm->D.dst.opcode = SQ_OP2_INST_COS;
-	pAsm->D.dst.math = 1;
+    assemble_src(pAsm, 0, -1);
 
-	setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-	pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-	pAsm->D.dst.reg = tmp;
-	pAsm->D.dst.writex = 1;
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+    pAsm->D2.dst2.literal_slots = 1;
+    pAsm->C[0].f = 1/(3.1415926535 * 2);
+    pAsm->C[1].f = 0.0F;
 
-	if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-	{
-		return GL_FALSE;
-	}
+    next_ins(pAsm);
 
-	if ( GL_FALSE == next_ins(pAsm) )
-	{
-		return GL_FALSE;
-	}
+    // COS dst.x,    a.x
+    pAsm->D.dst.opcode = SQ_OP2_INST_COS;
+    pAsm->D.dst.math = 1;
 
-	// SIN tmp.y,    a.x
-	pAsm->D.dst.opcode = SQ_OP2_INST_SIN;
-	pAsm->D.dst.math = 1;
+    assemble_dst(pAsm);
+    /* mask y */
+    pAsm->D.dst.writey = 0;
 
-	setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-	pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-	pAsm->D.dst.reg = tmp;
-	pAsm->D.dst.writey = 1;
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+    noneg_PVSSRC(&(pAsm->S[0].src));
 
-	if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-	{
-		return GL_FALSE;
-	}
+    if ( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
 
-	if( GL_FALSE == next_ins(pAsm) )
-	{
-		return GL_FALSE;
-	}
+    // SIN dst.y,    a.x
+    pAsm->D.dst.opcode = SQ_OP2_INST_SIN;
+    pAsm->D.dst.math = 1;
 
-	// MOV dst.mask,     tmp
-	pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
+    assemble_dst(pAsm);
+    /* mask x */
+    pAsm->D.dst.writex = 0;
 
-	if( GL_FALSE == assemble_dst(pAsm) )
-	{
-		return GL_FALSE;
-	}
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+    noneg_PVSSRC(&(pAsm->S[0].src));
 
-	setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-	pAsm->S[0].src.rtype = DST_REG_TEMPORARY;
-	pAsm->S[0].src.reg = tmp;
-
-	noswizzle_PVSSRC(&(pAsm->S[0].src));
-	pAsm->S[0].src.swizzlez = SQ_SEL_0;
-	pAsm->S[0].src.swizzlew = SQ_SEL_0;
-
-	if ( GL_FALSE == next_ins(pAsm) )
-	{
-		return GL_FALSE;
-	}
+    if( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
 
     return GL_TRUE;
 }
