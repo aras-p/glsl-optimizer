@@ -469,10 +469,8 @@ static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
 
     /* We might optionally check for [Z func: never] and inspect the stencil
      * state in a similar fashion, but it's not terribly important. */
-    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE)
-           ||
-           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK)
-           ||
+    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE) ||
+           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK) ||
            ((dsa->z_buffer_control & R500_STENCIL_REFMASK_FRONT_BACK) &&
             (dsa->stencil_ref_bf & R300_STENCILWRITEMASK_MASK));
 }
@@ -503,19 +501,25 @@ static void r300_update_ztop(struct r300_context* r300)
      * The docs claim that for the first three cases, if no ZS writes happen,
      * then ZTOP can be used.
      *
+     * (3) will never apply since we do not support chroma-keyed operations.
+     * (4) will need to be re-examined (and this comment updated) if/when
+     * Hyper-Z becomes supported.
+     *
      * Additionally, the following conditions require disabled ZTOP:
-     * ~) Depth writes in fragment shader
-     * ~) Outstanding occlusion queries
+     * 5) Depth writes in fragment shader
+     * 6) Outstanding occlusion queries
      *
      * ~C.
      */
 
-    if (r300->query_current ||
-        r300_fragment_shader_writes_depth(r300->fs)) {
+    /* ZS writes */
+    if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
+           (r300_dsa_alpha_test_enabled(r300->dsa_state) ||   /* (1) */
+            r300->fs->info.uses_kill)) {                      /* (2) */
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
-               (r300->fs->info.uses_kill ||
-                r300_dsa_alpha_test_enabled(r300->dsa_state))) {
+    } else if (r300_fragment_shader_writes_depth(r300->fs)) { /* (5) */
+        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300->query_current) {                         /* (6) */
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
     }
 }
