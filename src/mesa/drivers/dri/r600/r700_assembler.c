@@ -1733,7 +1733,7 @@ GLboolean add_alu_instruction(r700_AssemblerBase* pAsm,
     }
     else 
     {
-        pAsm->cf_current_alu_clause_ptr->m_Word1.f.count++;
+        pAsm->cf_current_alu_clause_ptr->m_Word1.f.count += (GetInstructionSize(alu_instruction_ptr->m_ShaderInstType) / 2);
     }
 
     // If this clause constains any instruction that is forward dependent on a TEX instruction, 
@@ -2168,6 +2168,10 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 {
+    R700ALUInstruction            * alu_instruction_ptr;
+    R700ALUInstructionHalfLiteral * alu_instruction_ptr_hl;
+    R700ALUInstructionFullLiteral * alu_instruction_ptr_fl;
+
     GLuint    number_of_scalar_operations;
     GLboolean is_single_scalar_operation;
     GLuint    scalar_channel_index;
@@ -2238,18 +2242,39 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         contiguous_slots_needed = 4;
     }
 
+    contiguous_slots_needed += pAsm->D2.dst2.literal_slots;
+
     initialize(pAsm);    
 
     for (scalar_channel_index=0;
             scalar_channel_index < number_of_scalar_operations; 
                 scalar_channel_index++) 
     {
-        R700ALUInstruction* alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
-        if (alu_instruction_ptr == NULL) 
-		{
-			return GL_FALSE;
-		}
-        Init_R700ALUInstruction(alu_instruction_ptr);
+        if(scalar_channel_index == (number_of_scalar_operations-1))
+        {
+            switch(pAsm->D2.dst2.literal_slots)
+            {
+            case 0:
+                alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
+                Init_R700ALUInstruction(alu_instruction_ptr);
+                break;
+            case 1:
+                alu_instruction_ptr_hl = (R700ALUInstructionHalfLiteral*) CALLOC_STRUCT(R700ALUInstructionHalfLiteral);
+                Init_R700ALUInstructionHalfLiteral(alu_instruction_ptr_hl, pAsm->C[0].f, pAsm->C[1].f);
+                alu_instruction_ptr = (R700ALUInstruction*)alu_instruction_ptr_hl;
+                break;
+            case 2:
+                alu_instruction_ptr_fl = (R700ALUInstructionFullLiteral*) CALLOC_STRUCT(R700ALUInstructionFullLiteral);
+                Init_R700ALUInstructionFullLiteral(alu_instruction_ptr_fl,pAsm->C[0].f, pAsm->C[1].f, pAsm->C[2].f, pAsm->C[3].f);
+                alu_instruction_ptr = (R700ALUInstruction*)alu_instruction_ptr_fl;
+            break;
+            };
+        }
+        else
+        {
+            alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
+            Init_R700ALUInstruction(alu_instruction_ptr);
+        }
         
         //src 0
         current_source_index = 0;
@@ -2447,12 +2472,12 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             }
         }
 
-        contiguous_slots_needed = 0;
+        contiguous_slots_needed -= 1;
     }
 
     return GL_TRUE;
 }
-
+#if 0
 GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral)
 {
     R700ALUInstruction            * alu_instruction_ptr;
@@ -2705,7 +2730,7 @@ GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * p
 
     return GL_TRUE;
 }
-
+#endif
 GLboolean next_ins(r700_AssemblerBase *pAsm)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
@@ -2758,11 +2783,11 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
     pAsm->is_tex = GL_FALSE;
     pAsm->need_tex_barrier = GL_FALSE;
     pAsm->D2.bits = 0;
-
+    pAsm->C[0].bits = pAsm->C[1].bits = pAsm->C[2].bits = pAsm->C[3].bits = 0;
     return GL_TRUE;
 }
 
-/* not work yet */
+#if 0/* not work yet */
 GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
@@ -2784,7 +2809,7 @@ GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral)
     pAsm->need_tex_barrier = GL_FALSE;
     return GL_TRUE;
 }
-
+#endif
 GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode)
 {
     BITS tmp;
@@ -4472,13 +4497,14 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         /* MULADD R0.x,  R0.x,  PS1,  (0x3FC00000, 1.5f).x
          * MULADD R0.y,  R0.y,  PS1,  (0x3FC00000, 1.5f).x
          * muladd has no writemask, have to use another temp 
-         * also no support for imm constants, so add 1 here
          */
         pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
         pAsm->D.dst.op3    = 1;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
         pAsm->D.dst.reg   = tmp2;
+        pAsm->D2.dst2.literal_slots = 1;
+        pAsm->C[0].f = 1.5F;
 
         setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
         pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
@@ -4489,12 +4515,13 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         pAsm->S[1].src.reg   = tmp1;
         setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_Z);
         setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
-        pAsm->S[2].src.rtype = SRC_REG_TEMPORARY;
+        /* immediate c 1.5 */
+        pAsm->S[2].src.rtype = SRC_REC_LITERAL;
         pAsm->S[2].src.reg   = tmp1;
-        setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_1);
+        setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X);
 
         next_ins(pAsm);
-
+#if 0
         /* ADD the remaining .5 */
         pAsm->D.dst.opcode = SQ_OP2_INST_ADD;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -4515,7 +4542,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         noswizzle_PVSSRC(&(pAsm->S[1].src));
 
         next_ins(pAsm);
-
+#endif
         /* tmp1.xy = temp2.xy */
         pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -5410,7 +5437,7 @@ GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
     pAsm->D.dst.writey   = 0;
     pAsm->D.dst.writez   = 0;
     pAsm->D.dst.writew   = 0;
-    pAsm->D2.dst2.literal      = 1;
+    pAsm->D2.dst2.literal_slots      = 1;
     pAsm->D2.dst2.SaturateMode = SATURATE_OFF;
     pAsm->D.dst.predicated     = 0;
     /* in reloc where dislink flag init inst, only one slot alu inst is handled. */
@@ -5465,7 +5492,7 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
     pAsm->D.dst.writey   = 0;
     pAsm->D.dst.writez   = 0;
     pAsm->D.dst.writew   = 0;
-    pAsm->D2.dst2.literal      = 1;
+    pAsm->D2.dst2.literal_slots      = 1;
     pAsm->D2.dst2.SaturateMode = SATURATE_OFF;
     pAsm->D.dst.predicated     = 1;
     pAsm->D2.dst2.index_mode = SQ_INDEX_LOOP; /* Check this ! */

@@ -114,7 +114,7 @@ typedef struct PVSDSTtag
 
 typedef struct PVSINSTtag
 {
-    BITS literal      :2; 
+    BITS literal_slots      :2; 
     BITS SaturateMode :2; 
     BITS index_mode   :3;
 } PVSINST;
@@ -345,6 +345,7 @@ typedef struct r700_AssemblerBase
 	PVSDWORD D;
     PVSDWORD D2;
 	PVSDWORD S[3];
+        PVSDWORD C[4];
 
 	unsigned int uLastPosUpdate;
 	unsigned int last_cond_register;
