@@ -524,9 +524,9 @@ static int image_matches_texture_obj(struct gl_texture_object *texObj,
 		return 0;
 
 	const unsigned levelDiff = level - texObj->BaseLevel;
-	const unsigned refWidth = baseImage->Width >> levelDiff;
-	const unsigned refHeight = baseImage->Height >> levelDiff;
-	const unsigned refDepth = baseImage->Depth >> levelDiff;
+	const unsigned refWidth = MAX2(baseImage->Width >> levelDiff, 1);
+	const unsigned refHeight = MAX2(baseImage->Height >> levelDiff, 1);
+	const unsigned refDepth = MAX2(baseImage->Depth >> levelDiff, 1);
 
 	return (texImage->Width == refWidth &&
 			texImage->Height == refHeight &&
