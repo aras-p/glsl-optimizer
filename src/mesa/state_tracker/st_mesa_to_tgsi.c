@@ -396,6 +396,23 @@ static void emit_swz( struct st_translate *t,
 }
 
 
+/**
+ * Negate the value of DDY to match GL semantics where (0,0) is the
+ * lower-left corner of the window.
+ * Note that the GL_ARB_fragment_coord_conventions extension will
+ * effect this someday.
+ */
+static void emit_ddy( struct st_translate *t,
+                      struct ureg_dst dst,
+                      const struct prog_src_register *SrcReg )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_src src = translate_src( t, SrcReg );
+   if(1)   src = ureg_negate( src );
+   ureg_DDY( ureg, dst, src );
+}
+
+
 
 static unsigned
 translate_opcode( unsigned op )
@@ -619,7 +636,9 @@ compile_instruction(
       ureg_MOV( ureg, dst[0], ureg_imm1f(ureg, 0.5) );
       break;
 		 
-
+   case OPCODE_DDY:
+      emit_ddy( t, dst[0], &inst->SrcReg[0] );
+      break;
 
    default:
       ureg_insn( ureg, 
