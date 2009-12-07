@@ -1292,6 +1292,15 @@ GLboolean assemble_dst(r700_AssemblerBase *pAsm)
     pAsm->D.dst.writez = (pILInst->DstReg.WriteMask >> 2) & 0x1;
     pAsm->D.dst.writew = (pILInst->DstReg.WriteMask >> 3) & 0x1;
   
+    if(pILInst->SaturateMode == SATURATE_ZERO_ONE)
+    {
+        pAsm->D2.dst2.SaturateMode = 1;
+    }
+    else
+    {
+        pAsm->D2.dst2.SaturateMode = 0;
+    }
+
     return GL_TRUE;
 }
 
@@ -2270,7 +2279,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         }
 
         //other bits
-        alu_instruction_ptr->m_Word0.f.index_mode = SQ_INDEX_AR_X;
+        alu_instruction_ptr->m_Word0.f.index_mode = pAsm->D2.dst2.index_mode;
 
         if(   (is_single_scalar_operation == GL_TRUE) 
            || (GL_TRUE == bSplitInst) )
@@ -2282,9 +2291,17 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             alu_instruction_ptr->m_Word0.f.last = (scalar_channel_index == 3) ?  1 : 0;
         }
 
-        alu_instruction_ptr->m_Word0.f.pred_sel                = 0x0;
-        alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x0;  
-        alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x0;
+        alu_instruction_ptr->m_Word0.f.pred_sel = (pAsm->D.dst.pred_inv > 0) ? 1 : 0;
+        if(1 == pAsm->D.dst.predicated)
+        {
+            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x1;
+            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x1;
+        }
+        else
+        {
+            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x0;
+            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x0;
+        }
 
         // dst
         if( (pAsm->D.dst.rtype == DST_REG_TEMPORARY) || 
@@ -2323,7 +2340,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 
         alu_instruction_ptr->m_Word1.f.dst_chan = scalar_channel_index;
 
-        alu_instruction_ptr->m_Word1.f.clamp    = pAsm->pILInst[pAsm->uiCurInst].SaturateMode;
+        alu_instruction_ptr->m_Word1.f.clamp    = pAsm->D2.dst2.SaturateMode;
 
         if (pAsm->D.dst.op3) 
         {            
@@ -2426,253 +2443,6 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         {
             if(GL_FALSE == check_vector(pAsm, alu_instruction_ptr) )
             {                
-                return GL_FALSE; 
-            }
-        }
-
-        contiguous_slots_needed = 0;
-    }
-
-    return GL_TRUE;
-}
-
-GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm)
-{
-    GLuint    number_of_scalar_operations;
-    GLboolean is_single_scalar_operation;
-    GLuint    scalar_channel_index;
-
-    PVSSRC * pcurrent_source;
-    int    current_source_index;
-    GLuint contiguous_slots_needed;
-
-    GLuint    uNumSrc = r700GetNumOperands(pAsm);
-    
-    GLboolean bSplitInst = GL_FALSE;
-
-    if (1 == pAsm->D.dst.math) 
-    {
-        is_single_scalar_operation = GL_TRUE;
-        number_of_scalar_operations = 1;
-    }
-    else 
-    {
-        is_single_scalar_operation = GL_FALSE;
-        number_of_scalar_operations = 4;
-    }
-
-    contiguous_slots_needed = 0;
-
-    if(GL_TRUE == is_reduction_opcode(&(pAsm->D)) ) 
-    {
-        contiguous_slots_needed = 4;
-    }
-
-    initialize(pAsm);    
-
-    for (scalar_channel_index=0;
-            scalar_channel_index < number_of_scalar_operations; 
-                scalar_channel_index++) 
-    {
-        R700ALUInstruction* alu_instruction_ptr = (R700ALUInstruction*) CALLOC_STRUCT(R700ALUInstruction);
-        if (alu_instruction_ptr == NULL) 
-        {
-            return GL_FALSE;
-        }
-        Init_R700ALUInstruction(alu_instruction_ptr);
-        
-        //src 0
-        current_source_index = 0;
-        pcurrent_source = &(pAsm->S[0].src);
-
-        if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                         current_source_index,
-                                         pcurrent_source, 
-                                         scalar_channel_index) )     
-        {
-            return GL_FALSE;
-        }
-   
-        if (uNumSrc > 1) 
-        {            
-            // Process source 1            
-            current_source_index = 1;
-            pcurrent_source = &(pAsm->S[current_source_index].src);
-
-            if (GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                             current_source_index,
-                                             pcurrent_source, 
-                                             scalar_channel_index) ) 
-            {
-                return GL_FALSE;
-            }
-        }
-
-        //other bits
-        alu_instruction_ptr->m_Word0.f.index_mode = SQ_INDEX_LOOP;
-
-        if(   (is_single_scalar_operation == GL_TRUE) 
-           || (GL_TRUE == bSplitInst) )
-        {
-            alu_instruction_ptr->m_Word0.f.last = 1;
-        }
-        else 
-        {
-            alu_instruction_ptr->m_Word0.f.last = (scalar_channel_index == 3) ?  1 : 0;
-        }
-
-        alu_instruction_ptr->m_Word0.f.pred_sel = (pAsm->D.dst.pred_inv > 0) ? 1 : 0;
-        if(1 == pAsm->D.dst.predicated)
-        {
-            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x1;  
-            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x1; 
-        }
-        else
-        {
-            alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x0;  
-            alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x0; 
-        }
-       
-        // dst
-        if( (pAsm->D.dst.rtype == DST_REG_TEMPORARY) || 
-            (pAsm->D.dst.rtype == DST_REG_OUT) ) 
-        {
-            alu_instruction_ptr->m_Word1.f.dst_gpr  = pAsm->D.dst.reg;
-        }
-        else 
-        {
-            radeon_error("Only temp destination registers supported for ALU dest regs.\n");
-            return GL_FALSE;
-        }
-
-        alu_instruction_ptr->m_Word1.f.dst_rel  = SQ_ABSOLUTE;  //D.rtype
-
-        if ( is_single_scalar_operation == GL_TRUE ) 
-        {
-            // Override scalar_channel_index since only one scalar value will be written
-            if(pAsm->D.dst.writex) 
-            {
-                scalar_channel_index = 0;
-            }
-            else if(pAsm->D.dst.writey) 
-            {
-                scalar_channel_index = 1;
-            }
-            else if(pAsm->D.dst.writez) 
-            {
-                scalar_channel_index = 2;
-            }
-            else if(pAsm->D.dst.writew) 
-            {
-                scalar_channel_index = 3;
-            }
-        }
-
-        alu_instruction_ptr->m_Word1.f.dst_chan = scalar_channel_index;
-
-        alu_instruction_ptr->m_Word1.f.clamp    = pAsm->D2.dst2.SaturateMode;
-
-        if (pAsm->D.dst.op3) 
-        {            
-            //op3
-
-            alu_instruction_ptr->m_Word1_OP3.f.alu_inst = pAsm->D.dst.opcode;
-
-            //There's 3rd src for op3
-            current_source_index = 2;
-            pcurrent_source = &(pAsm->S[current_source_index].src);
-
-            if ( GL_FALSE == assemble_alu_src(alu_instruction_ptr,
-                                              current_source_index,
-                                              pcurrent_source, 
-                                              scalar_channel_index) ) 
-            {
-                return GL_FALSE;
-            }
-        }
-        else 
-        {
-            //op2
-            if (pAsm->bR6xx)
-            {
-                alu_instruction_ptr->m_Word1_OP2.f6.alu_inst           = pAsm->D.dst.opcode;
-
-                alu_instruction_ptr->m_Word1_OP2.f6.src0_abs           = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f6.src1_abs           = 0x0;
-
-                //alu_instruction_ptr->m_Word1_OP2.f6.update_execute_mask = 0x0;
-                //alu_instruction_ptr->m_Word1_OP2.f6.update_pred         = 0x0;
-                switch (scalar_channel_index) 
-                {
-                    case 0: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = pAsm->D.dst.writex; 
-                        break;
-                    case 1: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = pAsm->D.dst.writey; 
-                        break;
-                    case 2: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = pAsm->D.dst.writez; 
-                        break;
-                    case 3: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = pAsm->D.dst.writew; 
-                        break;
-                    default: 
-                        alu_instruction_ptr->m_Word1_OP2.f6.write_mask = 1; //SQ_SEL_MASK;
-                        break;
-                }            
-                alu_instruction_ptr->m_Word1_OP2.f6.omod               = SQ_ALU_OMOD_OFF;
-            }
-            else
-            {
-                alu_instruction_ptr->m_Word1_OP2.f.alu_inst           = pAsm->D.dst.opcode;
-
-                alu_instruction_ptr->m_Word1_OP2.f.src0_abs           = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f.src1_abs           = 0x0;
-
-                //alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x0;
-                //alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x0;
-                switch (scalar_channel_index) 
-                {
-                    case 0: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = pAsm->D.dst.writex; 
-                        break;
-                    case 1: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = pAsm->D.dst.writey; 
-                        break;
-                    case 2: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = pAsm->D.dst.writez; 
-                        break;
-                    case 3: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = pAsm->D.dst.writew; 
-                        break;
-                    default: 
-                        alu_instruction_ptr->m_Word1_OP2.f.write_mask = 1; //SQ_SEL_MASK;
-                        break;
-                }            
-                alu_instruction_ptr->m_Word1_OP2.f.omod               = SQ_ALU_OMOD_OFF;
-            }
-        }
-
-        if(GL_FALSE == add_alu_instruction(pAsm, alu_instruction_ptr, contiguous_slots_needed) )
-        {
-            return GL_FALSE;
-        }
-
-        /*
-         * Judge the type of current instruction, is it vector or scalar 
-         * instruction.
-         */        
-        if (is_single_scalar_operation) 
-        {
-            if(GL_FALSE == check_scalar(pAsm, alu_instruction_ptr) )
-            {
-                return GL_FALSE;
-            }
-        }
-        else 
-        {
-            if(GL_FALSE == check_vector(pAsm, alu_instruction_ptr) )
-            {
                 return GL_FALSE; 
             }
         }
@@ -2987,44 +2757,6 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
     pAsm->S[2].bits = 0;
     pAsm->is_tex = GL_FALSE;
     pAsm->need_tex_barrier = GL_FALSE;
-
-    return GL_TRUE;
-}
-
-GLboolean next_ins2(r700_AssemblerBase *pAsm)
-{
-    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
-
-    //ALU      
-    if( GL_FALSE == assemble_alu_instruction2(pAsm) ) 
-    {
-        radeon_error("Error assembling ALU instruction\n");
-        return GL_FALSE;
-    }
-     
-    if(pAsm->D.dst.rtype == DST_REG_OUT) 
-    {
-        if(pAsm->D.dst.op3) 
-        {        
-            // There is no mask for OP3 instructions, so all channels are written        
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
-        }
-        else 
-        {
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] 
-               |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
-        }
-    }
-    
-    //reset for next inst.
-    pAsm->D.bits    = 0;
-    pAsm->D2.bits   = 0;
-    pAsm->S[0].bits = 0;
-    pAsm->S[1].bits = 0;
-    pAsm->S[2].bits = 0;
-    pAsm->is_tex = GL_FALSE;
-    pAsm->need_tex_barrier = GL_FALSE;
-
     pAsm->D2.bits = 0;
 
     return GL_TRUE;
@@ -4537,7 +4269,7 @@ GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode)
     pAsm->S[1].src.swizzlez = SQ_SEL_0;
     pAsm->S[1].src.swizzlew = SQ_SEL_0;
 
-    if( GL_FALSE == next_ins2(pAsm) ) 
+    if( GL_FALSE == next_ins(pAsm) ) 
     {
 	    return GL_FALSE;
     }
@@ -5683,6 +5415,7 @@ GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
     pAsm->D.dst.predicated     = 0;
     /* in reloc where dislink flag init inst, only one slot alu inst is handled. */
     pAsm->D.dst.math           = 1; /* TODO : not math really, but one channel op, more generic alu assembler needed */
+    pAsm->D2.dst2.index_mode = SQ_INDEX_LOOP; /* Check this ! */
 #if 0
     pAsm->S[0].src.rtype = SRC_REC_LITERAL;
     //pAsm->S[0].src.reg   = 0;
@@ -5707,7 +5440,7 @@ GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
     pAsm->S[0].src.swizzlez = flagValue;
     pAsm->S[0].src.swizzlew = flagValue;
 
-    if( GL_FALSE == next_ins2(pAsm) )
+    if( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }
@@ -5735,6 +5468,7 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
     pAsm->D2.dst2.literal      = 1;
     pAsm->D2.dst2.SaturateMode = SATURATE_OFF;
     pAsm->D.dst.predicated     = 1;
+    pAsm->D2.dst2.index_mode = SQ_INDEX_LOOP; /* Check this ! */
 
     pAsm->S[0].src.rtype = DST_REG_TEMPORARY;
     pAsm->S[0].src.reg   = pAsm->flag_reg_index;
@@ -5768,7 +5502,7 @@ GLboolean testFlag(r700_AssemblerBase *pAsm)
     pAsm->S[1].src.swizzlez = SQ_SEL_1;
     pAsm->S[1].src.swizzlew = SQ_SEL_1;
 
-    if( GL_FALSE == next_ins2(pAsm) )
+    if( GL_FALSE == next_ins(pAsm) )
     {
         return GL_FALSE;
     }

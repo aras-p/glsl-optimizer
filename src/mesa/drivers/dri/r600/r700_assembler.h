@@ -116,6 +116,7 @@ typedef struct PVSINSTtag
 {
     BITS literal      :2; 
     BITS SaturateMode :2; 
+    BITS index_mode   :3;
 } PVSINST;
 
 typedef struct PVSSRCtag 
@@ -529,10 +530,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm);
 GLboolean next_ins(r700_AssemblerBase *pAsm);
 
-GLboolean next_ins2(r700_AssemblerBase *pAsm);
-GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm);
-
-/* TODO : merge next_ins/2/literal, assemble_alu_instruction/2/literal */
+/* TODO : merge next_ins/literal, assemble_alu_instruction/literal */
 GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
 GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
 
