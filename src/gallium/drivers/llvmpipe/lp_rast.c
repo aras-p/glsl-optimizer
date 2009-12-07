@@ -505,8 +505,6 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
                    const struct pipe_framebuffer_state *fb,
                    bool write_depth )
 {
-   unsigned i, j;
-
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    lp_rast_begin( rast,
@@ -518,12 +516,28 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
                   fb->height );
                        
    /* loop over tile bins, rasterize each */
-   for (i = 0; i < bins->tiles_x; i++) {
-      for (j = 0; j < bins->tiles_y; j++) {
-         struct cmd_bin *bin = lp_get_bin(bins, i, j);
-         rasterize_bin( rast, bin, i * TILE_SIZE, j * TILE_SIZE );
+#if 0
+   {
+      unsigned i, j;
+      for (i = 0; i < bins->tiles_x; i++) {
+         for (j = 0; j < bins->tiles_y; j++) {
+            struct cmd_bin *bin = lp_get_bin(bins, i, j);
+            rasterize_bin( rast, bin, i * TILE_SIZE, j * TILE_SIZE );
+         }
       }
    }
+#else
+   {
+      struct cmd_bin *bin;
+      int x, y;
+
+      lp_bin_iter_begin( bins );
+
+      while ((bin = lp_bin_iter_next(bins, &x, &y))) {
+         rasterize_bin( rast, bin, x * TILE_SIZE, y * TILE_SIZE);
+      }
+   }
+#endif
 
    lp_rast_end( rast );
 
