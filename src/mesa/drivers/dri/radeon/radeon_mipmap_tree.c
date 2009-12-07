@@ -437,22 +437,17 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 
 		radeon_miptree_unreference(&image->mt);
 	} else {
-		/* need to confirm this value is correct */
-		if (_mesa_is_format_compressed(image->base.TexFormat)) {
-			unsigned size = _mesa_format_image_size(image->base.TexFormat,
-													image->base.Width,
-													image->base.Height,
-													image->base.Depth);
-			memcpy(dest, image->base.Data, size);
-		} else {
-			uint32_t srcrowstride;
-			uint32_t height;
+		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.TexFormat, image->base.Width);
+		uint32_t rows = image->base.Height * image->base.Depth;
 
-			height = image->base.Height * image->base.Depth;
-			srcrowstride = image->base.Width * _mesa_get_format_bytes(image->base.TexFormat);
-			copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
-					height, srcrowstride);
+		if (_mesa_is_format_compressed(image->base.TexFormat)) {
+			uint32_t blockWidth, blockHeight;
+			_mesa_get_format_block_size(image->base.TexFormat, &blockWidth, &blockHeight);
+			rows = (rows + blockHeight - 1) / blockHeight;
 		}
+
+		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
+				  rows, srcrowstride);
 
 		_mesa_free_texmemory(image->base.Data);
 		image->base.Data = 0;
