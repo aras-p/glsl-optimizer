@@ -120,14 +120,15 @@ typedef struct PVSINSTtag
 
 typedef struct PVSSRCtag 
 {
-	BITS rtype:4;            
+	BITS rtype:3;            
 	BITS addrmode0:1;        
-	BITS reg:10;      //15     (8)
+	BITS reg:10;      //14     (8)
 	BITS swizzlex:3;
 	BITS swizzley:3;
 	BITS swizzlez:3;
-	BITS swizzlew:3;  //27        
+	BITS swizzlew:3;  //26        
 
+	BITS abs:1;
 	BITS negx:1;
 	BITS negy:1;
 	BITS negz:1;

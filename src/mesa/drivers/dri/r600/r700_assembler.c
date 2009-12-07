@@ -2350,8 +2350,8 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             {
                 alu_instruction_ptr->m_Word1_OP2.f6.alu_inst           = pAsm->D.dst.opcode;
 
-                alu_instruction_ptr->m_Word1_OP2.f6.src0_abs           = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f6.src1_abs           = 0x0;
+                alu_instruction_ptr->m_Word1_OP2.f6.src0_abs           = pAsm->S[0].src.abs;
+                alu_instruction_ptr->m_Word1_OP2.f6.src1_abs           = pAsm->S[1].src.abs;
 
                 //alu_instruction_ptr->m_Word1_OP2.f6.update_execute_mask = 0x0;
                 //alu_instruction_ptr->m_Word1_OP2.f6.update_pred         = 0x0;
@@ -2379,8 +2379,8 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
             {
                 alu_instruction_ptr->m_Word1_OP2.f.alu_inst           = pAsm->D.dst.opcode;
 
-                alu_instruction_ptr->m_Word1_OP2.f.src0_abs           = 0x0;
-                alu_instruction_ptr->m_Word1_OP2.f.src1_abs           = 0x0;
+                alu_instruction_ptr->m_Word1_OP2.f.src0_abs           = pAsm->S[0].src.abs;
+                alu_instruction_ptr->m_Word1_OP2.f.src1_abs           = pAsm->S[1].src.abs;
 
                 //alu_instruction_ptr->m_Word1_OP2.f.update_execute_mask = 0x0;
                 //alu_instruction_ptr->m_Word1_OP2.f.update_pred         = 0x0;
@@ -4721,24 +4721,6 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             return GL_FALSE;
         }
  
-        /* tmp1.z = ABS(tmp1.z) dont have abs support in assembler currently
-         * have to do explicit instruction
-         */
-        pAsm->D.dst.opcode = SQ_OP2_INST_MAX;
-        setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
-        pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-        pAsm->D.dst.reg   = tmp1;
-        pAsm->D.dst.writez = 1;
-
-        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-        pAsm->S[0].src.reg = tmp1;
-	noswizzle_PVSSRC(&(pAsm->S[0].src));
-        pAsm->S[1].bits = pAsm->S[0].bits;
-        flipneg_PVSSRC(&(pAsm->S[1].src));
-        
-        next_ins(pAsm);
-
         /* tmp1.z = RCP_e(|tmp1.z|) */
         pAsm->D.dst.opcode = SQ_OP2_INST_RECIP_IEEE;
         pAsm->D.dst.math = 1;
@@ -4751,6 +4733,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
         pAsm->S[0].src.reg = tmp1;
         pAsm->S[0].src.swizzlex = SQ_SEL_Z;
+        pAsm->S[0].src.abs = 1;
 
         next_ins(pAsm);
 
