@@ -3039,10 +3039,9 @@ GLboolean assemble_CMP(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
 
-GLboolean assemble_COS(r700_AssemblerBase *pAsm)
+GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode)
 {
     int tmp;
-    //return assemble_math_function(pAsm, SQ_OP2_INST_COS);
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
@@ -3062,7 +3061,7 @@ GLboolean assemble_COS(r700_AssemblerBase *pAsm)
     pAsm->C[1].f = 0.0F;
     next_ins(pAsm);
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_COS;
+    pAsm->D.dst.opcode = opcode;
     pAsm->D.dst.math = 1;
 
     assemble_dst(pAsm);
@@ -3075,6 +3074,7 @@ GLboolean assemble_COS(r700_AssemblerBase *pAsm)
 
     next_ins(pAsm);
 
+    //TODO - replicate if more channels set in WriteMask
     return GL_TRUE;
 
 }
@@ -4190,11 +4190,6 @@ GLboolean assemble_RCP(r700_AssemblerBase *pAsm)
 GLboolean assemble_RSQ(r700_AssemblerBase *pAsm) 
 {
     return assemble_math_function(pAsm, SQ_OP2_INST_RECIPSQRT_IEEE);
-}
- 
-GLboolean assemble_SIN(r700_AssemblerBase *pAsm) 
-{
-    return assemble_math_function(pAsm, SQ_OP2_INST_SIN);
 }
  
 GLboolean assemble_SCS(r700_AssemblerBase *pAsm) 
@@ -5693,7 +5688,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
         case OPCODE_COS: 
-            if ( GL_FALSE == assemble_COS(pR700AsmCode) ) 
+            if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_COS) ) 
                 return GL_FALSE;
             break;  
 
@@ -5790,7 +5785,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
         case OPCODE_SIN: 
-            if ( GL_FALSE == assemble_SIN(pR700AsmCode) ) 
+            if ( GL_FALSE == assemble_TRIG(pR700AsmCode, SQ_OP2_INST_SIN) ) 
                 return GL_FALSE;
             break;  
         case OPCODE_SCS: 

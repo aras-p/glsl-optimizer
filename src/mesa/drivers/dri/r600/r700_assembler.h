@@ -548,7 +548,6 @@ GLboolean assemble_ADD(r700_AssemblerBase *pAsm);
 GLboolean assemble_ARL(r700_AssemblerBase *pAsm);
 GLboolean assemble_BAD(char *opcode_str);
 GLboolean assemble_CMP(r700_AssemblerBase *pAsm);
-GLboolean assemble_COS(r700_AssemblerBase *pAsm);
 GLboolean assemble_DOT(r700_AssemblerBase *pAsm);
 GLboolean assemble_DST(r700_AssemblerBase *pAsm);
 GLboolean assemble_EX2(r700_AssemblerBase *pAsm);
@@ -569,12 +568,12 @@ GLboolean assemble_MUL(r700_AssemblerBase *pAsm);
 GLboolean assemble_POW(r700_AssemblerBase *pAsm);
 GLboolean assemble_RCP(r700_AssemblerBase *pAsm);
 GLboolean assemble_RSQ(r700_AssemblerBase *pAsm);
-GLboolean assemble_SIN(r700_AssemblerBase *pAsm);
 GLboolean assemble_SCS(r700_AssemblerBase *pAsm);
 GLboolean assemble_SGE(r700_AssemblerBase *pAsm);
 
 GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode);
 GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode); 
+GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode);
 
 GLboolean assemble_SLT(r700_AssemblerBase *pAsm);
 GLboolean assemble_STP(r700_AssemblerBase *pAsm);
