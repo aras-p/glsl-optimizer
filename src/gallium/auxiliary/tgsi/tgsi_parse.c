@@ -60,7 +60,7 @@ tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx )
 {
    return ctx->Position >=
-      1 + ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
+      ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
 }
 
 
@@ -232,8 +232,7 @@ tgsi_num_tokens(const struct tgsi_token *tokens)
    struct tgsi_parse_context ctx;
    if (tgsi_parse_init(&ctx, tokens) == TGSI_PARSE_OK) {
       unsigned len = (ctx.FullHeader.Header.HeaderSize +
-                      ctx.FullHeader.Header.BodySize +
-                      1);
+                      ctx.FullHeader.Header.BodySize);
       return len;
    }
    return 0;

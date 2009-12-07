@@ -399,7 +399,7 @@ tgsi_default_instruction( void )
    struct tgsi_instruction instruction;
 
    instruction.Type = TGSI_TOKEN_TYPE_INSTRUCTION;
-   instruction.NrTokens = 1;
+   instruction.NrTokens = 0;
    instruction.Opcode = TGSI_OPCODE_MOV;
    instruction.Saturate = TGSI_SAT_NONE;
    instruction.Predicate = 0;
