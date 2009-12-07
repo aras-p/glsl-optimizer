@@ -122,7 +122,7 @@ svga_create_sampler_state(struct pipe_context *pipe,
 
       util_pack_color_ub( r, g, b, a,
                           PIPE_FORMAT_B8G8R8A8_UNORM,
-                          &cso->bordercolor );
+                          (union util_color *)&cso->bordercolor );
    }
 
    /* No SVGA3D support for:

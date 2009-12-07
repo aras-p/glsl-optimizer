@@ -167,7 +167,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
          ubyte g = ctx->PixelMaps.GtoG.Map8[i * gSize / texSize];
          ubyte b = ctx->PixelMaps.BtoB.Map8[j * bSize / texSize];
          ubyte a = ctx->PixelMaps.AtoA.Map8[i * aSize / texSize];
-         util_pack_color_ub(r, g, b, a, pt->format, dest + k);
+         util_pack_color_ub(r, g, b, a, pt->format, (union util_color *)(dest + k));
       }
    }
 

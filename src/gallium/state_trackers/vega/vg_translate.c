@@ -487,7 +487,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -503,7 +503,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -520,7 +520,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -537,7 +537,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          clr[3] = 1.f;
 
          util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                         rgba[i]);
+                         (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -553,7 +553,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          clr[3] = ((*src >>  0) & 1)/1.;
 
          util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                         rgba[i]);
+                         (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -569,7 +569,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          clr[3] = ((*src >>  0) & 15)/15.;
 
          util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                         rgba[i]);
+                         (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -579,7 +579,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; ++i) {
          util_pack_color_ub(0xff, 0xff, 0xff, *src, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                         rgba[i]);
+                         (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -595,7 +595,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -611,7 +611,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -628,7 +628,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -639,7 +639,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; ++i) {
          util_pack_color_ub(0xff, 0xff, 0xff, *src, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                         rgba[i]);
+                         (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -649,7 +649,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; ++i) {
          util_pack_color_ub(0xff, 0xff, 0xff, *src, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
    }
@@ -668,7 +668,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
             clr[3] = 1.f;
 
             util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i+j]);
+                            (union util_color *)rgba[i+j]);
          }
          ++src;
       }
@@ -689,7 +689,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
             clr[3] = (((*src) & (1<<shift)) >> shift);
 
             util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i+j]);
+                            (union util_color *)rgba[i+j]);
          }
          ++src;
       }
@@ -716,7 +716,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
             clr[3] = ((*src) & (bitter)) >> shift;
 
             util_pack_color(clr, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i +j]);
+                            (union util_color *)rgba[i +j]);
          }
          ++src;
       }
@@ -736,7 +736,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          b = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -753,7 +753,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          b = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -776,7 +776,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          b = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -793,7 +793,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          b = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -812,7 +812,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -829,7 +829,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -854,7 +854,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -871,7 +871,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          a = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -890,7 +890,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          r = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -907,7 +907,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          r = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -930,7 +930,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          r = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
@@ -947,7 +947,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
          r = (*src >>  0) & 0xff;
 
          util_pack_color_ub(r, g, b, a, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                            rgba[i]);
+                            (union util_color *)rgba[i]);
          ++src;
       }
       return;
