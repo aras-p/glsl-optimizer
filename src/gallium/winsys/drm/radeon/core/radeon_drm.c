@@ -29,6 +29,8 @@
  *      Joakim Sindholt <opensource@zhasha.com>
  */
 
+#include "softpipe/sp_winsys.h"
+
 #include "radeon_drm.h"
 
 /* Helper function to do the ioctls needed for setup and init. */
@@ -123,7 +125,7 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
                                            struct pipe_screen* screen)
 {
     if (debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
-        return radeon_create_softpipe(screen->winsys);
+        return softpipe_create(screen);
     } else {
         return r300_create_context(screen,
                                    (struct radeon_winsys*)screen->winsys);
