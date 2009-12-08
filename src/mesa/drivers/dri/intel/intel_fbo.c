@@ -126,7 +126,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB16:
       rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_XRGB8888;
+      irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
       cpp = 4;
       break;
    case GL_RGBA:
@@ -314,6 +314,10 @@ intel_create_renderbuffer(gl_format format)
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
    case MESA_FORMAT_XRGB8888:
+      /* XXX this is a hack since XRGB surfaces don't seem to work
+       * properly yet.  Reading the alpha channel returns 0 instead of 1.
+       */
+      format = MESA_FORMAT_ARGB8888;
       irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
