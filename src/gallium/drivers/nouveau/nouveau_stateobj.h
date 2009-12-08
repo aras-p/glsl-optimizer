@@ -48,13 +48,14 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 	struct nouveau_stateobj *so = *pso;
 	int i;
 
-        if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
+        if (pipe_reference(&(*pso)->reference, &ref->reference)) {
 		free(so->push);
 		for (i = 0; i < so->cur_reloc; i++)
 			nouveau_bo_ref(NULL, &so->reloc[i].bo);
 		free(so->reloc);
 		free(so);
 	}
+	*pso = ref;
 }
 
 static INLINE void

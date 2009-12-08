@@ -151,9 +151,10 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
+    union util_color uc;
 
-    util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM,
-            &r300->blend_color_state->blend_color);
+    util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
+    r300->blend_color_state->blend_color = uc.ui;
 
     /* XXX if FP16 blending is enabled, we should use the FP16 format */
     r300->blend_color_state->blend_color_red_alpha =
@@ -549,6 +550,7 @@ static void*
     struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
     int lod_bias;
+    union util_color uc;
 
     sampler->filter0 |=
         (r300_translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
@@ -570,8 +572,8 @@ static void*
 
     sampler->filter1 |= r300_anisotropy(state->max_anisotropy);
 
-    util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM,
-                    &sampler->border_color);
+    util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
+    sampler->border_color = uc.ui;
 
     /* R500-specific fixups and optimizations */
     if (r300_screen(r300->context.screen)->caps->is_r500) {

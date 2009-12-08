@@ -237,8 +237,9 @@ pb_reference(struct pb_buffer **dst,
 {
    struct pb_buffer *old = *dst;
 
-   if (pipe_reference((struct pipe_reference**)dst, &src->base.reference))
+   if (pipe_reference(&(*dst)->base.reference, &src->base.reference))
       pb_destroy( old );
+   *dst = src;
 }
 
 

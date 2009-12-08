@@ -47,7 +47,7 @@ vmw_svga_winsys_surface_reference(struct vmw_svga_winsys_surface **pdst,
    src_ref = src ? &src->refcnt : NULL;
    dst_ref = dst ? &dst->refcnt : NULL;
 
-   if (pipe_reference(&dst_ref, src_ref)) {
+   if (pipe_reference(dst_ref, src_ref)) {
       vmw_ioctl_surface_destroy(dst->screen, dst->sid);
 #ifdef DEBUG
       /* to detect dangling pointers */

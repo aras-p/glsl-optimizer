@@ -40,101 +40,97 @@
 #include "util/u_math.h"
 
 
+
+union util_color {
+   ubyte ub;
+   ushort us;
+   uint ui;
+   float f[4];
+};
+
 /**
  * Pack ubyte R,G,B,A into dest pixel.
  */
 static INLINE void
 util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
-                   enum pipe_format format, void *dest)
+                   enum pipe_format format, union util_color *uc)
 {
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (r << 24) | (g << 16) | (b << 8) | a;
+         uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
    case PIPE_FORMAT_R8G8B8X8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (r << 24) | (g << 16) | (b << 8) | 0xff;
+         uc->ui = (r << 24) | (g << 16) | (b << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (a << 24) | (r << 16) | (g << 8) | b;
+         uc->ui = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (0xff << 24) | (r << 16) | (g << 8) | b;
+         uc->ui = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
       return;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (b << 24) | (g << 16) | (r << 8) | a;
+         uc->ui = (b << 24) | (g << 16) | (r << 8) | a;
       }
       return;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (b << 24) | (g << 16) | (r << 8) | 0xff;
+         uc->ui = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+         uc->us = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
+         uc->us = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+         uc->us = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
    case PIPE_FORMAT_A8_UNORM:
       {
-         ubyte *d = (ubyte *) dest;
-         *d = a;
+         uc->ub = a;
       }
       return;
    case PIPE_FORMAT_L8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
       {
-         ubyte *d = (ubyte *) dest;
-         *d = r;
+         uc->ub = a;
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       {
-         float *d = (float *) dest;
-         d[0] = (float)r / 255.0f;
-         d[1] = (float)g / 255.0f;
-         d[2] = (float)b / 255.0f;
-         d[3] = (float)a / 255.0f;
+         uc->f[0] = (float)r / 255.0f;
+         uc->f[1] = (float)g / 255.0f;
+         uc->f[2] = (float)b / 255.0f;
+         uc->f[3] = (float)a / 255.0f;
       }
       return;
    case PIPE_FORMAT_R32G32B32_FLOAT:
       {
-         float *d = (float *) dest;
-         d[0] = (float)r / 255.0f;
-         d[1] = (float)g / 255.0f;
-         d[2] = (float)b / 255.0f;
+         uc->f[0] = (float)r / 255.0f;
+         uc->f[1] = (float)g / 255.0f;
+         uc->f[2] = (float)b / 255.0f;
       }
       return;
 
    /* XXX lots more cases to add */
    default:
+      uc->ui = 0; /* keep compiler happy */
       debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
       assert(0);
    }
@@ -145,13 +141,13 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
  * Unpack RGBA from a packed pixel, returning values as ubytes in [0,255].
  */
 static INLINE void
-util_unpack_color_ub(enum pipe_format format, const void *src,
+util_unpack_color_ub(enum pipe_format format, union util_color *uc,
                      ubyte *r, ubyte *g, ubyte *b, ubyte *a)
 {
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >> 24) & 0xff);
          *g = (ubyte) ((p >> 16) & 0xff);
          *b = (ubyte) ((p >>  8) & 0xff);
@@ -160,7 +156,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_R8G8B8X8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >> 24) & 0xff);
          *g = (ubyte) ((p >> 16) & 0xff);
          *b = (ubyte) ((p >>  8) & 0xff);
@@ -169,7 +165,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >> 16) & 0xff);
          *g = (ubyte) ((p >>  8) & 0xff);
          *b = (ubyte) ((p >>  0) & 0xff);
@@ -178,7 +174,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >> 16) & 0xff);
          *g = (ubyte) ((p >>  8) & 0xff);
          *b = (ubyte) ((p >>  0) & 0xff);
@@ -187,7 +183,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >>  8) & 0xff);
          *g = (ubyte) ((p >> 16) & 0xff);
          *b = (ubyte) ((p >> 24) & 0xff);
@@ -196,7 +192,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       {
-         uint p = ((const uint *) src)[0];
+         uint p = uc->ui;
          *r = (ubyte) ((p >>  8) & 0xff);
          *g = (ubyte) ((p >> 16) & 0xff);
          *b = (ubyte) ((p >> 24) & 0xff);
@@ -205,7 +201,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
       {
-         ushort p = ((const ushort *) src)[0];
+         ushort p = uc->us;
          *r = (ubyte) (((p >> 8) & 0xf8) | ((p >> 13) & 0x7));
          *g = (ubyte) (((p >> 3) & 0xfc) | ((p >>  9) & 0x3));
          *b = (ubyte) (((p << 3) & 0xf8) | ((p >>  2) & 0x7));
@@ -214,7 +210,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       {
-         ushort p = ((const ushort *) src)[0];
+         ushort p = uc->us;
          *r = (ubyte) (((p >>  7) & 0xf8) | ((p >> 12) & 0x7));
          *g = (ubyte) (((p >>  2) & 0xf8) | ((p >>  7) & 0x7));
          *b = (ubyte) (((p <<  3) & 0xf8) | ((p >>  2) & 0x7));
@@ -223,7 +219,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
       {
-         ushort p = ((const ushort *) src)[0];
+         ushort p = uc->us;
          *r = (ubyte) (((p >> 4) & 0xf0) | ((p >>  8) & 0xf));
          *g = (ubyte) (((p >> 0) & 0xf0) | ((p >>  4) & 0xf));
          *b = (ubyte) (((p << 4) & 0xf0) | ((p >>  0) & 0xf));
@@ -232,27 +228,27 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_A8_UNORM:
       {
-         ubyte p = ((const ubyte *) src)[0];
+         ubyte p = uc->ub;
          *r = *g = *b = (ubyte) 0xff;
          *a = p;
       }
       return;
    case PIPE_FORMAT_L8_UNORM:
       {
-         ubyte p = ((const ubyte *) src)[0];
+         ubyte p = uc->ub;
          *r = *g = *b = p;
          *a = (ubyte) 0xff;
       }
       return;
    case PIPE_FORMAT_I8_UNORM:
       {
-         ubyte p = ((const ubyte *) src)[0];
+         ubyte p = uc->ub;
          *r = *g = *b = *a = p;
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       {
-         const float *p = (const float *) src;
+         const float *p = &uc->f[0];
          *r = float_to_ubyte(p[0]);
          *g = float_to_ubyte(p[1]);
          *b = float_to_ubyte(p[2]);
@@ -261,7 +257,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       return;
    case PIPE_FORMAT_R32G32B32_FLOAT:
       {
-         const float *p = (const float *) src;
+         const float *p = &uc->f[0];
          *r = float_to_ubyte(p[0]);
          *g = float_to_ubyte(p[1]);
          *b = float_to_ubyte(p[2]);
@@ -271,7 +267,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
 
    case PIPE_FORMAT_R32G32_FLOAT:
       {
-         const float *p = (const float *) src;
+         const float *p = &uc->f[0];
          *r = float_to_ubyte(p[0]);
          *g = float_to_ubyte(p[1]);
          *b = *a = (ubyte) 0xff;
@@ -280,7 +276,7 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
 
    case PIPE_FORMAT_R32_FLOAT:
       {
-         const float *p = (const float *) src;
+         const float *p = &uc->f[0];
          *r = float_to_ubyte(p[0]);
          *g = *b = *a = (ubyte) 0xff;
       }
@@ -293,14 +289,13 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
       assert(0);
    }
 }
- 
 
 
 /**
  * Note rgba outside [0,1] will be clamped for int pixel formats.
  */
 static INLINE void
-util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
+util_pack_color(const float rgba[4], enum pipe_format format, union util_color *uc)
 {
    ubyte r = 0;
    ubyte g = 0;
@@ -318,90 +313,78 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (r << 24) | (g << 16) | (b << 8) | a;
+         uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
    case PIPE_FORMAT_R8G8B8X8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (r << 24) | (g << 16) | (b << 8) | 0xff;
+         uc->ui = (r << 24) | (g << 16) | (b << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (a << 24) | (r << 16) | (g << 8) | b;
+         uc->ui = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (0xff << 24) | (r << 16) | (g << 8) | b;
+         uc->ui = (0xff << 24) | (r << 16) | (g << 8) | b;
       }
       return;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (b << 24) | (g << 16) | (r << 8) | a;
+         uc->ui = (b << 24) | (g << 16) | (r << 8) | a;
       }
       return;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       {
-         uint *d = (uint *) dest;
-         *d = (b << 24) | (g << 16) | (r << 8) | 0xff;
+         uc->ui = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+         uc->us = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
+         uc->us = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
       {
-         ushort *d = (ushort *) dest;
-         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+         uc->ub = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
    case PIPE_FORMAT_A8_UNORM:
       {
-         ubyte *d = (ubyte *) dest;
-         *d = a;
+         uc->ub = a;
       }
       return;
    case PIPE_FORMAT_L8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
       {
-         ubyte *d = (ubyte *) dest;
-         *d = r;
+         uc->ub = r;
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       {
-         float *d = (float *) dest;
-         d[0] = rgba[0];
-         d[1] = rgba[1];
-         d[2] = rgba[2];
-         d[3] = rgba[3];
+         uc->f[0] = rgba[0];
+         uc->f[1] = rgba[1];
+         uc->f[2] = rgba[2];
+         uc->f[3] = rgba[3];
       }
       return;
    case PIPE_FORMAT_R32G32B32_FLOAT:
       {
-         float *d = (float *) dest;
-         d[0] = rgba[0];
-         d[1] = rgba[1];
-         d[2] = rgba[2];
+         uc->f[0] = rgba[0];
+         uc->f[1] = rgba[1];
+         uc->f[2] = rgba[2];
       }
       return;
    /* XXX lots more cases to add */
    default:
+      uc->ui = 0; /* keep compiler happy */
       debug_print_format("gallium: unhandled format in util_pack_color()", format);
       assert(0);
    }

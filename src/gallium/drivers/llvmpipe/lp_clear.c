@@ -50,6 +50,7 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
                double depth, unsigned stencil)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   union util_color uc;
    unsigned cv;
    uint i;
 
@@ -64,8 +65,8 @@ llvmpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
          struct pipe_surface *ps = llvmpipe->framebuffer.cbufs[i];
 
-         util_pack_color(rgba, ps->format, &cv);
-         lp_tile_cache_clear(llvmpipe->cbuf_cache[i], rgba, cv);
+         util_pack_color(rgba, ps->format, &uc);
+         lp_tile_cache_clear(llvmpipe->cbuf_cache[i], rgba, uc.ui);
       }
       llvmpipe->dirty_render_cache = TRUE;
    }

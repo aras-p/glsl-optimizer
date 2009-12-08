@@ -62,8 +62,9 @@ st_device_reference(struct st_device **ptr, struct st_device *st_dev)
 {
    struct st_device *old_dev = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+   if (pipe_reference(&(*ptr)->reference, &st_dev->reference))
       st_device_really_destroy(old_dev);
+   *ptr = st_dev;
 }
 
 
