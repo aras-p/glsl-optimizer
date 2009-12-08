@@ -35,8 +35,12 @@ import sys
 from u_format_parse import *
 
 
-def layout_map(layout):
-    return 'UTIL_FORMAT_LAYOUT_' + str(layout).upper()
+layout_map = {
+    'arith': 'UTIL_FORMAT_LAYOUT_PLAIN',
+    'array': 'UTIL_FORMAT_LAYOUT_PLAIN',
+    'yuv':   'UTIL_FORMAT_LAYOUT_PLAIN',
+    'dxt':   'UTIL_FORMAT_LAYOUT_DXT',
+}
 
 
 def colorspace_map(colorspace):
@@ -104,7 +108,7 @@ def write_format_table(formats):
         print "      %s," % (format.name,)
         print "      \"%s\"," % (format.name,)
         print "      {%u, %u, %u}, /* block */" % (format.block_width, format.block_height, format.block_size())
-        print "      %s," % (layout_map(format.layout),)
+        print "      %s," % (layout_map[format.layout],)
         print "      {"
         for i in range(4):
             type = format.in_types[i]
