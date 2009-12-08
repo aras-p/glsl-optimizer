@@ -290,10 +290,11 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
    
    assert(tc->surface);
    assert(tc->transfer);
-   assert(tc->transfer_map);
 
    if(!tc->transfer_map)
       lp_tile_cache_map_transfers(tc);
+
+   assert(tc->transfer_map);
 
    switch(tile->status) {
    case LP_TILE_STATUS_CLEAR:
