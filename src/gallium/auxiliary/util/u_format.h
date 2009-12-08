@@ -219,7 +219,6 @@ util_format_get_component_bits(enum pipe_format format,
 {
    const struct util_format_description *desc = util_format_description(format);
    enum util_format_colorspace desc_colorspace;
-   uint swizzle;
 
    assert(format);
    if (!format) {
