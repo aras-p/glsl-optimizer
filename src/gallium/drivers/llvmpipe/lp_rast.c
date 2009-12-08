@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 
 #include "lp_debug.h"
 #include "lp_state.h"
@@ -639,7 +640,8 @@ create_rast_threads(struct lp_rasterizer *rast)
 {
    unsigned i;
 
-   rast->num_threads = debug_get_num_option("LP_NUM_THREADS", MAX_THREADS);
+   rast->num_threads = util_cpu_caps.nr_cpus;
+   rast->num_threads = debug_get_num_option("LP_NUM_THREADS", rast->num_threads);
    rast->num_threads = MIN2(rast->num_threads, MAX_THREADS);
 
    /* NOTE: if num_threads is zero, we won't use any threads */

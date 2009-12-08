@@ -32,7 +32,7 @@
 #include "lp_rast.h"
 
 
-#define MAX_THREADS 4  /* XXX probably temporary here */
+#define MAX_THREADS 8  /* XXX probably temporary here */
 
 
 struct pipe_transfer;
