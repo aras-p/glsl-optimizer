@@ -644,9 +644,11 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
    case GL_TEXTURE_LOD_BIAS:
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
-         GLfloat fparam = (GLfloat) param;
+         GLfloat fparam[4];
+         fparam[0] = (GLfloat) param;
+         fparam[1] = fparam[2] = fparam[3] = 0.0F;
          /* convert int param to float */
-         need_update = set_tex_parameterf(ctx, texObj, pname, &fparam);
+         need_update = set_tex_parameterf(ctx, texObj, pname, fparam);
       }
       break;
    default:
