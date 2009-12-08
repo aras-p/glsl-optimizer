@@ -75,25 +75,15 @@ nv50_vbo_type_to_hw(enum pipe_format format)
 	case UTIL_FORMAT_TYPE_FLOAT:
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
 	case UTIL_FORMAT_TYPE_UNSIGNED:
-		switch (desc->layout) {
-		case UTIL_FORMAT_LAYOUT_ARITH:
+		if (desc->channel[0].normalized) {
 			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
-		case UTIL_FORMAT_LAYOUT_ARRAY:
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
-		default:
-			return 0;
 		}
-		break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
 	case UTIL_FORMAT_TYPE_SIGNED:
-		switch (desc->layout) {
-		case UTIL_FORMAT_LAYOUT_ARITH:
+		if (desc->channel[0].normalized) {
 			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
-		case UTIL_FORMAT_LAYOUT_ARRAY:
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
-		default:
-			return 0;
 		}
-		break;
+		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
 	/*
 	case PIPE_FORMAT_TYPE_UINT:
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT;

@@ -528,7 +528,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     if (desc->type == UTIL_FORMAT_TYPE_SIGNED) {
         result |= R300_SIGNED;
     }
-    if (desc->layout == UTIL_FORMAT_LAYOUT_ARITH) {
+    if (desc->channel[0].normalized) {
         result |= R300_NORMALIZE;
     }
 
