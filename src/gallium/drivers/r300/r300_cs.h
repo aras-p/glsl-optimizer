@@ -115,6 +115,15 @@
     cs_count -= 3; \
 } while (0)
 
+#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
+            "domains (%d, %d, %d)\n", \
+        bo, rd, wd, flags); \
+    assert(bo); \
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    cs_count -= 2; \
+} while (0)
+
 #define END_CS do { \
     if (VERY_VERBOSE_CS) { \
         DBG(cs_context_copy, DBG_CS, "r300: END_CS in %s (%s:%d)\n", __FUNCTION__, \

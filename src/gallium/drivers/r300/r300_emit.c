@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -623,50 +624,68 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-/* XXX I can't read this and that's not good */
-void r300_emit_aos(struct r300_context* r300, unsigned offset)
+static boolean r300_validate_aos(struct r300_context *r300)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
-    CS_LOCALS(r300);
     int i;
-    unsigned aos_count = r300->vertex_element_count;
 
+    /* Check if formats and strides are aligned to the size of DWORD. */
+    for (i = 0; i < r300->vertex_element_count; i++) {
+        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
+            pf_get_blocksize(velem[i].src_format) % 4 != 0) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+void r300_emit_aos(struct r300_context* r300, unsigned offset)
+{
+    struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    int i;
+    unsigned size1, size2, aos_count = r300->vertex_element_count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
+    CS_LOCALS(r300);
+
+    /* XXX Move this checking to a more approriate place. */
+    if (!r300_validate_aos(r300)) {
+        /* XXX We should fallback using Draw. */
+        assert(0);
+    }
+
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(aos_count);
+
     for (i = 0; i < aos_count - 1; i += 2) {
-        int buf_num1 = velem[i].vertex_buffer_index;
-        int buf_num2 = velem[i+1].vertex_buffer_index;
-        assert(vbuf[buf_num1].stride % 4 == 0 && pf_get_blocksize(velem[i].src_format) % 4 == 0);
-        assert(vbuf[buf_num2].stride % 4 == 0 && pf_get_blocksize(velem[i+1].src_format) % 4 == 0);
-        OUT_CS((pf_get_blocksize(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
-               (pf_get_blocksize(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
-        OUT_CS(vbuf[buf_num1].buffer_offset + velem[i].src_offset +
-               offset * vbuf[buf_num1].stride);
-        OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
-               offset * vbuf[buf_num2].stride);
-    }
-    if (aos_count & 1) {
-        int buf_num = velem[i].vertex_buffer_index;
-        assert(vbuf[buf_num].stride % 4 == 0 && pf_get_blocksize(velem[i].src_format) % 4 == 0);
-        OUT_CS((pf_get_blocksize(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
-        OUT_CS(vbuf[buf_num].buffer_offset + velem[i].src_offset +
-               offset * vbuf[buf_num].stride);
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        vb2 = &vbuf[velem[i+1].vertex_buffer_index];
+        size1 = pf_get_blocksize(velem[i].src_format);
+        size2 = pf_get_blocksize(velem[i+1].src_format);
+
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
+               R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
+        OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
     }
 
-    /* XXX bare CS reloc */
+    if (aos_count & 1) {
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        size1 = pf_get_blocksize(velem[i].src_format);
+
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
+    }
+
     for (i = 0; i < aos_count; i++) {
-        cs_winsys->write_cs_reloc(cs_winsys,
-                                  vbuf[velem[i].vertex_buffer_index].buffer,
-                                  RADEON_GEM_DOMAIN_GTT,
-                                  0,
-                                  0);
-        cs_count -= 2;
+        OUT_CS_RELOC_NO_OFFSET(vbuf[velem[i].vertex_buffer_index].buffer,
+                               RADEON_GEM_DOMAIN_GTT, 0, 0);
     }
     END_CS;
 }
+
 #if 0
 void r300_emit_draw_packet(struct r300_context* r300)
 {

@@ -3293,6 +3293,11 @@ enum {
  */
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
 
+#   define R300_VBPNTR_SIZE0(x)    ((x) >> 2)
+#   define R300_VBPNTR_STRIDE0(x)  (((x) >> 2) << 8)
+#   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)
+#   define R300_VBPNTR_STRIDE1(x)  (((x) >> 2) << 24)
+
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0
 #    define R300_INDX_BUFFER_SKIP_SHIFT         16
