@@ -419,8 +419,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     if (state->bypass_vs_clip_and_viewport ||
             !r300_screen(pipe->screen)->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
-    } else {
-        rs->rs.bypass_vs_clip_and_viewport = TRUE;
     }
 
     rs->point_size = pack_float_16_6x(state->point_size) |

@@ -134,6 +134,16 @@ static void r300_vertex_psc(struct r300_context* r300)
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
+    int identity[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    int* stream_tab;
+
+    /* If TCL is bypassed, map vertex streams to equivalent VS output
+     * locations. */
+    if (r300->rs_state->enable_vte) {
+        stream_tab = identity;
+    } else {
+        stream_tab = r300->vs->stream_loc_notcl;
+    }
 
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on the vertex elements,
@@ -147,10 +157,10 @@ static void r300_vertex_psc(struct r300_context* r300)
         format = r300->vertex_element[i].src_format;
 
         type = r300_translate_vertex_data_type(format) |
-            (i << R300_DST_VEC_LOC_SHIFT);
+            (stream_tab[i] << R300_DST_VEC_LOC_SHIFT);
         swizzle = r300_translate_vertex_data_swizzle(format);
 
-        if (i % 2) {
+        if (i & 1) {
             vformat->vap_prog_stream_cntl[i >> 1] |= type << 16;
             vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
         } else {
@@ -158,7 +168,6 @@ static void r300_vertex_psc(struct r300_context* r300)
             vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
         }
     }
-
 
     assert(i <= 15);
 
@@ -178,7 +187,7 @@ static void r300_swtcl_vertex_psc(struct r300_context* r300)
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
-    int* vs_output_tab = r300->vs->output_stream_loc_swtcl;
+    int* vs_output_tab = r300->vs->stream_loc_notcl;
 
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */

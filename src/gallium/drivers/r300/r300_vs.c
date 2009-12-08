@@ -143,35 +143,33 @@ static void r300_shader_vap_output_fmt(
     assert(gen_count <= 8);
 }
 
-/* Set VS output stream locations for SWTCL. */
-static void r300_stream_locations_swtcl(
+/* Sets up stream mapping to equivalent VS outputs if TCL is bypassed
+ * or isn't present. */
+static void r300_stream_locations_notcl(
     struct r300_shader_semantics* vs_outputs,
-    int* output_stream_loc)
+    int* stream_loc)
 {
     int i, tabi = 0, gen_count;
 
-    /* XXX Check whether the numbers (0, 1, 2+i, etc.) are correct.
-     * These should go to VAP_PROG_STREAM_CNTL/DST_VEC_LOC. */
-
     /* Position. */
-    output_stream_loc[tabi++] = 0;
+    stream_loc[tabi++] = 0;
 
     /* Point size. */
     if (vs_outputs->psize != ATTR_UNUSED) {
-        output_stream_loc[tabi++] = 1;
+        stream_loc[tabi++] = 1;
     }
 
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (vs_outputs->color[i] != ATTR_UNUSED) {
-            output_stream_loc[tabi++] = 2 + i;
+            stream_loc[tabi++] = 2 + i;
         }
     }
 
     /* Back-face colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
-            output_stream_loc[tabi++] = 4 + i;
+            stream_loc[tabi++] = 4 + i;
         }
     }
 
@@ -180,7 +178,7 @@ static void r300_stream_locations_swtcl(
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
         if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
             assert(tabi < 16);
-            output_stream_loc[tabi++] = 6 + gen_count;
+            stream_loc[tabi++] = 6 + gen_count;
             gen_count++;
         }
     }
@@ -188,7 +186,7 @@ static void r300_stream_locations_swtcl(
     /* Fog coordinates. */
     if (vs_outputs->fog != ATTR_UNUSED) {
         assert(tabi < 16);
-        output_stream_loc[tabi++] = 6 + gen_count;
+        stream_loc[tabi++] = 6 + gen_count;
         gen_count++;
     }
 
@@ -196,7 +194,7 @@ static void r300_stream_locations_swtcl(
     assert(gen_count <= 8);
 
     for (; tabi < 16;) {
-        output_stream_loc[tabi++] = -1;
+        stream_loc[tabi++] = -1;
     }
 }
 
@@ -254,10 +252,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     /* Initialize. */
     r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
     r300_shader_vap_output_fmt(&vs->outputs, vs->hwfmt);
-
-    if (!r300_screen(r300->context.screen)->caps->has_tcl) {
-        r300_stream_locations_swtcl(&vs->outputs, vs->output_stream_loc_swtcl);
-    }
+    r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -283,7 +278,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
-        /* XXX Fail gracefully */
+        /* XXX We should fallback using Draw. */
         fprintf(stderr, "r300 VP: Compiler error\n");
         abort();
     }

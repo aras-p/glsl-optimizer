@@ -38,8 +38,10 @@ struct r300_vertex_shader {
 
     struct tgsi_shader_info info;
     struct r300_shader_semantics outputs;
-    int output_stream_loc_swtcl[16];
     uint hwfmt[4];
+
+    /* Stream locations for SWTCL or if TCL is bypassed. */
+    int stream_loc_notcl[16];
 
     /* Has this shader been translated yet? */
     boolean translated;
