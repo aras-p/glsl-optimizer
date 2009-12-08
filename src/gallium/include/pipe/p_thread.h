@@ -207,6 +207,56 @@ typedef unsigned pipe_condvar;
 #endif  /* PIPE_OS_? */
 
 
+/*
+ * Semaphores
+ */
+
+typedef struct
+{
+   pipe_mutex mutex;
+   pipe_condvar cond;
+   int counter;
+} pipe_semaphore;
+
+
+static INLINE void
+pipe_semaphore_init(pipe_semaphore *sema, int init_val)
+{
+   pipe_mutex_init(sema->mutex);
+   pipe_condvar_init(sema->cond);
+   sema->counter = init_val;
+}
+
+static INLINE void
+pipe_semaphore_destroy(pipe_semaphore *sema)
+{
+   pipe_mutex_destroy(sema->mutex);
+   pipe_condvar_destroy(sema->cond);
+}
+
+/** Signal/increment semaphore counter */
+static INLINE void
+pipe_semaphore_signal(pipe_semaphore *sema)
+{
+   pipe_mutex_lock(sema->mutex);
+   sema->counter++;
+   pipe_condvar_signal(sema->cond);
+   pipe_mutex_unlock(sema->mutex);
+}
+
+/** Wait for semaphore counter to be greater than zero */
+static INLINE void
+pipe_semaphore_wait(pipe_semaphore *sema)
+{
+   pipe_mutex_lock(sema->mutex);
+   while (sema->counter <= 0) {
+      pipe_condvar_wait(sema->cond, sema->mutex);
+   }
+   sema->counter--;
+   pipe_mutex_unlock(sema->mutex);
+}
+
+
 
 /*
  * Thread-specific data.
