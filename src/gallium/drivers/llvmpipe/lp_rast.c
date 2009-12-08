@@ -402,12 +402,9 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
    if (x + w > rast->width)
       w -= x + w - rast->width;
 
-   if (y + h > rast->height) {
-      int h2;
-      h2 = h - (y + h - rast->height);
-      assert(h2 <= TILE_SIZE);
-      h = h2;
-   }
+   if (y + h > rast->height)
+      h -= y + h - rast->height;
+
    assert(w >= 0);
    assert(h >= 0);
    assert(w <= TILE_SIZE);
