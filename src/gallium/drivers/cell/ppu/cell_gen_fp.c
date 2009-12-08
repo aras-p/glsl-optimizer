@@ -995,7 +995,7 @@ static boolean
 emit_inequality(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], s2_reg[4], d_reg[4], one_reg;
-   bool complement = FALSE;
+   boolean complement = FALSE;
 
    one_reg = get_const_one_reg(gen);
 
