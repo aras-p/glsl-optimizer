@@ -276,6 +276,11 @@ vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 
     debug_printf("%s: enter\n", __func__);
 
+    if (vmw_ioctl_supports_overlay(vmw) != 0) {
+        debug_printf("No overlay ioctl support\n");
+        return FALSE;
+    }
+
     numAdaptors = xf86XVListGenericAdaptors(pScrn, &overlayAdaptors);
 
     newAdaptor = vmw_video_init_adaptor(pScrn, vmw);
