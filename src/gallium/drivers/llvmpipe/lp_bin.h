@@ -56,7 +56,9 @@
 
 /* switch to a non-pointer value for this:
  */
-typedef void (*lp_rast_cmd)( struct lp_rasterizer *, const union lp_rast_cmd_arg );
+typedef void (*lp_rast_cmd)( struct lp_rasterizer *,
+                             unsigned thread_index,
+                             const union lp_rast_cmd_arg );
 
 struct cmd_block {
    lp_rast_cmd cmd[CMD_BLOCK_MAX];

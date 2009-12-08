@@ -40,15 +40,15 @@
  * All pixels are known to be inside the triangle's bounds.
  */
 static void
-block_full_4( struct lp_rasterizer *rast, int x, int y )
+block_full_4( struct lp_rasterizer_task *rast_task, int x, int y )
 {
-   const unsigned i = rast->nr_blocks;
+   const unsigned i = rast_task->nr_blocks;
    assert(x % 4 == 0);
    assert(y % 4 == 0);
-   rast->blocks[i].x = x;
-   rast->blocks[i].y = y;
-   rast->blocks[i].mask = ~0;
-   rast->nr_blocks++;
+   rast_task->blocks[i].x = x;
+   rast_task->blocks[i].y = y;
+   rast_task->blocks[i].mask = ~0;
+   rast_task->nr_blocks++;
 }
 
 
@@ -57,14 +57,14 @@ block_full_4( struct lp_rasterizer *rast, int x, int y )
  * All pixels are known to be inside the triangle's bounds.
  */
 static void
-block_full_16( struct lp_rasterizer *rast, int x, int y )
+block_full_16( struct lp_rasterizer_task *rast_task, int x, int y )
 {
    unsigned ix, iy;
    assert(x % 16 == 0);
    assert(y % 16 == 0);
    for (iy = 0; iy < 16; iy += 4)
       for (ix = 0; ix < 16; ix += 4)
-	 block_full_4(rast, x + ix, y + iy);
+	 block_full_4(rast_task, x + ix, y + iy);
 }
 
 
@@ -74,7 +74,7 @@ block_full_16( struct lp_rasterizer *rast, int x, int y )
  * Generate a mask of in/out flags and add the block to the blocks list.
  */
 static void
-do_block_4( struct lp_rasterizer *rast,
+do_block_4( struct lp_rasterizer_task *rast_task,
 	    const struct lp_rast_triangle *tri,
 	    int x, int y,
 	    int c1,
@@ -97,11 +97,11 @@ do_block_4( struct lp_rasterizer *rast,
    /* As we do trivial reject already, masks should rarely be all zero:
     */
    if (mask) {
-      const unsigned i = rast->nr_blocks;
-      rast->blocks[i].x = x;
-      rast->blocks[i].y = y;
-      rast->blocks[i].mask = mask;
-      rast->nr_blocks++;
+      const unsigned i = rast_task->nr_blocks;
+      rast_task->blocks[i].x = x;
+      rast_task->blocks[i].y = y;
+      rast_task->blocks[i].mask = mask;
+      rast_task->nr_blocks++;
    }
 }
 
@@ -111,7 +111,7 @@ do_block_4( struct lp_rasterizer *rast,
  * of the triangle's bounds.
  */
 static void
-do_block_16( struct lp_rasterizer *rast,
+do_block_16( struct lp_rasterizer_task *rast_task,
              const struct lp_rast_triangle *tri,
              int x, int y,
              int c1,
@@ -146,11 +146,11 @@ do_block_16( struct lp_rasterizer *rast,
 		  cx2 + ei2 > 0 &&
 		  cx3 + ei3 > 0) {
             /* the block is completely inside the triangle */
-	    block_full_4(rast, x+ix, y+iy);
+	    block_full_4(rast_task, x+ix, y+iy);
 	 }
 	 else {
             /* the block is partially in/out of the triangle */
-	    do_block_4(rast, tri, x+ix, y+iy, cx1, cx2, cx3);
+	    do_block_4(rast_task, tri, x+ix, y+iy, cx1, cx2, cx3);
 	 }
       }
    }
@@ -163,12 +163,14 @@ do_block_16( struct lp_rasterizer *rast,
  */
 void
 lp_rast_triangle( struct lp_rasterizer *rast,
+                  unsigned thread_index,
                   const union lp_rast_cmd_arg arg )
 {
+   struct lp_rasterizer_task *rast_task = &rast->tasks[thread_index];
    const struct lp_rast_triangle *tri = arg.triangle;
 
-   int x = rast->x;
-   int y = rast->y;
+   int x = rast_task->x;
+   int y = rast_task->y;
    int ix, iy;
    unsigned i = 0;
 
@@ -184,11 +186,11 @@ lp_rast_triangle( struct lp_rasterizer *rast,
    int eo2 = tri->eo2 * 16;
    int eo3 = tri->eo3 * 16;
 
-   assert(Elements(rast->blocks) == (TILE_SIZE * TILE_SIZE) / (4*4));
+   assert(Elements(rast_task->blocks) == (TILE_SIZE * TILE_SIZE) / (4*4));
 
    LP_DBG(DEBUG_RAST, "lp_rast_triangle\n");
 
-   rast->nr_blocks = 0;
+   rast_task->nr_blocks = 0;
 
    /* Walk over the tile to build a list of 4x4 pixel blocks which will
     * be filled/shaded.  We do this at two granularities: 16x16 blocks
@@ -209,21 +211,23 @@ lp_rast_triangle( struct lp_rasterizer *rast,
 		  cx2 + ei2 > 0 &&
 		  cx3 + ei3 > 0) {
             /* the block is completely inside the triangle */
-	    block_full_16(rast, x+ix, y+iy);
+	    block_full_16(rast_task, x+ix, y+iy);
 	 }
 	 else {
             /* the block is partially in/out of the triangle */
-	    do_block_16(rast, tri, x+ix, y+iy, cx1, cx2, cx3);
+	    do_block_16(rast_task, tri, x+ix, y+iy, cx1, cx2, cx3);
 	 }
       }
    }
 
-   assert(rast->nr_blocks <= Elements(rast->blocks));
+   assert(rast_task->nr_blocks <= Elements(rast_task->blocks));
 
    /* Shade the 4x4 pixel blocks */
-   for (i = 0; i < rast->nr_blocks; i++) 
-      lp_rast_shade_quads(rast, &tri->inputs, 
-			  rast->blocks[i].x,
-			  rast->blocks[i].y,
-			  rast->blocks[i].mask);
+   for (i = 0; i < rast_task->nr_blocks; i++) 
+      lp_rast_shade_quads(rast,
+                          thread_index,
+                          &tri->inputs, 
+			  rast_task->blocks[i].x,
+			  rast_task->blocks[i].y,
+			  rast_task->blocks[i].mask);
 }

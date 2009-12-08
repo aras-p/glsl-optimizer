@@ -193,24 +193,31 @@ lp_rast_arg_null( void )
  */
 
 void lp_rast_clear_color( struct lp_rasterizer *, 
+                          unsigned thread_index,
                           const union lp_rast_cmd_arg );
 
 void lp_rast_clear_zstencil( struct lp_rasterizer *, 
+                             unsigned thread_index,
                              const union lp_rast_cmd_arg );
 
 void lp_rast_load_color( struct lp_rasterizer *, 
+                         unsigned thread_index,
                          const union lp_rast_cmd_arg );
 
 void lp_rast_load_zstencil( struct lp_rasterizer *, 
+                            unsigned thread_index,
                             const union lp_rast_cmd_arg );
 
 void lp_rast_set_state( struct lp_rasterizer *, 
+                        unsigned thread_index,
                         const union lp_rast_cmd_arg );
 
 void lp_rast_triangle( struct lp_rasterizer *, 
+                       unsigned thread_index,
                        const union lp_rast_cmd_arg );
 
 void lp_rast_shade_tile( struct lp_rasterizer *,
+                         unsigned thread_index,
                          const union lp_rast_cmd_arg );
 
 

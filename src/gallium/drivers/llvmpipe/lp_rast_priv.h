@@ -30,6 +30,10 @@
 
 #include "lp_rast.h"
 
+
+#define MAX_THREADS 4  /* XXX probably temporary here */
+
+
 struct pipe_transfer;
 struct pipe_screen;
 
@@ -47,14 +51,34 @@ struct lp_rast_tile
 
 
 /**
- * This is the state required while rasterizing a tile.
- * The tile size is TILE_SIZE x TILE_SIZE pixels.
+ * Per-thread rasterization state
  */
-struct lp_rasterizer
+struct lp_rasterizer_task
 {
    struct lp_rast_tile tile;   /** Tile color/z/stencil memory */
 
    unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
+
+   /* Pixel blocks produced during rasterization
+    */
+   unsigned nr_blocks;
+   struct {
+      unsigned x;
+      unsigned y;
+      unsigned mask;
+   } blocks[256];
+
+   const struct lp_rast_state *current_state;
+};
+
+
+/**
+ * This is the state required while rasterizing tiles.
+ * Note that this contains per-thread information too.
+ * The tile size is TILE_SIZE x TILE_SIZE pixels.
+ */
+struct lp_rasterizer
+{
    unsigned width, height; /**< Size of framebuffer, in pixels */
 
    boolean clipped_tile;
@@ -78,20 +102,13 @@ struct lp_rasterizer
       char clear_stencil;
    } state;
 
-   /* Pixel blocks produced during rasterization
-    */
-   unsigned nr_blocks;
-   struct {
-      unsigned x;
-      unsigned y;
-      unsigned mask;
-   } blocks[256];
-
-   const struct lp_rast_state *current_state;
+   /** A task object for each rasterization thread */
+   struct lp_rasterizer_task tasks[MAX_THREADS];
 };
 
 
 void lp_rast_shade_quads( struct lp_rasterizer *rast,
+                          unsigned thread_index,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
                           unsigned masks);
