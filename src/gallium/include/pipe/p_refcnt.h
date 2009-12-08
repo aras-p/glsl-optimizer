@@ -51,7 +51,7 @@ pipe_reference_init(struct pipe_reference *reference, unsigned count)
 }
 
 
-static INLINE bool
+static INLINE boolean
 pipe_is_referenced(struct pipe_reference *reference)
 {
    return p_atomic_read(&reference->count) != 0;
@@ -63,10 +63,10 @@ pipe_is_referenced(struct pipe_reference *reference)
  * The old thing pointed to, if any, will be unreferenced.
  * Both 'ptr' and 'reference' may be NULL.
  */
-static INLINE bool
+static INLINE boolean
 pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 {
-   bool destroy = FALSE;
+   boolean destroy = FALSE;
 
    if(ptr != reference) {
       /* bump the reference.count first */
