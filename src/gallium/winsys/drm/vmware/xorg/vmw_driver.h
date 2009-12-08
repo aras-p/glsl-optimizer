@@ -44,6 +44,8 @@ struct vmw_driver
 {
     int fd;
 
+    void *cursor_priv;
+
     /* vmw_video.c */
     void *video_priv;
 };
@@ -68,6 +70,8 @@ Bool vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
 /***********************************************************************
  * vmw_ioctl.c
  */
+
+int vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot);
 
 struct vmw_dma_buffer * vmw_ioctl_buffer_create(struct vmw_driver *vmw,
 						uint32_t size,

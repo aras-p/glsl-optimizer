@@ -86,7 +86,8 @@ static ImageRec *ImageOpen(char *fileName)
         exit(1);
     }
     if ((image->file = fopen(fileName, "rb")) == NULL) {
-	return NULL;
+        free(image);
+        return NULL;
     }
 
     fread(image, 1, 12, image->file);
@@ -224,6 +225,7 @@ read_rgb_texture(char *name, int *width, int *height)
       if (gbuf) free(gbuf);
       if (bbuf) free(bbuf);
       if (abuf) free(abuf);
+      ImageClose(image); 
       return NULL;
     }
     ptr = base;

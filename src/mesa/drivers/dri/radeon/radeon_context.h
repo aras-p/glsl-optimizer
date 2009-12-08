@@ -331,8 +331,12 @@ struct r100_hw_state {
 	struct radeon_state_atom stp;
 };
 
+struct radeon_stipple_state {
+	GLuint mask[32];
+};
 
 struct r100_state {
+	struct radeon_stipple_state stipple;
 	struct radeon_texture_state texture;
 };
 

@@ -401,6 +401,10 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
 
    root = RootWindow(dpy, scrnum);
 
+   /*
+    * Find a basic GLX visual.  We'll then create a rendering context and
+    * query various info strings.
+    */
    visinfo = glXChooseVisual(dpy, scrnum, attribSingle);
    if (!visinfo)
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
@@ -409,24 +413,29 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
 
 #ifdef GLX_VERSION_1_3
-   {
+   /* Try glXChooseFBConfig() if glXChooseVisual didn't work.
+    * XXX when would that happen?
+    */
+   if (!visinfo) {
       int fbAttribSingle[] = {
 	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
 	 GLX_RED_SIZE,      1,
 	 GLX_GREEN_SIZE,    1,
 	 GLX_BLUE_SIZE,     1,
-	 GLX_DOUBLEBUFFER,  GL_TRUE,
+	 GLX_DOUBLEBUFFER,  GL_FALSE,
 	 None };
       int fbAttribDouble[] = {
 	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
 	 GLX_RED_SIZE,      1,
 	 GLX_GREEN_SIZE,    1,
 	 GLX_BLUE_SIZE,     1,
+	 GLX_DOUBLEBUFFER,  GL_TRUE,
 	 None };
       GLXFBConfig *configs = NULL;
       int nConfigs;
 
-      if (!visinfo)
+      configs = glXChooseFBConfig(dpy, scrnum, fbAttribSingle, &nConfigs);
+      if (!configs)
 	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribDouble, &nConfigs);
 
       if (configs) {

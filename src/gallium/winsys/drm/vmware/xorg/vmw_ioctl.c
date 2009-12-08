@@ -54,6 +54,23 @@ struct vmw_dma_buffer
     uint32_t size;
 };
 
+int
+vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot)
+{
+    struct drm_vmw_cursor_bypass_arg arg;
+    int ret;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.flags = DRM_VMW_CURSOR_BYPASS_ALL;
+    arg.xhot = xhot;
+    arg.yhot = yhot;
+
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CURSOR_BYPASS,
+			  &arg, sizeof(arg));
+
+    return ret;
+}
+
 struct vmw_dma_buffer *
 vmw_ioctl_buffer_create(struct vmw_driver *vmw, uint32_t size, unsigned *handle)
 {
