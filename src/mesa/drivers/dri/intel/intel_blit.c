@@ -496,7 +496,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		  CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
 		  CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
 
-		  switch (irb->texformat) {
+		  switch (irb->Base.Format) {
 		  case MESA_FORMAT_ARGB8888:
 		  case MESA_FORMAT_XRGB8888:
 		     clearVal = intel->ClearColor8888;
@@ -514,7 +514,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		     break;
 		  default:
 		     _mesa_problem(ctx, "Unexpected renderbuffer format: %d\n",
-				   irb->texformat);
+				   irb->Base.Format);
 		     clearVal = 0;
 		  }
 	       }

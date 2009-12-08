@@ -537,7 +537,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
@@ -554,7 +554,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->texformat);
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {

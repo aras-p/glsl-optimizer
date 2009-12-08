@@ -117,7 +117,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB5:
       rb->Format = MESA_FORMAT_RGB565;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_RGB565;
       cpp = 2;
       break;
    case GL_RGB:
@@ -125,9 +124,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->Format = MESA_FORMAT_ARGB8888;
+      rb->Format = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
       cpp = 4;
       break;
    case GL_RGBA:
@@ -140,7 +138,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGBA16:
       rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888;
       cpp = 4;
       break;
    case GL_STENCIL_INDEX:
@@ -152,13 +149,11 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_SHORT;
       cpp = 2;
-      irb->texformat = MESA_FORMAT_Z16;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
@@ -166,14 +161,12 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    default:
       _mesa_problem(ctx,
@@ -347,7 +340,6 @@ intel_create_renderbuffer(gl_format format)
 
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
-   irb->texformat = format;
 
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
@@ -424,7 +416,6 @@ static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
-   irb->texformat = texImage->TexFormat;
    gl_format texFormat;
 
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
@@ -640,7 +631,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	 continue;
       }
 
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_XRGB8888:
       case MESA_FORMAT_RGB565:

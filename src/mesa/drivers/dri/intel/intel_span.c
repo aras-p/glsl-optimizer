@@ -624,7 +624,7 @@ intel_set_span_functions(struct intel_context *intel,
       tiling = I915_TILING_NONE;
 
    if (intel->intelScreen->kernel_exec_fencing) {
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_RGB565:
 	 intel_gttmap_InitPointers_RGB565(rb);
 	 break;
@@ -667,13 +667,13 @@ intel_set_span_functions(struct intel_context *intel,
       default:
 	 _mesa_problem(NULL,
 		       "Unexpected MesaFormat %d in intelSetSpanFunctions",
-		       irb->texformat);
+		       irb->Base.Format);
 	 break;
       }
       return;
    }
 
-   switch (irb->texformat) {
+   switch (irb->Base.Format) {
    case MESA_FORMAT_RGB565:
       switch (tiling) {
       case I915_TILING_NONE:
