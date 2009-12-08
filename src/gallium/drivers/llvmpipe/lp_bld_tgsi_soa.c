@@ -496,9 +496,9 @@ emit_instruction(
       if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z )) {
-         LLVMValueRef *p_floor_log2;
-         LLVMValueRef *p_exp;
-         LLVMValueRef *p_log2;
+         LLVMValueRef *p_floor_log2 = NULL;
+         LLVMValueRef *p_exp = NULL;
+         LLVMValueRef *p_log2 = NULL;
 
          src0 = emit_fetch( bld, inst, 0, CHAN_X );
          src0 = lp_build_abs( &bld->base, src0 );
