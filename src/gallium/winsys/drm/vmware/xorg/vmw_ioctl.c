@@ -31,7 +31,9 @@
  * @author Jakob Bornecrantz <jakob@vmware.com>
  */
 
-#define HAVE_STDINT_H
+#ifndef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
+#endif
 #define _FILE_OFFSET_BITS 64
 
 #include <errno.h>
