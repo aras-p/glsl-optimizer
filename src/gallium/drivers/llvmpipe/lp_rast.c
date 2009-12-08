@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "lp_debug.h"
 #include "lp_state.h"
@@ -35,25 +36,6 @@
 #include "lp_bld_debug.h"
 #include "lp_bin.h"
 
-
-struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
-{
-   struct lp_rasterizer *rast;
-   unsigned i;
-
-   rast = CALLOC_STRUCT(lp_rasterizer);
-   if(!rast)
-      return NULL;
-
-   rast->screen = screen;
-
-   for (i = 0; i < Elements(rast->tasks); i++) {
-      rast->tasks[i].tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
-      rast->tasks[i].tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
-   }
-
-   return rast;
-}
 
 
 /**
@@ -414,16 +396,25 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 {
    const unsigned x = rast->tasks[thread_index].x;
    const unsigned y = rast->tasks[thread_index].y;
-   unsigned w = TILE_SIZE;
-   unsigned h = TILE_SIZE;
+   int w = TILE_SIZE;
+   int h = TILE_SIZE;
 
    if (x + w > rast->width)
       w -= x + w - rast->width;
 
-   if (y + h > rast->height)
-      h -= y + h - rast->height;
+   if (y + h > rast->height) {
+      int h2;
+      h2 = h - (y + h - rast->height);
+      assert(h2 <= TILE_SIZE);
+      h = h2;
+   }
+   assert(w >= 0);
+   assert(h >= 0);
+   assert(w <= TILE_SIZE);
+   assert(h <= TILE_SIZE);
 
-   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+   LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
+          thread_index, x, y, w, h);
 
    lp_tile_write_4ub(rast->cbuf_transfer->format,
                      rast->tasks[thread_index].tile.color,
@@ -513,7 +504,7 @@ rasterize_bin( struct lp_rasterizer *rast,
    /* simply execute each of the commands in the block list */
    for (block = commands->head; block; block = block->next) {
       for (k = 0; k < block->count; k++) {
-         block->cmd[k]( rast, 0, block->arg[k] );
+         block->cmd[k]( rast, thread_index, block->arg[k] );
       }
    }
 
@@ -523,6 +514,41 @@ rasterize_bin( struct lp_rasterizer *rast,
 
 /**
  * Rasterize/execute all bins.
+ */
+static void
+rasterize_bins( struct lp_rasterizer *rast,
+                unsigned thread_index,
+                struct lp_bins *bins,
+                const struct pipe_framebuffer_state *fb,
+                bool write_depth )
+{
+   /* loop over tile bins, rasterize each */
+#if 0
+   {
+      unsigned i, j;
+      for (i = 0; i < bins->tiles_x; i++) {
+         for (j = 0; j < bins->tiles_y; j++) {
+            struct cmd_bin *bin = lp_get_bin(bins, i, j);
+            rasterize_bin( rast, thread_index,
+                           bin, i * TILE_SIZE, j * TILE_SIZE );
+         }
+      }
+   }
+#else
+   {
+      struct cmd_bin *bin;
+      int x, y;
+
+      while ((bin = lp_bin_iter_next(bins, &x, &y))) {
+         rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
+      }
+   }
+#endif
+}
+
+
+/**
+ * Called by rasterizer when it has something for us to render.
  */
 void
 lp_rasterize_bins( struct lp_rasterizer *rast,
@@ -539,36 +565,119 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
                   fb->zsbuf != NULL && write_depth,
                   fb->width,
                   fb->height );
-                       
-   /* loop over tile bins, rasterize each */
-#if 0
-   {
-      unsigned i, j;
-      for (i = 0; i < bins->tiles_x; i++) {
-         for (j = 0; j < bins->tiles_y; j++) {
-            struct cmd_bin *bin = lp_get_bin(bins, i, j);
-            rasterize_bin( rast, 0, bin, i * TILE_SIZE, j * TILE_SIZE );
-         }
-      }
+
+   if (rast->num_threads == 0) {
+      /* no threading */
+      lp_bin_iter_begin( bins );
+      rasterize_bins( rast, 0, bins, fb, write_depth );
    }
-#else
-   {
-      struct cmd_bin *bin;
-      int x, y;
+   else {
+      /* threaded rendering! */
+      unsigned i;
+
+      rast->bins = bins;
+      rast->fb = fb;
+      rast->write_depth = write_depth;
 
       lp_bin_iter_begin( bins );
 
-      while ((bin = lp_bin_iter_next(bins, &x, &y))) {
-         rasterize_bin( rast, 0, bin, x * TILE_SIZE, y * TILE_SIZE);
+      /* signal the threads that there's work to do */
+      for (i = 0; i < rast->num_threads; i++) {
+         pipe_semaphore_signal(&rast->tasks[i].work_ready);
+      }
+
+      /* wait for work to complete */
+      for (i = 0; i < rast->num_threads; i++) {
+         pipe_semaphore_wait(&rast->tasks[i].work_done);
       }
    }
-#endif
 
    lp_rast_end( rast );
 
    LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
 }
 
+
+/**
+ * This is the thread's main entrypoint.
+ * It's a simple loop:
+ *   1. wait for work
+ *   2. do work
+ *   3. signal that we're done
+ */
+static void *
+thread_func( void *init_data )
+{
+   struct lp_rasterizer_task *task = (struct lp_rasterizer_task *) init_data;
+   struct lp_rasterizer *rast = task->rast;
+   int debug = 0;
+
+   while (1) {
+      /* wait for work */
+      if (debug)
+         debug_printf("thread %d waiting for work\n", task->thread_index);
+      pipe_semaphore_wait(&task->work_ready);
+
+      /* do work */
+      if (debug)
+         debug_printf("thread %d doing work\n", task->thread_index);
+      rasterize_bins(rast, task->thread_index,
+                     rast->bins, rast->fb, rast->write_depth);
+
+      /* signal done with work */
+      if (debug)
+         debug_printf("thread %d done working\n", task->thread_index);
+      pipe_semaphore_signal(&task->work_done);
+   }
+
+   return NULL;
+}
+
+
+/**
+ * Initialize semaphores and spawn the threads.
+ */
+static void
+create_rast_threads(struct lp_rasterizer *rast)
+{
+   unsigned i;
+
+   rast->num_threads = debug_get_num_option("LP_NUM_THREADS", MAX_THREADS);
+   rast->num_threads = MIN2(rast->num_threads, MAX_THREADS);
+
+   /* NOTE: if num_threads is zero, we won't use any threads */
+   for (i = 0; i < rast->num_threads; i++) {
+      pipe_semaphore_init(&rast->tasks[i].work_ready, 0);
+      pipe_semaphore_init(&rast->tasks[i].work_done, 0);
+      rast->threads[i] = pipe_thread_create(thread_func,
+                                            (void *) &rast->tasks[i]);
+   }
+}
+
+
+
+struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
+{
+   struct lp_rasterizer *rast;
+   unsigned i;
+
+   rast = CALLOC_STRUCT(lp_rasterizer);
+   if(!rast)
+      return NULL;
+
+   rast->screen = screen;
+
+   for (i = 0; i < Elements(rast->tasks); i++) {
+      rast->tasks[i].tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+      rast->tasks[i].tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+      rast->tasks[i].rast = rast;
+      rast->tasks[i].thread_index = i;
+   }
+
+   create_rast_threads(rast);
+
+   return rast;
+}
 
 
 /* Shutdown:

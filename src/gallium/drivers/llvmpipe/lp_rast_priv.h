@@ -28,6 +28,7 @@
 #ifndef LP_RAST_PRIV_H
 #define LP_RAST_PRIV_H
 
+#include "pipe/p_thread.h"
 #include "lp_rast.h"
 
 
@@ -36,6 +37,7 @@
 
 struct pipe_transfer;
 struct pipe_screen;
+struct lp_rasterizer;
 
 
 /**
@@ -69,6 +71,15 @@ struct lp_rasterizer_task
    } blocks[256];
 
    const struct lp_rast_state *current_state;
+
+   /** "back" pointer */
+   struct lp_rasterizer *rast;
+
+   /** "my" index */
+   unsigned thread_index;
+
+   pipe_semaphore work_ready;
+   pipe_semaphore work_done;
 };
 
 
@@ -104,6 +115,13 @@ struct lp_rasterizer
 
    /** A task object for each rasterization thread */
    struct lp_rasterizer_task tasks[MAX_THREADS];
+
+   unsigned num_threads;
+   pipe_thread threads[MAX_THREADS];
+
+   struct lp_bins *bins;
+   const struct pipe_framebuffer_state *fb;
+   boolean write_depth;
 };
 
 
