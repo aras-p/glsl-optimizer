@@ -277,7 +277,7 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
 
     BEGIN_CS(13 +
              ((code->inst_end + 1) * 6));
-    OUT_CS_REG(R500_US_CONFIG, 0);
+    OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
     OUT_CS_REG(R500_US_CODE_RANGE,
                R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
