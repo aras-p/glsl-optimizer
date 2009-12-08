@@ -35,4 +35,4 @@ include ../../Makefile.template
 .PHONY : $(COMPILER_ARCHIVE)
 
 $(COMPILER_ARCHIVE):
-	cd $(TOP)/src/mesa/drivers/dri/r300/compiler; make
+	$(MAKE) -C $(TOP)/src/mesa/drivers/dri/r300/compiler

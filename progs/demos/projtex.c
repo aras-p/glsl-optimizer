@@ -248,6 +248,7 @@ loadImageTextures(void)
 
      free(texData3);
      free(texData4);
+     free(image);
   }
 }
 
