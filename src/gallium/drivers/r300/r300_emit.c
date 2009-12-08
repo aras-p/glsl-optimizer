@@ -331,7 +331,13 @@ void r300_emit_fb_state(struct r300_context* r300,
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 4);
+    /* Shouldn't fail unless there is a bug in the state tracker. */
+    assert(fb->nr_cbufs <= 4);
+
+    BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
+             (fb->zsbuf ? 10 : 0) + 4);
+
+    /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
@@ -339,6 +345,7 @@ void r300_emit_fb_state(struct r300_context* r300,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 
+    /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
         surf = fb->cbufs[i];
         tex = (struct r300_texture*)surf->texture;
@@ -356,6 +363,12 @@ void r300_emit_fb_state(struct r300_context* r300,
             r300_translate_out_fmt(surf->format));
     }
 
+    /* Disable unused colorbuffers. */
+    for (; i < 4; i++) {
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
+    }
+
+    /* Set up a zbuffer. */
     if (fb->zsbuf) {
         surf = fb->zsbuf;
         tex = (struct r300_texture*)surf->texture;
