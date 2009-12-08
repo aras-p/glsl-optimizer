@@ -106,8 +106,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   GLboolean softwareBuffer = GL_FALSE;
    int cpp;
+   GLuint pitch;
 
    ASSERT(rb->Name != 0);
 
@@ -184,32 +184,25 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
 
    /* allocate new memory region/renderbuffer */
-   if (softwareBuffer) {
-      return _mesa_soft_renderbuffer_storage(ctx, rb, internalFormat,
-                                             width, height);
-   }
-   else {
-      /* Choose a pitch to match hardware requirements:
-       */
-      GLuint pitch = ((cpp * width + 63) & ~63) / cpp;
 
-      /* alloc hardware renderbuffer */
-      DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
-	  height, pitch);
+   /* Choose a pitch to match hardware requirements:
+    */
+   pitch = ((cpp * width + 63) & ~63) / cpp;
 
-      irb->region = intel_region_alloc(intel, I915_TILING_NONE,
-				       cpp, width, height, pitch,
-				       GL_TRUE);
-      if (!irb->region)
-         return GL_FALSE;       /* out of memory? */
+   /* alloc hardware renderbuffer */
+   DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width, height, pitch);
 
-      ASSERT(irb->region->buffer);
+   irb->region = intel_region_alloc(intel, I915_TILING_NONE, cpp,
+				    width, height, pitch, GL_TRUE);
+   if (!irb->region)
+      return GL_FALSE;       /* out of memory? */
 
-      rb->Width = width;
-      rb->Height = height;
+   ASSERT(irb->region->buffer);
 
-      return GL_TRUE;
-   }
+   rb->Width = width;
+   rb->Height = height;
+
+   return GL_TRUE;
 }
 
 
