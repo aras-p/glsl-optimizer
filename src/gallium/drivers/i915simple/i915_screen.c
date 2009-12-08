@@ -273,6 +273,7 @@ i915_create_screen(struct intel_winsys *iws, uint pci_id)
    default:
       debug_printf("%s: unknown pci id 0x%x, cannot create screen\n", 
                    __FUNCTION__, pci_id);
+      FREE(is);
       return NULL;
    }
 
