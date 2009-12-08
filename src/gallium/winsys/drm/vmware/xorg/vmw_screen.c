@@ -33,6 +33,8 @@
 #include "vmw_hook.h"
 #include "vmw_driver.h"
 
+#include "cursorstr.h"
+
 /* modified version of crtc functions */
 xf86CrtcFuncsRec vmw_screen_crtc_funcs;
 
