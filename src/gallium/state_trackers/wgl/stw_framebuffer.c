@@ -268,9 +268,7 @@ stw_framebuffer_allocate(
       enum pipe_format colorFormat, depthFormat, stencilFormat;
 
       colorFormat = pfi->color_format;
-      
-      assert(pf_layout( pfi->depth_stencil_format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   
+
       if(util_format_get_component_bits(pfi->depth_stencil_format, UTIL_FORMAT_COLORSPACE_ZS, 0))
          depthFormat = pfi->depth_stencil_format;
       else

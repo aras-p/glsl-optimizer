@@ -54,11 +54,6 @@ extern "C" {
 #define PIPE_FORMAT_LAYOUT_DXT      2  /**< XXX temporary? */
 #define PIPE_FORMAT_LAYOUT_MIXED    3
 
-static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
-{
-   return f & 0x3;
-}
-
 /**
  * RGBAZS Format Layout.
  */
@@ -106,19 +101,6 @@ static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
  * should be filled with 0.0 and 1.0, respectively.
  */
 typedef uint pipe_format_rgbazs_t;
-
-static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
-{
-   return (f >> shift) & mask;
-}
-
-#define pf_size_x(f)          pf_get(f, 14, 0x7) /**< Size of X */
-#define pf_size_y(f)          pf_get(f, 17, 0x7) /**< Size of Y */
-#define pf_size_z(f)          pf_get(f, 20, 0x7) /**< Size of Z */
-#define pf_size_w(f)          pf_get(f, 23, 0x7) /**< Size of W */
-#define pf_size_xyzw(f,i)     pf_get(f, 14+((i)*3), 0x7)
-#define pf_exp2(f)            pf_get(f, 26, 0x7) /**< Scale size by 2 ^ exp2 */
-#define pf_type(f)            pf_get(f, 29, 0x7) /**< PIPE_FORMAT_TYPE_ */
 
 /**
  * Helper macro to encode the above structure into a 32-bit value.
