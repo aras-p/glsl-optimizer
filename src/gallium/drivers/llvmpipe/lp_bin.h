@@ -35,6 +35,7 @@
 #ifndef LP_BIN_H
 #define LP_BIN_H
 
+#include "pipe/p_thread.h"
 #include "lp_tile_soa.h"
 #include "lp_rast.h"
 
@@ -110,6 +111,9 @@ struct lp_bins {
     * This basically the framebuffer size divided by tile size
     */
    unsigned tiles_x, tiles_y;
+
+   int curr_x, curr_y;  /**< for iterating over bins */
+   pipe_mutex mutex;
 };
 
 
@@ -237,6 +241,13 @@ void
 lp_bin_state_command( struct lp_bins *bins,
                       lp_rast_cmd cmd,
                       const union lp_rast_cmd_arg arg );
+
+
+void
+lp_bin_iter_begin( struct lp_bins *bins );
+
+struct cmd_bin *
+lp_bin_iter_next( struct lp_bins *bins, int *bin_x, int *bin_y );
 
 
 #endif /* LP_BIN_H */

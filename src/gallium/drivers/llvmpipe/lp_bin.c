@@ -41,9 +41,14 @@ lp_init_bins(struct lp_bins *bins)
 
    bins->data.head =
       bins->data.tail = CALLOC_STRUCT(data_block);
+
+   pipe_mutex_init(bins->mutex);
 }
 
 
+/**
+ * Set bins to empty state.
+ */
 void
 lp_reset_bins(struct lp_bins *bins )
 {
@@ -87,6 +92,9 @@ lp_reset_bins(struct lp_bins *bins )
 }
 
 
+/**
+ * Free all data associated with the given bin, but don't free(bins).
+ */
 void
 lp_free_bin_data(struct lp_bins *bins)
 {
@@ -104,6 +112,8 @@ lp_free_bin_data(struct lp_bins *bins)
 
    FREE(bins->data.head);
    bins->data.head = NULL;
+
+   pipe_mutex_destroy(bins->mutex);
 }
 
 
@@ -190,4 +200,62 @@ lp_bin_state_command( struct lp_bins *bins,
          }
       }
    }
+}
+
+
+/** advance curr_x,y to the next bin */
+static boolean
+next_bin(struct lp_bins *bins)
+{
+   bins->curr_x++;
+   if (bins->curr_x >= bins->tiles_x) {
+      bins->curr_x = 0;
+      bins->curr_y++;
+   }
+   if (bins->curr_y >= bins->tiles_y) {
+      /* no more bins */
+      return FALSE;
+   }
+   return TRUE;
+}
+
+
+void
+lp_bin_iter_begin( struct lp_bins *bins )
+{
+   bins->curr_x = bins->curr_y = -1;
+}
+
+
+/**
+ * Return point to next bin to be rendered.
+ * The lp_bins::curr_x and ::curr_y fields will be advanced.
+ * Multiple rendering threads will call this function to get a chunk
+ * of work (a bin) to work on.
+ */
+struct cmd_bin *
+lp_bin_iter_next( struct lp_bins *bins, int *bin_x, int *bin_y )
+{
+   struct cmd_bin *bin = NULL;
+
+   pipe_mutex_lock(bins->mutex);
+
+   if (bins->curr_x < 0) {
+      /* first bin */
+      bins->curr_x = 0;
+      bins->curr_y = 0;
+   }
+   else if (!next_bin(bins)) {
+      /* no more bins left */
+      goto end;
+   }
+
+   bin = lp_get_bin(bins, bins->curr_x, bins->curr_y);
+   *bin_x = bins->curr_x;
+   *bin_y = bins->curr_y;
+
+end:
+   /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/
+   pipe_mutex_unlock(bins->mutex);
+   return bin;
 }
