@@ -65,7 +65,7 @@ struct nv50_rasterizer_stateobj {
 };
 
 struct nv50_sampler_stateobj {
-	bool normalized;
+	boolean normalized;
 	unsigned tsc[8];
 };
 

@@ -11,7 +11,7 @@
 struct nv20_transfer {
 	struct pipe_transfer base;
 	struct pipe_surface *surface;
-	bool direct;
+	boolean direct;
 };
 
 static void
