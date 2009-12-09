@@ -419,7 +419,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, 0x00000000);
+	so_data  (so, 0x00000000); /* ignored if TSC_LINKED (0x1234) = 1 */
 
 
 	/* Vertex array limits - max them out */
@@ -433,6 +433,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_data  (so, fui(0.0));
 	so_data  (so, fui(1.0));
 
+	/* no dynamic combination of TIC & TSC entries => only BIND_TIC used */
 	so_method(so, screen->tesla, 0x1234, 1);
 	so_data  (so, 1);
 

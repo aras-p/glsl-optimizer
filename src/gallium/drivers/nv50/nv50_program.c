@@ -1273,7 +1273,7 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 
 static void
 load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
-		     struct nv50_reg **src, boolean proj)
+		     struct nv50_reg **src, unsigned arg, boolean proj)
 {
 	int mod[3] = { src[0]->mod, src[1]->mod, src[2]->mod };
 
@@ -1290,6 +1290,10 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 
 	if (proj && 0 /* looks more correct without this */)
 		emit_mul(pc, t[2], t[2], src[3]);
+	else
+	if (arg == 4) /* there is no textureProj(samplerCubeShadow) */
+		emit_mov(pc, t[3], src[3]);
+
 	emit_flop(pc, 0, t[2], t[2]);
 
 	emit_mul(pc, t[0], src[0], t[2]);
@@ -1298,84 +1302,114 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 }
 
 static void
-emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
-	 struct nv50_reg **src, unsigned unit, unsigned type, boolean proj)
+load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
+		     struct nv50_reg **src, unsigned dim, unsigned arg)
 {
-	struct nv50_reg *t[4];
-	struct nv50_program_exec *e;
+	unsigned c, mode;
 
-	unsigned c, mode, dim;
+	if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
+		mode = pc->interp_mode[src[0]->index] | INTERP_PERSPECTIVE;
 
+		t[3]->rhw = src[3]->rhw;
+		emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
+		emit_flop(pc, 0, t[3], t[3]);
+
+		for (c = 0; c < dim; ++c) {
+			t[c]->rhw = src[c]->rhw;
+			emit_interp(pc, t[c], t[3], mode);
+		}
+		if (arg != dim) { /* depth reference value */
+			t[dim]->rhw = src[2]->rhw;
+			emit_interp(pc, t[dim], t[3], mode);
+		}
+	} else {
+		/* XXX: for some reason the blob sometimes uses MAD
+		 * (mad f32 $rX $rY $rZ neg $r63)
+		 */
+		emit_flop(pc, 0, t[3], src[3]);
+		for (c = 0; c < dim; ++c)
+			emit_mul(pc, t[c], src[c], t[3]);
+		if (arg != dim) /* depth reference value */
+			emit_mul(pc, t[dim], src[2], t[3]);
+	}
+}
+
+static INLINE void
+get_tex_dim(unsigned type, unsigned *dim, unsigned *arg)
+{
 	switch (type) {
 	case TGSI_TEXTURE_1D:
-		dim = 1;
+		*arg = *dim = 1;
+		break;
+	case TGSI_TEXTURE_SHADOW1D:
+		*dim = 1;
+		*arg = 2;
 		break;
 	case TGSI_TEXTURE_UNKNOWN:
 	case TGSI_TEXTURE_2D:
-	case TGSI_TEXTURE_SHADOW1D: /* XXX: x, z */
 	case TGSI_TEXTURE_RECT:
-		dim = 2;
+		*arg = *dim = 2;
+		break;
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOWRECT:
+		*dim = 2;
+		*arg = 3;
 		break;
 	case TGSI_TEXTURE_3D:
 	case TGSI_TEXTURE_CUBE:
-	case TGSI_TEXTURE_SHADOW2D:
-	case TGSI_TEXTURE_SHADOWRECT: /* XXX */
-		dim = 3;
+		*dim = *arg = 3;
 		break;
 	default:
 		assert(0);
 		break;
 	}
+}
 
-	/* some cards need t[0]'s hw index to be a multiple of 4 */
+static void
+emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
+	 struct nv50_reg **src, unsigned unit, unsigned type,
+	 boolean proj, int bias_lod)
+{
+	struct nv50_reg *t[4];
+	struct nv50_program_exec *e;
+	unsigned c, dim, arg;
+
+	/* t[i] must be within a single 128 bit super-reg */
 	alloc_temp4(pc, t, 0);
 
+	e = exec(pc);
+	e->inst[0] = 0xf0000000;
+	set_long(pc, e);
+	set_dst(pc, t[0], e);
+
+	/* TIC and TSC binding indices (TSC is ignored as TSC_LINKED = TRUE): */
+	e->inst[0] |= (unit << 9) /* | (unit << 17) */;
+
+	/* live flag (don't set if TEX results affect input to another TEX): */
+	/* e->inst[0] |= 0x00000004; */
+
+	get_tex_dim(type, &dim, &arg);
+
 	if (type == TGSI_TEXTURE_CUBE) {
-		load_cube_tex_coords(pc, t, src, proj);
+		e->inst[0] |= 0x08000000;
+		load_cube_tex_coords(pc, t, src, arg, proj);
 	} else
-	if (proj) {
-		if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
-			mode = pc->interp_mode[src[0]->index];
-
-			t[3]->rhw = src[3]->rhw;
-			emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
-			emit_flop(pc, 0, t[3], t[3]);
-
-			for (c = 0; c < dim; c++) {
-				t[c]->rhw = src[c]->rhw;
-				emit_interp(pc, t[c], t[3],
-					    (mode | INTERP_PERSPECTIVE));
-			}
-		} else {
-			emit_flop(pc, 0, t[3], src[3]);
-			for (c = 0; c < dim; c++)
-				emit_mul(pc, t[c], src[c], t[3]);
-
-			/* XXX: for some reason the blob sometimes uses MAD:
-			 * emit_mad(pc, t[c], src[0][c], t[3], t[3])
-			 * pc->p->exec_tail->inst[1] |= 0x080fc000;
-			 */
-		}
-	} else {
+	if (proj)
+		load_proj_tex_coords(pc, t, src, dim, arg);
+	else {
 		for (c = 0; c < dim; c++)
 			emit_mov(pc, t[c], src[c]);
+		if (arg != dim) /* depth reference value (always src.z here) */
+			emit_mov(pc, t[dim], src[2]);
 	}
 
-	e = exec(pc);
-	set_long(pc, e);
-	e->inst[0] |= 0xf0000000;
-	e->inst[1] |= 0x00000004;
-	set_dst(pc, t[0], e);
-	e->inst[0] |= (unit << 9);
-
-	if (dim == 2)
-		e->inst[0] |= 0x00400000;
-	else
-	if (dim == 3) {
-		e->inst[0] |= 0x00800000;
-		if (type == TGSI_TEXTURE_CUBE)
-			e->inst[0] |= 0x08000000;
+	if (bias_lod) {
+		assert(arg < 4);
+		emit_mov(pc, t[arg++], src[3]);
+		e->inst[1] |= (bias_lod < 0) ? 0x20000000 : 0x40000000;
 	}
+
+	e->inst[0] |= (arg - 1) << 22;
 
 	e->inst[0] |= (mask & 0x3) << 25;
 	e->inst[1] |= (mask & 0xc) << 12;
@@ -1578,6 +1612,8 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_LIT:
 		return 0xb;
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXL:
 	case TGSI_OPCODE_TXP:
 	{
 		const struct tgsi_instruction_texture *tex;
@@ -1586,12 +1622,16 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 		tex = &insn->Texture;
 
 		mask = 0x7;
-		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
-			mask |= 0x8;
+		if (insn->Instruction.Opcode != TGSI_OPCODE_TEX &&
+		    insn->Instruction.Opcode != TGSI_OPCODE_TXD)
+			mask |= 0x8; /* bias, lod or proj */
 
 		switch (tex->Texture) {
 		case TGSI_TEXTURE_1D:
 			mask &= 0x9;
+			break;
+		case TGSI_TEXTURE_SHADOW1D:
+			mask &= 0x5;
 			break;
 		case TGSI_TEXTURE_2D:
 			mask &= 0xb;
@@ -1784,6 +1824,8 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXL:
 	case TGSI_OPCODE_TXP:
 		/* these take care of dangerous swizzles themselves */
 		return 0x0;
@@ -2187,11 +2229,19 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_TEX:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->Texture.Texture, FALSE);
+			 inst->Texture.Texture, FALSE, 0);
+		break;
+	case TGSI_OPCODE_TXB:
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->Texture.Texture, FALSE, -1);
+		break;
+	case TGSI_OPCODE_TXL:
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->Texture.Texture, FALSE, 1);
 		break;
 	case TGSI_OPCODE_TXP:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->Texture.Texture, TRUE);
+			 inst->Texture.Texture, TRUE, 0);
 		break;
 	case TGSI_OPCODE_TRUNC:
 		for (c = 0; c < 4; c++) {
