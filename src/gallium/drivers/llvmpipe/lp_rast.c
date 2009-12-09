@@ -40,6 +40,7 @@
 
 
 
+
 /**
  * Begin the rasterization phase.
  * Map the framebuffer surfaces.  Initialize the 'rast' state.
@@ -555,7 +556,21 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
                    const struct pipe_framebuffer_state *fb,
                    bool write_depth )
 {
+   boolean debug = false;
+
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   if (debug) {
+      unsigned x, y;
+      printf("rasterize bins:\n");
+      printf("  data size: %u\n", lp_bin_data_size(bins));
+      for (y = 0; y < bins->tiles_y; y++) {
+         for (x = 0; x < bins->tiles_x; x++) {
+            printf("  bin %u, %u size: %u\n", x, y,
+                   lp_bin_cmd_size(bins, x, y));
+         }
+      }
+   }
 
    lp_rast_begin( rast,
                   fb->cbufs[0], 
