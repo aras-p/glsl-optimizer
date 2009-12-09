@@ -48,6 +48,7 @@
  */
 struct lp_rasterizer;
 struct lp_bins;
+struct lp_bins_queue;
 struct cmd_bin;
 struct pipe_screen;
 
@@ -130,7 +131,8 @@ struct lp_rast_triangle {
 
 
 
-struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen );
+struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen,
+                                      struct lp_bins_queue *empty );
 
 void lp_rast_destroy( struct lp_rasterizer * );
 

@@ -37,11 +37,17 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "lp_bin.h"
+#include "lp_bin_queue.h"
 #include "lp_debug.h"
 #include "lp_state.h"
 #include "lp_buffer.h"
 #include "lp_texture.h"
 #include "lp_setup_context.h"
+
+
+/** XXX temporary value, temporary here */
+#define MAX_BINS 2
 
 
 static void set_state( struct setup_context *, unsigned );
@@ -554,6 +560,14 @@ lp_setup_destroy( struct setup_context *setup )
 
    lp_bins_destroy(setup->bins);
 
+   /* free the bins in the 'empty' queue */
+   while (lp_bins_queue_size(setup->empty_bins) > 0) {
+      struct lp_bins *bins = lp_bins_dequeue(setup->empty_bins);
+      if (!bins)
+         break;
+      lp_bins_destroy(bins);
+   }
+
    lp_rast_destroy( setup->rast );
 
    FREE( setup );
@@ -567,13 +581,27 @@ lp_setup_destroy( struct setup_context *setup )
 struct setup_context *
 lp_setup_create( struct pipe_screen *screen )
 {
+   unsigned i;
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
 
-   setup->rast = lp_rast_create( screen );
+   if (!setup)
+      return NULL;
+
+   setup->empty_bins = lp_bins_queue_create();
+   if (!setup->empty_bins)
+      goto fail;
+
+   setup->rast = lp_rast_create( screen, setup->empty_bins );
    if (!setup->rast) 
       goto fail;
 
    setup->bins = lp_bins_create();
+
+   /* create some empty bins */
+   for (i = 0; i < MAX_BINS; i++) {
+      struct lp_bins *bins = lp_bins_create();
+      lp_bins_enqueue(setup->empty_bins, bins);
+   }
 
    setup->triangle = first_triangle;
    setup->line     = first_line;
@@ -584,6 +612,9 @@ lp_setup_create( struct pipe_screen *screen )
    return setup;
 
 fail:
+   if (setup->empty_bins)
+      lp_bins_queue_destroy(setup->empty_bins);
+
    FREE(setup);
    return NULL;
 }

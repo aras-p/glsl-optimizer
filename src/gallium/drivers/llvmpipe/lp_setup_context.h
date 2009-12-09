@@ -46,6 +46,9 @@
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
 
 
+struct lp_bins_queue;
+
+
 /**
  * Point/line/triangle setup context.
  * Note: "stored" below indicates data which is stored in the bins,
@@ -55,7 +58,9 @@ struct setup_context {
 
    struct lp_rasterizer *rast;
 
-   struct lp_bins *bins;
+
+   struct lp_bins *bins;               /**< current bins */
+   struct lp_bins_queue *empty_bins;   /**< queue of empty bins */
 
    boolean ccw_is_frontface;
    unsigned cullmode;

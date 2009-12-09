@@ -95,6 +95,10 @@ struct lp_rasterizer
    boolean clipped_tile;
    boolean check_for_clipped_tiles;
 
+   struct lp_bins_queue *full_bins;
+   struct lp_bins_queue *empty_bins;
+   pipe_mutex get_bin_mutex;
+
    /* Framebuffer stuff
     */
    struct pipe_screen *screen;

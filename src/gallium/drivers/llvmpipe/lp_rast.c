@@ -29,6 +29,7 @@
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
 
+#include "lp_bin_queue.h"
 #include "lp_debug.h"
 #include "lp_state.h"
 #include "lp_rast.h"
@@ -655,7 +656,13 @@ create_rast_threads(struct lp_rasterizer *rast)
 
 
 
-struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
+/**
+ * Create new lp_rasterizer.
+ * \param empty  the queue to put empty bins on after we've finished
+ *               processing them.
+ */
+struct lp_rasterizer *
+lp_rast_create( struct pipe_screen *screen, struct lp_bins_queue *empty )
 {
    struct lp_rasterizer *rast;
    unsigned i;
@@ -665,6 +672,9 @@ struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen )
       return NULL;
 
    rast->screen = screen;
+
+   rast->empty_bins = empty;
+   rast->full_bins = lp_bins_queue_create();
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       rast->tasks[i].tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
