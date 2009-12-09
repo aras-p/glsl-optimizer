@@ -325,7 +325,11 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
     {
          fp->r700AsmCode.SamplerUnits[i] = fp->mesa_program.Base.SamplerUnits[i];
     }
+
+    fp->r700AsmCode.unCurNumILInsts = mesa_fp->Base.NumInstructions;
+
 	if( GL_FALSE == AssembleInstr(0,
+                                  0,
                                   mesa_fp->Base.NumInstructions,
                                   &(mesa_fp->Base.Instructions[0]), 
                                   &(fp->r700AsmCode)) )
@@ -338,7 +342,7 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
         return GL_FALSE;
     }
 
-    if( GL_FALSE == RelocProgram(&(fp->r700AsmCode)) )
+    if( GL_FALSE == RelocProgram(&(fp->r700AsmCode), &(mesa_fp->Base)) )
     {
         return GL_FALSE;
     }
@@ -619,6 +623,25 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    }
     } else
 	    r700->ps.num_consts = 0;
+
+    COMPILED_SUB * pCompiledSub;
+    GLuint uj;
+    GLuint unConstOffset = r700->ps.num_consts;
+    for(ui=0; ui<pAsm->unNumPresub; ui++)
+    {
+        pCompiledSub = pAsm->presubs[ui].pCompiledSub;
+
+        r700->ps.num_consts += pCompiledSub->NumParameters;
+
+        for(uj=0; uj<pCompiledSub->NumParameters; uj++)
+        {
+            r700->ps.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
+		    r700->ps.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
+		    r700->ps.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
+		    r700->ps.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
+        }
+        unConstOffset += pCompiledSub->NumParameters;
+    }
 
     return GL_TRUE;
 }

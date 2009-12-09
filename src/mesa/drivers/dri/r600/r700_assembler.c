@@ -32,6 +32,7 @@
 
 #include "main/mtypes.h"
 #include "main/imports.h"
+#include "shader/prog_parameter.h"
 
 #include "radeon_debug.h"
 #include "r600_context.h"
@@ -40,6 +41,39 @@
 
 #define USE_CF_FOR_CONTINUE_BREAK 1
 #define USE_CF_FOR_POP_AFTER      1
+
+struct prog_instruction noise1_insts[12] = { 
+    {OPCODE_BGNSUB , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_MOV , {{0, 0, 0, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 0, 2, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_MOV , {{8, 0, 0, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 0, 4, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_MOV , {{8, 0, 585, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 0, 8, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_SGT , {{0, 0, 585, 0, 0, 0}, {8, 0, 1170, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 1, 1, 0, 8, 1672, 0}, 1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_IF , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 7, 0, 0}, 0, 0, 0, 1, 0, 0, 0, 15, 0, 0, 0}, 
+    {OPCODE_MOV , {{0, 0, 1755, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 0, 1, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_RET , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_ENDIF , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_MOV , {{0, 0, 1170, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {0, 0, 1, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_RET , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}, 
+    {OPCODE_ENDSUB , {{13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}, {13, 0, 1672, 0, 0, 0}}, {13, 0, 15, 0, 8, 1672, 0}, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0}
+};
+float noise1_const[2][4] = {
+    {0.300000f, 0.900000f, 0.500000f, 0.300000f}
+};
+
+COMPILED_SUB noise1_presub = {
+    &(noise1_insts[0]),
+    12, 
+    2, 
+    1, 
+    0, 
+    &(noise1_const[0]), 
+    SWIZZLE_X, 
+    SWIZZLE_X, 
+    SWIZZLE_X, 
+    SWIZZLE_X,
+    {0,0,0},
+    0 
+};
 
 BITS addrmode_PVSDST(PVSDST * pPVSDST)
 {
@@ -330,14 +364,14 @@ GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
     return(format);
 }
 
-unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
+unsigned int r700GetNumOperands(GLuint opcode, GLuint nIsOp3) 
 {
-    if(pAsm->D.dst.op3)
+    if(nIsOp3 > 0)
     {
         return 3;
     }
 
-    switch (pAsm->D.dst.opcode)
+    switch (opcode)
     {
     case SQ_OP2_INST_ADD:
     case SQ_OP2_INST_KILLE:
@@ -378,7 +412,7 @@ unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm)
         return 1;
         
     default: radeon_error(
-		    "Need instruction operand number for %x.\n", pAsm->D.dst.opcode);
+		    "Need instruction operand number for %x.\n", opcode); 
     };
 
     return 3;
@@ -499,6 +533,11 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
     SetActiveCFlist(pAsm->pR700Shader, pAsm->CALLSTACK[0].plstCFInstructions_local);
 
     pAsm->unCFflags = 0;
+
+    pAsm->presubs           = NULL;
+    pAsm->unPresubArraySize = 0;
+    pAsm->unNumPresub       = 0;
+    pAsm->unCurNumILInsts   = 0;
 
     return 0;
 }
@@ -2010,7 +2049,7 @@ GLboolean check_scalar(r700_AssemblerBase* pAsm,
 
     GLuint swizzle_key;
 
-    GLuint number_of_operands = r700GetNumOperands(pAsm);
+    GLuint number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
 
     for (src=0; src<number_of_operands; src++) 
     {
@@ -2099,7 +2138,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 
     GLuint swizzle_key;
 
-    GLuint number_of_operands = r700GetNumOperands(pAsm);
+    GLuint number_of_operands = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
 
     for (src=0; src<number_of_operands; src++) 
     {
@@ -2180,7 +2219,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
     int    current_source_index;
     GLuint contiguous_slots_needed;
 
-    GLuint    uNumSrc = r700GetNumOperands(pAsm);
+    GLuint    uNumSrc = r700GetNumOperands(pAsm->D.dst.opcode, pAsm->D.dst.op3);
     //GLuint    channel_swizzle, j;
     //GLuint    chan_counter[4] = {0, 0, 0, 0};
     //PVSSRC *  pSource[3];
@@ -4968,7 +5007,7 @@ void add_return_inst(r700_AssemblerBase *pAsm)
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.barrier          = 0x1;
 }
 
-GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
+GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex, GLuint uiIL_Shift)
 {
     /* Put in sub */
     if( (pAsm->unSubArrayPointer + 1) > pAsm->unSubArraySize )
@@ -4983,7 +5022,7 @@ GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex)
         pAsm->unSubArraySize += 10;
     }
 
-    pAsm->subs[pAsm->unSubArrayPointer].subIL_Offset = nILindex;
+    pAsm->subs[pAsm->unSubArrayPointer].subIL_Offset = nILindex + uiIL_Shift;
     pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.pHead=NULL;  
     pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.pTail=NULL;  
     pAsm->subs[pAsm->unSubArrayPointer].lstCFInstructions_local.uNumOfNode=0;
@@ -5074,9 +5113,13 @@ GLboolean assemble_RET(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_CAL(r700_AssemblerBase *pAsm, 
                        GLint nILindex,
+                       GLuint uiIL_Shift,
                        GLuint uiNumberInsts,
-                       struct prog_instruction *pILInst)
+                       struct prog_instruction *pILInst,
+                       PRESUB_DESC * pPresubDesc)
 {
+    GLint uiIL_Offset;
+
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
 
     if(GL_FALSE == add_cf_instruction(pAsm) )
@@ -5109,8 +5152,12 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
         pAsm->unCallerArraySize += 10;
     }
     
-    pAsm->callers[pAsm->unCallerArrayPointer].subIL_Offset = nILindex;
-    pAsm->callers[pAsm->unCallerArrayPointer].cf_ptr       = pAsm->cf_current_cf_clause_ptr; 
+    uiIL_Offset = nILindex + uiIL_Shift;
+    pAsm->callers[pAsm->unCallerArrayPointer].subIL_Offset = uiIL_Offset; 
+    pAsm->callers[pAsm->unCallerArrayPointer].cf_ptr       = pAsm->cf_current_cf_clause_ptr;
+    
+    pAsm->callers[pAsm->unCallerArrayPointer].finale_cf_ptr  = NULL; 
+    pAsm->callers[pAsm->unCallerArrayPointer].prelude_cf_ptr = NULL; 
 
     pAsm->unCallerArrayPointer++;
 
@@ -5120,7 +5167,7 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
     GLboolean bRet;
     for(j=0; j<pAsm->unSubArrayPointer; j++)
     {
-        if(nILindex == pAsm->subs[j].subIL_Offset)
+        if(uiIL_Offset == pAsm->subs[j].subIL_Offset)
         {   /* compiled before */
 
             max = pAsm->subs[j].unStackDepthMax 
@@ -5138,7 +5185,7 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
     pAsm->callers[pAsm->unCallerArrayPointer - 1].subDescIndex = pAsm->unSubArrayPointer;
     unSubID = pAsm->unSubArrayPointer;
 
-    bRet = AssembleInstr(nILindex, uiNumberInsts, pILInst, pAsm);
+    bRet = AssembleInstr(nILindex, uiIL_Shift, uiNumberInsts, pILInst, pAsm);
 
     if(GL_TRUE == bRet)
     {
@@ -5148,6 +5195,8 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
         {
             pAsm->CALLSTACK[pAsm->CALLSP].max = max;
         }
+
+        pAsm->subs[unSubID].pPresubDesc = pPresubDesc;
     }
 
     return bRet;
@@ -5313,6 +5362,7 @@ GLboolean breakLoopOnFlag(r700_AssemblerBase *pAsm, GLuint unFCSP)
 }
 
 GLboolean AssembleInstr(GLuint uiFirstInst,
+                        GLuint uiIL_Shift,
                         GLuint uiNumberInsts,
                         struct prog_instruction *pILInst, 
 						r700_AssemblerBase *pR700AsmCode)
@@ -5468,6 +5518,26 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         case OPCODE_MUL: 
             if ( GL_FALSE == assemble_MUL(pR700AsmCode) ) 
                 return GL_FALSE;
+            break;
+            
+        case OPCODE_NOISE1:
+            {                                               
+                callPreSub(pR700AsmCode, 
+                           GLSL_NOISE1,                         
+                           &noise1_presub,                                                  
+                           pILInst->DstReg.Index + pR700AsmCode->starting_temp_register_number, 
+                           1); 
+                radeon_error("noise1: not yet supported shader instruction\n");
+            };
+            break; 
+        case OPCODE_NOISE2: 
+            radeon_error("noise2: not yet supported shader instruction\n");
+            break; 
+        case OPCODE_NOISE3: 
+            radeon_error("noise3: not yet supported shader instruction\n");
+            break; 
+        case OPCODE_NOISE4: 
+            radeon_error("noise4: not yet supported shader instruction\n");
             break; 
 
         case OPCODE_POW: 
@@ -5653,7 +5723,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             break;
 
         case OPCODE_BGNSUB:
-            if( GL_FALSE == assemble_BGNSUB(pR700AsmCode, i) )
+            if( GL_FALSE == assemble_BGNSUB(pR700AsmCode, i, uiIL_Shift) )
             {
                 return GL_FALSE;
             }
@@ -5668,9 +5738,11 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         
         case OPCODE_CAL:
             if( GL_FALSE == assemble_CAL(pR700AsmCode, 
-                                         pILInst[i].BranchTarget,                                         
+                                         pILInst[i].BranchTarget,
+                                         uiIL_Shift,
                                          uiNumberInsts,
-                                         pILInst) )
+                                         pILInst,
+                                         NULL) )
             {
                 return GL_FALSE;
             }
@@ -5707,7 +5779,7 @@ GLboolean InitShaderProgram(r700_AssemblerBase * pAsm)
     return GL_TRUE;
 }
 
-GLboolean RelocProgram(r700_AssemblerBase * pAsm)
+GLboolean RelocProgram(r700_AssemblerBase * pAsm, struct gl_program * pILProg)
 {
     GLuint i;
     GLuint unCFoffset;
@@ -5716,6 +5788,12 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
 
     R700ShaderInstruction *        pInst;
     R700ControlFlowGenericClause * pCFInst;
+
+    R700ControlFlowALUClause * pCF_ALU;
+    R700ALUInstruction       * pALU;
+    GLuint                     unConstOffset = 0;
+    GLuint                     unRegOffset;
+    GLuint                     unMinRegIndex;
 
     plstCFmain = pAsm->CALLSTACK[0].plstCFInstructions_local;
 
@@ -5762,6 +5840,11 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
 
     unCFoffset = plstCFmain->uNumOfNode;
 
+    if(NULL != pILProg->Parameters)
+    {        
+        unConstOffset = pILProg->Parameters->NumParameters;
+    }
+
     /* Reloc subs */
     for(i=0; i<pAsm->unSubArrayPointer; i++)
     {
@@ -5799,6 +5882,84 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
             pInst = pInst->pNextInst;
         };
 
+        if(NULL != pAsm->subs[i].pPresubDesc)
+        {
+            GLuint                     uNumSrc;            
+            
+            unMinRegIndex  = pAsm->subs[i].pPresubDesc->pCompiledSub->MinRegIndex;
+            unRegOffset    = pAsm->subs[i].pPresubDesc->maxStartReg;            
+            unConstOffset += pAsm->subs[i].pPresubDesc->unConstantsStart;
+
+            pInst = plstCFsub->pHead;
+            while(pInst)
+            {
+                if(SIT_CF_ALU == pInst->m_ShaderInstType)
+                {
+                    pCF_ALU = (R700ControlFlowALUClause *)pInst;
+
+                    pALU = pCF_ALU->m_pLinkedALUInstruction;
+                    for(int j=0; j<=pCF_ALU->m_Word1.f.count; j++)
+                    {
+                        pALU->m_Word1.f.dst_gpr = pALU->m_Word1.f.dst_gpr + unRegOffset - unMinRegIndex;
+
+                        if(pALU->m_Word0.f.src0_sel < SQ_ALU_SRC_GPR_SIZE)
+                        {   
+                            pALU->m_Word0.f.src0_sel = pALU->m_Word0.f.src0_sel + unRegOffset - unMinRegIndex;
+                        }
+                        else if(pALU->m_Word0.f.src0_sel >= SQ_ALU_SRC_CFILE_BASE)
+                        {   
+                            pALU->m_Word0.f.src0_sel += unConstOffset;
+                        }
+
+                        if( ((pALU->m_Word1.val >> SQ_ALU_WORD1_OP3_ALU_INST_SHIFT) & 0x0000001F) 
+                            >= SQ_OP3_INST_MUL_LIT )
+                        {   /* op3 : 3 srcs */
+                            if(pALU->m_Word1_OP3.f.src2_sel < SQ_ALU_SRC_GPR_SIZE)
+                            {   
+                                pALU->m_Word1_OP3.f.src2_sel = pALU->m_Word1_OP3.f.src2_sel + unRegOffset - unMinRegIndex;
+                            }
+                            else if(pALU->m_Word1_OP3.f.src2_sel >= SQ_ALU_SRC_CFILE_BASE)
+                            {   
+                                pALU->m_Word1_OP3.f.src2_sel += unConstOffset;
+                            }    
+                            if(pALU->m_Word0.f.src1_sel < SQ_ALU_SRC_GPR_SIZE)
+                            {   
+                                pALU->m_Word0.f.src1_sel = pALU->m_Word0.f.src1_sel + unRegOffset - unMinRegIndex;
+                            }
+                            else if(pALU->m_Word0.f.src1_sel >= SQ_ALU_SRC_CFILE_BASE)
+                            {   
+                                pALU->m_Word0.f.src1_sel += unConstOffset;
+                            }                                 
+                        }
+                        else
+                        {
+                            if(pAsm->bR6xx)
+                            {
+                                uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f6.alu_inst, 0);
+                            }
+                            else
+                            {
+                                uNumSrc = r700GetNumOperands(pALU->m_Word1_OP2.f.alu_inst, 0);
+                            }
+                            if(2 == uNumSrc)
+                            {   /* 2 srcs */
+                                if(pALU->m_Word0.f.src1_sel < SQ_ALU_SRC_GPR_SIZE)
+                                {   
+                                    pALU->m_Word0.f.src1_sel = pALU->m_Word0.f.src1_sel + unRegOffset - unMinRegIndex;
+                                }
+                                else if(pALU->m_Word0.f.src1_sel >= SQ_ALU_SRC_CFILE_BASE)
+                                {   
+                                    pALU->m_Word0.f.src1_sel += unConstOffset;
+                                }                                  
+                            }                            
+                        }
+                        pALU = (R700ALUInstruction*)(pALU->pNextInst);
+                    }                    
+                }             
+                pInst = pInst->pNextInst;
+            };
+        }
+
         /* Put sub into main */
         plstCFmain->pTail->pNextInst = plstCFsub->pHead;
         plstCFmain->pTail            = plstCFsub->pTail;
@@ -5812,9 +5973,214 @@ GLboolean RelocProgram(r700_AssemblerBase * pAsm)
     {
         pAsm->callers[i].cf_ptr->m_Word0.f.addr
             = pAsm->subs[pAsm->callers[i].subDescIndex].unCFoffset; 
+
+        if(NULL != pAsm->subs[pAsm->callers[i].subDescIndex].pPresubDesc)
+        {                 
+            unMinRegIndex = pAsm->subs[pAsm->callers[i].subDescIndex].pPresubDesc->pCompiledSub->MinRegIndex;
+            unRegOffset = pAsm->subs[pAsm->callers[i].subDescIndex].pPresubDesc->maxStartReg;
+
+            if(NULL != pAsm->callers[i].prelude_cf_ptr)
+            {                
+                pCF_ALU = (R700ControlFlowALUClause * )(pAsm->callers[i].prelude_cf_ptr);
+                pALU = pCF_ALU->m_pLinkedALUInstruction;
+                for(int j=0; j<=pCF_ALU->m_Word1.f.count; j++)
+                {
+                    pALU->m_Word1.f.dst_gpr = pALU->m_Word1.f.dst_gpr + unRegOffset - unMinRegIndex;
+                    pALU = (R700ALUInstruction*)(pALU->pNextInst);
+                }
+            }
+            if(NULL != pAsm->callers[i].finale_cf_ptr)
+            {
+                pCF_ALU = (R700ControlFlowALUClause * )(pAsm->callers[i].finale_cf_ptr);
+                pALU = pCF_ALU->m_pLinkedALUInstruction;
+                for(int j=0; j<=pCF_ALU->m_Word1.f.count; j++)
+                {
+                    pALU->m_Word0.f.src0_sel = pALU->m_Word0.f.src0_sel + unRegOffset - unMinRegIndex;
+                    pALU = (R700ALUInstruction*)(pALU->pNextInst);
+                }
+            }
+        }
     }
 
     return GL_TRUE;
+}
+
+GLboolean callPreSub(r700_AssemblerBase* pAsm, 
+                         LOADABLE_SCRIPT_SIGNITURE scriptSigniture,                          
+                         COMPILED_SUB * pCompiledSub,                                               
+                         GLshort uOutReg,
+                         GLshort uNumValidSrc)
+{
+    /* save assemble context */
+    GLuint starting_temp_register_number_save;
+    GLuint number_used_registers_save;
+    GLuint uFirstHelpReg_save;
+    GLuint uHelpReg_save;
+    GLuint uiCurInst_save;
+    struct prog_instruction *pILInst_save;
+    PRESUB_DESC * pPresubDesc;
+    GLboolean     bRet;
+    int i;
+
+    R700ControlFlowGenericClause* prelude_cf_ptr = NULL;
+
+    /* copy srcs to presub inputs */  
+    pAsm->alu_x_opcode = SQ_CF_INST_ALU;
+    for(i=0; i<uNumValidSrc; i++)
+    {
+        pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
+        setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+        pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+        pAsm->D.dst.reg   = pCompiledSub->srcRegIndex[i];
+        pAsm->D.dst.writex = 1;
+        pAsm->D.dst.writey = 1;
+        pAsm->D.dst.writez = 1;
+        pAsm->D.dst.writew = 1;
+
+        if( GL_FALSE == assemble_src(pAsm, i, 0) )
+        {
+            return GL_FALSE;
+        }
+
+        next_ins(pAsm);
+    }
+    if(uNumValidSrc > 0)
+    {
+        prelude_cf_ptr     = pAsm->cf_current_alu_clause_ptr;
+        pAsm->alu_x_opcode = SQ_CF_INST_ALU;
+    }
+
+    /* browse thro existing presubs. */
+    for(i=0; i<pAsm->unNumPresub; i++)
+    {
+        if(pAsm->presubs[i].sptSigniture == scriptSigniture)
+        {
+            break;
+        }
+    }
+
+    if(i == pAsm->unNumPresub)
+    {   /* not loaded yet */
+        /* save assemble context */
+        number_used_registers_save         = pAsm->number_used_registers;
+        uFirstHelpReg_save                 = pAsm->uFirstHelpReg;
+        uHelpReg_save                      = pAsm->uHelpReg;
+        starting_temp_register_number_save = pAsm->starting_temp_register_number;
+        pILInst_save                       = pAsm->pILInst;
+        uiCurInst_save                     = pAsm->uiCurInst;
+
+        /* alloc in presub */
+        if( (pAsm->unNumPresub + 1) > pAsm->unPresubArraySize )
+        {
+            pAsm->presubs = (PRESUB_DESC*)_mesa_realloc( (void *)pAsm->presubs,
+                                      sizeof(PRESUB_DESC) * pAsm->unPresubArraySize,
+                                      sizeof(PRESUB_DESC) * (pAsm->unPresubArraySize + 4) );
+            if(NULL == pAsm->presubs)
+            {
+                radeon_error("No memeory to allocate built in shader function description structures. \n");
+                return GL_FALSE;
+            }
+            pAsm->unPresubArraySize += 4;
+        }
+        
+        pPresubDesc = &(pAsm->presubs[i]);
+        pPresubDesc->sptSigniture = scriptSigniture;
+
+        /* constants offsets need to be final resolved at reloc. */
+        if(0 == pAsm->unNumPresub)
+        {
+            pPresubDesc->unConstantsStart = 0; 
+        }
+        else
+        {
+            pPresubDesc->unConstantsStart =  pAsm->presubs[i-1].unConstantsStart
+                                           + pAsm->presubs[i-1].pCompiledSub->NumParameters;
+        }
+
+        pPresubDesc->pCompiledSub = pCompiledSub;
+
+        pPresubDesc->subIL_Shift = pAsm->unCurNumILInsts;
+        pPresubDesc->maxStartReg  = uFirstHelpReg_save;
+        pAsm->unCurNumILInsts    += pCompiledSub->NumInstructions;
+
+        pAsm->unNumPresub++;
+
+        /* setup new assemble context */
+        pAsm->starting_temp_register_number = 0;
+        pAsm->number_used_registers = pCompiledSub->NumTemporaries;
+        pAsm->uFirstHelpReg         = pAsm->number_used_registers;
+        pAsm->uHelpReg              = pAsm->uFirstHelpReg;
+
+        bRet = assemble_CAL(pAsm, 
+                            0, 
+                            pPresubDesc->subIL_Shift, 
+                            pCompiledSub->NumInstructions,
+                            pCompiledSub->Instructions,
+                            pPresubDesc);
+
+        
+        pPresubDesc->number_used_registers = pAsm->number_used_registers;        
+
+        /* restore assemble context */
+        pAsm->number_used_registers         = number_used_registers_save; 
+        pAsm->uFirstHelpReg                 = uFirstHelpReg_save;
+        pAsm->uHelpReg                      = uHelpReg_save;
+        pAsm->starting_temp_register_number = starting_temp_register_number_save;
+        pAsm->pILInst                       = pILInst_save; 
+        pAsm->uiCurInst                     = uiCurInst_save;
+    }
+    else
+    {   /* was loaded */
+        pPresubDesc = &(pAsm->presubs[i]);  
+        
+        bRet = assemble_CAL(pAsm, 
+                            0, 
+                            pPresubDesc->subIL_Shift, 
+                            pCompiledSub->NumInstructions,
+                            pCompiledSub->Instructions,
+                            pPresubDesc);
+    }
+
+    if(GL_FALSE == bRet)
+    {
+        radeon_error("Shader presub assemble failed. \n");
+    }
+    else
+    {
+        /* copy presub output to real dst */ 
+        pAsm->alu_x_opcode = SQ_CF_INST_ALU;
+        pAsm->D.dst.opcode = SQ_OP2_INST_MOV;
+
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = pCompiledSub->dstRegIndex;
+        pAsm->S[0].src.swizzlex = pCompiledSub->outputSwizzleX;
+        pAsm->S[0].src.swizzley = pCompiledSub->outputSwizzleY;
+        pAsm->S[0].src.swizzlez = pCompiledSub->outputSwizzleZ;
+        pAsm->S[0].src.swizzlew = pCompiledSub->outputSwizzleW;
+
+        next_ins(pAsm);        
+
+        pAsm->callers[pAsm->unCallerArrayPointer - 1].finale_cf_ptr  = pAsm->cf_current_alu_clause_ptr;
+        pAsm->callers[pAsm->unCallerArrayPointer - 1].prelude_cf_ptr = prelude_cf_ptr;
+        pAsm->alu_x_opcode = SQ_CF_INST_ALU;
+    }
+
+    if( (pPresubDesc->number_used_registers + pAsm->uFirstHelpReg) > pAsm->number_used_registers )
+    {
+        pAsm->number_used_registers = pPresubDesc->number_used_registers + pAsm->uFirstHelpReg;
+    }
+    if(pAsm->uFirstHelpReg > pPresubDesc->maxStartReg)
+    {
+        pPresubDesc->maxStartReg = pAsm->uFirstHelpReg;
+    }
+
+    return bRet;
 }
 
 GLboolean Process_Export(r700_AssemblerBase* pAsm,
@@ -6172,6 +6538,11 @@ GLboolean Clean_Up_Assembler(r700_AssemblerBase *pR700AsmCode)
     if(NULL != pR700AsmCode->callers)
     {
         FREE(pR700AsmCode->callers);
+    }
+
+    if(NULL != pR700AsmCode->presubs)
+    {
+        FREE(pR700AsmCode->presubs);
     }
 
     return GL_TRUE;
