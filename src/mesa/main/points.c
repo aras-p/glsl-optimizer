@@ -69,8 +69,10 @@ _mesa_PointSize( GLfloat size )
 void GLAPIENTRY
 _mesa_PointParameteri( GLenum pname, GLint param )
 {
-   const GLfloat value = (GLfloat) param;
-   _mesa_PointParameterfv(pname, &value);
+   GLfloat p[3];
+   p[0] = (GLfloat) param;
+   p[1] = p[2] = 0.0F;
+   _mesa_PointParameterfv(pname, p);
 }
 
 
