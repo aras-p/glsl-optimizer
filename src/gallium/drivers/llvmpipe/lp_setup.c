@@ -47,6 +47,13 @@
 static void set_state( struct setup_context *, unsigned );
 
 
+struct lp_bins *
+lp_setup_get_current_bins(struct setup_context *setup)
+{
+   /* XXX eventually get bin from queue */
+   return setup->bins;
+}
+
 
 static void
 first_triangle( struct setup_context *setup,
@@ -88,7 +95,7 @@ static void reset_context( struct setup_context *setup )
    setup->fs.stored = NULL;
    setup->dirty = ~0;
 
-   lp_reset_bins( &setup->bins );
+   lp_reset_bins( setup->bins );
 
    /* Reset some state:
     */
@@ -108,8 +115,10 @@ static void
 rasterize_bins( struct setup_context *setup,
                 boolean write_depth )
 {
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+
    lp_rasterize_bins(setup->rast,
-                     &setup->bins,
+                     bins,
                      setup->fb,
                      write_depth);
 
@@ -123,26 +132,28 @@ rasterize_bins( struct setup_context *setup,
 static void
 begin_binning( struct setup_context *setup )
 {
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    if (setup->fb->cbufs[0]) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
-         lp_bin_everywhere( &setup->bins, 
+         lp_bin_everywhere( bins, 
                             lp_rast_clear_color, 
                             setup->clear.color );
       else
-         lp_bin_everywhere( &setup->bins,
+         lp_bin_everywhere( bins,
                             lp_rast_load_color,
                             lp_rast_arg_null() );
    }
 
    if (setup->fb->zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         lp_bin_everywhere( &setup->bins, 
+         lp_bin_everywhere( bins, 
                             lp_rast_clear_zstencil, 
                             setup->clear.zstencil );
       else
-         lp_bin_everywhere( &setup->bins,
+         lp_bin_everywhere( bins,
                             lp_rast_load_zstencil,
                             lp_rast_arg_null() );
    }
@@ -215,6 +226,7 @@ void
 lp_setup_bind_framebuffer( struct setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
    unsigned tiles_x, tiles_y;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -226,7 +238,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
    tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
    tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
 
-   lp_bin_set_num_bins(&setup->bins, tiles_x, tiles_y);
+   lp_bin_set_num_bins(bins, tiles_x, tiles_y);
 }
 
 
@@ -237,6 +249,7 @@ lp_setup_clear( struct setup_context *setup,
                 unsigned stencil,
                 unsigned flags )
 {
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
    unsigned i;
 
    LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
@@ -261,12 +274,12 @@ lp_setup_clear( struct setup_context *setup,
        * don't see that as being a common usage.
        */
       if (flags & PIPE_CLEAR_COLOR)
-         lp_bin_everywhere( &setup->bins, 
+         lp_bin_everywhere( bins, 
                             lp_rast_clear_color, 
                             setup->clear.color );
 
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         lp_bin_everywhere( &setup->bins, 
+         lp_bin_everywhere( bins, 
                             lp_rast_clear_zstencil, 
                             setup->clear.zstencil );
    }
@@ -407,6 +420,8 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 static INLINE void
 lp_setup_update_shader_state( struct setup_context *setup )
 {
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    assert(setup->fs.current.jit_function);
@@ -415,7 +430,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
       uint8_t *stored;
       unsigned i, j;
 
-      stored = lp_bin_alloc_aligned(&setup->bins, 4 * 16, 16);
+      stored = lp_bin_alloc_aligned(bins, 4 * 16, 16);
 
       /* smear each blend color component across 16 ubyte elements */
       for (i = 0; i < 4; ++i) {
@@ -447,7 +462,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
                    current_size) != 0) {
             void *stored;
 
-            stored = lp_bin_alloc(&setup->bins, current_size);
+            stored = lp_bin_alloc(bins, current_size);
             if(stored) {
                memcpy(stored,
                       current_data,
@@ -477,7 +492,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
           * and append it to the bin's setup data buffer.
           */
          struct lp_rast_state *stored =
-            (struct lp_rast_state *) lp_bin_alloc(&setup->bins, sizeof *stored);
+            (struct lp_rast_state *) lp_bin_alloc(bins, sizeof *stored);
          if(stored) {
             memcpy(stored,
                    &setup->fs.current,
@@ -485,7 +500,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
             setup->fs.stored = stored;
 
             /* put the state-set command into all bins */
-            lp_bin_state_command( &setup->bins,
+            lp_bin_state_command( bins,
                                   lp_rast_set_state, 
                                   lp_rast_arg_state(setup->fs.stored) );
          }
@@ -537,9 +552,10 @@ lp_setup_destroy( struct setup_context *setup )
 
    pipe_buffer_reference(&setup->constants.current, NULL);
 
-   lp_free_bin_data(&setup->bins);
+   lp_bins_destroy(setup->bins);
 
    lp_rast_destroy( setup->rast );
+
    FREE( setup );
 }
 
@@ -557,7 +573,7 @@ lp_setup_create( struct pipe_screen *screen )
    if (!setup->rast) 
       goto fail;
 
-   lp_init_bins(&setup->bins);
+   setup->bins = lp_bins_create();
 
    setup->triangle = first_triangle;
    setup->line     = first_line;

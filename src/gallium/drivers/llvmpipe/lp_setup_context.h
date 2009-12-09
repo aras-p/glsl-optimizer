@@ -55,7 +55,7 @@ struct setup_context {
 
    struct lp_rasterizer *rast;
 
-   struct lp_bins bins;
+   struct lp_bins *bins;
 
    boolean ccw_is_frontface;
    unsigned cullmode;
@@ -113,5 +113,6 @@ void lp_setup_choose_triangle( struct setup_context *setup );
 void lp_setup_choose_line( struct setup_context *setup );
 void lp_setup_choose_point( struct setup_context *setup );
 
+struct lp_bins *lp_setup_get_current_bins(struct setup_context *setup);
 
 #endif
