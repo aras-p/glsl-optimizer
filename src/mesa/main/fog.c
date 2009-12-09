@@ -34,7 +34,10 @@
 void GLAPIENTRY
 _mesa_Fogf(GLenum pname, GLfloat param)
 {
-   _mesa_Fogfv(pname, &param);
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_Fogfv(pname, fparam);
 }
 
 
