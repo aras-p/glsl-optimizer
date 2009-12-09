@@ -56,7 +56,17 @@ static void set_state( struct setup_context *, unsigned );
 struct lp_bins *
 lp_setup_get_current_bins(struct setup_context *setup)
 {
-   /* XXX eventually get bin from queue */
+   if (!setup->bins) {
+      /* wait for a free/empty bin */
+      setup->bins = lp_bins_dequeue(setup->empty_bins);
+      if(0)lp_reset_bins( setup->bins ); /* XXX temporary? */
+
+      if (setup->fb) {
+         unsigned tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
+         unsigned tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
+         lp_bin_set_num_bins(setup->bins, tiles_x, tiles_y);
+      }
+   }
    return setup->bins;
 }
 
@@ -101,7 +111,8 @@ static void reset_context( struct setup_context *setup )
    setup->fs.stored = NULL;
    setup->dirty = ~0;
 
-   lp_reset_bins( setup->bins );
+   /* no current bin */
+   setup->bins = NULL;
 
    /* Reset some state:
     */
@@ -558,8 +569,6 @@ lp_setup_destroy( struct setup_context *setup )
 
    pipe_buffer_reference(&setup->constants.current, NULL);
 
-   lp_bins_destroy(setup->bins);
-
    /* free the bins in the 'empty' queue */
    while (lp_bins_queue_size(setup->empty_bins) > 0) {
       struct lp_bins *bins = lp_bins_dequeue(setup->empty_bins);
@@ -594,8 +603,6 @@ lp_setup_create( struct pipe_screen *screen )
    setup->rast = lp_rast_create( screen, setup->empty_bins );
    if (!setup->rast) 
       goto fail;
-
-   setup->bins = lp_bins_create();
 
    /* create some empty bins */
    for (i = 0; i < MAX_BINS; i++) {

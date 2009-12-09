@@ -569,6 +569,10 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       /* no threading */
       lp_bin_iter_begin( bins );
       rasterize_bins( rast, 0, bins, fb, write_depth );
+
+      /* reset bins and put into the empty queue */
+      lp_reset_bins( bins );
+      lp_bins_enqueue( rast->empty_bins, bins);
    }
    else {
       /* threaded rendering! */
@@ -589,6 +593,10 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       for (i = 0; i < rast->num_threads; i++) {
          pipe_semaphore_wait(&rast->tasks[i].work_done);
       }
+
+      /* reset bins and put into the empty queue */
+      lp_reset_bins( bins );
+      lp_bins_enqueue( rast->empty_bins, bins);
    }
 
    lp_rast_end( rast );
