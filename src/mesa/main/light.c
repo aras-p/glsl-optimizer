@@ -537,7 +537,10 @@ _mesa_LightModeliv( GLenum pname, const GLint *params )
 void GLAPIENTRY
 _mesa_LightModeli( GLenum pname, GLint param )
 {
-   _mesa_LightModeliv( pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_LightModeliv( pname, iparam );
 }
 
 
