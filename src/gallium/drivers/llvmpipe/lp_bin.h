@@ -120,6 +120,11 @@ struct lp_bins {
 
 
 
+struct lp_bins *lp_bins_create(void);
+
+void lp_bins_destroy(struct lp_bins *bins);
+
+
 void lp_init_bins(struct lp_bins *bins);
 
 void lp_reset_bins(struct lp_bins *bins );
@@ -133,6 +138,10 @@ lp_bin_set_num_bins( struct lp_bins *bins,
 void lp_bin_new_data_block( struct data_block_list *list );
 
 void lp_bin_new_cmd_block( struct cmd_block_list *list );
+
+unsigned lp_bin_data_size( const struct lp_bins *bins );
+
+unsigned lp_bin_cmd_size( const struct lp_bins *bins, unsigned x, unsigned y );
 
 
 /**

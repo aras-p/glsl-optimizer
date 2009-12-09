@@ -29,6 +29,25 @@
 #include "lp_bin.h"
 
 
+struct lp_bins *
+lp_bins_create(void)
+{
+   struct lp_bins *bins = CALLOC_STRUCT(lp_bins);
+   if (bins)
+      lp_init_bins(bins);
+   return bins;
+}
+
+
+void
+lp_bins_destroy(struct lp_bins *bins)
+{
+   lp_reset_bins(bins);
+   lp_free_bin_data(bins);
+   FREE(bins);
+}
+
+
 void
 lp_init_bins(struct lp_bins *bins)
 {
@@ -144,6 +163,34 @@ lp_bin_new_data_block( struct data_block_list *list )
    list->tail = block;
    block->next = NULL;
    block->used = 0;
+}
+
+
+/** Return number of bytes used for bin data */
+unsigned
+lp_bin_data_size( const struct lp_bins *bins )
+{
+   unsigned size = 0;
+   const struct data_block *block;
+   for (block = bins->data.head; block; block = block->next) {
+      size += block->used;
+   }
+   return size;
+}
+
+
+/** Return number of bytes used for a tile bin */
+unsigned
+lp_bin_cmd_size( const struct lp_bins *bins, unsigned x, unsigned y )
+{
+   struct cmd_bin *bin = lp_get_bin((struct lp_bins *) bins, x, y);
+   const struct cmd_block *cmd;
+   unsigned size = 0;
+   for (cmd = bin->commands.head; cmd; cmd = cmd->next) {
+      size += (cmd->count *
+               (sizeof(lp_rast_cmd) + sizeof(union lp_rast_cmd_arg)));
+   }
+   return size;
 }
 
 
