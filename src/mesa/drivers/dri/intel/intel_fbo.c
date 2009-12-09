@@ -278,7 +278,6 @@ intel_create_renderbuffer(gl_format format)
    GET_CURRENT_CONTEXT(ctx);
 
    struct intel_renderbuffer *irb;
-   const GLuint name = 0;
 
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
@@ -286,7 +285,7 @@ intel_create_renderbuffer(gl_format format)
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&irb->Base, name);
+   _mesa_init_renderbuffer(&irb->Base, 0);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
    switch (format) {
