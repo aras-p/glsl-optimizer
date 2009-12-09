@@ -37,6 +37,7 @@
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
+#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
@@ -591,6 +592,7 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_object *tex_obj = att->Texture;
    struct gl_texture_image *image =
       tex_obj->Image[att->CubeMapFace][att->TextureLevel];
@@ -598,8 +600,14 @@ intel_finish_render_texture(GLcontext * ctx,
 
    /* Flag that this image may now be validated into the object's miptree. */
    intel_image->used_as_render_target = GL_FALSE;
-}
 
+   /* Since we've (probably) rendered to the texture and will (likely) use
+    * it in the texture domain later on in this batchbuffer, flush the
+    * batch.  Once again, we wish for a domain tracker in libdrm to cover
+    * usage inside of a batchbuffer like GEM does in the kernel.
+    */
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+}
 
 /**
  * Do additional "completeness" testing of a framebuffer object.
