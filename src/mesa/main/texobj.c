@@ -418,7 +418,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Detect cases where the application set the base level to an invalid
     * value.
     */
-   if ((baseLevel < 0) || (baseLevel > MAX_TEXTURE_LEVELS)) {
+   if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       char s[100];
       _mesa_sprintf(s, "base level = %d is invalid", baseLevel);
       incomplete(t, s);
