@@ -192,10 +192,16 @@ st_translate_vertex_program(struct st_context *st,
 {
    struct st_vp_varient *vpv = CALLOC_STRUCT(st_vp_varient);
    struct pipe_context *pipe = st->pipe;
+   struct ureg_program *ureg;
 
-   vpv->state.tokens = 
+   ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
+   if (ureg == NULL)
+      return NULL;
+
+   error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
+                                ureg,
                                 &stvp->Base.Base,
                                 /* inputs */
                                 stvp->num_inputs,
@@ -208,6 +214,20 @@ st_translate_vertex_program(struct st_context *st,
                                 stvp->result_to_output,
                                 stvp->output_semantic_name,
                                 stvp->output_semantic_index );
+
+   if (ret)
+      goto fail;
+
+   /* Edgeflags will be the last input:
+    */
+   if (key.passthrough_edgeflags) {
+      ureg_MOV( ureg,
+                ureg_DECL_output( ureg, TGSI_SEMANTIC_EDGEFLAG, 0 ),
+                ureg_DECL_next_vs_input(ureg));
+   }
+
+   tokens = ureg_get_tokens( ureg, NULL );
+   ureg_destroy( ureg );
 
    vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
 
@@ -222,6 +242,10 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    return vpv;
+
+fail:
+   ureg_destroy( ureg );
+   return NULL;
 }
 
 
@@ -243,6 +267,7 @@ st_translate_fragment_program(struct st_context *st,
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
+   struct ureg_program *ureg;
    GLuint vslot = 0;
 
    uint fs_num_inputs = 0;
@@ -376,6 +401,11 @@ st_translate_fragment_program(struct st_context *st,
 
    if (!inputMapping)
       inputMapping = defaultInputMapping;
+
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return NULL;
+
 
    stfp->state.tokens = 
       st_translate_mesa_program(st->ctx,

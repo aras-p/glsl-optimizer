@@ -106,7 +106,16 @@ find_translated_vp(struct st_context *st,
    /* Nothing in our key yet.  This will change:
     */
    memset(&key, 0, sizeof key);
-   key.dummy = 0;
+
+   /* When this is true, we will add an extra input to the vertex
+    * shader translation (for edgeflags), an extra output with
+    * edgeflag semantics, and extend the vertex shader to pass through
+    * the input to the output.  We'll need to use similar logic to set
+    * up the extra vertex_element input for edgeflags.
+    */
+   key.passthrough_edgeflags = (ctx->Polygon.FrontMode != GL_FILL ||
+                                ctx->Polygon.BackMode != GL_FILL);
+      
 
    /* Do we need to throw away old translations after a change in the
     * GL program string?

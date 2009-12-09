@@ -86,7 +86,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)(draw->identity_viewport ||
                                       draw->rasterizer->bypass_vs_clip_and_viewport),
-			    (boolean)draw->rasterizer->gl_rasterization_rules );
+			    (boolean)draw->rasterizer->gl_rasterization_rules,
+                            need_edgeflags );
 			    
 
    if (!(opt & PT_PIPELINE)) {

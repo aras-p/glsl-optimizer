@@ -217,59 +217,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
 }
 
 
-/*
- * If edge flags are needed, setup an bitvector of flags and call
- * pipe->set_edgeflags().
- * XXX memleak: need to free the returned pointer at some point
- */
-static void *
-setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
-                const struct gl_client_array *array)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
 
-   if ((primMode == GL_TRIANGLES ||
-        primMode == GL_QUADS ||
-        primMode == GL_POLYGON) &&
-       (ctx->Polygon.FrontMode != GL_FILL ||
-        ctx->Polygon.BackMode != GL_FILL)) {
-      /* need edge flags */
-      GLint i;
-      unsigned *vec;
-      struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
-      ubyte *map;
-
-      if (!stobj || stobj->Base.Name == 0) {
-         /* edge flags are not in a VBO */
-         return NULL;
-      }
-
-      vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
-      if (!vec)
-         return NULL;
-
-      map = pipe_buffer_map(pipe->screen, stobj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-      map = ADD_POINTERS(map, array->Ptr);
-
-      for (i = 0; i < count; i++) {
-         if (*((float *) map))
-            vec[i/32] |= 1 << (i % 32);
-
-         map += array->StrideB;
-      }
-
-      pipe_buffer_unmap(pipe->screen, stobj->buffer);
-
-      pipe->set_edgeflags(pipe, vec);
-
-      return vec;
-   }
-   else {
-      /* edge flags not needed */
-      pipe->set_edgeflags(pipe, NULL);
-      return NULL;
-   }
-}
 
 
 /**
@@ -671,10 +619,6 @@ st_draw_vbo(GLcontext *ctx,
           * through to driver & draw module.  These interfaces still
           * need a bit of work...
           */
-         setup_edgeflags(ctx, prims[i].mode,
-                         prims[i].start + indexOffset, prims[i].count,
-                         arrays[VERT_ATTRIB_EDGEFLAG]);
-
          pipe->draw_range_elements(pipe, indexBuf, indexSize,
                                    min_index,
                                    max_index,
@@ -683,10 +627,6 @@ st_draw_vbo(GLcontext *ctx,
       }
       else {
          for (i = 0; i < nr_prims; i++) {
-            setup_edgeflags(ctx, prims[i].mode,
-                            prims[i].start + indexOffset, prims[i].count,
-                            arrays[VERT_ATTRIB_EDGEFLAG]);
-            
             pipe->draw_elements(pipe, indexBuf, indexSize,
                                 prims[i].mode,
                                 prims[i].start + indexOffset, prims[i].count);
@@ -699,10 +639,6 @@ st_draw_vbo(GLcontext *ctx,
       /* non-indexed */
       GLuint i;
       for (i = 0; i < nr_prims; i++) {
-         setup_edgeflags(ctx, prims[i].mode,
-                         prims[i].start, prims[i].count,
-                         arrays[VERT_ATTRIB_EDGEFLAG]);
-
          pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
       }
    }

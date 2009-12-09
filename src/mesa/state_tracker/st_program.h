@@ -73,7 +73,7 @@ struct st_fragment_program
 
 struct st_vp_varient_key
 {
-   char dummy;                  /* currently unused */
+   boolean passthrough_edgeflags;
 };
 
 

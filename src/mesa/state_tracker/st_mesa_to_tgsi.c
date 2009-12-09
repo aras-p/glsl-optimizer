@@ -741,6 +741,7 @@ emit_face_var( struct st_translate *t,
 const struct tgsi_token *
 st_translate_mesa_program(
    GLcontext *ctx,
+   struct ureg_program *ureg;
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,
@@ -754,7 +755,6 @@ st_translate_mesa_program(
    const ubyte outputSemanticIndex[] )
 {
    struct st_translate translate, *t;
-   struct ureg_program *ureg;
    const struct tgsi_token *tokens = NULL;
    unsigned i;
 
@@ -764,11 +764,7 @@ st_translate_mesa_program(
    t->procType = procType;
    t->inputMapping = inputMapping;
    t->outputMapping = outputMapping;
-   t->ureg = ureg_create( procType );
-   if (t->ureg == NULL)
-      return NULL;
-
-   ureg = t->ureg;
+   t->ureg = ureg;
 
    /*_mesa_print_program(program);*/
 
@@ -899,8 +895,7 @@ st_translate_mesa_program(
                         t->insn[t->labels[i].branch_target] );
    }
 
-   tokens = ureg_get_tokens( ureg, NULL );
-   ureg_destroy( ureg );
+   return PIPE_OK;
 
 out:
    FREE(t->insn);
@@ -919,7 +914,7 @@ out:
       debug_assert(0);
    }
 
-   return tokens;
+   return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 

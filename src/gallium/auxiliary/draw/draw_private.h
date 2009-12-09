@@ -142,8 +142,6 @@ struct draw_context
 
       /* user-space vertex data, buffers */
       struct {
-         const unsigned *edgeflag;
-
          /** vertex element/index buffer (ex: glDrawElements) */
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */

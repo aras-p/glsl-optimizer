@@ -120,7 +120,12 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {
-         static struct vertex_header vh = { 0, 1, 0, UNDEFINED_VERTEX_ID, { .0f, .0f, .0f, .0f } };
+         static struct vertex_header vh = { 0,
+                                            1,
+                                            0,
+                                            UNDEFINED_VERTEX_ID,
+                                            { .0f, .0f, .0f, .0f } };
+
 	 fetch->translate->set_buffer(fetch->translate,
 				      draw->pt.nr_vertex_buffers,
 				      &vh,
@@ -128,9 +133,6 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       }
    }
 
-   fetch->need_edgeflags = ((draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-                             draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) &&
-                            draw->pt.user.edgeflag);
 }
 
 
@@ -158,16 +160,10 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			count,
 			verts );
 
-   /* Edgeflags are hard to fit into a translate program, populate
-    * them separately if required.  In the setup above they are
-    * defaulted to one, so only need this if there is reason to change
-    * that default:
+   /* Extract edgeflag values from vertex data into the header.
     */
    if (fetch->need_edgeflags) {
-      for (i = 0; i < count; i++) {
-         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
-         vh->edgeflag = draw_pt_get_edgeflag( draw, elts[i] );
-      }
+      extract_edge_flags( fetch, count );
    }
 }
 
@@ -194,16 +190,12 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
                    count,
                    verts );
 
-   /* Edgeflags are hard to fit into a translate program, populate
-    * them separately if required.  In the setup above they are
-    * defaulted to one, so only need this if there is reason to change
-    * that default:
+   /* Extract edgeflag values from vertex data into the header.  XXX:
+    * this should be done after the vertex shader is run.
+    * Bypass-vs-and-clip interaction with pipeline???
     */
    if (fetch->need_edgeflags) {
-      for (i = 0; i < count; i++) {
-         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
-         vh->edgeflag = draw_pt_get_edgeflag( draw, start + i );
-      }
+      extract_edge_flags( fetch, count );
    }
 }
 
