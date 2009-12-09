@@ -90,7 +90,10 @@ _mesa_PointParameteriv( GLenum pname, const GLint *params )
 void GLAPIENTRY
 _mesa_PointParameterf( GLenum pname, GLfloat param)
 {
-   _mesa_PointParameterfv(pname, &param);
+   GLfloat p[3];
+   p[0] = param;
+   p[1] = p[2] = 0.0F;
+   _mesa_PointParameterfv(pname, p);
 }
 
 
