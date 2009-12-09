@@ -7,6 +7,7 @@ CFLAGS += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
 	lp_bin.c \
+	lp_bin_queue.c \
 	lp_bld_alpha.c \
 	lp_bld_arit.c \
 	lp_bld_blend_aos.c \

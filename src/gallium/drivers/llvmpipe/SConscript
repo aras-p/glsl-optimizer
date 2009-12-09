@@ -20,6 +20,7 @@ llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
 		'lp_bin.c',
+		'lp_bin_queue.c',
 		'lp_bld_alpha.c',
 		'lp_bld_arit.c',
 		'lp_bld_blend_aos.c',
