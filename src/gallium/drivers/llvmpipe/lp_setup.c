@@ -34,7 +34,6 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "lp_bin.h"
@@ -62,9 +61,8 @@ lp_setup_get_current_bins(struct setup_context *setup)
       if(0)lp_reset_bins( setup->bins ); /* XXX temporary? */
 
       if (setup->fb) {
-         unsigned tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
-         unsigned tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
-         lp_bin_set_num_bins(setup->bins, tiles_x, tiles_y);
+         lp_bin_set_framebuffer_size(setup->bins,
+                                     setup->fb->width, setup->fb->height);
       }
    }
    return setup->bins;
@@ -244,7 +242,6 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
    struct lp_bins *bins = lp_setup_get_current_bins(setup);
-   unsigned tiles_x, tiles_y;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -252,10 +249,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    setup->fb = fb;
 
-   tiles_x = align(setup->fb->width, TILE_SIZE) / TILE_SIZE;
-   tiles_y = align(setup->fb->height, TILE_SIZE) / TILE_SIZE;
-
-   lp_bin_set_num_bins(bins, tiles_x, tiles_y);
+   lp_bin_set_framebuffer_size(bins, setup->fb->width, setup->fb->height);
 }
 
 

@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_bin.h"
 
@@ -137,12 +138,13 @@ lp_free_bin_data(struct lp_bins *bins)
 
 
 void
-lp_bin_set_num_bins( struct lp_bins *bins,
-                     unsigned tiles_x, unsigned tiles_y )
+lp_bin_set_framebuffer_size( struct lp_bins *bins,
+                             unsigned width, unsigned height )
 {
-   bins->tiles_x = tiles_x;
-   bins->tiles_y = tiles_y;
+   bins->tiles_x = align(width, TILE_SIZE) / TILE_SIZE;
+   bins->tiles_y = align(height, TILE_SIZE) / TILE_SIZE;
 }
+
 
 void
 lp_bin_new_cmd_block( struct cmd_block_list *list )

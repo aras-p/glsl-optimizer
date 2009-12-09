@@ -131,9 +131,8 @@ void lp_reset_bins(struct lp_bins *bins );
 
 void lp_free_bin_data(struct lp_bins *bins);
 
-void
-lp_bin_set_num_bins( struct lp_bins *bins,
-                     unsigned tiles_x, unsigned tiles_y );
+void lp_bin_set_framebuffer_size( struct lp_bins *bins,
+                                  unsigned width, unsigned height );
 
 void lp_bin_new_data_block( struct data_block_list *list );
 
