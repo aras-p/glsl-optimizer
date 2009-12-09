@@ -653,7 +653,12 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
       break;
    default:
       /* this will generate an error if pname is illegal */
-      need_update = set_tex_parameteri(ctx, texObj, pname, &param);
+      {
+         GLint iparam[4];
+         iparam[0] = param;
+         iparam[1] = iparam[2] = iparam[3] = 0;
+         need_update = set_tex_parameteri(ctx, texObj, pname, iparam);
+      }
    }
 
    if (ctx->Driver.TexParameter && need_update) {
