@@ -215,6 +215,9 @@ static void Key( unsigned char key, int x, int y )
       case ' ':
          ToggleAnimate();
          break;
+      case 'n':
+         Idle();
+         break;
       case 27:
          glutDestroyWindow(Win);
          exit(0);
