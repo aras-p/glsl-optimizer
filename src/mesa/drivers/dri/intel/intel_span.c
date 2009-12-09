@@ -334,7 +334,7 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #include "intel_spantmp.h"
 
 /* x8r8g8b8 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_FMT GL_BGR
 #define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 #define INTEL_READ_VALUE(offset) pread_xrgb8888(irb, offset)
 #define INTEL_WRITE_VALUE(offset, v) pwrite_xrgb8888(irb, offset, v)
