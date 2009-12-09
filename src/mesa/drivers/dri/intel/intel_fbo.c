@@ -117,7 +117,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB5:
       rb->Format = MESA_FORMAT_RGB565;
       rb->DataType = GL_UNSIGNED_BYTE;
-      cpp = 2;
       break;
    case GL_RGB:
    case GL_RGB8:
@@ -126,7 +125,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB16:
       rb->Format = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
       rb->DataType = GL_UNSIGNED_BYTE;
-      cpp = 4;
       break;
    case GL_RGBA:
    case GL_RGBA2:
@@ -138,7 +136,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGBA16:
       rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      cpp = 4;
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
@@ -148,25 +145,21 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       /* alloc a depth+stencil buffer */
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_SHORT;
-      cpp = 2;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
       break;
    default:
       _mesa_problem(ctx,
@@ -175,6 +168,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
 
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+   cpp = _mesa_get_format_bytes(rb->Format);
 
    intelFlush(ctx);
 
