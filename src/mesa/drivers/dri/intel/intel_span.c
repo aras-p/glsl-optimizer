@@ -638,13 +638,7 @@ intel_set_span_functions(struct intel_context *intel,
          intel_gttmap_InitPointers_xRGB8888(rb);
 	 break;
       case MESA_FORMAT_ARGB8888:
-	 if (rb->_BaseFormat == GL_RGB) {
-	    /* XXX remove this code someday when we enable XRGB surfaces */
-	    /* 8888 RGBx */
-	    intel_gttmap_InitPointers_xRGB8888(rb);
-	 } else {
-	    intel_gttmap_InitPointers_ARGB8888(rb);
-	 }
+	 intel_gttmap_InitPointers_ARGB8888(rb);
 	 break;
       case MESA_FORMAT_Z16:
 	 intel_gttmap_InitDepthPointers_z16(rb);
@@ -731,35 +725,18 @@ intel_set_span_functions(struct intel_context *intel,
       }
       break;
    case MESA_FORMAT_ARGB8888:
-      if (rb->_BaseFormat == GL_RGB) {
-         /* XXX remove this code someday when we enable XRGB surfaces */
-	 /* 8888 RGBx */
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitPointers_xRGB8888(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitPointers_xRGB8888(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitPointers_xRGB8888(rb);
-	    break;
-	 }
-      } else {
-	 /* 8888 RGBA */
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitPointers_ARGB8888(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitPointers_ARGB8888(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitPointers_ARGB8888(rb);
-	    break;
-	 }
+      /* 8888 RGBA */
+      switch (tiling) {
+      case I915_TILING_NONE:
+      default:
+	 intelInitPointers_ARGB8888(rb);
+	 break;
+      case I915_TILING_X:
+	 intel_XTile_InitPointers_ARGB8888(rb);
+	 break;
+      case I915_TILING_Y:
+	 intel_YTile_InitPointers_ARGB8888(rb);
+	 break;
       }
       break;
    case MESA_FORMAT_Z16:
