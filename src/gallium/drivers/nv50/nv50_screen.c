@@ -76,6 +76,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
 		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
 		case PIPE_FORMAT_Z32_FLOAT:
 		case PIPE_FORMAT_R16G16B16A16_SNORM:
 		case PIPE_FORMAT_R16G16B16A16_UNORM:
