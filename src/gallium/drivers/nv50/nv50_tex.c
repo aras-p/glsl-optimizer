@@ -85,7 +85,7 @@ static const struct nv50_texture_format nv50_tex_format_list[] =
 
 static int
 nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
-		   struct nv50_miptree *mt, int unit)
+		   struct nv50_miptree *mt, int unit, unsigned p)
 {
 	unsigned i;
 	uint32_t mode;
@@ -96,7 +96,7 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	if (i == NV50_TEX_FORMAT_LIST_SIZE)
                 return 1;
 
-	if (nv50->sampler[unit]->normalized)
+	if (nv50->sampler[p][unit]->normalized)
 		mode = 0x50001000 | (1 << 31);
 	else {
 		mode = 0x50001000 | (7 << 14);
@@ -140,48 +140,78 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	return 0;
 }
 
+#ifndef NV50TCL_BIND_TIC
+#define NV50TCL_BIND_TIC(n) (0x1448 + 8 * n)
+#endif
+
+static boolean
+nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
+		       unsigned p)
+{
+	static const unsigned p_remap[PIPE_SHADER_TYPES] = { 0, 2 };
+
+	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned unit, j, p_hw = p_remap[p];
+
+	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
+			  p * (32 * 8 * 4), nv50->miptree_nr[p] * 8 * 4);
+
+	for (unit = 0; unit < nv50->miptree_nr[p]; ++unit) {
+		struct nv50_miptree *mt = nv50->miptree[p][unit];
+
+		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
+		if (mt) {
+			if (nv50_tex_construct(nv50, so, mt, unit, p))
+				return FALSE;
+			/* Set TEX insn $t src binding $unit in program type p
+			 * to TIC, TSC entry (32 * p + unit), mark valid (1).
+			 */
+			so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+			so_data  (so, ((32 * p + unit) << 9) | (unit << 1) | 1);
+		} else {
+			for (j = 0; j < 8; ++j)
+				so_data(so, 0);
+			so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+			so_data  (so, (unit << 1) | 0);
+		}
+	}
+
+	for (; unit < nv50->state.miptree_nr[p]; unit++) {
+		/* Make other bindings invalid. */
+		so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+		so_data  (so, (unit << 1) | 0);
+	}
+
+	nv50->state.miptree_nr[p] = nv50->miptree_nr[p];
+	return TRUE;
+}
+
 void
 nv50_tex_validate(struct nv50_context *nv50)
 {
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	unsigned i, unit, push;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned p, push, nrlc;
 
-	push = MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2 + 23 + 6;
-	so = so_new(nv50->miptree_nr * 9 + push, nv50->miptree_nr * 2 + 2);
-
-	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
-			  nv50->miptree_nr * 8 * 4);
-
-	for (i = 0, unit = 0; unit < nv50->miptree_nr; ++unit) {
-		struct nv50_miptree *mt = nv50->miptree[unit];
-
-		if (!mt)
-			continue;
-
-		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
-		if (nv50_tex_construct(nv50, so, mt, unit)) {
-			NOUVEAU_ERR("failed tex validate\n");
-			so_ref(NULL, &so);
-			return;
-		}
-
-		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
-		so_data  (so, (i++ << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
-			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
-			  NV50TCL_SET_SAMPLER_TEX_VALID);
+	for (nrlc = 0, push = 0, p = 0; p < PIPE_SHADER_TYPES; ++p) {
+		push += MAX2(nv50->miptree_nr[p], nv50->state.miptree_nr[p]);
+		nrlc += nv50->miptree_nr[p];
 	}
+	push = push * 11 + 23 * PIPE_SHADER_TYPES + 4;
+	nrlc = nrlc * 2 + 2 * PIPE_SHADER_TYPES;
 
-	for (; unit < nv50->state.miptree_nr; unit++) {
-		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
-		so_data  (so,
-			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
+	so = so_new(push, nrlc);
+
+	if (nv50_validate_textures(nv50, so, PIPE_SHADER_VERTEX) == FALSE ||
+	    nv50_validate_textures(nv50, so, PIPE_SHADER_FRAGMENT) == FALSE) {
+		so_ref(NULL, &so);
+
+		NOUVEAU_ERR("failed tex validate\n");
+		return;
 	}
 
 	/* not sure if the following really do what I think: */
-	so_method(so, tesla, 0x1440, 1); /* sync SIFC */
-	so_data  (so, 0);
 	so_method(so, tesla, 0x1330, 1); /* flush TIC */
 	so_data  (so, 0);
 	so_method(so, tesla, 0x1338, 1); /* flush texture caches */
@@ -189,6 +219,4 @@ nv50_tex_validate(struct nv50_context *nv50)
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);
-	nv50->state.miptree_nr = nv50->miptree_nr;
 }
-

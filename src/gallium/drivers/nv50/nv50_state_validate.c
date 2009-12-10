@@ -156,6 +156,30 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 }
 
 static void
+nv50_validate_samplers(struct nv50_context *nv50, struct nouveau_stateobj *so,
+		       unsigned p)
+{
+	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
+	unsigned i, j, dw = nv50->sampler_nr[p] * 8;
+
+	if (!dw)
+		return;
+	nv50_so_init_sifc(nv50, so, nv50->screen->tsc, NOUVEAU_BO_VRAM,
+			  p * (32 * 8 * 4), dw * 4);
+
+	so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), dw);
+
+	for (i = 0; i < nv50->sampler_nr[p]; ++i) {
+		if (nv50->sampler[p][i])
+			so_datap(so, nv50->sampler[p][i]->tsc, 8);
+		else {
+			for (j = 0; j < 8; ++j) /* you get punished */
+				so_data(so, 0); /* ... for leaving holes */
+		}
+	}
+}
+
+static void
 nv50_state_emit(struct nv50_context *nv50)
 {
 	struct nv50_screen *screen = nv50->screen;
@@ -246,7 +270,6 @@ boolean
 nv50_state_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
 	struct nouveau_stateobj *so;
 	unsigned i;
 
@@ -369,22 +392,16 @@ scissor_uptodate:
 viewport_uptodate:
 
 	if (nv50->dirty & NV50_NEW_SAMPLER) {
-		unsigned i;
+		unsigned nr = 0;
 
-		so = so_new(nv50->sampler_nr * 9 + 23 + 4, 2);
+		for (i = 0; i < PIPE_SHADER_TYPES; ++i)
+			nr += nv50->sampler_nr[i];
 
-		nv50_so_init_sifc(nv50, so, nv50->screen->tsc, NOUVEAU_BO_VRAM,
-				  nv50->sampler_nr * 8 * 4);
+		so = so_new(nr * 8 + 24 * PIPE_SHADER_TYPES + 2, 4);
 
-		for (i = 0; i < nv50->sampler_nr; i++) {
-			if (!nv50->sampler[i])
-				continue;
-			so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
-			so_datap (so, nv50->sampler[i]->tsc, 8);
-		}
+		nv50_validate_samplers(nv50, so, PIPE_SHADER_VERTEX);
+		nv50_validate_samplers(nv50, so, PIPE_SHADER_FRAGMENT);
 
-		so_method(so, tesla, 0x1440, 1); /* sync SIFC */
-		so_data  (so, 0);
 		so_method(so, tesla, 0x1334, 1); /* flush TSC */
 		so_data  (so, 0);
 
@@ -407,9 +424,12 @@ viewport_uptodate:
 
 void nv50_so_init_sifc(struct nv50_context *nv50,
 		       struct nouveau_stateobj *so,
-		       struct nouveau_bo *bo, unsigned reloc, unsigned size)
+		       struct nouveau_bo *bo, unsigned reloc,
+		       unsigned offset, unsigned size)
 {
 	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
+
+	reloc |= NOUVEAU_BO_WR;
 
 	so_method(so, eng2d, NV50_2D_DST_FORMAT, 2);
 	so_data  (so, NV50_2D_DST_FORMAT_R8_UNORM);
@@ -418,8 +438,8 @@ void nv50_so_init_sifc(struct nv50_context *nv50,
 	so_data  (so, 262144);
 	so_data  (so, 65536);
 	so_data  (so, 1);
-	so_reloc (so, bo, 0, reloc | NOUVEAU_BO_WR | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, bo, 0, reloc | NOUVEAU_BO_WR | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, eng2d, NV50_2D_SIFC_UNK0800, 2);
 	so_data  (so, 0);
 	so_data  (so, NV50_2D_SIFC_FORMAT_R8_UNORM);
