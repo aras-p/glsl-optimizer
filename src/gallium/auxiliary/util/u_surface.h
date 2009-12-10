@@ -66,4 +66,13 @@ util_destroy_rgba_surface(struct pipe_texture *texture,
                           struct pipe_surface *surface);
 
 
+extern boolean
+util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
+                             const struct pipe_framebuffer_state *src);
+
+extern void
+util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                            const struct pipe_framebuffer_state *src);
+
+
 #endif /* U_SURFACE_H */

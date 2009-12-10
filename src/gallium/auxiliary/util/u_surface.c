@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
+#include "util/u_memory.h"
 #include "util/u_surface.h"
 
 
@@ -111,3 +112,51 @@ util_destroy_rgba_surface(struct pipe_texture *texture,
    pipe_texture_reference(&texture, NULL);
 }
 
+
+
+/**
+ * Compare pipe_framebuffer_state objects.
+ * \return TRUE if same, FALSE if different
+ */
+boolean
+util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
+                             const struct pipe_framebuffer_state *src)
+{
+   boolean changed = FALSE;
+   unsigned i;
+
+   for (i = 0; i < Elements(src->cbufs); i++) {
+      if (dst->cbufs[i] != src->cbufs[i]) {
+         changed = TRUE;
+      }
+   }
+
+   if (dst->nr_cbufs != src->nr_cbufs) {
+      changed = TRUE;
+   }
+
+   if (dst->zsbuf != src->zsbuf) {
+      changed = TRUE;
+   }
+
+   return changed;
+}
+
+
+/**
+ * Copy framebuffer state from src to dst, updating refcounts.
+ */
+void
+util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                            const struct pipe_framebuffer_state *src)
+{
+   unsigned i;
+
+   for (i = 0; i < Elements(src->cbufs); i++) {
+      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+   }
+
+   dst->nr_cbufs = src->nr_cbufs;
+
+   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
+}
