@@ -28,6 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "pipe/p_state.h"
+#include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_surface.h"
@@ -44,27 +46,12 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
                                const struct pipe_framebuffer_state *fb)
 {
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
-   uint i;
-   boolean dirty = FALSE;
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (lp->framebuffer.cbufs[i] != fb->cbufs[i]) {
-         pipe_surface_reference(&lp->framebuffer.cbufs[i], fb->cbufs[i]);
-         dirty = TRUE;
-      }
-   }
+   boolean changed = util_framebuffer_state_equal(&lp->framebuffer, fb);
 
-   if (lp->framebuffer.nr_cbufs != fb->nr_cbufs) {
-      dirty = TRUE;
-      lp->framebuffer.nr_cbufs = fb->nr_cbufs;
-   }
+   if (changed) {
 
-   /* zbuf changing? */
-   if (lp->framebuffer.zsbuf != fb->zsbuf) {
-      dirty = TRUE;
-
-      /* assign new */
-      pipe_surface_reference(&lp->framebuffer.zsbuf, fb->zsbuf);
+      util_copy_framebuffer_state(&lp->framebuffer, fb);
 
       /* Tell draw module how deep the Z/depth buffer is */
       if (lp->framebuffer.zsbuf) {
@@ -80,9 +67,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
          }
          draw_set_mrd(lp->draw, mrd);
       }
-   }
 
-   if (dirty) {
       lp_setup_bind_framebuffer( lp->setup, fb );
 
       lp->dirty |= LP_NEW_FRAMEBUFFER;
