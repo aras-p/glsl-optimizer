@@ -453,11 +453,12 @@ lp_setup_set_vertex_info( struct setup_context *setup,
 
 
 /**
- * Called during state validation when LP_NEW_TEXTURE is set.
+ * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
  */
 void
-lp_setup_set_sampler_textures( struct setup_context *setup,
-                               unsigned num, struct pipe_texture **texture)
+lp_setup_set_fragment_sampler_views(struct setup_context *setup,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
 {
    unsigned i;
 
@@ -466,9 +467,10 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      if(tex) {
+      if(view) {
+         struct pipe_texture *tex = view->texture;
          struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
          struct lp_jit_texture *jit_tex;
          jit_tex = &setup->fs.current.jit_context.textures[i];

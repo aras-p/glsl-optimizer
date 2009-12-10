@@ -50,7 +50,7 @@
 #define LP_NEW_DEPTH_STENCIL_ALPHA 0x100
 #define LP_NEW_CONSTANTS     0x200
 #define LP_NEW_SAMPLER       0x400
-#define LP_NEW_TEXTURE       0x800
+#define LP_NEW_SAMPLER_VIEW  0x800
 #define LP_NEW_VERTEX        0x1000
 #define LP_NEW_VS            0x2000
 #define LP_NEW_QUERY         0x4000
@@ -182,14 +182,23 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *,
 void llvmpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 
-void llvmpipe_set_sampler_textures( struct pipe_context *,
-                                    unsigned num,
-                                    struct pipe_texture ** );
+void llvmpipe_set_fragment_sampler_views(struct pipe_context *,
+                                         unsigned num,
+                                         struct pipe_sampler_view **);
 
 void
-llvmpipe_set_vertex_sampler_textures(struct pipe_context *,
-                                     unsigned num_textures,
-                                     struct pipe_texture **);
+llvmpipe_set_vertex_sampler_views(struct pipe_context *,
+                                  unsigned num,
+                                  struct pipe_sampler_view **);
+
+struct pipe_sampler_view *
+llvmpipe_create_sampler_view(struct pipe_context *pipe,
+                            struct pipe_texture *texture,
+                            const struct pipe_sampler_view *templ);
+
+void
+llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view);
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );

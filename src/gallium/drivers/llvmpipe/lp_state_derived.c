@@ -150,7 +150,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
     */
    if (llvmpipe->tex_timestamp != lp_screen->timestamp) {
       llvmpipe->tex_timestamp = lp_screen->timestamp;
-      llvmpipe->dirty |= LP_NEW_TEXTURE;
+      llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
    }
       
    if (llvmpipe->dirty & (LP_NEW_RASTERIZER |
@@ -164,7 +164,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_RASTERIZER |
                           LP_NEW_SAMPLER |
-                          LP_NEW_TEXTURE))
+                          LP_NEW_SAMPLER_VIEW))
       llvmpipe_update_fs( llvmpipe );
 
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)
@@ -182,10 +182,10 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       lp_setup_set_fs_constants(llvmpipe->setup, 
                                 llvmpipe->constants[PIPE_SHADER_FRAGMENT]);
 
-   if (llvmpipe->dirty & LP_NEW_TEXTURE)
-      lp_setup_set_sampler_textures(llvmpipe->setup, 
-                                    llvmpipe->num_textures,
-                                    llvmpipe->texture);
+   if (llvmpipe->dirty & LP_NEW_SAMPLER_VIEW)
+      lp_setup_set_fragment_sampler_views(llvmpipe->setup, 
+                                          llvmpipe->num_fragment_sampler_views,
+                                          llvmpipe->fragment_sampler_views);
 
    llvmpipe->dirty = 0;
 }
