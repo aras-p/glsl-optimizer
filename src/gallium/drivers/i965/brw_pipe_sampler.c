@@ -217,7 +217,6 @@ brw_create_sampler_view(struct pipe_context *pipe,
                         struct pipe_texture *texture,
                         const struct pipe_sampler_view *templ)
 {
-   struct brw_context *brw = brw_context(pipe);
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
 
    *view = *templ;

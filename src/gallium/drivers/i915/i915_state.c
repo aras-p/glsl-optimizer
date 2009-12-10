@@ -596,7 +596,6 @@ i915_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_texture *texture,
                          const struct pipe_sampler_view *templ)
 {
-   struct i915_context *i915 = i915_context(pipe);
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
 
    *view = *templ;

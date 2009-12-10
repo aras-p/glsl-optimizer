@@ -181,7 +181,6 @@ svga_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_texture *texture,
                          const struct pipe_sampler_view *templ)
 {
-   struct svga_context *softpipe = svga_context(pipe);
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
 
    *view = *templ;
@@ -198,8 +197,6 @@ static void
 svga_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
 {
-   struct svga_context *svga = svga_context(pipe);
-
    pipe_texture_reference(&view->texture, NULL);
    FREE(view);
 }
