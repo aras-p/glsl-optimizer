@@ -120,6 +120,8 @@ struct sl_pp_token_info {
    union sl_pp_token_data data;
 };
 
+struct sl_pp_purify_options;
+
 int
 sl_pp_tokenise(struct sl_pp_context *context,
                const char *input,
