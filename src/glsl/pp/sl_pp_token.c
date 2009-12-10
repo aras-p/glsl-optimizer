@@ -35,7 +35,7 @@
 
 #define PURE_ERROR 256
 
-int
+static int
 _pure_getc(struct sl_pp_context *context)
 {
    char c;
@@ -52,7 +52,7 @@ _pure_getc(struct sl_pp_context *context)
 }
 
 
-void
+static void
 _pure_ungetc(struct sl_pp_context *context,
              int c)
 {
@@ -508,7 +508,7 @@ _tokenise_number(struct sl_pp_context *context,
 }
 
 
-int
+static int
 sl_pp_token_get(struct sl_pp_context *context,
                 struct sl_pp_token_info *out)
 {
