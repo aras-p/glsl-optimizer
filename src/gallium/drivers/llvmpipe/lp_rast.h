@@ -41,17 +41,13 @@
 #include "lp_jit.h"
 
 
-/* Initially create and program a single rasterizer directly.  Later
- * will want multiple of these, one or two per core.  At that stage
- * will probably pass command buffers into the rasterizers rather than
- * individual function calls like this.
- */
 struct lp_rasterizer;
 struct lp_bins;
 struct lp_bins_queue;
 struct cmd_bin;
 struct pipe_screen;
 
+/** For sub-pixel positioning */
 #define FIXED_ORDER 4
 #define FIXED_ONE (1<<FIXED_ORDER)
 
@@ -62,7 +58,8 @@ struct pipe_screen;
  * to by commands in the per-tile bins.
  */
 struct lp_rast_state {
-   /* State for the shader:
+   /* State for the shader.  This also contains state which feeds into
+    * the fragment shader, such as blend color and alpha ref value.
     */
    struct lp_jit_context jit_context;
    
