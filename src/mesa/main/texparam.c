@@ -700,8 +700,10 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
          /* convert int param to float */
-         GLfloat fparam = (GLfloat) params[0];
-         need_update = set_tex_parameterf(ctx, texObj, pname, &fparam);
+         GLfloat fparams[4];
+         fparams[0] = (GLfloat) params[0];
+         fparams[1] = fparams[2] = fparams[3] = 0.0F;
+         need_update = set_tex_parameterf(ctx, texObj, pname, fparams);
       }
       break;
    default:
