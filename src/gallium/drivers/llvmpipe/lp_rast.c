@@ -40,6 +40,46 @@
 
 
 
+/**
+ * Called by rasterization threads to get the next chunk of work.
+ * We use a lock to make sure that all the threads get the same bins.
+ */
+static struct lp_bins *
+get_next_full_bin( struct lp_rasterizer *rast )
+{
+   pipe_mutex_lock( rast->get_bin_mutex );
+   if (!rast->curr_bins) {
+      /* this will wait until there's something in the queue */
+      rast->curr_bins = lp_bins_dequeue( rast->full_bins );
+      rast->release_count = 0;
+
+      lp_bin_iter_begin( rast->curr_bins );
+   }
+   pipe_mutex_unlock( rast->get_bin_mutex );
+   return rast->curr_bins;
+}
+
+
+/**
+ * Called by rasterization threads after they've finished with
+ * the current bin.  When all threads have called this, we reset
+ * the bin and put it into the 'empty bins' queue.
+ */
+static void
+release_current_bin( struct lp_rasterizer *rast )
+{
+   pipe_mutex_lock( rast->get_bin_mutex );
+   rast->release_count++;
+   if (rast->release_count == rast->num_threads) {
+      assert(rast->curr_bins);
+      lp_reset_bins( rast->curr_bins );
+      lp_bins_enqueue( rast->empty_bins, rast->curr_bins );
+      rast->curr_bins = NULL;
+   }
+   pipe_mutex_unlock( rast->get_bin_mutex );
+}
+
+
 
 /**
  * Begin the rasterization phase.
@@ -488,6 +528,7 @@ lp_rast_end_tile( struct lp_rasterizer *rast,
  * Rasterize commands for a single bin.
  * \param x, y  position of the bin's tile in the framebuffer
  * Must be called between lp_rast_begin() and lp_rast_end().
+ * Called per thread.
  */
 static void
 rasterize_bin( struct lp_rasterizer *rast,
@@ -514,6 +555,7 @@ rasterize_bin( struct lp_rasterizer *rast,
 
 /**
  * Rasterize/execute all bins.
+ * Called per thread.
  */
 static void
 rasterize_bins( struct lp_rasterizer *rast,
@@ -539,6 +581,7 @@ rasterize_bins( struct lp_rasterizer *rast,
       struct cmd_bin *bin;
       int x, y;
 
+      assert(bins);
       while ((bin = lp_bin_iter_next(bins, &x, &y))) {
          rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
       }
@@ -593,11 +636,13 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       /* threaded rendering! */
       unsigned i;
 
-      rast->bins = bins;
+      lp_bins_enqueue( rast->full_bins, bins );
+
+      /* XXX need to move/fix these */
       rast->fb = fb;
       rast->write_depth = write_depth;
 
-      lp_bin_iter_begin( bins );
+      /*lp_bin_iter_begin( bins );*/
 
       /* signal the threads that there's work to do */
       for (i = 0; i < rast->num_threads; i++) {
@@ -608,10 +653,6 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       for (i = 0; i < rast->num_threads; i++) {
          pipe_semaphore_wait(&rast->tasks[i].work_done);
       }
-
-      /* reset bins and put into the empty queue */
-      lp_reset_bins( bins );
-      lp_bins_enqueue( rast->empty_bins, bins);
    }
 
    lp_rast_end( rast );
@@ -632,19 +673,26 @@ thread_func( void *init_data )
 {
    struct lp_rasterizer_task *task = (struct lp_rasterizer_task *) init_data;
    struct lp_rasterizer *rast = task->rast;
-   int debug = 0;
+   boolean debug = false;
 
    while (1) {
+      struct lp_bins *bins;
+
       /* wait for work */
       if (debug)
          debug_printf("thread %d waiting for work\n", task->thread_index);
       pipe_semaphore_wait(&task->work_ready);
 
+      bins = get_next_full_bin( rast );
+      assert(bins);
+
       /* do work */
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
       rasterize_bins(rast, task->thread_index,
-                     rast->bins, rast->fb, rast->write_depth);
+                     bins, rast->fb, rast->write_depth);
+      
+      release_current_bin( rast );
 
       /* signal done with work */
       if (debug)

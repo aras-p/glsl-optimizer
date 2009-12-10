@@ -95,9 +95,17 @@ struct lp_rasterizer
    boolean clipped_tile;
    boolean check_for_clipped_tiles;
 
+   /** The incoming queue of filled bins to rasterize */
    struct lp_bins_queue *full_bins;
+   /** The outgoing queue of emptied bins to return to setup modulee */
    struct lp_bins_queue *empty_bins;
+
    pipe_mutex get_bin_mutex;
+
+   /** The bins currently being rasterized by the threads */
+   struct lp_bins *curr_bins;
+   /** Counter to determine when all threads are done with current bin */
+   unsigned release_count;
 
    /* Framebuffer stuff
     */
