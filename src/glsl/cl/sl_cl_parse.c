@@ -1596,6 +1596,8 @@ _parse_parameter_declaration(struct parse_context *ctx,
    struct parse_state p = *ps;
    unsigned int e = _emit(ctx, &p.out, PARAMETER_NEXT);
 
+   (void) e;
+
    if (_parse_type_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_QUALIFIER_NONE);
    }
