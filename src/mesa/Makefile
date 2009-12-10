@@ -18,7 +18,6 @@ include sources.mak
 
 
 
-
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,
 # then convenience libs (.a) and finally the device drivers:
 default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
@@ -30,12 +29,12 @@ default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
 # Helper libraries used by many drivers:
 
 # Make archive of core mesa object files
-libmesa.a: $(MESA_OBJECTS)
-	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS)
+libmesa.a: $(MESA_OBJECTS) $(GLSL_LIBS)
+	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS) $(GLSL_LIBS)
 
 # Make archive of subset of core mesa object files for gallium
-libmesagallium.a: $(MESA_GALLIUM_OBJECTS)
-	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS)
+libmesagallium.a: $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
+	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)

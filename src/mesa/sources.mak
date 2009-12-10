@@ -364,6 +364,12 @@ GLAPI_OBJECTS = \
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
 
+### Other archives/libraries
+
+GLSL_LIBS = \
+	$(TOP)/src/glsl/pp/libglslpp.a \
+	$(TOP)/src/glsl/cl/libglslcl.a
+
 
 ### Include directories
 
