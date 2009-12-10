@@ -121,6 +121,17 @@ main(int argc,
       return -1;
    }
 
+   if (sl_pp_context_add_extension(context, "ARB_draw_buffers", "GL_ARB_draw_buffers") ||
+       sl_pp_context_add_extension(context, "ARB_texture_rectangle", "GL_ARB_texture_rectangle")) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
+
+      printf("Error: %s\n", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      free(tokens);
+      fclose(out);
+      return 0;
+   }
+
    if (sl_pp_process(context, &tokens[tokens_eaten], &outtokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
