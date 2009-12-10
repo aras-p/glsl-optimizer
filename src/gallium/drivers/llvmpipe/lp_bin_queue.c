@@ -122,6 +122,14 @@ lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins)
 
    assert(queue->size < MAX_BINS);
 
+   /* debug: check that bins is not already in the queue */
+   if (0) {
+      unsigned i;
+      for (i = 0; i < queue->size; i++) {
+         assert(queue->bins[i] != bins);
+      }
+   }
+
    /* add to end */
    queue->bins[queue->size++] = bins;
 
