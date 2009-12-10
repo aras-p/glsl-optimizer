@@ -80,6 +80,31 @@ sl_pp_context_error_message(const struct sl_pp_context *context)
 }
 
 int
+sl_pp_context_add_predefined(struct sl_pp_context *context,
+                             const char *name,
+                             const char *value)
+{
+   struct sl_pp_predefined pre;
+
+   if (context->num_predefined == SL_PP_MAX_PREDEFINED) {
+      return -1;
+   }
+
+   pre.name = sl_pp_context_add_unique_str(context, name);
+   if (pre.name == -1) {
+      return -1;
+   }
+
+   pre.value = sl_pp_context_add_unique_str(context, value);
+   if (pre.value == -1) {
+      return -1;
+   }
+
+   context->predefined[context->num_predefined++] = pre;
+   return 0;
+}
+
+int
 sl_pp_context_add_unique_str(struct sl_pp_context *context,
                              const char *str)
 {

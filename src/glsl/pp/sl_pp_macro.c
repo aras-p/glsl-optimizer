@@ -163,6 +163,23 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       return 0;
    }
 
+   for (j = 0; j < context->num_predefined; j++) {
+      if (macro_name == context->predefined[j].name) {
+         if (!mute) {
+            struct sl_pp_token_info ti;
+
+            ti.token = SL_PP_UINT;
+            ti.data._uint = context->predefined[j].value;
+            if (sl_pp_process_out(state, &ti)) {
+               strcpy(context->error_msg, "out of memory");
+               return -1;
+            }
+         }
+         (*pi)++;
+         return 0;
+      }
+   }
+
    /* Replace extension names with 1.
     */
    for (j = 0; j < context->num_extensions; j++) {

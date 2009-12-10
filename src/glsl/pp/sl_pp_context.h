@@ -39,9 +39,16 @@
 
 #define SL_PP_MAX_EXTENSIONS  16
 
+#define SL_PP_MAX_PREDEFINED  16
+
 struct sl_pp_extension {
    int name;         /*< VENDOR_extension_name */
    int name_string;  /*< GL_VENDOR_extension_name */
+};
+
+struct sl_pp_predefined {
+   int name;
+   int value;
 };
 
 struct sl_pp_context {
@@ -55,6 +62,9 @@ struct sl_pp_context {
 
    struct sl_pp_extension extensions[SL_PP_MAX_EXTENSIONS];
    unsigned int num_extensions;
+
+   struct sl_pp_predefined predefined[SL_PP_MAX_PREDEFINED];
+   unsigned int num_predefined;
 
    unsigned int if_stack[SL_PP_MAX_IF_NESTING];
    unsigned int if_ptr;

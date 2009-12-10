@@ -51,6 +51,11 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
                             const char *name_string);
 
 int
+sl_pp_context_add_predefined(struct sl_pp_context *context,
+                             const char *name,
+                             const char *value);
+
+int
 sl_pp_context_add_unique_str(struct sl_pp_context *context,
                              const char *str);
 
