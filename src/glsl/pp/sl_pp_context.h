@@ -37,6 +37,13 @@
 
 #define SL_PP_MAX_ERROR_MSG   1024
 
+#define SL_PP_MAX_EXTENSIONS  16
+
+struct sl_pp_extension {
+   int name;         /*< VENDOR_extension_name */
+   int name_string;  /*< GL_VENDOR_extension_name */
+};
+
 struct sl_pp_context {
    char *cstr_pool;
    unsigned int cstr_pool_max;
@@ -45,6 +52,9 @@ struct sl_pp_context {
 
    struct sl_pp_macro *macro;
    struct sl_pp_macro **macro_tail;
+
+   struct sl_pp_extension extensions[SL_PP_MAX_EXTENSIONS];
+   unsigned int num_extensions;
 
    unsigned int if_stack[SL_PP_MAX_IF_NESTING];
    unsigned int if_ptr;

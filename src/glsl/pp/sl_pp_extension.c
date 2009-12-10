@@ -28,7 +28,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include "sl_pp_process.h"
+#include "sl_pp_public.h"
 
+
+int
+sl_pp_context_add_extension(struct sl_pp_context *context,
+                            const char *name,
+                            const char *name_string)
+{
+   struct sl_pp_extension ext;
+
+   if (context->num_extensions == SL_PP_MAX_EXTENSIONS) {
+      return -1;
+   }
+
+   ext.name = sl_pp_context_add_unique_str(context, name);
+   if (ext.name == -1) {
+      return -1;
+   }
+
+   ext.name_string = sl_pp_context_add_unique_str(context, name_string);
+   if (ext.name_string == -1) {
+      return -1;
+   }
+
+   context->extensions[context->num_extensions++] = ext;
+   return 0;
+}
 
 int
 sl_pp_process_extension(struct sl_pp_context *context,
@@ -37,14 +63,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
                         unsigned int last,
                         struct sl_pp_process_state *state)
 {
-   int extensions[] = {
-      context->dict.all,
-      context->dict._GL_ARB_draw_buffers,
-      context->dict._GL_ARB_texture_rectangle,
-      -1
-   };
    int extension_name = -1;
-   int *ext;
    int behavior = -1;
    struct sl_pp_token_info out;
 
@@ -59,11 +78,17 @@ sl_pp_process_extension(struct sl_pp_context *context,
    }
 
    /* Make sure the extension is supported. */
-   out.data.extension = -1;
-   for (ext = extensions; *ext != -1; ext++) {
-      if (extension_name == *ext) {
-         out.data.extension = extension_name;
-         break;
+   if (extension_name == context->dict.all) {
+      out.data.extension = extension_name;
+   } else {
+      unsigned int i;
+
+      out.data.extension = -1;
+      for (i = 0; i < context->num_extensions; i++) {
+         if (extension_name == context->extensions[i].name_string) {
+            out.data.extension = extension_name;
+            break;
+         }
       }
    }
 

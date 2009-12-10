@@ -163,6 +163,18 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       return 0;
    }
 
+   /* Replace extension names with 1.
+    */
+   for (j = 0; j < context->num_extensions; j++) {
+      if (macro_name == context->extensions[j].name) {
+         if (!mute && _out_number(context, state, 1)) {
+            return -1;
+         }
+         (*pi)++;
+         return 0;
+      }
+   }
+
    /* TODO: For FEATURE_es2_glsl, expand to 1 the following symbols.
     *       GL_ES
     *       GL_FRAGMENT_PRECISION_HIGH

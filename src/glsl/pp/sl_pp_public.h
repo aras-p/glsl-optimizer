@@ -46,6 +46,11 @@ const char *
 sl_pp_context_error_message(const struct sl_pp_context *context);
 
 int
+sl_pp_context_add_extension(struct sl_pp_context *context,
+                            const char *name,
+                            const char *name_string);
+
+int
 sl_pp_context_add_unique_str(struct sl_pp_context *context,
                              const char *str);
 

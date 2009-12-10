@@ -45,8 +45,6 @@ int
 sl_pp_dict_init(struct sl_pp_context *context)
 {
    ADD_NAME(context, all);
-   ADD_NAME_STR(context, _GL_ARB_draw_buffers, "GL_ARB_draw_buffers");
-   ADD_NAME_STR(context, _GL_ARB_texture_rectangle, "GL_ARB_texture_rectangle");
 
    ADD_NAME(context, require);
    ADD_NAME(context, enable);

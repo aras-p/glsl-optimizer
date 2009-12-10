@@ -33,8 +33,6 @@ struct sl_pp_context;
 
 struct sl_pp_dict {
    int all;
-   int _GL_ARB_draw_buffers;
-   int _GL_ARB_texture_rectangle;
 
    int require;
    int enable;
