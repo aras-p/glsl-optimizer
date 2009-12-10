@@ -1821,6 +1821,7 @@ _parse_boolconstant(struct parse_context *ctx,
 {
    if (_parse_id(ctx, ctx->dict._false, ps) == 0) {
       _emit(ctx, &ps->out, OP_PUSH_BOOL);
+      _emit(ctx, &ps->out, 2);  /* radix */
       _emit(ctx, &ps->out, '0');
       _emit(ctx, &ps->out, '\0');
       return 0;
@@ -1828,6 +1829,7 @@ _parse_boolconstant(struct parse_context *ctx,
 
    if (_parse_id(ctx, ctx->dict._true, ps) == 0) {
       _emit(ctx, &ps->out, OP_PUSH_BOOL);
+      _emit(ctx, &ps->out, 2);  /* radix */
       _emit(ctx, &ps->out, '1');
       _emit(ctx, &ps->out, '\0');
       return 0;
