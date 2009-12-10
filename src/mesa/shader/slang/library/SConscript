@@ -5,13 +5,21 @@ Import('*')
 
 env = env.Clone()
 
+# See also http://www.scons.org/wiki/UsingCodeGenerators
+
+def glsl_compile_emitter(target, source, env):
+	env.Depends(target, glsl_compile)
+	return (target, source)
+ 
 bld_frag = Builder(
 	action = glsl_compile[0].abspath + ' fragment $SOURCE $TARGET',
+	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
 	
 bld_vert = Builder(
 	action = glsl_compile[0].abspath + ' vertex $SOURCE $TARGET',
+	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
 
