@@ -23,6 +23,7 @@ util = env.ConvenienceLibrary(
 	source = [
 		'u_bitmask.c',
 		'u_blit.c',
+		'u_blitter.c',
 		'u_cache.c',
 		'u_cpu_detect.c',
 		'u_debug.c',
