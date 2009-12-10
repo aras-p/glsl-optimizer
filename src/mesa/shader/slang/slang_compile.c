@@ -2603,6 +2603,13 @@ compile_with_grammar(const char *source,
       return GL_FALSE;
    }
 
+   if (sl_pp_context_add_extension(context, "ARB_draw_buffers", "GL_ARB_draw_buffers") ||
+       sl_pp_context_add_extension(context, "ARB_texture_rectangle", "GL_ARB_texture_rectangle")) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      return GL_FALSE;
+   }
+
    memset(&options, 0, sizeof(options));
    if (sl_pp_tokenise(context, source, &options, &intokens)) {
       slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
