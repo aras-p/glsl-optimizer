@@ -108,9 +108,9 @@ static void r300_hw_copy(struct pipe_context* pipe,
     util_blitter_save_fragment_sampler_states(
         r300->blitter, r300->sampler_count, (void**)r300->sampler_states);
 
-    util_blitter_save_fragment_sampler_textures(
-        r300->blitter, r300->texture_count,
-        (struct pipe_texture**)r300->textures);
+    util_blitter_save_fragment_sampler_views(
+        r300->blitter, r300->fragment_sampler_view_count,
+        r300->fragment_sampler_views);
 
     /* Do a copy */
     util_blitter_copy(r300->blitter,

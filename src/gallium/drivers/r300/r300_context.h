@@ -300,9 +300,9 @@ struct r300_context {
     int sampler_count;
     /* Scissor state. */
     struct r300_atom scissor_state;
-    /* Texture states. */
-    struct r300_texture* textures[8];
-    int texture_count;
+    /* Sampler view states. */
+    struct pipe_sampler_view* fragment_sampler_views[8];
+    int fragment_sampler_view_count;
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */

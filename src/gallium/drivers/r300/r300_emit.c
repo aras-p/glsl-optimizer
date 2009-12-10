@@ -159,7 +159,7 @@ static const float * get_shader_constant(
                 /* Factor for converting rectangle coords to
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = &r300->textures[constant->u.State[1]]->tex;
+                    tex = r300->fragment_sampler_views[constant->u.State[1]]->texture;
                     vec[0] = 1.0 / tex->width0;
                     vec[1] = 1.0 / tex->height0;
                     break;
@@ -967,11 +967,11 @@ void r300_emit_texture_count(struct r300_context* r300)
     int i;
     CS_LOCALS(r300);
 
-    /* Notice that texture_count and sampler_count are just sizes
+    /* Notice that fragment_sampler_view_count and sampler_count are just sizes
      * of the respective arrays. We still have to check for the individual
      * elements. */
-    for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
-        if (r300->textures[i]) {
+    for (i = 0; i < MIN2(r300->sampler_count, r300->fragment_sampler_view_count); i++) {
+        if (r300->fragment_sampler_views[i]) {
             tx_enable |= 1 << i;
         }
     }
@@ -1043,10 +1043,10 @@ validate:
         }
     }
     /* ...textures... */
-    for (i = 0; i < r300->texture_count; i++) {
-        tex = r300->textures[i];
-        if (!tex)
+    for (i = 0; i < r300->fragment_sampler_view_count; i++) {
+        if (!r300->fragment_sampler_views[i])
             continue;
+        tex = (struct r300_texture *)r300->fragment_sampler_views[i]->texture;
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
@@ -1145,13 +1145,13 @@ void r300_emit_dirty_state(struct r300_context* r300)
             (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
         r300_emit_texture_count(r300);
 
-        for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
+        for (i = 0; i < MIN2(r300->sampler_count, r300->fragment_sampler_view_count); i++) {
   	    if (r300->dirty_state &
 		((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
-		if (r300->textures[i]) {
+		if (r300->fragment_sampler_views[i]) {
 		    r300_emit_texture(r300,
 				      r300->sampler_states[i],
-				      r300->textures[i],
+				      (struct r300_texture *)r300->fragment_sampler_views[i]->texture,
 				      i);
                     dirty_tex |= r300->dirty_state & (R300_NEW_TEXTURE << i);
                 }
