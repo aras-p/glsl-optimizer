@@ -19,10 +19,10 @@ include sources.mak
 
 
 
-# Default: build dependencies, then asm_subdirs, then convenience
-# libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a libmesagallium.a libglapi.a \
-	driver_subdirs
+# Default: build dependencies, then asm_subdirs, GLSL built-in lib,
+# then convenience libs (.a) and finally the device drivers:
+default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
+	libglapi.a driver_subdirs
 
 
 
@@ -61,6 +61,12 @@ asm_subdirs:
 		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
+
+
+######################################################################
+# GLSL built-in library
+glsl_builtin:
+	(cd shader/slang/library && $(MAKE)) || exit 1 ;
 
 
 ######################################################################
@@ -156,6 +162,7 @@ clean:
 	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
+	-rm -f shader/slang/library/*_gc.h
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean
