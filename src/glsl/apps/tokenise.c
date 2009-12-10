@@ -40,8 +40,6 @@ main(int argc,
    long size;
    char *inbuf;
    struct sl_pp_purify_options options;
-   char errmsg[100] = "";
-   unsigned int errline = 0;
    struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    FILE *out;
