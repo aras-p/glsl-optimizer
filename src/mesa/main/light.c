@@ -288,7 +288,10 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 void GLAPIENTRY
 _mesa_Lighti( GLenum light, GLenum pname, GLint param )
 {
-   _mesa_Lightiv( light, pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_Lightiv( light, pname, iparam );
 }
 
 
