@@ -280,9 +280,10 @@ lp_setup_clear( struct setup_context *setup,
 
    if (setup->state == SETUP_ACTIVE) {
       /* Add the clear to existing bins.  In the unusual case where
-       * both color and depth-stencilare being cleared, we could
-       * discard the currently binned scene and start again, but I
-       * don't see that as being a common usage.
+       * both color and depth-stencil are being cleared when there's
+       * already been some rendering, we could discard the currently
+       * binned scene and start again, but I don't see that as being
+       * a common usage.
        */
       if (flags & PIPE_CLEAR_COLOR)
          lp_bin_everywhere( bins, 
