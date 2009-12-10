@@ -39,7 +39,7 @@ intel_drm_fence_reference(struct intel_winsys *iws,
    struct intel_drm_fence *old = (struct intel_drm_fence *)*ptr;
    struct intel_drm_fence *f = (struct intel_drm_fence *)fence;
 
-   if (pipe_reference(&(*ptr)->reference, &f->reference)) {
+   if (pipe_reference(&((struct intel_drm_fence *)(*ptr))->reference, &f->reference)) {
       if (old->bo)
          drm_intel_bo_unreference(old->bo);
       FREE(old);
