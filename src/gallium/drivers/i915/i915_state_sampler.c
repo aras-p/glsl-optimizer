@@ -144,20 +144,22 @@ void i915_update_samplers( struct i915_context *i915 )
    i915->current.sampler_enable_nr = 0;
    i915->current.sampler_enable_flags = 0x0;
 
-   for (unit = 0; unit < i915->num_textures && unit < i915->num_samplers;
+   for (unit = 0; unit < i915->num_fragment_sampler_views && unit < i915->num_samplers;
         unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
-      if (i915->texture[unit]) {
+      if (i915->fragment_sampler_views[unit]) {
+         struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+
 	 update_sampler( i915,
 	                 unit,
 	                 i915->sampler[unit],       /* sampler state */
-	                 i915->texture[unit],        /* texture */
+	                 texture,                    /* texture */
 	                 i915->current.sampler[unit] /* the result */
 	                 );
 	 i915_update_texture( i915,
 	                      unit,
-	                      i915->texture[unit],          /* texture */
+	                      texture,                      /* texture */
 	                      i915->sampler[unit],          /* sampler state */
 	                      i915->current.texbuffer[unit] );
 
@@ -281,14 +283,16 @@ i915_update_textures(struct i915_context *i915)
 {
    uint unit;
 
-   for (unit = 0; unit < i915->num_textures && unit < i915->num_samplers;
+   for (unit = 0; unit < i915->num_fragment_sampler_views && unit < i915->num_samplers;
         unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
-      if (i915->texture[unit]) {
+      if (i915->fragment_sampler_views[unit]) {
+         struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+
 	 i915_update_texture( i915,
 	                      unit,
-	                      i915->texture[unit],          /* texture */
+	                      texture,                      /* texture */
 	                      i915->sampler[unit],          /* sampler state */
 	                      i915->current.texbuffer[unit] );
       }

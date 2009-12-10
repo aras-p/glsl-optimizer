@@ -239,14 +239,14 @@ struct i915_context
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct i915_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 
    unsigned dirty;
 
    unsigned num_samplers;
-   unsigned num_textures;
+   unsigned num_fragment_sampler_views;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
@@ -276,7 +276,7 @@ struct i915_context
 #define I915_NEW_ALPHA_TEST    0x100
 #define I915_NEW_DEPTH_STENCIL 0x200
 #define I915_NEW_SAMPLER       0x400
-#define I915_NEW_TEXTURE       0x800
+#define I915_NEW_SAMPLER_VIEW  0x800
 #define I915_NEW_CONSTANTS     0x1000
 #define I915_NEW_VBO           0x2000
 #define I915_NEW_VS            0x4000

@@ -289,7 +289,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
             OUT_BATCH(enabled);
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
-                  struct intel_buffer *buf = i915->texture[unit]->buffer;
+                  struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+                  struct intel_buffer *buf = texture->buffer;
                   uint offset = 0;
                   assert(buf);
 
