@@ -132,6 +132,16 @@ main(int argc,
       return 0;
    }
 
+   if (sl_pp_context_add_predefined(context, "__GLSL_PP_PREDEFINED_MACRO_TEST", "1")) {
+      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
+
+      printf("Error: %s\n", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      free(tokens);
+      fclose(out);
+      return 0;
+   }
+
    if (sl_pp_process(context, &tokens[tokens_eaten], &outtokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
