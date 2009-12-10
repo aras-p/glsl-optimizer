@@ -196,8 +196,9 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	}
 
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-		tsc[0] |= (1 << 8);
-		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7);
+		/* XXX: must be deactivated for non-shadow textures */
+		tsc[0] |= (1 << 9);
+		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7) << 10;
 	}
 
 	limit = CLAMP(cso->lod_bias, -16.0, 15.0);
