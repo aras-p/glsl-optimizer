@@ -210,9 +210,31 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
                          unsigned thread_index,
                          const union lp_rast_cmd_arg arg)
 {
-   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const unsigned x = task->x;
+   const unsigned y = task->y;
+   int w = TILE_SIZE;
+   int h = TILE_SIZE;
 
-   /* call u_tile func to load colors from surface */
+   LP_DBG(DEBUG_RAST, "%s at %u, %u\n", __FUNCTION__, x, y);
+
+   if (x + w > rast->state.fb.width)
+      w -= x + w - rast->state.fb.width;
+
+   if (y + h > rast->state.fb.height)
+      h -= y + h - rast->state.fb.height;
+
+   assert(w >= 0);
+   assert(h >= 0);
+   assert(w <= TILE_SIZE);
+   assert(h <= TILE_SIZE);
+
+   lp_tile_read_4ub(rast->cbuf_transfer->format,
+                     rast->tasks[thread_index].tile.color,
+                     rast->cbuf_map, 
+                     rast->cbuf_transfer->stride,
+                     x, y,
+                     w, h);
 }
 
 
