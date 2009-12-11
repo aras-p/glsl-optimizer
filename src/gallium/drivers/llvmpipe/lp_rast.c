@@ -591,7 +591,7 @@ rasterize_bins( struct lp_rasterizer *rast,
 
 
 /**
- * Called by rasterizer when it has something for us to render.
+ * Called by setup module when it has something for us to render.
  */
 void
 lp_rasterize_bins( struct lp_rasterizer *rast,
