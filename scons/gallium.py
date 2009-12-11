@@ -370,7 +370,6 @@ def generate(env):
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
-            '-fno-strict-aliasing', # we violate strict pointer aliasing rules
         ]
         cflags += [
             '-Werror=declaration-after-statement',
