@@ -90,8 +90,6 @@ struct lp_rasterizer_task
  */
 struct lp_rasterizer
 {
-   unsigned width, height; /**< Size of framebuffer, in pixels */
-
    boolean clipped_tile;
    boolean check_for_clipped_tiles;
 
@@ -116,8 +114,7 @@ struct lp_rasterizer
    void *zsbuf_map;
 
    struct {
-      struct pipe_surface *cbuf;
-      struct pipe_surface *zsbuf;
+      struct pipe_framebuffer_state fb;
       boolean write_color;
       boolean write_zstencil;
       unsigned clear_color;

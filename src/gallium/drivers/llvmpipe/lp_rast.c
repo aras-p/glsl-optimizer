@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
+#include "util/u_surface.h"
 
 #include "lp_bin_queue.h"
 #include "lp_debug.h"
@@ -87,28 +88,25 @@ release_current_bin( struct lp_rasterizer *rast )
  */
 static boolean
 lp_rast_begin( struct lp_rasterizer *rast,
-                       struct pipe_surface *cbuf,
-                       struct pipe_surface *zsbuf,
-                       boolean write_color,
-                       boolean write_zstencil,
-                       unsigned width,
-                       unsigned height )
+               const struct pipe_framebuffer_state *fb,
+               boolean write_color,
+               boolean write_zstencil )
 {
    struct pipe_screen *screen = rast->screen;
+   struct pipe_surface *cbuf, *zsbuf;
 
-   LP_DBG(DEBUG_RAST, "%s %dx%d\n", __FUNCTION__, width, height);
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
-   pipe_surface_reference(&rast->state.cbuf, cbuf);
-   pipe_surface_reference(&rast->state.zsbuf, zsbuf);
+   util_copy_framebuffer_state(&rast->state.fb, fb);
 
-   rast->width = width;
-   rast->height = height;
    rast->state.write_zstencil = write_zstencil;
    rast->state.write_color = write_color;
 
-   rast->check_for_clipped_tiles = (width % TILE_SIZE != 0 ||
-                                    height % TILE_SIZE != 0);
+   rast->check_for_clipped_tiles = (fb->width % TILE_SIZE != 0 ||
+                                    fb->height % TILE_SIZE != 0);
 
+   /* XXX support multiple color buffers here */
+   cbuf = rast->state.fb.cbufs[0];
    if (cbuf) {
       rast->cbuf_transfer = screen->get_tex_transfer(rast->screen,
                                                      cbuf->texture,
@@ -116,7 +114,8 @@ lp_rast_begin( struct lp_rasterizer *rast,
                                                      cbuf->level,
                                                      cbuf->zslice,
                                                      PIPE_TRANSFER_READ_WRITE,
-                                                     0, 0, width, height);
+                                                     0, 0,
+                                                     fb->width, fb->height);
       if (!rast->cbuf_transfer)
          return FALSE;
 
@@ -126,14 +125,16 @@ lp_rast_begin( struct lp_rasterizer *rast,
          return FALSE;
    }
 
+   zsbuf = rast->state.fb.zsbuf;
    if (zsbuf) {
       rast->zsbuf_transfer = screen->get_tex_transfer(rast->screen,
-                                                     zsbuf->texture,
-                                                     zsbuf->face,
-                                                     zsbuf->level,
-                                                     zsbuf->zslice,
-                                                     PIPE_TRANSFER_READ_WRITE,
-                                                     0, 0, width, height);
+                                                      zsbuf->texture,
+                                                      zsbuf->face,
+                                                      zsbuf->level,
+                                                      zsbuf->zslice,
+                                                      PIPE_TRANSFER_READ_WRITE,
+                                                      0, 0,
+                                                      fb->width, fb->height);
       if (!rast->zsbuf_transfer)
          return FALSE;
 
@@ -442,11 +443,11 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
    int w = TILE_SIZE;
    int h = TILE_SIZE;
 
-   if (x + w > rast->width)
-      w -= x + w - rast->width;
+   if (x + w > rast->state.fb.width)
+      w -= x + w - rast->state.fb.width;
 
-   if (y + h > rast->height)
-      h -= y + h - rast->height;
+   if (y + h > rast->state.fb.height)
+      h -= y + h - rast->state.fb.height;
 
    assert(w >= 0);
    assert(h >= 0);
@@ -491,11 +492,11 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast,
    unsigned w = TILE_SIZE;
    unsigned h = TILE_SIZE;
 
-   if (x + w > rast->width)
-      w -= x + w - rast->width;
+   if (x + w > rast->state.fb.width)
+      w -= x + w - rast->state.fb.width;
 
-   if (y + h > rast->height)
-      h -= y + h - rast->height;
+   if (y + h > rast->state.fb.height)
+      h -= y + h - rast->state.fb.height;
 
    LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
@@ -614,13 +615,9 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       }
    }
 
-   lp_rast_begin( rast,
-                  fb->cbufs[0], 
-                  fb->zsbuf,
-                  fb->cbufs[0] != NULL,
-                  fb->zsbuf != NULL && write_depth,
-                  fb->width,
-                  fb->height );
+   lp_rast_begin( rast, fb,
+                  fb->cbufs[0]!= NULL,
+                  fb->zsbuf != NULL && write_depth );
 
    if (rast->num_threads == 0) {
       /* no threading */
@@ -765,8 +762,7 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
 {
    unsigned i;
 
-   pipe_surface_reference(&rast->state.cbuf, NULL);
-   pipe_surface_reference(&rast->state.zsbuf, NULL);
+   util_unreference_framebuffer_state(&rast->state.fb);
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       align_free(rast->tasks[i].tile.depth);
