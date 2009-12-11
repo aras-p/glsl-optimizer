@@ -472,6 +472,19 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_RGBA32F_ARB:
 		return MESA_FORMAT_RGBA_FLOAT32;
 
+#ifdef RADEON_R300
+	case GL_DEPTH_COMPONENT:
+	case GL_DEPTH_COMPONENT16:
+		return MESA_FORMAT_Z16;
+	case GL_DEPTH_COMPONENT24:
+	case GL_DEPTH_COMPONENT32:
+	case GL_DEPTH_STENCIL_EXT:
+	case GL_DEPTH24_STENCIL8_EXT:
+		if (rmesa->radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+			return MESA_FORMAT_S8_Z24;
+		else
+			return MESA_FORMAT_Z16;
+#else
 	case GL_DEPTH_COMPONENT:
 	case GL_DEPTH_COMPONENT16:
 	case GL_DEPTH_COMPONENT24:
@@ -479,6 +492,7 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_DEPTH_STENCIL_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
 		return MESA_FORMAT_S8_Z24;
+#endif
 
 	/* EXT_texture_sRGB */
 	case GL_SRGB:
