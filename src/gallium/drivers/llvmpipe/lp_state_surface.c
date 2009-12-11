@@ -47,7 +47,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
 
-   boolean changed = util_framebuffer_state_equal(&lp->framebuffer, fb);
+   boolean changed = !util_framebuffer_state_equal(&lp->framebuffer, fb);
 
    if (changed) {
 
