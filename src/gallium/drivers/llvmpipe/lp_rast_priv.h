@@ -129,7 +129,6 @@ struct lp_rasterizer
    pipe_thread threads[MAX_THREADS];
 
    struct lp_bins *bins;
-   const struct pipe_framebuffer_state *fb;
    boolean write_depth;
 };
 

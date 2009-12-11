@@ -635,7 +635,6 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       lp_bins_enqueue( rast->full_bins, bins );
 
       /* XXX need to move/fix these */
-      rast->fb = fb;
       rast->write_depth = write_depth;
 
       /*lp_bin_iter_begin( bins );*/
