@@ -122,24 +122,27 @@ boolean
 util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
                              const struct pipe_framebuffer_state *src)
 {
-   boolean changed = FALSE;
    unsigned i;
+
+   if (dst->width != src->width ||
+       dst->height != src->height)
+      return FALSE;
 
    for (i = 0; i < Elements(src->cbufs); i++) {
       if (dst->cbufs[i] != src->cbufs[i]) {
-         changed = TRUE;
+         return FALSE;
       }
    }
 
    if (dst->nr_cbufs != src->nr_cbufs) {
-      changed = TRUE;
+      return FALSE;
    }
 
    if (dst->zsbuf != src->zsbuf) {
-      changed = TRUE;
+      return FALSE;
    }
 
-   return changed;
+   return TRUE;
 }
 
 
@@ -151,6 +154,9 @@ util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
                             const struct pipe_framebuffer_state *src)
 {
    unsigned i;
+
+   dst->width = src->width;
+   dst->height = src->height;
 
    for (i = 0; i < Elements(src->cbufs); i++) {
       pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
