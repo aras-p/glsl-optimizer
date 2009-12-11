@@ -813,9 +813,17 @@ _mesa_find_free_register(const struct gl_program *prog, GLuint regFile)
       const struct prog_instruction *inst = prog->Instructions + i;
       const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
 
-      for (k = 0; k < n; k++) {
-         if (inst->SrcReg[k].File == regFile) {
-            used[inst->SrcReg[k].Index] = GL_TRUE;
+      /* check dst reg first */
+      if (inst->DstReg.File == regFile) {
+         used[inst->DstReg.Index] = GL_TRUE;
+      }
+      else {
+         /* check src regs otherwise */
+         for (k = 0; k < n; k++) {
+            if (inst->SrcReg[k].File == regFile) {
+               used[inst->SrcReg[k].Index] = GL_TRUE;
+               break;
+            }
          }
       }
    }
