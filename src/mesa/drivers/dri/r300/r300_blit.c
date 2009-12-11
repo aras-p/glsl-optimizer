@@ -480,7 +480,7 @@ GLboolean r300_blit(struct r300_context *r300,
 
     //return GL_FALSE;
 
-    if (1) {
+    if (0) {
         fprintf(stderr, "src: width %d, height %d, pitch %d vs %d, format %s\n",
                 src_width, src_height, src_pitch,
                 _mesa_format_row_stride(src_mesaformat, src_width),

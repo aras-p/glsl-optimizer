@@ -74,7 +74,7 @@ do_copy_texsubimage(GLcontext *ctx,
         return GL_FALSE;
     }
 
-    if (1) {
+    if (0) {
         fprintf(stderr, "%s: copying to face %d, level %d\n",
                 __FUNCTION__, _mesa_tex_target_to_face(target), level);
         fprintf(stderr, "to: x %d, y %d, offset %d\n", dstx, dsty, (uint32_t) dst_offset);
