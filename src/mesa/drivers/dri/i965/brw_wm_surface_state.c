@@ -94,20 +94,14 @@ static GLuint translate_tex_format( gl_format mesa_format,
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
 
    case MESA_FORMAT_ARGB8888:
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
    case MESA_FORMAT_XRGB8888:
       return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
 
    case MESA_FORMAT_RGBA8888_REV:
       _mesa_problem(NULL, "unexpected format in i965:translate_tex_format()");
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
+      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
 
    case MESA_FORMAT_RGB565:
       return BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -537,12 +531,16 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
+      /* XRGB and ARGB are treated the same here because the chips in this
+       * family cannot render to XRGB targets.  This means that we have to
+       * mask writes to alpha (ala glColorMask) and reconfigure the alpha
+       * blending hardware to use GL_ONE (or GL_ZERO) for cases where
+       * GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is used.
+       */
       case MESA_FORMAT_ARGB8888:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 break;
       case MESA_FORMAT_XRGB8888:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -554,7 +552,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->texformat);
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
@@ -579,6 +577,13 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    /* _NEW_COLOR */
    memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
+
+   /* As mentioned above, disable writes to the alpha component when the
+    * renderbuffer is XRGB.
+    */
+   if (ctx->Visual.alphaBits == 0)
+     key.color_mask[3] = GL_FALSE;
+
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
 		      ctx->Color.BlendEnabled);
 

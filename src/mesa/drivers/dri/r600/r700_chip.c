@@ -1163,7 +1163,11 @@ static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
 		count += 3;
 
 	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
-		for (ui = 0; ui < R700_MAX_RENDER_TARGETS; ui++) {
+		/* targets are enabled in r700SetRenderTarget but state
+		   size is calculated before that. Until MRT's are done
+		   hardcode target0 as enabled. */
+		count += 3;
+		for (ui = 1; ui < R700_MAX_RENDER_TARGETS; ui++) {
                         if (r700->render_target[ui].enabled)
 				count += 3;
 		}

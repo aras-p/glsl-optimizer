@@ -285,11 +285,11 @@ intelReadPixels(GLcontext * ctx,
 
    intelFlush(ctx);
 
-#ifdef I915
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
 
+#ifdef I915
    if (do_texture_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;

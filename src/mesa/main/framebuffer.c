@@ -969,3 +969,29 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
    /* OK */
    return GL_TRUE;
 }
+
+GLenum
+_mesa_get_color_read_format(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_BGRA;
+   case MESA_FORMAT_RGB565:
+      return GL_BGR;
+   default:
+      return GL_RGBA;
+   }
+}
+
+GLenum
+_mesa_get_color_read_type(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_UNSIGNED_BYTE;
+   case MESA_FORMAT_RGB565:
+      return GL_UNSIGNED_SHORT_5_6_5_REV;
+   default:
+      return GL_UNSIGNED_BYTE;
+   }
+}

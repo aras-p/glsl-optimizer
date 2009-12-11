@@ -260,8 +260,7 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 
 #ifdef HAVE_LIBKMS
     if (ms->kms)
-	kms_destroy(ms->kms);
-    ms->kms = NULL;
+	kms_destroy(&ms->kms);
 #endif
 
     return TRUE;
@@ -688,6 +687,9 @@ drv_leave_vt(int scrnIndex, int flags)
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
     int o;
 
+    if (ms->winsys_leave_vt)
+	ms->winsys_leave_vt(pScrn);
+
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
 
@@ -749,6 +751,9 @@ drv_enter_vt(int scrnIndex, int flags)
 
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
+
+    if (ms->winsys_enter_vt)
+	ms->winsys_enter_vt(pScrn);
 
     return TRUE;
 }
@@ -898,8 +903,7 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
 	return TRUE;
 
     kms_bo_unmap(ms->root_bo);
-    kms_bo_destroy(ms->root_bo);
-    ms->root_bo = NULL;
+    kms_bo_destroy(&ms->root_bo);
     return TRUE;
 }
 
@@ -945,7 +949,7 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     return TRUE;
 
 err_destroy:
-    kms_bo_destroy(bo);
+    kms_bo_destroy(&bo);
     return FALSE;
 }
 

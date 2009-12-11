@@ -13,6 +13,7 @@
 #include "mtypes.h"
 #include "state.h"
 #include "texcompress.h"
+#include "framebuffer.h"
 
 
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
@@ -1767,11 +1768,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(ctx->Const.ColorReadType);
+         params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(ctx->Const.ColorReadFormat);
+         params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
          CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
@@ -3602,11 +3603,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetFloatv");
-         params[0] = (GLfloat)(ctx->Const.ColorReadType);
+         params[0] = (GLfloat)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetFloatv");
-         params[0] = (GLfloat)(ctx->Const.ColorReadFormat);
+         params[0] = (GLfloat)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
          CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
@@ -5437,11 +5438,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetIntegerv");
-         params[0] = ctx->Const.ColorReadType;
+         params[0] = _mesa_get_color_read_type(ctx);
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetIntegerv");
-         params[0] = ctx->Const.ColorReadFormat;
+         params[0] = _mesa_get_color_read_format(ctx);
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
          CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
@@ -7273,11 +7274,11 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetInteger64v");
-         params[0] = (GLint64)(ctx->Const.ColorReadType);
+         params[0] = (GLint64)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetInteger64v");
-         params[0] = (GLint64)(ctx->Const.ColorReadFormat);
+         params[0] = (GLint64)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
          CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");

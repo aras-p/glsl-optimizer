@@ -212,17 +212,67 @@ check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
    return Success;
 }
 
+static int
+query_image_attributes(ScrnInfoPtr pScrn,
+                       int id,
+                       unsigned short *w, unsigned short *h,
+                       int *pitches, int *offsets)
+{
+   int size, tmp;
+
+   if (*w > IMAGE_MAX_WIDTH)
+      *w = IMAGE_MAX_WIDTH;
+   if (*h > IMAGE_MAX_HEIGHT)
+      *h = IMAGE_MAX_HEIGHT;
+
+   *w = (*w + 1) & ~1;
+   if (offsets)
+      offsets[0] = 0;
+
+   switch (id) {
+   case FOURCC_YV12:
+      *h = (*h + 1) & ~1;
+      size = (*w + 3) & ~3;
+      if (pitches) {
+         pitches[0] = size;
+      }
+      size *= *h;
+      if (offsets) {
+         offsets[1] = size;
+      }
+      tmp = ((*w >> 1) + 3) & ~3;
+      if (pitches) {
+         pitches[1] = pitches[2] = tmp;
+      }
+      tmp *= (*h >> 1);
+      size += tmp;
+      if (offsets) {
+         offsets[2] = size;
+      }
+      size += tmp;
+      break;
+   case FOURCC_UYVY:
+   case FOURCC_YUY2:
+   default:
+      size = *w << 1;
+      if (pitches)
+	 pitches[0] = size;
+      size *= *h;
+      break;
+   }
+
+   return size;
+}
+
 static void
 copy_packed_data(ScrnInfoPtr pScrn,
                  struct xorg_xv_port_priv *port,
                  int id,
                  unsigned char *buf,
-                 int srcPitch,
                  int left,
                  int top,
-                 int w, int h)
+                 unsigned short w, unsigned short h)
 {
-   unsigned char *src;
    int i, j;
    struct pipe_texture **dst = port->yuv[port->current_set];
    struct pipe_transfer *ytrans, *utrans, *vtrans;
@@ -231,8 +281,6 @@ copy_packed_data(ScrnInfoPtr pScrn,
    unsigned char y1, y2, u, v;
    int yidx, uidx, vidx;
    int y_array_size = w * h;
-
-   src = buf + (top * srcPitch) + (left << 1);
 
    ytrans = screen->get_tex_transfer(screen, dst[0],
                                      0, 0, 0,
@@ -255,15 +303,22 @@ copy_packed_data(ScrnInfoPtr pScrn,
 
    switch (id) {
    case FOURCC_YV12: {
-      for (i = 0; i < w; ++i) {
-         for (j = 0; j < h; ++j) {
-            /*XXX use src? */
-            y1  = buf[j*w + i];
-            u   = buf[(j/2) * (w/2) + i/2 + y_array_size];
-            v   = buf[(j/2) * (w/2) + i/2 + y_array_size + y_array_size/4];
-            ymap[yidx++] = y1;
-            umap[uidx++] = u;
-            vmap[vidx++] = v;
+      int pitches[3], offsets[3];
+      unsigned char *y, *u, *v;
+      query_image_attributes(pScrn, FOURCC_YV12,
+                             &w, &h, pitches, offsets);
+
+      y = buf + offsets[0];
+      v = buf + offsets[1];
+      u = buf + offsets[2];
+      for (i = 0; i < h; ++i) {
+         for (j = 0; j < w; ++j) {
+            int yoffset = (w*i+j);
+            int ii = (i|1), jj = (j|1);
+            int vuoffset = (w/2)*(ii/2) + (jj/2);
+            ymap[yidx++] = y[yoffset];
+            umap[uidx++] = u[vuoffset];
+            vmap[vidx++] = v[vuoffset];
          }
       }
    }
@@ -510,7 +565,6 @@ put_image(ScrnInfoPtr pScrn,
    ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
    PixmapPtr pPixmap;
    INT32 x1, x2, y1, y2;
-   int srcPitch;
    BoxRec dstBox;
    int ret;
 
@@ -529,21 +583,12 @@ put_image(ScrnInfoPtr pScrn,
 			      width, height))
       return Success;
 
-   switch (id) {
-   case FOURCC_UYVY:
-   case FOURCC_YUY2:
-   case FOURCC_YV12:
-   default:
-      srcPitch = width << 1;
-      break;
-   }
-
    ret = check_yuv_textures(pPriv, width, height);
 
    if (ret)
       return ret;
 
-   copy_packed_data(pScrn, pPriv, id, buf, srcPitch,
+   copy_packed_data(pScrn, pPriv, id, buf,
                     src_x, src_y, width, height);
 
    if (pDraw->type == DRAWABLE_WINDOW) {
@@ -559,38 +604,6 @@ put_image(ScrnInfoPtr pScrn,
 
    pPriv->current_set = (pPriv->current_set + 1) & 1;
    return Success;
-}
-
-static int
-query_image_attributes(ScrnInfoPtr pScrn,
-                       int id,
-                       unsigned short *w, unsigned short *h,
-                       int *pitches, int *offsets)
-{
-   int size;
-
-   if (*w > IMAGE_MAX_WIDTH)
-      *w = IMAGE_MAX_WIDTH;
-   if (*h > IMAGE_MAX_HEIGHT)
-      *h = IMAGE_MAX_HEIGHT;
-
-   *w = (*w + 1) & ~1;
-   if (offsets)
-      offsets[0] = 0;
-
-   switch (id) {
-   case FOURCC_UYVY:
-   case FOURCC_YUY2:
-   case FOURCC_YV12:
-   default:
-      size = *w << 1;
-      if (pitches)
-	 pitches[0] = size;
-      size *= *h;
-      break;
-   }
-
-   return size;
 }
 
 static struct xorg_xv_port_priv *

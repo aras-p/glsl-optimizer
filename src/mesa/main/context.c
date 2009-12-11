@@ -564,10 +564,6 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ARB_draw_buffers */
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
-   /* GL_OES_read_format */
-   ctx->Const.ColorReadFormat = GL_RGBA;
-   ctx->Const.ColorReadType = GL_UNSIGNED_BYTE;
-
 #if FEATURE_EXT_framebuffer_object
    ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
    ctx->Const.MaxRenderbufferSize = MAX_WIDTH;

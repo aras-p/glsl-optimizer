@@ -2356,9 +2356,6 @@ struct gl_constants
 
    GLuint MaxDrawBuffers;    /**< GL_ARB_draw_buffers */
 
-   GLenum ColorReadFormat;   /**< GL_OES_read_format */
-   GLenum ColorReadType;     /**< GL_OES_read_format */
-
    GLuint MaxColorAttachments;   /**< GL_EXT_framebuffer_object */
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */

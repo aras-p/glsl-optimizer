@@ -276,6 +276,11 @@ vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 
     debug_printf("%s: enter\n", __func__);
 
+    if (vmw_ioctl_supports_overlay(vmw) != 0) {
+        debug_printf("No overlay ioctl support\n");
+        return FALSE;
+    }
+
     numAdaptors = xf86XVListGenericAdaptors(pScrn, &overlayAdaptors);
 
     newAdaptor = vmw_video_init_adaptor(pScrn, vmw);
@@ -346,7 +351,8 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 	return TRUE;
 
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
-        vmw_video_port_cleanup(pScrn, &video->port[i]);
+	/* make sure the port is stoped as well */
+	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
     }
 
     /* XXX: I'm sure this function is missing code for turning off Xv */
@@ -355,6 +361,38 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     vmw->video_priv = NULL;
 
     return TRUE;
+}
+
+
+/*
+ *-----------------------------------------------------------------------------
+ *
+ * vmw_video_stop_all --
+ *
+ *    Stop all video streams from playing.
+ *
+ * Results:
+ *    None.
+ *
+ * Side effects:
+ *    All buffers are freed.
+ *
+ *-----------------------------------------------------------------------------
+ */
+
+void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+{
+    struct vmw_video_private *video = vmw->video_priv;
+    int i;
+
+    debug_printf("%s: enter\n", __func__);
+
+    if (!video)
+	return;
+
+    for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
+	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
+    }
 }
 
 

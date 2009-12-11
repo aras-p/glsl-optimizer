@@ -806,6 +806,7 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
       default:
 	 return debug(stream, "", 0);
       }
+      break;
    default:
       assert(0);
       return 0;

@@ -52,14 +52,16 @@
 /**
  * DRM_VMW_GET_PARAM - get device information.
  *
- * Currently we support only one parameter:
- *
  * DRM_VMW_PARAM_FIFO_OFFSET:
  * Offset to use to map the first page of the FIFO read-only.
  * The fifo is mapped using the mmap() system call on the drm device.
+ *
+ * DRM_VMW_PARAM_OVERLAY_IOCTL:
+ * Does the driver support the overlay ioctl.
  */
 
 #define DRM_VMW_PARAM_FIFO_OFFSET    0
+#define DRM_VMW_PARAM_OVERLAY_IOCTL  1
 
 /**
  * struct drm_vmw_getparam_arg

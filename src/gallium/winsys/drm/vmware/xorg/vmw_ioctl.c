@@ -56,6 +56,37 @@ struct vmw_dma_buffer
     uint32_t size;
 };
 
+static int
+vmw_ioctl_get_param(struct vmw_driver *vmw, uint32_t param, uint64_t *out)
+{
+    struct drm_vmw_getparam_arg gp_arg;
+    int ret;
+
+    memset(&gp_arg, 0, sizeof(gp_arg));
+    gp_arg.param = param;
+    ret = drmCommandWriteRead(vmw->fd, DRM_VMW_GET_PARAM,
+	    &gp_arg, sizeof(gp_arg));
+
+    if (ret == 0) {
+	*out = gp_arg.value;
+    }
+
+    return ret;
+}
+
+int
+vmw_ioctl_supports_overlay(struct vmw_driver *vmw)
+{
+    uint64_t value;
+    int ret;
+
+    ret = vmw_ioctl_get_param(vmw, DRM_VMW_PARAM_OVERLAY_IOCTL, &value);
+    if (ret)
+	return ret;
+
+    return value ? 0 : -ENOSYS;
+}
+
 int
 vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot)
 {
