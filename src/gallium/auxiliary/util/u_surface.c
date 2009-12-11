@@ -166,3 +166,19 @@ util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
 
    pipe_surface_reference(&dst->zsbuf, src->zsbuf);
 }
+
+
+void
+util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb)
+{
+   unsigned i;
+
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      pipe_surface_reference(&fb->cbufs[i], NULL);
+   }
+
+   pipe_surface_reference(&fb->zsbuf, NULL);
+
+   fb->width = fb->height = 0;
+   fb->nr_cbufs = 0;
+}
