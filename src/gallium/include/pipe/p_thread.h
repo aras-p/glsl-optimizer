@@ -47,6 +47,8 @@
 
 #define PIPE_THREAD_HAVE_CONDVAR
 
+/* pipe_thread
+ */
 typedef pthread_t pipe_thread;
 
 #define PIPE_THREAD_ROUTINE( name, param ) \
@@ -70,8 +72,10 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
    return pthread_detach( thread );
 }
 
+
+/* pipe_mutex
+ */
 typedef pthread_mutex_t pipe_mutex;
-typedef pthread_cond_t pipe_condvar;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = PTHREAD_MUTEX_INITIALIZER
@@ -87,6 +91,11 @@ typedef pthread_cond_t pipe_condvar;
 
 #define pipe_mutex_unlock(mutex) \
    (void) pthread_mutex_unlock(&(mutex))
+
+
+/* pipe_condvar
+ */
+typedef pthread_cond_t pipe_condvar;
 
 #define pipe_static_condvar(mutex) \
    static pipe_condvar mutex = PTHREAD_COND_INITIALIZER
@@ -107,6 +116,8 @@ typedef pthread_cond_t pipe_condvar;
   pthread_cond_broadcast(&(cond))
 
 
+/* pipe_barrier
+ */
 typedef pthread_barrier_t pipe_barrier;
 
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
@@ -129,6 +140,8 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 
 #include <windows.h>
 
+/* pipe_thread
+ */
 typedef HANDLE pipe_thread;
 
 #define PIPE_THREAD_ROUTINE( name, param ) \
@@ -154,6 +167,9 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
    return -1;
 }
 
+
+/* pipe_mutex
+ */
 typedef CRITICAL_SECTION pipe_mutex;
 
 #define pipe_static_mutex(mutex) \
@@ -171,17 +187,29 @@ typedef CRITICAL_SECTION pipe_mutex;
 #define pipe_mutex_unlock(mutex) \
    LeaveCriticalSection(&mutex)
 
-/* XXX: dummy definitions, make it compile */
 
+/* pipe_condvar (XXX FIX THIS)
+ */
 typedef unsigned pipe_condvar;
 
-#define pipe_condvar_init(condvar) \
-   (void) condvar
+#define pipe_condvar_init(cond) \
+   (void) cond
 
-#define pipe_condvar_broadcast(condvar) \
-   (void) condvar
+#define pipe_condvar_destroy(cond) \
+   (void) cond
+
+#define pipe_condvar_wait(cond, mutex) \
+   (void) cond; (void) mutex
+
+#define pipe_condvar_signal(cond) \
+   (void) cond
+
+#define pipe_condvar_broadcast(cond) \
+   (void) cond
 
 
+/* pipe_barrier (XXX FIX THIS)
+ */
 typedef unsigned pipe_barrier;
 
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
