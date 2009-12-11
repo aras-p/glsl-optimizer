@@ -27,7 +27,8 @@
 /**
  * @file
  * 
- * Thread, mutex, condition var and thread-specific data functions.
+ * Thread, mutex, condition variable, barrier, semaphore and
+ * thread-specific data functions.
  */
 
 
@@ -106,6 +107,24 @@ typedef pthread_cond_t pipe_condvar;
   pthread_cond_broadcast(&(cond))
 
 
+typedef pthread_barrier_t pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   pthread_barrier_init(barrier, NULL, count);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   pthread_barrier_destroy(barrier);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   pthread_barrier_wait(barrier);
+}
+
+
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
 #include <windows.h>
@@ -162,6 +181,27 @@ typedef unsigned pipe_condvar;
 #define pipe_condvar_broadcast(condvar) \
    (void) condvar
 
+
+typedef unsigned pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   /* XXX we could implement barriers with a mutex and condition var */
+   assert(0);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+
+
 #else
 
 /** Dummy definitions */
@@ -169,6 +209,7 @@ typedef unsigned pipe_condvar;
 typedef unsigned pipe_thread;
 typedef unsigned pipe_mutex;
 typedef unsigned pipe_condvar;
+typedef unsigned pipe_barrier;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -202,6 +243,24 @@ typedef unsigned pipe_condvar;
 
 #define pipe_condvar_broadcast(condvar) \
    (void) condvar
+
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   /* XXX we could implement barriers with a mutex and condition var */
+   assert(0);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
 
 
 #endif  /* PIPE_OS_? */
