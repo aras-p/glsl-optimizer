@@ -62,6 +62,7 @@ pipe_is_referenced(struct pipe_reference *reference)
  * Update reference counting.
  * The old thing pointed to, if any, will be unreferenced.
  * Both 'ptr' and 'reference' may be NULL.
+ * \return TRUE if the object's refcount hits zero and should be destroyed.
  */
 static INLINE boolean
 pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
