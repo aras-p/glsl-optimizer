@@ -219,7 +219,7 @@ Display( void )
       GLint reads = 0;
       GLint endTime;
       GLint startTime = glutGet(GLUT_ELAPSED_TIME);
-      GLdouble seconds, pixelsPerSecond;
+      GLdouble seconds, mpixels, mpixelsPerSecond;
       printf("Benchmarking...\n");
       do {
          glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
@@ -228,9 +228,10 @@ Display( void )
          endTime = glutGet(GLUT_ELAPSED_TIME);
       } while (endTime - startTime < 4000);   /* 4 seconds */
       seconds = (double) (endTime - startTime) / 1000.0;
-      pixelsPerSecond = reads * ImgWidth * ImgHeight / seconds;
-      printf("Result:  %d reads in %f seconds = %f pixels/sec\n",
-             reads, seconds, pixelsPerSecond);
+      mpixels = reads * (ImgWidth * ImgHeight / (1000.0 * 1000.0));
+      mpixelsPerSecond = mpixels / seconds;
+      printf("Result:  %d reads in %f seconds = %f Mpixels/sec\n",
+             reads, seconds, mpixelsPerSecond);
       Benchmark = GL_FALSE;
    }
    else {
