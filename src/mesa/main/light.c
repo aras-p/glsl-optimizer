@@ -206,7 +206,10 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
 void GLAPIENTRY
 _mesa_Lightf( GLenum light, GLenum pname, GLfloat param )
 {
-   _mesa_Lightfv( light, pname, &param );
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_Lightfv( light, pname, fparam );
 }
 
 
@@ -285,7 +288,10 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 void GLAPIENTRY
 _mesa_Lighti( GLenum light, GLenum pname, GLint param )
 {
-   _mesa_Lightiv( light, pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_Lightiv( light, pname, iparam );
 }
 
 
@@ -537,14 +543,20 @@ _mesa_LightModeliv( GLenum pname, const GLint *params )
 void GLAPIENTRY
 _mesa_LightModeli( GLenum pname, GLint param )
 {
-   _mesa_LightModeliv( pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_LightModeliv( pname, iparam );
 }
 
 
 void GLAPIENTRY
 _mesa_LightModelf( GLenum pname, GLfloat param )
 {
-   _mesa_LightModelfv( pname, &param );
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_LightModelfv( pname, fparam );
 }
 
 

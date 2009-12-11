@@ -84,10 +84,11 @@ _slang_lookup_constant(const char *name)
    for (i = 0; info[i].Name; i++) {
       if (strcmp(info[i].Name, name) == 0) {
          /* found */
-         GLint value = -1;
-         _mesa_GetIntegerv(info[i].Token, &value);
-         ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
-         return value;
+         GLint values[16];
+         values[0] = -1;
+         _mesa_GetIntegerv(info[i].Token, values);
+         ASSERT(values[0] >= 0);  /* sanity check that glGetFloatv worked */
+         return values[0];
       }
    }
    return -1;

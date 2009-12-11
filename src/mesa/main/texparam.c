@@ -595,8 +595,10 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    case GL_DEPTH_TEXTURE_MODE_ARB:
       {
          /* convert float param to int */
-         GLint p = (GLint) params[0];
-         need_update = set_tex_parameteri(ctx, texObj, pname, &p);
+         GLint p[4];
+         p[0] = (GLint) params[0];
+         p[1] = p[2] = p[3] = 0;
+         need_update = set_tex_parameteri(ctx, texObj, pname, p);
       }
       break;
 
@@ -645,14 +647,21 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
    case GL_TEXTURE_LOD_BIAS:
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
-         GLfloat fparam = (GLfloat) param;
+         GLfloat fparam[4];
+         fparam[0] = (GLfloat) param;
+         fparam[1] = fparam[2] = fparam[3] = 0.0F;
          /* convert int param to float */
-         need_update = set_tex_parameterf(ctx, texObj, pname, &fparam);
+         need_update = set_tex_parameterf(ctx, texObj, pname, fparam);
       }
       break;
    default:
       /* this will generate an error if pname is illegal */
-      need_update = set_tex_parameteri(ctx, texObj, pname, &param);
+      {
+         GLint iparam[4];
+         iparam[0] = param;
+         iparam[1] = iparam[2] = iparam[3] = 0;
+         need_update = set_tex_parameteri(ctx, texObj, pname, iparam);
+      }
    }
 
    if (ctx->Driver.TexParameter && need_update) {
@@ -694,8 +703,10 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
          /* convert int param to float */
-         GLfloat fparam = (GLfloat) params[0];
-         need_update = set_tex_parameterf(ctx, texObj, pname, &fparam);
+         GLfloat fparams[4];
+         fparams[0] = (GLfloat) params[0];
+         fparams[1] = fparams[2] = fparams[3] = 0.0F;
+         need_update = set_tex_parameterf(ctx, texObj, pname, fparams);
       }
       break;
    default:
