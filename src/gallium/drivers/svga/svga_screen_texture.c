@@ -528,7 +528,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
 {
    struct svga_screen *ss = svga_screen(tex->base.screen);
    struct svga_winsys_surface *handle;
-   int i, j;
+   uint32_t i, j;
    unsigned z_offset = 0;
 
    SVGA_DBG(DEBUG_PERF, 
