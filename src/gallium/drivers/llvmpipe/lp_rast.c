@@ -561,7 +561,6 @@ static void
 rasterize_bins( struct lp_rasterizer *rast,
                 unsigned thread_index,
                 struct lp_bins *bins,
-                const struct pipe_framebuffer_state *fb,
                 bool write_depth )
 {
    /* loop over tile bins, rasterize each */
@@ -626,7 +625,7 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
    if (rast->num_threads == 0) {
       /* no threading */
       lp_bin_iter_begin( bins );
-      rasterize_bins( rast, 0, bins, fb, write_depth );
+      rasterize_bins( rast, 0, bins, write_depth );
 
       /* reset bins and put into the empty queue */
       lp_reset_bins( bins );
@@ -690,7 +689,7 @@ thread_func( void *init_data )
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
       rasterize_bins(rast, task->thread_index,
-                     bins, rast->fb, rast->write_depth);
+                     bins, rast->write_depth);
       
       release_current_bin( rast );
 
