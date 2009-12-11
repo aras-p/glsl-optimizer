@@ -34,7 +34,7 @@
 
 
 #include "pipe/p_thread.h"
-#include "lp_bin.h"
+#include "util/u_memory.h"
 #include "lp_bin_queue.h"
 
 
