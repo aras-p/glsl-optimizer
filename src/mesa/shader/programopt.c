@@ -528,15 +528,11 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    /* look for instructions which write to the varying vars identified above */
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      GLuint j;
-      for (j = 0; j < numSrc; j++) {
-         if (inst->DstReg.File == type &&
-             outputMap[inst->DstReg.Index] >= 0) {
-            /* change inst to write to the temp reg, instead of the varying */
-            inst->DstReg.File = PROGRAM_TEMPORARY;
-            inst->DstReg.Index = outputMap[inst->DstReg.Index];
-         }
+      if (inst->DstReg.File == type &&
+          outputMap[inst->DstReg.Index] >= 0) {
+         /* change inst to write to the temp reg, instead of the varying */
+         inst->DstReg.File = PROGRAM_TEMPORARY;
+         inst->DstReg.Index = outputMap[inst->DstReg.Index];
       }
    }
 
