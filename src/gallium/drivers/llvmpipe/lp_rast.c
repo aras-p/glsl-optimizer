@@ -40,48 +40,6 @@
 #include "lp_bin.h"
 
 
-
-/**
- * Called by rasterization threads to get the next chunk of work.
- * We use a lock to make sure that all the threads get the same bins.
- */
-static struct lp_bins *
-get_next_full_bin( struct lp_rasterizer *rast )
-{
-   pipe_mutex_lock( rast->get_bin_mutex );
-   if (!rast->curr_bins) {
-      /* this will wait until there's something in the queue */
-      rast->curr_bins = lp_bins_dequeue( rast->full_bins );
-      rast->release_count = 0;
-
-      lp_bin_iter_begin( rast->curr_bins );
-   }
-   pipe_mutex_unlock( rast->get_bin_mutex );
-   return rast->curr_bins;
-}
-
-
-/**
- * Called by rasterization threads after they've finished with
- * the current bin.  When all threads have called this, we reset
- * the bin and put it into the 'empty bins' queue.
- */
-static void
-release_current_bin( struct lp_rasterizer *rast )
-{
-   pipe_mutex_lock( rast->get_bin_mutex );
-   rast->release_count++;
-   if (rast->release_count == rast->num_threads) {
-      assert(rast->curr_bins);
-      lp_reset_bins( rast->curr_bins );
-      lp_bins_enqueue( rast->empty_bins, rast->curr_bins );
-      rast->curr_bins = NULL;
-   }
-   pipe_mutex_unlock( rast->get_bin_mutex );
-}
-
-
-
 /**
  * Begin the rasterization phase.
  * Map the framebuffer surfaces.  Initialize the 'rast' state.
@@ -526,6 +484,22 @@ lp_rast_end_tile( struct lp_rasterizer *rast,
 
 
 /**
+ * When all the threads are done rasterizing a bin, one thread will
+ * call this function to reset the bin and put it onto the empty queue.
+ */
+static void
+release_bins( struct lp_rasterizer *rast,
+              struct lp_bins *bins )
+{
+   util_unreference_framebuffer_state( &bins->fb );
+
+   lp_reset_bins( bins );
+   lp_bins_enqueue( rast->empty_bins, bins );
+   rast->curr_bins = NULL;
+}
+
+
+/**
  * Rasterize commands for a single bin.
  * \param x, y  position of the bin's tile in the framebuffer
  * Must be called between lp_rast_begin() and lp_rast_end().
@@ -615,29 +589,29 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       }
    }
 
-   lp_rast_begin( rast, fb,
-                  fb->cbufs[0]!= NULL,
-                  fb->zsbuf != NULL && write_depth );
+   /* save framebuffer state in the bin */
+   util_copy_framebuffer_state(&bins->fb, fb);
+   bins->write_depth = write_depth;
 
    if (rast->num_threads == 0) {
       /* no threading */
+
+      lp_rast_begin( rast, fb,
+                     fb->cbufs[0]!= NULL,
+                     fb->zsbuf != NULL && write_depth );
+
       lp_bin_iter_begin( bins );
       rasterize_bins( rast, 0, bins, write_depth );
 
-      /* reset bins and put into the empty queue */
-      lp_reset_bins( bins );
-      lp_bins_enqueue( rast->empty_bins, bins);
+      release_bins( rast, bins );
+
+      lp_rast_end( rast );
    }
    else {
       /* threaded rendering! */
       unsigned i;
 
       lp_bins_enqueue( rast->full_bins, bins );
-
-      /* XXX need to move/fix these */
-      rast->write_depth = write_depth;
-
-      /*lp_bin_iter_begin( bins );*/
 
       /* signal the threads that there's work to do */
       for (i = 0; i < rast->num_threads; i++) {
@@ -649,8 +623,6 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
          pipe_semaphore_wait(&rast->tasks[i].work_done);
       }
    }
-
-   lp_rast_end( rast );
 
    LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
 }
@@ -671,23 +643,53 @@ thread_func( void *init_data )
    boolean debug = false;
 
    while (1) {
-      struct lp_bins *bins;
-
       /* wait for work */
       if (debug)
          debug_printf("thread %d waiting for work\n", task->thread_index);
       pipe_semaphore_wait(&task->work_ready);
 
-      bins = get_next_full_bin( rast );
-      assert(bins);
+      if (task->thread_index == 0) {
+         /* thread[0]:
+          *  - get next set of bins to rasterize
+          *  - map the framebuffer surfaces
+          */
+         const struct pipe_framebuffer_state *fb;
+         boolean write_depth;
+
+         rast->curr_bins = lp_bins_dequeue( rast->full_bins );
+
+         lp_bin_iter_begin( rast->curr_bins );
+
+         fb = &rast->curr_bins->fb;
+         write_depth = rast->curr_bins->write_depth;
+
+         lp_rast_begin( rast, fb,
+                        fb->cbufs[0] != NULL,
+                        fb->zsbuf != NULL && write_depth );
+      }
+
+      /* Wait for all threads to get here so that threads[1+] don't
+       * get a null rast->curr_bins pointer.
+       */
+      pipe_barrier_wait( &rast->barrier );
 
       /* do work */
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
       rasterize_bins(rast, task->thread_index,
-                     bins, rast->write_depth);
+                     rast->curr_bins, rast->curr_bins->write_depth);
       
-      release_current_bin( rast );
+      /* wait for all threads to finish with this set of bins */
+      pipe_barrier_wait( &rast->barrier );
+
+      if (task->thread_index == 0) {
+         /* thread[0]:
+          * - release the bins object
+          * - unmap the framebuffer surfaces
+          */
+         release_bins( rast, rast->curr_bins );
+         lp_rast_end( rast );
+      }
 
       /* signal done with work */
       if (debug)
@@ -751,6 +753,9 @@ lp_rast_create( struct pipe_screen *screen, struct lp_bins_queue *empty )
 
    create_rast_threads(rast);
 
+   /* for synchronizing rasterization threads */
+   pipe_barrier_init( &rast->barrier, rast->num_threads );
+
    return rast;
 }
 
@@ -767,6 +772,9 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
       align_free(rast->tasks[i].tile.depth);
       align_free(rast->tasks[i].tile.color);
    }
+
+   /* for synchronizing rasterization threads */
+   pipe_barrier_destroy( &rast->barrier );
 
    FREE(rast);
 }

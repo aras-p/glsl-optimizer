@@ -108,6 +108,11 @@ struct lp_bins {
    struct cmd_bin tile[TILES_X][TILES_Y];
    struct data_block_list data;
 
+   /** the framebuffer to render the bins into */
+   struct pipe_framebuffer_state fb;
+
+   boolean write_depth;
+
    /**
     * Number of active tiles in each dimension.
     * This basically the framebuffer size divided by tile size

@@ -93,18 +93,6 @@ struct lp_rasterizer
    boolean clipped_tile;
    boolean check_for_clipped_tiles;
 
-   /** The incoming queue of filled bins to rasterize */
-   struct lp_bins_queue *full_bins;
-   /** The outgoing queue of emptied bins to return to setup modulee */
-   struct lp_bins_queue *empty_bins;
-
-   pipe_mutex get_bin_mutex;
-
-   /** The bins currently being rasterized by the threads */
-   struct lp_bins *curr_bins;
-   /** Counter to determine when all threads are done with current bin */
-   unsigned release_count;
-
    /* Framebuffer stuff
     */
    struct pipe_screen *screen;
@@ -122,14 +110,22 @@ struct lp_rasterizer
       char clear_stencil;
    } state;
 
+   /** The incoming queue of filled bins to rasterize */
+   struct lp_bins_queue *full_bins;
+   /** The outgoing queue of emptied bins to return to setup modulee */
+   struct lp_bins_queue *empty_bins;
+
+   /** The bins currently being rasterized by the threads */
+   struct lp_bins *curr_bins;
+
    /** A task object for each rasterization thread */
    struct lp_rasterizer_task tasks[MAX_THREADS];
 
    unsigned num_threads;
    pipe_thread threads[MAX_THREADS];
 
-   struct lp_bins *bins;
-   boolean write_depth;
+   /** For synchronizing the rasterization threads */
+   pipe_barrier barrier;
 };
 
 
