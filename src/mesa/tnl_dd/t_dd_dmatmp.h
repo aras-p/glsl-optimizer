@@ -637,6 +637,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 	 /* Send v1, v2, v3
 	  */
 	 tmp = EMIT_VERTS(ctx, j + 1, 3, tmp);
+	 (void) tmp;
       }
    }
    else {
