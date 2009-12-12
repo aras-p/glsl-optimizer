@@ -46,6 +46,7 @@
 #include "util/u_gen_mipmap.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_math.h"
+#include "util/u_texture.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -1383,59 +1384,9 @@ set_vertex_data(struct gen_mipmap_state *ctx,
       static const float st[4][2] = {
          {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
       };
-      float rx, ry, rz;
-      uint i;
 
-      /* loop over quad verts */
-      for (i = 0; i < 4; i++) {
-         /* Compute sc = +/-scale and tc = +/-scale.
-          * Not +/-1 to avoid cube face selection ambiguity near the edges,
-          * though that can still sometimes happen with this scale factor...
-          */
-         const float scale = 0.9999f;
-         const float sc = (2.0f * st[i][0] - 1.0f) * scale;
-         const float tc = (2.0f * st[i][1] - 1.0f) * scale;
-
-         switch (face) {
-         case PIPE_TEX_FACE_POS_X:
-            rx = 1.0f;
-            ry = -tc;
-            rz = -sc;
-            break;
-         case PIPE_TEX_FACE_NEG_X:
-            rx = -1.0f;
-            ry = -tc;
-            rz = sc;
-            break;
-         case PIPE_TEX_FACE_POS_Y:
-            rx = sc;
-            ry = 1.0f;
-            rz = tc;
-            break;
-         case PIPE_TEX_FACE_NEG_Y:
-            rx = sc;
-            ry = -1.0f;
-            rz = -tc;
-            break;
-         case PIPE_TEX_FACE_POS_Z:
-            rx = sc;
-            ry = -tc;
-            rz = 1.0f;
-            break;
-         case PIPE_TEX_FACE_NEG_Z:
-            rx = -sc;
-            ry = -tc;
-            rz = -1.0f;
-            break;
-         default:
-            rx = ry = rz = 0.0f;
-            assert(0);
-         }
-
-         ctx->vertices[i][1][0] = rx; /*s*/
-         ctx->vertices[i][1][1] = ry; /*t*/
-         ctx->vertices[i][1][2] = rz; /*r*/
-      }
+      util_map_texcoords2d_onto_cubemap(face, &st[0][0], 2,
+                                        &ctx->vertices[0][1][0], 8);
    }
    else {
       /* 1D/2D */
