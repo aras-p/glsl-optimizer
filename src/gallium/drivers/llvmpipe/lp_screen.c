@@ -32,6 +32,7 @@
 
 #include "lp_texture.h"
 #include "lp_buffer.h"
+#include "lp_fence.h"
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
@@ -253,6 +254,7 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
 
    llvmpipe_init_screen_texture_funcs(&screen->base);
    llvmpipe_init_screen_buffer_funcs(&screen->base);
+   llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
 

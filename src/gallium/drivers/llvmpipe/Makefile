@@ -32,6 +32,7 @@ C_SOURCES = \
 	lp_clear.c \
 	lp_context.c \
 	lp_draw_arrays.c \
+	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
 	lp_prim_vbuf.c \
