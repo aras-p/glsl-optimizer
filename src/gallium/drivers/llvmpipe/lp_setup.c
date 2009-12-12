@@ -128,8 +128,8 @@ static void reset_context( struct setup_context *setup )
 
 /** Rasterize all tile's bins */
 static void
-rasterize_bins( struct setup_context *setup,
-                boolean write_depth )
+lp_setup_rasterize_bins( struct setup_context *setup,
+			 boolean write_depth )
 {
    struct lp_bins *bins = lp_setup_get_current_bins(setup);
 
@@ -189,7 +189,7 @@ execute_clears( struct setup_context *setup )
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    begin_binning( setup );
-   rasterize_bins( setup, TRUE );
+   lp_setup_rasterize_bins( setup, TRUE );
 }
 
 
@@ -220,7 +220,7 @@ set_state( struct setup_context *setup,
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
-         rasterize_bins( setup, TRUE );
+         lp_setup_rasterize_bins( setup, TRUE );
       break;
    }
 
