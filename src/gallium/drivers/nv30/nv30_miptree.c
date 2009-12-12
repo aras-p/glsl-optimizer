@@ -72,9 +72,6 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->base.screen = pscreen;
 
 	/* Swizzled textures must be POT */
-	if ((pt->width0 == 1) || (pt->height0 == 1)) {
-		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
-	} else
 	if (pt->width0 & (pt->width0 - 1) ||
 	    pt->height0 & (pt->height0 - 1))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
