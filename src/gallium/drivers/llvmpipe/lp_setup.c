@@ -588,7 +588,7 @@ lp_setup_destroy( struct setup_context *setup )
    pipe_buffer_reference(&setup->constants.current, NULL);
 
    /* free the bins in the 'empty' queue */
-   while (lp_bins_queue_size(setup->empty_bins) > 0) {
+   while (lp_bins_queue_count(setup->empty_bins) > 0) {
       struct lp_bins *bins = lp_bins_dequeue(setup->empty_bins);
       if (!bins)
          break;

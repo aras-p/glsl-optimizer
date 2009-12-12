@@ -46,10 +46,10 @@ void
 lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins);
 
 unsigned
-lp_bins_queue_size(struct lp_bins_queue *queue);
+lp_bins_queue_count(struct lp_bins_queue *queue);
 
 void
-lp_bins_queue_wait_size(struct lp_bins_queue *queue, unsigned size);
+lp_bins_queue_wait_count(struct lp_bins_queue *queue, unsigned size);
 
 
 #endif /* LP_BIN_QUEUE */

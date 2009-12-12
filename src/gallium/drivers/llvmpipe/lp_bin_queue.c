@@ -51,9 +51,9 @@ struct lp_bins_queue
     * probably always be pretty short.
     */
    struct lp_bins *bins[MAX_BINS];
-   unsigned size;
+   unsigned count;
 
-   pipe_condvar size_change;
+   pipe_condvar count_change;
    pipe_mutex mutex;
 };
 
@@ -65,7 +65,7 @@ lp_bins_queue_create(void)
 {
    struct lp_bins_queue *queue = CALLOC_STRUCT(lp_bins_queue);
    if (queue) {
-      pipe_condvar_init(queue->size_change);
+      pipe_condvar_init(queue->count_change);
       pipe_mutex_init(queue->mutex);
    }
    return queue;
@@ -76,7 +76,7 @@ lp_bins_queue_create(void)
 void
 lp_bins_queue_destroy(struct lp_bins_queue *queue)
 {
-   pipe_condvar_destroy(queue->size_change);
+   pipe_condvar_destroy(queue->count_change);
    pipe_mutex_destroy(queue->mutex);
 }
 
@@ -89,24 +89,24 @@ lp_bins_dequeue(struct lp_bins_queue *queue)
    unsigned i;
 
    pipe_mutex_lock(queue->mutex);
-   while (queue->size == 0) {
-      pipe_condvar_wait(queue->size_change, queue->mutex);
+   while (queue->count == 0) {
+      pipe_condvar_wait(queue->count_change, queue->mutex);
    }
 
-   assert(queue->size >= 1);
+   assert(queue->count >= 1);
 
    /* get head */
    bins = queue->bins[0];
 
    /* shift entries */
-   for (i = 0; i < queue->size - 1; i++) {
+   for (i = 0; i < queue->count - 1; i++) {
       queue->bins[i] = queue->bins[i + 1];
    }
 
-   queue->size--;
+   queue->count--;
 
    /* signal size change */
-   pipe_condvar_signal(queue->size_change);
+   pipe_condvar_signal(queue->count_change);
 
    pipe_mutex_unlock(queue->mutex);
 
@@ -120,21 +120,21 @@ lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins)
 {
    pipe_mutex_lock(queue->mutex);
 
-   assert(queue->size < MAX_BINS);
+   assert(queue->count < MAX_BINS);
 
    /* debug: check that bins is not already in the queue */
    if (0) {
       unsigned i;
-      for (i = 0; i < queue->size; i++) {
+      for (i = 0; i < queue->count; i++) {
          assert(queue->bins[i] != bins);
       }
    }
 
    /* add to end */
-   queue->bins[queue->size++] = bins;
+   queue->bins[queue->count++] = bins;
 
    /* signal size change */
-   pipe_condvar_signal(queue->size_change);
+   pipe_condvar_signal(queue->count_change);
 
    pipe_mutex_unlock(queue->mutex);
 }
@@ -142,23 +142,23 @@ lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins)
 
 /** Return number of entries in the queue */
 unsigned
-lp_bins_queue_size(struct lp_bins_queue *queue)
+lp_bins_queue_count(struct lp_bins_queue *queue)
 {
-   unsigned sz;
+   unsigned count;
    pipe_mutex_lock(queue->mutex);
-   sz = queue->size;
+   count = queue->count;
    pipe_mutex_unlock(queue->mutex);
-   return sz;
+   return count;
 }
 
 
-/** Wait until the queue as 'size' entries */
+/** Wait until the queue has exactly 'count' entries */
 void
-lp_bins_queue_wait_size(struct lp_bins_queue *queue, unsigned size)
+lp_bins_queue_wait_count(struct lp_bins_queue *queue, unsigned count)
 {
    pipe_mutex_lock(queue->mutex);
-   while (queue->size != size) {
-      pipe_condvar_wait(queue->size_change, queue->mutex);
+   while (queue->count != count) {
+      pipe_condvar_wait(queue->count_change, queue->mutex);
    }
    pipe_mutex_unlock(queue->mutex);
 }
