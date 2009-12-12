@@ -27,9 +27,16 @@
 #define COLORTAB_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
-#if _HAVE_FULL_GL
+#if FEATURE_colortable
+
+#define _MESA_INIT_COLORTABLE_FUNCTIONS(driver, impl)                \
+   do {                                                              \
+      (driver)->CopyColorTable       = impl ## CopyColorTable;       \
+      (driver)->CopyColorSubTable    = impl ## CopyColorSubTable;    \
+      (driver)->UpdateTexturePalette = impl ## UpdateTexturePalette; \
+   } while (0)
 
 extern void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalformat,
@@ -41,32 +48,35 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
                      GLsizei count, GLenum format, GLenum type,
                      const GLvoid *table );
 
-extern void GLAPIENTRY
-_mesa_CopyColorSubTable(GLenum target, GLsizei start,
-                        GLint x, GLint y, GLsizei width);
+extern void
+_mesa_init_colortable_dispatch(struct _glapi_table *disp);
 
-extern void GLAPIENTRY
-_mesa_CopyColorTable(GLenum target, GLenum internalformat,
-                     GLint x, GLint y, GLsizei width);
+#else /* FEATURE_colortable */
 
-extern void GLAPIENTRY
-_mesa_GetColorTable( GLenum target, GLenum format,
-                     GLenum type, GLvoid *table );
+#define _MESA_INIT_COLORTABLE_FUNCTIONS(driver, impl) do { } while (0)
 
-extern void GLAPIENTRY
-_mesa_ColorTableParameterfv(GLenum target, GLenum pname,
-                            const GLfloat *params);
+static INLINE void GLAPIENTRY
+_mesa_ColorTable( GLenum target, GLenum internalformat,
+                  GLsizei width, GLenum format, GLenum type,
+                  const GLvoid *table )
+{
+   ASSERT_NO_FEATURE();
+}
 
-extern void GLAPIENTRY
-_mesa_ColorTableParameteriv(GLenum target, GLenum pname,
-                            const GLint *params);
+static INLINE void GLAPIENTRY
+_mesa_ColorSubTable( GLenum target, GLsizei start,
+                     GLsizei count, GLenum format, GLenum type,
+                     const GLvoid *table )
+{
+   ASSERT_NO_FEATURE();
+}
 
-extern void GLAPIENTRY
-_mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params );
+static INLINE void
+_mesa_init_colortable_dispatch(struct _glapi_table *disp)
+{
+}
 
-extern void GLAPIENTRY
-_mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params );
-
+#endif /* FEATURE_colortable */
 
 
 extern void
@@ -81,20 +91,5 @@ _mesa_init_colortables( GLcontext *ctx );
 extern void 
 _mesa_free_colortables_data( GLcontext *ctx );
 
-#else
 
-/** No-op */
-#define _mesa_init_colortable( p ) ((void) 0)
-
-/** No-op */
-#define _mesa_free_colortable_data( p ) ((void) 0)
-
-/** No-op */
-#define _mesa_init_colortables( p ) ((void)0)
-
-/** No-op */
-#define _mesa_free_colortables_data( p ) ((void)0)
-
-#endif
-
-#endif
+#endif /* COLORTAB_H */

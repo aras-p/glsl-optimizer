@@ -33,21 +33,21 @@
 #ifndef __R500_FRAGPROG_H_
 #define __R500_FRAGPROG_H_
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_instruction.h"
-
 #include "radeon_compiler.h"
-#include "radeon_nqssadce.h"
+#include "radeon_swizzle.h"
 
 extern void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
 extern void r500FragmentProgramDump(struct rX00_fragment_program_code *c);
 
-extern GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+extern struct rc_swizzle_caps r500_swizzle_caps;
 
-extern void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src);
+extern int r500_transform_TEX(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	void* data);
 
-extern GLboolean r500_transform_TEX(
+extern int r500_transform_IF(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void* data);

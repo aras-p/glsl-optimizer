@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 struct tgsi_src_register;
-struct tgsi_src_register_ext_swz;
 struct tgsi_full_src_register;
 
 void *
@@ -45,13 +44,9 @@ tgsi_util_get_src_register_swizzle(
    const struct tgsi_src_register *reg,
    unsigned component );
 
-unsigned
-tgsi_util_get_src_register_extswizzle(
-   const struct tgsi_src_register_ext_swz *reg,
-   unsigned component);
 
 unsigned
-tgsi_util_get_full_src_register_extswizzle(
+tgsi_util_get_full_src_register_swizzle(
    const struct tgsi_full_src_register *reg,
    unsigned component );
 
@@ -59,23 +54,6 @@ void
 tgsi_util_set_src_register_swizzle(
    struct tgsi_src_register *reg,
    unsigned swizzle,
-   unsigned component );
-
-void
-tgsi_util_set_src_register_extswizzle(
-   struct tgsi_src_register_ext_swz *reg,
-   unsigned swizzle,
-   unsigned component );
-
-unsigned
-tgsi_util_get_src_register_extnegate(
-   const struct tgsi_src_register_ext_swz *reg,
-   unsigned component );
-
-void
-tgsi_util_set_src_register_extnegate(
-   struct tgsi_src_register_ext_swz *reg,
-   unsigned negate,
    unsigned component );
 
 #define TGSI_UTIL_SIGN_CLEAR    0   /* Force positive */

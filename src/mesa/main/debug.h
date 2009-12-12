@@ -58,7 +58,13 @@ extern void _mesa_init_debug( GLcontext *ctx );
 #endif
 
 extern void
-_mesa_dump_textures(GLboolean dumpImages);
+_mesa_dump_texture(GLuint texture, GLuint writeImages);
+
+extern void
+_mesa_dump_textures(GLuint writeImages);
+
+extern void
+_mesa_dump_renderbuffers(GLboolean writeImages);
 
 extern void
 _mesa_dump_color_buffer(const char *filename);
@@ -68,5 +74,8 @@ _mesa_dump_depth_buffer(const char *filename);
 
 extern void
 _mesa_dump_stencil_buffer(const char *filename);
+
+extern void
+_mesa_print_texture(GLcontext *ctx, const struct gl_texture_image *img);
 
 #endif

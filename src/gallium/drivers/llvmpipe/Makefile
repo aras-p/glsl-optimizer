@@ -17,10 +17,13 @@ C_SOURCES = \
 	lp_bld_depth.c \
 	lp_bld_flow.c \
 	lp_bld_format_aos.c \
+	lp_bld_format_query.c \
 	lp_bld_format_soa.c \
 	lp_bld_interp.c \
 	lp_bld_intr.c \
 	lp_bld_logic.c \
+	lp_bld_pack.c \
+	lp_bld_sample.c \
 	lp_bld_sample_soa.c \
 	lp_bld_swizzle.c \
 	lp_bld_struct.c \
@@ -32,7 +35,6 @@ C_SOURCES = \
 	lp_draw_arrays.c \
 	lp_flush.c \
 	lp_jit.c \
-	lp_prim_setup.c \
 	lp_prim_vbuf.c \
 	lp_setup.c \
 	lp_query.c \
@@ -54,4 +56,10 @@ C_SOURCES = \
 	lp_tile_cache.c \
 	lp_tile_soa.c
 
+CPP_SOURCES = \
+	lp_bld_misc.cpp
+
 include ../../Makefile.template
+
+lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_access.py ../../auxiliary/util/u_format.csv
+	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@

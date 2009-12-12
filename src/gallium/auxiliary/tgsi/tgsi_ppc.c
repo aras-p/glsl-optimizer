@@ -60,7 +60,7 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -156,8 +156,8 @@ init_gen_context(struct gen_context *gen, struct ppc_function *func)
 static boolean
 is_ppc_vec_temporary(const struct tgsi_full_src_register *reg)
 {
-   return (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-           reg->SrcRegister.Index < MAX_PPC_TEMPS);
+   return (reg->Register.File == TGSI_FILE_TEMPORARY &&
+           reg->Register.Index < MAX_PPC_TEMPS);
 }
 
 
@@ -167,8 +167,8 @@ is_ppc_vec_temporary(const struct tgsi_full_src_register *reg)
 static boolean
 is_ppc_vec_temporary_dst(const struct tgsi_full_dst_register *reg)
 {
-   return (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-           reg->DstRegister.Index < MAX_PPC_TEMPS);
+   return (reg->Register.File == TGSI_FILE_TEMPORARY &&
+           reg->Register.Index < MAX_PPC_TEMPS);
 }
 
 
@@ -283,18 +283,18 @@ emit_fetch(struct gen_context *gen,
            const struct tgsi_full_src_register *reg,
            const unsigned chan_index)
 {
-   uint swizzle = tgsi_util_get_full_src_register_extswizzle(reg, chan_index);
+   uint swizzle = tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    int dst_vec = -1;
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
-      switch (reg->SrcRegister.File) {
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
+      switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
+            int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
@@ -303,11 +303,11 @@ emit_fetch(struct gen_context *gen,
       case TGSI_FILE_TEMPORARY:
          if (is_ppc_vec_temporary(reg)) {
             /* use PPC vec register */
-            dst_vec = gen->temps_map[reg->SrcRegister.Index][swizzle];
+            dst_vec = gen->temps_map[reg->Register.Index][swizzle];
          }
          else {
             /* use memory-based temp register "file" */
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
+            int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->temps_reg, offset_reg);
@@ -315,7 +315,7 @@ emit_fetch(struct gen_context *gen,
          break;
       case TGSI_FILE_IMMEDIATE:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
+            int offset = (reg->Register.Index * 4 + swizzle) * 4;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             /* Load 4-byte word into vector register.
@@ -331,7 +331,7 @@ emit_fetch(struct gen_context *gen,
          break;
       case TGSI_FILE_CONSTANT:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
+            int offset = (reg->Register.Index * 4 + swizzle) * 4;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             /* Load 4-byte word into vector register.
@@ -347,16 +347,6 @@ emit_fetch(struct gen_context *gen,
          break;
       default:
          assert( 0 );
-      }
-      break;
-   case TGSI_EXTSWIZZLE_ZERO:
-      ppc_vzero(gen->f, dst_vec);
-      break;
-   case TGSI_EXTSWIZZLE_ONE:
-      {
-         int one_vec = gen_one_vec(gen);
-         dst_vec = ppc_allocate_vec_register(gen->f);
-         ppc_vmove(gen->f, dst_vec, one_vec);
       }
       break;
    default:
@@ -414,12 +404,12 @@ equal_src_locs(const struct tgsi_full_src_register *a, uint chan_a,
 {
    int swz_a, swz_b;
    int sign_a, sign_b;
-   if (a->SrcRegister.File != b->SrcRegister.File)
+   if (a->Register.File != b->Register.File)
       return FALSE;
-   if (a->SrcRegister.Index != b->SrcRegister.Index)
+   if (a->Register.Index != b->Register.Index)
       return FALSE;
-   swz_a = tgsi_util_get_full_src_register_extswizzle(a, chan_a);
-   swz_b = tgsi_util_get_full_src_register_extswizzle(b, chan_b);
+   swz_a = tgsi_util_get_full_src_register_swizzle(a, chan_a);
+   swz_b = tgsi_util_get_full_src_register_swizzle(b, chan_b);
    if (swz_a != swz_b)
       return FALSE;
    sign_a = tgsi_util_get_full_src_register_sign_mode(a, chan_a);
@@ -441,7 +431,7 @@ get_src_vec(struct gen_context *gen,
             struct tgsi_full_instruction *inst, int src_reg, uint chan)
 {
    const const struct tgsi_full_src_register *src = 
-      &inst->FullSrcRegisters[src_reg];
+      &inst->Src[src_reg];
    int vec;
    uint i;
 
@@ -492,10 +482,10 @@ get_dst_vec(struct gen_context *gen,
             const struct tgsi_full_instruction *inst,
             unsigned chan_index)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[0];
 
    if (is_ppc_vec_temporary_dst(reg)) {
-      int vec = gen->temps_map[reg->DstRegister.Index][chan_index];
+      int vec = gen->temps_map[reg->Register.Index][chan_index];
       return vec;
    }
    else {
@@ -515,12 +505,12 @@ emit_store(struct gen_context *gen,
            unsigned chan_index,
            boolean free_vec)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[0];
 
-   switch (reg->DstRegister.File) {
+   switch (reg->Register.File) {
    case TGSI_FILE_OUTPUT:
       {
-         int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
+         int offset = (reg->Register.Index * 4 + chan_index) * 16;
          int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->outputs_reg, offset_reg);
       }
@@ -528,14 +518,14 @@ emit_store(struct gen_context *gen,
    case TGSI_FILE_TEMPORARY:
       if (is_ppc_vec_temporary_dst(reg)) {
          if (!free_vec) {
-            int dst_vec = gen->temps_map[reg->DstRegister.Index][chan_index];
+            int dst_vec = gen->temps_map[reg->Register.Index][chan_index];
             if (dst_vec != src_vec)
                ppc_vmove(gen->f, dst_vec, src_vec);
          }
          free_vec = FALSE;
       }
       else {
-         int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
+         int offset = (reg->Register.Index * 4 + chan_index) * 16;
          int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->temps_reg, offset_reg);
       }
@@ -545,7 +535,7 @@ emit_store(struct gen_context *gen,
       emit_addrs(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 #endif
@@ -635,7 +625,6 @@ emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vlogefp(gen->f, v1, v0);      /* v1 = log2(v0) */
          break;
       case TGSI_OPCODE_MOV:
-      case TGSI_OPCODE_SWZ:
          if (v0 != v1)
             ppc_vmove(gen->f, v1, v0);
          break;
@@ -1119,7 +1108,6 @@ emit_instruction(struct gen_context *gen,
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
    case TGSI_OPCODE_ABS:
    case TGSI_OPCODE_FLR:
    case TGSI_OPCODE_FRC:
@@ -1190,8 +1178,8 @@ emit_declaration(
       unsigned first, last, mask;
       unsigned i, j;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {

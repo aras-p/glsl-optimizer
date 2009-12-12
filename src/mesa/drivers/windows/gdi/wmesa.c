@@ -12,6 +12,7 @@
 #include "framebuffer.h"
 #include "renderbuffer.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 #include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -1515,6 +1516,8 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_enable_2_0_extensions(ctx);
     _mesa_enable_2_1_extensions(ctx);
   
+    _mesa_meta_init(ctx);
+
     /* Initialize the software rasterizer and helper modules. */
     if (!_swrast_CreateContext(ctx) ||
         !_vbo_CreateContext(ctx) ||
@@ -1558,6 +1561,8 @@ void WMesaDestroyContext( WMesaContext pwc )
     DeleteObject(pwc->clearPen); 
     DeleteObject(pwc->clearBrush); 
     
+    _mesa_meta_free(ctx);
+
     _swsetup_DestroyContext(ctx);
     _tnl_DestroyContext(ctx);
     _vbo_DestroyContext(ctx);

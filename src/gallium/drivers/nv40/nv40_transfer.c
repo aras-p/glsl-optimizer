@@ -2,6 +2,7 @@
 #include <pipe/p_defines.h>
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_math.h>
 #include <nouveau/nouveau_winsys.h>
 #include "nv40_context.h"
 #include "nv40_screen.h"
@@ -10,24 +11,8 @@
 struct nv40_transfer {
 	struct pipe_transfer base;
 	struct pipe_surface *surface;
-	bool direct;
+	boolean direct;
 };
-
-static unsigned nv40_usage_tx_to_buf(unsigned tx_usage)
-{
-	switch (tx_usage) {
-		case PIPE_TRANSFER_READ:
-			return PIPE_BUFFER_USAGE_CPU_READ;
-		case PIPE_TRANSFER_WRITE:
-			return PIPE_BUFFER_USAGE_CPU_WRITE;
-		case PIPE_TRANSFER_READ_WRITE:
-			return PIPE_BUFFER_USAGE_CPU_READ_WRITE;
-		default:
-			assert(0);
-	}
-
-	return -1;
-}
 
 static void
 nv40_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
@@ -36,12 +21,9 @@ nv40_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
 	memset(template, 0, sizeof(struct pipe_texture));
 	template->target = pt->target;
 	template->format = pt->format;
-	template->width[0] = pt->width[level];
-	template->height[0] = pt->height[level];
-	template->depth[0] = 1;
-	template->block = pt->block;
-	template->nblocksx[0] = pt->nblocksx[level];
-	template->nblocksy[0] = pt->nblocksx[level];
+	template->width0 = u_minify(pt->width0, level);
+	template->height0 = u_minify(pt->height0, level);
+	template->depth0 = 1;
 	template->last_level = 0;
 	template->nr_samples = pt->nr_samples;
 
@@ -64,14 +46,10 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 
 	pipe_texture_reference(&tx->base.texture, pt);
-	tx->base.format = pt->format;
 	tx->base.x = x;
 	tx->base.y = y;
 	tx->base.width = w;
 	tx->base.height = h;
-	tx->base.block = pt->block;
-	tx->base.nblocksx = pt->nblocksx[level];
-	tx->base.nblocksy = pt->nblocksy[level];
 	tx->base.stride = mt->level[level].pitch;
 	tx->base.usage = usage;
 	tx->base.face = face;
@@ -86,7 +64,7 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		tx->direct = true;
 		tx->surface = pscreen->get_tex_surface(pscreen, pt,
 	                                               face, level, zslice,
-	                                               nv40_usage_tx_to_buf(usage));
+	                                               pipe_transfer_buffer_flags(&tx->base));
 		return &tx->base;
 	}
 
@@ -103,7 +81,7 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	tx->surface = pscreen->get_tex_surface(pscreen, tx_tex,
 	                                       0, 0, 0,
-	                                       nv40_usage_tx_to_buf(usage));
+	                                       pipe_transfer_buffer_flags(&tx->base));
 
 	pipe_texture_reference(&tx_tex, NULL);
 
@@ -114,7 +92,7 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	}
 
-	if (usage != PIPE_TRANSFER_WRITE) {
+	if (usage & PIPE_TRANSFER_READ) {
 		struct nv40_screen *nvscreen = nv40_screen(pscreen);
 		struct pipe_surface *src;
 
@@ -140,7 +118,7 @@ nv40_transfer_del(struct pipe_transfer *ptx)
 {
 	struct nv40_transfer *tx = (struct nv40_transfer *)ptx;
 
-	if (!tx->direct && ptx->usage != PIPE_TRANSFER_READ) {
+	if (!tx->direct && (ptx->usage & PIPE_TRANSFER_WRITE)) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
 		struct nv40_screen *nvscreen = nv40_screen(pscreen);
 		struct pipe_surface *dst;
@@ -170,10 +148,10 @@ nv40_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 	struct nv04_surface *ns = (struct nv04_surface *)tx->surface;
 	struct nv40_miptree *mt = (struct nv40_miptree *)tx->surface->texture;
 	void *map = pipe_buffer_map(pscreen, mt->buffer,
-	                            nv40_usage_tx_to_buf(ptx->usage));
+	                            pipe_transfer_buffer_flags(ptx));
 
 	return map + ns->base.offset +
-	       ptx->y * ns->pitch + ptx->x * ptx->block.size;
+	       ptx->y * ns->pitch + ptx->x * pf_get_blocksize(ptx->texture->format);
 }
 
 static void

@@ -60,8 +60,8 @@ EGL_DRIVERS_DIRS = demo glx
 DRIVER_DIRS = dri
 WINDOW_SYSTEM = dri
 GALLIUM_WINSYS_DIRS = drm
-GALLIUM_WINSYS_DRM_DIRS = intel
+GALLIUM_WINSYS_DRM_DIRS = vmware intel
 GALLIUM_STATE_TRACKERS_DIRS = egl
 
-DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
-	savage sis tdfx trident unichrome ffb swrast
+DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon \
+	savage sis tdfx unichrome ffb swrast

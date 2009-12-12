@@ -8,7 +8,7 @@ drivers = [
     st_dri,
     inteldrm,
     softpipe,
-    i915simple,
+    i915,
     trace,
 ]
 

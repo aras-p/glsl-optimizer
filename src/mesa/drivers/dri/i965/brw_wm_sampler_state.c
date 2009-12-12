@@ -66,19 +66,6 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-
-static GLuint U_FIXED(GLfloat value, GLuint frac_bits)
-{
-   value *= (1<<frac_bits);
-   return value < 0 ? 0 : value;
-}
-
-static GLint S_FIXED(GLfloat value, GLuint frac_bits)
-{
-   return value * (1<<frac_bits);
-}
-
-
 static dri_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
@@ -86,8 +73,8 @@ static dri_bo *upload_default_color( struct brw_context *brw,
 
    COPY_4V(sdc.color, color); 
    
-   return brw_cache_data( &brw->cache, BRW_SAMPLER_DEFAULT_COLOR, &sdc,
-			  NULL, 0 );
+   return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
+			 &sdc, sizeof(sdc), NULL, 0);
 }
 
 
@@ -228,8 +215,8 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
     */
    sampler->ss0.base_level = U_FIXED(0, 1);
 
-   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(key->maxlod, 0), 13), 6);
-   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(key->minlod, 0), 13), 6);
+   sampler->ss1.max_lod = U_FIXED(CLAMP(key->maxlod, 0, 13), 6);
+   sampler->ss1.min_lod = U_FIXED(CLAMP(key->minlod, 0, 13), 6);
    
    sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }

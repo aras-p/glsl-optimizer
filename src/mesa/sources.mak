@@ -33,6 +33,7 @@ MAIN_SOURCES = \
 	main/feedback.c \
 	main/ffvertex_prog.c \
 	main/fog.c \
+	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
 	main/getstring.c \
@@ -55,6 +56,7 @@ MAIN_SOURCES = \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
+	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
 	main/shaders.c \
@@ -67,6 +69,7 @@ MAIN_SOURCES = \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
 	main/texenvprogram.c \
+	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
 	main/texgetimage.c \
@@ -115,7 +118,6 @@ SWRAST_SOURCES = \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
 	swrast/s_fragprog.c \
-	swrast/s_imaging.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
@@ -125,7 +127,6 @@ SWRAST_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texcombine.c \
 	swrast/s_texfilter.c \
-	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 
@@ -190,7 +191,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_flush.c \
-	state_tracker/st_cb_get.c \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_feedback.c \

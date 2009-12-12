@@ -32,7 +32,6 @@
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
-#include "glapi/glapioffsets.h"
 #include "glapi/dispatch.h"
 
 typedef void (GLAPIENTRY *array_func)( const void * );
@@ -70,6 +69,10 @@ typedef struct {
  * numbered in gl.h, except for GL_DOUBLE.
  */
 #define TYPE_IDX(t) ( (t) == GL_DOUBLE ? 7 : (t) & 7 )
+
+
+#if FEATURE_arrayelt
+
 
 static const int ColorFuncs[2][8] = {
    {
@@ -1160,7 +1163,7 @@ static void _ae_update_state( GLcontext *ctx )
          at->array = attribArray;
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
           * function pointer here (for float arrays) since the pointer may
-          * change from one execution of _ae_loopback_array_elt() to
+          * change from one execution of _ae_ArrayElement() to
           * the next.  Doing so caused UT to break.
           */
          if (ctx->VertexProgram._Enabled
@@ -1254,7 +1257,7 @@ void _ae_unmap_vbos( GLcontext *ctx )
  * for all enabled vertex arrays (for elt-th element).
  * Note: this may be called during display list construction.
  */
-void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
+void GLAPIENTRY _ae_ArrayElement( GLint elt )
 {
    GET_CURRENT_CONTEXT(ctx);
    const AEcontext *actx = AE_CONTEXT(ctx);
@@ -1317,3 +1320,13 @@ void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
       actx->NewState |= new_state;
    }
 }
+
+
+void _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
+                                   const GLvertexformat *vfmt)
+{
+   SET_ArrayElement(disp, vfmt->ArrayElement);
+}
+
+
+#endif /* FEATURE_arrayelt */

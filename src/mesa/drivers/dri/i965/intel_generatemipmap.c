@@ -1,1 +1,0 @@
-../intel/intel_generatemipmap.c

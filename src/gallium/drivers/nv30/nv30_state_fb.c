@@ -8,15 +8,15 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	struct nouveau_channel *chan = nv30->screen->base.channel;
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	struct nv04_surface *rt[2], *zeta = NULL;
-	uint32_t rt_enable, rt_format;
-	int i, colour_format = 0, zeta_format = 0;
+	uint32_t rt_enable = 0, rt_format = 0;
+	int i, colour_format = 0, zeta_format = 0, depth_only = 0;
 	struct nouveau_stateobj *so = so_new(64, 10);
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;
 	struct nv30_miptree *nv30mt;
+	int colour_bits = 32, zeta_bits = 32;
 
-	rt_enable = 0;
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		if (colour_format) {
 			assert(colour_format == fb->cbufs[i]->format);
@@ -35,26 +35,47 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		zeta = (struct nv04_surface *)fb->zsbuf;
 	}
 
-	if (!(rt[0]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
-		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
-		for (i = 1; i < fb->nr_cbufs; i++)
-			assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
+	if (rt_enable & (NV34TCL_RT_ENABLE_COLOR0|NV34TCL_RT_ENABLE_COLOR1)) {
+		/* Render to at least a colour buffer */
+		if (!(rt[0]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+			assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
+			for (i = 1; i < fb->nr_cbufs; i++)
+				assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
-		/* FIXME: NV34TCL_RT_FORMAT_LOG2_[WIDTH/HEIGHT] */
-		rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
-		log2i(fb->width) << 16 /*NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT*/ |
-		log2i(fb->height) << 24 /*NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT*/;
+			rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
+				(log2i(rt[0]->base.width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
+				(log2i(rt[0]->base.height) << NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
+		}
+		else
+			rt_format = NV34TCL_RT_FORMAT_TYPE_LINEAR;
+	} else if (fb->zsbuf) {
+		depth_only = 1;
+
+		/* Render to depth buffer only */
+		if (!(zeta->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+			assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
+
+			rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
+				(log2i(zeta->base.width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
+				(log2i(zeta->base.height) << NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
+		}
+		else
+			rt_format = NV34TCL_RT_FORMAT_TYPE_LINEAR;
+	} else {
+		return FALSE;
 	}
-	else
-		rt_format = NV34TCL_RT_FORMAT_TYPE_LINEAR;
 
 	switch (colour_format) {
+	case PIPE_FORMAT_X8R8G8B8_UNORM:
+		rt_format |= NV34TCL_RT_FORMAT_COLOR_X8R8G8B8;
+		break;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case 0:
 		rt_format |= NV34TCL_RT_FORMAT_COLOR_A8R8G8B8;
 		break;
 	case PIPE_FORMAT_R5G6B5_UNORM:
 		rt_format |= NV34TCL_RT_FORMAT_COLOR_R5G6B5;
+		colour_bits = 16;
 		break;
 	default:
 		assert(0);
@@ -63,6 +84,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	switch (zeta_format) {
 	case PIPE_FORMAT_Z16_UNORM:
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z16;
+		zeta_bits = 16;
 		break;
 	case PIPE_FORMAT_Z24S8_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -73,21 +95,27 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		assert(0);
 	}
 
-	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
-		uint32_t pitch = rt[0]->pitch;
+	if (colour_bits > zeta_bits) {
+		return FALSE;
+	}
+
+	if (depth_only || (rt_enable & NV34TCL_RT_ENABLE_COLOR0)) {
+		struct nv04_surface *rt0 = (depth_only ? zeta : rt[0]);
+		uint32_t pitch = rt0->pitch;
+
 		if (zeta) {
 			pitch |= (zeta->pitch << 16);
 		} else {
 			pitch |= (pitch << 16);
 		}
 
-		nv30mt = (struct nv30_miptree *)rt[0]->base.texture;
+		nv30mt = (struct nv30_miptree *) rt0->base.texture;
 		so_method(so, rankine, NV34TCL_DMA_COLOR0, 1);
 		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
 		so_method(so, rankine, NV34TCL_COLOR0_PITCH, 2);
 		so_data  (so, pitch);
-		so_reloc (so, nouveau_bo(nv30mt->buffer), rt[0]->base.offset,
+		so_reloc (so, nouveau_bo(nv30mt->buffer), rt0->base.offset,
 			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 	}
 

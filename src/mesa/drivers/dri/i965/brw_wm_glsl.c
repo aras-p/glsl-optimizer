@@ -371,7 +371,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	  for (j = 0; j < 4; j++)
 	     set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
        }
-       if (c->key.vp_outputs_written & (1 << i)) {
+       if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
 	  reg_index += 2;
        }
     }
@@ -550,42 +550,6 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     }
 }
 
-
-/**
- * Same as \sa get_src_reg() but if the register is a literal, emit
- * a brw_reg encoding the literal.
- * Note that a brw instruction only allows one src operand to be a literal.
- * For instructions with more than one operand, only the second can be a
- * literal.  This means that we treat some literals as constants/uniforms
- * (which why PROGRAM_CONSTANT is checked in fetch_constants()).
- * 
- */
-static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c, 
-                                      const struct prog_instruction *inst,
-                                      GLuint srcRegIndex, GLuint channel)
-{
-    const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
-    if (src->File == PROGRAM_CONSTANT) {
-       /* a literal */
-       const int component = GET_SWZ(src->Swizzle, channel);
-       const GLfloat *param =
-          c->fp->program.Base.Parameters->ParameterValues[src->Index];
-       GLfloat value = param[component];
-       if (src->Negate & (1 << channel))
-          value = -value;
-       if (src->Abs)
-          value = FABSF(value);
-#if 0
-       printf("  form immed value %f for chan %d\n", value, channel);
-#endif
-       return brw_imm_f(value);
-    }
-    else {
-       return get_src_reg(c, inst, srcRegIndex, channel);
-    }
-}
-
-
 /**
  * Subroutines are minimal support for resusable instruction sequences.
  * They are implemented as simply as possible to minimise overhead: there
@@ -650,542 +614,110 @@ static void invoke_subroutine( struct brw_wm_compile *c,
     }
 }
 
-static void emit_trunc( struct brw_wm_compile *c,
-                        const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg(c, inst, 0, i);
-	    brw_RNDZ(p, dst, src);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_mov( struct brw_wm_compile *c,
-                      const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i);
-            /* XXX some moves from immediate value don't work reliably!!! */
-            /*src = get_src_reg_imm(c, inst, 0, i);*/
-            src = get_src_reg(c, inst, 0, i);
-	    brw_MOV(p, dst, src);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_pixel_xy(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_reg r1 = brw_vec1_grf(1, 0);
-    struct brw_reg r1_uw = retype(r1, BRW_REGISTER_TYPE_UW);
-
-    struct brw_reg dst0, dst1;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    dst0 = get_dst_reg(c, inst, 0);
-    dst1 = get_dst_reg(c, inst, 1);
-    /* Calculate pixel centers by adding 1 or 0 to each of the
-     * micro-tile coordinates passed in r1.
-     */
-    if (mask & WRITEMASK_X) {
-	brw_ADD(p,
-		vec8(retype(dst0, BRW_REGISTER_TYPE_UW)),
-		stride(suboffset(r1_uw, 4), 2, 4, 0),
-		brw_imm_v(0x10101010));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	brw_ADD(p,
-		vec8(retype(dst1, BRW_REGISTER_TYPE_UW)),
-		stride(suboffset(r1_uw, 5), 2, 4, 0),
-		brw_imm_v(0x11001100));
-    }
-}
-
-static void emit_delta_xy(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_reg r1 = brw_vec1_grf(1, 0);
-    struct brw_reg dst0, dst1, src0, src1;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    dst0 = get_dst_reg(c, inst, 0);
-    dst1 = get_dst_reg(c, inst, 1);
-    src0 = get_src_reg(c, inst, 0, 0);
-    src1 = get_src_reg(c, inst, 0, 1);
-    /* Calc delta X,Y by subtracting origin in r1 from the pixel
-     * centers.
-     */
-    if (mask & WRITEMASK_X) {
-	brw_ADD(p,
-		dst0,
-		retype(src0, BRW_REGISTER_TYPE_UW),
-		negate(r1));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	brw_ADD(p,
-		dst1,
-		retype(src1, BRW_REGISTER_TYPE_UW),
-		negate(suboffset(r1,1)));
-
-    }
-}
-
-static void fire_fb_write( struct brw_wm_compile *c,
-                           GLuint base_reg,
-                           GLuint nr,
-                           GLuint target,
-                           GLuint eot)
-{
-    struct brw_compile *p = &c->func;
-    /* Pass through control information:
-     */
-    /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
-    {
-	brw_push_insn_state(p);
-	brw_set_mask_control(p, BRW_MASK_DISABLE); /* ? */
-	brw_MOV(p,
-		brw_message_reg(base_reg + 1),
-		brw_vec8_grf(1, 0));
-	brw_pop_insn_state(p);
-    }
-    /* Send framebuffer write message: */
-    brw_fb_WRITE(p,
-	    retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
-	    base_reg,
-	    retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
-	    target,              
-	    nr,
-	    0,
-	    eot);
-}
-
-static void emit_fb_write(struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    int nr = 2;
-    int channel;
-    GLuint target, eot;
-    struct brw_reg src0;
-
-    /* Reserve a space for AA - may not be needed:
-     */
-    if (c->key.aa_dest_stencil_reg)
-	nr += 1;
-
-    brw_push_insn_state(p);
-    for (channel = 0; channel < 4; channel++) {
-        src0 = get_src_reg(c,  inst, 0, channel);
-        /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-        /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-        brw_MOV(p, brw_message_reg(nr + channel), src0);
-    }
-    /* skip over the regs populated above: */
-    nr += 8;
-    brw_pop_insn_state(p);
-
-    if (c->key.source_depth_to_render_target) {
-       if (c->key.computes_depth) {
-          src0 = get_src_reg(c, inst, 2, 2);
-          brw_MOV(p, brw_message_reg(nr), src0);
-       }
-       else {
-          src0 = get_src_reg(c, inst, 1, 1);
-          brw_MOV(p, brw_message_reg(nr), src0);
-       }
-
-       nr += 2;
-    }
-
-    if (c->key.dest_depth_reg) {
-        const GLuint comp = c->key.dest_depth_reg / 2;
-        const GLuint off = c->key.dest_depth_reg % 2;
-
-        if (off != 0) {
-            /* XXX this code needs review/testing */
-            struct brw_reg arg1_0 = get_src_reg(c, inst, 1, comp);
-            struct brw_reg arg1_1 = get_src_reg(c, inst, 1, comp+1);
-
-            brw_push_insn_state(p);
-            brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-
-            brw_MOV(p, brw_message_reg(nr), offset(arg1_0, 1));
-            /* 2nd half? */
-            brw_MOV(p, brw_message_reg(nr+1), arg1_1);
-            brw_pop_insn_state(p);
-        }
-        else
-        {
-            struct brw_reg src =  get_src_reg(c, inst, 1, 1);
-            brw_MOV(p, brw_message_reg(nr), src);
-        }
-        nr += 2;
-   }
-
-    target = inst->Aux >> 1;
-    eot = inst->Aux & 1;
-    fire_fb_write(c, 0, nr, target, eot);
-}
-
-static void emit_pixel_w( struct brw_wm_compile *c,
-                          const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    if (mask & WRITEMASK_W) {
-	struct brw_reg dst, src0, delta0, delta1;
-	struct brw_reg interp3;
-
-	dst = get_dst_reg(c, inst, 3);
-	src0 = get_src_reg(c, inst, 0, 0);
-	delta0 = get_src_reg(c, inst, 1, 0);
-	delta1 = get_src_reg(c, inst, 1, 1);
-
-	interp3 = brw_vec1_grf(src0.nr+1, 4);
-	/* Calc 1/w - just linterp wpos[3] optimized by putting the
-	 * result straight into a message reg.
-	 */
-	brw_LINE(p, brw_null_reg(), interp3, delta0);
-	brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), delta1);
-
-	/* Calc w */
-	brw_math_16( p, dst,
-		BRW_MATH_FUNCTION_INV,
-		BRW_MATH_SATURATE_NONE,
-		2, brw_null_reg(),
-		BRW_MATH_PRECISION_FULL);
-    }
-}
-
-static void emit_linterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg interp[4];
-    struct brw_reg dst, delta0, delta1;
-    struct brw_reg src0;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    delta0 = get_src_reg(c, inst, 1, 0);
-    delta1 = get_src_reg(c, inst, 1, 1);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
-	    brw_MAC(p, dst, suboffset(interp[i],1), delta1);
-	}
-    }
-}
-
-static void emit_cinterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    struct brw_reg interp[4];
-    struct brw_reg dst, src0;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, suboffset(interp[i],3));
-	}
-    }
-}
-
-static void emit_pinterp(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-
-    struct brw_reg interp[4];
-    struct brw_reg dst, delta0, delta1;
-    struct brw_reg src0, w;
-    GLuint nr, i;
-
-    src0 = get_src_reg(c, inst, 0, 0);
-    delta0 = get_src_reg(c, inst, 1, 0);
-    delta1 = get_src_reg(c, inst, 1, 1);
-    w = get_src_reg(c, inst, 2, 3);
-    nr = src0.nr;
-
-    interp[0] = brw_vec1_grf(nr, 0);
-    interp[1] = brw_vec1_grf(nr, 4);
-    interp[2] = brw_vec1_grf(nr+1, 0);
-    interp[3] = brw_vec1_grf(nr+1, 4);
-
-    for(i = 0; i < 4; i++ ) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
-	    brw_MAC(p, dst, suboffset(interp[i],1), 
-		    delta1);
-	    brw_MUL(p, dst, dst, w);
-	}
-    }
-}
-
-/* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
-static void emit_frontfacing(struct brw_wm_compile *c,
-			     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
-    struct brw_reg dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, brw_imm_f(0.0));
-	}
-    }
-
-    /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
-     * us front face
-     */
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, r1_6ud, brw_imm_ud(1 << 31));
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    brw_MOV(p, dst, brw_imm_f(1.0));
-	}
-    }
-    brw_set_predicate_control_flag_value(p, 0xff);
-}
-
-static void emit_xpd(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    for (i = 0; i < 4; i++) {
-	GLuint i2 = (i+2)%3;
-	GLuint i1 = (i+1)%3;
-	if (mask & (1<<i)) {
-	    struct brw_reg src0, src1, dst;
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = negate(get_src_reg(c, inst, 0, i2));
-	    src1 = get_src_reg_imm(c, inst, 1, i1);
-	    brw_MUL(p, brw_null_reg(), src0, src1);
-	    src0 = get_src_reg(c, inst, 0, i1);
-	    src1 = get_src_reg_imm(c, inst, 1, i2);
-	    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
-	    brw_MAC(p, dst, src0, src1);
-	    brw_set_saturate(p, 0);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_dp3(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[3], src1[3], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 3; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_MAC(p, dst, src0[2], src1[2]);
-    brw_set_saturate(p, 0);
-}
-
-static void emit_dp4(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[4], src1[4], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_MAC(p, brw_null_reg(), src0[2], src1[2]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_MAC(p, dst, src0[3], src1[3]);
-    brw_set_saturate(p, 0);
-}
-
-static void emit_dph(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_reg src0[4], src1[4], dst;
-    int i;
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, inst, 0, i);
-	src1[i] = get_src_reg_imm(c, inst, 1, i);
-    }
-    dst = get_dst_reg(c, inst, dst_chan);
-    brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
-    brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
-    brw_MAC(p, dst, src0[2], src1[2]);
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_ADD(p, dst, dst, src1[3]);
-    brw_set_saturate(p, 0);
-}
-
-/**
- * Emit a scalar instruction, like RCP, RSQ, LOG, EXP.
- * Note that the result of the function is smeared across the dest
- * register's X, Y, Z and W channels (subject to writemasking of course).
+/* Workaround for using brw_wm_emit.c's emit functions, which expect
+ * destination regs to be uniquely written.  Moves arguments out to
+ * temporaries as necessary for instructions which use their destination as
+ * a temporary.
  */
-static void emit_math1(struct brw_wm_compile *c,
-                       const struct prog_instruction *inst, GLuint func)
+static void
+unalias3(struct brw_wm_compile *c,
+	 void (*func)(struct brw_compile *c,
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1,
+		      const struct brw_reg *arg2),
+	 const struct brw_reg *dst,
+	 GLuint mask,
+	 const struct brw_reg *arg0,
+	 const struct brw_reg *arg1,
+	 const struct brw_reg *arg2)
 {
     struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+    struct brw_reg tmp_arg0[4], tmp_arg1[4], tmp_arg2[4];
+    int i, j;
+    int mark = mark_tmps(c);
 
-    if (!(mask & WRITEMASK_XYZW))
-	return;
+    for (j = 0; j < 4; j++) {
+	tmp_arg0[j] = arg0[j];
+	tmp_arg1[j] = arg1[j];
+	tmp_arg2[j] = arg2[j];
+    }
 
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    /* Get first component of source register */
-    dst = get_dst_reg(c, inst, dst_chan);
-    src0 = get_src_reg(c, inst, 0, 0);
-
-    brw_MOV(p, brw_message_reg(2), src0);
-    brw_math(p,
-             dst,
-             func,
-             (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-             2,
-             brw_null_reg(),
-             BRW_MATH_DATA_VECTOR,
-             BRW_MATH_PRECISION_FULL);
-}
-
-static void emit_rcp(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_INV);
-}
-
-static void emit_rsq(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_RSQ);
-}
-
-static void emit_sin(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_SIN);
-}
-
-static void emit_cos(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_COS);
-}
-
-static void emit_ex2(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_EXP);
-}
-
-static void emit_lg2(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_math1(c, inst, BRW_MATH_FUNCTION_LOG);
-}
-
-static void emit_add(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, src1, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_ADD(p, dst, src0, src1);
+	    for (j = 0; j < 4; j++) {
+		if (arg0[j].file == dst[i].file &&
+		    dst[i].nr == arg0[j].nr) {
+		    tmp_arg0[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg0[j], arg0[j]);
+		}
+		if (arg1[j].file == dst[i].file &&
+		    dst[i].nr == arg1[j].nr) {
+		    tmp_arg1[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg1[j], arg1[j]);
+		}
+		if (arg2[j].file == dst[i].file &&
+		    dst[i].nr == arg2[j].nr) {
+		    tmp_arg2[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg2[j], arg2[j]);
+		}
+	    }
 	}
     }
-    brw_set_saturate(p, 0);
+
+    func(p, dst, mask, tmp_arg0, tmp_arg1, tmp_arg2);
+
+    release_tmps(c, mark);
+}
+
+/* Workaround for using brw_wm_emit.c's emit functions, which expect
+ * destination regs to be uniquely written.  Moves arguments out to
+ * temporaries as necessary for instructions which use their destination as
+ * a temporary.
+ */
+static void
+unalias2(struct brw_wm_compile *c,
+	 void (*func)(struct brw_compile *c,
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1),
+	 const struct brw_reg *dst,
+	 GLuint mask,
+	 const struct brw_reg *arg0,
+	 const struct brw_reg *arg1)
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg tmp_arg0[4], tmp_arg1[4];
+    int i, j;
+    int mark = mark_tmps(c);
+
+    for (j = 0; j < 4; j++) {
+	tmp_arg0[j] = arg0[j];
+	tmp_arg1[j] = arg1[j];
+    }
+
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    for (j = 0; j < 4; j++) {
+		if (arg0[j].file == dst[i].file &&
+		    dst[i].nr == arg0[j].nr) {
+		    tmp_arg0[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg0[j], arg0[j]);
+		}
+		if (arg1[j].file == dst[i].file &&
+		    dst[i].nr == arg1[j].nr) {
+		    tmp_arg1[j] = alloc_tmp(c);
+		    brw_MOV(p, tmp_arg1[j], arg1[j]);
+		}
+	    }
+	}
+    }
+
+    func(p, dst, mask, tmp_arg0, tmp_arg1);
+
+    release_tmps(c, mark);
 }
 
 static void emit_arl(struct brw_wm_compile *c,
@@ -1201,180 +733,6 @@ static void emit_arl(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-
-static void emit_mul(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, src1, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_MUL(p, dst, src0, src1);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-static void emit_frc(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg_imm(c, inst, 0, i);
-	    brw_FRC(p, dst, src0);
-	}
-    }
-    if (inst->SaturateMode != SATURATE_OFF)
-	brw_set_saturate(p, 0);
-}
-
-static void emit_flr(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
-    GLuint mask = inst->DstReg.WriteMask;
-    int i;
-    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    for (i = 0 ; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg_imm(c, inst, 0, i);
-	    brw_RNDD(p, dst, src0);
-	}
-    }
-    brw_set_saturate(p, 0);
-}
-
-
-static void emit_min_max(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    const GLuint mask = inst->DstReg.WriteMask;
-    const int mark = mark_tmps(c);
-    int i;
-    brw_push_insn_state(p);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-            struct brw_reg real_dst = get_dst_reg(c, inst, i);
-	    struct brw_reg src0 = get_src_reg(c, inst, 0, i);
-	    struct brw_reg src1 = get_src_reg(c, inst, 1, i);
-            struct brw_reg dst;
-            /* if dst==src0 or dst==src1 we need to use a temp reg */
-            GLboolean use_temp = brw_same_reg(dst, src0) ||
-                                 brw_same_reg(dst, src1);
-            if (use_temp)
-               dst = alloc_tmp(c);
-            else
-               dst = real_dst;
-
-            /*
-            printf("  Min/max: dst %d  src0 %d  src1 %d\n",
-                   dst.nr, src0.nr, src1.nr);
-            */
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_MOV(p, dst, src0);
-	    brw_set_saturate(p, 0);
-
-            if (inst->Opcode == OPCODE_MIN)
-               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, src1, src0);
-            else
-               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, src1, src0);
-
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	    brw_MOV(p, dst, src1);
-	    brw_set_saturate(p, 0);
-	    brw_set_predicate_control_flag_value(p, 0xff);
-            if (use_temp)
-               brw_MOV(p, real_dst, dst);
-	}
-    }
-    brw_pop_insn_state(p);
-    release_tmps(c, mark);
-}
-
-static void emit_pow(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg dst, src0, src1;
-    GLuint mask = inst->DstReg.WriteMask;
-    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-
-    if (!(mask & WRITEMASK_XYZW))
-	return;
-
-    assert(is_power_of_two(mask & WRITEMASK_XYZW));
-
-    dst = get_dst_reg(c, inst, dst_chan);
-    src0 = get_src_reg_imm(c, inst, 0, 0);
-    src1 = get_src_reg_imm(c, inst, 1, 0);
-
-    brw_MOV(p, brw_message_reg(2), src0);
-    brw_MOV(p, brw_message_reg(3), src1);
-
-    brw_math(p,
-	    dst,
-	    BRW_MATH_FUNCTION_POW,
-	    (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	    2,
-	    brw_null_reg(),
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
-}
-
-static void emit_lrp(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, tmp1, tmp2, src0, src1, src2;
-    int i;
-    int mark = mark_tmps(c);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-
-	    if (src1.nr == dst.nr) {
-		tmp1 = alloc_tmp(c);
-		brw_MOV(p, tmp1, src1);
-	    } else
-		tmp1 = src1;
-
-	    src2 = get_src_reg(c, inst, 2, i);
-	    if (src2.nr == dst.nr) {
-		tmp2 = alloc_tmp(c);
-		brw_MOV(p, tmp2, src2);
-	    } else
-		tmp2 = src2;
-
-	    brw_ADD(p, dst, negate(src0), brw_imm_f(1.0));
-	    brw_MUL(p, brw_null_reg(), dst, tmp2);
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_MAC(p, dst, src0, tmp1);
-	    brw_set_saturate(p, 0);
-	}
-	release_tmps(c, mark);
-    }
-}
-
 /**
  * For GLSL shaders, this KIL will be unconditional.
  * It may be contained inside an IF/ENDIF structure of course.
@@ -1388,89 +746,6 @@ static void emit_kil(struct brw_wm_compile *c)
     brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
     brw_AND(p, depth, c->emit_mask_reg, depth);
     brw_pop_insn_state(p);
-}
-
-static void emit_mad(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, src0, src1, src2;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    src2 = get_src_reg_imm(c, inst, 2, i);
-	    brw_MUL(p, dst, src0, src1);
-
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_ADD(p, dst, dst, src2);
-	    brw_set_saturate(p, 0);
-	}
-    }
-}
-
-static void emit_sop(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst, GLuint cond)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg dst, src0, src1;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
-	    brw_push_insn_state(p);
-	    brw_CMP(p, brw_null_reg(), cond, src0, src1);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	    brw_MOV(p, dst, brw_imm_f(0.0));
-	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	    brw_MOV(p, dst, brw_imm_f(1.0));
-	    brw_pop_insn_state(p);
-	}
-    }
-}
-
-static void emit_slt(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_L);
-}
-
-static void emit_sle(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_LE);
-}
-
-static void emit_sgt(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_G);
-}
-
-static void emit_sge(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_GE);
-}
-
-static void emit_seq(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_EQ);
-}
-
-static void emit_sne(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    emit_sop(c, inst, BRW_CONDITIONAL_NEQ);
 }
 
 static INLINE struct brw_reg high_words( struct brw_reg reg )
@@ -2525,196 +1800,6 @@ static void emit_noise4( struct brw_wm_compile *c,
     
     release_tmps( c, mark );
 }
-    
-static void emit_wpos_xy(struct brw_wm_compile *c,
-                         const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg src0[2], dst[2];
-
-    dst[0] = get_dst_reg(c, inst, 0);
-    dst[1] = get_dst_reg(c, inst, 1);
-
-    src0[0] = get_src_reg(c, inst, 0, 0);
-    src0[1] = get_src_reg(c, inst, 0, 1);
-
-    /* Calculate the pixel offset from window bottom left into destination
-     * X and Y channels.
-     */
-    if (mask & WRITEMASK_X) {
-	/* X' = X - origin_x */
-	brw_ADD(p,
-		dst[0],
-		retype(src0[0], BRW_REGISTER_TYPE_W),
-		brw_imm_d(0 - c->key.origin_x));
-    }
-
-    if (mask & WRITEMASK_Y) {
-	/* Y' = height - (Y - origin_y) = height + origin_y - Y */
-	brw_ADD(p,
-		dst[1],
-		negate(retype(src0[1], BRW_REGISTER_TYPE_W)),
-		brw_imm_d(c->key.origin_y + c->key.drawable_height - 1));
-    }
-}
-
-/* TODO
-   BIAS on SIMD8 not working yet...
- */	
-static void emit_txb(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg dst[4], src[4], payload_reg;
-    /* Note: TexSrcUnit was already looked up through SamplerTextures[] */
-    const GLuint unit = inst->TexSrcUnit;
-    GLuint i;
-    GLuint msg_type;
-
-    assert(unit < BRW_MAX_TEX_UNIT);
-
-    payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
-
-    for (i = 0; i < 4; i++) 
-	dst[i] = get_dst_reg(c, inst, i);
-    for (i = 0; i < 4; i++)
-	src[i] = get_src_reg(c, inst, 0, i);
-
-    switch (inst->TexSrcTarget) {
-	case TEXTURE_1D_INDEX:
-	    brw_MOV(p, brw_message_reg(2), src[0]);         /* s coord */
-	    brw_MOV(p, brw_message_reg(3), brw_imm_f(0));   /* t coord */
-	    brw_MOV(p, brw_message_reg(4), brw_imm_f(0));   /* r coord */
-	    break;
-	case TEXTURE_2D_INDEX:
-	case TEXTURE_RECT_INDEX:
-	    brw_MOV(p, brw_message_reg(2), src[0]);
-	    brw_MOV(p, brw_message_reg(3), src[1]);
-	    brw_MOV(p, brw_message_reg(4), brw_imm_f(0));
-	    break;
-	case TEXTURE_3D_INDEX:
-	case TEXTURE_CUBE_INDEX:
-	    brw_MOV(p, brw_message_reg(2), src[0]);
-	    brw_MOV(p, brw_message_reg(3), src[1]);
-	    brw_MOV(p, brw_message_reg(4), src[2]);
-	    break;
-	default:
-            /* invalid target */
-            abort();
-    }
-    brw_MOV(p, brw_message_reg(5), src[3]);          /* bias */
-    brw_MOV(p, brw_message_reg(6), brw_imm_f(0));    /* ref (unused?) */
-
-    if (BRW_IS_IGDNG(p->brw)) {
-        msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_IGDNG;
-    } else {
-        /* Does it work well on SIMD8? */
-        msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
-    }
-
-    brw_SAMPLE(p,
-               retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),  /* dest */
-               1,                                           /* msg_reg_nr */
-               retype(payload_reg, BRW_REGISTER_TYPE_UW),   /* src0 */
-               SURF_INDEX_TEXTURE(unit),
-               unit,                                        /* sampler */
-               inst->DstReg.WriteMask,                      /* writemask */
-               msg_type,                                    /* msg_type */
-               4,                                           /* response_length */
-               4,                                           /* msg_length */
-               0,                                           /* eot */
-               1,
-               BRW_SAMPLER_SIMD_MODE_SIMD8);	
-}
-
-
-static void emit_tex(struct brw_wm_compile *c,
-                     const struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg dst[4], src[4], payload_reg;
-    /* Note: TexSrcUnit was already looked up through SamplerTextures[] */
-    const GLuint unit = inst->TexSrcUnit;
-    GLuint msg_len;
-    GLuint i, nr;
-    GLuint emit;
-    GLboolean shadow = (c->key.shadowtex_mask & (1<<unit)) ? 1 : 0;
-    GLuint msg_type;
-
-    assert(unit < BRW_MAX_TEX_UNIT);
-
-    payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
-
-    for (i = 0; i < 4; i++) 
-	dst[i] = get_dst_reg(c, inst, i);
-    for (i = 0; i < 4; i++)
-	src[i] = get_src_reg(c, inst, 0, i);
-
-    switch (inst->TexSrcTarget) {
-	case TEXTURE_1D_INDEX:
-	    emit = WRITEMASK_X;
-	    nr = 1;
-	    break;
-	case TEXTURE_2D_INDEX:
-	case TEXTURE_RECT_INDEX:
-	    emit = WRITEMASK_XY;
-	    nr = 2;
-	    break;
-	case TEXTURE_3D_INDEX:
-	case TEXTURE_CUBE_INDEX:
-	    emit = WRITEMASK_XYZ;
-	    nr = 3;
-	    break;
-	default:
-           /* invalid target */
-           abort();
-    }
-    msg_len = 1;
-
-    /* move/load S, T, R coords */
-    for (i = 0; i < nr; i++) {
-	static const GLuint swz[4] = {0,1,2,2};
-	if (emit & (1<<i))
-	    brw_MOV(p, brw_message_reg(msg_len+1), src[swz[i]]);
-	else
-	    brw_MOV(p, brw_message_reg(msg_len+1), brw_imm_f(0));
-	msg_len += 1;
-    }
-
-    if (shadow) {
-       brw_MOV(p, brw_message_reg(5), brw_imm_f(0));  /* lod / bias */
-       brw_MOV(p, brw_message_reg(6), src[2]);        /* ref value / R coord */
-    }
-
-    if (BRW_IS_IGDNG(p->brw)) {
-        if (shadow)
-            msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_COMPARE_IGDNG;
-        else
-            msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_IGDNG;
-    } else {
-        /* Does it work for shadow on SIMD8 ? */
-        msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
-    }
-    
-    brw_SAMPLE(p,
-               retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW), /* dest */
-               1,                                          /* msg_reg_nr */
-               retype(payload_reg, BRW_REGISTER_TYPE_UW),  /* src0 */
-               SURF_INDEX_TEXTURE(unit),
-               unit,                                       /* sampler */
-               inst->DstReg.WriteMask,                     /* writemask */
-               msg_type,                                   /* msg_type */
-               4,                                          /* response_length */
-               shadow ? 6 : 4,                             /* msg_length */
-               0,                                          /* eot */
-               1,
-               BRW_SAMPLER_SIMD_MODE_SIMD8);	
-
-    if (shadow)
-	brw_MOV(p, dst[3], brw_imm_f(1.0));
-}
-
 
 /**
  * Resolve subroutine calls after code emit is done.
@@ -2771,6 +1856,21 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
         if (c->fp->use_const_buffer)
            fetch_constants(c, inst);
 
+	if (inst->Opcode != OPCODE_ARL) {
+	   for (j = 0; j < 4; j++) {
+	      if (inst->DstReg.WriteMask & (1 << j))
+		 dst[j] = get_dst_reg(c, inst, j);
+	      else
+		 dst[j] = brw_null_reg();
+	   }
+	}
+	for (j = 0; j < brw_wm_nr_args(inst->Opcode); j++)
+	    get_argument_regs(c, inst, j, args[j], WRITEMASK_XYZW);
+
+	dst_flags = inst->DstReg.WriteMask;
+	if (inst->SaturateMode == SATURATE_ZERO_ONE)
+	    dst_flags |= SATURATE;
+
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
@@ -2782,126 +1882,131 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
-		emit_pixel_xy(c, inst);
+		emit_pixel_xy(c, dst, dst_flags);
 		break;
 	    case WM_DELTAXY: 
-		emit_delta_xy(c, inst);
+		emit_delta_xy(p, dst, dst_flags, args[0]);
 		break;
 	    case WM_PIXELW:
-		emit_pixel_w(c, inst);
+		emit_pixel_w(c, dst, dst_flags, args[0], args[1]);
 		break;	
 	    case WM_LINTERP:
-		emit_linterp(c, inst);
+		emit_linterp(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case WM_PINTERP:
-		emit_pinterp(c, inst);
+		emit_pinterp(p, dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case WM_CINTERP:
-		emit_cinterp(c, inst);
+		emit_cinterp(p, dst, dst_flags, args[0]);
 		break;
 	    case WM_WPOSXY:
-		emit_wpos_xy(c, inst);
+		emit_wpos_xy(c, dst, dst_flags, args[0]);
 		break;
 	    case WM_FB_WRITE:
-		emit_fb_write(c, inst);
+		emit_fb_write(c, args[0], args[1], args[2],
+			      INST_AUX_GET_TARGET(inst->Aux),
+			      inst->Aux & INST_AUX_EOT);
 		break;
 	    case WM_FRONTFACING:
-		emit_frontfacing(c, inst);
+		emit_frontfacing(p, dst, dst_flags);
 		break;
 	    case OPCODE_ADD:
-		emit_add(c, inst);
+		emit_alu2(p, brw_ADD, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_ARL:
 		emit_arl(c, inst);
 		break;
 	    case OPCODE_FRC:
-		emit_frc(c, inst);
+		emit_alu1(p, brw_FRC, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_FLR:
-		emit_flr(c, inst);
+		emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LRP:
-		emit_lrp(c, inst);
+		unalias3(c, emit_lrp,
+			 dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case OPCODE_TRUNC:
-		emit_trunc(c, inst);
+		emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MOV:
 	    case OPCODE_SWZ:
-		emit_mov(c, inst);
+		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_DP3:
-		emit_dp3(c, inst);
+		emit_dp3(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DP4:
-		emit_dp4(c, inst);
+		emit_dp4(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_XPD:
-		emit_xpd(c, inst);
+		emit_xpd(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DPH:
-		emit_dph(c, inst);
+		emit_dph(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_RCP:
-		emit_rcp(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_INV, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_RSQ:
-		emit_rsq(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_SIN:
-		emit_sin(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_COS:
-		emit_cos(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_COS, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_EX2:
-		emit_ex2(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LG2:
-		emit_lg2(c, inst);
+		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MIN:	
+		unalias2(c, emit_min, dst, dst_flags, args[0], args[1]);
+		break;
 	    case OPCODE_MAX:	
-		emit_min_max(c, inst);
+		unalias2(c, emit_max, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DDX:
 	    case OPCODE_DDY:
-		for (j = 0; j < 4; j++) {
-		    if (inst->DstReg.WriteMask & (1 << j))
-			dst[j] = get_dst_reg(c, inst, j);
-		    else
-			dst[j] = brw_null_reg();
-		}
-		get_argument_regs(c, inst, 0, args[0], WRITEMASK_XYZW);
 		emit_ddxy(p, dst, dst_flags, (inst->Opcode == OPCODE_DDX),
 			  args[0]);
                 break;
 	    case OPCODE_SLT:
-		emit_slt(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_L, args[0], args[1]);
 		break;
 	    case OPCODE_SLE:
-		emit_sle(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_LE, args[0], args[1]);
 		break;
 	    case OPCODE_SGT:
-		emit_sgt(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_G, args[0], args[1]);
 		break;
 	    case OPCODE_SGE:
-		emit_sge(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_GE, args[0], args[1]);
 		break;
 	    case OPCODE_SEQ:
-		emit_seq(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_EQ, args[0], args[1]);
 		break;
 	    case OPCODE_SNE:
-		emit_sne(c, inst);
+		emit_sop(p, dst, dst_flags,
+			 BRW_CONDITIONAL_NEQ, args[0], args[1]);
 		break;
 	    case OPCODE_MUL:
-		emit_mul(c, inst);
+		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_POW:
-		emit_pow(c, inst);
+		emit_math2(c, BRW_MATH_FUNCTION_POW,
+			   dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_MAD:
-		emit_mad(c, inst);
+		emit_mad(p, dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case OPCODE_NOISE1:
 		emit_noise1(c, inst);
@@ -2916,10 +2021,19 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_noise4(c, inst);
 		break;
 	    case OPCODE_TEX:
-		emit_tex(c, inst);
+		emit_tex(c, dst, dst_flags, args[0],
+			 get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH,
+				 0, 1, 0, 0),
+			 inst->TexSrcTarget,
+			 inst->TexSrcUnit,
+			 (c->key.shadowtex_mask & (1 << inst->TexSrcUnit)) != 0);
 		break;
 	    case OPCODE_TXB:
-		emit_txb(c, inst);
+		emit_txb(c, dst, dst_flags, args[0],
+			 get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH,
+				 0, 1, 0, 0),
+			 inst->TexSrcTarget,
+			 c->fp->program.Base.SamplerUnits[inst->TexSrcUnit]);
 		break;
 	    case OPCODE_KIL_NV:
 		emit_kil(c);

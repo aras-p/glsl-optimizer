@@ -21,8 +21,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "r300_context.h"
+#include "r300_cs.h"
+#include "r300_reg.h"
+#include "r300_screen.h"
 #include "r300_state_invariant.h"
-
 
 struct pipe_viewport_state r300_viewport_identity = {
     .scale = {1.0, 1.0, 1.0, 1.0},
@@ -81,7 +84,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(64 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(56 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -111,7 +114,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* XXX this big chunk should be refactored into rs_state */
     OUT_CS_REG(R300_GA_SOLID_RG, 0x00000000);
     OUT_CS_REG(R300_GA_SOLID_BA, 0x00000000);
-    OUT_CS_REG(R300_GA_POLY_MODE, 0x00000000);
     OUT_CS_REG(R300_GA_ROUND_MODE, 0x00000001);
     OUT_CS_REG(R300_GA_OFFSET, 0x00000000);
     OUT_CS_REG(R300_GA_FOG_SCALE, 0x3DBF1412);
@@ -122,7 +124,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
     OUT_CS_REG(R300_RB3D_CCTL, 0x00000000);
-    OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
     if (caps->is_r500) {
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x00000000);
@@ -134,8 +135,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-    OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
-    OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
 
     /* XXX */

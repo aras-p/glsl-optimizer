@@ -31,8 +31,8 @@
 
 struct llvmpipe_context;
 
-extern void
-lp_init_vbuf(struct llvmpipe_context *llvmpipe);
+extern struct vbuf_render *
+lp_create_vbuf_backend(struct llvmpipe_context *llvmpipe);
 
 
 #endif /* LP_VBUF_H */

@@ -76,6 +76,43 @@ fs_sse_prepare( const struct sp_fragment_shader *base,
 }
 
 
+
+/**
+ * Compute quad X,Y,Z,W for the four fragments in a quad.
+ *
+ * This should really be part of the compiled shader.
+ */
+static void
+setup_pos_vector(const struct tgsi_interp_coef *coef,
+		    float x, float y,
+		    struct tgsi_exec_vector *quadpos)
+{
+   uint chan;
+   /* do X */
+   quadpos->xyzw[0].f[0] = x;
+   quadpos->xyzw[0].f[1] = x + 1;
+   quadpos->xyzw[0].f[2] = x;
+   quadpos->xyzw[0].f[3] = x + 1;
+
+   /* do Y */
+   quadpos->xyzw[1].f[0] = y;
+   quadpos->xyzw[1].f[1] = y;
+   quadpos->xyzw[1].f[2] = y + 1;
+   quadpos->xyzw[1].f[3] = y + 1;
+
+   /* do Z and W for all fragments in the quad */
+   for (chan = 2; chan < 4; chan++) {
+      const float dadx = coef->dadx[chan];
+      const float dady = coef->dady[chan];
+      const float a0 = coef->a0[chan] + dadx * x + dady * y;
+      quadpos->xyzw[chan].f[0] = a0;
+      quadpos->xyzw[chan].f[1] = a0 + dadx;
+      quadpos->xyzw[chan].f[2] = a0 + dady;
+      quadpos->xyzw[chan].f[3] = a0 + dadx + dady;
+   }
+}
+
+
 /* TODO: codegenerate the whole run function, skip this wrapper.
  * TODO: break dependency on tgsi_exec_machine struct
  * TODO: push Position calculation into the generated shader
@@ -89,9 +126,9 @@ fs_sse_run( const struct sp_fragment_shader *base,
    struct sp_sse_fragment_shader *shader = sp_sse_fragment_shader(base);
 
    /* Compute X, Y, Z, W vals for this quad -- place in temp[0] for now */
-   sp_setup_pos_vector(quad->posCoef, 
-		       (float)quad->input.x0, (float)quad->input.y0, 
-		       machine->Temps);
+   setup_pos_vector(quad->posCoef, 
+                    (float)quad->input.x0, (float)quad->input.y0, 
+                    machine->Temps);
 
    /* init kill mask */
    tgsi_set_kill_mask(machine, 0x0);
@@ -101,10 +138,42 @@ fs_sse_run( const struct sp_fragment_shader *base,
 		 machine->Consts,
                  (const float (*)[4])shader->immediates,
 		 machine->InterpCoefs
-		 //	 , &machine->QuadPos
+		 /*, &machine->QuadPos*/
       );
 
-   return ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
+   quad->inout.mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
+   if (quad->inout.mask == 0)
+      return FALSE;
+
+   /* store outputs */
+   {
+      const ubyte *sem_name = base->info.output_semantic_name;
+      const ubyte *sem_index = base->info.output_semantic_index;
+      const uint n = base->info.num_outputs;
+      uint i;
+      for (i = 0; i < n; i++) {
+         switch (sem_name[i]) {
+         case TGSI_SEMANTIC_COLOR:
+            {
+               uint cbuf = sem_index[i];
+               memcpy(quad->output.color[cbuf],
+                      &machine->Outputs[i].xyzw[0].f[0],
+                      sizeof(quad->output.color[0]) );
+            }
+            break;
+         case TGSI_SEMANTIC_POSITION:
+            {
+               uint j;
+               for (j = 0; j < 4; j++) {
+                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+               }
+            }
+            break;
+         }
+      }
+   }
+
+   return TRUE;
 }
 
 

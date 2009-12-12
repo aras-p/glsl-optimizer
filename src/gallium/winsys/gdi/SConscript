@@ -18,14 +18,20 @@ if env['platform'] == 'windows':
         'ws2_32',
     ])
 
-    if 'llvmpipe' in env['drivers']:
-        sources = ['gdi_llvmpipe_winsys.c']
-        drivers = [llvmpipe]
-        env.Tool('llvm')
-    elif 'softpipe' in env['drivers']:
+    sources = []
+    drivers = []
+
+    if 'softpipe' in env['drivers']:
         sources = ['gdi_softpipe_winsys.c']
         drivers = [softpipe]
-    else:
+
+    if 'llvmpipe' in env['drivers']:
+        env.Tool('llvm')
+        if 'LLVM_VERSION' in env:
+            sources = ['gdi_llvmpipe_winsys.c']
+            drivers = [llvmpipe]
+
+    if not sources or not drivers:
         print 'warning: softpipe or llvmpipe not selected, gdi winsys disabled'
         Return()
     

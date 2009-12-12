@@ -104,7 +104,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    unsigned clipped = 0;
    unsigned j;
 
-   if (0) debug_printf("%s\n");
+   if (0) debug_printf("%s\n", __FUNCTION__);
 
    for (j = 0; j < count; j++) {
       float *position = out->data[pos];
@@ -210,7 +210,7 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 	 pvs->run = post_vs_viewport;
    }
    else {
-      //if (opengl) 
+      /* if (opengl) */
       pvs->run = post_vs_cliptest_viewport_gl;
    }
 }

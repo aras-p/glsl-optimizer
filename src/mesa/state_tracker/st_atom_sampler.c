@@ -209,7 +209,7 @@ update_samplers(struct st_context *st)
          }
 
          xlate_border_color(texobj->BorderColor,
-                            teximg ? teximg->TexFormat->BaseFormat : GL_RGBA,
+                            teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;
@@ -229,14 +229,23 @@ update_samplers(struct st_context *st)
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, sampler);
+         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
+            cso_single_vertex_sampler(st->cso_context, su, sampler);
+         }
       }
       else {
          /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, NULL);
+         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
+            cso_single_vertex_sampler(st->cso_context, su, NULL);
+         }
       }
    }
 
    cso_single_sampler_done(st->cso_context);
+   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
+      cso_single_vertex_sampler_done(st->cso_context);
+   }
 }
 
 

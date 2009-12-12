@@ -35,6 +35,7 @@
 #include "tr_screen.h"
 
 #include "pipe/p_inlines.h"
+#include "pipe/p_format.h"
 
 
 static boolean trace = FALSE;
@@ -366,7 +367,8 @@ trace_screen_get_tex_transfer(struct pipe_screen *_screen,
 
    trace_dump_call_end();
 
-   result = trace_transfer_create(tr_tex, result);
+   if (result)
+      result = trace_transfer_create(tr_tex, result);
 
    return result;
 }
@@ -403,7 +405,7 @@ trace_screen_transfer_map(struct pipe_screen *_screen,
 
    map = screen->transfer_map(screen, transfer);
    if(map) {
-      if(transfer->usage != PIPE_TRANSFER_READ) {
+      if(transfer->usage & PIPE_TRANSFER_WRITE) {
          assert(!tr_trans->map);
          tr_trans->map = map;
       }
@@ -423,7 +425,7 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
    struct pipe_transfer *transfer = tr_trans->transfer;
 
    if(tr_trans->map) {
-      size_t size = transfer->nblocksy * transfer->stride;
+      size_t size = pf_get_nblocksy(transfer->texture->format, transfer->width) * transfer->stride;
 
       trace_dump_call_begin("pipe_screen", "transfer_write");
 

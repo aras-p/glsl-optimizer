@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <EGL/egl.h>
@@ -119,10 +120,7 @@ main(int argc, char *argv[])
    EGLScreenMESA screen;
    EGLint count;
 
-   /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-   */
-   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType) "!EGL_i915");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {
@@ -132,6 +130,11 @@ main(int argc, char *argv[])
 
    printf("EGL version = %d.%d\n", maj, min);
    printf("EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
+   if (!strstr(eglQueryString(d, EGL_EXTENSIONS),
+               "EGL_MESA_screen_surface")) {
+      printf("EGL_MESA_screen_surface is not supported\n");
+      exit(1);
+   }
 
    eglGetConfigs(d, configs, 10, &numConfigs);
    printf("Got %d EGL configs:\n", numConfigs);

@@ -44,7 +44,7 @@
  */
 void
 util_copy_rect(ubyte * dst,
-               const struct pipe_format_block *block,
+               enum pipe_format format,
                unsigned dst_stride,
                unsigned dst_x,
                unsigned dst_y,
@@ -57,27 +57,30 @@ util_copy_rect(ubyte * dst,
 {
    unsigned i;
    int src_stride_pos = src_stride < 0 ? -src_stride : src_stride;
+   int blocksize = pf_get_blocksize(format);
+   int blockwidth = pf_get_blockwidth(format);
+   int blockheight = pf_get_blockheight(format);
 
-   assert(block->size > 0);
-   assert(block->width > 0);
-   assert(block->height > 0);
+   assert(blocksize > 0);
+   assert(blockwidth > 0);
+   assert(blockheight > 0);
    assert(src_x >= 0);
    assert(src_y >= 0);
    assert(dst_x >= 0);
    assert(dst_y >= 0);
 
-   dst_x /= block->width;
-   dst_y /= block->height;
-   width = (width + block->width - 1)/block->width;
-   height = (height + block->height - 1)/block->height;
-   src_x /= block->width;
-   src_y /= block->height;
+   dst_x /= blockwidth;
+   dst_y /= blockheight;
+   width = (width + blockwidth - 1)/blockwidth;
+   height = (height + blockheight - 1)/blockheight;
+   src_x /= blockwidth;
+   src_y /= blockheight;
    
-   dst += dst_x * block->size;
-   src += src_x * block->size;
+   dst += dst_x * blocksize;
+   src += src_x * blocksize;
    dst += dst_y * dst_stride;
    src += src_y * src_stride_pos;
-   width *= block->size;
+   width *= blocksize;
 
    if (width == dst_stride && width == src_stride)
       memcpy(dst, src, height * width);
@@ -92,7 +95,7 @@ util_copy_rect(ubyte * dst,
 
 void
 util_fill_rect(ubyte * dst,
-               const struct pipe_format_block *block,
+               enum pipe_format format,
                unsigned dst_stride,
                unsigned dst_x,
                unsigned dst_y,
@@ -102,23 +105,26 @@ util_fill_rect(ubyte * dst,
 {
    unsigned i, j;
    unsigned width_size;
+   int blocksize = pf_get_blocksize(format);
+   int blockwidth = pf_get_blockwidth(format);
+   int blockheight = pf_get_blockheight(format);
 
-   assert(block->size > 0);
-   assert(block->width > 0);
-   assert(block->height > 0);
+   assert(blocksize > 0);
+   assert(blockwidth > 0);
+   assert(blockheight > 0);
    assert(dst_x >= 0);
    assert(dst_y >= 0);
 
-   dst_x /= block->width;
-   dst_y /= block->height;
-   width = (width + block->width - 1)/block->width;
-   height = (height + block->height - 1)/block->height;
+   dst_x /= blockwidth;
+   dst_y /= blockheight;
+   width = (width + blockwidth - 1)/blockwidth;
+   height = (height + blockheight - 1)/blockheight;
    
-   dst += dst_x * block->size;
+   dst += dst_x * blocksize;
    dst += dst_y * dst_stride;
-   width_size = width * block->size;
+   width_size = width * blocksize;
    
-   switch (block->size) {
+   switch (blocksize) {
    case 1:
       if(dst_stride == width_size)
 	 memset(dst, (ubyte) value, height * width_size);
@@ -172,10 +178,15 @@ util_surface_copy(struct pipe_context *pipe,
    struct pipe_transfer *src_trans, *dst_trans;
    void *dst_map;
    const void *src_map;
+   enum pipe_format src_format, dst_format;
 
    assert(src->texture && dst->texture);
    if (!src->texture || !dst->texture)
       return;
+
+   src_format = src->texture->format;
+   dst_format = dst->texture->format;
+
    src_trans = screen->get_tex_transfer(screen,
                                         src->texture,
                                         src->face,
@@ -192,9 +203,9 @@ util_surface_copy(struct pipe_context *pipe,
                                         PIPE_TRANSFER_WRITE,
                                         dst_x, dst_y, w, h);
 
-   assert(dst_trans->block.size == src_trans->block.size);
-   assert(dst_trans->block.width == src_trans->block.width);
-   assert(dst_trans->block.height == src_trans->block.height);
+   assert(pf_get_blocksize(dst_format) == pf_get_blocksize(src_format));
+   assert(pf_get_blockwidth(dst_format) == pf_get_blockwidth(src_format));
+   assert(pf_get_blockheight(dst_format) == pf_get_blockheight(src_format));
 
    src_map = pipe->screen->transfer_map(screen, src_trans);
    dst_map = pipe->screen->transfer_map(screen, dst_trans);
@@ -205,7 +216,7 @@ util_surface_copy(struct pipe_context *pipe,
    if (src_map && dst_map) {
       /* If do_flip, invert src_y position and pass negative src stride */
       util_copy_rect(dst_map,
-                     &dst_trans->block,
+                     dst_format,
                      dst_trans->stride,
                      0, 0,
                      w, h,
@@ -259,11 +270,11 @@ util_surface_fill(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      switch (dst_trans->block.size) {
+      switch (pf_get_blocksize(dst_trans->texture->format)) {
       case 1:
       case 2:
       case 4:
-         util_fill_rect(dst_map, &dst_trans->block, dst_trans->stride,
+         util_fill_rect(dst_map, dst_trans->texture->format, dst_trans->stride,
                         0, 0, width, height, value);
          break;
       case 8:

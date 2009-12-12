@@ -44,7 +44,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define sleep Sleep
-#elif defined(PIPE_OS_LINUX)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 void usleep(int);
 #  define sleep usleep
 #else
@@ -200,10 +200,12 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    t = tr_tex->texture;
    rbug_send_texture_info_reply(tr_rbug->con, serial,
                                t->target, t->format,
-                               t->width, t->last_level + 1,
-                               t->height, t->last_level + 1,
-                               t->depth, t->last_level + 1,
-                               t->block.width, t->block.height, t->block.size,
+                               &t->width0, 1,
+                               &t->height0, 1,
+                               &t->depth0, 1,
+                               pf_get_blockwidth(t->format),
+                               pf_get_blockheight(t->format),
+                               pf_get_blocksize(t->format),
                                t->last_level,
                                t->nr_samples,
                                t->tex_usage,
@@ -251,9 +253,12 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    map = screen->transfer_map(screen, t);
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
-                                t->format,
-                                t->block.width, t->block.height, t->block.size,
-                                (uint8_t*)map, t->stride * t->nblocksy,
+                                t->texture->format,
+                                pf_get_blockwidth(t->texture->format),
+                                pf_get_blockheight(t->texture->format),
+                                pf_get_blocksize(t->texture->format),
+                                (uint8_t*)map,
+                                t->stride * pf_get_nblocksy(t->texture->format, t->height),
                                 t->stride,
                                 NULL);
 

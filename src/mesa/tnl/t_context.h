@@ -198,26 +198,23 @@ struct vertex_buffer
     */
    GLuint Count;  /**< Number of vertices currently in buffer */
 
-   /* Pointers to current data.
-    * XXX some of these fields alias AttribPtr below and should be removed
-    * such as NormalPtr, TexCoordPtr, FogCoordPtr, etc.
+   /* Pointers to current data.  Most of the data is in AttribPtr -- all of
+    * it that is one of VERT_ATTRIB_X.  For things only produced by TNL,
+    * such as backface color or eye-space coordinates, they are stored
+    * here.
     */
    GLuint      *Elts;		                
-   GLvector4f  *ObjPtr;		                /* _TNL_BIT_POS */
    GLvector4f  *EyePtr;		                /* _TNL_BIT_POS */
    GLvector4f  *ClipPtr;	                /* _TNL_BIT_POS */
    GLvector4f  *NdcPtr;                         /* _TNL_BIT_POS */
    GLubyte     ClipOrMask;	                /* _TNL_BIT_POS */
    GLubyte     ClipAndMask;	                /* _TNL_BIT_POS */
    GLubyte     *ClipMask;		        /* _TNL_BIT_POS */
-   GLvector4f  *NormalPtr;	                /* _TNL_BIT_NORMAL */
    GLfloat     *NormalLengthPtr;	        /* _TNL_BIT_NORMAL */
    GLboolean   *EdgeFlag;	                /* _TNL_BIT_EDGEFLAG */
-   GLvector4f  *TexCoordPtr[MAX_TEXTURE_COORD_UNITS]; /* VERT_TEX_0..n */
-   GLvector4f  *IndexPtr[2];	                /* _TNL_BIT_INDEX */
-   GLvector4f  *ColorPtr[2];	                /* _TNL_BIT_COLOR0 */
-   GLvector4f  *SecondaryColorPtr[2];           /* _TNL_BIT_COLOR1 */
-   GLvector4f  *FogCoordPtr;	                /* _TNL_BIT_FOG */
+   GLvector4f  *BackfaceIndexPtr;
+   GLvector4f  *BackfaceColorPtr;
+   GLvector4f  *BackfaceSecondaryColorPtr;
 
    const struct _mesa_prim  *Primitive;	              
    GLuint      PrimitiveCount;	      
@@ -400,11 +397,6 @@ struct tnl_device_driver
 
    void (*NotifyMaterialChange)(GLcontext *ctx);
    /* Alert tnl-aware drivers of changes to material.
-    */
-
-   void (*NotifyInputChanges)(GLcontext *ctx, GLuint bitmask);
-   /* Alert tnl-aware drivers of changes to size and stride of input
-    * arrays.
     */
 
    /***

@@ -66,7 +66,7 @@ static void upload_blend_constant_color(struct brw_context *brw)
 const struct brw_tracked_state brw_blend_constant_color = {
    .dirty = {
       .mesa = _NEW_COLOR,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_blend_constant_color
@@ -93,7 +93,7 @@ static void upload_drawing_rect(struct brw_context *brw)
 const struct brw_tracked_state brw_drawing_rect = {
    .dirty = {
       .mesa = _NEW_BUFFERS,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_drawing_rect
@@ -317,7 +317,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
 const struct brw_tracked_state brw_polygon_stipple = {
    .dirty = {
       .mesa = _NEW_POLYGONSTIPPLE,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_polygon_stipple
@@ -362,7 +362,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
       .mesa = _NEW_WINDOW_POS,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_polygon_stipple_offset
@@ -425,7 +425,7 @@ static void upload_line_stipple(struct brw_context *brw)
 const struct brw_tracked_state brw_line_stipple = {
    .dirty = {
       .mesa = _NEW_LINE,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_line_stipple

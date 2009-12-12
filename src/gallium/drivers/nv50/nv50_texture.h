@@ -38,18 +38,26 @@
 #define NV50TIC_0_0_TYPEA_MASK                                    0x00038000
 #define NV50TIC_0_0_TYPEA_UNORM                                   0x00010000
 #define NV50TIC_0_0_TYPEA_SNORM                                   0x00008000
+#define NV50TIC_0_0_TYPEA_SINT                                    0x00018000
+#define NV50TIC_0_0_TYPEA_UINT                                    0x00020000
 #define NV50TIC_0_0_TYPEA_FLOAT                                   0x00038000
 #define NV50TIC_0_0_TYPEB_MASK                                    0x00007000
 #define NV50TIC_0_0_TYPEB_UNORM                                   0x00002000
 #define NV50TIC_0_0_TYPEB_SNORM                                   0x00001000
+#define NV50TIC_0_0_TYPEB_SINT                                    0x00003000
+#define NV50TIC_0_0_TYPEB_UINT                                    0x00004000
 #define NV50TIC_0_0_TYPEB_FLOAT                                   0x00007000
 #define NV50TIC_0_0_TYPEG_MASK                                    0x00000e00
 #define NV50TIC_0_0_TYPEG_UNORM                                   0x00000400
 #define NV50TIC_0_0_TYPEG_SNORM                                   0x00000200
+#define NV50TIC_0_0_TYPEG_SINT                                    0x00000600
+#define NV50TIC_0_0_TYPEG_UINT                                    0x00000800
 #define NV50TIC_0_0_TYPEG_FLOAT                                   0x00000e00
 #define NV50TIC_0_0_TYPER_MASK                                    0x000001c0
 #define NV50TIC_0_0_TYPER_UNORM                                   0x00000080
 #define NV50TIC_0_0_TYPER_SNORM                                   0x00000040
+#define NV50TIC_0_0_TYPER_SINT                                    0x000000c0
+#define NV50TIC_0_0_TYPER_UINT                                    0x00000100
 #define NV50TIC_0_0_TYPER_FLOAT                                   0x000001c0
 #define NV50TIC_0_0_FMT_MASK                                      0x0000003f
 #define NV50TIC_0_0_FMT_32_32_32_32                               0x00000001
@@ -57,6 +65,7 @@
 #define NV50TIC_0_0_FMT_32_32                                     0x00000004
 #define NV50TIC_0_0_FMT_8_8_8_8                                   0x00000008
 #define NV50TIC_0_0_FMT_2_10_10_10                                0x00000009
+#define NV50TIC_0_0_FMT_16_16                                     0x0000000c
 #define NV50TIC_0_0_FMT_32                                        0x0000000f
 #define NV50TIC_0_0_FMT_4_4_4_4                                   0x00000012
 /* #define NV50TIC_0_0_FMT_1_5_5_5                                0x00000013 */
@@ -65,12 +74,16 @@
 #define NV50TIC_0_0_FMT_8_8                                       0x00000018
 #define NV50TIC_0_0_FMT_16                                        0x0000001b
 #define NV50TIC_0_0_FMT_8                                         0x0000001d
+#define NV50TIC_0_0_FMT_5_9_9_9                                   0x00000020
 #define NV50TIC_0_0_FMT_10_11_11                                  0x00000021
 #define NV50TIC_0_0_FMT_DXT1                                      0x00000024
 #define NV50TIC_0_0_FMT_DXT3                                      0x00000025
 #define NV50TIC_0_0_FMT_DXT5                                      0x00000026
 #define NV50TIC_0_0_FMT_RGTC1                                     0x00000027
 #define NV50TIC_0_0_FMT_RGTC2                                     0x00000028
+#define NV50TIC_0_0_FMT_24_8                                      0x00000029
+#define NV50TIC_0_0_FMT_32_DEPTH                                  0x0000002f
+#define NV50TIC_0_0_FMT_32_8                                      0x00000030
 
 #define NV50TIC_0_1_OFFSET_LOW_MASK                               0xffffffff
 #define NV50TIC_0_1_OFFSET_LOW_SHIFT                                       0
@@ -133,6 +146,8 @@
 #define NV50TSC_1_1_MIPF_NEAREST                                 0x00000080
 #define NV50TSC_1_1_MIPF_LINEAR                                  0x000000c0
 #define NV50TSC_1_1_LOD_BIAS_MASK                                0x01fff000
+#define NV50TSC_1_1_UNKN_ANISO_15                                0x10000000
+#define NV50TSC_1_1_UNKN_ANISO_35                                0x18000000
 
 #define NV50TSC_1_2_MIN_LOD_MASK                                 0x00000f00
 #define NV50TSC_1_2_MAX_LOD_MASK                                 0x00f00000

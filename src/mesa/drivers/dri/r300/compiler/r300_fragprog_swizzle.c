@@ -33,16 +33,17 @@
 
 #include "r300_fragprog_swizzle.h"
 
+#include <stdio.h>
+
 #include "../r300_reg.h"
-#include "radeon_nqssadce.h"
 #include "radeon_compiler.h"
 
-#define MAKE_SWZ3(x, y, z) (MAKE_SWIZZLE4(SWIZZLE_##x, SWIZZLE_##y, SWIZZLE_##z, SWIZZLE_ZERO))
+#define MAKE_SWZ3(x, y, z) (RC_MAKE_SWIZZLE(RC_SWIZZLE_##x, RC_SWIZZLE_##y, RC_SWIZZLE_##z, RC_SWIZZLE_ZERO))
 
 struct swizzle_data {
-	GLuint hash; /**< swizzle value this matches */
-	GLuint base; /**< base value for hw swizzle */
-	GLuint stride; /**< difference in base between arg0/1/2 */
+	unsigned int hash; /**< swizzle value this matches */
+	unsigned int base; /**< base value for hw swizzle */
+	unsigned int stride; /**< difference in base between arg0/1/2 */
 };
 
 static const struct swizzle_data native_swizzles[] = {
@@ -65,15 +66,15 @@ static const int num_native_swizzles = sizeof(native_swizzles)/sizeof(native_swi
  * Find a native RGB swizzle that matches the given swizzle.
  * Returns 0 if none found.
  */
-static const struct swizzle_data* lookup_native_swizzle(GLuint swizzle)
+static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
 {
 	int i, comp;
 
 	for(i = 0; i < num_native_swizzles; ++i) {
 		const struct swizzle_data* sd = &native_swizzles[i];
 		for(comp = 0; comp < 3; ++comp) {
-			GLuint swz = GET_SWZ(swizzle, comp);
-			if (swz == SWIZZLE_NIL)
+			unsigned int swz = GET_SWZ(swizzle, comp);
+			if (swz == RC_SWIZZLE_UNUSED)
 				continue;
 			if (swz != GET_SWZ(sd->hash, comp))
 				break;
@@ -90,71 +91,72 @@ static const struct swizzle_data* lookup_native_swizzle(GLuint swizzle)
  * Check whether the given instruction supports the swizzle and negate
  * combinations in the given source register.
  */
-GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
+static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
 	if (reg.Abs)
-		reg.Negate = NEGATE_NONE;
+		reg.Negate = RC_MASK_NONE;
 
-	if (opcode == OPCODE_KIL ||
-	    opcode == OPCODE_TEX ||
-	    opcode == OPCODE_TXB ||
-	    opcode == OPCODE_TXP) {
+	if (opcode == RC_OPCODE_KIL ||
+	    opcode == RC_OPCODE_TEX ||
+	    opcode == RC_OPCODE_TXB ||
+	    opcode == RC_OPCODE_TXP) {
 		int j;
 
 		if (reg.Abs || reg.Negate)
-			return GL_FALSE;
+			return 0;
 
 		for(j = 0; j < 4; ++j) {
-			GLuint swz = GET_SWZ(reg.Swizzle, j);
-			if (swz == SWIZZLE_NIL)
+			unsigned int swz = GET_SWZ(reg.Swizzle, j);
+			if (swz == RC_SWIZZLE_UNUSED)
 				continue;
 			if (swz != j)
-				return GL_FALSE;
+				return 0;
 		}
 
-		return GL_TRUE;
+		return 1;
 	}
 
-	GLuint relevant = 0;
+	unsigned int relevant = 0;
 	int j;
 
 	for(j = 0; j < 3; ++j)
-		if (GET_SWZ(reg.Swizzle, j) != SWIZZLE_NIL)
+		if (GET_SWZ(reg.Swizzle, j) != RC_SWIZZLE_UNUSED)
 			relevant |= 1 << j;
 
 	if ((reg.Negate & relevant) && ((reg.Negate & relevant) != relevant))
-		return GL_FALSE;
+		return 0;
 
 	if (!lookup_native_swizzle(reg.Swizzle))
-		return GL_FALSE;
+		return 0;
 
-	return GL_TRUE;
+	return 1;
 }
 
 
-/**
- * Generate MOV dst, src using only native swizzles.
- */
-void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
+static void r300_swizzle_split(
+		struct rc_src_register src, unsigned int mask,
+		struct rc_swizzle_split * split)
 {
 	if (src.Abs)
-		src.Negate = NEGATE_NONE;
+		src.Negate = RC_MASK_NONE;
 
-	while(dst.WriteMask) {
+	split->NumPhases = 0;
+
+	while(mask) {
 		const struct swizzle_data *best_swizzle = 0;
-		GLuint best_matchcount = 0;
-		GLuint best_matchmask = 0;
+		unsigned int best_matchcount = 0;
+		unsigned int best_matchmask = 0;
 		int i, comp;
 
 		for(i = 0; i < num_native_swizzles; ++i) {
 			const struct swizzle_data *sd = &native_swizzles[i];
-			GLuint matchcount = 0;
-			GLuint matchmask = 0;
+			unsigned int matchcount = 0;
+			unsigned int matchmask = 0;
 			for(comp = 0; comp < 3; ++comp) {
-				if (!GET_BIT(dst.WriteMask, comp))
+				if (!GET_BIT(mask, comp))
 					continue;
-				GLuint swz = GET_SWZ(src.Swizzle, comp);
-				if (swz == SWIZZLE_NIL)
+				unsigned int swz = GET_SWZ(src.Swizzle, comp);
+				if (swz == RC_SWIZZLE_UNUSED)
 					continue;
 				if (swz == GET_SWZ(sd->hash, comp)) {
 					/* check if the negate bit of current component
@@ -170,34 +172,35 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 				best_swizzle = sd;
 				best_matchcount = matchcount;
 				best_matchmask = matchmask;
-				if (matchmask == (dst.WriteMask & WRITEMASK_XYZ))
+				if (matchmask == (mask & RC_MASK_XYZ))
 					break;
 			}
 		}
 
-		struct rc_instruction *inst = rc_insert_new_instruction(s->Compiler, s->IP->Prev);
-		inst->I.Opcode = OPCODE_MOV;
-		inst->I.DstReg = dst;
-		inst->I.DstReg.WriteMask &= (best_matchmask | WRITEMASK_W);
-		inst->I.SrcReg[0] = src;
-		inst->I.SrcReg[0].Negate = (best_matchmask & src.Negate) ? NEGATE_XYZW : NEGATE_NONE;
-		/* Note: We rely on NqSSA/DCE to set unused swizzle components to NIL */
+		if (mask & RC_MASK_W)
+			best_matchmask |= RC_MASK_W;
 
-		dst.WriteMask &= ~inst->I.DstReg.WriteMask;
+		split->Phase[split->NumPhases++] = best_matchmask;
+		mask &= ~best_matchmask;
 	}
 }
+
+struct rc_swizzle_caps r300_swizzle_caps = {
+	.IsNative = r300_swizzle_is_native,
+	.Split = r300_swizzle_split
+};
 
 
 /**
  * Translate an RGB (XYZ) swizzle into the hardware code for the given
  * instruction source.
  */
-GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle)
+unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle)
 {
 	const struct swizzle_data* sd = lookup_native_swizzle(swizzle);
 
 	if (!sd) {
-		_mesa_printf("Not a native swizzle: %08x\n", swizzle);
+		fprintf(stderr, "Not a native swizzle: %08x\n", swizzle);
 		return 0;
 	}
 
@@ -209,15 +212,15 @@ GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle)
  * Translate an Alpha (W) swizzle into the hardware code for the given
  * instruction source.
  */
-GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle)
+unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle)
 {
 	if (swizzle < 3)
 		return swizzle + 3*src;
 
 	switch(swizzle) {
-	case SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
-	case SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
-	case SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;
+	case RC_SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
+	case RC_SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
+	case RC_SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;
 	default: return R300_ALU_ARGA_ONE;
 	}
 }

@@ -35,7 +35,7 @@
 
 #include "main/mtypes.h"
 
-extern GLuint brw_count_bits( GLuint val );
+extern GLuint brw_count_bits(uint64_t val);
 extern GLuint brw_parameter_list_state_flags(struct gl_program_parameter_list *paramList);
 extern GLuint brw_translate_blend_factor( GLenum factor );
 extern GLuint brw_translate_blend_equation( GLenum mode );

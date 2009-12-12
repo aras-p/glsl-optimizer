@@ -5,7 +5,7 @@ Import('*')
 
 if env['platform'] == 'linux' \
         and 'mesa' in env['statetrackers'] \
-        and set(('softpipe', 'llvmpipe', 'i915simple', 'trace')).intersection(env['drivers']) \
+        and set(('softpipe', 'llvmpipe', 'i915', 'trace')).intersection(env['drivers']) \
         and not env['dri']:
 
     env = env.Clone()
@@ -36,15 +36,6 @@ if env['platform'] == 'linux' \
             env.Tool('udis86')
             sources += ['xlib_llvmpipe.c']
             drivers += [llvmpipe]
-
-    if 'i965simple' in env['drivers']:
-        env.Append(CPPDEFINES = 'GALLIUM_I965SIMPLE')
-        sources += [
-            'xlib_brw_aub.c',
-            'xlib_brw_context.c',
-            'xlib_brw_screen.c',
-        ]
-        drivers += [i965simple]
         
     if 'cell' in env['drivers']:
         env.Append(CPPDEFINES = 'GALLIUM_CELL')

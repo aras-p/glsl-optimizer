@@ -33,6 +33,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -50,10 +51,9 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    }
 
    templ.target = PIPE_TEXTURE_2D;
-   pf_get_block(templ.format, &templ.block);
-   templ.width[0] = width;
-   templ.height[0] = height;
-   templ.depth[0] = 1;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
    templ.last_level = 0;
 
    if (pf_get_component_bits(format, PIPE_FORMAT_COMP_S)) {
@@ -235,13 +235,23 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
          old_texture,
          0, 0, 0,
          PIPE_BUFFER_USAGE_GPU_READ);
-      pipe->surface_copy(pipe,
-                         surface,
-                         0, 0,
-                         old_surface,
-                         0, 0,
-                         MIN2(old_surface->width, width),
-                         MIN2(old_surface->height, height));
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                            surface,
+                            0, 0,
+                            old_surface,
+                            0, 0,
+                            MIN2(old_surface->width, width),
+                            MIN2(old_surface->height, height));
+      } else {
+         util_surface_copy(pipe, FALSE,
+                           surface,
+                           0, 0,
+                           old_surface,
+                           0, 0,
+                           MIN2(old_surface->width, width),
+                           MIN2(old_surface->height, height));
+      }
       if (surface)
          pipe_surface_reference(&surface, NULL);
       if (old_surface)

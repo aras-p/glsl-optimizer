@@ -23,6 +23,8 @@
 #include "radeon_compiler.h"
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "radeon_program.h"
 
@@ -34,7 +36,7 @@ void rc_init(struct radeon_compiler * c)
 	memory_pool_init(&c->Pool);
 	c->Program.Instructions.Prev = &c->Program.Instructions;
 	c->Program.Instructions.Next = &c->Program.Instructions;
-	c->Program.Instructions.I.Opcode = OPCODE_END;
+	c->Program.Instructions.U.I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
 }
 
 void rc_destroy(struct radeon_compiler * c)
@@ -60,7 +62,7 @@ void rc_error(struct radeon_compiler * c, const char * fmt, ...)
 {
 	va_list ap;
 
-	c->Error = GL_TRUE;
+	c->Error = 1;
 
 	if (!c->ErrorMsg) {
 		/* Only remember the first error */
@@ -91,28 +93,63 @@ void rc_error(struct radeon_compiler * c, const char * fmt, ...)
 	}
 }
 
+int rc_if_fail_helper(struct radeon_compiler * c, const char * file, int line, const char * assertion)
+{
+	rc_error(c, "ICE at %s:%i: assertion failed: %s\n", file, line, assertion);
+	return 1;
+}
+
+/**
+ * Recompute c->Program.InputsRead and c->Program.OutputsWritten
+ * based on which inputs and outputs are actually referenced
+ * in program instructions.
+ */
+void rc_calculate_inputs_outputs(struct radeon_compiler * c)
+{
+	struct rc_instruction *inst;
+
+	c->Program.InputsRead = 0;
+	c->Program.OutputsWritten = 0;
+
+	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next)
+	{
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+		int i;
+
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_INPUT)
+				c->Program.InputsRead |= 1 << inst->U.I.SrcReg[i].Index;
+		}
+
+		if (opcode->HasDstReg) {
+			if (inst->U.I.DstReg.File == RC_FILE_OUTPUT)
+				c->Program.OutputsWritten |= 1 << inst->U.I.DstReg.Index;
+		}
+	}
+}
+
 /**
  * Rewrite the program such that everything that source the given input
  * register will source new_input instead.
  */
-void rc_move_input(struct radeon_compiler * c, unsigned input, struct prog_src_register new_input)
+void rc_move_input(struct radeon_compiler * c, unsigned input, struct rc_src_register new_input)
 {
 	struct rc_instruction * inst;
 
 	c->Program.InputsRead &= ~(1 << input);
 
 	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
-		const unsigned numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		unsigned i;
 
-		for(i = 0; i < numsrcs; ++i) {
-			if (inst->I.SrcReg[i].File == PROGRAM_INPUT && inst->I.SrcReg[i].Index == input) {
-				inst->I.SrcReg[i].File = new_input.File;
-				inst->I.SrcReg[i].Index = new_input.Index;
-				inst->I.SrcReg[i].Swizzle = combine_swizzles(new_input.Swizzle, inst->I.SrcReg[i].Swizzle);
-				if (!inst->I.SrcReg[i].Abs) {
-					inst->I.SrcReg[i].Negate ^= new_input.Negate;
-					inst->I.SrcReg[i].Abs = new_input.Abs;
+		for(i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_INPUT && inst->U.I.SrcReg[i].Index == input) {
+				inst->U.I.SrcReg[i].File = new_input.File;
+				inst->U.I.SrcReg[i].Index = new_input.Index;
+				inst->U.I.SrcReg[i].Swizzle = combine_swizzles(new_input.Swizzle, inst->U.I.SrcReg[i].Swizzle);
+				if (!inst->U.I.SrcReg[i].Abs) {
+					inst->U.I.SrcReg[i].Negate ^= new_input.Negate;
+					inst->U.I.SrcReg[i].Abs = new_input.Abs;
 				}
 
 				c->Program.InputsRead |= 1 << new_input.Index;
@@ -134,12 +171,12 @@ void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_ou
 	c->Program.OutputsWritten &= ~(1 << output);
 
 	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
-		const unsigned numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (numdsts) {
-			if (inst->I.DstReg.File == PROGRAM_OUTPUT && inst->I.DstReg.Index == output) {
-				inst->I.DstReg.Index = new_output;
-				inst->I.DstReg.WriteMask &= writemask;
+		if (opcode->HasDstReg) {
+			if (inst->U.I.DstReg.File == RC_FILE_OUTPUT && inst->U.I.DstReg.Index == output) {
+				inst->U.I.DstReg.Index = new_output;
+				inst->U.I.DstReg.WriteMask &= writemask;
 
 				c->Program.OutputsWritten |= 1 << new_output;
 			}
@@ -157,33 +194,33 @@ void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_ou
 	struct rc_instruction * inst;
 
 	for(inst = c->Program.Instructions.Next; inst != &c->Program.Instructions; inst = inst->Next) {
-		const unsigned numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (numdsts) {
-			if (inst->I.DstReg.File == PROGRAM_OUTPUT && inst->I.DstReg.Index == output) {
-				inst->I.DstReg.File = PROGRAM_TEMPORARY;
-				inst->I.DstReg.Index = tempreg;
+		if (opcode->HasDstReg) {
+			if (inst->U.I.DstReg.File == RC_FILE_OUTPUT && inst->U.I.DstReg.Index == output) {
+				inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst->U.I.DstReg.Index = tempreg;
 			}
 		}
 	}
 
 	inst = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
-	inst->I.Opcode = OPCODE_MOV;
-	inst->I.DstReg.File = PROGRAM_OUTPUT;
-	inst->I.DstReg.Index = output;
+	inst->U.I.Opcode = RC_OPCODE_MOV;
+	inst->U.I.DstReg.File = RC_FILE_OUTPUT;
+	inst->U.I.DstReg.Index = output;
 
-	inst->I.SrcReg[0].File = PROGRAM_TEMPORARY;
-	inst->I.SrcReg[0].Index = tempreg;
-	inst->I.SrcReg[0].Swizzle = SWIZZLE_XYZW;
+	inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	inst->U.I.SrcReg[0].Index = tempreg;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
 
 	inst = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
-	inst->I.Opcode = OPCODE_MOV;
-	inst->I.DstReg.File = PROGRAM_OUTPUT;
-	inst->I.DstReg.Index = dup_output;
+	inst->U.I.Opcode = RC_OPCODE_MOV;
+	inst->U.I.DstReg.File = RC_FILE_OUTPUT;
+	inst->U.I.DstReg.Index = dup_output;
 
-	inst->I.SrcReg[0].File = PROGRAM_TEMPORARY;
-	inst->I.SrcReg[0].Index = tempreg;
-	inst->I.SrcReg[0].Swizzle = SWIZZLE_XYZW;
+	inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	inst->U.I.SrcReg[0].Index = tempreg;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
 
 	c->Program.OutputsWritten |= 1 << dup_output;
 }
@@ -201,60 +238,60 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 
 	/* perspective divide */
 	struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, &c->Program.Instructions);
-	inst_rcp->I.Opcode = OPCODE_RCP;
+	inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
 
-	inst_rcp->I.DstReg.File = PROGRAM_TEMPORARY;
-	inst_rcp->I.DstReg.Index = tempregi;
-	inst_rcp->I.DstReg.WriteMask = WRITEMASK_W;
+	inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst_rcp->U.I.DstReg.Index = tempregi;
+	inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
 
-	inst_rcp->I.SrcReg[0].File = PROGRAM_INPUT;
-	inst_rcp->I.SrcReg[0].Index = new_input;
-	inst_rcp->I.SrcReg[0].Swizzle = SWIZZLE_WWWW;
+	inst_rcp->U.I.SrcReg[0].File = RC_FILE_INPUT;
+	inst_rcp->U.I.SrcReg[0].Index = new_input;
+	inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
 
 	struct rc_instruction * inst_mul = rc_insert_new_instruction(c, inst_rcp);
-	inst_mul->I.Opcode = OPCODE_MUL;
+	inst_mul->U.I.Opcode = RC_OPCODE_MUL;
 
-	inst_mul->I.DstReg.File = PROGRAM_TEMPORARY;
-	inst_mul->I.DstReg.Index = tempregi;
-	inst_mul->I.DstReg.WriteMask = WRITEMASK_XYZ;
+	inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst_mul->U.I.DstReg.Index = tempregi;
+	inst_mul->U.I.DstReg.WriteMask = RC_MASK_XYZ;
 
-	inst_mul->I.SrcReg[0].File = PROGRAM_INPUT;
-	inst_mul->I.SrcReg[0].Index = new_input;
+	inst_mul->U.I.SrcReg[0].File = RC_FILE_INPUT;
+	inst_mul->U.I.SrcReg[0].Index = new_input;
 
-	inst_mul->I.SrcReg[1].File = PROGRAM_TEMPORARY;
-	inst_mul->I.SrcReg[1].Index = tempregi;
-	inst_mul->I.SrcReg[1].Swizzle = SWIZZLE_WWWW;
+	inst_mul->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+	inst_mul->U.I.SrcReg[1].Index = tempregi;
+	inst_mul->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
 
 	/* viewport transformation */
 	struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_mul);
-	inst_mad->I.Opcode = OPCODE_MAD;
+	inst_mad->U.I.Opcode = RC_OPCODE_MAD;
 
-	inst_mad->I.DstReg.File = PROGRAM_TEMPORARY;
-	inst_mad->I.DstReg.Index = tempregi;
-	inst_mad->I.DstReg.WriteMask = WRITEMASK_XYZ;
+	inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst_mad->U.I.DstReg.Index = tempregi;
+	inst_mad->U.I.DstReg.WriteMask = RC_MASK_XYZ;
 
-	inst_mad->I.SrcReg[0].File = PROGRAM_TEMPORARY;
-	inst_mad->I.SrcReg[0].Index = tempregi;
-	inst_mad->I.SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	inst_mad->U.I.SrcReg[0].Index = tempregi;
+	inst_mad->U.I.SrcReg[0].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
-	inst_mad->I.SrcReg[1].File = PROGRAM_STATE_VAR;
-	inst_mad->I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_WINDOW_DIMENSION, 0);
-	inst_mad->I.SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+	inst_mad->U.I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_WINDOW_DIMENSION, 0);
+	inst_mad->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
-	inst_mad->I.SrcReg[2].File = PROGRAM_STATE_VAR;
-	inst_mad->I.SrcReg[2].Index = inst_mad->I.SrcReg[1].Index;
-	inst_mad->I.SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[2].File = RC_FILE_CONSTANT;
+	inst_mad->U.I.SrcReg[2].Index = inst_mad->U.I.SrcReg[1].Index;
+	inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
 	struct rc_instruction * inst;
 	for (inst = inst_mad->Next; inst != &c->Program.Instructions; inst = inst->Next) {
-		const unsigned numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		unsigned i;
 
-		for(i = 0; i < numsrcs; i++) {
-			if (inst->I.SrcReg[i].File == PROGRAM_INPUT &&
-			    inst->I.SrcReg[i].Index == wpos) {
-				inst->I.SrcReg[i].File = PROGRAM_TEMPORARY;
-				inst->I.SrcReg[i].Index = tempregi;
+		for(i = 0; i < opcode->NumSrcRegs; i++) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_INPUT &&
+			    inst->U.I.SrcReg[i].Index == wpos) {
+				inst->U.I.SrcReg[i].File = RC_FILE_TEMPORARY;
+				inst->U.I.SrcReg[i].Index = tempregi;
 			}
 		}
 	}

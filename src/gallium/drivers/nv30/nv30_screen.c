@@ -10,6 +10,22 @@
 #define NV34TCL_CHIPSET_3X_MASK 0x00000010
 #define NV35TCL_CHIPSET_3X_MASK 0x000001e0
 
+/* FIXME: It seems I should not include directly ../../winsys/drm/nouveau/drm/nouveau_drm_api.h
+ * to get the pointer to the context front buffer, so I copied nouveau_winsys here.
+ * nv30_screen_surface_format_supported() can then use it to enforce creating fbo
+ * with same number of bits everywhere.
+ */
+struct nouveau_winsys {
+	struct pipe_winsys base;
+
+	struct pipe_screen *pscreen;
+
+	unsigned nr_pctx;
+	struct pipe_context **pctx;
+
+	struct pipe_surface *front;
+};
+
 static int
 nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 {
@@ -83,6 +99,8 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 				     enum pipe_texture_target target,
 				     unsigned tex_usage, unsigned geom_flags)
 {
+	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
+
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -96,7 +114,11 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 		switch (format) {
 		case PIPE_FORMAT_Z24S8_UNORM:
 		case PIPE_FORMAT_Z24X8_UNORM:
+			return TRUE;
 		case PIPE_FORMAT_Z16_UNORM:
+			if (front) {
+				return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			}
 			return TRUE;
 		default:
 			break;

@@ -522,7 +522,7 @@ _generic_read_RGBA_span_RGB565_MMX:
 	addl	$32,%esp
 
 	sarl	$2, %ecx
-	jle	.L01		/* Bail early if the count is negative. */
+	jl	.L01		/* Bail early if the count is negative. */
 	jmp	.L02
 
 .L03:

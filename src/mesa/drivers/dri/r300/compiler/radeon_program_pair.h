@@ -28,116 +28,97 @@
 #ifndef __RADEON_PROGRAM_PAIR_H_
 #define __RADEON_PROGRAM_PAIR_H_
 
-#include "radeon_program.h"
+#include "radeon_code.h"
+#include "radeon_opcodes.h"
+#include "radeon_program_constants.h"
 
 struct r300_fragment_program_compiler;
 
 
 /**
- * Represents a paired instruction, as found in R300 and R500
+ * \file
+ * Represents a paired ALU instruction, as found in R300 and R500
  * fragment programs.
+ *
+ * Note that this representation is taking some liberties as far
+ * as register files are concerned, to allow separate register
+ * allocation.
+ *
+ * Also note that there are some subtleties in that the semantics
+ * of certain opcodes are implicitly changed in this representation;
+ * see \ref rc_pair_translate
  */
+
+
 struct radeon_pair_instruction_source {
-	GLuint Index:8;
-	GLuint Constant:1;
-	GLuint Used:1;
+	unsigned int Used:1;
+	rc_register_file File:3;
+	unsigned int Index:RC_REGISTER_INDEX_BITS;
 };
 
 struct radeon_pair_instruction_rgb {
-	GLuint Opcode:8;
-	GLuint DestIndex:8;
-	GLuint WriteMask:3;
-	GLuint OutputWriteMask:3;
-	GLuint Saturate:1;
+	rc_opcode Opcode:8;
+	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
+	unsigned int WriteMask:3;
+	unsigned int OutputWriteMask:3;
+	unsigned int Saturate:1;
 
 	struct radeon_pair_instruction_source Src[3];
 
 	struct {
-		GLuint Source:2;
-		GLuint Swizzle:9;
-		GLuint Abs:1;
-		GLuint Negate:1;
+		unsigned int Source:2;
+		unsigned int Swizzle:9;
+		unsigned int Abs:1;
+		unsigned int Negate:1;
 	} Arg[3];
 };
 
 struct radeon_pair_instruction_alpha {
-	GLuint Opcode:8;
-	GLuint DestIndex:8;
-	GLuint WriteMask:1;
-	GLuint OutputWriteMask:1;
-	GLuint DepthWriteMask:1;
-	GLuint Saturate:1;
+	rc_opcode Opcode:8;
+	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
+	unsigned int WriteMask:1;
+	unsigned int OutputWriteMask:1;
+	unsigned int DepthWriteMask:1;
+	unsigned int Saturate:1;
 
 	struct radeon_pair_instruction_source Src[3];
 
 	struct {
-		GLuint Source:2;
-		GLuint Swizzle:3;
-		GLuint Abs:1;
-		GLuint Negate:1;
+		unsigned int Source:2;
+		unsigned int Swizzle:3;
+		unsigned int Abs:1;
+		unsigned int Negate:1;
 	} Arg[3];
 };
 
-struct radeon_pair_instruction {
+struct rc_pair_instruction {
 	struct radeon_pair_instruction_rgb RGB;
 	struct radeon_pair_instruction_alpha Alpha;
-};
 
-
-enum {
-	RADEON_OPCODE_TEX = 0,
-	RADEON_OPCODE_TXB,
-	RADEON_OPCODE_TXP,
-	RADEON_OPCODE_KIL
-};
-
-struct radeon_pair_texture_instruction {
-	GLuint Opcode:2; /**< one of RADEON_OPCODE_xxx */
-
-	GLuint DestIndex:8;
-	GLuint WriteMask:4;
-
-	GLuint TexSrcUnit:5;
-	GLuint TexSrcTarget:3;
-
-	GLuint SrcIndex:8;
-	GLuint SrcSwizzle:12;
+	rc_write_aluresult WriteALUResult:2;
+	rc_compare_func ALUResultCompare:3;
 };
 
 
 /**
- *
+ * General helper functions for dealing with the paired instruction format.
  */
-struct radeon_pair_handler {
-	/**
-	 * Write a paired instruction to the hardware.
-	 *
-	 * @return GL_FALSE on error.
-	 */
-	GLboolean (*EmitPaired)(void*, struct radeon_pair_instruction*);
+/*@{*/
+int rc_pair_alloc_source(struct rc_pair_instruction *pair,
+	unsigned int rgb, unsigned int alpha,
+	rc_register_file file, unsigned int index);
+/*@}*/
 
-	/**
-	 * Write a texture instruction to the hardware.
-	 * Register indices have already been rewritten to the allocated
-	 * hardware register numbers.
-	 *
-	 * @return GL_FALSE on error.
-	 */
-	GLboolean (*EmitTex)(void*, struct radeon_pair_texture_instruction*);
 
-	/**
-	 * Called before a block of contiguous, independent texture
-	 * instructions is emitted.
-	 */
-	GLboolean (*BeginTexBlock)(void*);
+/**
+ * Compiler passes that operate with the paired format.
+ */
+/*@{*/
+struct radeon_pair_handler;
 
-	unsigned MaxHwTemps;
-};
-
-void radeonPairProgram(
-	struct r300_fragment_program_compiler * compiler,
-	const struct radeon_pair_handler*, void *userdata);
-
-void radeonPrintPairInstruction(struct radeon_pair_instruction *inst);
+void rc_pair_translate(struct r300_fragment_program_compiler *c);
+void rc_pair_schedule(struct r300_fragment_program_compiler *c);
+void rc_pair_regalloc(struct r300_fragment_program_compiler *c, unsigned maxtemps);
+/*@}*/
 
 #endif /* __RADEON_PROGRAM_PAIR_H_ */

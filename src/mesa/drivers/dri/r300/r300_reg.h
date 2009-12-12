@@ -1789,6 +1789,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTC_OUTPUT_X           (1 << 26)
 #       define R300_ALU_DSTC_OUTPUT_Y           (1 << 27)
 #       define R300_ALU_DSTC_OUTPUT_Z           (1 << 28)
+#       define R300_RGB_TARGET(x)               ((x) << 29)
 
 #define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
 #       define R300_ALU_SRC0A_SHIFT             0
@@ -1806,6 +1807,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTA_REG                (1 << 23)
 #       define R300_ALU_DSTA_OUTPUT             (1 << 24)
 #		define R300_ALU_DSTA_DEPTH              (1 << 27)
+#		define R300_ALPHA_TARGET(x)             ((x) << 25)
 
 #define R300_US_ALU_RGB_INST_0                   0x48C0
 #       define R300_ALU_ARGC_SRC0C_XYZ          0
@@ -3002,6 +3004,8 @@ enum {
 #   define R500_INST_RGB_CLAMP				(1 << 19)
 #   define R500_INST_ALPHA_CLAMP			(1 << 20)
 #   define R500_INST_ALU_RESULT_SEL			(1 << 21)
+#   define R500_INST_ALU_RESULT_SEL_RED		(0 << 21)
+#   define R500_INST_ALU_RESULT_SEL_ALPHA		(1 << 21)
 #   define R500_INST_ALPHA_PRED_INV			(1 << 22)
 #   define R500_INST_ALU_RESULT_OP_EQ			(0 << 23)
 #   define R500_INST_ALU_RESULT_OP_LT			(1 << 23)

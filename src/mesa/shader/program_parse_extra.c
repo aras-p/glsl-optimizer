@@ -34,6 +34,121 @@
  */
 
 int
+_mesa_parse_instruction_suffix(const struct asm_parser_state *state,
+			       const char *suffix,
+			       struct prog_instruction *inst)
+{
+   inst->CondUpdate = 0;
+   inst->CondDst = 0;
+   inst->SaturateMode = SATURATE_OFF;
+   inst->Precision = FLOAT32;
+
+
+   /* The first possible suffix element is the precision specifier from
+    * NV_fragment_program_option.
+    */
+   if (state->option.NV_fragment) {
+      switch (suffix[0]) {
+      case 'H':
+	 inst->Precision = FLOAT16;
+	 suffix++;
+	 break;
+      case 'R':
+	 inst->Precision = FLOAT32;
+	 suffix++;
+	 break;
+      case 'X':
+	 inst->Precision = FIXED12;
+	 suffix++;
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   /* The next possible suffix element is the condition code modifier selection
+    * from NV_fragment_program_option.
+    */
+   if (state->option.NV_fragment) {
+      if (suffix[0] == 'C') {
+	 inst->CondUpdate = 1;
+	 suffix++;
+      }
+   }
+
+
+   /* The final possible suffix element is the saturation selector from
+    * ARB_fragment_program.
+    */
+   if (state->mode == ARB_fragment) {
+      if (strcmp(suffix, "_SAT") == 0) {
+	 inst->SaturateMode = SATURATE_ZERO_ONE;
+	 suffix += 4;
+      }
+   }
+
+
+   /* It is an error for all of the suffix string not to be consumed.
+    */
+   return suffix[0] == '\0';
+}
+
+
+int
+_mesa_parse_cc(const char *s)
+{
+   int cond = 0;
+
+   switch (s[0]) {
+   case 'E':
+      if (s[1] == 'Q') {
+	 cond = COND_EQ;
+      }
+      break;
+
+   case 'F':
+      if (s[1] == 'L') {
+	 cond = COND_FL;
+      }
+      break;
+
+   case 'G':
+      if (s[1] == 'E') {
+	 cond = COND_GE;
+      } else if (s[1] == 'T') {
+	 cond = COND_GT;
+      }
+      break;
+
+   case 'L':
+      if (s[1] == 'E') {
+	 cond = COND_LE;
+      } else if (s[1] == 'T') {
+	 cond = COND_LT;
+      }
+      break;
+
+   case 'N':
+      if (s[1] == 'E') {
+	 cond = COND_NE;
+      }
+      break;
+
+   case 'T':
+      if (s[1] == 'R') {
+	 cond = COND_TR;
+      }
+      break;
+
+   default:
+      break;
+   }
+
+   return ((cond == 0) || (s[2] != '\0')) ? 0 : cond;
+}
+
+
+int
 _mesa_ARBvp_parse_option(struct asm_parser_state *state, const char *option)
 {
    if (strcmp(option, "ARB_position_invariant") == 0) {
@@ -99,6 +214,17 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
       } else if (strcmp(option, "fragment_program_shadow") == 0) {
 	 if (state->ctx->Extensions.ARB_fragment_program_shadow) {
 	    state->option.Shadow = 1;
+	    return 1;
+	 }
+      }
+   } else if (strncmp(option, "NV_fragment_program", 19) == 0) {
+      option += 19;
+
+      /* Other NV_fragment_program strings may be supported later.
+       */
+      if (option[0] == '\0') {
+	 if (state->ctx->Extensions.NV_fragment_program_option) {
+	    state->option.NV_fragment = 1;
 	    return 1;
 	 }
       }

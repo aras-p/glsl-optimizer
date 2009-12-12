@@ -33,10 +33,46 @@
 #include "pipe/p_format.h"
 
 
+/**
+ * Describe how to best pack/unpack pixels into/from the prescribed format.
+ *
+ * These are used for automatic code generation of pixel packing and unpacking
+ * routines (in compile time, e.g., u_format_access.py, or in runtime, like
+ * llvmpipe does).
+ *
+ * Thumb rule is: if you're not code generating pixel packing/unpacking then
+ * these are irrelevant for you.
+ *
+ * Note that this can be deduced from other values in util_format_description
+ * structure. This is by design, to make code generation of pixel
+ * packing/unpacking/sampling routines simple and efficient.
+ *
+ * XXX: This should be renamed to something like util_format_pack.
+ */
 enum util_format_layout {
+   /**
+    * Single scalar component.
+    */
    UTIL_FORMAT_LAYOUT_SCALAR = 0,
+
+   /**
+    * One or more components of mixed integer formats, arithmetically encoded
+    * in a word up to 32bits.
+    */
    UTIL_FORMAT_LAYOUT_ARITH = 1,
+
+   /**
+    * One or more components, no mixed formats, each with equal power of two
+    * number of bytes.
+    */
    UTIL_FORMAT_LAYOUT_ARRAY = 2,
+
+   /**
+    * XXX: Not used yet. These might go away and be replaced by a single entry,
+    * for formats where multiple pixels have to be
+    * read in order to determine a single pixel value (i.e., block.width > 1
+    * || block.height > 1)
+    */
    UTIL_FORMAT_LAYOUT_YUV = 3,
    UTIL_FORMAT_LAYOUT_DXT = 4
 };
@@ -50,7 +86,7 @@ struct util_format_block
    /** Block height in pixels */
    unsigned height;
 
-   /** Block size in bytes */
+   /** Block size in bits */
    unsigned bits;
 };
 

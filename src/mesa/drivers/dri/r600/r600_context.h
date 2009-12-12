@@ -58,56 +58,14 @@ typedef struct r600_context context_t;
 
 #include "main/mm.h"
 
-/************ DMA BUFFERS **************/
-
-/* The blit width for texture uploads
- */
-#define R600_BLIT_WIDTH_BYTES 1024
-#define R600_MAX_TEXTURE_UNITS 8
-
-struct r600_texture_state {
-	int tc_count;		/* number of incoming texture coordinates from VAP */
-};
-
-/* Perhaps more if we store programs in vmem? */
-/* drm_r600_cmd_header_t->vpu->count is unsigned char */
-#define VSF_MAX_FRAGMENT_LENGTH (255*4)
-
-/* Can be tested with colormat currently. */
-#define VSF_MAX_FRAGMENT_TEMPS (14)
-
-#define STATE_R600_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
-#define STATE_R600_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
-
-extern int hw_tcl_on;
-
 #define COLOR_IS_RGBA
 #define TAG(x) r600##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-#define PFS_MAX_ALU_INST	64
-#define PFS_MAX_TEX_INST	64
-#define PFS_MAX_TEX_INDIRECT 4
-#define PFS_NUM_TEMP_REGS	32
-#define PFS_NUM_CONST_REGS	16
-
-#define R600_MAX_AOS_ARRAYS		16
-
-#define REG_COORDS	0
-#define REG_COLOR0	1
-#define REG_TEX0	2
-
 #define R600_FALLBACK_NONE 0
 #define R600_FALLBACK_TCL 1
 #define R600_FALLBACK_RAST 2
-
-enum 
-{
-    NO_SHIFT    = 0,
-    LEFT_SHIFT  = 1,
-    RIGHT_SHIFT = 2,
-};
 
 struct r600_hw_state {
 	struct radeon_state_atom sq;
@@ -145,6 +103,32 @@ struct r600_hw_state {
 	struct radeon_state_atom tx_brdr_clr;
 };
 
+typedef struct StreamDesc
+{
+	GLint   size;   //number of data element
+	GLenum  type;  //data element type
+	GLsizei stride;
+
+	struct radeon_bo *bo;
+	GLint  bo_offset;
+
+	GLuint    dwords;
+	GLuint    dst_loc;
+	GLuint    _signed;
+	GLboolean normalize;
+	GLboolean is_named_bo;
+	GLubyte   element;
+} StreamDesc;
+
+typedef struct r700_index_buffer
+{
+	struct radeon_bo *bo;
+	int    bo_offset;
+
+	GLboolean is_32bit;
+	GLuint    count;
+} r700_index_buffer;
+
 /**
  * \brief R600 context structure.
  */
@@ -160,9 +144,9 @@ struct r600_context {
 
 	/* Vertex buffers
 	 */
-	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
-	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
-
+	GLint      nNumActiveAos;
+	StreamDesc stream_desc[VERT_ATTRIB_MAX];
+    struct r700_index_buffer ind_buf;
 };
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
@@ -193,16 +177,13 @@ extern GLboolean r700SyncSurf(context_t *context,
 			      uint32_t write_domain,
 			      uint32_t sync_type);
 
-extern void r700SetupStreams(GLcontext * ctx);
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
+extern void r700InitDraw(GLcontext *ctx);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1
 #define RADEON_D_PLAYBACK_RAW 2
 #define RADEON_D_T 3
-
-#define r600PackFloat32 radeonPackFloat32
-#define r600PackFloat24 radeonPackFloat24
 
 #endif				/* __R600_CONTEXT_H__ */

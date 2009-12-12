@@ -49,12 +49,13 @@ st_translate_mesa_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   const GLbitfield inputFlags[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   const GLbitfield outputFlags[] );
+   const ubyte outputSemanticIndex[] );
+
+void
+st_free_tokens(const struct tgsi_token *tokens);
 
 
 #if defined __cplusplus

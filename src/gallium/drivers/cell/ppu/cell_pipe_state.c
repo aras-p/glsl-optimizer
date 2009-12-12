@@ -383,10 +383,10 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.delete_blend_state = cell_delete_blend_state;
 
    cell->pipe.create_sampler_state = cell_create_sampler_state;
-   cell->pipe.bind_sampler_states = cell_bind_sampler_states;
+   cell->pipe.bind_fragment_sampler_states = cell_bind_sampler_states;
    cell->pipe.delete_sampler_state = cell_delete_sampler_state;
 
-   cell->pipe.set_sampler_textures = cell_set_sampler_textures;
+   cell->pipe.set_fragment_sampler_textures = cell_set_sampler_textures;
 
    cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
    cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;

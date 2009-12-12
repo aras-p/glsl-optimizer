@@ -28,44 +28,23 @@
 #include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi_parse.h"
-#include "tgsi_build.h"
 #include "util/u_memory.h"
-
-void
-tgsi_full_token_init(
-   union tgsi_full_token *full_token )
-{
-   full_token->Token.Type = TGSI_TOKEN_TYPE_DECLARATION;
-}
-
-void
-tgsi_full_token_free(
-   union tgsi_full_token *full_token )
-{
-}
 
 unsigned
 tgsi_parse_init(
    struct tgsi_parse_context *ctx,
    const struct tgsi_token *tokens )
 {
-   ctx->FullVersion.Version = *(struct tgsi_version *) &tokens[0];
-   if( ctx->FullVersion.Version.MajorVersion > 1 ) {
+   ctx->FullHeader.Header = *(struct tgsi_header *) &tokens[0];
+   if( ctx->FullHeader.Header.HeaderSize >= 2 ) {
+      ctx->FullHeader.Processor = *(struct tgsi_processor *) &tokens[1];
+   }
+   else {
       return TGSI_PARSE_ERROR;
    }
 
-   ctx->FullHeader.Header = *(struct tgsi_header *) &tokens[1];
-   if( ctx->FullHeader.Header.HeaderSize >= 2 ) {
-      ctx->FullHeader.Processor = *(struct tgsi_processor *) &tokens[2];
-   }
-   else {
-      ctx->FullHeader.Processor = tgsi_default_processor();
-   }
-
    ctx->Tokens = tokens;
-   ctx->Position = 1 + ctx->FullHeader.Header.HeaderSize;
-
-   tgsi_full_token_init( &ctx->FullToken );
+   ctx->Position = ctx->FullHeader.Header.HeaderSize;
 
    return TGSI_PARSE_OK;
 }
@@ -74,7 +53,6 @@ void
 tgsi_parse_free(
    struct tgsi_parse_context *ctx )
 {
-   tgsi_full_token_free( &ctx->FullToken );
 }
 
 boolean
@@ -82,7 +60,7 @@ tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx )
 {
    return ctx->Position >=
-      1 + ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
+      ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
 }
 
 
@@ -119,9 +97,6 @@ tgsi_parse_token(
    struct tgsi_token token;
    unsigned i;
 
-   tgsi_full_token_free( &ctx->FullToken );
-   tgsi_full_token_init( &ctx->FullToken );
-
    next_token( ctx, &token );
 
    switch( token.Type ) {
@@ -129,10 +104,10 @@ tgsi_parse_token(
    {
       struct tgsi_full_declaration *decl = &ctx->FullToken.FullDeclaration;
 
-      *decl = tgsi_default_full_declaration();
+      memset(decl, 0, sizeof *decl);
       copy_token(&decl->Declaration, &token);
 
-      next_token( ctx, &decl->DeclarationRange );
+      next_token( ctx, &decl->Range );
 
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );
@@ -145,9 +120,8 @@ tgsi_parse_token(
    {
       struct tgsi_full_immediate *imm = &ctx->FullToken.FullImmediate;
 
-      *imm = tgsi_default_full_immediate();
+      memset(imm, 0, sizeof *imm);
       copy_token(&imm->Immediate, &token);
-      assert( !imm->Immediate.Extended );
 
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
@@ -169,147 +143,76 @@ tgsi_parse_token(
    case TGSI_TOKEN_TYPE_INSTRUCTION:
    {
       struct tgsi_full_instruction *inst = &ctx->FullToken.FullInstruction;
-      unsigned extended;
 
-      *inst = tgsi_default_full_instruction();
+      memset(inst, 0, sizeof *inst);
       copy_token(&inst->Instruction, &token);
-      extended = inst->Instruction.Extended;
 
-      while( extended ) {
-         struct tgsi_src_register_ext token;
+      if (inst->Instruction.Predicate) {
+         next_token(ctx, &inst->Predicate);
+      }
 
-         next_token( ctx, &token );
+      if (inst->Instruction.Label) {
+         next_token( ctx, &inst->Label);
+      }
 
-         switch( token.Type ) {
-         case TGSI_INSTRUCTION_EXT_TYPE_NV:
-            copy_token(&inst->InstructionExtNv, &token);
-            break;
-
-         case TGSI_INSTRUCTION_EXT_TYPE_LABEL:
-            copy_token(&inst->InstructionExtLabel, &token);
-            break;
-
-         case TGSI_INSTRUCTION_EXT_TYPE_TEXTURE:
-            copy_token(&inst->InstructionExtTexture, &token);
-            break;
-
-         default:
-            assert( 0 );
-         }
-
-         extended = token.Extended;
+      if (inst->Instruction.Texture) {
+         next_token( ctx, &inst->Texture);
       }
 
       assert( inst->Instruction.NumDstRegs <= TGSI_FULL_MAX_DST_REGISTERS );
 
       for(  i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-         unsigned extended;
 
-         next_token( ctx, &inst->FullDstRegisters[i].DstRegister );
+         next_token( ctx, &inst->Dst[i].Register );
 
          /*
           * No support for indirect or multi-dimensional addressing.
           */
-         assert( !inst->FullDstRegisters[i].DstRegister.Dimension );
+         assert( !inst->Dst[i].Register.Dimension );
 
-         extended = inst->FullDstRegisters[i].DstRegister.Extended;
-
-         while( extended ) {
-            struct tgsi_src_register_ext token;
-
-            next_token( ctx, &token );
-
-            switch( token.Type ) {
-            case TGSI_DST_REGISTER_EXT_TYPE_CONDCODE:
-               copy_token(&inst->FullDstRegisters[i].DstRegisterExtConcode,
-                          &token);
-               break;
-
-            case TGSI_DST_REGISTER_EXT_TYPE_MODULATE:
-               copy_token(&inst->FullDstRegisters[i].DstRegisterExtModulate,
-                          &token);
-               break;
-
-            default:
-               assert( 0 );
-            }
-
-            extended = token.Extended;
-         }
-
-         if( inst->FullDstRegisters[i].DstRegister.Indirect ) {
-            next_token( ctx, &inst->FullDstRegisters[i].DstRegisterInd );
+         if( inst->Dst[i].Register.Indirect ) {
+            next_token( ctx, &inst->Dst[i].Indirect );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->FullDstRegisters[i].DstRegisterInd.Indirect );
-            assert( !inst->FullDstRegisters[i].DstRegisterInd.Dimension );
-            assert( !inst->FullDstRegisters[i].DstRegisterInd.Extended );
+            assert( !inst->Dst[i].Indirect.Dimension );
+            assert( !inst->Dst[i].Indirect.Indirect );
          }
       }
 
       assert( inst->Instruction.NumSrcRegs <= TGSI_FULL_MAX_SRC_REGISTERS );
 
       for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-         unsigned extended;
 
-         next_token( ctx, &inst->FullSrcRegisters[i].SrcRegister );
+         next_token( ctx, &inst->Src[i].Register );
 
-         extended = inst->FullSrcRegisters[i].SrcRegister.Extended;
-
-         while( extended ) {
-            struct tgsi_src_register_ext token;
-
-            next_token( ctx, &token );
-
-            switch( token.Type ) {
-            case TGSI_SRC_REGISTER_EXT_TYPE_SWZ:
-               copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtSwz,
-                          &token);
-               break;
-
-            case TGSI_SRC_REGISTER_EXT_TYPE_MOD:
-               copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtMod,
-                          &token);
-               break;
-
-            default:
-               assert( 0 );
-            }
-
-            extended = token.Extended;
-         }
-
-         if( inst->FullSrcRegisters[i].SrcRegister.Indirect ) {
-            next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterInd );
+         if( inst->Src[i].Register.Indirect ) {
+            next_token( ctx, &inst->Src[i].Indirect );
 
             /*
              * No support for indirect or multi-dimensional addressing.
              */
-            assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Indirect );
-            assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Dimension );
-            assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Extended );
+            assert( !inst->Src[i].Indirect.Indirect );
+            assert( !inst->Src[i].Indirect.Dimension );
          }
 
-         if( inst->FullSrcRegisters[i].SrcRegister.Dimension ) {
-            next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterDim );
+         if( inst->Src[i].Register.Dimension ) {
+            next_token( ctx, &inst->Src[i].Dimension );
 
             /*
              * No support for multi-dimensional addressing.
              */
-            assert( !inst->FullSrcRegisters[i].SrcRegisterDim.Dimension );
-            assert( !inst->FullSrcRegisters[i].SrcRegisterDim.Extended );
+            assert( !inst->Src[i].Dimension.Dimension );
 
-            if( inst->FullSrcRegisters[i].SrcRegisterDim.Indirect ) {
-               next_token( ctx, &inst->FullSrcRegisters[i].SrcRegisterDimInd );
+            if( inst->Src[i].Dimension.Indirect ) {
+               next_token( ctx, &inst->Src[i].DimIndirect );
 
                /*
                * No support for indirect or multi-dimensional addressing.
                */
-               assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Indirect );
-               assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Dimension );
-               assert( !inst->FullSrcRegisters[i].SrcRegisterInd.Extended );
+               assert( !inst->Src[i].Indirect.Indirect );
+               assert( !inst->Src[i].Indirect.Dimension );
             }
          }
       }
@@ -329,8 +232,7 @@ tgsi_num_tokens(const struct tgsi_token *tokens)
    struct tgsi_parse_context ctx;
    if (tgsi_parse_init(&ctx, tokens) == TGSI_PARSE_OK) {
       unsigned len = (ctx.FullHeader.Header.HeaderSize +
-                      ctx.FullHeader.Header.BodySize +
-                      1);
+                      ctx.FullHeader.Header.BodySize);
       return len;
    }
    return 0;

@@ -4,9 +4,10 @@
 #include "intel_drm_winsys.h"
 #include "util/u_memory.h"
 
-#include "i915simple/i915_context.h"
-#include "i915simple/i915_screen.h"
+#include "i915/i915_context.h"
+#include "i915/i915_screen.h"
 
+#include "trace/tr_drm.h"
 
 /*
  * Helper functions
@@ -40,6 +41,7 @@ intel_drm_buffer_from_handle(struct intel_drm_winsys *idws,
                              const char* name, unsigned handle)
 {
    struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
+   uint32_t tile = 0, swizzle = 0;
 
    if (!buf)
       return NULL;
@@ -51,6 +53,10 @@ intel_drm_buffer_from_handle(struct intel_drm_winsys *idws,
 
    if (!buf->bo)
       goto err;
+
+   drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
+   if (tile != INTEL_TILE_NONE)
+      buf->map_gtt = TRUE;
 
    return (struct intel_buffer *)buf;
 
@@ -166,6 +172,7 @@ intel_drm_create_screen(struct drm_api *api, int drmFD,
    idws->base.destroy = intel_drm_winsys_destroy;
 
    idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
+   drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
 
    idws->softpipe = FALSE;
    idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
@@ -198,5 +205,5 @@ struct drm_api intel_drm_api =
 struct drm_api *
 drm_api_create()
 {
-   return &intel_drm_api;
+   return trace_drm_create(&intel_drm_api);
 }

@@ -24,6 +24,7 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -211,9 +212,6 @@ clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    ASSERT(!ctx->Visual.rgbMode);
 
-   ASSERT((ctx->Color.IndexMask & ((1 << rb->IndexBits) - 1))
-          == (GLuint) ((1 << rb->IndexBits) - 1));
-
    ASSERT(rb->PutMonoRow);
 
    /* setup clear value */
@@ -264,8 +262,8 @@ clear_color_buffers(GLcontext *ctx)
    }
    else {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-      const GLuint indexBits = (1 << rb->IndexBits) - 1;
-      if ((ctx->Color.IndexMask & indexBits) == indexBits) {
+      const GLuint indexMask = (1 << _mesa_get_format_bits(rb->Format, GL_INDEX_BITS)) - 1;
+      if ((ctx->Color.IndexMask & indexMask) == indexMask) {
          masking = GL_FALSE;
       }
       else {

@@ -109,7 +109,7 @@ _mesa_insert_mvp_dp4_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    vprog->Base.Instructions = newInst;
    vprog->Base.NumInstructions = newLen;
    vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VERT_RESULT_HPOS);
 }
 
 
@@ -211,7 +211,7 @@ _mesa_insert_mvp_mad_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    vprog->Base.Instructions = newInst;
    vprog->Base.NumInstructions = newLen;
    vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VERT_RESULT_HPOS);
 }
 
 
@@ -528,15 +528,11 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    /* look for instructions which write to the varying vars identified above */
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      GLuint j;
-      for (j = 0; j < numSrc; j++) {
-         if (inst->DstReg.File == type &&
-             outputMap[inst->DstReg.Index] >= 0) {
-            /* change inst to write to the temp reg, instead of the varying */
-            inst->DstReg.File = PROGRAM_TEMPORARY;
-            inst->DstReg.Index = outputMap[inst->DstReg.Index];
-         }
+      if (inst->DstReg.File == type &&
+          outputMap[inst->DstReg.Index] >= 0) {
+         /* change inst to write to the temp reg, instead of the varying */
+         inst->DstReg.File = PROGRAM_TEMPORARY;
+         inst->DstReg.Index = outputMap[inst->DstReg.Index];
       }
    }
 
@@ -572,4 +568,95 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
          }
       }
    }
+}
+
+
+/**
+ * Make the given fragment program into a "no-op" shader.
+ * Actually, just copy the incoming fragment color (or texcoord)
+ * to the output color.
+ * This is for debug/test purposes.
+ */
+void
+_mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog)
+{
+   struct prog_instruction *inst;
+   GLuint inputAttr;
+
+   inst = _mesa_alloc_instructions(2);
+   if (!inst) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "_mesa_nop_fragment_program");
+      return;
+   }
+
+   _mesa_init_instructions(inst, 2);
+
+   inst[0].Opcode = OPCODE_MOV;
+   inst[0].DstReg.File = PROGRAM_OUTPUT;
+   inst[0].DstReg.Index = FRAG_RESULT_COLOR;
+   inst[0].SrcReg[0].File = PROGRAM_INPUT;
+   if (prog->Base.InputsRead & FRAG_BIT_COL0)
+      inputAttr = FRAG_ATTRIB_COL0;
+   else
+      inputAttr = FRAG_ATTRIB_TEX0;
+   inst[0].SrcReg[0].Index = inputAttr;
+
+   inst[1].Opcode = OPCODE_END;
+
+   _mesa_free_instructions(prog->Base.Instructions,
+                           prog->Base.NumInstructions);
+
+   prog->Base.Instructions = inst;
+   prog->Base.NumInstructions = 2;
+   prog->Base.InputsRead = 1 << inputAttr;
+   prog->Base.OutputsWritten = BITFIELD64_BIT(FRAG_RESULT_COLOR);
+}
+
+
+/**
+ * \sa _mesa_nop_fragment_program
+ * Replace the given vertex program with a "no-op" program that just
+ * transforms vertex position and emits color.
+ */
+void
+_mesa_nop_vertex_program(GLcontext *ctx, struct gl_vertex_program *prog)
+{
+   struct prog_instruction *inst;
+   GLuint inputAttr;
+
+   /*
+    * Start with a simple vertex program that emits color.
+    */
+   inst = _mesa_alloc_instructions(2);
+   if (!inst) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "_mesa_nop_vertex_program");
+      return;
+   }
+
+   _mesa_init_instructions(inst, 2);
+
+   inst[0].Opcode = OPCODE_MOV;
+   inst[0].DstReg.File = PROGRAM_OUTPUT;
+   inst[0].DstReg.Index = VERT_RESULT_COL0;
+   inst[0].SrcReg[0].File = PROGRAM_INPUT;
+   if (prog->Base.InputsRead & VERT_BIT_COLOR0)
+      inputAttr = VERT_ATTRIB_COLOR0;
+   else
+      inputAttr = VERT_ATTRIB_TEX0;
+   inst[0].SrcReg[0].Index = inputAttr;
+
+   inst[1].Opcode = OPCODE_END;
+
+   _mesa_free_instructions(prog->Base.Instructions,
+                           prog->Base.NumInstructions);
+
+   prog->Base.Instructions = inst;
+   prog->Base.NumInstructions = 2;
+   prog->Base.InputsRead = 1 << inputAttr;
+   prog->Base.OutputsWritten = BITFIELD64_BIT(VERT_RESULT_COL0);
+
+   /*
+    * Now insert code to do standard modelview/projection transformation.
+    */
+   _mesa_insert_mvp_code(ctx, prog);
 }

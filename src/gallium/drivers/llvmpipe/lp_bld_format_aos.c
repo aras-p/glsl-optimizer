@@ -25,18 +25,39 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * AoS pixel format manipulation.
+ *
+ * @author Jose Fonseca <jfonseca@vmware.com>
+ */
 
+
+#include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 
+#include "lp_bld_type.h"
+#include "lp_bld_const.h"
+#include "lp_bld_logic.h"
+#include "lp_bld_swizzle.h"
 #include "lp_bld_format.h"
 
 
+/**
+ * Unpack a single pixel into its RGBA components.
+ *
+ * @param packed integer.
+ *
+ * @return RGBA in a 4 floats vector.
+ *
+ * XXX: This is mostly for reference and testing -- operating a single pixel at
+ * a time is rarely if ever needed.
+ */
 LLVMValueRef
 lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
-                         enum pipe_format format,
+                         const struct util_format_description *desc,
                          LLVMValueRef packed)
 {
-   const struct util_format_description *desc;
    LLVMTypeRef type;
    LLVMValueRef shifted, casted, scaled, masked;
    LLVMValueRef shifts[4];
@@ -48,8 +69,6 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    int empty_channel;
    unsigned shift;
    unsigned i;
-
-   desc = util_format_description(format);
 
    /* FIXME: Support more formats */
    assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
@@ -151,12 +170,130 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
 }
 
 
+/**
+ * Take a vector with packed pixels and unpack into a rgba8 vector.
+ *
+ * Formats with bit depth smaller than 32bits are accepted, but they must be
+ * padded to 32bits.
+ */
+LLVMValueRef
+lp_build_unpack_rgba8_aos(LLVMBuilderRef builder,
+                          const struct util_format_description *desc,
+                          struct lp_type type,
+                          LLVMValueRef packed)
+{
+   struct lp_build_context bld;
+   bool rgba8;
+   LLVMValueRef res;
+   unsigned i;
+
+   lp_build_context_init(&bld, builder, type);
+
+   /* FIXME: Support more formats */
+   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
+   assert(desc->block.width == 1);
+   assert(desc->block.height == 1);
+   assert(desc->block.bits <= 32);
+
+   assert(!type.floating);
+   assert(!type.fixed);
+   assert(type.norm);
+   assert(type.width == 8);
+   assert(type.length % 4 == 0);
+
+   rgba8 = TRUE;
+   for(i = 0; i < 4; ++i) {
+      assert(desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED ||
+             desc->channel[i].type == UTIL_FORMAT_TYPE_VOID);
+      if(desc->channel[0].size != 8)
+         rgba8 = FALSE;
+   }
+
+   if(rgba8) {
+      /*
+       * The pixel is already in a rgba8 format variant. All it is necessary
+       * is to swizzle the channels.
+       */
+
+      unsigned char swizzles[4];
+      boolean zeros[4]; /* bitwise AND mask */
+      boolean ones[4]; /* bitwise OR mask */
+      boolean swizzles_needed = FALSE;
+      boolean zeros_needed = FALSE;
+      boolean ones_needed = FALSE;
+
+      for(i = 0; i < 4; ++i) {
+         enum util_format_swizzle swizzle = desc->swizzle[i];
+
+         /* Initialize with the no-op case */
+         swizzles[i] = util_cpu_caps.little_endian ? 3 - i : i;
+         zeros[i] = TRUE;
+         ones[i] = FALSE;
+
+         switch (swizzle) {
+         case UTIL_FORMAT_SWIZZLE_X:
+         case UTIL_FORMAT_SWIZZLE_Y:
+         case UTIL_FORMAT_SWIZZLE_Z:
+         case UTIL_FORMAT_SWIZZLE_W:
+            if(swizzle != swizzles[i]) {
+               swizzles[i] = swizzle;
+               swizzles_needed = TRUE;
+            }
+            break;
+         case UTIL_FORMAT_SWIZZLE_0:
+            zeros[i] = FALSE;
+            zeros_needed = TRUE;
+            break;
+         case UTIL_FORMAT_SWIZZLE_1:
+            ones[i] = TRUE;
+            ones_needed = TRUE;
+            break;
+         case UTIL_FORMAT_SWIZZLE_NONE:
+            assert(0);
+            break;
+         }
+      }
+
+      res = packed;
+
+      if(swizzles_needed)
+         res = lp_build_swizzle1_aos(&bld, res, swizzles);
+
+      if(zeros_needed) {
+         /* Mask out zero channels */
+         LLVMValueRef mask = lp_build_const_mask_aos(type, zeros);
+         res = LLVMBuildAnd(builder, res, mask, "");
+      }
+
+      if(ones_needed) {
+         /* Or one channels */
+         LLVMValueRef mask = lp_build_const_mask_aos(type, ones);
+         res = LLVMBuildOr(builder, res, mask, "");
+      }
+   }
+   else {
+      /* FIXME */
+      assert(0);
+      res = lp_build_undef(type);
+   }
+
+   return res;
+}
+
+
+/**
+ * Pack a single pixel.
+ *
+ * @param rgba 4 float vector with the unpacked components.
+ *
+ * XXX: This is mostly for reference and testing -- operating a single pixel at
+ * a time is rarely if ever needed.
+ */
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
-                       enum pipe_format format,
+                       const struct util_format_description *desc,
                        LLVMValueRef rgba)
 {
-   const struct util_format_description *desc;
    LLVMTypeRef type;
    LLVMValueRef packed = NULL;
    LLVMValueRef swizzles[4];
@@ -166,8 +303,6 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
    bool normalized;
    unsigned shift;
    unsigned i, j;
-
-   desc = util_format_description(format);
 
    assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
    assert(desc->block.width == 1);
@@ -247,57 +382,3 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 
    return packed;
 }
-
-
-LLVMValueRef
-lp_build_load_rgba_aos(LLVMBuilderRef builder,
-                       enum pipe_format format,
-                       LLVMValueRef ptr)
-{
-   const struct util_format_description *desc;
-   LLVMTypeRef type;
-   LLVMValueRef packed;
-
-   desc = util_format_description(format);
-
-   /* FIXME: Support more formats */
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
-   assert(desc->block.width == 1);
-   assert(desc->block.height == 1);
-   assert(desc->block.bits <= 32);
-
-   type = LLVMIntType(desc->block.bits);
-
-   ptr = LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), "");
-
-   packed = LLVMBuildLoad(builder, ptr, "");
-
-   return lp_build_unpack_rgba_aos(builder, format, packed);
-}
-
-
-void
-lp_build_store_rgba_aos(LLVMBuilderRef builder,
-                        enum pipe_format format,
-                        LLVMValueRef ptr,
-                        LLVMValueRef rgba)
-{
-   const struct util_format_description *desc;
-   LLVMTypeRef type;
-   LLVMValueRef packed;
-
-   desc = util_format_description(format);
-
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
-   assert(desc->block.width == 1);
-   assert(desc->block.height == 1);
-
-   type = LLVMIntType(desc->block.bits);
-
-   packed = lp_build_pack_rgba_aos(builder, format, rgba);
-
-   ptr = LLVMBuildBitCast(builder, ptr, LLVMPointerType(type, 0), "");
-
-   LLVMBuildStore(builder, packed, ptr);
-}
-

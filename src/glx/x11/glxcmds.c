@@ -50,7 +50,7 @@
 #include <xcb/glx.h>
 #endif
 
-static const char __glXGLXClientVendorName[] = "SGI";
+static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
 
 
@@ -398,6 +398,10 @@ CreateContext(Display * dpy, XVisualInfo * vis,
                _XError(dpy, &error);
                return None;
             }
+            if (renderType == 0) {
+               /* Initialize renderType now */
+               renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+            }
          }
          else {
             mode = fbconfig;
@@ -484,6 +488,8 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       gc->imported = GL_TRUE;
    }
 
+   gc->renderType = renderType;
+
    return gc;
 }
 
@@ -533,6 +539,16 @@ DestroyContext(Display * dpy, GLXContext gc)
    xid = gc->xid;
    imported = gc->imported;
    gc->xid = None;
+
+   if (gc->currentDpy) {
+      /* This context is bound to some thread.  According to the man page,
+       * we should not actually delete the context until it's unbound.
+       * Note that we set gc->xid = None above.  In MakeContextCurrent()
+       * we check for that and delete the context there.
+       */
+      __glXUnlock();
+      return;
+   }
 
 #ifdef GLX_DIRECT_RENDERING
    /* Destroy the direct rendering context */
@@ -1575,7 +1591,7 @@ GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
  * This function dynamically determines whether to use the EXT_import_context
  * version of the protocol or the GLX 1.3 version of the protocol.
  */
-     static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
+static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    xGLXQueryContextReply reply;
@@ -1713,7 +1729,7 @@ GLX_ALIAS(int, glXQueryContextInfoEXT,
           (Display * dpy, GLXContext ctx, int attribute, int *value),
           (dpy, ctx, attribute, value), glXQueryContext)
 
-     PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
+PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
 {
    return ctx->xid;
 }
@@ -2159,18 +2175,19 @@ GLX_ALIAS(int, glXGetFBConfigAttribSGIX,
           (Display * dpy, GLXFBConfigSGIX config, int attribute, int *value),
           (dpy, config, attribute, value), glXGetFBConfigAttrib)
 
-     PUBLIC GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
-                      (Display * dpy, int screen, int *attrib_list,
-                       int *nelements), (dpy, screen, attrib_list, nelements),
-                      glXChooseFBConfig)
+PUBLIC GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
+                 (Display * dpy, int screen, int *attrib_list,
+                  int *nelements), (dpy, screen, attrib_list, nelements),
+                 glXChooseFBConfig)
 
-     PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
-                      (Display * dpy, GLXFBConfigSGIX config),
-                      (dpy, config), glXGetVisualFromFBConfig)
+PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
+                 (Display * dpy, GLXFBConfigSGIX config),
+                 (dpy, config), glXGetVisualFromFBConfig)
 
-     PUBLIC GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
-                                                       GLXFBConfigSGIX config,
-                                                       Pixmap pixmap)
+PUBLIC GLXPixmap
+glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
+                                 GLXFBConfigSGIX config,
+                                 Pixmap pixmap)
 {
    xGLXVendorPrivateWithReplyReq *vpreq;
    xGLXCreateGLXPixmapWithConfigSGIXReq *req;

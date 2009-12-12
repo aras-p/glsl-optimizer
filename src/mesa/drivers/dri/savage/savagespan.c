@@ -255,15 +255,13 @@ void
 savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
                        GLboolean float_depth)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         savageInitPointers_565(&drb->Base);
-      }
-      else {
-         savageInitPointers_8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      savageInitPointers_565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      savageInitPointers_8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       if (float_depth) {
          savageInitDepthPointers_z16f(&drb->Base);
       }
@@ -271,7 +269,7 @@ savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
          savageInitDepthPointers_z16(&drb->Base);
       }
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (drb->Base.Format == MESA_FORMAT_S8_Z24) {
       if (float_depth) {
          savageInitDepthPointers_s8_z24f(&drb->Base);
       }
@@ -279,7 +277,7 @@ savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
          savageInitDepthPointers_s8_z24(&drb->Base);
       }
    }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (drb->Base.Format == MESA_FORMAT_S8) {
       savageInitStencilPointers_s8_z24(&drb->Base);
    }
 }

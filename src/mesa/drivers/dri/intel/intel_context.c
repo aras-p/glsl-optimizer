@@ -176,9 +176,7 @@ intelGetString(GLcontext * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, 
-				  (intel->ttm) ? DRIVER_DATE_GEM : DRIVER_DATE,
-				  0);
+      (void) driGetRendererString(buffer, chipset, DRIVER_DATE_GEM, 0);
       return (GLubyte *) buffer;
 
    default:
@@ -189,19 +187,7 @@ intelGetString(GLcontext * ctx, GLenum name)
 static unsigned
 intel_bits_per_pixel(const struct intel_renderbuffer *rb)
 {
-   switch (rb->Base._ActualFormat) {
-   case GL_RGB5:
-   case GL_DEPTH_COMPONENT16:
-      return 16;
-   case GL_RGB8:
-   case GL_RGBA8:
-   case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH24_STENCIL8_EXT:
-   case GL_STENCIL_INDEX8_EXT:
-      return 32;
-   default:
-      return 0;
-   }
+   return _mesa_get_format_bytes(rb->Base.Format) * 8;
 }
 
 void
@@ -489,14 +475,14 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
    if (intel->Fallback)
       _swrast_flush(ctx);
 
-   if (!IS_965(intel->intelScreen->deviceID))
+   if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
    /* Emit a flush so that any frontbuffer rendering that might have occurred
     * lands onscreen in a timely manner, even if the X Server doesn't trigger
     * a flush for us.
     */
-   if (needs_mi_flush)
+   if (!intel->driScreen->dri2.enabled && needs_mi_flush)
       intel_batchbuffer_emit_mi_flush(intel->batch);
 
    if (intel->batch->map != intel->batch->ptr)
@@ -507,7 +493,8 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
       if (screen->dri2.loader &&
           (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL)) {
+	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
+          intel->driDrawable && intel->driDrawable->loaderPrivate) {
 	 (*screen->dri2.loader->flushFrontBuffer)(intel->driDrawable,
 						  intel->driDrawable->loaderPrivate);
 
@@ -612,6 +599,7 @@ intelInitContext(struct intel_context *intel,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    int fthrottle_mode;
+   int bo_reuse_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
                                  functions, (void *) intel)) {
@@ -625,6 +613,13 @@ intelInitContext(struct intel_context *intel,
    intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
 
+   if (IS_965(intel->intelScreen->deviceID))
+      intel->gen = 4;
+   else if (IS_9XX(intel->intelScreen->deviceID))
+      intel->gen = 3;
+   else
+      intel->gen = 2;
+
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
@@ -632,25 +627,21 @@ intelInitContext(struct intel_context *intel,
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum,
-		       IS_965(intelScreen->deviceID) ? "i965" : "i915");
+		       (intel->gen >= 4) ? "i965" : "i915");
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intel->maxBatchSize = 4096;
    else
       intel->maxBatchSize = BATCH_SZ;
 
    intel->bufmgr = intelScreen->bufmgr;
-   intel->ttm = intelScreen->ttm;
-   if (intel->ttm) {
-      int bo_reuse_mode;
 
-      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
-      switch (bo_reuse_mode) {
-      case DRI_CONF_BO_REUSE_DISABLED:
-	 break;
-      case DRI_CONF_BO_REUSE_ALL:
-	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
-	 break;
-      }
+   bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+   switch (bo_reuse_mode) {
+   case DRI_CONF_BO_REUSE_DISABLED:
+      break;
+   case DRI_CONF_BO_REUSE_ALL:
+      intel_bufmgr_gem_enable_reuse(intel->bufmgr);
+      break;
    }
 
    /* This doesn't yet catch all non-conformant rendering, but it's a
@@ -694,7 +685,7 @@ intelInitContext(struct intel_context *intel,
 
    meta_init_metaops(ctx, &intel->meta);
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
-   if (IS_965(intelScreen->deviceID)) {
+   if (intel->gen >= 4) {
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {
@@ -731,25 +722,19 @@ intelInitContext(struct intel_context *intel,
       break;
    }
 
-   if (IS_965(intelScreen->deviceID))
+   if (intel->gen >= 4)
       intel->polygon_offset_scale /= 0xffff;
 
    intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->irqsEmitted = 0;
 
-   intel->do_irqs = (intel->intelScreen->irq_active &&
-                     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
-
-   intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
-
-   if (IS_965(intelScreen->deviceID) && !intel->intelScreen->irq_active) {
+   if (intel->gen >= 4 && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);
    }
 
-   intelInitExtensions(ctx, GL_FALSE);
+   intelInitExtensions(ctx);
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
@@ -829,7 +814,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       _vbo_DestroyContext(&intel->ctx);
 
       _swrast_DestroyContext(&intel->ctx);
-      intel->Fallback = 0;      /* don't call _swrast_Flush later */
+      intel->Fallback = 0x0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
       intel->batch = NULL;
@@ -934,10 +919,23 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
    __DRIscreenPrivate *psp = driDrawPriv->driScreenPriv;
+   struct intel_context *intel;
+   GET_CURRENT_CONTEXT(curCtx);
+
+   if (driContextPriv)
+      intel = (struct intel_context *) driContextPriv->driverPrivate;
+   else
+      intel = NULL;
+
+   /* According to the glXMakeCurrent() man page: "Pending commands to
+    * the previous context, if any, are flushed before it is released."
+    * But only flush if we're actually changing contexts.
+    */
+   if (intel_context(curCtx) && intel_context(curCtx) != intel) {
+      _mesa_flush(curCtx);
+   }
 
    if (driContextPriv) {
-      struct intel_context *intel =
-         (struct intel_context *) driContextPriv->driverPrivate;
       struct intel_framebuffer *intel_fb =
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
@@ -983,41 +981,35 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
 
-      /* The drawbuffer won't always be updated by _mesa_make_current: 
-       */
-      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
+      intel->driReadDrawable = driReadPriv;
 
-	 if (intel->driReadDrawable != driReadPriv)
-	    intel->driReadDrawable = driReadPriv;
+      if (intel->driDrawable != driDrawPriv) {
+         if (driDrawPriv->swap_interval == (unsigned)-1) {
+            int i;
 
-	 if (intel->driDrawable != driDrawPriv) {
-	    if (driDrawPriv->swap_interval == (unsigned)-1) {
-	       int i;
+            driDrawPriv->vblFlags = (intel->intelScreen->irq_active != 0)
+               ? driGetDefaultVBlankFlags(&intel->optionCache)
+               : VBLANK_FLAG_NO_IRQ;
 
-	       driDrawPriv->vblFlags = (intel->intelScreen->irq_active != 0)
-		  ? driGetDefaultVBlankFlags(&intel->optionCache)
-		 : VBLANK_FLAG_NO_IRQ;
+            /* Prevent error printf if one crtc is disabled, this will
+             * be properly calculated in intelWindowMoved() next.
+             */
+            driDrawPriv->vblFlags = intelFixupVblank(intel, driDrawPriv);
 
-	       /* Prevent error printf if one crtc is disabled, this will
-		* be properly calculated in intelWindowMoved() next.
-		*/
-		driDrawPriv->vblFlags = intelFixupVblank(intel, driDrawPriv);
+            (*psp->systemTime->getUST) (&intel_fb->swap_ust);
+            driDrawableInitVBlank(driDrawPriv);
+            intel_fb->vbl_waited = driDrawPriv->vblSeq;
 
-	       (*psp->systemTime->getUST) (&intel_fb->swap_ust);
-	       driDrawableInitVBlank(driDrawPriv);
-	       intel_fb->vbl_waited = driDrawPriv->vblSeq;
-
-	       for (i = 0; i < 2; i++) {
-		  if (intel_fb->color_rb[i])
-		     intel_fb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
-	       }
-	    }
-	    intel->driDrawable = driDrawPriv;
-	    intelWindowMoved(intel);
-	 }
-
-	 intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+            for (i = 0; i < 2; i++) {
+               if (intel_fb->color_rb[i])
+                  intel_fb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
+            }
+         }
+         intel->driDrawable = driDrawPriv;
+         intelWindowMoved(intel);
       }
+
+      intel_draw_buffer(&intel->ctx, &intel_fb->Base);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
@@ -1053,21 +1045,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 		 sarea->ctxOwner, me);
       }
       sarea->ctxOwner = me;
-   }
-
-   /* If the last consumer of the texture memory wasn't us, notify the fake
-    * bufmgr and record the new owner.  We should have the memory shared
-    * between contexts of a single fake bufmgr, but this will at least make
-    * things correct for now.
-    */
-   if (!intel->ttm && sarea->texAge != intel->hHWContext) {
-      sarea->texAge = intel->hHWContext;
-      intel_bufmgr_fake_contended_lock_take(intel->bufmgr);
-      if (INTEL_DEBUG & DEBUG_BATCH)
-	 intel_decode_context_reset();
-      if (INTEL_DEBUG & DEBUG_BUFMGR)
-	 fprintf(stderr, "Lost Textures: sarea->texAge %x hw context %x\n",
-		 sarea->ctxOwner, intel->hHWContext);
    }
 
    /* Drawable changed?

@@ -31,9 +31,8 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
+#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
@@ -51,12 +50,9 @@ softpipe_create_fs_state(struct pipe_context *pipe,
       tgsi_dump(templ->tokens, 0);
 
    /* codegen */
-   state = softpipe_create_fs_llvm( softpipe, templ );
+   state = softpipe_create_fs_sse( softpipe, templ );
    if (!state) {
-      state = softpipe_create_fs_sse( softpipe, templ );
-      if (!state) {
-         state = softpipe_create_fs_exec( softpipe, templ );
-      }
+      state = softpipe_create_fs_exec( softpipe, templ );
    }
 
    assert(state);
@@ -111,6 +107,8 @@ softpipe_create_vs_state(struct pipe_context *pipe,
    if (state->draw_data == NULL) 
       goto fail;
 
+   state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
+
    return state;
 
 fail:
@@ -128,7 +126,7 @@ softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->vs = (const struct sp_vertex_shader *)vs;
+   softpipe->vs = (struct sp_vertex_shader *) vs;
 
    draw_bind_vertex_shader(softpipe->draw,
                            (softpipe->vs ? softpipe->vs->draw_data : NULL));
@@ -142,10 +140,10 @@ softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   struct sp_vertex_shader *state =
-      (struct sp_vertex_shader *)vs;
+   struct sp_vertex_shader *state = (struct sp_vertex_shader *) vs;
 
    draw_delete_vertex_shader(softpipe->draw, state->draw_data);
+   FREE( (void *)state->shader.tokens );
    FREE( state );
 }
 

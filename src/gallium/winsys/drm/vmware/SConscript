@@ -1,0 +1,11 @@
+Import('*')
+
+SConscript(['core/SConscript',])
+
+if 'mesa' in env['statetrackers']:
+
+    SConscript(['dri/SConscript'])
+
+if 'xorg' in env['statetrackers']:
+
+    SConscript(['xorg/SConscript'])

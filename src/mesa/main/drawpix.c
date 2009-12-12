@@ -33,7 +33,10 @@
 #include "image.h"
 #include "readpix.h"
 #include "state.h"
+#include "glapi/dispatch.h"
 
+
+#if FEATURE_drawpix
 
 
 /**
@@ -47,12 +50,10 @@ valid_fragment_program(GLcontext *ctx)
 }
 
 
-#if _HAVE_FULL_GL
-
 /*
  * Execute glDrawPixels
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DrawPixels( GLsizei width, GLsizei height,
                   GLenum format, GLenum type, const GLvoid *pixels )
 {
@@ -140,7 +141,7 @@ end:
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
                   GLenum type )
 {
@@ -225,11 +226,8 @@ end:
    _mesa_set_vp_override(ctx, GL_FALSE);
 }
 
-#endif /* _HAVE_FULL_GL */
 
-
-
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Bitmap( GLsizei width, GLsizei height,
               GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove,
               const GLubyte *bitmap )
@@ -309,3 +307,15 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    ctx->Current.RasterPos[0] += xmove;
    ctx->Current.RasterPos[1] += ymove;
 }
+
+
+void
+_mesa_init_drawpix_dispatch(struct _glapi_table *disp)
+{
+   SET_Bitmap(disp, _mesa_Bitmap);
+   SET_CopyPixels(disp, _mesa_CopyPixels);
+   SET_DrawPixels(disp, _mesa_DrawPixels);
+}
+
+
+#endif /* FEATURE_drawpix */

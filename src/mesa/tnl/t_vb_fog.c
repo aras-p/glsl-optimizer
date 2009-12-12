@@ -156,7 +156,7 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       GLuint i;
       GLfloat *coord;
       /* Fog is computed from vertex or fragment Z values */
-      /* source = VB->ObjPtr or VB->EyePtr coords */
+      /* source = VB->AttribPtr[_TNL_ATTRIB_POS] or VB->EyePtr coords */
       /* dest = VB->AttribPtr[_TNL_ATTRIB_FOG] = fog stage private storage */
       VB->AttribPtr[_TNL_ATTRIB_FOG] = &store->fogcoord;
 
@@ -176,11 +176,12 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.
 	  */
-	 _mesa_dotprod_tab[VB->ObjPtr->size]( (GLfloat *) input->data,
-					      4 * sizeof(GLfloat),
-					      VB->ObjPtr, plane );
+	 _mesa_dotprod_tab[VB->AttribPtr[_TNL_ATTRIB_POS]->size]
+	    ( (GLfloat *) input->data,
+	      4 * sizeof(GLfloat),
+	      VB->AttribPtr[_TNL_ATTRIB_POS], plane );
 
-	 input->count = VB->ObjPtr->count;
+	 input->count = VB->AttribPtr[_TNL_ATTRIB_POS]->count;
 
 	 /* make sure coords are really positive
 	    NOTE should avoid going through array twice */
@@ -213,7 +214,7 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       /* input->count may be one if glFogCoord was only called once
        * before glBegin.  But we need to compute fog for all vertices.
        */
-      input->count = VB->ObjPtr->count;
+      input->count = VB->AttribPtr[_TNL_ATTRIB_POS]->count;
 
       VB->AttribPtr[_TNL_ATTRIB_FOG] = &store->fogcoord;  /* dest data */
    }
@@ -227,7 +228,6 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       VB->AttribPtr[_TNL_ATTRIB_FOG] = input;
    }
 
-   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
    return GL_TRUE;
 }
 

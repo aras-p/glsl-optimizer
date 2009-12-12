@@ -33,42 +33,7 @@
 #include "lp_tile_soa.h"
 
 
-enum llvmpipe_tile_status
-{
-   LP_TILE_STATUS_UNDEFINED = 0,
-   LP_TILE_STATUS_CLEAR = 1,
-   LP_TILE_STATUS_DEFINED = 2
-};
-
-
-struct llvmpipe_cached_tile
-{
-   enum llvmpipe_tile_status status;
-
-   /** color in SOA format */
-   uint8_t *color;
-};
-
-
-/** XXX move these */
-#define MAX_WIDTH 2048
-#define MAX_HEIGHT 2048
-
-
-struct llvmpipe_tile_cache
-{
-   struct pipe_screen *screen;
-   struct pipe_surface *surface;  /**< the surface we're caching */
-   struct pipe_transfer *transfer;
-   void *transfer_map;
-
-   struct llvmpipe_cached_tile entries[MAX_WIDTH/TILE_SIZE][MAX_HEIGHT/TILE_SIZE];
-
-   uint8_t clear_color[4];  /**< for color bufs */
-   uint clear_val;        /**< for z+stencil, or packed color clear value */
-
-   struct llvmpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
-};
+struct llvmpipe_tile_cache;  /* opaque */
 
 
 extern struct llvmpipe_tile_cache *

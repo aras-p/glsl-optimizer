@@ -78,6 +78,34 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
 
 
 void
+llvmpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
+                                    unsigned num_samplers,
+                                    void **samplers)
+{
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   unsigned i;
+
+   assert(num_samplers <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_samplers == llvmpipe->num_vertex_samplers &&
+       !memcmp(llvmpipe->vertex_samplers, samplers, num_samplers * sizeof(void *)))
+      return;
+
+   draw_flush(llvmpipe->draw);
+
+   for (i = 0; i < num_samplers; ++i)
+      llvmpipe->vertex_samplers[i] = samplers[i];
+   for (i = num_samplers; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+      llvmpipe->vertex_samplers[i] = NULL;
+
+   llvmpipe->num_vertex_samplers = num_samplers;
+
+   llvmpipe->dirty |= LP_NEW_SAMPLER;
+}
+
+
+void
 llvmpipe_set_sampler_textures(struct pipe_context *pipe,
                               unsigned num, struct pipe_texture **texture)
 {
@@ -102,8 +130,8 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
       if(tex) {
          struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
          struct lp_jit_texture *jit_tex = &llvmpipe->jit_context.textures[i];
-         jit_tex->width = tex->width[0];
-         jit_tex->height = tex->height[0];
+         jit_tex->width = tex->width0;
+         jit_tex->height = tex->height0;
          jit_tex->stride = lp_tex->stride[0];
          if(!lp_tex->dt)
             jit_tex->data = lp_tex->data;
@@ -111,6 +139,37 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
    }
 
    llvmpipe->num_textures = num;
+
+   llvmpipe->dirty |= LP_NEW_TEXTURE;
+}
+
+
+void
+llvmpipe_set_vertex_sampler_textures(struct pipe_context *pipe,
+                                     unsigned num_textures,
+                                     struct pipe_texture **textures)
+{
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   uint i;
+
+   assert(num_textures <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_textures == llvmpipe->num_vertex_textures &&
+       !memcmp(llvmpipe->vertex_textures, textures, num_textures * sizeof(struct pipe_texture *))) {
+      return;
+   }
+
+   draw_flush(llvmpipe->draw);
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct pipe_texture *tex = i < num_textures ? textures[i] : NULL;
+
+      pipe_texture_reference(&llvmpipe->vertex_textures[i], tex);
+      lp_tex_tile_cache_set_texture(llvmpipe->vertex_tex_cache[i], tex);
+   }
+
+   llvmpipe->num_vertex_textures = num_textures;
 
    llvmpipe->dirty |= LP_NEW_TEXTURE;
 }

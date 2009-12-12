@@ -14,14 +14,20 @@
  * Apply polygon stipple to quads produced by triangle rasterization
  */
 static void
-stipple_quad(struct quad_stage *qs, struct quad_header *quad)
+stipple_quad(struct quad_stage *qs, struct quad_header *quads[], unsigned nr)
 {
    static const uint bit31 = 1 << 31;
    static const uint bit30 = 1 << 30;
+   unsigned pass = nr;
 
-   if (quad->input.prim == QUAD_PRIM_TRI) {
-      struct softpipe_context *softpipe = qs->softpipe;
-      /* need to invert Y to index into OpenGL's stipple pattern */
+   struct softpipe_context *softpipe = qs->softpipe;
+   unsigned q;
+
+   pass = 0;
+
+   for (q = 0; q < nr; q++)  {
+      struct quad_header *quad = quads[q];
+
       const int col0 = quad->input.x0 % 32;
       const int y0 = quad->input.y0;
       const int y1 = y0 + 1;
@@ -41,13 +47,11 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
       if ((stipple1 & (bit30 >> col0)) == 0)
          quad->inout.mask &= ~MASK_BOTTOM_RIGHT;
 
-      if (!quad->inout.mask) {
-         /* all fragments failed stipple test, end of quad pipeline */
-         return;
-      }
+      if (quad->inout.mask)
+         quads[pass++] = quad;
    }
 
-   qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quads, pass);
 }
 
 

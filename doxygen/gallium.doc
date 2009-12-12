@@ -33,8 +33,7 @@
   
   - Pipe drivers:
     - \ref softpipe
-    - \ref i915simple
-    - Simple 965 driver (brw_context.h, brw_winsys.h)
+    - \ref i915g
     - Cell driver (cell_context.h, cell_winsys.h)
     - \ref failover
 
@@ -120,7 +119,7 @@
   \sa sp_winsys.h
 */
 
-/** \page i915simple Simple i915 Driver
+/** \page i915g i915 Driver
 
   The i915 Gallium3D Driver is an initial hardware driver implementation within
   the Gallium3D driver architecture. We expect that once complete this driver
@@ -163,7 +162,7 @@
   The Draw module is effectively the part of \ref softpipe which is concerned with
   vertex processing, split off into a separate module so that it can be reused
   by drivers for rasterization-only hardware. As such it is also instantiated
-  by the \ref i915simple driver.
+  by the \ref i915g driver.
 
   Additionally, there are cases in the Mesa OpenGL state_tracker where it is
   required to obtain transformed vertices and yet it is anticipated that using

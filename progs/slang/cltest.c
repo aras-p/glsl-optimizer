@@ -237,7 +237,7 @@ void RenderScene (void)
       if (p != NULL)
          p++;
    }
-   if (*p != '\0')
+   if (p && *p != '\0')
       printf ("*** %s\n", "I/O error");
 
    nextprogram = program->next;

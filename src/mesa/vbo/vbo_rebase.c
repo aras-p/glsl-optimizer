@@ -127,7 +127,10 @@ void vbo_rebase_prims( GLcontext *ctx,
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
 
-   if (ib && ctx->Extensions.ARB_draw_elements_base_vertex) {
+   /* XXX this path is disabled for now.
+    * There's rendering corruption in some apps when it's enabled.
+    */
+   if (0 && ib && ctx->Extensions.ARB_draw_elements_base_vertex) {
       /* If we can just tell the hardware or the TNL to interpret our
        * indices with a different base, do so.
        */

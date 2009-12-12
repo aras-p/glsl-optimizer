@@ -27,9 +27,9 @@
 
 #include "radeon_program.h"
 
+#include <stdio.h>
+
 #include "radeon_compiler.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 
 
 /**
@@ -69,37 +69,57 @@ void radeonLocalTransform(
 	}
 }
 
-
-GLint rc_find_free_temporary(struct radeon_compiler * c)
+/**
+ * Left multiplication of a register with a swizzle
+ */
+struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg)
 {
-	GLboolean used[MAX_PROGRAM_TEMPS];
-	GLuint i;
+	struct rc_src_register tmp = srcreg;
+	int i;
+	tmp.Swizzle = 0;
+	tmp.Negate = 0;
+	for(i = 0; i < 4; ++i) {
+		rc_swizzle swz = GET_SWZ(swizzle, i);
+		if (swz < 4) {
+			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
+			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
+		} else {
+			tmp.Swizzle |= swz << (i*3);
+		}
+	}
+	return tmp;
+}
+
+unsigned int rc_find_free_temporary(struct radeon_compiler * c)
+{
+	char used[RC_REGISTER_MAX_INDEX];
+	unsigned int i;
 
 	memset(used, 0, sizeof(used));
 
 	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
-		const struct prog_instruction *inst = &rcinst->I;
-		const GLuint nsrc = _mesa_num_inst_src_regs(inst->Opcode);
-		const GLuint ndst = _mesa_num_inst_dst_regs(inst->Opcode);
-		GLuint k;
+		const struct rc_sub_instruction *inst = &rcinst->U.I;
+		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->Opcode);
+		unsigned int k;
 
-		for (k = 0; k < nsrc; k++) {
-			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
-				used[inst->SrcReg[k].Index] = GL_TRUE;
+		for (k = 0; k < opcode->NumSrcRegs; k++) {
+			if (inst->SrcReg[k].File == RC_FILE_TEMPORARY)
+				used[inst->SrcReg[k].Index] = 1;
 		}
 
-		if (ndst) {
-			if (inst->DstReg.File == PROGRAM_TEMPORARY)
-				used[inst->DstReg.Index] = GL_TRUE;
+		if (opcode->HasDstReg) {
+			if (inst->DstReg.File == RC_FILE_TEMPORARY)
+				used[inst->DstReg.Index] = 1;
 		}
 	}
 
-	for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+	for (i = 0; i < RC_REGISTER_MAX_INDEX; i++) {
 		if (!used[i])
 			return i;
 	}
 
-	return -1;
+	rc_error(c, "Ran out of temporary registers\n");
+	return 0;
 }
 
 
@@ -107,24 +127,31 @@ struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c)
 {
 	struct rc_instruction * inst = memory_pool_malloc(&c->Pool, sizeof(struct rc_instruction));
 
-	inst->Prev = 0;
-	inst->Next = 0;
+	memset(inst, 0, sizeof(struct rc_instruction));
 
-	_mesa_init_instructions(&inst->I, 1);
+	inst->U.I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
+	inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
+	inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZW;
+	inst->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_XYZW;
 
 	return inst;
 }
 
-
-struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after)
+void rc_insert_instruction(struct rc_instruction * after, struct rc_instruction * inst)
 {
-	struct rc_instruction * inst = rc_alloc_instruction(c);
-
 	inst->Prev = after;
 	inst->Next = after->Next;
 
 	inst->Prev->Next = inst;
 	inst->Next->Prev = inst;
+}
+
+struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after)
+{
+	struct rc_instruction * inst = rc_alloc_instruction(c);
+
+	rc_insert_instruction(after, inst);
 
 	return inst;
 }
@@ -135,53 +162,20 @@ void rc_remove_instruction(struct rc_instruction * inst)
 	inst->Next->Prev = inst->Prev;
 }
 
-
-void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program)
-{
-	struct prog_instruction *source;
-	unsigned int i;
-
-	for(source = program->Instructions; source->Opcode != OPCODE_END; ++source) {
-		struct rc_instruction * dest = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
-		dest->I = *source;
-	}
-
-	c->Program.ShadowSamplers = program->ShadowSamplers;
-	c->Program.InputsRead = program->InputsRead;
-	c->Program.OutputsWritten = program->OutputsWritten;
-
-	for(i = 0; i < program->Parameters->NumParameters; ++i) {
-		struct rc_constant constant;
-
-		constant.Type = RC_CONSTANT_EXTERNAL;
-		constant.Size = 4;
-		constant.u.External = i;
-
-		rc_constants_add(&c->Program.Constants, &constant);
-	}
-}
-
-
 /**
- * Print program to stderr, default options.
+ * Return the number of instructions in the program.
  */
-void rc_print_program(const struct rc_program *prog)
+unsigned int rc_recompute_ips(struct radeon_compiler * c)
 {
-	GLuint indent = 0;
-	GLuint linenum = 1;
-	struct rc_instruction *inst;
+	unsigned int ip = 0;
 
-	fprintf(stderr, "# Radeon Compiler Program\n");
-
-	for(inst = prog->Instructions.Next; inst != &prog->Instructions; inst = inst->Next) {
-		fprintf(stderr, "%3d: ", linenum);
-
-		/* Massive hack: We rely on the fact that the printers do not actually
-		 * use the gl_program argument (last argument) in debug mode */
-		indent = _mesa_fprint_instruction_opt(
-				stderr, &inst->I,
-				indent, PROG_PRINT_DEBUG, 0);
-
-		linenum++;
+	for(struct rc_instruction * inst = c->Program.Instructions.Next;
+	    inst != &c->Program.Instructions;
+	    inst = inst->Next) {
+		inst->IP = ip++;
 	}
+
+	c->Program.Instructions.IP = 0xcafedead;
+
+	return ip;
 }

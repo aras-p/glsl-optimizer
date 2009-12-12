@@ -52,6 +52,51 @@ index_bytes(GLenum type, GLsizei count)
 
 
 /**
+ * Find the max index in the given element/index buffer
+ */
+GLuint
+_mesa_max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
+                       const void *indices,
+                       struct gl_buffer_object *elementBuf)
+{
+   const GLubyte *map = NULL;
+   GLuint max = 0;
+   GLuint i;
+
+   if (_mesa_is_bufferobj(elementBuf)) {
+      /* elements are in a user-defined buffer object.  need to map it */
+      map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
+                                  GL_READ_ONLY, elementBuf);
+      /* Actual address is the sum of pointers */
+      indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
+   }
+
+   if (type == GL_UNSIGNED_INT) {
+      for (i = 0; i < count; i++)
+         if (((GLuint *) indices)[i] > max)
+            max = ((GLuint *) indices)[i];
+   }
+   else if (type == GL_UNSIGNED_SHORT) {
+      for (i = 0; i < count; i++)
+         if (((GLushort *) indices)[i] > max)
+            max = ((GLushort *) indices)[i];
+   }
+   else {
+      ASSERT(type == GL_UNSIGNED_BYTE);
+      for (i = 0; i < count; i++)
+         if (((GLubyte *) indices)[i] > max)
+            max = ((GLubyte *) indices)[i];
+   }
+
+   if (map) {
+      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuf);
+   }
+
+   return max;
+}
+
+
+/**
  * Check if OK to draw arrays/elements.
  */
 static GLboolean

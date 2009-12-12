@@ -68,9 +68,9 @@ int R128_DEBUG = 0;
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_env_add",            NULL },

@@ -1,0 +1,30 @@
+Import('*')
+
+env = env.Clone()
+
+i915 = env.ConvenienceLibrary(
+	target = 'i915',
+	source = [
+		'i915_blit.c',
+		'i915_buffer.c',
+		'i915_clear.c',
+		'i915_context.c',
+		'i915_debug.c',
+		'i915_debug_fp.c',
+		'i915_flush.c',
+		'i915_fpc_emit.c',
+		'i915_fpc_translate.c',
+		'i915_prim_emit.c',
+		'i915_prim_vbuf.c',
+		'i915_screen.c',
+		'i915_state.c',
+		'i915_state_derived.c',
+		'i915_state_dynamic.c',
+		'i915_state_emit.c',
+		'i915_state_immediate.c',
+		'i915_state_sampler.c',
+		'i915_surface.c',
+		'i915_texture.c',
+	])
+
+Export('i915')

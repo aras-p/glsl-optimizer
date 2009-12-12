@@ -243,14 +243,6 @@ static void wrap_buffers( struct brw_context *brw,
       dri_bo_unreference(brw->vb.upload.bo);
    brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
 				    size, 1);
-
-   /* Set the internal VBO\ to no-backing-store.  We only use them as a
-    * temporary within a brw_try_draw_prims while the lock is held.
-    */
-   /* DON'T DO THIS AS IF WE HAVE TO RE-ORG MEMORY WE NEED SOMEWHERE WITH
-      FAKE TO PUSH THIS STUFF */
-//   if (!brw->intel.ttm)
-//      dri_bo_fake_disable_backing_store(brw->vb.upload.bo, NULL, NULL);
 }
 
 static void get_space( struct brw_context *brw,
@@ -375,7 +367,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * isn't an issue at this point.
     */
    if (brw->vb.nr_enabled >= BRW_VEP_MAX) {
-      intel->Fallback = 1;
+      intel->Fallback = GL_TRUE; /* boolean, not bitfield */
       return;
    }
 
@@ -427,7 +419,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    /* Position array not properly enabled:
 	     */
             if (input->glarray->StrideB == 0) {
-               intel->Fallback = 1;
+               intel->Fallback = GL_TRUE; /* boolean, not bitfield */
                return;
             }
 
@@ -536,16 +528,9 @@ static void brw_emit_vertices(struct brw_context *brw)
 		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
       if (BRW_IS_IGDNG(brw)) {
-          if (input->stride) {
-              OUT_RELOC(input->bo,
-                        I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->stride * input->count);
-          } else {
-              assert(input->count == 1);
-              OUT_RELOC(input->bo,
-                        I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->element_size);
-          }
+	 OUT_RELOC(input->bo,
+		   I915_GEM_DOMAIN_VERTEX, 0,
+		   input->bo->size - 1);
       } else
           OUT_BATCH(input->stride ? input->count : 0);
       OUT_BATCH(0); /* Instance data step rate */
@@ -726,7 +711,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
 		brw->ib.offset);
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + brw->ib.size);
+		brw->ib.offset + brw->ib.size - 1);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }

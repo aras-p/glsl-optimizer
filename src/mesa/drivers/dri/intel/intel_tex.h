@@ -29,6 +29,7 @@
 #define INTELTEX_INC
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "intel_context.h"
 #include "texmem.h"
 
@@ -41,10 +42,8 @@ void intelInitTextureSubImageFuncs(struct dd_function_table *functions);
 
 void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
-const struct gl_texture_format *intelChooseTextureFormat(GLcontext * ctx,
-                                                         GLint internalFormat,
-                                                         GLenum format,
-                                                         GLenum type);
+gl_format intelChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
+                                   GLenum format, GLenum type);
 
 void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 		       unsigned long long offset, GLint depth, GLuint pitch);
@@ -70,8 +69,5 @@ void intel_tex_unmap_images(struct intel_context *intel,
                             struct intel_texture_object *intelObj);
 
 int intel_compressed_num_bytes(GLuint mesaFormat);
-
-void intel_generate_mipmap(GLcontext *ctx, GLenum target,
-			   struct gl_texture_object *texObj);
 
 #endif

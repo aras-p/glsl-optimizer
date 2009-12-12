@@ -30,9 +30,8 @@
 #include "context.h"
 #include "light.h"
 #include "macros.h"
-#if FEATURE_dlist
 #include "dlist.h"
-#endif
+#include "eval.h"
 #include "glapi/dispatch.h"
 
 
@@ -42,6 +41,9 @@
  * These functions are used when outside glBegin/glEnd or outside display
  * lists.
  */
+
+
+#if FEATURE_beginend
 
 
 static void GLAPIENTRY _mesa_noop_EdgeFlag( GLboolean b )
@@ -992,26 +994,21 @@ _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 void
 _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
 {
-   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = _mesa_noop_Begin;
-#if FEATURE_dlist
-   vfmt->CallList = _mesa_CallList;
-   vfmt->CallLists = _mesa_CallLists;
-#endif
+
+   _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
+
    vfmt->Color3f = _mesa_noop_Color3f;
    vfmt->Color3fv = _mesa_noop_Color3fv;
    vfmt->Color4f = _mesa_noop_Color4f;
    vfmt->Color4fv = _mesa_noop_Color4fv;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->End = _mesa_noop_End;
-#if FEATURE_evaluators
-   vfmt->EvalCoord1f = _mesa_noop_EvalCoord1f;
-   vfmt->EvalCoord1fv = _mesa_noop_EvalCoord1fv;
-   vfmt->EvalCoord2f = _mesa_noop_EvalCoord2f;
-   vfmt->EvalCoord2fv = _mesa_noop_EvalCoord2fv;
-   vfmt->EvalPoint1 = _mesa_noop_EvalPoint1;
-   vfmt->EvalPoint2 = _mesa_noop_EvalPoint2;
-#endif
+
+   _MESA_INIT_EVAL_VTXFMT(vfmt, _mesa_noop_);
+
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->FogCoordfvEXT = _mesa_noop_FogCoordfvEXT;
    vfmt->Indexf = _mesa_noop_Indexf;
@@ -1069,6 +1066,7 @@ _mesa_noop_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
    vfmt->DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
    vfmt->MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
-   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }
+
+
+#endif /* FEATURE_beginend */

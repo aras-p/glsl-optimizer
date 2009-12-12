@@ -40,6 +40,10 @@
 #include "mtypes.h"
 #include "pixel.h"
 #include "state.h"
+#include "glapi/dispatch.h"
+
+
+#if FEATURE_convolve
 
 
 /*
@@ -256,7 +260,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -299,7 +303,7 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -351,7 +355,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -394,7 +398,7 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -459,7 +463,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
 {
    GLint baseFormat;
@@ -482,12 +486,16 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
       return;
    }
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
+   }
+
    ctx->Driver.CopyConvolutionFilter1D( ctx, target, 
 					internalFormat, x, y, width);
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLint baseFormat;
@@ -514,12 +522,16 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
       return;
    }
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      return;      /* no readbuffer - OK */
+   }
+
    ctx->Driver.CopyConvolutionFilter2D( ctx, target, internalFormat, x, y, 
 					width, height );
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                            GLvoid *image)
 {
@@ -578,7 +590,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -639,7 +651,7 @@ _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -709,7 +721,7 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
                          GLvoid *row, GLvoid *column, GLvoid *span)
 {
@@ -776,7 +788,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
 {
    const GLint colStart = MAX_CONVOLUTION_WIDTH * 4;
@@ -1425,3 +1437,25 @@ _mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
       *height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
    }
 }
+
+
+void
+_mesa_init_convolve_dispatch(struct _glapi_table *disp)
+{
+   SET_ConvolutionFilter1D(disp, _mesa_ConvolutionFilter1D);
+   SET_ConvolutionFilter2D(disp, _mesa_ConvolutionFilter2D);
+   SET_ConvolutionParameterf(disp, _mesa_ConvolutionParameterf);
+   SET_ConvolutionParameterfv(disp, _mesa_ConvolutionParameterfv);
+   SET_ConvolutionParameteri(disp, _mesa_ConvolutionParameteri);
+   SET_ConvolutionParameteriv(disp, _mesa_ConvolutionParameteriv);
+   SET_CopyConvolutionFilter1D(disp, _mesa_CopyConvolutionFilter1D);
+   SET_CopyConvolutionFilter2D(disp, _mesa_CopyConvolutionFilter2D);
+   SET_GetConvolutionFilter(disp, _mesa_GetConvolutionFilter);
+   SET_GetConvolutionParameterfv(disp, _mesa_GetConvolutionParameterfv);
+   SET_GetConvolutionParameteriv(disp, _mesa_GetConvolutionParameteriv);
+   SET_SeparableFilter2D(disp, _mesa_SeparableFilter2D);
+   SET_GetSeparableFilter(disp, _mesa_GetSeparableFilter);
+}
+
+
+#endif /* FEATURE_convolve */

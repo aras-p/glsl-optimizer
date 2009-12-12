@@ -17,53 +17,53 @@ struct pixel_format {
    GLenum format;
    GLenum type;
    GLint bytes;
-   GLuint redTexel, greenTexel;
+   GLuint redTexel, greenTexel; /* with approx 51% alpha, when applicable */
 };
 
 static const struct pixel_format Formats[] = {
 
    { "GL_RGBA/GL_UNSIGNED_INT_8_8_8_8",
-     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, 4, 0xff000000, 0x00ff0000 },
+     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, 4, 0xff000080, 0x00ff0080 },
    { "GL_RGBA/GL_UNSIGNED_INT_8_8_8_8_REV",
-     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0x000000ff, 0x0000ff00 },
+     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0x800000ff, 0x8000ff00 },
    { "GL_RGBA/GL_UNSIGNED_INT_10_10_10_2",
-     GL_RGBA, GL_UNSIGNED_INT_10_10_10_2, 4, 0xffc00000, 0x3ff000 },
+     GL_RGBA, GL_UNSIGNED_INT_10_10_10_2, 4, 0xffc00002, 0x3ff002 },
    { "GL_RGBA/GL_UNSIGNED_INT_2_10_10_10_REV",
-     GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, 4, 0x3ff, 0xffc00 },
+     GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, 4, 0xc00003ff, 0xc00ffc00 },
    { "GL_RGBA/GL_UNSIGNED_SHORT_4_4_4_4",
-     GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0xf000, 0x0f00 },
+     GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0xf008, 0x0f08 },
    { "GL_RGBA/GL_UNSIGNED_SHORT_4_4_4_4_REV",
-     GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0x000f, 0x00f0 },
+     GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0x800f, 0x80f0 },
    { "GL_RGBA/GL_UNSIGNED_SHORT_5_5_5_1",
-     GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0xf800, 0x7c0 },
+     GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0xf801, 0x7c1 },
    { "GL_RGBA/GL_UNSIGNED_SHORT_1_5_5_5_REV",
-     GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0x1f, 0x3e0 },
+     GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0x801f, 0x83e0 },
 
    { "GL_BGRA/GL_UNSIGNED_INT_8_8_8_8",
-     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, 4, 0x0000ff00, 0x00ff0000 },
+     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, 4, 0x0000ff80, 0x00ff0080 },
    { "GL_BGRA/GL_UNSIGNED_INT_8_8_8_8_REV",
-     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0x00ff0000, 0x0000ff00 },
+     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0x80ff0000, 0x8000ff00 },
    { "GL_BGRA/GL_UNSIGNED_SHORT_4_4_4_4",
-     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0x00f0, 0x0f00 },
+     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0x00f8, 0x0f08 },
    { "GL_BGRA/GL_UNSIGNED_SHORT_4_4_4_4_REV",
-     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0x0f00, 0x00f0 },
+     GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0x8f00, 0x80f0 },
    { "GL_BGRA/GL_UNSIGNED_SHORT_5_5_5_1",
-     GL_BGRA, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0x3e, 0x7c0 },
+     GL_BGRA, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0x3f, 0x7c1 },
    { "GL_BGRA/GL_UNSIGNED_SHORT_1_5_5_5_REV",
-     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0x7c00, 0x3e0 },
+     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0xfc00, 0x83e0 },
 
    { "GL_ABGR_EXT/GL_UNSIGNED_INT_8_8_8_8",
-     GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8, 4, 0x000000ff, 0x0000ff00 },
+     GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8, 4, 0x800000ff, 0x8000ff00 },
    { "GL_ABGR_EXT/GL_UNSIGNED_INT_8_8_8_8_REV",
-     GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0xff000000, 0x00ff0000 },
+     GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8_REV, 4, 0xff000080, 0x00ff0080 },
    { "GL_ABGR_EXT/GL_UNSIGNED_SHORT_4_4_4_4",
-     GL_ABGR_EXT, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0x000f, 0x00f0 },
+     GL_ABGR_EXT, GL_UNSIGNED_SHORT_4_4_4_4, 2, 0x800f, 0x80f0 },
    { "GL_ABGR_EXT/GL_UNSIGNED_SHORT_4_4_4_4_REV",
-     GL_ABGR_EXT, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0xf000, 0x0f00 },
+     GL_ABGR_EXT, GL_UNSIGNED_SHORT_4_4_4_4_REV, 2, 0xf008, 0x0f08 },
    { "GL_ABGR_EXT/GL_UNSIGNED_SHORT_5_5_5_1",
-     GL_ABGR_EXT, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0x1, 0x3e },
+     GL_ABGR_EXT, GL_UNSIGNED_SHORT_5_5_5_1, 2, 0xf801, 0xf83e },
    { "GL_ABGR_EXT/GL_UNSIGNED_SHORT_1_5_5_5_REV",
-     GL_ABGR_EXT, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0x8000, 0x7c00 },
+     GL_ABGR_EXT, GL_UNSIGNED_SHORT_1_5_5_5_REV, 2, 0x800f, 0x7c0f },
 
    { "GL_RGB/GL_UNSIGNED_SHORT_5_6_5",
      GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2, 0xf800, 0x7e0 },
@@ -108,7 +108,7 @@ static const struct name_format IntFormats[] = {
 static GLuint CurFormat = 0;
 
 static GLboolean Test3D = GL_FALSE;
-
+static GLboolean Blend = GL_FALSE;
 
 
 static void
@@ -191,6 +191,19 @@ MakeTexture(const struct pixel_format *format, GLenum intFormat, GLboolean swap)
                    format->format, format->type, texBuffer);
    }
 
+   if (0) {
+      GLint r, g, b, a, l, i;
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_LUMINANCE_SIZE, &l);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTENSITY_SIZE, &i);
+      printf("IntFormat: 0x%x  R %d  G %d  B %d  A %d  L %d  I %d\n",
+             intFormat, r, g, b, a, l, i);
+      glGetError();
+   }                              
+
    if (glGetError()) {
       printf("GL Error for %s\n", format->name);
       memset(texBuffer, 255, 1000);
@@ -221,6 +234,10 @@ Draw(void)
            glEnable(GL_TEXTURE_3D);
         else
            glEnable(GL_TEXTURE_2D);
+
+        if (Blend)
+           glEnable(GL_BLEND);
+
         glBegin(GL_POLYGON);
         glTexCoord3f(0, 0, 0.5);  glVertex2f(0, 0);
         glTexCoord3f(1, 0, 0.5);  glVertex2f(w, 0);
@@ -232,6 +249,9 @@ Draw(void)
            glDisable(GL_TEXTURE_3D);
         else
            glDisable(GL_TEXTURE_2D);
+
+        glDisable(GL_BLEND);
+
         glColor3f(0, 0, 0);
         glRasterPos2i(8, 6);
         PrintString(Formats[i].name);
@@ -252,7 +272,7 @@ Draw(void)
    glPushMatrix();
    glTranslatef(2, (i + 1) * (h + 2), 0);
    glRasterPos2i(8, 6);
-   sprintf(s, "Internal Texture Format [f/F]: %s (%d of %d)",
+   sprintf(s, "Internal Texture Format [f/F]: %s (%d of %lu)",
            IntFormats[CurFormat].name, CurFormat + 1, NUM_INT_FORMATS);
    PrintString(s);
    glPopMatrix();
@@ -264,6 +284,15 @@ Draw(void)
       PrintString("Target [2/3]: GL_TEXTURE_3D");
    else
       PrintString("Target [2/3]: GL_TEXTURE_2D");
+   glPopMatrix();
+
+   glPushMatrix();
+   glTranslatef(2, (i + 3) * (h + 2), 0);
+   glRasterPos2i(8, 6);
+   if (Blend)
+      PrintString("Blend: Yes");
+   else
+      PrintString("Blend: No");
    glPopMatrix();
 
    glutSwapBuffers();
@@ -288,6 +317,9 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
+      case 'b':
+         Blend = !Blend;
+         break;
       case 'F':
          if (CurFormat == 0)
             CurFormat = NUM_INT_FORMATS - 1;
@@ -323,6 +355,7 @@ Init(void)
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 

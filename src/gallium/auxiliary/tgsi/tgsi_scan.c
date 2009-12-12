@@ -35,7 +35,6 @@
 
 
 #include "util/u_math.h"
-#include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 
@@ -97,14 +96,14 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                uint i;
                for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
                   const struct tgsi_full_src_register *src =
-                     &fullinst->FullSrcRegisters[i];
-                  if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-                     const int ind = src->SrcRegister.Index;
+                     &fullinst->Src[i];
+                  if (src->Register.File == TGSI_FILE_INPUT) {
+                     const int ind = src->Register.Index;
                      if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_X) {
+                        if (src->Register.SwizzleX == TGSI_SWIZZLE_X) {
                            info->uses_fogcoord = TRUE;
                         }
-                        else if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_Y) {
+                        else if (src->Register.SwizzleX == TGSI_SWIZZLE_Y) {
                            info->uses_frontfacing = TRUE;
                         }
                      }
@@ -120,8 +119,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                = &parse.FullToken.FullDeclaration;
             const uint file = fulldecl->Declaration.File;
             uint reg;
-            for (reg = fulldecl->DeclarationRange.First;
-                 reg <= fulldecl->DeclarationRange.Last;
+            for (reg = fulldecl->Range.First;
+                 reg <= fulldecl->Range.Last;
                  reg++) {
 
                /* only first 32 regs will appear in this bitfield */
@@ -130,20 +129,21 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
                if (file == TGSI_FILE_INPUT) {
-                  info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
+                  info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
+                  info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
                   info->num_inputs++;
                }
                else if (file == TGSI_FILE_OUTPUT) {
-                  info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
+                  info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->num_outputs++;
                }
 
                /* special case */
                if (procType == TGSI_PROCESSOR_FRAGMENT &&
                    file == TGSI_FILE_OUTPUT &&
-                   fulldecl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+                   fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
                   info->writes_z = TRUE;
                }
             }
@@ -205,34 +205,25 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
             struct tgsi_full_instruction *fullinst =
                &parse.FullToken.FullInstruction;
             const struct tgsi_full_src_register *src =
-               &fullinst->FullSrcRegisters[0];
+               &fullinst->Src[0];
             const struct tgsi_full_dst_register *dst =
-               &fullinst->FullDstRegisters[0];
+               &fullinst->Dst[0];
 
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
-                src->SrcRegister.File != TGSI_FILE_INPUT ||
-                dst->DstRegister.File != TGSI_FILE_OUTPUT ||
-                src->SrcRegister.Index != dst->DstRegister.Index ||
+                src->Register.File != TGSI_FILE_INPUT ||
+                dst->Register.File != TGSI_FILE_OUTPUT ||
+                src->Register.Index != dst->Register.Index ||
 
-                src->SrcRegister.Negate ||
-                src->SrcRegisterExtMod.Negate ||
-                src->SrcRegisterExtMod.Absolute ||
-                src->SrcRegisterExtMod.Scale2X ||
-                src->SrcRegisterExtMod.Bias ||
-                src->SrcRegisterExtMod.Complement ||
+                src->Register.Negate ||
+                src->Register.Absolute ||
 
-                src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-                src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-                src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-                src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ||
+                src->Register.SwizzleX != TGSI_SWIZZLE_X ||
+                src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
+                src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
+                src->Register.SwizzleW != TGSI_SWIZZLE_W ||
 
-                src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-                src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-                src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-                src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W ||
-
-                dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW)
+                dst->Register.WriteMask != TGSI_WRITEMASK_XYZW)
             {
                tgsi_parse_free(&parse);
                return FALSE;

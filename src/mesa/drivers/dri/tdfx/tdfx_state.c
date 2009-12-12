@@ -40,7 +40,6 @@
 
 #include "main/mtypes.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 

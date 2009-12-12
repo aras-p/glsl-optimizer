@@ -27,12 +27,6 @@ using the SDK with Visual Studio Express can be found at
 
 http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/
 
-If you are stuck using VC6 or VC7, you may start with these project
-files, but you may need to modify them to reflect changes in the
-Mesa source code tree.  If you sucessfully update the project files,
-please submit them to the author of this document so that they may
-be included in the next distribution. 
-
 The project files to build the core Mesa library, Windows Mesa
 drivers, OSMesa, and GLU are in the mesa directory.  The project files
 to build GLUT and some demo programs are in the progs directory.
@@ -105,23 +99,6 @@ should build all the demos.
 
 Build System Notes
 ----- ------ -----
-
-VC6 (not actively supported)
----
-
-Visual Studio 6 does not recognize files with the .cc extension as C++
-language files, without a lot of unnatural tweaking.  So, the VC6
-build process uses custom build steps to compile these files in the
-GLU library.
-
-Two additional configurations are provided, Debug x86 and Release x86
-that activate the shader code compilation by defining SLANG_86.  It is
-unknown if and how this works.
-
-VC7 (not actively supported)
----
-
-The above-mentioned .cc problem does not exist in this version.
 
 VC8
 ---

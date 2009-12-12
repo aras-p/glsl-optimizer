@@ -443,7 +443,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 
    } else if (HAVE_TRI_STRIPS && 
 	      ctx->Light.ShadeModel == GL_FLAT &&
-	      TNL_CONTEXT(ctx)->vb.ColorPtr[0]->stride) {
+	      TNL_CONTEXT(ctx)->vb.AttribPtr[_TNL_ATTRIB_COLOR0]->stride) {
       if (HAVE_ELTS) {
 	 LOCAL_VARS;
 	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -1221,7 +1221,7 @@ static GLboolean TAG(validate_render)( GLcontext *ctx,
 	    ok = GL_TRUE;
 	 } else if (HAVE_TRI_STRIPS && 
 		    ctx->Light.ShadeModel == GL_FLAT &&
-		    VB->ColorPtr[0]->stride != 0) {
+		    VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride != 0) {
 	    if (HAVE_ELTS) {
 	       ok = (GLint) count < GET_SUBSEQUENT_VB_MAX_ELTS();
 	    }

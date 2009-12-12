@@ -285,6 +285,12 @@ main(int argc, char** argv)
     glutInitWindowSize (600, 600);
     glutCreateWindow (argv[0]);
     glewInit();
+
+    if (!glutExtensionSupported("GL_EXT_texture_compression_s3tc")) {
+       fprintf(stderr, "This test requires GL_EXT_texture_compression_s3tc.\n");
+       exit(1);
+    }
+
     myInit();
     glutReshapeFunc (myReshape);
     glutDisplayFunc(display);

@@ -136,7 +136,12 @@ radeonBufferSubData(GLcontext * ctx,
                     const GLvoid * data,
                     struct gl_buffer_object *obj)
 {
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
+
+    if (radeon_bo_is_referenced_by_cs(radeon_obj->bo, radeon->cmdbuf.cs)) {
+        radeon_firevertices(radeon);
+    }
 
     radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
@@ -187,7 +192,11 @@ radeonMapBuffer(GLcontext * ctx,
 
     radeon_bo_map(radeon_obj->bo, access == GL_WRITE_ONLY_ARB);
 
-    return obj->Pointer = radeon_obj->bo->ptr;
+    obj->Pointer = radeon_obj->bo->ptr;
+    obj->Length = obj->Size;
+    obj->Offset = 0;
+
+    return obj->Pointer;
 }
 
 
@@ -203,8 +212,11 @@ radeonUnmapBuffer(GLcontext * ctx,
 
     if (radeon_obj->bo != NULL) {
         radeon_bo_unmap(radeon_obj->bo);
-        obj->Pointer = NULL;
     }
+
+    obj->Pointer = NULL;
+    obj->Offset = 0;
+    obj->Length = 0;
 
     return GL_TRUE;
 }

@@ -54,8 +54,18 @@
  * Set x to positive or negative infinity.
  */
 #if defined(USE_IEEE) || defined(_WIN32)
-#define SET_POS_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0x7F800000 )
-#define SET_NEG_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0xFF800000 )
+#define SET_POS_INFINITY(x)                  \
+   do {                                      \
+         fi_type fi;                         \
+         fi.i = 0x7F800000;                  \
+         x = fi.f;                           \
+   } while (0)
+#define SET_NEG_INFINITY(x)                  \
+   do {                                      \
+         fi_type fi;                         \
+         fi.i = 0xFF800000;                  \
+         x = fi.f;                           \
+   } while (0)
 #elif defined(VMS)
 #define SET_POS_INFINITY(x)  x = __MAXFLOAT
 #define SET_NEG_INFINITY(x)  x = -__MAXFLOAT
@@ -939,7 +949,7 @@ _mesa_execute_program(GLcontext * ctx,
 	    /* The fast LOG2 macro doesn't meet the precision requirements.
 	     */
             if (a[0] == 0.0F) {
-               val = 0.0F;
+               val = -FLT_MAX;
             }
             else {
                val = log(a[0]) * 1.442695F;
@@ -1555,17 +1565,12 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_TXB:         /* GL_ARB_fragment_program only */
          /* Texel lookup with LOD bias */
          {
-            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
-            const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
             GLfloat texcoord[4], color[4], lodBias;
 
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
 
             /* texcoord[3] is the bias to add to lambda */
-            lodBias = texUnit->LodBias + texcoord[3];
-            if (texUnit->_Current) {
-               lodBias += texUnit->_Current->LodBias;
-            }
+            lodBias = texcoord[3];
 
             fetch_texel(ctx, machine, inst, texcoord, lodBias, color);
 
@@ -1640,11 +1645,12 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_UP2H:        /* unpack two 16-bit floats */
          {
             GLfloat a[4], result[4];
-            const GLuint *rawBits = (const GLuint *) a;
+            fi_type fi;
             GLhalfNV hx, hy;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            hx = rawBits[0] & 0xffff;
-            hy = rawBits[0] >> 16;
+            fi.f = a[0];
+            hx = fi.i & 0xffff;
+            hy = fi.i >> 16;
             result[0] = result[2] = _mesa_half_to_float(hx);
             result[1] = result[3] = _mesa_half_to_float(hy);
             store_vector4(inst, machine, result);
@@ -1653,11 +1659,12 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_UP2US:       /* unpack two GLushorts */
          {
             GLfloat a[4], result[4];
-            const GLuint *rawBits = (const GLuint *) a;
+            fi_type fi;
             GLushort usx, usy;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            usx = rawBits[0] & 0xffff;
-            usy = rawBits[0] >> 16;
+            fi.f = a[0];
+            usx = fi.i & 0xffff;
+            usy = fi.i >> 16;
             result[0] = result[2] = usx * (1.0f / 65535.0f);
             result[1] = result[3] = usy * (1.0f / 65535.0f);
             store_vector4(inst, machine, result);
@@ -1666,24 +1673,26 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_UP4B:        /* unpack four GLbytes */
          {
             GLfloat a[4], result[4];
-            const GLuint *rawBits = (const GLuint *) a;
+            fi_type fi;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = (((rawBits[0] >> 0) & 0xff) - 128) / 127.0F;
-            result[1] = (((rawBits[0] >> 8) & 0xff) - 128) / 127.0F;
-            result[2] = (((rawBits[0] >> 16) & 0xff) - 128) / 127.0F;
-            result[3] = (((rawBits[0] >> 24) & 0xff) - 128) / 127.0F;
+            fi.f = a[0];
+            result[0] = (((fi.i >> 0) & 0xff) - 128) / 127.0F;
+            result[1] = (((fi.i >> 8) & 0xff) - 128) / 127.0F;
+            result[2] = (((fi.i >> 16) & 0xff) - 128) / 127.0F;
+            result[3] = (((fi.i >> 24) & 0xff) - 128) / 127.0F;
             store_vector4(inst, machine, result);
          }
          break;
       case OPCODE_UP4UB:       /* unpack four GLubytes */
          {
             GLfloat a[4], result[4];
-            const GLuint *rawBits = (const GLuint *) a;
+            fi_type fi;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = ((rawBits[0] >> 0) & 0xff) / 255.0F;
-            result[1] = ((rawBits[0] >> 8) & 0xff) / 255.0F;
-            result[2] = ((rawBits[0] >> 16) & 0xff) / 255.0F;
-            result[3] = ((rawBits[0] >> 24) & 0xff) / 255.0F;
+            fi.f = a[0];
+            result[0] = ((fi.i >> 0) & 0xff) / 255.0F;
+            result[1] = ((fi.i >> 8) & 0xff) / 255.0F;
+            result[2] = ((fi.i >> 16) & 0xff) / 255.0F;
+            result[3] = ((fi.i >> 24) & 0xff) / 255.0F;
             store_vector4(inst, machine, result);
          }
          break;

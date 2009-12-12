@@ -159,7 +159,7 @@ def test(dev):
     
     # vertex shader
     vs = Shader('''
-        VERT1.1
+        VERT
         DCL IN[0], POSITION, CONSTANT
         DCL IN[1], COLOR, CONSTANT
         DCL OUT[0], POSITION, CONSTANT
@@ -172,7 +172,7 @@ def test(dev):
 
     # fragment shader
     fs = Shader('''
-        FRAG1.1
+        FRAG
         DCL IN[0], COLOR, LINEAR
         DCL OUT[0], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]

@@ -37,6 +37,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -229,13 +230,13 @@ void renderer_draw_texture(struct renderer *r,
    struct pipe_buffer *buf;
    VGfloat s0, t0, s1, t1;
 
-   assert(tex->width[0] != 0);
-   assert(tex->height[0] != 0);
+   assert(tex->width0 != 0);
+   assert(tex->height0 != 0);
 
-   s0 = x1offset / tex->width[0];
-   s1 = x2offset / tex->width[0];
-   t0 = y1offset / tex->height[0];
-   t1 = y2offset / tex->height[0];
+   s0 = x1offset / tex->width0;
+   s1 = x2offset / tex->width0;
+   t0 = y1offset / tex->height0;
+   t1 = y2offset / tex->height0;
 
    cso_save_vertex_shader(r->cso);
    /* shaders */
@@ -275,10 +276,10 @@ void renderer_copy_texture(struct renderer *ctx,
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
 
-   assert(src->width[0] != 0);
-   assert(src->height[0] != 0);
-   assert(dst->width[0] != 0);
-   assert(dst->height[0] != 0);
+   assert(src->width0 != 0);
+   assert(src->height0 != 0);
+   assert(dst->width0 != 0);
+   assert(dst->height0 != 0);
 
 #if 0
    debug_printf("copy texture [%f, %f, %f, %f], [%f, %f, %f, %f]\n",
@@ -286,10 +287,10 @@ void renderer_copy_texture(struct renderer *ctx,
 #endif
 
 #if 1
-   s0 = sx1 / src->width[0];
-   s1 = sx2 / src->width[0];
-   t0 = sy1 / src->height[0];
-   t1 = sy2 / src->height[0];
+   s0 = sx1 / src->width0;
+   s1 = sx2 / src->width0;
+   t0 = sy1 / src->height0;
+   t1 = sy2 / src->height0;
 #else
    s0 = 0;
    s1 = 1;
@@ -444,10 +445,9 @@ void renderer_copy_surface(struct renderer *ctx,
    texTemp.target = PIPE_TEXTURE_2D;
    texTemp.format = src->format;
    texTemp.last_level = 0;
-   texTemp.width[0] = srcW;
-   texTemp.height[0] = srcH;
-   texTemp.depth[0] = 1;
-   pf_get_block(src->format, &texTemp.block);
+   texTemp.width0 = srcW;
+   texTemp.height0 = srcH;
+   texTemp.depth0 = 1;
 
    tex = screen->texture_create(screen, &texTemp);
    if (!tex)
@@ -457,10 +457,17 @@ void renderer_copy_surface(struct renderer *ctx,
                                      PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* load temp texture */
-   pipe->surface_copy(pipe,
-                      texSurf, 0, 0,   /* dest */
-                      src, srcLeft, srcTop, /* src */
-                      srcW, srcH);     /* size */
+   if (pipe->surface_copy) {
+      pipe->surface_copy(pipe,
+                         texSurf, 0, 0,   /* dest */
+                         src, srcLeft, srcTop, /* src */
+                         srcW, srcH);     /* size */
+   } else {
+      util_surface_copy(pipe, FALSE,
+                        texSurf, 0, 0,   /* dest */
+                        src, srcLeft, srcTop, /* src */
+                        srcW, srcH);     /* size */
+   }
 
    /* free the surface, update the texture if necessary.*/
    screen->tex_surface_destroy(texSurf);
@@ -562,13 +569,13 @@ void renderer_texture_quad(struct renderer *r,
    struct pipe_buffer *buf;
    VGfloat s0, t0, s1, t1;
 
-   assert(tex->width[0] != 0);
-   assert(tex->height[0] != 0);
+   assert(tex->width0 != 0);
+   assert(tex->height0 != 0);
 
-   s0 = x1offset / tex->width[0];
-   s1 = x2offset / tex->width[0];
-   t0 = y1offset / tex->height[0];
-   t1 = y2offset / tex->height[0];
+   s0 = x1offset / tex->width0;
+   s1 = x2offset / tex->width0;
+   t0 = y1offset / tex->height0;
+   t1 = y2offset / tex->height0;
 
    cso_save_vertex_shader(r->cso);
    /* shaders */

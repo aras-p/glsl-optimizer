@@ -11,6 +11,7 @@
 #define DRIRENDERBUFFER_H
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "dri_util.h"
 
 
@@ -56,14 +57,14 @@ typedef struct {
     * A handy flag to know if this is the back color buffer.
     * 
     * \note
-    * This is currently only used by s3v and tdfx.
+    * This is currently only used by tdfx.
     */
    GLboolean backBuffer;
 } driRenderbuffer;
 
 
 extern driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLvoid *addr,
+driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
                    __DRIdrawablePrivate *dPriv);
 

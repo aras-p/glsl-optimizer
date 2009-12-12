@@ -1,16 +1,19 @@
-
 #ifndef EGLCONFIGUTIL_INCLUDED
 #define EGLCONFIGUTIL_INCLUDED
 
-#include "eglconfig.h"
+
+#include "GL/gl.h"
 #include "GL/internal/glcore.h"
-#if (!defined(WIN32) && !defined(_WIN32_WCE))
-#include "stdint.h"
-#endif
+#include "eglconfig.h"
 
 
 extern void
 _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode);
+
+
+extern EGLBoolean
+_eglConfigFromContextModesRec(_EGLConfig *conf, const __GLcontextModes *m,
+                              EGLint conformant, EGLint renderable_type);
 
 
 extern EGLBoolean

@@ -360,13 +360,13 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	OUT_RINGf (0.0);
 	OUT_RINGf (16777216.0); /* [0, 1] scaled approx to [0, 2^24] */
 
-	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE0_X, 4);
+	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_TRANSLATE_X, 4);
 	OUT_RINGf (0.0); /* x-offset, w/2 + 1.031250 */
 	OUT_RINGf (0.0); /* y-offset, h/2 + 0.030762 */
 	OUT_RINGf (0.0);
 	OUT_RINGf (16777215.0);
 
-	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE1_X, 4);
+	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE_X, 4);
 	OUT_RINGf (0.0); /* no effect?, w/2 */
 	OUT_RINGf (0.0); /* no effect?, h/2 */
 	OUT_RINGf (16777215.0 * 0.5);
@@ -378,30 +378,6 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 static void
 nv20_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
 {
-}
-
-
-static unsigned int
-nv20_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-nv20_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 struct pipe_context *
@@ -429,8 +405,8 @@ nv20_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv20->pipe.clear = nv20_clear;
 	nv20->pipe.flush = nv20_flush;
 
-	nv20->pipe.is_texture_referenced = nv20_is_texture_referenced;
-	nv20->pipe.is_buffer_referenced = nv20_is_buffer_referenced;
+	nv20->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nv20->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	nv20_init_surface_functions(nv20);
 	nv20_init_state_functions(nv20);

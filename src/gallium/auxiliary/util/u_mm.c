@@ -39,13 +39,20 @@ u_mmDumpMemInfo(const struct mem_block *heap)
    }
    else {
       const struct mem_block *p;
+      int total_used = 0, total_free = 0;
 
       for (p = heap->next; p != heap; p = p->next) {
 	 debug_printf("  Offset:%08x, Size:%08x, %c%c\n", p->ofs, p->size,
                       p->free ? 'F':'.',
                       p->reserved ? 'R':'.');
+         if (p->free)
+            total_free += p->size;
+         else
+            total_used += p->size;
       }
 
+      debug_printf("'\nMemory stats: total = %d, used = %d, free = %d\n",
+                   total_used + total_free, total_used, total_free);
       debug_printf("\nFree list:\n");
 
       for (p = heap->next_free; p != heap; p = p->next_free) {

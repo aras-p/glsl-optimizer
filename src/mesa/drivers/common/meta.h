@@ -34,35 +34,39 @@ extern void
 _mesa_meta_free(GLcontext *ctx);
 
 extern void
-_mesa_meta_blit_framebuffer(GLcontext *ctx,
-                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                            GLbitfield mask, GLenum filter);
+_mesa_meta_BlitFramebuffer(GLcontext *ctx,
+                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                           GLbitfield mask, GLenum filter);
 
 extern void
-_mesa_meta_clear(GLcontext *ctx, GLbitfield buffers);
+_mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers);
 
 extern void
-_mesa_meta_copy_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
-                       GLsizei width, GLsizei height,
-                       GLint dstx, GLint dsty, GLenum type);
+_mesa_meta_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
+                      GLsizei width, GLsizei height,
+                      GLint dstx, GLint dsty, GLenum type);
 
 extern void
-_mesa_meta_draw_pixels(GLcontext *ctx,
-		       GLint x, GLint y, GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       const struct gl_pixelstore_attrib *unpack,
-		       const GLvoid *pixels);
+_mesa_meta_DrawPixels(GLcontext *ctx,
+                      GLint x, GLint y, GLsizei width, GLsizei height,
+                      GLenum format, GLenum type,
+                      const struct gl_pixelstore_attrib *unpack,
+                      const GLvoid *pixels);
 
 extern void
-_mesa_meta_bitmap(GLcontext *ctx,
+_mesa_meta_Bitmap(GLcontext *ctx,
                   GLint x, GLint y, GLsizei width, GLsizei height,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap);
 
+extern GLboolean
+_mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
+                                          struct gl_texture_object *texObj);
+
 extern void
-_mesa_meta_generate_mipmap(GLcontext *ctx, GLenum target,
-                           struct gl_texture_object *texObj);
+_mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
+                          struct gl_texture_object *texObj);
 
 extern void
 _mesa_meta_CopyTexImage1D(GLcontext *ctx, GLenum target, GLint level,
@@ -90,6 +94,25 @@ _mesa_meta_CopyTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
                              GLint xoffset, GLint yoffset, GLint zoffset,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height);
+
+extern void
+_mesa_meta_CopyColorTable(GLcontext *ctx,
+                          GLenum target, GLenum internalformat,
+                          GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+                             GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat,
+                                   GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
+                                   GLenum internalFormat, GLint x, GLint y,
+                                   GLsizei width, GLsizei height);
 
 
 #endif /* META_H */

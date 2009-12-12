@@ -53,8 +53,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
 i810FillInModes( __DRIscreenPrivate *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
@@ -165,8 +163,6 @@ i810InitScreen(__DRIscreen *sPriv)
 				      &sPriv->drm_version, & drm_expected ) ) {
       return NULL;
    }
-
-   driInitExtensions( NULL, card_extensions, GL_TRUE );
 
    if (sPriv->devPrivSize != sizeof(I810DRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(I810DRIRec) does not match passed size from device driver\n");
@@ -293,7 +289,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  driScrnPriv->pFB,
                                  screen->cpp,
                                  /*screen->frontOffset*/0, screen->backPitch,
@@ -304,7 +300,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  screen->back.map,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -315,7 +311,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  screen->depth.map,
                                  screen->cpp,
                                  screen->depthOffset, screen->backPitch,

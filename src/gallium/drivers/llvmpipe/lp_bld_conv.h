@@ -40,7 +40,7 @@
 #include <llvm-c/Core.h>  
 
 
-struct lp_type type;
+struct lp_type;
 
 
 LLVMValueRef

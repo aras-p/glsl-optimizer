@@ -77,6 +77,10 @@
 #define FOGCOORDF(x)                CALL_FogCoordfEXT(GET_DISPATCH(), (x))
 #define SECONDARYCOLORF(a,b,c)      CALL_SecondaryColor3fEXT(GET_DISPATCH(), (a,b,c))
 
+
+#if FEATURE_beginend
+
+
 static void GLAPIENTRY
 loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
 {
@@ -1655,3 +1659,6 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest )
    SET_VertexAttrib4NusvARB(dest, loopback_VertexAttrib4NusvARB);
    SET_VertexAttrib4NuivARB(dest, loopback_VertexAttrib4NuivARB);
 }
+
+
+#endif /* FEATURE_beginend */

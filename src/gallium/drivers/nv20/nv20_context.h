@@ -13,6 +13,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
+#include "nouveau/nouveau_context.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
 	struct nv20_screen *ctx = nv20->screen

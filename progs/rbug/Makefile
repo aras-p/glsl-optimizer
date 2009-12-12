@@ -45,4 +45,4 @@ $(OBJECTS): %.o: %.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $(PROG_DEFINES) $< -o $@
 
 $(PROGS): %: %.o
-	$(CC) $(LDFLAGS) $< $(LINKS) -o $@
+	$(CC) $(LDFLAGS) $< $(LINKS) -lm -o $@

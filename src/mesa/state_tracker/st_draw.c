@@ -25,10 +25,20 @@
  * 
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  */
+/*
+ * This file implements the st_draw_vbo() function which is called from
+ * Mesa's VBO module.  All point/line/triangle rendering is done through
+ * this function whether the user called glBegin/End, glDrawArrays,
+ * glDrawElements, glEvalMesh, or glCalList, etc.
+ *
+ * We basically convert the VBO's vertex attribute/array information into
+ * Gallium vertex state, bind the vertex buffer objects and call
+ * pipe->draw_elements(), pipe->draw_range_elements() or pipe->draw_arrays().
+ *
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ */
+
 
 #include "main/imports.h"
 #include "main/image.h"
@@ -328,23 +338,29 @@ get_arrays_bounds(const struct st_vertex_program *vp,
                        const GLubyte **low, const GLubyte **high)
 {
    const GLubyte *low_addr = NULL;
+   const GLubyte *high_addr = NULL;
    GLuint attr;
-   GLint stride;
 
    for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
+      const GLint stride = arrays[mesaAttr]->StrideB;
       const GLubyte *start = arrays[mesaAttr]->Ptr;
-      stride = arrays[mesaAttr]->StrideB;
+      const unsigned sz = (arrays[mesaAttr]->Size * 
+                           _mesa_sizeof_type(arrays[mesaAttr]->Type));
+      const GLubyte *end = start + (max_index * stride) + sz;
+
       if (attr == 0) {
          low_addr = start;
+         high_addr = end;
       }
       else {
          low_addr = MIN2(low_addr, start);
+         high_addr = MAX2(high_addr, end);
       }
    }
 
    *low = low_addr;
-   *high = low_addr + (max_index + 1) * stride;
+   *high = high_addr;
 }
 
 
@@ -557,7 +573,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->vp->state;
+   vs = &ctx->st->vp_varient->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {

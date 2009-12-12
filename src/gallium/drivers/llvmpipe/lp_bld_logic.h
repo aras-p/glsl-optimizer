@@ -42,7 +42,7 @@
 #include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
 
 
-struct lp_type type;
+struct lp_type;
 struct lp_build_context;
 
 

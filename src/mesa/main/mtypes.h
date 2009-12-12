@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.7
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -79,11 +79,37 @@
 
 
 /**
+ * \name 64-bit extension of GLbitfield.
+ */
+/*@{*/
+typedef GLuint64 GLbitfield64;
+
+#define BITFIELD64_ONE         1ULL
+#define BITFIELD64_ALLONES     ~0ULL
+
+/** Set a single bit */
+#define BITFIELD64_BIT(b)      (BITFIELD64_ONE << (b))
+
+/** Set a mask of the least significant \c b bits */
+#define BITFIELD64_MASK(b)     (((b) >= 64) ? BITFIELD64_ALLONES : \
+				(BITFIELD64_BIT(b) - 1))
+
+/**
+ * Set all bits from l (low bit) to h (high bit), inclusive.
+ *
+ * \note \C BITFIELD_64_RANGE(0, 63) return 64 set bits.
+ */
+#define BITFIELD64_RANGE(l, h) (BITFIELD64_MASK((h) + 1) & ~BITFIELD64_MASK(l))
+/*@}*/
+
+
+/**
  * \name Some forward type declarations
  */
 /*@{*/
 struct _mesa_HashTable;
 struct gl_attrib_node;
+struct gl_list_extensions;
 struct gl_meta_state;
 struct gl_pixelstore_attrib;
 struct gl_program_cache;
@@ -207,7 +233,7 @@ typedef enum
    VERT_RESULT_BFC0 = 13,
    VERT_RESULT_BFC1 = 14,
    VERT_RESULT_EDGE = 15,
-   VERT_RESULT_VAR0 = 16  /**< shader varying */,
+   VERT_RESULT_VAR0 = 16,  /**< shader varying */
    VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
 } gl_vert_result;
 
@@ -820,29 +846,6 @@ struct gl_list_attrib
 
 
 /**
- * Used by device drivers to hook new commands into display lists.
- */
-struct gl_list_instruction
-{
-   GLuint Size;
-   void (*Execute)( GLcontext *ctx, void *data );
-   void (*Destroy)( GLcontext *ctx, void *data );
-   void (*Print)( GLcontext *ctx, void *data );
-};
-
-#define MAX_DLIST_EXT_OPCODES 16
-
-/**
- * Used by device drivers to hook new commands into display lists.
- */
-struct gl_list_extensions
-{
-   struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
-   GLuint NumOpcodes;
-};
-
-
-/**
  * Multisample attribute group (GL_MULTISAMPLE_BIT).
  */
 struct gl_multisample_attrib
@@ -1137,103 +1140,20 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
 
 
 /**
- * This macro defines the (many) parameters to the texstore functions.
- * \param dims  either 1 or 2 or 3
- * \param baseInternalFormat  user-specified base internal format
- * \param dstFormat  destination Mesa texture format
- * \param dstAddr  destination image address
- * \param dstX/Y/Zoffset  destination x/y/z offset (ala TexSubImage), in texels
- * \param dstRowStride  destination image row stride, in bytes
- * \param dstImageOffsets  offset of each 2D slice within 3D texture, in texels
- * \param srcWidth/Height/Depth  source image size, in pixels
- * \param srcFormat  incoming image format
- * \param srcType  incoming image data type
- * \param srcAddr  source image address
- * \param srcPacking  source image packing parameters
- */
-#define TEXSTORE_PARAMS \
-	GLcontext *ctx, GLuint dims, \
-	GLenum baseInternalFormat, \
-	const struct gl_texture_format *dstFormat, \
-	GLvoid *dstAddr, \
-	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
-	GLint dstRowStride, const GLuint *dstImageOffsets, \
-	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
-	GLenum srcFormat, GLenum srcType, \
-	const GLvoid *srcAddr, \
-	const struct gl_pixelstore_attrib *srcPacking
-
-
-
-/**
- * Texture image storage function.
- */
-typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
-
-
-/**
- * Texture format record 
- */
-struct gl_texture_format
-{
-   GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
-
-   GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
-				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 *   GL_INTENSITY, GL_COLOR_INDEX or
-				 *   GL_DEPTH_COMPONENT.
-				 */
-   GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-
-   /**
-    * Bits per texel component.  These are just rough approximations
-    * for compressed texture formats.
-    */
-   /*@{*/
-   GLubyte RedBits;
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte LuminanceBits;
-   GLubyte IntensityBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
-   /*@}*/
-
-   GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
-
-   StoreTexImageFunc StoreImage;
-
-   /**
-    * \name Texel fetch function pointers
-    */
-   /*@{*/
-   FetchTexelFuncC FetchTexel1D;
-   FetchTexelFuncC FetchTexel2D;
-   FetchTexelFuncC FetchTexel3D;
-   FetchTexelFuncF FetchTexel1Df;
-   FetchTexelFuncF FetchTexel2Df;
-   FetchTexelFuncF FetchTexel3Df;
-   /*@}*/
-
-   StoreTexelFunc StoreTexel;
-};
-
-
-/**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
  */
 struct gl_texture_image
 {
+   GLint InternalFormat;	/**< Internal format as given by the user */
    GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX,
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLint InternalFormat;	/**< Internal format as given by the user */
+   GLuint TexFormat;            /**< The actual format: MESA_FORMAT_x */
+
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
@@ -1251,15 +1171,10 @@ struct gl_texture_image
    GLboolean IsClientData;	/**< Data owned by client? */
    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
-   const struct gl_texture_format *TexFormat;
-
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
 
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
-
-   GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
-   GLuint CompressedSize;	/**< GL_ARB_texture_compression */
 
    GLuint RowStride;		/**< Padded width in units of texels */
    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
@@ -1780,7 +1695,7 @@ struct gl_program
    struct prog_instruction *Instructions;
 
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
+   GLbitfield64 OutputsWritten; /**< Bitmask of which output regs are written */
    GLbitfield InputFlags[MAX_PROGRAM_INPUTS];   /**< PROG_PARAM_BIT_x flags */
    GLbitfield OutputFlags[MAX_PROGRAM_OUTPUTS]; /**< PROG_PARAM_BIT_x flags */
    GLbitfield TexturesUsed[MAX_TEXTURE_UNITS];  /**< TEXTURE_x_BIT bitmask */
@@ -1834,7 +1749,6 @@ struct gl_vertex_program
    struct gl_program Base;   /**< base class */
    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
-   void *TnlData;		/**< should probably use Base.DriverData */
 };
 
 
@@ -1940,10 +1854,10 @@ struct ati_fragment_shader
    struct atifs_instruction *Instructions[2];
    struct atifs_setupinst *SetupInst[2];
    GLfloat Constants[8][4];
-   GLbitfield LocalConstDef;  /** Indicates which constants have been set */
+   GLbitfield LocalConstDef;  /**< Indicates which constants have been set */
    GLubyte numArithInstr[2];
    GLubyte regsAssigned[2];
-   GLubyte NumPasses;         /** 1 or 2 */
+   GLubyte NumPasses;         /**< 1 or 2 */
    GLubyte cur_pass;
    GLubyte last_optype;
    GLboolean interpinp1;
@@ -1957,7 +1871,7 @@ struct ati_fragment_shader
 struct gl_ati_fragment_shader_state
 {
    GLboolean Enabled;
-   GLboolean _Enabled;                      /** enabled and valid shader? */
+   GLboolean _Enabled;                  /**< enabled and valid shader? */
    GLboolean Compiling;
    GLfloat GlobalConstants[8][4];
    struct ati_fragment_shader *Current;
@@ -2067,6 +1981,9 @@ struct gl_shader_program
 #define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
 #define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
 #define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+#define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
+#define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
+#define GLSL_USE_PROG 0x80  /**< Log glUseProgram calls */
 
 
 /**
@@ -2080,6 +1997,7 @@ struct gl_shader_state
    GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
+   GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
    void *MemPool;
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
@@ -2176,20 +2094,12 @@ struct gl_renderbuffer
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
+
    GLenum InternalFormat; /**< The user-specified format */
-   GLenum _ActualFormat;  /**< The driver-chosen format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum ColorEncoding; /**< GL_LINEAR or GL_SRGB */
-   GLenum ComponentType; /**< GL_FLOAT, GL_INT, GL_UNSIGNED_INT,
-                              GL_UNSIGNED_NORMALIZED or GL_INDEX */
-   GLubyte RedBits;      /**< Bits of red per pixel */
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits;
+   GLuint Format;         /**< The actual format: MESA_FORMAT_x */
+
    GLubyte NumSamples;
 
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
@@ -2409,6 +2319,7 @@ struct gl_constants
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
+   GLuint MaxCombinedTextureImageUnits;
    GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
@@ -2444,9 +2355,6 @@ struct gl_constants
    GLboolean CheckArrayBounds;
 
    GLuint MaxDrawBuffers;    /**< GL_ARB_draw_buffers */
-
-   GLenum ColorReadFormat;   /**< GL_OES_read_format */
-   GLenum ColorReadType;     /**< GL_OES_read_format */
 
    GLuint MaxColorAttachments;   /**< GL_EXT_framebuffer_object */
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
@@ -2527,9 +2435,10 @@ struct gl_extensions
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_range_elements;
-   GLboolean EXT_framebuffer_object;
    GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
+   GLboolean EXT_framebuffer_multisample;
+   GLboolean EXT_framebuffer_object;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
@@ -2583,6 +2492,7 @@ struct gl_extensions
    GLboolean MESA_texture_signed_rgba;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
+   GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_texgen_reflection;
@@ -3058,7 +2968,7 @@ struct __GLcontextRec
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
    /**@}*/
 
-   struct gl_list_extensions ListExt; /**< driver dlist extensions */
+   struct gl_list_extensions *ListExt; /**< driver dlist extensions */
 
    /** \name For debugging/development only */
    /*@{*/
@@ -3114,11 +3024,12 @@ extern int MESA_DEBUG_FLAGS;
 #endif
 
 
+/** The MESA_VERBOSE var is a bitmask of these flags */
 enum _verbose
 {
    VERBOSE_VARRAY		= 0x0001,
    VERBOSE_TEXTURE		= 0x0002,
-   VERBOSE_IMMEDIATE		= 0x0004,
+   VERBOSE_MATERIAL		= 0x0004,
    VERBOSE_PIPELINE		= 0x0008,
    VERBOSE_DRIVER		= 0x0010,
    VERBOSE_STATE		= 0x0020,
@@ -3128,9 +3039,12 @@ enum _verbose
    VERBOSE_PRIMS		= 0x0400,
    VERBOSE_VERTS		= 0x0800,
    VERBOSE_DISASSEM		= 0x1000,
+   VERBOSE_DRAW                 = 0x2000,
+   VERBOSE_SWAPBUFFERS          = 0x4000
 };
 
 
+/** The MESA_DEBUG_FLAGS var is a bitmask of these flags */
 enum _debug
 {
    DEBUG_ALWAYS_FLUSH		= 0x1

@@ -5511,7 +5511,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
    }
 
    if (*height <= 0)
-      return GL_TRUE;
+      return GL_FALSE;
 
    return GL_TRUE;
 }
@@ -5564,7 +5564,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
       *height -= (*srcY + *height - buffer->Height);
 
    if (*height <= 0)
-      return GL_TRUE;
+      return GL_FALSE;
 
    return GL_TRUE;
 }

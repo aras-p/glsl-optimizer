@@ -35,7 +35,7 @@ enum asm_type {
    at_attrib,
    at_param,
    at_temp,
-   at_output,
+   at_output
 };
 
 struct asm_symbol {
@@ -202,6 +202,7 @@ struct asm_parser_state {
       unsigned Shadow:1;
       unsigned TexRect:1;
       unsigned TexArray:1;
+      unsigned NV_fragment:1;
    } option;
 
    struct {
@@ -262,5 +263,32 @@ extern int _mesa_ARBvp_parse_option(struct asm_parser_state *state,
  */
 extern int _mesa_ARBfp_parse_option(struct asm_parser_state *state,
     const char *option);
+
+/**
+ * Parses and processes instruction suffixes
+ *
+ * Instruction suffixes, such as \c _SAT, are processed.  The relevant bits
+ * are set in \c inst.  If suffixes are encountered that are either not known
+ * or not supported by the modes and options set in \c state, zero will be
+ * returned.
+ *
+ * \return
+ * Non-zero on success, zero on failure.
+ */
+extern int _mesa_parse_instruction_suffix(const struct asm_parser_state *state,
+    const char *suffix, struct prog_instruction *inst);
+
+/**
+ * Parses a condition code name
+ *
+ * The condition code names (e.g., \c LT, \c GT, \c NE) were added to assembly
+ * shaders with the \c GL_NV_fragment_program_option extension.  This function
+ * converts a string representation into one of the \c COND_ macros.
+ *
+ * \return
+ * One of the \c COND_ macros defined in prog_instruction.h on success or zero
+ * on failure.
+ */
+extern int _mesa_parse_cc(const char *s);
 
 /*@}*/

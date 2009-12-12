@@ -274,9 +274,9 @@ draw(void)
 static void
 reshape(int width, int height)
 {
-   glViewport(0, 0, (GLint) width, (GLint) height);
-
    GLfloat h = (GLfloat) height / (GLfloat) width;
+
+   glViewport(0, 0, (GLint) width, (GLint) height);
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
@@ -333,6 +333,8 @@ static void run_gears(EGLDisplay dpy, EGLSurface surf, int ttr)
 	double st = current_time();
 	double ct = st;
 	int frames = 0;
+	GLfloat seconds, fps;
+
 	while (ct - st < ttr)
 	{
 		double tt = current_time();
@@ -352,8 +354,8 @@ static void run_gears(EGLDisplay dpy, EGLSurface surf, int ttr)
 		frames++;
 	}
 	
-	GLfloat seconds = ct - st;
-	GLfloat fps = frames / seconds;
+	seconds = ct - st;
+	fps = frames / seconds;
 	printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds, fps);
 	
 }
@@ -385,7 +387,7 @@ main(int argc, char *argv[])
 	}
 	
 	/* DBR : Create EGL context/surface etc */
-	d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
+	d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	assert(d);
 
 	if (!eglInitialize(d, &major, &minor)) {

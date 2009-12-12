@@ -29,6 +29,7 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/feedback.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -107,7 +108,7 @@ read_depth_pixels( GLcontext *ctx,
        && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT16);
+      ASSERT(rb->Format == MESA_FORMAT_Z16);
       ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
       for (j = 0; j < height; j++, y++) {
          void *dest =_mesa_image_address2d(packing, pixels, width, height,
@@ -119,8 +120,12 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT24);
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
+      ASSERT(rb->Format == MESA_FORMAT_X8_Z24 ||
+             rb->Format == MESA_FORMAT_S8_Z24 ||
+             rb->Format == MESA_FORMAT_Z24_X8 ||
+             rb->Format == MESA_FORMAT_Z24_S8);
+      ASSERT(rb->DataType == GL_UNSIGNED_INT ||
+             rb->DataType == GL_UNSIGNED_INT_24_8);
       for (j = 0; j < height; j++, y++) {
          GLuint *dest = (GLuint *)
             _mesa_image_address2d(packing, pixels, width, height,
@@ -128,9 +133,18 @@ read_depth_pixels( GLcontext *ctx,
          GLint k;
          rb->GetRow(ctx, rb, width, x, y, dest);
          /* convert range from 24-bit to 32-bit */
-         for (k = 0; k < width; k++) {
-            /* Note: put MSByte of 24-bit value into LSByte */
-            dest[k] = (dest[k] << 8) | ((dest[k] >> 16) & 0xff);
+         if (rb->Format == MESA_FORMAT_X8_Z24 ||
+             rb->Format == MESA_FORMAT_S8_Z24) {
+            for (k = 0; k < width; k++) {
+               /* Note: put MSByte of 24-bit value into LSByte */
+               dest[k] = (dest[k] << 8) | ((dest[k] >> 16) & 0xff);
+            }
+         }
+         else {
+            for (k = 0; k < width; k++) {
+               /* Note: fill in LSByte by replication */
+               dest[k] = dest[k] | ((dest[k] >> 8) & 0xff);
+            }
          }
       }
    }
@@ -138,7 +152,7 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->Format == MESA_FORMAT_Z32);
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       for (j = 0; j < height; j++, y++) {
          void *dest = _mesa_image_address2d(packing, pixels, width, height,
@@ -555,14 +569,14 @@ _swrast_ReadPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib clippedPacking = *packing;
 
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    /* Need to do swrast_render_start() before clipping or anything else
     * since this is where a driver may grab the hw lock and get an updated
     * window size.
     */
    swrast_render_start(ctx);
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );

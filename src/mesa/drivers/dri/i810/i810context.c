@@ -116,7 +116,7 @@ static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 
 /* Extension strings exported by the i810 driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_env_add",            NULL },

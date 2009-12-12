@@ -89,6 +89,23 @@ unsigned rc_constants_add_immediate_vec4(struct rc_constant_list * c, const floa
 unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float data, unsigned * swizzle);
 
 /**
+ * Compare functions.
+ *
+ * \note By design, RC_COMPARE_FUNC_xxx + GL_NEVER gives you
+ * the correct GL compare function.
+ */
+typedef enum {
+	RC_COMPARE_FUNC_NEVER = 0,
+	RC_COMPARE_FUNC_LESS,
+	RC_COMPARE_FUNC_EQUAL,
+	RC_COMPARE_FUNC_LEQUAL,
+	RC_COMPARE_FUNC_GREATER,
+	RC_COMPARE_FUNC_NOTEQUAL,
+	RC_COMPARE_FUNC_GEQUAL,
+	RC_COMPARE_FUNC_ALWAYS
+} rc_compare_func;
+
+/**
  * Stores state that influences the compilation of a fragment program.
  */
 struct r300_fragment_program_external_state {
@@ -105,10 +122,12 @@ struct r300_fragment_program_external_state {
 
 		/**
 		 * If the sampler is used as a shadow sampler,
-		 * this field is (texture_compare_func - GL_NEVER).
-		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
+		 * this field specifies the compare function.
+		 *
+		 * Otherwise, this field is \ref RC_COMPARE_FUNC_NEVER (aka 0).
 		 *
 		 * Otherwise, this field is 0.
+		 * \sa rc_compare_func
 		 */
 		unsigned texture_compare_func : 3;
 	} unit[16];
@@ -163,6 +182,8 @@ struct r500_fragment_program_code {
 	int inst_end; /* Number of instructions - 1; also, last instruction to be executed */
 
 	int max_temp_idx;
+
+	uint32_t us_fc_ctrl;
 };
 
 struct rX00_fragment_program_code {

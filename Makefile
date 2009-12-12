@@ -182,7 +182,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.7-devel
+VERSION=7.7-rc2
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -419,6 +419,12 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/README			\
 	$(DIRECTORY)/progs/fbdev/Makefile		\
 	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
+	$(DIRECTORY)/progs/objviewer/*.[ch]		\
+	$(DIRECTORY)/progs/objviewer/*.obj		\
+	$(DIRECTORY)/progs/objviewer/*.mtl		\
+	$(DIRECTORY)/progs/objviewer/*.rgb		\
+	$(DIRECTORY)/progs/objviewer/Makefile		\
+	$(DIRECTORY)/progs/objviewer/README.txt		\
 	$(DIRECTORY)/progs/osdemos/Makefile		\
 	$(DIRECTORY)/progs/osdemos/*.c			\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
@@ -437,8 +443,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c			\
-	$(DIRECTORY)/windows/VC7/progs/progs.sln
+	$(DIRECTORY)/progs/ggi/*.c
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
@@ -461,9 +466,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
 	$(DIRECTORY)/src/glut/directfb/Makefile		\
 	$(DIRECTORY)/src/glut/directfb/NOTES		\
-	$(DIRECTORY)/src/glut/directfb/*[ch]		\
-	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
-	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
+	$(DIRECTORY)/src/glut/directfb/*[ch]
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
@@ -503,9 +506,11 @@ rm_depend:
 		touch $$dep ; \
 	done
 
-lib_gz:
-	rm -f configs/current ; \
-	rm -f configs/autoconf ; \
+rm_config:
+	rm -f configs/current
+	rm -f configs/autoconf
+
+lib_gz: rm_config
 	cd .. ; \
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	gzip $(LIB_NAME).tar ; \
@@ -523,9 +528,7 @@ glut_gz:
 	gzip $(GLUT_NAME).tar ; \
 	mv $(GLUT_NAME).tar.gz $(DIRECTORY)
 
-lib_bz2:
-	rm -f configs/current ; \
-	rm -f configs/autoconf ; \
+lib_bz2: rm_config
 	cd .. ; \
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	bzip2 $(LIB_NAME).tar ; \
@@ -543,9 +546,7 @@ glut_bz2:
 	bzip2 $(GLUT_NAME).tar ; \
 	mv $(GLUT_NAME).tar.bz2 $(DIRECTORY)
 
-lib_zip:
-	rm -f configs/current ; \
-	rm -f configs/autoconf ; \
+lib_zip: rm_config
 	rm -f $(LIB_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
@@ -574,5 +575,7 @@ md5:
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
 
-.PHONY: tarballs rm_depend lib_gz demo_gz glut_gz lib_bz2 demo_bz2 \
-	glut_bz2 lib_zip demo_zip glut_zip md5
+.PHONY: tarballs rm_depend rm_config md5 \
+	lib_gz demo_gz glut_gz \
+	lib_bz2 demo_bz2 glut_bz2 \
+	lib_zip demo_zip glut_zip

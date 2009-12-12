@@ -111,6 +111,15 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 		}
 	}
 
+    for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
+	{
+		unBit = 1 << i;
+		if(mesa_vp->Base.OutputsWritten & unBit)
+		{
+			pAsm->ucVP_OutputMap[i] = unTotal++;
+		}
+	}
+
 	return (unTotal - unStart);
 }
 
@@ -159,7 +168,35 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 	return GL_TRUE;
 }
 
-void Map_Vertex_Program(struct r700_vertex_program *vp,
+GLboolean Process_Vertex_Program_Vfetch_Instructions2(
+    GLcontext *ctx,
+	struct r700_vertex_program *vp,
+	struct gl_vertex_program   *mesa_vp)
+{
+    int i;
+    context_t *context = R700_CONTEXT(ctx);
+
+    VTX_FETCH_METHOD vtxFetchMethod;
+	vtxFetchMethod.bEnableMini          = GL_FALSE;
+	vtxFetchMethod.mega_fetch_remainder = 0;
+
+    for(i=0; i<context->nNumActiveAos; i++)
+    {
+        assemble_vfetch_instruction2(&vp->r700AsmCode,
+                                      vp->r700AsmCode.ucVP_AttributeMap[context->stream_desc[i].element],
+                                      context->stream_desc[i].type,
+                                      context->stream_desc[i].size,
+                                      context->stream_desc[i].element,
+                                      context->stream_desc[i]._signed,
+                                      context->stream_desc[i].normalize,						            
+                                     &vtxFetchMethod);
+    }
+
+    return GL_TRUE;
+}
+
+void Map_Vertex_Program(GLcontext *ctx,
+                        struct r700_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
     GLuint ui;
@@ -175,10 +212,10 @@ void Map_Vertex_Program(struct r700_vertex_program *vp,
 	pAsm->number_used_registers += num_inputs;
 
 	// Create VFETCH instructions for inputs
-	if (GL_TRUE != Process_Vertex_Program_Vfetch_Instructions(vp, mesa_vp) ) 
+        if (GL_TRUE != Process_Vertex_Program_Vfetch_Instructions2(ctx, vp, mesa_vp) )
 	{
-		radeon_error("Calling Process_Vertex_Program_Vfetch_Instructions return error. \n");
-		return; //error
+		radeon_error("Calling Process_Vertex_Program_Vfetch_Instructions2 return error. \n");
+		return;
 	}
 
 	// Map Outputs
@@ -189,7 +226,7 @@ void Map_Vertex_Program(struct r700_vertex_program *vp,
 	pAsm->number_used_registers += pAsm->number_of_exports;
 
     pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
-    
+
     for(ui=0; ui<pAsm->number_of_exports; ui++)
     {
         pAsm->pucOutMask[ui] = 0x0;
@@ -206,7 +243,9 @@ void Map_Vertex_Program(struct r700_vertex_program *vp,
     {   /* fix func t_vp uses NumTemporaries */
         pAsm->number_used_registers += mesa_vp->Base.NumTemporaries;
     }
-	
+
+    pAsm->flag_reg_index = pAsm->number_used_registers++;
+
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
@@ -261,13 +300,10 @@ GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
 }
 
 struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
-						struct gl_vertex_program *mesa_vp)
+						      struct gl_vertex_program *mesa_vp)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	struct r700_vertex_program *vp;
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *vb = &tnl->vb;
-	unsigned int unBit;
 	unsigned int i;
 
 	vp = _mesa_calloc(sizeof(*vp));
@@ -278,17 +314,13 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
                 _mesa_insert_mvp_code(ctx, vp->mesa_program);
         }
 
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
+	for(i=0; i<context->nNumActiveAos; i++)
 	{
-		unBit = 1 << i;
-		if(vp->mesa_program->Base.InputsRead & unBit) /* ctx->Array.ArrayObj->xxxxxxx */
-		{
-			vp->aos_desc[i].size   = vb->AttribPtr[i]->size;
-			vp->aos_desc[i].stride = vb->AttribPtr[i]->size * sizeof(GL_FLOAT);/* when emit array, data is packed. vb->AttribPtr[i]->stride;*/
-			vp->aos_desc[i].type   = GL_FLOAT;
-		}
+		vp->aos_desc[i].size   = context->stream_desc[i].size;
+		vp->aos_desc[i].stride = context->stream_desc[i].stride;
+		vp->aos_desc[i].type   = context->stream_desc[i].type;
 	}
-	
+
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
 	{
 		vp->r700AsmCode.bR6xx = 1;
@@ -296,23 +328,39 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 
 	//Init_Program
 	Init_r700_AssemblerBase(SPT_VP, &(vp->r700AsmCode), &(vp->r700Shader) );
-	Map_Vertex_Program( vp, vp->mesa_program );
+	Map_Vertex_Program(ctx, vp, vp->mesa_program );
 
 	if(GL_FALSE == Find_Instruction_Dependencies_vp(vp, vp->mesa_program))
 	{
 		return NULL;
+	}
+
+    InitShaderProgram(&(vp->r700AsmCode));
+
+    for(i=0; i < MAX_SAMPLERS; i++)
+    {
+        vp->r700AsmCode.SamplerUnits[i] = vp->mesa_program->Base.SamplerUnits[i];
     }
 
-	if(GL_FALSE == AssembleInstr(vp->mesa_program->Base.NumInstructions,
-                                 &(vp->mesa_program->Base.Instructions[0]), 
+    vp->r700AsmCode.unCurNumILInsts = vp->mesa_program->Base.NumInstructions;
+
+	if(GL_FALSE == AssembleInstr(0,
+                                 0,
+                                 vp->mesa_program->Base.NumInstructions,
+                                 &(vp->mesa_program->Base.Instructions[0]),
                                  &(vp->r700AsmCode)) )
 	{
 		return NULL;
-	} 
+	}
 
     if(GL_FALSE == Process_Vertex_Exports(&(vp->r700AsmCode), vp->mesa_program->Base.OutputsWritten) )
     {
         return NULL;
+    }
+
+    if( GL_FALSE == RelocProgram(&(vp->r700AsmCode), &(vp->mesa_program->Base)) )
+    {
+        return GL_FALSE;
     }
 
     vp->r700Shader.nRegs = (vp->r700AsmCode.number_used_registers == 0) ? 0 
@@ -330,9 +378,6 @@ void r700SelectVertexShader(GLcontext *ctx)
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program_cont *vpc;
     struct r700_vertex_program *vp;
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-    struct vertex_buffer *vb = &tnl->vb;
-    unsigned int unBit;
     unsigned int i;
     GLboolean match;
     GLbitfield InputsRead;
@@ -343,29 +388,27 @@ void r700SelectVertexShader(GLcontext *ctx)
     if (vpc->mesa_program.IsPositionInvariant)
     {
 	InputsRead |= VERT_BIT_POS;
-    } 
-    
+    }
+
     for (vp = vpc->progs; vp; vp = vp->next)
     {
-	match = GL_TRUE;	
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
+	match = GL_TRUE;
+	for(i=0; i<context->nNumActiveAos; i++)
 	{
-		unBit = 1 << i;
-		if(InputsRead & unBit)
+		if (vp->aos_desc[i].size != context->stream_desc[i].size)
 		{
-			if (vp->aos_desc[i].size != vb->AttribPtr[i]->size)
-				match = GL_FALSE;
-				break;
+			match = GL_FALSE;
+			break;
 		}
 	}
-	if (match) 
+	if (match)
 	{
 		context->selected_vp = vp;
 		return;
 	}
     }
 
-    vp = r700TranslateVertexShader(ctx, &(vpc->mesa_program) );
+    vp = r700TranslateVertexShader(ctx, &(vpc->mesa_program));
     if(!vp)
     {
 	radeon_error("Failed to translate vertex shader. \n");
@@ -375,6 +418,146 @@ void r700SelectVertexShader(GLcontext *ctx)
     vpc->progs = vp;
     context->selected_vp = vp;
     return;
+}
+
+int getTypeSize(GLenum type)
+{
+    switch (type) 
+    {
+    case GL_DOUBLE:
+        return sizeof(GLdouble);
+    case GL_FLOAT:
+        return sizeof(GLfloat);
+    case GL_INT:
+        return sizeof(GLint);
+    case GL_UNSIGNED_INT:
+        return sizeof(GLuint);
+    case GL_SHORT:
+        return sizeof(GLshort);
+    case GL_UNSIGNED_SHORT:
+        return sizeof(GLushort);
+    case GL_BYTE:
+        return sizeof(GLbyte);
+    case GL_UNSIGNED_BYTE:
+        return sizeof(GLubyte);
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    
+    StreamDesc * pStreamDesc = &(context->stream_desc[context->nNumActiveAos]);
+
+	GLuint stride;
+
+	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size 
+                                   : input->StrideB;
+
+    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
+#if MESA_BIG_ENDIAN
+        getTypeSize(input->Type) != 4 ||
+#endif
+        stride < 4) 
+    {
+        pStreamDesc->type = GL_FLOAT;
+
+        if (input->StrideB == 0) 
+        {
+	        pStreamDesc->stride = 0;
+        } 
+        else 
+        {
+	        pStreamDesc->stride = sizeof(GLfloat) * input->Size;
+        }
+        pStreamDesc->dwords = input->Size;
+        pStreamDesc->is_named_bo = GL_FALSE;
+    } 
+    else 
+    {
+        pStreamDesc->type = input->Type;
+        pStreamDesc->dwords = (getTypeSize(input->Type) * input->Size + 3)/ 4;
+        if (!input->BufferObj->Name) 
+        {
+            if (input->StrideB == 0) 
+            {
+                pStreamDesc->stride = 0;
+            } 
+            else 
+            {
+                pStreamDesc->stride = (getTypeSize(pStreamDesc->type) * input->Size + 3) & ~3;
+            }
+
+            pStreamDesc->is_named_bo = GL_FALSE;
+        }
+    }
+
+	pStreamDesc->size = input->Size;
+	pStreamDesc->dst_loc = context->nNumActiveAos;
+	pStreamDesc->element = unLoc;
+
+	switch (pStreamDesc->type) 
+	{ //GetSurfaceFormat
+	case GL_FLOAT:
+		pStreamDesc->_signed = 0;
+		pStreamDesc->normalize = GL_FALSE;
+		break;
+	case GL_SHORT:
+		pStreamDesc->_signed = 1;
+		pStreamDesc->normalize = input->Normalized;
+		break;
+	case GL_BYTE:
+		pStreamDesc->_signed = 1;
+		pStreamDesc->normalize = input->Normalized;
+		break;
+	case GL_UNSIGNED_SHORT:
+		pStreamDesc->_signed = 0;
+		pStreamDesc->normalize = input->Normalized;
+		break;
+	case GL_UNSIGNED_BYTE:
+		pStreamDesc->_signed = 0;
+		pStreamDesc->normalize = input->Normalized;
+		break;
+	default:
+	case GL_INT:
+	case GL_UNSIGNED_INT:
+	case GL_DOUBLE: 
+		assert(0);
+		break;
+	}
+	context->nNumActiveAos++;
+}
+
+void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    struct r700_vertex_program *vpc
+           = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+
+    struct gl_vertex_program * mesa_vp = (struct gl_vertex_program *)&(vpc->mesa_program);
+    unsigned int unLoc = 0;
+    unsigned int unBit = mesa_vp->Base.InputsRead;
+    context->nNumActiveAos = 0;
+
+    if (mesa_vp->IsPositionInvariant)
+    {
+        unBit |= VERT_BIT_POS;
+    }
+
+    while(unBit) 
+    {
+        if(unBit & 1)
+        {
+            r700TranslateAttrib(ctx, unLoc, count, arrays[unLoc]);
+        }
+
+        unBit >>= 1;
+        ++unLoc;
+    }
+    context->radeon.tcl.aos_count = context->nNumActiveAos;
 }
 
 void * r700GetActiveVpShaderBo(GLcontext * ctx)
@@ -456,6 +639,12 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     paramList = vp->mesa_program->Base.Parameters;
 
     if(NULL != paramList) {
+        /* vp->mesa_program was cloned, not updated by glsl shader api. */
+        /* _mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current */
+        /* so, use ctx->VertexProgem._Current */       
+        struct gl_program_parameter_list *paramListOrginal = 
+                         paramListOrginal = ctx->VertexProgram._Current->Base.Parameters;
+         
 	    _mesa_load_state_parameters(ctx, paramList);
 
 	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
@@ -468,13 +657,42 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		    r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		    r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		    r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		    r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
+            {
+                r700->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
+            }
+            else
+            {
+		        r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            }
 	    }
     } else
 	    r700->vs.num_consts = 0;
+
+    COMPILED_SUB * pCompiledSub;
+    GLuint uj;
+    GLuint unConstOffset = r700->vs.num_consts;
+    for(ui=0; ui<vp->r700AsmCode.unNumPresub; ui++)
+    {
+        pCompiledSub = vp->r700AsmCode.presubs[ui].pCompiledSub;
+
+        r700->vs.num_consts += pCompiledSub->NumParameters;
+
+        for(uj=0; uj<pCompiledSub->NumParameters; uj++)
+        {
+            r700->vs.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
+		    r700->vs.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
+		    r700->vs.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
+		    r700->vs.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
+        }
+        unConstOffset += pCompiledSub->NumParameters;
+    }
 
     return GL_TRUE;
 }

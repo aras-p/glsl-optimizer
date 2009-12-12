@@ -36,48 +36,22 @@
 #ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 
-#if _HAVE_FULL_GL
+#if FEATURE_histogram
 
-extern void GLAPIENTRY 
-_mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values);
+extern void
+_mesa_init_histogram_dispatch(struct _glapi_table *disp);
 
-extern void GLAPIENTRY 
-_mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values);
+#else /* FEATURE_histogram */
 
-extern void GLAPIENTRY 
-_mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params);
+static INLINE void
+_mesa_init_histogram_dispatch(struct _glapi_table *disp)
+{
+}
 
-extern void GLAPIENTRY 
-_mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY 
-_mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params);
-
-extern void GLAPIENTRY 
-_mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY 
-_mesa_Histogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink);
-
-extern void GLAPIENTRY 
-_mesa_Minmax(GLenum target, GLenum internalformat, GLboolean sink);
-
-extern void GLAPIENTRY 
-_mesa_ResetHistogram(GLenum target);
-
-extern void GLAPIENTRY 
-_mesa_ResetMinmax(GLenum target);
+#endif /* FEATURE_histogram */
 
 extern void _mesa_init_histogram( GLcontext * ctx );
 
-#else
-
-/** No-op */
-#define _mesa_init_histogram( c ) ((void) 0)
-
-#endif
-
-#endif
+#endif /* HISTOGRAM_H */

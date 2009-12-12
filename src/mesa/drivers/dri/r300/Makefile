@@ -43,17 +43,19 @@ RADEON_COMMON_SOURCES = \
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
+		 r300_blit.c \
 		 r300_context.c \
 		 r300_draw.c \
-		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
 		 r300_render.c \
 		 r300_tex.c \
+		 r300_texcopy.c \
 		 r300_texstate.c \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \
 		 r300_shader.c \
+		 radeon_mesa_to_rc.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
 		 $(RADEON_COMMON_SOURCES) \
@@ -68,16 +70,12 @@ DRIVER_DEFINES = -DRADEON_R300
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
-PIPE_DRIVERS =  compiler/libr300compiler.a
+SUBDIRS = compiler
+
+EXTRA_MODULES = compiler/libr300compiler.a
+
 
 ##### TARGETS #####
 
 include ../Makefile.template
 
-symlinks:
-
-# Mark the archive phony so that we always check for recompilation
-.PHONY : compiler/libr300compiler.a
-
-compiler/libr300compiler.a:
-	cd compiler && $(MAKE)

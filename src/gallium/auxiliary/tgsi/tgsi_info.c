@@ -134,10 +134,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 0, 0, 0, 0, 1, "BGNSUB", TGSI_OPCODE_BGNSUB },
    { 0, 0, 0, 1, 1, 0, "ENDLOOP", TGSI_OPCODE_ENDLOOP },
    { 0, 0, 0, 0, 1, 0, "ENDSUB", TGSI_OPCODE_ENDSUB },
-   { 1, 1, 0, 0, 0, 0, "NOISE1", TGSI_OPCODE_NOISE1 },
-   { 1, 1, 0, 0, 0, 0, "NOISE2", TGSI_OPCODE_NOISE2 },
-   { 1, 1, 0, 0, 0, 0, "NOISE3", TGSI_OPCODE_NOISE3 },
-   { 1, 1, 0, 0, 0, 0, "NOISE4", TGSI_OPCODE_NOISE4 },
+   { 0, 0, 0, 0, 0, 0, "", 103 },     /* removed */
+   { 0, 0, 0, 0, 0, 0, "", 104 },     /* removed */
+   { 0, 0, 0, 0, 0, 0, "", 105 },     /* removed */
+   { 0, 0, 0, 0, 0, 0, "", 106 },     /* removed */
    { 0, 0, 0, 0, 0, 0, "NOP", TGSI_OPCODE_NOP },
    { 0, 0, 0, 0, 0, 0, "", 108 },     /* removed */
    { 0, 0, 0, 0, 0, 0, "", 109 },     /* removed */
@@ -149,7 +149,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, 0, 0, "BREAKC", TGSI_OPCODE_BREAKC },
    { 0, 1, 0, 0, 0, 0, "KIL", TGSI_OPCODE_KIL },
    { 0, 0, 0, 0, 0, 0, "END", TGSI_OPCODE_END },
-   { 1, 1, 0, 0, 0, 0, "SWZ", TGSI_OPCODE_SWZ }
+   { 0, 0, 0, 0, 0, 0, "", 118 }      /* removed */
 };
 
 const struct tgsi_opcode_info *

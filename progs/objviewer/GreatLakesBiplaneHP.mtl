@@ -1,0 +1,161 @@
+# Exported from Wings 3D 0.99.03
+
+# Top flaps
+newmtl BottomWing
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 0.0 0.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd TopBotMap.rgb
+
+newmtl CompBall_auv
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd CompBall_auv.rgb
+
+newmtl EngMat1
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.334 0.334 0.334
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl EngMat2
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.78688 0.78688 0.78688
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl Fuselage_auv
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 1.0
+Ka 0.0 0.0 0.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd SidesMap.rgb
+
+newmtl Glass
+Ns 100.0
+d 0.5
+illum 2
+#Kd 0.5533333333333333 1.0 1.0
+Kd 1.0 1.0 1.0
+#Ka 0.37333333333333335 0.68 1.0
+Ka 0.0 0.0 0.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl Grip
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.47386 0.47386 0.47386
+Ka 0.6203799999999999 0.6203799999999999 0.6203799999999999
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl Interior
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.70696 0.70696 0.70696
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl Prop
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 0.6266666666666667
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd PropMap.rgb
+
+# Rudder
+newmtl Sides
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 0.0 0.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd SidesMap.rgb
+
+newmtl TailHoriz
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 0.0 0.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd TopBotMap.rgb
+
+# Top wing, bot wing, fuselage
+newmtl TopWing
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd TopBotMap.rgb
+
+newmtl Wheels
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.0 0.0 0.0
+Ka 0.0 0.0 0.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd WheelsMap.rgb
+
+newmtl cylinder58_auv
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd cylinder58_auv.rgb
+
+newmtl default
+Ns 100.0
+d 1.0
+illum 2
+Kd 0.0 1.0 1.0
+Ka 0.0 1.0 1.0
+Ks 0.0 1.0 1.0
+Ke 0.0 0.0 0.0
+
+newmtl gage_auv
+Ns 100.0
+d 1.0
+illum 2
+Kd 1.0 1.0 1.0
+Ka 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
+Ke 0.0 0.0 0.0
+map_Kd gage_auv.rgb
+

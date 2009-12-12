@@ -146,7 +146,7 @@ static void r300_vs_op_dump(uint32_t op)
 static void r300_vs_src_dump(uint32_t src)
 {
 	fprintf(stderr, " reg: %d%s swiz: %s%s/%s%s/%s%s/%s%s\n",
-			(src >> 5) & 0x7f, r300_vs_src_debug[src & 0x3],
+			(src >> 5) & 0xff, r300_vs_src_debug[src & 0x3],
 			src & (1 << 25) ? "-" : " ",
 			r300_vs_swiz_debug[(src >> 13) & 0x7],
 			src & (1 << 26) ? "-" : " ",

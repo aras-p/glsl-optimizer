@@ -16,73 +16,6 @@
 
 #include "GL/internal/glcore.h"
 
-#define need_GL_ARB_multisample
-#define need_GL_ARB_point_parameters
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_buffer_object
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_window_pos
-#define need_GL_EXT_blend_color
-#define need_GL_EXT_blend_equation_separate
-#define need_GL_EXT_blend_func_separate
-#define need_GL_EXT_blend_minmax
-#define need_GL_EXT_cull_vertex
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_multi_draw_arrays
-#define need_GL_EXT_secondary_color
-#define need_GL_NV_vertex_program
-#include "extension_helper.h"
-
-/**
- * TODO HACK! FUGLY!
- * Copied for intel extentions.
- */
-const struct dri_extension card_extensions[] = {
-	{"GL_ARB_multisample", GL_ARB_multisample_functions},
-	{"GL_ARB_multitexture", NULL},
-	{"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
-	{"GL_ARB_texture_border_clamp", NULL},
-	{"GL_ARB_texture_compression", GL_ARB_texture_compression_functions},
-	{"GL_ARB_texture_cube_map", NULL},
-	{"GL_ARB_texture_env_add", NULL},
-	{"GL_ARB_texture_env_combine", NULL},
-	{"GL_ARB_texture_env_dot3", NULL},
-	{"GL_ARB_texture_mirrored_repeat", NULL},
-	{"GL_ARB_texture_rectangle", NULL},
-	{"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-	{"GL_ARB_pixel_buffer_object", NULL},
-	{"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
-	{"GL_ARB_window_pos", GL_ARB_window_pos_functions},
-	{"GL_EXT_blend_color", GL_EXT_blend_color_functions},
-	{"GL_EXT_blend_equation_separate", GL_EXT_blend_equation_separate_functions},
-	{"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
-	{"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
-	{"GL_EXT_blend_subtract", NULL},
-	{"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
-	{"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-	{"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
-	{"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
-	{"GL_EXT_packed_depth_stencil", NULL},
-	{"GL_EXT_pixel_buffer_object", NULL},
-	{"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
-	{"GL_EXT_stencil_wrap", NULL},
-	{"GL_EXT_texture_edge_clamp", NULL},
-	{"GL_EXT_texture_env_combine", NULL},
-	{"GL_EXT_texture_env_dot3", NULL},
-	{"GL_EXT_texture_filter_anisotropic", NULL},
-	{"GL_EXT_texture_lod_bias", NULL},
-	{"GL_3DFX_texture_compression_FXT1", NULL},
-	{"GL_APPLE_client_storage", NULL},
-	{"GL_MESA_pack_invert", NULL},
-	{"GL_MESA_ycbcr_texture", NULL},
-	{"GL_NV_blend_square", NULL},
-	{"GL_NV_vertex_program", GL_NV_vertex_program_functions},
-	{"GL_NV_vertex_program1_1", NULL},
-	{"GL_SGIS_generate_mipmap", NULL },
-	{NULL, NULL}
-};
-
 _EGLContext *
 drm_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, _EGLContext *share_list, const EGLint *attrib_list)
 {
@@ -138,7 +71,6 @@ drm_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *context)
 	struct drm_context *c = lookup_drm_context(context);
 	if (!_eglIsContextBound(&c->base)) {
 		st_destroy_context(c->st);
-		c->pipe->destroy(c->pipe);
 		free(c);
 	}
 	return EGL_TRUE;
@@ -160,18 +92,12 @@ drm_make_current(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurfa
 		if (!drawSurf || !readSurf)
 			return EGL_FALSE;
 
-		drawSurf->user = ctx;
-		readSurf->user = ctx;
-
 		st_make_current(ctx->st, drawSurf->stfb, readSurf->stfb);
 
 		/* st_resize_framebuffer needs a bound context to work */
 		st_resize_framebuffer(drawSurf->stfb, drawSurf->w, drawSurf->h);
 		st_resize_framebuffer(readSurf->stfb, readSurf->w, readSurf->h);
 	} else {
-		drawSurf->user = NULL;
-		readSurf->user = NULL;
-
 		st_make_current(NULL, NULL, NULL);
 	}
 

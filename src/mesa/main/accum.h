@@ -38,25 +38,40 @@
 #define ACCUM_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
-#if _HAVE_FULL_GL
+#if FEATURE_accum
 
-extern void GLAPIENTRY
-_mesa_Accum( GLenum op, GLfloat value );
-
+#define _MESA_INIT_ACCUM_FUNCTIONS(driver, impl) \
+   do {                                          \
+      (driver)->Accum = impl ## Accum;           \
+   } while (0)
 
 extern void GLAPIENTRY
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha );
 
-extern void 
+extern void
+_mesa_init_accum_dispatch(struct _glapi_table *disp);
+
+#else /* FEATURE_accum */
+
+#define _MESA_INIT_ACCUM_FUNCTIONS(driver, impl) do { } while (0)
+
+static INLINE void
+_mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+   /* this is used in _mesa_PopAttrib */
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_init_accum_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_accum */
+
+extern void
 _mesa_init_accum( GLcontext *ctx );
 
-#else
-
-/** No-op */
-#define _mesa_init_accum( c ) ((void)0)
-
-#endif
-
-#endif
+#endif /* ACCUM_H */

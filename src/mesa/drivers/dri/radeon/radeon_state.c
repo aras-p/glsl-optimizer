@@ -550,6 +550,31 @@ static void radeonPolygonOffset( GLcontext *ctx,
    rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = constant.ui32;
 }
 
+static void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   GLuint i;
+   drm_radeon_stipple_t stipple;
+
+   /* Must flip pattern upside down.
+    */
+   for ( i = 0 ; i < 32 ; i++ ) {
+      rmesa->state.stipple.mask[31 - i] = ((GLuint *) mask)[i];
+   }
+
+   /* TODO: push this into cmd mechanism
+    */
+   radeon_firevertices(&rmesa->radeon);
+   LOCK_HARDWARE( &rmesa->radeon );
+
+   /* FIXME: Use window x,y offsets into stipple RAM.
+    */
+   stipple.mask = rmesa->state.stipple.mask;
+   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE,
+		    &stipple, sizeof(drm_radeon_stipple_t) );
+   UNLOCK_HARDWARE( &rmesa->radeon );
+}
+
 static void radeonPolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);

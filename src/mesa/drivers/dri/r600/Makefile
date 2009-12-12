@@ -29,6 +29,7 @@ COMMON_SOURCES = \
 RADEON_COMMON_SOURCES = \
 	radeon_bo_legacy.c \
 	radeon_common_context.c \
+	radeon_buffer_objects.c \
 	radeon_common.c \
 	radeon_cs_legacy.c \
 	radeon_dma.c \
@@ -75,4 +76,3 @@ DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 include ../Makefile.template
 
-symlinks:

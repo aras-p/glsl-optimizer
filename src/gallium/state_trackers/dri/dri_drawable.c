@@ -45,7 +45,8 @@
 #include "state_tracker/st_cb_fbo.h"
 
 #include "util/u_memory.h"
-
+#include "util/u_rect.h"
+ 
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,
 			struct pipe_screen *screen,
@@ -61,11 +62,10 @@ dri_surface_from_handle(struct drm_api *api,
    templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
    templat.target = PIPE_TEXTURE_2D;
    templat.last_level = 0;
-   templat.depth[0] = 1;
+   templat.depth0 = 1;
    templat.format = format;
-   templat.width[0] = width;
-   templat.height[0] = height;
-   pf_get_block(templat.format, &templat.block);
+   templat.width0 = width;
+   templat.height0 = height;
 
    texture = api->texture_from_shared_handle(api, screen, &templat,
                                              "dri2 buffer", pitch, handle);
@@ -179,7 +179,6 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -214,6 +213,7 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 					dri_drawable->h, buffers[i].pitch);
 
       switch (buffers[i].attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
       case __DRI_BUFFER_BACK_LEFT:
 	 drawable->color_format = surface->format;
@@ -223,6 +223,9 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       case __DRI_BUFFER_STENCIL:
 	 drawable->depth_stencil_format = surface->format;
 	 break;
+      case __DRI_BUFFER_ACCUM:
+      default:
+	 assert(0);
       }
 
       st_set_framebuffer_surface(drawable->stfb, index, surface);
@@ -249,6 +252,9 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 
    dri_get_buffers(drawable->dPriv);
    st_get_framebuffer_surface(drawable->stfb, ST_SURFACE_FRONT_LEFT, &ps);
+
+   if (!ps)
+      return;
 
    st_bind_texture_surface(ps, target == GL_TEXTURE_2D ? ST_TEXTURE_2D :
                            ST_TEXTURE_RECT, 0, drawable->color_format);
@@ -360,8 +366,6 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
 
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-   else
-      drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
    if (visual->depthBits && visual->stencilBits)
       drawable->attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
    else if (visual->depthBits)
@@ -537,12 +541,21 @@ dri1_swap_copy(struct dri_context *ctx,
    cur = dPriv->pClipRects;
 
    for (i = 0; i < dPriv->numClipRects; ++i) {
-      if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox))
-	 pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
-			    src,
-			    (int)clip.x1 - dPriv->x,
-			    (int)clip.y1 - dPriv->y,
-			    clip.x2 - clip.x1, clip.y2 - clip.y1);
+      if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox)) {
+         if (pipe->surface_copy) {
+            pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
+                               src,
+                               (int)clip.x1 - dPriv->x,
+                               (int)clip.y1 - dPriv->y,
+                               clip.x2 - clip.x1, clip.y2 - clip.y1);
+         } else {
+            util_surface_copy(pipe, FALSE, dst, clip.x1, clip.y1,
+                              src,
+                              (int)clip.x1 - dPriv->x,
+                              (int)clip.y1 - dPriv->y,
+                              clip.x2 - clip.x1, clip.y2 - clip.y1);
+         }
+      }
    }
 }
 

@@ -35,9 +35,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/vtxfmt.h"
-#if FEATURE_dlist
 #include "main/dlist.h"
-#endif
+#include "main/eval.h"
 #include "main/state.h"
 #include "main/light.h"
 #include "main/api_arrayelt.h"
@@ -58,7 +57,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void reset_attrfv( struct vbo_exec_context *exec );
 
 
-/* Close off the last primitive, execute the buffer, restart the
+/**
+ * Close off the last primitive, execute the buffer, restart the
  * primitive.  
  */
 static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
@@ -107,7 +107,8 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
 }
 
 
-/* Deal with buffer wrapping where provoked by the vertex buffer
+/**
+ * Deal with buffer wrapping where provoked by the vertex buffer
  * filling up, as opposed to upgrade_vertex().
  */
 void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
@@ -136,7 +137,7 @@ void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
 }
 
 
-/*
+/**
  * Copy the active vertex's values to the ctx->Current fields.
  */
 static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
@@ -209,7 +210,8 @@ static void vbo_exec_copy_from_current( struct vbo_exec_context *exec )
 }
 
 
-/* Flush existing data, set new attrib size, replay copied vertices.
+/**
+ * Flush existing data, set new attrib size, replay copied vertices.
  */ 
 static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 					  GLuint attr,
@@ -349,7 +351,7 @@ static void vbo_exec_fixup_vertex( GLcontext *ctx,
 }
 
 
-
+#if FEATURE_beginend
 
 /* 
  */
@@ -392,8 +394,8 @@ do {								\
 
 
 
-/* Eval
- */
+#if FEATURE_evaluators
+
 static void GLAPIENTRY vbo_exec_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT( ctx );
@@ -485,9 +487,15 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
    vbo_exec_EvalCoord2f( u, v );
 }
 
+/* use noop eval mesh */
+#define vbo_exec_EvalMesh1 _mesa_noop_EvalMesh1
+#define vbo_exec_EvalMesh2 _mesa_noop_EvalMesh2
 
-/* Build a list of primitives on the fly.  Keep
- * ctx->Driver.CurrentExecPrimitive uptodate as well.
+#endif /* FEATURE_evaluators */
+
+
+/**
+ * Called via glBegin.
  */
 static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
 {
@@ -531,6 +539,10 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
       
 }
 
+
+/**
+ * Called via glEnd.
+ */
 static void GLAPIENTRY vbo_exec_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
@@ -557,24 +569,15 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 {
    GLvertexformat *vfmt = &exec->vtxfmt;
 
-   vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
+   _MESA_INIT_ARRAYELT_VTXFMT(vfmt, _ae_);
+
    vfmt->Begin = vbo_exec_Begin;
-#if FEATURE_dlist
-   vfmt->CallList = _mesa_CallList;
-   vfmt->CallLists = _mesa_CallLists;
-#endif
    vfmt->End = vbo_exec_End;
-   vfmt->EvalCoord1f = vbo_exec_EvalCoord1f;
-   vfmt->EvalCoord1fv = vbo_exec_EvalCoord1fv;
-   vfmt->EvalCoord2f = vbo_exec_EvalCoord2f;
-   vfmt->EvalCoord2fv = vbo_exec_EvalCoord2fv;
-   vfmt->EvalPoint1 = vbo_exec_EvalPoint1;
-   vfmt->EvalPoint2 = vbo_exec_EvalPoint2;
+
+   _MESA_INIT_DLIST_VTXFMT(vfmt, _mesa_);
+   _MESA_INIT_EVAL_VTXFMT(vfmt, vbo_exec_);
 
    vfmt->Rectf = _mesa_noop_Rectf;
-   vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
-   vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
-
 
    /* from attrib_tmp.h:
     */
@@ -638,6 +641,98 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 }
 
 
+#else /* FEATURE_beginend */
+
+
+#define ATTR( A, N, V0, V1, V2, V3 )				\
+do {								\
+   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
+								\
+   /* FLUSH_UPDATE_CURRENT needs to be set manually */		\
+   exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;		\
+								\
+   if (exec->vtx.active_sz[A] != N)				\
+      vbo_exec_fixup_vertex(ctx, A, N);				\
+								\
+   {								\
+      GLfloat *dest = exec->vtx.attrptr[A];			\
+      if (N>0) dest[0] = V0;					\
+      if (N>1) dest[1] = V1;					\
+      if (N>2) dest[2] = V2;					\
+      if (N>3) dest[3] = V3;					\
+   }								\
+} while (0)
+
+#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define TAG(x) vbo_##x
+
+#include "vbo_attrib_tmp.h"
+
+static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
+{
+   /* silence warnings */
+   (void) vbo_Color3f;
+   (void) vbo_Color3fv;
+   (void) vbo_Color4f;
+   (void) vbo_Color4fv;
+   (void) vbo_FogCoordfEXT;
+   (void) vbo_FogCoordfvEXT;
+   (void) vbo_MultiTexCoord1f;
+   (void) vbo_MultiTexCoord1fv;
+   (void) vbo_MultiTexCoord2f;
+   (void) vbo_MultiTexCoord2fv;
+   (void) vbo_MultiTexCoord3f;
+   (void) vbo_MultiTexCoord3fv;
+   (void) vbo_MultiTexCoord4f;
+   (void) vbo_MultiTexCoord4fv;
+   (void) vbo_Normal3f;
+   (void) vbo_Normal3fv;
+   (void) vbo_SecondaryColor3fEXT;
+   (void) vbo_SecondaryColor3fvEXT;
+   (void) vbo_TexCoord1f;
+   (void) vbo_TexCoord1fv;
+   (void) vbo_TexCoord2f;
+   (void) vbo_TexCoord2fv;
+   (void) vbo_TexCoord3f;
+   (void) vbo_TexCoord3fv;
+   (void) vbo_TexCoord4f;
+   (void) vbo_TexCoord4fv;
+   (void) vbo_Vertex2f;
+   (void) vbo_Vertex2fv;
+   (void) vbo_Vertex3f;
+   (void) vbo_Vertex3fv;
+   (void) vbo_Vertex4f;
+   (void) vbo_Vertex4fv;
+
+   (void) vbo_VertexAttrib1fARB;
+   (void) vbo_VertexAttrib1fvARB;
+   (void) vbo_VertexAttrib2fARB;
+   (void) vbo_VertexAttrib2fvARB;
+   (void) vbo_VertexAttrib3fARB;
+   (void) vbo_VertexAttrib3fvARB;
+   (void) vbo_VertexAttrib4fARB;
+   (void) vbo_VertexAttrib4fvARB;
+
+   (void) vbo_VertexAttrib1fNV;
+   (void) vbo_VertexAttrib1fvNV;
+   (void) vbo_VertexAttrib2fNV;
+   (void) vbo_VertexAttrib2fvNV;
+   (void) vbo_VertexAttrib3fNV;
+   (void) vbo_VertexAttrib3fvNV;
+   (void) vbo_VertexAttrib4fNV;
+   (void) vbo_VertexAttrib4fvNV;
+
+   (void) vbo_Materialfv;
+
+   (void) vbo_EdgeFlag;
+   (void) vbo_Indexf;
+   (void) vbo_Indexfv;
+}
+
+
+#endif /* FEATURE_beginend */
+
+
 /**
  * Tell the VBO module to use a real OpenGL vertex buffer object to
  * store accumulated immediate-mode vertex data.
@@ -695,8 +790,14 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    _mesa_install_exec_vtxfmt( exec->ctx, &exec->vtxfmt );
 
    for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
+      ASSERT(i < Elements(exec->vtx.attrsz));
       exec->vtx.attrsz[i] = 0;
+      ASSERT(i < Elements(exec->vtx.active_sz));
       exec->vtx.active_sz[i] = 0;
+   }
+   for (i = 0 ; i < VERT_ATTRIB_MAX; i++) {
+      ASSERT(i < Elements(exec->vtx.inputs));
+      ASSERT(i < Elements(exec->vtx.arrays));
       exec->vtx.inputs[i] = &exec->vtx.arrays[i];
    }
    
@@ -766,15 +867,27 @@ void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
 }
 
 
-
+/**
+ * \param flags  bitmask of FLUSH_STORED_VERTICES, FLUSH_UPDATE_CURRENT
+ */
 void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+
+#ifdef DEBUG
+   /* debug check: make sure we don't get called recursively */
+   exec->flush_call_depth++;
+   assert(exec->flush_call_depth == 1);
+#endif
 
    if (0) _mesa_printf("%s\n", __FUNCTION__);
 
    if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       if (0) _mesa_printf("%s - inside begin/end\n", __FUNCTION__);
+#ifdef DEBUG
+      exec->flush_call_depth--;
+      assert(exec->flush_call_depth == 0);
+#endif
       return;
    }
 
@@ -788,6 +901,11 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
    }
 
    exec->ctx->Driver.NeedFlush &= ~flags;
+
+#ifdef DEBUG
+   exec->flush_call_depth--;
+   assert(exec->flush_call_depth == 0);
+#endif
 }
 
 

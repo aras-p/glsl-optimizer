@@ -95,9 +95,6 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
-static GLboolean fullscreen = GL_FALSE;	/* Create a single fullscreen window */
-
-
 /*
  *
  *  Draw a gear wheel.  You'll probably want to call this function when
@@ -327,122 +324,235 @@ init(void)
 }
 
 
-/*
- * Create an RGB, double-buffered X window.
- * Return the window and context handles.
- */
-static void
-make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
-              const char *name,
-              int x, int y, int width, int height,
-              Window *winRet,
-              EGLContext *ctxRet,
-              EGLSurface *surfRet)
-{
-   static const EGLint attribs[] = {
-      EGL_RED_SIZE, 1,
-      EGL_GREEN_SIZE, 1,
-      EGL_BLUE_SIZE, 1,
-      /*EGL_DOUBLEBUFFER,*/
-      EGL_DEPTH_SIZE, 1,
-      EGL_NONE
-   };
+struct egl_manager {
+   EGLNativeDisplayType xdpy;
+   EGLNativeWindowType xwin;
+   EGLNativePixmapType xpix;
 
-   int scrnum;
-   XSetWindowAttributes attr;
-   unsigned long mask;
-   Window root;
-   Window win;
-   XVisualInfo *visInfo, visTemplate;
-   int num_visuals;
+   EGLDisplay dpy;
+   EGLConfig conf;
    EGLContext ctx;
-   EGLConfig config;
-   EGLint num_configs, vid;
 
-   scrnum = DefaultScreen( x_dpy );
-   root = RootWindow( x_dpy, scrnum );
+   EGLSurface win;
+   EGLSurface pix;
+   EGLSurface pbuf;
 
+   EGLBoolean verbose;
+   EGLint major, minor;
+};
+
+static struct egl_manager *
+egl_manager_new(EGLNativeDisplayType xdpy, const EGLint *attrib_list,
+                EGLBoolean verbose)
+{
+   struct egl_manager *eman;
+   const char *ver;
+   EGLint num_conf;
+
+   eman = calloc(1, sizeof(*eman));
+   if (!eman)
+      return NULL;
+
+   eman->verbose = verbose;
+   eman->xdpy = xdpy;
+
+   eman->dpy = eglGetDisplay(eman->xdpy);
+   if (eman->dpy == EGL_NO_DISPLAY) {
+      printf("eglGetDisplay() failed\n");
+      free(eman);
+      return NULL;
+   }
+
+   if (!eglInitialize(eman->dpy, &eman->major, &eman->minor)) {
+      printf("eglInitialize() failed\n");
+      free(eman);
+      return NULL;
+   }
+
+   ver = eglQueryString(eman->dpy, EGL_VERSION);
+   printf("EGL_VERSION = %s\n", ver);
+
+   if (!eglChooseConfig(eman->dpy, attrib_list, &eman->conf, 1, &num_conf) ||
+       !num_conf) {
+      printf("eglChooseConfig() failed\n");
+      eglTerminate(eman->dpy);
+      free(eman);
+      return NULL;
+   }
+
+   eman->ctx = eglCreateContext(eman->dpy, eman->conf, EGL_NO_CONTEXT, NULL);
+   if (eman->ctx == EGL_NO_CONTEXT) {
+      printf("eglCreateContext() failed\n");
+      eglTerminate(eman->dpy);
+      free(eman);
+      return NULL;
+   }
+
+   return eman;
+}
+
+static EGLBoolean
+egl_manager_create_window(struct egl_manager *eman, const char *name,
+                          EGLint w, EGLint h, EGLBoolean need_surface,
+                          EGLBoolean fullscreen, const EGLint *attrib_list)
+{
+   XVisualInfo vinfo_template, *vinfo = NULL;
+   EGLint val, num_vinfo;
+   Window root;
+   XSetWindowAttributes attrs;
+   unsigned long mask;
+   EGLint x = 0, y = 0;
+
+   if (!eglGetConfigAttrib(eman->dpy, eman->conf,
+                           EGL_NATIVE_VISUAL_ID, &val)) {
+      printf("eglGetConfigAttrib() failed\n");
+      return EGL_FALSE;
+   }
+   if (val) {
+      vinfo_template.visualid = (VisualID) val;
+      vinfo = XGetVisualInfo(eman->xdpy, VisualIDMask, &vinfo_template, &num_vinfo);
+   }
+   /* try harder if window surface is not needed */
+   if (!vinfo && !need_surface &&
+       eglGetConfigAttrib(eman->dpy, eman->conf, EGL_BUFFER_SIZE, &val)) {
+      if (val == 32)
+         val = 24;
+      vinfo_template.depth = val;
+      vinfo = XGetVisualInfo(eman->xdpy, VisualDepthMask, &vinfo_template, &num_vinfo);
+   }
+
+   if (!vinfo) {
+      printf("XGetVisualInfo() failed\n");
+      return EGL_FALSE;
+   }
+
+   root = DefaultRootWindow(eman->xdpy);
    if (fullscreen) {
-      x = 0; y = 0;
-      width = DisplayWidth( x_dpy, scrnum );
-      height = DisplayHeight( x_dpy, scrnum );
-   }
-
-   if (!eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs)) {
-      printf("Error: couldn't get an EGL visual config\n");
-      exit(1);
-   }
-
-   if (!eglGetConfigAttrib(egl_dpy, config, EGL_NATIVE_VISUAL_ID, &vid)) {
-      printf("Error: eglGetConfigAttrib() failed\n");
-      exit(1);
-   }
-
-   /* The X window visual must match the EGL config */
-   visTemplate.visualid = vid;
-   visInfo = XGetVisualInfo(x_dpy, VisualIDMask, &visTemplate, &num_visuals);
-   if (!visInfo) {
-      printf("Error: couldn't get X visual\n");
-      exit(1);
+      x = y = 0;
+      w = DisplayWidth(eman->xdpy, DefaultScreen(eman->xdpy));
+      h = DisplayHeight(eman->xdpy, DefaultScreen(eman->xdpy));
    }
 
    /* window attributes */
-   attr.background_pixel = 0;
-   attr.border_pixel = 0;
-   attr.colormap = XCreateColormap( x_dpy, root, visInfo->visual, AllocNone);
-   attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-   attr.override_redirect = fullscreen;
+   attrs.background_pixel = 0;
+   attrs.border_pixel = 0;
+   attrs.colormap = XCreateColormap(eman->xdpy, root, vinfo->visual, AllocNone);
+   attrs.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+   attrs.override_redirect = fullscreen;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
-   win = XCreateWindow( x_dpy, root, 0, 0, width, height,
-		        0, visInfo->depth, InputOutput,
-		        visInfo->visual, mask, &attr );
+   eman->xwin = XCreateWindow(eman->xdpy, root, x, y, w, h,
+                              0, vinfo->depth, InputOutput,
+                              vinfo->visual, mask, &attrs);
+   XFree(vinfo);
 
    /* set hints and properties */
    {
       XSizeHints sizehints;
       sizehints.x = x;
       sizehints.y = y;
-      sizehints.width  = width;
-      sizehints.height = height;
+      sizehints.width  = w;
+      sizehints.height = h;
       sizehints.flags = USSize | USPosition;
-      XSetNormalHints(x_dpy, win, &sizehints);
-      XSetStandardProperties(x_dpy, win, name, name,
-                              None, (char **)NULL, 0, &sizehints);
+      XSetNormalHints(eman->xdpy, eman->xwin, &sizehints);
+      XSetStandardProperties(eman->xdpy, eman->xwin, name, name,
+                             None, (char **)NULL, 0, &sizehints);
    }
 
-   eglBindAPI(EGL_OPENGL_API);
-
-   ctx = eglCreateContext(egl_dpy, config, EGL_NO_CONTEXT, NULL );
-   if (!ctx) {
-      printf("Error: glXCreateContext failed\n");
-      exit(1);
+   if (need_surface) {
+      eman->win = eglCreateWindowSurface(eman->dpy, eman->conf,
+                                         eman->xwin, attrib_list);
+      if (eman->win == EGL_NO_SURFACE) {
+         printf("eglCreateWindowSurface() failed\n");
+         XDestroyWindow(eman->xdpy, eman->xwin);
+         eman->xwin = None;
+         return EGL_FALSE;
+      }
    }
 
-   *surfRet = eglCreateWindowSurface(egl_dpy, config, win, NULL);
+   XMapWindow(eman->xdpy, eman->xwin);
 
-   XFree(visInfo);
-
-   *winRet = win;
-   *ctxRet = ctx;
+   return EGL_TRUE;
 }
 
+static EGLBoolean
+egl_manager_create_pixmap(struct egl_manager *eman, EGLNativeWindowType xwin,
+                          EGLBoolean need_surface, const EGLint *attrib_list)
+{
+   XWindowAttributes attrs;
+
+   if (!XGetWindowAttributes(eman->xdpy, xwin, &attrs)) {
+      printf("XGetWindowAttributes() failed\n");
+      return EGL_FALSE;
+   }
+
+   eman->xpix = XCreatePixmap(eman->xdpy, xwin,
+                              attrs.width, attrs.height, attrs.depth);
+
+   if (need_surface) {
+      eman->pix = eglCreatePixmapSurface(eman->dpy, eman->conf,
+                                         eman->xpix, attrib_list);
+      if (eman->pix == EGL_NO_SURFACE) {
+         printf("eglCreatePixmapSurface() failed\n");
+         XFreePixmap(eman->xdpy, eman->xpix);
+         eman->xpix = None;
+         return EGL_FALSE;
+      }
+   }
+
+   return EGL_TRUE;
+}
+
+static EGLBoolean
+egl_manager_create_pbuffer(struct egl_manager *eman, const EGLint *attrib_list)
+{
+   eman->pbuf = eglCreatePbufferSurface(eman->dpy, eman->conf, attrib_list);
+   if (eman->pbuf == EGL_NO_SURFACE) {
+      printf("eglCreatePbufferSurface() failed\n");
+      return EGL_FALSE;
+   }
+
+   return EGL_TRUE;
+}
 
 static void
-event_loop(Display *dpy, Window win,
-           EGLDisplay egl_dpy, EGLSurface egl_surf)
+egl_manager_destroy(struct egl_manager *eman)
 {
+   eglMakeCurrent(eman->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+   eglTerminate(eman->dpy);
+
+   if (eman->xwin != None)
+      XDestroyWindow(eman->xdpy, eman->xwin);
+   if (eman->xpix != None)
+      XFreePixmap(eman->xdpy, eman->xpix);
+
+   free(eman);
+}
+
+static void
+event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
+{
+   GC gc = XCreateGC(eman->xdpy, eman->xwin, 0, NULL);
+   EGLint orig_w = w, orig_h = h;
+
+   if (surface_type == EGL_PBUFFER_BIT)
+      printf("there will be no screen update if "
+             "eglCopyBuffers() is not implemented\n");
+
    while (1) {
-      while (XPending(dpy) > 0) {
+      while (XPending(eman->xdpy) > 0) {
          XEvent event;
-         XNextEvent(dpy, &event);
+         XNextEvent(eman->xdpy, &event);
          switch (event.type) {
-	 case Expose:
+         case Expose:
             /* we'll redraw below */
-	    break;
-	 case ConfigureNotify:
-	    reshape(event.xconfigure.width, event.xconfigure.height);
-	    break;
+            break;
+         case ConfigureNotify:
+            w = event.xconfigure.width;
+            h = event.xconfigure.height;
+            if (surface_type == EGL_WINDOW_BIT)
+               reshape(w, h);
+            break;
          case KeyPress:
             {
                char buffer[10];
@@ -476,6 +586,7 @@ event_loop(Display *dpy, Window win,
          static int frames = 0;
          static double tRot0 = -1.0, tRate0 = -1.0;
          double dt, t = current_time();
+         int x, y;
          if (tRot0 < 0.0)
             tRot0 = t;
          dt = t - tRot0;
@@ -487,7 +598,25 @@ event_loop(Display *dpy, Window win,
              angle -= 3600.0;
 
          draw();
-         eglSwapBuffers(egl_dpy, egl_surf);
+         switch (surface_type) {
+         case EGL_WINDOW_BIT:
+            eglSwapBuffers(eman->dpy, eman->win);
+            break;
+         case EGL_PBUFFER_BIT:
+            eglWaitClient();
+            if (!eglCopyBuffers(eman->xdpy, eman->pbuf, eman->xpix))
+               break;
+            /* fall through */
+         case EGL_PIXMAP_BIT:
+            eglWaitClient();
+            for (x = 0; x < w; x += orig_w) {
+               for (y = 0; y < h; y += orig_h) {
+                  XCopyArea(eman->xdpy, eman->xpix, eman->xwin, gc,
+                            0, 0, orig_w, orig_h, x, y);
+               }
+            }
+            break;
+         }
 
          frames++;
 
@@ -503,6 +632,8 @@ event_loop(Display *dpy, Window win,
          }
       }
    }
+
+   XFreeGC(eman->xdpy, gc);
 }
 
 
@@ -513,6 +644,8 @@ usage(void)
    printf("  -display <displayname>  set the display to run on\n");
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
+   printf("  -pixmap                 use pixmap surface\n");
+   printf("  -pbuffer                use pbuffer surface\n");
 }
  
 
@@ -521,15 +654,23 @@ main(int argc, char *argv[])
 {
    const int winWidth = 300, winHeight = 300;
    Display *x_dpy;
-   Window win;
-   EGLSurface egl_surf;
-   EGLContext egl_ctx;
-   EGLDisplay egl_dpy;
    char *dpyName = NULL;
+   struct egl_manager *eman;
+   EGLint attribs[] = {
+      EGL_SURFACE_TYPE, 0, /* filled later */
+      EGL_RED_SIZE, 1,
+      EGL_GREEN_SIZE, 1,
+      EGL_BLUE_SIZE, 1,
+      EGL_DEPTH_SIZE, 1,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+      EGL_NONE
+   };
+   char win_title[] = "xeglgears (window/pixmap/pbuffer)";
+   EGLint surface_type = EGL_WINDOW_BIT;
    GLboolean printInfo = GL_FALSE;
-   EGLint egl_major, egl_minor;
+   GLboolean fullscreen = GL_FALSE;
+   EGLBoolean ret;
    int i;
-   const char *s;
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-display") == 0) {
@@ -542,11 +683,20 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-fullscreen") == 0) {
          fullscreen = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-pixmap") == 0) {
+         surface_type = EGL_PIXMAP_BIT;
+      }
+      else if (strcmp(argv[i], "-pbuffer") == 0) {
+         surface_type = EGL_PBUFFER_BIT;
+      }
       else {
          usage();
          return -1;
       }
    }
+
+   /* set surface type */
+   attribs[1] = surface_type;
 
    x_dpy = XOpenDisplay(dpyName);
    if (!x_dpy) {
@@ -555,26 +705,60 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   egl_dpy = eglGetDisplay(x_dpy);
-   if (!egl_dpy) {
-      printf("Error: eglGetDisplay() failed\n");
+   eglBindAPI(EGL_OPENGL_API);
+
+   eman = egl_manager_new(x_dpy, attribs, printInfo);
+   if (!eman) {
+      XCloseDisplay(x_dpy);
       return -1;
    }
 
-   if (!eglInitialize(egl_dpy, &egl_major, &egl_minor)) {
-      printf("Error: eglInitialize() failed\n");
-      return -1;
+   snprintf(win_title, sizeof(win_title), "xeglgears (%s)",
+            (surface_type == EGL_WINDOW_BIT) ? "window" :
+            (surface_type == EGL_PIXMAP_BIT) ? "pixmap" : "pbuffer");
+
+   /* create surface(s) */
+   switch (surface_type) {
+   case EGL_WINDOW_BIT:
+      ret = egl_manager_create_window(eman, win_title, winWidth, winHeight,
+                                      EGL_TRUE, fullscreen, NULL);
+      if (ret)
+         ret = eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
+      break;
+   case EGL_PIXMAP_BIT:
+      ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
+                                       EGL_FALSE, fullscreen, NULL) &&
+             egl_manager_create_pixmap(eman, eman->xwin,
+                                       EGL_TRUE, NULL));
+      if (ret)
+         ret = eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
+      break;
+   case EGL_PBUFFER_BIT:
+      {
+         EGLint pbuf_attribs[] = {
+            EGL_WIDTH, winWidth,
+            EGL_HEIGHT, winHeight,
+            EGL_NONE
+         };
+         ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
+                                          EGL_FALSE, fullscreen, NULL) &&
+                egl_manager_create_pixmap(eman, eman->xwin,
+                                          EGL_FALSE, NULL) &&
+                egl_manager_create_pbuffer(eman, pbuf_attribs));
+         if (ret)
+            ret = eglMakeCurrent(eman->dpy, eman->pbuf, eman->pbuf, eman->ctx);
+      }
+      break;
+   default:
+      ret = EGL_FALSE;
+      break;
    }
 
-   s = eglQueryString(egl_dpy, EGL_VERSION);
-   printf("EGL_VERSION = %s\n", s);
-
-   make_x_window(x_dpy, egl_dpy,
-                 "glxgears", 0, 0, winWidth, winHeight,
-                 &win, &egl_ctx, &egl_surf);
-
-   XMapWindow(x_dpy, win);
-   eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
+   if (!ret) {
+      egl_manager_destroy(eman);
+      XCloseDisplay(x_dpy);
+      return -1;
+   }
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -590,18 +774,13 @@ main(int argc, char *argv[])
     */
    reshape(winWidth, winHeight);
 
-   event_loop(x_dpy, win, egl_dpy, egl_surf);
+   event_loop(eman, surface_type, winWidth, winHeight);
 
    glDeleteLists(gear1, 1);
    glDeleteLists(gear2, 1);
    glDeleteLists(gear3, 1);
 
-   eglDestroyContext(egl_dpy, egl_ctx);
-   eglDestroySurface(egl_dpy, egl_surf);
-   eglTerminate(egl_dpy);
-
-
-   XDestroyWindow(x_dpy, win);
+   egl_manager_destroy(eman);
    XCloseDisplay(x_dpy);
 
    return 0;

@@ -9,7 +9,7 @@ PIPE_DRIVERS = \
 	$(GALLIUMDIR)/winsys/drm/intel/gem/libinteldrm.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
-	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
+	$(TOP)/src/gallium/drivers/i915/libi915.a
 
 DRIVER_SOURCES =
 

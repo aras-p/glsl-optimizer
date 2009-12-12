@@ -66,11 +66,26 @@ static int validate_inputs(struct YYLTYPE *locp,
 
 static void init_dst_reg(struct prog_dst_register *r);
 
+static void set_dst_reg(struct prog_dst_register *r,
+                        gl_register_file file, GLint index);
+
 static void init_src_reg(struct asm_src_register *r);
+
+static void set_src_reg(struct asm_src_register *r,
+                        gl_register_file file, GLint index);
+
+static void asm_instruction_set_operands(struct asm_instruction *inst,
+    const struct prog_dst_register *dst, const struct asm_src_register *src0,
+    const struct asm_src_register *src1, const struct asm_src_register *src2);
 
 static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
     const struct prog_dst_register *dst, const struct asm_src_register *src0,
     const struct asm_src_register *src1, const struct asm_src_register *src2);
+
+static struct asm_instruction *asm_instruction_copy_ctor(
+    const struct prog_instruction *base, const struct prog_dst_register *dst,
+    const struct asm_src_register *src0, const struct asm_src_register *src1,
+    const struct asm_src_register *src2);
 
 #ifndef FALSE
 #define FALSE 0
@@ -142,7 +157,7 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 
  /* Tokens for instructions */
 %token <temp_inst> BIN_OP BINSC_OP SAMPLE_OP SCALAR_OP TRI_OP VECTOR_OP
-%token <temp_inst> ARL KIL SWZ
+%token <temp_inst> ARL KIL SWZ TXD_OP
 
 %token <integer> INTEGER
 %token <real> REAL
@@ -169,7 +184,8 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %token VERTEX VTXATTRIB
 %token WEIGHT
 
-%token <string> IDENTIFIER
+%token <string> IDENTIFIER USED_IDENTIFIER
+%type <string> string
 %token <swiz_mask> MASK4 MASK3 MASK2 MASK1 SWIZZLE
 %token DOT_DOT
 %token DOT
@@ -177,11 +193,11 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %type <inst> instruction ALU_instruction TexInstruction
 %type <inst> ARL_instruction VECTORop_instruction
 %type <inst> SCALARop_instruction BINSCop_instruction BINop_instruction
-%type <inst> TRIop_instruction SWZ_instruction SAMPLE_instruction
+%type <inst> TRIop_instruction TXD_instruction SWZ_instruction SAMPLE_instruction
 %type <inst> KIL_instruction
 
 %type <dst_reg> dstReg maskedDstReg maskedAddrReg
-%type <src_reg> srcReg scalarSrcReg swizzleSrcReg
+%type <src_reg> srcReg scalarUse scalarSrcReg swizzleSrcReg
 %type <swiz_mask> scalarSuffix swizzleSuffix extendedSwizzle
 %type <ext_swizzle> extSwizComp extSwizSel
 %type <swiz_mask> optionalMask
@@ -191,6 +207,8 @@ static struct asm_instruction *asm_instruction_ctor(gl_inst_opcode op,
 %type <src_reg> progParamArrayMem progParamArrayAbs progParamArrayRel
 %type <sym> addrReg
 %type <swiz_mask> addrComponent addrWriteMask
+
+%type <dst_reg> ccMaskRule ccTest ccMaskRule2 ccTest2 optionalCcMask
 
 %type <result> resultBinding resultColBinding
 %type <integer> optFaceType optColorType
@@ -280,7 +298,7 @@ optionSequence: optionSequence option
 	|
 	;
 
-option: OPTION IDENTIFIER ';'
+option: OPTION string ';'
 	{
 	   int valid = 0;
 
@@ -290,6 +308,8 @@ option: OPTION IDENTIFIER ';'
 	      valid = _mesa_ARBfp_parse_option(state, $2);
 	   }
 
+
+	   free($2);
 
 	   if (!valid) {
 	      const char *const err_str = (state->mode == ARB_vertex)
@@ -347,6 +367,7 @@ ALU_instruction: ARL_instruction
 
 TexInstruction: SAMPLE_instruction
 	| KIL_instruction
+	| TXD_instruction
 	;
 
 ARL_instruction: ARL maskedAddrReg ',' scalarSrcReg
@@ -357,51 +378,45 @@ ARL_instruction: ARL maskedAddrReg ',' scalarSrcReg
 
 VECTORop_instruction: VECTOR_OP maskedDstReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
 SCALARop_instruction: SCALAR_OP maskedDstReg ',' scalarSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
 BINSCop_instruction: BINSC_OP maskedDstReg ',' scalarSrcReg ',' scalarSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, NULL);
 	}
 	;
 
 
 BINop_instruction: BIN_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, NULL);
 	}
 	;
 
 TRIop_instruction: TRI_OP maskedDstReg ','
                    swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, & $6, & $8);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, & $8);
 	}
 	;
 
 SAMPLE_instruction: SAMPLE_OP maskedDstReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
 	{
-	   $$ = asm_instruction_ctor($1.Opcode, & $2, & $4, NULL, NULL);
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	   if ($$ != NULL) {
 	      const GLbitfield tex_mask = (1U << $6);
 	      GLbitfield shadow_tex = 0;
 	      GLbitfield target_mask = 0;
 
 
-	      $$->Base.SaturateMode = $1.SaturateMode;
 	      $$->Base.TexSrcUnit = $6;
 
 	      if ($8 < 0) {
@@ -442,6 +457,58 @@ KIL_instruction: KIL swizzleSrcReg
 	   $$ = asm_instruction_ctor(OPCODE_KIL, NULL, & $2, NULL, NULL);
 	   state->fragment.UsesKill = 1;
 	}
+	| KIL ccTest
+	{
+	   $$ = asm_instruction_ctor(OPCODE_KIL_NV, NULL, NULL, NULL, NULL);
+	   $$->Base.DstReg.CondMask = $2.CondMask;
+	   $$->Base.DstReg.CondSwizzle = $2.CondSwizzle;
+	   $$->Base.DstReg.CondSrc = $2.CondSrc;
+	   state->fragment.UsesKill = 1;
+	}
+	;
+
+TXD_instruction: TXD_OP maskedDstReg ',' swizzleSrcReg ',' swizzleSrcReg ',' swizzleSrcReg ',' texImageUnit ',' texTarget
+	{
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, & $6, & $8);
+	   if ($$ != NULL) {
+	      const GLbitfield tex_mask = (1U << $10);
+	      GLbitfield shadow_tex = 0;
+	      GLbitfield target_mask = 0;
+
+
+	      $$->Base.TexSrcUnit = $10;
+
+	      if ($12 < 0) {
+		 shadow_tex = tex_mask;
+
+		 $$->Base.TexSrcTarget = -$12;
+		 $$->Base.TexShadow = 1;
+	      } else {
+		 $$->Base.TexSrcTarget = $12;
+	      }
+
+	      target_mask = (1U << $$->Base.TexSrcTarget);
+
+	      /* If this texture unit was previously accessed and that access
+	       * had a different texture target, generate an error.
+	       *
+	       * If this texture unit was previously accessed and that access
+	       * had a different shadow mode, generate an error.
+	       */
+	      if ((state->prog->TexturesUsed[$10] != 0)
+		  && ((state->prog->TexturesUsed[$10] != target_mask)
+		      || ((state->prog->ShadowSamplers & tex_mask)
+			  != shadow_tex))) {
+		 yyerror(& @12, state,
+			 "multiple targets used on one texture image unit");
+		 YYERROR;
+	      }
+
+
+	      state->prog->TexturesUsed[$10] |= target_mask;
+	      state->prog->ShadowSamplers |= shadow_tex;
+	   }
+	}
 	;
 
 texImageUnit: TEXTURE_UNIT optTexImageUnitNum
@@ -472,21 +539,56 @@ SWZ_instruction: SWZ maskedDstReg ',' srcReg ',' extendedSwizzle
 	   $4.Base.Swizzle = $6.swizzle;
 	   $4.Base.Negate = $6.mask;
 
-	   $$ = asm_instruction_ctor(OPCODE_SWZ, & $2, & $4, NULL, NULL);
-	   $$->Base.SaturateMode = $1.SaturateMode;
+	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
 
-scalarSrcReg: optionalSign srcReg scalarSuffix
+scalarSrcReg: optionalSign scalarUse
 	{
 	   $$ = $2;
 
 	   if ($1) {
 	      $$.Base.Negate = ~$$.Base.Negate;
 	   }
+	}
+	| optionalSign '|' scalarUse '|'
+	{
+	   $$ = $3;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @2, state, "unexpected character '|'");
+	      YYERROR;
+	   }
+
+	   if ($1) {
+	      $$.Base.Negate = ~$$.Base.Negate;
+	   }
+
+	   $$.Base.Abs = 1;
+	}
+	;
+
+scalarUse:  srcReg scalarSuffix
+	{
+	   $$ = $1;
 
 	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
-						    $3.swizzle);
+						    $2.swizzle);
+	}
+	| paramConstScalarUse
+	{
+	   struct asm_symbol temp_sym;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @1, state, "expected scalar suffix");
+	      YYERROR;
+	   }
+
+	   memset(& temp_sym, 0, sizeof(temp_sym));
+	   temp_sym.param_binding_begin = ~0;
+	   initialize_symbol_from_const(state->prog, & temp_sym, & $1);
+
+	   set_src_reg(& $$, PROGRAM_CONSTANT, temp_sym.param_binding_begin);
 	}
 	;
 
@@ -501,12 +603,33 @@ swizzleSrcReg: optionalSign srcReg swizzleSuffix
 	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
 						    $3.swizzle);
 	}
+	| optionalSign '|' srcReg swizzleSuffix '|'
+	{
+	   $$ = $3;
+
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @2, state, "unexpected character '|'");
+	      YYERROR;
+	   }
+
+	   if ($1) {
+	      $$.Base.Negate = ~$$.Base.Negate;
+	   }
+
+	   $$.Base.Abs = 1;
+	   $$.Base.Swizzle = _mesa_combine_swizzles($$.Base.Swizzle,
+						    $4.swizzle);
+	}
+
 	;
 
-maskedDstReg: dstReg optionalMask
+maskedDstReg: dstReg optionalMask optionalCcMask
 	{
 	   $$ = $1;
 	   $$.WriteMask = $2.mask;
+	   $$.CondMask = $3.CondMask;
+	   $$.CondSwizzle = $3.CondSwizzle;
+	   $$.CondSrc = $3.CondSrc;
 
 	   if ($$.File == PROGRAM_OUTPUT) {
 	      /* Technically speaking, this should check that it is in
@@ -520,16 +643,14 @@ maskedDstReg: dstReg optionalMask
 		 YYERROR;
 	      }
 
-	      state->prog->OutputsWritten |= (1U << $$.Index);
+	      state->prog->OutputsWritten |= BITFIELD64_BIT($$.Index);
 	   }
 	}
 	;
 
 maskedAddrReg: addrReg addrWriteMask
 	{
-	   init_dst_reg(& $$);
-	   $$.File = PROGRAM_ADDRESS;
-	   $$.Index = 0;
+	   set_dst_reg(& $$, PROGRAM_ADDRESS, 0);
 	   $$.WriteMask = $2.mask;
 	}
 	;
@@ -589,14 +710,19 @@ extSwizSel: INTEGER
 	   $$.xyzw_valid = 1;
 	   $$.rgba_valid = 1;
 	}
-	| IDENTIFIER
+	| string
 	{
+	   char s;
+
 	   if (strlen($1) > 1) {
 	      yyerror(& @1, state, "invalid extended swizzle selector");
 	      YYERROR;
 	   }
 
-	   switch ($1[0]) {
+	   s = $1[0];
+	   free($1);
+
+	   switch (s) {
 	   case 'x':
 	      $$.swz = SWIZZLE_X;
 	      $$.xyzw_valid = 1;
@@ -639,10 +765,12 @@ extSwizSel: INTEGER
 	}
 	;
 
-srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
+srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
@@ -659,16 +787,13 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	   init_src_reg(& $$);
 	   switch (s->type) {
 	   case at_temp:
-	      $$.Base.File = PROGRAM_TEMPORARY;
-	      $$.Base.Index = s->temp_binding;
+	      set_src_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_param:
-	      $$.Base.File = s->param_binding_type;
-	      $$.Base.Index = s->param_binding_begin;
+	      set_src_reg(& $$, s->param_binding_type, s->param_binding_begin);
 	      break;
 	   case at_attrib:
-	      $$.Base.File = PROGRAM_INPUT;
-	      $$.Base.Index = s->attrib_binding;
+	      set_src_reg(& $$, PROGRAM_INPUT, s->attrib_binding);
 	      state->prog->InputsRead |= (1U << $$.Base.Index);
 
 	      if (!validate_inputs(& @1, state)) {
@@ -683,9 +808,7 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	}
 	| attribBinding
 	{
-	   init_src_reg(& $$);
-	   $$.Base.File = PROGRAM_INPUT;
-	   $$.Base.Index = $1;
+	   set_src_reg(& $$, PROGRAM_INPUT, $1);
 	   state->prog->InputsRead |= (1U << $$.Base.Index);
 
 	   if (!validate_inputs(& @1, state)) {
@@ -715,24 +838,23 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	}
 	| paramSingleItemUse
 	{
-	   init_src_reg(& $$);
-	   $$.Base.File = ($1.name != NULL) 
+           gl_register_file file = ($1.name != NULL) 
 	      ? $1.param_binding_type
 	      : PROGRAM_CONSTANT;
-	   $$.Base.Index = $1.param_binding_begin;
+	   set_src_reg(& $$, file, $1.param_binding_begin);
 	}
 	;
 
 dstReg: resultBinding
 	{
-	   init_dst_reg(& $$);
-	   $$.File = PROGRAM_OUTPUT;
-	   $$.Index = $1;
+	   set_dst_reg(& $$, PROGRAM_OUTPUT, $1);
 	}
-	| IDENTIFIER /* temporaryReg | vertexResultReg */
+	| USED_IDENTIFIER /* temporaryReg | vertexResultReg */
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
@@ -742,28 +864,26 @@ dstReg: resultBinding
 	      YYERROR;
 	   }
 
-	   init_dst_reg(& $$);
 	   switch (s->type) {
 	   case at_temp:
-	      $$.File = PROGRAM_TEMPORARY;
-	      $$.Index = s->temp_binding;
+	      set_dst_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_output:
-	      $$.File = PROGRAM_OUTPUT;
-	      $$.Index = s->output_binding;
+	      set_dst_reg(& $$, PROGRAM_OUTPUT, s->output_binding);
 	      break;
 	   default:
-	      $$.File = s->param_binding_type;
-	      $$.Index = s->param_binding_begin;
+	      set_dst_reg(& $$, s->param_binding_type, s->param_binding_begin);
 	      break;
 	   }
 	}
 	;
 
-progParamArray: IDENTIFIER
+progParamArray: USED_IDENTIFIER
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid operand variable");
@@ -831,10 +951,12 @@ addrRegNegOffset: INTEGER
 	}
 	;
 
-addrReg: IDENTIFIER
+addrReg: USED_IDENTIFIER
 	{
 	   struct asm_symbol *const s = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $1);
+
+	   free($1);
 
 	   if (s == NULL) {
 	      yyerror(& @1, state, "invalid array member");
@@ -884,6 +1006,82 @@ optionalMask: MASK4 | MASK3 | MASK2 | MASK1
 	|              { $$.swizzle = SWIZZLE_NOOP; $$.mask = WRITEMASK_XYZW; }
 	;
 
+optionalCcMask: '(' ccTest ')'
+	{
+	   $$ = $2;
+	}
+	| '(' ccTest2 ')'
+	{
+	   $$ = $2;
+	}
+	|
+	{
+	   $$.CondMask = COND_TR;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
+	;
+
+ccTest: ccMaskRule swizzleSuffix
+	{
+	   $$ = $1;
+	   $$.CondSwizzle = $2.swizzle;
+	}
+	;
+
+ccTest2: ccMaskRule2 swizzleSuffix
+	{
+	   $$ = $1;
+	   $$.CondSwizzle = $2.swizzle;
+	}
+	;
+
+ccMaskRule: IDENTIFIER
+	{
+	   const int cond = _mesa_parse_cc($1);
+	   if ((cond == 0) || ($1[2] != '\0')) {
+	      char *const err_str =
+		 make_error_string("invalid condition code \"%s\"", $1);
+
+	      yyerror(& @1, state, (err_str != NULL)
+		      ? err_str : "invalid condition code");
+
+	      if (err_str != NULL) {
+		 _mesa_free(err_str);
+	      }
+
+	      YYERROR;
+	   }
+
+	   $$.CondMask = cond;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
+	;
+
+ccMaskRule2: USED_IDENTIFIER
+	{
+	   const int cond = _mesa_parse_cc($1);
+	   if ((cond == 0) || ($1[2] != '\0')) {
+	      char *const err_str =
+		 make_error_string("invalid condition code \"%s\"", $1);
+
+	      yyerror(& @1, state, (err_str != NULL)
+		      ? err_str : "invalid condition code");
+
+	      if (err_str != NULL) {
+		 _mesa_free(err_str);
+	      }
+
+	      YYERROR;
+	   }
+
+	   $$.CondMask = cond;
+	   $$.CondSwizzle = SWIZZLE_NOOP;
+	   $$.CondSrc = 0;
+	}
+	;
+
 namingStatement: ATTRIB_statement
 	| PARAM_statement
 	| TEMP_statement
@@ -898,6 +1096,7 @@ ATTRIB_statement: ATTRIB IDENTIFIER '=' attribBinding
 	      declare_variable(state, $2, at_attrib, & @2);
 
 	   if (s == NULL) {
+	      free($2);
 	      YYERROR;
 	   } else {
 	      s->attrib_binding = $4;
@@ -1005,6 +1204,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	      declare_variable(state, $2, at_param, & @2);
 
 	   if (s == NULL) {
+	      free($2);
 	      YYERROR;
 	   } else {
 	      s->param_binding_type = $3.param_binding_type;
@@ -1018,6 +1218,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 	{
 	   if (($4 != 0) && ((unsigned) $4 != $6.param_binding_length)) {
+	      free($2);
 	      yyerror(& @4, state, 
 		      "parameter array size and number of bindings must match");
 	      YYERROR;
@@ -1026,6 +1227,7 @@ PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 		 declare_variable(state, $2, $6.type, & @2);
 
 	      if (s == NULL) {
+		 free($2);
 		 YYERROR;
 	      } else {
 		 s->param_binding_type = $6.param_binding_type;
@@ -1043,7 +1245,7 @@ optArraySize:
 	}
 	| INTEGER
         {
-	   if (($1 < 1) || ((unsigned) $1 >= state->limits->MaxParameters)) {
+	   if (($1 < 1) || ((unsigned) $1 > state->limits->MaxParameters)) {
 	      yyerror(& @1, state, "invalid parameter array size");
 	      YYERROR;
 	   } else {
@@ -1712,7 +1914,46 @@ optionalSign: '+'        { $$ = FALSE; }
 	|                { $$ = FALSE; }
 	;
 
-TEMP_statement: TEMP { $<integer>$ = $1; } varNameList
+TEMP_statement: optVarSize TEMP { $<integer>$ = $2; } varNameList
+	;
+
+optVarSize: string
+	{
+	   /* NV_fragment_program_option defines the size qualifiers in a
+	    * fairly broken way.  "SHORT" or "LONG" can optionally be used
+	    * before TEMP or OUTPUT.  However, neither is a reserved word!
+	    * This means that we have to parse it as an identifier, then check
+	    * to make sure it's one of the valid values.  *sigh*
+	    *
+	    * In addition, the grammar in the extension spec does *not* allow
+	    * the size specifier to be optional, but all known implementations
+	    * do.
+	    */
+	   if (!state->option.NV_fragment) {
+	      yyerror(& @1, state, "unexpected IDENTIFIER");
+	      YYERROR;
+	   }
+
+	   if (strcmp("SHORT", $1) == 0) {
+	   } else if (strcmp("LONG", $1) == 0) {
+	   } else {
+	      char *const err_str =
+		 make_error_string("invalid storage size specifier \"%s\"",
+				   $1);
+
+	      yyerror(& @1, state, (err_str != NULL)
+		      ? err_str : "invalid storage size specifier");
+
+	      if (err_str != NULL) {
+		 _mesa_free(err_str);
+	      }
+
+	      YYERROR;
+	   }
+	}
+	|
+	{
+	}
 	;
 
 ADDRESS_statement: ADDRESS { $<integer>$ = $1; } varNameList
@@ -1721,26 +1962,29 @@ ADDRESS_statement: ADDRESS { $<integer>$ = $1; } varNameList
 varNameList: varNameList ',' IDENTIFIER
 	{
 	   if (!declare_variable(state, $3, $<integer>0, & @3)) {
+	      free($3);
 	      YYERROR;
 	   }
 	}
 	| IDENTIFIER
 	{
 	   if (!declare_variable(state, $1, $<integer>0, & @1)) {
+	      free($1);
 	      YYERROR;
 	   }
 	}
 	;
 
-OUTPUT_statement: OUTPUT IDENTIFIER '=' resultBinding
+OUTPUT_statement: optVarSize OUTPUT IDENTIFIER '=' resultBinding
 	{
 	   struct asm_symbol *const s =
-	      declare_variable(state, $2, at_output, & @2);
+	      declare_variable(state, $3, at_output, & @3);
 
 	   if (s == NULL) {
+	      free($3);
 	      YYERROR;
 	   } else {
-	      s->output_binding = $4;
+	      s->output_binding = $5;
 	   }
 	}
 	;
@@ -1907,18 +2151,23 @@ legacyTexUnitNum: INTEGER
 	}
 	;
 
-ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
+ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 	{
 	   struct asm_symbol *exist = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $2);
 	   struct asm_symbol *target = (struct asm_symbol *)
 	      _mesa_symbol_table_find_symbol(state->st, 0, $4);
 
+	   free($4);
 
 	   if (exist != NULL) {
-	      yyerror(& @2, state, "redeclared identifier");
+	      char m[1000];
+	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
+	      free($2);
+	      yyerror(& @2, state, m);
 	      YYERROR;
 	   } else if (target == NULL) {
+	      free($2);
 	      yyerror(& @4, state,
 		      "undefined variable binding in ALIAS statement");
 	      YYERROR;
@@ -1928,7 +2177,53 @@ ALIAS_statement: ALIAS IDENTIFIER '=' IDENTIFIER
 	}
 	;
 
+string: IDENTIFIER
+	| USED_IDENTIFIER
+	;
+
 %%
+
+void
+asm_instruction_set_operands(struct asm_instruction *inst,
+			     const struct prog_dst_register *dst,
+			     const struct asm_src_register *src0,
+			     const struct asm_src_register *src1,
+			     const struct asm_src_register *src2)
+{
+   /* In the core ARB extensions only the KIL instruction doesn't have a
+    * destination register.
+    */
+   if (dst == NULL) {
+      init_dst_reg(& inst->Base.DstReg);
+   } else {
+      inst->Base.DstReg = *dst;
+   }
+
+   /* The only instruction that doesn't have any source registers is the
+    * condition-code based KIL instruction added by NV_fragment_program_option.
+    */
+   if (src0 != NULL) {
+      inst->Base.SrcReg[0] = src0->Base;
+      inst->SrcReg[0] = *src0;
+   } else {
+      init_src_reg(& inst->SrcReg[0]);
+   }
+
+   if (src1 != NULL) {
+      inst->Base.SrcReg[1] = src1->Base;
+      inst->SrcReg[1] = *src1;
+   } else {
+      init_src_reg(& inst->SrcReg[1]);
+   }
+
+   if (src2 != NULL) {
+      inst->Base.SrcReg[2] = src2->Base;
+      inst->SrcReg[2] = *src2;
+   } else {
+      init_src_reg(& inst->SrcReg[2]);
+   }
+}
+
 
 struct asm_instruction *
 asm_instruction_ctor(gl_inst_opcode op,
@@ -1937,37 +2232,37 @@ asm_instruction_ctor(gl_inst_opcode op,
 		     const struct asm_src_register *src1,
 		     const struct asm_src_register *src2)
 {
-   struct asm_instruction *inst = calloc(1, sizeof(struct asm_instruction));
+   struct asm_instruction *inst = CALLOC_STRUCT(asm_instruction);
 
    if (inst) {
       _mesa_init_instructions(& inst->Base, 1);
       inst->Base.Opcode = op;
 
-      /* In the core ARB extensions only the KIL instruction doesn't have a
-       * destination register.
-       */
-      if (dst == NULL) {
-	 init_dst_reg(& inst->Base.DstReg);
-      } else {
-	 inst->Base.DstReg = *dst;
-      }
+      asm_instruction_set_operands(inst, dst, src0, src1, src2);
+   }
 
-      inst->Base.SrcReg[0] = src0->Base;
-      inst->SrcReg[0] = *src0;
+   return inst;
+}
 
-      if (src1 != NULL) {
-	 inst->Base.SrcReg[1] = src1->Base;
-	 inst->SrcReg[1] = *src1;
-      } else {
-	 init_src_reg(& inst->SrcReg[1]);
-      }
 
-      if (src2 != NULL) {
-	 inst->Base.SrcReg[2] = src2->Base;
-	 inst->SrcReg[2] = *src2;
-      } else {
-	 init_src_reg(& inst->SrcReg[2]);
-      }
+struct asm_instruction *
+asm_instruction_copy_ctor(const struct prog_instruction *base,
+			  const struct prog_dst_register *dst,
+			  const struct asm_src_register *src0,
+			  const struct asm_src_register *src1,
+			  const struct asm_src_register *src2)
+{
+   struct asm_instruction *inst = CALLOC_STRUCT(asm_instruction);
+
+   if (inst) {
+      _mesa_init_instructions(& inst->Base, 1);
+      inst->Base.Opcode = base->Opcode;
+      inst->Base.CondUpdate = base->CondUpdate;
+      inst->Base.CondDst = base->CondDst;
+      inst->Base.SaturateMode = base->SaturateMode;
+      inst->Base.Precision = base->Precision;
+
+      asm_instruction_set_operands(inst, dst, src0, src1, src2);
    }
 
    return inst;
@@ -1985,11 +2280,48 @@ init_dst_reg(struct prog_dst_register *r)
 }
 
 
+/** Like init_dst_reg() but set the File and Index fields. */
+void
+set_dst_reg(struct prog_dst_register *r, gl_register_file file, GLint index)
+{
+   const GLint maxIndex = 1 << INST_INDEX_BITS;
+   const GLint minIndex = 0;
+   ASSERT(index >= minIndex);
+   ASSERT(index <= maxIndex);
+   ASSERT(file == PROGRAM_TEMPORARY ||
+	  file == PROGRAM_ADDRESS ||
+	  file == PROGRAM_OUTPUT);
+   memset(r, 0, sizeof(*r));
+   r->File = file;
+   r->Index = index;
+   r->WriteMask = WRITEMASK_XYZW;
+   r->CondMask = COND_TR;
+   r->CondSwizzle = SWIZZLE_NOOP;
+}
+
+
 void
 init_src_reg(struct asm_src_register *r)
 {
    memset(r, 0, sizeof(*r));
    r->Base.File = PROGRAM_UNDEFINED;
+   r->Base.Swizzle = SWIZZLE_NOOP;
+   r->Symbol = NULL;
+}
+
+
+/** Like init_src_reg() but set the File and Index fields. */
+void
+set_src_reg(struct asm_src_register *r, gl_register_file file, GLint index)
+{
+   const GLint maxIndex = (1 << INST_INDEX_BITS) - 1;
+   const GLint minIndex = -(1 << INST_INDEX_BITS);
+   ASSERT(index >= minIndex);
+   ASSERT(index <= maxIndex);
+   ASSERT(file < PROGRAM_FILE_MAX);
+   memset(r, 0, sizeof(*r));
+   r->Base.File = file;
+   r->Base.Index = index;
    r->Base.Swizzle = SWIZZLE_NOOP;
    r->Symbol = NULL;
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,446 +21,528 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_state_derived.h"
+#include "draw/draw_context.h"
 
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+#include "r300_context.h"
 #include "r300_fs.h"
+#include "r300_screen.h"
+#include "r300_shader_semantics.h"
+#include "r300_state_derived.h"
 #include "r300_state_inlines.h"
 #include "r300_vs.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
-/* Set up the vs_tab and routes. */
-static void r300_vs_tab_routes(struct r300_context* r300,
-                               struct r300_vertex_format* vformat)
+struct r300_shader_key {
+    struct r300_vertex_shader* vs;
+    struct r300_fragment_shader* fs;
+};
+
+struct r300_shader_derived_value {
+    struct r300_vertex_format* vformat;
+    struct r300_rs_block* rs_block;
+};
+
+unsigned r300_shader_key_hash(void* key) {
+    struct r300_shader_key* shader_key = (struct r300_shader_key*)key;
+    unsigned vs = (intptr_t)shader_key->vs;
+    unsigned fs = (intptr_t)shader_key->fs;
+
+    return (vs << 16) | (fs & 0xffff);
+}
+
+int r300_shader_key_compare(void* key1, void* key2) {
+    struct r300_shader_key* shader_key1 = (struct r300_shader_key*)key1;
+    struct r300_shader_key* shader_key2 = (struct r300_shader_key*)key2;
+
+    return (shader_key1->vs == shader_key2->vs) &&
+        (shader_key1->fs == shader_key2->fs);
+}
+
+static void r300_draw_emit_attrib(struct r300_context* r300,
+                                  enum attrib_emit emit,
+                                  enum interp_mode interp,
+                                  int index)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct vertex_info* vinfo = &vformat->vinfo;
-    int* tab = vformat->vs_tab;
-    boolean pos = FALSE, psize = FALSE, fog = FALSE;
-    int i, texs = 0, cols = 0;
-    struct tgsi_shader_info* info;
+    struct tgsi_shader_info* info = &r300->vs->info;
+    int output;
 
-    if (r300screen->caps->has_tcl) {
-        /* Use vertex shader to determine required routes. */
-        info = &r300->vs->info;
+    output = draw_find_vs_output(r300->draw,
+                                 info->output_semantic_name[index],
+                                 info->output_semantic_index[index]);
+    draw_emit_vertex_attr(&r300->vertex_info->vinfo, emit, interp, output);
+}
+
+static void r300_draw_emit_all_attribs(struct r300_context* r300)
+{
+    struct r300_shader_semantics* vs_outputs = &r300->vs->outputs;
+    int i, gen_count;
+
+    /* Position. */
+    if (vs_outputs->pos != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->pos);
     } else {
-        /* Use fragment shader to determine required routes. */
-        info = &r300->fs->info;
+        assert(0);
     }
 
-    assert(info->num_inputs <= 16);
+    /* Point size. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_1F_PSIZE, INTERP_POS,
+                              vs_outputs->psize);
+    }
 
-    if (!r300screen->caps->has_tcl || !r300->rs_state->enable_vte)
-    {
-        for (i = 0; i < info->num_inputs; i++) {
-            switch (info->input_semantic_name[i]) {
-                case TGSI_SEMANTIC_POSITION:
-                    pos = TRUE;
-                    tab[i] = 0;
-                    break;
-                case TGSI_SEMANTIC_COLOR:
-                    tab[i] = 2 + cols;
-                    cols++;
-                    break;
-                case TGSI_SEMANTIC_PSIZE:
-                    psize = TRUE;
-                    tab[i] = 15;
-                    break;
-                case TGSI_SEMANTIC_FOG:
-                    fog = TRUE;
-                    /* Fall through */
-                case TGSI_SEMANTIC_GENERIC:
-                    tab[i] = 6 + texs;
-                    texs++;
-                    break;
-                default:
-                    debug_printf("r300: Unknown vertex input %d\n",
-                        info->input_semantic_name[i]);
-                    break;
-            }
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_LINEAR,
+                                  vs_outputs->color[i]);
         }
     }
-    else
-    {
-        /* Just copy vert attribs over as-is. */
-        for (i = 0; i < info->num_inputs; i++) {
-            tab[i] = i;
-        }
 
-        for (i = 0; i < info->num_outputs; i++) {
-            switch (info->output_semantic_name[i]) {
-                case TGSI_SEMANTIC_POSITION:
-                    pos = TRUE;
-                    break;
-                case TGSI_SEMANTIC_COLOR:
-                    cols++;
-                    break;
-                case TGSI_SEMANTIC_PSIZE:
-                    psize = TRUE;
-                    break;
-                case TGSI_SEMANTIC_FOG:
-                    fog = TRUE;
-                    /* Fall through */
-                case TGSI_SEMANTIC_GENERIC:
-                    texs++;
-                    break;
-                default:
-                    debug_printf("r300: Unknown vertex output %d\n",
-                        info->output_semantic_name[i]);
-                    break;
-            }
+    /* XXX Back-face colors. */
+
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                                  vs_outputs->generic[i]);
+            gen_count++;
         }
+    }
+
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->fog);
+        gen_count++;
     }
 
     /* XXX magic */
-    assert(texs <= 8);
-
-    /* Do the actual vertex_info setup.
-     *
-     * vertex_info has four uints of hardware-specific data in it.
-     * vinfo.hwfmt[0] is R300_VAP_VTX_STATE_CNTL
-     * vinfo.hwfmt[1] is R300_VAP_VSM_VTX_ASSM
-     * vinfo.hwfmt[2] is R300_VAP_OUTPUT_VTX_FMT_0
-     * vinfo.hwfmt[3] is R300_VAP_OUTPUT_VTX_FMT_1 */
-
-    vinfo->hwfmt[0] = 0x5555; /* XXX this is classic Mesa bonghits */
-
-    if (!pos) {
-        debug_printf("r300: Forcing vertex position attribute emit...\n");
-        /* Make room for the position attribute
-         * at the beginning of the tab. */
-        for (i = 15; i > 0; i--) {
-            tab[i] = tab[i-1];
-        }
-        tab[0] = 0;
-    }
-    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-        draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
-    vinfo->hwfmt[1] |= R300_INPUT_CNTL_POS;
-    vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-
-    if (psize) {
-        draw_emit_vertex_attr(vinfo, EMIT_1F_PSIZE, INTERP_POS,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_PSIZE, 0));
-        vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-    }
-
-    for (i = 0; i < cols; i++) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_COLOR, i));
-        vinfo->hwfmt[1] |= R300_INPUT_CNTL_COLOR;
-        vinfo->hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
-    }
-
-    /* Init i right here, increment it if fog is enabled.
-     * This gets around a double-increment problem. */
-    i = 0;
-
-    if (fog) {
-        i++;
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
-        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
-        vinfo->hwfmt[3] |= (4 << (3 * i));
-    }
-
-    for (i; i < texs; i++) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
-        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
-        vinfo->hwfmt[3] |= (4 << (3 * i));
-    }
-
-    /* Handle the case where the vertex shader will be generating some of
-     * the attribs based on its inputs. */
-    if (r300screen->caps->has_tcl &&
-            info->num_inputs < info->num_outputs) {
-        vinfo->num_attribs = info->num_inputs;
-    }
-
-    draw_compute_vertex_size(vinfo);
+    assert(gen_count <= 8);
 }
 
 /* Update the PSC tables. */
-static void r300_vertex_psc(struct r300_context* r300,
-                            struct r300_vertex_format* vformat)
+static void r300_vertex_psc(struct r300_context* r300)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct vertex_info* vinfo = &vformat->vinfo;
-    int* tab = vformat->vs_tab;
-    uint32_t temp;
-    int i, attrib_count;
+    struct r300_vertex_info *vformat = r300->vertex_info;
+    uint16_t type, swizzle;
+    enum pipe_format format;
+    unsigned i;
+    int identity[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    int* stream_tab;
+
+    /* If TCL is bypassed, map vertex streams to equivalent VS output
+     * locations. */
+    if (r300->rs_state->enable_vte) {
+        stream_tab = identity;
+    } else {
+        stream_tab = r300->vs->stream_loc_notcl;
+    }
 
     /* Vertex shaders have no semantics on their inputs,
-     * so PSC should just route stuff based on their info,
+     * so PSC should just route stuff based on the vertex elements,
      * and not on attrib information. */
-    if (r300screen->caps->has_tcl) {
-        attrib_count = r300->vs->info.num_inputs;
-        DBG(r300, DBG_DRAW, "r300: routing %d attribs in psc for vs\n",
-                attrib_count);
-    } else {
-        attrib_count = vinfo->num_attribs;
-        DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
-        for (i = 0; i < attrib_count; i++) {
-            DBG(r300, DBG_DRAW, "r300: attrib: offset %d, interp %d, size %d,"
-                   " tab %d\n", vinfo->attrib[i].src_index,
-                   vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
-                   tab[i]);
-        }
-    }
+    DBG(r300, DBG_DRAW, "r300: vs expects %d attribs, routing %d elements"
+            " in psc\n",
+            r300->vs->info.num_inputs,
+            r300->vertex_element_count);
 
-    for (i = 0; i < attrib_count; i++) {
-        /* Make sure we have a proper destination for our attribute */
-        assert(tab[i] != -1);
+    for (i = 0; i < r300->vertex_element_count; i++) {
+        format = r300->vertex_element[i].src_format;
 
-        /* Add the attribute to the PSC table. */
-        temp = r300screen->caps->has_tcl ?
-            R300_DATA_TYPE_FLOAT_4 :
-            translate_vertex_data_type(vinfo->attrib[i].emit);
-        temp |= tab[i] << R300_DST_VEC_LOC_SHIFT;
+        type = r300_translate_vertex_data_type(format) |
+            (stream_tab[i] << R300_DST_VEC_LOC_SHIFT);
+        swizzle = r300_translate_vertex_data_swizzle(format);
 
         if (i & 1) {
-            vformat->vap_prog_stream_cntl[i >> 1] &= 0x0000ffff;
-            vformat->vap_prog_stream_cntl[i >> 1] |= temp << 16;
-
-            vformat->vap_prog_stream_cntl_ext[i >> 1] |=
-                (R300_VAP_SWIZZLE_XYZW << 16);
+            vformat->vap_prog_stream_cntl[i >> 1] |= type << 16;
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
         } else {
-            vformat->vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
-            vformat->vap_prog_stream_cntl[i >> 1] |= temp <<  0;
-
-            vformat->vap_prog_stream_cntl_ext[i >> 1] |=
-                (R300_VAP_SWIZZLE_XYZW <<  0);
+            vformat->vap_prog_stream_cntl[i >> 1] |= type;
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
         }
     }
 
+    assert(i <= 15);
+
     /* Set the last vector in the PSC. */
-    i--;
+    if (i) {
+        i -= 1;
+    }
     vformat->vap_prog_stream_cntl[i >> 1] |=
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
 }
 
-/* Update the vertex format. */
-static void r300_update_vertex_format(struct r300_context* r300)
+/* Update the PSC tables for SW TCL, using Draw. */
+static void r300_swtcl_vertex_psc(struct r300_context* r300)
 {
-    struct r300_vertex_format vformat;
-    int i;
+    struct r300_vertex_info *vformat = r300->vertex_info;
+    struct vertex_info* vinfo = &vformat->vinfo;
+    uint16_t type, swizzle;
+    enum pipe_format format;
+    unsigned i, attrib_count;
+    int* vs_output_tab = r300->vs->stream_loc_notcl;
 
-    memset(&vformat, 0, sizeof(struct r300_vertex_format));
-    for (i = 0; i < 16; i++) {
-        vformat.vs_tab[i] = -1;
-        vformat.fs_tab[i] = -1;
+    /* For each Draw attribute, route it to the fragment shader according
+     * to the vs_output_tab. */
+    attrib_count = vinfo->num_attribs;
+    DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
+    for (i = 0; i < attrib_count; i++) {
+        DBG(r300, DBG_DRAW, "r300: attrib: offset %d, interp %d, size %d,"
+               " vs_output_tab %d\n", vinfo->attrib[i].src_index,
+               vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
+               vs_output_tab[i]);
     }
 
-    r300_vs_tab_routes(r300, &vformat);
+    for (i = 0; i < attrib_count; i++) {
+        /* Make sure we have a proper destination for our attribute. */
+        assert(vs_output_tab[i] != -1);
 
-    r300_vertex_psc(r300, &vformat);
+        format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
 
-    if (memcmp(&r300->vertex_info, &vformat,
-                sizeof(struct r300_vertex_format))) {
-        memcpy(&r300->vertex_info, &vformat,
-                sizeof(struct r300_vertex_format));
-        r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
-    }
-}
+        /* Obtain the type of data in this attribute. */
+        type = r300_translate_vertex_data_type(format) |
+            vs_output_tab[i] << R300_DST_VEC_LOC_SHIFT;
 
-/* Set up the mappings from GB to US, for RS block. */
-static void r300_update_fs_tab(struct r300_context* r300)
-{
-    struct r300_vertex_format* vformat = &r300->vertex_info;
-    struct tgsi_shader_info* info = &r300->fs->info;
-    int i, cols = 0, texs = 0, cols_emitted = 0;
-    int* tab = vformat->fs_tab;
+        /* Obtain the swizzle for this attribute. Note that the default
+         * swizzle in the hardware is not XYZW! */
+        swizzle = r300_translate_vertex_data_swizzle(format);
 
-    for (i = 0; i < 16; i++) {
-        tab[i] = -1;
-    }
-
-    assert(info->num_inputs <= 16);
-    for (i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
-            case TGSI_SEMANTIC_COLOR:
-                tab[i] = INTERP_LINEAR;
-                cols++;
-                break;
-            case TGSI_SEMANTIC_POSITION:
-            case TGSI_SEMANTIC_PSIZE:
-                debug_printf("r300: Implementation error: Can't use "
-                        "pos attribs in fragshader yet!\n");
-                /* Pass through for now */
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                tab[i] = INTERP_PERSPECTIVE;
-                break;
-            default:
-                debug_printf("r300: Unknown vertex input %d\n",
-                    info->input_semantic_name[i]);
-                break;
+        /* Add the attribute to the PSC table. */
+        if (i & 1) {
+            vformat->vap_prog_stream_cntl[i >> 1] |= type << 16;
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
+        } else {
+            vformat->vap_prog_stream_cntl[i >> 1] |= type;
+            vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
         }
     }
 
-    /* Now that we know where everything is... */
-    DBG(r300, DBG_DRAW, "r300: fp input count: %d\n", info->num_inputs);
-    for (i = 0; i < info->num_inputs; i++) {
-        switch (tab[i]) {
-            case INTERP_LINEAR:
-                DBG(r300, DBG_DRAW, "r300: attrib: "
-                        "stack offset %d, color,    tab %d\n",
-                        i, cols_emitted);
-                tab[i] = cols_emitted;
-                cols_emitted++;
-                break;
-            case INTERP_PERSPECTIVE:
-                DBG(r300, DBG_DRAW, "r300: attrib: "
-                        "stack offset %d, texcoord, tab %d\n",
-                        i, cols + texs);
-                tab[i] = cols + texs;
-                texs++;
-                break;
-            case -1:
-                debug_printf("r300: Implementation error: Bad fp interp!\n");
-            default:
-                break;
-        }
+    /* Set the last vector in the PSC. */
+    if (i) {
+        i -= 1;
     }
-
+    vformat->vap_prog_stream_cntl[i >> 1] |=
+        (R300_LAST_VEC << (i & 1 ? 16 : 0));
 }
 
-/* Set up the RS block. This is the part of the chipset that actually does
- * the rasterization of vertices into fragments. This is also the part of the
- * chipset that locks up if any part of it is even slightly wrong. */
-static void r300_update_rs_block(struct r300_context* r300)
+static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_0001)
+{
+    rs->ip[id] |= R300_RS_COL_PTR(ptr);
+    if (swizzle_0001) {
+        rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+    } else {
+        rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+    }
+    rs->inst[id] |= R300_RS_INST_COL_ID(id);
+}
+
+static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
+                    R300_RS_INST_COL_ADDR(fp_offset);
+}
+
+static void r300_rs_tex(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_X001)
+{
+    if (swizzle_X001) {
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+                      R300_RS_SEL_S(R300_RS_SEL_C0) |
+                      R300_RS_SEL_T(R300_RS_SEL_K0) |
+                      R300_RS_SEL_R(R300_RS_SEL_K0) |
+                      R300_RS_SEL_Q(R300_RS_SEL_K1);
+    } else {
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+                      R300_RS_SEL_S(R300_RS_SEL_C0) |
+                      R300_RS_SEL_T(R300_RS_SEL_C1) |
+                      R300_RS_SEL_R(R300_RS_SEL_C2) |
+                      R300_RS_SEL_Q(R300_RS_SEL_C3);
+    }
+    rs->inst[id] |= R300_RS_INST_TEX_ID(id);
+}
+
+static void r300_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R300_RS_INST_TEX_CN_WRITE |
+                    R300_RS_INST_TEX_ADDR(fp_offset);
+}
+
+static void r500_rs_col(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_0001)
+{
+    rs->ip[id] |= R500_RS_COL_PTR(ptr);
+    if (swizzle_0001) {
+        rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+    } else {
+        rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+    }
+    rs->inst[id] |= R500_RS_INST_COL_ID(id);
+}
+
+static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
+                    R500_RS_INST_COL_ADDR(fp_offset);
+}
+
+static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
+                        boolean swizzle_X001)
+{
+    int rs_tex_comp = ptr*4;
+
+    if (swizzle_X001) {
+        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+                      R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
+    } else {
+        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+                      R500_RS_SEL_T(rs_tex_comp + 1) |
+                      R500_RS_SEL_R(rs_tex_comp + 2) |
+                      R500_RS_SEL_Q(rs_tex_comp + 3);
+    }
+    rs->inst[id] |= R500_RS_INST_TEX_ID(id);
+}
+
+static void r500_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
+{
+    rs->inst[id] |= R500_RS_INST_TEX_CN_WRITE |
+                    R500_RS_INST_TEX_ADDR(fp_offset);
+}
+
+/* Set up the RS block.
+ *
+ * This is the part of the chipset that actually does the rasterization
+ * of vertices into fragments. This is also the part of the chipset that
+ * locks up if any part of it is even slightly wrong. */
+static void r300_update_rs_block(struct r300_context* r300,
+                                 struct r300_shader_semantics* vs_outputs,
+                                 struct r300_shader_semantics* fs_inputs)
 {
     struct r300_rs_block* rs = r300->rs_block;
-    struct tgsi_shader_info* info = &r300->fs->info;
-    int* tab = r300->vertex_info.fs_tab;
-    int col_count = 0, fp_offset = 0, i, memory_pos, tex_count = 0;
-
-    memset(rs, 0, sizeof(struct r300_rs_block));
+    int i, col_count = 0, tex_count = 0, fp_offset = 0;
+    void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
+    void (*rX00_rs_tex)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
-        for (i = 0; i < info->num_inputs; i++) {
-            assert(tab[i] != -1);
-            memory_pos = tab[i] * 4;
-            switch (info->input_semantic_name[i]) {
-                case TGSI_SEMANTIC_COLOR:
-                    rs->ip[col_count] |=
-                        R500_RS_COL_PTR(memory_pos) |
-                        R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
-                    col_count++;
-                    break;
-                case TGSI_SEMANTIC_GENERIC:
-                    rs->ip[tex_count] |=
-                        R500_RS_SEL_S(memory_pos) |
-                        R500_RS_SEL_T(memory_pos + 1) |
-                        R500_RS_SEL_R(memory_pos + 2) |
-                        R500_RS_SEL_Q(memory_pos + 3);
-                    tex_count++;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (col_count == 0) {
-            rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
-        }
-
-        if (tex_count == 0) {
-            rs->ip[0] |=
-                R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
-                R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
-        }
-
-        /* Rasterize at least one color, or bad things happen. */
-        if ((col_count == 0) && (tex_count == 0)) {
-            col_count++;
-        }
-
-        for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R500_RS_INST_TEX_ID(i) |
-                R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_offset);
-            fp_offset++;
-        }
-
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R500_RS_INST_COL_ID(i) |
-                R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_offset);
-            fp_offset++;
-        }
+        rX00_rs_col       = r500_rs_col;
+        rX00_rs_col_write = r500_rs_col_write;
+        rX00_rs_tex       = r500_rs_tex;
+        rX00_rs_tex_write = r500_rs_tex_write;
     } else {
-        for (i = 0; i < info->num_inputs; i++) {
-            assert(tab[i] != -1);
-            memory_pos = tab[i] * 4;
-            switch (info->input_semantic_name[i]) {
-                case TGSI_SEMANTIC_COLOR:
-                    rs->ip[col_count] |=
-                        R300_RS_COL_PTR(memory_pos) |
-                        R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
-                    col_count++;
-                    break;
-                case TGSI_SEMANTIC_GENERIC:
-                    rs->ip[tex_count] |=
-                        R300_RS_TEX_PTR(memory_pos) |
-                        R300_RS_SEL_S(R300_RS_SEL_C0) |
-                        R300_RS_SEL_T(R300_RS_SEL_C1) |
-                        R300_RS_SEL_R(R300_RS_SEL_C2) |
-                        R300_RS_SEL_Q(R300_RS_SEL_C3);
-                    tex_count++;
-                    break;
-                default:
-                    break;
+        rX00_rs_col       = r300_rs_col;
+        rX00_rs_col_write = r300_rs_col_write;
+        rX00_rs_tex       = r300_rs_tex;
+        rX00_rs_tex_write = r300_rs_tex_write;
+    }
+
+    /* Rasterize colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            /* Always rasterize if it's written by the VS,
+             * otherwise it locks up. */
+            rX00_rs_col(rs, col_count, i, FALSE);
+
+            /* Write it to the FS input register if it's used by the FS. */
+            if (fs_inputs->color[i] != ATTR_UNUSED) {
+                rX00_rs_col_write(rs, col_count, fp_offset);
+                fp_offset++;
+            }
+            col_count++;
+        } else {
+            /* Skip the FS input register, leave it uninitialized. */
+            /* If we try to set it to (0,0,0,1), it will lock up. */
+            if (fs_inputs->color[i] != ATTR_UNUSED) {
+                fp_offset++;
             }
         }
+    }
 
-        if (col_count == 0) {
-            rs->ip[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+    /* Rasterize texture coordinates. */
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            /* Always rasterize if it's written by the VS,
+             * otherwise it locks up. */
+            rX00_rs_tex(rs, tex_count, tex_count, FALSE);
+
+            /* Write it to the FS input register if it's used by the FS. */
+            if (fs_inputs->generic[i] != ATTR_UNUSED) {
+                rX00_rs_tex_write(rs, tex_count, fp_offset);
+                fp_offset++;
+            }
+            tex_count++;
+        } else {
+            /* Skip the FS input register, leave it uninitialized. */
+            /* If we try to set it to (0,0,0,1), it will lock up. */
+            if (fs_inputs->generic[i] != ATTR_UNUSED) {
+                fp_offset++;
+            }
         }
+    }
 
-        if (tex_count == 0) {
-            rs->ip[0] |=
-                R300_RS_SEL_S(R300_RS_SEL_K0) |
-                R300_RS_SEL_T(R300_RS_SEL_K0) |
-                R300_RS_SEL_R(R300_RS_SEL_K0) |
-                R300_RS_SEL_Q(R300_RS_SEL_K1);
-        }
+    /* Rasterize fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        /* Always rasterize if it's written by the VS,
+         * otherwise it locks up. */
+        rX00_rs_tex(rs, tex_count, tex_count, TRUE);
 
-        /* Rasterize at least one color, or bad things happen. */
-        if ((col_count == 0) && (tex_count == 0)) {
-            col_count++;
-        }
-
-        for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R300_RS_INST_TEX_ID(i) |
-                R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_offset);
+        /* Write it to the FS input register if it's used by the FS. */
+        if (fs_inputs->fog != ATTR_UNUSED) {
+            rX00_rs_tex_write(rs, tex_count, fp_offset);
             fp_offset++;
         }
-
-        for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R300_RS_INST_COL_ID(i) |
-                R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_offset);
+        tex_count++;
+    } else {
+        /* Skip the FS input register, leave it uninitialized. */
+        /* If we try to set it to (0,0,0,1), it will lock up. */
+        if (fs_inputs->fog != ATTR_UNUSED) {
             fp_offset++;
         }
     }
 
-    rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |
+    /* Rasterize at least one color, or bad things happen. */
+    if (col_count == 0 && tex_count == 0) {
+        rX00_rs_col(rs, 0, 0, TRUE);
+        col_count++;
+    }
+
+    rs->count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
-    rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
+    rs->inst_count = MAX3(col_count - 1, tex_count - 1, 0);
+}
+
+/* Update the vertex format. */
+static void r300_update_derived_shader_state(struct r300_context* r300)
+{
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+
+    /*
+    struct r300_shader_key* key;
+    struct r300_shader_derived_value* value;
+    key = CALLOC_STRUCT(r300_shader_key);
+    key->vs = r300->vs;
+    key->fs = r300->fs;
+
+    value = (struct r300_shader_derived_value*)
+        util_hash_table_get(r300->shader_hash_table, (void*)key);
+    if (value) {
+        //vformat = value->vformat;
+        rs_block = value->rs_block;
+
+        FREE(key);
+    } else {
+        rs_block = CALLOC_STRUCT(r300_rs_block);
+        value = CALLOC_STRUCT(r300_shader_derived_value);
+
+        r300_update_rs_block(r300, rs_block);
+
+        //value->vformat = vformat;
+        value->rs_block = rs_block;
+        util_hash_table_set(r300->shader_hash_table,
+            (void*)key, (void*)value);
+    } */
+
+    /* Reset structures */
+    memset(r300->rs_block, 0, sizeof(struct r300_rs_block));
+    memset(r300->vertex_info, 0, sizeof(struct r300_vertex_info));
+    memcpy(r300->vertex_info->vinfo.hwfmt, r300->vs->hwfmt, sizeof(uint)*4);
+
+    r300_update_rs_block(r300, &r300->vs->outputs, &r300->fs->inputs);
+
+    if (r300screen->caps->has_tcl) {
+        r300_vertex_psc(r300);
+    } else {
+        r300_draw_emit_all_attribs(r300);
+        draw_compute_vertex_size(&r300->vertex_info->vinfo);
+        r300_swtcl_vertex_psc(r300);
+    }
+
+    r300->dirty_state |= R300_NEW_RS_BLOCK;
+}
+
+static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when a new depth or stencil value
+     * can be written and changed. */
+
+    /* We might optionally check for [Z func: never] and inspect the stencil
+     * state in a similar fashion, but it's not terribly important. */
+    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE) ||
+           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK) ||
+           ((dsa->z_buffer_control & R500_STENCIL_REFMASK_FRONT_BACK) &&
+            (dsa->stencil_ref_bf & R300_STENCILWRITEMASK_MASK));
+}
+
+static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when alpha testing can kill
+     * a fragment. */
+    uint32_t af = dsa->alpha_function;
+
+    return (af & R300_FG_ALPHA_FUNC_ENABLE) &&
+           (af & R300_FG_ALPHA_FUNC_ALWAYS) != R300_FG_ALPHA_FUNC_ALWAYS;
+}
+
+static void r300_update_ztop(struct r300_context* r300)
+{
+    r300->ztop_state.z_buffer_top = R300_ZTOP_ENABLE;
+
+    /* This is important enough that I felt it warranted a comment.
+     *
+     * According to the docs, these are the conditions where ZTOP must be
+     * disabled:
+     * 1) Alpha testing enabled
+     * 2) Texture kill instructions in fragment shader
+     * 3) Chroma key culling enabled
+     * 4) W-buffering enabled
+     *
+     * The docs claim that for the first three cases, if no ZS writes happen,
+     * then ZTOP can be used.
+     *
+     * (3) will never apply since we do not support chroma-keyed operations.
+     * (4) will need to be re-examined (and this comment updated) if/when
+     * Hyper-Z becomes supported.
+     *
+     * Additionally, the following conditions require disabled ZTOP:
+     * 5) Depth writes in fragment shader
+     * 6) Outstanding occlusion queries
+     *
+     * ~C.
+     */
+
+    /* ZS writes */
+    if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
+           (r300_dsa_alpha_test_enabled(r300->dsa_state) ||   /* (1) */
+            r300->fs->info.uses_kill)) {                      /* (2) */
+        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300_fragment_shader_writes_depth(r300->fs)) { /* (5) */
+        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    } else if (r300->query_current) {                         /* (6) */
+        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    }
 }
 
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->dirty_state &
-            (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
-        r300_update_vertex_format(r300);
+        (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER |
+         R300_NEW_VERTEX_FORMAT)) {
+        r300_update_derived_shader_state(r300);
     }
 
-    if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
-        r300_update_fs_tab(r300);
-        r300_update_rs_block(r300);
+    if (r300->dirty_state &
+            (R300_NEW_DSA | R300_NEW_FRAGMENT_SHADER | R300_NEW_QUERY)) {
+        r300_update_ztop(r300);
     }
 }

@@ -229,7 +229,6 @@ void radeonUpdateScissor( GLcontext *ctx )
 	}
 	if (!rmesa->radeonScreen->kernel_mm) {
 	   /* Fix scissors for dri 1 */
-
 	   __DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
 	   x1 += dPriv->x;
 	   x2 += dPriv->x + 1;
@@ -262,29 +261,6 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 		radeonUpdateScissor(ctx);
 	}
 }
-
-void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
-{
-   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-   GLuint i;
-   drm_radeon_stipple_t stipple;
-
-   /* Must flip pattern upside down.
-   */
-   for ( i = 0 ; i < 32 ; i++ ) {
-      stipple.mask[31 - i] = ((GLuint *) mask)[i];
-   }
-
-   /* TODO: push this into cmd mechanism
-   */
-   radeon_firevertices(radeon);
-   LOCK_HARDWARE( radeon );
-
-   drmCommandWrite( radeon->dri.fd, DRM_RADEON_STIPPLE,
-	 &stipple, sizeof(stipple) );
-   UNLOCK_HARDWARE( radeon );
-}
-
 
 /* ================================================================
  * SwapBuffers with client-side throttling
@@ -841,7 +817,7 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
        */
 		if (!was_front_buffer_rendering && radeon->is_front_buffer_rendering) {
 			radeon_update_renderbuffers(radeon->dri.context,
-				radeon->dri.context->driDrawablePriv);
+				radeon->dri.context->driDrawablePriv, GL_FALSE);
       }
 	}
 
@@ -858,7 +834,7 @@ void radeonReadBuffer( GLcontext *ctx, GLenum mode )
 
 		if (!was_front_buffer_reading && rmesa->is_front_buffer_reading) {
 			radeon_update_renderbuffers(rmesa->dri.context,
-						    rmesa->dri.context->driReadablePriv);
+						    rmesa->dri.context->driReadablePriv, GL_FALSE);
 	 	}
 	}
 	/* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
@@ -909,9 +885,9 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 		if (radeon->is_front_buffer_rendering) {
 			ctx->Driver.Flush(ctx);
 		}
-		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv, GL_FALSE);
 		if (driContext->driDrawablePriv != driContext->driReadablePriv)
-			radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+			radeon_update_renderbuffers(driContext, driContext->driReadablePriv, GL_FALSE);
 	}
 
 	old_viewport = ctx->Driver.Viewport;
@@ -1124,8 +1100,6 @@ void radeonFlush(GLcontext *ctx)
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
 
-	radeonEmitState(radeon);
-
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
@@ -1148,9 +1122,6 @@ void radeonFlush(GLcontext *ctx)
 			}
 		}
 	}
-
-	make_empty_list(&radeon->query.not_flushed_head);
-
 }
 
 /* Make sure all commands have been sent to the hardware and have
@@ -1345,5 +1316,5 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 
 void radeonUserClear(GLcontext *ctx, GLuint mask)
 {
-   _mesa_meta_clear(ctx, mask);
+   _mesa_meta_Clear(ctx, mask);
 }

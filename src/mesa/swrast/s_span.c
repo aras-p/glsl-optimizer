@@ -880,13 +880,13 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       stipple_polygon_span(ctx, span);
    }
 
-   if (ctx->Transform.DepthClamp)
-      _swrast_depth_clamp_span(ctx, span);
-
    /* Stencil and Z testing */
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
 
       if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
@@ -904,7 +904,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -912,7 +911,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* we have to wait until after occlusion to do this test */
    if (ctx->Color.IndexMask == 0) {
@@ -1358,6 +1356,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
+
       if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
@@ -1376,7 +1378,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -1384,7 +1385,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.

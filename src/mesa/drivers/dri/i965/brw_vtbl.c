@@ -46,7 +46,7 @@
 #include "brw_state.h"
 #include "brw_fallback.h"
 #include "brw_vs.h"
-
+#include "brw_wm.h"
 
 static void
 dri_bo_release(dri_bo **bo)
@@ -66,10 +66,14 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
-
-   _mesa_free(brw->wm.compile_data);
-
-   brw_FrameBufferTexDestroy( brw );
+   brw_clear_validated_bos(brw);
+   if (brw->wm.compile_data) {
+      _mesa_free(brw->wm.compile_data->instruction);
+      _mesa_free(brw->wm.compile_data->vreg);
+      _mesa_free(brw->wm.compile_data->refs);
+      _mesa_free(brw->wm.compile_data->prog_instructions);
+      _mesa_free(brw->wm.compile_data);
+   }
 
    for (i = 0; i < brw->state.nr_color_regions; i++)
       intel_region_release(&brw->state.color_regions[i]);
@@ -146,9 +150,6 @@ static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!brw->no_batch_wrap);
-
    brw->curbe.need_new_bo = GL_TRUE;
 
    /* Mark all context state as needing to be re-emitted.
@@ -177,20 +178,6 @@ static void brw_note_fence( struct intel_context *intel, GLuint fence )
    brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_FENCE;
 }
 
-/* called from intelWaitForIdle() and intelFlush()
- *
- * For now, just flush everything.  Could be smarter later.
- */
-static GLuint brw_flush_cmd( void )
-{
-   struct brw_mi_flush flush;
-   flush.opcode = CMD_MI_FLUSH;
-   flush.pad = 0;
-   flush.flags = BRW_FLUSH_STATE_CACHE;
-   return *(GLuint *)&flush;
-}
-
-
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )
 {
    /* nothing */
@@ -211,6 +198,5 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
-   brw->intel.vtbl.flush_cmd = brw_flush_cmd;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
 }

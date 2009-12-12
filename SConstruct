@@ -32,10 +32,10 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,i915simple,trace,identity,llvmpipe'
+	default_drivers = 'softpipe,failover,svga,i915,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_drivers = 'softpipe,i915simple,trace,identity'
+	default_drivers = 'softpipe,svga,i915,trace,identity'
 	default_winsys = 'all'
 else:
 	default_drivers = 'all'
@@ -46,9 +46,9 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'cell', 'trace', 'r300', 'identity', 'llvmpipe']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'intel', 'gdi', 'radeon']))
+                     ['xlib', 'vmware', 'intel', 'gdi', 'radeon']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 

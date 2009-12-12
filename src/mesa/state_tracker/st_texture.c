@@ -32,8 +32,9 @@
 #include "st_cb_fbo.h"
 #include "st_inlines.h"
 #include "main/enums.h"
-#include "main/texobj.h"
+#include "main/texfetch.h"
 #include "main/teximage.h"
+#include "main/texobj.h"
 #include "main/texstore.h"
 
 #undef Elements  /* fix re-defined macro warning */
@@ -43,6 +44,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "util/u_rect.h"
+#include "util/u_math.h"
 
 
 #define DBG if(0) printf
@@ -99,10 +101,9 @@ st_texture_create(struct st_context *st,
    pt.target = target;
    pt.format = format;
    pt.last_level = last_level;
-   pt.width[0] = width0;
-   pt.height[0] = height0;
-   pt.depth[0] = depth0;
-   pf_get_block(format, &pt.block);
+   pt.width0 = width0;
+   pt.height0 = height0;
+   pt.depth0 = depth0;
    pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);
@@ -128,15 +129,15 @@ st_texture_match_image(const struct pipe_texture *pt,
 
    /* Check if this image's format matches the established texture's format.
     */
-   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format)
+   if (st_mesa_format_to_pipe_format(image->TexFormat) != pt->format)
       return GL_FALSE;
 
    /* Test if this image's size matches what's expected in the
     * established texture.
     */
-   if (image->Width != pt->width[level] ||
-       image->Height != pt->height[level] ||
-       image->Depth != pt->depth[level])
+   if (image->Width != u_minify(pt->width0, level) ||
+       image->Height != u_minify(pt->height0, level) ||
+       image->Depth != u_minify(pt->depth0, level))
       return GL_FALSE;
 
    return GL_TRUE;
@@ -240,8 +241,9 @@ st_surface_data(struct pipe_context *pipe,
    struct pipe_screen *screen = pipe->screen;
    void *map = screen->transfer_map(screen, dst);
 
+   assert(dst->texture);
    util_copy_rect(map,
-                  &dst->block,
+                  dst->texture->format,
                   dst->stride,
                   dstx, dsty, 
                   width, height, 
@@ -264,7 +266,7 @@ st_texture_image_data(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   GLuint depth = dst->depth[level];
+   GLuint depth = u_minify(dst->depth0, level);
    GLuint i;
    const GLubyte *srcUB = src;
    struct pipe_transfer *dst_transfer;
@@ -274,15 +276,16 @@ st_texture_image_data(struct st_context *st,
    for (i = 0; i < depth; i++) {
       dst_transfer = st_no_flush_get_tex_transfer(st, dst, face, level, i,
 						  PIPE_TRANSFER_WRITE, 0, 0,
-						  dst->width[level],
-						  dst->height[level]);
+						  u_minify(dst->width0, level),
+                                                  u_minify(dst->height0, level));
 
       st_surface_data(pipe, dst_transfer,
 		      0, 0,                             /* dstx, dsty */
 		      srcUB,
 		      src_row_stride,
 		      0, 0,                             /* source x, y */
-		      dst->width[level], dst->height[level]);       /* width, height */
+		      u_minify(dst->width0, level),
+                      u_minify(dst->height0, level));      /* width, height */
 
       screen->tex_transfer_destroy(dst_transfer);
 
@@ -300,9 +303,9 @@ st_texture_image_copy(struct pipe_context *pipe,
                       GLuint face)
 {
    struct pipe_screen *screen = pipe->screen;
-   GLuint width = dst->width[dstLevel];
-   GLuint height = dst->height[dstLevel];
-   GLuint depth = dst->depth[dstLevel];
+   GLuint width = u_minify(dst->width0, dstLevel); 
+   GLuint height = u_minify(dst->height0, dstLevel); 
+   GLuint depth = u_minify(dst->depth0, dstLevel); 
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
    GLuint i;
@@ -312,13 +315,13 @@ st_texture_image_copy(struct pipe_context *pipe,
 
       /* find src texture level of needed size */
       for (srcLevel = 0; srcLevel <= src->last_level; srcLevel++) {
-         if (src->width[srcLevel] == width &&
-             src->height[srcLevel] == height) {
+         if (u_minify(src->width0, srcLevel) == width &&
+             u_minify(src->height0, srcLevel) == height) {
             break;
          }
       }
-      assert(src->width[srcLevel] == width);
-      assert(src->height[srcLevel] == height);
+      assert(u_minify(src->width0, srcLevel) == width);
+      assert(u_minify(src->height0, srcLevel) == height);
 
 #if 0
       {
@@ -342,12 +345,21 @@ st_texture_image_copy(struct pipe_context *pipe,
       src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
                                             PIPE_BUFFER_USAGE_GPU_READ);
 
-      pipe->surface_copy(pipe,
-			 dst_surface,
-			 0, 0, /* destX, Y */
-			 src_surface,
-			 0, 0, /* srcX, Y */
-			 width, height);
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+			    dst_surface,
+			    0, 0, /* destX, Y */
+			    src_surface,
+			    0, 0, /* srcX, Y */
+			    width, height);
+      } else {
+         util_surface_copy(pipe, FALSE,
+			   dst_surface,
+			   0, 0, /* destX, Y */
+			   src_surface,
+			   0, 0, /* srcX, Y */
+			   width, height);
+      }
 
       pipe_surface_reference(&src_surface, NULL);
       pipe_surface_reference(&dst_surface, NULL);
@@ -577,7 +589,6 @@ st_teximage_flush_before_map(struct st_context *st,
       pipe->is_texture_referenced(pipe, pt, face, level);
 
    if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      usage == PIPE_TRANSFER_WRITE ||
-		      usage == PIPE_TRANSFER_READ_WRITE))
-      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
+		      (usage & PIPE_TRANSFER_WRITE)))
+      st->pipe->flush(st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 }

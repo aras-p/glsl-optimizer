@@ -28,6 +28,7 @@
 #include "intel_chipset.h"
 #include "intel_context.h"
 #include "intel_extensions.h"
+#include "utils.h"
 
 
 #define need_GL_ARB_copy_buffer
@@ -63,7 +64,7 @@
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 
 /**
@@ -78,8 +79,12 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_half_float_pixel",           NULL },
    { "GL_ARB_map_buffer_range",           GL_ARB_map_buffer_range_functions },
    { "GL_ARB_multitexture",               NULL },
+   { "GL_ARB_pixel_buffer_object",      NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_point_sprite",               NULL },
+   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
+   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
+   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
    { "GL_ARB_sync",                       GL_ARB_sync_functions },
    { "GL_ARB_texture_border_clamp",       NULL },
    { "GL_ARB_texture_cube_map",           NULL },
@@ -91,6 +96,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_texture_rectangle",          NULL },
    { "GL_ARB_vertex_array_object",        GL_ARB_vertex_array_object_functions},
    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
+   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
    { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
    { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
@@ -99,6 +105,8 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_blend_logic_op",             NULL },
    { "GL_EXT_blend_subtract",             NULL },
    { "GL_EXT_cull_vertex",                GL_EXT_cull_vertex_functions },
+   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
+   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
    { "GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions },
    { "GL_EXT_packed_depth_stencil",       NULL },
@@ -116,7 +124,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_MESA_pack_invert",               NULL },
    { "GL_MESA_ycbcr_texture",             NULL },
    { "GL_NV_blend_square",                NULL },
-   { "GL_NV_point_sprite",                GL_NV_point_sprite_functions },
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
    { "GL_SGIS_generate_mipmap",           NULL },
@@ -150,13 +157,9 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_seamless_cube_map",          NULL },
-   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
-   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
-   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
    { "GL_ARB_shadow",                     NULL },
    { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
-   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_EXT_texture_sRGB",		  NULL },
@@ -171,40 +174,39 @@ static const struct dri_extension brw_extensions[] = {
 
 
 static const struct dri_extension arb_oq_extensions[] = {
+   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { NULL, NULL }
 };
 
-
-static const struct dri_extension ttm_extensions[] = {
-   { "GL_ARB_pixel_buffer_object",      NULL },
-   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
-   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
+static const struct dri_extension fragment_shader_extensions[] = {
+   { "GL_ARB_fragment_shader",            NULL },
    { NULL, NULL }
 };
-
 
 /**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
 void
-intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+intelInitExtensions(GLcontext *ctx)
 {
-   struct intel_context *intel = ctx?intel_context(ctx):NULL;
+   struct intel_context *intel = intel_context(ctx);
 
    /* Disable imaging extension until convolution is working in teximage paths.
     */
-   enable_imaging = GL_FALSE;
+   driInitExtensions(ctx, card_extensions, GL_FALSE);
 
-   driInitExtensions(ctx, card_extensions, enable_imaging);
-
-   if (intel == NULL || intel->ttm)
-      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
-
-   if (intel == NULL || IS_965(intel->intelScreen->deviceID))
+   if (IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
 
-   if (intel == NULL || IS_915(intel->intelScreen->deviceID)
-       || IS_945(intel->intelScreen->deviceID))
+   if (IS_915(intel->intelScreen->deviceID)
+       || IS_945(intel->intelScreen->deviceID)) {
       driInitExtensions(ctx, i915_extensions, GL_FALSE);
+
+      if (driQueryOptionb(&intel->optionCache, "fragment_shader"))
+	 driInitExtensions(ctx, fragment_shader_extensions, GL_FALSE);
+
+      if (driQueryOptionb(&intel->optionCache, "stub_occlusion_query"))
+	 driInitExtensions(ctx, arb_oq_extensions, GL_FALSE);
+   }
 }

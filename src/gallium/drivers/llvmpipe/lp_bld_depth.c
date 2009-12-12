@@ -90,7 +90,7 @@ lp_depth_type(const struct util_format_description *format_desc,
 
    if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
       type.floating = TRUE;
-      assert(swizzle = 0);
+      assert(swizzle == 0);
       assert(format_desc->channel[swizzle].size == format_desc->block.bits);
    }
    else if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED) {
@@ -210,7 +210,4 @@ lp_build_depth_test(LLVMBuilderRef builder,
       dst = lp_build_select(&bld, z_bitmask, src, dst);
       LLVMBuildStore(builder, dst, dst_ptr);
    }
-
-   /* FIXME */
-   assert(!state->occlusion_count);
 }

@@ -122,7 +122,8 @@ create_color_map_texture(GLcontext *ctx)
    const uint texSize = 256; /* simple, and usually perfect */
 
    /* find an RGBA texture format */
-   format = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
+   format = st_choose_format(pipe->screen, GL_RGBA,
+                             PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
 
    /* create texture for color map/table */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
@@ -144,7 +145,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    const GLuint gSize = ctx->PixelMaps.GtoG.Size;
    const GLuint bSize = ctx->PixelMaps.BtoB.Size;
    const GLuint aSize = ctx->PixelMaps.AtoA.Size;
-   const uint texSize = pt->width[0];
+   const uint texSize = pt->width0;
    uint *dest;
    uint i, j;
 
@@ -161,12 +162,14 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
     */
    for (i = 0; i < texSize; i++) {
       for (j = 0; j < texSize; j++) {
+         union util_color uc;
          int k = (i * texSize + j);
          ubyte r = ctx->PixelMaps.RtoR.Map8[j * rSize / texSize];
          ubyte g = ctx->PixelMaps.GtoG.Map8[i * gSize / texSize];
          ubyte b = ctx->PixelMaps.BtoB.Map8[j * bSize / texSize];
          ubyte a = ctx->PixelMaps.AtoA.Map8[i * aSize / texSize];
-         util_pack_color_ub(r, g, b, a, pt->format, dest + k);
+         util_pack_color_ub(r, g, b, a, pt->format, &uc);
+         *(dest + k) = uc.ui;
       }
    }
 

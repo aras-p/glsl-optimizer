@@ -263,7 +263,11 @@ def generate(env):
         if msvc and env['toolchain'] != 'winddk':
             cppdefines += [
                 'VC_EXTRALEAN',
+                '_USE_MATH_DEFINES',
+                '_CRT_SECURE_NO_WARNINGS',
                 '_CRT_SECURE_NO_DEPRECATE',
+                '_SCL_SECURE_NO_WARNINGS',
+                '_SCL_SECURE_NO_DEPRECATE',
             ]
         if debug:
             cppdefines += ['_DEBUG']
@@ -334,15 +338,27 @@ def generate(env):
         else:
             ccflags += ['-O3', '-g3']
         if env['profile']:
-            ccflags += ['-pg']
+            # See http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Which_options_should_I_pass_to_gcc_when_compiling_for_profiling?
+            ccflags += [
+                '-fno-omit-frame-pointer',
+                '-fno-optimize-sibling-calls',
+            ]
         if env['machine'] == 'x86':
             ccflags += [
                 '-m32',
                 #'-march=pentium4',
-                '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
-                '-mstackrealign', # ensure stack is aligned -- do not enabled -msse without it!
                 #'-mfpmath=sse',
             ]
+            if platform != 'windows':
+                # XXX: -mstackrealign causes stack corruption on MinGW. Ditto
+                # for -mincoming-stack-boundary=2.  Still enable it on other
+                # platforms for now, but we can't rely on it for cross platform
+                # code. We have to use __attribute__((force_align_arg_pointer))
+                # instead.
+                ccflags += [
+                    '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                    '-mstackrealign', # ensure stack is aligned
+                ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
         # See also:
@@ -350,7 +366,7 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wmissing-field-initializers',
-            '-Wpointer-arith',
+            '-Werror=pointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
@@ -374,20 +390,15 @@ def generate(env):
         else:
             ccflags += [
                 '/O2', # optimize for speed
-                #'/fp:fast', # fast floating point 
-            ]
-        if env['profile']:
-            ccflags += [
-                '/Gh', # enable _penter hook function
-                '/GH', # enable _pexit hook function
+                '/GL', # enable whole program optimization
             ]
         ccflags += [
+            '/fp:fast', # fast floating point 
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
         if env['machine'] == 'x86':
             ccflags += [
-                #'/QIfist', # Suppress _ftol
                 #'/arch:SSE2', # use the SSE2 instructions
             ]
         if platform == 'windows':
@@ -465,6 +476,11 @@ def generate(env):
         ]
         # Handle circular dependencies in the libraries
         env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+    if msvc:
+        if not env['debug']:
+            # enable Link-time Code Generation
+            linkflags += ['/LTCG']
+            env.Append(ARFLAGS = ['/LTCG'])
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx

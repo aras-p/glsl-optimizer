@@ -422,6 +422,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_lrp", IR_LRP, 1, 3 },
    { "vec4_min", IR_MIN, 1, 2 },
    { "vec4_max", IR_MAX, 1, 2 },
+   { "vec4_cmp", IR_CMP, 1, 3 },
    { "vec4_clamp", IR_CLAMP, 1, 3 },
    { "vec4_seq", IR_SEQUAL, 1, 2 },
    { "vec4_sne", IR_SNEQUAL, 1, 2 },
@@ -924,7 +925,7 @@ gen_return_with_expression(slang_assemble_ctx *A, slang_operation *oper)
       slang_operation_copy(rhs, &oper->children[0]);
    }
 
-   ///blockOper->locals->outer_scope = oper->locals->outer_scope;
+   /*blockOper->locals->outer_scope = oper->locals->outer_scope;*/
 
    /*slang_print_tree(blockOper, 0);*/
 
@@ -2775,7 +2776,7 @@ _slang_gen_while(slang_assemble_ctx * A, slang_operation *oper)
     *    body code (child[1])
     */
    slang_ir_node *loop, *breakIf, *body;
-   GLboolean isConst, constTrue;
+   GLboolean isConst, constTrue = GL_FALSE;
 
    if (!A->EmitContReturn) {
       /* We don't want to emit CONT instructions.  If this while-loop has

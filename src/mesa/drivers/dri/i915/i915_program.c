@@ -130,6 +130,7 @@ i915_emit_decl(struct i915_fragment_program *p,
    *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
    *(p->decl++) = D1_MBZ;
    *(p->decl++) = D2_MBZ;
+   assert(p->decl <= p->declarations + ARRAY_SIZE(p->declarations));
 
    p->nr_decl_insn++;
    return reg;
@@ -184,6 +185,11 @@ i915_emit_arith(struct i915_fragment_program * p,
       src1 = s[1];
       src2 = s[2];
       p->utemp_flag = old_utemp_flag;   /* restore */
+   }
+
+   if (p->csr >= p->program + ARRAY_SIZE(p->program)) {
+      i915_program_error(p, "Program contains too many instructions");
+      return UREG_BAD;
    }
 
    *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
@@ -269,6 +275,11 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
       if (GET_UREG_TYPE(coord) == REG_TYPE_R &&
 	  p->register_phases[GET_UREG_NR(coord)] == p->nr_tex_indirect)
 	 p->nr_tex_indirect++;
+
+      if (p->csr >= p->program + ARRAY_SIZE(p->program)) {
+	 i915_program_error(p, "Program contains too many instructions");
+	 return UREG_BAD;
+      }
 
       *(p->csr++) = (op | 
 		     T0_DEST( dest ) |
@@ -424,12 +435,21 @@ i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
    return 0;
 }
 
-
-
+/* Warning the user about program errors seems to be quite valuable, from
+ * our bug reports.  It unfortunately means piglit reporting errors
+ * when we fall back to software due to an unsupportable program, though.
+ */
 void
-i915_program_error(struct i915_fragment_program *p, const char *msg)
+i915_program_error(struct i915_fragment_program *p, const char *fmt, ...)
 {
-   _mesa_problem(NULL, "i915_program_error: %s", msg);
+   va_list args;
+
+   fprintf(stderr, "i915_program_error: ");
+   va_start(args, fmt);
+   vfprintf(stderr, fmt, args);
+   va_end(args);
+
+   fprintf(stderr, "\n");
    p->error = 1;
 }
 
@@ -511,7 +531,8 @@ i915_upload_program(struct i915_context *i915,
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
 
-   FALLBACK(&i915->intel, I915_FALLBACK_PROGRAM, p->error);
+   if (p->error)
+      return;
 
    /* Could just go straight to the batchbuffer from here:
     */

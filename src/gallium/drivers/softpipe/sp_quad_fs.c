@@ -68,72 +68,69 @@ quad_shade_stage(struct quad_stage *qs)
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
-static void
+static INLINE boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = qss->machine;
-   boolean z_written;
-   
-   /* Consts do not require 16 byte alignment. */
-   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
-
-   machine->InterpCoefs = quad->coef;
 
    /* run shader */
-   quad->inout.mask &= softpipe->fs->run( softpipe->fs, machine, quad );
+   return softpipe->fs->run( softpipe->fs, machine, quad );
+}
 
-   /* store outputs */
-   z_written = FALSE;
-   {
-      const ubyte *sem_name = softpipe->fs->info.output_semantic_name;
-      const ubyte *sem_index = softpipe->fs->info.output_semantic_index;
-      const uint n = qss->stage.softpipe->fs->info.num_outputs;
-      uint i;
-      for (i = 0; i < n; i++) {
-         switch (sem_name[i]) {
-         case TGSI_SEMANTIC_COLOR:
-            {
-               uint cbuf = sem_index[i];
-               memcpy(quad->output.color[cbuf],
-                      &machine->Outputs[i].xyzw[0].f[0],
-                      sizeof(quad->output.color[0]) );
-            }
-            break;
-         case TGSI_SEMANTIC_POSITION:
-            {
-               uint j;
-               for (j = 0; j < 4; j++) {
-                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
-               }
-               z_written = TRUE;
-            }
-            break;
-         }
+
+
+static void
+coverage_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   struct softpipe_context *softpipe = qs->softpipe;
+   uint cbuf;
+
+   /* loop over colorbuffer outputs */
+   for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
+      float (*quadColor)[4] = quad->output.color[cbuf];
+      unsigned j;
+      for (j = 0; j < QUAD_SIZE; j++) {
+         assert(quad->input.coverage[j] >= 0.0);
+         assert(quad->input.coverage[j] <= 1.0);
+         quadColor[3][j] *= quad->input.coverage[j];
       }
    }
-
-   if (!z_written) {
-      /* compute Z values now, as in the quad earlyz stage */
-      /* XXX we should really only do this if the earlyz stage is not used */
-      const float fx = (float) quad->input.x0;
-      const float fy = (float) quad->input.y0;
-      const float dzdx = quad->posCoef->dadx[2];
-      const float dzdy = quad->posCoef->dady[2];
-      const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
-
-      quad->output.depth[0] = z0;
-      quad->output.depth[1] = z0 + dzdx;
-      quad->output.depth[2] = z0 + dzdy;
-      quad->output.depth[3] = z0 + dzdx + dzdy;
-   }
-
-   /* shader may cull fragments */
-   if (quad->inout.mask) {
-      qs->next->run( qs->next, quad );
-   }
 }
+
+
+
+static void
+shade_quads(struct quad_stage *qs, 
+                 struct quad_header *quads[],
+                 unsigned nr)
+{
+   struct quad_shade_stage *qss = quad_shade_stage( qs );
+   struct softpipe_context *softpipe = qs->softpipe;
+   struct tgsi_exec_machine *machine = qss->machine;
+
+   unsigned i, pass = 0;
+   
+   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   machine->InterpCoefs = quads[0]->coef;
+
+   for (i = 0; i < nr; i++) {
+      if (!shade_quad(qs, quads[i]))
+         continue;
+
+      if (/*do_coverage*/ 0)
+         coverage_quad( qs, quads[i] );
+
+      quads[pass++] = quads[i];
+   }
+   
+   if (pass)
+      qs->next->run(qs->next, quads, pass);
+}
+   
+
+
 
 
 /**
@@ -174,7 +171,7 @@ sp_quad_shade_stage( struct softpipe_context *softpipe )
 
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
-   qss->stage.run = shade_quad;
+   qss->stage.run = shade_quads;
    qss->stage.destroy = shade_destroy;
 
    qss->machine = tgsi_exec_machine_create();

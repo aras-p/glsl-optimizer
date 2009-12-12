@@ -71,7 +71,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 	def __init__(self):
 		gl_XML.gl_print_base.__init__(self)
 
-		self.header_tag = '_DISPATCH_H_'
+		self.header_tag = '_GLAPI_DISPATCH_H_'
 		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ("(C) Copyright IBM Corporation 2005", "IBM")
 		return
@@ -79,9 +79,10 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print """
-#include "glapitable.h"
+/* this file should not be included directly in mesa */
+
 /**
- * \\file dispatch.h
+ * \\file glapidispatch.h
  * Macros for handling GL dispatch tables.
  *
  * For each known GL function, there are 3 macros in this file.  The first
@@ -133,7 +134,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 		print ''
-		print '#if !defined(IN_DRI_DRIVER)'
+		print '#if !defined(_GLAPI_USE_REMAP_TABLE)'
 		print ''
 
 		for [f, index] in functions:
@@ -163,7 +164,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 		print ''
-		print '#endif /* !defined(IN_DRI_DRIVER) */'
+		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
 		return
 
 

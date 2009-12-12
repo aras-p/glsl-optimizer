@@ -1,6 +1,7 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
  *                Joakim Sindholt <opensource@zhasha.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,18 +25,17 @@
 #ifndef R300_FS_H
 #define R300_FS_H
 
-#include "tgsi/tgsi_dump.h"
-
-#include "r300_context.h"
-#include "r3xx_fs.h"
-#include "r5xx_fs.h"
-
+#include "pipe/p_state.h"
+#include "tgsi/tgsi_scan.h"
 #include "radeon_code.h"
+#include "r300_shader_semantics.h"
 
 struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
+
     struct tgsi_shader_info info;
+    struct r300_shader_semantics inputs;
 
     /* Has this shader been translated yet? */
     boolean translated;
@@ -48,4 +48,10 @@ struct r300_fragment_shader {
 void r300_translate_fragment_shader(struct r300_context* r300,
                                     struct r300_fragment_shader* fs);
 
-    #endif /* R300_FS_H */
+static inline boolean r300_fragment_shader_writes_depth(struct r300_fragment_shader *fs)
+{
+    if (!fs)
+	return FALSE;
+    return (fs->code.writes_depth) ? TRUE : FALSE;
+}
+#endif /* R300_FS_H */

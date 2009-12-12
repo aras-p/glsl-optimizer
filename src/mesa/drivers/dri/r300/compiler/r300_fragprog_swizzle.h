@@ -28,15 +28,11 @@
 #ifndef __R300_FRAGPROG_SWIZZLE_H_
 #define __R300_FRAGPROG_SWIZZLE_H_
 
-#include "main/glheader.h"
-#include "shader/prog_instruction.h"
+#include "radeon_swizzle.h"
 
-struct nqssadce_state;
+extern struct rc_swizzle_caps r300_swizzle_caps;
 
-GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
-void r300FPBuildSwizzle(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
-
-GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle);
-GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle);
+unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle);
+unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle);
 
 #endif /* __R300_FRAGPROG_SWIZZLE_H_ */

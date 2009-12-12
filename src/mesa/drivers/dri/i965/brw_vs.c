@@ -56,7 +56,7 @@ static void do_vs_prog( struct brw_context *brw,
    c.prog_data.inputs_read = vp->program.Base.InputsRead;
 
    if (c.key.copy_edgeflag) {
-      c.prog_data.outputs_written |= 1<<VERT_RESULT_EDGE;
+      c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_EDGE);
       c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
    }
 
@@ -90,8 +90,6 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
 
-   assert (vp && !vp->program.IsNVProgram);
-   
    memset(&key, 0, sizeof(key));
 
    /* Just upload the program verbatim for now.  Always send it all

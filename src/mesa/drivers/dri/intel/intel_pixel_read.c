@@ -216,9 +216,8 @@ do_blit_readpixels(GLcontext * ctx,
       rowLength = -rowLength;
    }
 
-   /* XXX 64-bit cast? */
-   dst_offset = (GLuint) _mesa_image_address(2, pack, pixels, width, height,
-                                             format, type, 0, 0, 0);
+   dst_offset = (GLintptr) _mesa_image_address(2, pack, pixels, width, height,
+					       format, type, 0, 0, 0);
 
 
    /* Although the blits go on the command buffer, need to do this and
@@ -227,14 +226,14 @@ do_blit_readpixels(GLcontext * ctx,
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
+   if (intel->driReadDrawable->numClipRects) {
       GLboolean all = (width * height * src->cpp == dst->Base.Size &&
                        x == 0 && dst_offset == 0);
 
       dri_bo *dst_buffer = intel_bufferobj_buffer(intel, dst,
 						  all ? INTEL_WRITE_FULL :
 						  INTEL_WRITE_PART);
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
+      __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
       int nbox = dPriv->numClipRects;
       drm_clip_rect_t *box = dPriv->pClipRects;
       drm_clip_rect_t rect;
@@ -286,11 +285,11 @@ intelReadPixels(GLcontext * ctx,
 
    intelFlush(ctx);
 
-#ifdef I915
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
 
+#ifdef I915
    if (do_texture_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;

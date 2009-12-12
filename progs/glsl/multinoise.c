@@ -22,22 +22,22 @@ static const char *FragShaderText[ 4 ] = {
    "void main()\n"
    "{\n"
    "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].w ) * 0.5 + 0.5;\n"
-   "   gl_FragColor.a = 1;\n"
+   "   gl_FragColor.a = 1.0;\n"
    "}\n",
    "void main()\n"
    "{\n"
    "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xw ) * 0.5 + 0.5;\n"
-   "   gl_FragColor.a = 1;\n"
+   "   gl_FragColor.a = 1.0;\n"
    "}\n",
    "void main()\n"
    "{\n"
    "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xyw ) * 0.5 + 0.5;\n"
-   "   gl_FragColor.a = 1;\n"
+   "   gl_FragColor.a = 1.0;\n"
    "}\n",
    "void main()\n"
    "{\n"
    "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xyzw ) * 0.5 + 0.5;\n"
-   "   gl_FragColor.a = 1;\n"
+   "   gl_FragColor.a = 1.0;\n"
    "}\n"
 };
     
@@ -125,6 +125,7 @@ Key(unsigned char key, int x, int y)
    case 'a':
       Anim = !Anim;
       glutIdleFunc(Anim ? Idle : NULL);
+      break;
    case 's':
       Slice -= step;
       break;
@@ -193,7 +194,7 @@ LoadAndCompileShader(GLuint shader, const char *text)
       GLchar log[1000];
       GLsizei len;
       glGetShaderInfoLog(shader, 1000, &len, log);
-      fprintf(stderr, "noise: problem compiling shader: %s\n", log);
+      fprintf(stderr, "multinoise: problem compiling shader: %s\n", log);
       exit(1);
    }
    else {

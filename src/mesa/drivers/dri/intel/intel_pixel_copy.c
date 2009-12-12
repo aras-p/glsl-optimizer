@@ -222,6 +222,8 @@ do_blit_copypixels(GLcontext * ctx,
 out:
    UNLOCK_HARDWARE(intel);
 
+   intel_check_front_buffer_rendering(intel);
+
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;
 }
@@ -240,5 +242,5 @@ intelCopyPixels(GLcontext * ctx,
       return;
 
    /* this will use swrast if needed */
-   _mesa_meta_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type);
+   _mesa_meta_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }

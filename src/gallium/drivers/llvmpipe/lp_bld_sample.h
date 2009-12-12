@@ -40,7 +40,9 @@
 
 struct pipe_texture;
 struct pipe_sampler_state;
+struct util_format_description;
 struct lp_type;
+struct lp_build_context;
 
 
 /**
@@ -117,6 +119,24 @@ void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_texture *texture,
                         const struct pipe_sampler_state *sampler);
+
+
+LLVMValueRef
+lp_build_gather(LLVMBuilderRef builder,
+                unsigned length,
+                unsigned src_width,
+                unsigned dst_width,
+                LLVMValueRef base_ptr,
+                LLVMValueRef offsets);
+
+
+LLVMValueRef
+lp_build_sample_offset(struct lp_build_context *bld,
+                       const struct util_format_description *format_desc,
+                       LLVMValueRef x,
+                       LLVMValueRef y,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef data_ptr);
 
 
 void

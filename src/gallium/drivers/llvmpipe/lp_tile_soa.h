@@ -64,14 +64,18 @@ tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 
 
 void
-lp_get_tile_rgba_soa(struct pipe_transfer *pt,
-                     uint x, uint y,
-                     uint8_t *p);
+lp_tile_read_4ub(enum pipe_format format,
+                 uint8_t *dst,
+                 const void *src, unsigned src_stride,
+                 unsigned x, unsigned y, unsigned w, unsigned h);
+
 
 void
-lp_put_tile_rgba_soa(struct pipe_transfer *pt,
-                     uint x, uint y,
-                     const uint8_t *p);
+lp_tile_write_4ub(enum pipe_format format,
+                  const uint8_t *src,
+                  void *dst, unsigned dst_stride,
+                  unsigned x, unsigned y, unsigned w, unsigned h);
+
 
 
 #ifdef __cplusplus

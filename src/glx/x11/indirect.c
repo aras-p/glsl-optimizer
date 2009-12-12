@@ -8604,6 +8604,26 @@ __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
     }
 }
 
+#define X_GLrop_RenderbufferStorageMultisample 4331
+void
+__indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples,
+                                            GLenum internalformat,
+                                            GLsizei width, GLsizei height)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_RenderbufferStorageMultisample, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&samples), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&internalformat), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&width), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&height), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
 #define X_GLrop_SampleMaskSGIS 2048
 void
 __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert)
@@ -10591,6 +10611,52 @@ __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat,
     (void) memcpy((void *) (gc->pc + 8), (void *) (&internalformat), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&width), 4);
     (void) memcpy((void *) (gc->pc + 16), (void *) (&height), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_BlitFramebufferEXT 4330
+void
+__indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1,
+                                GLint srcY1, GLint dstX0, GLint dstY0,
+                                GLint dstX1, GLint dstY1, GLbitfield mask,
+                                GLenum filter)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 44;
+    emit_header(gc->pc, X_GLrop_BlitFramebufferEXT, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&srcX0), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&srcY0), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&srcX1), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&srcY1), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&dstX0), 4);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&dstY0), 4);
+    (void) memcpy((void *) (gc->pc + 28), (void *) (&dstX1), 4);
+    (void) memcpy((void *) (gc->pc + 32), (void *) (&dstY1), 4);
+    (void) memcpy((void *) (gc->pc + 36), (void *) (&mask), 4);
+    (void) memcpy((void *) (gc->pc + 40), (void *) (&filter), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTextureLayerEXT 237
+void
+__indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+                                        GLuint texture, GLint level,
+                                        GLint layer)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTextureLayerEXT, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&level), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&layer), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);

@@ -1578,13 +1578,6 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
  * Window position and viewport transformation
  */
 
-/*
- * To correctly position primitives:
- */
-#define SUBPIXEL_X 0.125
-#define SUBPIXEL_Y 0.125
-
-
 /**
  * Called when window size or position changes or viewport or depth range
  * state is changed.  We update the hardware viewport state here.
@@ -1609,9 +1602,9 @@ void r200UpdateWindow( GLcontext *ctx )
    }
 
    float_ui32_type sx = { v[MAT_SX] };
-   float_ui32_type tx = { v[MAT_TX] + xoffset + SUBPIXEL_X };
+   float_ui32_type tx = { v[MAT_TX] + xoffset };
    float_ui32_type sy = { v[MAT_SY] * y_scale };
-   float_ui32_type ty = { (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y };
+   float_ui32_type ty = { (v[MAT_TY] * y_scale) + y_bias };
    float_ui32_type sz = { v[MAT_SZ] * depthScale };
    float_ui32_type tz = { v[MAT_TZ] * depthScale };
 
@@ -1680,8 +1673,8 @@ void r200UpdateViewportOffset( GLcontext *ctx )
    float_ui32_type tx;
    float_ui32_type ty;
 
-   tx.f = v[MAT_TX] + xoffset + SUBPIXEL_X;
-   ty.f = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+   tx.f = v[MAT_TX] + xoffset;
+   ty.f = (- v[MAT_TY]) + yoffset;
 
    if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != tx.ui32 ||
 	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != ty.ui32 )
@@ -2483,7 +2476,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 }
 /* Initialize the driver's state functions.
  */
-void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 )
+void r200InitStateFuncs( struct dd_function_table *functions )
 {
    functions->UpdateState		= r200InvalidateState;
    functions->LightingSpaceChange	= r200LightingSpaceChange;
@@ -2517,10 +2510,7 @@ void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 )
    functions->LogicOpcode		= r200LogicOpCode;
    functions->PolygonMode		= r200PolygonMode;
    functions->PolygonOffset		= r200PolygonOffset;
-   if (dri2)
-      functions->PolygonStipple		= r200PolygonStipple;
-   else
-      functions->PolygonStipple		= radeonPolygonStipplePreKMS;
+   functions->PolygonStipple		= r200PolygonStipple;
    functions->PointParameterfv		= r200PointParameter;
    functions->PointSize			= r200PointSize;
    functions->RenderMode		= r200RenderMode;

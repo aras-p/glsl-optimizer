@@ -942,9 +942,9 @@ StateVars = [
 
 	# GL_OES_read_format
 	( "GL_IMPLEMENTATION_COLOR_READ_TYPE_OES", GLint,
-	  ["ctx->Const.ColorReadType"], "", ["OES_read_format"] ),
+	  ["_mesa_get_color_read_type(ctx)"], "", ["OES_read_format"] ),
 	( "GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES", GLint,
-	  ["ctx->Const.ColorReadFormat"], "", ["OES_read_format"] ),
+	  ["_mesa_get_color_read_format(ctx)"], "", ["OES_read_format"] ),
 
 	# GL_ATI_fragment_shader
 	( "GL_NUM_FRAGMENT_REGISTERS_ATI", GLint, ["6"], "", ["ATI_fragment_shader"] ),
@@ -1006,7 +1006,7 @@ StateVars = [
 	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
 	  ["ctx->Const.MaxVertexTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
-	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxCombinedTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 
 	# GL_ARB_shader_objects
 	# Actually, this token isn't part of GL_ARB_shader_objects, but is
@@ -1046,7 +1046,7 @@ def ConversionFunc(fromType, toType):
 	elif fromType == GLint and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	elif fromType == GLint and toType == GLint64:
-		return ""
+		return "(GLint64)"
 	elif fromType == GLint64 and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	else:
@@ -1159,6 +1159,7 @@ def EmitHeader():
 #include "mtypes.h"
 #include "state.h"
 #include "texcompress.h"
+#include "framebuffer.h"
 
 
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )

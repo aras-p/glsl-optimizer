@@ -156,53 +156,53 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (DO_TEX3) {
       const GLuint t3 = GET_TEXSOURCE(3);
-      tc3 = VB->TexCoordPtr[t3]->data;
-      tc3_stride = VB->TexCoordPtr[t3]->stride;
+      tc3 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t3]->data;
+      tc3_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t3]->stride;
       if (DO_PTEX)
-	 tc3_size = VB->TexCoordPtr[t3]->size;
+	 tc3_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t3]->size;
    }
 
    if (DO_TEX2) {
       const GLuint t2 = GET_TEXSOURCE(2);
-      tc2 = VB->TexCoordPtr[t2]->data;
-      tc2_stride = VB->TexCoordPtr[t2]->stride;
+      tc2 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->data;
+      tc2_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->stride;
       if (DO_PTEX)
-	 tc2_size = VB->TexCoordPtr[t2]->size;
+	 tc2_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->size;
    }
 
    if (DO_TEX1) {
       const GLuint t1 = GET_TEXSOURCE(1);
-      tc1 = VB->TexCoordPtr[t1]->data;
-      tc1_stride = VB->TexCoordPtr[t1]->stride;
+      tc1 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->data;
+      tc1_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->stride;
       if (DO_PTEX)
-	 tc1_size = VB->TexCoordPtr[t1]->size;
+	 tc1_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size;
    }
 
    if (DO_TEX0) {
       const GLuint t0 = GET_TEXSOURCE(0);
-      tc0_stride = VB->TexCoordPtr[t0]->stride;
-      tc0 = VB->TexCoordPtr[t0]->data;
+      tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->stride;
+      tc0 = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->data;
       if (DO_PTEX) 
-	 tc0_size = VB->TexCoordPtr[t0]->size;
+	 tc0_size = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size;
    }
 
    if (DO_RGBA) {
-      col = VB->ColorPtr[0]->data;
-      col_stride = VB->ColorPtr[0]->stride;
+      col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+      col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
    }
 
    if (DO_SPEC) {
-      spec = VB->SecondaryColorPtr[0]->data;
-      spec_stride = VB->SecondaryColorPtr[0]->stride;
+      spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
+      spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
    } else {
       spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
       spec_stride = 0;
    }
 
    if (DO_FOG) {
-      if (VB->FogCoordPtr) {
-	 fog = VB->FogCoordPtr->data;
-	 fog_stride = VB->FogCoordPtr->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_FOG]) {
+	 fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+	 fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
       } else {
 	 static GLfloat tmp[4] = {0, 0, 0, 0};
 	 fog = &tmp;
@@ -384,8 +384,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    ASSERT(stride == 4);
 
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
+   col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+   col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
     * place, and there is no 'w' coordinate.
@@ -432,8 +432,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    GLfloat *v = (GLfloat *)dest;
    int i;
 
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
+   col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+   col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
 
    if (start)
       STRIDE_4F(col, col_stride * start);
@@ -473,22 +473,22 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    /* Force 'missing' texcoords to something valid.
     */
-   if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
-      VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
+   if (DO_TEX3 && VB->AttribPtr[_TNL_ATTRIB_TEX2] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX2] = VB->AttribPtr[_TNL_ATTRIB_TEX3];
 
-   if (DO_TEX2 && VB->TexCoordPtr[1] == 0)
-      VB->TexCoordPtr[1] = VB->TexCoordPtr[2];
+   if (DO_TEX2 && VB->AttribPtr[_TNL_ATTRIB_TEX1] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX1] = VB->AttribPtr[_TNL_ATTRIB_TEX2];
 
-   if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
-      VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
+   if (DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX0] = VB->AttribPtr[_TNL_ATTRIB_TEX1];
 
    if (DO_PTEX)
       return GL_TRUE;
    
-   if ((DO_TEX3 && VB->TexCoordPtr[GET_TEXSOURCE(3)]->size == 4) ||
-       (DO_TEX2 && VB->TexCoordPtr[GET_TEXSOURCE(2)]->size == 4) ||
-       (DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4) ||
-       (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4))
+   if ((DO_TEX3 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(3)]->size == 4) ||
+       (DO_TEX2 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(2)]->size == 4) ||
+       (DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(1)]->size == 4) ||
+       (DO_TEX0 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(0)]->size == 4))
       return GL_FALSE;
 
    return GL_TRUE;
@@ -501,14 +501,14 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    /* Force 'missing' texcoords to something valid.
     */
-   if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
-      VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
+   if (DO_TEX3 && VB->AttribPtr[_TNL_ATTRIB_TEX2] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX2] = VB->AttribPtr[_TNL_ATTRIB_TEX3];
 
-   if (DO_TEX2 && VB->TexCoordPtr[1] == 0)
-      VB->TexCoordPtr[1] = VB->TexCoordPtr[2];
+   if (DO_TEX2 && VB->AttribPtr[_TNL_ATTRIB_TEX1] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX1] = VB->AttribPtr[_TNL_ATTRIB_TEX2];
 
-   if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
-      VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
+   if (DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0] == 0)
+      VB->AttribPtr[_TNL_ATTRIB_TEX0] = VB->AttribPtr[_TNL_ATTRIB_TEX1];
 
    if (DO_PTEX)
       return GL_TRUE;
@@ -516,14 +516,14 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    /* No hardware support for projective texture.  Can fake it for
     * TEX0 only.
     */
-   if ((DO_TEX3 && VB->TexCoordPtr[GET_TEXSOURCE(3)]->size == 4) ||
-       (DO_TEX2 && VB->TexCoordPtr[GET_TEXSOURCE(2)]->size == 4) ||
-       (DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4)) {
+   if ((DO_TEX3 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(3)]->size == 4) ||
+       (DO_TEX2 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(2)]->size == 4) ||
+       (DO_TEX1 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(1)]->size == 4)) {
       PTEX_FALLBACK();
       return GL_FALSE;
    }
 
-   if (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4) {
+   if (DO_TEX0 && VB->AttribPtr[_TNL_ATTRIB_TEX0 + GET_TEXSOURCE(0)]->size == 4) {
       if (DO_TEX1 || DO_TEX2 || DO_TEX3) {
 	 PTEX_FALLBACK();
       }

@@ -51,7 +51,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 
 
 #ifdef __cplusplus

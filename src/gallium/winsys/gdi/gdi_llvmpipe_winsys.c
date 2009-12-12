@@ -43,13 +43,12 @@
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
 #include "llvmpipe/lp_texture.h"
-#include "shared/stw_winsys.h"
+#include "stw_winsys.h"
 
 
 struct gdi_llvmpipe_displaytarget
 {
    enum pipe_format format;
-   struct pipe_format_block block;
    unsigned width;
    unsigned height;
    unsigned stride;
@@ -118,16 +117,6 @@ gdi_llvmpipe_displaytarget_destroy(struct llvmpipe_winsys *winsys,
 }
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 static struct llvmpipe_displaytarget *
 gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
                                   enum pipe_format format,
@@ -147,10 +136,10 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    gdt->width = width;
    gdt->height = height;
 
-   bpp = pf_get_bits(format);
-   cpp = pf_get_size(format);
+   bpp = pf_get_blocksizebits(format);
+   cpp = pf_get_blocksize(format);
    
-   gdt->stride = round_up(width * cpp, alignment);
+   gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;
    
    gdt->data = align_malloc(gdt->size, alignment);
@@ -234,9 +223,9 @@ gdi_llvmpipe_context_create(struct pipe_screen *screen)
 
 
 static void
-gdi_llvmpipe_flush_frontbuffer(struct pipe_screen *screen,
-                               struct pipe_surface *surface,
-                               HDC hDC)
+gdi_llvmpipe_present(struct pipe_screen *screen,
+                     struct pipe_surface *surface,
+                     HDC hDC)
 {
     struct llvmpipe_texture *texture;
     struct gdi_llvmpipe_displaytarget *gdt;
@@ -254,7 +243,11 @@ gdi_llvmpipe_flush_frontbuffer(struct pipe_screen *screen,
 static const struct stw_winsys stw_winsys = {
    &gdi_llvmpipe_screen_create,
    &gdi_llvmpipe_context_create,
-   &gdi_llvmpipe_flush_frontbuffer
+   &gdi_llvmpipe_present,
+   NULL, /* get_adapter_luid */
+   NULL, /* shared_surface_open */
+   NULL, /* shared_surface_close */
+   NULL  /* compose */
 };
 
 

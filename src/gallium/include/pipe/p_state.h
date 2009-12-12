@@ -60,6 +60,7 @@ extern "C" {
 #define PIPE_MAX_COLOR_BUFS        8
 #define PIPE_MAX_CONSTANT         32
 #define PIPE_MAX_SAMPLERS         16
+#define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
@@ -114,11 +115,29 @@ struct pipe_rasterizer_state
     * the vertex shader, clipping and viewport processing.  Note that
     * a vertex shader is still needed though, to indicate the mapping
     * from vertex elements to fragment shader input semantics.
+    *
+    * XXX: considered for removal.
     */
    unsigned bypass_vs_clip_and_viewport:1;
 
-   unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
-   unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
+   /** 
+    * Use the first vertex of a primitive as the provoking vertex for
+    * flat shading.
+    */
+   unsigned flatshade_first:1;   
+
+   /** 
+    * When true, triangle rasterization uses (0.5, 0.5) pixel centers
+    * for determining pixel ownership.
+    *
+    * When false, triangle rasterization uses (0,0) pixel centers for
+    * determining pixel ownership.
+    *
+    * Triangle rasterization always uses a 'top,left' rule for pixel
+    * ownership, this just alters which point we consider the pixel
+    * center for that test.
+    */
+   unsigned gl_rasterization_rules:1;
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
@@ -179,7 +198,6 @@ struct pipe_depth_state
    unsigned enabled:1;         /**< depth test enabled? */
    unsigned writemask:1;       /**< allow depth buffer writes? */
    unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
-   unsigned occlusion_count:1; /**< do occlusion counting? */
 };
 
 
@@ -298,14 +316,10 @@ struct pipe_surface
  */
 struct pipe_transfer
 {
-   enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned x;                   /**< x offset from start of texture image */
    unsigned y;                   /**< y offset from start of texture image */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
-   struct pipe_format_block block;
-   unsigned nblocksx;            /**< allocated width in blocks */
-   unsigned nblocksy;            /**< allocated height in blocks */
    unsigned stride;              /**< stride in bytes between rows of blocks */
    enum pipe_transfer_usage usage; /**< PIPE_TRANSFER_*  */
 
@@ -326,13 +340,9 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned width[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned height[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
-
-   struct pipe_format_block block;
-   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */
-   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated height in blocks */
+   unsigned width0;
+   unsigned height0;
+   unsigned depth0;
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
 
@@ -382,8 +392,9 @@ pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
 {
    struct pipe_buffer *old_buf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
+   if (pipe_reference(&(*ptr)->reference, &buf->reference))
       old_buf->screen->buffer_destroy(old_buf);
+   *ptr = buf;
 }
 
 static INLINE void
@@ -391,8 +402,9 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    struct pipe_surface *old_surf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
+   if (pipe_reference(&(*ptr)->reference, &surf->reference))
       old_surf->texture->screen->tex_surface_destroy(old_surf);
+   *ptr = surf;
 }
 
 static INLINE void
@@ -400,8 +412,9 @@ pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
 {
    struct pipe_texture *old_tex = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &tex->reference))
+   if (pipe_reference(&(*ptr)->reference, &tex->reference))
       old_tex->screen->texture_destroy(old_tex);
+   *ptr = tex;
 }
 
 

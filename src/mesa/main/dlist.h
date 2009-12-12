@@ -33,64 +33,80 @@
 #define DLIST_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
-#if _HAVE_FULL_GL
+#if FEATURE_dlist
 
-extern void
-_mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist);
+#define _MESA_INIT_DLIST_FUNCTIONS(driver, impl)               \
+   do {                                                        \
+      (driver)->NewList           = impl ## NewList;           \
+      (driver)->EndList           = impl ## EndList;           \
+      (driver)->BeginCallList     = impl ## BeginCallList;     \
+      (driver)->EndCallList       = impl ## EndCallList;       \
+      (driver)->SaveFlushVertices = impl ## SaveFlushVertices; \
+      (driver)->NotifySaveBegin   = impl ## NotifyBegin;       \
+   } while (0)
+
+#define _MESA_INIT_DLIST_VTXFMT(vfmt, impl)  \
+   do {                                      \
+      (vfmt)->CallList  = impl ## CallList;  \
+      (vfmt)->CallLists = impl ## CallLists; \
+   } while (0)
 
 extern void GLAPIENTRY _mesa_CallList( GLuint list );
 
 extern void GLAPIENTRY _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
 
-extern void GLAPIENTRY _mesa_DeleteLists( GLuint list, GLsizei range );
-
-extern void GLAPIENTRY _mesa_EndList( void );
-
-extern GLuint GLAPIENTRY _mesa_GenLists( GLsizei range );
-
-extern GLboolean GLAPIENTRY _mesa_IsList( GLuint list );
-
-extern void GLAPIENTRY _mesa_ListBase( GLuint base );
-
-extern void GLAPIENTRY _mesa_NewList( GLuint list, GLenum mode );
-
-extern void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
-
-extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
-
-
-
-extern void _mesa_init_dlist_table( struct _glapi_table *table );
 
 extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
+extern void *_mesa_dlist_alloc(GLcontext *ctx, GLuint opcode, GLuint sz);
 
-extern void *_mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint sz);
+extern GLint _mesa_dlist_alloc_opcode( GLcontext *ctx, GLuint sz,
+                                       void (*execute)( GLcontext *, void * ),
+                                       void (*destroy)( GLcontext *, void * ),
+                                       void (*print)( GLcontext *, void * ) );
 
-extern GLint _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
-                                 void (*execute)( GLcontext *, void * ),
-                                 void (*destroy)( GLcontext *, void * ),
-                                 void (*print)( GLcontext *, void * ) );
-
-extern void _mesa_init_display_list( GLcontext * ctx );
+extern void _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist);
 
 extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
 
+extern void _mesa_init_save_table( struct _glapi_table *table );
 
-#else
+extern void _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
+                                       const GLvertexformat *vfmt);
 
-/** No-op */
-#define _mesa_init_dlist_table(t,ts) ((void)0)
+extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
 
-/** No-op */
-#define _mesa_init_display_list(c) ((void)0)
+#else /* FEATURE_dlist */
 
-/** No-op */
-#define _mesa_save_vtxfmt_init(v) ((void)0)
+#define _MESA_INIT_DLIST_FUNCTIONS(driver, impl) do { } while (0)
+#define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
 
-#endif
+static INLINE void
+_mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
+{
+   /* there should be no list to delete */
+   ASSERT_NO_FEATURE();
+}
 
-#endif
+static INLINE void
+_mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
+                           const GLvertexformat *vfmt)
+{
+}
+
+static INLINE void
+_mesa_init_dlist_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_dlist */
+
+extern void _mesa_init_display_list( GLcontext * ctx );
+
+extern void _mesa_free_display_list_data(GLcontext *ctx);
+
+
+#endif /* DLIST_H */

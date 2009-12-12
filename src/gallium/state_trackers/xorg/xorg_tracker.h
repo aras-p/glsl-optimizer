@@ -51,6 +51,10 @@
 
 #define DRV_ERROR(msg)	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, msg);
 
+struct kms_bo;
+struct kms_driver;
+struct exa_context;
+
 typedef struct
 {
     int lastInstance;
@@ -58,6 +62,8 @@ typedef struct
     ScrnInfoPtr pScrn_1;
     ScrnInfoPtr pScrn_2;
 } EntRec, *EntPtr;
+
+#define XORG_NR_FENCES 3
 
 typedef struct _modesettingRec
 {
@@ -82,7 +88,18 @@ typedef struct _modesettingRec
     unsigned int SaveGeneration;
 
     void (*blockHandler)(int, pointer, pointer, pointer);
+    struct pipe_fence_handle *fence[XORG_NR_FENCES];
+
     CreateScreenResourcesProcPtr createScreenResources;
+
+    /* for frontbuffer backing store */
+    Bool (*destroy_front_buffer)(ScrnInfoPtr pScrn);
+    Bool (*create_front_buffer)(ScrnInfoPtr pScrn);
+    Bool (*bind_front_buffer)(ScrnInfoPtr pScrn);
+
+    /* kms */
+    struct kms_driver *kms;
+    struct kms_bo *root_bo;
 
     /* gallium */
     struct drm_api *api;
@@ -90,10 +107,19 @@ typedef struct _modesettingRec
     struct pipe_context *ctx;
     boolean d_depth_bits_last;
     boolean ds_depth_bits_last;
+    struct pipe_texture *root_texture;
 
     /* exa */
-    void *exa;
+    struct exa_context *exa;
     Bool noEvict;
+    Bool debug_fallback;
+
+    /* winsys hocks */
+    Bool (*winsys_screen_init)(ScrnInfoPtr pScr);
+    Bool (*winsys_screen_close)(ScrnInfoPtr pScr);
+    Bool (*winsys_enter_vt)(ScrnInfoPtr pScr);
+    Bool (*winsys_leave_vt)(ScrnInfoPtr pScr);
+    void *winsys_priv;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
@@ -118,8 +144,16 @@ xorg_exa_set_displayed_usage(PixmapPtr pPixmap);
 int
 xorg_exa_set_shared_usage(PixmapPtr pPixmap);
 
+Bool
+xorg_exa_set_texture(PixmapPtr pPixmap, struct  pipe_texture *tex);
+
+struct pipe_texture *
+xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
+			     int width, int height,
+			     int depth, int bpp);
+
 void *
-xorg_exa_init(ScrnInfoPtr pScrn);
+xorg_exa_init(ScrnInfoPtr pScrn, Bool accel);
 
 void
 xorg_exa_close(ScrnInfoPtr pScrn);
@@ -129,27 +163,34 @@ xorg_exa_close(ScrnInfoPtr pScrn);
  * xorg_dri2.c
  */
 Bool
-driScreenInit(ScreenPtr pScreen);
+xorg_dri2_init(ScreenPtr pScreen);
 
 void
-driCloseScreen(ScreenPtr pScreen);
+xorg_dri2_close(ScreenPtr pScreen);
 
 
 /***********************************************************************
  * xorg_crtc.c
  */
 void
-crtc_init(ScrnInfoPtr pScrn);
+xorg_crtc_init(ScrnInfoPtr pScrn);
 
 void
-crtc_cursor_destroy(xf86CrtcPtr crtc);
+xorg_crtc_cursor_destroy(xf86CrtcPtr crtc);
 
 
 /***********************************************************************
  * xorg_output.c
  */
 void
-output_init(ScrnInfoPtr pScrn);
+xorg_output_init(ScrnInfoPtr pScrn);
+
+
+/***********************************************************************
+ * xorg_xv.c
+ */
+void
+xorg_xv_init(ScreenPtr pScreen);
 
 
 #endif /* _XORG_TRACKER_H_ */

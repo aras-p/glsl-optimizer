@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_chipset.h"
+
 #include "util/u_debug.h"
 
 /* r300_chipset: A file all to itself for deducing the various properties of
@@ -31,7 +32,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
     caps->num_vert_fpus = 4;
-    caps->has_tcl = getenv("RADEON_NO_TCL") ? FALSE : TRUE;
+    caps->has_tcl = debug_get_bool_option("RADEON_NO_TCL", FALSE) ? FALSE : TRUE;
     caps->is_r500 = FALSE;
     caps->high_second_pipe = FALSE;
 

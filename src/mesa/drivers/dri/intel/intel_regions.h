@@ -62,6 +62,8 @@ struct intel_region
    GLuint map_refcount;  /**< Reference count for mapping */
 
    GLuint draw_offset; /**< Offset of drawing address within the region */
+   GLuint draw_x, draw_y; /**< Offset of drawing within the region */
+
    uint32_t tiling; /**< Which tiling mode the region is in */
    uint32_t bit_6_swizzle; /**< GEM flag for address swizzling requirement */
    drmAddress classic_map; /**< drmMap of the region when not in GEM mode */

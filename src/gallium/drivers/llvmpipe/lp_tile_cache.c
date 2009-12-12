@@ -44,10 +44,53 @@
 #include "lp_tile_cache.h"
 
 
+#define MAX_WIDTH 4096
+#define MAX_HEIGHT 4096
+
+
+enum llvmpipe_tile_status
+{
+   LP_TILE_STATUS_UNDEFINED = 0,
+   LP_TILE_STATUS_CLEAR = 1,
+   LP_TILE_STATUS_DEFINED = 2
+};
+
+
+struct llvmpipe_cached_tile
+{
+   enum llvmpipe_tile_status status;
+
+   /** color in SOA format */
+   uint8_t *color;
+};
+
+
+struct llvmpipe_tile_cache
+{
+   struct pipe_screen *screen;
+   struct pipe_surface *surface;  /**< the surface we're caching */
+   struct pipe_transfer *transfer;
+   void *transfer_map;
+
+   struct llvmpipe_cached_tile entries[MAX_WIDTH/TILE_SIZE][MAX_HEIGHT/TILE_SIZE];
+
+   uint8_t clear_color[4];  /**< for color bufs */
+   uint clear_val;        /**< for z+stencil, or packed color clear value */
+
+   struct llvmpipe_cached_tile *last_tile;  /**< most recently retrieved tile */
+};
+
+
 struct llvmpipe_tile_cache *
 lp_create_tile_cache( struct pipe_screen *screen )
 {
    struct llvmpipe_tile_cache *tc;
+   int maxLevels, maxTexSize;
+
+   /* sanity checking: max sure MAX_WIDTH/HEIGHT >= largest texture image */
+   maxLevels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+   maxTexSize = 1 << (maxLevels - 1);
+   assert(MAX_WIDTH >= maxTexSize);
 
    tc = CALLOC_STRUCT( llvmpipe_tile_cache );
    if(!tc)
@@ -193,44 +236,41 @@ lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
    if(!pt)
       return;
 
+   assert(tc->transfer_map);
+
    /* push the tile to all positions marked as clear */
    for (y = 0; y < pt->height; y += TILE_SIZE) {
       for (x = 0; x < pt->width; x += TILE_SIZE) {
          struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
 
-         switch(tile->status) {
-         case LP_TILE_STATUS_UNDEFINED:
-            break;
+         if(tile->status != LP_TILE_STATUS_UNDEFINED) {
+            unsigned w = TILE_SIZE;
+            unsigned h = TILE_SIZE;
 
-         case LP_TILE_STATUS_CLEAR: {
-            /**
-             * Actually clear the tiles which were flagged as being in a clear state.
-             */
+            if (!pipe_clip_tile(x, y, &w, &h, pt)) {
+               switch(tile->status) {
+               case LP_TILE_STATUS_CLEAR:
+                  /* Actually clear the tiles which were flagged as being in a
+                   * clear state. */
+                  util_fill_rect(tc->transfer_map, pt->texture->format, pt->stride,
+                                 x, y, w, h,
+                                 tc->clear_val);
+                  break;
 
-            struct pipe_screen *screen = pt->texture->screen;
-            unsigned tw = TILE_SIZE;
-            unsigned th = TILE_SIZE;
-            void *dst;
+               case LP_TILE_STATUS_DEFINED:
+                  lp_tile_write_4ub(pt->texture->format,
+                                    tile->color,
+                                    tc->transfer_map, pt->stride,
+                                    x, y, w, h);
+                  break;
 
-            if (pipe_clip_tile(x, y, &tw, &th, pt))
-               continue;
+               default:
+                  assert(0);
+                  break;
+               }
+            }
 
-            dst = screen->transfer_map(screen, pt);
-            assert(dst);
-            if(!dst)
-               continue;
-
-            util_fill_rect(dst, &pt->block, pt->stride,
-                           x, y, tw,  th,
-                           tc->clear_val);
-
-            screen->transfer_unmap(screen, pt);
-            break;
-         }
-
-         case LP_TILE_STATUS_DEFINED:
-            lp_put_tile_rgba_soa(pt, x, y, tile->color);
-            break;
+            tile->status = LP_TILE_STATUS_UNDEFINED;
          }
       }
    }
@@ -248,6 +288,14 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
    struct llvmpipe_cached_tile *tile = &tc->entries[y/TILE_SIZE][x/TILE_SIZE];
    struct pipe_transfer *pt = tc->transfer;
    
+   assert(tc->surface);
+   assert(tc->transfer);
+
+   if(!tc->transfer_map)
+      lp_tile_cache_map_transfers(tc);
+
+   assert(tc->transfer_map);
+
    switch(tile->status) {
    case LP_TILE_STATUS_CLEAR:
       /* don't get tile from framebuffer, just clear it */
@@ -255,11 +303,22 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc,
       tile->status = LP_TILE_STATUS_DEFINED;
       break;
 
-   case LP_TILE_STATUS_UNDEFINED:
-      /* get new tile data from transfer */
-      lp_get_tile_rgba_soa(pt, x, y, tile->color);
+   case LP_TILE_STATUS_UNDEFINED: {
+      unsigned w = TILE_SIZE;
+      unsigned h = TILE_SIZE;
+
+      x &= ~(TILE_SIZE - 1);
+      y &= ~(TILE_SIZE - 1);
+
+      if (!pipe_clip_tile(x, y, &w, &h, tc->transfer))
+         lp_tile_read_4ub(pt->texture->format,
+                          tile->color,
+                          tc->transfer_map, tc->transfer->stride,
+                          x, y, w, h);
+
       tile->status = LP_TILE_STATUS_DEFINED;
       break;
+   }
 
    case LP_TILE_STATUS_DEFINED:
       /* nothing to do */

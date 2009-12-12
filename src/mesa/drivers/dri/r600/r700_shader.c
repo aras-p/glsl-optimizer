@@ -60,6 +60,55 @@ void AddInstToList(TypedShaderList * plstCFInstructions, R700ShaderInstruction *
 	plstCFInstructions->uNumOfNode++;
 }
 
+void TakeInstOutFromList(TypedShaderList * plstCFInstructions, R700ShaderInstruction * pInst)
+{
+    GLuint    ulIndex = 0;
+    GLboolean bFound  = GL_FALSE;
+    R700ShaderInstruction * pPrevInst = NULL;
+    R700ShaderInstruction * pCurInst = plstCFInstructions->pHead;
+
+    /* Need go thro list to make sure pInst is there. */
+    while(NULL != pCurInst)
+    {
+        if(pCurInst == pInst)
+        {                        
+            bFound  = GL_TRUE;
+            break;
+        }
+
+        pPrevInst = pCurInst;
+        pCurInst  = pCurInst->pNextInst;
+    }
+    if(GL_TRUE == bFound)
+    {
+        plstCFInstructions->uNumOfNode--;
+
+        pCurInst = pInst->pNextInst;
+        ulIndex  = pInst->m_uIndex;
+        while(NULL != pCurInst)
+        {
+            pCurInst->m_uIndex = ulIndex;
+            ulIndex++;
+            pCurInst = pCurInst->pNextInst;
+        }
+
+        if(plstCFInstructions->pHead == pInst)
+        {
+            plstCFInstructions->pHead = pInst->pNextInst;
+        }
+        if(plstCFInstructions->pTail == pInst)
+        {
+            plstCFInstructions->pTail = pPrevInst;
+        }
+        if(NULL != pPrevInst)
+        {
+            pPrevInst->pNextInst = pInst->pNextInst;
+        }
+
+        FREE(pInst);
+    }
+}
+
 void Init_R700_Shader(R700_Shader * pShader)
 {
 	pShader->Type = R700_SHADER_INVALID;
@@ -110,13 +159,18 @@ void Init_R700_Shader(R700_Shader * pShader)
 	pShader->lstVTXInstructions.uNumOfNode=0;
 }
 
+void SetActiveCFlist(R700_Shader *pShader, TypedShaderList * plstCF)
+{
+    pShader->plstCFInstructions_active = plstCF;
+}
+
 void AddCFInstruction(R700_Shader *pShader, R700ControlFlowInstruction *pCFInst)
 {
     R700ControlFlowSXClause*  pSXClause; 
     R700ControlFlowSMXClause* pSMXClause;
 
-    pCFInst->m_uIndex = pShader->lstCFInstructions.uNumOfNode;
-    AddInstToList(&(pShader->lstCFInstructions), 
+    pCFInst->m_uIndex = pShader->plstCFInstructions_active->uNumOfNode;
+    AddInstToList(pShader->plstCFInstructions_active, 
                   (R700ShaderInstruction*)pCFInst);
     pShader->uShaderBinaryDWORDSize += GetInstructionSize(pCFInst->m_ShaderInstType);
 
@@ -486,6 +540,47 @@ void DeleteInstructions(R700_Shader *pShader)
 
 void DebugPrint(void)
 {
+}
+
+void cleanup_vfetch_shaderinst(R700_Shader *pShader)
+{
+    R700ShaderInstruction      *pInst;
+    R700ShaderInstruction      *pInstToFree;
+    R700VertexInstruction      *pVTXInst;
+    R700ControlFlowInstruction *pCFInst;
+
+    pInst = pShader->lstVTXInstructions.pHead;
+    while(NULL != pInst)
+    {
+        pVTXInst = (R700VertexInstruction  *)pInst;        
+        pShader->uShaderBinaryDWORDSize -= GetInstructionSize(pVTXInst->m_ShaderInstType);
+
+        if(NULL != pVTXInst->m_pLinkedGenericClause)
+        {
+            pCFInst = (R700ControlFlowInstruction*)(pVTXInst->m_pLinkedGenericClause);
+
+            TakeInstOutFromList(&(pShader->lstCFInstructions), 
+                                 (R700ShaderInstruction*)pCFInst);
+
+            pShader->uShaderBinaryDWORDSize -= GetInstructionSize(pCFInst->m_ShaderInstType);
+        }
+
+        pInst = pInst->pNextInst;
+    };
+
+    //destroy each item in pShader->lstVTXInstructions;
+    pInst = pShader->lstVTXInstructions.pHead;
+    while(NULL != pInst)
+    {
+        pInstToFree = pInst;
+        pInst = pInst->pNextInst;
+        FREE(pInstToFree);
+    };
+
+    //set NULL pShader->lstVTXInstructions
+    pShader->lstVTXInstructions.pHead=NULL; 
+	pShader->lstVTXInstructions.pTail=NULL; 
+	pShader->lstVTXInstructions.uNumOfNode=0;
 }
 
 void Clean_Up_Shader(R700_Shader *pShader)

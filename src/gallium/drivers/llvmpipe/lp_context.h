@@ -55,6 +55,7 @@ struct llvmpipe_context {
    /** Constant state objects */
    const struct pipe_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
    const struct pipe_depth_stencil_alpha_state *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    struct lp_fragment_shader *fs;
@@ -68,12 +69,15 @@ struct llvmpipe_context {
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_samplers;
+   unsigned num_vertex_textures;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
@@ -88,9 +92,6 @@ struct llvmpipe_context {
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
    
-   /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES];
-
    /** Vertex format */
    struct vertex_info vertex_info;
    struct vertex_info vertex_info_vbuf;
@@ -124,9 +125,10 @@ struct llvmpipe_context {
 
    /** The primitive drawing context */
    struct draw_context *draw;
-   struct draw_stage *setup;
+
+   /** Draw module backend */
+   struct vbuf_render *vbuf_backend;
    struct draw_stage *vbuf;
-   struct llvmpipe_vbuf_render *vbuf_render;
 
    boolean dirty_render_cache;
    
@@ -138,6 +140,7 @@ struct llvmpipe_context {
 
    unsigned tex_timestamp;
    struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct llvmpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
 
    unsigned no_rast : 1;
 

@@ -36,24 +36,13 @@
 #include "draw/draw_vertex.h"
 
 #include "sp_quad_pipe.h"
-#include "sp_tex_sample.h"
 
-
-/**
- * This is a temporary variable for testing draw-stage polygon stipple.
- * If zero, do stipple in sp_quad_stipple.c
- */
-#define USE_DRAW_STAGE_PSTIPPLE 1
-
-/* Number of threads working on individual quads.
- * Setting to 1 disables this feature.
- */
-#define SP_NUM_QUAD_THREADS 1
 
 struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
+struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
 
@@ -62,12 +51,13 @@ struct softpipe_context {
    struct pipe_context pipe;  /**< base class */
 
    /** Constant state objects */
-   const struct pipe_blend_state *blend;
-   const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-   const struct pipe_depth_stencil_alpha_state *depth_stencil;
-   const struct pipe_rasterizer_state *rasterizer;
-   const struct sp_fragment_shader *fs;
-   const struct sp_vertex_shader *vs;
+   struct pipe_blend_state *blend;
+   struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_depth_stencil_alpha_state *depth_stencil;
+   struct pipe_rasterizer_state *rasterizer;
+   struct sp_fragment_shader *fs;
+   struct sp_vertex_shader *vs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -77,12 +67,15 @@ struct softpipe_context {
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_samplers;
+   unsigned num_vertex_textures;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
@@ -96,7 +89,7 @@ struct softpipe_context {
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
-   
+
    /** Mapped constant buffers */
    void *mapped_constants[PIPE_SHADER_TYPES];
 
@@ -107,7 +100,15 @@ struct softpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
+   /** The reduced version of the primitive supplied by the state tracker */
+   unsigned reduced_api_prim;
+
+   /**
+    * The reduced primitive after unfilled triangles, wide-line decomposition,
+    * etc, are taken into account.  This is the primitive type that's actually
+    * rasterized.
+    */
+   unsigned reduced_prim;
 
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
@@ -116,41 +117,33 @@ struct softpipe_context {
 
    /** Software quad rendering pipeline */
    struct {
-      struct quad_stage *polygon_stipple;
-      struct quad_stage *earlyz;
       struct quad_stage *shade;
-      struct quad_stage *alpha_test;
-      struct quad_stage *stencil_test;
       struct quad_stage *depth_test;
-      struct quad_stage *occlusion;
-      struct quad_stage *coverage;
       struct quad_stage *blend;
-      struct quad_stage *colormask;
-      struct quad_stage *output;
-
       struct quad_stage *first; /**< points to one of the above stages */
-   } quad[SP_NUM_QUAD_THREADS];
+   } quad;
 
    /** TGSI exec things */
    struct {
-      struct sp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler *vert_samplers_list[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler frag_samplers[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_VERTEX_SAMPLERS];
+      struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
    /** The primitive drawing context */
    struct draw_context *draw;
-   struct draw_stage *setup;
+
+   /** Draw module backend */
+   struct vbuf_render *vbuf_backend;
    struct draw_stage *vbuf;
-   struct softpipe_vbuf_render *vbuf_render;
 
    boolean dirty_render_cache;
-   
+
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zsbuf_cache;
 
-   struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   unsigned tex_timestamp;
+   struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;
@@ -164,5 +157,8 @@ softpipe_context( struct pipe_context *pipe )
    return (struct softpipe_context *)pipe;
 }
 
-#endif /* SP_CONTEXT_H */
+void
+softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
 
+
+#endif /* SP_CONTEXT_H */

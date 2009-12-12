@@ -149,21 +149,22 @@ static inline void radeon_debug_remove_indent(void)
        }
 }
 
+
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
-#define WARN_ONCE(a, ...)      { \
-       static int warn##__LINE__=1; \
-       if(warn##__LINE__){ \
+#define WARN_ONCE(a, ...)      do { \
+       static int __warn_once=1; \
+       if(__warn_once){ \
                radeon_warning("*********************************WARN_ONCE*********************************\n"); \
                radeon_warning("File %s function %s line %d\n", \
                        __FILE__, __FUNCTION__, __LINE__); \
                radeon_warning(  (a), ## __VA_ARGS__);\
                radeon_warning("***************************************************************************\n"); \
-               warn##__LINE__=0;\
+               __warn_once=0;\
                } \
-       }
+       } while(0)
 
 
 #endif

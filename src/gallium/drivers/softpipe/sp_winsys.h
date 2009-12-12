@@ -34,15 +34,17 @@
 #ifndef SP_WINSYS_H
 #define SP_WINSYS_H
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "pipe/p_defines.h"
 
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
+struct pipe_texture;
+struct pipe_buffer;
 
 
 struct pipe_context *softpipe_create( struct pipe_screen * );

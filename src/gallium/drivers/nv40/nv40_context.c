@@ -10,7 +10,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	
+
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(curie, 0x1fd8, 1);
 		OUT_RING  (2);
@@ -29,29 +29,6 @@ nv40_destroy(struct pipe_context *pipe)
 	if (nv40->draw)
 		draw_destroy(nv40->draw);
 	FREE(nv40);
-}
-
-static unsigned int
-nv40_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-nv40_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 struct pipe_context *
@@ -78,8 +55,8 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv40->pipe.clear = nv40_clear;
 	nv40->pipe.flush = nv40_flush;
 
-	nv40->pipe.is_texture_referenced = nv40_is_texture_referenced;
-	nv40->pipe.is_buffer_referenced = nv40_is_buffer_referenced;
+	nv40->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nv40->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	nv40_init_query_functions(nv40);
 	nv40_init_surface_functions(nv40);
@@ -95,4 +72,3 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	return &nv40->pipe;
 }
-	

@@ -59,7 +59,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #ifndef SIS_DEBUG
 int SIS_DEBUG = 0;
@@ -69,7 +69,7 @@ int GlobalCurrentHwcx = -1;
 int GlobalHwcxCountBase = 1;
 int GlobalCmdQueueLen = 0;
 
-struct dri_extension card_extensions[] =
+static struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_border_clamp",       NULL },
@@ -83,7 +83,7 @@ struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-struct dri_extension card_extensions_6326[] =
+static struct dri_extension card_extensions_6326[] =
 {
     /*{ "GL_ARB_texture_border_clamp",       NULL },*/
     /*{ "GL_ARB_texture_mirrored_repeat",    NULL },*/

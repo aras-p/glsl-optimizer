@@ -37,7 +37,7 @@ glslcompiler: $(OBJECTS)
 
 
 glslcompiler.o: glslcompiler.c
-	$(CC) -c $(CFLAGS) $(INCLUDES) glslcompiler.c -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) glslcompiler.c -o $@
 
 
 clean:

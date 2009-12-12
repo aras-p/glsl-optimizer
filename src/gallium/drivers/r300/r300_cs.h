@@ -26,7 +26,8 @@
 #include "util/u_math.h"
 
 #include "r300_reg.h"
-#include "r300_winsys.h"
+
+#include "radeon_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -34,8 +35,8 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
-#define VERY_VERBOSE_CS 0
-#define VERY_VERBOSE_REGISTERS 0
+#define VERY_VERBOSE_CS 1
+#define VERY_VERBOSE_REGISTERS 1
 
 /* XXX stolen from radeon_drm.h */
 #define RADEON_GEM_DOMAIN_CPU  0x1
@@ -50,11 +51,11 @@
 
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
-    struct r300_winsys* cs_winsys = cs_context_copy->winsys; \
+    struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
     int cs_count = 0;
 
 #define CHECK_CS(size) \
-    cs_winsys->check_cs(cs_winsys, (size))
+    assert(cs_winsys->check_cs(cs_winsys, (size)))
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
@@ -68,11 +69,17 @@
 } while (0)
 
 #define OUT_CS(value) do { \
+    if (VERY_VERBOSE_CS || VERY_VERBOSE_REGISTERS) { \
+        DBG(cs_context_copy, DBG_CS, "r300: writing %08x\n", value); \
+    } \
     cs_winsys->write_cs_dword(cs_winsys, (value)); \
     cs_count--; \
 } while (0)
 
 #define OUT_CS_32F(value) do { \
+    if (VERY_VERBOSE_CS || VERY_VERBOSE_REGISTERS) { \
+        DBG(cs_context_copy, DBG_CS, "r300: writing %f\n", value); \
+    } \
     cs_winsys->write_cs_dword(cs_winsys, fui(value)); \
     cs_count--; \
 } while (0)
@@ -82,8 +89,9 @@
         DBG(cs_context_copy, DBG_CS, "r300: writing 0x%08X to register 0x%04X\n", \
             value, register); \
     assert(register); \
-    OUT_CS(CP_PACKET0(register, 0)); \
-    OUT_CS(value); \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0(register, 0)); \
+    cs_winsys->write_cs_dword(cs_winsys, value); \
+    cs_count -= 2; \
 } while (0)
 
 /* Note: This expects count to be the number of registers,
@@ -93,7 +101,8 @@
         DBG(cs_context_copy, DBG_CS, "r300: writing register sequence of %d to 0x%04X\n", \
             count, register); \
     assert(register); \
-    OUT_CS(CP_PACKET0(register, ((count) - 1))); \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1))); \
+    cs_count--; \
 } while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
@@ -101,7 +110,16 @@
             "domains (%d, %d, %d)\n", \
         bo, offset, rd, wd, flags); \
     assert(bo); \
-    OUT_CS(offset); \
+    cs_winsys->write_cs_dword(cs_winsys, offset); \
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    cs_count -= 3; \
+} while (0)
+
+#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
+            "domains (%d, %d, %d)\n", \
+        bo, rd, wd, flags); \
+    assert(bo); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 2; \
 } while (0)
@@ -131,24 +149,26 @@
         DBG(cs_context_copy, DBG_CS, "r300: writing data sequence of %d to 0x%04X\n", \
             count, register); \
     assert(register); \
-    OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR); \
+    cs_count--; \
 } while (0)
 
 #define CP_PACKET3(op, count) \
     (RADEON_CP_PACKET3 | (op) | ((count) << 16))
 
 #define OUT_CS_PKT3(op, count) do { \
-    OUT_CS(CP_PACKET3(op, count)); \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET3(op, count)); \
+    cs_count--; \
 } while (0)
 
 #define OUT_CS_INDEX_RELOC(bo, offset, count, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for index buffer %p," \
             "offset %d\n", bo, offset); \
     assert(bo); \
-    OUT_CS(offset); \
-    OUT_CS(count); \
+    cs_winsys->write_cs_dword(cs_winsys, offset); \
+    cs_winsys->write_cs_dword(cs_winsys, count); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
-    cs_count -= 2; \
+    cs_count -= 4; \
 } while (0)
 
 #endif /* R300_CS_H */

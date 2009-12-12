@@ -37,13 +37,13 @@
 #include "pipe/p_screen.h"
 
 #include "trace/tr_drm.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 
 #include "state_tracker/drm_api.h"
 
 #include "radeon_buffer.h"
 #include "radeon_r300.h"
-#include "radeon_winsys_softpipe.h"
 
 /* XXX */
 #include "r300_screen.h"

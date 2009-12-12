@@ -107,8 +107,7 @@ extern "C" {
 /**
  * finite macro.
  */
-#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-#  define __WIN32__
+#if defined(_MSC_VER)
 #  define finite _finite
 #elif defined(__WATCOMC__)
 #  define finite _finite
@@ -235,7 +234,12 @@ extern "C" {
 #elif defined(__APPLE__)
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
-#else /*__linux__ __APPLE__*/
+#elif defined(_AIX)
+#define CPU_TO_LE32( x )        x = ((x & 0x000000ff) << 24) | \
+                                    ((x & 0x0000ff00) <<  8) | \
+                                    ((x & 0x00ff0000) >>  8) | \
+                                    ((x & 0xff000000) >> 24);
+#else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
 #endif /*__linux__*/

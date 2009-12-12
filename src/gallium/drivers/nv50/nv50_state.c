@@ -146,6 +146,7 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 		  (wrap_mode(cso->wrap_r) << 6));
 
 	switch (cso->mag_img_filter) {
+	case PIPE_TEX_FILTER_ANISO:
 	case PIPE_TEX_FILTER_LINEAR:
 		tsc[1] |= NV50TSC_1_1_MAGF_LINEAR;
 		break;
@@ -156,6 +157,7 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	}
 
 	switch (cso->min_img_filter) {
+	case PIPE_TEX_FILTER_ANISO:
 	case PIPE_TEX_FILTER_LINEAR:
 		tsc[1] |= NV50TSC_1_1_MINF_LINEAR;
 		break;
@@ -183,21 +185,15 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	else
 	if (cso->max_anisotropy >= 12.0)
 		tsc[0] |= (6 << 20);
-	else
-	if (cso->max_anisotropy >= 10.0)
-		tsc[0] |= (5 << 20);
-	else
-	if (cso->max_anisotropy >= 8.0)
-		tsc[0] |= (4 << 20);
-	else
-	if (cso->max_anisotropy >= 6.0)
-		tsc[0] |= (3 << 20);
-	else
-	if (cso->max_anisotropy >= 4.0)
-		tsc[0] |= (2 << 20);
-	else
-	if (cso->max_anisotropy >= 2.0)
-		tsc[0] |= (1 << 20);
+	else {
+		tsc[0] |= (int)(cso->max_anisotropy * 0.5f) << 20;
+
+		if (cso->max_anisotropy >= 4.0)
+			tsc[1] |= NV50TSC_1_1_UNKN_ANISO_35;
+		else
+		if (cso->max_anisotropy >= 2.0)
+			tsc[1] |= NV50TSC_1_1_UNKN_ANISO_15;
+	}
 
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		tsc[0] |= (1 << 8);
@@ -652,9 +648,9 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_blend_state = nv50_blend_state_delete;
 
 	nv50->pipe.create_sampler_state = nv50_sampler_state_create;
-	nv50->pipe.bind_sampler_states = nv50_sampler_state_bind;
+	nv50->pipe.bind_fragment_sampler_states = nv50_sampler_state_bind;
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
-	nv50->pipe.set_sampler_textures = nv50_set_sampler_texture;
+	nv50->pipe.set_fragment_sampler_textures = nv50_set_sampler_texture;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;

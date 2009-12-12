@@ -36,8 +36,10 @@
 #include <llvm-c/Transforms/Scalar.h>
 
 #include "util/u_memory.h"
+#include "util/u_cpu_detect.h"
 #include "lp_screen.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_misc.h"
 #include "lp_jit.h"
 
 
@@ -147,6 +149,18 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
    char *error = NULL;
 
+   util_cpu_detect();
+
+#if 0
+   /* For simulating less capable machines */
+   util_cpu_caps.has_sse3 = 0;
+   util_cpu_caps.has_ssse3 = 0;
+   util_cpu_caps.has_sse4_1 = 0;
+#endif
+
+   LLVMLinkInJIT();
+   LLVMInitializeNativeTarget();
+
    screen->module = LLVMModuleCreateWithName("llvmpipe");
 
    screen->provider = LLVMCreateModuleProviderForExistingModule(screen->module);
@@ -154,7 +168,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
       _debug_printf("%s\n", error);
       LLVMDisposeMessage(error);
-      abort();
+      assert(0);
    }
 
    screen->target = LLVMGetExecutionEngineTargetData(screen->engine);
@@ -163,8 +177,15 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    LLVMAddTargetData(screen->target, screen->pass);
    /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
     * but there are more on SVN. */
+   /* TODO: Add more passes */
    LLVMAddConstantPropagationPass(screen->pass);
-   LLVMAddInstructionCombiningPass(screen->pass);
+   if(util_cpu_caps.has_sse4_1) {
+      /* FIXME: There is a bug in this pass, whereby the combination of fptosi
+       * and sitofp (necessary for trunc/floor/ceil/round implementation)
+       * somehow becomes invalid code.
+       */
+      LLVMAddInstructionCombiningPass(screen->pass);
+   }
    LLVMAddPromoteMemoryToRegisterPass(screen->pass);
    LLVMAddGVNPass(screen->pass);
    LLVMAddCFGSimplificationPass(screen->pass);

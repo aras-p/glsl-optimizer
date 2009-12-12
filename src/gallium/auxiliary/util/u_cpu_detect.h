@@ -24,55 +24,55 @@
  *
  ***************************************************************************/
 
-/*
- * Based on the work of Eric Anholt <anholt@FreeBSD.org>
+/**
+ * @file
+ * CPU feature detection.
+ *
+ * @author Dennis Smit
+ * @author Based on the work of Eric Anholt <anholt@FreeBSD.org>
  */
 
-#ifndef _CPU_DETECT_H
-#define _CPU_DETECT_H
+#ifndef _UTIL_CPU_DETECT_H
+#define _UTIL_CPU_DETECT_H
 
-typedef enum {
-	CPU_DETECT_TYPE_MIPS,
-	CPU_DETECT_TYPE_ALPHA,
-	CPU_DETECT_TYPE_SPARC,
-	CPU_DETECT_TYPE_X86,
-	CPU_DETECT_TYPE_POWERPC,
-	CPU_DETECT_TYPE_OTHER
-} cpu_detect_type;
+#include "pipe/p_compiler.h"
 
-struct cpu_detect_caps {
-	cpu_detect_type	type;
-	int		nrcpu;
-
-	/* Feature flags */
-	int		x86cpuType;
-	int		cacheline;
-
-	int		hasTSC;
-	int		hasMMX;
-	int		hasMMX2;
-	int		hasSSE;
-	int		hasSSE2;
-	int		hasSSE3;
-	int		hasSSSE3;
-	int		has3DNow;
-	int		has3DNowExt;
-	int		hasAltiVec;
+enum util_cpu_arch {
+   UTIL_CPU_ARCH_UNKNOWN = 0,
+   UTIL_CPU_ARCH_MIPS,
+   UTIL_CPU_ARCH_ALPHA,
+   UTIL_CPU_ARCH_SPARC,
+   UTIL_CPU_ARCH_X86,
+   UTIL_CPU_ARCH_POWERPC
 };
 
-/* prototypes */
-void cpu_detect_initialize(void);
-struct cpu_detect_caps *cpu_detect_get_caps(void);
+struct util_cpu_caps {
+   enum util_cpu_arch arch;
+   unsigned nr_cpus;
 
-int cpu_detect_get_tsc(void);
-int cpu_detect_get_mmx(void);
-int cpu_detect_get_mmx2(void);
-int cpu_detect_get_sse(void);
-int cpu_detect_get_sse2(void);
-int cpu_detect_get_sse3(void);
-int cpu_detect_get_ssse3(void);
-int cpu_detect_get_3dnow(void);
-int cpu_detect_get_3dnow2(void);
-int cpu_detect_get_altivec(void);
+   /* Feature flags */
+   int x86_cpu_type;
+   unsigned cacheline;
 
-#endif /* _CPU_DETECT_H */
+   unsigned little_endian:1;
+
+   unsigned has_tsc:1;
+   unsigned has_mmx:1;
+   unsigned has_mmx2:1;
+   unsigned has_sse:1;
+   unsigned has_sse2:1;
+   unsigned has_sse3:1;
+   unsigned has_ssse3:1;
+   unsigned has_sse4_1:1;
+   unsigned has_3dnow:1;
+   unsigned has_3dnow_ext:1;
+   unsigned has_altivec:1;
+};
+
+extern struct util_cpu_caps
+util_cpu_caps;
+
+void util_cpu_detect(void);
+
+
+#endif /* _UTIL_CPU_DETECT_H */

@@ -37,13 +37,13 @@
 
 
 #include "sp_context.h"
+#include "sp_setup.h"
 #include "sp_state.h"
 #include "sp_prim_vbuf.h"
-#include "sp_prim_setup.h"
-#include "sp_setup.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 
 
 #define SP_MAX_VBUF_INDEXES 1024
@@ -58,6 +58,8 @@ struct softpipe_vbuf_render
 {
    struct vbuf_render base;
    struct softpipe_context *softpipe;
+   struct setup_context *setup;
+
    uint prim;
    uint vertex_size;
    uint nr_vertices;
@@ -72,6 +74,11 @@ softpipe_vbuf_render(struct vbuf_render *vbr)
 {
    return (struct softpipe_vbuf_render *) vbr;
 }
+
+
+
+
+
 
 
 static const struct vertex_info *
@@ -104,36 +111,6 @@ sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
 static void
 sp_vbuf_release_vertices(struct vbuf_render *vbr)
 {
-#if 0
-   {
-      struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-      const struct vertex_info *info = 
-         softpipe_get_vbuf_vertex_info(cvbr->softpipe);
-      const float *vtx = (const float *) cvbr->vertex_buffer;
-      uint i, j;
-      debug_printf("%s (vtx_size = %u,  vtx_used = %u)\n",
-             __FUNCTION__, cvbr->vertex_size, cvbr->nr_vertices);
-      for (i = 0; i < cvbr->nr_vertices; i++) {
-         for (j = 0; j < info->num_attribs; j++) {
-            uint k;
-            switch (info->attrib[j].emit) {
-            case EMIT_4F:  k = 4;   break;
-            case EMIT_3F:  k = 3;   break;
-            case EMIT_2F:  k = 2;   break;
-            case EMIT_1F:  k = 1;   break;
-            default: assert(0);
-            }
-            debug_printf("Vert %u attr %u: ", i, j);
-            while (k-- > 0) {
-               debug_printf("%g ", vtx[0]);
-               vtx++;
-            }
-            debug_printf("\n");
-         }
-      }
-   }
-#endif
-
    /* keep the old allocation for next time */
 }
 
@@ -159,14 +136,11 @@ static boolean
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct setup_context *setup_ctx = sp_draw_setup_context(cvbr->softpipe->setup);
+   struct setup_context *setup_ctx = cvbr->setup;
    
-   setup_prepare( setup_ctx );
+   sp_setup_prepare( setup_ctx );
 
+   cvbr->softpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
    return TRUE;
 
@@ -191,25 +165,20 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    struct softpipe_context *softpipe = cvbr->softpipe;
    const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    const void *vertex_buffer = cvbr->vertex_buffer;
+   struct setup_context *setup_ctx = cvbr->setup;
    unsigned i;
-
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct draw_stage *setup = softpipe->setup;
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < nr; i++) {
-         setup_point( setup_ctx,
+         sp_setup_point( setup_ctx,
                       get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
    case PIPE_PRIM_LINES:
       for (i = 1; i < nr; i += 2) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
@@ -217,7 +186,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
@@ -225,27 +194,29 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 
    case PIPE_PRIM_LINE_LOOP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[i-1], stride),
                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
       if (nr) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, indices[nr-1], stride),
                      get_vert(vertex_buffer, indices[0], stride) );
       }
       break;
 
    case PIPE_PRIM_TRIANGLES:
-      for (i = 2; i < nr; i += 3) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i += 3) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-2], stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i += 3) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -254,15 +225,17 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_STRIP:
-      for (i = 2; i < nr; i += 1) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i+(i&1)-1], stride),
                        get_vert(vertex_buffer, indices[i-(i&1)], stride),
                        get_vert(vertex_buffer, indices[i-2], stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i+(i&1)-2], stride),
                        get_vert(vertex_buffer, indices[i-(i&1)-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -271,15 +244,17 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_FAN:
-      for (i = 2; i < nr; i += 1) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -288,24 +263,26 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      for (i = 3; i < nr; i += 4) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 3; i < nr; i += 4) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 3; i < nr; i += 4) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
 
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -314,23 +291,25 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      for (i = 3; i < nr; i += 2) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 3; i < nr; i += 2) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride));
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride),
                        get_vert(vertex_buffer, indices[i-3], stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 3; i < nr; i += 2) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
@@ -345,7 +324,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
        * flatshade_first state makes no difference.
        */
       for (i = 2; i < nr; i += 1) {
-         setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                     get_vert(vertex_buffer, indices[i-0], stride),
                     get_vert(vertex_buffer, indices[i-1], stride),
                     get_vert(vertex_buffer, indices[0], stride) );
@@ -355,11 +334,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
    default:
       assert(0);
    }
-
-   /* XXX: why are we calling this???  If we had to call something, it
-    * would be a function in sp_setup.c:
-    */
-   sp_draw_flush( setup );
 }
 
 
@@ -372,28 +346,23 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
+   struct setup_context *setup_ctx = cvbr->setup;
    const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    const void *vertex_buffer =
       (void *) get_vert(cvbr->vertex_buffer, start, stride);
    unsigned i;
 
-   /* XXX: break this dependency - make setup_context live under
-    * softpipe, rename the old "setup" draw stage to something else.
-    */
-   struct draw_stage *setup = softpipe->setup;
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
-
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < nr; i++) {
-         setup_point( setup_ctx,
+         sp_setup_point( setup_ctx,
                       get_vert(vertex_buffer, i-0, stride) );
       }
       break;
 
    case PIPE_PRIM_LINES:
       for (i = 1; i < nr; i += 2) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
@@ -401,7 +370,7 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
@@ -409,27 +378,29 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 
    case PIPE_PRIM_LINE_LOOP:
       for (i = 1; i < nr; i ++) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
       }
       if (nr) {
-         setup_line( setup_ctx,
+         sp_setup_line( setup_ctx,
                      get_vert(vertex_buffer, nr-1, stride),
                      get_vert(vertex_buffer, 0, stride) );
       }
       break;
 
    case PIPE_PRIM_TRIANGLES:
-      for (i = 2; i < nr; i += 3) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i += 3) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-2, stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i += 3) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -438,15 +409,17 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_STRIP:
-      for (i = 2; i < nr; i++) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i++) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i+(i&1)-1, stride),
                        get_vert(vertex_buffer, i-(i&1), stride),
                        get_vert(vertex_buffer, i-2, stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i++) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i+(i&1)-2, stride),
                        get_vert(vertex_buffer, i-(i&1)-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -455,15 +428,17 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_FAN:
-      for (i = 2; i < nr; i += 1) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, 0, stride),
                        get_vert(vertex_buffer, i-1, stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 2; i < nr; i += 1) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, 0, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -472,23 +447,25 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      for (i = 3; i < nr; i += 4) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 3; i < nr; i += 4) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-3, stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 3; i < nr; i += 4) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -497,23 +474,25 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      for (i = 3; i < nr; i += 2) {
-         if (softpipe->rasterizer->flatshade_first) {
-            setup_tri( setup_ctx,
+      if (softpipe->rasterizer->flatshade_first) {
+         for (i = 3; i < nr; i += 2) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride),
                        get_vert(vertex_buffer, i-3, stride) );
          }
-         else {
-            setup_tri( setup_ctx,
+      }
+      else {
+         for (i = 3; i < nr; i += 2) {
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            setup_tri( setup_ctx,
+            sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-0, stride) );
@@ -528,7 +507,7 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
        * flatshade_first state makes no difference.
        */
       for (i = 2; i < nr; i += 1) {
-         setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                     get_vert(vertex_buffer, i-1, stride),
                     get_vert(vertex_buffer, i-0, stride),
                     get_vert(vertex_buffer, 0, stride) );
@@ -546,40 +525,38 @@ static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   cvbr->softpipe->vbuf_render = NULL;
+   sp_setup_destroy_context(cvbr->setup);
    FREE(cvbr);
 }
 
 
 /**
- * Initialize the post-transform vertex buffer information for the given
- * context.
+ * Create the post-transform vertex handler for the given context.
  */
-void
-sp_init_vbuf(struct softpipe_context *sp)
+struct vbuf_render *
+sp_create_vbuf_backend(struct softpipe_context *sp)
 {
+   struct softpipe_vbuf_render *cvbr = CALLOC_STRUCT(softpipe_vbuf_render);
+
    assert(sp->draw);
 
-   sp->vbuf_render = CALLOC_STRUCT(softpipe_vbuf_render);
 
-   sp->vbuf_render->base.max_indices = SP_MAX_VBUF_INDEXES;
-   sp->vbuf_render->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
+   cvbr->base.max_indices = SP_MAX_VBUF_INDEXES;
+   cvbr->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
 
-   sp->vbuf_render->base.get_vertex_info = sp_vbuf_get_vertex_info;
-   sp->vbuf_render->base.allocate_vertices = sp_vbuf_allocate_vertices;
-   sp->vbuf_render->base.map_vertices = sp_vbuf_map_vertices;
-   sp->vbuf_render->base.unmap_vertices = sp_vbuf_unmap_vertices;
-   sp->vbuf_render->base.set_primitive = sp_vbuf_set_primitive;
-   sp->vbuf_render->base.draw = sp_vbuf_draw;
-   sp->vbuf_render->base.draw_arrays = sp_vbuf_draw_arrays;
-   sp->vbuf_render->base.release_vertices = sp_vbuf_release_vertices;
-   sp->vbuf_render->base.destroy = sp_vbuf_destroy;
+   cvbr->base.get_vertex_info = sp_vbuf_get_vertex_info;
+   cvbr->base.allocate_vertices = sp_vbuf_allocate_vertices;
+   cvbr->base.map_vertices = sp_vbuf_map_vertices;
+   cvbr->base.unmap_vertices = sp_vbuf_unmap_vertices;
+   cvbr->base.set_primitive = sp_vbuf_set_primitive;
+   cvbr->base.draw = sp_vbuf_draw;
+   cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
+   cvbr->base.release_vertices = sp_vbuf_release_vertices;
+   cvbr->base.destroy = sp_vbuf_destroy;
 
-   sp->vbuf_render->softpipe = sp;
+   cvbr->softpipe = sp;
 
-   sp->vbuf = draw_vbuf_stage(sp->draw, &sp->vbuf_render->base);
+   cvbr->setup = sp_setup_create_context(cvbr->softpipe);
 
-   draw_set_rasterize_stage(sp->draw, sp->vbuf);
-
-   draw_set_render(sp->draw, &sp->vbuf_render->base);
+   return &cvbr->base;
 }

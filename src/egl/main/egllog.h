@@ -9,6 +9,17 @@
 #define _EGL_DEBUG   3   /* useful info for debugging */
 
 
+typedef void (*_EGLLogProc)(EGLint level, const char *msg);
+
+
+extern void
+_eglSetLogProc(_EGLLogProc logger);
+
+
+extern void
+_eglSetLogLevel(EGLint level);
+
+
 extern void
 _eglLog(EGLint level, const char *fmtStr, ...);
 

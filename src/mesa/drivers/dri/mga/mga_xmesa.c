@@ -78,7 +78,7 @@
 #endif
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 /* MGA configuration
  */
@@ -723,7 +723,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->frontOffset, screen->frontPitch,
@@ -734,7 +734,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -745,7 +745,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -757,7 +757,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
          /* XXX is this right? */
          if (mesaVis->stencilBits) {
             driRenderbuffer *depthRb
-               = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+               = driNewRenderbuffer(MESA_FORMAT_Z24_S8,
                                     NULL,
                                     screen->cpp,
                                     screen->depthOffset, screen->depthPitch,
@@ -767,7 +767,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
          }
          else {
             driRenderbuffer *depthRb
-               = driNewRenderbuffer(GL_DEPTH_COMPONENT32,
+               = driNewRenderbuffer(MESA_FORMAT_Z32,
                                     NULL,
                                     screen->cpp,
                                     screen->depthOffset, screen->depthPitch,
@@ -778,7 +778,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 32) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT32,
+            = driNewRenderbuffer(MESA_FORMAT_Z32,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -789,7 +789,7 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+            = driNewRenderbuffer(MESA_FORMAT_S8,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -944,22 +944,6 @@ static const __DRIconfig **mgaInitScreen(__DRIscreen *psp)
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
 
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-   driInitExtensions( NULL, g400_extensions, GL_FALSE );
-   driInitExtensions(NULL, ARB_vp_extensions, GL_FALSE);
-   driInitExtensions( NULL, NV_vp_extensions, GL_FALSE );
 
    if (!mgaInitDriver(psp))
        return NULL;

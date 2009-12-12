@@ -15,7 +15,7 @@ message:
 
 
 subdirs:
-	@for dir in $(SUBDIRS) ; do \
+	@list='$(SUBDIRS)'; for dir in $$list ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE)) || exit 1 ; \
 		fi \
@@ -25,7 +25,7 @@ subdirs:
 install:
 
 clean:
-	-@for dir in $(SUBDIRS) tests ; do \
+	@list='$(SUBDIRS)'; for dir in $$list tests ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \

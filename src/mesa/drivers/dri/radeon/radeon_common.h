@@ -10,7 +10,6 @@ void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
 void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask );
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
@@ -43,7 +42,7 @@ void
 radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
 			   struct radeon_bo *bo);
 struct radeon_renderbuffer *
-radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv);
+radeon_create_renderbuffer(gl_format format, __DRIdrawablePrivate *driDrawPriv);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;

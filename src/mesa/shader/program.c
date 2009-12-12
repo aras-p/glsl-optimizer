@@ -351,13 +351,6 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       _mesa_free_parameter_list(prog->Attributes);
    }
 
-   /* XXX this is a little ugly */
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
-      if (vprog->TnlData)
-         _mesa_free(vprog->TnlData);
-   }
-
    _mesa_free(prog);
 }
 
@@ -502,6 +495,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
             = (const struct gl_vertex_program *) prog;
          struct gl_vertex_program *vpc = (struct gl_vertex_program *) clone;
          vpc->IsPositionInvariant = vp->IsPositionInvariant;
+         vpc->IsNVProgram = vp->IsNVProgram;
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
@@ -812,9 +806,17 @@ _mesa_find_free_register(const struct gl_program *prog, GLuint regFile)
       const struct prog_instruction *inst = prog->Instructions + i;
       const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
 
-      for (k = 0; k < n; k++) {
-         if (inst->SrcReg[k].File == regFile) {
-            used[inst->SrcReg[k].Index] = GL_TRUE;
+      /* check dst reg first */
+      if (inst->DstReg.File == regFile) {
+         used[inst->DstReg.Index] = GL_TRUE;
+      }
+      else {
+         /* check src regs otherwise */
+         for (k = 0; k < n; k++) {
+            if (inst->SrcReg[k].File == regFile) {
+               used[inst->SrcReg[k].Index] = GL_TRUE;
+               break;
+            }
          }
       }
    }

@@ -45,6 +45,7 @@ _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
    ctx->DrawSurface = EGL_NO_SURFACE;
    ctx->ReadSurface = EGL_NO_SURFACE;
    ctx->ClientAPI = api;
+   ctx->WindowRenderBuffer = EGL_NONE;
 
    return EGL_TRUE;
 }
@@ -87,6 +88,24 @@ _eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 }
 
 
+#ifdef EGL_VERSION_1_2
+static EGLint
+_eglQueryContextRenderBuffer(_EGLContext *ctx)
+{
+   _EGLSurface *surf = ctx->DrawSurface;
+   EGLint rb;
+
+   if (!surf)
+      return EGL_NONE;
+   if (surf->Type == EGL_WINDOW_BIT && ctx->WindowRenderBuffer != EGL_NONE)
+      rb = ctx->WindowRenderBuffer;
+   else
+      rb = surf->RenderBuffer;
+   return rb;
+}
+#endif /* EGL_VERSION_1_2 */
+
+
 EGLBoolean
 _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
                  EGLint attribute, EGLint *value)
@@ -94,22 +113,29 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
    (void) drv;
    (void) dpy;
 
+   if (!value)
+      return _eglError(EGL_BAD_PARAMETER, "eglQueryContext");
+
    switch (attribute) {
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(c->Config, EGL_CONFIG_ID);
-      return EGL_TRUE;
+      break;
+   case EGL_CONTEXT_CLIENT_VERSION:
+      *value = c->ClientVersion;
+      break;
 #ifdef EGL_VERSION_1_2
    case EGL_CONTEXT_CLIENT_TYPE:
       *value = c->ClientAPI;
-      return EGL_TRUE;
+      break;
+   case EGL_RENDER_BUFFER:
+      *value = _eglQueryContextRenderBuffer(c);
+      break;
 #endif /* EGL_VERSION_1_2 */
-   case EGL_CONTEXT_CLIENT_VERSION:
-      *value = c->ClientVersion;
-      return EGL_TRUE;
    default:
-      _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
-      return EGL_FALSE;
+      return _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
    }
+
+   return EGL_TRUE;
 }
 
 

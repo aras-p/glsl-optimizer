@@ -44,6 +44,7 @@
 #include "nvprogram.h"
 #include "nvvertparse.h"
 #include "prog_instruction.h"
+#include "prog_parameter.h"
 #include "prog_print.h"
 #include "program.h"
 
@@ -1345,6 +1346,9 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 
 
    if (Parse_Program(&parseState, instBuffer)) {
+      gl_state_index state_tokens[STATE_LENGTH] = {0, 0, 0, 0, 0};
+      int i;
+
       /* successful parse! */
 
       if (parseState.isStateProgram) {
@@ -1398,6 +1402,29 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       _mesa_fprint_program_opt(stdout, &program->Base, PROG_PRINT_NV, 0);
       _mesa_printf("------------------------------\n");
 #endif
+
+      if (program->Base.Parameters)
+	 _mesa_free_parameter_list(program->Base.Parameters);
+
+      program->Base.Parameters = _mesa_new_parameter_list ();
+      program->Base.NumParameters = 0;
+
+      state_tokens[0] = STATE_VERTEX_PROGRAM;
+      state_tokens[1] = STATE_ENV;
+      /* Add refs to all of the potential params, in order.  If we want to not
+       * upload everything, _mesa_layout_parameters is the answer.
+       */
+      for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS; i++) {
+	 GLint index;
+	 state_tokens[2] = i;
+	 index = _mesa_add_state_reference(program->Base.Parameters,
+					   state_tokens);
+	 assert(index == i);
+      }
+      program->Base.NumParameters = program->Base.Parameters->NumParameters;
+
+      _mesa_setup_nv_temporary_count(ctx, &program->Base);
+      _mesa_emit_nv_temp_initialization(ctx, &program->Base);
    }
    else {
       /* Error! */

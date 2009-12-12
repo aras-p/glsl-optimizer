@@ -135,6 +135,9 @@ static void nv20_state_emit_framebuffer(struct nv20_context* nv20)
 	rt_format = NV20TCL_RT_FORMAT_TYPE_LINEAR | 0x20;
 
 	switch (colour_format) {
+	case PIPE_FORMAT_X8R8G8B8_UNORM:
+		rt_format |= NV20TCL_RT_FORMAT_COLOR_X8R8G8B8;
+		break;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case 0:
 		rt_format |= NV20TCL_RT_FORMAT_COLOR_A8R8G8B8;

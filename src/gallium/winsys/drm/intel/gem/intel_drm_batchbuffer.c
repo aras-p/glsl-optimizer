@@ -14,6 +14,8 @@
 
 #undef INTEL_RUN_SYNC
 #undef INTEL_MAP_BATCHBUFFER
+#undef INTEL_MAP_GTT
+#define INTEL_ALWAYS_FLUSH
 
 struct intel_drm_batchbuffer
 {
@@ -34,6 +36,7 @@ static void
 intel_drm_batchbuffer_reset(struct intel_drm_batchbuffer *batch)
 {
    struct intel_drm_winsys *idws = intel_drm_winsys(batch->base.iws);
+   int ret;
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
@@ -43,8 +46,15 @@ intel_drm_batchbuffer_reset(struct intel_drm_batchbuffer *batch)
                                   4096);
 
 #ifdef INTEL_MAP_BATCHBUFFER
-   drm_intel_bo_map(batch->bo, TRUE);
+#ifdef INTEL_MAP_GTT
+   ret = drm_intel_gem_bo_map_gtt(batch->bo);
+#else
+   ret = drm_intel_bo_map(batch->bo, TRUE);
+#endif
+   assert(ret == 0);
    batch->base.map = batch->bo->virtual;
+#else
+   (void)ret;
 #endif
 
    memset(batch->base.map, 0, batch->actual_size);
@@ -148,24 +158,29 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
    used = batch->base.ptr - batch->base.map;
    assert((used & 3) == 0);
 
-   if (used & 4) {
-      // MI_FLUSH | FLUSH_MAP_CACHE;
-      intel_batchbuffer_dword(ibatch, (0x0<<29)|(0x4<<23)|(1<<0));
-      // MI_NOOP
-      intel_batchbuffer_dword(ibatch, (0x0<<29)|(0x0<<23));
-      // MI_BATCH_BUFFER_END;
-      intel_batchbuffer_dword(ibatch, (0x0<<29)|(0xA<<23));
-   } else {
-      //MI_FLUSH | FLUSH_MAP_CACHE;
-      intel_batchbuffer_dword(ibatch, (0x0<<29)|(0x4<<23)|(1<<0));
-      // MI_BATCH_BUFFER_END;
-      intel_batchbuffer_dword(ibatch, (0x0<<29)|(0xA<<23));
+
+#ifdef INTEL_ALWAYS_FLUSH
+   /* MI_FLUSH | FLUSH_MAP_CACHE */
+   intel_batchbuffer_dword(ibatch, (0x4<<23)|(1<<0));
+   used += 4;
+#endif
+
+   if ((used & 4) == 0) {
+      /* MI_NOOP */
+      intel_batchbuffer_dword(ibatch, 0);
    }
+   /* MI_BATCH_BUFFER_END */
+   intel_batchbuffer_dword(ibatch, (0xA<<23));
 
    used = batch->base.ptr - batch->base.map;
+   assert((used & 4) == 0);
 
 #ifdef INTEL_MAP_BATCHBUFFER
+#ifdef INTEL_MAP_GTT
+   drm_intel_gem_bo_unmap_gtt(batch->bo);
+#else
    drm_intel_bo_unmap(batch->bo);
+#endif
 #else
    drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
 #endif

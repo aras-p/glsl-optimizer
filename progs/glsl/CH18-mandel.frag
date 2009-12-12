@@ -31,7 +31,7 @@ void main()
     float iter;
 
 //    for (iter = 0.0; iter < MaxIterations && r2 < 4.0; ++iter)
-    for (iter = 0.0; iter < 12 && r2 < 4.0; ++iter)
+    for (iter = 0.0; iter < 12.0 && r2 < 4.0; ++iter)
     {
         float tempreal = real;
 

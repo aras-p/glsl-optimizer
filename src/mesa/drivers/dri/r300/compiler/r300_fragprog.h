@@ -33,9 +33,6 @@
 #ifndef __R300_FRAGPROG_H_
 #define __R300_FRAGPROG_H_
 
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-
 #include "radeon_compiler.h"
 #include "radeon_program.h"
 
@@ -44,6 +41,6 @@ extern void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler
 
 extern void r300FragmentProgramDump(struct rX00_fragment_program_code *c);
 
-extern GLboolean r300_transform_TEX(struct radeon_compiler * c, struct rc_instruction* inst, void* data);
+extern int r300_transform_TEX(struct radeon_compiler * c, struct rc_instruction* inst, void* data);
 
 #endif

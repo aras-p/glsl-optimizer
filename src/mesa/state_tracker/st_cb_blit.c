@@ -39,6 +39,7 @@
 #include "shader/prog_print.h"
 
 #include "st_context.h"
+#include "st_texture.h"
 #include "st_program.h"
 #include "st_cb_blit.h"
 #include "st_cb_fbo.h"
@@ -63,6 +64,7 @@ st_destroy_blit(struct st_context *st)
 }
 
 
+#if FEATURE_EXT_framebuffer_blit
 static void
 st_BlitFramebuffer(GLcontext *ctx,
                    GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -110,17 +112,50 @@ st_BlitFramebuffer(GLcontext *ctx,
    }
 
    if (mask & GL_COLOR_BUFFER_BIT) {
-      struct st_renderbuffer *srcRb = 
-         st_renderbuffer(readFB->_ColorReadBuffer);
-      struct st_renderbuffer *dstRb = 
-         st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
-      struct pipe_surface *srcSurf = srcRb->surface;
-      struct pipe_surface *dstSurf = dstRb->surface;
+      struct gl_renderbuffer_attachment *srcAtt =
+         &readFB->Attachment[readFB->_ColorReadBufferIndex];
 
-      util_blit_pixels(st->blit,
-                       srcSurf, srcX0, srcY0, srcX1, srcY1,
-                       dstSurf, dstX0, dstY0, dstX1, dstY1,
-                       0.0, pFilter);
+      if(srcAtt->Type == GL_TEXTURE) {
+         struct pipe_screen *screen = ctx->st->pipe->screen;
+         const struct st_texture_object *srcObj =
+            st_texture_object(srcAtt->Texture);
+         struct st_renderbuffer *dstRb =
+            st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
+         struct pipe_surface *srcSurf;
+         struct pipe_surface *dstSurf = dstRb->surface;
+
+         if (!srcObj->pt)
+            return;
+
+         srcSurf = screen->get_tex_surface(screen,
+                                           srcObj->pt,
+                                           srcAtt->CubeMapFace,
+                                           srcAtt->TextureLevel,
+                                           srcAtt->Zoffset,
+                                           PIPE_BUFFER_USAGE_GPU_READ);
+         if(!srcSurf)
+            return;
+
+         util_blit_pixels(st->blit,
+                          srcSurf, srcX0, srcY0, srcX1, srcY1,
+                          dstSurf, dstX0, dstY0, dstX1, dstY1,
+                          0.0, pFilter);
+
+         pipe_surface_reference(&srcSurf, NULL);
+      }
+      else {
+         struct st_renderbuffer *srcRb =
+            st_renderbuffer(readFB->_ColorReadBuffer);
+         struct st_renderbuffer *dstRb =
+            st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
+         struct pipe_surface *srcSurf = srcRb->surface;
+         struct pipe_surface *dstSurf = dstRb->surface;
+
+         util_blit_pixels(st->blit,
+                          srcSurf, srcX0, srcY0, srcX1, srcY1,
+                          dstSurf, dstX0, dstY0, dstX1, dstY1,
+                          0.0, pFilter);
+      }
    }
 
    if (mask & depthStencil) {
@@ -172,6 +207,7 @@ st_BlitFramebuffer(GLcontext *ctx,
       }
    }
 }
+#endif /* FEATURE_EXT_framebuffer_blit */
 
 
 

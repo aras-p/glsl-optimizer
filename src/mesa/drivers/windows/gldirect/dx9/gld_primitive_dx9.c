@@ -189,9 +189,9 @@
 		GLfloat		ex,ey,fx,fy,cc;							\
 		/* Get vars for later */							\
 		VB		= &TNL_CONTEXT(ctx)->vb;					\
-		vbcolor	= (GLchan (*)[4])VB->ColorPtr[1]->data;		\
-		if (VB->SecondaryColorPtr[1]) {						\
-			vbspec = (GLchan (*)[4])VB->SecondaryColorPtr[1]->data;	\
+		vbcolor	= (GLchan (*)[4])VB->BackfaceColorPtr->data;	\
+		if (VB->BackfaceSecondaryColorPtr) {			\
+			vbspec = (GLchan (*)[4])VB->BackfaceSecondaryColorPtr->data;	\
 		} else {													\
 			vbspec = NULL;											\
 		}															\
@@ -241,33 +241,33 @@
 	DWORD					dwColor;
 
 #define GLD_SETUP_3D_VERTEX(v)					\
-	p4f				= VB->ObjPtr->data;			\
+	p4f = VB->AttribPtr[_TNL_ATTRIB_POS]->data;		\
 	pV->Position.x	= p4f[##v][0];				\
 	pV->Position.y	= p4f[##v][1];				\
 	pV->Position.z	= p4f[##v][2];
 
 #define GLD_SETUP_SMOOTH_COLOUR_3D(v)															\
-	p4f			= (GLfloat (*)[4])VB->ColorPtr[0]->data;										\
+	p4f = (GLfloat (*)[4])VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;										\
 	pV->Diffuse	= D3DCOLOR_COLORVALUE(p4f[##v][0], p4f[##v][1], p4f[##v][2], p4f[##v][3]);
 
 
 #define GLD_SETUP_GET_FLAT_COLOUR_3D(v)													\
-	p4f		= (GLfloat (*)[4])VB->ColorPtr[0]->data;										\
+	p4f = (GLfloat (*)[4])VB->AttribPtr[_TNL_ATTRIB_COLOR00]->data;	\
 	dwColor	= D3DCOLOR_COLORVALUE(p4f[##v][0], p4f[##v][1], p4f[##v][2], p4f[##v][3]);
 
 #define GLD_SETUP_USE_FLAT_COLOUR_3D			\
 	pV->Diffuse = dwColor;
 
 #define GLD_SETUP_TEX0_3D(v)						\
-	if (VB->TexCoordPtr[0]) {						\
-		tc				= VB->TexCoordPtr[0]->data;	\
+	if (VB->AttribPtr[_TNL_ATTRIB_TEX0]) {				\
+		tc = VB->AttribPtr[_TNL_ATTRIB_TEX0]->data;		\
 		pV->TexUnit0.x	= tc[##v][0];				\
 		pV->TexUnit0.y	= tc[##v][1];				\
 	}
 
 #define GLD_SETUP_TEX1_3D(v)						\
-	if (VB->TexCoordPtr[1]) {						\
-		tc				= VB->TexCoordPtr[1]->data;	\
+	if (VB->AttribPtr[_TNL_ATTRIB_TEX1]) {				\
+		tc = VB->AttribPtr[_TNL_ATTRIB_TEX1]->data;		\
 		pV->TexUnit1.x	= tc[##v][0];				\
 		pV->TexUnit1.y	= tc[##v][1];				\
 	}

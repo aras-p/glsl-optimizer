@@ -62,9 +62,9 @@ nv20_fragtex_build(struct nv20_context *nv20, int unit)
 
 	txf  = tf->format << 8;
 	txf |= (pt->last_level + 1) << 16;
-	txf |= log2i(pt->width[0]) << 20;
-	txf |= log2i(pt->height[0]) << 24;
-	txf |= log2i(pt->depth[0]) << 28;
+	txf |= log2i(pt->width0) << 20;
+	txf |= log2i(pt->height0) << 24;
+	txf |= log2i(pt->depth0) << 28;
 	txf |= 8;
 
 	switch (pt->target) {
@@ -89,7 +89,7 @@ nv20_fragtex_build(struct nv20_context *nv20, int unit)
 	OUT_RING  (0x40000000); /* enable */
 	OUT_RING  (txs);
 	OUT_RING  (ps->filt | 0x2000 /* magic */);
-	OUT_RING  ((pt->width[0] << 16) | pt->height[0]);
+	OUT_RING  ((pt->width0 << 16) | pt->height0);
 	OUT_RING  (ps->bcol);
 #endif
 }

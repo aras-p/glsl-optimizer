@@ -226,8 +226,6 @@ dri_init_screen(__DRIscreenPrivate * sPriv)
    const __DRIconfig **configs;
    struct dri1_create_screen_arg arg;
 
-   dri_init_extensions(NULL);
-
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
       return NULL;
@@ -291,9 +289,6 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
 {
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;
-
-   /* Set up dispatch table to cope with all known extensions */
-   dri_init_extensions(NULL);
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)

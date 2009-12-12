@@ -55,7 +55,7 @@ static void Key(unsigned char key, int x, int y)
       case 27:
 	exit(1);
       default:
-	return;
+	break;
     }
 
     glutPostRedisplay();

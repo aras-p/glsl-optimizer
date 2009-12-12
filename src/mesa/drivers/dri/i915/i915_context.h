@@ -39,6 +39,7 @@
 #define I915_FALLBACK_LOGICOP		 0x20000
 #define I915_FALLBACK_POLYGON_SMOOTH	 0x40000
 #define I915_FALLBACK_POINT_SMOOTH	 0x80000
+#define I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN	 0x100000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -121,10 +122,14 @@ enum {
 #define I915_MAX_CONSTANT      32
 #define I915_CONSTANT_SIZE     (2+(4*I915_MAX_CONSTANT))
 
+#define I915_MAX_INSN          (I915_MAX_DECL_INSN + \
+				I915_MAX_TEX_INSN + \
+				I915_MAX_ALU_INSN)
 
-#define I915_PROGRAM_SIZE      192
-
-#define I915_MAX_INSN          (I915_MAX_TEX_INSN+I915_MAX_ALU_INSN)
+/* Maximum size of the program packet, which matches the limits on
+ * decl, tex, and ALU instructions.
+ */
+#define I915_PROGRAM_SIZE      (I915_MAX_INSN * 3 + 1)
 
 /* Hardware version of a parsed fragment program.  "Derived" from the
  * mesa fragment_program struct.
@@ -154,8 +159,9 @@ struct i915_fragment_program
     */
    GLcontext *ctx;
 
-   GLuint declarations[I915_PROGRAM_SIZE];
-   GLuint program[I915_PROGRAM_SIZE];
+   /* declarations contains the packet header. */
+   GLuint declarations[I915_MAX_DECL_INSN * 3 + 1];
+   GLuint program[(I915_MAX_TEX_INSN + I915_MAX_ALU_INSN) * 3];
 
    GLfloat constant[I915_MAX_CONSTANT][4];
    GLuint constant_flags[I915_MAX_CONSTANT];

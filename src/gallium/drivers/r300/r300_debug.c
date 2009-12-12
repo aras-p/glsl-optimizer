@@ -37,6 +37,8 @@ static struct debug_option debug_options[] = {
     { "vp", DBG_VP, "Vertex program handling" },
     { "cs", DBG_CS, "Command submissions" },
     { "draw", DBG_DRAW, "Draw and emit" },
+    { "tex", DBG_TEX, "Textures" },
+    { "fall", DBG_FALL, "Fallbacks" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 
@@ -47,7 +49,9 @@ static struct debug_option debug_options[] = {
 void r300_init_debug(struct r300_context * ctx)
 {
     const char * options = debug_get_option("RADEON_DEBUG", 0);
-    boolean printhint = false;
+    boolean printhint = FALSE;
+    size_t length;
+    struct debug_option * opt;
 
     if (options) {
         while(*options) {
@@ -56,8 +60,7 @@ void r300_init_debug(struct r300_context * ctx)
                 continue;
             }
 
-            size_t length = strcspn(options, " ,");
-            struct debug_option * opt;
+            length = strcspn(options, " ,");
 
             for(opt = debug_options; opt->name; ++opt) {
                 if (!strncmp(options, opt->name, length)) {
@@ -68,20 +71,20 @@ void r300_init_debug(struct r300_context * ctx)
 
             if (!opt->name) {
                 debug_printf("Unknown debug option: %s\n", options);
-                printhint = true;
+                printhint = TRUE;
             }
 
             options += length;
         }
 
         if (!ctx->debug)
-            printhint = true;
+            printhint = TRUE;
     }
 
     if (printhint || ctx->debug & DBG_HELP) {
         debug_printf("You can enable debug output by setting the RADEON_DEBUG environment variable\n"
                      "to a comma-separated list of debug options. Available options are:\n");
-        for(struct debug_option * opt = debug_options; opt->name; ++opt) {
+        for(opt = debug_options; opt->name; ++opt) {
             debug_printf("    %s: %s\n", opt->name, opt->description);
         }
     }

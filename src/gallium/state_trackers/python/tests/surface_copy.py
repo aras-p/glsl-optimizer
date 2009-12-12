@@ -98,9 +98,10 @@ class TextureTest(TestCase):
         y = 0
         w = dst_surface.width
         h = dst_surface.height
-    
-        stride = dst_surface.nblocksx * dst_texture.block.size
-        size = dst_surface.nblocksy * stride
+
+        # ???
+        stride = pf_get_stride(texture->format, w)
+        size = pf_get_nblocksy(texture->format) * stride
         src_raw = os.urandom(size)
 
         src_surface.put_tile_raw(0, 0, w, h, src_raw, stride)

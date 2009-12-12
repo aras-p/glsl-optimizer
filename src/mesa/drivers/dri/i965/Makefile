@@ -14,7 +14,6 @@ DRIVER_SOURCES = \
 	intel_decode.c \
 	intel_extensions.c \
 	intel_fbo.c \
-	intel_generatemipmap.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
 	intel_screen.c \
@@ -101,6 +100,5 @@ DRI_LIB_DEPS += -ldrm_intel
 
 include ../Makefile.template
 
-symlinks:
 intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c

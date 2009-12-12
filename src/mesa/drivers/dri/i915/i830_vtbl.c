@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include "glapi/glapi.h"
-#include "main/texformat.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -127,7 +126,7 @@ i830_render_start(struct intel_context *intel)
 
       for (i = 0; i < I830_TEX_UNITS; i++) {
          if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_TEX(i))) {
-            GLuint sz = VB->TexCoordPtr[i]->size;
+            GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
             GLuint emit;
             GLuint mcs = (i830->state.Tex[i][I830_TEXREG_MCS] &
                           ~TEXCOORDTYPE_MASK);
@@ -646,8 +645,9 @@ i830_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
 
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
+      case MESA_FORMAT_XRGB8888:
 	 value |= DV_PF_8888;
 	 break;
       case MESA_FORMAT_RGB565:
@@ -661,7 +661,7 @@ i830_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->Base.Format);
       }
    }
 
@@ -714,19 +714,7 @@ i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
 }
-
-
-
-static GLuint
-i830_flush_cmd(void)
-{
-   return MI_FLUSH | FLUSH_MAP_CACHE;
-}
-
 
 static void 
 i830_assert_not_dirty( struct intel_context *intel )
@@ -753,7 +741,6 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;
    i830->intel.vtbl.set_draw_region = i830_set_draw_region;
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
-   i830->intel.vtbl.flush_cmd = i830_flush_cmd;
    i830->intel.vtbl.render_start = i830_render_start;
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;

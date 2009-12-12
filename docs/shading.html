@@ -39,7 +39,8 @@ Contents
 
 <p>
 The <b>MESA_GLSL</b> environment variable can be set to a comma-separated
-list of keywords to control some aspects of the GLSL compiler:
+list of keywords to control some aspects of the GLSL compiler and shader
+execution.  These are generally used for debugging.
 </p>
 <ul>
 <li>dump - print GLSL shader code to stdout at link time
@@ -49,6 +50,12 @@ list of keywords to control some aspects of the GLSL compiler:
 <li>nopt - disable compiler optimizations
 <li>opt - force compiler optimizations
 <li>uniform - print message to stdout when glUniform is called
+<li>nopvert - force vertex shaders to be a simple shader that just transforms
+    the vertex position with ftransform() and passes through the color and
+    texcoord[0] attributes.
+<li>nopfrag - force fragment shader to be a simple shader that passes
+    through the color attribute.
+<li>useprog - log glUseProgram calls to stderr
 </ul>
 <p>
 Example:  export MESA_GLSL=dump,nopt

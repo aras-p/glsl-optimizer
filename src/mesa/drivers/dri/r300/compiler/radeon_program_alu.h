@@ -30,27 +30,27 @@
 
 #include "radeon_program.h"
 
-GLboolean radeonTransformALU(
+int radeonTransformALU(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
 
-GLboolean r300_transform_vertex_alu(
+int r300_transform_vertex_alu(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
 
-GLboolean radeonTransformTrigSimple(
+int radeonTransformTrigSimple(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
 
-GLboolean radeonTransformTrigScale(
+int radeonTransformTrigScale(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);
 
-GLboolean radeonTransformDeriv(
+int radeonTransformDeriv(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void*);

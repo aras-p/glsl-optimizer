@@ -205,7 +205,7 @@
 #define MAX_VARYING                    16    /**< number of float[4] vectors */
 #define MAX_SAMPLERS                   MAX_TEXTURE_IMAGE_UNITS
 #define MAX_PROGRAM_INPUTS             32
-#define MAX_PROGRAM_OUTPUTS            32
+#define MAX_PROGRAM_OUTPUTS            64
 /*@}*/
 
 /** For GL_ARB_vertex_program */
@@ -243,7 +243,8 @@
 /*@{*/
 #define MAX_VERTEX_GENERIC_ATTRIBS 16
 #define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
-#define MAX_COMBINED_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
+#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_VERTEX_TEXTURE_IMAGE_UNITS + \
+					  MAX_TEXTURE_IMAGE_UNITS)
 /*@}*/
 
 

@@ -22,22 +22,21 @@
 
 #include "radeon_compiler.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
+#include <stdio.h>
 
-#include "radeon_nqssadce.h"
+#include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
 
 
-static void nqssadce_init(struct nqssadce_state* s)
+static void dataflow_outputs_mark_use(void * userdata, void * data,
+		void (*callback)(void *, unsigned int, unsigned int))
 {
-	struct r300_fragment_program_compiler * c = s->UserData;
-	s->Outputs[c->OutputColor].Sourced = WRITEMASK_XYZW;
-	s->Outputs[c->OutputDepth].Sourced = WRITEMASK_W;
+	struct r300_fragment_program_compiler * c = userdata;
+	callback(data, c->OutputColor, RC_MASK_XYZW);
+	callback(data, c->OutputDepth, RC_MASK_W);
 }
 
 static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
@@ -45,35 +44,35 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	struct rc_instruction *rci;
 
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
-		struct prog_instruction * inst = &rci->I;
+		struct rc_sub_instruction * inst = &rci->U.I;
 
-		if (inst->DstReg.File != PROGRAM_OUTPUT || inst->DstReg.Index != c->OutputDepth)
+		if (inst->DstReg.File != RC_FILE_OUTPUT || inst->DstReg.Index != c->OutputDepth)
 			continue;
 
-		if (inst->DstReg.WriteMask & WRITEMASK_Z) {
-			inst->DstReg.WriteMask = WRITEMASK_W;
+		if (inst->DstReg.WriteMask & RC_MASK_Z) {
+			inst->DstReg.WriteMask = RC_MASK_W;
 		} else {
 			inst->DstReg.WriteMask = 0;
 			continue;
 		}
 
 		switch (inst->Opcode) {
-			case OPCODE_FRC:
-			case OPCODE_MOV:
-				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
+			case RC_OPCODE_FRC:
+			case RC_OPCODE_MOV:
+				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
 				break;
-			case OPCODE_ADD:
-			case OPCODE_MAX:
-			case OPCODE_MIN:
-			case OPCODE_MUL:
-				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
+			case RC_OPCODE_ADD:
+			case RC_OPCODE_MAX:
+			case RC_OPCODE_MIN:
+			case RC_OPCODE_MUL:
+				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
+				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
 				break;
-			case OPCODE_CMP:
-			case OPCODE_MAD:
-				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
-				inst->SrcReg[2] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[2]);
+			case RC_OPCODE_CMP:
+			case RC_OPCODE_MAD:
+				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
+				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
+				inst->SrcReg[2] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[2]);
 				break;
 			default:
 				// Scalar instructions needn't be reswizzled
@@ -89,11 +88,14 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r500_transform_TEX, c },
+			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(&c->Base, 4, transformations);
+		radeonLocalTransform(&c->Base, 5, transformations);
+
+		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_TEX, c },
@@ -101,32 +103,66 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(&c->Base, 3, transformations);
+
+		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
 
 	if (c->Base.Debug) {
-		_mesa_printf("Fragment Program: After native rewrite:\n");
+		fprintf(stderr, "Fragment Program: After native rewrite:\n");
 		rc_print_program(&c->Base.Program);
 		fflush(stderr);
 	}
 
-	if (c->is_r500) {
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
-			.BuildSwizzle = &r500FPBuildSwizzle
-		};
-		radeonNqssaDce(&c->Base, &nqssadce, c);
-	} else {
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
-			.BuildSwizzle = &r300FPBuildSwizzle
-		};
-		radeonNqssaDce(&c->Base, &nqssadce, c);
-	}
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
+	if (c->Base.Error)
+		return;
 
 	if (c->Base.Debug) {
-		_mesa_printf("Compiler: after NqSSA-DCE:\n");
+		fprintf(stderr, "Fragment Program: After deadcode:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	rc_dataflow_swizzles(&c->Base);
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after dataflow passes:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	rc_pair_translate(c);
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair translate:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	rc_pair_schedule(c);
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair scheduling:\n");
+		rc_print_program(&c->Base.Program);
+		fflush(stderr);
+	}
+
+	if (c->is_r500)
+		rc_pair_regalloc(c, 128);
+	else
+		rc_pair_regalloc(c, R300_PFS_NUM_TEMP_REGS);
+
+	if (c->Base.Error)
+		return;
+
+	if (c->Base.Debug) {
+		fprintf(stderr, "Compiler: after pair register allocation:\n");
 		rc_print_program(&c->Base.Program);
 		fflush(stderr);
 	}

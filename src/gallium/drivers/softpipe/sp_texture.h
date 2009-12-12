@@ -30,6 +30,7 @@
 
 
 #include "pipe/p_state.h"
+#include "pipe/p_video_state.h"
 
 
 struct pipe_context;
@@ -48,7 +49,11 @@ struct softpipe_texture
     */
    struct pipe_buffer *buffer;
 
-   boolean modified;
+   /* True if texture images are power-of-two in all dimensions:
+    */
+   boolean pot;
+
+   unsigned timestamp;
 };
 
 struct softpipe_transfer
@@ -56,6 +61,15 @@ struct softpipe_transfer
    struct pipe_transfer base;
 
    unsigned long offset;
+};
+
+struct softpipe_video_surface
+{
+   struct pipe_video_surface base;
+
+   /* The data is held here:
+    */
+   struct pipe_texture *tex;
 };
 
 
@@ -70,6 +84,12 @@ static INLINE struct softpipe_transfer *
 softpipe_transfer(struct pipe_transfer *pt)
 {
    return (struct softpipe_transfer *) pt;
+}
+
+static INLINE struct softpipe_video_surface *
+softpipe_video_surface(struct pipe_video_surface *pvs)
+{
+   return (struct softpipe_video_surface *) pvs;
 }
 
 

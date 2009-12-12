@@ -41,6 +41,32 @@
 
 
 
+#ifdef DEBUG
+int ST_DEBUG = 0;
+
+static const struct debug_named_value st_debug_flags[] = {
+   { "mesa",     DEBUG_MESA },
+   { "tgsi",     DEBUG_TGSI },
+   { "pipe",     DEBUG_PIPE },
+   { "tex",      DEBUG_TEX },
+   { "fallback", DEBUG_FALLBACK },
+   { "screen",   DEBUG_SCREEN },
+   { "query",    DEBUG_QUERY },
+   {NULL, 0}
+};
+#endif
+
+
+void
+st_debug_init(void)
+{
+#ifdef DEBUG
+   ST_DEBUG = debug_get_flags_option("ST_DEBUG", st_debug_flags, 0 );
+#endif
+}
+
+
+
 /**
  * Print current state.  May be called from inside gdb to see currently
  * bound vertex/fragment shaders and associated constants.
@@ -60,7 +86,8 @@ st_print_current(void)
    }
 #endif
 
-   tgsi_dump( st->vp->state.tokens, 0 );
+   if (st->vp->varients)
+      tgsi_dump( st->vp->varients[0].state.tokens, 0 );
    if (st->vp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->vp->Base.Base.Parameters);
 
@@ -68,3 +95,5 @@ st_print_current(void)
    if (st->fp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->fp->Base.Base.Parameters);
 }
+
+

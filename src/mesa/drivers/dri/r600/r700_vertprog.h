@@ -52,8 +52,7 @@ struct r700_vertex_program
 
     GLboolean translated;
     GLboolean loaded;
-    GLboolean needUpdateVF;
-	
+
     void * shaderbo;
 
     ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
@@ -76,19 +75,27 @@ unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm,
 GLboolean Process_Vertex_Program_Vfetch_Instructions(
 	struct r700_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
-void Map_Vertex_Program(struct r700_vertex_program *vp,
+GLboolean Process_Vertex_Program_Vfetch_Instructions2(
+    GLcontext *ctx,
+	struct r700_vertex_program *vp,
+	struct gl_vertex_program   *mesa_vp);
+void Map_Vertex_Program(GLcontext *ctx,
+            struct r700_vertex_program *vp,
 			struct gl_vertex_program   *mesa_vp);
 GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
 					   struct gl_vertex_program   *mesa_vp);
 
 struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
-				    struct gl_vertex_program   *mesa_vp);
+						      struct gl_vertex_program   *mesa_vp);
 
 /* Interface */
 extern void r700SelectVertexShader(GLcontext *ctx);
+extern void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count);
 
 extern GLboolean r700SetupVertexProgram(GLcontext * ctx);
 
 extern void *    r700GetActiveVpShaderBo(GLcontext * ctx);
+
+extern int getTypeSize(GLenum type);
 
 #endif /* _R700_VERTPROG_H_ */

@@ -1303,71 +1303,6 @@ xmesa_convert_from_x_visual_type( int visualType )
 /**********************************************************************/
 
 
-#ifdef IN_DRI_DRIVER
-#define need_GL_VERSION_1_3
-#define need_GL_VERSION_1_4
-#define need_GL_VERSION_1_5
-#define need_GL_VERSION_2_0
-
-/* sw extensions for imaging */
-#define need_GL_EXT_blend_color
-#define need_GL_EXT_blend_minmax
-#define need_GL_EXT_convolution
-#define need_GL_EXT_histogram
-#define need_GL_SGI_color_table
-
-/* sw extensions not associated with some GL version */
-#define need_GL_ARB_draw_elements_base_vertex
-#define need_GL_ARB_shader_objects
-#define need_GL_ARB_sync
-#define need_GL_ARB_vertex_program
-#define need_GL_APPLE_vertex_array_object
-#define need_GL_ATI_fragment_shader
-#define need_GL_EXT_depth_bounds_test
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_framebuffer_blit
-#define need_GL_EXT_gpu_program_parameters
-#define need_GL_EXT_paletted_texture
-#define need_GL_MESA_resize_buffers
-#define need_GL_NV_vertex_program
-#define need_GL_NV_fragment_program
-
-#include "extension_helper.h"
-#include "utils.h"
-
-const struct dri_extension card_extensions[] =
-{
-   { "GL_VERSION_1_3",			GL_VERSION_1_3_functions },
-   { "GL_VERSION_1_4",			GL_VERSION_1_4_functions },
-   { "GL_VERSION_1_5",			GL_VERSION_1_5_functions },
-   { "GL_VERSION_2_0",			GL_VERSION_2_0_functions },
-
-   { "GL_EXT_blend_color",		GL_EXT_blend_color_functions },
-   { "GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions },
-   { "GL_EXT_convolution",		GL_EXT_convolution_functions },
-   { "GL_EXT_histogram",		GL_EXT_histogram_functions },
-   { "GL_SGI_color_table",		GL_SGI_color_table_functions },
-
-   { "GL_ARB_depth_clamp",		NULL },
-   { "GL_ARB_draw_elements_base_vertex", GL_ARB_draw_elements_base_vertex_functions },
-   { "GL_ARB_shader_objects",		GL_ARB_shader_objects_functions },
-   { "GL_ARB_sync",			GL_ARB_sync_functions },
-   { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },
-   { "GL_APPLE_vertex_array_object",	GL_APPLE_vertex_array_object_functions },
-   { "GL_ATI_fragment_shader",		GL_ATI_fragment_shader_functions },
-   { "GL_EXT_depth_bounds_test",	GL_EXT_depth_bounds_test_functions },
-   { "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
-   { "GL_EXT_framebuffer_blit",		GL_EXT_framebuffer_blit_functions },
-   { "GL_EXT_gpu_program_parameters",	GL_EXT_gpu_program_parameters_functions },
-   { "GL_EXT_paletted_texture",		GL_EXT_paletted_texture_functions },
-   { "GL_MESA_resize_buffers",		GL_MESA_resize_buffers_functions },
-   { "GL_NV_depth_clamp",		NULL },
-   { "GL_NV_vertex_program",		GL_NV_vertex_program_functions },
-   { "GL_NV_fragment_program",		GL_NV_fragment_program_functions },
-   { NULL,				NULL }
-};
-#endif
-
 /*
  * Create a new X/Mesa visual.
  * Input:  display - X11 display
@@ -1412,14 +1347,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    char *gamma;
    XMesaVisual v;
    GLint red_bits, green_bits, blue_bits, alpha_bits;
-
-#ifdef IN_DRI_DRIVER
-   /* driInitExtensions() should be called once per screen to setup extension
-    * indices.  There is no need to call it when the context is created since
-    * XMesa enables mesa sw extensions on its own.
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-#endif
 
 #ifndef XFree86Server
    /* For debugging only */
@@ -1648,8 +1575,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_register_swrast_functions( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
 
-   if (TEST_META_FUNCS)
-      _mesa_meta_init(mesaCtx);
+   _mesa_meta_init(mesaCtx);
 
    return c;
 }
@@ -1665,8 +1591,7 @@ void XMesaDestroyContext( XMesaContext c )
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
 #endif
 
-   if (TEST_META_FUNCS)
-      _mesa_meta_free( mesaCtx );
+   _mesa_meta_free( mesaCtx );
 
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );

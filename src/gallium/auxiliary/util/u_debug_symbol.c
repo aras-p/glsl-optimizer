@@ -214,7 +214,7 @@ debug_symbol_print_imagehlp(const void *addr)
    HANDLE hProcess;
    BYTE symbolBuffer[1024];
    PIMAGEHLP_SYMBOL pSymbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
-   DWORD dwDisplacement = 0;  // Displacement of the input address, relative to the start of the symbol
+   DWORD dwDisplacement = 0;  /* Displacement of the input address, relative to the start of the symbol */
 
    hProcess = GetCurrentProcess();
 

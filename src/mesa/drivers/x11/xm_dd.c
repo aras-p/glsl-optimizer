@@ -448,7 +448,7 @@ can_do_DrawPixels_8R8G8B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -582,7 +582,7 @@ can_do_DrawPixels_5R6G5B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -1019,15 +1019,15 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 /**
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
-static const struct gl_texture_format *
+static gl_format
 choose_tex_format( GLcontext *ctx, GLint internalFormat,
                    GLenum format, GLenum type )
 {
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_ARB:
-         return &_mesa_texformat_rgb;
+         return MESA_FORMAT_RGB888;
       case GL_COMPRESSED_RGBA_ARB:
-         return &_mesa_texformat_rgba;
+         return MESA_FORMAT_RGBA8888;
       default:
          return _mesa_choose_tex_format(ctx, internalFormat, format, type);
    }
@@ -1150,11 +1150,11 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Enable = enable;
    driver->Viewport = xmesa_viewport;
    if (TEST_META_FUNCS) {
-      driver->Clear = _mesa_meta_clear;
-      driver->CopyPixels = _mesa_meta_copy_pixels;
-      driver->BlitFramebuffer = _mesa_meta_blit_framebuffer;
-      driver->DrawPixels = _mesa_meta_draw_pixels;
-      driver->Bitmap = _mesa_meta_bitmap;
+      driver->Clear = _mesa_meta_Clear;
+      driver->CopyPixels = _mesa_meta_CopyPixels;
+      driver->BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+      driver->DrawPixels = _mesa_meta_DrawPixels;
+      driver->Bitmap = _mesa_meta_Bitmap;
    }
    else {
       driver->Clear = clear_buffers;

@@ -34,6 +34,7 @@
 #include "main/image.h"
 #include "main/macros.h"
 
+#include "st_debug.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_fbo.h"
@@ -136,6 +137,9 @@ accum_accum(struct st_context *st, GLfloat value,
    GLubyte *data = acc_strb->data;
    GLfloat *buf;
 
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
+
    color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
 						0, 0, 0,
 						PIPE_TRANSFER_READ, xpos, ypos,
@@ -180,6 +184,10 @@ accum_load(struct st_context *st, GLfloat value,
    size_t stride = acc_strb->stride;
    GLubyte *data = acc_strb->data;
    GLfloat *buf;
+
+
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
 						0, 0, 0,
@@ -228,6 +236,9 @@ accum_return(GLcontext *ctx, GLfloat value,
    const GLubyte *data = acc_strb->data;
    GLfloat *buf;
 
+   if (ST_DEBUG & DEBUG_FALLBACK)
+      debug_printf("%s: fallback processing\n", __FUNCTION__);
+
    buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3])
@@ -241,7 +252,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 						xpos, ypos,
 						width, height);
 
-   if (usage != PIPE_TRANSFER_WRITE)
+   if (usage & PIPE_TRANSFER_READ)
       pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
 
    switch (acc_strb->format) {

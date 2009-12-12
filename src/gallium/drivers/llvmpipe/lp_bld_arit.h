@@ -40,7 +40,7 @@
 #include <llvm-c/Core.h>  
 
 
-struct lp_type type;
+struct lp_type;
 struct lp_build_context;
 
 
@@ -65,6 +65,11 @@ LLVMValueRef
 lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
+
+LLVMValueRef
+lp_build_mul_imm(struct lp_build_context *bld,
+                 LLVMValueRef a,
+                 int b);
 
 LLVMValueRef
 lp_build_div(struct lp_build_context *bld,
@@ -126,11 +131,18 @@ lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef
-lp_build_int(struct lp_build_context *bld,
-             LLVMValueRef a);
+lp_build_ifloor(struct lp_build_context *bld,
+                LLVMValueRef a);
+LLVMValueRef
+lp_build_iceil(struct lp_build_context *bld,
+               LLVMValueRef a);
 
 LLVMValueRef
-lp_build_ifloor(struct lp_build_context *bld,
+lp_build_iround(struct lp_build_context *bld,
+                LLVMValueRef a);
+
+LLVMValueRef
+lp_build_itrunc(struct lp_build_context *bld,
                 LLVMValueRef a);
 
 LLVMValueRef

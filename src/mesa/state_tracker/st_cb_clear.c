@@ -34,6 +34,7 @@
   */
 
 #include "main/glheader.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "shader/prog_instruction.h"
 #include "st_context.h"
@@ -116,7 +117,18 @@ draw_quad(GLcontext *ctx,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
-   const GLuint max_slots = 1024 / sizeof(st->clear.vertices);
+
+   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
+    * no_flush) updates to buffers where we know there is no conflict
+    * with previous data.  Currently using max_slots > 1 will cause
+    * synchronous rendering if the driver flushes its command buffers
+    * between one bitmap and the next.  Our flush hook below isn't
+    * sufficient to catch this as the driver doesn't tell us when it
+    * flushes its own command buffers.  Until this gets fixed, pay the
+    * price of allocating a new buffer for each bitmap cache-flush to
+    * avoid synchronous rendering.
+    */
+   const GLuint max_slots = 1; /* 1024 / sizeof(st->clear.vertices); */
    GLuint i;
 
    if (st->clear.vbuf_slot >= max_slots) {
@@ -300,9 +312,13 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 static INLINE GLboolean
 check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   const GLuint stencilMax = 0xff;
    GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
+
+   assert(rb->Format == MESA_FORMAT_S8 ||
+          rb->Format == MESA_FORMAT_Z24_S8 ||
+          rb->Format == MESA_FORMAT_S8_Z24);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -350,9 +366,13 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
-   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   const GLuint stencilMax = 0xff;
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
+
+   assert(rb->Format == MESA_FORMAT_S8 ||
+          rb->Format == MESA_FORMAT_Z24_S8 ||
+          rb->Format == MESA_FORMAT_S8_Z24);
 
    if (maskStencil) 
       return TRUE;

@@ -1,0 +1,13 @@
+Import('*')
+
+vl = env.ConvenienceLibrary(
+	target = 'vl',
+	source = [
+		'vl_bitstream_parser.c',
+		'vl_mpeg12_mc_renderer.c',
+		'vl_compositor.c',
+                'vl_csc.c',
+		'vl_shader_build.c',
+	])
+
+auxiliaries.insert(0, vl)

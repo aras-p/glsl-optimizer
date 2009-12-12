@@ -34,20 +34,28 @@ tbd
 
 <h2>New features</h2>
 <ul>
+<li>VMware "SVGA" Gallium driver.  This is a Gallium3D driver which targets the
+    VMware virtual graphics device.  It allows Linux OpenGL guest applications
+    to utilize the 3D graphics hardware of the host operating system.
 <li>GL_ARB_draw_elements_base_vertex (supported in Intel i965 and software drivers)</li>
 <li>GL_ARB_depth_clamp (supported in Intel i965 DRI and software drivers)</li>
 <li>GL_NV_depth_clamp (supported in Intel i965 DRI and software drivers)</li>
 <li>GL_ARB_provoking_vertex (same as GL_EXT_provoking_vertex)</li>
+<li>Wavefront .obj file loader/viewer demo (progs/demos/objviewer)
 </ul>
 
 
 <h2>Bug fixes</h2>
 <ul>
+<li>Many assorted i965 driver fixes.
+<li>Many r300-gallium driver fixes; this driver is now considered unstable-quality instead of experimental-quality.
 </ul>
 
 
 <h2>Changes</h2>
 <ul>
+<li>New Mesa texture/surface format infrastructure
+<li>Removed some unused Mesa device driver hooks
 </ul>
 
 </body>

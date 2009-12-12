@@ -49,6 +49,7 @@
 #include "st_public.h"
 #include "st_texture.h"
 
+#include "util/u_rect.h"
 
 
 /**
@@ -64,13 +65,7 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
       assert( 0 );
    }
 
-   strb->Base._ActualFormat = info.base_format;
-   strb->Base.RedBits = info.red_bits;
-   strb->Base.GreenBits = info.green_bits;
-   strb->Base.BlueBits = info.blue_bits;
-   strb->Base.AlphaBits = info.alpha_bits;
-   strb->Base.DepthBits = info.depth_bits;
-   strb->Base.StencilBits = info.stencil_bits;
+   strb->Base.Format = info.mesa_format;
    strb->Base.DataType = st_format_datatype(pipeFormat);
 
    return info.size;
@@ -93,7 +88,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(pipe, internalFormat);
+      format = st_choose_renderbuffer_format(pipe->screen, internalFormat);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;
@@ -103,16 +98,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->defined = GL_FALSE;  /* undefined contents now */
 
    if(strb->software) {
-      struct pipe_format_block block;
       size_t size;
       
       _mesa_free(strb->data);
 
       assert(strb->format != PIPE_FORMAT_NONE);
-      pf_get_block(strb->format, &block);
       
-      strb->stride = pf_get_stride(&block, width);
-      size = pf_get_2d_size(&block, strb->stride, height);
+      strb->stride = pf_get_stride(strb->format, width);
+      size = pf_get_2d_size(strb->format, strb->stride, height);
       
       strb->data = _mesa_malloc(size);
       
@@ -132,10 +125,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       memset(&template, 0, sizeof(template));
       template.target = PIPE_TEXTURE_2D;
       template.format = format;
-      pf_get_block(format, &template.block);
-      template.width[0] = width;
-      template.height[0] = height;
-      template.depth[0] = 1;
+      template.width0 = width;
+      template.height0 = height;
+      template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (pf_is_depth_stencil(format)) {
@@ -165,12 +157,12 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                                                      strb->texture,
                                                      0, 0, 0,
                                                      surface_usage );
-
-      assert(strb->surface->texture);
-      assert(strb->surface->format);
-      assert(strb->surface->width == width);
-      assert(strb->surface->height == height);
-
+      if (strb->surface) {
+         assert(strb->surface->texture);
+         assert(strb->surface->format);
+         assert(strb->surface->width == width);
+         assert(strb->surface->height == height);
+      }
 
       return strb->surface != NULL;
    }
@@ -258,6 +250,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
    strb->format = format;
+   init_renderbuffer_bits(strb, format);
    strb->software = sw;
    
    switch (format) {
@@ -269,34 +262,29 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_A4R4G4B4_UNORM:
    case PIPE_FORMAT_R5G6B5_UNORM:
       strb->Base.InternalFormat = GL_RGBA;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT16;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_Z32_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
-      strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
    case PIPE_FORMAT_S8_UNORM:
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
-      strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    default:
       _mesa_problem(NULL,
 		    "Unexpected format in st_new_renderbuffer_fb");
+      _mesa_free(strb);
       return NULL;
    }
 
@@ -382,9 +370,10 @@ st_render_texture(GLcontext *ctx,
 
    rb->Width = texImage->Width2;
    rb->Height = texImage->Height2;
+   rb->_BaseFormat = texImage->_BaseFormat;
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
-   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
+   /*printf("***** pipe texture %d x %d\n", pt->width0, pt->height0);*/
 
    pipe_texture_reference( &strb->texture, pt );
 
@@ -535,10 +524,17 @@ copy_back_to_front(struct st_context *st,
    (void) st_get_framebuffer_surface(stfb, backIndex, &surf_back);
 
    if (surf_front && surf_back) {
-      st->pipe->surface_copy(st->pipe,
-                             surf_front, 0, 0,  /* dest */
-                             surf_back, 0, 0,   /* src */
-                             fb->Width, fb->Height);
+      if (st->pipe->surface_copy) {
+         st->pipe->surface_copy(st->pipe,
+                                surf_front, 0, 0,  /* dest */
+                                surf_back, 0, 0,   /* src */
+                                fb->Width, fb->Height);
+      } else {
+         util_surface_copy(st->pipe, FALSE,
+                           surf_front, 0, 0,
+                           surf_back, 0, 0,
+                           fb->Width, fb->Height);
+      }
    }
 }
 

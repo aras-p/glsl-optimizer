@@ -32,7 +32,10 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_private.h"
 #include "sp_context.h"
+#include "sp_screen.h"
 #include "sp_state.h"
+#include "sp_texture.h"
+#include "sp_tex_tile_cache.h"
 
 
 /**
@@ -63,26 +66,19 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct sp_fragment_shader *spfs = softpipe->fs;
-      const enum interp_mode colorInterp
-         = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
+      const uint num = draw_num_vs_outputs(softpipe->draw);
       uint i;
 
-      if (softpipe->vbuf) {
-         /* if using the post-transform vertex buffer, tell draw_vbuf to
-          * simply emit the whole post-xform vertex as-is:
-          */
-         struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
-         const uint num = draw_num_vs_outputs(softpipe->draw);
-         uint i;
-
-         /* No longer any need to try and emit draw vertex_header info.
-          */
-         vinfo_vbuf->num_attribs = 0;
-         for (i = 0; i < num; i++) {
-            draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
-         }
-         draw_compute_vertex_size(vinfo_vbuf);
+      /* Tell draw_vbuf to simply emit the whole post-xform vertex
+       * as-is.  No longer any need to try and emit draw vertex_header
+       * info.
+       */
+      vinfo_vbuf->num_attribs = 0;
+      for (i = 0; i < num; i++) {
+	 draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
       }
+      draw_compute_vertex_size(vinfo_vbuf);
 
       /*
        * Loop over fragment shader inputs, searching for the matching output
@@ -91,35 +87,40 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
       vinfo->num_attribs = 0;
       for (i = 0; i < spfs->info.num_inputs; i++) {
          int src;
+         enum interp_mode interp;
+
+         switch (spfs->info.input_interpolate[i]) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            interp = INTERP_CONSTANT;
+            break;
+         case TGSI_INTERPOLATE_LINEAR:
+            interp = INTERP_LINEAR;
+            break;
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            interp = INTERP_PERSPECTIVE;
+            break;
+         default:
+            assert(0);
+            interp = INTERP_LINEAR;
+         }
+
          switch (spfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
-            src = draw_find_vs_output(softpipe->draw,
-                                      TGSI_SEMANTIC_POSITION, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
+            interp = INTERP_POS;
             break;
 
          case TGSI_SEMANTIC_COLOR:
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_COLOR, 
-                                 spfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+            if (softpipe->rasterizer->flatshade) {
+               interp = INTERP_CONSTANT;
+            }
             break;
-
-         case TGSI_SEMANTIC_FOG:
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
-            break;
-
-         case TGSI_SEMANTIC_GENERIC:
-         case TGSI_SEMANTIC_FACE:
-            /* this includes texcoords and varying vars */
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
-                                      spfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
-            break;
-
-         default:
-            assert(0);
          }
+
+         /* this includes texcoords and varying vars */
+         src = draw_find_vs_output(softpipe->draw,
+                                   spfs->info.input_semantic_name[i],
+                                   spfs->info.input_semantic_index[i]);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
       softpipe->psize_slot = draw_find_vs_output(softpipe->draw,
@@ -164,11 +165,19 @@ softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe)
 static void
 compute_cliprect(struct softpipe_context *sp)
 {
+   /* SP_NEW_FRAMEBUFFER
+    */
    uint surfWidth = sp->framebuffer.width;
    uint surfHeight = sp->framebuffer.height;
 
+   /* SP_NEW_RASTERIZER
+    */
    if (sp->rasterizer->scissor) {
-      /* clip to scissor rect */
+
+      /* SP_NEW_SCISSOR
+       *
+       * clip to scissor rect:
+       */
       sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
       sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
       sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth);
@@ -184,27 +193,76 @@ compute_cliprect(struct softpipe_context *sp)
 }
 
 
+static void
+update_tgsi_samplers( struct softpipe_context *softpipe )
+{
+   unsigned i;
+
+   softpipe_reset_sampler_varients( softpipe );
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      struct softpipe_tex_tile_cache *tc = softpipe->tex_cache[i];
+      if (tc->texture) {
+         struct softpipe_texture *spt = softpipe_texture(tc->texture);
+         if (spt->timestamp != tc->timestamp) {
+	    sp_tex_tile_cache_validate_texture( tc );
+            /*
+            _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
+            */
+            tc->timestamp = spt->timestamp;
+         }
+      }
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct softpipe_tex_tile_cache *tc = softpipe->vertex_tex_cache[i];
+
+      if (tc->texture) {
+         struct softpipe_texture *spt = softpipe_texture(tc->texture);
+
+         if (spt->timestamp != tc->timestamp) {
+	    sp_tex_tile_cache_validate_texture(tc);
+            tc->timestamp = spt->timestamp;
+         }
+      }
+   }
+}
+
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
+   struct softpipe_screen *sp_screen = softpipe_screen(softpipe->pipe.screen);
+
+   /* Check for updated textures.
+    */
+   if (softpipe->tex_timestamp != sp_screen->timestamp) {
+      softpipe->tex_timestamp = sp_screen->timestamp;
+      softpipe->dirty |= SP_NEW_TEXTURE;
+   }
+      
+   if (softpipe->dirty & (SP_NEW_SAMPLER |
+                          SP_NEW_TEXTURE |
+                          SP_NEW_FS | 
+                          SP_NEW_VS))
+      update_tgsi_samplers( softpipe );
+
    if (softpipe->dirty & (SP_NEW_RASTERIZER |
                           SP_NEW_FS |
                           SP_NEW_VS))
       invalidate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
+                          SP_NEW_RASTERIZER |
                           SP_NEW_FRAMEBUFFER))
       compute_cliprect(softpipe);
 
    if (softpipe->dirty & (SP_NEW_BLEND |
                           SP_NEW_DEPTH_STENCIL_ALPHA |
                           SP_NEW_FRAMEBUFFER |
-                          SP_NEW_RASTERIZER |
-                          SP_NEW_FS | 
-			  SP_NEW_QUERY))
+                          SP_NEW_FS))
       sp_build_quad_pipeline(softpipe);
 
    softpipe->dirty = 0;

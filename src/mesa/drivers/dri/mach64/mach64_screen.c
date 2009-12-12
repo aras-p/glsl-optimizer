@@ -67,8 +67,6 @@ static const GLuint __driNConfigOptions = 3;
 static const GLuint __driNConfigOptions = 2;
 #endif
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
 mach64FillInModes( __DRIscreenPrivate *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
@@ -316,7 +314,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->frontOffset, screen->frontPitch,
@@ -327,7 +325,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -338,7 +336,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  NULL, screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
                                  driDrawPriv);
@@ -348,7 +346,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       else if (mesaVis->depthBits == 24) {
          /* XXX I don't think 24-bit Z is supported - so this isn't used */
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_Z24_S8,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -436,18 +434,6 @@ mach64InitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
    
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-
    if (!mach64InitDriver(psp))
       return NULL;
 

@@ -58,6 +58,10 @@ static void Display(void)
       printf("Depth value range: [%f, %f]\n", min, max);
    }
 
+   /* Draw the Z image as luminance above original rendering */
+   glWindowPos2i(0, 100);
+   glDrawPixels(100, 100, GL_LUMINANCE, depthType, depth);
+
    if (TestPacking) {
       glPixelStorei(GL_PACK_ROW_LENGTH, 0);
       glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
@@ -100,6 +104,7 @@ static void Display(void)
    glReadPixels(100, 0, 400, 400, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
    /* draw as luminance */
    glPixelZoom(1.0, 1.0);
+   glWindowPos2i(100, 0);
    glDrawPixels(400, 400, GL_LUMINANCE, GL_FLOAT, depth2);
 
    glutSwapBuffers();

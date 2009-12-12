@@ -87,6 +87,9 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
       return;
    }
 
+   if (program->Base.String != NULL)
+      _mesa_free(program->Base.String);
+
    /* Copy the relevant contents of the arb_program struct into the
     * fragment_program struct.
     */
@@ -177,6 +180,9 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
       _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramString(bad program)");
       return;
    }
+
+   if (program->Base.String != NULL)
+      _mesa_free(program->Base.String);
 
    /* Copy the relevant contents of the arb_program struct into the 
     * vertex_program struct.

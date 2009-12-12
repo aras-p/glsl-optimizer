@@ -127,6 +127,8 @@ struct st_context
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
 
+   struct st_vp_varient *vp_varient;
+
    struct gl_texture_object *default_texture;
 
    struct {

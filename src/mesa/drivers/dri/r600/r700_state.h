@@ -35,6 +35,7 @@
 
 extern void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state);
 extern void r700UpdateShaders (GLcontext * ctx);
+extern void r700UpdateShaderStates(GLcontext * ctx);
 
 extern void r700UpdateViewportOffset(GLcontext * ctx);
 

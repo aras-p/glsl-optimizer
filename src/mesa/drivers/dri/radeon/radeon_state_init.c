@@ -440,16 +440,18 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
    if (rrb->cpp == 4)
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
-   else switch (rrb->base._ActualFormat) {
-   case GL_RGB5:
+   else switch (rrb->base.Format) {
+   case MESA_FORMAT_RGB565:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
 	break;
-   case GL_RGBA4:
+   case MESA_FORMAT_ARGB4444:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB4444;
 	break;
-   case GL_RGB5_A1:
+   case MESA_FORMAT_ARGB1555:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB1555;
 	break;
+   default:
+	_mesa_problem(ctx, "unexpected format in ctx_emit_cs()");
    }
 
    cbpitch = (rrb->pitch / rrb->cpp);
@@ -643,11 +645,11 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH(CP_PACKET0(RADEON_PP_TXOFFSET_0 + (24 * i), 0));
      if (t->mt && !t->image_override) {
         if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-            lvl = &t->mt->levels[0];
+            lvl = &t->mt->levels[t->minLod];
 	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
 			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
         } else {
-           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
       } else {

@@ -353,6 +353,7 @@ MakeSphere(void)
    glNewList(SphereList, GL_COMPILE);
    gluSphere(obj, 2.0f, 10, 5);
    glEndList();
+   gluDeleteQuadric(obj);
 }
 
 static void

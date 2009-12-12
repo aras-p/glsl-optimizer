@@ -134,6 +134,8 @@ static void Init( const char *vertProgFile,
       }
 
       len = fread(buf, 1, 10*1000,f);
+      fclose(f);
+
       glProgramStringARB_func(GL_VERTEX_PROGRAM_ARB,
                               GL_PROGRAM_FORMAT_ASCII_ARB,
                               len,
@@ -170,6 +172,8 @@ static void Init( const char *vertProgFile,
       }
 
       len = fread(buf, 1, 10*1000,f);
+      fclose(f);
+
       glProgramStringARB_func(GL_FRAGMENT_PROGRAM_ARB,
                               GL_PROGRAM_FORMAT_ASCII_ARB,
                               len,

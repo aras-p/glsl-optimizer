@@ -44,6 +44,7 @@ struct _egl_display
    EGLint NumScreens;
    _EGLScreen **Screens;  /* array [NumScreens] */
 
+   EGLint MaxConfigs;
    EGLint NumConfigs;
    _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
 

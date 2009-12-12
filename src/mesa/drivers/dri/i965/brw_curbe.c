@@ -130,7 +130,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
       .mesa = _NEW_TRANSFORM,
-      .brw  = BRW_NEW_VERTEX_PROGRAM,
+      .brw  = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_WM_PROG
    },
    .prepare = calculate_curbe_offsets
@@ -247,6 +247,9 @@ static void prepare_constant_buffer(struct brw_context *brw)
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
+
+      if (brw->vertex_program->IsNVProgram)
+	 _mesa_load_tracked_matrices(ctx);
 
       /* Updates the ParamaterValues[i] pointers for all parameters of the
        * basic type of PROGRAM_STATE_VAR.

@@ -29,7 +29,10 @@
 #include "context.h"
 #include "image.h"
 #include "histogram.h"
+#include "glapi/dispatch.h"
 
+
+#if FEATURE_histogram
 
 
 /*
@@ -186,16 +189,17 @@ pack_histogram( GLcontext *ctx,
          {
             /* temporarily store as GLuints */
             GLuint temp[4*HISTOGRAM_TABLE_SIZE];
-            GLhalfARB *dst = (GLhalfARB *) destination;
+            GLuint *dst = temp;
+            GLhalfARB *half = (GLhalfARB *) destination;
             GLuint i;
             /* get GLuint values */
             PACK_MACRO(GLuint);
             /* convert to GLhalf */
             for (i = 0; i < n * comps; i++) {
-               dst[i] = _mesa_float_to_half((GLfloat) temp[i]);
+               half[i] = _mesa_float_to_half((GLfloat) temp[i]);
             }
             if (packing->SwapBytes) {
-               _mesa_swap2((GLushort *) dst, n * comps);
+               _mesa_swap2((GLushort *) half, n * comps);
             }
          }
          break;
@@ -614,7 +618,11 @@ base_histogram_format( GLenum format )
  */
 
 
-void GLAPIENTRY
+/* this is defined below */
+static void GLAPIENTRY _mesa_ResetMinmax(GLenum target);
+
+
+static void GLAPIENTRY
 _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -677,7 +685,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -737,7 +745,7 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -784,7 +792,7 @@ _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -831,7 +839,7 @@ _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -857,7 +865,7 @@ _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -883,7 +891,7 @@ _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean sink)
 {
    GLuint i;
@@ -966,7 +974,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -994,7 +1002,7 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ResetHistogram(GLenum target)
 {
    GLuint i;
@@ -1020,7 +1028,7 @@ _mesa_ResetHistogram(GLenum target)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1042,6 +1050,24 @@ _mesa_ResetMinmax(GLenum target)
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
 }
 
+
+void
+_mesa_init_histogram_dispatch(struct _glapi_table *disp)
+{
+   SET_GetHistogram(disp, _mesa_GetHistogram);
+   SET_GetHistogramParameterfv(disp, _mesa_GetHistogramParameterfv);
+   SET_GetHistogramParameteriv(disp, _mesa_GetHistogramParameteriv);
+   SET_GetMinmax(disp, _mesa_GetMinmax);
+   SET_GetMinmaxParameterfv(disp, _mesa_GetMinmaxParameterfv);
+   SET_GetMinmaxParameteriv(disp, _mesa_GetMinmaxParameteriv);
+   SET_Histogram(disp, _mesa_Histogram);
+   SET_Minmax(disp, _mesa_Minmax);
+   SET_ResetHistogram(disp, _mesa_ResetHistogram);
+   SET_ResetMinmax(disp, _mesa_ResetMinmax);
+}
+
+
+#endif /* FEATURE_histogram */
 
 
 /**********************************************************************/

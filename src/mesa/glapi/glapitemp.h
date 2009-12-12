@@ -4011,6 +4011,11 @@ KEYWORD1 void KEYWORD2 NAME(RenderbufferStorageMultisample)(GLenum target, GLsiz
    DISPATCH(RenderbufferStorageMultisample, (target, samples, internalformat, width, height), (F, "glRenderbufferStorageMultisample(0x%x, %d, 0x%x, %d, %d);\n", target, samples, internalformat, width, height));
 }
 
+KEYWORD1 void KEYWORD2 NAME(RenderbufferStorageMultisampleEXT)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+   DISPATCH(RenderbufferStorageMultisample, (target, samples, internalformat, width, height), (F, "glRenderbufferStorageMultisampleEXT(0x%x, %d, 0x%x, %d, %d);\n", target, samples, internalformat, width, height));
+}
+
 KEYWORD1 void KEYWORD2 NAME(FlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length)
 {
    DISPATCH(FlushMappedBufferRange, (target, offset, length), (F, "glFlushMappedBufferRange(0x%x, %d, %d);\n", target, offset, length));
@@ -5677,6 +5682,11 @@ KEYWORD1 void KEYWORD2 NAME(ProvokingVertexEXT)(GLenum mode)
    DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertexEXT(0x%x);\n", mode));
 }
 
+KEYWORD1 void KEYWORD2 NAME(ProvokingVertex)(GLenum mode)
+{
+   DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertex(0x%x);\n", mode));
+}
+
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params);
 
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params)
@@ -6832,6 +6842,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetAttribLocation),
    TABLE_ENTRY(DrawBuffers),
    TABLE_ENTRY(DrawBuffersATI),
+   TABLE_ENTRY(RenderbufferStorageMultisampleEXT),
    TABLE_ENTRY(PointParameterf),
    TABLE_ENTRY(PointParameterfARB),
    TABLE_ENTRY(PointParameterfv),
@@ -6923,6 +6934,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(RenderbufferStorage),
    TABLE_ENTRY(BlitFramebuffer),
    TABLE_ENTRY(FramebufferTextureLayer),
+   TABLE_ENTRY(ProvokingVertex),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

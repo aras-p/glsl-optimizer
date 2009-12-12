@@ -100,7 +100,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "SAMP",
    "ADDR",
    "IMM",
-   "LOOP"
+   "LOOP",
+   "PRED"
 };
 
 static const char *interpolate_names[] =
@@ -148,26 +149,6 @@ static const char *texture_names[] =
    "SHADOWRECT"
 };
 
-static const char *extswizzle_names[] =
-{
-   "x",
-   "y",
-   "z",
-   "w",
-   "0",
-   "1"
-};
-
-static const char *modulate_names[TGSI_MODULATE_COUNT] =
-{
-   "",
-   "_2X",
-   "_4X",
-   "_8X",
-   "_D2",
-   "_D4",
-   "_D8"
-};
 
 static void
 _dump_register(
@@ -243,19 +224,19 @@ iter_declaration(
    _dump_register(
       ctx,
       decl->Declaration.File,
-      decl->DeclarationRange.First,
-      decl->DeclarationRange.Last );
+      decl->Range.First,
+      decl->Range.Last );
    _dump_writemask(
       ctx,
       decl->Declaration.UsageMask );
 
    if (decl->Declaration.Semantic) {
       TXT( ", " );
-      ENM( decl->Semantic.SemanticName, semantic_names );
-      if (decl->Semantic.SemanticIndex != 0 ||
-          decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC) {
+      ENM( decl->Semantic.Name, semantic_names );
+      if (decl->Semantic.Index != 0 ||
+          decl->Semantic.Name == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
-         UID( decl->Semantic.SemanticIndex );
+         UID( decl->Semantic.Index );
          CHR( ']' );
       }
    }
@@ -371,117 +352,84 @@ iter_instruction(
    }
 
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *dst = &inst->Dst[i];
 
       if (!first_reg)
          CHR( ',' );
       CHR( ' ' );
 
-      if (dst->DstRegister.Indirect) {
+      if (dst->Register.Indirect) {
          _dump_register_ind(
             ctx,
-            dst->DstRegister.File,
-            dst->DstRegister.Index,
-            dst->DstRegisterInd.File,
-            dst->DstRegisterInd.Index,
-            dst->DstRegisterInd.SwizzleX );
+            dst->Register.File,
+            dst->Register.Index,
+            dst->Indirect.File,
+            dst->Indirect.Index,
+            dst->Indirect.SwizzleX );
       }
       else {
          _dump_register(
             ctx,
-            dst->DstRegister.File,
-            dst->DstRegister.Index,
-            dst->DstRegister.Index );
+            dst->Register.File,
+            dst->Register.Index,
+            dst->Register.Index );
       }
-      ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
-      _dump_writemask( ctx, dst->DstRegister.WriteMask );
+      _dump_writemask( ctx, dst->Register.WriteMask );
 
       first_reg = FALSE;
    }
 
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *src = &inst->Src[i];
 
       if (!first_reg)
          CHR( ',' );
       CHR( ' ' );
 
-      if (src->SrcRegisterExtMod.Negate)
+      if (src->Register.Negate)
          TXT( "-(" );
-      if (src->SrcRegisterExtMod.Absolute)
+      if (src->Register.Absolute)
          CHR( '|' );
-      if (src->SrcRegisterExtMod.Scale2X)
-         TXT( "2*(" );
-      if (src->SrcRegisterExtMod.Bias)
-         CHR( '(' );
-      if (src->SrcRegisterExtMod.Complement)
-         TXT( "1-(" );
-      if (src->SrcRegister.Negate)
-         CHR( '-' );
 
-      if (src->SrcRegister.Indirect) {
+      if (src->Register.Indirect) {
          _dump_register_ind(
             ctx,
-            src->SrcRegister.File,
-            src->SrcRegister.Index,
-            src->SrcRegisterInd.File,
-            src->SrcRegisterInd.Index,
-            src->SrcRegisterInd.SwizzleX );
+            src->Register.File,
+            src->Register.Index,
+            src->Indirect.File,
+            src->Indirect.Index,
+            src->Indirect.SwizzleX );
       }
       else {
          _dump_register(
             ctx,
-            src->SrcRegister.File,
-            src->SrcRegister.Index,
-            src->SrcRegister.Index );
+            src->Register.File,
+            src->Register.Index,
+            src->Register.Index );
       }
 
-      if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-          src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-          src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-          src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
+      if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
+          src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
+          src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
+          src->Register.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
-         ENM( src->SrcRegister.SwizzleX, swizzle_names );
-         ENM( src->SrcRegister.SwizzleY, swizzle_names );
-         ENM( src->SrcRegister.SwizzleZ, swizzle_names );
-         ENM( src->SrcRegister.SwizzleW, swizzle_names );
-      }
-      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-         CHR( '.' );
-         if (src->SrcRegisterExtSwz.NegateX)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateY)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateZ)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, extswizzle_names );
-         if (src->SrcRegisterExtSwz.NegateW)
-            TXT("-");
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, extswizzle_names );
+         ENM( src->Register.SwizzleX, swizzle_names );
+         ENM( src->Register.SwizzleY, swizzle_names );
+         ENM( src->Register.SwizzleZ, swizzle_names );
+         ENM( src->Register.SwizzleW, swizzle_names );
       }
 
-      if (src->SrcRegisterExtMod.Complement)
-         CHR( ')' );
-      if (src->SrcRegisterExtMod.Bias)
-         TXT( ")-.5" );
-      if (src->SrcRegisterExtMod.Scale2X)
-         CHR( ')' );
-      if (src->SrcRegisterExtMod.Absolute)
+      if (src->Register.Absolute)
          CHR( '|' );
-      if (src->SrcRegisterExtMod.Negate)
+      if (src->Register.Negate)
          CHR( ')' );
 
       first_reg = FALSE;
    }
 
-   if (inst->InstructionExtTexture.Texture != TGSI_TEXTURE_UNKNOWN) {
+   if (inst->Instruction.Texture) {
       TXT( ", " );
-      ENM( inst->InstructionExtTexture.Texture, texture_names );
+      ENM( inst->Texture.Texture, texture_names );
    }
 
    switch (inst->Instruction.Opcode) {
@@ -491,7 +439,7 @@ iter_instruction(
    case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_CAL:
       TXT( " :" );
-      UID( inst->InstructionExtLabel.Label );
+      UID( inst->Label.Label );
       break;
    }
 
@@ -529,9 +477,6 @@ prolog(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
    ENM( iter->processor.Processor, processor_type_names );
-   UID( iter->version.MajorVersion );
-   CHR( '.' );
-   UID( iter->version.MinorVersion );
    EOL();
    return TRUE;
 }

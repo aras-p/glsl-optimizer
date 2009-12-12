@@ -27,11 +27,15 @@
 #define FEEDBACK_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
-extern void
-_mesa_init_feedback( GLcontext *ctx );
+#if FEATURE_feedback
+
+#define _MESA_INIT_FEEDBACK_FUNCTIONS(driver, impl) \
+   do {                                             \
+      (driver)->RenderMode = impl ## RenderMode;    \
+   } while (0)
 
 extern void
 _mesa_feedback_vertex( GLcontext *ctx,
@@ -55,29 +59,47 @@ extern void
 _mesa_update_hitflag( GLcontext *ctx, GLfloat z );
 
 
-extern void GLAPIENTRY
-_mesa_PassThrough( GLfloat token );
+extern void
+_mesa_init_feedback_dispatch(struct _glapi_table *disp);
 
-extern void GLAPIENTRY
-_mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer );
+#else /* FEATURE_feedback */
 
-extern void GLAPIENTRY
-_mesa_SelectBuffer( GLsizei size, GLuint *buffer );
+#define _MESA_INIT_FEEDBACK_FUNCTIONS(driver, impl) do { } while (0)
 
-extern void GLAPIENTRY
-_mesa_InitNames( void );
-
-extern void GLAPIENTRY
-_mesa_LoadName( GLuint name );
-
-extern void GLAPIENTRY
-_mesa_PushName( GLuint name );
-
-extern void GLAPIENTRY
-_mesa_PopName( void );
-
-extern GLint GLAPIENTRY
-_mesa_RenderMode( GLenum mode );
+static INLINE void
+_mesa_feedback_vertex( GLcontext *ctx,
+                       const GLfloat win[4],
+                       const GLfloat color[4],
+                       GLfloat index,
+                       const GLfloat texcoord[4] )
+{
+   /* render mode is always GL_RENDER */
+   ASSERT_NO_FEATURE();
+}
 
 
-#endif
+static INLINE void
+_mesa_feedback_token( GLcontext *ctx, GLfloat token )
+{
+   /* render mode is always GL_RENDER */
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_update_hitflag( GLcontext *ctx, GLfloat z )
+{
+   /* render mode is always GL_RENDER */
+   ASSERT_NO_FEATURE();
+}
+
+static INLINE void
+_mesa_init_feedback_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_feedback */
+
+extern void
+_mesa_init_feedback( GLcontext *ctx );
+
+#endif /* FEEDBACK_H */

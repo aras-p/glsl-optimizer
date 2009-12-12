@@ -35,8 +35,14 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 {
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_R16G16B16A16_SNORM:
+		case PIPE_FORMAT_R16G16B16A16_UNORM:
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		case PIPE_FORMAT_R16G16_SNORM:
+		case PIPE_FORMAT_R16G16_UNORM:
 			return TRUE;
 		default:
 			break;
@@ -55,6 +61,9 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 	} else {
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_A8R8G8B8_SRGB:
+		case PIPE_FORMAT_X8R8G8B8_SRGB:
 		case PIPE_FORMAT_A1R5G5B5_UNORM:
 		case PIPE_FORMAT_A4R4G4B4_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM:
@@ -66,6 +75,13 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
+		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z32_FLOAT:
+		case PIPE_FORMAT_R16G16B16A16_SNORM:
+		case PIPE_FORMAT_R16G16B16A16_UNORM:
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		case PIPE_FORMAT_R16G16_SNORM:
+		case PIPE_FORMAT_R16G16_UNORM:
 			return TRUE;
 		default:
 			break;
@@ -216,16 +232,19 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		tesla_class = NV54TCL;
 		break;
 	case 0xa0:
-		tesla_class = NVA0TCL;
+		switch (chipset) {
+		case 0xa0:
+		case 0xaa:
+		case 0xac:
+			tesla_class = NVA0TCL;
+			break;
+		default:
+			tesla_class = 0x8597;
+			break;
+		}
 		break;
 	default:
 		NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", chipset);
-		nv50_screen_destroy(pscreen);
-		return NULL;
-	}
-
-	if (tesla_class == 0) {
-		NOUVEAU_ERR("Unknown G8x chipset: NV%02x\n", chipset);
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
@@ -290,6 +309,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, 0x121c, 1);
 	so_data  (so, 1);
 
+	/* activate all 32 lanes (threads) in a warp */
+	so_method(so, screen->tesla, 0x19a0, 1);
+	so_data  (so, 0x2);
+	so_method(so, screen->tesla, 0x1400, 1);
+	so_data  (so, 0xf);
+
 	so_method(so, screen->tesla, 0x13bc, 1);
 	so_data  (so, 0x54);
 	/* origin is top left (set to 1 for bottom left) */
@@ -299,7 +324,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_data  (so, 8);
 
 	/* constant buffers for immediates and VP/FP parameters */
-	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (32 * 4) * 4,
 			     &screen->constbuf_misc[0]);
 	if (ret) {
 		nv50_screen_destroy(pscreen);
@@ -307,7 +332,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	for (i = 0; i < 2; i++) {
-		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (128 * 4) * 4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
 			nv50_screen_destroy(pscreen);
@@ -316,8 +341,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	if (nouveau_resource_init(&screen->immd_heap[0], 0, 128) ||
-		nouveau_resource_init(&screen->parm_heap[0], 0, 128) ||
-		nouveau_resource_init(&screen->parm_heap[1], 0, 128))
+	    nouveau_resource_init(&screen->parm_heap[0], 0, 512) ||
+	    nouveau_resource_init(&screen->parm_heap[1], 0, 512))
 	{
 		NOUVEAU_ERR("Error initialising constant buffers.\n");
 		nv50_screen_destroy(pscreen);
@@ -338,7 +363,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000800);
+	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000200);
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000001 | (NV50_CB_PMISC << 12));
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
@@ -362,48 +387,31 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000131 | (NV50_CB_PFP << 12));
 
-	/* Texture sampler/image unit setup - we abuse the constant buffer
-	 * upload mechanism for the moment to upload data to the tex config
-	 * blocks.  At some point we *may* want to go the NVIDIA way of doing
-	 * things?
-	 */
-	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tic);
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 64*8*4, &screen->tic);
 	if (ret) {
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
-	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_TIC << 16) | 0x0800);
 	so_method(so, screen->tesla, NV50TCL_TIC_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, 0x00000800);
+	so_data  (so, 0x000007ff);
 
-	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tsc);
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 64*8*4, &screen->tsc);
 	if (ret) {
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
-	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_TSC << 16) | 0x0800);
 	so_method(so, screen->tesla, NV50TCL_TSC_ADDRESS_HIGH, 3);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, 0x00000800);
+	so_data  (so, 0x00000000);
 
 
 	/* Vertex array limits - max them out */
