@@ -50,6 +50,7 @@
 struct radeon_pipe_buffer {
     struct pipe_buffer  base;
     struct radeon_bo    *bo;
+    struct radeon_winsys *ws;
     boolean flinked;
     uint32_t flink;
 };
