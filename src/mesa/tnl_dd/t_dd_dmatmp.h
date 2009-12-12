@@ -255,6 +255,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	 tmp = ALLOC_VERTS(2);
 	 tmp = TAG(emit_verts)( ctx, start+1, 1, tmp );
 	 tmp = TAG(emit_verts)( ctx, start, 1, tmp );
+	 (void) tmp;
       }
 
       FLUSH();
