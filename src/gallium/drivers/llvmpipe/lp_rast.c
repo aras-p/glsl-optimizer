@@ -32,6 +32,7 @@
 
 #include "lp_bin_queue.h"
 #include "lp_debug.h"
+#include "lp_fence.h"
 #include "lp_state.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
@@ -502,6 +503,30 @@ lp_rast_end_tile( struct lp_rasterizer *rast,
 
    if (rast->state.write_zstencil)
       lp_rast_store_zstencil(rast, thread_index);
+}
+
+
+/**
+ * Signal on a fence.  This is called during bin execution/rasterization.
+ * Called per thread.
+ */
+void lp_rast_fence( struct lp_rasterizer *rast,
+                    unsigned thread_index,
+                    const union lp_rast_cmd_arg arg )
+{
+   struct lp_fence *fence = arg.fence;
+
+   pipe_mutex_lock( fence->mutex );
+
+   fence->count++;
+   assert(fence->count <= fence->rank);
+
+   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
+          fence->count, fence->rank);
+
+   pipe_condvar_signal( fence->signalled );
+
+   pipe_mutex_unlock( fence->mutex );
 }
 
 

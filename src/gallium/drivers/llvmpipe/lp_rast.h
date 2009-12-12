@@ -44,6 +44,7 @@
 struct lp_rasterizer;
 struct lp_bins;
 struct lp_bins_queue;
+struct lp_fence;
 struct cmd_bin;
 struct pipe_screen;
 
@@ -148,6 +149,7 @@ union lp_rast_cmd_arg {
    const struct lp_rast_state *set_state;
    uint8_t clear_color[4];
    unsigned clear_zstencil;
+   struct lp_fence *fence;
 };
 
 
@@ -176,6 +178,15 @@ lp_rast_arg_state( const struct lp_rast_state *state )
    arg.set_state = state;
    return arg;
 }
+
+static INLINE const union lp_rast_cmd_arg
+lp_rast_arg_fence( struct lp_fence *fence )
+{
+   union lp_rast_cmd_arg arg;
+   arg.fence = fence;
+   return arg;
+}
+
 
 static INLINE const union lp_rast_cmd_arg
 lp_rast_arg_null( void )
@@ -221,5 +232,8 @@ void lp_rast_shade_tile( struct lp_rasterizer *,
                          unsigned thread_index,
                          const union lp_rast_cmd_arg );
 
+void lp_rast_fence( struct lp_rasterizer *,
+                    unsigned thread_index,
+                    const union lp_rast_cmd_arg );
 
 #endif
