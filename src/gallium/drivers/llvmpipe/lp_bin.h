@@ -258,6 +258,13 @@ lp_bin_state_command( struct lp_bins *bins,
                       const union lp_rast_cmd_arg arg );
 
 
+static INLINE unsigned
+lp_bin_get_num_bins( const struct lp_bins *bins )
+{
+   return bins->tiles_x * bins->tiles_y;
+}
+
+
 void
 lp_bin_iter_begin( struct lp_bins *bins );
 
