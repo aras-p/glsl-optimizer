@@ -436,7 +436,10 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		radeon_bo_unmap(image->mt->bo);
 
 		radeon_miptree_unreference(&image->mt);
-	} else {
+	} else if (image->base.Data) {
+		/* This condition should be removed, it's here to workaround
+		 * a segfault when mapping textures during software fallbacks.
+		 */
 		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.TexFormat, image->base.Width);
 		uint32_t rows = image->base.Height * image->base.Depth;
 
