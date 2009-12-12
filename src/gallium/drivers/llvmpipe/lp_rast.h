@@ -133,6 +133,8 @@ struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen,
 
 void lp_rast_destroy( struct lp_rasterizer * );
 
+unsigned lp_rast_get_num_threads( struct lp_rasterizer * );
+
 void lp_rasterize_bins( struct lp_rasterizer *rast,
                         struct lp_bins *bins,
                         const struct pipe_framebuffer_state *fb,
