@@ -400,6 +400,7 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 	 tmp = ALLOC_VERTS( nr );
 	 tmp = TAG(emit_verts)( ctx, start, 1, tmp );
 	 tmp = TAG(emit_verts)( ctx, j, nr - 1, tmp );
+	 (void) tmp;
 	 currentsz = dmasz;
       }
 
