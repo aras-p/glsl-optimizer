@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef _VMWGFX_DRM_H_
-#define _VMWGFX_DRM_H_
+#ifndef __VMWGFX_DRM_H__
+#define __VMWGFX_DRM_H__
 
 #define DRM_VMW_MAX_SURFACE_FACES 6
 #define DRM_VMW_MAX_MIP_LEVELS 24
@@ -34,7 +34,6 @@
 #define DRM_VMW_EXT_NAME_LEN 128
 
 #define DRM_VMW_GET_PARAM            1
-#define DRM_VMW_EXTENSION            2
 #define DRM_VMW_CREATE_CONTEXT       3
 #define DRM_VMW_UNREF_CONTEXT        4
 #define DRM_VMW_CREATE_SURFACE       5
@@ -62,6 +61,7 @@
 
 #define DRM_VMW_PARAM_FIFO_OFFSET    0
 #define DRM_VMW_PARAM_OVERLAY_IOCTL  1
+#define DRM_VMW_PARAM_3D             2
 
 /**
  * struct drm_vmw_getparam_arg
