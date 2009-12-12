@@ -94,16 +94,16 @@ GLfloat colorPoints[4][4][4] =
 };
 
 
-void
+static void
 initlights(void)
 {
+#if 0 /* no lighting for now */
     GLfloat ambient[] = {0.2, 0.2, 0.2, 1.0};
     GLfloat position[] = {0.0, 0.0, 2.0, 1.0};
     GLfloat mat_diffuse[] = {0.6, 0.6, 0.6, 1.0};
     GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
     GLfloat mat_shininess[] = {50.0};
 
-#if 0 /* no lighting for now */
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
@@ -116,7 +116,7 @@ initlights(void)
 #endif
 }
 
-void
+static void
 display(void)
 {
    glClearColor(.3, .3, .3, 0);
@@ -130,7 +130,7 @@ display(void)
     glFlush();
 }
 
-void
+static void
 myinit(int argc, char *argv[])
 {
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -186,7 +186,7 @@ myinit(int argc, char *argv[])
     }
 }
 
-void
+static void
 myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
