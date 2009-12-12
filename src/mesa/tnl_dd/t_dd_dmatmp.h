@@ -241,6 +241,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	       tmp = ALLOC_VERTS(nr+1);
 	       tmp = TAG(emit_verts)( ctx, j, nr, tmp );
 	       tmp = TAG(emit_verts)( ctx, start, 1, tmp );
+	       (void) tmp;
 	    }
 	    else {
 	       TAG(emit_verts)( ctx, j, nr, ALLOC_VERTS(nr) );
