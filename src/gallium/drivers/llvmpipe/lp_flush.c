@@ -49,6 +49,23 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    draw_flush(llvmpipe->draw);
 
+   if (fence) {
+      if ((flags & (PIPE_FLUSH_SWAPBUFFERS |
+                    PIPE_FLUSH_RENDER_CACHE))) {
+         /* if we're going to flush the setup/rasterization modules, emit
+          * a fence.
+          * XXX this (and the code below) may need fine tuning...
+          */
+         *fence = lp_setup_fence( llvmpipe->setup );
+      }
+      else {
+         *fence = NULL;
+      }
+   }
+
+   /* XXX the lp_setup_flush(flags) param is not a bool, and it's ignored
+    * at this time!
+    */
    if (flags & PIPE_FLUSH_SWAPBUFFERS) {
       lp_setup_flush( llvmpipe->setup, FALSE );
    }
@@ -68,8 +85,5 @@ llvmpipe_flush( struct pipe_context *pipe,
       ++frame_no;
    }
 #endif
-   
-   if (fence)
-      *fence = NULL;
 }
 

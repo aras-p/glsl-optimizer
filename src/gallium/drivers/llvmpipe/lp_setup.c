@@ -39,6 +39,7 @@
 #include "lp_bin.h"
 #include "lp_bin_queue.h"
 #include "lp_debug.h"
+#include "lp_fence.h"
 #include "lp_state.h"
 #include "lp_buffer.h"
 #include "lp_texture.h"
@@ -307,6 +308,28 @@ lp_setup_clear( struct setup_context *setup,
    }
 }
 
+
+/**
+ * Emit a fence.
+ */
+struct pipe_fence_handle *
+lp_setup_fence( struct setup_context *setup )
+{
+   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   const unsigned rank = lp_bin_get_num_bins( bins );
+   struct lp_fence *fence = lp_fence_create(rank);
+
+   LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
+
+   set_state( setup, SETUP_ACTIVE );
+
+   /* insert the fence into all command bins */
+   lp_bin_everywhere( bins,
+                      lp_rast_fence,
+                      lp_rast_arg_fence(fence) );
+
+   return (struct pipe_fence_handle *) fence;
+}
 
 
 void 
