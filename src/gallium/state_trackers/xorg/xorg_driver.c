@@ -480,7 +480,7 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
 	if (num_cliprects) {
 	    drmModeClip *clip = alloca(num_cliprects * sizeof(drmModeClip));
 	    BoxPtr rect = REGION_RECTS(dirty);
-	    int i;
+	    int i, ret;
 
 	    /* XXX no need for copy? */
 	    for (i = 0; i < num_cliprects; i++, rect++) {
@@ -491,7 +491,11 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
 	    }
 
 	    /* TODO query connector property to see if this is needed */
-	    drmModeDirtyFB(ms->fd, ms->fb_id, clip, num_cliprects);
+	    ret = drmModeDirtyFB(ms->fd, ms->fb_id, clip, num_cliprects);
+	    if (ret) {
+		debug_printf("%s: failed to send dirty (%i, %s)\n",
+			     __func__, ret, strerror(-ret));
+	    }
 
 	    DamageEmpty(ms->damage);
 	}
@@ -837,6 +841,7 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     unsigned handle, stride;
     struct pipe_texture *tex;
+    int ret;
 
     ms->noEvict = TRUE;
 
@@ -850,16 +855,21 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 					    tex,
 					    &stride,
 					    &handle))
-	return FALSE;
+	goto err_destroy;
 
-    drmModeAddFB(ms->fd,
-		 pScrn->virtualX,
-		 pScrn->virtualY,
-		 pScrn->depth,
-		 pScrn->bitsPerPixel,
-		 stride,
-		 handle,
-                 &ms->fb_id);
+    ret = drmModeAddFB(ms->fd,
+		       pScrn->virtualX,
+		       pScrn->virtualY,
+		       pScrn->depth,
+		       pScrn->bitsPerPixel,
+		       stride,
+		       handle,
+		       &ms->fb_id);
+    if (ret) {
+	debug_printf("%s: failed to create framebuffer (%i, %s)",
+		     __func__, ret, strerror(-ret));
+	goto err_destroy;
+    }
 
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
@@ -869,6 +879,10 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
     pipe_texture_reference(&tex, NULL);
 
     return TRUE;
+
+err_destroy:
+    pipe_texture_reference(&tex, NULL);
+    return FALSE;
 }
 
 static Bool
@@ -898,6 +912,8 @@ static Bool
 drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
 
     if (!ms->root_bo)
 	return TRUE;
@@ -914,6 +930,7 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     unsigned handle, stride;
     struct kms_bo *bo;
     unsigned attr[8];
+    int ret;
 
     attr[0] = KMS_BO_TYPE;
     attr[1] = KMS_BO_TYPE_SCANOUT;
@@ -932,14 +949,19 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     if (kms_bo_get_prop(bo, KMS_HANDLE, &handle))
 	goto err_destroy;
 
-    drmModeAddFB(ms->fd,
-		 pScrn->virtualX,
-		 pScrn->virtualY,
-		 pScrn->depth,
-		 pScrn->bitsPerPixel,
-		 stride,
-		 handle,
-                 &ms->fb_id);
+    ret = drmModeAddFB(ms->fd,
+		       pScrn->virtualX,
+		       pScrn->virtualY,
+		       pScrn->depth,
+		       pScrn->bitsPerPixel,
+		       stride,
+		       handle,
+		       &ms->fb_id);
+    if (ret) {
+	debug_printf("%s: failed to create framebuffer (%i, %s)",
+		     __func__, ret, strerror(-ret));
+	goto err_destroy;
+    }
 
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
@@ -966,7 +988,7 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
 	return FALSE;
 
     if (kms_bo_map(ms->root_bo, &ptr))
-	return FALSE;
+	goto err_destroy;
 
     pScreen->ModifyPixmapHeader(rootPixmap,
 				pScreen->width,
@@ -976,6 +998,10 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
 				stride,
 				ptr);
     return TRUE;
+
+err_destroy:
+    kms_bo_destroy(&ms->root_bo);
+    return FALSE;
 }
 #endif /* HAVE_LIBKMS */
 
