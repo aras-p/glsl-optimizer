@@ -218,7 +218,6 @@ clean:
 	-$(call UNLINK,vbo/*.o)
 	-$(call UNLINK,shader/*.o)
 	-$(call UNLINK,shader/slang/*.o)
-	-$(call UNLINK,shader/grammar/*.o)
 	-$(call UNLINK,sparc/*.o)
 	-$(call UNLINK,ppc/*.o)
 	-$(call UNLINK,swrast/*.o)

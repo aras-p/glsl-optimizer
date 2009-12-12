@@ -43,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="NDEBUG;WIN32;_LIB;_DLL;BUILD_GL32;MESA_MINWARN;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="_DEBUG;WIN32;_LIB;_DLL;BUILD_GL32;MESA_MINWARN;_CRT_SECURE_NO_DEPRECATE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -185,7 +185,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="_DEBUG;WIN32;_LIB;BUILD_GL32;MESA_MINWARN;_CRT_SECURE_NO_DEPRECATE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -256,7 +256,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="NDEBUG;WIN32;_LIB;BUILD_GL32;MESA_MINWARN;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -472,10 +472,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.c"
 				>
 			</File>
 			<File
@@ -1357,22 +1353,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_crt.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_syn.h"
 				>
 			</File>
 			<File

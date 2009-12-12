@@ -218,7 +218,6 @@ SHADER_SOURCES = \
 	shader/arbprogparse.c \
 	shader/arbprogram.c \
 	shader/atifragshader.c \
-	shader/grammar/grammar_mesa.c \
 	shader/hash_table.c \
 	shader/lex.yy.c \
 	shader/nvfragparse.c \

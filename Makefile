@@ -244,7 +244,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
 	$(DIRECTORY)/src/mesa/shader/Makefile				\
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/grammar/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
