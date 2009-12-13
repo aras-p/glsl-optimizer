@@ -486,13 +486,16 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300_init_vtbl(&r300->radeon);
 
 	_mesa_init_driver_functions(&functions);
-	r300_init_texcopy_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
+
+	if (r300->radeon.radeonScreen->kernel_mm) {
+		r300_init_texcopy_functions(&functions);
+	}
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
