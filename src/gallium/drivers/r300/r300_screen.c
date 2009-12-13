@@ -220,12 +220,18 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
 
         /* Z buffer or texture */
         case PIPE_FORMAT_Z16_UNORM:
+            retval = usage &
+                (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+                 PIPE_TEXTURE_USAGE_SAMPLER);
+            break;
+
+        /* 24bit Z buffer can only be used as a texture on R500. */
         case PIPE_FORMAT_Z24X8_UNORM:
         /* Z buffer with stencil or texture */
         case PIPE_FORMAT_Z24S8_UNORM:
             retval = usage &
                 (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-                 PIPE_TEXTURE_USAGE_SAMPLER);
+                 (is_r500 ? PIPE_TEXTURE_USAGE_SAMPLER : 0));
             break;
 
         /* Definitely unsupported formats. */
