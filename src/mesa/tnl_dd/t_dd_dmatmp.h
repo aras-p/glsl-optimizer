@@ -951,6 +951,7 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 	 tmp = ALLOC_ELTS( nr );
 	 tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
 	 tmp = TAG(emit_elts)( ctx, elts+j, nr - 1, tmp );
+	 (void) tmp;
 	 FLUSH();
 	 currentsz = dmasz;
       }
