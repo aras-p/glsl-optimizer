@@ -31,6 +31,7 @@ intel_drm_get_device_id(unsigned int *device_id)
    }
 
    shutup_gcc = fgets(path, sizeof(path), file);
+   (void) shutup_gcc;
    sscanf(path, "%x", device_id);
    fclose(file);
 }
