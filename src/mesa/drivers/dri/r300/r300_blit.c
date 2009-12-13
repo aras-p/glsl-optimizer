@@ -428,6 +428,7 @@ static void emit_cb_setup(struct r300_context *r300,
                           struct radeon_bo *bo,
                           intptr_t offset,
                           gl_format mesa_format,
+                          unsigned pitch,
                           unsigned width,
                           unsigned height)
 {
@@ -448,7 +449,7 @@ static void emit_cb_setup(struct r300_context *r300,
 
     r300_emit_cb_setup(r300, bo, offset, mesa_format,
                        _mesa_get_format_bytes(mesa_format),
-                       _mesa_format_row_stride(mesa_format, width));
+                       _mesa_format_row_stride(mesa_format, pitch));
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
     OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
@@ -468,17 +469,13 @@ GLboolean r300_blit(struct r300_context *r300,
                     struct radeon_bo *dst_bo,
                     intptr_t dst_offset,
                     gl_format dst_mesaformat,
+                    unsigned dst_pitch,
                     unsigned dst_width,
                     unsigned dst_height)
 {
-    //assert(src_width == dst_width);
-    //assert(src_height == dst_height);
-
     if (src_bo == dst_bo) {
         return GL_FALSE;
     }
-
-    //return GL_FALSE;
 
     if (0) {
         fprintf(stderr, "src: width %d, height %d, pitch %d vs %d, format %s\n",
@@ -511,14 +508,13 @@ GLboolean r300_blit(struct r300_context *r300,
     emit_pvs_setup(r300, r300->blit.vp_code.body.d, 2);
     emit_vap_setup(r300, dst_width, dst_height);
 
-    emit_cb_setup(r300, dst_bo, dst_offset, dst_mesaformat, dst_width, dst_height);
+    emit_cb_setup(r300, dst_bo, dst_offset, dst_mesaformat, dst_pitch, dst_width, dst_height);
 
     emit_draw_packet(r300, dst_width, dst_height);
 
     r300EmitCacheFlush(r300);
 
     radeonFlush(r300->radeon.glCtx);
-    //r300ResetHwState(r300);
 
     return GL_TRUE;
 }

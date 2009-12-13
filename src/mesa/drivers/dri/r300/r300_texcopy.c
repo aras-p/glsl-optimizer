@@ -63,7 +63,6 @@ do_copy_texsubimage(GLcontext *ctx,
     assert(timg->mt->bo);
     assert(timg->base.Width >= dstx + width);
     assert(timg->base.Height >= dsty + height);
-    //assert(tobj->mt == timg->mt);
 
     intptr_t src_offset = rrb->draw_offset + x * rrb->cpp + y * rrb->pitch;
     intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
@@ -87,7 +86,7 @@ do_copy_texsubimage(GLcontext *ctx,
     /* blit from src buffer to texture */
     return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch,
                      rrb->base.Width, rrb->base.Height, timg->mt->bo ? timg->mt->bo : timg->bo, dst_offset,
-                     timg->base.TexFormat, width, height);
+                     timg->base.TexFormat, timg->base.Width, width, height);
 }
 
 static void
