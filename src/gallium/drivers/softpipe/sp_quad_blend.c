@@ -258,7 +258,8 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* loop over colorbuffer outputs */
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
-      float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
+      float source[4][QUAD_SIZE] = { { 0 } };
+      float dest[4][QUAD_SIZE];
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe,
                               softpipe->cbuf_cache[cbuf],
