@@ -141,7 +141,7 @@ static void r300_emit_tx_setup(struct r300_context *r300,
 
     assert(width <= 2048);
     assert(height <= 2048);
-    assert(r300TranslateTexFormat(mesa_format) != 0);
+    assert(r300TranslateTexFormat(mesa_format) >= 0);
     assert(offset % 32 == 0);
 
     BEGIN_BATCH(17);
