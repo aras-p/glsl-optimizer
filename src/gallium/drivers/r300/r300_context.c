@@ -28,7 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
-#include "r300_clear.h"
+#include "r300_blit.h"
 #include "r300_context.h"
 #include "r300_flush.h"
 #include "r300_query.h"
@@ -51,6 +51,8 @@ static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
     struct r300_query* query, * temp;
+
+    util_blitter_destroy(r300->blitter);
 
     util_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
         NULL);
@@ -124,6 +126,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.destroy = r300_destroy_context;
 
     r300->context.clear = r300_clear;
+    r300->context.surface_copy = r300_surface_copy;
+    r300->context.surface_fill = r300_surface_fill;
 
     if (r300screen->caps->has_tcl) {
         r300->context.draw_arrays = r300_draw_arrays;
@@ -175,5 +179,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
+
+    r300->blitter = util_blitter_create(&r300->context);
+
     return &r300->context;
 }

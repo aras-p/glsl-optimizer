@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2008 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,19 +20,29 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_clear.h"
-#include "r300_context.h"
+#ifndef R300_BLIT_H
+#define R300_BLIT_H
 
-#include "util/u_clear.h"
+struct pipe_context;
+struct pipe_surface;
 
-/* Clears currently bound buffers. */
 void r300_clear(struct pipe_context* pipe,
                 unsigned buffers,
                 const float* rgba,
                 double depth,
-                unsigned stencil)
-{
-    /* XXX we can and should do one clear if both color and zs are set */
-    util_clear(pipe, &r300_context(pipe)->framebuffer_state,
-            buffers, rgba, depth, stencil);
-}
+                unsigned stencil);
+
+void r300_surface_copy(struct pipe_context* pipe,
+                       struct pipe_surface* dst,
+                       unsigned dstx, unsigned dsty,
+                       struct pipe_surface* src,
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height);
+
+void r300_surface_fill(struct pipe_context* pipe,
+                       struct pipe_surface* dst,
+                       unsigned dstx, unsigned dsty,
+                       unsigned width, unsigned height,
+                       unsigned value);
+
+#endif /* R300_BLIT_H */

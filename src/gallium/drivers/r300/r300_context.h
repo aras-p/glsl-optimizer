@@ -25,6 +25,8 @@
 
 #include "draw/draw_vertex.h"
 
+#include "util/u_blitter.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
@@ -248,6 +250,8 @@ struct r300_context {
     struct radeon_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    /* Accelerated blit support. */
+    struct blitter_context* blitter;
 
     /* Vertex buffer for rendering. */
     struct pipe_buffer* vbo;
