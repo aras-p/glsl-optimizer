@@ -825,6 +825,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 	       tmp = ALLOC_ELTS(nr+1);
 	       tmp = TAG(emit_elts)( ctx, elts+j, nr, tmp );
 	       tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
+	       (void) tmp;
 	    }
 	    else {
 	       TAG(emit_elts)( ctx, elts+j, nr, ALLOC_ELTS(nr) );
@@ -838,6 +839,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 	 tmp = ALLOC_ELTS(2);
 	 tmp = TAG(emit_elts)( ctx, elts+start+1, 1, tmp );
 	 tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
+	 (void) tmp;
       }
 
       FLUSH();
