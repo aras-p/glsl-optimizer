@@ -660,7 +660,7 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	if (src->type == P_IMMD || src->type == P_CONST) {
 		set_long(pc, e);
 		set_data(pc, src, 0x7f, 9, e);
-		e->inst[1] |= 0x20000000; /* src0 const? */
+		e->inst[1] |= 0x20000000; /* mov from c[] */
 	} else {
 		if (src->type == P_ATTR) {
 			set_long(pc, e);
@@ -675,9 +675,9 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	if (is_long(e) && !is_immd(e)) {
 		e->inst[1] |= 0x04000000; /* 32-bit */
-		e->inst[1] |= 0x0000c000; /* "subsubop" 0x3 */
+		e->inst[1] |= 0x0000c000; /* 32-bit c[] load / lane mask 0:1 */
 		if (!(e->inst[1] & 0x20000000))
-			e->inst[1] |= 0x00030000; /* "subsubop" 0xf */
+			e->inst[1] |= 0x00030000; /* lane mask 2:3 */
 	} else
 		e->inst[0] |= 0x00008000;
 
@@ -690,6 +690,17 @@ emit_mov_immdval(struct nv50_pc *pc, struct nv50_reg *dst, float f)
 	struct nv50_reg *imm = alloc_immd(pc, f);
 	emit_mov(pc, dst, imm);
 	FREE(imm);
+}
+
+static void
+emit_nop(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xf0000000;
+	set_long(pc, e);
+	e->inst[1] = 0xe0000000;
+	emit(pc, e);
 }
 
 static boolean
@@ -808,6 +819,33 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 
 	alloc_reg(pc, src);
 	e->inst[1] |= ((src->hw & 127) << 14);
+}
+
+static void
+emit_mov_from_pred(struct nv50_pc *pc, struct nv50_reg *dst, int pred)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	assert(dst->type == P_TEMP);
+	e->inst[1] = 0x20000000 | (pred << 12);
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+
+	emit(pc, e);
+}
+
+static void
+emit_mov_to_pred(struct nv50_pc *pc, int pred, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x000001fc;
+	e->inst[1] = 0xa0000008;
+	set_long(pc, e);
+	set_pred_wr(pc, 1, pred, e);
+	set_src_0_restricted(pc, src, e);
+
+	emit(pc, e);
 }
 
 static void
@@ -1271,6 +1309,65 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+static struct nv50_program_exec *
+emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
+	    struct nv50_program_exec **join)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	if (join) {
+		set_long(pc, e);
+		e->inst[0] |= 0xa0000002;
+		emit(pc, e);
+		*join = e;
+		e = exec(pc);
+	}
+
+	set_long(pc, e);
+	e->inst[0] |= 0x10000002;
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+	emit(pc, e);
+	return pc->p->exec_tail;
+}
+
+#define QOP_ADD 0
+#define QOP_SUBR 1
+#define QOP_SUB 2
+#define QOP_MOV_SRC1 3
+
+/* For a quad of threads / top left, top right, bottom left, bottom right
+ * pixels, do a different operation, and take src0 from a specific thread.
+ */
+static void
+emit_quadop(struct nv50_pc *pc, struct nv50_reg *dst, int wp, int lane_src0,
+	    struct nv50_reg *src0, struct nv50_reg *src1, ubyte qop)
+{
+       struct nv50_program_exec *e = exec(pc);
+
+       e->inst[0] = 0xc0000000;
+       e->inst[1] = 0x80000000;
+       set_long(pc, e);
+       e->inst[0] |= lane_src0 << 16;
+       set_src_0(pc, src0, e);
+       set_src_2(pc, src1, e);
+
+       if (wp >= 0)
+	       set_pred_wr(pc, 1, wp, e);
+
+       if (dst)
+	       set_dst(pc, dst, e);
+       else {
+	       e->inst[0] |= 0x000001fc;
+	       e->inst[1] |= 0x00000008;
+       }
+
+       e->inst[0] |= (qop & 3) << 20;
+       e->inst[1] |= (qop >> 2) << 22;
+
+       emit(pc, e);
+}
+
 static void
 load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 		     struct nv50_reg **src, unsigned arg, boolean proj)
@@ -1365,6 +1462,94 @@ get_tex_dim(unsigned type, unsigned *dim, unsigned *arg)
 	}
 }
 
+/* We shouldn't execute TEXLOD if any of the pixels in a quad have
+ * different LOD values, so branch off groups of equal LOD.
+ */
+static void
+emit_texlod_sequence(struct nv50_pc *pc, struct nv50_reg *tlod,
+		     struct nv50_reg *src, struct nv50_program_exec *tex)
+{
+	struct nv50_program_exec *join_at;
+	unsigned i, target = pc->p->exec_size + 7 * 2;
+
+	/* Subtract lod of each pixel from lod of top left pixel, jump
+	 * texlod insn if result is 0, then repeat for 2 other pixels.
+	 */
+	emit_quadop(pc, NULL, 0, 0, tlod, tlod, 0x55);
+	emit_branch(pc, 0, 2, &join_at)->param.index = target;
+
+	for (i = 1; i < 4; ++i) {
+		emit_quadop(pc, NULL, 0, i, tlod, tlod, 0x55);
+		emit_branch(pc, 0, 2, NULL)->param.index = target;
+	}
+
+	emit_mov(pc, tlod, src); /* target */
+	emit(pc, tex); /* texlod */
+
+	join_at->param.index = target + 2 * 2;
+	emit_nop(pc);
+	pc->p->exec_tail->inst[1] |= 2; /* join _after_ tex */
+}
+
+static void
+emit_texbias_sequence(struct nv50_pc *pc, struct nv50_reg *t[4], unsigned arg,
+		      struct nv50_program_exec *tex)
+{
+	struct nv50_program_exec *e;
+	struct nv50_reg imm_1248, *t123[4][4], *r_bits = alloc_temp(pc, NULL);
+	int r_pred = 0;
+	unsigned n, c, i, cc[4] = { 0x0a, 0x13, 0x11, 0x10 };
+
+	pc->allow32 = FALSE;
+	ctor_reg(&imm_1248, P_IMMD, -1, ctor_immd_4u32(pc, 1, 2, 4, 8) * 4);
+
+	/* Subtract bias value of thread i from bias values of each thread,
+	 * store result in r_pred, and set bit i in r_bits if result was 0.
+	 */
+	assert(arg < 4);
+	for (i = 0; i < 4; ++i, ++imm_1248.hw) {
+		emit_quadop(pc, NULL, r_pred, i, t[arg], t[arg], 0x55);
+		emit_mov(pc, r_bits, &imm_1248);
+		set_pred(pc, 2, r_pred, pc->p->exec_tail);
+	}
+	emit_mov_to_pred(pc, r_pred, r_bits);
+
+	/* The lanes of a quad are now grouped by the bit in r_pred they have
+	 * set. Put the input values for TEX into a new register set for each
+	 * group and execute TEX only for a specific group.
+	 * We cannot use the same register set for each group because we need
+	 * the derivatives, which are implicitly calculated, to be correct.
+	 */
+	for (i = 1; i < 4; ++i) {
+		alloc_temp4(pc, t123[i], 0);
+
+		for (c = 0; c <= arg; ++c)
+			emit_mov(pc, t123[i][c], t[c]);
+
+		*(e = exec(pc)) = *(tex);
+		e->inst[0] &= ~0x01fc;
+		set_dst(pc, t123[i][0], e);
+		set_pred(pc, cc[i], r_pred, e);
+		emit(pc, e);
+	}
+	/* finally TEX on the original regs (where we kept the input) */
+	set_pred(pc, cc[0], r_pred, tex);
+	emit(pc, tex);
+
+	/* put the 3 * n other results into regs for lane 0 */
+	n = popcnt4(((e->inst[0] >> 25) & 0x3) | ((e->inst[1] >> 12) & 0xc));
+	for (i = 1; i < 4; ++i) {
+		for (c = 0; c < n; ++c) {
+			emit_mov(pc, t[c], t123[i][c]);
+			set_pred(pc, cc[i], r_pred, pc->p->exec_tail);
+		}
+		free_temp4(pc, t123[i]);
+	}
+
+	emit_nop(pc);
+	free_temp(pc, r_bits);
+}
+
 static void
 emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	 struct nv50_reg **src, unsigned unit, unsigned type,
@@ -1403,18 +1588,25 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			emit_mov(pc, t[dim], src[2]);
 	}
 
-	if (bias_lod) {
-		assert(arg < 4);
-		emit_mov(pc, t[arg++], src[3]);
-		e->inst[1] |= (bias_lod < 0) ? 0x20000000 : 0x40000000;
-	}
-
-	e->inst[0] |= (arg - 1) << 22;
-
 	e->inst[0] |= (mask & 0x3) << 25;
 	e->inst[1] |= (mask & 0xc) << 12;
 
-	emit(pc, e);
+	if (!bias_lod) {
+		e->inst[0] |= (arg - 1) << 22;
+		emit(pc, e);
+	} else
+	if (bias_lod < 0) {
+		e->inst[0] |= arg << 22;
+		e->inst[1] |= 0x20000000; /* texbias */
+		emit_mov(pc, t[arg], src[3]);
+		emit_texbias_sequence(pc, t, arg, e);
+	} else {
+		e->inst[0] |= arg << 22;
+		e->inst[1] |= 0x40000000; /* texlod */
+		emit_mov(pc, t[arg], src[3]);
+		emit_texlod_sequence(pc, t[arg], src[3], e);
+	}
+
 #if 1
 	c = 0;
 	if (mask & 1) emit_mov(pc, dst[0], t[c++]);
@@ -1434,38 +1626,6 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			free_temp(pc, t[c]);
 	}
 #endif
-}
-
-static void
-emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
-	    struct nv50_program_exec **join)
-{
-	struct nv50_program_exec *e = exec(pc);
-
-	if (join) {
-		set_long(pc, e);
-		e->inst[0] |= 0xa0000002;
-		emit(pc, e);
-		*join = e;
-		e = exec(pc);
-	}
-
-	set_long(pc, e);
-	e->inst[0] |= 0x10000002;
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-	emit(pc, e);
-}
-
-static void
-emit_nop(struct nv50_pc *pc)
-{
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xf0000000;
-	set_long(pc, e);
-	e->inst[1] = 0xe0000000;
-	emit(pc, e);
 }
 
 static void
