@@ -28,12 +28,12 @@
 
 /**
  * Binner data structures and bin-related functions.
- * Note: the "setup" code is concerned with building bins while
- * The "rast" code is concerned with consuming/executing bins.
+ * Note: the "setup" code is concerned with building scenes while
+ * The "rast" code is concerned with consuming/executing scenes.
  */
 
-#ifndef LP_BIN_H
-#define LP_BIN_H
+#ifndef LP_SCENE_H
+#define LP_SCENE_H
 
 #include "pipe/p_thread.h"
 #include "lp_tile_soa.h"
@@ -87,7 +87,7 @@ struct cmd_bin {
    
 
 /**
- * This stores bulk data which is shared by all bins.
+ * This stores bulk data which is shared by all bins within a scene.
  * Examples include triangle data and state data.  The commands in
  * the per-tile bins will point to chunks of data in this structure.
  */
@@ -100,15 +100,16 @@ struct data_block_list {
 /**
  * All bins and bin data are contained here.
  * Per-bin data goes into the 'tile' bins.
- * Shared bin data goes into the 'data' buffer.
- * When there are multiple threads, will want to double-buffer the
- * bin arrays:
+ * Shared data goes into the 'data' buffer.
+ *
+ * When there are multiple threads, will want to double-buffer between
+ * scenes:
  */
-struct lp_bins {
+struct lp_scene {
    struct cmd_bin tile[TILES_X][TILES_Y];
    struct data_block_list data;
 
-   /** the framebuffer to render the bins into */
+   /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 
    boolean write_depth;
@@ -125,27 +126,27 @@ struct lp_bins {
 
 
 
-struct lp_bins *lp_bins_create(void);
+struct lp_scene *lp_scene_create(void);
 
-void lp_bins_destroy(struct lp_bins *bins);
+void lp_scene_destroy(struct lp_scene *scene);
 
 
-void lp_init_bins(struct lp_bins *bins);
+void lp_scene_init(struct lp_scene *scene);
 
-void lp_reset_bins(struct lp_bins *bins );
+void lp_scene_reset(struct lp_scene *scene );
 
-void lp_free_bin_data(struct lp_bins *bins);
+void lp_scene_free_bin_data(struct lp_scene *scene);
 
-void lp_bin_set_framebuffer_size( struct lp_bins *bins,
+void lp_scene_set_framebuffer_size( struct lp_scene *scene,
                                   unsigned width, unsigned height );
 
 void lp_bin_new_data_block( struct data_block_list *list );
 
 void lp_bin_new_cmd_block( struct cmd_block_list *list );
 
-unsigned lp_bin_data_size( const struct lp_bins *bins );
+unsigned lp_scene_data_size( const struct lp_scene *scene );
 
-unsigned lp_bin_cmd_size( const struct lp_bins *bins, unsigned x, unsigned y );
+unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y );
 
 
 /**
@@ -153,9 +154,9 @@ unsigned lp_bin_cmd_size( const struct lp_bins *bins, unsigned x, unsigned y );
  * Grow the block list if needed.
  */
 static INLINE void *
-lp_bin_alloc( struct lp_bins *bins, unsigned size)
+lp_scene_alloc( struct lp_scene *scene, unsigned size)
 {
-   struct data_block_list *list = &bins->data;
+   struct data_block_list *list = &scene->data;
 
    if (list->tail->used + size > DATA_BLOCK_SIZE) {
       lp_bin_new_data_block( list );
@@ -174,10 +175,10 @@ lp_bin_alloc( struct lp_bins *bins, unsigned size)
  * As above, but with specific alignment.
  */
 static INLINE void *
-lp_bin_alloc_aligned( struct lp_bins *bins, unsigned size,
-                      unsigned alignment )
+lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
+			unsigned alignment )
 {
-   struct data_block_list *list = &bins->data;
+   struct data_block_list *list = &scene->data;
 
    if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
       lp_bin_new_data_block( list );
@@ -196,9 +197,9 @@ lp_bin_alloc_aligned( struct lp_bins *bins, unsigned size,
 /* Put back data if we decide not to use it, eg. culled triangles.
  */
 static INLINE void
-lp_bin_putback_data( struct lp_bins *bins, unsigned size)
+lp_scene_putback_data( struct lp_scene *scene, unsigned size)
 {
-   struct data_block_list *list = &bins->data;
+   struct data_block_list *list = &scene->data;
    assert(list->tail->used >= size);
    list->tail->used -= size;
 }
@@ -206,9 +207,9 @@ lp_bin_putback_data( struct lp_bins *bins, unsigned size)
 
 /** Return pointer to a particular tile's bin. */
 static INLINE struct cmd_bin *
-lp_get_bin(struct lp_bins *bins, unsigned x, unsigned y)
+lp_scene_get_bin(struct lp_scene *scene, unsigned x, unsigned y)
 {
-   return &bins->tile[x][y];
+   return &scene->tile[x][y];
 }
 
 
@@ -216,12 +217,12 @@ lp_get_bin(struct lp_bins *bins, unsigned x, unsigned y)
 /* Add a command to bin[x][y].
  */
 static INLINE void
-lp_bin_command( struct lp_bins *bins,
+lp_scene_bin_command( struct lp_scene *scene,
                 unsigned x, unsigned y,
                 lp_rast_cmd cmd,
                 union lp_rast_cmd_arg arg )
 {
-   struct cmd_bin *bin = lp_get_bin(bins, x, y);
+   struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
    struct cmd_block_list *list = &bin->commands;
 
    if (list->tail->count == CMD_BLOCK_MAX) {
@@ -241,35 +242,35 @@ lp_bin_command( struct lp_bins *bins,
 /* Add a command to all active bins.
  */
 static INLINE void
-lp_bin_everywhere( struct lp_bins *bins,
-                   lp_rast_cmd cmd,
-                   const union lp_rast_cmd_arg arg )
+lp_scene_bin_everywhere( struct lp_scene *scene,
+			 lp_rast_cmd cmd,
+			 const union lp_rast_cmd_arg arg )
 {
    unsigned i, j;
-   for (i = 0; i < bins->tiles_x; i++)
-      for (j = 0; j < bins->tiles_y; j++)
-         lp_bin_command( bins, i, j, cmd, arg );
+   for (i = 0; i < scene->tiles_x; i++)
+      for (j = 0; j < scene->tiles_y; j++)
+         lp_scene_bin_command( scene, i, j, cmd, arg );
 }
 
 
 void
-lp_bin_state_command( struct lp_bins *bins,
-                      lp_rast_cmd cmd,
-                      const union lp_rast_cmd_arg arg );
+lp_scene_bin_state_command( struct lp_scene *scene,
+			    lp_rast_cmd cmd,
+			    const union lp_rast_cmd_arg arg );
 
 
 static INLINE unsigned
-lp_bin_get_num_bins( const struct lp_bins *bins )
+lp_scene_get_num_bins( const struct lp_scene *scene )
 {
-   return bins->tiles_x * bins->tiles_y;
+   return scene->tiles_x * scene->tiles_y;
 }
 
 
 void
-lp_bin_iter_begin( struct lp_bins *bins );
+lp_scene_bin_iter_begin( struct lp_scene *scene );
 
 struct cmd_bin *
-lp_bin_iter_next( struct lp_bins *bins, int *bin_x, int *bin_y );
+lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y );
 
 
 #endif /* LP_BIN_H */

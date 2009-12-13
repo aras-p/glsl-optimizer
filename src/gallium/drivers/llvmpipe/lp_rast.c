@@ -30,7 +30,7 @@
 #include "util/u_cpu_detect.h"
 #include "util/u_surface.h"
 
-#include "lp_bin_queue.h"
+#include "lp_scene_queue.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
 #include "lp_state.h"
@@ -38,7 +38,7 @@
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 #include "lp_bld_debug.h"
-#include "lp_bin.h"
+#include "lp_scene.h"
 
 
 /**
@@ -531,18 +531,18 @@ void lp_rast_fence( struct lp_rasterizer *rast,
 
 
 /**
- * When all the threads are done rasterizing a bin, one thread will
- * call this function to reset the bin and put it onto the empty queue.
+ * When all the threads are done rasterizing a scene, one thread will
+ * call this function to reset the scene and put it onto the empty queue.
  */
 static void
-release_bins( struct lp_rasterizer *rast,
-              struct lp_bins *bins )
+release_scene( struct lp_rasterizer *rast,
+	       struct lp_scene *scene )
 {
-   util_unreference_framebuffer_state( &bins->fb );
+   util_unreference_framebuffer_state( &scene->fb );
 
-   lp_reset_bins( bins );
-   lp_bins_enqueue( rast->empty_bins, bins );
-   rast->curr_bins = NULL;
+   lp_scene_reset( scene );
+   lp_scene_enqueue( rast->empty_scenes, scene );
+   rast->curr_scene = NULL;
 }
 
 
@@ -576,22 +576,22 @@ rasterize_bin( struct lp_rasterizer *rast,
 
 
 /**
- * Rasterize/execute all bins.
+ * Rasterize/execute all bins within a scene.
  * Called per thread.
  */
 static void
-rasterize_bins( struct lp_rasterizer *rast,
+rasterize_scene( struct lp_rasterizer *rast,
                 unsigned thread_index,
-                struct lp_bins *bins,
+                struct lp_scene *scene,
                 bool write_depth )
 {
-   /* loop over tile bins, rasterize each */
+   /* loop over scene bins, rasterize each */
 #if 0
    {
       unsigned i, j;
-      for (i = 0; i < bins->tiles_x; i++) {
-         for (j = 0; j < bins->tiles_y; j++) {
-            struct cmd_bin *bin = lp_get_bin(bins, i, j);
+      for (i = 0; i < scene->tiles_x; i++) {
+         for (j = 0; j < scene->tiles_y; j++) {
+            struct cmd_bin *bin = lp_get_bin(scene, i, j);
             rasterize_bin( rast, thread_index,
                            bin, i * TILE_SIZE, j * TILE_SIZE );
          }
@@ -602,8 +602,8 @@ rasterize_bins( struct lp_rasterizer *rast,
       struct cmd_bin *bin;
       int x, y;
 
-      assert(bins);
-      while ((bin = lp_bin_iter_next(bins, &x, &y))) {
+      assert(scene);
+      while ((bin = lp_scene_bin_iter_next(scene, &x, &y))) {
          rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
       }
    }
@@ -615,8 +615,8 @@ rasterize_bins( struct lp_rasterizer *rast,
  * Called by setup module when it has something for us to render.
  */
 void
-lp_rasterize_bins( struct lp_rasterizer *rast,
-                   struct lp_bins *bins,
+lp_rasterize_scene( struct lp_rasterizer *rast,
+                   struct lp_scene *scene,
                    const struct pipe_framebuffer_state *fb,
                    bool write_depth )
 {
@@ -626,19 +626,19 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
 
    if (debug) {
       unsigned x, y;
-      printf("rasterize bins:\n");
-      printf("  data size: %u\n", lp_bin_data_size(bins));
-      for (y = 0; y < bins->tiles_y; y++) {
-         for (x = 0; x < bins->tiles_x; x++) {
+      printf("rasterize scene:\n");
+      printf("  data size: %u\n", lp_scene_data_size(scene));
+      for (y = 0; y < scene->tiles_y; y++) {
+         for (x = 0; x < scene->tiles_x; x++) {
             printf("  bin %u, %u size: %u\n", x, y,
-                   lp_bin_cmd_size(bins, x, y));
+                   lp_scene_bin_size(scene, x, y));
          }
       }
    }
 
    /* save framebuffer state in the bin */
-   util_copy_framebuffer_state(&bins->fb, fb);
-   bins->write_depth = write_depth;
+   util_copy_framebuffer_state(&scene->fb, fb);
+   scene->write_depth = write_depth;
 
    if (rast->num_threads == 0) {
       /* no threading */
@@ -647,10 +647,10 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
                      fb->cbufs[0]!= NULL,
                      fb->zsbuf != NULL && write_depth );
 
-      lp_bin_iter_begin( bins );
-      rasterize_bins( rast, 0, bins, write_depth );
+      lp_scene_bin_iter_begin( scene );
+      rasterize_scene( rast, 0, scene, write_depth );
 
-      release_bins( rast, bins );
+      release_scene( rast, scene );
 
       lp_rast_end( rast );
    }
@@ -658,7 +658,7 @@ lp_rasterize_bins( struct lp_rasterizer *rast,
       /* threaded rendering! */
       unsigned i;
 
-      lp_bins_enqueue( rast->full_bins, bins );
+      lp_scene_enqueue( rast->full_scenes, scene );
 
       /* signal the threads that there's work to do */
       for (i = 0; i < rast->num_threads; i++) {
@@ -697,18 +697,18 @@ thread_func( void *init_data )
 
       if (task->thread_index == 0) {
          /* thread[0]:
-          *  - get next set of bins to rasterize
+          *  - get next scene to rasterize
           *  - map the framebuffer surfaces
           */
          const struct pipe_framebuffer_state *fb;
          boolean write_depth;
 
-         rast->curr_bins = lp_bins_dequeue( rast->full_bins );
+         rast->curr_scene = lp_scene_dequeue( rast->full_scenes );
 
-         lp_bin_iter_begin( rast->curr_bins );
+         lp_scene_bin_iter_begin( rast->curr_scene );
 
-         fb = &rast->curr_bins->fb;
-         write_depth = rast->curr_bins->write_depth;
+         fb = &rast->curr_scene->fb;
+         write_depth = rast->curr_scene->write_depth;
 
          lp_rast_begin( rast, fb,
                         fb->cbufs[0] != NULL,
@@ -716,25 +716,27 @@ thread_func( void *init_data )
       }
 
       /* Wait for all threads to get here so that threads[1+] don't
-       * get a null rast->curr_bins pointer.
+       * get a null rast->curr_scene pointer.
        */
       pipe_barrier_wait( &rast->barrier );
 
       /* do work */
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
-      rasterize_bins(rast, task->thread_index,
-                     rast->curr_bins, rast->curr_bins->write_depth);
+      rasterize_scene(rast, 
+		     task->thread_index,
+                     rast->curr_scene, 
+		     rast->curr_scene->write_depth);
       
-      /* wait for all threads to finish with this set of bins */
+      /* wait for all threads to finish with this scene */
       pipe_barrier_wait( &rast->barrier );
 
       if (task->thread_index == 0) {
          /* thread[0]:
-          * - release the bins object
+          * - release the scene object
           * - unmap the framebuffer surfaces
           */
-         release_bins( rast, rast->curr_bins );
+         release_scene( rast, rast->curr_scene );
          lp_rast_end( rast );
       }
 
@@ -773,11 +775,11 @@ create_rast_threads(struct lp_rasterizer *rast)
 
 /**
  * Create new lp_rasterizer.
- * \param empty  the queue to put empty bins on after we've finished
+ * \param empty  the queue to put empty scenes on after we've finished
  *               processing them.
  */
 struct lp_rasterizer *
-lp_rast_create( struct pipe_screen *screen, struct lp_bins_queue *empty )
+lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
 {
    struct lp_rasterizer *rast;
    unsigned i;
@@ -788,8 +790,8 @@ lp_rast_create( struct pipe_screen *screen, struct lp_bins_queue *empty )
 
    rast->screen = screen;
 
-   rast->empty_bins = empty;
-   rast->full_bins = lp_bins_queue_create();
+   rast->empty_scenes = empty;
+   rast->full_scenes = lp_scene_queue_create();
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       rast->tasks[i].tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );

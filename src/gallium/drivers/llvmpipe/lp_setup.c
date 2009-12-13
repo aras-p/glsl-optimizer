@@ -36,8 +36,8 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
-#include "lp_bin.h"
-#include "lp_bin_queue.h"
+#include "lp_scene.h"
+#include "lp_scene_queue.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
 #include "lp_state.h"
@@ -47,26 +47,26 @@
 
 
 /** XXX temporary value, temporary here */
-#define MAX_BINS 2
+#define MAX_SCENES 2
 
 
 static void set_state( struct setup_context *, unsigned );
 
 
-struct lp_bins *
-lp_setup_get_current_bins(struct setup_context *setup)
+struct lp_scene *
+lp_setup_get_current_scene(struct setup_context *setup)
 {
-   if (!setup->bins) {
+   if (!setup->scene) {
       /* wait for a free/empty bin */
-      setup->bins = lp_bins_dequeue(setup->empty_bins);
-      if(0)lp_reset_bins( setup->bins ); /* XXX temporary? */
+      setup->scene = lp_scene_dequeue(setup->empty_scenes);
+      if(0)lp_scene_reset( setup->scene ); /* XXX temporary? */
 
       if (setup->fb) {
-         lp_bin_set_framebuffer_size(setup->bins,
+         lp_scene_set_framebuffer_size(setup->scene,
                                      setup->fb->width, setup->fb->height);
       }
    }
-   return setup->bins;
+   return setup->scene;
 }
 
 
@@ -111,7 +111,7 @@ static void reset_context( struct setup_context *setup )
    setup->dirty = ~0;
 
    /* no current bin */
-   setup->bins = NULL;
+   setup->scene = NULL;
 
    /* Reset some state:
     */
@@ -126,15 +126,15 @@ static void reset_context( struct setup_context *setup )
 }
 
 
-/** Rasterize all tile's bins */
+/** Rasterize all scene's bins */
 static void
-lp_setup_rasterize_bins( struct setup_context *setup,
+lp_setup_rasterize_scene( struct setup_context *setup,
 			 boolean write_depth )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
-   lp_rasterize_bins(setup->rast,
-                     bins,
+   lp_rasterize_scene(setup->rast,
+                     scene,
                      setup->fb,
                      write_depth);
 
@@ -148,28 +148,28 @@ lp_setup_rasterize_bins( struct setup_context *setup,
 static void
 begin_binning( struct setup_context *setup )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    if (setup->fb->cbufs[0]) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
-         lp_bin_everywhere( bins, 
+         lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_color, 
                             setup->clear.color );
       else
-         lp_bin_everywhere( bins,
+         lp_scene_bin_everywhere( scene,
                             lp_rast_load_color,
                             lp_rast_arg_null() );
    }
 
    if (setup->fb->zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         lp_bin_everywhere( bins, 
+         lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_zstencil, 
                             setup->clear.zstencil );
       else
-         lp_bin_everywhere( bins,
+         lp_scene_bin_everywhere( scene,
                             lp_rast_load_zstencil,
                             lp_rast_arg_null() );
    }
@@ -189,7 +189,7 @@ execute_clears( struct setup_context *setup )
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    begin_binning( setup );
-   lp_setup_rasterize_bins( setup, TRUE );
+   lp_setup_rasterize_scene( setup, TRUE );
 }
 
 
@@ -220,7 +220,7 @@ set_state( struct setup_context *setup,
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
-         lp_setup_rasterize_bins( setup, TRUE );
+         lp_setup_rasterize_scene( setup, TRUE );
       break;
    }
 
@@ -242,7 +242,7 @@ void
 lp_setup_bind_framebuffer( struct setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -250,7 +250,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    setup->fb = fb;
 
-   lp_bin_set_framebuffer_size(bins, setup->fb->width, setup->fb->height);
+   lp_scene_set_framebuffer_size(scene, setup->fb->width, setup->fb->height);
 }
 
 
@@ -261,7 +261,7 @@ lp_setup_clear( struct setup_context *setup,
                 unsigned stencil,
                 unsigned flags )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
    unsigned i;
 
    LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
@@ -280,19 +280,19 @@ lp_setup_clear( struct setup_context *setup,
    }
 
    if (setup->state == SETUP_ACTIVE) {
-      /* Add the clear to existing bins.  In the unusual case where
+      /* Add the clear to existing scene.  In the unusual case where
        * both color and depth-stencil are being cleared when there's
        * already been some rendering, we could discard the currently
        * binned scene and start again, but I don't see that as being
        * a common usage.
        */
       if (flags & PIPE_CLEAR_COLOR)
-         lp_bin_everywhere( bins, 
+         lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_color, 
                             setup->clear.color );
 
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
-         lp_bin_everywhere( bins, 
+         lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_zstencil, 
                             setup->clear.zstencil );
    }
@@ -315,8 +315,8 @@ lp_setup_clear( struct setup_context *setup,
 struct pipe_fence_handle *
 lp_setup_fence( struct setup_context *setup )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
-   const unsigned rank = lp_bin_get_num_bins( bins );
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
    struct lp_fence *fence = lp_fence_create(rank);
 
    LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
@@ -324,9 +324,9 @@ lp_setup_fence( struct setup_context *setup )
    set_state( setup, SETUP_ACTIVE );
 
    /* insert the fence into all command bins */
-   lp_bin_everywhere( bins,
-                      lp_rast_fence,
-                      lp_rast_arg_fence(fence) );
+   lp_scene_bin_everywhere( scene,
+			    lp_rast_fence,
+			    lp_rast_arg_fence(fence) );
 
    return (struct pipe_fence_handle *) fence;
 }
@@ -455,7 +455,7 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 static INLINE void
 lp_setup_update_shader_state( struct setup_context *setup )
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -465,7 +465,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
       uint8_t *stored;
       unsigned i, j;
 
-      stored = lp_bin_alloc_aligned(bins, 4 * 16, 16);
+      stored = lp_scene_alloc_aligned(scene, 4 * 16, 16);
 
       /* smear each blend color component across 16 ubyte elements */
       for (i = 0; i < 4; ++i) {
@@ -497,7 +497,7 @@ lp_setup_update_shader_state( struct setup_context *setup )
                    current_size) != 0) {
             void *stored;
 
-            stored = lp_bin_alloc(bins, current_size);
+            stored = lp_scene_alloc(scene, current_size);
             if(stored) {
                memcpy(stored,
                       current_data,
@@ -522,12 +522,12 @@ lp_setup_update_shader_state( struct setup_context *setup )
          memcmp(setup->fs.stored,
                 &setup->fs.current,
                 sizeof setup->fs.current) != 0) {
-         /* The fs state that's been stored in the bins is different from
+         /* The fs state that's been stored in the scene is different from
           * the new, current state.  So allocate a new lp_rast_state object
           * and append it to the bin's setup data buffer.
           */
          struct lp_rast_state *stored =
-            (struct lp_rast_state *) lp_bin_alloc(bins, sizeof *stored);
+            (struct lp_rast_state *) lp_scene_alloc(scene, sizeof *stored);
          if(stored) {
             memcpy(stored,
                    &setup->fs.current,
@@ -535,9 +535,9 @@ lp_setup_update_shader_state( struct setup_context *setup )
             setup->fs.stored = stored;
 
             /* put the state-set command into all bins */
-            lp_bin_state_command( bins,
-                                  lp_rast_set_state, 
-                                  lp_rast_arg_state(setup->fs.stored) );
+            lp_scene_bin_state_command( scene,
+					lp_rast_set_state, 
+					lp_rast_arg_state(setup->fs.stored) );
          }
       }
    }
@@ -587,12 +587,12 @@ lp_setup_destroy( struct setup_context *setup )
 
    pipe_buffer_reference(&setup->constants.current, NULL);
 
-   /* free the bins in the 'empty' queue */
-   while (lp_bins_queue_count(setup->empty_bins) > 0) {
-      struct lp_bins *bins = lp_bins_dequeue(setup->empty_bins);
-      if (!bins)
+   /* free the scenes in the 'empty' queue */
+   while (lp_scene_queue_count(setup->empty_scenes) > 0) {
+      struct lp_scene *scene = lp_scene_dequeue(setup->empty_scenes);
+      if (!scene)
          break;
-      lp_bins_destroy(bins);
+      lp_scene_destroy(scene);
    }
 
    lp_rast_destroy( setup->rast );
@@ -614,18 +614,18 @@ lp_setup_create( struct pipe_screen *screen )
    if (!setup)
       return NULL;
 
-   setup->empty_bins = lp_bins_queue_create();
-   if (!setup->empty_bins)
+   setup->empty_scenes = lp_scene_queue_create();
+   if (!setup->empty_scenes)
       goto fail;
 
-   setup->rast = lp_rast_create( screen, setup->empty_bins );
+   setup->rast = lp_rast_create( screen, setup->empty_scenes );
    if (!setup->rast) 
       goto fail;
 
-   /* create some empty bins */
-   for (i = 0; i < MAX_BINS; i++) {
-      struct lp_bins *bins = lp_bins_create();
-      lp_bins_enqueue(setup->empty_bins, bins);
+   /* create some empty scenes */
+   for (i = 0; i < MAX_SCENES; i++) {
+      struct lp_scene *scene = lp_scene_create();
+      lp_scene_enqueue(setup->empty_scenes, scene);
    }
 
    setup->triangle = first_triangle;
@@ -637,8 +637,8 @@ lp_setup_create( struct pipe_screen *screen )
    return setup;
 
 fail:
-   if (setup->empty_bins)
-      lp_bins_queue_destroy(setup->empty_bins);
+   if (setup->empty_scenes)
+      lp_scene_queue_destroy(setup->empty_scenes);
 
    FREE(setup);
    return NULL;

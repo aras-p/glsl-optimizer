@@ -42,8 +42,8 @@
 
 
 struct lp_rasterizer;
-struct lp_bins;
-struct lp_bins_queue;
+struct lp_scene;
+struct lp_scene_queue;
 struct lp_fence;
 struct cmd_bin;
 struct pipe_screen;
@@ -130,16 +130,16 @@ struct lp_rast_triangle {
 
 
 struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen,
-                                      struct lp_bins_queue *empty );
+                                      struct lp_scene_queue *empty );
 
 void lp_rast_destroy( struct lp_rasterizer * );
 
 unsigned lp_rast_get_num_threads( struct lp_rasterizer * );
 
-void lp_rasterize_bins( struct lp_rasterizer *rast,
-                        struct lp_bins *bins,
-                        const struct pipe_framebuffer_state *fb,
-                        bool write_depth );
+void lp_rasterize_scene( struct lp_rasterizer *rast,
+			 struct lp_scene *scene,
+			 const struct pipe_framebuffer_state *fb,
+			 bool write_depth );
 
 
 

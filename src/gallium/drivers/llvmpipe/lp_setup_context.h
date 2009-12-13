@@ -38,7 +38,7 @@
 #include "lp_setup.h"
 #include "lp_rast.h"
 #include "lp_tile_soa.h"        /* for TILE_SIZE */
-#include "lp_bin.h"
+#include "lp_scene.h"
 
 
 #define LP_SETUP_NEW_FS          0x01
@@ -46,7 +46,7 @@
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
 
 
-struct lp_bins_queue;
+struct lp_scene_queue;
 
 
 /**
@@ -59,8 +59,8 @@ struct setup_context {
    struct lp_rasterizer *rast;
 
 
-   struct lp_bins *bins;               /**< current bins */
-   struct lp_bins_queue *empty_bins;   /**< queue of empty bins */
+   struct lp_scene *scene;               /**< current scene */
+   struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
 
    boolean ccw_is_frontface;
    unsigned cullmode;
@@ -83,7 +83,7 @@ struct setup_context {
       struct lp_shader_input input[PIPE_MAX_ATTRIBS];
       unsigned nr_inputs;
 
-      const struct lp_rast_state *stored; /**< what's in the bins */
+      const struct lp_rast_state *stored; /**< what's in the scene */
       struct lp_rast_state current;  /**< currently set state */
    } fs;
 
@@ -118,6 +118,6 @@ void lp_setup_choose_triangle( struct setup_context *setup );
 void lp_setup_choose_line( struct setup_context *setup );
 void lp_setup_choose_point( struct setup_context *setup );
 
-struct lp_bins *lp_setup_get_current_bins(struct setup_context *setup);
+struct lp_scene *lp_setup_get_current_scene(struct setup_context *setup);
 
 #endif

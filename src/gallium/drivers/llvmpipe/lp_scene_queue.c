@@ -27,30 +27,30 @@
 
 
 /**
- * Bin queue.  We'll use two queues.  One contains "full" bins which
- * are produced by the "setup" code.  The other contains "empty" bins
- * which are produced by the "rast" code when it finishes rendering a bin.
+ * Scene queue.  We'll use two queues.  One contains "full" scenes which
+ * are produced by the "setup" code.  The other contains "empty" scenes
+ * which are produced by the "rast" code when it finishes rendering a scene.
  */
 
 
 #include "pipe/p_thread.h"
 #include "util/u_memory.h"
-#include "lp_bin_queue.h"
+#include "lp_scene_queue.h"
 
 
 
-#define MAX_BINS 4
+#define MAX_SCENE_QUEUE 4
 
 
 /**
- * A queue of bins
+ * A queue of scenes
  */
-struct lp_bins_queue
+struct lp_scene_queue
 {
    /** XXX might use a linked list here somedone, but the list will
     * probably always be pretty short.
     */
-   struct lp_bins *bins[MAX_BINS];
+   struct lp_scene *scenes[MAX_SCENE_QUEUE];
    unsigned count;
 
    pipe_condvar count_change;
@@ -59,11 +59,11 @@ struct lp_bins_queue
 
 
 
-/** Allocate a new bins queue */
-struct lp_bins_queue *
-lp_bins_queue_create(void)
+/** Allocate a new scene queue */
+struct lp_scene_queue *
+lp_scene_queue_create(void)
 {
-   struct lp_bins_queue *queue = CALLOC_STRUCT(lp_bins_queue);
+   struct lp_scene_queue *queue = CALLOC_STRUCT(lp_scene_queue);
    if (queue) {
       pipe_condvar_init(queue->count_change);
       pipe_mutex_init(queue->mutex);
@@ -72,20 +72,20 @@ lp_bins_queue_create(void)
 }
 
 
-/** Delete a new bins queue */
+/** Delete a scene queue */
 void
-lp_bins_queue_destroy(struct lp_bins_queue *queue)
+lp_scene_queue_destroy(struct lp_scene_queue *queue)
 {
    pipe_condvar_destroy(queue->count_change);
    pipe_mutex_destroy(queue->mutex);
 }
 
 
-/** Remove first lp_bins from head of queue */
-struct lp_bins *
-lp_bins_dequeue(struct lp_bins_queue *queue)
+/** Remove first lp_scene from head of queue */
+struct lp_scene *
+lp_scene_dequeue(struct lp_scene_queue *queue)
 {
-   struct lp_bins *bins;
+   struct lp_scene *scene;
    unsigned i;
 
    pipe_mutex_lock(queue->mutex);
@@ -96,11 +96,11 @@ lp_bins_dequeue(struct lp_bins_queue *queue)
    assert(queue->count >= 1);
 
    /* get head */
-   bins = queue->bins[0];
+   scene = queue->scenes[0];
 
    /* shift entries */
    for (i = 0; i < queue->count - 1; i++) {
-      queue->bins[i] = queue->bins[i + 1];
+      queue->scenes[i] = queue->scenes[i + 1];
    }
 
    queue->count--;
@@ -110,28 +110,28 @@ lp_bins_dequeue(struct lp_bins_queue *queue)
 
    pipe_mutex_unlock(queue->mutex);
 
-   return bins;
+   return scene;
 }
 
 
-/** Add an lp_bins to tail of queue */
+/** Add an lp_scene to tail of queue */
 void
-lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins)
+lp_scene_enqueue(struct lp_scene_queue *queue, struct lp_scene *scene)
 {
    pipe_mutex_lock(queue->mutex);
 
-   assert(queue->count < MAX_BINS);
+   assert(queue->count < MAX_SCENE_QUEUE);
 
-   /* debug: check that bins is not already in the queue */
+   /* debug: check that scene is not already in the queue */
    if (0) {
       unsigned i;
       for (i = 0; i < queue->count; i++) {
-         assert(queue->bins[i] != bins);
+         assert(queue->scenes[i] != scene);
       }
    }
 
    /* add to end */
-   queue->bins[queue->count++] = bins;
+   queue->scenes[queue->count++] = scene;
 
    /* signal size change */
    pipe_condvar_signal(queue->count_change);
@@ -142,7 +142,7 @@ lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins)
 
 /** Return number of entries in the queue */
 unsigned
-lp_bins_queue_count(struct lp_bins_queue *queue)
+lp_scene_queue_count(struct lp_scene_queue *queue)
 {
    unsigned count;
    pipe_mutex_lock(queue->mutex);
@@ -154,7 +154,7 @@ lp_bins_queue_count(struct lp_bins_queue *queue)
 
 /** Wait until the queue has exactly 'count' entries */
 void
-lp_bins_queue_wait_count(struct lp_bins_queue *queue, unsigned count)
+lp_scene_queue_wait_count(struct lp_scene_queue *queue, unsigned count)
 {
    pipe_mutex_lock(queue->mutex);
    while (queue->count != count) {

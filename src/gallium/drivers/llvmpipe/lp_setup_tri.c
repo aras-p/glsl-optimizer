@@ -178,7 +178,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
 				    const float (*v3)[4],
 				    boolean frontface)
 {
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
    unsigned slot;
 
    /* Allocate space for the a0, dadx and dady arrays
@@ -186,9 +186,9 @@ static void setup_tri_coefficients( struct setup_context *setup,
    {
       unsigned bytes;
       bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
-      tri->inputs.a0   = lp_bin_alloc_aligned( bins, bytes, 16 );
-      tri->inputs.dadx = lp_bin_alloc_aligned( bins, bytes, 16 );
-      tri->inputs.dady = lp_bin_alloc_aligned( bins, bytes, 16 );
+      tri->inputs.a0   = lp_scene_alloc_aligned( scene, bytes, 16 );
+      tri->inputs.dadx = lp_scene_alloc_aligned( scene, bytes, 16 );
+      tri->inputs.dady = lp_scene_alloc_aligned( scene, bytes, 16 );
    }
 
    /* The internal position input is in slot zero:
@@ -246,8 +246,8 @@ static inline int subpixel_snap( float a )
 
 /**
  * Do basic setup for triangle rasterization and determine which
- * framebuffer tiles are touched.  Put the triangle in the bins for the
- * tiles which we overlap.
+ * framebuffer tiles are touched.  Put the triangle in the scene's
+ * bins for the tiles which we overlap.
  */
 static void 
 do_triangle_ccw(struct setup_context *setup,
@@ -264,8 +264,8 @@ do_triangle_ccw(struct setup_context *setup,
    const int y2 = subpixel_snap(v2[0][1]);
    const int y3 = subpixel_snap(v3[0][1]);
 
-   struct lp_bins *bins = lp_setup_get_current_bins(setup);
-   struct lp_rast_triangle *tri = lp_bin_alloc( bins, sizeof *tri );
+   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_rast_triangle *tri = lp_scene_alloc( scene, sizeof *tri );
    float area, oneoverarea;
    int minx, maxx, miny, maxy;
 
@@ -285,7 +285,7 @@ do_triangle_ccw(struct setup_context *setup,
     * XXX: subject to overflow??
     */
    if (area <= 0) {
-      lp_bin_putback_data( bins, sizeof *tri );
+      lp_scene_putback_data( scene, sizeof *tri );
       return;
    }
 
@@ -297,7 +297,7 @@ do_triangle_ccw(struct setup_context *setup,
    
    if (tri->miny == tri->maxy || 
        tri->minx == tri->maxx) {
-      lp_bin_putback_data( bins, sizeof *tri );
+      lp_scene_putback_data( scene, sizeof *tri );
       return;
    }
 
@@ -407,8 +407,8 @@ do_triangle_ccw(struct setup_context *setup,
    {
       /* Triangle is contained in a single tile:
        */
-      lp_bin_command( bins, minx, miny, lp_rast_triangle, 
-                   lp_rast_arg_triangle(tri) );
+      lp_scene_bin_command( scene, minx, miny, lp_rast_triangle, 
+			    lp_rast_arg_triangle(tri) );
    }
    else 
    {
@@ -466,17 +466,17 @@ do_triangle_ccw(struct setup_context *setup,
 	    {
 	       in = 1;
                /* triangle covers the whole tile- shade whole tile */
-               lp_bin_command( bins, x, y,
-                               lp_rast_shade_tile,
-                               lp_rast_arg_inputs(&tri->inputs) );
+               lp_scene_bin_command( scene, x, y,
+				     lp_rast_shade_tile,
+				     lp_rast_arg_inputs(&tri->inputs) );
 	    }
 	    else 
 	    { 
 	       in = 1;
                /* shade partial tile */
-               lp_bin_command( bins, x, y,
-                               lp_rast_triangle, 
-                               lp_rast_arg_triangle(tri) );
+               lp_scene_bin_command( scene, x, y,
+				     lp_rast_triangle, 
+				     lp_rast_arg_triangle(tri) );
 	    }
 
 	    /* Iterate cx values across the region:

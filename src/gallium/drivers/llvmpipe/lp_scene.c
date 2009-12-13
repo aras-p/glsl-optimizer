@@ -27,58 +27,58 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "lp_bin.h"
+#include "lp_scene.h"
 
 
-struct lp_bins *
-lp_bins_create(void)
+struct lp_scene *
+lp_scene_create(void)
 {
-   struct lp_bins *bins = CALLOC_STRUCT(lp_bins);
-   if (bins)
-      lp_init_bins(bins);
-   return bins;
+   struct lp_scene *scene = CALLOC_STRUCT(lp_scene);
+   if (scene)
+      lp_scene_init(scene);
+   return scene;
 }
 
 
 void
-lp_bins_destroy(struct lp_bins *bins)
+lp_scene_destroy(struct lp_scene *scene)
 {
-   lp_reset_bins(bins);
-   lp_free_bin_data(bins);
-   FREE(bins);
+   lp_scene_reset(scene);
+   lp_scene_free_bin_data(scene);
+   FREE(scene);
 }
 
 
 void
-lp_init_bins(struct lp_bins *bins)
+lp_scene_init(struct lp_scene *scene)
 {
    unsigned i, j;
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++) {
-         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
          bin->commands.head = bin->commands.tail = CALLOC_STRUCT(cmd_block);
       }
 
-   bins->data.head =
-      bins->data.tail = CALLOC_STRUCT(data_block);
+   scene->data.head =
+      scene->data.tail = CALLOC_STRUCT(data_block);
 
-   pipe_mutex_init(bins->mutex);
+   pipe_mutex_init(scene->mutex);
 }
 
 
 /**
- * Set bins to empty state.
+ * Set scene to empty state.
  */
 void
-lp_reset_bins(struct lp_bins *bins )
+lp_scene_reset(struct lp_scene *scene )
 {
    unsigned i, j;
 
    /* Free all but last binner command lists:
     */
-   for (i = 0; i < bins->tiles_x; i++) {
-      for (j = 0; j < bins->tiles_y; j++) {
-         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+   for (i = 0; i < scene->tiles_x; i++) {
+      for (j = 0; j < scene->tiles_y; j++) {
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
          struct cmd_block_list *list = &bin->commands;
          struct cmd_block *block;
          struct cmd_block *tmp;
@@ -97,7 +97,7 @@ lp_reset_bins(struct lp_bins *bins )
    /* Free all but last binned data block:
     */
    {
-      struct data_block_list *list = &bins->data;
+      struct data_block_list *list = &scene->data;
       struct data_block *block, *tmp;
 
       for (block = list->head; block != list->tail; block = tmp) {
@@ -113,36 +113,36 @@ lp_reset_bins(struct lp_bins *bins )
 
 
 /**
- * Free all data associated with the given bin, but don't free(bins).
+ * Free all data associated with the given bin, but don't free(scene).
  */
 void
-lp_free_bin_data(struct lp_bins *bins)
+lp_scene_free_bin_data(struct lp_scene *scene)
 {
    unsigned i, j;
 
    for (i = 0; i < TILES_X; i++)
       for (j = 0; j < TILES_Y; j++) {
-         struct cmd_bin *bin = lp_get_bin(bins, i, j);
-         /* lp_reset_bins() should have been already called */
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
+         /* lp_reset_scene() should have been already called */
          assert(bin->commands.head == bin->commands.tail);
          FREE(bin->commands.head);
          bin->commands.head = NULL;
          bin->commands.tail = NULL;
       }
 
-   FREE(bins->data.head);
-   bins->data.head = NULL;
+   FREE(scene->data.head);
+   scene->data.head = NULL;
 
-   pipe_mutex_destroy(bins->mutex);
+   pipe_mutex_destroy(scene->mutex);
 }
 
 
 void
-lp_bin_set_framebuffer_size( struct lp_bins *bins,
+lp_scene_set_framebuffer_size( struct lp_scene *scene,
                              unsigned width, unsigned height )
 {
-   bins->tiles_x = align(width, TILE_SIZE) / TILE_SIZE;
-   bins->tiles_y = align(height, TILE_SIZE) / TILE_SIZE;
+   scene->tiles_x = align(width, TILE_SIZE) / TILE_SIZE;
+   scene->tiles_y = align(height, TILE_SIZE) / TILE_SIZE;
 }
 
 
@@ -168,24 +168,24 @@ lp_bin_new_data_block( struct data_block_list *list )
 }
 
 
-/** Return number of bytes used for bin data */
+/** Return number of bytes used for all bin data within a scene */
 unsigned
-lp_bin_data_size( const struct lp_bins *bins )
+lp_scene_data_size( const struct lp_scene *scene )
 {
    unsigned size = 0;
    const struct data_block *block;
-   for (block = bins->data.head; block; block = block->next) {
+   for (block = scene->data.head; block; block = block->next) {
       size += block->used;
    }
    return size;
 }
 
 
-/** Return number of bytes used for a tile bin */
+/** Return number of bytes used for a single bin */
 unsigned
-lp_bin_cmd_size( const struct lp_bins *bins, unsigned x, unsigned y )
+lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
 {
-   struct cmd_bin *bin = lp_get_bin((struct lp_bins *) bins, x, y);
+   struct cmd_bin *bin = lp_scene_get_bin((struct lp_scene *) scene, x, y);
    const struct cmd_block *cmd;
    unsigned size = 0;
    for (cmd = bin->commands.head; cmd; cmd = cmd->next) {
@@ -232,20 +232,20 @@ lp_replace_last_command_arg( struct cmd_bin *bin,
  * command, we can simply replace that one with the new one.
  */
 void
-lp_bin_state_command( struct lp_bins *bins,
+lp_scene_bin_state_command( struct lp_scene *scene,
                       lp_rast_cmd cmd,
                       const union lp_rast_cmd_arg arg )
 {
    unsigned i, j;
-   for (i = 0; i < bins->tiles_x; i++) {
-      for (j = 0; j < bins->tiles_y; j++) {
-         struct cmd_bin *bin = lp_get_bin(bins, i, j);
+   for (i = 0; i < scene->tiles_x; i++) {
+      for (j = 0; j < scene->tiles_y; j++) {
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
          lp_rast_cmd last_cmd = lp_get_last_command(bin);
          if (last_cmd == cmd) {
             lp_replace_last_command_arg(bin, arg);
          }
          else {
-            lp_bin_command( bins, i, j, cmd, arg );
+            lp_scene_bin_command( scene, i, j, cmd, arg );
          }
       }
    }
@@ -254,14 +254,14 @@ lp_bin_state_command( struct lp_bins *bins,
 
 /** advance curr_x,y to the next bin */
 static boolean
-next_bin(struct lp_bins *bins)
+next_bin(struct lp_scene *scene)
 {
-   bins->curr_x++;
-   if (bins->curr_x >= bins->tiles_x) {
-      bins->curr_x = 0;
-      bins->curr_y++;
+   scene->curr_x++;
+   if (scene->curr_x >= scene->tiles_x) {
+      scene->curr_x = 0;
+      scene->curr_y++;
    }
-   if (bins->curr_y >= bins->tiles_y) {
+   if (scene->curr_y >= scene->tiles_y) {
       /* no more bins */
       return FALSE;
    }
@@ -270,41 +270,41 @@ next_bin(struct lp_bins *bins)
 
 
 void
-lp_bin_iter_begin( struct lp_bins *bins )
+lp_scene_bin_iter_begin( struct lp_scene *scene )
 {
-   bins->curr_x = bins->curr_y = -1;
+   scene->curr_x = scene->curr_y = -1;
 }
 
 
 /**
  * Return point to next bin to be rendered.
- * The lp_bins::curr_x and ::curr_y fields will be advanced.
+ * The lp_scene::curr_x and ::curr_y fields will be advanced.
  * Multiple rendering threads will call this function to get a chunk
  * of work (a bin) to work on.
  */
 struct cmd_bin *
-lp_bin_iter_next( struct lp_bins *bins, int *bin_x, int *bin_y )
+lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y )
 {
    struct cmd_bin *bin = NULL;
 
-   pipe_mutex_lock(bins->mutex);
+   pipe_mutex_lock(scene->mutex);
 
-   if (bins->curr_x < 0) {
+   if (scene->curr_x < 0) {
       /* first bin */
-      bins->curr_x = 0;
-      bins->curr_y = 0;
+      scene->curr_x = 0;
+      scene->curr_y = 0;
    }
-   else if (!next_bin(bins)) {
+   else if (!next_bin(scene)) {
       /* no more bins left */
       goto end;
    }
 
-   bin = lp_get_bin(bins, bins->curr_x, bins->curr_y);
-   *bin_x = bins->curr_x;
-   *bin_y = bins->curr_y;
+   bin = lp_scene_get_bin(scene, scene->curr_x, scene->curr_y);
+   *bin_x = scene->curr_x;
+   *bin_y = scene->curr_y;
 
 end:
    /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/
-   pipe_mutex_unlock(bins->mutex);
+   pipe_mutex_unlock(scene->mutex);
    return bin;
 }

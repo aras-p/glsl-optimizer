@@ -26,30 +26,30 @@
  **************************************************************************/
 
 
-#ifndef LP_BIN_QUEUE
-#define LP_BIN_QUEUE
+#ifndef LP_SCENE_QUEUE
+#define LP_SCENE_QUEUE
 
-struct lp_bin_queue;
-struct lp_bins;
+struct lp_scene_queue;
+struct lp_scene;
 
 
-struct lp_bins_queue *
-lp_bins_queue_create(void);
-
-void
-lp_bins_queue_destroy(struct lp_bins_queue *queue);
-
-struct lp_bins *
-lp_bins_dequeue(struct lp_bins_queue *queue);
+struct lp_scene_queue *
+lp_scene_queue_create(void);
 
 void
-lp_bins_enqueue(struct lp_bins_queue *queue, struct lp_bins *bins);
+lp_scene_queue_destroy(struct lp_scene_queue *queue);
+
+struct lp_scene *
+lp_scene_dequeue(struct lp_scene_queue *queue);
+
+void
+lp_scene_enqueue(struct lp_scene_queue *queue, struct lp_scene *bins);
 
 unsigned
-lp_bins_queue_count(struct lp_bins_queue *queue);
+lp_scene_queue_count(struct lp_scene_queue *queue);
 
 void
-lp_bins_queue_wait_count(struct lp_bins_queue *queue, unsigned size);
+lp_scene_queue_wait_count(struct lp_scene_queue *queue, unsigned size);
 
 
 #endif /* LP_BIN_QUEUE */

@@ -110,13 +110,13 @@ struct lp_rasterizer
       char clear_stencil;
    } state;
 
-   /** The incoming queue of filled bins to rasterize */
-   struct lp_bins_queue *full_bins;
-   /** The outgoing queue of emptied bins to return to setup modulee */
-   struct lp_bins_queue *empty_bins;
+   /** The incoming queue of scenes ready to rasterize */
+   struct lp_scene_queue *full_scenes;
+   /** The outgoing queue of processed scenes to return to setup modulee */
+   struct lp_scene_queue *empty_scenes;
 
-   /** The bins currently being rasterized by the threads */
-   struct lp_bins *curr_bins;
+   /** The scene currently being rasterized by the threads */
+   struct lp_scene *curr_scene;
 
    /** A task object for each rasterization thread */
    struct lp_rasterizer_task tasks[MAX_THREADS];
