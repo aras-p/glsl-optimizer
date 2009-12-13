@@ -119,20 +119,6 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 	}
 }
 
-static INLINE unsigned
-get_zslice_offset(unsigned tile_mode, unsigned z, unsigned pitch, unsigned ny)
-{
-	unsigned tile_h = get_tile_height(tile_mode);
-	unsigned tile_d = get_tile_depth(tile_mode);
-
-	/* pitch_2d == to next slice within this volume-tile */
-	/* pitch_3d == to next slice in next 2D array of blocks */
-	unsigned pitch_2d = tile_h * 64;
-	unsigned pitch_3d = tile_d * align(ny, tile_h) * pitch;
-
-	return (z % tile_d) * pitch_2d + (z / tile_d) * pitch_3d;
-}
-
 static struct pipe_transfer *
 nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		  unsigned face, unsigned level, unsigned zslice,
