@@ -358,7 +358,7 @@ static void
 kill_temp_temp(struct nv50_pc *pc)
 {
 	int i;
-	
+
 	for (i = 0; i < pc->temp_temp_nr; i++)
 		free_temp(pc, pc->temp_temp[i]);
 	pc->temp_temp_nr = 0;
@@ -373,7 +373,20 @@ ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
 	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
 	pc->immd_buf[(pc->immd_nr * 4) + 3] = w;
-	
+
+	return pc->immd_nr++;
+}
+
+static int
+ctor_immd_4u32(struct nv50_pc *pc, uint32_t x, uint32_t y, uint32_t z, uint32_t w)
+{
+	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(uint32_t)),
+			       (pc->immd_nr + 1) * 4 * sizeof(uint32_t));
+	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
+	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
+	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
+	pc->immd_buf[(pc->immd_nr * 4) + 3] = w;
+
 	return pc->immd_nr++;
 }
 
