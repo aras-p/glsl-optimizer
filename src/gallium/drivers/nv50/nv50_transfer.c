@@ -16,6 +16,7 @@ struct nv50_transfer {
 	int level_depth;
 	int level_x;
 	int level_y;
+	int level_z;
 	unsigned nblocksx;
 	unsigned nblocksy;
 };
@@ -24,10 +25,10 @@ static void
 nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			struct nouveau_bo *src_bo, unsigned src_offset,
 			int src_pitch, unsigned src_tile_mode,
-			int sx, int sy, int sw, int sh, int sd,
+			int sx, int sy, int sz, int sw, int sh, int sd,
 			struct nouveau_bo *dst_bo, unsigned dst_offset,
 			int dst_pitch, unsigned dst_tile_mode,
-			int dx, int dy, int dw, int dh, int dd,
+			int dx, int dy, int dz, int dw, int dh, int dd,
 			int cpp, int width, int height,
 			unsigned src_reloc, unsigned dst_reloc)
 {
@@ -56,7 +57,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RING  (chan, sw * cpp);
 		OUT_RING  (chan, sh);
 		OUT_RING  (chan, sd);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, sz); /* copying only 1 zslice per call */
 	}
 
 	if (!dst_bo->tile_flags) {
@@ -75,7 +76,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RING  (chan, dw * cpp);
 		OUT_RING  (chan, dh);
 		OUT_RING  (chan, dd);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, dz); /* copying only 1 zslice per call */
 	}
 
 	while (height) {
@@ -166,6 +167,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->level_depth = u_minify(mt->base.base.depth0, level);
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
+	tx->level_z = zslice;
 	tx->level_x = pf_get_nblocksx(pt->format, x);
 	tx->level_y = pf_get_nblocksy(pt->format, y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
@@ -175,23 +177,18 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	}
 
-	if (pt->target == PIPE_TEXTURE_3D)
-		tx->level_offset += get_zslice_offset(lvl->tile_mode, zslice,
-						      lvl->pitch,
-						      tx->nblocksy);
-
 	if (usage & PIPE_TRANSFER_READ) {
 		nx = pf_get_nblocksx(pt->format, tx->base.width);
 		ny = pf_get_nblocksy(pt->format, tx->base.height);
 
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					x, y,
+					x, y, zslice,
 					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
 					tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
-					0, 0,
+					0, 0, 0,
 					tx->nblocksx, tx->nblocksy, 1,
 					pf_get_blocksize(pt->format), nx, ny,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
@@ -216,11 +213,11 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
-					0, 0,
+					0, 0, 0,
 					tx->nblocksx, tx->nblocksy, 1,
 					mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					tx->level_x, tx->level_y,
+					tx->level_x, tx->level_y, tx->level_z,
 					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
 					pf_get_blocksize(pt->format), nx, ny,
