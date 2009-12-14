@@ -273,11 +273,17 @@ vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     XF86VideoAdaptorPtr *overlayAdaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
     int numAdaptors;
+    unsigned int ntot, nfree;
 
     debug_printf("%s: enter\n", __func__);
 
-    if (vmw_ioctl_supports_overlay(vmw) != 0) {
-        debug_printf("No overlay ioctl support\n");
+    if (vmw_ioctl_num_streams(vmw, &ntot, &nfree) != 0) {
+        debug_printf("No stream ioctl support\n");
+        return FALSE;
+    }
+
+    if (nfree == 0) {
+        debug_printf("No free streams\n");
         return FALSE;
     }
 
@@ -353,6 +359,7 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
 	/* make sure the port is stoped as well */
 	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
+	vmw_ioctl_unref_stream(vmw, video->port[i].streamId);
     }
 
     /* XXX: I'm sure this function is missing code for turning off Xv */
@@ -448,7 +455,7 @@ vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     adaptor->pPortPrivates = video->port_ptr;
 
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
-        video->port[i].streamId = i;
+        vmw_ioctl_claim_stream(vmw, &video->port[i].streamId);
         video->port[i].play = vmw_video_port_init;
         video->port[i].flags = SVGA_VIDEO_FLAG_COLORKEY;
         video->port[i].colorKey = VMWARE_VIDEO_COLORKEY;

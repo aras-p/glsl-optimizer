@@ -46,6 +46,8 @@
 #define DRM_VMW_FENCE_WAIT           12
 #define DRM_VMW_OVERLAY              13
 #define DRM_VMW_CURSOR_BYPASS        14
+#define DRM_VMW_CLAIM_STREAM         15
+#define DRM_VMW_UNREF_STREAM         16
 
 /*************************************************************************/
 /**
@@ -59,9 +61,11 @@
  * Does the driver support the overlay ioctl.
  */
 
-#define DRM_VMW_PARAM_FIFO_OFFSET    0
-#define DRM_VMW_PARAM_OVERLAY_IOCTL  1
-#define DRM_VMW_PARAM_3D             2
+#define DRM_VMW_PARAM_FIFO_OFFSET      0
+#define DRM_VMW_PARAM_OVERLAY_IOCTL    1
+#define DRM_VMW_PARAM_3D               2
+#define DRM_VMW_PARAM_NUM_STREAMS      3
+#define DRM_VMW_PARAM_NUM_FREE_STREAMS 4
 
 /**
  * struct drm_vmw_getparam_arg
@@ -536,5 +540,32 @@ struct drm_vmw_cursor_bypass_arg {
 	int32_t xhot;
 	int32_t yhot;
 };
+
+/*************************************************************************/
+/**
+ * DRM_VMW_CLAIM_STREAM - Claim a single stream.
+ */
+
+/**
+ * struct drm_vmw_context_arg
+ *
+ * @stream_id: Device unique context ID.
+ *
+ * Output argument to the DRM_VMW_CREATE_CONTEXT Ioctl.
+ * Input argument to the DRM_VMW_UNREF_CONTEXT Ioctl.
+ */
+
+struct drm_vmw_stream_arg {
+	uint32_t stream_id;
+	uint32_t pad64;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_UNREF_STREAM - Unclaim a stream.
+ *
+ * Return a single stream that was claimed by this process. Also makes
+ * sure that the stream has been stopped.
+ */
 
 #endif
