@@ -101,6 +101,9 @@ draw_create_vertex_shader(struct draw_context *draw,
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
              vs->info.output_semantic_index[i] == 0)
             vs->position_output = i;
+         else if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_EDGEFLAG &&
+             vs->info.output_semantic_index[i] == 0)
+            vs->edgeflag_output = i;
       }
    }
 
@@ -120,6 +123,7 @@ draw_bind_vertex_shader(struct draw_context *draw,
       draw->vs.vertex_shader = dvs;
       draw->vs.num_vs_outputs = dvs->info.num_outputs;
       draw->vs.position_output = dvs->position_output;
+      draw->vs.edgeflag_output = dvs->edgeflag_output;
       dvs->prepare( dvs, draw );
    }
    else {

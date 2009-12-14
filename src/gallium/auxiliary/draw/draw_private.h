@@ -182,6 +182,7 @@ struct draw_context
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
       uint position_output;
+      uint edgeflag_output;
 
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;

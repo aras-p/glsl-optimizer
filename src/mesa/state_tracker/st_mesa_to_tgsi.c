@@ -738,11 +738,11 @@ emit_face_var( struct st_translate *t,
  *
  * \return  array of translated tokens, caller's responsibility to free
  */
-const struct tgsi_token *
+enum pipe_error
 st_translate_mesa_program(
    GLcontext *ctx,
-   struct ureg_program *ureg;
    uint procType,
+   struct ureg_program *ureg,
    const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
@@ -755,7 +755,6 @@ st_translate_mesa_program(
    const ubyte outputSemanticIndex[] )
 {
    struct st_translate translate, *t;
-   const struct tgsi_token *tokens = NULL;
    unsigned i;
 
    t = &translate;
@@ -904,16 +903,15 @@ out:
 
    if (t->error) {
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
-      FREE((void *)tokens);
-      tokens = NULL;
    }
 
+/* ???
    if (!tokens) {
       debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
       _mesa_print_program(program);
       debug_assert(0);
    }
-
+*/
    return PIPE_ERROR_OUT_OF_MEMORY;
 }
 

@@ -184,11 +184,3 @@ softpipe_draw_elements(struct pipe_context *pipe,
                                         0, 0xffffffff,
                                         mode, start, count );
 }
-
-
-void
-softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
-{
-   struct softpipe_context *sp = softpipe_context(pipe);
-   draw_set_edgeflags(sp->draw, edgeflags);
-}

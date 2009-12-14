@@ -85,10 +85,9 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    draw_pt_post_vs_prepare( fpme->post_vs,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)(draw->identity_viewport ||
-                                      draw->rasterizer->bypass_vs_clip_and_viewport),
+			    draw->rasterizer->bypass_vs_clip_and_viewport),
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
-                            need_edgeflags );
-			    
+			    (draw->vs.edgeflag_output ? true : false) );    
 
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit, 

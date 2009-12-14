@@ -113,8 +113,8 @@ find_translated_vp(struct st_context *st,
     * the input to the output.  We'll need to use similar logic to set
     * up the extra vertex_element input for edgeflags.
     */
-   key.passthrough_edgeflags = (ctx->Polygon.FrontMode != GL_FILL ||
-                                ctx->Polygon.BackMode != GL_FILL);
+   key.passthrough_edgeflags = (st->ctx->Polygon.FrontMode != GL_FILL ||
+                                st->ctx->Polygon.BackMode != GL_FILL);
       
 
    /* Do we need to throw away old translations after a change in the

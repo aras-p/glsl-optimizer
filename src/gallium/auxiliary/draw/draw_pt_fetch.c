@@ -42,10 +42,10 @@ struct pt_fetch {
    struct translate *translate;
 
    unsigned vertex_size;
-   boolean need_edgeflags;
 
    struct translate_cache *cache;
 };
+
 
 /* Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
@@ -160,11 +160,6 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			count,
 			verts );
 
-   /* Extract edgeflag values from vertex data into the header.
-    */
-   if (fetch->need_edgeflags) {
-      extract_edge_flags( fetch, count );
-   }
 }
 
 
@@ -189,14 +184,6 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
                    start,
                    count,
                    verts );
-
-   /* Extract edgeflag values from vertex data into the header.  XXX:
-    * this should be done after the vertex shader is run.
-    * Bypass-vs-and-clip interaction with pipeline???
-    */
-   if (fetch->need_edgeflags) {
-      extract_edge_flags( fetch, count );
-   }
 }
 
 

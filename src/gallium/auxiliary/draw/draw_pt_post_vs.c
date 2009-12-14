@@ -155,6 +155,7 @@ post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
                                       unsigned count,
                                       unsigned stride )
 {
+   unsigned j;
    if (!post_vs_cliptest_viewport_gl( pvs, vertices, count, stride))
       return FALSE;
 
@@ -170,6 +171,7 @@ post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
          out->edgeflag = (edgeflag[0] != 1.0f);
       }
    }
+   return TRUE;
 }
 
 
@@ -229,7 +231,8 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,
 			      boolean bypass_viewport,
-			      boolean opengl )
+			      boolean opengl,
+			      boolean need_edgeflags )
 {
    if (!need_edgeflags) {
       if (bypass_clipping) {

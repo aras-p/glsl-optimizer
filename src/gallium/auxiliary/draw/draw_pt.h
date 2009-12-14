@@ -212,7 +212,8 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,
 			      boolean bypass_viewport,
-			      boolean opengl );
+			      boolean opengl,
+			      boolean need_edgeflags );
 
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
 
