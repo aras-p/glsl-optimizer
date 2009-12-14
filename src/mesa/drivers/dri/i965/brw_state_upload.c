@@ -145,8 +145,11 @@ const struct brw_tracked_state *gen6_atoms[] =
    /* Command packets:
     */
    &brw_invarient_state,
+#endif
+
    &brw_state_base_address,
 
+#if 0
    &brw_binding_table_pointers,
    &brw_blend_constant_color,
 #endif

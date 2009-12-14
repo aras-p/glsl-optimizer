@@ -559,7 +559,20 @@ static void upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (intel->is_ironlake) {
+   if (intel->gen >= 6) {
+       BEGIN_BATCH(10);
+       OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
+       OUT_BATCH(1); /* General state base address */
+       OUT_BATCH(1); /* Surface state base address */
+       OUT_BATCH(1); /* Dynamic state base address */
+       OUT_BATCH(1); /* Indirect object base address */
+       OUT_BATCH(1); /* Instruction base address */
+       OUT_BATCH(1); /* General state upper bound */
+       OUT_BATCH(1); /* Dynamic state upper bound */
+       OUT_BATCH(1); /* Indirect object upper bound */
+       OUT_BATCH(1); /* Instruction access upper bound */
+       ADVANCE_BATCH();
+   } else if (intel->is_ironlake) {
        BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
