@@ -90,6 +90,11 @@ struct ureg_program
    unsigned vs_inputs[UREG_MAX_INPUT/32];
 
    struct {
+      unsigned index;
+   } gs_input[UREG_MAX_INPUT];
+   unsigned nr_gs_inputs;
+
+   struct {
       unsigned semantic_name;
       unsigned semantic_index;
    } output[UREG_MAX_OUTPUT];
@@ -275,6 +280,22 @@ ureg_DECL_vs_input( struct ureg_program *ureg,
    
    ureg->vs_inputs[index/32] |= 1 << (index % 32);
    return ureg_src_register( TGSI_FILE_INPUT, index );
+}
+
+
+struct ureg_src
+ureg_DECL_gs_input(struct ureg_program *ureg,
+                   unsigned index)
+{
+   if (ureg->nr_gs_inputs < UREG_MAX_INPUT) {
+      ureg->gs_input[ureg->nr_gs_inputs].index = index;
+      ureg->nr_gs_inputs++;
+   } else {
+      set_bad(ureg);
+   }
+
+   /* XXX: Add suport for true 2D input registers. */
+   return ureg_src_register(TGSI_FILE_INPUT, index);
 }
 
 
@@ -964,8 +985,7 @@ static void emit_decls( struct ureg_program *ureg )
             emit_decl_range( ureg, TGSI_FILE_INPUT, i, 1 );
          }
       }
-   }
-   else {
+   } else if (ureg->processor == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < ureg->nr_fs_inputs; i++) {
          emit_decl( ureg, 
                     TGSI_FILE_INPUT, 
@@ -973,6 +993,13 @@ static void emit_decls( struct ureg_program *ureg )
                     ureg->fs_input[i].semantic_name,
                     ureg->fs_input[i].semantic_index,
                     ureg->fs_input[i].interp );
+      }
+   } else {
+      for (i = 0; i < ureg->nr_gs_inputs; i++) {
+         emit_decl_range(ureg, 
+                         TGSI_FILE_INPUT, 
+                         ureg->gs_input[i].index,
+                         1);
       }
    }
 
