@@ -546,7 +546,8 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
 
 GLboolean IsTex(gl_inst_opcode Opcode)
 {
-    if( (OPCODE_TEX==Opcode) || (OPCODE_TXP==Opcode) || (OPCODE_TXB==Opcode) )
+    if( (OPCODE_TEX==Opcode) || (OPCODE_TXP==Opcode) || (OPCODE_TXB==Opcode) ||
+        (OPCODE_DDX==Opcode) || (OPCODE_DDY==Opcode) )
     {
         return GL_TRUE;
     }
@@ -4363,13 +4364,20 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 
     }
 
-    if(pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_TXB)
+    switch(pAsm->pILInst[pAsm->uiCurInst].Opcode)
     {
-        pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
-    }
-    else
-    {
-        pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
+        case OPCODE_DDX:
+            /* will these need WQM(1) on CF inst ? */
+            pAsm->D.dst.opcode = SQ_TEX_INST_GET_GRADIENTS_H;
+            break;
+        case OPCODE_DDY:
+            pAsm->D.dst.opcode = SQ_TEX_INST_GET_GRADIENTS_V;
+            break;
+        case OPCODE_TXB:
+            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
+            break;
+        default:
+            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
     }
 
     pAsm->is_tex = GL_TRUE;
@@ -5682,7 +5690,8 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 }
             }
             break;
-
+        case OPCODE_DDX:
+        case OPCODE_DDY:
         case OPCODE_TEX: 
         case OPCODE_TXB:  
         case OPCODE_TXP: 
