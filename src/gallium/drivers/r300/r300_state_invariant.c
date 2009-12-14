@@ -43,7 +43,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(24 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(20 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
@@ -70,9 +70,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_US_W_FMT, 0x0);
 
     /*** VAP ***/
-    /* Max and min vertex index clamp. */
-    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xffffff);
     /* Sign/normalize control */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
     /* TCL-only stuff */

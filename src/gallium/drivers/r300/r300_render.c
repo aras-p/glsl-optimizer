@@ -82,8 +82,9 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(4);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
+    BEGIN_CS(6);
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300_translate_primitive(mode));
@@ -108,7 +109,8 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     assert((start * indexSize)  % 4 == 0);
     assert(offset_dwords == 0);
 
-    BEGIN_CS(10);
+    BEGIN_CS(12);
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
