@@ -331,7 +331,7 @@ cell_emit_state(struct cell_context *cell)
       const struct draw_context *const draw = cell->draw;
       struct cell_shader_info info;
 
-      info.num_outputs = draw_num_vs_outputs(draw);
+      info.num_outputs = draw_num_shader_outputs(draw);
       info.declarations = (uintptr_t) draw->vs.machine.Declarations;
       info.num_declarations = draw->vs.machine.NumDeclarations;
       info.instructions = (uintptr_t) draw->vs.machine.Instructions;

@@ -191,6 +191,14 @@ struct tgsi_exec_labels
  */
 #define TGSI_EXEC_MAX_CONST_BUFFER  4096
 
+/* The maximum number of vertices per primitive */
+#define TGSI_MAX_PRIM_VERTICES 6
+
+/* The maximum number of primitives to be generated */
+#define TGSI_MAX_PRIMITIVES 64
+
+/* The maximum total number of vertices */
+#define TGSI_MAX_TOTAL_VERTICES (TGSI_MAX_PRIM_VERTICES * TGSI_MAX_PRIMITIVES * PIPE_MAX_ATTRIBS)
 
 /** function call/activation record */
 struct tgsi_call_record
@@ -200,7 +208,6 @@ struct tgsi_call_record
    uint ContStackTop;
    uint ReturnAddr;
 };
-
 
 /**
  * Run-time virtual machine state for executing TGSI shader.
@@ -214,8 +221,8 @@ struct tgsi_exec_machine
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
 
-   struct tgsi_exec_vector       Inputs[PIPE_MAX_ATTRIBS];
-   struct tgsi_exec_vector       Outputs[PIPE_MAX_ATTRIBS];
+   struct tgsi_exec_vector       Inputs[TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS];
+   struct tgsi_exec_vector       Outputs[TGSI_MAX_TOTAL_VERTICES];
 
    struct tgsi_exec_vector       *Addrs;
    struct tgsi_exec_vector       *Predicates;
@@ -229,6 +236,8 @@ struct tgsi_exec_machine
 
    /* GEOMETRY processor only. */
    unsigned                      *Primitives;
+   unsigned                       NumOutputs;
+   unsigned                       MaxGeometryShaderOutputs;
 
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;

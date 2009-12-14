@@ -100,7 +100,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = pvs->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned clipped = 0;
    unsigned j;
 
@@ -190,7 +190,7 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = pvs->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned j;
 
    if (0) debug_printf("%s\n", __FUNCTION__);

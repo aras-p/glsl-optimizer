@@ -48,7 +48,7 @@ static void
 softpipe_map_constant_buffers(struct softpipe_context *sp)
 {
    struct pipe_winsys *ws = sp->pipe.winsys;
-   uint i, size;
+   uint i, vssize, gssize;
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
@@ -57,13 +57,21 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    }
 
    if (sp->constants[PIPE_SHADER_VERTEX].buffer)
-      size = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
+      vssize = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
    else
-      size = 0;
+      vssize = 0;
 
-   draw_set_mapped_constant_buffer(sp->draw,
+   if (sp->constants[PIPE_SHADER_GEOMETRY].buffer)
+      gssize = sp->constants[PIPE_SHADER_GEOMETRY].buffer->size;
+   else
+      gssize = 0;
+
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX,
                                    sp->mapped_constants[PIPE_SHADER_VERTEX],
-                                   size);
+                                   vssize);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_GEOMETRY,
+                                   sp->mapped_constants[PIPE_SHADER_GEOMETRY],
+                                   gssize);
 }
 
 
@@ -78,9 +86,10 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
     */
    draw_flush(sp->draw);
 
-   draw_set_mapped_constant_buffer(sp->draw, NULL, 0);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX, NULL, 0);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_GEOMETRY, NULL, 0);
 
-   for (i = 0; i < 2; i++) {
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
          ws->buffer_unmap(ws, sp->constants[i].buffer);
       sp->mapped_constants[i] = NULL;

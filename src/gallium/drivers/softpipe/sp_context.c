@@ -222,6 +222,10 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
    softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
 
+   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
+   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
+   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
+
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;

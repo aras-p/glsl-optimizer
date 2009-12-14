@@ -32,6 +32,7 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
+#include "draw/draw_gs.h"
 #include "translate/translate.h"
 
 
@@ -119,7 +120,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( fetch_count, 4 );
 
@@ -147,13 +149,21 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_SHADE)
    {
-      shader->run_linear(shader, 
-			 (const float (*)[4])pipeline_verts->data,
-			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
-			 fetch_count,
-			 fpme->vertex_size,
-			 fpme->vertex_size);
+      vshader->run_linear(vshader,
+                          (const float (*)[4])pipeline_verts->data,
+                          (      float (*)[4])pipeline_verts->data,
+                          (const float (*)[4])draw->pt.user.vs_constants,
+                          fetch_count,
+                          fpme->vertex_size,
+                          fpme->vertex_size);
+      if (gshader)
+         draw_geometry_shader_run(gshader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  fetch_count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,
@@ -196,6 +206,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( count, 4 );
 
@@ -226,10 +237,19 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
+			 (const float (*)[4])draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
+
+      if (geometry_shader)
+         draw_geometry_shader_run(geometry_shader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,
@@ -270,6 +290,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( count, 4 );
 
@@ -296,10 +317,19 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
+			 (const float (*)[4])draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
+
+      if (geometry_shader)
+         draw_geometry_shader_run(geometry_shader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,

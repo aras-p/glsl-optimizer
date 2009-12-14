@@ -40,7 +40,8 @@ draw = env.ConvenienceLibrary(
 		'draw_vs_llvm.c',
 		'draw_vs_ppc.c',
 		'draw_vs_sse.c',
-		'draw_vs_varient.c'
+		'draw_vs_varient.c',
+                'draw_gs.c'
 	])
 
 auxiliaries.insert(0, draw)

@@ -791,7 +791,9 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "PSIZE",
    "GENERIC",
    "NORMAL",
-   "FACE"
+   "FACE",
+   "VERTICES_IN",
+   "PRIM_ID"
 };
 
 static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =

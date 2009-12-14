@@ -57,6 +57,7 @@ struct st_context {
    
    void *vs;
    void *fs;
+   void *gs;
 
    struct pipe_texture *default_texture;
    struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];

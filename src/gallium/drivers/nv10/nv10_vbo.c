@@ -45,6 +45,7 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	}
 
 	draw_set_mapped_constant_buffer(draw,
+                                        PIPE_SHADER_VERTEX,
 					nv10->constbuf[PIPE_SHADER_VERTEX],
 					nv10->constbuf_nr[PIPE_SHADER_VERTEX]);
 

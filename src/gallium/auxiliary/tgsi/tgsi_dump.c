@@ -122,7 +122,9 @@ static const char *semantic_names[] =
    "GENERIC",
    "NORMAL",
    "FACE",
-   "EDGEFLAG"
+   "EDGEFLAG",
+   "VERTICES_IN",
+   "PRIM_ID"
 };
 
 static const char *immediate_type_names[] =

@@ -372,6 +372,7 @@ tgsi_exec_machine_create( void )
    memset(mach, 0, sizeof(*mach));
 
    mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
+   mach->MaxGeometryShaderOutputs = TGSI_MAX_TOTAL_VERTICES;
    mach->Predicates = &mach->Temps[TGSI_EXEC_TEMP_P0];
 
    /* Setup constants. */
@@ -1468,6 +1469,15 @@ store_dest(
       index = mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
          + reg->Register.Index;
       dst = &mach->Outputs[offset + index].xyzw[chan_index];
+#if 0
+      if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
+         fprintf(stderr, "STORING OUT[%d] mask(%d), = (", index, execmask);
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (execmask & (1 << i))
+               fprintf(stderr, "%f, ", chan->f[i]);
+         fprintf(stderr, ")\n");
+      }
+#endif
       break;
 
    case TGSI_FILE_TEMPORARY:
@@ -1638,6 +1648,35 @@ exec_kilp(struct tgsi_exec_machine *mach,
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
+static void
+emit_vertex(struct tgsi_exec_machine *mach)
+{
+   /* FIXME: check for exec mask correctly
+   unsigned i;
+   for (i = 0; i < QUAD_SIZE; ++i) {
+         if ((mach->ExecMask & (1 << i)))
+   */
+   if (mach->ExecMask) {
+      mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] += mach->NumOutputs;
+      mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]]++;
+   }
+}
+
+static void
+emit_primitive(struct tgsi_exec_machine *mach)
+{
+   unsigned *prim_count = &mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0];
+   /* FIXME: check for exec mask correctly
+   unsigned i;
+   for (i = 0; i < QUAD_SIZE; ++i) {
+         if ((mach->ExecMask & (1 << i)))
+   */
+   if (mach->ExecMask) {
+      ++(*prim_count);
+      debug_assert((*prim_count * mach->NumOutputs) < mach->MaxGeometryShaderOutputs);
+      mach->Primitives[*prim_count] = 0;
+   }
+}
 
 /*
  * Fetch a four texture samples using STR texture coordinates.
@@ -3087,13 +3126,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EMIT:
-      mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] += 16;
-      mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]]++;
+      emit_vertex(mach);
       break;
 
    case TGSI_OPCODE_ENDPRIM:
-      mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]++;
-      mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] = 0;
+      emit_primitive(mach);
       break;
 
    case TGSI_OPCODE_BGNFOR:

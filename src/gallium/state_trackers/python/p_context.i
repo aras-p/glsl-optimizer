@@ -103,6 +103,25 @@ struct st_context {
       $self->vs = vs;
    }
 
+   void set_geometry_shader( const struct pipe_shader_state *state ) {
+      void *gs;
+
+      if(!state) {
+         cso_set_geometry_shader_handle($self->cso, NULL);
+         return;
+      }
+
+      gs = $self->pipe->create_gs_state($self->pipe, state);
+      if(!gs)
+         return;
+
+      if(cso_set_geometry_shader_handle($self->cso, gs) != PIPE_OK)
+         return;
+
+      cso_delete_geometry_shader($self->cso, $self->gs);
+      $self->gs = gs;
+   }
+
    /*
     * Parameter-like state (or properties)
     */

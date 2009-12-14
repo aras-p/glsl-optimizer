@@ -165,3 +165,62 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
 
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }
+
+void *
+softpipe_create_gs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct sp_geometry_shader *state;
+
+   state = CALLOC_STRUCT(sp_geometry_shader);
+   if (state == NULL )
+      goto fail;
+
+   /* copy shader tokens, the ones passed in will go away.
+    */
+   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
+   if (state->shader.tokens == NULL)
+      goto fail;
+
+   state->draw_data = draw_create_geometry_shader(softpipe->draw, templ);
+   if (state->draw_data == NULL)
+      goto fail;
+
+   return state;
+
+fail:
+   if (state) {
+      FREE( (void *)state->shader.tokens );
+      FREE( state->draw_data );
+      FREE( state );
+   }
+   return NULL;
+}
+
+
+void
+softpipe_bind_gs_state(struct pipe_context *pipe, void *gs)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->gs = (struct sp_geometry_shader *)gs;
+
+   draw_bind_geometry_shader(softpipe->draw,
+                             (softpipe->gs ? softpipe->gs->draw_data : NULL));
+
+   softpipe->dirty |= SP_NEW_GS;
+}
+
+
+void
+softpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   struct sp_geometry_shader *state =
+      (struct sp_geometry_shader *)gs;
+
+   draw_delete_geometry_shader(softpipe->draw, state->draw_data);
+   FREE(state);
+}
