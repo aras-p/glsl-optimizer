@@ -539,6 +539,8 @@ int Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700
     pAsm->unNumPresub       = 0;
     pAsm->unCurNumILInsts   = 0;
 
+    pAsm->unVetTexBits      = 0;
+
     return 0;
 }
 
@@ -1412,43 +1414,65 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
             pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
             break;
         case PROGRAM_INPUT:
-            switch (pILInst->SrcReg[0].Index)
+            if(SPT_VP == pAsm->currentShaderType)
             {
-                case FRAG_ATTRIB_WPOS:
-                case FRAG_ATTRIB_COL0:
-                case FRAG_ATTRIB_COL1:
-                case FRAG_ATTRIB_FOGC:
-                case FRAG_ATTRIB_TEX0:
-                case FRAG_ATTRIB_TEX1:
-                case FRAG_ATTRIB_TEX2:
-                case FRAG_ATTRIB_TEX3:
-                case FRAG_ATTRIB_TEX4:
-                case FRAG_ATTRIB_TEX5:
-                case FRAG_ATTRIB_TEX6:
-                case FRAG_ATTRIB_TEX7:
-                    bValidTexCoord = GL_TRUE;
+                switch (pILInst->SrcReg[0].Index)
+                {
+                    case VERT_ATTRIB_TEX0:
+                    case VERT_ATTRIB_TEX1:
+                    case VERT_ATTRIB_TEX2:
+                    case VERT_ATTRIB_TEX3:
+                    case VERT_ATTRIB_TEX4:
+                    case VERT_ATTRIB_TEX5:
+                    case VERT_ATTRIB_TEX6:
+                    case VERT_ATTRIB_TEX7:
+                        bValidTexCoord = GL_TRUE;
+                        pAsm->S[0].src.reg   =
+                            pAsm->ucVP_AttributeMap[pILInst->SrcReg[0].Index];
+                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        break;
+                }
+            }
+            else
+            {
+                switch (pILInst->SrcReg[0].Index)
+                {
+                    case FRAG_ATTRIB_WPOS:
+                    case FRAG_ATTRIB_COL0:
+                    case FRAG_ATTRIB_COL1:
+                    case FRAG_ATTRIB_FOGC:
+                    case FRAG_ATTRIB_TEX0:
+                    case FRAG_ATTRIB_TEX1:
+                    case FRAG_ATTRIB_TEX2:
+                    case FRAG_ATTRIB_TEX3:
+                    case FRAG_ATTRIB_TEX4:
+                    case FRAG_ATTRIB_TEX5:
+                    case FRAG_ATTRIB_TEX6:
+                    case FRAG_ATTRIB_TEX7:
+                        bValidTexCoord = GL_TRUE;
+                        pAsm->S[0].src.reg   =
+                            pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
+                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        break;
+                    case FRAG_ATTRIB_FACE:
+                        fprintf(stderr, "FRAG_ATTRIB_FACE unsupported\n");
+                        break;
+                    case FRAG_ATTRIB_PNTC:
+                        fprintf(stderr, "FRAG_ATTRIB_PNTC unsupported\n");
+                        break;
+                }
+
+                if( (pILInst->SrcReg[0].Index >= FRAG_ATTRIB_VAR0) ||
+                    (pILInst->SrcReg[0].Index < FRAG_ATTRIB_MAX) )
+                {
+				    bValidTexCoord = GL_TRUE;
                     pAsm->S[0].src.reg   =
                         pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
                     pAsm->S[0].src.rtype = SRC_REG_INPUT;
-                    break;
-                case FRAG_ATTRIB_FACE:
-                    fprintf(stderr, "FRAG_ATTRIB_FACE unsupported\n");
-                    break;
-                case FRAG_ATTRIB_PNTC:
-                    fprintf(stderr, "FRAG_ATTRIB_PNTC unsupported\n");
-                    break;
+                }
             }
 
-            if( (pILInst->SrcReg[0].Index >= FRAG_ATTRIB_VAR0) ||
-                (pILInst->SrcReg[0].Index < FRAG_ATTRIB_MAX) )
-            {
-				bValidTexCoord = GL_TRUE;
-                pAsm->S[0].src.reg   =
-                    pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-                pAsm->S[0].src.rtype = SRC_REG_INPUT;
-            }
-
-        break;
+            break;
         }
     }
 
@@ -1493,8 +1517,17 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     tex_instruction_ptr->m_Word0.f.tex_inst         = pAsm->D.dst.opcode;
     tex_instruction_ptr->m_Word0.f.bc_frac_mode     = 0x0;
     tex_instruction_ptr->m_Word0.f.fetch_whole_quad = 0x0;
+    tex_instruction_ptr->m_Word0.f.alt_const        = 0;
 
-    tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg;
+    if(SPT_VP == pAsm->currentShaderType)
+    {
+        tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg + VERT_ATTRIB_MAX;
+        pAsm->unVetTexBits |= 1 < texture_unit_source->reg;
+    }
+    else
+    {
+        tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg;
+    }
 
     tex_instruction_ptr->m_Word1.f.lod_bias     = 0x0;
     if (normalized) {
@@ -1513,7 +1546,6 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     tex_instruction_ptr->m_Word2.f.offset_x   = 0x0;
     tex_instruction_ptr->m_Word2.f.offset_y   = 0x0;
     tex_instruction_ptr->m_Word2.f.offset_z   = 0x0;
-
     tex_instruction_ptr->m_Word2.f.sampler_id = texture_unit_source->reg;
 
     // dst

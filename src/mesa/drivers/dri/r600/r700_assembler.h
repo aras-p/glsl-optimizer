@@ -485,6 +485,8 @@ typedef struct r700_AssemblerBase
     GLuint        unNumPresub;
     GLuint        unCurNumILInsts;
 
+    GLuint    unVetTexBits;
+
 } r700_AssemblerBase;
 
 //Internal use
