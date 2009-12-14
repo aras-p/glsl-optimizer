@@ -626,8 +626,6 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
         return;
     }
     
-    r300->context.flush(&r300->context, 0, NULL);
-
     for (i = 0; i < count; i++) {
         if (r300->textures[i] != (struct r300_texture*)texture[i]) {
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
