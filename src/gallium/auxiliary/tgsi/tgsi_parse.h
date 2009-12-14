@@ -67,6 +67,12 @@ struct tgsi_full_immediate
    union tgsi_immediate_data u[4];
 };
 
+struct tgsi_full_property
+{
+   struct tgsi_property   Property;
+   struct tgsi_property_data u[8];
+};
+
 #define TGSI_FULL_MAX_DST_REGISTERS 2
 #define TGSI_FULL_MAX_SRC_REGISTERS 4 /* TXD has 4 */
 
@@ -86,6 +92,7 @@ union tgsi_full_token
    struct tgsi_full_declaration  FullDeclaration;
    struct tgsi_full_immediate    FullImmediate;
    struct tgsi_full_instruction  FullInstruction;
+   struct tgsi_full_property     FullProperty;
 };
 
 struct tgsi_parse_context

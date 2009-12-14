@@ -336,6 +336,9 @@ tgsi_exec_machine_bind_shader(
          numInstructions++;
          break;
 
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         break;
+
       default:
          assert( 0 );
       }
@@ -1158,6 +1161,7 @@ fetch_src_file_channel(
          break;
 
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          chan->u[0] = mach->Inputs[index->i[0]].xyzw[swizzle].u[0];
          chan->u[1] = mach->Inputs[index->i[1]].xyzw[swizzle].u[1];
          chan->u[2] = mach->Inputs[index->i[2]].xyzw[swizzle].u[2];
@@ -1302,6 +1306,7 @@ fetch_source(
        */
       switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          index.i[0] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
          index.i[1] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
          index.i[2] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
@@ -1892,7 +1897,8 @@ exec_declaration(struct tgsi_exec_machine *mach,
                  const struct tgsi_full_declaration *decl)
 {
    if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
-      if (decl->Declaration.File == TGSI_FILE_INPUT) {
+      if (decl->Declaration.File == TGSI_FILE_INPUT ||
+          decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE) {
          uint first, last, mask;
 
          first = decl->Range.First;

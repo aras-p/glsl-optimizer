@@ -55,6 +55,7 @@ struct tgsi_processor
 #define TGSI_TOKEN_TYPE_DECLARATION    0
 #define TGSI_TOKEN_TYPE_IMMEDIATE      1
 #define TGSI_TOKEN_TYPE_INSTRUCTION    2
+#define TGSI_TOKEN_TYPE_PROPERTY       3
 
 struct tgsi_token
 {
@@ -64,16 +65,17 @@ struct tgsi_token
 };
 
 enum tgsi_file_type {
-   TGSI_FILE_NULL        =0,
-   TGSI_FILE_CONSTANT    =1,
-   TGSI_FILE_INPUT       =2,
-   TGSI_FILE_OUTPUT      =3,
-   TGSI_FILE_TEMPORARY   =4,
-   TGSI_FILE_SAMPLER     =5,
-   TGSI_FILE_ADDRESS     =6,
-   TGSI_FILE_IMMEDIATE   =7,
-   TGSI_FILE_LOOP        =8,
-   TGSI_FILE_PREDICATE   =9,
+   TGSI_FILE_NULL         =0,
+   TGSI_FILE_CONSTANT     =1,
+   TGSI_FILE_INPUT        =2,
+   TGSI_FILE_OUTPUT       =3,
+   TGSI_FILE_TEMPORARY    =4,
+   TGSI_FILE_SAMPLER      =5,
+   TGSI_FILE_ADDRESS      =6,
+   TGSI_FILE_IMMEDIATE    =7,
+   TGSI_FILE_LOOP         =8,
+   TGSI_FILE_PREDICATE    =9,
+   TGSI_FILE_SYSTEM_VALUE =10,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -149,6 +151,22 @@ struct tgsi_immediate
 union tgsi_immediate_data
 {
    float Float;
+};
+
+#define TGSI_PROPERTY_GS_INPUT_PRIM          0
+#define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
+#define TGSI_PROPERTY_GS_MAX_VERTICES        2
+#define TGSI_PROPERTY_COUNT                  3
+
+struct tgsi_property {
+   unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
+   unsigned NrTokens     : 8;  /**< UINT */
+   unsigned PropertyName : 8;  /**< one of TGSI_PROPERTY */
+   unsigned Padding      : 12;
+};
+
+struct tgsi_property_data {
+   unsigned Data;
 };
 
 /* TGSI opcodes.  

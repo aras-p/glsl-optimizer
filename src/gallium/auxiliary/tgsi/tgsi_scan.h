@@ -33,7 +33,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 
-
 /**
  * Shader summary info
  */
@@ -61,8 +60,13 @@ struct tgsi_shader_info
    boolean uses_kill;  /**< KIL or KILP instruction used? */
    boolean uses_fogcoord; /**< fragment shader uses fog coord? */
    boolean uses_frontfacing; /**< fragment shader uses front/back-face flag? */
-};
 
+   struct {
+      unsigned name;
+      unsigned data[8];
+   } properties[TGSI_PROPERTY_COUNT];
+   uint num_properties;
+};
 
 extern void
 tgsi_scan_shader(const struct tgsi_token *tokens,

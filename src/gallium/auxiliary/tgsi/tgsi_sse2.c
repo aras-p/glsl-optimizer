@@ -1288,6 +1288,7 @@ emit_fetch(
          break;
 
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          emit_inputf(
             func,
             xmm,
@@ -2633,7 +2634,8 @@ emit_declaration(
    struct x86_function *func,
    struct tgsi_full_declaration *decl )
 {
-   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+   if( decl->Declaration.File == TGSI_FILE_INPUT ||
+       decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE ) {
       unsigned first, last, mask;
       unsigned i, j;
 
@@ -2951,6 +2953,9 @@ tgsi_emit_sse2(
 #endif
             num_immediates++;
          }
+         break;
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         /* we just ignore them for now */
          break;
 
       default:

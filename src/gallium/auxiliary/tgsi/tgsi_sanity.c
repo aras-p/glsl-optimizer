@@ -324,6 +324,17 @@ iter_immediate(
    return TRUE;
 }
 
+
+static boolean
+iter_property(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_property *prop )
+{
+   /*struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;*/
+
+   return TRUE;
+}
+
 static boolean
 epilog(
    struct tgsi_iterate_context *iter )
@@ -367,6 +378,7 @@ tgsi_sanity_check(
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
    ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.iterate_property = iter_property;
    ctx.iter.epilog = epilog;
 
    memset( ctx.regs_decl, 0, sizeof( ctx.regs_decl ) );

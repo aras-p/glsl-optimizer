@@ -220,6 +220,22 @@ tgsi_parse_token(
       break;
    }
 
+   case TGSI_TOKEN_TYPE_PROPERTY:
+   {
+      struct tgsi_full_property *prop = &ctx->FullToken.FullProperty;
+      uint prop_count;
+
+      memset(prop, 0, sizeof *prop);
+      copy_token(&prop->Property, &token);
+
+      prop_count = prop->Property.NrTokens - 1;
+      for (i = 0; i < prop_count; i++) {
+         next_token(ctx, &prop->u[i]);
+      }
+
+      break;
+   }
+
    default:
       assert( 0 );
    }

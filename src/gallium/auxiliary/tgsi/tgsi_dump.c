@@ -101,7 +101,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "LOOP",
-   "PRED"
+   "PRED",
+   "SV"
 };
 
 static const char *interpolate_names[] =
@@ -147,6 +148,27 @@ static const char *texture_names[] =
    "SHADOW1D",
    "SHADOW2D",
    "SHADOWRECT"
+};
+
+static const char *property_names[] =
+{
+   "GS_INPUT_PRIMITIVE",
+   "GS_OUTPUT_PRIMITIVE",
+   "GS_MAX_OUTPUT_VERTICES"
+};
+
+static const char *primitive_names[] =
+{
+   "POINTS",
+   "LINES",
+   "LINE_LOOP",
+   "LINE_STRIP",
+   "TRIANGLES",
+   "TRIANGLE_STRIP",
+   "TRIANGLE_FAN",
+   "QUADS",
+   "QUAD_STRIP",
+   "POLYGON"
 };
 
 
@@ -270,6 +292,50 @@ tgsi_dump_declaration(
    ctx.printf = dump_ctx_printf;
 
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
+}
+
+static boolean
+iter_property(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_property *prop )
+{
+   int i;
+   struct dump_ctx *ctx = (struct dump_ctx *)iter;
+
+   assert(Elements(property_names) == TGSI_PROPERTY_COUNT);
+
+   TXT( "PROPERTY " );
+   ENM(prop->Property.PropertyName, property_names);
+
+   if (prop->Property.NrTokens > 1)
+      TXT(" ");
+
+   for (i = 0; i < prop->Property.NrTokens - 1; ++i) {
+      switch (prop->Property.PropertyName) {
+      case TGSI_PROPERTY_GS_INPUT_PRIM:
+      case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+         ENM(prop->u[i].Data, primitive_names);
+         break;
+      default:
+         SID( prop->u[i].Data );
+         break;
+      }
+      if (i < prop->Property.NrTokens - 2)
+         TXT( ", " );
+   }
+   EOL();
+
+   return TRUE;
+}
+
+void tgsi_dump_property(
+   const struct tgsi_full_property *prop )
+{
+   struct dump_ctx ctx;
+
+   ctx.printf = dump_ctx_printf;
+
+   iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
 
 static boolean
@@ -492,6 +558,7 @@ tgsi_dump(
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
    ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.iterate_property = iter_property;
    ctx.iter.epilog = NULL;
 
    ctx.instno = 0;
@@ -546,6 +613,7 @@ tgsi_dump_str(
    ctx.base.iter.iterate_instruction = iter_instruction;
    ctx.base.iter.iterate_declaration = iter_declaration;
    ctx.base.iter.iterate_immediate = iter_immediate;
+   ctx.base.iter.iterate_property = iter_property;
    ctx.base.iter.epilog = NULL;
 
    ctx.base.instno = 0;

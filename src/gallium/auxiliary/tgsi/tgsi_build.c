@@ -942,3 +942,107 @@ tgsi_default_full_dst_register( void )
    return full_dst_register;
 }
 
+struct tgsi_property
+tgsi_default_property( void )
+{
+   struct tgsi_property property;
+
+   property.Type = TGSI_TOKEN_TYPE_PROPERTY;
+   property.NrTokens = 1;
+   property.PropertyName = TGSI_PROPERTY_GS_INPUT_PRIM;
+   property.Padding = 0;
+
+   return property;
+}
+
+struct tgsi_property
+tgsi_build_property(unsigned property_name,
+                    struct tgsi_header *header)
+{
+   struct tgsi_property property;
+
+   property = tgsi_default_property();
+   property.PropertyName = property_name;
+
+   header_bodysize_grow( header );
+
+   return property;
+}
+
+
+struct tgsi_full_property
+tgsi_default_full_property( void )
+{
+   struct tgsi_full_property  full_property;
+
+   full_property.Property  = tgsi_default_property();
+   memset(full_property.u, 0,
+          sizeof(struct tgsi_property_data) * 8);
+
+   return full_property;
+}
+
+static void
+property_grow(
+   struct tgsi_property *property,
+   struct tgsi_header *header )
+{
+   assert( property->NrTokens < 0xFF );
+
+   property->NrTokens++;
+
+   header_bodysize_grow( header );
+}
+
+struct tgsi_property_data
+tgsi_build_property_data(
+   unsigned value,
+   struct tgsi_property *property,
+   struct tgsi_header *header )
+{
+   struct tgsi_property_data property_data;
+
+   property_data.Data = value;
+
+   property_grow( property, header );
+
+   return property_data;
+}
+
+unsigned
+tgsi_build_full_property(
+   const struct tgsi_full_property *full_prop,
+   struct tgsi_token *tokens,
+   struct tgsi_header *header,
+   unsigned maxsize )
+{
+   unsigned size = 0, i;
+   struct tgsi_property *property;
+
+   if( maxsize <= size )
+      return 0;
+   property = (struct tgsi_property *) &tokens[size];
+   size++;
+
+   *property = tgsi_build_property(
+      TGSI_PROPERTY_GS_INPUT_PRIM,
+      header );
+
+   assert( full_prop->Property.NrTokens <= 8 + 1 );
+
+   for( i = 0; i < full_prop->Property.NrTokens - 1; i++ ) {
+      struct tgsi_property_data *data;
+
+      if( maxsize <= size )
+         return  0;
+      data = (struct tgsi_property_data *) &tokens[size];
+      size++;
+
+      *data = tgsi_build_property_data(
+         full_prop->u[i].Data,
+         property,
+         header );
+   }
+
+   return size;
+}
