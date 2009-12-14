@@ -156,14 +156,15 @@ struct nv50_pc {
 static INLINE struct nv50_reg *
 reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
 {
-	struct nv50_reg *dup = NULL;
+	struct nv50_reg *ri;
+
+	assert(pc->reg_instance_nr < 16);
+	ri = &pc->reg_instances[pc->reg_instance_nr++];
 	if (reg) {
-		assert(pc->reg_instance_nr < 16);
-		dup = &pc->reg_instances[pc->reg_instance_nr++];
-		*dup = *reg;
+		*ri = *reg;
 		reg->mod = 0;
 	}
-	return dup;
+	return ri;
 }
 
 static INLINE void
@@ -1886,7 +1887,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			/* Indicate indirection by setting r->acc < 0 and
 			 * use the index field to select the address reg.
 			 */
-			r = MALLOC_STRUCT(nv50_reg);
+			r = reg_instance(pc, NULL);
 			swz = tgsi_util_get_src_register_swizzle(
 						 &src->Indirect, 0);
 			ctor_reg(r, P_CONST,
@@ -1940,6 +1941,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	}
 
+	if (r && r->acc >= 0 && r != temp)
+		return reg_instance(pc, r);
 	return r;
 }
 
@@ -2094,8 +2097,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 
 		for (c = 0; c < 4; c++)
 			if (src_mask & (1 << c))
-				src[i][c] = reg_instance(pc,
-					tgsi_src(pc, c, fs, neg_supp));
+				src[i][c] = tgsi_src(pc, c, fs, neg_supp);
 	}
 
 	brdc = temp = pc->r_brdc;
@@ -2463,15 +2465,6 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (rdst[c]->type == P_TEMP && rdst[c]->index < 0)
 				continue;
 			emit_sat(pc, rdst[c], dst[c]);
-		}
-	}
-
-	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-		for (c = 0; c < 4; c++) {
-			if (!src[i][c])
-				continue;
-			if (src[i][c]->acc < 0 && src[i][c]->type == P_CONST)
-				FREE(src[i][c]); /* indirect constant */
 		}
 	}
 
