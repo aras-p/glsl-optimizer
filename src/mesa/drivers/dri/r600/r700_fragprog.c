@@ -155,6 +155,12 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
         pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE] = pAsm->number_used_registers++;
     }
 
+    unBit = 1 << FRAG_ATTRIB_PNTC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+        pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC] = pAsm->number_used_registers++;
+    }
+
 /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
 
@@ -479,6 +485,21 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     }
 
 
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+    {
+        ui++;
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
+        //SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+    }
+    else
+    {
+        CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+    }
+
+
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
@@ -498,6 +519,10 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     struct r700_vertex_program_cont *vpc =
 		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
     GLbitfield OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
+    
+    for(ui = 0; ui < R700_MAX_SHADER_EXPORTS; ui++)
+        r700->SPI_PS_INPUT_CNTL[ui].u32All = 0;
+
     unBit = 1 << FRAG_ATTRIB_WPOS;
     if(mesa_fp->Base.InputsRead & unBit)
     {
@@ -575,6 +600,22 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
             else
                     CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
+    unBit = 1 << FRAG_ATTRIB_PNTC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+    }
+
+
+
 
     for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
 	{
