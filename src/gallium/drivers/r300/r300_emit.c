@@ -335,7 +335,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     assert(fb->nr_cbufs <= 4);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
-             (fb->zsbuf ? 10 : 0) + 4);
+             (fb->zsbuf ? 10 : 0) + 6);
 
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -344,6 +344,9 @@ void r300_emit_fb_state(struct r300_context* r300,
     OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+
+    /* Set the number of colorbuffers. */
+    OUT_CS_REG(R300_RB3D_CCTL, R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs));
 
     /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {

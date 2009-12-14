@@ -2145,6 +2145,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Unpipelined. */
 #define R300_RB3D_CCTL                      0x4e00
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES(x)       (MAX2(((x)-1), 0) << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)

@@ -84,7 +84,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(56 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(54 + (caps->has_tcl ? 5 : 0) + (caps->is_r500 ? 4 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -123,7 +123,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
-    OUT_CS_REG(R300_RB3D_CCTL, 0x00000000);
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
     if (caps->is_r500) {
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x00000000);
