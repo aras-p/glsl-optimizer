@@ -42,6 +42,65 @@
 
 #include "r700_debug.h"
 
+void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+{
+    static const gl_state_index winstate[STATE_LENGTH]
+         = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
+    struct prog_instruction *newInst, *inst;
+    const GLuint origLen = fprog->Base.NumInstructions;
+    const GLuint newLen = origLen + 1;
+    GLint  win_size;  /* state reference */
+    GLuint wpos_temp; /* temp register */
+    int i, j;
+
+    /* PARAM win_size = STATE_FB_SIZE */
+    win_size = _mesa_add_state_reference(fprog->Base.Parameters, winstate);
+
+    wpos_temp = fprog->Base.NumTemporaries++;
+
+    /* Alloc storage for new instructions */
+    newInst = _mesa_alloc_instructions(newLen);
+
+    _mesa_init_instructions(newInst,1);
+
+    /* invert wpos.y
+     * wpos_temp.xyzw = wpos.x-yzw + winsize.0y00 */
+    newInst[0].Opcode = OPCODE_ADD;
+    newInst[0].DstReg.File = PROGRAM_TEMPORARY;
+    newInst[0].DstReg.Index = wpos_temp;
+    newInst[0].DstReg.WriteMask = WRITEMASK_XYZW;
+
+    newInst[0].SrcReg[0].File = PROGRAM_INPUT;
+    newInst[0].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+    newInst[0].SrcReg[0].Swizzle = SWIZZLE_XYZW;
+    newInst[0].SrcReg[0].Negate = NEGATE_Y;
+
+    newInst[0].SrcReg[1].File = PROGRAM_STATE_VAR;
+    newInst[0].SrcReg[1].Index = win_size;
+    newInst[0].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
+
+    /* scan program where WPOS is used and replace with wpos_temp */
+    inst = fprog->Base.Instructions;
+    for (i = 0; i < fprog->Base.NumInstructions; i++) {
+        for (j=0; j < 3; j++) {
+            if(inst->SrcReg[j].File == PROGRAM_INPUT && 
+               inst->SrcReg[j].Index == FRAG_ATTRIB_WPOS) {
+                inst->SrcReg[j].File = PROGRAM_TEMPORARY;
+                inst->SrcReg[j].Index = wpos_temp;
+            }
+        }
+        inst++;
+    }
+    /* Append original instructions after new instructions */
+    _mesa_copy_instructions (newInst + 1, fprog->Base.Instructions, origLen);
+    /* free old instructions */
+    _mesa_free_instructions(fprog->Base.Instructions, origLen);
+    /* install new instructions */
+    fprog->Base.Instructions = newInst;
+    fprog->Base.NumInstructions = newLen;
+
+}
+
 //TODO : Validate FP input with VP output.
 void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 						  struct gl_fragment_program *mesa_fp,
@@ -318,7 +377,13 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
-	Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 
+
+    if(mesa_fp->Base.InputsRead & FRAG_BIT_WPOS)
+    {
+        insert_wpos_code(ctx, mesa_fp);
+    }
+
+    Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 
 
     if( GL_FALSE == Find_Instruction_Dependencies_fp(fp, mesa_fp) )
 	{
