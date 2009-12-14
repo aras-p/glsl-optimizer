@@ -119,7 +119,7 @@ struct nv50_pc {
 	struct nv50_reg *param;
 	int param_nr;
 	struct nv50_reg *immd;
-	float *immd_buf;
+	uint32_t *immd_buf;
 	int immd_nr;
 	struct nv50_reg **addr;
 	int addr_nr;
@@ -365,10 +365,13 @@ kill_temp_temp(struct nv50_pc *pc)
 }
 
 static int
-ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
+ctor_immd_4u32(struct nv50_pc *pc,
+	       uint32_t x, uint32_t y, uint32_t z, uint32_t w)
 {
-	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(float)),
-			       (pc->immd_nr + 1) * 4 * sizeof(float));
+	unsigned size = pc->immd_nr * 4 * sizeof(uint32_t);
+
+	pc->immd_buf = REALLOC(pc->immd_buf, size, size + 4 * sizeof(uint32_t));
+
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
 	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
@@ -377,17 +380,10 @@ ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 	return pc->immd_nr++;
 }
 
-static int
-ctor_immd_4u32(struct nv50_pc *pc, uint32_t x, uint32_t y, uint32_t z, uint32_t w)
+static INLINE int
+ctor_immd_4f32(struct nv50_pc *pc, float x, float y, float z, float w)
 {
-	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(uint32_t)),
-			       (pc->immd_nr + 1) * 4 * sizeof(uint32_t));
-	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
-	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
-	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
-	pc->immd_buf[(pc->immd_nr * 4) + 3] = w;
-
-	return pc->immd_nr++;
+	return ctor_immd_4u32(pc, fui(x), fui(y), fui(z), fui(w));
 }
 
 static struct nv50_reg *
@@ -397,11 +393,11 @@ alloc_immd(struct nv50_pc *pc, float f)
 	unsigned hw;
 
 	for (hw = 0; hw < pc->immd_nr * 4; hw++)
-		if (pc->immd_buf[hw] == f)
+		if (pc->immd_buf[hw] == fui(f))
 			break;
 
 	if (hw == pc->immd_nr * 4)
-		hw = ctor_immd(pc, f, -f, 0.5 * f, 0) * 4;
+		hw = ctor_immd_4f32(pc, f, -f, 0.5 * f, 0) * 4;
 
 	ctor_reg(r, P_IMMD, -1, hw);
 	return r;
@@ -493,22 +489,24 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	unsigned val;
-	float f = pc->immd_buf[imm->hw];
+	union {
+		float f;
+		uint32_t ui;
+	} u;
+	u.ui = pc->immd_buf[imm->hw];
 
-	if (imm->mod & NV50_MOD_ABS)
-		f = fabsf(f);
-	val = fui((imm->mod & NV50_MOD_NEG) ? -f : f);
+	u.f = (imm->mod & NV50_MOD_ABS) ? fabsf(u.f) : u.f;
+	u.f = (imm->mod & NV50_MOD_NEG) ? -u.f : u.f;
 
 	set_long(pc, e);
-	/*XXX: can't be predicated - bits overlap.. catch cases where both
-	 *     are required and avoid them. */
+	/* XXX: can't be predicated - bits overlap; cases where both
+	 * are required should be avoided by using pc->allow32 */
 	set_pred(pc, 0, 0, e);
 	set_pred_wr(pc, 0, 0, e);
 
 	e->inst[1] |= 0x00000002 | 0x00000001;
-	e->inst[0] |= (val & 0x3f) << 16;
-	e->inst[1] |= (val >> 6) << 2;
+	e->inst[0] |= (u.ui & 0x3f) << 16;
+	e->inst[1] |= (u.ui >> 6) << 2;
 }
 
 static INLINE void
@@ -2762,10 +2760,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			const struct tgsi_full_immediate *imm =
 				&tp.FullToken.FullImmediate;
 
-			ctor_immd(pc, imm->u[0].Float,
-				      imm->u[1].Float,
-				      imm->u[2].Float,
-				      imm->u[3].Float);
+			ctor_immd_4f32(pc, imm->u[0].Float,
+				       imm->u[1].Float,
+				       imm->u[2].Float,
+				       imm->u[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
@@ -3245,7 +3243,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 }
 
 static void
-nv50_program_upload_data(struct nv50_context *nv50, float *map,
+nv50_program_upload_data(struct nv50_context *nv50, uint32_t *map,
 			unsigned start, unsigned count, unsigned cbuf)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
@@ -3293,8 +3291,8 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cb;
-		float *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
-					     PIPE_BUFFER_USAGE_CPU_READ);
+		uint32_t *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
+						PIPE_BUFFER_USAGE_CPU_READ);
 
 		if (p->type == PIPE_SHADER_VERTEX)
 			cb = NV50_CB_PVP;
