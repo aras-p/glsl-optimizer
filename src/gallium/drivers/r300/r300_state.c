@@ -339,6 +339,7 @@ static void
         r300->dirty_state |= R300_NEW_SCISSOR;
     }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
+    r300->dirty_state |= R300_NEW_BLEND;
 }
 
 /* Create fragment shader state. */
