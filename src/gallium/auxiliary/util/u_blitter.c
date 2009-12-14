@@ -56,6 +56,10 @@ struct blitter_context_priv
 
    float vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
 
+   /* Templates for various state objects. */
+   struct pipe_depth_stencil_alpha_state template_dsa;
+   struct pipe_sampler_state template_sampler_state;
+
    /* Constant state objects. */
    /* Vertex shaders. */
    void *vs_col; /**< Vertex shader which passes {pos, color} to the output */
@@ -93,10 +97,10 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
    struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_depth_stencil_alpha_state *dsa;
    struct pipe_rasterizer_state rs_state;
-   struct pipe_sampler_state sampler_state;
-   unsigned i, max_render_targets;
+   struct pipe_sampler_state *sampler_state;
+   unsigned i;
 
    ctx = CALLOC_STRUCT(blitter_context_priv);
    if (!ctx)
@@ -117,46 +121,33 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */
-   memset(&dsa, 0, sizeof(dsa));
+   dsa = &ctx->template_dsa;
    ctx->dsa_keep_depth_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
+      pipe->create_depth_stencil_alpha_state(pipe, dsa);
 
-   dsa.depth.enabled = 1;
-   dsa.depth.writemask = 1;
-   dsa.depth.func = PIPE_FUNC_ALWAYS;
+   dsa->depth.enabled = 1;
+   dsa->depth.writemask = 1;
+   dsa->depth.func = PIPE_FUNC_ALWAYS;
    ctx->dsa_write_depth_keep_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
+      pipe->create_depth_stencil_alpha_state(pipe, dsa);
 
-   dsa.stencil[0].enabled = 1;
-   dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-   dsa.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
-   dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
-   dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
-   dsa.stencil[0].valuemask = 0xff;
-   dsa.stencil[0].writemask = 0xff;
-
-   /* create a depth stencil alpha state for each possible stencil clear
-    * value */
-   for (i = 0; i < 0xff; i++) {
-      dsa.stencil[0].ref_value = i;
-
-      ctx->dsa_write_depth_stencil[i] =
-         pipe->create_depth_stencil_alpha_state(pipe, &dsa);
-   }
+   dsa->stencil[0].enabled = 1;
+   dsa->stencil[0].func = PIPE_FUNC_ALWAYS;
+   dsa->stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa->stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
+   dsa->stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa->stencil[0].valuemask = 0xff;
+   dsa->stencil[0].writemask = 0xff;
+   /* The DSA state objects which write depth and stencil are created
+    * on-demand. */
 
    /* sampler state */
-   memset(&sampler_state, 0, sizeof(sampler_state));
-   sampler_state.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler_state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler_state.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-
-   for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++) {
-      sampler_state.lod_bias = i;
-      sampler_state.min_lod = i;
-      sampler_state.max_lod = i;
-
-      ctx->sampler_state[i] = pipe->create_sampler_state(pipe, &sampler_state);
-   }
+   sampler_state = &ctx->template_sampler_state;
+   sampler_state->wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler_state->wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler_state->wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   /* The sampler state objects which sample from a specified mipmap level
+    * are created on-demand. */
 
    /* rasterizer state */
    memset(&rs_state, 0, sizeof(rs_state));
@@ -165,6 +156,8 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    rs_state.bypass_vs_clip_and_viewport = 1;
    rs_state.gl_rasterization_rules = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
+
+   /* fragment shaders are created on-demand */
 
    /* vertex shaders */
    {
@@ -183,31 +176,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
          util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
                                              semantic_indices);
    }
-
-   /* fragment shaders */
-   ctx->fs_texfetch_col[PIPE_TEXTURE_1D] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D);
-   ctx->fs_texfetch_col[PIPE_TEXTURE_2D] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
-   ctx->fs_texfetch_col[PIPE_TEXTURE_3D] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_3D);
-   ctx->fs_texfetch_col[PIPE_TEXTURE_CUBE] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
-
-   ctx->fs_texfetch_depth[PIPE_TEXTURE_1D] =
-      util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_1D);
-   ctx->fs_texfetch_depth[PIPE_TEXTURE_2D] =
-      util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D);
-   ctx->fs_texfetch_depth[PIPE_TEXTURE_3D] =
-      util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_3D);
-   ctx->fs_texfetch_depth[PIPE_TEXTURE_CUBE] =
-      util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_CUBE);
-
-   max_render_targets = pipe->screen->get_param(pipe->screen,
-                                                PIPE_CAP_MAX_RENDER_TARGETS);
-   assert(max_render_targets <= PIPE_MAX_COLOR_BUFS);
-   for (i = 0; i < max_render_targets; i++)
-      ctx->fs_col[i] = util_make_fragment_clonecolor_shader(pipe, 1+i);
 
    /* set invariant vertex coordinates */
    for (i = 0; i < 4; i++)
@@ -235,23 +203,28 @@ void util_blitter_destroy(struct blitter_context *blitter)
                                           ctx->dsa_write_depth_keep_stencil);
 
    for (i = 0; i < 0xff; i++)
-      pipe->delete_depth_stencil_alpha_state(pipe,
-                                             ctx->dsa_write_depth_stencil[i]);
+      if (ctx->dsa_write_depth_stencil[i])
+         pipe->delete_depth_stencil_alpha_state(pipe,
+            ctx->dsa_write_depth_stencil[i]);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
-      pipe->delete_fs_state(pipe, ctx->fs_texfetch_col[i]);
-      pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
+      if (ctx->fs_texfetch_col[i])
+         pipe->delete_fs_state(pipe, ctx->fs_texfetch_col[i]);
+      if (ctx->fs_texfetch_depth[i])
+         pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
    }
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
-      pipe->delete_fs_state(pipe, ctx->fs_col[i]);
+      if (ctx->fs_col[i])
+         pipe->delete_fs_state(pipe, ctx->fs_col[i]);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
-      pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
+      if (ctx->sampler_state[i])
+         pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
 
    pipe_buffer_reference(&ctx->vbuf, NULL);
    FREE(ctx);
@@ -428,6 +401,133 @@ static void blitter_draw_quad(struct blitter_context_priv *ctx)
    }
 }
 
+static INLINE
+void *blitter_get_state_write_depth_stencil(
+               struct blitter_context_priv *ctx,
+               unsigned stencil)
+{
+   struct pipe_context *pipe = ctx->pipe;
+
+   stencil &= 0xff;
+
+   /* Create the DSA state on-demand. */
+   if (!ctx->dsa_write_depth_stencil[stencil]) {
+      ctx->template_dsa.stencil[0].ref_value = stencil;
+
+      ctx->dsa_write_depth_stencil[stencil] =
+         pipe->create_depth_stencil_alpha_state(pipe, &ctx->template_dsa);
+   }
+
+   return ctx->dsa_write_depth_stencil[stencil];
+}
+
+static INLINE
+void **blitter_get_sampler_state(struct blitter_context_priv *ctx,
+                                 int miplevel)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_sampler_state *sampler_state = &ctx->template_sampler_state;
+
+   assert(miplevel < PIPE_MAX_TEXTURE_LEVELS);
+
+   /* Create the sampler state on-demand. */
+   if (!ctx->sampler_state[miplevel]) {
+      sampler_state->lod_bias = miplevel;
+      sampler_state->min_lod = miplevel;
+      sampler_state->max_lod = miplevel;
+
+      ctx->sampler_state[miplevel] = pipe->create_sampler_state(pipe,
+                                                                sampler_state);
+   }
+
+   /* Return void** so that it can be passed to bind_fragment_sampler_states
+    * directly. */
+   return &ctx->sampler_state[miplevel];
+}
+
+static INLINE
+void *blitter_get_fs_col(struct blitter_context_priv *ctx, unsigned num_cbufs)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   unsigned index = num_cbufs ? num_cbufs - 1 : 0;
+
+   assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
+
+   if (!ctx->fs_col[index])
+      ctx->fs_col[index] =
+         util_make_fragment_clonecolor_shader(pipe, num_cbufs);
+
+   return ctx->fs_col[index];
+}
+
+static INLINE
+void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
+                                  unsigned tex_target)
+{
+   struct pipe_context *pipe = ctx->pipe;
+
+   assert(tex_target < PIPE_MAX_TEXTURE_TYPES);
+
+   /* Create the fragment shader on-demand. */
+   if (!ctx->fs_texfetch_col[tex_target]) {
+      switch (tex_target) {
+         case PIPE_TEXTURE_1D:
+            ctx->fs_texfetch_col[PIPE_TEXTURE_1D] =
+               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D);
+            break;
+         case PIPE_TEXTURE_2D:
+            ctx->fs_texfetch_col[PIPE_TEXTURE_2D] =
+               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+            break;
+         case PIPE_TEXTURE_3D:
+            ctx->fs_texfetch_col[PIPE_TEXTURE_3D] =
+               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_3D);
+            break;
+         case PIPE_TEXTURE_CUBE:
+            ctx->fs_texfetch_col[PIPE_TEXTURE_CUBE] =
+               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
+            break;
+         default:;
+      }
+   }
+
+   return ctx->fs_texfetch_col[tex_target];
+}
+
+static INLINE
+void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
+                                    unsigned tex_target)
+{
+   struct pipe_context *pipe = ctx->pipe;
+
+   assert(tex_target < PIPE_MAX_TEXTURE_TYPES);
+
+   /* Create the fragment shader on-demand. */
+   if (!ctx->fs_texfetch_depth[tex_target]) {
+      switch (tex_target) {
+         case PIPE_TEXTURE_1D:
+            ctx->fs_texfetch_depth[PIPE_TEXTURE_1D] =
+               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_1D);
+            break;
+         case PIPE_TEXTURE_2D:
+            ctx->fs_texfetch_depth[PIPE_TEXTURE_2D] =
+               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D);
+            break;
+         case PIPE_TEXTURE_3D:
+            ctx->fs_texfetch_depth[PIPE_TEXTURE_3D] =
+               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_3D);
+            break;
+         case PIPE_TEXTURE_CUBE:
+            ctx->fs_texfetch_depth[PIPE_TEXTURE_CUBE] =
+               util_make_fragment_tex_shader_writedepth(pipe,TGSI_TEXTURE_CUBE);
+            break;
+         default:;
+      }
+   }
+
+   return ctx->fs_texfetch_depth[tex_target];
+}
+
 void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
                         unsigned num_cbufs,
@@ -450,12 +550,12 @@ void util_blitter_clear(struct blitter_context *blitter,
 
    if (clear_buffers & PIPE_CLEAR_DEPTHSTENCIL)
       pipe->bind_depth_stencil_alpha_state(pipe,
-         ctx->dsa_write_depth_stencil[stencil&0xff]);
+         blitter_get_state_write_depth_stencil(ctx, stencil));
    else
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
-   pipe->bind_fs_state(pipe, ctx->fs_col[num_cbufs ? num_cbufs-1 : 0]);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs));
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
    blitter_set_clear_color(ctx, rgba);
@@ -516,22 +616,26 @@ void util_blitter_copy(struct blitter_context *blitter,
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
       pipe->bind_depth_stencil_alpha_state(pipe,
                                            ctx->dsa_write_depth_keep_stencil);
-      pipe->bind_fs_state(pipe, ctx->fs_texfetch_depth[src->texture->target]);
+      pipe->bind_fs_state(pipe,
+         blitter_get_fs_texfetch_depth(ctx, src->texture->target));
 
       fb_state.nr_cbufs = 0;
       fb_state.zsbuf = dst;
    } else {
       pipe->bind_blend_state(pipe, ctx->blend_write_color);
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
-      pipe->bind_fs_state(pipe, ctx->fs_texfetch_col[src->texture->target]);
+      pipe->bind_fs_state(pipe,
+         blitter_get_fs_texfetch_col(ctx, src->texture->target));
 
       fb_state.nr_cbufs = 1;
       fb_state.cbufs[0] = dst;
       fb_state.zsbuf = 0;
    }
+
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vs_state(pipe, ctx->vs_tex);
-   pipe->bind_fragment_sampler_states(pipe, 1, &ctx->sampler_state[src->level]);
+   pipe->bind_fragment_sampler_states(pipe, 1,
+      blitter_get_sampler_state(ctx, src->level));
    pipe->set_fragment_sampler_textures(pipe, 1, &src->texture);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
@@ -601,7 +705,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->bind_blend_state(pipe, ctx->blend_write_color);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
-   pipe->bind_fs_state(pipe, ctx->fs_col[0]);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1));
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
    /* set a framebuffer state */
