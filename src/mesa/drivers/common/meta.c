@@ -2170,6 +2170,9 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
 
    _mesa_meta_begin(ctx, META_ALL);
 
+   if (original_active_unit != 0)
+      _mesa_BindTexture(target, texObj->Name);
+
    if (mipmap->ArrayObj == 0) {
       /* one-time setup */
 
@@ -2288,9 +2291,6 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
 
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
-
-   if (original_active_unit != 0)
-      _mesa_BindTexture(target, texObj->Name);
 
    for (dstLevel = baseLevel + 1; dstLevel <= maxLevel; dstLevel++) {
       const struct gl_texture_image *srcImage;
