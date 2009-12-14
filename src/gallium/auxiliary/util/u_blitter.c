@@ -62,10 +62,16 @@ struct blitter_context_priv
    void *vs_tex; /**<Vertex shader which passes {pos, texcoord} to the output.*/
 
    /* Fragment shaders. */
-   void *fs_col[8];     /**< FS which outputs colors to 1-8 color buffers */
-   void *fs_texfetch_col[4];   /**< FS which outputs a color from a texture */
-   void *fs_texfetch_depth[4]; /**< FS which outputs a depth from a texture,
-                              where the index is PIPE_TEXTURE_* to be sampled */
+   /* FS which outputs a color to multiple color buffers. */
+   void *fs_col[PIPE_MAX_COLOR_BUFS];
+
+   /* FS which outputs a color from a texture,
+      where the index is PIPE_TEXTURE_* to be sampled. */
+   void *fs_texfetch_col[PIPE_MAX_TEXTURE_TYPES];
+
+   /* FS which outputs a depth from a texture,
+      where the index is PIPE_TEXTURE_* to be sampled. */
+   void *fs_texfetch_depth[PIPE_MAX_TEXTURE_TYPES];
 
    /* Blend state. */
    void *blend_write_color;   /**< blend state with writemask of RGBA */
@@ -76,9 +82,11 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
 
-   /* Other state. */
-   void *sampler_state[16];   /**< sampler state for clamping to a miplevel */
-   void *rs_state;            /**< rasterizer state */
+   /* Sampler state for clamping to a miplevel. */
+   void *sampler_state[PIPE_MAX_TEXTURE_LEVELS];
+
+   /* Rasterizer state. */
+   void *rs_state;
 };
 
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
@@ -142,7 +150,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    sampler_state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
 
-   for (i = 0; i < 16; i++) {
+   for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++) {
       sampler_state.lod_bias = i;
       sampler_state.min_lod = i;
       sampler_state.max_lod = i;
@@ -197,7 +205,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
    max_render_targets = pipe->screen->get_param(pipe->screen,
                                                 PIPE_CAP_MAX_RENDER_TARGETS);
-   assert(max_render_targets <= 8);
+   assert(max_render_targets <= PIPE_MAX_COLOR_BUFS);
    for (i = 0; i < max_render_targets; i++)
       ctx->fs_col[i] = util_make_fragment_clonecolor_shader(pipe, 1+i);
 
@@ -234,12 +242,16 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
 
-   for (i = 0; i < 4; i++) {
+   for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
       pipe->delete_fs_state(pipe, ctx->fs_texfetch_col[i]);
       pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
    }
-   for (i = 0; i < 8 && ctx->fs_col[i]; i++)
+
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
       pipe->delete_fs_state(pipe, ctx->fs_col[i]);
+
+   for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
+      pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
 
    pipe_buffer_reference(&ctx->vbuf, NULL);
    FREE(ctx);
@@ -426,7 +438,7 @@ void util_blitter_clear(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
 
-   assert(num_cbufs <= 8);
+   assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    blitter_check_saved_CSOs(ctx);
 
@@ -494,7 +506,7 @@ void util_blitter_copy(struct blitter_context *blitter,
    assert(blitter->saved_fb_state.nr_cbufs != ~0);
    assert(blitter->saved_num_textures != ~0);
    assert(blitter->saved_num_sampler_states != ~0);
-   assert(src->texture->target < 4);
+   assert(src->texture->target < PIPE_MAX_TEXTURE_TYPES);
 
    /* bind CSOs */
    fb_state.width = dst->width;
@@ -538,6 +550,8 @@ void util_blitter_copy(struct blitter_context *blitter,
          blitter_set_texcoords_cube(ctx, src, srcx, srcy,
                                     srcx+width, srcy+height);
          break;
+      default:
+         assert(0);
    }
 
    blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
