@@ -584,7 +584,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
                     short height, RegionPtr clipBoxes)
 {
     struct vmw_driver *vmw = vmw_driver(pScrn);
-    struct drm_vmw_overlay_arg arg;
+    struct drm_vmw_control_stream_arg arg;
     unsigned short w, h;
     int size;
     int ret;
@@ -643,7 +643,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
         }
     }
 
-    ret = drmCommandWrite(vmw->fd, DRM_VMW_OVERLAY, &arg, sizeof(arg));
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CONTROL_STREAM, &arg, sizeof(arg));
     if (ret) {
 	vmw_video_port_cleanup(pScrn, port);
 	return XvBadAlloc;
@@ -853,7 +853,7 @@ vmw_xv_stop_video(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
 {
     struct vmw_driver *vmw = vmw_driver(pScrn);
     struct vmw_video_port *port = data;
-    struct drm_vmw_overlay_arg arg;
+    struct drm_vmw_control_stream_arg arg;
     int ret;
 
     debug_printf("%s: cleanup is %s\n", __func__, cleanup ? "TRUE" : "FALSE");
@@ -869,7 +869,7 @@ vmw_xv_stop_video(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
     arg.stream_id = port->streamId;
     arg.enabled = FALSE;
 
-    ret = drmCommandWrite(vmw->fd, DRM_VMW_OVERLAY, &arg, sizeof(arg));
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CONTROL_STREAM, &arg, sizeof(arg));
     assert(ret == 0);
 
     vmw_video_port_cleanup(pScrn, port);
