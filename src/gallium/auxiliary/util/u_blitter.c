@@ -385,20 +385,15 @@ static void blitter_set_texcoords_cube(struct blitter_context_priv *ctx,
 
 static void blitter_draw_quad(struct blitter_context_priv *ctx)
 {
-   struct blitter_context *blitter = &ctx->blitter;
    struct pipe_context *pipe = ctx->pipe;
 
-   if (blitter->draw_quad) {
-      blitter->draw_quad(pipe, &ctx->vertices[0][0][0]);
-   } else {
-      /* write vertices and draw them */
-      pipe_buffer_write(pipe->screen, ctx->vbuf,
-                        0, sizeof(ctx->vertices), ctx->vertices);
+   /* write vertices and draw them */
+   pipe_buffer_write(pipe->screen, ctx->vbuf,
+                     0, sizeof(ctx->vertices), ctx->vertices);
 
-      util_draw_vertex_buffer(ctx->pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-   }
+   util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
+                           4,  /* verts */
+                           2); /* attribs/vert */
 }
 
 static INLINE

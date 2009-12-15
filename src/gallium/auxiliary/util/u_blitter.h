@@ -40,20 +40,6 @@ struct pipe_context;
 
 struct blitter_context
 {
-   /**
-    * Draw a quad.
-    *
-    * The pipe driver can set this to provide a more efficient way of drawing
-    * a quad. If it's NULL, the quad is drawn using a vertex buffer.
-    *
-    * There are always 4 vertices with interleaved vertex elements of type
-    * RGBA32F. See the vertex shader _output_ semantics to know what those are.
-    * The primitive type is always PIPE_PRIM_TRIANGLE_FAN and VS/clip/viewport
-    * is bypasssed.
-    */
-   void (*draw_quad)(struct pipe_context *pipe,
-                     const float *vertices);
-
    /* Private members, really. */
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
