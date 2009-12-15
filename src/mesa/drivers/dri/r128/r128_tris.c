@@ -216,7 +216,8 @@ do {							\
 
 #define LOCAL_VARS(n)						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset = rmesa->coloroffset;			\
    GLuint specoffset = rmesa->specoffset;			\
    GLboolean havespec = (rmesa->specoffset != 0);		\
