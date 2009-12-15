@@ -315,8 +315,8 @@ static void r300_emit_rs_setup(struct r300_context *r300)
     OUT_BATCH_REGVAL(R300_RS_IP_0,
                      R300_RS_TEX_PTR(0) |
                      R300_RS_SEL_S(R300_RS_SEL_C0) |
-                     R300_RS_SEL_R(R300_RS_SEL_C1) |
-                     R300_RS_SEL_T(R300_RS_SEL_K0) |
+                     R300_RS_SEL_T(R300_RS_SEL_C1) |
+                     R300_RS_SEL_R(R300_RS_SEL_K0) |
                      R300_RS_SEL_Q(R300_RS_SEL_K1));
     END_BATCH();
 }
