@@ -1095,7 +1095,7 @@ lp_build_log(struct lp_build_context *bld,
 
 /**
  * Generate polynomial.
- * Ex:  x^2 * coeffs[0] + x * coeffs[1] + coeffs[2].
+ * Ex:  coeffs[0] + x * coeffs[1] + x^2 * coeffs[2].
  */
 static LLVMValueRef
 lp_build_polynomial(struct lp_build_context *bld,
