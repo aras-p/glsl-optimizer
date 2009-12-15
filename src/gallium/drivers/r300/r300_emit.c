@@ -883,10 +883,21 @@ void r300_emit_viewport_state(struct r300_context* r300,
 
 void r300_emit_texture_count(struct r300_context* r300)
 {
+    uint32_t tx_enable = 0;
+    int i;
     CS_LOCALS(r300);
 
+    /* Notice that texture_count and sampler_count are just sizes
+     * of the respective arrays. We still have to check for the individual
+     * elements. */
+    for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
+        if (r300->textures[i]) {
+            tx_enable |= 1 << i;
+        }
+    }
+
     BEGIN_CS(2);
-    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    OUT_CS_REG(R300_TX_ENABLE, tx_enable);
     END_CS;
 
 }
