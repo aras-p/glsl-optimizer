@@ -34,6 +34,7 @@
 #include "main/imports.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
+#include "shader/program.h"
 
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
@@ -47,8 +48,6 @@ void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
     static const gl_state_index winstate[STATE_LENGTH]
          = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
     struct prog_instruction *newInst, *inst;
-    const GLuint origLen = fprog->Base.NumInstructions;
-    const GLuint newLen = origLen + 1;
     GLint  win_size;  /* state reference */
     GLuint wpos_temp; /* temp register */
     int i, j;
@@ -58,11 +57,22 @@ void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 
     wpos_temp = fprog->Base.NumTemporaries++;
 
-    /* Alloc storage for new instructions */
-    newInst = _mesa_alloc_instructions(newLen);
+    /* scan program where WPOS is used and replace with wpos_temp */
+    inst = fprog->Base.Instructions;
+    for (i = 0; i < fprog->Base.NumInstructions; i++) {
+        for (j=0; j < 3; j++) {
+            if(inst->SrcReg[j].File == PROGRAM_INPUT && 
+               inst->SrcReg[j].Index == FRAG_ATTRIB_WPOS) {
+                inst->SrcReg[j].File = PROGRAM_TEMPORARY;
+                inst->SrcReg[j].Index = wpos_temp;
+            }
+        }
+        inst++;
+    }
 
-    _mesa_init_instructions(newInst,1);
+    _mesa_insert_instructions(&(fprog->Base), 0, 1);
 
+    newInst = fprog->Base.Instructions;
     /* invert wpos.y
      * wpos_temp.xyzw = wpos.x-yzw + winsize.0y00 */
     newInst[0].Opcode = OPCODE_ADD;
@@ -78,26 +88,6 @@ void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
     newInst[0].SrcReg[1].File = PROGRAM_STATE_VAR;
     newInst[0].SrcReg[1].Index = win_size;
     newInst[0].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
-
-    /* scan program where WPOS is used and replace with wpos_temp */
-    inst = fprog->Base.Instructions;
-    for (i = 0; i < fprog->Base.NumInstructions; i++) {
-        for (j=0; j < 3; j++) {
-            if(inst->SrcReg[j].File == PROGRAM_INPUT && 
-               inst->SrcReg[j].Index == FRAG_ATTRIB_WPOS) {
-                inst->SrcReg[j].File = PROGRAM_TEMPORARY;
-                inst->SrcReg[j].Index = wpos_temp;
-            }
-        }
-        inst++;
-    }
-    /* Append original instructions after new instructions */
-    _mesa_copy_instructions (newInst + 1, fprog->Base.Instructions, origLen);
-    /* free old instructions */
-    _mesa_free_instructions(fprog->Base.Instructions, origLen);
-    /* install new instructions */
-    fprog->Base.Instructions = newInst;
-    fprog->Base.NumInstructions = newLen;
 
 }
 
