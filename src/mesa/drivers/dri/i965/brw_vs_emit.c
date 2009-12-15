@@ -392,6 +392,17 @@ static void emit_sge( struct brw_vs_compile *c,
   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_GE);
 }
 
+static void emit_cmp( struct brw_compile *p,
+		      struct brw_reg dst,
+		      struct brw_reg arg0,
+		      struct brw_reg arg1,
+		      struct brw_reg arg2 )
+{
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, brw_imm_f(0));
+   brw_SEL(p, dst, arg1, arg2);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+}
+
 static void emit_max( struct brw_compile *p, 
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -1484,6 +1495,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 if (!accumulator_contains(c, args[2]))
 	    brw_MOV(p, brw_acc_reg(), args[2]);
 	 brw_MAC(p, dst, args[0], args[1]);
+	 break;
+      case OPCODE_CMP:
+	 emit_cmp(p, dst, args[0], args[1], args[2]);
 	 break;
       case OPCODE_MAX:
 	 emit_max(p, dst, args[0], args[1]);
