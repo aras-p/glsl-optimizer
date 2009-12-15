@@ -197,7 +197,20 @@ struct translate_ctx
 
 static void report_error( struct translate_ctx *ctx, const char *msg )
 {
-   debug_printf( "\nError: %s", msg );
+   int line = 1;
+   int column = 1;
+   const char *itr = ctx->text;
+
+   while (itr != ctx->cur) {
+      if (*itr == '\n') {
+         column = 1;
+         ++line;
+      }
+      ++column;
+      ++itr;
+   }
+
+   debug_printf( "\nTGSI asm error: %s [%d : %d] \n", msg, line, column );
 }
 
 /* Parse shader header.
