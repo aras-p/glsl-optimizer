@@ -1285,7 +1285,7 @@ lp_build_log2_approx(struct lp_build_context *bld,
       /* mant = (float) mantissa(x) */
       mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
       mant = LLVMBuildOr(bld->builder, mant, one, "");
-      mant = LLVMBuildSIToFP(bld->builder, mant, vec_type, "");
+      mant = LLVMBuildBitCast(bld->builder, mant, vec_type, "");
 
       logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
                                     Elements(lp_build_log2_polynomial));
