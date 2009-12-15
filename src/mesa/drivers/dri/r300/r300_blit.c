@@ -162,7 +162,7 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                      R300_TX_SIZE_TXPITCH_EN);
 
     OUT_BATCH_REGVAL(R300_TX_FORMAT_0, r300TranslateTexFormat(mesa_format));
-    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0, pitch/_mesa_get_format_bytes(mesa_format) - 1);
+    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0, pitch - 1);
     OUT_BATCH_REGSEQ(R300_TX_OFFSET_0, 1);
     OUT_BATCH_RELOC(0, bo, offset, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 
@@ -339,7 +339,7 @@ static void emit_pvs_setup(struct r300_context *r300,
     END_BATCH();
 }
 
-static void emit_vap_setup(struct r300_context *r300, unsigned width, unsigned height)
+static void emit_vap_setup(struct r300_context *r300)
 {
     BATCH_LOCALS(&r300->radeon);
 
@@ -389,12 +389,14 @@ static GLboolean validate_buffers(struct r300_context *r300,
     return GL_TRUE;
 }
 
-static void emit_draw_packet(struct r300_context *r300, float width, float height)
+static void emit_draw_packet(struct r300_context *r300,
+                             float src_width, float src_height,
+                             float dst_width, float dst_height)
 {
-    float verts[] = {   0.0,    0.0, 0.0, 1.0,
-                        0.0, height, 0.0, 0.0,
-                      width, height, 1.0, 0.0,
-                      width,    0.0, 1.0, 1.0 };
+    float verts[] = { 0.0, 0.0, 0.0, 1.0,
+                      0.0, dst_height, 0.0, 1.0 - dst_height/src_height,
+                      dst_width, dst_height, dst_width/src_width, 1.0 - dst_height/src_height,
+                      dst_width, 0.0, dst_width/src_width, 1.0 };
 
     BATCH_LOCALS(&r300->radeon);
 
@@ -473,18 +475,22 @@ GLboolean r300_blit(struct r300_context *r300,
                     unsigned dst_width,
                     unsigned dst_height)
 {
+    /* Need to clamp the destination size to make sure
+     * we don't write outside of the buffer
+     */
+    dst_width = MIN2(dst_width, src_width);
+    dst_height = MIN2(src_height, dst_height);
+
     if (src_bo == dst_bo) {
         return GL_FALSE;
     }
 
     if (0) {
-        fprintf(stderr, "src: width %d, height %d, pitch %d vs %d, format %s\n",
+        fprintf(stderr, "src: width %d, height %d, pitch %d, format %s\n",
                 src_width, src_height, src_pitch,
-                _mesa_format_row_stride(src_mesaformat, src_width),
                 _mesa_get_format_name(src_mesaformat));
         fprintf(stderr, "dst: width %d, height %d, pitch %d, format %s\n",
-                dst_width, dst_height,
-                _mesa_format_row_stride(dst_mesaformat, dst_width),
+                dst_width, dst_height, dst_pitch,
                 _mesa_get_format_name(dst_mesaformat));
     }
 
@@ -506,11 +512,11 @@ GLboolean r300_blit(struct r300_context *r300,
     }
 
     emit_pvs_setup(r300, r300->blit.vp_code.body.d, 2);
-    emit_vap_setup(r300, dst_width, dst_height);
+    emit_vap_setup(r300);
 
     emit_cb_setup(r300, dst_bo, dst_offset, dst_mesaformat, dst_pitch, dst_width, dst_height);
 
-    emit_draw_packet(r300, dst_width, dst_height);
+    emit_draw_packet(r300, src_width, src_height, dst_width, dst_height);
 
     r300EmitCacheFlush(r300);
 

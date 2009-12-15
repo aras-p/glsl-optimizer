@@ -77,14 +77,14 @@ do_copy_texsubimage(GLcontext *ctx,
         fprintf(stderr, "%s: copying to face %d, level %d\n",
                 __FUNCTION__, _mesa_tex_target_to_face(target), level);
         fprintf(stderr, "to: x %d, y %d, offset %d\n", dstx, dsty, (uint32_t) dst_offset);
-        fprintf(stderr, "from (%dx%d) width %d, height %d, offset %d, pitch %d, width %d\n",
-                x, y, width, height, (uint32_t) src_offset, rrb->pitch, rrb->pitch/rrb->cpp);
+        fprintf(stderr, "from (%dx%d) width %d, height %d, offset %d, pitch %d\n",
+                x, y, rrb->base.Width, rrb->base.Height, (uint32_t) src_offset, rrb->pitch/rrb->cpp);
         fprintf(stderr, "src size %d, dst size %d\n", rrb->bo->size, timg->mt->bo->size);
 
     }
 
     /* blit from src buffer to texture */
-    return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch,
+    return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
                      rrb->base.Width, rrb->base.Height, timg->mt->bo ? timg->mt->bo : timg->bo, dst_offset,
                      timg->base.TexFormat, timg->base.Width, width, height);
 }
