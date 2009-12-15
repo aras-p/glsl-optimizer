@@ -358,8 +358,8 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    masks[1][1][1][1] = mask & (1 << (1*8+1*4+1*2+1)) ? ~0 : 0;
 #endif
 
-   assert((x % 2) == 0);
-   assert((y % 2) == 0);
+   assert((x % 4) == 0);
+   assert((y % 4) == 0);
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
