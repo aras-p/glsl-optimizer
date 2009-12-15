@@ -1523,7 +1523,7 @@ GLboolean assemble_tex_instruction(r700_AssemblerBase *pAsm, GLboolean normalize
     if(SPT_VP == pAsm->currentShaderType)
     {
         tex_instruction_ptr->m_Word0.f.resource_id      = texture_unit_source->reg + VERT_ATTRIB_MAX;
-        pAsm->unVetTexBits |= 1 < texture_unit_source->reg;
+        pAsm->unVetTexBits |= 1 << texture_unit_source->reg;
     }
     else
     {

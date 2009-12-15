@@ -75,7 +75,7 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 					BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
 					R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
 
-                    if( (1<i) & vp->r700AsmCode.unVetTexBits )                    
+                    if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
                     {   /* vs texture */                                     
                         R600_OUT_BATCH((i + VERT_ATTRIB_MAX + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
                     }
@@ -127,7 +127,7 @@ static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *at
 				BEGIN_BATCH_NO_AUTOSTATE(5);
 				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
 
-                if( (1<i) & vp->r700AsmCode.unVetTexBits )                    
+                if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
                 {   /* vs texture */
                     R600_OUT_BATCH((i+SQ_TEX_SAMPLER_VS_OFFSET) * SAMPLER_STRIDE); //work 1
                 }
