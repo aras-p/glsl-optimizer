@@ -60,6 +60,21 @@ static boolean uprcase( char c )
    return c;
 }
 
+/*
+ * Ignore case of str1 and assume str2 is already uppercase.
+ * Return TRUE iff str1 and str2 are equal.
+ */
+static int
+streq_nocase_uprcase(const char *str1,
+                     const char *str2)
+{
+   while (*str1 && uprcase(*str1) == *str2) {
+      str1++;
+      str2++;
+   }
+   return *str1 == *str2;
+}
+
 static boolean str_match_no_case( const char **pcur, const char *str )
 {
    const char *cur = *pcur;
@@ -1012,8 +1027,7 @@ static boolean parse_property( struct translate_ctx *ctx )
    }
    for (property_name = 0; property_name < TGSI_PROPERTY_COUNT;
         ++property_name) {
-      if (strncasecmp(id, property_names[property_name],
-                      strlen(property_names[property_name]))) {
+      if (streq_nocase_uprcase(id, property_names[property_name])) {
          break;
       }
    }
