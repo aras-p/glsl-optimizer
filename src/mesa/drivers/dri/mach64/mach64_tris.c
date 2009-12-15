@@ -1297,7 +1297,8 @@ do {						\
 
 #define LOCAL_VARS(n)						\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint vertex_size = mmesa->vertex_size;			\
    const GLuint xyoffset = 9;					\
    const GLuint coloroffset = 8;				\
