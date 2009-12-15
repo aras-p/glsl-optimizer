@@ -52,6 +52,7 @@ slang_operation_construct(slang_operation * oper)
    _slang_variable_scope_ctr(oper->locals);
    oper->fun = NULL;
    oper->var = NULL;
+   oper->label = NULL;
    return GL_TRUE;
 }
 

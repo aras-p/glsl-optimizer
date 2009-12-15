@@ -101,7 +101,7 @@ static void drawRightTriangle(void)
    glEnd();
 }
 
-void display(void)
+static void display(void)
 {
    printf("GL_CLEAR_DEPTH = %.2f,  GL_DEPTH_FUNC = %s,  DepthRange(%.1f, %.1f)\n",
           clearVal, funcs[curFunc].str, minZ, maxZ);
@@ -124,7 +124,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -136,7 +136,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 'n':

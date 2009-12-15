@@ -191,10 +191,15 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /*
-    * How many color buffers are we drawing into?
+   /* How many color buffers are we drawing into?
+    *
+    * If there are zero buffers or the buffer is too big, don't configure any
+    * regions for hardware drawing.  We'll fallback to software below.  Not
+    * having regions set makes some of the software fallback paths faster.
     */
-   if (fb->_NumColorDrawBuffers == 0) {
+   if ((fb->Width > ctx->Const.MaxRenderbufferSize)
+       || (fb->Height > ctx->Const.MaxRenderbufferSize)
+       || (fb->_NumColorDrawBuffers == 0)) {
       /* writing to 0  */
       colorRegions[0] = NULL;
       intel->constant_cliprect = GL_TRUE;

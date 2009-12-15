@@ -225,6 +225,7 @@ menuVisualSetup(void)
             if (!status) {
               XFreeColormap(__glutDisplay, menuColormap);
               free(placeHolders);
+              placeHolders = NULL;
               continue;
             }
           }
@@ -241,6 +242,7 @@ menuVisualSetup(void)
             XFreeColormap(__glutDisplay, menuColormap);
             if (placeHolders) {
               free(placeHolders);
+              placeHolders = NULL;
             }
             continue;
           }
@@ -252,6 +254,7 @@ menuVisualSetup(void)
             XFreeColormap(__glutDisplay, menuColormap);
             if (placeHolders) {
               free(placeHolders);
+              placeHolders = NULL;
             }
             continue;
           }
@@ -263,6 +266,7 @@ menuVisualSetup(void)
             XFreeColormap(__glutDisplay, menuColormap);
             if (placeHolders) {
               free(placeHolders);
+              placeHolders = NULL;
             }
             continue;
           }
@@ -271,6 +275,7 @@ menuVisualSetup(void)
             XFreeColors(__glutDisplay, menuColormap,
               placeHolders, numPlaceHolders, 0);
             free(placeHolders);
+            placeHolders = NULL;
           }
           menuWhite = color.pixel;
           menuVisual = visual->vinfo.visual;

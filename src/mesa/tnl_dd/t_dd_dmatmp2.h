@@ -266,6 +266,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	    if (j + nr < count) {
 	       ELT_TYPE *dest = ALLOC_ELTS( nr );
 	       dest = TAG(emit_consecutive_elts)( ctx, dest, j, nr );
+	       (void) dest;
 	       j += nr - 1;
 	       CLOSE_ELTS();
 	    }
@@ -273,6 +274,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	       ELT_TYPE *dest = ALLOC_ELTS( nr + 1 );
 	       dest = TAG(emit_consecutive_elts)( ctx, dest, j, nr );
 	       dest = TAG(emit_consecutive_elts)( ctx, dest, start, 1 );
+	       (void) dest;
 	       j += nr;
 	       CLOSE_ELTS();
 	    }
@@ -554,6 +556,7 @@ static void TAG(render_points_elts)( GLcontext *ctx,
       nr = MIN2( dmasz, count - j );
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -590,6 +593,7 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
       nr = MIN2( dmasz, count - j );
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      (void) dest;
       CLOSE_ELTS();
    }
 
@@ -621,6 +625,7 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
       nr = MIN2( dmasz, count - j );
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -671,6 +676,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
       j += nr - 1;
       if (j + 1 >= count && (flags & PRIM_END)) {
 	 dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
+	 (void) dest;
       }
       CLOSE_ELTS();
    }
@@ -703,6 +709,7 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
       nr = MIN2( dmasz, count - j );
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -734,6 +741,7 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
 
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -759,6 +767,7 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr - 1 );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -785,6 +794,7 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
       dest = ALLOC_ELTS( nr );
       dest = TAG(emit_elts)( ctx, dest, elts+start, 1 );
       dest = TAG(emit_elts)( ctx, dest, elts+j, nr - 1 );
+      (void) dest;
       CLOSE_ELTS();
    }
 }
@@ -843,6 +853,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 	    nr = MIN2( dmasz, count - j );
 	    dest = ALLOC_ELTS( nr );
 	    dest = TAG(emit_elts)( ctx, dest, elts+j, nr );
+	    (void) dest;
 	    CLOSE_ELTS();
 	 }
       }

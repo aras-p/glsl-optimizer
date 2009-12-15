@@ -56,7 +56,7 @@ static float rotAngle = 0.;
  *  at RAMP1START, and a blue color ramp starting
  *  at RAMP2START. The ramps must be a multiple of 16.
  */
-void init(void)
+static void init(void)
 {
    int i;
 
@@ -76,7 +76,7 @@ void init(void)
 
 /*  Draw 2 diagonal lines to form an X
  */
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -101,7 +101,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -117,7 +117,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 'r':

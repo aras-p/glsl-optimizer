@@ -189,9 +189,6 @@ Key(unsigned char key, int x, int y)
 static void
 Init(int argc, char *argv[])
 {
-   static const GLfloat mat[4] = { 1.0, 0.5, 0.5, 1.0 };
-   GLint i;
-
    if (!glutExtensionSupported("GL_EXT_framebuffer_object")) {
       printf("GL_EXT_framebuffer_object not found!\n");
       exit(0);

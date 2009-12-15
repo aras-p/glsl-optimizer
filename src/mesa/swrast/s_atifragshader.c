@@ -279,7 +279,7 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
 /* sample from unit idx using texinst->src as coords */
    GLuint swizzle = texinst->swizzle;
    GLuint coord_source = texinst->src;
-   GLfloat tex_coords[4];
+   GLfloat tex_coords[4] = { 0 };
 
    if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
       coord_source -= GL_TEXTURE0_ARB;

@@ -270,7 +270,8 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    i810ContextPtr imesa = I810_CONTEXT(ctx);				\
-   GLuint color[n], spec[n];						\
+   GLuint color[n] = { 0 };						\
+   GLuint spec[n] = { 0 };						\
    GLuint coloroffset = (imesa->vertex_size == 4 ? 3 : 4);		\
    GLboolean havespec = (imesa->vertex_size > 4);			\
    (void) color; (void) spec; (void) coloroffset; (void) havespec;

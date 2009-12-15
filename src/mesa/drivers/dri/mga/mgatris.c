@@ -397,7 +397,8 @@ do {						\
 
 #define LOCAL_VARS(n)					\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];				\
+   GLuint color[n] = { 0 };				\
+   GLuint spec[n] = { 0 };				\
    (void) color; (void) spec;
 
 
