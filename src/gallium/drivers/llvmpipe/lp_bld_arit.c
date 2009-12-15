@@ -1083,7 +1083,7 @@ lp_build_log(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log(2) */
-   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 1.4426950408889634);
+   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 0.69314718055994529);
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
