@@ -1291,7 +1291,7 @@ lp_build_log2_approx(struct lp_build_context *bld,
                                     Elements(lp_build_log2_polynomial));
 
       /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
-      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildMul(bld->builder, mant, bld->one, ""), "");
+      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildSub(bld->builder, mant, bld->one, ""), "");
 
       res = LLVMBuildAdd(bld->builder, logmant, logexp, "");
    }
