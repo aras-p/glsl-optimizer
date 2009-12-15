@@ -158,9 +158,9 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 
       /* If the renderbuffer is XRGB, we have to frob the blend function to
        * force the destination alpha to 1.0.  This means replacing GL_DST_ALPHA
-       * with GL_ONE and GL_ONE_MINUS_DST_ALPAH with GL_ZERO.
+       * with GL_ONE and GL_ONE_MINUS_DST_ALPHA with GL_ZERO.
        */
-      if (ctx->Visual.alphaBits == 0) {
+      if (ctx->DrawBuffer->Visual.alphaBits == 0) {
 	 key->blend_src_rgb = fix_xRGB_alpha(key->blend_src_rgb);
 	 key->blend_src_a   = fix_xRGB_alpha(key->blend_src_a);
 	 key->blend_dst_rgb = fix_xRGB_alpha(key->blend_dst_rgb);

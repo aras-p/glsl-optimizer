@@ -581,7 +581,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    /* As mentioned above, disable writes to the alpha component when the
     * renderbuffer is XRGB.
     */
-   if (ctx->Visual.alphaBits == 0)
+   if (ctx->DrawBuffer->Visual.alphaBits == 0)
      key.color_mask[3] = GL_FALSE;
 
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
