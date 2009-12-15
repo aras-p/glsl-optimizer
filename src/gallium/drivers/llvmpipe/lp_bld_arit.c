@@ -591,7 +591,7 @@ lp_build_abs(struct lp_build_context *bld,
    if(type.floating) {
       /* Mask out the sign bit */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      unsigned long absMask = ~(1 << (type.width - 1));
+      unsigned long long absMask = ~(1ULL << (type.width - 1));
       LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
       a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       a = LLVMBuildAnd(bld->builder, a, mask, "");
