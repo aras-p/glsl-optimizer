@@ -129,11 +129,18 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
       }
       return;
 
-   /* XXX lots more cases to add */
+   /* Handle other cases with a generic function.
+    */
    default:
-      uc->ui = 0; /* keep compiler happy */
-      debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
-      assert(0);
+      {
+         ubyte src[4];
+
+         src[0] = r;
+         src[1] = g;
+         src[2] = b;
+         src[3] = a;
+         util_format_write_4ub(format, src, 0, uc, 0, 0, 0, 1, 1);
+      }
    }
 }
  
@@ -283,11 +290,18 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
       }
       return;
 
-   /* XXX lots more cases to add */
+   /* Handle other cases with a generic function.
+    */
    default:
-      debug_print_format("gallium: unhandled format in util_unpack_color_ub()",
-                         format);
-      assert(0);
+      {
+         ubyte dst[4];
+
+         util_format_read_4ub(format, dst, 0, uc, 0, 0, 0, 1, 1);
+         *r = dst[0];
+         *g = dst[1];
+         *b = dst[2];
+         *a = dst[3];
+      }
    }
 }
 
@@ -383,11 +397,11 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
          uc->f[2] = rgba[2];
       }
       return;
-   /* XXX lots more cases to add */
+
+   /* Handle other cases with a generic function.
+    */
    default:
-      uc->ui = 0; /* keep compiler happy */
-      debug_print_format("gallium: unhandled format in util_pack_color()", format);
-      assert(0);
+      util_format_write_4f(format, rgba, 0, uc, 0, 0, 0, 1, 1);
    }
 }
  
