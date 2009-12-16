@@ -149,7 +149,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
                                array->Ptr, array->BufferObj->Name);
                   f[k] = 1.0; /* XXX replace the bad value! */
                }
-               //assert(!IS_INF_OR_NAN(f[k]));
+               /*assert(!IS_INF_OR_NAN(f[k]));*/
             }
          }
          break;
