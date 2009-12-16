@@ -61,15 +61,6 @@ struct lp_rasterizer_task
 
    unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
 
-   /* Pixel blocks produced during rasterization
-    */
-   unsigned nr_blocks;
-   struct {
-      unsigned x;
-      unsigned y;
-      unsigned mask;
-   } blocks[256];
-
    const struct lp_rast_state *current_state;
 
    /** "back" pointer */
@@ -133,6 +124,6 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned thread_index,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
-                          unsigned masks);
+                          int32_t c1, int32_t c2, int32_t c3);
 
 #endif

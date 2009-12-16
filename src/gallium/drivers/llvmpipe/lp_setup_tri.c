@@ -265,7 +265,7 @@ do_triangle_ccw(struct setup_context *setup,
    const int y3 = subpixel_snap(v3[0][1]);
 
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
-   struct lp_rast_triangle *tri = lp_scene_alloc( scene, sizeof *tri );
+   struct lp_rast_triangle *tri = lp_scene_alloc_aligned( scene, sizeof *tri, 16 );
    float area, oneoverarea;
    int minx, maxx, miny, maxy;
 
@@ -354,38 +354,29 @@ do_triangle_ccw(struct setup_context *setup,
    tri->ei3 = tri->dx31 - tri->dy31 - tri->eo3;
 
    {
-      int xstep1 = -tri->dy12;
-      int xstep2 = -tri->dy23;
-      int xstep3 = -tri->dy31;
+      const int xstep1 = -tri->dy12;
+      const int xstep2 = -tri->dy23;
+      const int xstep3 = -tri->dy31;
 
-      int ystep1 = tri->dx12;
-      int ystep2 = tri->dx23;
-      int ystep3 = tri->dx31;
+      const int ystep1 = tri->dx12;
+      const int ystep2 = tri->dx23;
+      const int ystep3 = tri->dx31;
       
-      int ix, iy;
+      int qx, qy, ix, iy;
       int i = 0;
 
-      int c1 = 0;
-      int c2 = 0;
-      int c3 = 0;
-      
-      for (iy = 0; iy < 4; iy++) {
-	 int cx1 = c1;
-	 int cx2 = c2;
-	 int cx3 = c3;
-
-	 for (ix = 0; ix < 4; ix++, i++) {
-	    tri->step[0][i] = cx1;
-	    tri->step[1][i] = cx2;
-	    tri->step[2][i] = cx3;
-	    cx1 += xstep1;
-	    cx2 += xstep2;
-	    cx3 += xstep3;
-	 }
-
-	 c1 += ystep1;
-	 c2 += ystep2;
-	 c3 += ystep3;
+      for (qy = 0; qy < 2; qy++) {
+         for (qx = 0; qx < 2; qx++) {
+            for (iy = 0; iy < 2; iy++) {
+               for (ix = 0; ix < 2; ix++, i++) {
+                  int x = qx * 2 + ix;
+                  int y = qy * 2 + iy;
+                  tri->inputs.step[0][i] = x * xstep1 + y * ystep1;
+                  tri->inputs.step[1][i] = x * xstep2 + y * ystep2;
+                  tri->inputs.step[2][i] = x * xstep3 + y * ystep3;
+               }
+            }
+         }
       }
    }
 

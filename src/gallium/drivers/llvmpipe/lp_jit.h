@@ -114,9 +114,14 @@ typedef void
                     const void *a0,
                     const void *dadx,
                     const void *dady,
-                    const uint32_t *mask,
                     void *color,
-                    void *depth);
+                    void *depth,
+                    const int32_t c1,
+                    const int32_t c2,
+                    const int32_t c3,
+                    const int32_t *step1,
+                    const int32_t *step2,
+                    const int32_t *step3);
 
 
 

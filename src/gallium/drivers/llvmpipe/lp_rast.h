@@ -80,6 +80,9 @@ struct lp_rast_shader_inputs {
    float (*a0)[4];
    float (*dadx)[4];
    float (*dady)[4];
+
+   /* edge/step info for 3 edges and 4x4 block of pixels */
+   int ALIGN16_ATTRIB step[3][16];
 };
 
 
@@ -117,14 +120,10 @@ struct lp_rast_triangle {
    int dx31;
 
    /* edge function values at minx,miny ?? */
-   int c1;
-   int c2;
-   int c3;
-
-   int step[3][16];
+   int c1, c2, c3;
 
    /* inputs for the shader */
-   struct lp_rast_shader_inputs inputs;
+   struct lp_rast_shader_inputs ALIGN16_ATTRIB inputs;
 };
 
 

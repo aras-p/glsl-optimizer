@@ -176,7 +176,92 @@ generate_depth(LLVMBuilderRef builder,
 
 
 /**
+ * Generate the code to do inside/outside triangle testing for the
+ * four pixels in a 2x2 quad.  This will set the four elements of the
+ * quad mask vector to 0 or ~0.
+ * \param i  which quad of the quad group to test, in [0,3]
+ */
+static void
+generate_tri_edge_mask(LLVMBuilderRef builder,
+                       unsigned i,
+                       LLVMValueRef *mask,      /* ivec4, out */
+                       LLVMValueRef c0,         /* int32 */
+                       LLVMValueRef c1,         /* int32 */
+                       LLVMValueRef c2,         /* int32 */
+                       LLVMValueRef step0_ptr,  /* ivec4 */
+                       LLVMValueRef step1_ptr,  /* ivec4 */
+                       LLVMValueRef step2_ptr)  /* ivec4 */
+{
+   /*
+     c0_vec = splat(c0)
+     c1_vec = splat(c1)
+     c2_vec = splat(c2)
+     s0_vec = c0_vec + step0_ptr[i]
+     s1_vec = c1_vec + step1_ptr[i]
+     s2_vec = c2_vec + step2_ptr[i]
+     m0_vec = s0_vec > {0,0,0,0}
+     m1_vec = s1_vec > {0,0,0,0}
+     m2_vec = s2_vec > {0,0,0,0}
+     mask = m0_vec & m1_vec & m2_vec
+    */
+   struct lp_type i32_type;
+   LLVMTypeRef i32vec4_type;
+
+   LLVMValueRef index;
+   LLVMValueRef c0_vec, c1_vec, c2_vec;
+   LLVMValueRef step0_vec, step1_vec, step2_vec;
+   LLVMValueRef m0_vec, m1_vec, m2_vec;
+   LLVMValueRef s0_vec, s1_vec, s2_vec;
+   LLVMValueRef m;
+
+   LLVMValueRef zeros;
+
+   assert(i < 4);
+   
+   /* int32 vector type */
+   memset(&i32_type, 0, sizeof i32_type);
+   i32_type.floating = FALSE; /* values are integers */
+   i32_type.sign = TRUE;      /* values are signed */
+   i32_type.norm = FALSE;     /* values are not normalized */
+   i32_type.width = 32;       /* 32-bit int values */
+   i32_type.length = 4;       /* 4 elements per vector */
+
+   i32vec4_type = lp_build_int32_vec4_type();
+
+   /* int32_vec4 zero = {0,0,0,0} */
+   zeros = LLVMConstNull(i32vec4_type);
+
+   c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
+   c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
+   c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
+
+   index = LLVMConstInt(LLVMInt32Type(), i, 0);
+   step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
+   step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
+   step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
+
+   /** XXX with a little work, we could remove the add here and just
+    * compare c0_vec > step0_vec.
+    */
+   s0_vec = LLVMBuildAdd(builder, c0_vec, step0_vec, "");
+   s1_vec = LLVMBuildAdd(builder, c1_vec, step1_vec, "");
+   s2_vec = LLVMBuildAdd(builder, c2_vec, step2_vec, "");
+   m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s0_vec, zeros);
+   m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s1_vec, zeros);
+   m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s2_vec, zeros);
+
+   m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
+   m = LLVMBuildAnd(builder, m, m2_vec, "");
+
+   lp_build_name(m, "m");
+
+   *mask = m;
+}
+
+
+/**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
+ * \param i  which quad in the tile, in range [0,3]
  */
 static void
 generate_fs(struct llvmpipe_context *lp,
@@ -190,7 +275,13 @@ generate_fs(struct llvmpipe_context *lp,
             struct lp_build_sampler_soa *sampler,
             LLVMValueRef *pmask,
             LLVMValueRef *color,
-            LLVMValueRef depth_ptr)
+            LLVMValueRef depth_ptr,
+            LLVMValueRef c0,
+            LLVMValueRef c1,
+            LLVMValueRef c2,
+            LLVMValueRef step0_ptr,
+            LLVMValueRef step1_ptr,
+            LLVMValueRef step2_ptr)
 {
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef elem_type;
@@ -204,6 +295,8 @@ generate_fs(struct llvmpipe_context *lp,
    boolean early_depth_test;
    unsigned attrib;
    unsigned chan;
+
+   assert(i < 4);
 
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
@@ -224,7 +317,12 @@ generate_fs(struct llvmpipe_context *lp,
    }
    lp_build_flow_scope_declare(flow, &z);
 
+   /* do triangle edge testing */
+   generate_tri_edge_mask(builder, i, pmask,
+                          c0, c1, c2, step0_ptr, step1_ptr, step2_ptr);
+
    lp_build_mask_begin(&mask, flow, type, *pmask);
+
 
    early_depth_test =
       key->depth.enabled &&
@@ -376,17 +474,18 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
    LLVMTypeRef blend_int_vec_type;
-   LLVMTypeRef arg_types[9];
+   LLVMTypeRef arg_types[14];
    LLVMTypeRef func_type;
+   LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
    LLVMValueRef context_ptr;
    LLVMValueRef x;
    LLVMValueRef y;
    LLVMValueRef a0_ptr;
    LLVMValueRef dadx_ptr;
    LLVMValueRef dady_ptr;
-   LLVMValueRef mask_ptr;
    LLVMValueRef color_ptr;
    LLVMValueRef depth_ptr;
+   LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef x0;
@@ -468,9 +567,17 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
    arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
    arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dady */
-   arg_types[6] = LLVMPointerType(fs_int_vec_type, 0); /* mask */
-   arg_types[7] = LLVMPointerType(blend_vec_type, 0);  /* color */
-   arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
+   arg_types[6] = LLVMPointerType(blend_vec_type, 0);  /* color */
+   arg_types[7] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
+   arg_types[8] = LLVMInt32Type();                     /* c0 */
+   arg_types[9] = LLVMInt32Type();                    /* c1 */
+   arg_types[10] = LLVMInt32Type();                    /* c2 */
+   /* Note: the step arrays are built as int32[16] but we interpret
+    * them here as int32_vec4[4].
+    */
+   arg_types[11] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
+   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
+   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -486,9 +593,14 @@ generate_fragment(struct llvmpipe_context *lp,
    a0_ptr       = LLVMGetParam(variant->function, 3);
    dadx_ptr     = LLVMGetParam(variant->function, 4);
    dady_ptr     = LLVMGetParam(variant->function, 5);
-   mask_ptr     = LLVMGetParam(variant->function, 6);
-   color_ptr    = LLVMGetParam(variant->function, 7);
-   depth_ptr    = LLVMGetParam(variant->function, 8);
+   color_ptr    = LLVMGetParam(variant->function, 6);
+   depth_ptr    = LLVMGetParam(variant->function, 7);
+   c0           = LLVMGetParam(variant->function, 8);
+   c1           = LLVMGetParam(variant->function, 9);
+   c2           = LLVMGetParam(variant->function, 10);
+   step0_ptr    = LLVMGetParam(variant->function, 11);
+   step1_ptr    = LLVMGetParam(variant->function, 12);
+   step2_ptr    = LLVMGetParam(variant->function, 13);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
@@ -496,9 +608,14 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
-   lp_build_name(mask_ptr, "mask");
    lp_build_name(color_ptr, "color");
    lp_build_name(depth_ptr, "depth");
+   lp_build_name(c0, "c0");
+   lp_build_name(c1, "c1");
+   lp_build_name(c2, "c2");
+   lp_build_name(step0_ptr, "step0");
+   lp_build_name(step1_ptr, "step1");
+   lp_build_name(step2_ptr, "step2");
 
    /*
     * Function body
@@ -526,7 +643,6 @@ generate_fragment(struct llvmpipe_context *lp,
       if(i != 0)
          lp_build_interp_soa_update(&interp, i);
 
-      fs_mask[i] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, mask_ptr, &index, 1, ""), "");
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &index, 1, "");
 
       generate_fs(lp, shader, key,
@@ -536,9 +652,11 @@ generate_fragment(struct llvmpipe_context *lp,
                   i,
                   &interp,
                   sampler,
-                  &fs_mask[i],
+                  &fs_mask[i], /* output */
                   out_color,
-                  depth_ptr_i);
+                  depth_ptr_i,
+                  c0, c1, c2,
+                  step0_ptr, step1_ptr, step2_ptr);
 
       for(chan = 0; chan < NUM_CHANNELS; ++chan)
          fs_out_color[chan][i] = out_color[chan];

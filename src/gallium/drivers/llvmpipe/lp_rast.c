@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <limits.h>
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
@@ -279,6 +280,8 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          unsigned thread_index,
                          const union lp_rast_cmd_arg arg )
 {
+   /* Set c1,c2,c3 to large values so the in/out test always passes */
+   const int32_t c1 = INT_MAX/2, c2 = INT_MAX/2, c3 = INT_MAX/2;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
    const unsigned tile_x = rast->tasks[thread_index].x;
    const unsigned tile_y = rast->tasks[thread_index].y;
@@ -296,7 +299,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                               inputs,
                               tile_x + x,
                               tile_y + y,
-                              mask);
+                              c1, c2, c3);
 }
 
 
@@ -308,58 +311,25 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned thread_index,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
-                          unsigned mask)
+                          int32_t c1, int32_t c2, int32_t c3)
 {
-#if 1
    const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
    struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
    void *color;
    void *depth;
-   uint32_t ALIGN16_ATTRIB masks[2][2][2][2];
    unsigned ix, iy;
    int block_offset;
 
+#ifdef DEBUG
    assert(state);
 
    /* Sanity checks */
    assert(x % TILE_VECTOR_WIDTH == 0);
    assert(y % TILE_VECTOR_HEIGHT == 0);
 
-   /* mask: the rasterizer wants to treat pixels in 4x4 blocks, but
-    * the pixel shader wants to swizzle them into 4 2x2 quads.
-    * 
-    * Additionally, the pixel shader wants masks as full dword ~0,
-    * while the rasterizer wants to pack per-pixel bits tightly.
-    */
-#if 0
-   unsigned qx, qy;
-   for (qy = 0; qy < 2; ++qy)
-      for (qx = 0; qx < 2; ++qx)
-	 for (iy = 0; iy < 2; ++iy)
-	    for (ix = 0; ix < 2; ++ix)
-	       masks[qy][qx][iy][ix] = mask & (1 << (qy*8+iy*4+qx*2+ix)) ? ~0 : 0;
-#else
-   masks[0][0][0][0] = mask & (1 << (0*8+0*4+0*2+0)) ? ~0 : 0;
-   masks[0][0][0][1] = mask & (1 << (0*8+0*4+0*2+1)) ? ~0 : 0;
-   masks[0][0][1][0] = mask & (1 << (0*8+1*4+0*2+0)) ? ~0 : 0;
-   masks[0][0][1][1] = mask & (1 << (0*8+1*4+0*2+1)) ? ~0 : 0;
-   masks[0][1][0][0] = mask & (1 << (0*8+0*4+1*2+0)) ? ~0 : 0;
-   masks[0][1][0][1] = mask & (1 << (0*8+0*4+1*2+1)) ? ~0 : 0;
-   masks[0][1][1][0] = mask & (1 << (0*8+1*4+1*2+0)) ? ~0 : 0;
-   masks[0][1][1][1] = mask & (1 << (0*8+1*4+1*2+1)) ? ~0 : 0;
-
-   masks[1][0][0][0] = mask & (1 << (1*8+0*4+0*2+0)) ? ~0 : 0;
-   masks[1][0][0][1] = mask & (1 << (1*8+0*4+0*2+1)) ? ~0 : 0;
-   masks[1][0][1][0] = mask & (1 << (1*8+1*4+0*2+0)) ? ~0 : 0;
-   masks[1][0][1][1] = mask & (1 << (1*8+1*4+0*2+1)) ? ~0 : 0;
-   masks[1][1][0][0] = mask & (1 << (1*8+0*4+1*2+0)) ? ~0 : 0;
-   masks[1][1][0][1] = mask & (1 << (1*8+0*4+1*2+1)) ? ~0 : 0;
-   masks[1][1][1][0] = mask & (1 << (1*8+1*4+1*2+0)) ? ~0 : 0;
-   masks[1][1][1][1] = mask & (1 << (1*8+1*4+1*2+1)) ? ~0 : 0;
-#endif
-
    assert((x % 4) == 0);
    assert((y % 4) == 0);
+#endif
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
@@ -373,12 +343,15 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    /* depth buffer */
    depth = tile->depth + block_offset;
 
-   /* XXX: This will most likely fail on 32bit x86 without -mstackrealign */
-   assert(lp_check_alignment(masks, 16));
-
+#ifdef DEBUG
    assert(lp_check_alignment(depth, 16));
    assert(lp_check_alignment(color, 16));
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
+
+   assert(lp_check_alignment(inputs->step[0], 16));
+   assert(lp_check_alignment(inputs->step[1], 16));
+   assert(lp_check_alignment(inputs->step[2], 16));
+#endif
 
    /* run shader */
    state->jit_function( &state->jit_context,
@@ -386,26 +359,11 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                         inputs->a0,
                         inputs->dadx,
                         inputs->dady,
-                        &masks[0][0][0][0],
                         color,
-                        depth);
-#else
-   struct lp_rast_tile *tile = &rast->tile;
-   unsigned chan_index;
-   unsigned q, ix, iy;
-
-   x %= TILE_SIZE;
-   y %= TILE_SIZE;
-
-   /* mask */
-   for (q = 0; q < 4; ++q)
-      for(iy = 0; iy < 2; ++iy)
-         for(ix = 0; ix < 2; ++ix)
-            if(masks[q] & (1 << (iy*2 + ix)))
-               for (chan_index = 0; chan_index < NUM_CHANNELS; ++chan_index)
-                  TILE_PIXEL(tile->color, x + q*2 + ix, y + iy, chan_index) = 0xff;
-
-#endif
+                        depth,
+                        c1, c2, c3,
+                        inputs->step[0], inputs->step[1], inputs->step[2]
+                        );
 }
 
 
