@@ -515,7 +515,7 @@ reset_cache(struct st_context *st)
    struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
-   //memset(cache->buffer, 0xff, sizeof(cache->buffer));
+   /*memset(cache->buffer, 0xff, sizeof(cache->buffer));*/
    cache->empty = GL_TRUE;
 
    cache->xmin = 1000000;
