@@ -430,7 +430,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset = smesa->coloroffset;			\
    GLuint specoffset = smesa->specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;

@@ -393,7 +393,6 @@ sis_clear_z_stencil_buffer( GLcontext * ctx, GLbitfield mask,
 			    GLint x, GLint y, GLint width, GLint height )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   int cmd;
 
    mWait3DCmdQueue (8);
    MMIO(REG_SRC_PITCH, (smesa->zFormat == SiS_ZFORMAT_Z16) ?

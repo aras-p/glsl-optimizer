@@ -330,7 +330,8 @@ do {							\
 
 #define LOCAL_VARS(n)                                                   \
     struct via_context *vmesa = VIA_CONTEXT(ctx);                             \
-    GLuint color[n], spec[n];                                           \
+    GLuint color[n] = { 0 };                                          \
+    GLuint spec[n] = { 0 };                                           \
     GLuint coloroffset = vmesa->coloroffset;              \
     GLuint specoffset = vmesa->specoffset;                       \
     (void)color; (void)spec; (void)coloroffset; (void)specoffset;

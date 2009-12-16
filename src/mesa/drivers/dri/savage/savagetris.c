@@ -435,7 +435,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset =						\
       ((imesa->skip & SAVAGE_SKIP_W) ? 3 : 4);			\
    GLboolean specoffset =					\
