@@ -91,6 +91,8 @@ struct r300_rs_block {
 };
 
 struct r300_sampler_state {
+    struct pipe_sampler_state state;
+
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
     uint32_t border_color; /* R300_TX_BORDER_COLOR: 0x45c0 */

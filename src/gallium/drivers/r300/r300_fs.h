@@ -30,6 +30,13 @@
 #include "radeon_code.h"
 #include "r300_shader_semantics.h"
 
+struct r300_fragment_shader_code {
+    struct r300_fragment_program_external_state compare_state;
+    struct rX00_fragment_program_code code;
+
+    struct r300_fragment_shader_code* next;
+};
+
 struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
@@ -37,21 +44,28 @@ struct r300_fragment_shader {
     struct tgsi_shader_info info;
     struct r300_shader_semantics inputs;
 
-    /* Has this shader been translated yet? */
-    boolean translated;
+    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
+    unsigned shadow_samplers;
 
-    /* Compiled code */
-    struct rX00_fragment_program_code code;
+    /* Currently-bound fragment shader. */
+    struct r300_fragment_shader_code* shader;
+
+    /* List of the same shaders compiled with different texture-compare
+     * states. */
+    struct r300_fragment_shader_code* first;
 };
 
+void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
+                                struct r300_shader_semantics* fs_inputs);
 
-void r300_translate_fragment_shader(struct r300_context* r300,
-                                    struct r300_fragment_shader* fs);
+/* Return TRUE if the shader was switched and should be re-emitted. */
+boolean r300_pick_fragment_shader(struct r300_context* r300);
 
-static inline boolean r300_fragment_shader_writes_depth(struct r300_fragment_shader *fs)
+static INLINE boolean r300_fragment_shader_writes_depth(struct r300_fragment_shader *fs)
 {
     if (!fs)
-	return FALSE;
-    return (fs->code.writes_depth) ? TRUE : FALSE;
+        return FALSE;
+    return (fs->shader->code.writes_depth) ? TRUE : FALSE;
 }
+
 #endif /* R300_FS_H */

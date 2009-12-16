@@ -355,6 +355,7 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
     fs->state.tokens = tgsi_dup_tokens(shader->tokens);
 
     tgsi_scan_shader(shader->tokens, &fs->info);
+    r300_shader_read_fs_inputs(&fs->info, &fs->inputs);
 
     return (void*)fs;
 }
@@ -368,11 +369,10 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     if (fs == NULL) {
         r300->fs = NULL;
         return;
-    } else if (!fs->translated) {
-        r300_translate_fragment_shader(r300, fs);
     }
 
     r300->fs = fs;
+    r300_pick_fragment_shader(r300);
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
@@ -381,7 +381,14 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
-    rc_constants_destroy(&fs->code.constants);
+    struct r300_fragment_shader_code *tmp, *ptr = fs->first;
+
+    while (ptr) {
+        tmp = ptr;
+        ptr = ptr->next;
+        rc_constants_destroy(&tmp->code.constants);
+        FREE(tmp);
+    }
     FREE((void*)fs->state.tokens);
     FREE(shader);
 }
@@ -547,6 +554,8 @@ static void*
     int lod_bias;
     union util_color uc;
 
+    sampler->state = *state;
+
     sampler->filter0 |=
         (r300_translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
         (r300_translate_wrap(state->wrap_t) << R300_TX_WRAP_T_SHIFT) |
@@ -597,6 +606,14 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     }
 
     r300->sampler_count = count;
+
+    /* Pick a fragment shader based on the texture compare state. */
+    if (r300->fs && (r300->dirty_state & R300_ANY_NEW_SAMPLERS)) {
+        if (r300_pick_fragment_shader(r300)) {
+            r300->dirty_state |= R300_NEW_FRAGMENT_SHADER |
+                                 R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+        }
+    }
 }
 
 static void r300_lacks_vertex_textures(struct pipe_context* pipe,

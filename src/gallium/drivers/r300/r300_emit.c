@@ -158,6 +158,13 @@ static const float * get_shader_constant(
                     vec[1] = 1.0 / tex->height0;
                     break;
 
+                /* Texture compare-fail value. */
+                /* XXX Since Gallium doesn't support GL_ARB_shadow_ambient,
+                 * this is always (0,0,0,0). */
+                case RC_STATE_SHADOW_AMBIENT:
+                    vec[3] = 0;
+                    break;
+
                 default:
                     debug_printf("r300: Implementation error: "
                         "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
@@ -1030,18 +1037,20 @@ validate:
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
         if (r300screen->caps->is_r500) {
-            r500_emit_fragment_program_code(r300, &r300->fs->code);
+            r500_emit_fragment_program_code(r300, &r300->fs->shader->code);
         } else {
-            r300_emit_fragment_program_code(r300, &r300->fs->code);
+            r300_emit_fragment_program_code(r300, &r300->fs->shader->code);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
     }
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER_CONSTANTS) {
         if (r300screen->caps->is_r500) {
-            r500_emit_fs_constant_buffer(r300, &r300->fs->code.constants);
+            r500_emit_fs_constant_buffer(r300,
+                                         &r300->fs->shader->code.constants);
         } else {
-            r300_emit_fs_constant_buffer(r300, &r300->fs->code.constants);
+            r300_emit_fs_constant_buffer(r300,
+                                         &r300->fs->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
