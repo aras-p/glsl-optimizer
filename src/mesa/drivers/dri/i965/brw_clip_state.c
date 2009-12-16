@@ -131,7 +131,7 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.clip5.api_mode = BRW_CLIP_API_OGL;
    clip.clip5.clip_mode = key->clip_mode;
 
-   if (BRW_IS_G4X(brw))
+   if (intel->is_g4x)
       clip.clip5.negative_w_clip_test = 1;
 
    clip.clip6.clipper_viewport_state_ptr = 0;

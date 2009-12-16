@@ -832,12 +832,7 @@
 
 #include "intel_chipset.h"
 
-#define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->intel.intelScreen->deviceID))
-#define BRW_IS_965(brw)         (!(BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)))
-#define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
-#define CMD_VF_STATISTICS(brw)          ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
-#define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
-                                         (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
+#define BRW_IS_965(brw)         (!(brw)->intel.is_g4x && \
+				 !(brw)->intel.is_ironlake)
 
 #endif

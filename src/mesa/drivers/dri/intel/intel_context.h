@@ -178,6 +178,10 @@ struct intel_context
    int gen;
    GLboolean needs_ff_sync;
    GLboolean is_ironlake;
+   GLboolean is_g4x;
+   GLboolean has_luminance_srgb;
+
+   int urb_size;
 
    struct intel_region *front_region;
    struct intel_region *back_region;

@@ -438,7 +438,9 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-
+   GLboolean has_surface_tile_offset;
+   GLboolean has_compr4;
+;
    struct {
       struct brw_state_flags dirty;
 
@@ -514,6 +516,12 @@ struct brw_context
     */
    GLuint next_free_page;
 
+   /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
+   uint32_t CMD_VF_STATISTICS;
+   /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
+   uint32_t CMD_PIPELINE_SELECT;
+   int vs_max_threads;
+   int wm_max_threads;
 
    /* BRW_NEW_URB_ALLOCATIONS:
     */
@@ -541,6 +549,7 @@ struct brw_context
       GLuint clip_start;
       GLuint sf_start;
       GLuint cs_start;
+      GLuint size; /* Hardware URB size, in KB. */
    } urb;
 
    

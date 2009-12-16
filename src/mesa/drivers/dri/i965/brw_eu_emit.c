@@ -452,7 +452,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
       insn->bits3.sampler_igdng.end_of_thread = eot;
       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_SAMPLER;
       insn->bits2.send_igdng.end_of_thread = eot;
-   } else if (BRW_IS_G4X(brw)) {
+   } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
       insn->bits3.sampler_g4x.msg_type = msg_type;

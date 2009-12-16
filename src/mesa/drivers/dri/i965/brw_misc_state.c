@@ -212,7 +212,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (BRW_IS_G4X(brw) || intel->is_ironlake) ? 6 : 5;
+   unsigned int len = (intel->is_g4x || intel->is_ironlake) ? 6 : 5;
 
    if (region == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -223,7 +223,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -262,7 +262,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -444,7 +444,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_pipeline_select ps;
 
       memset(&ps, 0, sizeof(ps));
-      ps.header.opcode = CMD_PIPELINE_SELECT(brw);
+      ps.header.opcode = brw->CMD_PIPELINE_SELECT;
       ps.header.pipeline_select = 0;
       BRW_BATCH_STRUCT(brw, &ps);
    }
@@ -480,7 +480,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
 
-      vfs.opcode = CMD_VF_STATISTICS(brw);
+      vfs.opcode = brw->CMD_VF_STATISTICS;
       if (INTEL_DEBUG & DEBUG_STATS)
 	 vfs.statistics_enable = 1; 
 

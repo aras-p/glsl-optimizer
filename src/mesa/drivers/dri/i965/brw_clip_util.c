@@ -135,6 +135,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     GLboolean force_edgeflag)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = get_tmp(c);
    GLuint i;
 
@@ -142,7 +143,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
     */
    /*
     * After CLIP stage, only first 256 bits of the VUE are read
-    * back on IGDNG, so needn't change it
+    * back on Ironlake, so needn't change it
     */
    brw_copy_indirect_to_indirect(p, dest_ptr, v0_ptr, 1);
       
@@ -151,7 +152,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    for (i = 0; i < c->nr_attrs; i++) {
       GLuint delta = i*16 + 32;
 
-      if (BRW_IS_IGDNG(p->brw))
+      if (intel->is_ironlake)
           delta = i * 16 + 32 * 3;
 
       if (delta == c->offset[VERT_RESULT_EDGE]) {
@@ -185,7 +186,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    if (i & 1) {
       GLuint delta = i*16 + 32;
 
-      if (BRW_IS_IGDNG(p->brw))
+      if (intel->is_ironlake)
           delta = i * 16 + 32 * 3;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));

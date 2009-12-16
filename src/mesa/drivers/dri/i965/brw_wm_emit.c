@@ -1162,7 +1162,6 @@ void emit_fb_write(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
-   struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
 
@@ -1177,7 +1176,7 @@ void emit_fb_write(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    for (channel = 0; channel < 4; channel++) {
-      if (c->dispatch_width == 16 && (BRW_IS_G4X(brw) || intel->is_ironlake)) {
+      if (c->dispatch_width == 16 && brw->has_compr4) {
 	 /* By setting the high bit of the MRF register number, we indicate
 	  * that we want COMPR4 mode - instead of doing the usual destination
 	  * + 1 for the second half we get destination + 4.

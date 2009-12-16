@@ -158,6 +158,38 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
 
+   if (intel->is_ironlake || intel->is_g4x) {
+      brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
+      brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
+      brw->has_surface_tile_offset = GL_TRUE;
+      brw->has_compr4 = GL_TRUE;
+  } else {
+      brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_965;
+      brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
+      brw->has_surface_tile_offset = GL_FALSE;
+      brw->has_compr4 = GL_FALSE;
+   }
+
+   /* WM maximum threads is number of EUs times number of threads per EU. */
+   if (intel->is_ironlake) {
+      brw->urb.size = 1024;
+      brw->vs_max_threads = 72;
+      brw->wm_max_threads = 12 * 6;
+   } else if (intel->is_g4x) {
+      brw->urb.size = 384;
+      brw->vs_max_threads = 32;
+      brw->wm_max_threads = 10 * 5;
+   } else {
+      brw->urb.size = 256;
+      brw->vs_max_threads = 16;
+      brw->wm_max_threads = 8 * 4;
+   }
+
+   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD) {
+      brw->vs_max_threads = 1;
+      brw->wm_max_threads = 1;
+   }
+
    brw_init_state( brw );
 
    brw->state.dirty.mesa = ~0;

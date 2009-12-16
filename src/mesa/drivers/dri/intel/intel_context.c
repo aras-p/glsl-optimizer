@@ -623,6 +623,10 @@ intelInitContext(struct intel_context *intel,
    if (IS_IGDNG(intel->intelScreen->deviceID)) {
       intel->is_ironlake = GL_TRUE;
       intel->needs_ff_sync = GL_TRUE;
+      intel->has_luminance_srgb = GL_TRUE;
+   } else if (IS_G4X(intel->intelScreen->deviceID)) {
+      intel->has_luminance_srgb = GL_TRUE;
+      intel->is_g4x = GL_TRUE;
    }
 
    /* Dri stuff */

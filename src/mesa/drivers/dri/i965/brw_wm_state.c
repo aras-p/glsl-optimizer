@@ -49,8 +49,6 @@ struct brw_wm_unit_key {
    unsigned int curbe_offset;
    unsigned int urb_size;
 
-   unsigned int max_threads;
-
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
    GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
@@ -66,18 +64,6 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    struct intel_context *intel = &brw->intel;
 
    memset(key, 0, sizeof(*key));
-
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
-      key->max_threads = 1;
-   else {
-      /* WM maximum threads is number of EUs times number of threads per EU. */
-      if (intel->is_ironlake)
-         key->max_threads = 12 * 6;
-      else if (BRW_IS_G4X(brw))
-	 key->max_threads = 10 * 5;
-      else
-	 key->max_threads = 8 * 4;
-   }
 
    /* CACHE_NEW_WM_PROG */
    key->total_grf = brw->wm.prog_data->total_grf;
@@ -192,7 +178,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    else
       wm.wm5.enable_16_pix = 1;
 
-   wm.wm5.max_threads = key->max_threads - 1;
+   wm.wm5.max_threads = brw->wm_max_threads - 1;
    wm.wm5.thread_dispatch_enable = 1;	/* AKA: color_write */
    wm.wm5.legacy_line_rast = 0;
    wm.wm5.legacy_global_depth_bias = 0;
@@ -269,7 +255,7 @@ static void upload_wm_unit( struct brw_context *brw )
     */
    assert(key.total_scratch <= 12 * 1024);
    if (key.total_scratch) {
-      GLuint total = key.total_scratch * key.max_threads;
+      GLuint total = key.total_scratch * brw->wm_max_threads;
 
       if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
 	 dri_bo_unreference(brw->wm.scratch_bo);

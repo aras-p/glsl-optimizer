@@ -608,8 +608,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
 	 surf.ss1.base_addr = key.draw_offset - tile_offset;
 
-	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
-	 if (BRW_IS_G4X(brw)) {
+	 if (brw->has_surface_tile_offset) {
 	    if (key.tiling == I915_TILING_X) {
 	       /* Note that the low bits of these fields are missing, so
 		* there's the possibility of getting in trouble.
@@ -620,6 +619,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
 	       surf.ss5.y_offset = tile_offset / 128 / 2;
 	    }
+	 } else {
+	    assert(tile_offset == 0);
 	 }
       }
       if (region_bo != NULL)

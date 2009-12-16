@@ -173,13 +173,13 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
       return MESA_FORMAT_SARGB8;
    case GL_SLUMINANCE_EXT:
    case GL_SLUMINANCE8_EXT:
-      if (IS_G4X(intel->intelScreen->deviceID))
+      if (intel->has_luminance_srgb)
          return MESA_FORMAT_SL8;
       else
          return MESA_FORMAT_SARGB8;
    case GL_SLUMINANCE_ALPHA_EXT:
    case GL_SLUMINANCE8_ALPHA8_EXT:
-      if (IS_G4X(intel->intelScreen->deviceID))
+      if (intel->has_luminance_srgb)
          return MESA_FORMAT_SLA8;
       else
          return MESA_FORMAT_SARGB8;
