@@ -1826,6 +1826,7 @@ get_argument_regs(struct brw_wm_compile *c,
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 {
+   struct intel_context *intel = &brw->intel;
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
     struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
@@ -2096,7 +2097,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                   struct brw_instruction *inst0, *inst1;
                   GLuint br = 1;
 
-                  if (BRW_IS_IGDNG(brw))
+                  if (intel->is_ironlake)
                      br = 2;
  
                   loop_depth--;

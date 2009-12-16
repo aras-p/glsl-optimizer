@@ -63,7 +63,6 @@ struct brw_gs_compile {
    GLuint nr_attrs;
    GLuint nr_regs;
    GLuint nr_bytes;
-   GLboolean need_ff_sync;
 };
 
 #define ATTR_SIZE  (4*4)

@@ -82,6 +82,7 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 static dri_bo *
 vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_vs_unit_state vs;
    dri_bo *bo;
    int chipset_max_threads;
@@ -98,7 +99,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.thread1.single_program_flow = 0;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       vs.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       vs.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -109,7 +110,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
       switch (key->nr_urb_entries) {
       case 8:
       case 12:
@@ -145,7 +146,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       chipset_max_threads = 72;
    else if (BRW_IS_G4X(brw))
       chipset_max_threads = 32;

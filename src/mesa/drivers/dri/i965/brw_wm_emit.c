@@ -830,6 +830,7 @@ void emit_tex(struct brw_wm_compile *c,
 	      GLboolean shadow)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg dst_retyped;
    GLuint cur_mrf = 2, response_length;
    GLuint i, nr_texcoords;
@@ -873,7 +874,7 @@ void emit_tex(struct brw_wm_compile *c,
    }
 
    /* Pre-Ironlake, the 8-wide sampler always took u,v,r. */
-   if (!BRW_IS_IGDNG(p->brw) && c->dispatch_width == 8)
+   if (!intel->is_ironlake && c->dispatch_width == 8)
       nr_texcoords = 3;
 
    /* For shadow comparisons, we have to supply u,v,r. */
@@ -891,7 +892,7 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Fill in the shadow comparison reference value. */
    if (shadow) {
-      if (BRW_IS_IGDNG(p->brw)) {
+      if (intel->is_ironlake) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
 	 cur_mrf += mrf_per_channel;
@@ -904,7 +905,7 @@ void emit_tex(struct brw_wm_compile *c,
       cur_mrf += mrf_per_channel;
    }
 
-   if (BRW_IS_IGDNG(p->brw)) {
+   if (intel->is_ironlake) {
       if (shadow)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
       else
@@ -944,6 +945,7 @@ void emit_txb(struct brw_wm_compile *c,
 	      GLuint sampler)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    GLuint msgLength;
    GLuint msg_type;
    GLuint mrf_per_channel;
@@ -955,8 +957,8 @@ void emit_txb(struct brw_wm_compile *c,
     * undefined, and trust the execution mask to keep the undefined pixels
     * from mattering.
     */
-   if (c->dispatch_width == 16 || !BRW_IS_IGDNG(p->brw)) {
-      if (BRW_IS_IGDNG(p->brw))
+   if (c->dispatch_width == 16 || !intel->is_ironlake) {
+      if (intel->is_ironlake)
 	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG;
       else
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
@@ -1160,6 +1162,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
 
@@ -1174,7 +1177,7 @@ void emit_fb_write(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    for (channel = 0; channel < 4; channel++) {
-      if (c->dispatch_width == 16 && (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))) {
+      if (c->dispatch_width == 16 && (BRW_IS_G4X(brw) || intel->is_ironlake)) {
 	 /* By setting the high bit of the MRF register number, we indicate
 	  * that we want COMPR4 mode - instead of doing the usual destination
 	  * + 1 for the second half we get destination + 4.

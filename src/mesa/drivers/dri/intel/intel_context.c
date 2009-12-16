@@ -620,6 +620,11 @@ intelInitContext(struct intel_context *intel,
    else
       intel->gen = 2;
 
+   if (IS_IGDNG(intel->intelScreen->deviceID)) {
+      intel->is_ironlake = GL_TRUE;
+      intel->needs_ff_sync = GL_TRUE;
+   }
+
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;

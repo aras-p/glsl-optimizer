@@ -359,7 +359,9 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
 
 void brw_clip_ff_sync(struct brw_clip_compile *c)
 {
-    if (c->need_ff_sync) {
+    struct intel_context *intel = &c->func.brw->intel;
+
+    if (intel->needs_ff_sync) {
         struct brw_compile *p = &c->func;
         struct brw_instruction *need_ff_sync;
 
@@ -388,7 +390,9 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
 
 void brw_clip_init_ff_sync(struct brw_clip_compile *c)
 {
-    if (c->need_ff_sync) {
+    struct intel_context *intel = &c->func.brw->intel;
+
+    if (intel->needs_ff_sync) {
 	struct brw_compile *p = &c->func;
         
         brw_MOV(p, c->reg.ff_sync, brw_imm_ud(0));

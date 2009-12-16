@@ -46,6 +46,7 @@
 
 static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    GLuint i = 0,j;
 
    /* Register usage is static, precompute here:
@@ -85,7 +86,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
       i++;
    }
 
-   if (c->need_ff_sync) {
+   if (intel->needs_ff_sync) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }

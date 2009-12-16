@@ -176,6 +176,8 @@ struct intel_context
     * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
     */
    int gen;
+   GLboolean needs_ff_sync;
+   GLboolean is_ironlake;
 
    struct intel_region *front_region;
    struct intel_region *back_region;

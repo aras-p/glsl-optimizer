@@ -252,9 +252,10 @@ static void brw_set_math_message( struct brw_context *brw,
 				  GLboolean saturate,
 				  GLuint dataType )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.math_igdng.function = function;
        insn->bits3.math_igdng.int_type = integer_type;
        insn->bits3.math_igdng.precision = low_precision;
@@ -319,9 +320,10 @@ static void brw_set_urb_message( struct brw_context *brw,
 				 GLuint offset,
 				 GLuint swizzle_control )
 {
+    struct intel_context *intel = &brw->intel;
     brw_set_src1(insn, brw_imm_d(0));
 
-    if (BRW_IS_IGDNG(brw)) {
+    if (intel->is_ironlake) {
         insn->bits3.urb_igdng.opcode = 0;	/* ? */
         insn->bits3.urb_igdng.offset = offset;
         insn->bits3.urb_igdng.swizzle_control = swizzle_control;
@@ -358,9 +360,10 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint response_length,
 				      GLuint end_of_thread )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.dp_write_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_write_igdng.msg_control = msg_control;
        insn->bits3.dp_write_igdng.pixel_scoreboard_clear = pixel_scoreboard_clear;
@@ -395,9 +398,10 @@ static void brw_set_dp_read_message( struct brw_context *brw,
 				      GLuint response_length,
 				      GLuint end_of_thread )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.dp_read_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_read_igdng.msg_control = msg_control;
        insn->bits3.dp_read_igdng.msg_type = msg_type;
@@ -433,10 +437,11 @@ static void brw_set_sampler_message(struct brw_context *brw,
                                     GLuint header_present,
                                     GLuint simd_mode)
 {
+   struct intel_context *intel = &brw->intel;
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
       insn->bits3.sampler_igdng.binding_table_index = binding_table_index;
       insn->bits3.sampler_igdng.sampler = sampler;
       insn->bits3.sampler_igdng.msg_type = msg_type;
@@ -648,10 +653,11 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2;
 
    if (p->single_program_flow) {
@@ -690,9 +696,10 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 void brw_ENDIF(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -803,10 +810,11 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 struct brw_instruction *brw_WHILE(struct brw_compile *p, 
                                   struct brw_instruction *do_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2;
 
    if (p->single_program_flow)
@@ -846,10 +854,11 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 void brw_land_fwd_jump(struct brw_compile *p, 
 		       struct brw_instruction *jmp_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);

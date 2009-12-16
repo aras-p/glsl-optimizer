@@ -67,6 +67,7 @@ static void release_tmps( struct brw_vs_compile *c )
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    GLuint i, reg = 0, mrf;
    int attributes_in_vue;
 
@@ -141,7 +142,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_output = reg;
    c->first_overflow_output = 0;
 
-   if (BRW_IS_IGDNG(c->func.brw))
+   if (intel->is_ironlake)
        mrf = 8;
    else
        mrf = 4;
@@ -238,7 +239,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
-   if (BRW_IS_IGDNG(c->func.brw))
+   if (intel->is_ironlake)
        c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
        c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1113,6 +1114,7 @@ static void emit_swz( struct brw_vs_compile *c,
 static void emit_vertex_write( struct brw_vs_compile *c)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg m0 = brw_message_reg(0);
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
@@ -1195,8 +1197,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
 
-   if (BRW_IS_IGDNG(p->brw)) {
-       /* There are 20 DWs (D0-D19) in VUE vertex header on IGDNG */
+   if (intel->is_ironlake) {
+       /* There are 20 DWs (D0-D19) in VUE vertex header on Ironlake */
        brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
        /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
         * Seems it is useless for us.
@@ -1359,6 +1361,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 #define MAX_LOOP_DEPTH 32
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_depth = 0, loop_depth = 0;
    GLuint end_offset = 0;
@@ -1592,7 +1595,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
             loop_depth--;
 
-	    if (BRW_IS_IGDNG(brw))
+	    if (intel->is_ironlake)
 	       br = 2;
 
             inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);

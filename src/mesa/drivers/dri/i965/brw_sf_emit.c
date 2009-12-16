@@ -149,6 +149,7 @@ static void copy_colors( struct brw_sf_compile *c,
 static void do_flatshade_triangle( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -161,7 +162,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -187,6 +188,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 static void do_flatshade_line( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -199,7 +201,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    brw_push_insn_state(p);

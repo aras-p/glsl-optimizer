@@ -74,6 +74,7 @@ static dri_bo *
 clip_unit_create_from_key(struct brw_context *brw,
 			  struct brw_clip_unit_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_clip_unit_state clip;
    dri_bo *bo;
 
@@ -105,7 +106,7 @@ clip_unit_create_from_key(struct brw_context *brw,
       /* Although up to 16 concurrent Clip threads are allowed on IGDNG, 
        * only 2 threads can output VUEs at a time.
        */
-      if (BRW_IS_IGDNG(brw))
+      if (intel->is_ironlake)
          clip.thread4.max_threads = 16 - 1;        
       else
          clip.thread4.max_threads = 2 - 1;

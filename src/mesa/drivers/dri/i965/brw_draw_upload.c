@@ -527,7 +527,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_RELOC(input->bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
-      if (BRW_IS_IGDNG(brw)) {
+      if (intel->is_ironlake) {
 	 OUT_RELOC(input->bo,
 		   I915_GEM_DOMAIN_VERTEX, 0,
 		   input->bo->size - 1);
@@ -563,7 +563,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 		(format << BRW_VE0_FORMAT_SHIFT) |
 		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
 
-      if (BRW_IS_IGDNG(brw))
+      if (intel->is_ironlake)
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
                     (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
                     (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |

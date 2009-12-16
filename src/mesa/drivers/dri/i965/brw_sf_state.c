@@ -165,6 +165,7 @@ static dri_bo *
 sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			dri_bo **reloc_bufs)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_sf_unit_state sf;
    dri_bo *bo;
    int chipset_max_threads;
@@ -177,7 +178,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread3.dispatch_grf_start_reg = 3;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        sf.thread3.urb_entry_read_offset = 3;
    else
        sf.thread3.urb_entry_read_offset = 1;
@@ -187,10 +188,10 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.thread4.nr_urb_entries = key->nr_urb_entries;
    sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
 
-   /* Each SF thread produces 1 PUE, and there can be up to 24(Pre-IGDNG) or 
-    * 48(IGDNG) threads 
+   /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
+    * 48 (Ironlake) threads.
     */
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;

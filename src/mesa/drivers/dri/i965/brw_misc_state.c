@@ -212,7 +212,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? 6 : 5;
+   unsigned int len = (BRW_IS_G4X(brw) || intel->is_ironlake) ? 6 : 5;
 
    if (region == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -223,7 +223,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (BRW_IS_G4X(brw) || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -262,7 +262,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (BRW_IS_G4X(brw) || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -512,7 +512,7 @@ static void upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        BEGIN_BATCH(8, IGNORE_CLIPRECTS);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
