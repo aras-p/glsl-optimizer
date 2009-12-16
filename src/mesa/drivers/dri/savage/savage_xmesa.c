@@ -436,7 +436,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
        __driUtilMessage("Not enough texture memory. "
 			"Falling back to indirect rendering.");
-       Xfree(imesa);
+       _mesa_free(imesa);
        return GL_FALSE;
    }
 
@@ -574,7 +574,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       _mesa_destroy_context(imesa->glCtx);
 
       /* no longer use vertex_dma_buf*/
-      Xfree(imesa);
+      _mesa_free(imesa);
    }
 }
 
