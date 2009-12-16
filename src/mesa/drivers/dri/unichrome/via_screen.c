@@ -210,7 +210,9 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
+#if 000
     viaScreenPrivate *screen = (viaScreenPrivate *) driScrnPriv->private;
+#endif
 
     GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			   mesaVis->depthBits != 24);

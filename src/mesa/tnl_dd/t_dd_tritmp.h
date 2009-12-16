@@ -132,7 +132,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    VERTEX *v[3];
    GLfloat offset = 0;
-   GLfloat z[3];
+   GLfloat z[3] = { 0 };
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    LOCAL_VARS(3);
@@ -395,7 +395,7 @@ static void TAG(quadr)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    VERTEX *v[4];
    GLfloat offset = 0;
-   GLfloat z[4];
+   GLfloat z[4] = { 0 };
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    LOCAL_VARS(4);
