@@ -374,8 +374,8 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
 static void upload_aa_line_parameters(struct brw_context *brw)
 {
    struct brw_aa_line_parameters balp;
-   
-   if (BRW_IS_965(brw))
+
+   if (!brw->has_aa_line_parameters)
       return;
 
    /* use legacy aa line coverage computation */

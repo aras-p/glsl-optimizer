@@ -196,7 +196,7 @@ intelInitExtensions(GLcontext *ctx)
     */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
-   if (IS_965(intel->intelScreen->deviceID))
+   if (intel->gen >= 4)
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
 
    if (IS_915(intel->intelScreen->deviceID)

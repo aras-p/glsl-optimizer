@@ -832,7 +832,4 @@
 
 #include "intel_chipset.h"
 
-#define BRW_IS_965(brw)         (!(brw)->intel.is_g4x && \
-				 !(brw)->intel.is_ironlake)
-
 #endif

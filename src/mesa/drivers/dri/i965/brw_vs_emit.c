@@ -1114,7 +1114,8 @@ static void emit_swz( struct brw_vs_compile *c,
 static void emit_vertex_write( struct brw_vs_compile *c)
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
+   struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    struct brw_reg m0 = brw_message_reg(0);
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
@@ -1138,7 +1139,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     * workaround.
     */
    if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip || BRW_IS_965(p->brw))
+       c->key.nr_userclip || brw->has_negative_rhw_bug)
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -1169,7 +1170,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (BRW_IS_965(p->brw)) {
+      if (brw->has_negative_rhw_bug) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,

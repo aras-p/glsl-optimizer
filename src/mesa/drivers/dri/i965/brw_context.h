@@ -440,6 +440,8 @@ struct brw_context
    GLboolean emit_state_always;
    GLboolean has_surface_tile_offset;
    GLboolean has_compr4;
+   GLboolean has_negative_rhw_bug;
+   GLboolean has_aa_line_parameters;
 ;
    struct {
       struct brw_state_flags dirty;

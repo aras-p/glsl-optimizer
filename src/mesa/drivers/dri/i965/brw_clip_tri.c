@@ -572,6 +572,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 {
    struct brw_instruction *neg_rhw;
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    brw_clip_tri_alloc_regs(c, 3 + c->key.nr_userclip + 6);
    brw_clip_tri_init_vertices(c);
    brw_clip_init_clipmask(c);
@@ -579,7 +580,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (BRW_IS_965(p->brw)) {
+   if (brw->has_negative_rhw_bug) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));

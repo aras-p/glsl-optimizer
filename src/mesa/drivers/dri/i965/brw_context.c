@@ -163,11 +163,10 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
       brw->has_compr4 = GL_TRUE;
+      brw->has_aa_line_parameters = GL_TRUE;
   } else {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_965;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
-      brw->has_surface_tile_offset = GL_FALSE;
-      brw->has_compr4 = GL_FALSE;
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
@@ -183,6 +182,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       brw->urb.size = 256;
       brw->vs_max_threads = 16;
       brw->wm_max_threads = 8 * 4;
+      brw->has_negative_rhw_bug = GL_TRUE;
    }
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD) {
