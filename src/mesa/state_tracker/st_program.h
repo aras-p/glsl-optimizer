@@ -100,6 +100,9 @@ struct st_vp_varient
 
    /** Next in linked list */
    struct st_vp_varient *next;  
+
+   /** similar to that in st_vertex_program, but with information about edgeflags too */
+   GLuint num_inputs;
 };
 
 

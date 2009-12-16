@@ -113,6 +113,9 @@ st_prepare_vertex_program(struct st_context *st,
          stvp->num_inputs++;
       }
    }
+   /* bit of a hack, presetup potentially unused edgeflag input */
+   stvp->input_to_index[VERT_ATTRIB_EDGEFLAG] = stvp->num_inputs;
+   stvp->index_to_input[stvp->num_inputs] = VERT_ATTRIB_EDGEFLAG;
 
    /* Compute mapping of vertex program outputs to slots.
     */
@@ -199,6 +202,8 @@ st_translate_vertex_program(struct st_context *st,
    if (ureg == NULL)
       return NULL;
 
+   vpv->num_inputs = stvp->num_inputs;
+
    error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
@@ -224,7 +229,8 @@ st_translate_vertex_program(struct st_context *st,
    if (key->passthrough_edgeflags) {
       ureg_MOV( ureg,
                 ureg_DECL_output( ureg, TGSI_SEMANTIC_EDGEFLAG, 0 ),
-                ureg_DECL_next_vs_input(ureg));
+                ureg_DECL_vs_input( ureg, vpv->num_inputs ));
+      vpv->num_inputs++;
    }
 
    vpv->state.tokens = ureg_get_tokens( ureg, NULL );

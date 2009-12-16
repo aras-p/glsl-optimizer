@@ -156,8 +156,9 @@ post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
                                       unsigned stride )
 {
    unsigned j;
-   if (!post_vs_cliptest_viewport_gl( pvs, vertices, count, stride))
-      return FALSE;
+   boolean needpipe;
+
+   needpipe = post_vs_cliptest_viewport_gl( pvs, vertices, count, stride);
 
    /* If present, copy edgeflag VS output into vertex header.
     * Otherwise, leave header as is.
@@ -168,10 +169,12 @@ post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
 
       for (j = 0; j < count; j++) {
          const float *edgeflag = out->data[ef];
-         out->edgeflag = (edgeflag[0] != 1.0f);
+         out->edgeflag = !(edgeflag[0] != 1.0f);
+         needpipe |= !out->edgeflag;
+         out = (struct vertex_header *)( (char *)out + stride );
       }
    }
-   return TRUE;
+   return needpipe;
 }
 
 

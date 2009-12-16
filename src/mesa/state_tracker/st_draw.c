@@ -227,6 +227,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
  */
 static GLboolean
 is_interleaved_arrays(const struct st_vertex_program *vp,
+                      const struct st_vp_varient *vpv,
                       const struct gl_client_array **arrays,
                       GLboolean *userSpace)
 {
@@ -236,7 +237,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    GLuint num_client_arrays = 0;
    const GLubyte *client_addr = NULL;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const struct gl_buffer_object *bufObj = arrays[mesaAttr]->BufferObj;
       const GLsizei stride = arrays[mesaAttr]->StrideB; /* in bytes */
@@ -269,7 +270,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
       }
    }
 
-   *userSpace = (num_client_arrays == vp->num_inputs);
+   *userSpace = (num_client_arrays == vpv->num_inputs);
    /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
 
    return GL_TRUE;
@@ -281,15 +282,16 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
  */
 static void
 get_arrays_bounds(const struct st_vertex_program *vp,
-                       const struct gl_client_array **arrays,
-                       GLuint max_index,
-                       const GLubyte **low, const GLubyte **high)
+                  const struct st_vp_varient *vpv,
+                  const struct gl_client_array **arrays,
+                  GLuint max_index,
+                  const GLubyte **low, const GLubyte **high)
 {
    const GLubyte *low_addr = NULL;
    const GLubyte *high_addr = NULL;
    GLuint attr;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const GLint stride = arrays[mesaAttr]->StrideB;
       const GLubyte *start = arrays[mesaAttr]->Ptr;
@@ -321,6 +323,7 @@ get_arrays_bounds(const struct st_vertex_program *vp,
 static void
 setup_interleaved_attribs(GLcontext *ctx,
                           const struct st_vertex_program *vp,
+                          const struct st_vp_varient *vpv,
                           const struct gl_client_array **arrays,
                           GLuint max_index,
                           GLboolean userSpace,
@@ -331,7 +334,7 @@ setup_interleaved_attribs(GLcontext *ctx,
    GLuint attr;
    const GLubyte *offset0;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
@@ -342,7 +345,7 @@ setup_interleaved_attribs(GLcontext *ctx,
       if (attr == 0) {
          const GLubyte *low, *high;
 
-         get_arrays_bounds(vp, arrays, max_index, &low, &high);
+         get_arrays_bounds(vp, vpv, arrays, max_index, &low, &high);
          /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
 
          offset0 = low;
@@ -383,6 +386,7 @@ setup_interleaved_attribs(GLcontext *ctx,
 static void
 setup_non_interleaved_attribs(GLcontext *ctx,
                               const struct st_vertex_program *vp,
+                              const struct st_vp_varient *vpv,
                               const struct gl_client_array **arrays,
                               GLuint max_index,
                               GLboolean *userSpace,
@@ -392,7 +396,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       GLsizei stride = arrays[mesaAttr]->StrideB;
@@ -503,6 +507,7 @@ st_draw_vbo(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    const struct st_vertex_program *vp;
+   const struct st_vp_varient *vpv;
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
@@ -521,7 +526,8 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->vp_varient->state;
+   vpv = ctx->st->vp_varient;
+   vs = &vpv->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {
@@ -534,21 +540,21 @@ st_draw_vbo(GLcontext *ctx,
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
-   if (is_interleaved_arrays(vp, arrays, &userSpace)) {
+   if (is_interleaved_arrays(vp, vpv, arrays, &userSpace)) {
       /*printf("Draw interleaved\n");*/
-      setup_interleaved_attribs(ctx, vp, arrays, max_index, userSpace,
+      setup_interleaved_attribs(ctx, vp, vpv, arrays, max_index, userSpace,
                                 vbuffer, velements);
       num_vbuffers = 1;
-      num_velements = vp->num_inputs;
+      num_velements = vpv->num_inputs;
       if (num_velements == 0)
          num_vbuffers = 0;
    }
    else {
       /*printf("Draw non-interleaved\n");*/
-      setup_non_interleaved_attribs(ctx, vp, arrays, max_index,
+      setup_non_interleaved_attribs(ctx, vp, vpv, arrays, max_index,
                                     &userSpace, vbuffer, velements);
-      num_vbuffers = vp->num_inputs;
-      num_velements = vp->num_inputs;
+      num_vbuffers = vpv->num_inputs;
+      num_velements = vpv->num_inputs;
    }
 
 #if 0
