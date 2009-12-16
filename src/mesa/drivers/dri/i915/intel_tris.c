@@ -221,7 +221,7 @@ void intel_flush_prim(struct intel_context *intel)
    intel->prim.count = 0;
    offset = intel->prim.start_offset;
    intel->prim.start_offset = intel->prim.current_offset;
-   if (!IS_9XX(intel->intelScreen->deviceID))
+   if (!intel->gen >= 3)
       intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.flush = NULL;
 
@@ -251,7 +251,7 @@ void intel_flush_prim(struct intel_context *intel)
 	  intel->vertex_size * 4);
 #endif
 
-   if (IS_9XX(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 3) {
       BEGIN_BATCH(5, LOOP_CLIPRECTS);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);

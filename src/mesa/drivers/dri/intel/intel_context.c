@@ -613,12 +613,16 @@ intelInitContext(struct intel_context *intel,
    intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
 
-   if (IS_965(intel->intelScreen->deviceID))
+   if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
-   else if (IS_9XX(intel->intelScreen->deviceID))
+   } else if (IS_9XX(intel->intelScreen->deviceID)) {
       intel->gen = 3;
-   else
+      if (IS_945(intel->intelScreen->deviceID)) {
+	 intel->is_945 = GL_TRUE;
+      }
+   } else {
       intel->gen = 2;
+   }
 
    if (IS_IGDNG(intel->intelScreen->deviceID)) {
       intel->is_ironlake = GL_TRUE;

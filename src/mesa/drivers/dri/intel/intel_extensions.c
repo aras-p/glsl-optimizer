@@ -199,8 +199,7 @@ intelInitExtensions(GLcontext *ctx)
    if (intel->gen >= 4)
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
 
-   if (IS_915(intel->intelScreen->deviceID)
-       || IS_945(intel->intelScreen->deviceID)) {
+   if (intel->gen == 3) {
       driInitExtensions(ctx, i915_extensions, GL_FALSE);
 
       if (driQueryOptionb(&intel->optionCache, "fragment_shader"))

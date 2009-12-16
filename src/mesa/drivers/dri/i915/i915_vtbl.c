@@ -611,7 +611,7 @@ i915_state_draw_region(struct intel_context *intel,
     * the value of this bit, the pipeline needs to be MI_FLUSHed.  And it
     * can only be set when a depth buffer is already defined.
     */
-   if (IS_945(intel->intelScreen->deviceID) && intel->use_early_z &&
+   if (intel->is_945 && intel->use_early_z &&
        depth_region->tiling != I915_TILING_NONE)
       value |= CLASSIC_EARLY_DEPTH;
 

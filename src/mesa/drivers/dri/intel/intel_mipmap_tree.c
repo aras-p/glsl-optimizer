@@ -87,7 +87,7 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->pitch = 0;
 
 #ifdef I915
-   if (IS_945(intel->intelScreen->deviceID))
+   if (intel->is_945)
       ok = i945_miptree_layout(intel, mt, tiling);
    else
       ok = i915_miptree_layout(intel, mt, tiling);

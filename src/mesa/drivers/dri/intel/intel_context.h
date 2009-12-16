@@ -179,6 +179,7 @@ struct intel_context
    GLboolean needs_ff_sync;
    GLboolean is_ironlake;
    GLboolean is_g4x;
+   GLboolean is_945;
    GLboolean has_luminance_srgb;
 
    int urb_size;
