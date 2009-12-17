@@ -99,20 +99,20 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       else {
          const GLuint size = format_max_bits(format);
          if (size == 8) {
-            if (desc->type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_BYTE;
             else
                pinfo->datatype = GL_BYTE;
          }
          else if (size == 16) {
-            if (desc->type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_SHORT;
             else
                pinfo->datatype = GL_SHORT;
          }
          else {
             assert( size <= 32 );
-            if (desc->type == UTIL_FORMAT_TYPE_UNSIGNED)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_INT;
             else
                pinfo->datatype = GL_INT;

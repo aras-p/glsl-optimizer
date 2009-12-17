@@ -483,7 +483,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         assert(0);
     }
 
-    switch (desc->type) {
+    switch (desc->channel[0].type) {
         /* Half-floats, floats, doubles */
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
@@ -525,7 +525,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
             assert(0);
     }
 
-    if (desc->type == UTIL_FORMAT_TYPE_SIGNED) {
+    if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
         result |= R300_SIGNED;
     }
     if (desc->channel[0].normalized) {

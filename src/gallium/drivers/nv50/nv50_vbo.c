@@ -71,7 +71,7 @@ nv50_vbo_type_to_hw(enum pipe_format format)
 	desc = util_format_description(format);
 	assert(desc);
 
-	switch (desc->type) {
+	switch (desc->channel[0].type) {
 	case UTIL_FORMAT_TYPE_FLOAT:
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
 	case UTIL_FORMAT_TYPE_UNSIGNED:
@@ -339,7 +339,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 	desc = util_format_description(pf);
 	assert(desc);
 
-	if ((desc->type != UTIL_FORMAT_TYPE_FLOAT) ||
+	if ((desc->channel[0].type != UTIL_FORMAT_TYPE_FLOAT) ||
 	    util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0) != 32)
 		return FALSE;
 
