@@ -46,7 +46,7 @@
  * Enumeration of all possible flow constructs.
  */
 enum lp_build_flow_construct_kind {
-   lP_BUILD_FLOW_SCOPE,
+   LP_BUILD_FLOW_SCOPE,
    LP_BUILD_FLOW_SKIP,
 };
 
@@ -200,7 +200,7 @@ lp_build_flow_scope_begin(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_push(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_push(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
@@ -241,7 +241,7 @@ lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_peek(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_peek(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
@@ -263,7 +263,7 @@ lp_build_flow_scope_end(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_pop(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_pop(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
