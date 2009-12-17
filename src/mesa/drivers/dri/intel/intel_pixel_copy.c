@@ -222,6 +222,8 @@ do_blit_copypixels(GLcontext * ctx,
 out:
    UNLOCK_HARDWARE(intel);
 
+   intel_check_front_buffer_rendering(intel);
+
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;
 }

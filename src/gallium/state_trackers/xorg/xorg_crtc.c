@@ -201,7 +201,6 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	templat.width0 = 64;
 	templat.height0 = 64;
-	util_format_get_block(templat.format, &templat.block);
 
 	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
 						       &templat);
@@ -217,7 +216,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 					    PIPE_TRANSFER_WRITE,
 					    0, 0, 64, 64);
     ptr = ms->screen->transfer_map(ms->screen, transfer);
-    util_copy_rect(ptr, &crtcp->cursor_tex->block,
+    util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ms->screen->transfer_unmap(ms->screen, transfer);
@@ -258,7 +257,7 @@ crtc_load_cursor_argb_kms(xf86CrtcPtr crtc, CARD32 * image)
     return;
 
 err_bo_destroy:
-    kms_bo_destroy(crtcp->cursor_bo);
+    kms_bo_destroy(&crtcp->cursor_bo);
 }
 #endif
 
@@ -306,10 +305,8 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
 	pipe_texture_reference(&crtcp->cursor_tex, NULL);
 #ifdef HAVE_LIBKMS
     if (crtcp->cursor_bo)
-	kms_bo_destroy(crtcp->cursor_bo);
+	kms_bo_destroy(&crtcp->cursor_bo);
 #endif
-
-    xfree(crtcp);
 }
 
 /*
@@ -321,11 +318,12 @@ crtc_destroy(xf86CrtcPtr crtc)
 {
     struct crtc_private *crtcp = crtc->driver_private;
 
-    if (crtcp->cursor_tex)
-	pipe_texture_reference(&crtcp->cursor_tex, NULL);
+    xorg_crtc_cursor_destroy(crtc);
 
     drmModeFreeCrtc(crtcp->drm_crtc);
+
     xfree(crtcp);
+    crtc->driver_private = NULL;
 }
 
 static const xf86CrtcFuncsRec crtc_funcs = {

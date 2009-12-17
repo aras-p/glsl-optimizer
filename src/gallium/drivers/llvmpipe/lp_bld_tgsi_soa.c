@@ -560,9 +560,9 @@ emit_instruction(
       if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z )) {
-         LLVMValueRef *p_floor_log2;
-         LLVMValueRef *p_exp;
-         LLVMValueRef *p_log2;
+         LLVMValueRef *p_floor_log2 = NULL;
+         LLVMValueRef *p_exp = NULL;
+         LLVMValueRef *p_log2 = NULL;
 
          src0 = emit_fetch( bld, inst, 0, CHAN_X );
          src0 = lp_build_abs( &bld->base, src0 );
@@ -763,7 +763,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          src0 = emit_fetch( bld, inst, 0, chan_index );
          tmp0 = lp_build_floor(&bld->base, src0);
-         tmp0 = lp_build_sub(&bld->base, tmp0, src0);
+         tmp0 = lp_build_sub(&bld->base, src0, tmp0);
          dst0[chan_index] = tmp0;
       }
       break;

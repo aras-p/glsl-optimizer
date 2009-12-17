@@ -72,7 +72,6 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
    templ.width0 = color_data_len;
    templ.height0 = 1;
    templ.depth0 = 1;
-   util_format_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &templ.block);
    templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    tex = screen->texture_create(screen, &templ);

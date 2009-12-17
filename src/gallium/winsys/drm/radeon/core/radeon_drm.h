@@ -44,7 +44,6 @@
 
 #include "radeon_buffer.h"
 #include "radeon_r300.h"
-#include "radeon_winsys_softpipe.h"
 
 /* XXX */
 #include "r300_screen.h"

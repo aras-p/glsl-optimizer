@@ -243,6 +243,7 @@ fenced_buffer_list_check_free_locked(struct fenced_buffer_list *fenced_list,
    struct pb_fence_ops *ops = fenced_list->ops;
    struct list_head *curr, *next;
    struct fenced_buffer *fenced_buf;
+   struct pb_buffer *pb_buf;
    struct pipe_fence_handle *prev_fence = NULL;
 
    curr = fenced_list->delayed.next;
@@ -271,7 +272,9 @@ fenced_buffer_list_check_free_locked(struct fenced_buffer_list *fenced_list,
       fenced_buffer_remove_locked(fenced_list, fenced_buf);
       pipe_mutex_unlock(fenced_buf->mutex);
 
-      pb_reference((struct pb_buffer **)&fenced_buf, NULL);
+      pb_buf = &fenced_buf->base;
+      pb_reference(&pb_buf, NULL);
+      
 
       curr = next; 
       next = curr->next;

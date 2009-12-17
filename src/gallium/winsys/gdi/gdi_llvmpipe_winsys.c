@@ -50,7 +50,6 @@
 struct gdi_llvmpipe_displaytarget
 {
    enum pipe_format format;
-   struct pipe_format_block block;
    unsigned width;
    unsigned height;
    unsigned stride;
@@ -119,16 +118,6 @@ gdi_llvmpipe_displaytarget_destroy(struct llvmpipe_winsys *winsys,
 }
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 static struct llvmpipe_displaytarget *
 gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
                                   enum pipe_format format,
@@ -151,7 +140,7 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    bpp = util_format_get_bits(format);
    cpp = util_format_get_size(format);
    
-   gdt->stride = round_up(width * cpp, alignment);
+   gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;
    
    gdt->data = align_malloc(gdt->size, alignment);

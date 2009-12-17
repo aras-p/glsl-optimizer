@@ -2145,6 +2145,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Unpipelined. */
 #define R300_RB3D_CCTL                      0x4e00
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES(x)       (MAX2(((x)-1), 0) << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)
@@ -3292,6 +3293,11 @@ enum {
  * the last block is omitted.
  */
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
+
+#   define R300_VBPNTR_SIZE0(x)    ((x) >> 2)
+#   define R300_VBPNTR_STRIDE0(x)  (((x) >> 2) << 8)
+#   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)
+#   define R300_VBPNTR_STRIDE1(x)  (((x) >> 2) << 24)
 
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0

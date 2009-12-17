@@ -51,4 +51,6 @@ extern GLboolean r300ValidateBuffers(GLcontext * ctx);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 
+int32_t r300TranslateTexFormat(gl_format mesaFormat);
+
 #endif				/* __r300_TEX_H__ */

@@ -9,8 +9,10 @@ C_SOURCES = \
 	u_debug_symbol.c \
 	u_debug_stack.c \
 	u_blit.c \
+	u_blitter.c \
 	u_cache.c \
 	u_cpu_detect.c \
+	u_dl.c \
 	u_draw_quad.c \
 	u_format.c \
 	u_format_access.c \
@@ -30,6 +32,7 @@ C_SOURCES = \
 	u_stream_stdc.c \
 	u_stream_wd.c \
 	u_surface.c \
+	u_texture.c \
 	u_tile.c \
 	u_time.c \
 	u_timed_winsys.c \

@@ -61,7 +61,7 @@ struct svga_sampler_view
 {
    struct pipe_reference reference;
 
-   struct svga_texture *texture;
+   struct pipe_texture *texture;
 
    int min_lod;
    int max_lod;
@@ -94,6 +94,13 @@ struct svga_texture
     * operation.
     */
    struct svga_host_surface_cache_key key;
+
+   /**
+    * Handle for the host side surface.
+    *
+    * This handle is owned by this texture. Views should hold on to a reference
+    * to this texture and never destroy this handle directly.
+    */
    struct svga_winsys_surface *handle;
 };
 
@@ -164,8 +171,9 @@ svga_sampler_view_reference(struct svga_sampler_view **ptr, struct svga_sampler_
 {
    struct svga_sampler_view *old = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &v->reference))
+   if (pipe_reference(&(*ptr)->reference, &v->reference))
       svga_destroy_sampler_view_priv(old);
+   *ptr = v;
 }
 
 extern void

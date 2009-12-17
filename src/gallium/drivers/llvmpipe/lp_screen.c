@@ -36,6 +36,24 @@
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
+#include "lp_debug.h"
+
+#ifdef DEBUG
+int LP_DEBUG = 0;
+
+static const struct debug_named_value lp_debug_flags[] = {
+   { "pipe",   DEBUG_PIPE },
+   { "tgsi",   DEBUG_TGSI },
+   { "tex",    DEBUG_TEX },
+   { "asm",    DEBUG_ASM },
+   { "setup",  DEBUG_SETUP },
+   { "rast",   DEBUG_RAST },
+   { "query",  DEBUG_QUERY },
+   { "screen", DEBUG_SCREEN },
+   { "jit",    DEBUG_JIT },
+   {NULL, 0}
+};
+#endif
 
 
 static const char *
@@ -59,7 +77,9 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return 0;
+      return PIPE_MAX_VERTEX_SAMPLERS;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -256,6 +276,10 @@ struct pipe_screen *
 llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
+
+#ifdef DEBUG
+   LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
+#endif
 
    if (!screen)
       return NULL;

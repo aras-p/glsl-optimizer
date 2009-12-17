@@ -492,7 +492,6 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       memset(&pt, 0, sizeof(pt));
       pt.target = PIPE_TEXTURE_2D;
       pt.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      util_format_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &pt.block);
       pt.last_level = 0;
       pt.width0 = width;
       pt.height0 = height;

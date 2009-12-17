@@ -220,12 +220,18 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
 
         /* Z buffer or texture */
         case PIPE_FORMAT_Z16_UNORM:
+            retval = usage &
+                (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+                 PIPE_TEXTURE_USAGE_SAMPLER);
+            break;
+
+        /* 24bit Z buffer can only be used as a texture on R500. */
         case PIPE_FORMAT_Z24X8_UNORM:
         /* Z buffer with stencil or texture */
         case PIPE_FORMAT_Z24S8_UNORM:
             retval = usage &
                 (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-                 PIPE_TEXTURE_USAGE_SAMPLER);
+                 (is_r500 ? PIPE_TEXTURE_USAGE_SAMPLER : 0));
             break;
 
         /* Definitely unsupported formats. */
@@ -312,14 +318,10 @@ r300_get_tex_transfer(struct pipe_screen *screen,
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
         pipe_texture_reference(&trans->transfer.texture, texture);
-        trans->transfer.format = texture->format;
         trans->transfer.x = x;
         trans->transfer.y = y;
         trans->transfer.width = w;
         trans->transfer.height = h;
-        trans->transfer.block = texture->block;
-        trans->transfer.nblocksx = texture->nblocksx[level];
-        trans->transfer.nblocksy = texture->nblocksy[level];
         trans->transfer.stride = r300_texture_get_stride(tex, level);
         trans->transfer.usage = usage;
 
@@ -345,6 +347,7 @@ static void* r300_transfer_map(struct pipe_screen* screen,
 {
     struct r300_texture* tex = (struct r300_texture*)transfer->texture;
     char* map;
+    enum pipe_format format = tex->tex.format;
 
     map = pipe_buffer_map(screen, tex->buffer,
                           pipe_transfer_buffer_flags(transfer));
@@ -354,8 +357,8 @@ static void* r300_transfer_map(struct pipe_screen* screen,
     }
 
     return map + r300_transfer(transfer)->offset +
-        transfer->y / transfer->block.height * transfer->stride +
-        transfer->x / transfer->block.width * transfer->block.size;
+        transfer->y / pf_get_blockheight(format) * transfer->stride +
+        transfer->x / pf_get_blockwidth(format) * pf_get_blocksize(format);
 }
 
 static void r300_transfer_unmap(struct pipe_screen* screen,

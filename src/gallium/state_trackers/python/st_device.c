@@ -62,8 +62,9 @@ st_device_reference(struct st_device **ptr, struct st_device *st_dev)
 {
    struct st_device *old_dev = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+   if (pipe_reference(&(*ptr)->reference, &st_dev->reference))
       st_device_really_destroy(old_dev);
+   *ptr = st_dev;
 }
 
 
@@ -249,9 +250,6 @@ st_context_create(struct st_device *st_dev)
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
       templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      templat.block.size = 4;
-      templat.block.width = 1;
-      templat.block.height = 1;
       templat.width0 = 1;
       templat.height0 = 1;
       templat.depth0 = 1;

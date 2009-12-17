@@ -117,7 +117,12 @@ static rawImageRec *RawImageOpen(const char *fileName)
    fread(raw, 1, 12, raw->file);
 
    if (swapFlag) {
-      ConvertShort(&raw->imagic, 6);
+      ConvertShort(&raw->imagic, 1);
+      ConvertShort(&raw->type, 1);
+      ConvertShort(&raw->dim, 1);
+      ConvertShort(&raw->sizeX, 1);
+      ConvertShort(&raw->sizeY, 1);
+      ConvertShort(&raw->sizeZ, 1);
    }
 
    raw->tmp = (unsigned char *)malloc(raw->sizeX*256);

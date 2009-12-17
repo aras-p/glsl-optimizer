@@ -114,6 +114,13 @@ typedef struct _modesettingRec
     Bool noEvict;
     Bool debug_fallback;
 
+    /* winsys hocks */
+    Bool (*winsys_screen_init)(ScrnInfoPtr pScr);
+    Bool (*winsys_screen_close)(ScrnInfoPtr pScr);
+    Bool (*winsys_enter_vt)(ScrnInfoPtr pScr);
+    Bool (*winsys_leave_vt)(ScrnInfoPtr pScr);
+    void *winsys_priv;
+
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
 #endif

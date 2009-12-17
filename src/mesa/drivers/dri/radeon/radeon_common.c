@@ -257,35 +257,10 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	if (ctx->Scissor.Enabled) {
 		/* We don't pipeline cliprect changes */
-		if (!radeon->radeonScreen->kernel_mm) {
-			radeon_firevertices(radeon);
-		}
+		radeon_firevertices(radeon);
 		radeonUpdateScissor(ctx);
 	}
 }
-
-void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
-{
-   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-   GLuint i;
-   drm_radeon_stipple_t stipple;
-
-   /* Must flip pattern upside down.
-   */
-   for ( i = 0 ; i < 32 ; i++ ) {
-      stipple.mask[31 - i] = ((GLuint *) mask)[i];
-   }
-
-   /* TODO: push this into cmd mechanism
-   */
-   radeon_firevertices(radeon);
-   LOCK_HARDWARE( radeon );
-
-   drmCommandWrite( radeon->dri.fd, DRM_RADEON_STIPPLE,
-	 &stipple, sizeof(stipple) );
-   UNLOCK_HARDWARE( radeon );
-}
-
 
 /* ================================================================
  * SwapBuffers with client-side throttling
@@ -842,7 +817,7 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
        */
 		if (!was_front_buffer_rendering && radeon->is_front_buffer_rendering) {
 			radeon_update_renderbuffers(radeon->dri.context,
-				radeon->dri.context->driDrawablePriv);
+				radeon->dri.context->driDrawablePriv, GL_FALSE);
       }
 	}
 
@@ -859,7 +834,7 @@ void radeonReadBuffer( GLcontext *ctx, GLenum mode )
 
 		if (!was_front_buffer_reading && rmesa->is_front_buffer_reading) {
 			radeon_update_renderbuffers(rmesa->dri.context,
-						    rmesa->dri.context->driReadablePriv);
+						    rmesa->dri.context->driReadablePriv, GL_FALSE);
 	 	}
 	}
 	/* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
@@ -910,9 +885,9 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 		if (radeon->is_front_buffer_rendering) {
 			ctx->Driver.Flush(ctx);
 		}
-		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv, GL_FALSE);
 		if (driContext->driDrawablePriv != driContext->driReadablePriv)
-			radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+			radeon_update_renderbuffers(driContext, driContext->driReadablePriv, GL_FALSE);
 	}
 
 	old_viewport = ctx->Driver.Viewport;

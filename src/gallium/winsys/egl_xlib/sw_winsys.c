@@ -72,16 +72,6 @@ sw_pipe_buffer(struct pipe_buffer *b)
 }
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 static const char *
 get_name(struct pipe_winsys *pws)
 {
@@ -171,13 +161,10 @@ surface_buffer_create(struct pipe_winsys *winsys,
                       unsigned *stride)
 {
    const unsigned alignment = 64;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy;
+   unsigned nblocksy;
 
-   util_format_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = round_up(nblocksx * block.size, alignment);
+   nblocksy = pf_get_nblocksy(format, height);
+   *stride = align(pf_get_stride(format, width), alignment);
 
    return winsys->buffer_create(winsys, alignment,
                                 usage,

@@ -293,6 +293,7 @@ emit_fetch(struct gen_context *gen,
    case TGSI_SWIZZLE_W:
       switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          {
             int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
@@ -1173,7 +1174,8 @@ emit_declaration(
    struct ppc_function *func,
    struct tgsi_full_declaration *decl )
 {
-   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+   if( decl->Declaration.File == TGSI_FILE_INPUT ||
+       decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE ) {
 #if 0
       unsigned first, last, mask;
       unsigned i, j;
@@ -1337,6 +1339,9 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
             }
             num_immediates++;
          }
+         break;
+
+      case TGSI_TOKEN_TYPE_PROPERTY:
          break;
 
       default:

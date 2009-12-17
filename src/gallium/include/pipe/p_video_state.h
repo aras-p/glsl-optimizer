@@ -56,8 +56,9 @@ pipe_video_surface_reference(struct pipe_video_surface **ptr, struct pipe_video_
 {
    struct pipe_video_surface *old_surf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
+   if (pipe_reference(&(*ptr)->reference, &surf->reference))
       old_surf->screen->video_surface_destroy(old_surf);
+   *ptr = surf;
 }
 
 struct pipe_video_rect

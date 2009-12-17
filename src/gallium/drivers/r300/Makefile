@@ -4,8 +4,8 @@ include $(TOP)/configs/current
 LIBNAME = r300
 
 C_SOURCES = \
+	r300_blit.c \
 	r300_chipset.c \
-	r300_clear.c \
 	r300_context.c \
 	r300_debug.c \
 	r300_emit.c \
@@ -36,4 +36,4 @@ include ../../Makefile.template
 .PHONY : $(COMPILER_ARCHIVE)
 
 $(COMPILER_ARCHIVE):
-	cd $(TOP)/src/mesa/drivers/dri/r300/compiler; make
+	$(MAKE) -C $(TOP)/src/mesa/drivers/dri/r300/compiler

@@ -37,7 +37,7 @@ struct nv50_program {
 
 	struct nouveau_bo *bo;
 
-	float *immd;
+	uint32_t *immd;
 	unsigned immd_nr;
 	unsigned param_nr;
 

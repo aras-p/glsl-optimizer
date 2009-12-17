@@ -29,7 +29,6 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	tmpl.format = format;
 	tmpl.width0 = width;
 	tmpl.height0 = height;
-	util_format_get_block(tmpl.format, &tmpl.block);
 
 	pt = api->texture_from_shared_handle(api, pscreen, &tmpl,
 					     "front buffer", pitch, handle);
@@ -248,7 +247,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 		return false;
 
 	*handle = mt->bo->handle;
-	*stride = mt->base.nblocksx[0] * mt->base.block.size;
+	*stride = pf_get_stride(mt->base.format, mt->base.width0);
 	return true;
 }
 

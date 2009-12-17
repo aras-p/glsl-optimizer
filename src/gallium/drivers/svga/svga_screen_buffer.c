@@ -356,7 +356,8 @@ svga_buffer_upload_flush(struct svga_context *svga,
    sbuf->hw.boxes = NULL;
 
    /* Decrement reference count */
-   pipe_buffer_reference((struct pipe_buffer **)&sbuf, NULL);
+   pipe_reference(&(sbuf->base.reference), NULL);
+   sbuf = NULL;
 }
 
 

@@ -127,7 +127,8 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    }
 
    /* fragment shader */
-   ctx->fs[TGSI_WRITEMASK_XYZW] = util_make_fragment_tex_shader(pipe);
+   ctx->fs[TGSI_WRITEMASK_XYZW] =
+      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -358,7 +359,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       texTemp.width0 = srcW;
       texTemp.height0 = srcH;
       texTemp.depth0 = 1;
-      util_format_get_block(src->format, &texTemp.block);
 
       tex = screen->texture_create(screen, &texTemp);
       if (!tex)
@@ -422,7 +422,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
    if (ctx->fs[writemask] == NULL)
-      ctx->fs[writemask] = util_make_fragment_tex_shader_writemask(pipe, writemask);
+      ctx->fs[writemask] =
+         util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
+                                                 writemask);
 
    /* shaders */
    cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);

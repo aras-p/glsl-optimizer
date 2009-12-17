@@ -413,7 +413,7 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa glew"
+SRC_DIRS="glsl mesa glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -1143,7 +1143,14 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        test "x$enable_egl" = xyes && GALLIUM_STATE_TRACKERS_DIRS=egl
+        GALLIUM_STATE_TRACKERS_DIRS="dri"
+        if test "x$enable_egl" = xyes; then
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+        fi
+        # Have only tested st/xorg on 1.6.0 servers
+        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
+            HAVE_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
+            HAVE_XORG="no")
         ;;
     esac
     ;;
@@ -1206,12 +1213,14 @@ dnl
 dnl Gallium Intel configuration
 dnl
 AC_ARG_ENABLE([gallium-intel],
-    [AS_HELP_STRING([--disable-gallium-intel],
-        [build gallium intel @<:@default=enabled@:>@])],
+    [AS_HELP_STRING([--enable-gallium-intel],
+        [build gallium intel @<:@default=disabled@:>@])],
     [enable_gallium_intel="$enableval"],
-    [enable_gallium_intel=yes])
+    [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+elif test "x$enable_gallium_intel" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
 fi
 

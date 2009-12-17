@@ -101,6 +101,7 @@ svga_create_sampler_state(struct pipe_context *pipe,
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_sampler_state *cso = CALLOC_STRUCT( svga_sampler_state );
+   union util_color uc;
    
    cso->mipfilter = translate_mip_filter(sampler->min_mip_filter);
    cso->magfilter = translate_img_filter( sampler->mag_img_filter );
@@ -121,8 +122,8 @@ svga_create_sampler_state(struct pipe_context *pipe,
       ubyte a = float_to_ubyte(sampler->border_color[3]);
 
       util_pack_color_ub( r, g, b, a,
-                          PIPE_FORMAT_B8G8R8A8_UNORM,
-                          &cso->bordercolor );
+                          PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+      cso->bordercolor = uc.ui;
    }
 
    /* No SVGA3D support for:

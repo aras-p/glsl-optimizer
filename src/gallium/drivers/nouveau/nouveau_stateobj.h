@@ -48,13 +48,14 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 	struct nouveau_stateobj *so = *pso;
 	int i;
 
-        if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
+        if (pipe_reference(&(*pso)->reference, &ref->reference)) {
 		free(so->push);
 		for (i = 0; i < so->cur_reloc; i++)
 			nouveau_bo_ref(NULL, &so->reloc[i].bo);
 		free(so->reloc);
 		free(so);
 	}
+	*pso = ref;
 }
 
 static INLINE void
@@ -111,20 +112,30 @@ so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
 	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned nr, i;
+	int ret = 0;
 
 	nr = so->cur - so->push;
-	if (pb->remaining < nr)
-		nouveau_pushbuf_flush(chan, nr);
+	/* This will flush if we need space.
+	 * We don't actually need the marker.
+	 */
+	if ((ret = nouveau_pushbuf_marker_emit(chan, nr, so->cur_reloc))) {
+		debug_printf("so_emit failed marker emit with error %d\n", ret);
+		return;
+	}
 	pb->remaining -= nr;
 
 	memcpy(pb->cur, so->push, nr * 4);
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
+		if ((ret = nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
 					   r->bo, r->data, 0, r->flags,
-					   r->vor, r->tor);
+					   r->vor, r->tor))) {
+			debug_printf("so_emit failed reloc with error %d\n", ret);
+			goto out;
+		}
 	}
+out:
 	pb->cur += nr;
 }
 
@@ -133,26 +144,45 @@ so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
 	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned i;
+	int ret = 0;
 
 	if (!so)
 		return;
 
 	i = so->cur_reloc << 1;
-	if (pb->remaining < i)
-		nouveau_pushbuf_flush(chan, i);
+	/* This will flush if we need space.
+	 * We don't actually need the marker.
+	 */
+	if ((ret = nouveau_pushbuf_marker_emit(chan, i, i))) {
+		debug_printf("so_emit_reloc_markers failed marker emit with" \
+			"error %d\n", ret);
+		return;
+	}
 	pb->remaining -= i;
 
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet, 0,
+		if ((ret = nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo,
+					   r->packet, 0,
 					   (r->flags & (NOUVEAU_BO_VRAM |
 							NOUVEAU_BO_GART |
 							NOUVEAU_BO_RDWR)) |
-					   NOUVEAU_BO_DUMMY, 0, 0);
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data, 0,
+					   NOUVEAU_BO_DUMMY, 0, 0))) {
+			debug_printf("so_emit_reloc_markers failed reloc" \
+						"with error %d\n", ret);
+			pb->remaining += ((so->cur_reloc - i) << 1);
+			return;
+		}
+		if ((ret = nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo,
+					   r->data, 0,
 					   r->flags | NOUVEAU_BO_DUMMY,
-					   r->vor, r->tor);
+					   r->vor, r->tor))) {
+			debug_printf("so_emit_reloc_markers failed reloc" \
+						"with error %d\n", ret);
+			pb->remaining += ((so->cur_reloc - i) << 1) - 1;
+			return;
+		}
 	}
 }
 

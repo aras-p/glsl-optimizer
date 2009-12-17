@@ -35,6 +35,7 @@
 #include "tr_screen.h"
 
 #include "pipe/p_inlines.h"
+#include "pipe/p_format.h"
 
 
 static boolean trace = FALSE;
@@ -424,7 +425,7 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
    struct pipe_transfer *transfer = tr_trans->transfer;
 
    if(tr_trans->map) {
-      size_t size = transfer->nblocksy * transfer->stride;
+      size_t size = pf_get_nblocksy(transfer->texture->format, transfer->width) * transfer->stride;
 
       trace_dump_call_begin("pipe_screen", "transfer_write");
 

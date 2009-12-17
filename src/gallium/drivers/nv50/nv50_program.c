@@ -119,7 +119,7 @@ struct nv50_pc {
 	struct nv50_reg *param;
 	int param_nr;
 	struct nv50_reg *immd;
-	float *immd_buf;
+	uint32_t *immd_buf;
 	int immd_nr;
 	struct nv50_reg **addr;
 	int addr_nr;
@@ -130,6 +130,9 @@ struct nv50_pc {
 	/* broadcast and destination replacement regs */
 	struct nv50_reg *r_brdc;
 	struct nv50_reg *r_dst[4];
+
+	struct nv50_reg reg_instances[16];
+	unsigned reg_instance_nr;
 
 	unsigned interp_mode[32];
 	/* perspective interpolation registers */
@@ -149,6 +152,20 @@ struct nv50_pc {
 
 	boolean allow32;
 };
+
+static INLINE struct nv50_reg *
+reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
+{
+	struct nv50_reg *ri;
+
+	assert(pc->reg_instance_nr < 16);
+	ri = &pc->reg_instances[pc->reg_instance_nr++];
+	if (reg) {
+		*ri = *reg;
+		reg->mod = 0;
+	}
+	return ri;
+}
 
 static INLINE void
 ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
@@ -342,23 +359,32 @@ static void
 kill_temp_temp(struct nv50_pc *pc)
 {
 	int i;
-	
+
 	for (i = 0; i < pc->temp_temp_nr; i++)
 		free_temp(pc, pc->temp_temp[i]);
 	pc->temp_temp_nr = 0;
 }
 
 static int
-ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
+ctor_immd_4u32(struct nv50_pc *pc,
+	       uint32_t x, uint32_t y, uint32_t z, uint32_t w)
 {
-	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * 4 * sizeof(float)),
-			       (pc->immd_nr + 1) * 4 * sizeof(float));
+	unsigned size = pc->immd_nr * 4 * sizeof(uint32_t);
+
+	pc->immd_buf = REALLOC(pc->immd_buf, size, size + 4 * sizeof(uint32_t));
+
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
 	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
 	pc->immd_buf[(pc->immd_nr * 4) + 3] = w;
-	
+
 	return pc->immd_nr++;
+}
+
+static INLINE int
+ctor_immd_4f32(struct nv50_pc *pc, float x, float y, float z, float w)
+{
+	return ctor_immd_4u32(pc, fui(x), fui(y), fui(z), fui(w));
 }
 
 static struct nv50_reg *
@@ -368,11 +394,11 @@ alloc_immd(struct nv50_pc *pc, float f)
 	unsigned hw;
 
 	for (hw = 0; hw < pc->immd_nr * 4; hw++)
-		if (pc->immd_buf[hw] == f)
+		if (pc->immd_buf[hw] == fui(f))
 			break;
 
 	if (hw == pc->immd_nr * 4)
-		hw = ctor_immd(pc, f, -f, 0.5 * f, 0) * 4;
+		hw = ctor_immd_4f32(pc, f, -f, 0.5 * f, 0) * 4;
 
 	ctor_reg(r, P_IMMD, -1, hw);
 	return r;
@@ -464,22 +490,24 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	unsigned val;
-	float f = pc->immd_buf[imm->hw];
+	union {
+		float f;
+		uint32_t ui;
+	} u;
+	u.ui = pc->immd_buf[imm->hw];
 
-	if (imm->mod & NV50_MOD_ABS)
-		f = fabsf(f);
-	val = fui((imm->mod & NV50_MOD_NEG) ? -f : f);
+	u.f = (imm->mod & NV50_MOD_ABS) ? fabsf(u.f) : u.f;
+	u.f = (imm->mod & NV50_MOD_NEG) ? -u.f : u.f;
 
 	set_long(pc, e);
-	/*XXX: can't be predicated - bits overlap.. catch cases where both
-	 *     are required and avoid them. */
+	/* XXX: can't be predicated - bits overlap; cases where both
+	 * are required should be avoided by using pc->allow32 */
 	set_pred(pc, 0, 0, e);
 	set_pred_wr(pc, 0, 0, e);
 
 	e->inst[1] |= 0x00000002 | 0x00000001;
-	e->inst[0] |= (val & 0x3f) << 16;
-	e->inst[1] |= (val >> 6) << 2;
+	e->inst[0] |= (u.ui & 0x3f) << 16;
+	e->inst[1] |= (u.ui >> 6) << 2;
 }
 
 static INLINE void
@@ -644,7 +672,7 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	if (src->type == P_IMMD || src->type == P_CONST) {
 		set_long(pc, e);
 		set_data(pc, src, 0x7f, 9, e);
-		e->inst[1] |= 0x20000000; /* src0 const? */
+		e->inst[1] |= 0x20000000; /* mov from c[] */
 	} else {
 		if (src->type == P_ATTR) {
 			set_long(pc, e);
@@ -659,9 +687,9 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	if (is_long(e) && !is_immd(e)) {
 		e->inst[1] |= 0x04000000; /* 32-bit */
-		e->inst[1] |= 0x0000c000; /* "subsubop" 0x3 */
+		e->inst[1] |= 0x0000c000; /* 32-bit c[] load / lane mask 0:1 */
 		if (!(e->inst[1] & 0x20000000))
-			e->inst[1] |= 0x00030000; /* "subsubop" 0xf */
+			e->inst[1] |= 0x00030000; /* lane mask 2:3 */
 	} else
 		e->inst[0] |= 0x00008000;
 
@@ -674,6 +702,17 @@ emit_mov_immdval(struct nv50_pc *pc, struct nv50_reg *dst, float f)
 	struct nv50_reg *imm = alloc_immd(pc, f);
 	emit_mov(pc, dst, imm);
 	FREE(imm);
+}
+
+static void
+emit_nop(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xf0000000;
+	set_long(pc, e);
+	e->inst[1] = 0xe0000000;
+	emit(pc, e);
 }
 
 static boolean
@@ -795,6 +834,33 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 }
 
 static void
+emit_mov_from_pred(struct nv50_pc *pc, struct nv50_reg *dst, int pred)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	assert(dst->type == P_TEMP);
+	e->inst[1] = 0x20000000 | (pred << 12);
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+
+	emit(pc, e);
+}
+
+static void
+emit_mov_to_pred(struct nv50_pc *pc, int pred, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x000001fc;
+	e->inst[1] = 0xa0000008;
+	set_long(pc, e);
+	set_pred_wr(pc, 1, pred, e);
+	set_src_0_restricted(pc, src, e);
+
+	emit(pc, e);
+}
+
+static void
 emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
@@ -898,7 +964,6 @@ static INLINE void
 emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
-	assert(src0 != src1);
 	src1->mod ^= NV50_MOD_NEG;
 	emit_add(pc, dst, src0, src1);
 	src1->mod ^= NV50_MOD_NEG;
@@ -967,7 +1032,6 @@ static INLINE void
 emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
-	assert(src2 != src0 && src2 != src1);
 	src2->mod ^= NV50_MOD_NEG;
 	emit_mad(pc, dst, src0, src1, src2);
 	src2->mod ^= NV50_MOD_NEG;
@@ -1257,9 +1321,68 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+static struct nv50_program_exec *
+emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
+	    struct nv50_program_exec **join)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	if (join) {
+		set_long(pc, e);
+		e->inst[0] |= 0xa0000002;
+		emit(pc, e);
+		*join = e;
+		e = exec(pc);
+	}
+
+	set_long(pc, e);
+	e->inst[0] |= 0x10000002;
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+	emit(pc, e);
+	return pc->p->exec_tail;
+}
+
+#define QOP_ADD 0
+#define QOP_SUBR 1
+#define QOP_SUB 2
+#define QOP_MOV_SRC1 3
+
+/* For a quad of threads / top left, top right, bottom left, bottom right
+ * pixels, do a different operation, and take src0 from a specific thread.
+ */
+static void
+emit_quadop(struct nv50_pc *pc, struct nv50_reg *dst, int wp, int lane_src0,
+	    struct nv50_reg *src0, struct nv50_reg *src1, ubyte qop)
+{
+       struct nv50_program_exec *e = exec(pc);
+
+       e->inst[0] = 0xc0000000;
+       e->inst[1] = 0x80000000;
+       set_long(pc, e);
+       e->inst[0] |= lane_src0 << 16;
+       set_src_0(pc, src0, e);
+       set_src_2(pc, src1, e);
+
+       if (wp >= 0)
+	       set_pred_wr(pc, 1, wp, e);
+
+       if (dst)
+	       set_dst(pc, dst, e);
+       else {
+	       e->inst[0] |= 0x000001fc;
+	       e->inst[1] |= 0x00000008;
+       }
+
+       e->inst[0] |= (qop & 3) << 20;
+       e->inst[1] |= (qop >> 2) << 22;
+
+       emit(pc, e);
+}
+
 static void
 load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
-		     struct nv50_reg **src, boolean proj)
+		     struct nv50_reg **src, unsigned arg, boolean proj)
 {
 	int mod[3] = { src[0]->mod, src[1]->mod, src[2]->mod };
 
@@ -1276,6 +1399,10 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 
 	if (proj && 0 /* looks more correct without this */)
 		emit_mul(pc, t[2], t[2], src[3]);
+	else
+	if (arg == 4) /* there is no textureProj(samplerCubeShadow) */
+		emit_mov(pc, t[3], src[3]);
+
 	emit_flop(pc, 0, t[2], t[2]);
 
 	emit_mul(pc, t[0], src[0], t[2]);
@@ -1284,89 +1411,214 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 }
 
 static void
-emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
-	 struct nv50_reg **src, unsigned unit, unsigned type, boolean proj)
+load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
+		     struct nv50_reg **src, unsigned dim, unsigned arg)
 {
-	struct nv50_reg *t[4];
-	struct nv50_program_exec *e;
+	unsigned c, mode;
 
-	unsigned c, mode, dim;
+	if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
+		mode = pc->interp_mode[src[0]->index] | INTERP_PERSPECTIVE;
 
+		t[3]->rhw = src[3]->rhw;
+		emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
+		emit_flop(pc, 0, t[3], t[3]);
+
+		for (c = 0; c < dim; ++c) {
+			t[c]->rhw = src[c]->rhw;
+			emit_interp(pc, t[c], t[3], mode);
+		}
+		if (arg != dim) { /* depth reference value */
+			t[dim]->rhw = src[2]->rhw;
+			emit_interp(pc, t[dim], t[3], mode);
+		}
+	} else {
+		/* XXX: for some reason the blob sometimes uses MAD
+		 * (mad f32 $rX $rY $rZ neg $r63)
+		 */
+		emit_flop(pc, 0, t[3], src[3]);
+		for (c = 0; c < dim; ++c)
+			emit_mul(pc, t[c], src[c], t[3]);
+		if (arg != dim) /* depth reference value */
+			emit_mul(pc, t[dim], src[2], t[3]);
+	}
+}
+
+static INLINE void
+get_tex_dim(unsigned type, unsigned *dim, unsigned *arg)
+{
 	switch (type) {
 	case TGSI_TEXTURE_1D:
-		dim = 1;
+		*arg = *dim = 1;
+		break;
+	case TGSI_TEXTURE_SHADOW1D:
+		*dim = 1;
+		*arg = 2;
 		break;
 	case TGSI_TEXTURE_UNKNOWN:
 	case TGSI_TEXTURE_2D:
-	case TGSI_TEXTURE_SHADOW1D: /* XXX: x, z */
 	case TGSI_TEXTURE_RECT:
-		dim = 2;
+		*arg = *dim = 2;
+		break;
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOWRECT:
+		*dim = 2;
+		*arg = 3;
 		break;
 	case TGSI_TEXTURE_3D:
 	case TGSI_TEXTURE_CUBE:
-	case TGSI_TEXTURE_SHADOW2D:
-	case TGSI_TEXTURE_SHADOWRECT: /* XXX */
-		dim = 3;
+		*dim = *arg = 3;
 		break;
 	default:
 		assert(0);
 		break;
 	}
+}
 
-	/* some cards need t[0]'s hw index to be a multiple of 4 */
-	alloc_temp4(pc, t, 0);
+/* We shouldn't execute TEXLOD if any of the pixels in a quad have
+ * different LOD values, so branch off groups of equal LOD.
+ */
+static void
+emit_texlod_sequence(struct nv50_pc *pc, struct nv50_reg *tlod,
+		     struct nv50_reg *src, struct nv50_program_exec *tex)
+{
+	struct nv50_program_exec *join_at;
+	unsigned i, target = pc->p->exec_size + 7 * 2;
 
-	if (type == TGSI_TEXTURE_CUBE) {
-		load_cube_tex_coords(pc, t, src, proj);
-	} else
-	if (proj) {
-		if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
-			mode = pc->interp_mode[src[0]->index];
+	/* Subtract lod of each pixel from lod of top left pixel, jump
+	 * texlod insn if result is 0, then repeat for 2 other pixels.
+	 */
+	emit_quadop(pc, NULL, 0, 0, tlod, tlod, 0x55);
+	emit_branch(pc, 0, 2, &join_at)->param.index = target;
 
-			t[3]->rhw = src[3]->rhw;
-			emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
-			emit_flop(pc, 0, t[3], t[3]);
-
-			for (c = 0; c < dim; c++) {
-				t[c]->rhw = src[c]->rhw;
-				emit_interp(pc, t[c], t[3],
-					    (mode | INTERP_PERSPECTIVE));
-			}
-		} else {
-			emit_flop(pc, 0, t[3], src[3]);
-			for (c = 0; c < dim; c++)
-				emit_mul(pc, t[c], src[c], t[3]);
-
-			/* XXX: for some reason the blob sometimes uses MAD:
-			 * emit_mad(pc, t[c], src[0][c], t[3], t[3])
-			 * pc->p->exec_tail->inst[1] |= 0x080fc000;
-			 */
-		}
-	} else {
-		for (c = 0; c < dim; c++)
-			emit_mov(pc, t[c], src[c]);
+	for (i = 1; i < 4; ++i) {
+		emit_quadop(pc, NULL, 0, i, tlod, tlod, 0x55);
+		emit_branch(pc, 0, 2, NULL)->param.index = target;
 	}
 
-	e = exec(pc);
-	set_long(pc, e);
-	e->inst[0] |= 0xf0000000;
-	e->inst[1] |= 0x00000004;
-	set_dst(pc, t[0], e);
-	e->inst[0] |= (unit << 9);
+	emit_mov(pc, tlod, src); /* target */
+	emit(pc, tex); /* texlod */
 
-	if (dim == 2)
-		e->inst[0] |= 0x00400000;
-	else
-	if (dim == 3) {
-		e->inst[0] |= 0x00800000;
-		if (type == TGSI_TEXTURE_CUBE)
-			e->inst[0] |= 0x08000000;
+	join_at->param.index = target + 2 * 2;
+	emit_nop(pc);
+	pc->p->exec_tail->inst[1] |= 2; /* join _after_ tex */
+}
+
+static void
+emit_texbias_sequence(struct nv50_pc *pc, struct nv50_reg *t[4], unsigned arg,
+		      struct nv50_program_exec *tex)
+{
+	struct nv50_program_exec *e;
+	struct nv50_reg imm_1248, *t123[4][4], *r_bits = alloc_temp(pc, NULL);
+	int r_pred = 0;
+	unsigned n, c, i, cc[4] = { 0x0a, 0x13, 0x11, 0x10 };
+
+	pc->allow32 = FALSE;
+	ctor_reg(&imm_1248, P_IMMD, -1, ctor_immd_4u32(pc, 1, 2, 4, 8) * 4);
+
+	/* Subtract bias value of thread i from bias values of each thread,
+	 * store result in r_pred, and set bit i in r_bits if result was 0.
+	 */
+	assert(arg < 4);
+	for (i = 0; i < 4; ++i, ++imm_1248.hw) {
+		emit_quadop(pc, NULL, r_pred, i, t[arg], t[arg], 0x55);
+		emit_mov(pc, r_bits, &imm_1248);
+		set_pred(pc, 2, r_pred, pc->p->exec_tail);
+	}
+	emit_mov_to_pred(pc, r_pred, r_bits);
+
+	/* The lanes of a quad are now grouped by the bit in r_pred they have
+	 * set. Put the input values for TEX into a new register set for each
+	 * group and execute TEX only for a specific group.
+	 * We cannot use the same register set for each group because we need
+	 * the derivatives, which are implicitly calculated, to be correct.
+	 */
+	for (i = 1; i < 4; ++i) {
+		alloc_temp4(pc, t123[i], 0);
+
+		for (c = 0; c <= arg; ++c)
+			emit_mov(pc, t123[i][c], t[c]);
+
+		*(e = exec(pc)) = *(tex);
+		e->inst[0] &= ~0x01fc;
+		set_dst(pc, t123[i][0], e);
+		set_pred(pc, cc[i], r_pred, e);
+		emit(pc, e);
+	}
+	/* finally TEX on the original regs (where we kept the input) */
+	set_pred(pc, cc[0], r_pred, tex);
+	emit(pc, tex);
+
+	/* put the 3 * n other results into regs for lane 0 */
+	n = popcnt4(((e->inst[0] >> 25) & 0x3) | ((e->inst[1] >> 12) & 0xc));
+	for (i = 1; i < 4; ++i) {
+		for (c = 0; c < n; ++c) {
+			emit_mov(pc, t[c], t123[i][c]);
+			set_pred(pc, cc[i], r_pred, pc->p->exec_tail);
+		}
+		free_temp4(pc, t123[i]);
+	}
+
+	emit_nop(pc);
+	free_temp(pc, r_bits);
+}
+
+static void
+emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
+	 struct nv50_reg **src, unsigned unit, unsigned type,
+	 boolean proj, int bias_lod)
+{
+	struct nv50_reg *t[4];
+	struct nv50_program_exec *e;
+	unsigned c, dim, arg;
+
+	/* t[i] must be within a single 128 bit super-reg */
+	alloc_temp4(pc, t, 0);
+
+	e = exec(pc);
+	e->inst[0] = 0xf0000000;
+	set_long(pc, e);
+	set_dst(pc, t[0], e);
+
+	/* TIC and TSC binding indices (TSC is ignored as TSC_LINKED = TRUE): */
+	e->inst[0] |= (unit << 9) /* | (unit << 17) */;
+
+	/* live flag (don't set if TEX results affect input to another TEX): */
+	/* e->inst[0] |= 0x00000004; */
+
+	get_tex_dim(type, &dim, &arg);
+
+	if (type == TGSI_TEXTURE_CUBE) {
+		e->inst[0] |= 0x08000000;
+		load_cube_tex_coords(pc, t, src, arg, proj);
+	} else
+	if (proj)
+		load_proj_tex_coords(pc, t, src, dim, arg);
+	else {
+		for (c = 0; c < dim; c++)
+			emit_mov(pc, t[c], src[c]);
+		if (arg != dim) /* depth reference value (always src.z here) */
+			emit_mov(pc, t[dim], src[2]);
 	}
 
 	e->inst[0] |= (mask & 0x3) << 25;
 	e->inst[1] |= (mask & 0xc) << 12;
 
-	emit(pc, e);
+	if (!bias_lod) {
+		e->inst[0] |= (arg - 1) << 22;
+		emit(pc, e);
+	} else
+	if (bias_lod < 0) {
+		e->inst[0] |= arg << 22;
+		e->inst[1] |= 0x20000000; /* texbias */
+		emit_mov(pc, t[arg], src[3]);
+		emit_texbias_sequence(pc, t, arg, e);
+	} else {
+		e->inst[0] |= arg << 22;
+		e->inst[1] |= 0x40000000; /* texlod */
+		emit_mov(pc, t[arg], src[3]);
+		emit_texlod_sequence(pc, t[arg], src[3], e);
+	}
+
 #if 1
 	c = 0;
 	if (mask & 1) emit_mov(pc, dst[0], t[c++]);
@@ -1386,38 +1638,6 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 			free_temp(pc, t[c]);
 	}
 #endif
-}
-
-static void
-emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
-	    struct nv50_program_exec **join)
-{
-	struct nv50_program_exec *e = exec(pc);
-
-	if (join) {
-		set_long(pc, e);
-		e->inst[0] |= 0xa0000002;
-		emit(pc, e);
-		*join = e;
-		e = exec(pc);
-	}
-
-	set_long(pc, e);
-	e->inst[0] |= 0x10000002;
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-	emit(pc, e);
-}
-
-static void
-emit_nop(struct nv50_pc *pc)
-{
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xf0000000;
-	set_long(pc, e);
-	e->inst[1] = 0xe0000000;
-	emit(pc, e);
 }
 
 static void
@@ -1515,8 +1735,6 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
-	int s;
-
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
@@ -1526,29 +1744,14 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_ADD:
 	case TGSI_OPCODE_SUB:
 	case TGSI_OPCODE_MAD:
-		break;
+		return TRUE;
 	case TGSI_OPCODE_POW:
 		if (i == 1)
-			break;
+			return TRUE;
 		return FALSE;
 	default:
 		return FALSE;
 	}
-
-	/* Watch out for possible multiple uses of an nv50_reg, we
-	 * can't use nv50_reg::neg in these cases.
-	 */
-	for (s = 0; s < insn->Instruction.NumSrcRegs; ++s) {
-		if (s == i)
-			continue;
-		if ((insn->Src[s].Register.Index ==
-		     insn->Src[i].Register.Index) &&
-		    (insn->Src[s].Register.File ==
-		     insn->Src[i].Register.File))
-			return FALSE;
-	}
-
-	return TRUE;
 }
 
 /* Return a read mask for source registers deduced from opcode & write mask. */
@@ -1576,9 +1779,13 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_RSQ:
 	case TGSI_OPCODE_SCS:
 		return 0x1;
+	case TGSI_OPCODE_IF:
+		return 0x1;
 	case TGSI_OPCODE_LIT:
 		return 0xb;
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXL:
 	case TGSI_OPCODE_TXP:
 	{
 		const struct tgsi_instruction_texture *tex;
@@ -1587,12 +1794,16 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 		tex = &insn->Texture;
 
 		mask = 0x7;
-		if (insn->Instruction.Opcode == TGSI_OPCODE_TXP)
-			mask |= 0x8;
+		if (insn->Instruction.Opcode != TGSI_OPCODE_TEX &&
+		    insn->Instruction.Opcode != TGSI_OPCODE_TXD)
+			mask |= 0x8; /* bias, lod or proj */
 
 		switch (tex->Texture) {
 		case TGSI_TEXTURE_1D:
 			mask &= 0x9;
+			break;
+		case TGSI_TEXTURE_SHADOW1D:
+			mask &= 0x5;
 			break;
 		case TGSI_TEXTURE_2D:
 			mask &= 0xb;
@@ -1676,7 +1887,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			/* Indicate indirection by setting r->acc < 0 and
 			 * use the index field to select the address reg.
 			 */
-			r = MALLOC_STRUCT(nv50_reg);
+			r = reg_instance(pc, NULL);
 			swz = tgsi_util_get_src_register_swizzle(
 						 &src->Indirect, 0);
 			ctor_reg(r, P_CONST,
@@ -1730,6 +1941,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	}
 
+	if (r && r->acc >= 0 && r != temp)
+		return reg_instance(pc, r);
 	return r;
 }
 
@@ -1785,6 +1998,8 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXB:
+	case TGSI_OPCODE_TXL:
 	case TGSI_OPCODE_TXP:
 		/* these take care of dangerous swizzles themselves */
 		return 0x0;
@@ -2187,11 +2402,19 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_TEX:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->Texture.Texture, FALSE);
+			 inst->Texture.Texture, FALSE, 0);
+		break;
+	case TGSI_OPCODE_TXB:
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->Texture.Texture, FALSE, -1);
+		break;
+	case TGSI_OPCODE_TXL:
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->Texture.Texture, FALSE, 1);
 		break;
 	case TGSI_OPCODE_TXP:
 		emit_tex(pc, dst, mask, src[0], unit,
-			 inst->Texture.Texture, TRUE);
+			 inst->Texture.Texture, TRUE, 0);
 		break;
 	case TGSI_OPCODE_TRUNC:
 		for (c = 0; c < 4; c++) {
@@ -2245,20 +2468,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 	}
 
-	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-		for (c = 0; c < 4; c++) {
-			if (!src[i][c])
-				continue;
-			src[i][c]->mod = 0;
-			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
-				FREE(src[i][c]);
-			else
-			if (src[i][c]->acc < 0 && src[i][c]->type == P_CONST)
-				FREE(src[i][c]); /* indirect constant */
-		}
-	}
-
 	kill_temp_temp(pc);
+	pc->reg_instance_nr = 0;
+
 	return TRUE;
 }
 
@@ -2541,10 +2753,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			const struct tgsi_full_immediate *imm =
 				&tp.FullToken.FullImmediate;
 
-			ctor_immd(pc, imm->u[0].Float,
-				      imm->u[1].Float,
-				      imm->u[2].Float,
-				      imm->u[3].Float);
+			ctor_immd_4f32(pc, imm->u[0].Float,
+				       imm->u[1].Float,
+				       imm->u[2].Float,
+				       imm->u[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
@@ -3024,7 +3236,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 }
 
 static void
-nv50_program_upload_data(struct nv50_context *nv50, float *map,
+nv50_program_upload_data(struct nv50_context *nv50, uint32_t *map,
 			unsigned start, unsigned count, unsigned cbuf)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
@@ -3072,8 +3284,8 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cb;
-		float *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
-					     PIPE_BUFFER_USAGE_CPU_READ);
+		uint32_t *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
+						PIPE_BUFFER_USAGE_CPU_READ);
 
 		if (p->type == PIPE_SHADER_VERTEX)
 			cb = NV50_CB_PVP;

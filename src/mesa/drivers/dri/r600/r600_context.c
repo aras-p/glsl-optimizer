@@ -317,20 +317,8 @@ static void r600InitGLExtensions(GLcontext *ctx)
 
 #ifdef R600_ENABLE_GLSL_TEST
     driInitExtensions(ctx, gl_20_extension, GL_TRUE);
-    //_mesa_enable_2_0_extensions(ctx);
-    //1.5
-    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
-    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
-    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
-    //2.0
-    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
-    ctx->Extensions.ARB_point_sprite = GL_TRUE;
-    ctx->Extensions.ARB_shader_objects = GL_TRUE;
-    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
-    ctx->Extensions.ATI_separate_stencil = GL_TRUE;
-
+    _mesa_enable_2_0_extensions(ctx);
+    
     /* glsl compiler has problem if this is not GL_TRUE */
     ctx->Shader.EmitCondCodes = GL_TRUE;
 #endif /* R600_ENABLE_GLSL_TEST */

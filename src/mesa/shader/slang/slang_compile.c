@@ -35,10 +35,10 @@
 #include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
-#include "shader/grammar/grammar_mesa.h"
+#include "../../glsl/pp/sl_pp_public.h"
+#include "../../glsl/cl/sl_cl_parse.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
-#include "slang_preprocess.h"
 #include "slang_storage.h"
 #include "slang_emit.h"
 #include "slang_log.h"
@@ -128,7 +128,7 @@ _slang_code_object_dtr(slang_code_object * self)
 
 typedef struct slang_parse_ctx_
 {
-   const byte *I;
+   const unsigned char *I;
    slang_info_log *L;
    int parsing_builtin;
    GLboolean global_scope;   /**< Is object being declared a global? */
@@ -184,22 +184,102 @@ parse_identifier(slang_parse_ctx * C)
 }
 
 static int
+is_hex_digit(char c)
+{
+   return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+static int
+parse_general_number(slang_parse_ctx *ctx, float *number)
+{
+   char *flt = NULL;
+
+   if (*ctx->I == '0') {
+      int value = 0;
+      const unsigned char *pi;
+
+      if (ctx->I[1] == 'x' || ctx->I[1] == 'X') {
+         ctx->I += 2;
+         if (!is_hex_digit(*ctx->I)) {
+            return 0;
+         }
+         do {
+            int digit;
+
+            if (*ctx->I >= '0' && *ctx->I <= '9') {
+               digit = (int)(*ctx->I - '0');
+            } else if (*ctx->I >= 'a' && *ctx->I <= 'f') {
+               digit = (int)(*ctx->I - 'a') + 10;
+            } else {
+               digit = (int)(*ctx->I - 'A') + 10;
+            }
+            value = value * 0x10 + digit;
+            ctx->I++;
+         } while (is_hex_digit(*ctx->I));
+         if (*ctx->I != '\0') {
+            return 0;
+         }
+         ctx->I++;
+         *number = (float)value;
+         return 1;
+      }
+
+      pi = ctx->I;
+      pi++;
+      while (*pi >= '0' && *pi <= '7') {
+         int digit;
+
+         digit = (int)(*pi - '0');
+         value = value * 010 + digit;
+         pi++;
+      }
+      if (*pi == '\0') {
+         pi++;
+         ctx->I = pi;
+         *number = (float)value;
+         return 1;
+      }
+   }
+
+   parse_identifier_str(ctx, &flt);
+   flt = strdup(flt);
+   if (!flt) {
+      return 0;
+   }
+   if (flt[strlen(flt) - 1] == 'f' || flt[strlen(flt) - 1] == 'F') {
+      flt[strlen(flt) - 1] = '\0';
+   }
+   *number = (float)_mesa_strtod(flt, (char **)NULL);
+   free(flt);
+
+   return 1;
+}
+
+static int
 parse_number(slang_parse_ctx * C, int *number)
 {
    const int radix = (int) (*C->I++);
-   *number = 0;
-   while (*C->I != '\0') {
-      int digit;
-      if (*C->I >= '0' && *C->I <= '9')
-         digit = (int) (*C->I - '0');
-      else if (*C->I >= 'A' && *C->I <= 'Z')
-         digit = (int) (*C->I - 'A') + 10;
-      else
-         digit = (int) (*C->I - 'a') + 10;
-      *number = *number * radix + digit;
+
+   if (radix == 1) {
+      float f = 0.0f;
+
+      parse_general_number(C, &f);
+      *number = (int)f;
+   } else {
+      *number = 0;
+      while (*C->I != '\0') {
+         int digit;
+         if (*C->I >= '0' && *C->I <= '9')
+            digit = (int) (*C->I - '0');
+         else if (*C->I >= 'A' && *C->I <= 'Z')
+            digit = (int) (*C->I - 'A') + 10;
+         else
+            digit = (int) (*C->I - 'a') + 10;
+         *number = *number * radix + digit;
+         C->I++;
+      }
       C->I++;
    }
-   C->I++;
    if (*number > 65535)
       slang_info_log_warning(C->L, "%d: literal integer overflow.", *number);
    return 1;
@@ -208,32 +288,37 @@ parse_number(slang_parse_ctx * C, int *number)
 static int
 parse_float(slang_parse_ctx * C, float *number)
 {
-   char *integral = NULL;
-   char *fractional = NULL;
-   char *exponent = NULL;
-   char *whole = NULL;
+   if (*C->I == 1) {
+      C->I++;
+      parse_general_number(C, number);
+   } else {
+      char *integral = NULL;
+      char *fractional = NULL;
+      char *exponent = NULL;
+      char *whole = NULL;
 
-   parse_identifier_str(C, &integral);
-   parse_identifier_str(C, &fractional);
-   parse_identifier_str(C, &exponent);
+      parse_identifier_str(C, &integral);
+      parse_identifier_str(C, &fractional);
+      parse_identifier_str(C, &exponent);
 
-   whole = (char *) _slang_alloc((_mesa_strlen(integral) +
-                                  _mesa_strlen(fractional) +
-                                  _mesa_strlen(exponent) + 3) * sizeof(char));
-   if (whole == NULL) {
-      slang_info_log_memory(C->L);
-      RETURN0;
+      whole = (char *) _slang_alloc((_mesa_strlen(integral) +
+                                     _mesa_strlen(fractional) +
+                                     _mesa_strlen(exponent) + 3) * sizeof(char));
+      if (whole == NULL) {
+         slang_info_log_memory(C->L);
+         RETURN0;
+      }
+
+      slang_string_copy(whole, integral);
+      slang_string_concat(whole, ".");
+      slang_string_concat(whole, fractional);
+      slang_string_concat(whole, "E");
+      slang_string_concat(whole, exponent);
+
+      *number = (float) (_mesa_strtod(whole, (char **) NULL));
+
+      _slang_free(whole);
    }
-
-   slang_string_copy(whole, integral);
-   slang_string_concat(whole, ".");
-   slang_string_concat(whole, fractional);
-   slang_string_concat(whole, "E");
-   slang_string_concat(whole, exponent);
-
-   *number = (float) (_mesa_strtod(whole, (char **) NULL));
-
-   _slang_free(whole);
 
    return 1;
 }
@@ -2455,7 +2540,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 }
 
 static GLboolean
-compile_binary(const byte * prod, slang_code_unit * unit,
+compile_binary(const unsigned char * prod, slang_code_unit * unit,
                GLuint version,
                slang_unit_type type, slang_info_log * infolog,
                slang_code_unit * builtin, slang_code_unit * downlink,
@@ -2488,17 +2573,141 @@ compile_binary(const byte * prod, slang_code_unit * unit,
 }
 
 static GLboolean
-compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
-                     slang_unit_type type, slang_info_log * infolog,
-                     slang_code_unit * builtin,
+compile_with_grammar(const char *source,
+                     slang_code_unit *unit,
+                     slang_unit_type type,
+                     slang_info_log *infolog,
+                     slang_code_unit *builtin,
                      struct gl_shader *shader,
                      const struct gl_extensions *extensions,
-                     struct gl_sl_pragmas *pragmas)
+                     struct gl_sl_pragmas *pragmas,
+                     unsigned int shader_type,
+                     unsigned int parsing_builtin)
 {
-   byte *prod;
-   GLuint size, start, version;
-   slang_string preprocessed;
-   GLuint maxVersion;
+   struct sl_pp_context *context;
+   struct sl_pp_token_info *tokens;
+   unsigned char *prod;
+   GLuint size;
+   unsigned int version;
+   unsigned int maxVersion;
+   int result;
+   struct sl_pp_purify_options options;
+   char errmsg[200] = "";
+   unsigned int errline = 0;
+   struct sl_pp_token_info *intokens;
+   unsigned int tokens_eaten;
+
+   context = sl_pp_context_create();
+   if (!context) {
+      slang_info_log_error(infolog, "out of memory");
+      return GL_FALSE;
+   }
+
+   if (sl_pp_context_add_extension(context, "ARB_draw_buffers", "GL_ARB_draw_buffers") ||
+       sl_pp_context_add_extension(context, "ARB_texture_rectangle", "GL_ARB_texture_rectangle")) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      return GL_FALSE;
+   }
+
+#if FEATURE_es2_glsl
+   if (sl_pp_context_add_predefined(context, "GL_ES", "1") ||
+       sl_pp_context_add_predefined(context, "GL_FRAGMENT_PRECISION_HIGH", "1")) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      return GL_FALSE;
+   }
+#endif
+
+   memset(&options, 0, sizeof(options));
+   if (sl_pp_tokenise(context, source, &options, &intokens)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      return GL_FALSE;
+   }
+
+   if (sl_pp_version(context, intokens, &version, &tokens_eaten)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      free(intokens);
+      return GL_FALSE;
+   }
+
+   if (sl_pp_process(context, &intokens[tokens_eaten], &tokens)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
+      free(intokens);
+      return GL_FALSE;
+   }
+
+   free(intokens);
+
+   /* For the time being we care about only a handful of tokens. */
+   {
+      const struct sl_pp_token_info *src = tokens;
+      struct sl_pp_token_info *dst = tokens;
+
+      while (src->token != SL_PP_EOF) {
+         switch (src->token) {
+         case SL_PP_COMMA:
+         case SL_PP_SEMICOLON:
+         case SL_PP_LBRACE:
+         case SL_PP_RBRACE:
+         case SL_PP_LPAREN:
+         case SL_PP_RPAREN:
+         case SL_PP_LBRACKET:
+         case SL_PP_RBRACKET:
+         case SL_PP_DOT:
+         case SL_PP_INCREMENT:
+         case SL_PP_ADDASSIGN:
+         case SL_PP_PLUS:
+         case SL_PP_DECREMENT:
+         case SL_PP_SUBASSIGN:
+         case SL_PP_MINUS:
+         case SL_PP_BITNOT:
+         case SL_PP_NOTEQUAL:
+         case SL_PP_NOT:
+         case SL_PP_MULASSIGN:
+         case SL_PP_STAR:
+         case SL_PP_DIVASSIGN:
+         case SL_PP_SLASH:
+         case SL_PP_MODASSIGN:
+         case SL_PP_MODULO:
+         case SL_PP_LSHIFTASSIGN:
+         case SL_PP_LSHIFT:
+         case SL_PP_LESSEQUAL:
+         case SL_PP_LESS:
+         case SL_PP_RSHIFTASSIGN:
+         case SL_PP_RSHIFT:
+         case SL_PP_GREATEREQUAL:
+         case SL_PP_GREATER:
+         case SL_PP_EQUAL:
+         case SL_PP_ASSIGN:
+         case SL_PP_AND:
+         case SL_PP_BITANDASSIGN:
+         case SL_PP_BITAND:
+         case SL_PP_XOR:
+         case SL_PP_BITXORASSIGN:
+         case SL_PP_BITXOR:
+         case SL_PP_OR:
+         case SL_PP_BITORASSIGN:
+         case SL_PP_BITOR:
+         case SL_PP_QUESTION:
+         case SL_PP_COLON:
+         case SL_PP_IDENTIFIER:
+         case SL_PP_UINT:
+         case SL_PP_FLOAT:
+            *dst++ = *src++;
+            break;
+
+         default:
+            src++;
+         }
+      }
+
+      /* The end of stream token. */
+      *dst = *src;
+   }
 
 #if FEATURE_ARB_shading_language_120
    maxVersion = 120;
@@ -2508,36 +2717,33 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    maxVersion = 110;
 #endif
 
-   /* First retrieve the version number. */
-   if (!_slang_preprocess_version(source, &version, &start, infolog))
-      return GL_FALSE;
-
-   if (version > maxVersion) {
+   if (version > maxVersion ||
+       (version != 100 && version != 110 && version != 120)) {
       slang_info_log_error(infolog,
                            "language version %.2f is not supported.",
                            version * 0.01);
-      return GL_FALSE;
-   }
-
-   /* Now preprocess the source string. */
-   slang_string_init(&preprocessed);
-   if (!_slang_preprocess_directives(&preprocessed, &source[start],
-                                     infolog, extensions, pragmas)) {
-      slang_string_free(&preprocessed);
-      slang_info_log_error(infolog, "failed to preprocess the source.");
+      sl_pp_context_destroy(context);
+      free(tokens);
       return GL_FALSE;
    }
 
    /* Finally check the syntax and generate its binary representation. */
-   if (!grammar_fast_check(id,
-                           (const byte *) (slang_string_cstr(&preprocessed)),
-                           &prod, &size, 65536)) {
-      char buf[1024];
-      GLint pos;
+   result = sl_cl_compile(context,
+                          tokens,
+                          shader_type,
+                          parsing_builtin,
+                          &prod,
+                          &size,
+                          errmsg,
+                          sizeof(errmsg));
 
-      slang_string_free(&preprocessed);
-      grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
-      slang_info_log_error(infolog, buf);
+   sl_pp_context_destroy(context);
+   free(tokens);
+
+   if (result) {
+      /*GLint pos;*/
+
+      slang_info_log_error(infolog, errmsg);
       /* syntax error (possibly in library code) */
 #if 0
       {
@@ -2551,77 +2757,65 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
 #endif
       return GL_FALSE;
    }
-   slang_string_free(&preprocessed);
 
    /* Syntax is okay - translate it to internal representation. */
    if (!compile_binary(prod, unit, version, type, infolog, builtin,
                        &builtin[SLANG_BUILTIN_TOTAL - 1],
                        shader)) {
-      grammar_alloc_free(prod);
+      free(prod);
       return GL_FALSE;
    }
-   grammar_alloc_free(prod);
+   free(prod);
    return GL_TRUE;
 }
 
-LONGSTRING static const char *slang_shader_syn =
-#include "library/slang_shader_syn.h"
-   ;
-
-static const byte slang_core_gc[] = {
+static const unsigned char slang_core_gc[] = {
 #include "library/slang_core_gc.h"
 };
 
-static const byte slang_120_core_gc[] = {
+static const unsigned char slang_120_core_gc[] = {
 #include "library/slang_120_core_gc.h"
 };
 
-static const byte slang_120_fragment_gc[] = {
+static const unsigned char slang_120_fragment_gc[] = {
 #include "library/slang_builtin_120_fragment_gc.h"
 };
 
-static const byte slang_common_builtin_gc[] = {
+static const unsigned char slang_common_builtin_gc[] = {
 #include "library/slang_common_builtin_gc.h"
 };
 
-static const byte slang_fragment_builtin_gc[] = {
+static const unsigned char slang_fragment_builtin_gc[] = {
 #include "library/slang_fragment_builtin_gc.h"
 };
 
-static const byte slang_vertex_builtin_gc[] = {
+static const unsigned char slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
 static GLboolean
-compile_object(grammar * id, const char *source, slang_code_object * object,
-               slang_unit_type type, slang_info_log * infolog,
+compile_object(const char *source,
+               slang_code_object *object,
+               slang_unit_type type,
+               slang_info_log *infolog,
                struct gl_shader *shader,
                const struct gl_extensions *extensions,
                struct gl_sl_pragmas *pragmas)
 {
    slang_code_unit *builtins = NULL;
    GLuint base_version = 110;
-
-   /* load GLSL grammar */
-   *id = grammar_load_from_text((const byte *) (slang_shader_syn));
-   if (*id == 0) {
-      byte buf[1024];
-      int pos;
-
-      grammar_get_last_error(buf, 1024, &pos);
-      slang_info_log_error(infolog, (const char *) (buf));
-      return GL_FALSE;
-   }
+   unsigned int shader_type;
+   unsigned int parsing_builtin;
 
    /* set shader type - the syntax is slightly different for different shaders */
-   if (type == SLANG_UNIT_FRAGMENT_SHADER
-       || type == SLANG_UNIT_FRAGMENT_BUILTIN)
-      grammar_set_reg8(*id, (const byte *) "shader_type", 1);
-   else
-      grammar_set_reg8(*id, (const byte *) "shader_type", 2);
+   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_FRAGMENT_BUILTIN) {
+      shader_type = 1;
+   } else {
+      shader_type = 2;
+   }
 
    /* enable language extensions */
-   grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
+   parsing_builtin = 1;
 
    /* if parsing user-specified shader, load built-in library */
    if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER) {
@@ -2687,16 +2881,24 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 
       /* disable language extensions */
 #if NEW_SLANG /* allow-built-ins */
-      grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
+      parsing_builtin = 1;
 #else
-      grammar_set_reg8(*id, (const byte *) "parsing_builtin", 0);
+      parsing_builtin = 0;
 #endif
       builtins = object->builtin;
    }
 
    /* compile the actual shader - pass-in built-in library for external shader */
-   return compile_with_grammar(*id, source, &object->unit, type, infolog,
-                               builtins, shader, extensions, pragmas);
+   return compile_with_grammar(source,
+                               &object->unit,
+                               type,
+                               infolog,
+                               builtins,
+                               shader,
+                               extensions,
+                               pragmas,
+                               shader_type,
+                               parsing_builtin);
 }
 
 
@@ -2705,9 +2907,6 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
                struct gl_shader *shader)
 {
-   GLboolean success;
-   grammar id = 0;
-
 #if 0 /* for debug */
    _mesa_printf("********* COMPILE SHADER ***********\n");
    _mesa_printf("%s\n", shader->Source);
@@ -2719,14 +2918,13 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
 
-   success = compile_object(&id, shader->Source, object, type, infolog, shader,
-                            &ctx->Extensions, &shader->Pragmas);
-   if (id != 0)
-      grammar_destroy(id);
-   if (!success)
-      return GL_FALSE;
-
-   return GL_TRUE;
+   return compile_object(shader->Source,
+                         object,
+                         type,
+                         infolog,
+                         shader,
+                         &ctx->Extensions,
+                         &shader->Pragmas);
 }
 
 

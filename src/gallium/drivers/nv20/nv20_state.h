@@ -126,6 +126,7 @@ struct nv20_depth_stencil_alpha_state {
 
 struct nv20_miptree {
 	struct pipe_texture base;
+	struct nouveau_bo *bo;
 
 	struct pipe_buffer *buffer;
 	uint total_size;

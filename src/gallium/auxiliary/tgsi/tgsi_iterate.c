@@ -66,6 +66,12 @@ tgsi_iterate_shader(
                goto fail;
          break;
 
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         if (ctx->iterate_property)
+            if (!ctx->iterate_property( ctx,  &parse.FullToken.FullProperty ))
+               goto fail;
+         break;
+
       default:
          assert( 0 );
       }

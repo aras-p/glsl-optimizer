@@ -191,7 +191,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_flush.c \
-	state_tracker/st_cb_get.c \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_feedback.c \
@@ -219,7 +218,6 @@ SHADER_SOURCES = \
 	shader/arbprogparse.c \
 	shader/arbprogram.c \
 	shader/atifragshader.c \
-	shader/grammar/grammar_mesa.c \
 	shader/hash_table.c \
 	shader/lex.yy.c \
 	shader/nvfragparse.c \
@@ -256,7 +254,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_link.c	\
 	shader/slang/slang_log.c	\
 	shader/slang/slang_mem.c	\
-	shader/slang/slang_preprocess.c	\
 	shader/slang/slang_print.c	\
 	shader/slang/slang_simplify.c	\
 	shader/slang/slang_storage.c	\
@@ -365,6 +362,12 @@ GLAPI_OBJECTS = \
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
+
+### Other archives/libraries
+
+GLSL_LIBS = \
+	$(TOP)/src/glsl/pp/libglslpp.a \
+	$(TOP)/src/glsl/cl/libglslcl.a
 
 
 ### Include directories

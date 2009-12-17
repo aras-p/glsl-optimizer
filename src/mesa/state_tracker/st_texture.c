@@ -105,7 +105,6 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
-   util_format_get_block(format, &pt.block);
    pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);
@@ -243,8 +242,9 @@ st_surface_data(struct pipe_context *pipe,
    struct pipe_screen *screen = pipe->screen;
    void *map = screen->transfer_map(screen, dst);
 
+   assert(dst->texture);
    util_copy_rect(map,
-                  &dst->block,
+                  dst->texture->format,
                   dst->stride,
                   dstx, dsty, 
                   width, height, 

@@ -316,14 +316,10 @@ struct pipe_surface
  */
 struct pipe_transfer
 {
-   enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned x;                   /**< x offset from start of texture image */
    unsigned y;                   /**< y offset from start of texture image */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
-   struct pipe_format_block block;
-   unsigned nblocksx;            /**< allocated width in blocks */
-   unsigned nblocksy;            /**< allocated height in blocks */
    unsigned stride;              /**< stride in bytes between rows of blocks */
    enum pipe_transfer_usage usage; /**< PIPE_TRANSFER_*  */
 
@@ -347,10 +343,6 @@ struct pipe_texture
    unsigned width0;
    unsigned height0;
    unsigned depth0;
-
-   struct pipe_format_block block;
-   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */
-   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated height in blocks */
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
 
@@ -400,8 +392,9 @@ pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
 {
    struct pipe_buffer *old_buf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
+   if (pipe_reference(&(*ptr)->reference, &buf->reference))
       old_buf->screen->buffer_destroy(old_buf);
+   *ptr = buf;
 }
 
 static INLINE void
@@ -409,8 +402,9 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    struct pipe_surface *old_surf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
+   if (pipe_reference(&(*ptr)->reference, &surf->reference))
       old_surf->texture->screen->tex_surface_destroy(old_surf);
+   *ptr = surf;
 }
 
 static INLINE void
@@ -418,8 +412,9 @@ pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
 {
    struct pipe_texture *old_tex = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &tex->reference))
+   if (pipe_reference(&(*ptr)->reference, &tex->reference))
       old_tex->screen->texture_destroy(old_tex);
+   *ptr = tex;
 }
 
 

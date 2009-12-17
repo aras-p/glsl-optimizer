@@ -70,14 +70,21 @@ uint32_t r300_translate_primitive(unsigned prim)
     }
 }
 
+static boolean r300_nothing_to_draw(struct r300_context *r300)
+{
+    return r300->rs_state->rs.scissor &&
+           r300->scissor_state->scissor.empty_area;
+}
+
 static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned mode,
                                   unsigned count)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(4);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count);
+    BEGIN_CS(6);
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300_translate_primitive(mode));
@@ -102,7 +109,8 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     assert((start * indexSize)  % 4 == 0);
     assert(offset_dwords == 0);
 
-    BEGIN_CS(10);
+    BEGIN_CS(12);
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
@@ -173,8 +181,13 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
         return FALSE;
     }
 
+
     if (count > 65535) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     r300_update_derived_state(r300);
@@ -218,6 +231,10 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         return FALSE;
     }
 
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
+    }
+
     r300_update_derived_state(r300);
 
     if (!r300_setup_vertex_buffers(r300)) {
@@ -249,6 +266,10 @@ boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
@@ -290,6 +311,10 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
+    }
+
+    if (r300_nothing_to_draw(r300)) {
+        return TRUE;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {

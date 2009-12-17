@@ -182,7 +182,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.7-devel
+VERSION=7.7-rc2
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -225,6 +225,10 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/src/glsl/Makefile					\
+	$(DIRECTORY)/src/glsl/*/Makefile				\
+	$(DIRECTORY)/src/glsl/*/SConscript				\
+	$(DIRECTORY)/src/glsl/*/*.[ch]					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources.mak				\
@@ -240,7 +244,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
 	$(DIRECTORY)/src/mesa/shader/Makefile				\
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/grammar/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\

@@ -112,7 +112,10 @@ struct st_device {
       struct pipe_texture templat;
       memset(&templat, 0, sizeof(templat));
       templat.format = format;
+<<<<<<< HEAD
       util_format_get_block(templat.format, &templat.block);
+=======
+>>>>>>> master
       templat.width0 = width;
       templat.height0 = height;
       templat.depth0 = depth;

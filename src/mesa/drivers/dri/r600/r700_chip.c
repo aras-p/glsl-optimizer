@@ -45,6 +45,9 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    struct r700_vertex_program *vp = context->selected_vp;
+
 	struct radeon_bo *bo = NULL;
 	unsigned int i;
 	BATCH_LOCALS(&context->radeon);
@@ -52,7 +55,7 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {            
 			radeonTexObj *t = r700->textures[i];
 			uint32_t offset;
 			if (t) {
@@ -71,7 +74,16 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 					BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
 					R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-					R600_OUT_BATCH(i * 7);
+
+                    if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
+                    {   /* vs texture */                                     
+                        R600_OUT_BATCH((i + VERT_ATTRIB_MAX + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
+                    }
+                    else
+                    {
+					    R600_OUT_BATCH(i * 7);
+                    }
+
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
@@ -95,21 +107,35 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	}
 }
 
+#define SAMPLER_STRIDE                 3
+
 static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	unsigned int i;
+
+    struct r700_vertex_program *vp = context->selected_vp;
+
 	BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {            
 			radeonTexObj *t = r700->textures[i];
 			if (t) {
 				BEGIN_BATCH_NO_AUTOSTATE(5);
 				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-				R600_OUT_BATCH(i * 3);
+
+                if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
+                {   /* vs texture */
+                    R600_OUT_BATCH((i+SQ_TEX_SAMPLER_VS_OFFSET) * SAMPLER_STRIDE); //work 1
+                }
+                else
+                {
+				    R600_OUT_BATCH(i * 3);
+                }
+
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
@@ -1163,7 +1189,11 @@ static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
 		count += 3;
 
 	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
-		for (ui = 0; ui < R700_MAX_RENDER_TARGETS; ui++) {
+		/* targets are enabled in r700SetRenderTarget but state
+		   size is calculated before that. Until MRT's are done
+		   hardcode target0 as enabled. */
+		count += 3;
+		for (ui = 1; ui < R700_MAX_RENDER_TARGETS; ui++) {
                         if (r700->render_target[ui].enabled)
 				count += 3;
 		}
@@ -1306,9 +1336,9 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(poly, always, 10, r700SendPolyState);
 	ALLOC_STATE(cb, cb, 18, r700SendCBState);
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
+	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
 	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
-	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
 	ALLOC_STATE(vgt, always, 41, r700SendVGTState);
 	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);

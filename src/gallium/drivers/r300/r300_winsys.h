@@ -35,6 +35,8 @@ extern "C" {
 #include "pipe/p_state.h"
 #include "pipe/internal/p_winsys_screen.h"
 
+#include "radeon_winsys.h"
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct radeon_winsys* radeon_winsys);
 

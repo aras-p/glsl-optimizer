@@ -260,8 +260,7 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 
 #ifdef HAVE_LIBKMS
     if (ms->kms)
-	kms_destroy(ms->kms);
-    ms->kms = NULL;
+	kms_destroy(&ms->kms);
 #endif
 
     return TRUE;
@@ -652,6 +651,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 
+    if (ms->winsys_screen_init)
+	ms->winsys_screen_init(pScrn);
+
     return drv_enter_vt(scrnIndex, 1);
 }
 
@@ -684,6 +686,9 @@ drv_leave_vt(int scrnIndex, int flags)
     modesettingPtr ms = modesettingPTR(pScrn);
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
     int o;
+
+    if (ms->winsys_leave_vt)
+	ms->winsys_leave_vt(pScrn);
 
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
@@ -747,6 +752,9 @@ drv_enter_vt(int scrnIndex, int flags)
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
 
+    if (ms->winsys_enter_vt)
+	ms->winsys_enter_vt(pScrn);
+
     return TRUE;
 }
 
@@ -767,6 +775,9 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     if (pScrn->vtSema) {
 	drv_leave_vt(scrnIndex, 0);
     }
+
+    if (ms->winsys_screen_close)
+	ms->winsys_screen_close(pScrn);
 
 #ifdef DRI2
     if (ms->screen)
@@ -892,8 +903,7 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
 	return TRUE;
 
     kms_bo_unmap(ms->root_bo);
-    kms_bo_destroy(ms->root_bo);
-    ms->root_bo = NULL;
+    kms_bo_destroy(&ms->root_bo);
     return TRUE;
 }
 
@@ -939,7 +949,7 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     return TRUE;
 
 err_destroy:
-    kms_bo_destroy(bo);
+    kms_bo_destroy(&bo);
     return FALSE;
 }
 

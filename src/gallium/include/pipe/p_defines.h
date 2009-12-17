@@ -140,7 +140,8 @@ enum pipe_texture_target {
    PIPE_TEXTURE_1D   = 0,
    PIPE_TEXTURE_2D   = 1,
    PIPE_TEXTURE_3D   = 2,
-   PIPE_TEXTURE_CUBE = 3
+   PIPE_TEXTURE_CUBE = 3,
+   PIPE_MAX_TEXTURE_TYPES
 };
 
 #define PIPE_TEX_FACE_POS_X 0

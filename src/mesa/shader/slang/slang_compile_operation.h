@@ -127,7 +127,6 @@ typedef struct slang_operation_
     * indicate such.  num_children indicates number of elements.
     */
    GLboolean array_constructor;
-   double x;
 } slang_operation;
 
 

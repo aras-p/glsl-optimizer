@@ -37,6 +37,7 @@
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
+#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
@@ -105,8 +106,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   GLboolean softwareBuffer = GL_FALSE;
    int cpp;
+   GLuint pitch;
 
    ASSERT(rb->Name != 0);
 
@@ -116,18 +117,14 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB5:
       rb->Format = MESA_FORMAT_RGB565;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_RGB565;
-      cpp = 2;
       break;
    case GL_RGB:
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->Format = MESA_FORMAT_ARGB8888;
+      rb->Format = MESA_FORMAT_XRGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888; /* XXX: Need xrgb8888 */
-      cpp = 4;
       break;
    case GL_RGBA:
    case GL_RGBA2:
@@ -139,8 +136,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGBA16:
       rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
-      irb->texformat = MESA_FORMAT_ARGB8888;
-      cpp = 4;
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
@@ -150,29 +145,21 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       /* alloc a depth+stencil buffer */
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_SHORT;
-      cpp = 2;
-      irb->texformat = MESA_FORMAT_Z16;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       rb->Format = MESA_FORMAT_S8_Z24;
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
-      irb->texformat = MESA_FORMAT_S8_Z24;
       break;
    default:
       _mesa_problem(ctx,
@@ -181,6 +168,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
 
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+   cpp = _mesa_get_format_bytes(rb->Format);
 
    intelFlush(ctx);
 
@@ -190,32 +178,25 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
 
    /* allocate new memory region/renderbuffer */
-   if (softwareBuffer) {
-      return _mesa_soft_renderbuffer_storage(ctx, rb, internalFormat,
-                                             width, height);
-   }
-   else {
-      /* Choose a pitch to match hardware requirements:
-       */
-      GLuint pitch = ((cpp * width + 63) & ~63) / cpp;
 
-      /* alloc hardware renderbuffer */
-      DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
-	  height, pitch);
+   /* Choose a pitch to match hardware requirements:
+    */
+   pitch = ((cpp * width + 63) & ~63) / cpp;
 
-      irb->region = intel_region_alloc(intel, I915_TILING_NONE,
-				       cpp, width, height, pitch,
-				       GL_TRUE);
-      if (!irb->region)
-         return GL_FALSE;       /* out of memory? */
+   /* alloc hardware renderbuffer */
+   DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width, height, pitch);
 
-      ASSERT(irb->region->buffer);
+   irb->region = intel_region_alloc(intel, I915_TILING_NONE, cpp,
+				    width, height, pitch, GL_TRUE);
+   if (!irb->region)
+      return GL_FALSE;       /* out of memory? */
 
-      rb->Width = width;
-      rb->Height = height;
+   ASSERT(irb->region->buffer);
 
-      return GL_TRUE;
-   }
+   rb->Width = width;
+   rb->Height = height;
+
+   return GL_TRUE;
 }
 
 
@@ -297,7 +278,6 @@ intel_create_renderbuffer(gl_format format)
    GET_CURRENT_CONTEXT(ctx);
 
    struct intel_renderbuffer *irb;
-   const GLuint name = 0;
 
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
@@ -305,7 +285,7 @@ intel_create_renderbuffer(gl_format format)
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&irb->Base, name);
+   _mesa_init_renderbuffer(&irb->Base, 0);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
    switch (format) {
@@ -314,10 +294,6 @@ intel_create_renderbuffer(gl_format format)
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
    case MESA_FORMAT_XRGB8888:
-      /* XXX this is a hack since XRGB surfaces don't seem to work
-       * properly yet.  Reading the alpha channel returns 0 instead of 1.
-       */
-      format = MESA_FORMAT_ARGB8888;
       irb->Base._BaseFormat = GL_RGB;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
@@ -346,7 +322,6 @@ intel_create_renderbuffer(gl_format format)
 
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
-   irb->texformat = format;
 
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
@@ -423,7 +398,6 @@ static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
-   irb->texformat = texImage->TexFormat;
    gl_format texFormat;
 
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
@@ -591,6 +565,7 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_object *tex_obj = att->Texture;
    struct gl_texture_image *image =
       tex_obj->Image[att->CubeMapFace][att->TextureLevel];
@@ -598,8 +573,14 @@ intel_finish_render_texture(GLcontext * ctx,
 
    /* Flag that this image may now be validated into the object's miptree. */
    intel_image->used_as_render_target = GL_FALSE;
-}
 
+   /* Since we've (probably) rendered to the texture and will (likely) use
+    * it in the texture domain later on in this batchbuffer, flush the
+    * batch.  Once again, we wish for a domain tracker in libdrm to cover
+    * usage inside of a batchbuffer like GEM does in the kernel.
+    */
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+}
 
 /**
  * Do additional "completeness" testing of a framebuffer object.
@@ -632,7 +613,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	 continue;
       }
 
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_XRGB8888:
       case MESA_FORMAT_RGB565:

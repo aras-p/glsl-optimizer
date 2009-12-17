@@ -51,7 +51,6 @@
 #include "st_cb_drawtex.h"
 #endif
 #include "st_cb_fbo.h"
-#include "st_cb_get.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
 #endif
@@ -331,7 +330,6 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_rasterpos_functions(functions);
 #endif
    st_init_fbo_functions(functions);
-   st_init_get_functions(functions);
 #if FEATURE_feedback
    st_init_feedback_functions(functions);
 #endif

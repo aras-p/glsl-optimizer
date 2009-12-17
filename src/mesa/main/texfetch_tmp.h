@@ -864,7 +864,7 @@ static void store_texel_al88_rev(struct gl_texture_image *texImage,
 static void FETCH(f_al1616)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   const GLuint s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = USHORT_TO_FLOAT( s & 0xffff );

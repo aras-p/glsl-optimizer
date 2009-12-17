@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,9 +42,16 @@ void r300_emit_blend_state(struct r300_context* r300,
     CS_LOCALS(r300);
     BEGIN_CS(8);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
-    OUT_CS(blend->blend_control);
-    OUT_CS(blend->alpha_blend_control);
-    OUT_CS(blend->color_channel_mask);
+    if (r300->framebuffer_state.nr_cbufs) {
+        OUT_CS(blend->blend_control);
+        OUT_CS(blend->alpha_blend_control);
+        OUT_CS(blend->color_channel_mask);
+    } else {
+        OUT_CS(0);
+        OUT_CS(0);
+        OUT_CS(0);
+        /* XXX also disable fastfill here once it's supported */
+    }
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
     END_CS;
@@ -277,7 +285,7 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
 
     BEGIN_CS(13 +
              ((code->inst_end + 1) * 6));
-    OUT_CS_REG(R500_US_CONFIG, 0);
+    OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
     OUT_CS_REG(R500_US_CODE_RANGE,
                R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
@@ -331,7 +339,13 @@ void r300_emit_fb_state(struct r300_context* r300,
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 4);
+    /* Shouldn't fail unless there is a bug in the state tracker. */
+    assert(fb->nr_cbufs <= 4);
+
+    BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
+             (fb->zsbuf ? 10 : 0) + 6);
+
+    /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
@@ -339,6 +353,10 @@ void r300_emit_fb_state(struct r300_context* r300,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 
+    /* Set the number of colorbuffers. */
+    OUT_CS_REG(R300_RB3D_CCTL, R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs));
+
+    /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
         surf = fb->cbufs[i];
         tex = (struct r300_texture*)surf->texture;
@@ -356,6 +374,12 @@ void r300_emit_fb_state(struct r300_context* r300,
             r300_translate_out_fmt(surf->format));
     }
 
+    /* Disable unused colorbuffers. */
+    for (; i < 4; i++) {
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
+    }
+
+    /* Set up a zbuffer. */
     if (fb->zsbuf) {
         surf = fb->zsbuf;
         tex = (struct r300_texture*)surf->texture;
@@ -383,8 +407,6 @@ static void r300_emit_query_start(struct r300_context *r300)
     if (!query)
 	return;
 
-    /* XXX This will almost certainly not return good results
-     * for overlapping queries. */
     BEGIN_CS(4);
     if (caps->family == CHIP_FAMILY_RV530) {
         OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
@@ -566,16 +588,26 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_scissor_state(struct r300_context* r300,
-                             struct r300_scissor_state* scissor)
+static void r300_emit_scissor_regs(struct r300_context* r300,
+                                   struct r300_scissor_regs* scissor)
 {
     CS_LOCALS(r300);
 
     BEGIN_CS(3);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS(scissor->scissor_top_left);
-    OUT_CS(scissor->scissor_bottom_right);
+    OUT_CS(scissor->top_left);
+    OUT_CS(scissor->bottom_right);
     END_CS;
+}
+
+void r300_emit_scissor_state(struct r300_context* r300,
+                             struct r300_scissor_state* scissor)
+{
+    if (r300->rs_state->rs.scissor) {
+        r300_emit_scissor_regs(r300, &scissor->scissor);
+    } else {
+        r300_emit_scissor_regs(r300, &scissor->framebuffer);
+    }
 }
 
 void r300_emit_texture(struct r300_context* r300,
@@ -616,50 +648,68 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-/* XXX I can't read this and that's not good */
-void r300_emit_aos(struct r300_context* r300, unsigned offset)
+static boolean r300_validate_aos(struct r300_context *r300)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
-    CS_LOCALS(r300);
     int i;
-    unsigned aos_count = r300->vertex_element_count;
 
+    /* Check if formats and strides are aligned to the size of DWORD. */
+    for (i = 0; i < r300->vertex_element_count; i++) {
+        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
+            pf_get_blocksize(velem[i].src_format) % 4 != 0) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+void r300_emit_aos(struct r300_context* r300, unsigned offset)
+{
+    struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    int i;
+    unsigned size1, size2, aos_count = r300->vertex_element_count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
+    CS_LOCALS(r300);
+
+    /* XXX Move this checking to a more approriate place. */
+    if (!r300_validate_aos(r300)) {
+        /* XXX We should fallback using Draw. */
+        assert(0);
+    }
+
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(aos_count);
+
     for (i = 0; i < aos_count - 1; i += 2) {
-        int buf_num1 = velem[i].vertex_buffer_index;
-        int buf_num2 = velem[i+1].vertex_buffer_index;
-        assert(vbuf[buf_num1].stride % 4 == 0 && util_format_get_size(velem[i].src_format) % 4 == 0);
-        assert(vbuf[buf_num2].stride % 4 == 0 && util_format_get_size(velem[i+1].src_format) % 4 == 0);
-        OUT_CS((util_format_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num1].stride << 6) |
-               (util_format_get_size(velem[i+1].src_format) << 14) | (vbuf[buf_num2].stride << 22));
-        OUT_CS(vbuf[buf_num1].buffer_offset + velem[i].src_offset +
-               offset * vbuf[buf_num1].stride);
-        OUT_CS(vbuf[buf_num2].buffer_offset + velem[i+1].src_offset +
-               offset * vbuf[buf_num2].stride);
-    }
-    if (aos_count & 1) {
-        int buf_num = velem[i].vertex_buffer_index;
-        assert(vbuf[buf_num].stride % 4 == 0 && util_format_get_size(velem[i].src_format) % 4 == 0);
-        OUT_CS((util_format_get_size(velem[i].src_format) >> 2) | (vbuf[buf_num].stride << 6));
-        OUT_CS(vbuf[buf_num].buffer_offset + velem[i].src_offset +
-               offset * vbuf[buf_num].stride);
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        vb2 = &vbuf[velem[i+1].vertex_buffer_index];
+        size1 = util_format_get_size(velem[i].src_format);
+        size2 = util_format_get_size(velem[i+1].src_format);
+
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
+               R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
+        OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
     }
 
-    /* XXX bare CS reloc */
+    if (aos_count & 1) {
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        size1 = util_format_get_size(velem[i].src_format);
+
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
+    }
+
     for (i = 0; i < aos_count; i++) {
-        cs_winsys->write_cs_reloc(cs_winsys,
-                                  vbuf[velem[i].vertex_buffer_index].buffer,
-                                  RADEON_GEM_DOMAIN_GTT,
-                                  0,
-                                  0);
-        cs_count -= 2;
+        OUT_CS_RELOC_NO_OFFSET(vbuf[velem[i].vertex_buffer_index].buffer,
+                               RADEON_GEM_DOMAIN_GTT, 0, 0);
     }
     END_CS;
 }
+
 #if 0
 void r300_emit_draw_packet(struct r300_context* r300)
 {
@@ -834,10 +884,21 @@ void r300_emit_viewport_state(struct r300_context* r300,
 
 void r300_emit_texture_count(struct r300_context* r300)
 {
+    uint32_t tx_enable = 0;
+    int i;
     CS_LOCALS(r300);
 
+    /* Notice that texture_count and sampler_count are just sizes
+     * of the respective arrays. We still have to check for the individual
+     * elements. */
+    for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
+        if (r300->textures[i]) {
+            tx_enable |= 1 << i;
+        }
+    }
+
     BEGIN_CS(2);
-    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    OUT_CS_REG(R300_TX_ENABLE, tx_enable);
     END_CS;
 
 }
@@ -872,10 +933,17 @@ void r300_emit_dirty_state(struct r300_context* r300)
         return;
     }
 
+    /* Check size of CS. */
+    /* Make sure we have at least 8*1024 spare dwords. */
+    /* XXX It would be nice to know the number of dwords we really need to
+     * XXX emit. */
+    if (!r300->winsys->check_cs(r300->winsys, 8*1024)) {
+        r300->context.flush(&r300->context, 0, NULL);
+    }
+
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
-    /* XXX check size */
 validate:
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {

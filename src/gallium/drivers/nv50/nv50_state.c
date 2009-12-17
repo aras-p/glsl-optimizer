@@ -196,8 +196,9 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	}
 
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-		tsc[0] |= (1 << 8);
-		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7);
+		/* XXX: must be deactivated for non-shadow textures */
+		tsc[0] |= (1 << 9);
+		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7) << 10;
 	}
 
 	limit = CLAMP(cso->lod_bias, -16.0, 15.0);
@@ -215,17 +216,28 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	return (void *)sso;
 }
 
-static void
-nv50_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
+static INLINE void
+nv50_sampler_state_bind(struct pipe_context *pipe, unsigned type,
+			unsigned nr, void **sampler)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	int i;
 
-	nv50->sampler_nr = nr;
-	for (i = 0; i < nv50->sampler_nr; i++)
-		nv50->sampler[i] = sampler[i];
+	memcpy(nv50->sampler[type], sampler, nr * sizeof(void *));
 
+	nv50->sampler_nr[type] = nr;
 	nv50->dirty |= NV50_NEW_SAMPLER;
+}
+
+static void
+nv50_vp_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **s)
+{
+	nv50_sampler_state_bind(pipe, PIPE_SHADER_VERTEX, nr, s);
+}
+
+static void
+nv50_fp_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **s)
+{
+	nv50_sampler_state_bind(pipe, PIPE_SHADER_FRAGMENT, nr, s);
 }
 
 static void
@@ -234,20 +246,34 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 	FREE(hwcso);
 }
 
-static void
-nv50_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
-			 struct pipe_texture **pt)
+static INLINE void
+nv50_set_sampler_texture(struct pipe_context *pipe, unsigned type,
+			 unsigned nr, struct pipe_texture **pt)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	int i;
+	unsigned i;
 
 	for (i = 0; i < nr; i++)
-		pipe_texture_reference((void *)&nv50->miptree[i], pt[i]);
-	for (i = nr; i < nv50->miptree_nr; i++)
-		pipe_texture_reference((void *)&nv50->miptree[i], NULL);
+		pipe_texture_reference((void *)&nv50->miptree[type][i], pt[i]);
+	for (i = nr; i < nv50->miptree_nr[type]; i++)
+		pipe_texture_reference((void *)&nv50->miptree[type][i], NULL);
 
-	nv50->miptree_nr = nr;
+	nv50->miptree_nr[type] = nr;
 	nv50->dirty |= NV50_NEW_TEXTURE;
+}
+
+static void
+nv50_set_vp_sampler_textures(struct pipe_context *pipe,
+			     unsigned nr, struct pipe_texture **pt)
+{
+	nv50_set_sampler_texture(pipe, PIPE_SHADER_VERTEX, nr, pt);
+}
+
+static void
+nv50_set_fp_sampler_textures(struct pipe_context *pipe,
+			     unsigned nr, struct pipe_texture **pt)
+{
+	nv50_set_sampler_texture(pipe, PIPE_SHADER_FRAGMENT, nr, pt);
 }
 
 static void *
@@ -648,9 +674,11 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_blend_state = nv50_blend_state_delete;
 
 	nv50->pipe.create_sampler_state = nv50_sampler_state_create;
-	nv50->pipe.bind_fragment_sampler_states = nv50_sampler_state_bind;
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
-	nv50->pipe.set_fragment_sampler_textures = nv50_set_sampler_texture;
+	nv50->pipe.bind_fragment_sampler_states = nv50_fp_sampler_state_bind;
+	nv50->pipe.bind_vertex_sampler_states   = nv50_vp_sampler_state_bind;
+	nv50->pipe.set_fragment_sampler_textures = nv50_set_fp_sampler_textures;
+	nv50->pipe.set_vertex_sampler_textures   = nv50_set_vp_sampler_textures;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;

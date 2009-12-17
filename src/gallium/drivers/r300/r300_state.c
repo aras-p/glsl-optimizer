@@ -151,9 +151,10 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
+    union util_color uc;
 
-    util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM,
-            &r300->blend_color_state->blend_color);
+    util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
+    r300->blend_color_state->blend_color = uc.ui;
 
     /* XXX if FP16 blending is enabled, we should use the FP16 format */
     r300->blend_color_state->blend_color_red_alpha =
@@ -289,11 +290,37 @@ static void r300_set_edgeflags(struct pipe_context* pipe,
     /* XXX and even worse, I have no idea WTF the bitfield is */
 }
 
+static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
+                                  struct r300_scissor_regs *scissor,
+                                  boolean is_r500)
+{
+    if (is_r500) {
+        scissor->top_left =
+            (state->minx << R300_SCISSORS_X_SHIFT) |
+            (state->miny << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
+            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        scissor->top_left =
+            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
+        scissor->bottom_right =
+            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
+
+    scissor->empty_area = state->minx >= state->maxx ||
+                          state->miny >= state->maxy;
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_scissor_state scissor;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -301,7 +328,18 @@ static void
 
     r300->framebuffer_state = *state;
 
+    scissor.minx = scissor.miny = 0;
+    scissor.maxx = state->width;
+    scissor.maxy = state->height;
+    r300_set_scissor_regs(&scissor, &r300->scissor_state->framebuffer,
+                          r300_screen(r300->context.screen)->caps->is_r500);
+
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || !r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
+    }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
+    r300->dirty_state |= R300_NEW_BLEND;
 }
 
 /* Create fragment shader state. */
@@ -382,8 +420,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     if (state->bypass_vs_clip_and_viewport ||
             !r300_screen(pipe->screen)->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
-    } else {
-        rs->rs.bypass_vs_clip_and_viewport = TRUE;
     }
 
     rs->point_size = pack_float_16_6x(state->point_size) |
@@ -513,6 +549,7 @@ static void*
     struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
     int lod_bias;
+    union util_color uc;
 
     sampler->filter0 |=
         (r300_translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
@@ -534,8 +571,8 @@ static void*
 
     sampler->filter1 |= r300_anisotropy(state->max_anisotropy);
 
-    util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM,
-                    &sampler->border_color);
+    util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
+    sampler->border_color = uc.ui;
 
     /* R500-specific fixups and optimizations */
     if (r300_screen(r300->context.screen)->caps->is_r500) {
@@ -590,8 +627,6 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
         return;
     }
     
-    r300->context.flush(&r300->context, 0, NULL);
-
     for (i = 0; i < count; i++) {
         if (r300->textures[i] != (struct r300_texture*)texture[i]) {
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
@@ -623,24 +658,13 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
-        r300->scissor_state->scissor_top_left =
-            (state->minx << R300_SCISSORS_X_SHIFT) |
-            (state->miny << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
-            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        r300->scissor_state->scissor_top_left =
-            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
-        r300->scissor_state->scissor_bottom_right =
-            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
-    }
+    r300_set_scissor_regs(state, &r300->scissor_state->scissor,
+                          r300_screen(r300->context.screen)->caps->is_r500);
 
-    r300->dirty_state |= R300_NEW_SCISSOR;
+    /* Don't rely on the order of states being set for the first time. */
+    if (!r300->rs_state || r300->rs_state->rs.scissor) {
+        r300->dirty_state |= R300_NEW_SCISSOR;
+    }
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,

@@ -449,7 +449,6 @@ void renderer_copy_surface(struct renderer *ctx,
    texTemp.width0 = srcW;
    texTemp.height0 = srcH;
    texTemp.depth0 = 1;
-   util_format_get_block(src->format, &texTemp.block);
 
    tex = screen->texture_create(screen, &texTemp);
    if (!tex)

@@ -126,6 +126,10 @@ void *
 llvmpipe_create_sampler_state(struct pipe_context *,
                               const struct pipe_sampler_state *);
 void llvmpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
+void
+llvmpipe_bind_vertex_sampler_states(struct pipe_context *,
+                                    unsigned num_samplers,
+                                    void **samplers);
 void llvmpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
@@ -171,6 +175,11 @@ void llvmpipe_set_scissor_state( struct pipe_context *,
 void llvmpipe_set_sampler_textures( struct pipe_context *,
                                     unsigned num,
                                     struct pipe_texture ** );
+
+void
+llvmpipe_set_vertex_sampler_textures(struct pipe_context *,
+                                     unsigned num_textures,
+                                     struct pipe_texture **);
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );

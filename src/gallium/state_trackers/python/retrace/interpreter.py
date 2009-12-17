@@ -99,7 +99,6 @@ struct_factories = {
     "pipe_stencil_state": gallium.Stencil,
     "pipe_alpha_state": gallium.Alpha,
     "pipe_depth_stencil_alpha_state": gallium.DepthStencilAlpha,
-    "pipe_format_block": gallium.FormatBlock,
     #"pipe_framebuffer_state": gallium.Framebuffer,
     "pipe_poly_stipple": gallium.PolyStipple,
     "pipe_rasterizer_state": gallium.Rasterizer,
@@ -307,7 +306,7 @@ class Screen(Object):
     def surface_write(self, surface, data, stride, size):
         if surface is None:
             return
-        assert surface.nblocksy * stride == size 
+#        assert surface.nblocksy * stride == size 
         surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
 
     def get_tex_transfer(self, texture, face, level, zslice, usage, x, y, w, h):

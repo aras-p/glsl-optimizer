@@ -55,6 +55,20 @@ get_tile_mode(unsigned ny, unsigned d)
 	return tile_mode | 0x10;
 }
 
+static INLINE unsigned
+get_zslice_offset(unsigned tile_mode, unsigned z, unsigned pitch, unsigned nb_h)
+{
+	unsigned tile_h = get_tile_height(tile_mode);
+	unsigned tile_d = get_tile_depth(tile_mode);
+
+	/* pitch_2d == to next slice within this volume-tile */
+	/* pitch_3d == size (in bytes) of a volume-tile */
+	unsigned pitch_2d = tile_h * 64;
+	unsigned pitch_3d = tile_d * align(nb_h, tile_h) * pitch;
+
+	return (z % tile_d) * pitch_2d + (z / tile_d) * pitch_3d;
+}
+
 static struct pipe_texture *
 nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
@@ -91,13 +105,11 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		struct nv50_miptree_level *lvl = &mt->level[l];
-
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
+		unsigned nblocksy = pf_get_nblocksy(pt->format, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-		lvl->pitch = align(pt->nblocksx[l] * pt->block.size, 64);
-		lvl->tile_mode = get_tile_mode(pt->nblocksy[l], depth);
+		lvl->pitch = align(pf_get_stride(pt->format, width), 64);
+		lvl->tile_mode = get_tile_mode(nblocksy, depth);
 
 		width = u_minify(width, 1);
 		height = u_minify(height, 1);
@@ -118,7 +130,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 			unsigned tile_d = get_tile_depth(lvl->tile_mode);
 
 			size  = lvl->pitch;
-			size *= align(pt->nblocksy[l], tile_h);
+			size *= align(pf_get_nblocksy(pt->format, u_minify(pt->height0, l)), tile_h);
 			size *= align(u_minify(pt->depth0, l), tile_d);
 
 			lvl->image_offset[i] = mt->total_size;
@@ -132,6 +144,8 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 				  mt->level[0].tile_mode, tile_flags,
 				  &mt->base.bo);
 	if (ret) {
+		for (l = 0; l < pt->last_level; ++l)
+			FREE(mt->level[l].image_offset);
 		FREE(mt);
 		return NULL;
 	}
@@ -171,6 +185,10 @@ static void
 nv50_miptree_destroy(struct pipe_texture *pt)
 {
 	struct nv50_miptree *mt = nv50_miptree(pt);
+	unsigned l;
+
+	for (l = 0; l < pt->last_level; ++l)
+		FREE(mt->level[l].image_offset);
 
 	nouveau_bo_ref(NULL, &mt->base.bo);
 	FREE(mt);
@@ -184,15 +202,10 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct pipe_surface *ps;
-	int img;
+	unsigned img = 0;
 
 	if (pt->target == PIPE_TEXTURE_CUBE)
 		img = face;
-	else
-	if (pt->target == PIPE_TEXTURE_3D)
-		img = zslice;
-	else
-		img = 0;
 
 	ps = CALLOC_STRUCT(pipe_surface);
 	if (!ps)
@@ -207,6 +220,12 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->level = level;
 	ps->zslice = zslice;
 	ps->offset = lvl->image_offset[img];
+
+	if (pt->target == PIPE_TEXTURE_3D) {
+		unsigned nb_h = pf_get_nblocksy(pt->format, ps->height);
+		ps->offset += get_zslice_offset(lvl->tile_mode, zslice,
+						lvl->pitch, nb_h);
+	}
 
 	return ps;
 }

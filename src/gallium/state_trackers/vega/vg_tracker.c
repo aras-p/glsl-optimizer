@@ -34,6 +34,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -51,7 +52,6 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    }
 
    templ.target = PIPE_TEXTURE_2D;
-   util_format_get_block(templ.format, &templ.block);
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;

@@ -474,8 +474,6 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
    struct stw_framebuffer *fb;
    struct pipe_screen *screen;
    struct pipe_surface *surface;
-   unsigned surface_index;
-   BOOL ret = FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -483,9 +481,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 
    screen = stw_dev->screen;
 
-   surface_index = (unsigned)(uintptr_t)data->pPrivateData;
-   if(!st_get_framebuffer_surface( fb->stfb, surface_index, &surface ))
-      goto fail;
+   surface = (struct pipe_surface *)data->pPrivateData;
 
 #ifdef DEBUG
    if(stw_dev->trace_running) {
@@ -519,15 +515,11 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
       stw_dev->stw_winsys->present( screen, surface, hdc );
    }
 
-   ret = TRUE;
-
-fail:
-
    stw_framebuffer_update(fb);
 
    stw_framebuffer_release(fb);
 
-   return ret;
+   return TRUE;
 }
 
 
@@ -539,7 +531,7 @@ fail:
 BOOL
 stw_framebuffer_present_locked(HDC hdc,
                                struct stw_framebuffer *fb,
-                               unsigned surface_index)
+                               struct pipe_surface *surface)
 {
    if(stw_dev->callbacks.wglCbPresentBuffers &&
       stw_dev->stw_winsys->compose) {
@@ -550,7 +542,7 @@ stw_framebuffer_present_locked(HDC hdc,
       data.magic2 = 0;
       data.AdapterLuid = stw_dev->AdapterLuid;
       data.rect = fb->client_rect;
-      data.pPrivateData = (void *)(uintptr_t)surface_index;
+      data.pPrivateData = (void *)surface;
 
       stw_framebuffer_release(fb);
 
@@ -558,13 +550,6 @@ stw_framebuffer_present_locked(HDC hdc,
    }
    else {
       struct pipe_screen *screen = stw_dev->screen;
-      struct pipe_surface *surface;
-
-      if(!st_get_framebuffer_surface( fb->stfb, surface_index, &surface )) {
-         /* FIXME: this shouldn't happen, but does on glean */
-         stw_framebuffer_release(fb);
-         return FALSE;
-      }
 
 #ifdef DEBUG
       if(stw_dev->trace_running) {
@@ -589,6 +574,7 @@ DrvSwapBuffers(
    HDC hdc )
 {
    struct stw_framebuffer *fb;
+   struct pipe_surface *surface = NULL;
 
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -599,12 +585,9 @@ DrvSwapBuffers(
       return TRUE;
    }
 
-   /* If we're swapping the buffer associated with the current context
-    * we have to flush any pending rendering commands first.
-    */
-   st_notify_swapbuffers( fb->stfb );
+   st_swapbuffers(fb->stfb, &surface, NULL);
 
-   return stw_framebuffer_present_locked(hdc, fb, ST_SURFACE_BACK_LEFT);
+   return stw_framebuffer_present_locked(hdc, fb, surface);
 }
 
 

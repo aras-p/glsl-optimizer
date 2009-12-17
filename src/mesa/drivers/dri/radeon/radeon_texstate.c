@@ -672,24 +672,13 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
     	    return;
     	}
 
-	radeon_update_renderbuffers(pDRICtx, dPriv);
-	/* back & depth buffer are useless free them right away */
-	rb = (void*)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-	}
-	rb = (void*)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
+	radeon_update_renderbuffers(pDRICtx, dPriv, GL_TRUE);
 	rb = rfb->color_rb[0];
 	if (rb->bo == NULL) {
 		/* Failed to BO for the buffer */
 		return;
 	}
-	
+
 	_mesa_lock_texture(radeon->glCtx, texObj);
 	if (t->bo) {
 		radeon_bo_unref(t->bo);

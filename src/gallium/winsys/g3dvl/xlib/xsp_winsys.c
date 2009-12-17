@@ -139,13 +139,10 @@ static struct pipe_buffer* xsp_surface_buffer_create
 )
 {
    const unsigned int ALIGNMENT = 1;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy;
+   unsigned nblocksy;
 
-   util_format_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = align(nblocksx * block.size, ALIGNMENT);
+   nblocksy = pf_get_nblocksy(format, height);
+   *stride = align(pf_get_stride(format, width), ALIGNMENT);
 
    return pws->buffer_create(pws, ALIGNMENT, usage,
                              *stride * nblocksy);

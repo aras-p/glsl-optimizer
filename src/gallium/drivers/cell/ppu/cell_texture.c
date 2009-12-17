@@ -67,14 +67,11 @@ cell_texture_layout(struct cell_texture *ct)
       w_tile = align(width, TILE_SIZE);
       h_tile = align(height, TILE_SIZE);
 
-      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w_tile);  
-      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h_tile);  
-
-      ct->stride[level] = pt->nblocksx[level] * pt->block.size;
+      ct->stride[level] = pf_get_stride(pt->format, w_tile);
 
       ct->level_offset[level] = ct->buffer_size;
 
-      size = pt->nblocksx[level] * pt->nblocksy[level] * pt->block.size;
+      size = ct->stride[level] * pf_get_nblocksy(pt->format, h_tile);
       if (pt->target == PIPE_TEXTURE_CUBE)
          size *= 6;
       else
@@ -285,10 +282,12 @@ cell_get_tex_surface(struct pipe_screen *screen,
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE) {
-         ps->offset += face * pt->nblocksy[level] * ct->stride[level];
+         unsigned h_tile = align(ps->height, TILE_SIZE);
+         ps->offset += face * pf_get_nblocksy(ps->format, h_tile) * ct->stride[level];
       }
       else if (pt->target == PIPE_TEXTURE_3D) {
-         ps->offset += zslice * pt->nblocksy[level] * ct->stride[level];
+         unsigned h_tile = align(ps->height, TILE_SIZE);
+         ps->offset += zslice * pf_get_nblocksy(ps->format, h_tile) * ct->stride[level];
       }
       else {
          assert(face == 0);
@@ -329,14 +328,10 @@ cell_get_tex_transfer(struct pipe_screen *screen,
    if (ctrans) {
       struct pipe_transfer *pt = &ctrans->base;
       pipe_texture_reference(&pt->texture, texture);
-      pt->format = texture->format;
-      pt->block = texture->block;
       pt->x = x;
       pt->y = y;
       pt->width = w;
       pt->height = h;
-      pt->nblocksx = texture->nblocksx[level];
-      pt->nblocksy = texture->nblocksy[level];
       pt->stride = ct->stride[level];
       pt->usage = usage;
       pt->face = face;
@@ -346,10 +341,12 @@ cell_get_tex_transfer(struct pipe_screen *screen,
       ctrans->offset = ct->level_offset[level];
 
       if (texture->target == PIPE_TEXTURE_CUBE) {
-         ctrans->offset += face * pt->nblocksy * pt->stride;
+         unsigned h_tile = align(u_minify(texture->height0, level), TILE_SIZE);
+         ctrans->offset += face * pf_get_nblocksy(texture->format, h_tile) * pt->stride;
       }
       else if (texture->target == PIPE_TEXTURE_3D) {
-         ctrans->offset += zslice * pt->nblocksy * pt->stride;
+         unsigned h_tile = align(u_minify(texture->height0, level), TILE_SIZE);
+         ctrans->offset += zslice * pf_get_nblocksy(texture->format, h_tile) * pt->stride;
       }
       else {
          assert(face == 0);
@@ -402,7 +399,8 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
     * Create a buffer of ordinary memory for the linear texture.
     * This is the memory that the user will read/write.
     */
-   size = pt->nblocksx[level] * pt->nblocksy[level] * pt->block.size;
+   size = pf_get_stride(pt->format, align(texWidth, TILE_SIZE)) *
+          pf_get_nblocksy(pt->format, align(texHeight, TILE_SIZE));
 
    ctrans->map = align_malloc(size, 16);
    if (!ctrans->map)

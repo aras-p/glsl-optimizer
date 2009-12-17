@@ -49,8 +49,11 @@
 #include "st_mesa_to_tgsi.h"
 #include "cso_cache/cso_context.h"
 
-   /* Clean out any old compilations:
-    */
+
+
+/**
+ * Clean out any old compilations:
+ */
 void
 st_vp_release_varients( struct st_context *st,
                         struct st_vertex_program *stvp )

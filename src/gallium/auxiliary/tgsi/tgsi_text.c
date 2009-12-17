@@ -27,6 +27,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "pipe/p_defines.h"
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_info.h"
@@ -57,6 +58,21 @@ static boolean uprcase( char c )
    if (c >= 'a' && c <= 'z')
       return c += 'A' - 'a';
    return c;
+}
+
+/*
+ * Ignore case of str1 and assume str2 is already uppercase.
+ * Return TRUE iff str1 and str2 are equal.
+ */
+static int
+streq_nocase_uprcase(const char *str1,
+                     const char *str2)
+{
+   while (*str1 && uprcase(*str1) == *str2) {
+      str1++;
+      str2++;
+   }
+   return *str1 == *str2;
 }
 
 static boolean str_match_no_case( const char **pcur, const char *str )
@@ -104,6 +120,20 @@ static boolean parse_uint( const char **pcur, uint *val )
       *val = *cur++ - '0';
       while (is_digit( cur ))
          *val = *val * 10 + *cur++ - '0';
+      *pcur = cur;
+      return TRUE;
+   }
+   return FALSE;
+}
+
+static boolean parse_identifier( const char **pcur, char *ret )
+{
+   const char *cur = *pcur;
+   int i = 0;
+   if (is_alpha_underscore( cur )) {
+      ret[i++] = *cur++;
+      while (is_alpha_underscore( cur ))
+         ret[i++] = *cur++;
       *pcur = cur;
       return TRUE;
    }
@@ -229,7 +259,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "LOOP",
-   "PRED"
+   "PRED",
+   "SV"
 };
 
 static boolean
@@ -939,6 +970,106 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    return TRUE;
 }
 
+static const char *property_names[] =
+{
+   "GS_INPUT_PRIMITIVE",
+   "GS_OUTPUT_PRIMITIVE",
+   "GS_MAX_OUTPUT_VERTICES"
+};
+
+static const char *primitive_names[] =
+{
+   "POINTS",
+   "LINES",
+   "LINE_LOOP",
+   "LINE_STRIP",
+   "TRIANGLES",
+   "TRIANGLE_STRIP",
+   "TRIANGLE_FAN",
+   "QUADS",
+   "QUAD_STRIP",
+   "POLYGON"
+};
+
+static boolean
+parse_primitive( const char **pcur, uint *primitive )
+{
+   uint i;
+
+   for (i = 0; i < PIPE_PRIM_MAX; i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, primitive_names[i])) {
+         *primitive = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+
+static boolean parse_property( struct translate_ctx *ctx )
+{
+   struct tgsi_full_property prop;
+   uint property_name;
+   uint values[8];
+   uint advance;
+   char id[64];
+
+   if (!eat_white( &ctx->cur )) {
+      report_error( ctx, "Syntax error" );
+      return FALSE;
+   }
+   if (!parse_identifier( &ctx->cur, id )) {
+      report_error( ctx, "Syntax error" );
+      return FALSE;
+   }
+   for (property_name = 0; property_name < TGSI_PROPERTY_COUNT;
+        ++property_name) {
+      if (streq_nocase_uprcase(id, property_names[property_name])) {
+         break;
+      }
+   }
+   if (property_name >= TGSI_PROPERTY_COUNT) {
+      debug_printf( "\nError: Unknown property : '%s'", id );
+      return FALSE;
+   }
+
+   eat_opt_white( &ctx->cur );
+   switch(property_name) {
+   case TGSI_PROPERTY_GS_INPUT_PRIM:
+   case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+      if (!parse_primitive(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown primitive name as property!" );
+         return FALSE;
+      }
+      break;
+   default:
+      if (!parse_uint(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Expected unsigned integer as property!" );
+         return FALSE;
+      }
+   }
+
+   prop = tgsi_default_full_property();
+   prop.Property.PropertyName = property_name;
+   prop.Property.NrTokens += 1;
+   prop.u[0].Data = values[0];
+
+   advance = tgsi_build_full_property(
+      &prop,
+      ctx->tokens_cur,
+      ctx->header,
+      (uint) (ctx->tokens_end - ctx->tokens_cur) );
+   if (advance == 0)
+      return FALSE;
+   ctx->tokens_cur += advance;
+
+   return TRUE;
+}
+
+
 static boolean translate( struct translate_ctx *ctx )
 {
    eat_opt_white( &ctx->cur );
@@ -947,7 +1078,6 @@ static boolean translate( struct translate_ctx *ctx )
 
    while (*ctx->cur != '\0') {
       uint label_val = 0;
-
       if (!eat_white( &ctx->cur )) {
          report_error( ctx, "Syntax error" );
          return FALSE;
@@ -955,7 +1085,6 @@ static boolean translate( struct translate_ctx *ctx )
 
       if (*ctx->cur == '\0')
          break;
-
       if (parse_label( ctx, &label_val )) {
          if (!parse_instruction( ctx, TRUE ))
             return FALSE;
@@ -966,6 +1095,10 @@ static boolean translate( struct translate_ctx *ctx )
       }
       else if (str_match_no_case( &ctx->cur, "IMM" )) {
          if (!parse_immediate( ctx ))
+            return FALSE;
+      }
+      else if (str_match_no_case( &ctx->cur, "PROPERTY" )) {
+         if (!parse_property( ctx ))
             return FALSE;
       }
       else if (!parse_instruction( ctx, FALSE )) {

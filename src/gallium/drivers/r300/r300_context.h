@@ -25,6 +25,8 @@
 
 #include "draw/draw_vertex.h"
 
+#include "util/u_blitter.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
@@ -98,9 +100,17 @@ struct r300_sampler_state {
     unsigned min_lod, max_lod;
 };
 
+struct r300_scissor_regs {
+    uint32_t top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
+    uint32_t bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+
+    /* Whether everything is culled by scissoring. */
+    boolean empty_area;
+};
+
 struct r300_scissor_state {
-    uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
-    uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+    struct r300_scissor_regs framebuffer;
+    struct r300_scissor_regs scissor;
 };
 
 struct r300_texture_state {
@@ -240,6 +250,8 @@ struct r300_context {
     struct radeon_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    /* Accelerated blit support. */
+    struct blitter_context* blitter;
 
     /* Vertex buffer for rendering. */
     struct pipe_buffer* vbo;

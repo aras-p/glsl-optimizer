@@ -138,6 +138,10 @@ struct vbo_exec_context
        */
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
    } array;
+
+#ifdef DEBUG
+   GLint flush_call_depth;
+#endif
 };
 
 

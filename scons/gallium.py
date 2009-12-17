@@ -390,15 +390,15 @@ def generate(env):
         else:
             ccflags += [
                 '/O2', # optimize for speed
-                #'/fp:fast', # fast floating point 
+                '/GL', # enable whole program optimization
             ]
         ccflags += [
+            '/fp:fast', # fast floating point 
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
         if env['machine'] == 'x86':
             ccflags += [
-                #'/QIfist', # Suppress _ftol
                 #'/arch:SSE2', # use the SSE2 instructions
             ]
         if platform == 'windows':
@@ -476,6 +476,11 @@ def generate(env):
         ]
         # Handle circular dependencies in the libraries
         env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+    if msvc:
+        if not env['debug']:
+            # enable Link-time Code Generation
+            linkflags += ['/LTCG']
+            env.Append(ARFLAGS = ['/LTCG'])
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx

@@ -533,6 +533,11 @@ struct r300_context {
 
 	uint32_t fallback;
 
+	struct {
+		struct r300_vertex_program_code vp_code;
+		struct rX00_fragment_program_code fp_code;
+	} blit;
+
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 };
 
@@ -548,6 +553,8 @@ extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern void r300InitShaderFunctions(r300ContextPtr r300);
 
 extern void r300InitDraw(GLcontext *ctx);
+
+extern void r300_init_texcopy_functions(struct dd_function_table *table);
 
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24

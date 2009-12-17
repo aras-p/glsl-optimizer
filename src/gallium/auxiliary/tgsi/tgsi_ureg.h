@@ -133,6 +133,10 @@ struct ureg_src
 ureg_DECL_vs_input( struct ureg_program *,
                     unsigned index );
 
+struct ureg_src
+ureg_DECL_gs_input(struct ureg_program *,
+                   unsigned index);
+
 struct ureg_dst
 ureg_DECL_output( struct ureg_program *,
                   unsigned semantic_name,

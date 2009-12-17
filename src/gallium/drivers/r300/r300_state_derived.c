@@ -134,6 +134,16 @@ static void r300_vertex_psc(struct r300_context* r300)
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
+    int identity[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    int* stream_tab;
+
+    /* If TCL is bypassed, map vertex streams to equivalent VS output
+     * locations. */
+    if (r300->rs_state->enable_vte) {
+        stream_tab = identity;
+    } else {
+        stream_tab = r300->vs->stream_loc_notcl;
+    }
 
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on the vertex elements,
@@ -147,10 +157,10 @@ static void r300_vertex_psc(struct r300_context* r300)
         format = r300->vertex_element[i].src_format;
 
         type = r300_translate_vertex_data_type(format) |
-            (i << R300_DST_VEC_LOC_SHIFT);
+            (stream_tab[i] << R300_DST_VEC_LOC_SHIFT);
         swizzle = r300_translate_vertex_data_swizzle(format);
 
-        if (i % 2) {
+        if (i & 1) {
             vformat->vap_prog_stream_cntl[i >> 1] |= type << 16;
             vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
         } else {
@@ -158,7 +168,6 @@ static void r300_vertex_psc(struct r300_context* r300)
             vformat->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
         }
     }
-
 
     assert(i <= 15);
 
@@ -178,7 +187,7 @@ static void r300_swtcl_vertex_psc(struct r300_context* r300)
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
-    int* vs_output_tab = r300->vs->output_stream_loc_swtcl;
+    int* vs_output_tab = r300->vs->stream_loc_notcl;
 
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */
@@ -462,6 +471,29 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
     r300->dirty_state |= R300_NEW_RS_BLOCK;
 }
 
+static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when a new depth or stencil value
+     * can be written and changed. */
+
+    /* We might optionally check for [Z func: never] and inspect the stencil
+     * state in a similar fashion, but it's not terribly important. */
+    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE) ||
+           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK) ||
+           ((dsa->z_buffer_control & R500_STENCIL_REFMASK_FRONT_BACK) &&
+            (dsa->stencil_ref_bf & R300_STENCILWRITEMASK_MASK));
+}
+
+static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
+{
+    /* We are interested only in the cases when alpha testing can kill
+     * a fragment. */
+    uint32_t af = dsa->alpha_function;
+
+    return (af & R300_FG_ALPHA_FUNC_ENABLE) &&
+           (af & R300_FG_ALPHA_FUNC_ALWAYS) != R300_FG_ALPHA_FUNC_ALWAYS;
+}
+
 static void r300_update_ztop(struct r300_context* r300)
 {
     r300->ztop_state.z_buffer_top = R300_ZTOP_ENABLE;
@@ -478,19 +510,25 @@ static void r300_update_ztop(struct r300_context* r300)
      * The docs claim that for the first three cases, if no ZS writes happen,
      * then ZTOP can be used.
      *
+     * (3) will never apply since we do not support chroma-keyed operations.
+     * (4) will need to be re-examined (and this comment updated) if/when
+     * Hyper-Z becomes supported.
+     *
      * Additionally, the following conditions require disabled ZTOP:
-     * ~) Depth writes in fragment shader
-     * ~) Outstanding occlusion queries
+     * 5) Depth writes in fragment shader
+     * 6) Outstanding occlusion queries
      *
      * ~C.
      */
-    if (r300->dsa_state->alpha_function) {
+
+    /* ZS writes */
+    if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
+           (r300_dsa_alpha_test_enabled(r300->dsa_state) ||   /* (1) */
+            r300->fs->info.uses_kill)) {                      /* (2) */
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->fs->info.uses_kill) {
+    } else if (r300_fragment_shader_writes_depth(r300->fs)) { /* (5) */
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300_fragment_shader_writes_depth(r300->fs)) {
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->query_current) {
+    } else if (r300->query_current) {                         /* (6) */
         r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
     }
 }
