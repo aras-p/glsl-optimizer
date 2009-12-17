@@ -16,7 +16,7 @@
 
 VPATH = RCS
 
-INCDIR = [---.include],[.grammar],[-.main],[-.glapi],[.slang]
+INCDIR = [---.include],[-.main],[-.glapi],[.slang]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1,"__extension__=")/name=(as_is,short)/float=ieee/ieee=denorm
 
@@ -63,8 +63,6 @@ VERSION=Mesa V3.4
 all : 
 	$(MMS)$(MMSQUALIFIERS) $(LIBDIR)$(GL_LIB)
 	set def [.slang]
-	$(MMS)$(MMSQUALIFIERS)
-	set def [-.grammar]
 	$(MMS)$(MMSQUALIFIERS)
 	set def [-]
 

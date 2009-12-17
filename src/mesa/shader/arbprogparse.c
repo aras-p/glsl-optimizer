@@ -56,7 +56,6 @@ having three separate program parameter arrays.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
-#include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
 #include "program.h"
 #include "programopt.h"
