@@ -139,6 +139,9 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_samplers,
 
    &brw_wm_unit,
+#endif
+   &gen6_scissor_state,
+#if 0
    &brw_sf_vp,
    &brw_sf_unit,
 

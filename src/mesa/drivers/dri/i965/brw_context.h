@@ -293,7 +293,7 @@ enum brw_cache_id {
    BRW_WM_UNIT,
    BRW_SF_PROG,
    BRW_SF_VP,
-   BRW_SF_UNIT,
+   BRW_SF_UNIT, /* scissor state on gen6 */
    BRW_VS_UNIT,
    BRW_VS_PROG,
    BRW_GS_UNIT,

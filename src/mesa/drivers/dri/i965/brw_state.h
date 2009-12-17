@@ -97,6 +97,7 @@ const struct brw_tracked_state gen6_clip_state;
 const struct brw_tracked_state gen6_color_calc_state;
 const struct brw_tracked_state gen6_depth_stencil_state;
 const struct brw_tracked_state gen6_gs_state;
+const struct brw_tracked_state gen6_scissor_state;
 const struct brw_tracked_state gen6_urb;
 const struct brw_tracked_state gen6_vs_state;
 

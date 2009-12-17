@@ -909,6 +909,11 @@ struct brw_sf_unit_state
 
 };
 
+struct gen6_scissor_state
+{
+   GLuint ymin, xmin;
+   GLuint ymax, xmax;
+};
 
 struct brw_gs_unit_state
 {

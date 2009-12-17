@@ -823,6 +823,8 @@
 # define GEN6_URB_GS_SIZE_SHIFT				8
 # define GEN6_URB_GS_ENTRIES_SHIFT			0
 
+#define CMD_3D_SCISSOR_STATE_POINTERS		0x780f /* GEN6+ */
+
 #define CMD_3D_VS_STATE		      0x7810 /* GEN6+ */
 /* DW2 */
 # define GEN6_VS_SPF_MODE				(1 << 31)
