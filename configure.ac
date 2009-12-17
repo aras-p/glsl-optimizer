@@ -413,7 +413,7 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa glew"
+SRC_DIRS="glsl mesa glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
