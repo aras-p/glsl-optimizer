@@ -69,6 +69,10 @@ struct radeon_winsys_priv {
 
     /* Current CS. */
     struct radeon_cs* cs;
+
+    /* Flush CB */
+    void (*flush_cb)(void *);
+    void *flush_data;
 };
 
 struct radeon_winsys* radeon_pipe_winsys(int fb);

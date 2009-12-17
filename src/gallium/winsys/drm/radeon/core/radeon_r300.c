@@ -26,6 +26,8 @@ static void radeon_set_flush_cb(struct radeon_winsys *winsys,
                                 void (*flush_cb)(void *),
                                 void *data)
 {
+    winsys->priv->flush_cb = flush_cb;
+    winsys->priv->flush_data = data;
     radeon_cs_space_set_flush(winsys->priv->cs, flush_cb, data);
 }
 

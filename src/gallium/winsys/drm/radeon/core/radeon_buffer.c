@@ -135,7 +135,7 @@ static void radeon_buffer_del(struct pipe_buffer *buffer)
     struct radeon_winsys_priv *priv = radeon_buffer->ws->priv;
 
     if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
-        priv->cs->space_flush_fn(priv->cs->space_flush_data);
+        priv->flush_cb(priv->flush_data);
     }
 
     radeon_bo_unref(radeon_buffer->bo);
@@ -152,7 +152,7 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
     int write = 0;
 
     if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
-        priv->cs->space_flush_fn(priv->cs->space_flush_data);
+        priv->flush_cb(priv->flush_data);
     }
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
