@@ -11,7 +11,7 @@ LIBNAME = radeon_dri.so
 MINIGLX_SOURCES = server/radeon_dri.c 
 
 ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c
+CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 RADEON_COMMON_SOURCES = \

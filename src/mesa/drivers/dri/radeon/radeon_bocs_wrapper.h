@@ -18,8 +18,11 @@
 #define RADEON_TILING_MACRO 0x1
 #define RADEON_TILING_MICRO 0x2
 #define RADEON_TILING_SWAP 0x4
+
+#ifndef RADEON_TILING_SURFACE
 #define RADEON_TILING_SURFACE 0x8 /* this object requires a surface
 				   * when mapped - i.e. front buffer */
+#endif
 
 /* to be used to build locally in mesa with no libdrm bits */
 #include "../radeon/radeon_bo_drm.h"

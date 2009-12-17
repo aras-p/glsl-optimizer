@@ -14,7 +14,7 @@ EGL_SOURCES = server/radeon_egl.c
 endif
 
 ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c
+CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 COMMON_SOURCES = \

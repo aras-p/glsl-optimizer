@@ -811,8 +811,7 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 		return;
 
 	if (flag) {
-		if (rrb->bo->bom->funcs->bo_wait)
-			radeon_bo_wait(rrb->bo);
+	        radeon_bo_wait(rrb->bo);
 		r = radeon_bo_map(rrb->bo, 1);
 		if (r) {
 			fprintf(stderr, "(%s) error(%d) mapping buffer.\n",
