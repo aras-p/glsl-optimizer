@@ -119,9 +119,13 @@ const struct brw_tracked_state *gen6_atoms[] =
     */
    &brw_curbe_offsets,
 
-   &brw_cc_vp,
 
 #endif
+   &gen6_clip_vp,
+   &gen6_sf_vp,
+   &gen6_cc_vp,
+   &gen6_viewport_state,	/* must do after *_vp stages */
+
    &gen6_urb,
    &gen6_blend_state,		/* must do before cc unit */
    &gen6_color_calc_state,	/* must do before cc unit */
@@ -141,8 +145,8 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_unit,
 #endif
    &gen6_scissor_state,
+
 #if 0
-   &brw_sf_vp,
    &brw_sf_unit,
 
    /* Command packets:

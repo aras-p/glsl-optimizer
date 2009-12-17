@@ -1144,6 +1144,15 @@ struct brw_sf_viewport
    } scissor;
 };
 
+struct gen6_sf_viewport {
+   GLfloat m00;
+   GLfloat m11;
+   GLfloat m22;
+   GLfloat m30;
+   GLfloat m31;
+   GLfloat m32;
+};
+
 /* Documented in the subsystem/shared-functions/sampler chapter...
  */
 struct brw_surface_state

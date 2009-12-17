@@ -91,6 +91,7 @@ DRIVER_SOURCES = \
 	gen6_gs_state.c \
 	gen6_scissor_state.c \
 	gen6_urb.c \
+	gen6_viewport_state.c \
 	gen6_vs_state.c
 
 C_SOURCES = \
