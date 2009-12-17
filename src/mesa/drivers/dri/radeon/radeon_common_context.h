@@ -405,9 +405,6 @@ struct radeon_state {
 	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
 	struct radeon_stencilbuffer_state stencil;
-
-	struct radeon_cs_space_check bos[RADEON_MAX_BOS];
-	int validated_bo_count;
 };
 
 /**
