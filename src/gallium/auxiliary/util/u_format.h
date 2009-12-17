@@ -225,7 +225,7 @@ util_format_get_component_bits(enum pipe_format format,
       return 0;
    }
 
-   assert(component >= 4);
+   assert(component < 4);
 
    /* Treat RGB and SRGB as equivalent. */
    if (colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
