@@ -167,9 +167,9 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_aa_line_parameters,
 
    &brw_psp_urb_cbs,
+#endif
 
    &brw_drawing_rect,
-#endif
 
    &brw_indices,
    &brw_index_buffer,
