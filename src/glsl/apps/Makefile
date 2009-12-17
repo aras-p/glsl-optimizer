@@ -36,7 +36,8 @@ INCLUDES = -I.
 
 default: $(APPS)
 
+install:
+
 clean:
 	-rm -f $(APPS)
 	-rm -f *.o
-
