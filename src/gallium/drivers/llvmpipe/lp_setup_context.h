@@ -65,7 +65,7 @@ struct setup_context {
    boolean ccw_is_frontface;
    unsigned cullmode;
 
-   const struct pipe_framebuffer_state *fb;
+   struct pipe_framebuffer_state fb;
 
    struct {
       unsigned flags;

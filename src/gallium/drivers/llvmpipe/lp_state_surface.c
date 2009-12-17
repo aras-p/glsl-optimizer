@@ -68,7 +68,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
          draw_set_mrd(lp->draw, mrd);
       }
 
-      lp_setup_bind_framebuffer( lp->setup, fb );
+      lp_setup_bind_framebuffer( lp->setup, &lp->framebuffer );
 
       lp->dirty |= LP_NEW_FRAMEBUFFER;
    }

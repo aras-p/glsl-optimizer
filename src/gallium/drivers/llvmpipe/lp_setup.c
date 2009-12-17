@@ -36,6 +36,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "util/u_surface.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
 #include "lp_debug.h"
@@ -61,10 +62,9 @@ lp_setup_get_current_scene(struct setup_context *setup)
       setup->scene = lp_scene_dequeue(setup->empty_scenes);
       if(0)lp_scene_reset( setup->scene ); /* XXX temporary? */
 
-      if (setup->fb) {
-         lp_scene_set_framebuffer_size(setup->scene,
-                                     setup->fb->width, setup->fb->height);
-      }
+      lp_scene_set_framebuffer_size(setup->scene,
+                                    setup->fb.width, 
+                                    setup->fb.height);
    }
    return setup->scene;
 }
@@ -134,9 +134,9 @@ lp_setup_rasterize_scene( struct setup_context *setup,
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
    lp_rasterize_scene(setup->rast,
-                     scene,
-                     setup->fb,
-                     write_depth);
+                      scene,
+                      &setup->fb,
+                      write_depth);
 
    reset_context( setup );
 
@@ -152,7 +152,7 @@ begin_binning( struct setup_context *setup )
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   if (setup->fb->cbufs[0]) {
+   if (setup->fb.cbufs[0]) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_color, 
@@ -163,7 +163,7 @@ begin_binning( struct setup_context *setup )
                             lp_rast_arg_null() );
    }
 
-   if (setup->fb->zsbuf) {
+   if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          lp_scene_bin_everywhere( scene, 
                             lp_rast_clear_zstencil, 
@@ -248,9 +248,9 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    set_state( setup, SETUP_FLUSHED );
 
-   setup->fb = fb;
+   util_copy_framebuffer_state(&setup->fb, fb);
 
-   lp_scene_set_framebuffer_size(scene, setup->fb->width, setup->fb->height);
+   lp_scene_set_framebuffer_size(scene, setup->fb.width, setup->fb.height);
 }
 
 
@@ -274,7 +274,7 @@ lp_setup_clear( struct setup_context *setup,
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
       setup->clear.zstencil.clear_zstencil = 
-         util_pack_z_stencil(setup->fb->zsbuf->format, 
+         util_pack_z_stencil(setup->fb.zsbuf->format, 
                              depth,
                              stencil);
    }
