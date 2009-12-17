@@ -55,7 +55,7 @@ upload_clip_state(struct brw_context *brw)
 
    BEGIN_BATCH(4);
    OUT_BATCH(CMD_3D_CLIP_STATE << 16 | (4 - 2));
-   OUT_BATCH(0);
+   OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_REJECT_ALL | /* XXX: debug: get VS working */
