@@ -210,8 +210,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    LLVMValueRef m0_vec, m1_vec, m2_vec;
    LLVMValueRef m;
 
-   LLVMValueRef zeros;
-
    assert(i < 4);
    
    /* int32 vector type */
@@ -224,17 +222,26 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 
    i32vec4_type = lp_build_int32_vec4_type();
 
-   /* int32_vec4 zero = {0,0,0,0} */
-   zeros = LLVMConstNull(i32vec4_type);
-
+   /* c0_vec = {c0, c0, c0, c0}
+    * Note that we emit this code four times but LLVM optimizes away
+    * three instances of it.
+    */
    c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
    c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
    c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
+
+   lp_build_name(c0_vec, "edgeconst0vec");
+   lp_build_name(c1_vec, "edgeconst1vec");
+   lp_build_name(c2_vec, "edgeconst2vec");
 
    index = LLVMConstInt(LLVMInt32Type(), i, 0);
    step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
    step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
    step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
+
+   lp_build_name(step0_vec, "step0vec");
+   lp_build_name(step1_vec, "step1vec");
+   lp_build_name(step2_vec, "step2vec");
 
    m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
    m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
@@ -243,7 +250,13 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
    m = LLVMBuildAnd(builder, m, m2_vec, "");
 
+   lp_build_name(m, "inoutmaskvec");
+
    *mask = m;
+
+   /*
+    * if mask = {0,0,0,0} skip quad
+    */
 }
 
 
@@ -309,6 +322,7 @@ generate_fs(struct llvmpipe_context *lp,
    generate_tri_edge_mask(builder, i, pmask,
                           c0, c1, c2, step0_ptr, step1_ptr, step2_ptr);
 
+   /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
 
 
