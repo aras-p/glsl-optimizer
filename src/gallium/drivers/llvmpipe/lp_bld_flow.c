@@ -402,6 +402,13 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
 }
 
 
+/**
+ * Begin a section of code which is predicated on a mask.
+ * \param mask  the mask context, initialized here
+ * \param flow  the flow context
+ * \param type  the type of the mask
+ * \param value  storage for the mask
+ */
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
                     struct lp_build_flow_context *flow,
@@ -422,6 +429,11 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
 }
 
 
+/**
+ * Update boolean mask with given value (bitwise AND).
+ * Typically used to update the quad's pixel alive/killed mask
+ * after depth testing, alpha testing, TGSI_OPCODE_KIL, etc.
+ */
 void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
@@ -432,6 +444,9 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
 }
 
 
+/**
+ * End section of code which is predicated on a mask.
+ */
 LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask)
 {
