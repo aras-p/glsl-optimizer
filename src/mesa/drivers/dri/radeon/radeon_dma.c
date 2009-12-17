@@ -207,7 +207,6 @@ again_alloc:
 		   counter on unused buffers for later freeing them from
 		   begin of list */
 		dma_bo = last_elem(&rmesa->dma.free);
-		assert(dma_bo->bo->cref == 1);
 		remove_from_list(dma_bo);
 		insert_at_head(&rmesa->dma.reserved, dma_bo);
 	}
