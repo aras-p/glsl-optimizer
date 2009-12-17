@@ -857,8 +857,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					   usage, dstx, dsty,
 					   width, height);
 
-   assert(pf_get_blockwidth(ptDraw->texture->format) == 1);
-   assert(pf_get_blockheight(ptDraw->texture->format) == 1);
+   assert(util_format_get_blockwidth(ptDraw->texture->format) == 1);
+   assert(util_format_get_blockheight(ptDraw->texture->format) == 1);
 
    /* map the stencil buffer */
    drawMap = screen->transfer_map(screen, ptDraw);

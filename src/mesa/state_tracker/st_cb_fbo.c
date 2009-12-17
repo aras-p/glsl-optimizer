@@ -105,8 +105,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
       assert(strb->format != PIPE_FORMAT_NONE);
       
-      strb->stride = pf_get_stride(strb->format, width);
-      size = pf_get_2d_size(strb->format, strb->stride, height);
+      strb->stride = util_format_get_stride(strb->format, width);
+      size = util_format_get_2d_size(strb->format, strb->stride, height);
       
       strb->data = _mesa_malloc(size);
       

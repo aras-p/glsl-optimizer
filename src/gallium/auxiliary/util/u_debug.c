@@ -64,6 +64,7 @@
 #include "pipe/p_format.h" 
 #include "pipe/p_state.h" 
 #include "pipe/p_inlines.h" 
+#include "util/u_format.h"
 #include "util/u_memory.h" 
 #include "util/u_string.h" 
 #include "util/u_stream.h" 
@@ -670,9 +671,9 @@ void debug_dump_surface(const char *prefix,
    
    debug_dump_image(prefix, 
                     texture->format,
-                    pf_get_blocksize(texture->format), 
-                    pf_get_nblocksx(texture->format, transfer->width),
-                    pf_get_nblocksy(texture->format, transfer->height),
+                    util_format_get_blocksize(texture->format), 
+                    util_format_get_nblocksx(texture->format, transfer->width),
+                    util_format_get_nblocksy(texture->format, transfer->height),
                     transfer->stride,
                     data);
    

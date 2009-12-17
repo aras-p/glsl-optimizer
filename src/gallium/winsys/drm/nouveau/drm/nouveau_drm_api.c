@@ -247,7 +247,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 		return false;
 
 	*handle = mt->bo->handle;
-	*stride = pf_get_stride(mt->base.format, mt->base.width0);
+	*stride = util_format_get_stride(mt->base.format, mt->base.width0);
 	return true;
 }
 

@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_simple_screen.h"
 
@@ -357,8 +358,8 @@ static void* r300_transfer_map(struct pipe_screen* screen,
     }
 
     return map + r300_transfer(transfer)->offset +
-        transfer->y / pf_get_blockheight(format) * transfer->stride +
-        transfer->x / pf_get_blockwidth(format) * pf_get_blocksize(format);
+        transfer->y / util_format_get_blockheight(format) * transfer->stride +
+        transfer->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 }
 
 static void r300_transfer_unmap(struct pipe_screen* screen,

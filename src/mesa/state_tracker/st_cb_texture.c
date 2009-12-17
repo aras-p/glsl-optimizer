@@ -833,7 +833,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    /* copy/pack data into user buffer */
    if (st_equal_formats(stImage->pt->format, format, type)) {
       /* memcpy */
-      const uint bytesPerRow = width * util_format_get_size(stImage->pt->format);
+      const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
       ubyte *map = screen->transfer_map(screen, tex_xfer);
       GLuint row;
       for (row = 0; row < height; row++) {
@@ -915,7 +915,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                                             PIPE_TRANSFER_READ, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
-      texImage->RowStride = stImage->transfer->stride / pf_get_blocksize(stImage->pt->format);
+      texImage->RowStride = stImage->transfer->stride / util_format_get_blocksize(stImage->pt->format);
    }
    else {
       /* Otherwise, the image should actually be stored in
@@ -1178,7 +1178,7 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                                             xoffset, yoffset,
                                             width, height);
       
-      srcBlockStride = pf_get_stride(pformat, width);
+      srcBlockStride = util_format_get_stride(pformat, width);
       dstBlockStride = stImage->transfer->stride;
    } else {
       assert(stImage->pt);
@@ -1192,16 +1192,16 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   assert(xoffset % pf_get_blockwidth(pformat) == 0);
-   assert(yoffset % pf_get_blockheight(pformat) == 0);
-   assert(width % pf_get_blockwidth(pformat) == 0);
-   assert(height % pf_get_blockheight(pformat) == 0);
+   assert(xoffset % util_format_get_blockwidth(pformat) == 0);
+   assert(yoffset % util_format_get_blockheight(pformat) == 0);
+   assert(width % util_format_get_blockwidth(pformat) == 0);
+   assert(height % util_format_get_blockheight(pformat) == 0);
 
-   for (y = 0; y < height; y += pf_get_blockheight(pformat)) {
+   for (y = 0; y < height; y += util_format_get_blockheight(pformat)) {
       /* don't need to adjust for xoffset and yoffset as st_texture_image_map does that */
-      const char *src = (const char*)data + srcBlockStride * pf_get_nblocksy(pformat, y);
-      char *dst = (char*)texImage->Data + dstBlockStride * pf_get_nblocksy(pformat, y);
-      memcpy(dst, src, pf_get_stride(pformat, width));
+      const char *src = (const char*)data + srcBlockStride * util_format_get_nblocksy(pformat, y);
+      char *dst = (char*)texImage->Data + dstBlockStride * util_format_get_nblocksy(pformat, y);
+      memcpy(dst, src, util_format_get_stride(pformat, width));
    }
 
    if (stImage->pt) {
@@ -1691,10 +1691,10 @@ copy_image_data_to_texture(struct st_context *st,
                             dstLevel,
                             stImage->base.Data,
                             stImage->base.RowStride * 
-                            pf_get_blocksize(stObj->pt->format),
+                            util_format_get_blocksize(stObj->pt->format),
                             stImage->base.RowStride *
                             stImage->base.Height *
-                            pf_get_blocksize(stObj->pt->format));
+                            util_format_get_blocksize(stObj->pt->format));
       _mesa_align_free(stImage->base.Data);
       stImage->base.Data = NULL;
    }

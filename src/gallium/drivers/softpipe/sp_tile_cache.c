@@ -239,7 +239,7 @@ clear_tile(struct softpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (util_format_get_size(format)) {
+   switch (util_format_get_blocksize(format)) {
    case 1:
       memset(tile->data.any, clear_value, TILE_SIZE * TILE_SIZE);
       break;

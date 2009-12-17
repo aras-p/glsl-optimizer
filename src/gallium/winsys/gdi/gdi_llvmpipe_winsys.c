@@ -137,8 +137,8 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    gdt->width = width;
    gdt->height = height;
 
-   bpp = util_format_get_bits(format);
-   cpp = util_format_get_size(format);
+   bpp = util_format_get_blocksizebits(format);
+   cpp = util_format_get_blocksize(format);
    
    gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;

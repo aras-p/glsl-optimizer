@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "util/u_format.h"
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
@@ -203,9 +204,9 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
                                &t->width0, 1,
                                &t->height0, 1,
                                &t->depth0, 1,
-                               pf_get_blockwidth(t->format),
-                               pf_get_blockheight(t->format),
-                               pf_get_blocksize(t->format),
+                               util_format_get_blockwidth(t->format),
+                               util_format_get_blockheight(t->format),
+                               util_format_get_blocksize(t->format),
                                t->last_level,
                                t->nr_samples,
                                t->tex_usage,
@@ -254,11 +255,11 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
                                 t->texture->format,
-                                pf_get_blockwidth(t->texture->format),
-                                pf_get_blockheight(t->texture->format),
-                                pf_get_blocksize(t->texture->format),
+                                util_format_get_blockwidth(t->texture->format),
+                                util_format_get_blockheight(t->texture->format),
+                                util_format_get_blocksize(t->texture->format),
                                 (uint8_t*)map,
-                                t->stride * pf_get_nblocksy(t->texture->format, t->height),
+                                t->stride * util_format_get_nblocksy(t->texture->format, t->height),
                                 t->stride,
                                 NULL);
 

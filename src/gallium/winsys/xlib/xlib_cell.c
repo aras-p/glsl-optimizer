@@ -289,8 +289,8 @@ xm_surface_buffer_create(struct pipe_winsys *winsys,
    const unsigned alignment = 64;
    unsigned nblocksy;
 
-   nblocksy = pf_get_nblocksy(format, height);
-   *stride = align(pf_get_stride(format, width), alignment);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), alignment);
 
    return winsys->buffer_create(winsys, alignment,
                                 usage,

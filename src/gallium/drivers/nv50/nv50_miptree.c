@@ -23,6 +23,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 
 #include "nv50_context.h"
 
@@ -105,10 +106,10 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		struct nv50_miptree_level *lvl = &mt->level[l];
-		unsigned nblocksy = pf_get_nblocksy(pt->format, height);
+		unsigned nblocksy = util_format_get_nblocksy(pt->format, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-		lvl->pitch = align(pf_get_stride(pt->format, width), 64);
+		lvl->pitch = align(util_format_get_stride(pt->format, width), 64);
 		lvl->tile_mode = get_tile_mode(nblocksy, depth);
 
 		width = u_minify(width, 1);
@@ -130,7 +131,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 			unsigned tile_d = get_tile_depth(lvl->tile_mode);
 
 			size  = lvl->pitch;
-			size *= align(pf_get_nblocksy(pt->format, u_minify(pt->height0, l)), tile_h);
+			size *= align(util_format_get_nblocksy(pt->format, u_minify(pt->height0, l)), tile_h);
 			size *= align(u_minify(pt->depth0, l), tile_d);
 
 			lvl->image_offset[i] = mt->total_size;
@@ -222,7 +223,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->offset = lvl->image_offset[img];
 
 	if (pt->target == PIPE_TEXTURE_3D) {
-		unsigned nb_h = pf_get_nblocksy(pt->format, ps->height);
+		unsigned nb_h = util_format_get_nblocksy(pt->format, ps->height);
 		ps->offset += get_zslice_offset(lvl->tile_mode, zslice,
 						lvl->pitch, nb_h);
 	}

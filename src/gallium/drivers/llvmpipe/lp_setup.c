@@ -41,6 +41,7 @@
 #include "draw/draw_vertex.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_thread.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_bld_debug.h"
@@ -166,7 +167,7 @@ shade_quads(struct llvmpipe_context *llvmpipe,
       assert((y % 2) == 0);
       depth = llvmpipe->zsbuf_map +
               y*llvmpipe->zsbuf_transfer->stride +
-              2*x*pf_get_blocksize(llvmpipe->zsbuf_transfer->texture->format);
+              2*x*util_format_get_blocksize(llvmpipe->zsbuf_transfer->texture->format);
    }
    else
       depth = NULL;

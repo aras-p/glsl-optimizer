@@ -65,11 +65,11 @@ softpipe_texture_layout(struct pipe_screen *screen,
    pt->depth0 = depth;
 
    for (level = 0; level <= pt->last_level; level++) {
-      spt->stride[level] = pf_get_stride(pt->format, width);
+      spt->stride[level] = util_format_get_stride(pt->format, width);
 
       spt->level_offset[level] = buffer_size;
 
-      buffer_size += (pf_get_nblocksy(pt->format, height) *
+      buffer_size += (util_format_get_nblocksy(pt->format, height) *
                       ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
                       spt->stride[level]);
 
@@ -239,11 +239,11 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE) {
-         ps->offset += face * pf_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
+         ps->offset += face * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
                        spt->stride[level];
       }
       else if (pt->target == PIPE_TEXTURE_3D) {
-         ps->offset += zslice * pf_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
+         ps->offset += zslice * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
                        spt->stride[level];
       }
       else {
@@ -299,7 +299,7 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
    spt = CALLOC_STRUCT(softpipe_transfer);
    if (spt) {
       struct pipe_transfer *pt = &spt->base;
-      int nblocksy = pf_get_nblocksy(texture->format, u_minify(texture->height0, level));
+      int nblocksy = util_format_get_nblocksy(texture->format, u_minify(texture->height0, level));
       pipe_texture_reference(&pt->texture, texture);
       pt->x = x;
       pt->y = y;
@@ -376,8 +376,8 @@ softpipe_transfer_map( struct pipe_screen *screen,
    }
 
    xfer_map = map + softpipe_transfer(transfer)->offset +
-      transfer->y / pf_get_blockheight(format) * transfer->stride +
-      transfer->x / pf_get_blockwidth(format) * pf_get_blocksize(format);
+      transfer->y / util_format_get_blockheight(format) * transfer->stride +
+      transfer->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
    /*printf("map = %p  xfer map = %p\n", map, xfer_map);*/
    return xfer_map;
 }

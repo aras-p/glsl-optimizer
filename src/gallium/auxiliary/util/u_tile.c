@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
@@ -52,7 +53,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = pf_get_stride(pt->texture->format, w);
+      dst_stride = util_format_get_stride(pt->texture->format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -81,7 +82,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
    enum pipe_format format = pt->texture->format;
 
    if (src_stride == 0)
-      src_stride = pf_get_stride(format, w);
+      src_stride = util_format_get_stride(format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -1275,7 +1276,7 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(format, w, h) * pf_get_blocksize(format));
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
 
    if (!packed)
       return;
@@ -1303,7 +1304,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(format, w, h) * pf_get_blocksize(format));
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
 
    if (!packed)
       return;

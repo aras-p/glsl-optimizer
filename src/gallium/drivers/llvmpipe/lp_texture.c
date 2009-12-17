@@ -69,10 +69,10 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
       /* Allocate storage for whole quads. This is particularly important
        * for depth surfaces, which are currently stored in a swizzled format. */
-      nblocksx = pf_get_nblocksx(pt->format, align(width, 2));
-      nblocksy = pf_get_nblocksy(pt->format, align(height, 2));
+      nblocksx = util_format_get_nblocksx(pt->format, align(width, 2));
+      nblocksy = util_format_get_nblocksy(pt->format, align(height, 2));
 
-      lpt->stride[level] = align(nblocksx * pf_get_blocksize(pt->format), 16);
+      lpt->stride[level] = align(nblocksx * util_format_get_blocksize(pt->format), 16);
 
       lpt->level_offset[level] = buffer_size;
 
@@ -251,11 +251,11 @@ llvmpipe_get_tex_surface(struct pipe_screen *screen,
       */
       if (pt->target == PIPE_TEXTURE_CUBE) {
          unsigned tex_height = ps->height;
-         ps->offset += face * pf_get_nblocksy(pt->format, tex_height) * lpt->stride[level];
+         ps->offset += face * util_format_get_nblocksy(pt->format, tex_height) * lpt->stride[level];
       }
       else if (pt->target == PIPE_TEXTURE_3D) {
          unsigned tex_height = ps->height;
-         ps->offset += zslice * pf_get_nblocksy(pt->format, tex_height) * lpt->stride[level];
+         ps->offset += zslice * util_format_get_nblocksy(pt->format, tex_height) * lpt->stride[level];
       }
       else {
          assert(face == 0);
@@ -314,11 +314,11 @@ llvmpipe_get_tex_transfer(struct pipe_screen *screen,
       */
       if (texture->target == PIPE_TEXTURE_CUBE) {
          unsigned tex_height = u_minify(texture->height0, level);
-         lpt->offset += face *  pf_get_nblocksy(texture->format, tex_height) * pt->stride;
+         lpt->offset += face *  util_format_get_nblocksy(texture->format, tex_height) * pt->stride;
       }
       else if (texture->target == PIPE_TEXTURE_3D) {
          unsigned tex_height = u_minify(texture->height0, level);
-         lpt->offset += zslice * pf_get_nblocksy(texture->format, tex_height) * pt->stride;
+         lpt->offset += zslice * util_format_get_nblocksy(texture->format, tex_height) * pt->stride;
       }
       else {
          assert(face == 0);
@@ -379,8 +379,8 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
    }
    
    xfer_map = map + llvmpipe_transfer(transfer)->offset +
-      transfer->y / pf_get_blockheight(format) * transfer->stride +
-      transfer->x / pf_get_blockwidth(format) * pf_get_blocksize(format);
+      transfer->y / util_format_get_blockheight(format) * transfer->stride +
+      transfer->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
    /*printf("map = %p  xfer map = %p\n", map, xfer_map);*/
    return xfer_map;
 }

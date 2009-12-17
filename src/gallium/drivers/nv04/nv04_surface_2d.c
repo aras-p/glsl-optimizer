@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -158,10 +159,10 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    sub_w = MIN2(sub_w, w - x);
 
 	    /* Must be 64-byte aligned */
-	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y) * pf_get_blocksize(dst->texture->format)) & 63));
+	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format)) & 63));
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y) * pf_get_blocksize(dst->texture->format),
+	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format),
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
@@ -180,7 +181,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    OUT_RING  (chan, src_pitch |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + (sy+y) * src_pitch + (sx+x) * pf_get_blocksize(src->texture->format),
+	    OUT_RELOCl(chan, src_bo, src->offset + (sy+y) * src_pitch + (sx+x) * util_format_get_blocksize(src->texture->format),
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	    OUT_RING  (chan, 0);
 	  }
@@ -201,9 +202,9 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
 	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	unsigned dst_offset = dst->offset + dy * dst_pitch +
-	                      dx * pf_get_blocksize(dst->texture->format);
+	                      dx * util_format_get_blocksize(dst->texture->format);
 	unsigned src_offset = src->offset + sy * src_pitch +
-	                      sx * pf_get_blocksize(src->texture->format);
+	                      sx * util_format_get_blocksize(src->texture->format);
 
 	MARK_RING (chan, 3 + ((h / 2047) + 1) * 9, 2 + ((h / 2047) + 1) * 2);
 	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
@@ -222,7 +223,7 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_WR);
 		OUT_RING  (chan, src_pitch);
 		OUT_RING  (chan, dst_pitch);
-		OUT_RING  (chan, w * pf_get_blocksize(src->texture->format));
+		OUT_RING  (chan, w * util_format_get_blocksize(src->texture->format));
 		OUT_RING  (chan, count);
 		OUT_RING  (chan, 0x0101);
 		OUT_RING  (chan, 0);

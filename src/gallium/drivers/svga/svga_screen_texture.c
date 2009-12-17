@@ -159,8 +159,8 @@ svga_transfer_dma_band(struct svga_transfer *st,
                 st->base.x + st->base.width,
                 y + h,
                 st->base.zslice + 1,
-                pf_get_blocksize(texture->base.format)*8/
-                (pf_get_blockwidth(texture->base.format)*pf_get_blockheight(texture->base.format)));
+                util_format_get_blocksize(texture->base.format)*8/
+                (util_format_get_blockwidth(texture->base.format)*util_format_get_blockheight(texture->base.format)));
    
    box.x = st->base.x;
    box.y = y;
@@ -210,7 +210,7 @@ svga_transfer_dma(struct svga_transfer *st,
    }
    else {
       unsigned y, h, srcy;
-      unsigned blockheight = pf_get_blockheight(st->base.texture->format);
+      unsigned blockheight = util_format_get_blockheight(st->base.texture->format);
       h = st->hw_nblocksy * blockheight;
       srcy = 0;
       for(y = 0; y < st->base.height; y += h) {
@@ -772,8 +772,8 @@ svga_get_tex_transfer(struct pipe_screen *screen,
    struct svga_screen *ss = svga_screen(screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st;
-   unsigned nblocksx = pf_get_nblocksx(texture->format, w);
-   unsigned nblocksy = pf_get_nblocksy(texture->format, h);
+   unsigned nblocksx = util_format_get_nblocksx(texture->format, w);
+   unsigned nblocksy = util_format_get_nblocksy(texture->format, h);
 
    /* We can't map texture storage directly */
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
@@ -787,7 +787,7 @@ svga_get_tex_transfer(struct pipe_screen *screen,
    st->base.y = y;
    st->base.width = w;
    st->base.height = h;
-   st->base.stride = nblocksx*pf_get_blocksize(texture->format);
+   st->base.stride = nblocksx*util_format_get_blocksize(texture->format);
    st->base.usage = usage;
    st->base.face = face;
    st->base.level = level;
@@ -1071,7 +1071,7 @@ svga_screen_buffer_from_texture(struct pipe_texture *texture,
        svga_translate_format(texture->format),
        stex->handle);
 
-   *stride = pf_get_stride(texture->format, texture->width0);
+   *stride = util_format_get_stride(texture->format, texture->width0);
 
    return *buffer != NULL;
 }
