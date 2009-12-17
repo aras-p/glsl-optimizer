@@ -90,7 +90,7 @@ block_full_4( struct lp_rasterizer_task *rast_task,
               int x, int y )
 {
    /* Set c1,c2,c3 to large values so the in/out test always passes */
-   const int32_t c1 = INT_MAX/2, c2 = INT_MAX/2, c3 = INT_MAX/2;
+   const int32_t c1 = INT_MIN/2, c2 = INT_MIN/2, c3 = INT_MIN/2;
    lp_rast_shade_quads(rast_task->rast,
                        rast_task->thread_index,
                        &tri->inputs, 
@@ -133,7 +133,7 @@ do_block_4( struct lp_rasterizer_task *rast_task,
                        rast_task->thread_index,
                        &tri->inputs, 
                        x, y,
-                       c1, c2, c3);
+                       -c1, -c2, -c3);
 }
 
 

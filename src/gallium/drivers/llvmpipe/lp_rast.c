@@ -281,11 +281,10 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          const union lp_rast_cmd_arg arg )
 {
    /* Set c1,c2,c3 to large values so the in/out test always passes */
-   const int32_t c1 = INT_MAX/2, c2 = INT_MAX/2, c3 = INT_MAX/2;
+   const int32_t c1 = INT_MIN/2, c2 = INT_MIN/2, c3 = INT_MIN/2;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
    const unsigned tile_x = rast->tasks[thread_index].x;
    const unsigned tile_y = rast->tasks[thread_index].y;
-   const unsigned mask = ~0;
    unsigned x, y;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);

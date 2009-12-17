@@ -196,12 +196,9 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
      c0_vec = splat(c0)
      c1_vec = splat(c1)
      c2_vec = splat(c2)
-     s0_vec = c0_vec + step0_ptr[i]
-     s1_vec = c1_vec + step1_ptr[i]
-     s2_vec = c2_vec + step2_ptr[i]
-     m0_vec = s0_vec > {0,0,0,0}
-     m1_vec = s1_vec > {0,0,0,0}
-     m2_vec = s2_vec > {0,0,0,0}
+     m0_vec = step0_ptr[i] > c0_vec
+     m1_vec = step1_ptr[i] > c1_vec
+     m2_vec = step2_ptr[i] > c2_vec
      mask = m0_vec & m1_vec & m2_vec
     */
    struct lp_type i32_type;
@@ -211,7 +208,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    LLVMValueRef c0_vec, c1_vec, c2_vec;
    LLVMValueRef step0_vec, step1_vec, step2_vec;
    LLVMValueRef m0_vec, m1_vec, m2_vec;
-   LLVMValueRef s0_vec, s1_vec, s2_vec;
    LLVMValueRef m;
 
    LLVMValueRef zeros;
@@ -240,20 +236,12 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
    step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
 
-   /** XXX with a little work, we could remove the add here and just
-    * compare c0_vec > step0_vec.
-    */
-   s0_vec = LLVMBuildAdd(builder, c0_vec, step0_vec, "");
-   s1_vec = LLVMBuildAdd(builder, c1_vec, step1_vec, "");
-   s2_vec = LLVMBuildAdd(builder, c2_vec, step2_vec, "");
-   m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s0_vec, zeros);
-   m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s1_vec, zeros);
-   m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, s2_vec, zeros);
+   m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
+   m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
+   m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step2_vec, c2_vec);
 
    m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
    m = LLVMBuildAnd(builder, m, m2_vec, "");
-
-   lp_build_name(m, "m");
 
    *mask = m;
 }
