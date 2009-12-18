@@ -575,6 +575,10 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    GLuint color_mask = 0;
    GLuint orig_mask = mask;
 
+   if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+      rmesa->radeon.front_buffer_dirty = GL_TRUE;
+   }
+
    if ( RADEON_DEBUG & RADEON_IOCTL ) {
       fprintf( stderr, "radeonClear\n");
    }

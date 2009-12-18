@@ -641,6 +641,27 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 	}
 }
 
+/**
+ * Check if we're about to draw into the front color buffer.
+ * If so, set the intel->front_buffer_dirty field to true.
+ */
+void
+radeon_check_front_buffer_rendering(GLcontext *ctx)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	const struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+	if (fb->Name == 0) {
+		/* drawing to window system buffer */
+		if (fb->_NumColorDrawBuffers > 0) {
+			if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+				radeon->front_buffer_dirty = GL_TRUE;
+			}
+		}
+	}
+}
+
+
 void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -1095,7 +1116,7 @@ void radeonFlush(GLcontext *ctx)
 	   then no point flushing anything at all.
 	*/
 	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && is_empty_list(&radeon->dma.reserved))
-		return;
+		goto flush_front;
 
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
@@ -1103,6 +1124,7 @@ void radeonFlush(GLcontext *ctx)
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
+flush_front:
 	if ((ctx->DrawBuffer->Name == 0) && radeon->front_buffer_dirty) {
 		__DRIscreen *const screen = radeon->radeonScreen->driScreen;
 

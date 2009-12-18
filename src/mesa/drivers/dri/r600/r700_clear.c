@@ -57,6 +57,10 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
 
     radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s %x\n", __func__, mask);
 
+    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+        context->radeon.front_buffer_dirty = GL_TRUE;
+    }
+
     if( GL_TRUE == r700ClearFast(context, mask) )
     {
         return;
