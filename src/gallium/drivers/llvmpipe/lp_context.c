@@ -226,8 +226,6 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
    llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
    llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
-   llvmpipe->pipe.set_edgeflags = llvmpipe_set_edgeflags;
-
 
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;

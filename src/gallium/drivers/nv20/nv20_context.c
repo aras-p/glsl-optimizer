@@ -375,11 +375,6 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	FIRE_RING (NULL);
 }
 
-static void
-nv20_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-}
-
 struct pipe_context *
 nv20_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -399,7 +394,6 @@ nv20_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv20->pipe.winsys = ws;
 	nv20->pipe.screen = pscreen;
 	nv20->pipe.destroy = nv20_destroy;
-	nv20->pipe.set_edgeflags = nv20_set_edgeflags;
 	nv20->pipe.draw_arrays = nv20_draw_arrays;
 	nv20->pipe.draw_elements = nv20_draw_elements;
 	nv20->pipe.clear = nv20_clear;

@@ -213,10 +213,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
                              unsigned mode, unsigned start, unsigned count);
 
 void
-llvmpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
-
-
-void
 llvmpipe_map_transfers(struct llvmpipe_context *lp);
 
 void
