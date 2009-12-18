@@ -31,6 +31,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_rect.h"
@@ -56,7 +57,7 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    templ.depth0 = 1;
    templ.last_level = 0;
 
-   if (pf_get_component_bits(format, PIPE_FORMAT_COMP_S)) {
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
       templ.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    } else {
       templ.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |

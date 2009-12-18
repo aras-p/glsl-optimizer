@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 #include "nv40_context.h"
@@ -31,9 +32,9 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			mt->level[l].pitch = align(pf_get_stride(pt->format, pt->width0), 64);
+			mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
 		else
-			mt->level[l].pitch = pf_get_stride(pt->format, width);
+			mt->level[l].pitch = util_format_get_stride(pt->format, width);
 
 		mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));

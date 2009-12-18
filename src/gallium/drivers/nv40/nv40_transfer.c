@@ -1,6 +1,7 @@
 #include <pipe/p_state.h>
 #include <pipe/p_defines.h>
 #include <pipe/p_inlines.h>
+#include <util/u_format.h>
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <nouveau/nouveau_winsys.h>
@@ -151,7 +152,7 @@ nv40_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 	                            pipe_transfer_buffer_flags(ptx));
 
 	return map + ns->base.offset +
-	       ptx->y * ns->pitch + ptx->x * pf_get_blocksize(ptx->texture->format);
+	       ptx->y * ns->pitch + ptx->x * util_format_get_blocksize(ptx->texture->format);
 }
 
 static void

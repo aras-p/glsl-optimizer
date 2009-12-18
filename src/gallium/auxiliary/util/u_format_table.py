@@ -89,6 +89,15 @@ def write_format_table(formats):
     print 'const struct util_format_description'
     print 'util_format_description_table[] = '
     print "{"
+    print "   {"
+    print "      PIPE_FORMAT_NONE,"
+    print "      \"PIPE_FORMAT_NONE\","
+    print "      {0, 0, 0},"
+    print "      0,"
+    print "      {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
+    print "      {0, 0, 0, 0},"
+    print "      0"
+    print "   },"
     for format in formats:
         print "   {"
         print "      %s," % (format.name,)
@@ -119,15 +128,6 @@ def write_format_table(formats):
         print "      },"
         print "      %s," % (colorspace_map(format.colorspace),)
         print "   },"
-    print "   {"
-    print "      PIPE_FORMAT_NONE,"
-    print "      \"PIPE_FORMAT_NONE\","
-    print "      {0, 0, 0},"
-    print "      0,"
-    print "      {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
-    print "      {0, 0, 0, 0},"
-    print "      0"
-    print "   },"
     print "};"
 
 

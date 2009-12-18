@@ -24,6 +24,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
+
 #include "nv50_context.h"
 
 static boolean
@@ -62,18 +64,25 @@ nv50_prim(unsigned mode)
 }
 
 static INLINE uint32_t
-nv50_vbo_type_to_hw(unsigned type)
+nv50_vbo_type_to_hw(enum pipe_format format)
 {
-	switch (type) {
-	case PIPE_FORMAT_TYPE_FLOAT:
+	const struct util_format_description *desc;
+
+	desc = util_format_description(format);
+	assert(desc);
+
+	switch (desc->channel[0].type) {
+	case UTIL_FORMAT_TYPE_FLOAT:
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
-	case PIPE_FORMAT_TYPE_UNORM:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
-	case PIPE_FORMAT_TYPE_SNORM:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
-	case PIPE_FORMAT_TYPE_USCALED:
+	case UTIL_FORMAT_TYPE_UNSIGNED:
+		if (desc->channel[0].normalized) {
+			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
+		}
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
-	case PIPE_FORMAT_TYPE_SSCALED:
+	case UTIL_FORMAT_TYPE_SIGNED:
+		if (desc->channel[0].normalized) {
+			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
+		}
 		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
 	/*
 	case PIPE_FORMAT_TYPE_UINT:
@@ -120,9 +129,15 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 {
 	uint32_t hw_type, hw_size;
 	enum pipe_format pf = ve->src_format;
-	unsigned size = pf_size_x(pf) << pf_exp2(pf);
+	const struct util_format_description *desc;
+	unsigned size;
 
-	hw_type = nv50_vbo_type_to_hw(pf_type(pf));
+	desc = util_format_description(pf);
+	assert(desc);
+
+	size = util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0);
+
+	hw_type = nv50_vbo_type_to_hw(pf);
 	hw_size = nv50_vbo_size_to_hw(size, ve->nr_components);
 
 	if (!hw_type || !hw_size) {
@@ -131,7 +146,7 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 		return 0x24e80000;
 	}
 
-	if (pf_swizzle_x(pf) == 2) /* BGRA */
+	if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z) /* BGRA */
 		hw_size |= (1 << 31); /* no real swizzle bits :-( */
 
 	return (hw_type | hw_size);
@@ -319,9 +334,13 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 	float *v;
 	int ret;
 	enum pipe_format pf = ve->src_format;
+	const struct util_format_description *desc;
 
-	if ((pf_type(pf) != PIPE_FORMAT_TYPE_FLOAT) ||
-	    (pf_size_x(pf) << pf_exp2(pf)) != 32)
+	desc = util_format_description(pf);
+	assert(desc);
+
+	if ((desc->channel[0].type != UTIL_FORMAT_TYPE_FLOAT) ||
+	    util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0) != 32)
 		return FALSE;
 
 	ret = nouveau_bo_map(bo, NOUVEAU_BO_RD);
@@ -609,7 +628,8 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 	for (i = 0; i < nv50->vtxelt_nr; ++i) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
-		unsigned n, type, size;
+		unsigned n, size;
+		const struct util_format_description *desc;
 
 		ve = &nv50->vtxelt[i];
 		vb = &nv50->vtxbuf[ve->vertex_buffer_index];
@@ -621,8 +641,10 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 		emit->map[n] = nouveau_bo(vb->buffer)->map +
 			(start * vb->stride + ve->src_offset);
 
-		type = pf_type(ve->src_format);
-		size = pf_size_x(ve->src_format) << pf_exp2(ve->src_format);
+		desc = util_format_description(ve->src_format);
+		assert(desc);
+
+		size = util_format_get_component_bits(ve->src_format, UTIL_FORMAT_COLORSPACE_RGB, 0);
 
 		assert(ve->nr_components > 0 && ve->nr_components <= 4);
 

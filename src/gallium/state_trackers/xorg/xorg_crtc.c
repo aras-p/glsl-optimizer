@@ -50,6 +50,7 @@
 #endif
 
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 #ifdef HAVE_LIBKMS

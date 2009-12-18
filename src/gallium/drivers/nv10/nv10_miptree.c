@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 #include "nv10_context.h"
@@ -23,9 +24,9 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 	
 	for (l = 0; l <= pt->last_level; l++) {
 		if (swizzled)
-			nv10mt->level[l].pitch = pf_get_stride(pt->format, width);
+			nv10mt->level[l].pitch = util_format_get_stride(pt->format, width);
 		else
-			nv10mt->level[l].pitch = pf_get_stride(pt->format, pt->width0);
+			nv10mt->level[l].pitch = util_format_get_stride(pt->format, pt->width0);
 		nv10mt->level[l].pitch = (nv10mt->level[l].pitch + 63) & ~63;
 
 		nv10mt->level[l].image_offset =

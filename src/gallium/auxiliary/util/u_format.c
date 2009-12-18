@@ -32,15 +32,14 @@
 const struct util_format_description *
 util_format_description(enum pipe_format format)
 {
-   const struct util_format_description *desc = util_format_description_table;
+   const struct util_format_description *desc;
 
-   while(TRUE) {
-      if(desc->format == format)
-         return desc;
+   if (format >= PIPE_FORMAT_COUNT) {
+      return NULL;
+   }
 
-      if(desc->format == PIPE_FORMAT_NONE)
-         return NULL;
+   desc = &util_format_description_table[format];
+   assert(desc->format == format);
 
-      ++desc;
-   };
+   return desc;
 }

@@ -49,6 +49,7 @@
 #include "st_public.h"
 #include "st_texture.h"
 
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 
@@ -104,8 +105,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
       assert(strb->format != PIPE_FORMAT_NONE);
       
-      strb->stride = pf_get_stride(strb->format, width);
-      size = pf_get_2d_size(strb->format, strb->stride, height);
+      strb->stride = util_format_get_stride(strb->format, width);
+      size = util_format_get_2d_size(strb->format, strb->stride, height);
       
       strb->data = _mesa_malloc(size);
       
@@ -130,7 +131,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
-      if (pf_is_depth_stencil(format)) {
+      if (util_format_is_depth_or_stencil(format)) {
          template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
       }
       else {

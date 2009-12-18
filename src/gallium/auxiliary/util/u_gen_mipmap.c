@@ -41,6 +41,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_draw_quad.h"
 #include "util/u_gen_mipmap.h"
@@ -997,7 +998,7 @@ reduce_2d(enum pipe_format pformat,
 {
    enum dtype datatype;
    uint comps;
-   const int bpt = pf_get_blocksize(pformat);
+   const int bpt = util_format_get_blocksize(pformat);
    const ubyte *srcA, *srcB;
    ubyte *dst;
    int row;
@@ -1036,7 +1037,7 @@ reduce_3d(enum pipe_format pformat,
           int dstWidth, int dstHeight, int dstDepth,
           int dstRowStride, ubyte *dstPtr)
 {
-   const int bpt = pf_get_blocksize(pformat);
+   const int bpt = util_format_get_blocksize(pformat);
    const int border = 0;
    int img, row;
    int bytesPerSrcImage, bytesPerDstImage;
@@ -1160,8 +1161,8 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
    const uint zslice = 0;
    uint dstLevel;
    
-   assert(pf_get_blockwidth(pt->format) == 1);
-   assert(pf_get_blockheight(pt->format) == 1);
+   assert(util_format_get_blockwidth(pt->format) == 1);
+   assert(util_format_get_blockheight(pt->format) == 1);
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
@@ -1205,8 +1206,8 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_screen *screen = pipe->screen;
    uint dstLevel, zslice = 0;
 
-   assert(pf_get_blockwidth(pt->format) == 1);
-   assert(pf_get_blockheight(pt->format) == 1);
+   assert(util_format_get_blockwidth(pt->format) == 1);
+   assert(util_format_get_blockheight(pt->format) == 1);
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;

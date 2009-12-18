@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "pipe/p_format.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 
@@ -267,15 +268,13 @@ stw_framebuffer_allocate(
       enum pipe_format colorFormat, depthFormat, stencilFormat;
 
       colorFormat = pfi->color_format;
-      
-      assert(pf_layout( pfi->depth_stencil_format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   
-      if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_Z ))
+
+      if(util_format_get_component_bits(pfi->depth_stencil_format, UTIL_FORMAT_COLORSPACE_ZS, 0))
          depthFormat = pfi->depth_stencil_format;
       else
          depthFormat = PIPE_FORMAT_NONE;
    
-      if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_S ))
+      if(util_format_get_component_bits(pfi->depth_stencil_format, UTIL_FORMAT_COLORSPACE_ZS, 1))
          stencilFormat = pfi->depth_stencil_format;
       else
          stencilFormat = PIPE_FORMAT_NONE;

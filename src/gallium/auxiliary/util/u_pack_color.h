@@ -37,6 +37,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 
@@ -302,7 +303,7 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
    ubyte b = 0;
    ubyte a = 0;
 
-   if (pf_size_x(format) <= 8) {
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) <= 8) {
       /* format uses 8-bit components or less */
       r = float_to_ubyte(rgba[0]);
       g = float_to_ubyte(rgba[1]);

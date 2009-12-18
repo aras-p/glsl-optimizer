@@ -35,6 +35,7 @@
 #include "radeon_bo_gem.h"
 #include "softpipe/sp_texture.h"
 #include "r300_context.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include <X11/Xutil.h>
 
@@ -121,8 +122,8 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
     const unsigned alignment = 64;
     unsigned nblocksy, size;
 
-    nblocksy = pf_get_nblocksy(format, height);
-    *stride = align(pf_get_stride(format, width), alignment);
+    nblocksy = util_format_get_nblocksy(format, height);
+    *stride = align(util_format_get_stride(format, width), alignment);
     size = *stride * nblocksy;
 
     return radeon_buffer_create(ws, 64, usage, size);

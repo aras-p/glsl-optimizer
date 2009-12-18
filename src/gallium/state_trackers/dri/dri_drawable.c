@@ -44,6 +44,7 @@
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
  

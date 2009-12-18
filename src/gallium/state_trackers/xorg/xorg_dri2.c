@@ -40,6 +40,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 /* Make all the #if cases in the code esier to read */
@@ -92,7 +93,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     case 9:
 #endif
 	if (exa_priv->depth_stencil_tex &&
-	    !pf_is_depth_stencil(exa_priv->depth_stencil_tex->format))
+	    !util_format_is_depth_or_stencil(exa_priv->depth_stencil_tex->format))
 	    exa_priv->depth_stencil_tex = NULL;
         /* Fall through */
     case DRI2BufferDepth:

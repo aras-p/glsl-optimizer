@@ -25,6 +25,7 @@
 
 #include "pipe/p_inlines.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "translate/translate.h"
 
@@ -210,7 +211,7 @@ static int update_zero_stride( struct svga_context *svga,
          mapped_buffer = pipe_buffer_map_range(svga->pipe.screen, 
                                                vbuffer->buffer,
                                                vel->src_offset,
-                                               pf_get_blocksize(vel->src_format),
+                                               util_format_get_blocksize(vel->src_format),
                                                PIPE_BUFFER_USAGE_CPU_READ);
          translate->set_buffer(translate, vel->vertex_buffer_index,
                                mapped_buffer,

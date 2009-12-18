@@ -42,42 +42,34 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "st_context.h"
 #include "st_format.h"
 
-static GLuint
-format_bits(
-   pipe_format_rgbazs_t  info,
-   GLuint comp )
-{
-   return pf_get_component_bits( (enum pipe_format) info, comp );
-}
 
 static GLuint
-format_max_bits(
-   pipe_format_rgbazs_t  info )
+format_max_bits(enum pipe_format format)
 {
-   GLuint   size = format_bits( info, PIPE_FORMAT_COMP_R );
+   GLuint size = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0);
 
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_G ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_B ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_A ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_Z ) );
-   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_S ) );
+   size = MAX2(size, util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1));
+   size = MAX2(size, util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2));
+   size = MAX2(size, util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3));
+   size = MAX2(size, util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0));
+   size = MAX2(size, util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1));
    return size;
 }
 
 static GLuint
-format_size(
-   pipe_format_rgbazs_t  info )
+format_size(enum pipe_format format)
 {
    return
-      format_bits( info, PIPE_FORMAT_COMP_R ) +
-      format_bits( info, PIPE_FORMAT_COMP_G ) +
-      format_bits( info, PIPE_FORMAT_COMP_B ) +
-      format_bits( info, PIPE_FORMAT_COMP_A ) +
-      format_bits( info, PIPE_FORMAT_COMP_Z ) +
-      format_bits( info, PIPE_FORMAT_COMP_S );
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) +
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1) +
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2) +
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) +
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0) +
+      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1);
 }
 
 /*
@@ -86,11 +78,13 @@ format_size(
 GLboolean
 st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 {
-   if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
-      pipe_format_rgbazs_t info;
+   const struct util_format_description *desc;
 
-      info = format;
+   desc = util_format_description(format);
+   assert(desc);
 
+   if (desc->layout == UTIL_FORMAT_LAYOUT_ARITH ||
+       desc->layout == UTIL_FORMAT_LAYOUT_ARRAY) {
 #if 0
       printf("%s\n", pf_name( format ) );
 #endif
@@ -103,22 +97,22 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
          pinfo->datatype = GL_UNSIGNED_INT_24_8;
       }
       else {
-         const GLuint size = format_max_bits( info );
+         const GLuint size = format_max_bits(format);
          if (size == 8) {
-            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_BYTE;
             else
                pinfo->datatype = GL_BYTE;
          }
          else if (size == 16) {
-            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_SHORT;
             else
                pinfo->datatype = GL_SHORT;
          }
          else {
             assert( size <= 32 );
-            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
                pinfo->datatype = GL_UNSIGNED_INT;
             else
                pinfo->datatype = GL_INT;
@@ -126,23 +120,23 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       }
 
       /* Component bits */
-      pinfo->red_bits = format_bits( info, PIPE_FORMAT_COMP_R );
-      pinfo->green_bits = format_bits( info, PIPE_FORMAT_COMP_G );
-      pinfo->blue_bits = format_bits( info, PIPE_FORMAT_COMP_B );
-      pinfo->alpha_bits = format_bits( info, PIPE_FORMAT_COMP_A );
-      pinfo->depth_bits = format_bits( info, PIPE_FORMAT_COMP_Z );
-      pinfo->stencil_bits = format_bits( info, PIPE_FORMAT_COMP_S );
+      pinfo->red_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+      pinfo->green_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1);
+      pinfo->blue_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2);
+      pinfo->alpha_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3);
+      pinfo->depth_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0);
+      pinfo->stencil_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1);
       pinfo->luminance_bits = 0;
       pinfo->intensity_bits = 0;
 
       /* Format size */
-      pinfo->size = format_size( info ) / 8;
+      pinfo->size = format_size(format) / 8;
 
       /* Luminance & Intensity bits */
-      if( pf_swizzle_x(info) == PIPE_FORMAT_COMP_R &&
-          pf_swizzle_y(info) == PIPE_FORMAT_COMP_R &&
-          pf_swizzle_z(info) == PIPE_FORMAT_COMP_R ) {
-         if( pf_swizzle_w(info) == PIPE_FORMAT_COMP_R ) {
+      if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_X &&
+          desc->swizzle[1] == UTIL_FORMAT_SWIZZLE_X &&
+          desc->swizzle[2] == UTIL_FORMAT_SWIZZLE_X) {
+         if (desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_X) {
             pinfo->intensity_bits = pinfo->red_bits;
          }
          else {
@@ -153,7 +147,7 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 
       pinfo->mesa_format = st_pipe_format_to_mesa_format(format);
    }
-   else if (pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR) {
+   else if (desc->layout == UTIL_FORMAT_LAYOUT_YUV) {
       pinfo->mesa_format = MESA_FORMAT_YCBCR;
       pinfo->datatype = GL_UNSIGNED_SHORT;
       pinfo->size = 2; /* two bytes per "texel" */

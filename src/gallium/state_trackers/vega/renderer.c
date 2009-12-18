@@ -35,6 +35,7 @@
 #include "pipe/p_shader_tokens.h"
 
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"

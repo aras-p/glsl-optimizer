@@ -1,6 +1,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 #include "nv50_context.h"
@@ -140,11 +141,11 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 
 	pipe_texture_reference(&tx->base.texture, pt);
-	tx->nblocksx = pf_get_nblocksx(pt->format, u_minify(pt->width0, level));
-	tx->nblocksy = pf_get_nblocksy(pt->format, u_minify(pt->height0, level));
+	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, level));
+	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, level));
 	tx->base.width = w;
 	tx->base.height = h;
-	tx->base.stride = tx->nblocksx * pf_get_blocksize(pt->format);
+	tx->base.stride = tx->nblocksx * util_format_get_blocksize(pt->format);
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
@@ -154,8 +155,8 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
 	tx->level_z = zslice;
-	tx->level_x = pf_get_nblocksx(pt->format, x);
-	tx->level_y = pf_get_nblocksy(pt->format, y);
+	tx->level_x = util_format_get_nblocksx(pt->format, x);
+	tx->level_y = util_format_get_nblocksy(pt->format, y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
 			     tx->nblocksy * tx->base.stride, &tx->bo);
 	if (ret) {
@@ -164,8 +165,8 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	}
 
 	if (usage & PIPE_TRANSFER_READ) {
-		nx = pf_get_nblocksx(pt->format, tx->base.width);
-		ny = pf_get_nblocksy(pt->format, tx->base.height);
+		nx = util_format_get_nblocksx(pt->format, tx->base.width);
+		ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
@@ -176,7 +177,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 					tx->base.stride, tx->bo->tile_mode,
 					0, 0, 0,
 					tx->nblocksx, tx->nblocksy, 1,
-					pf_get_blocksize(pt->format), nx, ny,
+					util_format_get_blocksize(pt->format), nx, ny,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
 					NOUVEAU_BO_GART);
 	}
@@ -191,8 +192,8 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 	struct pipe_texture *pt = ptx->texture;
 
-	unsigned nx = pf_get_nblocksx(pt->format, tx->base.width);
-	unsigned ny = pf_get_nblocksy(pt->format, tx->base.height);
+	unsigned nx = util_format_get_nblocksx(pt->format, tx->base.width);
+	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
 		struct pipe_screen *pscreen = pt->screen;
@@ -206,7 +207,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 					tx->level_x, tx->level_y, tx->level_z,
 					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
-					pf_get_blocksize(pt->format), nx, ny,
+					util_format_get_blocksize(pt->format), nx, ny,
 					NOUVEAU_BO_GART, NOUVEAU_BO_VRAM |
 					NOUVEAU_BO_GART);
 	}

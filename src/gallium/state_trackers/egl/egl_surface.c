@@ -12,6 +12,7 @@
 
 #include "state_tracker/drm_api.h"
 
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 /*

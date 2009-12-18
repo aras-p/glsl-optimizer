@@ -22,6 +22,7 @@
 
 #include "pipe/p_screen.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -105,7 +106,7 @@ unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
         return 0;
     }
 
-    return align(pf_get_stride(tex->tex.format, u_minify(tex->tex.width0, level)), 32);
+    return align(util_format_get_stride(tex->tex.format, u_minify(tex->tex.width0, level)), 32);
 }
 
 static void r300_setup_miptree(struct r300_texture* tex)
@@ -115,7 +116,7 @@ static void r300_setup_miptree(struct r300_texture* tex)
     int i;
 
     for (i = 0; i <= base->last_level; i++) {
-        unsigned nblocksy = pf_get_nblocksy(base->format, u_minify(base->height0, i));
+        unsigned nblocksy = util_format_get_nblocksy(base->format, u_minify(base->height0, i));
 
         stride = r300_texture_get_stride(tex, i);
         layer_size = stride * nblocksy;
@@ -128,7 +129,7 @@ static void r300_setup_miptree(struct r300_texture* tex)
         tex->offset[i] = align(tex->size, 32);
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
-        tex->pitch[i] = stride / pf_get_blocksize(base->format);
+        tex->pitch[i] = stride / util_format_get_blocksize(base->format);
 
         debug_printf("r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes)\n",
@@ -244,7 +245,7 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     tex->stride_override = *stride;
-    tex->pitch[0] = *stride / pf_get_blocksize(base->format);
+    tex->pitch[0] = *stride / util_format_get_blocksize(base->format);
 
     r300_setup_flags(tex);
     r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);

@@ -39,6 +39,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
@@ -136,8 +137,8 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    gdt->width = width;
    gdt->height = height;
 
-   bpp = pf_get_blocksizebits(format);
-   cpp = pf_get_blocksize(format);
+   bpp = util_format_get_blocksizebits(format);
+   cpp = util_format_get_blocksize(format);
    
    gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;

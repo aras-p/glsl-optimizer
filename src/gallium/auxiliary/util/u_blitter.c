@@ -579,8 +579,8 @@ void util_blitter_copy(struct blitter_context *blitter,
    if (!dst->texture || !src->texture)
       return;
 
-   is_depth = pf_get_component_bits(src->format, PIPE_FORMAT_COMP_Z) != 0;
-   is_stencil = pf_get_component_bits(src->format, PIPE_FORMAT_COMP_S) != 0;
+   is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
+   is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
    dst_tex_usage = is_depth || is_stencil ? PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
                                             PIPE_TEXTURE_USAGE_RENDER_TARGET;
 

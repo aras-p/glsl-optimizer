@@ -40,6 +40,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
@@ -168,8 +169,8 @@ st_softpipe_surface_buffer_create(struct pipe_winsys *winsys,
    const unsigned alignment = 64;
    unsigned nblocksy;
 
-   nblocksy = pf_get_nblocksy(format, height);
-   *stride = align(pf_get_stride(format, width), alignment);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), alignment);
 
    return winsys->buffer_create(winsys, alignment,
                                 usage,

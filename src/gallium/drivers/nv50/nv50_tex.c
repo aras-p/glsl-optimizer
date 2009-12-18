@@ -25,6 +25,8 @@
 
 #include "nouveau/nouveau_stateobj.h"
 
+#include "util/u_format.h"
+
 #define _MIXED(pf, t0, t1, t2, t3, cr, cg, cb, ca, f)		\
 {                                                       	\
 	PIPE_FORMAT_##pf,					\
@@ -90,6 +92,7 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 {
 	unsigned i;
 	uint32_t mode;
+	const struct util_format_description *desc;
 
 	for (i = 0; i < NV50_TEX_FORMAT_LIST_SIZE; i++)
 		if (nv50_tex_format_list[i].pf == mt->base.base.format)
@@ -107,7 +110,10 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	mode |= ((mt->base.bo->tile_mode & 0x0f) << 22) |
 		((mt->base.bo->tile_mode & 0xf0) << 21);
 
-	if (pf_type(mt->base.base.format) == PIPE_FORMAT_TYPE_SRGB)
+	desc = util_format_description(mt->base.base.format);
+	assert(desc);
+
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		mode |= 0x0400;
 
 	switch (mt->base.base.target) {

@@ -44,6 +44,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
@@ -261,10 +262,10 @@ xm_llvmpipe_display(struct xmesa_buffer *xm_buffer,
    {
       if (xm_dt->tempImage == NULL)
       {
-         assert(pf_get_blockwidth(xm_dt->format) == 1);
-         assert(pf_get_blockheight(xm_dt->format) == 1);
+         assert(util_format_get_blockwidth(xm_dt->format) == 1);
+         assert(util_format_get_blockheight(xm_dt->format) == 1);
          alloc_shm_ximage(xm_dt, xm_buffer,
-                          xm_dt->stride / pf_get_blocksize(xm_dt->format),
+                          xm_dt->stride / util_format_get_blocksize(xm_dt->format),
                           xm_dt->height);
       }
 
@@ -330,8 +331,8 @@ xm_displaytarget_create(struct llvmpipe_winsys *winsys,
    xm_dt->width = width;
    xm_dt->height = height;
 
-   nblocksy = pf_get_nblocksy(format, height);
-   xm_dt->stride = align(pf_get_stride(format, width), alignment);
+   nblocksy = util_format_get_nblocksy(format, height);
+   xm_dt->stride = align(util_format_get_stride(format, width), alignment);
    size = xm_dt->stride * nblocksy;
 
 #ifdef USE_XSHM

@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "util/u_format.h"
 #include "util/u_debug.h"
 
 #include "stw_icd.h"
@@ -132,14 +133,12 @@ stw_pixelformat_add(
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
       return;
 
-   assert(pf_layout( color->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_R ) == color->bits.red );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_G ) == color->bits.green );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_B ) == color->bits.blue );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_A ) == color->bits.alpha );
-   assert(pf_layout( depth->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_Z ) == depth->bits.depth );
-   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_S ) == depth->bits.stencil );
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 0) == color->bits.red);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 1) == color->bits.green);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 2) == color->bits.blue);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 3) == color->bits.alpha);
+   assert(util_format_get_component_bits(depth->format, UTIL_FORMAT_COLORSPACE_ZS, 0) == depth->bits.depth);
+   assert(util_format_get_component_bits(depth->format, UTIL_FORMAT_COLORSPACE_ZS, 1) == depth->bits.stencil);
    
    pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
    
