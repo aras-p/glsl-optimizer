@@ -236,6 +236,9 @@ st_translate_vertex_program(struct st_context *st,
       goto fail;
 
    vpv->state.tokens = ureg_get_tokens( ureg, NULL );
+   if (!vpv->state.tokens)
+      goto fail;
+
    ureg_destroy( ureg );
 
    vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
@@ -253,6 +256,10 @@ st_translate_vertex_program(struct st_context *st,
    return vpv;
 
 fail:
+   debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
+   _mesa_print_program(&stvp->Base.Base);
+   debug_assert(0);
+
    ureg_destroy( ureg );
    return NULL;
 }

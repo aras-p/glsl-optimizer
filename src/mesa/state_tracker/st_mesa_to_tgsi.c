@@ -918,13 +918,6 @@ out:
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
    }
 
-/* ???
-   if (!tokens) {
-      debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
-      _mesa_print_program(program);
-      debug_assert(0);
-   }
-*/
    return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
