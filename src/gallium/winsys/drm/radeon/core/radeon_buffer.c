@@ -82,7 +82,6 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
         domain |= RADEON_GEM_DOMAIN_GTT;
     }
 
-    radeon_buffer->ws = radeon_ws;
     radeon_buffer->bo = radeon_bo_open(radeon_ws->priv->bom, 0, size,
             alignment, domain, 0);
     if (radeon_buffer->bo == NULL) {
@@ -133,11 +132,6 @@ static void radeon_buffer_del(struct pipe_buffer *buffer)
 {
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
-    struct radeon_winsys_priv *priv = radeon_buffer->ws->priv;
-
-    if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
-        priv->flush_cb(priv->flush_data);
-    }
 
     radeon_bo_unref(radeon_buffer->bo);
     free(radeon_buffer);

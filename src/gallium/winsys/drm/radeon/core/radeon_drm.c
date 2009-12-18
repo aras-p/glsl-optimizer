@@ -171,7 +171,6 @@ struct pipe_buffer* radeon_buffer_from_handle(struct drm_api* api,
     radeon_buffer->base.screen = screen;
     radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
     radeon_buffer->bo = bo;
-    radeon_buffer->ws = (struct radeon_winsys*)screen->winsys;
     return &radeon_buffer->base;
 }
 
