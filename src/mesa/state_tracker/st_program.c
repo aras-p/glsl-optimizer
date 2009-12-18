@@ -87,6 +87,8 @@ st_translate_vertex_program(struct st_context *st,
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(st->ctx, &stvp->Base);
 
+   assert(stvp->Base.Base.NumInstructions > 1);
+
    /*
     * Determine number of inputs, the mappings between VERT_ATTRIB_x
     * and TGSI generic input indexes, plus input attrib semantic info.

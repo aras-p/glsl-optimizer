@@ -287,8 +287,6 @@ find_translated_vp(struct st_context *st,
 #endif
       }
 
-      assert(stvp->Base.Base.NumInstructions > 1);
-
       st_translate_vertex_program(st, stvp, xvp->output_to_slot,
                                   xvp->output_to_semantic_name,
                                   xvp->output_to_semantic_index);
