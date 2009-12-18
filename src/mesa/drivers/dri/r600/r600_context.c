@@ -74,7 +74,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-//#define R600_ENABLE_GLSL_TEST 1
+#define R600_ENABLE_GLSL_TEST 1
 
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_occlusion_query
