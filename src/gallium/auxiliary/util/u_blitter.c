@@ -38,6 +38,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_blitter.h"
@@ -678,7 +679,7 @@ void util_blitter_fill(struct blitter_context *blitter,
       return;
 
    /* check if we can render to the surface */
-   if (pf_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
+   if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
