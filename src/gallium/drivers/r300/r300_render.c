@@ -37,7 +37,6 @@
 #include "r300_reg.h"
 #include "r300_render.h"
 #include "r300_state_derived.h"
-#include "r300_vbo.h"
 
 /* r300_render: Vertex and index buffer primitive emission. */
 #define R300_MAX_VBO_SIZE  (1024 * 1024)
@@ -196,7 +195,14 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
         return FALSE;
     }
 
-    setup_index_buffer(r300, indexBuffer, indexSize);
+    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
+                                  RADEON_GEM_DOMAIN_GTT, 0)) {
+        assert(0);
+    }
+
+    if (!r300->winsys->validate(r300->winsys)) {
+        assert(0);
+    }
 
     r300_emit_dirty_state(r300);
 
