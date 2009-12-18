@@ -2738,6 +2738,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    slang_info_log info_log;
    slang_code_object obj;
    slang_unit_type type;
+   GLenum progTarget;
 
    if (shader->Type == GL_VERTEX_SHADER) {
       type = SLANG_UNIT_VERTEX_SHADER;
@@ -2754,17 +2755,18 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    shader->Main = GL_FALSE;
 
-   if (!shader->Program) {
-      GLenum progTarget;
-      if (shader->Type == GL_VERTEX_SHADER)
-         progTarget = GL_VERTEX_PROGRAM_ARB;
-      else
-         progTarget = GL_FRAGMENT_PROGRAM_ARB;
-      shader->Program = ctx->Driver.NewProgram(ctx, progTarget, 1);
-      shader->Program->Parameters = _mesa_new_parameter_list();
-      shader->Program->Varying = _mesa_new_parameter_list();
-      shader->Program->Attributes = _mesa_new_parameter_list();
-   }
+   /* free the shader's old instructions, etc */
+   _mesa_reference_program(ctx, &shader->Program, NULL);
+
+   /* allocate new GPU program, parameter lists, etc. */
+   if (shader->Type == GL_VERTEX_SHADER)
+      progTarget = GL_VERTEX_PROGRAM_ARB;
+   else
+      progTarget = GL_FRAGMENT_PROGRAM_ARB;
+   shader->Program = ctx->Driver.NewProgram(ctx, progTarget, 1);
+   shader->Program->Parameters = _mesa_new_parameter_list();
+   shader->Program->Varying = _mesa_new_parameter_list();
+   shader->Program->Attributes = _mesa_new_parameter_list();
 
    slang_info_log_construct(&info_log);
    _slang_code_object_ctr(&obj);
