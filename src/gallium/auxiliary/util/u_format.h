@@ -32,6 +32,10 @@
 
 #include "pipe/p_format.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * Describe how to best pack/unpack pixels into/from the prescribed format.
@@ -345,6 +349,47 @@ util_format_get_component_bits(enum pipe_format format,
    }
 }
 
+static INLINE boolean
+util_format_has_alpha(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return FALSE;
+   }
+
+   switch (desc->layout) {
+   case UTIL_FORMAT_LAYOUT_SCALAR:
+   case UTIL_FORMAT_LAYOUT_ARITH:
+   case UTIL_FORMAT_LAYOUT_ARRAY:
+      /* FIXME: pf_get_component_bits( PIPE_FORMAT_A8L8_UNORM, PIPE_FORMAT_COMP_A ) should not return 0 right? */
+      if (format == PIPE_FORMAT_A8_UNORM ||
+          format == PIPE_FORMAT_A8L8_UNORM ||
+          format == PIPE_FORMAT_A8L8_SRGB) {
+         return TRUE;
+      }
+      return util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) != 0;
+   case UTIL_FORMAT_LAYOUT_YUV:
+      return FALSE;
+   case UTIL_FORMAT_LAYOUT_DXT:
+      switch (format) {
+      case PIPE_FORMAT_DXT1_RGBA:
+      case PIPE_FORMAT_DXT3_RGBA:
+      case PIPE_FORMAT_DXT5_RGBA:
+      case PIPE_FORMAT_DXT1_SRGBA:
+      case PIPE_FORMAT_DXT3_SRGBA:
+      case PIPE_FORMAT_DXT5_SRGBA:
+         return TRUE;
+      default:
+         return FALSE;
+      }
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
+
 
 /*
  * Format access functions.
@@ -373,5 +418,9 @@ util_format_write_4ub(enum pipe_format format,
                       const uint8_t *src, unsigned src_stride, 
                       void *dst, unsigned dst_stride, 
                       unsigned x, unsigned y, unsigned w, unsigned h);
+
+#ifdef __cplusplus
+} // extern "C" {
+#endif
 
 #endif /* ! U_FORMAT_H */
