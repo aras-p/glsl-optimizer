@@ -12,7 +12,7 @@ import platform as _platform
 
 _platform_map = {
 	'linux2': 'linux',
-	'win32': 'winddk',
+	'win32': 'windows',
 }
 
 default_platform = sys.platform
