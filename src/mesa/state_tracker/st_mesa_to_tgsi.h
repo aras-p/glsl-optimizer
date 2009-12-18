@@ -54,7 +54,8 @@ st_translate_mesa_program(
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[] );
+   const ubyte outputSemanticIndex[],
+   boolean passthrough_edgeflags );
 
 void
 st_free_tokens(const struct tgsi_token *tokens);

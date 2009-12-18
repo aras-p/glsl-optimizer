@@ -718,6 +718,16 @@ emit_face_var( struct st_translate *t,
    t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
 }
 
+static void
+emit_edgeflags( struct st_translate *t,
+                 const struct gl_program *program )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VERT_RESULT_EDGE]];
+   struct ureg_src edge_src = t->inputs[t->inputMapping[VERT_ATTRIB_EDGEFLAG]];
+
+   ureg_MOV( ureg, edge_dst, edge_src );
+}
 
 /**
  * Translate Mesa program to TGSI format.
@@ -752,7 +762,8 @@ st_translate_mesa_program(
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[] )
+   const ubyte outputSemanticIndex[],
+   boolean passthrough_edgeflags )
 {
    struct st_translate translate, *t;
    unsigned i;
@@ -823,6 +834,8 @@ st_translate_mesa_program(
                                            outputSemanticName[i],
                                            outputSemanticIndex[i] );
       }
+      if (passthrough_edgeflags)
+         emit_edgeflags( t, program );
    }
 
    /* Declare address register.

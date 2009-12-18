@@ -185,6 +185,10 @@ st_prepare_vertex_program(struct st_context *st,
          }
       }
    }
+   /* similar hack to above, presetup potentially unused edgeflag output */
+   stvp->result_to_output[VERT_RESULT_EDGE] = stvp->num_outputs;
+   stvp->output_semantic_name[stvp->num_outputs] = TGSI_SEMANTIC_EDGEFLAG;
+   stvp->output_semantic_index[stvp->num_outputs] = 0;
 }
 
 
@@ -197,12 +201,18 @@ st_translate_vertex_program(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    struct ureg_program *ureg;
    enum pipe_error error;
+   unsigned num_outputs;
 
    ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
    if (ureg == NULL)
       return NULL;
 
    vpv->num_inputs = stvp->num_inputs;
+   num_outputs = stvp->num_outputs;
+   if (key->passthrough_edgeflags) {
+      vpv->num_inputs++;
+      num_outputs++;
+   }
 
    error = 
       st_translate_mesa_program(st->ctx,
@@ -210,28 +220,20 @@ st_translate_vertex_program(struct st_context *st,
                                 ureg,
                                 &stvp->Base.Base,
                                 /* inputs */
-                                stvp->num_inputs,
+                                vpv->num_inputs,
                                 stvp->input_to_index,
                                 NULL, /* input semantic name */
                                 NULL, /* input semantic index */
                                 NULL,
                                 /* outputs */
-                                stvp->num_outputs,
+                                num_outputs,
                                 stvp->result_to_output,
                                 stvp->output_semantic_name,
-                                stvp->output_semantic_index );
+                                stvp->output_semantic_index,
+                                key->passthrough_edgeflags );
 
    if (error)
       goto fail;
-
-   /* Edgeflags will be the last input:
-    */
-   if (key->passthrough_edgeflags) {
-      ureg_MOV( ureg,
-                ureg_DECL_output( ureg, TGSI_SEMANTIC_EDGEFLAG, 0 ),
-                ureg_DECL_vs_input( ureg, vpv->num_inputs ));
-      vpv->num_inputs++;
-   }
 
    vpv->state.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
@@ -430,7 +432,7 @@ st_translate_fragment_program(struct st_context *st,
                                 fs_num_outputs,
                                 outputMapping,
                                 fs_output_semantic_name,
-                                fs_output_semantic_index );
+                                fs_output_semantic_index, FALSE );
 
    stfp->state.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
