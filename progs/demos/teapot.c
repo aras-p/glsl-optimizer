@@ -638,7 +638,6 @@ int main(int ac, char **av)
     }
     */
 
-  glutInitWindowPosition(0,0);
   glutInitWindowSize(WIDTH,HEIGHT);
   glutInit(&ac,av);
 

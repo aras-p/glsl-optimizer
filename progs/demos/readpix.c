@@ -382,12 +382,11 @@ int
 main( int argc, char *argv[] )
 {
    GLboolean ciMode = GL_FALSE;
+   glutInitWindowSize( 750, 250 );
+   glutInit( &argc, argv );
    if (argc > 1 && strcmp(argv[1], "-ci")==0) {
       ciMode = GL_TRUE;
    }
-   glutInit( &argc, argv );
-   glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize( 750, 250 );
    if (ciMode)
       glutInitDisplayMode( GLUT_INDEX | GLUT_DOUBLE );
    else

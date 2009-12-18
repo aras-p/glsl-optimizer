@@ -682,7 +682,6 @@ main(int ac, char **av)
    fprintf(stderr,
 	   "IperS V1.0\nWritten by David Bucciarelli (tech.hmw@plus.it)\n");
 
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WIDTH, HEIGHT);
    glutInit(&ac, av);
 

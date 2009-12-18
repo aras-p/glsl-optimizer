@@ -1049,18 +1049,17 @@ main (int argc, char *argv[])
 {
     char *file;
 
-    if (argc < 2)
-       file = "geartrain.dat";
-    else
-       file = argv[1];
-
-    glutInit(&argc, argv); 
-    glutInitWindowPosition (0, 0);
     glutInitWindowSize(640,480);
+    glutInit(&argc, argv); 
     glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
 
     if (glutCreateWindow ("Gear Train Simulation") == GL_FALSE)
       exit (1);
+
+    if (argc < 2)
+       file = "geartrain.dat";
+    else
+       file = argv[1];
 
     getdata (file);
     process ();

@@ -1061,9 +1061,8 @@ int main(int argc, char **argv)
 
    read_surface( "isosurf.dat" );
 
-   glutInit( &argc, argv);
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(400, 400);
+   glutInit( &argc, argv);
 
    type = GLUT_DEPTH;
    type |= GLUT_RGB;
