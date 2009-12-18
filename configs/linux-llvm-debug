@@ -1,0 +1,12 @@
+# -*-makefile-*-
+# Configuration for Linux and LLVM with debugging info
+# Builds the llvmpipe gallium driver
+
+include $(TOP)/configs/linux-llvm
+
+CONFIG_NAME = linux-llvm-debug
+
+OPT_FLAGS = -g -ansi -pedantic
+
+DEFINES += -DDEBUG -UNDEBUG
+
