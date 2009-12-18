@@ -180,7 +180,6 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
         return FALSE;
     }
 
-
     if (count > 65535) {
         return FALSE;
     }
@@ -197,11 +196,11 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
-        assert(0);
+        return FALSE;
     }
 
     if (!r300->winsys->validate(r300->winsys)) {
-        assert(0);
+        return FALSE;
     }
 
     r300_emit_dirty_state(r300);
