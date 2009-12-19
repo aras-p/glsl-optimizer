@@ -45,6 +45,11 @@ sl_pp_context_destroy(struct sl_pp_context *context);
 const char *
 sl_pp_context_error_message(const struct sl_pp_context *context);
 
+void
+sl_pp_context_error_position(const struct sl_pp_context *context,
+                             unsigned int *file,
+                             unsigned int *line);
+
 int
 sl_pp_context_add_extension(struct sl_pp_context *context,
                             const char *name,

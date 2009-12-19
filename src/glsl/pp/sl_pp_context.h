@@ -71,6 +71,7 @@ struct sl_pp_context {
    unsigned int if_value;
 
    char error_msg[SL_PP_MAX_ERROR_MSG];
+   unsigned int error_line;
 
    unsigned int line;
    unsigned int file;

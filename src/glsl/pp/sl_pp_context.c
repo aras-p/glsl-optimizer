@@ -56,6 +56,7 @@ sl_pp_context_create(void)
    context->if_ptr = SL_PP_MAX_IF_NESTING;
    context->if_value = 1;
    memset(context->error_msg, 0, sizeof(context->error_msg));
+   context->error_line = 1;
    context->line = 1;
    context->file = 0;
 
@@ -77,6 +78,19 @@ const char *
 sl_pp_context_error_message(const struct sl_pp_context *context)
 {
    return context->error_msg;
+}
+
+void
+sl_pp_context_error_position(const struct sl_pp_context *context,
+                             unsigned int *file,
+                             unsigned int *line)
+{
+   if (file) {
+      *file = 0;
+   }
+   if (line) {
+      *line = context->error_line;
+   }
 }
 
 int

@@ -39,13 +39,12 @@ static int
 _pure_getc(struct sl_pp_context *context)
 {
    char c;
-   unsigned int current_line;
 
    if (context->getc_buf_size) {
       return context->getc_buf[--context->getc_buf_size];
    }
 
-   if (sl_pp_purify_getc(&context->pure, &c, &current_line, context->error_msg, sizeof(context->error_msg)) == 0) {
+   if (sl_pp_purify_getc(&context->pure, &c, &context->error_line, context->error_msg, sizeof(context->error_msg)) == 0) {
       return PURE_ERROR;
    }
    return c;
