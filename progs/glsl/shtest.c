@@ -627,7 +627,7 @@ Init(void)
    NumAttribs = GetAttribs(Program, Attribs);
    PrintAttribs(Attribs);
 
-   //assert(glGetError() == 0);
+   /* assert(glGetError() == 0); */
 
    glClearColor(0.4f, 0.4f, 0.8f, 0.0f);
 
