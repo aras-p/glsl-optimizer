@@ -887,5 +887,5 @@ int main(int argc, char **argv)
   glutIdleFunc( idle_ );
   glutDisplayFunc( draw );
   glutMainLoop();
-  
+  return 0;
 }
