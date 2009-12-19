@@ -227,7 +227,7 @@ update_vp( struct st_context *st )
 const struct st_tracked_state st_update_vp = {
    "st_update_vp",					/* name */
    {							/* dirty */
-      0,						/* mesa */
+      _NEW_POLYGON,					/* mesa */
       ST_NEW_VERTEX_PROGRAM                             /* st */
    },
    update_vp					/* update */
