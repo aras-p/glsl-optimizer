@@ -514,6 +514,7 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
    GLboolean userSpace;
+   GLboolean vertDataEdgeFlags;
 
    /* Gallium probably doesn't want this in some cases. */
    if (!index_bounds_valid)
@@ -521,6 +522,13 @@ st_draw_vbo(GLcontext *ctx,
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
+
+   vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
+                       arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
+   if (vertDataEdgeFlags != ctx->st->vertdata_edgeflags) {
+      ctx->st->vertdata_edgeflags = vertDataEdgeFlags;
+      ctx->st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
+   }
 
    st_validate_state(ctx->st);
 
