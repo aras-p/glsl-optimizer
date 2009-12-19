@@ -83,15 +83,34 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     /* By default (see r300_state.c:r300_create_rs_state) color_control is
      * initialized to provoking the first vertex.
      *
-     * If we are provoking the first vertex, then there's a quirk in the
-     * specification for ARB_provoking_vertex that essentially makes the
-     * second vertex the correct one to provoke for triangle fans.
+     * Triangle fans must be reduced to the second vertex, not the first, in
+     * Gallium flatshade-first mode, as per the GL spec.
      * (http://www.opengl.org/registry/specs/ARB/provoking_vertex.txt)
-     * Otherwise, force the last vertex, as GL standard. */
+     *
+     * Quads never provoke correctly in flatshade-first mode. The first
+     * vertex is never considered as provoking, so only the second, third,
+     * and fourth vertices can be selected, and both "third" and "last" modes
+     * select the fourth vertex. This is probably due to D3D lacking quads.
+     *
+     * Similarly, polygons reduce to the first, not the last, vertex, when in
+     * "last" mode, and all other modes start from the second vertex.
+     *
+     * ~ C.
+     */
 
     if (r300->rs_state->rs.flatshade_first) {
-        if (mode == PIPE_PRIM_TRIANGLE_FAN) {
-            color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND;
+        switch (mode) {
+            case PIPE_PRIM_TRIANGLE_FAN:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND;
+                break;
+            case PIPE_PRIM_QUADS:
+            case PIPE_PRIM_QUAD_STRIP:
+            case PIPE_PRIM_POLYGON:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+                break;
+            default:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_FIRST;
+                break;
         }
     } else {
         color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
