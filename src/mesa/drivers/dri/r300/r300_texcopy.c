@@ -37,6 +37,8 @@
 #include "r300_blit.h"
 #include <main/debug.h>
 
+// TODO:
+// need to pass correct pitch for small dst textures!
 static GLboolean
 do_copy_texsubimage(GLcontext *ctx,
                     GLenum target, GLint level,
@@ -64,10 +66,8 @@ do_copy_texsubimage(GLcontext *ctx,
     assert(timg->base.Width >= dstx + width);
     assert(timg->base.Height >= dsty + height);
 
-    intptr_t src_offset = rrb->draw_offset + x * rrb->cpp + y * rrb->pitch;
+    intptr_t src_offset = rrb->draw_offset;
     intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
-    dst_offset += dstx * _mesa_get_format_bytes(timg->base.TexFormat) +
-                  dsty * _mesa_format_row_stride(timg->base.TexFormat, timg->base.Width);
 
     if (src_offset % 32 || dst_offset % 32) {
         return GL_FALSE;
@@ -85,8 +85,10 @@ do_copy_texsubimage(GLcontext *ctx,
 
     /* blit from src buffer to texture */
     return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
-                     rrb->base.Width, rrb->base.Height, timg->mt->bo ? timg->mt->bo : timg->bo, dst_offset,
-                     timg->base.TexFormat, timg->base.Width, width, height);
+                     rrb->base.Width, rrb->base.Height, x, y,
+                     timg->mt->bo, dst_offset, timg->base.TexFormat,
+                     timg->base.Width, timg->base.Width, timg->base.Height,
+                     dstx, dsty, width, height, 1);
 }
 
 static void

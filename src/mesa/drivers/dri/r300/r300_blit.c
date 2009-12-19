@@ -389,14 +389,49 @@ static GLboolean validate_buffers(struct r300_context *r300,
     return GL_TRUE;
 }
 
-static void emit_draw_packet(struct r300_context *r300,
-                             float src_width, float src_height,
-                             float dst_width, float dst_height)
+/**
+ * Calculate texcoords for given image region.
+ * Output values are [minx, maxx, miny, maxy]
+ */
+static void calc_tex_coords(float img_width, float img_height,
+                            float x, float y,
+                            float reg_width, float reg_height,
+                            unsigned flip_y, float *buf)
 {
-    float verts[] = { 0.0, 0.0, 0.0, 1.0,
-                      0.0, dst_height, 0.0, 1.0 - dst_height/src_height,
-                      dst_width, dst_height, dst_width/src_width, 1.0 - dst_height/src_height,
-                      dst_width, 0.0, dst_width/src_width, 1.0 };
+    buf[0] = x / img_width;
+    buf[1] = buf[0] + reg_width / img_width;
+    buf[2] = y / img_height;
+    buf[3] = buf[2] + reg_height / img_height;
+    if (flip_y)
+    {
+        float tmp = buf[2];
+        buf[2] = 1.0 - buf[3];
+        buf[3] = 1.0 - tmp;
+    }
+}
+
+static void emit_draw_packet(struct r300_context *r300,
+                             unsigned src_width, unsigned src_height,
+                             unsigned src_x_offset, unsigned src_y_offset,
+                             unsigned dst_x_offset, unsigned dst_y_offset,
+                             unsigned reg_width, unsigned reg_height,
+                             unsigned flip_y)
+{
+    float texcoords[4];
+
+    calc_tex_coords(src_width, src_height,
+                    src_x_offset, src_y_offset,
+                    reg_width, reg_height,
+                    flip_y, texcoords);
+
+    float verts[] = { dst_x_offset, dst_y_offset,
+                      texcoords[0], texcoords[3],
+                      dst_x_offset, dst_y_offset + reg_height,
+                      texcoords[0], texcoords[2],
+                      dst_x_offset + reg_width, dst_y_offset + reg_height,
+                      texcoords[1], texcoords[2],
+                      dst_x_offset + reg_width, dst_y_offset,
+                      texcoords[1], texcoords[3] };
 
     BATCH_LOCALS(&r300->radeon);
 
@@ -461,6 +496,30 @@ static void emit_cb_setup(struct r300_context *r300,
     END_BATCH();
 }
 
+/**
+ * Copy a region of [@a width x @a height] pixels from source buffer
+ * to destination buffer.
+ * @param[in] r300 r300 context
+ * @param[in] src_bo source radeon buffer object
+ * @param[in] src_offset offset of the source image in the @a src_bo
+ * @param[in] src_mesaformat source image format
+ * @param[in] src_pitch aligned source image width
+ * @param[in] src_width source image width
+ * @param[in] src_height source image height
+ * @param[in] src_x_offset x offset in the source image
+ * @param[in] src_y_offset y offset in the source image
+ * @param[in] dst_bo destination radeon buffer object
+ * @param[in] dst_offset offset of the destination image in the @a dst_bo
+ * @param[in] dst_mesaformat destination image format
+ * @param[in] dst_pitch aligned destination image width
+ * @param[in] dst_width destination image width
+ * @param[in] dst_height destination image height
+ * @param[in] dst_x_offset x offset in the destination image
+ * @param[in] dst_y_offset y offset in the destination image
+ * @param[in] width region width
+ * @param[in] height region height
+ * @param[in] flip_y set if y coords of the source image need to be flipped
+ */
 GLboolean r300_blit(struct r300_context *r300,
                     struct radeon_bo *src_bo,
                     intptr_t src_offset,
@@ -468,30 +527,48 @@ GLboolean r300_blit(struct r300_context *r300,
                     unsigned src_pitch,
                     unsigned src_width,
                     unsigned src_height,
+                    unsigned src_x_offset,
+                    unsigned src_y_offset,
                     struct radeon_bo *dst_bo,
                     intptr_t dst_offset,
                     gl_format dst_mesaformat,
                     unsigned dst_pitch,
                     unsigned dst_width,
-                    unsigned dst_height)
+                    unsigned dst_height,
+                    unsigned dst_x_offset,
+                    unsigned dst_y_offset,
+                    unsigned reg_width,
+                    unsigned reg_height,
+                    unsigned flip_y)
 {
-    /* Need to clamp the destination size to make sure
-     * we don't write outside of the buffer
+    /* Need to clamp the region size to make sure
+     * we don't read outside of the source buffer
+     * or write outside of the destination buffer.
      */
-    dst_width = MIN2(dst_width, src_width);
-    dst_height = MIN2(src_height, dst_height);
+    if (reg_width + src_x_offset > src_width)
+        reg_width = src_width - src_x_offset;
+    if (reg_height + src_y_offset > src_height)
+        reg_height = src_height - src_y_offset;
+    if (reg_width + dst_x_offset > dst_width)
+        reg_width = dst_width - dst_x_offset;
+    if (reg_height + dst_y_offset > dst_height)
+        reg_height = dst_height - dst_y_offset;
 
     if (src_bo == dst_bo) {
         return GL_FALSE;
     }
 
     if (0) {
-        fprintf(stderr, "src: width %d, height %d, pitch %d, format %s\n",
+        fprintf(stderr, "src: size [%d x %d], pitch %d, "
+                "offset [%d x %d], format %s, bo %p\n",
                 src_width, src_height, src_pitch,
-                _mesa_get_format_name(src_mesaformat));
-        fprintf(stderr, "dst: width %d, height %d, pitch %d, format %s\n",
-                dst_width, dst_height, dst_pitch,
-                _mesa_get_format_name(dst_mesaformat));
+                src_offset, src_y_offset,
+                _mesa_get_format_name(src_mesaformat),
+                src_bo);
+        fprintf(stderr, "dst: pitch %d, offset[%d x %d], format %s, bo %p\n",
+                dst_pitch, dst_x_offset, dst_y_offset,
+                _mesa_get_format_name(dst_mesaformat), dst_bo);
+        fprintf(stderr, "region: %d x %d\n", reg_width, reg_height);
     }
 
     if (!validate_buffers(r300, src_bo, dst_bo))
@@ -516,7 +593,11 @@ GLboolean r300_blit(struct r300_context *r300,
 
     emit_cb_setup(r300, dst_bo, dst_offset, dst_mesaformat, dst_pitch, dst_width, dst_height);
 
-    emit_draw_packet(r300, src_width, src_height, dst_width, dst_height);
+    emit_draw_packet(r300, src_width, src_height,
+                     src_x_offset, src_y_offset,
+                     dst_x_offset, dst_y_offset,
+                     reg_width, reg_height,
+                     flip_y);
 
     r300EmitCacheFlush(r300);
 

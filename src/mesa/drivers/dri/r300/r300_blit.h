@@ -37,11 +37,18 @@ GLboolean r300_blit(struct r300_context *r300,
                     unsigned src_pitch,
                     unsigned src_width,
                     unsigned src_height,
+                    unsigned src_x_offset,
+                    unsigned src_y_offset,
                     struct radeon_bo *dst_bo,
                     intptr_t dst_offset,
                     gl_format dst_mesaformat,
                     unsigned dst_pitch,
                     unsigned dst_width,
-                    unsigned dst_height);
+                    unsigned dst_height,
+                    unsigned dst_x_offset,
+                    unsigned dst_y_offset,
+                    unsigned width,
+                    unsigned height,
+                    unsigned flip_y);
 
 #endif // R300_BLIT_H
