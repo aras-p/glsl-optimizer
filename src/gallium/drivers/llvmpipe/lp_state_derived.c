@@ -116,13 +116,13 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
          }
 
          /* this includes texcoords and varying vars */
-         src = draw_find_vs_output(llvmpipe->draw,
+         src = draw_find_shader_output(llvmpipe->draw,
                                    lpfs->info.input_semantic_name[i],
                                    lpfs->info.input_semantic_index[i]);
          draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
-      llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,
+      llvmpipe->psize_slot = draw_find_shader_output(llvmpipe->draw,
                                                  TGSI_SEMANTIC_PSIZE, 0);
       if (llvmpipe->psize_slot > 0) {
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
