@@ -333,6 +333,8 @@ static void r300_update_rs_block(struct r300_context* r300,
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, boolean);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
+    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
+                              vs_outputs->bcolor[1] != ATTR_UNUSED;
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
         rX00_rs_col       = r500_rs_col;
@@ -348,7 +350,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 
     /* Rasterize colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
             /* Always rasterize if it's written by the VS,
              * otherwise it locks up. */
             rX00_rs_col(rs, col_count, i, FALSE);

@@ -96,6 +96,8 @@ static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
     struct r300_shader_semantics* vs_outputs = &vs->outputs;
     uint32_t* hwfmt = vs->hwfmt;
     int i, gen_count;
+    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
+                              vs_outputs->bcolor[1] != ATTR_UNUSED;
 
     /* Do the actual vertex_info setup.
      *
@@ -122,13 +124,19 @@ static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
 
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
             hwfmt[1] |= R300_INPUT_CNTL_COLOR;
             hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
         }
     }
 
-    /* XXX Back-face colors. */
+    /* Back-face colors. */
+    if (any_bcolor_used) {
+        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+            hwfmt[1] |= R300_INPUT_CNTL_COLOR;
+            hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
+        }
+    }
 
     /* Texture coordinates. */
     gen_count = 0;
@@ -161,6 +169,8 @@ static void r300_stream_locations_notcl(
     int* stream_loc)
 {
     int i, tabi = 0, gen_count;
+    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
+                              vs_outputs->bcolor[1] != ATTR_UNUSED;
 
     /* Position. */
     stream_loc[tabi++] = 0;
@@ -172,14 +182,14 @@ static void r300_stream_locations_notcl(
 
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
             stream_loc[tabi++] = 2 + i;
         }
     }
 
     /* Back-face colors. */
-    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
+    if (any_bcolor_used) {
+        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
             stream_loc[tabi++] = 4 + i;
         }
     }
@@ -219,6 +229,8 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     struct r300_shader_semantics* outputs = &vs->outputs;
     struct tgsi_shader_info* info = &vs->info;
     int i, reg = 0;
+    boolean any_bcolor_used = outputs->bcolor[0] != ATTR_UNUSED ||
+                              outputs->bcolor[1] != ATTR_UNUSED;
 
     /* Fill in the input mapping */
     for (i = 0; i < info->num_inputs; i++)
@@ -236,14 +248,30 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
         c->code->outputs[outputs->psize] = reg++;
     }
 
+    /* If we're writing back facing colors we need to send
+     * four colors to make front/back face colors selection work.
+     * If the vertex program doesn't write all 4 colors, lets
+     * pretend it does by skipping output index reg so the colors
+     * get written into appropriate output vectors.
+     */
+
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (outputs->color[i] != ATTR_UNUSED) {
             c->code->outputs[outputs->color[i]] = reg++;
+        } else if (any_bcolor_used) {
+            reg++;
         }
     }
 
-    /* XXX Back-face colors. */
+    /* Back-face colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (outputs->bcolor[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->bcolor[i]] = reg++;
+        } else if (any_bcolor_used) {
+            reg++;
+        }
+    }
 
     /* Texture coordinates. */
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
