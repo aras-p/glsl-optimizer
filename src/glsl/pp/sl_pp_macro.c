@@ -192,11 +192,6 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       }
    }
 
-   /* TODO: For FEATURE_es2_glsl, expand to 1 the following symbols.
-    *       GL_ES
-    *       GL_FRAGMENT_PRECISION_HIGH
-    */
-
    if (local) {
       for (macro = local; macro; macro = macro->next) {
          if (macro->name == macro_name) {
