@@ -138,6 +138,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    GLuint *state = i915->state.Tex[unit], format, pitch;
    GLint lodbias, aniso = 0;
    GLubyte border[4];
+   GLfloat maxlod;
 
    memset(state, 0, sizeof(state));
 
@@ -195,10 +196,14 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 	 state[I915_TEXREG_MS3] |= MS3_TILE_WALK;
    }
 
+   /* We get one field with fraction bits to cover the maximum addressable (smallest
+    * resolution) LOD.  Use it to cover both MAX_LEVEL and MAX_LOD.
+    */
+   maxlod = MIN2(tObj->MaxLod, tObj->MaxLevel - tObj->BaseLevel);
    state[I915_TEXREG_MS4] =
       ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) |
        MS4_CUBE_FACE_ENA_MASK |
-       (U_FIXED(CLAMP(tObj->MaxLod, 0.0, 11.0), 2) << MS4_MAX_LOD_SHIFT) |
+       (U_FIXED(CLAMP(maxlod, 0.0, 11.0), 2) << MS4_MAX_LOD_SHIFT) |
        ((firstImage->Depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 
 
