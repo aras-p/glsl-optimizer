@@ -75,13 +75,40 @@ static boolean r300_nothing_to_draw(struct r300_context *r300)
            r300->scissor_state->scissor.empty_area;
 }
 
+static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
+                                            unsigned mode)
+{
+    uint32_t color_control = r300->rs_state->color_control;
+
+    /* By default (see r300_state.c:r300_create_rs_state) color_control is
+     * initialized to provoking the first vertex.
+     *
+     * If we are provoking the first vertex, then there's a quirk in the
+     * specification for ARB_provoking_vertex that essentially makes the
+     * second vertex the correct one to provoke for triangle fans.
+     * (http://www.opengl.org/registry/specs/ARB/provoking_vertex.txt)
+     * Otherwise, force the last vertex, as GL standard. */
+
+    if (r300->rs_state->rs.flatshade_first) {
+        if (mode == PIPE_PRIM_TRIANGLE_FAN) {
+            color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND;
+        }
+    } else {
+        color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+    }
+
+    return color_control;
+}
+
 static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned mode,
                                   unsigned count)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(6);
+    BEGIN_CS(8);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
@@ -108,7 +135,9 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     assert((start * indexSize)  % 4 == 0);
     assert(offset_dwords == 0);
 
-    BEGIN_CS(12);
+    BEGIN_CS(14);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
