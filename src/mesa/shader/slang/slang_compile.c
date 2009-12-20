@@ -2586,7 +2586,6 @@ compile_with_grammar(const char *source,
 {
    struct sl_pp_purify_options options;
    struct sl_pp_context *context;
-   struct sl_pp_token_info *tokens;
    unsigned char *prod;
    GLuint size;
    unsigned int version;
@@ -2625,79 +2624,6 @@ compile_with_grammar(const char *source,
    }
 #endif
 
-   if (sl_pp_process(context, &tokens)) {
-      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
-      sl_pp_context_destroy(context);
-      return GL_FALSE;
-   }
-
-   /* For the time being we care about only a handful of tokens. */
-   {
-      const struct sl_pp_token_info *src = tokens;
-      struct sl_pp_token_info *dst = tokens;
-
-      while (src->token != SL_PP_EOF) {
-         switch (src->token) {
-         case SL_PP_COMMA:
-         case SL_PP_SEMICOLON:
-         case SL_PP_LBRACE:
-         case SL_PP_RBRACE:
-         case SL_PP_LPAREN:
-         case SL_PP_RPAREN:
-         case SL_PP_LBRACKET:
-         case SL_PP_RBRACKET:
-         case SL_PP_DOT:
-         case SL_PP_INCREMENT:
-         case SL_PP_ADDASSIGN:
-         case SL_PP_PLUS:
-         case SL_PP_DECREMENT:
-         case SL_PP_SUBASSIGN:
-         case SL_PP_MINUS:
-         case SL_PP_BITNOT:
-         case SL_PP_NOTEQUAL:
-         case SL_PP_NOT:
-         case SL_PP_MULASSIGN:
-         case SL_PP_STAR:
-         case SL_PP_DIVASSIGN:
-         case SL_PP_SLASH:
-         case SL_PP_MODASSIGN:
-         case SL_PP_MODULO:
-         case SL_PP_LSHIFTASSIGN:
-         case SL_PP_LSHIFT:
-         case SL_PP_LESSEQUAL:
-         case SL_PP_LESS:
-         case SL_PP_RSHIFTASSIGN:
-         case SL_PP_RSHIFT:
-         case SL_PP_GREATEREQUAL:
-         case SL_PP_GREATER:
-         case SL_PP_EQUAL:
-         case SL_PP_ASSIGN:
-         case SL_PP_AND:
-         case SL_PP_BITANDASSIGN:
-         case SL_PP_BITAND:
-         case SL_PP_XOR:
-         case SL_PP_BITXORASSIGN:
-         case SL_PP_BITXOR:
-         case SL_PP_OR:
-         case SL_PP_BITORASSIGN:
-         case SL_PP_BITOR:
-         case SL_PP_QUESTION:
-         case SL_PP_COLON:
-         case SL_PP_IDENTIFIER:
-         case SL_PP_UINT:
-         case SL_PP_FLOAT:
-            *dst++ = *src++;
-            break;
-
-         default:
-            src++;
-         }
-      }
-
-      /* The end of stream token. */
-      *dst = *src;
-   }
-
 #if FEATURE_ARB_shading_language_120
    maxVersion = 120;
 #elif FEATURE_es2_glsl
@@ -2712,13 +2638,11 @@ compile_with_grammar(const char *source,
                            "language version %.2f is not supported.",
                            version * 0.01);
       sl_pp_context_destroy(context);
-      free(tokens);
       return GL_FALSE;
    }
 
    /* Finally check the syntax and generate its binary representation. */
    result = sl_cl_compile(context,
-                          tokens,
                           shader_type,
                           parsing_builtin,
                           &prod,
@@ -2727,7 +2651,6 @@ compile_with_grammar(const char *source,
                           sizeof(errmsg));
 
    sl_pp_context_destroy(context);
-   free(tokens);
 
    if (result) {
       /*GLint pos;*/
