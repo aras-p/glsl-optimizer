@@ -2584,6 +2584,7 @@ compile_with_grammar(const char *source,
                      unsigned int shader_type,
                      unsigned int parsing_builtin)
 {
+   struct sl_pp_purify_options options;
    struct sl_pp_context *context;
    struct sl_pp_token_info *tokens;
    unsigned char *prod;
@@ -2591,15 +2592,20 @@ compile_with_grammar(const char *source,
    unsigned int version;
    unsigned int maxVersion;
    int result;
-   struct sl_pp_purify_options options;
    char errmsg[200] = "";
    unsigned int errline = 0;
-   struct sl_pp_token_info *intokens;
-   unsigned int tokens_eaten;
 
-   context = sl_pp_context_create();
+   memset(&options, 0, sizeof(options));
+
+   context = sl_pp_context_create(source, &options);
    if (!context) {
       slang_info_log_error(infolog, "out of memory");
+      return GL_FALSE;
+   }
+
+   if (sl_pp_version(context, &version)) {
+      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+      sl_pp_context_destroy(context);
       return GL_FALSE;
    }
 
@@ -2619,28 +2625,11 @@ compile_with_grammar(const char *source,
    }
 #endif
 
-   memset(&options, 0, sizeof(options));
-   if (sl_pp_tokenise(context, source, &options, &intokens)) {
+   if (sl_pp_process(context, &tokens)) {
       slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
       return GL_FALSE;
    }
-
-   if (sl_pp_version(context, intokens, &version, &tokens_eaten)) {
-      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
-      sl_pp_context_destroy(context);
-      free(intokens);
-      return GL_FALSE;
-   }
-
-   if (sl_pp_process(context, &intokens[tokens_eaten], &tokens)) {
-      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
-      sl_pp_context_destroy(context);
-      free(intokens);
-      return GL_FALSE;
-   }
-
-   free(intokens);
 
    /* For the time being we care about only a handful of tokens. */
    {
