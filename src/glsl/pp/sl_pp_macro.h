@@ -33,6 +33,7 @@
 
 struct sl_pp_context;
 struct sl_pp_process_state;
+struct sl_pp_token_buffer;
 
 struct sl_pp_macro_formal_arg {
    int name;
