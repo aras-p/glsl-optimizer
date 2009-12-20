@@ -98,9 +98,17 @@ struct nv50_reg {
 #define NV50_MOD_ABS 2
 #define NV50_MOD_SAT 4
 
-/* arbitrary limits */
-#define MAX_IF_DEPTH 4
-#define MAX_LOOP_DEPTH 4
+/* STACK: Conditionals and loops have to use the (per warp) stack.
+ * Stack entries consist of an entry type (divergent path, join at),
+ * a mask indicating the active threads of the warp, and an address.
+ * MPs can store 12 stack entries internally, if we need more (and
+ * we probably do), we have to create a stack buffer in VRAM.
+ */
+/* impose low limits for now */
+#define NV50_MAX_COND_NESTING 4
+#define NV50_MAX_LOOP_NESTING 3
+
+#define JOIN_ON(e) e; pc->p->exec_tail->inst[1] |= 2
 
 struct nv50_pc {
 	struct nv50_program *p;
@@ -139,12 +147,11 @@ struct nv50_pc {
 	struct nv50_reg *iv_p;
 	struct nv50_reg *iv_c;
 
-	struct nv50_program_exec *if_cond;
-	struct nv50_program_exec *if_insn[MAX_IF_DEPTH];
-	struct nv50_program_exec *br_join[MAX_IF_DEPTH];
-	struct nv50_program_exec *br_loop[MAX_LOOP_DEPTH]; /* for BRK branch */
+	struct nv50_program_exec *if_insn[NV50_MAX_COND_NESTING];
+	struct nv50_program_exec *if_join[NV50_MAX_COND_NESTING];
+	struct nv50_program_exec *loop_brka[NV50_MAX_LOOP_NESTING];
 	int if_lvl, loop_lvl;
-	unsigned loop_pos[MAX_LOOP_DEPTH];
+	unsigned loop_pos[NV50_MAX_LOOP_NESTING];
 
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
@@ -1184,7 +1191,6 @@ emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 	set_src_1(pc, src1, e);
 
 	emit(pc, e);
-	pc->if_cond = pc->p->exec_tail; /* record for OPCODE_IF */
 
 	/* cvt.f32.u32/s32 (?) if we didn't only write the predicate */
 	if (rdst)
@@ -1326,21 +1332,49 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static struct nv50_program_exec *
-emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
-	    struct nv50_program_exec **join)
+emit_breakaddr(struct nv50_pc *pc)
 {
 	struct nv50_program_exec *e = exec(pc);
 
-	if (join) {
-		set_long(pc, e);
-		e->inst[0] |= 0xa0000002;
-		emit(pc, e);
-		*join = e;
-		e = exec(pc);
-	}
-
+	e->inst[0] = 0x40000002;
 	set_long(pc, e);
-	e->inst[0] |= 0x10000002;
+
+	emit(pc, e);
+	return e;
+}
+
+static void
+emit_break(struct nv50_pc *pc, int pred, unsigned cc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x50000002;
+	set_long(pc, e);
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+
+	emit(pc, e);
+}
+
+static struct nv50_program_exec *
+emit_joinat(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xa0000002;
+	set_long(pc, e);
+
+	emit(pc, e);
+	return e;
+}
+
+static struct nv50_program_exec *
+emit_branch(struct nv50_pc *pc, int pred, unsigned cc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x10000002;
+	set_long(pc, e);
 	if (pred >= 0)
 		set_pred(pc, cc, pred, e);
 	emit(pc, e);
@@ -1504,20 +1538,20 @@ emit_texlod_sequence(struct nv50_pc *pc, struct nv50_reg *tlod,
 	/* Subtract lod of each pixel from lod of top left pixel, jump
 	 * texlod insn if result is 0, then repeat for 2 other pixels.
 	 */
+	join_at = emit_joinat(pc);
 	emit_quadop(pc, NULL, 0, 0, tlod, tlod, 0x55);
-	emit_branch(pc, 0, 2, &join_at)->param.index = target;
+	emit_branch(pc, 0, 2)->param.index = target;
 
 	for (i = 1; i < 4; ++i) {
 		emit_quadop(pc, NULL, 0, i, tlod, tlod, 0x55);
-		emit_branch(pc, 0, 2, NULL)->param.index = target;
+		emit_branch(pc, 0, 2)->param.index = target;
 	}
 
 	emit_mov(pc, tlod, src); /* target */
 	emit(pc, tex); /* texlod */
 
 	join_at->param.index = target + 2 * 2;
-	emit_nop(pc);
-	pc->p->exec_tail->inst[1] |= 2; /* join _after_ tex */
+	JOIN_ON(emit_nop(pc)); /* join _after_ tex */
 }
 
 static void
@@ -2058,22 +2092,19 @@ nv50_kill_branch(struct nv50_pc *pc)
 	 */
 	if (has_pred(pc->if_insn[lvl], 0xf))
 		return FALSE;
-	assert(pc->if_insn[lvl] && pc->br_join[lvl]);
+	assert(pc->if_insn[lvl] && pc->if_join[lvl]);
 
-	/* We'll use the exec allocated for JOIN_AT (as we can't easily
-	 * update prev's next); if exec_tail is BRK, update the pointer.
+	/* We'll use the exec allocated for JOIN_AT (we can't easily
+	 * access nv50_program_exec's prev).
 	 */
-	if (pc->loop_lvl && pc->br_loop[pc->loop_lvl - 1] == pc->p->exec_tail)
-		pc->br_loop[pc->loop_lvl - 1] = pc->br_join[lvl];
-
 	pc->p->exec_size -= 4; /* remove JOIN_AT and BRA */
 
-	*pc->br_join[lvl] = *pc->p->exec_tail;
+	*pc->if_join[lvl] = *pc->p->exec_tail;
 
 	FREE(pc->if_insn[lvl]);
 	FREE(pc->p->exec_tail);
 
-	pc->p->exec_tail = pc->br_join[lvl];
+	pc->p->exec_tail = pc->if_join[lvl];
 	pc->p->exec_tail->next = NULL;
 	set_pred(pc, 0xd, 0, pc->p->exec_tail);
 
@@ -2184,13 +2215,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_arl(pc, dst[0], temp, 4);
 		break;
 	case TGSI_OPCODE_BGNLOOP:
+		pc->loop_brka[pc->loop_lvl] = emit_breakaddr(pc);
 		pc->loop_pos[pc->loop_lvl++] = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_BRK:
-		emit_branch(pc, -1, 0, NULL);
 		assert(pc->loop_lvl > 0);
-		pc->br_loop[pc->loop_lvl - 1] = pc->p->exec_tail;
+		emit_break(pc, -1, 0);
 		break;
 	case TGSI_OPCODE_CEIL:
 		for (c = 0; c < 4; c++) {
@@ -2266,7 +2297,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mov_immdval(pc, dst[0], 1.0f);
 		break;
 	case TGSI_OPCODE_ELSE:
-		emit_branch(pc, -1, 0, NULL);
+		emit_branch(pc, -1, 0);
 		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
 		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
 		terminate_mbb(pc);
@@ -2278,21 +2309,20 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		if (nv50_kill_branch(pc) == TRUE)
 			break;
 
-		if (pc->br_join[pc->if_lvl]) {
-			pc->br_join[pc->if_lvl]->param.index = pc->p->exec_size;
-			pc->br_join[pc->if_lvl] = NULL;
+		if (pc->if_join[pc->if_lvl]) {
+			pc->if_join[pc->if_lvl]->param.index = pc->p->exec_size;
+			pc->if_join[pc->if_lvl] = NULL;
 		}
 		terminate_mbb(pc);
 		/* emit a NOP as join point, we could set it on the next
 		 * one, but would have to make sure it is long and !immd
 		 */
-		emit_nop(pc);
-		pc->p->exec_tail->inst[1] |= 2;
+		JOIN_ON(emit_nop(pc));
 		break;
 	case TGSI_OPCODE_ENDLOOP:
-		emit_branch(pc, -1, 0, NULL);
-		pc->p->exec_tail->param.index = pc->loop_pos[--pc->loop_lvl];
-		pc->br_loop[pc->loop_lvl]->param.index = pc->p->exec_size;
+		emit_branch(pc, -1, 0)->param.index =
+			pc->loop_pos[--pc->loop_lvl];
+		pc->loop_brka[pc->loop_lvl]->param.index = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_EX2:
@@ -2316,13 +2346,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_IF:
-		/* emitting a join_at may not be necessary */
-		assert(pc->if_lvl < MAX_IF_DEPTH);
-		/* set_pred_wr(pc, 1, 0, pc->if_cond); */
+		assert(pc->if_lvl < NV50_MAX_COND_NESTING);
 		emit_cvt(pc, NULL, src[0][0], 0, CVTOP_ABS | CVTOP_RN,
 			 CVT_F32_F32);
-		emit_branch(pc, 0, 2, &pc->br_join[pc->if_lvl]);
-		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
+		pc->if_join[pc->if_lvl] = emit_joinat(pc);
+		pc->if_insn[pc->if_lvl++] = emit_branch(pc, 0, 2);;
 		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_KIL:
