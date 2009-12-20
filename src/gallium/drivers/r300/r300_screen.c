@@ -142,6 +142,10 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             return 0;
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
             return 1;
+        case PIPE_CAP_SM3:
+            return 1;
+        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+            return 8;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
