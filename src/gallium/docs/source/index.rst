@@ -13,6 +13,8 @@ Contents:
 
    intro
    tgsi
+   screen
+   context
    cso
 
 Indices and tables
