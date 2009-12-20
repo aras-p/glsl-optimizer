@@ -51,9 +51,7 @@ main(int argc,
    char errmsg[100] = "";
    struct sl_pp_context *context;
    unsigned int version;
-   struct sl_pp_token_info *outtokens;
    FILE *out;
-   unsigned int i, j;
    unsigned char *outbytes;
    unsigned int cboutbytes;
    unsigned int shader_type;
@@ -147,38 +145,7 @@ main(int argc,
       return 0;
    }
 
-   if (sl_pp_process(context, &outtokens)) {
-      unsigned int errline;
-
-      sl_pp_context_error_position(context, NULL, &errline);
-
-      fprintf(out, "$ERROR: (%u) `%s'\n", errline, sl_pp_context_error_message(context));
-
-      printf("Error: (%u) %s\n", errline, sl_pp_context_error_message(context));
-      sl_pp_context_destroy(context);
-      free(inbuf);
-      fclose(out);
-      return 0;
-   }
-
-   free(inbuf);
-
-   for (i = j = 0; outtokens[i].token != SL_PP_EOF; i++) {
-      switch (outtokens[i].token) {
-      case SL_PP_NEWLINE:
-      case SL_PP_EXTENSION_REQUIRE:
-      case SL_PP_EXTENSION_ENABLE:
-      case SL_PP_EXTENSION_WARN:
-      case SL_PP_EXTENSION_DISABLE:
-      case SL_PP_LINE:
-         break;
-      default:
-         outtokens[j++] = outtokens[i];
-      }
-   }
-   outtokens[j] = outtokens[i];
-
-   if (sl_cl_compile(context, outtokens, shader_type, 1, &outbytes, &cboutbytes, errmsg, sizeof(errmsg)) == 0) {
+   if (sl_cl_compile(context, shader_type, 1, &outbytes, &cboutbytes, errmsg, sizeof(errmsg)) == 0) {
       unsigned int i;
       unsigned int line = 0;
 
@@ -218,7 +185,7 @@ main(int argc,
    }
 
    sl_pp_context_destroy(context);
-   free(outtokens);
+   free(inbuf);
    fclose(out);
    return 0;
 }
