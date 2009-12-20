@@ -87,7 +87,7 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   context = sl_pp_context_create();
+   context = sl_pp_context_create(inbuf, &options);
    if (!context) {
       fprintf(out, "$CONTEXERROR\n");
 
@@ -96,7 +96,7 @@ main(int argc,
       return 1;
    }
 
-   if (sl_pp_tokenise(context, inbuf, &options, &tokens)) {
+   if (sl_pp_tokenise(context, &tokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       sl_pp_context_destroy(context);

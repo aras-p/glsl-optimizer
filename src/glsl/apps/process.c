@@ -41,9 +41,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    struct sl_pp_context *context;
-   struct sl_pp_token_info *tokens;
    unsigned int version;
-   unsigned int tokens_eaten;
    struct sl_pp_token_info *outtokens;
    FILE *out;
    unsigned int i;
@@ -90,7 +88,7 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   context = sl_pp_context_create();
+   context = sl_pp_context_create(inbuf, &options);
    if (!context) {
       fprintf(out, "$CONTEXERROR\n");
 
@@ -99,22 +97,11 @@ main(int argc,
       return 1;
    }
 
-   if (sl_pp_tokenise(context, inbuf, &options, &tokens)) {
+   if (sl_pp_version(context, &version)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       sl_pp_context_destroy(context);
       free(inbuf);
-      fclose(out);
-      return 1;
-   }
-
-   free(inbuf);
-
-   if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
-      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
-
-      sl_pp_context_destroy(context);
-      free(tokens);
       fclose(out);
       return -1;
    }
@@ -125,7 +112,7 @@ main(int argc,
 
       printf("Error: %s\n", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
-      free(tokens);
+      free(inbuf);
       fclose(out);
       return 0;
    }
@@ -135,21 +122,21 @@ main(int argc,
 
       printf("Error: %s\n", sl_pp_context_error_message(context));
       sl_pp_context_destroy(context);
-      free(tokens);
+      free(inbuf);
       fclose(out);
       return 0;
    }
 
-   if (sl_pp_process(context, &tokens[tokens_eaten], &outtokens)) {
+   if (sl_pp_process(context, &outtokens)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       sl_pp_context_destroy(context);
-      free(tokens);
+      free(inbuf);
       fclose(out);
       return -1;
    }
 
-   free(tokens);
+   free(inbuf);
 
    for (i = 0; outtokens[i].token != SL_PP_EOF; i++) {
       switch (outtokens[i].token) {
