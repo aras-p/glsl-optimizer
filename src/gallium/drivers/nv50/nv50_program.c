@@ -131,6 +131,7 @@ struct nv50_pc {
 	int immd_nr;
 	struct nv50_reg **addr;
 	int addr_nr;
+	uint8_t addr_alloc; /* set bit indicates used for TGSI_FILE_ADDRESS */
 
 	struct nv50_reg *temp_temp[16];
 	unsigned temp_temp_nr;
@@ -200,8 +201,7 @@ terminate_mbb(struct nv50_pc *pc)
 
 	/* remove records of temporary address register values */
 	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
-		if (pc->r_addr[i].index < 0)
-			pc->r_addr[i].rhw = -1;
+		pc->r_addr[i].rhw = -1;
 }
 
 static void
@@ -546,21 +546,24 @@ emit_add_addr_imm(struct nv50_pc *pc, struct nv50_reg *dst,
 static struct nv50_reg *
 alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 {
-	int i;
 	struct nv50_reg *a_tgsi = NULL, *a = NULL;
+	int i;
+	uint8_t avail = ~pc->addr_alloc;
 
 	if (!ref) {
-		/* allocate for TGSI address reg */
-		for (i = 0; i < NV50_SU_MAX_ADDR; ++i) {
-			if (pc->r_addr[i].index >= 0)
-				continue;
-			if (pc->r_addr[i].rhw >= 0 &&
-			    pc->r_addr[i].acc == pc->insn_cur)
-				continue;
+		/* allocate for TGSI_FILE_ADDRESS */
+		while (avail) {
+			i = ffs(avail) - 1;
 
-			pc->r_addr[i].rhw = -1;
-			pc->r_addr[i].index = i;
-			return &pc->r_addr[i];
+			if (pc->r_addr[i].rhw < 0 ||
+			    pc->r_addr[i].acc != pc->insn_cur) {
+				pc->addr_alloc |= (1 << i);
+
+				pc->r_addr[i].rhw = -1;
+				pc->r_addr[i].index = i;
+				return &pc->r_addr[i];
+			}
+			avail &= ~(1 << i);
 		}
 		assert(0);
 		return NULL;
@@ -568,15 +571,16 @@ alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 
 	/* Allocate and set an address reg so we can access 'ref'.
 	 *
-	 * If and r_addr has index < 0, it is not reserved for TGSI,
-	 * and index will be the negative of the TGSI addr index the
-	 * value in rhw is relative to, or -256 if rhw is an offset
-	 * from 0. If rhw < 0, the reg has not been initialized.
+	 * If and r_addr->index will be -1 or the hw index the value
+	 * value in rhw is relative to. If rhw < 0, the reg has not
+	 * been initialized or is in use for TGSI_FILE_ADDRESS.
 	 */
-	for (i = NV50_SU_MAX_ADDR - 1; i >= 0; --i) {
-		if (pc->r_addr[i].index >= 0) /* occupied for TGSI */
-			continue;
-		if (pc->r_addr[i].rhw < 0) { /* unused */
+	while (avail) { /* only consider regs that are not TGSI */
+		i = ffs(avail) - 1;
+		avail &= ~(1 << i);
+
+		if ((!a || a->rhw >= 0) && pc->r_addr[i].rhw < 0) {
+			/* prefer an usused reg with low hw index */
 			a = &pc->r_addr[i];
 			continue;
 		}
@@ -586,8 +590,8 @@ alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 		if (ref->hw - pc->r_addr[i].rhw >= 128)
 			continue;
 
-		if ((ref->acc >= 0 && pc->r_addr[i].index == -256) ||
-		    (ref->acc < 0 && -pc->r_addr[i].index == ref->index)) {
+		if ((ref->acc >= 0 && pc->r_addr[i].index < 0) ||
+		    (ref->acc < 0 && pc->r_addr[i].index == ref->index)) {
 			pc->r_addr[i].acc = pc->insn_cur;
 			return &pc->r_addr[i];
 		}
@@ -601,7 +605,7 @@ alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
 
 	a->rhw = ref->hw & ~0x7f;
 	a->acc = pc->insn_cur;
-	a->index = a_tgsi ? -ref->index : -256;
+	a->index = a_tgsi ? ref->index : -1;
 	return a;
 }
 
