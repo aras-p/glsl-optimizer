@@ -74,6 +74,10 @@ sl_pp_version(struct sl_pp_context *context,
               unsigned int *version);
 
 int
+sl_pp_process_get(struct sl_pp_context *context,
+                  struct sl_pp_token_info *output);
+
+int
 sl_pp_process(struct sl_pp_context *context,
               struct sl_pp_token_info **output);
 

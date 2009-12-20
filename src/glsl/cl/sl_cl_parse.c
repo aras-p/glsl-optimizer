@@ -321,9 +321,12 @@ struct parse_dict {
 
 struct parse_context {
    struct sl_pp_context *context;
-   const struct sl_pp_token_info *input;
 
    struct parse_dict dict;
+
+   struct sl_pp_token_info *tokens;
+   unsigned int tokens_read;
+   unsigned int tokens_cap;
 
    unsigned char *out_buf;
    unsigned int out_cap;
@@ -332,6 +335,7 @@ struct parse_context {
    unsigned int parsing_builtin;
 
    char error[256];
+   int process_error;
 };
 
 
@@ -366,11 +370,93 @@ _update(struct parse_context *ctx,
 
 static void
 _error(struct parse_context *ctx,
-       char *msg)
+       const char *msg)
 {
    if (ctx->error[0] == '\0') {
       strcpy(ctx->error, msg);
    }
+}
+
+
+static const struct sl_pp_token_info *
+_fetch_token(struct parse_context *ctx,
+             unsigned int pos)
+{
+   if (ctx->process_error) {
+      return NULL;
+   }
+
+   while (pos >= ctx->tokens_read) {
+      if (ctx->tokens_read == ctx->tokens_cap) {
+         ctx->tokens_cap += 1024;
+         ctx->tokens = realloc(ctx->tokens,
+                               ctx->tokens_cap * sizeof(struct sl_pp_token_info));
+         if (!ctx->tokens) {
+            _error(ctx, "out of memory");
+            ctx->process_error = 1;
+            return NULL;
+         }
+      }
+      if (sl_pp_process_get(ctx->context, &ctx->tokens[ctx->tokens_read])) {
+         _error(ctx, sl_pp_context_error_message(ctx->context));
+         ctx->process_error = 1;
+         return NULL;
+      }
+      switch (ctx->tokens[ctx->tokens_read].token) {
+      case SL_PP_COMMA:
+      case SL_PP_SEMICOLON:
+      case SL_PP_LBRACE:
+      case SL_PP_RBRACE:
+      case SL_PP_LPAREN:
+      case SL_PP_RPAREN:
+      case SL_PP_LBRACKET:
+      case SL_PP_RBRACKET:
+      case SL_PP_DOT:
+      case SL_PP_INCREMENT:
+      case SL_PP_ADDASSIGN:
+      case SL_PP_PLUS:
+      case SL_PP_DECREMENT:
+      case SL_PP_SUBASSIGN:
+      case SL_PP_MINUS:
+      case SL_PP_BITNOT:
+      case SL_PP_NOTEQUAL:
+      case SL_PP_NOT:
+      case SL_PP_MULASSIGN:
+      case SL_PP_STAR:
+      case SL_PP_DIVASSIGN:
+      case SL_PP_SLASH:
+      case SL_PP_MODASSIGN:
+      case SL_PP_MODULO:
+      case SL_PP_LSHIFTASSIGN:
+      case SL_PP_LSHIFT:
+      case SL_PP_LESSEQUAL:
+      case SL_PP_LESS:
+      case SL_PP_RSHIFTASSIGN:
+      case SL_PP_RSHIFT:
+      case SL_PP_GREATEREQUAL:
+      case SL_PP_GREATER:
+      case SL_PP_EQUAL:
+      case SL_PP_ASSIGN:
+      case SL_PP_AND:
+      case SL_PP_BITANDASSIGN:
+      case SL_PP_BITAND:
+      case SL_PP_XOR:
+      case SL_PP_BITXORASSIGN:
+      case SL_PP_BITXOR:
+      case SL_PP_OR:
+      case SL_PP_BITORASSIGN:
+      case SL_PP_BITOR:
+      case SL_PP_QUESTION:
+      case SL_PP_COLON:
+      case SL_PP_IDENTIFIER:
+      case SL_PP_UINT:
+      case SL_PP_FLOAT:
+      case SL_PP_EOF:
+         ctx->tokens_read++;
+         break;
+      }
+   }
+   return &ctx->tokens[pos];
 }
 
 
@@ -379,7 +465,9 @@ _parse_token(struct parse_context *ctx,
              enum sl_pp_token token,
              struct parse_state *ps)
 {
-   if (ctx->input[ps->in].token == token) {
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+
+   if (input && input->token == token) {
       ps->in++;
       return 0;
    }
@@ -392,8 +480,9 @@ _parse_id(struct parse_context *ctx,
           int id,
           struct parse_state *ps)
 {
-   if (ctx->input[ps->in].token == SL_PP_IDENTIFIER &&
-       ctx->input[ps->in].data.identifier == id) {
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+
+   if (input && input->token == SL_PP_IDENTIFIER && input->data.identifier == id) {
       ps->in++;
       return 0;
    }
@@ -405,8 +494,10 @@ static int
 _parse_identifier(struct parse_context *ctx,
                   struct parse_state *ps)
 {
-   if (ctx->input[ps->in].token == SL_PP_IDENTIFIER) {
-      const char *cstr = sl_pp_context_cstr(ctx->context, ctx->input[ps->in].data.identifier);
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+
+   if (input && input->token == SL_PP_IDENTIFIER) {
+      const char *cstr = sl_pp_context_cstr(ctx->context, input->data.identifier);
 
       do {
          _emit(ctx, &ps->out, *cstr);
@@ -422,8 +513,10 @@ static int
 _parse_float(struct parse_context *ctx,
              struct parse_state *ps)
 {
-   if (ctx->input[ps->in].token == SL_PP_FLOAT) {
-      const char *cstr = sl_pp_context_cstr(ctx->context, ctx->input[ps->in].data._float);
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+
+   if (input && input->token == SL_PP_FLOAT) {
+      const char *cstr = sl_pp_context_cstr(ctx->context, input->data._float);
 
       _emit(ctx, &ps->out, 1);
       do {
@@ -440,8 +533,10 @@ static int
 _parse_uint(struct parse_context *ctx,
             struct parse_state *ps)
 {
-   if (ctx->input[ps->in].token == SL_PP_UINT) {
-      const char *cstr = sl_pp_context_cstr(ctx->context, ctx->input[ps->in].data._uint);
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+
+   if (input && input->token == SL_PP_UINT) {
+      const char *cstr = sl_pp_context_cstr(ctx->context, input->data._uint);
 
       _emit(ctx, &ps->out, 1);
       do {
@@ -614,13 +709,14 @@ _parse_type_qualifier(struct parse_context *ctx,
                       struct parse_state *ps)
 {
    struct parse_state p = *ps;
+   const struct sl_pp_token_info *input = _fetch_token(ctx, p.in);
    unsigned int e = _emit(ctx, &p.out, 0);
    int id;
 
-   if (ctx->input[p.in].token != SL_PP_IDENTIFIER) {
+   if (!input || input->token != SL_PP_IDENTIFIER) {
       return -1;
    }
-   id = ctx->input[p.in].data.identifier;
+   id = input->data.identifier;
 
    if (id == ctx->dict._const) {
       _update(ctx, e, TYPE_QUALIFIER_CONST);
@@ -771,6 +867,7 @@ _parse_type_specifier_nonarray(struct parse_context *ctx,
 {
    struct parse_state p = *ps;
    unsigned int e = _emit(ctx, &p.out, 0);
+   const struct sl_pp_token_info *input;
    int id;
 
    if (_parse_struct_specifier(ctx, &p) == 0) {
@@ -779,10 +876,11 @@ _parse_type_specifier_nonarray(struct parse_context *ctx,
       return 0;
    }
 
-   if (ctx->input[p.in].token != SL_PP_IDENTIFIER) {
+   input = _fetch_token(ctx, p.in);
+   if (!input || input->token != SL_PP_IDENTIFIER) {
       return -1;
    }
-   id = ctx->input[p.in].data.identifier;
+   id = input->data.identifier;
 
    if (id == ctx->dict._void) {
       _update(ctx, e, TYPE_SPECIFIER_VOID);
@@ -1696,13 +1794,14 @@ static int
 _parse_precision(struct parse_context *ctx,
                  struct parse_state *ps)
 {
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
    int id;
    unsigned int precision;
 
-   if (ctx->input[ps->in].token != SL_PP_IDENTIFIER) {
+   if (!input || input->token != SL_PP_IDENTIFIER) {
       return -1;
    }
-   id = ctx->input[ps->in].data.identifier;
+   id = input->data.identifier;
 
    if (id == ctx->dict.lowp) {
       precision = PRECISION_LOW;
@@ -1724,13 +1823,14 @@ static int
 _parse_prectype(struct parse_context *ctx,
                  struct parse_state *ps)
 {
+   const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
    int id;
    unsigned int type;
 
-   if (ctx->input[ps->in].token != SL_PP_IDENTIFIER) {
+   if (!input || input->token != SL_PP_IDENTIFIER) {
       return -1;
    }
-   id = ctx->input[ps->in].data.identifier;
+   id = input->data.identifier;
 
    if (id == ctx->dict._int) {
       type = TYPE_SPECIFIER_INT;
@@ -2607,7 +2707,6 @@ _parse_translation_unit(struct parse_context *ctx,
 
 int
 sl_cl_compile(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
               unsigned int shader_type,
               unsigned int parsing_builtin,
               unsigned char **output,
@@ -2619,7 +2718,6 @@ sl_cl_compile(struct sl_pp_context *context,
    struct parse_state ps;
 
    ctx.context = context;
-   ctx.input = input;
 
    ADD_NAME_STR(ctx, _void, "void");
    ADD_NAME_STR(ctx, _float, "float");
@@ -2699,16 +2797,27 @@ sl_cl_compile(struct sl_pp_context *context,
    ctx.parsing_builtin = 1;
 
    ctx.error[0] = '\0';
+   ctx.process_error = 0;
+
+   ctx.tokens_cap = 1024;
+   ctx.tokens_read = 0;
+   ctx.tokens = malloc(ctx.tokens_cap * sizeof(struct sl_pp_token_info));
+   if (!ctx.tokens) {
+      strncpy(error, "out of memory", cberror);
+      return -1;
+   }
 
    ps.in = 0;
    ps.out = 0;
 
    if (_parse_translation_unit(&ctx, &ps)) {
       strncpy(error, ctx.error, cberror);
+      free(ctx.tokens);
       return -1;
    }
 
    *output = ctx.out_buf;
    *cboutput = ps.out;
+   free(ctx.tokens);
    return 0;
 }

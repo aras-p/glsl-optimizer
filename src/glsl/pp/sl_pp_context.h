@@ -30,6 +30,7 @@
 
 #include "sl_pp_dict.h"
 #include "sl_pp_macro.h"
+#include "sl_pp_process.h"
 #include "sl_pp_purify.h"
 #include "sl_pp_token_util.h"
 
@@ -84,6 +85,8 @@ struct sl_pp_context {
    unsigned int getc_buf_capacity;
 
    struct sl_pp_token_buffer tokens;
+
+   struct sl_pp_process_state process_state;
 };
 
 #endif /* SL_PP_CONTEXT_H */

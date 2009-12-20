@@ -30,7 +30,6 @@
 
 int
 sl_cl_compile(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
               unsigned int shader_type,
               unsigned int parsing_builtin,
               unsigned char **output,

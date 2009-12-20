@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "sl_pp_context.h"
 #include "sl_pp_process.h"
 #include "sl_pp_public.h"
 
@@ -58,34 +59,47 @@ sl_pp_process_out(struct sl_pp_process_state *state,
 }
 
 int
-sl_pp_process(struct sl_pp_context *context,
-              struct sl_pp_token_info **output)
+sl_pp_process_get(struct sl_pp_context *context,
+                  struct sl_pp_token_info *output)
 {
-   struct sl_pp_process_state state;
-   int found_eof = 0;
+   if (!context->process_state.out) {
+      if (context->line > 1) {
+         struct sl_pp_token_info ti;
 
-   memset(&state, 0, sizeof(state));
+         ti.token = SL_PP_LINE;
+         ti.data.line.lineno = context->line - 1;
+         ti.data.line.fileno = context->file;
+         if (sl_pp_process_out(&context->process_state, &ti)) {
+            strcpy(context->error_msg, "out of memory");
+            return -1;
+         }
 
-   if (context->line > 1) {
-      struct sl_pp_token_info ti;
-
-      ti.token = SL_PP_LINE;
-      ti.data.line.lineno = context->line - 1;
-      ti.data.line.fileno = context->file;
-      if (sl_pp_process_out(&state, &ti)) {
-         strcpy(context->error_msg, "out of memory");
-         return -1;
-      }
-
-      ti.token = SL_PP_NEWLINE;
-      if (sl_pp_process_out(&state, &ti)) {
-         strcpy(context->error_msg, "out of memory");
-         return -1;
+         ti.token = SL_PP_NEWLINE;
+         if (sl_pp_process_out(&context->process_state, &ti)) {
+            strcpy(context->error_msg, "out of memory");
+            return -1;
+         }
       }
    }
 
-   while (!found_eof) {
+   for (;;) {
       struct sl_pp_token_info input;
+      int found_eof = 0;
+
+      if (context->process_state.out_len) {
+         *output = context->process_state.out[0];
+
+         if (context->process_state.out_len > 1) {
+            unsigned int i;
+
+            for (i = 1; i < context->process_state.out_len; i++) {
+               context->process_state.out[i - 1] = context->process_state.out[i];
+            }
+         }
+         context->process_state.out_len--;
+
+         return 0;
+      }
 
       if (sl_pp_token_buffer_skip_white(&context->tokens, &input)) {
          return -1;
@@ -101,7 +115,7 @@ sl_pp_process(struct sl_pp_context *context,
                int found_eol = 0;
                struct sl_pp_token_info endof;
                struct sl_pp_token_peek peek;
-               int result;
+               int result = 0;
 
                /* Directive name. */
                name = input.data.identifier;
@@ -166,17 +180,17 @@ sl_pp_process(struct sl_pp_context *context,
                      sl_pp_process_error(context, peek.tokens, 0, peek.size - 1);
                      result = -1;
                   } else if (name == context->dict.extension) {
-                     result = sl_pp_process_extension(context, peek.tokens, 0, peek.size - 1, &state);
+                     result = sl_pp_process_extension(context, peek.tokens, 0, peek.size - 1, &context->process_state);
                   } else if (name == context->dict.line) {
                      struct sl_pp_token_buffer buffer;
 
                      result = sl_pp_token_peek_to_buffer(&peek, &buffer);
                      if (result == 0) {
-                        result = sl_pp_process_line(context, &buffer, &state);
+                        result = sl_pp_process_line(context, &buffer, &context->process_state);
                         sl_pp_token_buffer_destroy(&buffer);
                      }
                   } else if (name == context->dict.pragma) {
-                     result = sl_pp_process_pragma(context, peek.tokens, 0, peek.size - 1, &state);
+                     result = sl_pp_process_pragma(context, peek.tokens, 0, peek.size - 1, &context->process_state);
                   } else if (name == context->dict.undef) {
                      result = sl_pp_process_undef(context, peek.tokens, 0, peek.size - 1);
                   } else {
@@ -192,7 +206,7 @@ sl_pp_process(struct sl_pp_context *context,
                   return result;
                }
 
-               if (sl_pp_process_out(&state, &endof)) {
+               if (sl_pp_process_out(&context->process_state, &endof)) {
                   strcpy(context->error_msg, "out of memory");
                   return -1;
                }
@@ -202,7 +216,7 @@ sl_pp_process(struct sl_pp_context *context,
 
          case SL_PP_NEWLINE:
             /* Empty directive. */
-            if (sl_pp_process_out(&state, &input)) {
+            if (sl_pp_process_out(&context->process_state, &input)) {
                strcpy(context->error_msg, "out of memory");
                return -1;
             }
@@ -211,7 +225,7 @@ sl_pp_process(struct sl_pp_context *context,
 
          case SL_PP_EOF:
             /* Empty directive. */
-            if (sl_pp_process_out(&state, &input)) {
+            if (sl_pp_process_out(&context->process_state, &input)) {
                strcpy(context->error_msg, "out of memory");
                return -1;
             }
@@ -239,7 +253,7 @@ sl_pp_process(struct sl_pp_context *context,
 
             case SL_PP_NEWLINE:
                /* Preserve newline just for the sake of line numbering. */
-               if (sl_pp_process_out(&state, &input)) {
+               if (sl_pp_process_out(&context->process_state, &input)) {
                   strcpy(context->error_msg, "out of memory");
                   return -1;
                }
@@ -248,7 +262,7 @@ sl_pp_process(struct sl_pp_context *context,
                break;
 
             case SL_PP_EOF:
-               if (sl_pp_process_out(&state, &input)) {
+               if (sl_pp_process_out(&context->process_state, &input)) {
                   strcpy(context->error_msg, "out of memory");
                   return -1;
                }
@@ -258,7 +272,7 @@ sl_pp_process(struct sl_pp_context *context,
 
             case SL_PP_IDENTIFIER:
                sl_pp_token_buffer_unget(&context->tokens, &input);
-               if (sl_pp_macro_expand(context, &context->tokens, NULL, &state,
+               if (sl_pp_macro_expand(context, &context->tokens, NULL, &context->process_state,
                                       context->if_value ? sl_pp_macro_expand_normal : sl_pp_macro_expand_mute)) {
                   return -1;
                }
@@ -266,7 +280,7 @@ sl_pp_process(struct sl_pp_context *context,
 
             default:
                if (context->if_value) {
-                  if (sl_pp_process_out(&state, &input)) {
+                  if (sl_pp_process_out(&context->process_state, &input)) {
                      strcpy(context->error_msg, "out of memory");
                      return -1;
                   }
@@ -274,13 +288,37 @@ sl_pp_process(struct sl_pp_context *context,
             }
          }
       }
-   }
 
-   if (context->if_ptr != SL_PP_MAX_IF_NESTING) {
-      strcpy(context->error_msg, "expected `#endif' directive");
-      return -1;
+      if (found_eof) {
+         if (context->if_ptr != SL_PP_MAX_IF_NESTING) {
+            strcpy(context->error_msg, "expected `#endif' directive");
+            return -1;
+         }
+      }
    }
+}
 
-   *output = state.out;
-   return 0;
+int
+sl_pp_process(struct sl_pp_context *context,
+              struct sl_pp_token_info **output)
+{
+   struct sl_pp_process_state state;
+
+   memset(&state, 0, sizeof(state));
+   for (;;) {
+      struct sl_pp_token_info input;
+
+      if (sl_pp_process_get(context, &input)) {
+         free(state.out);
+         return -1;
+      }
+      if (sl_pp_process_out(&state, &input)) {
+         free(state.out);
+         return -1;
+      }
+      if (input.token == SL_PP_EOF) {
+         *output = state.out;
+         return 0;
+      }
+   }
 }

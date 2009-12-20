@@ -28,10 +28,11 @@
 #ifndef SL_PP_PROCESS_H
 #define SL_PP_PROCESS_H
 
-#include "sl_pp_context.h"
 #include "sl_pp_macro.h"
 #include "sl_pp_token.h"
 
+
+struct sl_pp_context;
 
 struct sl_pp_process_state {
    struct sl_pp_token_info *out;

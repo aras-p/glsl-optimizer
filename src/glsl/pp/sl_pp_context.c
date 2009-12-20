@@ -69,6 +69,8 @@ sl_pp_context_create(const char *input,
 
    sl_pp_purify_state_init(&context->pure, input, options);
 
+   memset(&context->process_state, 0, sizeof(context->process_state));
+
    return context;
 }
 
@@ -80,6 +82,7 @@ sl_pp_context_destroy(struct sl_pp_context *context)
       sl_pp_macro_free(context->macro);
       free(context->getc_buf);
       sl_pp_token_buffer_destroy(&context->tokens);
+      free(context->process_state.out);
       free(context);
    }
 }
