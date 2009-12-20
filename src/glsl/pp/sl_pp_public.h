@@ -37,7 +37,8 @@ struct sl_pp_context;
 
 
 struct sl_pp_context *
-sl_pp_context_create(void);
+sl_pp_context_create(const char *input,
+                     const struct sl_pp_purify_options *options);
 
 void
 sl_pp_context_destroy(struct sl_pp_context *context);
@@ -70,13 +71,10 @@ sl_pp_context_cstr(const struct sl_pp_context *context,
 
 int
 sl_pp_version(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
-              unsigned int *version,
-              unsigned int *tokens_eaten);
+              unsigned int *version);
 
 int
 sl_pp_process(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
               struct sl_pp_token_info **output);
 
 #endif /* SL_PP_PUBLIC_H */

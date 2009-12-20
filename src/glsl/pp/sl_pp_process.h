@@ -53,9 +53,7 @@ sl_pp_process_undef(struct sl_pp_context *context,
 
 int
 sl_pp_process_if(struct sl_pp_context *context,
-                 const struct sl_pp_token_info *input,
-                 unsigned int first,
-                 unsigned int last);
+                 struct sl_pp_token_buffer *input);
 
 int
 sl_pp_process_ifdef(struct sl_pp_context *context,
@@ -71,9 +69,7 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
 
 int
 sl_pp_process_elif(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int first,
-                   unsigned int last);
+                   struct sl_pp_token_buffer *buffer);
 
 int
 sl_pp_process_else(struct sl_pp_context *context,
@@ -109,9 +105,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
 int
 sl_pp_process_line(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int first,
-                   unsigned int last,
+                   struct sl_pp_token_buffer *buffer,
                    struct sl_pp_process_state *state);
 
 int

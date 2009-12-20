@@ -31,55 +31,50 @@
 #include "sl_pp_process.h"
 
 
-static void
-skip_whitespace(const struct sl_pp_token_info *input,
-                unsigned int *pi)
-{
-   while (input[*pi].token == SL_PP_WHITESPACE) {
-      (*pi)++;
-   }
-}
-
 static int
 _parse_defined(struct sl_pp_context *context,
-               const struct sl_pp_token_info *input,
-               unsigned int *pi,
+               struct sl_pp_token_buffer *buffer,
                struct sl_pp_process_state *state)
 {
+   struct sl_pp_token_info input;
    int parens = 0;
    int macro_name;
    struct sl_pp_macro *macro;
    int defined = 0;
    struct sl_pp_token_info result;
 
-   skip_whitespace(input, pi);
-   if (input[*pi].token == SL_PP_LPAREN) {
-      (*pi)++;
-      skip_whitespace(input, pi);
+   if (sl_pp_token_buffer_skip_white(buffer, &input)) {
+      return -1;
+   }
+
+   if (input.token == SL_PP_LPAREN) {
+      if (sl_pp_token_buffer_skip_white(buffer, &input)) {
+         return -1;
+      }
       parens = 1;
    }
 
-   if (input[*pi].token != SL_PP_IDENTIFIER) {
+   if (input.token != SL_PP_IDENTIFIER) {
       strcpy(context->error_msg, "expected an identifier");
       return -1;
    }
 
-   macro_name = input[*pi].data.identifier;
+   macro_name = input.data.identifier;
    for (macro = context->macro; macro; macro = macro->next) {
       if (macro->name == macro_name) {
          defined = 1;
          break;
       }
    }
-   (*pi)++;
 
    if (parens) {
-      skip_whitespace(input, pi);
-      if (input[*pi].token != SL_PP_RPAREN) {
+      if (sl_pp_token_buffer_skip_white(buffer, &input)) {
+         return -1;
+      }
+      if (input.token != SL_PP_RPAREN) {
          strcpy(context->error_msg, "expected `)'");
          return -1;
       }
-      (*pi)++;
    }
 
    result.token = SL_PP_UINT;
@@ -108,12 +103,10 @@ _evaluate_if_stack(struct sl_pp_context *context)
 
 static int
 _parse_if(struct sl_pp_context *context,
-          const struct sl_pp_token_info *input,
-          unsigned int first,
-          unsigned int last)
+          struct sl_pp_token_buffer *buffer)
 {
-   unsigned int i;
    struct sl_pp_process_state state;
+   int found_end = 0;
    struct sl_pp_token_info eof;
    int result;
 
@@ -123,34 +116,40 @@ _parse_if(struct sl_pp_context *context,
    }
 
    memset(&state, 0, sizeof(state));
-   for (i = first; i < last;) {
-      switch (input[i].token) {
+   while (!found_end) {
+      struct sl_pp_token_info input;
+
+      sl_pp_token_buffer_get(buffer, &input);
+      switch (input.token) {
       case SL_PP_WHITESPACE:
-         i++;
          break;
 
       case SL_PP_IDENTIFIER:
-         if (input[i].data.identifier == context->dict.defined) {
-            i++;
-            if (_parse_defined(context, input, &i, &state)) {
+         if (input.data.identifier == context->dict.defined) {
+            if (_parse_defined(context, buffer, &state)) {
                free(state.out);
                return -1;
             }
          } else {
-            if (sl_pp_macro_expand(context, input, &i, NULL, &state, sl_pp_macro_expand_unknown_to_0)) {
+            sl_pp_token_buffer_unget(buffer, &input);
+            if (sl_pp_macro_expand(context, buffer, NULL, &state, sl_pp_macro_expand_unknown_to_0)) {
                free(state.out);
                return -1;
             }
          }
          break;
 
+      case SL_PP_NEWLINE:
+      case SL_PP_EOF:
+         found_end = 1;
+         break;
+
       default:
-         if (sl_pp_process_out(&state, &input[i])) {
+         if (sl_pp_process_out(&state, &input)) {
             strcpy(context->error_msg, "out of memory");
             free(state.out);
             return -1;
          }
-         i++;
       }
    }
 
@@ -198,11 +197,9 @@ _parse_else(struct sl_pp_context *context)
 
 int
 sl_pp_process_if(struct sl_pp_context *context,
-                 const struct sl_pp_token_info *input,
-                 unsigned int first,
-                 unsigned int last)
+                 struct sl_pp_token_buffer *buffer)
 {
-   return _parse_if(context, input, first, last);
+   return _parse_if(context, buffer);
 }
 
 int
@@ -301,9 +298,7 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
 
 int
 sl_pp_process_elif(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int first,
-                   unsigned int last)
+                   struct sl_pp_token_buffer *buffer)
 {
    if (_parse_else(context)) {
       return -1;
@@ -311,7 +306,7 @@ sl_pp_process_elif(struct sl_pp_context *context,
 
    if (context->if_stack[context->if_ptr] & 1) {
       context->if_ptr++;
-      if (_parse_if(context, input, first, last)) {
+      if (_parse_if(context, buffer)) {
          return -1;
       }
    }

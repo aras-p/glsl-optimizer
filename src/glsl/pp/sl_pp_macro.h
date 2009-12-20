@@ -64,8 +64,7 @@ enum sl_pp_macro_expand_behaviour {
 
 int
 sl_pp_macro_expand(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int *pi,
+                   struct sl_pp_token_buffer *tokens,
                    struct sl_pp_macro *local,
                    struct sl_pp_process_state *state,
                    enum sl_pp_macro_expand_behaviour behaviour);

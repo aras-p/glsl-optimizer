@@ -31,6 +31,7 @@
 #include "sl_pp_dict.h"
 #include "sl_pp_macro.h"
 #include "sl_pp_purify.h"
+#include "sl_pp_token_util.h"
 
 
 #define SL_PP_MAX_IF_NESTING  64
@@ -81,6 +82,8 @@ struct sl_pp_context {
    char *getc_buf;
    unsigned int getc_buf_size;
    unsigned int getc_buf_capacity;
+
+   struct sl_pp_token_buffer tokens;
 };
 
 #endif /* SL_PP_CONTEXT_H */

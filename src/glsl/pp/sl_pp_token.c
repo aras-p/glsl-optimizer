@@ -507,7 +507,7 @@ _tokenise_number(struct sl_pp_context *context,
 }
 
 
-static int
+int
 sl_pp_token_get(struct sl_pp_context *context,
                 struct sl_pp_token_info *out)
 {
@@ -809,20 +809,16 @@ sl_pp_token_get(struct sl_pp_context *context,
 
 int
 sl_pp_tokenise(struct sl_pp_context *context,
-               const char *input,
-               const struct sl_pp_purify_options *options,
                struct sl_pp_token_info **output)
 {
    struct sl_pp_token_info *out = NULL;
    unsigned int out_len = 0;
    unsigned int out_max = 0;
 
-   sl_pp_purify_state_init(&context->pure, input, options);
-
    for (;;) {
       struct sl_pp_token_info info;
 
-      if (sl_pp_token_get(context, &info)) {
+      if (sl_pp_token_buffer_get(&context->tokens, &info)) {
          free(out);
          return -1;
       }

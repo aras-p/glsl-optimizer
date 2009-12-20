@@ -88,15 +88,6 @@ sl_pp_macro_reset(struct sl_pp_macro *macro)
    _macro_init(macro);
 }
 
-static void
-skip_whitespace(const struct sl_pp_token_info *input,
-                unsigned int *pi)
-{
-   while (input[*pi].token == SL_PP_WHITESPACE) {
-      (*pi)++;
-   }
-}
-
 static int
 _out_number(struct sl_pp_context *context,
             struct sl_pp_process_state *state,
@@ -119,24 +110,28 @@ _out_number(struct sl_pp_context *context,
 
 int
 sl_pp_macro_expand(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int *pi,
+                   struct sl_pp_token_buffer *tokens,
                    struct sl_pp_macro *local,
                    struct sl_pp_process_state *state,
                    enum sl_pp_macro_expand_behaviour behaviour)
 {
    int mute = (behaviour == sl_pp_macro_expand_mute);
+   struct sl_pp_token_info input;
    int macro_name;
    struct sl_pp_macro *macro = NULL;
    struct sl_pp_macro *actual_arg = NULL;
    unsigned int j;
 
-   if (input[*pi].token != SL_PP_IDENTIFIER) {
+   if (sl_pp_token_buffer_get(tokens, &input)) {
+      return -1;
+   }
+
+   if (input.token != SL_PP_IDENTIFIER) {
       strcpy(context->error_msg, "expected an identifier");
       return -1;
    }
 
-   macro_name = input[*pi].data.identifier;
+   macro_name = input.data.identifier;
 
    /* First look for predefined macros.
     */
@@ -145,21 +140,18 @@ sl_pp_macro_expand(struct sl_pp_context *context,
       if (!mute && _out_number(context, state, context->line)) {
          return -1;
       }
-      (*pi)++;
       return 0;
    }
    if (macro_name == context->dict.___FILE__) {
       if (!mute && _out_number(context, state, context->file)) {
          return -1;
       }
-      (*pi)++;
       return 0;
    }
    if (macro_name == context->dict.___VERSION__) {
       if (!mute && _out_number(context, state, 110)) {
          return -1;
       }
-      (*pi)++;
       return 0;
    }
 
@@ -175,7 +167,6 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                return -1;
             }
          }
-         (*pi)++;
          return 0;
       }
    }
@@ -187,7 +178,6 @@ sl_pp_macro_expand(struct sl_pp_context *context,
          if (!mute && _out_number(context, state, 1)) {
             return -1;
          }
-         (*pi)++;
          return 0;
       }
    }
@@ -215,25 +205,26 @@ sl_pp_macro_expand(struct sl_pp_context *context,
             return -1;
          }
       } else if (!mute) {
-         if (sl_pp_process_out(state, &input[*pi])) {
+         if (sl_pp_process_out(state, &input)) {
             strcpy(context->error_msg, "out of memory");
             return -1;
          }
       }
-      (*pi)++;
       return 0;
    }
 
-   (*pi)++;
-
    if (macro->num_args >= 0) {
-      skip_whitespace(input, pi);
-      if (input[*pi].token != SL_PP_LPAREN) {
+      if (sl_pp_token_buffer_skip_white(tokens, &input)) {
+         return -1;
+      }
+      if (input.token != SL_PP_LPAREN) {
          strcpy(context->error_msg, "expected `('");
          return -1;
       }
-      (*pi)++;
-      skip_whitespace(input, pi);
+      if (sl_pp_token_buffer_skip_white(tokens, &input)) {
+         return -1;
+      }
+      sl_pp_token_buffer_unget(tokens, &input);
    }
 
    if (macro->num_args > 0) {
@@ -242,103 +233,85 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
       for (j = 0; j < (unsigned int)macro->num_args; j++) {
          struct sl_pp_process_state arg_state;
-         unsigned int i;
          int done = 0;
          unsigned int paren_nesting = 0;
          struct sl_pp_token_info eof;
 
          memset(&arg_state, 0, sizeof(arg_state));
 
-         for (i = *pi; !done;) {
-            switch (input[i].token) {
+         while (!done) {
+            if (sl_pp_token_buffer_get(tokens, &input)) {
+               goto fail_arg;
+            }
+            switch (input.token) {
             case SL_PP_WHITESPACE:
-               i++;
                break;
 
             case SL_PP_COMMA:
                if (!paren_nesting) {
                   if (j < (unsigned int)macro->num_args - 1) {
                      done = 1;
-                     i++;
                   } else {
                      strcpy(context->error_msg, "too many actual macro arguments");
-                     return -1;
+                     goto fail_arg;
                   }
                } else {
-                  if (sl_pp_process_out(&arg_state, &input[i])) {
+                  if (sl_pp_process_out(&arg_state, &input)) {
                      strcpy(context->error_msg, "out of memory");
-                     free(arg_state.out);
-                     return -1;
+                     goto fail_arg;
                   }
-                  i++;
                }
                break;
 
             case SL_PP_LPAREN:
                paren_nesting++;
-               if (sl_pp_process_out(&arg_state, &input[i])) {
-                  strcpy(context->error_msg, "out of memory");
-                  free(arg_state.out);
-                  return -1;
+               if (sl_pp_process_out(&arg_state, &input)) {
+                  goto oom_arg;
                }
-               i++;
                break;
 
             case SL_PP_RPAREN:
                if (!paren_nesting) {
                   if (j == (unsigned int)macro->num_args - 1) {
                      done = 1;
-                     i++;
                   } else {
                      strcpy(context->error_msg, "too few actual macro arguments");
-                     return -1;
+                     goto fail_arg;
                   }
                } else {
                   paren_nesting--;
-                  if (sl_pp_process_out(&arg_state, &input[i])) {
-                     strcpy(context->error_msg, "out of memory");
-                     free(arg_state.out);
-                     return -1;
+                  if (sl_pp_process_out(&arg_state, &input)) {
+                     goto oom_arg;
                   }
-                  i++;
                }
                break;
 
             case SL_PP_IDENTIFIER:
-               if (sl_pp_macro_expand(context, input, &i, local, &arg_state, sl_pp_macro_expand_normal)) {
-                  free(arg_state.out);
-                  return -1;
+               sl_pp_token_buffer_unget(tokens, &input);
+               if (sl_pp_macro_expand(context, tokens, local, &arg_state, sl_pp_macro_expand_normal)) {
+                  goto fail_arg;
                }
                break;
 
             case SL_PP_EOF:
                strcpy(context->error_msg, "too few actual macro arguments");
-               return -1;
+               goto fail_arg;
 
             default:
-               if (sl_pp_process_out(&arg_state, &input[i])) {
-                  strcpy(context->error_msg, "out of memory");
-                  free(arg_state.out);
-                  return -1;
+               if (sl_pp_process_out(&arg_state, &input)) {
+                  goto oom_arg;
                }
-               i++;
             }
          }
 
-         (*pi) = i;
-
          eof.token = SL_PP_EOF;
          if (sl_pp_process_out(&arg_state, &eof)) {
-            strcpy(context->error_msg, "out of memory");
-            free(arg_state.out);
-            return -1;
+            goto oom_arg;
          }
 
          *pmacro = sl_pp_macro_new();
          if (!*pmacro) {
-            strcpy(context->error_msg, "out of memory");
-            free(arg_state.out);
-            return -1;
+            goto oom_arg;
          }
 
          (**pmacro).name = formal_arg->name;
@@ -346,47 +319,95 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
          formal_arg = formal_arg->next;
          pmacro = &(**pmacro).next;
+
+         continue;
+
+oom_arg:
+         strcpy(context->error_msg, "out of memory");
+fail_arg:
+         free(arg_state.out);
+         goto fail;
       }
    }
 
    /* Right paren for non-empty argument list has already been eaten. */
    if (macro->num_args == 0) {
-      skip_whitespace(input, pi);
-      if (input[*pi].token != SL_PP_RPAREN) {
-         strcpy(context->error_msg, "expected `)'");
-         return -1;
+      if (sl_pp_token_buffer_skip_white(tokens, &input)) {
+         goto fail;
       }
-      (*pi)++;
+      if (input.token != SL_PP_RPAREN) {
+         strcpy(context->error_msg, "expected `)'");
+         goto fail;
+      }
    }
 
-   for (j = 0;;) {
-      switch (macro->body[j].token) {
-      case SL_PP_NEWLINE:
-         if (sl_pp_process_out(state, &macro->body[j])) {
-            strcpy(context->error_msg, "out of memory");
-            return -1;
-         }
-         j++;
-         break;
+   /* XXX: This is all wrong, we should be ungetting all tokens
+    *      back to the main token buffer.
+    */
+   {
+      struct sl_pp_token_buffer buffer;
 
-      case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state, behaviour)) {
-            return -1;
-         }
-         break;
+      /* Seek to the end.
+       */
+      for (j = 0; macro->body[j].token != SL_PP_EOF; j++) {
+      }
+      j++;
 
-      case SL_PP_EOF:
-         sl_pp_macro_free(actual_arg);
-         return 0;
+      /* Create a context-less token buffer since we are not going to underrun
+       * its internal buffer.
+       */
+      if (sl_pp_token_buffer_init(&buffer, NULL)) {
+         strcpy(context->error_msg, "out of memory");
+         goto fail;
+      }
 
-      default:
-         if (!mute) {
-            if (sl_pp_process_out(state, &macro->body[j])) {
+      /* Unget the tokens in reverse order so later they will be fetched correctly.
+       */
+      for (; j > 0; j--) {
+         sl_pp_token_buffer_unget(&buffer, &macro->body[j - 1]);
+      }
+
+      /* Expand.
+       */
+      for (;;) {
+         struct sl_pp_token_info input;
+
+         sl_pp_token_buffer_get(&buffer, &input);
+         switch (input.token) {
+         case SL_PP_NEWLINE:
+            if (sl_pp_process_out(state, &input)) {
                strcpy(context->error_msg, "out of memory");
-               return -1;
+               sl_pp_token_buffer_destroy(&buffer);
+               goto fail;
+            }
+            break;
+
+         case SL_PP_IDENTIFIER:
+            sl_pp_token_buffer_unget(&buffer, &input);
+            if (sl_pp_macro_expand(context, &buffer, actual_arg, state, behaviour)) {
+               sl_pp_token_buffer_destroy(&buffer);
+               goto fail;
+            }
+            break;
+
+         case SL_PP_EOF:
+            sl_pp_token_buffer_destroy(&buffer);
+            sl_pp_macro_free(actual_arg);
+            return 0;
+
+         default:
+            if (!mute) {
+               if (sl_pp_process_out(state, &input)) {
+                  strcpy(context->error_msg, "out of memory");
+                  sl_pp_token_buffer_destroy(&buffer);
+                  goto fail;
+               }
             }
          }
-         j++;
       }
    }
+
+fail:
+   sl_pp_macro_free(actual_arg);
+   return -1;
 }

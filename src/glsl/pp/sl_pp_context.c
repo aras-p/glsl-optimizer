@@ -32,7 +32,8 @@
 
 
 struct sl_pp_context *
-sl_pp_context_create(void)
+sl_pp_context_create(const char *input,
+                     const struct sl_pp_purify_options *options)
 {
    struct sl_pp_context *context;
 
@@ -46,8 +47,14 @@ sl_pp_context_create(void)
       return NULL;
    }
 
-   context->getc_buf = malloc(64 * sizeof(char));
+   context->getc_buf_capacity = 64;
+   context->getc_buf = malloc(context->getc_buf_capacity * sizeof(char));
    if (!context->getc_buf) {
+      sl_pp_context_destroy(context);
+      return NULL;
+   }
+
+   if (sl_pp_token_buffer_init(&context->tokens, context)) {
       sl_pp_context_destroy(context);
       return NULL;
    }
@@ -60,6 +67,8 @@ sl_pp_context_create(void)
    context->line = 1;
    context->file = 0;
 
+   sl_pp_purify_state_init(&context->pure, input, options);
+
    return context;
 }
 
@@ -70,6 +79,7 @@ sl_pp_context_destroy(struct sl_pp_context *context)
       free(context->cstr_pool);
       sl_pp_macro_free(context->macro);
       free(context->getc_buf);
+      sl_pp_token_buffer_destroy(&context->tokens);
       free(context);
    }
 }

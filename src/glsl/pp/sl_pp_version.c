@@ -33,21 +33,23 @@
 
 int
 sl_pp_version(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
-              unsigned int *version,
-              unsigned int *tokens_eaten)
+              unsigned int *version)
 {
-   unsigned int i = 0;
+   struct sl_pp_token_peek peek;
    unsigned int line = context->line;
 
    /* Default values if `#version' is not present. */
    *version = 110;
-   *tokens_eaten = 0;
+
+   if (sl_pp_token_peek_init(&peek, &context->tokens)) {
+      return -1;
+   }
 
    /* There can be multiple `#version' directives present.
     * Accept the value of the last one.
     */
    for (;;) {
+      struct sl_pp_token_info input;
       int found_hash = 0;
       int found_version = 0;
       int found_number = 0;
@@ -55,82 +57,101 @@ sl_pp_version(struct sl_pp_context *context,
 
       /* Skip whitespace and newlines and seek for hash. */
       while (!found_hash) {
-         switch (input[i].token) {
+         if (sl_pp_token_peek_get(&peek, &input)) {
+            sl_pp_token_peek_destroy(&peek);
+            return -1;
+         }
+
+         switch (input.token) {
          case SL_PP_NEWLINE:
             line++;
-            /* pass thru */
+            break;
+
          case SL_PP_WHITESPACE:
-            i++;
             break;
 
          case SL_PP_HASH:
-            i++;
             found_hash = 1;
             break;
 
          default:
+            sl_pp_token_peek_destroy(&peek);
             return 0;
          }
       }
 
       /* Skip whitespace and seek for `version'. */
       while (!found_version) {
-         switch (input[i].token) {
+         if (sl_pp_token_peek_get(&peek, &input)) {
+            sl_pp_token_peek_destroy(&peek);
+            return -1;
+         }
+
+         switch (input.token) {
          case SL_PP_WHITESPACE:
-            i++;
             break;
 
          case SL_PP_IDENTIFIER:
-            if (input[i].data.identifier != context->dict.version) {
+            if (input.data.identifier != context->dict.version) {
+               sl_pp_token_peek_destroy(&peek);
                return 0;
             }
-            i++;
             found_version = 1;
             break;
 
          default:
+            sl_pp_token_peek_destroy(&peek);
             return 0;
          }
       }
 
+      sl_pp_token_peek_commit(&peek);
+
       /* Skip whitespace and seek for version number. */
       while (!found_number) {
-         switch (input[i].token) {
+         if (sl_pp_token_buffer_get(&context->tokens, &input)) {
+            sl_pp_token_peek_destroy(&peek);
+            return -1;
+         }
+
+         switch (input.token) {
          case SL_PP_WHITESPACE:
-            i++;
             break;
 
          case SL_PP_UINT:
-            *version = atoi(sl_pp_context_cstr(context, input[i].data._uint));
-            i++;
+            *version = atoi(sl_pp_context_cstr(context, input.data._uint));
             found_number = 1;
             break;
 
          default:
             strcpy(context->error_msg, "expected version number after `#version'");
+            sl_pp_token_peek_destroy(&peek);
             return -1;
          }
       }
 
       /* Skip whitespace and seek for either newline or eof. */
       while (!found_end) {
-         switch (input[i].token) {
+         if (sl_pp_token_buffer_get(&context->tokens, &input)) {
+            sl_pp_token_peek_destroy(&peek);
+            return -1;
+         }
+
+         switch (input.token) {
          case SL_PP_WHITESPACE:
-            i++;
             break;
 
          case SL_PP_NEWLINE:
             line++;
             /* pass thru */
          case SL_PP_EOF:
-            i++;
-            *tokens_eaten = i;
             context->line = line;
             found_end = 1;
             break;
 
          default:
             strcpy(context->error_msg, "expected end of line after version number");
+            sl_pp_token_peek_destroy(&peek);
             return -1;
          }
       }

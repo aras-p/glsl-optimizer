@@ -123,9 +123,11 @@ struct sl_pp_token_info {
 struct sl_pp_purify_options;
 
 int
+sl_pp_token_get(struct sl_pp_context *context,
+                struct sl_pp_token_info *out);
+
+int
 sl_pp_tokenise(struct sl_pp_context *context,
-               const char *input,
-               const struct sl_pp_purify_options *options,
                struct sl_pp_token_info **output);
 
 #endif /* SL_PP_TOKEN_H */

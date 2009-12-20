@@ -31,15 +31,6 @@
 #include "sl_pp_public.h"
 
 
-static void
-skip_whitespace(const struct sl_pp_token_info *input,
-                unsigned int *pi)
-{
-   while (input[*pi].token == SL_PP_WHITESPACE) {
-      (*pi)++;
-   }
-}
-
 int
 sl_pp_process_out(struct sl_pp_process_state *state,
                   const struct sl_pp_token_info *token)
@@ -68,12 +59,10 @@ sl_pp_process_out(struct sl_pp_process_state *state,
 
 int
 sl_pp_process(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
               struct sl_pp_token_info **output)
 {
-   unsigned int i = 0;
-   int found_eof = 0;
    struct sl_pp_process_state state;
+   int found_eof = 0;
 
    memset(&state, 0, sizeof(state));
 
@@ -96,101 +85,111 @@ sl_pp_process(struct sl_pp_context *context,
    }
 
    while (!found_eof) {
-      skip_whitespace(input, &i);
-      if (input[i].token == SL_PP_HASH) {
-         i++;
-         skip_whitespace(input, &i);
-         switch (input[i].token) {
+      struct sl_pp_token_info input;
+
+      if (sl_pp_token_buffer_skip_white(&context->tokens, &input)) {
+         return -1;
+      }
+      if (input.token == SL_PP_HASH) {
+         if (sl_pp_token_buffer_skip_white(&context->tokens, &input)) {
+            return -1;
+         }
+         switch (input.token) {
          case SL_PP_IDENTIFIER:
             {
                int name;
                int found_eol = 0;
-               unsigned int first;
-               unsigned int last;
                struct sl_pp_token_info endof;
+               struct sl_pp_token_peek peek;
+               int result;
 
                /* Directive name. */
-               name = input[i].data.identifier;
-               i++;
-               skip_whitespace(input, &i);
+               name = input.data.identifier;
 
-               first = i;
+               if (sl_pp_token_buffer_skip_white(&context->tokens, &input)) {
+                  return -1;
+               }
+               sl_pp_token_buffer_unget(&context->tokens, &input);
+
+               if (sl_pp_token_peek_init(&peek, &context->tokens)) {
+                  return -1;
+               }
 
                while (!found_eol) {
-                  switch (input[i].token) {
+                  if (sl_pp_token_peek_get(&peek, &input)) {
+                     sl_pp_token_peek_destroy(&peek);
+                     return -1;
+                  }
+                  switch (input.token) {
                   case SL_PP_NEWLINE:
                      /* Preserve newline just for the sake of line numbering. */
-                     endof = input[i];
-                     i++;
+                     endof = input;
                      found_eol = 1;
                      break;
 
                   case SL_PP_EOF:
-                     endof = input[i];
-                     i++;
+                     endof = input;
                      found_eof = 1;
                      found_eol = 1;
                      break;
-
-                  default:
-                     i++;
                   }
                }
 
-               last = i - 1;
-
                if (name == context->dict._if) {
-                  if (sl_pp_process_if(context, input, first, last)) {
-                     return -1;
+                  struct sl_pp_token_buffer buffer;
+
+                  result = sl_pp_token_peek_to_buffer(&peek, &buffer);
+                  if (result == 0) {
+                     result = sl_pp_process_if(context, &buffer);
+                     sl_pp_token_buffer_destroy(&buffer);
                   }
                } else if (name == context->dict.ifdef) {
-                  if (sl_pp_process_ifdef(context, input, first, last)) {
-                     return -1;
-                  }
+                  result = sl_pp_process_ifdef(context, peek.tokens, 0, peek.size - 1);
                } else if (name == context->dict.ifndef) {
-                  if (sl_pp_process_ifndef(context, input, first, last)) {
-                     return -1;
-                  }
+                  result = sl_pp_process_ifndef(context, peek.tokens, 0, peek.size - 1);
                } else if (name == context->dict.elif) {
-                  if (sl_pp_process_elif(context, input, first, last)) {
-                     return -1;
+                  struct sl_pp_token_buffer buffer;
+
+                  result = sl_pp_token_peek_to_buffer(&peek, &buffer);
+                  if (result == 0) {
+                     result = sl_pp_process_elif(context, &buffer);
+                     sl_pp_token_buffer_destroy(&buffer);
                   }
                } else if (name == context->dict._else) {
-                  if (sl_pp_process_else(context, input, first, last)) {
-                     return -1;
-                  }
+                  result = sl_pp_process_else(context, peek.tokens, 0, peek.size - 1);
                } else if (name == context->dict.endif) {
-                  if (sl_pp_process_endif(context, input, first, last)) {
-                     return -1;
-                  }
+                  result = sl_pp_process_endif(context, peek.tokens, 0, peek.size - 1);
                } else if (context->if_value) {
                   if (name == context->dict.define) {
-                     if (sl_pp_process_define(context, input, first, last)) {
-                        return -1;
-                     }
+                     result = sl_pp_process_define(context, peek.tokens, 0, peek.size - 1);
                   } else if (name == context->dict.error) {
-                     sl_pp_process_error(context, input, first, last);
-                     return -1;
+                     sl_pp_process_error(context, peek.tokens, 0, peek.size - 1);
+                     result = -1;
                   } else if (name == context->dict.extension) {
-                     if (sl_pp_process_extension(context, input, first, last, &state)) {
-                        return -1;
-                     }
+                     result = sl_pp_process_extension(context, peek.tokens, 0, peek.size - 1, &state);
                   } else if (name == context->dict.line) {
-                     if (sl_pp_process_line(context, input, first, last, &state)) {
-                        return -1;
+                     struct sl_pp_token_buffer buffer;
+
+                     result = sl_pp_token_peek_to_buffer(&peek, &buffer);
+                     if (result == 0) {
+                        result = sl_pp_process_line(context, &buffer, &state);
+                        sl_pp_token_buffer_destroy(&buffer);
                      }
                   } else if (name == context->dict.pragma) {
-                     if (sl_pp_process_pragma(context, input, first, last, &state)) {
-                        return -1;
-                     }
+                     result = sl_pp_process_pragma(context, peek.tokens, 0, peek.size - 1, &state);
                   } else if (name == context->dict.undef) {
-                     if (sl_pp_process_undef(context, input, first, last)) {
-                        return -1;
-                     }
+                     result = sl_pp_process_undef(context, peek.tokens, 0, peek.size - 1);
                   } else {
                      strcpy(context->error_msg, "unrecognised directive name");
-                     return -1;
+                     result = -1;
                   }
+               }
+
+               sl_pp_token_peek_commit(&peek);
+               sl_pp_token_peek_destroy(&peek);
+
+               if (result) {
+                  return result;
                }
 
                if (sl_pp_process_out(&state, &endof)) {
@@ -203,21 +202,19 @@ sl_pp_process(struct sl_pp_context *context,
 
          case SL_PP_NEWLINE:
             /* Empty directive. */
-            if (sl_pp_process_out(&state, &input[i])) {
+            if (sl_pp_process_out(&state, &input)) {
                strcpy(context->error_msg, "out of memory");
                return -1;
             }
             context->line++;
-            i++;
             break;
 
          case SL_PP_EOF:
             /* Empty directive. */
-            if (sl_pp_process_out(&state, &input[i])) {
+            if (sl_pp_process_out(&state, &input)) {
                strcpy(context->error_msg, "out of memory");
                return -1;
             }
-            i++;
             found_eof = 1;
             break;
 
@@ -228,36 +225,40 @@ sl_pp_process(struct sl_pp_context *context,
       } else {
          int found_eol = 0;
 
+         sl_pp_token_buffer_unget(&context->tokens, &input);
+
          while (!found_eol) {
-            switch (input[i].token) {
+            if (sl_pp_token_buffer_get(&context->tokens, &input)) {
+               return -1;
+            }
+
+            switch (input.token) {
             case SL_PP_WHITESPACE:
                /* Drop whitespace all together at this point. */
-               i++;
                break;
 
             case SL_PP_NEWLINE:
                /* Preserve newline just for the sake of line numbering. */
-               if (sl_pp_process_out(&state, &input[i])) {
+               if (sl_pp_process_out(&state, &input)) {
                   strcpy(context->error_msg, "out of memory");
                   return -1;
                }
                context->line++;
-               i++;
                found_eol = 1;
                break;
 
             case SL_PP_EOF:
-               if (sl_pp_process_out(&state, &input[i])) {
+               if (sl_pp_process_out(&state, &input)) {
                   strcpy(context->error_msg, "out of memory");
                   return -1;
                }
-               i++;
                found_eof = 1;
                found_eol = 1;
                break;
 
             case SL_PP_IDENTIFIER:
-               if (sl_pp_macro_expand(context, input, &i, NULL, &state,
+               sl_pp_token_buffer_unget(&context->tokens, &input);
+               if (sl_pp_macro_expand(context, &context->tokens, NULL, &state,
                                       context->if_value ? sl_pp_macro_expand_normal : sl_pp_macro_expand_mute)) {
                   return -1;
                }
@@ -265,12 +266,11 @@ sl_pp_process(struct sl_pp_context *context,
 
             default:
                if (context->if_value) {
-                  if (sl_pp_process_out(&state, &input[i])) {
+                  if (sl_pp_process_out(&state, &input)) {
                      strcpy(context->error_msg, "out of memory");
                      return -1;
                   }
                }
-               i++;
             }
          }
       }

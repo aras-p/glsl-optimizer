@@ -33,39 +33,44 @@
 
 int
 sl_pp_process_line(struct sl_pp_context *context,
-                   const struct sl_pp_token_info *input,
-                   unsigned int first,
-                   unsigned int last,
+                   struct sl_pp_token_buffer *buffer,
                    struct sl_pp_process_state *pstate)
 {
-   unsigned int i;
    struct sl_pp_process_state state;
+   int found_end = 0;
    int line_number = -1;
    int file_number = -1;
    unsigned int line;
    unsigned int file;
 
    memset(&state, 0, sizeof(state));
-   for (i = first; i < last;) {
-      switch (input[i].token) {
+   while (!found_end) {
+      struct sl_pp_token_info input;
+
+      sl_pp_token_buffer_get(buffer, &input);
+      switch (input.token) {
       case SL_PP_WHITESPACE:
-         i++;
          break;
 
       case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, input, &i, NULL, &state, sl_pp_macro_expand_normal)) {
+         sl_pp_token_buffer_unget(buffer, &input);
+         if (sl_pp_macro_expand(context, buffer, NULL, &state, sl_pp_macro_expand_normal)) {
             free(state.out);
             return -1;
          }
          break;
 
+      case SL_PP_NEWLINE:
+      case SL_PP_EOF:
+         found_end = 1;
+         break;
+
       default:
-         if (sl_pp_process_out(&state, &input[i])) {
+         if (sl_pp_process_out(&state, &input)) {
             strcpy(context->error_msg, "out of memory");
             free(state.out);
             return -1;
          }
-         i++;
       }
    }
 
