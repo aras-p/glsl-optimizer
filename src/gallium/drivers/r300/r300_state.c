@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +41,120 @@
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
+
+static boolean blend_discard_if_src_alpha_0(unsigned srcRGB, unsigned srcA,
+                                            unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_ALPHA == 0, and the following state is set, the colorbuffer
+     * will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_SRC_COLOR ||
+            srcA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+            srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            dstA == PIPE_BLENDFACTOR_ONE);
+}
+
+static boolean blend_discard_if_src_alpha_1(unsigned srcRGB, unsigned srcA,
+                                            unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_ALPHA == 1, and the following state is set, the colorbuffer
+     * will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            srcA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
+            dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            dstA == PIPE_BLENDFACTOR_ONE);
+}
+
+static boolean blend_discard_if_src_color_0(unsigned srcRGB, unsigned srcA,
+                                            unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_COLOR == (0,0,0), and the following state is set, the colorbuffer
+     * will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_SRC_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_ONE);
+}
+
+static boolean blend_discard_if_src_color_1(unsigned srcRGB, unsigned srcA,
+                                            unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_COLOR == (1,1,1), and the following state is set, the colorbuffer
+     * will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_SRC_COLOR ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_ONE);
+}
+
+static boolean blend_discard_if_src_alpha_color_0(unsigned srcRGB, unsigned srcA,
+                                                  unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_ALPHA_COLOR == (0,0,0,0), and the following state is set,
+     * the colorbuffer will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_SRC_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_SRC_COLOR ||
+            srcA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE ||
+            srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            dstRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            dstA == PIPE_BLENDFACTOR_ONE);
+}
+
+static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA,
+                                                  unsigned dstRGB, unsigned dstA)
+{
+    /* If the blend equation is ADD or REVERSE_SUBTRACT,
+     * SRC_ALPHA_COLOR == (1,1,1,1), and the following state is set,
+     * the colorbuffer will not be changed.
+     * Notice that the dst factors are the src factors inverted. */
+    return (srcRGB == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_ZERO) &&
+           (srcA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+            srcA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_ZERO) &&
+           (dstRGB == PIPE_BLENDFACTOR_SRC_COLOR ||
+            dstRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            dstRGB == PIPE_BLENDFACTOR_ONE) &&
+           (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
+            dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+            dstA == PIPE_BLENDFACTOR_ONE);
+}
 
 /* Create a new blend state based on the CSO blend state.
  *
@@ -86,7 +201,51 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
             blend->blend_control |= R300_READ_ENABLE;
 
-        /* XXX implement the optimization with DISCARD_SRC_PIXELS*/
+        /* Optimization: discard pixels which don't change the colorbuffer.
+         *
+         * The code below is non-trivial and some math is involved.
+         *
+         * Discarding pixels must be disabled when FP16 AA is enabled.
+         * This is a hardware bug. Also, this implementation wouldn't work
+         * with FP blending enabled and equation clamping disabled.
+         *
+         * Equations other than ADD are rarely used and therefore won't be
+         * optimized. */
+        if ((eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
+            (eqA == PIPE_BLEND_ADD || eqA == PIPE_BLEND_REVERSE_SUBTRACT)) {
+            /* ADD: X+Y
+             * REVERSE_SUBTRACT: Y-X
+             *
+             * The idea is:
+             * If X = src*srcFactor = 0 and Y = dst*dstFactor = 1,
+             * then CB will not be changed.
+             *
+             * Given the srcFactor and dstFactor variables, we can derive
+             * what src and dst should be equal to and discard appropriate
+             * pixels.
+             */
+            if (blend_discard_if_src_alpha_0(srcRGB, srcA, dstRGB, dstA)) {
+                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
+            } else if (blend_discard_if_src_alpha_1(srcRGB, srcA,
+                                                    dstRGB, dstA)) {
+                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1;
+            } else if (blend_discard_if_src_color_0(srcRGB, srcA,
+                                                    dstRGB, dstA)) {
+                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_0;
+            } else if (blend_discard_if_src_color_1(srcRGB, srcA,
+                                                    dstRGB, dstA)) {
+                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_1;
+            } else if (blend_discard_if_src_alpha_color_0(srcRGB, srcA,
+                                                          dstRGB, dstA)) {
+                blend->blend_control |=
+                    R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0;
+            } else if (blend_discard_if_src_alpha_color_1(srcRGB, srcA,
+                                                          dstRGB, dstA)) {
+                blend->blend_control |=
+                    R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1;
+            }
+        }
+
         /* XXX implement the optimization with SRC_ALPHA_?_NO_READ */
 
         /* separate alpha */
