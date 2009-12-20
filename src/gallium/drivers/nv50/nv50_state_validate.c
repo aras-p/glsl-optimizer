@@ -185,6 +185,9 @@ nv50_state_emit(struct nv50_context *nv50)
 	struct nv50_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 
+	/* I don't want to copy headers from the winsys. */
+	screen->cur_ctx = nv50;
+
 	if (nv50->pctx_id != screen->cur_pctx) {
 		if (nv50->state.fb)
 			nv50->state.dirty |= NV50_NEW_FRAMEBUFFER;

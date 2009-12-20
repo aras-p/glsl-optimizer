@@ -98,6 +98,19 @@ so_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo,
 	so_data(so, data);
 }
 
+/* Determine if this buffer object is referenced by this state object. */
+static INLINE boolean
+so_bo_is_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo)
+{
+	int i;
+
+	for (i = 0; i < so->cur_reloc; i++)
+		if (so->reloc[i].bo == bo)
+			return true;
+
+	return false;
+}
+
 static INLINE void
 so_dump(struct nouveau_stateobj *so)
 {

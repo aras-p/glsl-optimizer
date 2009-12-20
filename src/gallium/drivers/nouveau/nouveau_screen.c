@@ -127,7 +127,17 @@ nouveau_screen_bo_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 		      unsigned usage)
 {
 	struct nouveau_bo *bo = nouveau_bo(pb);
+	struct nouveau_screen *nscreen = nouveau_screen(pscreen);
 	int ret;
+
+	if (nscreen->pre_pipebuffer_map_callback) {
+		ret = nscreen->pre_pipebuffer_map_callback(pscreen, pb, usage);
+		if (ret) {
+			debug_printf("pre_pipebuffer_map_callback failed %d\n",
+				ret);
+			return NULL;
+		}
+	}
 
 	ret = nouveau_bo_map(bo, nouveau_screen_map_flags(usage));
 	if (ret) {
@@ -143,11 +153,22 @@ nouveau_screen_bo_map_range(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			    unsigned offset, unsigned length, unsigned usage)
 {
 	struct nouveau_bo *bo = nouveau_bo(pb);
+	struct nouveau_screen *nscreen = nouveau_screen(pscreen);
 	uint32_t flags = nouveau_screen_map_flags(usage);
 	int ret;
 
+	if (nscreen->pre_pipebuffer_map_callback) {
+		ret = nscreen->pre_pipebuffer_map_callback(pscreen, pb, usage);
+		if (ret) {
+			debug_printf("pre_pipebuffer_map_callback failed %d\n",
+				ret);
+			return NULL;
+		}
+	}
+
 	ret = nouveau_bo_map_range(bo, offset, length, flags);
 	if (ret) {
+		nouveau_bo_unmap(bo);
 		if (!(flags & NOUVEAU_BO_NOWAIT) || ret != -EBUSY)
 			debug_printf("map_range failed: %d\n", ret);
 		return NULL;
