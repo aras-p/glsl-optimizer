@@ -1306,18 +1306,22 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 {
 	struct nv50_program_exec *e;
 	const int r_pred = 1;
-	unsigned cvn = CVT_F32_F32;
 
-	if (src->mod & NV50_MOD_NEG)
-		cvn |= CVT_NEG;
-	/* write predicate reg */
-	emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
-
-	/* conditional discard */
 	e = exec(pc);
-	e->inst[0] = 0x00000002;
-	set_long(pc, e);
-	set_pred(pc, 0x1 /* LT */, r_pred, e);
+	e->inst[0] = 0x00000002; /* discard */
+	set_long(pc, e); /* sets cond code to ALWAYS */
+
+	if (src) {
+		unsigned cvn = CVT_F32_F32;
+
+		set_pred(pc, 0x1 /* cc = LT */, r_pred, e);
+
+		if (src->mod & NV50_MOD_NEG)
+			cvn |= CVT_NEG;
+		/* write predicate reg */
+		emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
+	}
+
 	emit(pc, e);
 }
 
@@ -1341,6 +1345,19 @@ emit_branch(struct nv50_pc *pc, int pred, unsigned cc,
 		set_pred(pc, cc, pred, e);
 	emit(pc, e);
 	return pc->p->exec_tail;
+}
+
+static void
+emit_ret(struct nv50_pc *pc, int pred, unsigned cc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x30000002;
+	set_long(pc, e);
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+
+	emit(pc, e);
 }
 
 #define QOP_ADD 0
@@ -2063,6 +2080,24 @@ nv50_kill_branch(struct nv50_pc *pc)
 	return TRUE;
 }
 
+static void
+nv50_fp_move_results(struct nv50_pc *pc)
+{
+	struct nv50_reg reg;
+	unsigned i;
+
+	ctor_reg(&reg, P_TEMP, -1, -1);
+
+	for (i = 0; i < pc->result_nr * 4; ++i) {
+		if (pc->result[i].rhw < 0 || pc->result[i].hw < 0)
+			continue;
+		if (pc->result[i].rhw != pc->result[i].hw) {
+			reg.hw = pc->result[i].rhw;
+			emit_mov(pc, &reg, &pc->result[i]);
+		}
+	}
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc,
 		     const struct tgsi_full_instruction *inst)
@@ -2291,10 +2326,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		terminate_mbb(pc);
 		break;
 	case TGSI_OPCODE_KIL:
+		assert(src[0][0] && src[0][1] && src[0][2] && src[0][3]);
 		emit_kil(pc, src[0][0]);
 		emit_kil(pc, src[0][1]);
 		emit_kil(pc, src[0][2]);
 		emit_kil(pc, src[0][3]);
+		break;
+	case TGSI_OPCODE_KILP:
+		emit_kil(pc, NULL);
 		break;
 	case TGSI_OPCODE_LIT:
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
@@ -2351,6 +2390,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_RCP:
 		emit_flop(pc, 0, brdc, src[0][0]);
+		break;
+	case TGSI_OPCODE_RET:
+		if (pc->p->type == PIPE_SHADER_FRAGMENT)
+			nv50_fp_move_results(pc);
+		emit_ret(pc, -1, 0);
 		break;
 	case TGSI_OPCODE_RSQ:
 		emit_flop(pc, 2, brdc, src[0][0]);
@@ -3107,24 +3151,6 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 		ctor_reg(&pc->r_addr[i], P_ADDR, -256, i + 1);
 
 	return TRUE;
-}
-
-static void
-nv50_fp_move_results(struct nv50_pc *pc)
-{
-	struct nv50_reg reg;
-	unsigned i;
-
-	ctor_reg(&reg, P_TEMP, -1, -1);
-
-	for (i = 0; i < pc->result_nr * 4; ++i) {
-		if (pc->result[i].rhw < 0 || pc->result[i].hw < 0)
-			continue;
-		if (pc->result[i].rhw != pc->result[i].hw) {
-			reg.hw = pc->result[i].rhw;
-			emit_mov(pc, &reg, &pc->result[i]);
-		}
-	}
 }
 
 static void
