@@ -201,7 +201,7 @@ util_format_is_depth_and_stencil(enum pipe_format format)
 
 
 /**
- * Return total bits needed for the pixel format.
+ * Return total bits needed for the pixel format per block.
  */
 static INLINE uint
 util_format_get_blocksizebits(enum pipe_format format)
@@ -213,11 +213,11 @@ util_format_get_blocksizebits(enum pipe_format format)
       return 0;
    }
 
-   return desc->block.bits / (desc->block.width * desc->block.height);
+   return desc->block.bits;
 }
 
 /**
- * Return bytes per pixel for the given format.
+ * Return bytes per block (not pixel) for the given format.
  */
 static INLINE uint
 util_format_get_blocksize(enum pipe_format format)
