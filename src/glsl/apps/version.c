@@ -41,9 +41,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    struct sl_pp_context *context;
-   struct sl_pp_token_info *tokens;
    unsigned int version;
-   unsigned int tokens_eaten;
    FILE *out;
 
    if (argc != 3) {
@@ -88,7 +86,7 @@ main(int argc,
 
    memset(&options, 0, sizeof(options));
 
-   context = sl_pp_context_create();
+   context = sl_pp_context_create(inbuf, &options);
    if (!context) {
       fprintf(out, "$CONTEXERROR\n");
 
@@ -97,33 +95,19 @@ main(int argc,
       return 1;
    }
 
-   if (sl_pp_tokenise(context, inbuf, &options, &tokens)) {
+   if (sl_pp_version(context, &version)) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       sl_pp_context_destroy(context);
       free(inbuf);
       fclose(out);
-      return 1;
-   }
-
-   free(inbuf);
-
-   if (sl_pp_version(context, tokens, &version, &tokens_eaten)) {
-      fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
-
-      sl_pp_context_destroy(context);
-      free(tokens);
-      fclose(out);
       return -1;
    }
 
    sl_pp_context_destroy(context);
-   free(tokens);
+   free(inbuf);
 
-   fprintf(out,
-           "%u\n%u\n",
-           version,
-           tokens_eaten);
+   fprintf(out, "%u\n", version);
 
    fclose(out);
 
