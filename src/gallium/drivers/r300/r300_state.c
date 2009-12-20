@@ -66,7 +66,11 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
 
-        /* optimization: some operations do not require the destination color */
+        /* Optimization: some operations do not require the destination color.
+         *
+         * When SRC_ALPHA_SATURATE is used, colorbuffer reads must be enabled,
+         * otherwise blending gives incorrect results. It seems to be
+         * a hardware bug. */
         if (eqRGB == PIPE_BLEND_MIN || eqA == PIPE_BLEND_MIN ||
             eqRGB == PIPE_BLEND_MAX || eqA == PIPE_BLEND_MAX ||
             dstRGB != PIPE_BLENDFACTOR_ZERO ||
@@ -78,7 +82,8 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcA == PIPE_BLENDFACTOR_DST_COLOR ||
             srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
             srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
-            srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA)
+            srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
             blend->blend_control |= R300_READ_ENABLE;
 
         /* XXX implement the optimization with DISCARD_SRC_PIXELS*/
