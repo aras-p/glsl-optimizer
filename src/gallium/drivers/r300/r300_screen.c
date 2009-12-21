@@ -83,6 +83,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
 
     switch (param) {
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
             /* XXX I'm told this goes up to 16 */
             return 8;
         case PIPE_CAP_NPOT_TEXTURES:
@@ -143,9 +144,11 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
             return 1;
         case PIPE_CAP_SM3:
-            return 1;
-        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-            return 8;
+            if (r300screen->caps->is_r500) {
+                return 1;
+            } else {
+                return 0;
+            }
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
