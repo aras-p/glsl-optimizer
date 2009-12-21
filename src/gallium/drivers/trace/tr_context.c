@@ -178,16 +178,15 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
    pipe_mutex_unlock(tr_ctx->draw_mutex);
 }
 
-static INLINE boolean
+static INLINE void
 trace_context_draw_arrays(struct pipe_context *_pipe,
                           unsigned mode, unsigned start, unsigned count)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
-   boolean result;
 
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
-      return 0;
+      return;
 
    trace_context_draw_block(tr_ctx, 1);
 
@@ -198,19 +197,15 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
    trace_dump_arg(uint, start);
    trace_dump_arg(uint, count);
 
-   result = pipe->draw_arrays(pipe, mode, start, count);
-
-   trace_dump_ret(bool, result);
+   pipe->draw_arrays(pipe, mode, start, count);
 
    trace_dump_call_end();
 
    trace_context_draw_block(tr_ctx, 2);
-
-   return result;
 }
 
 
-static INLINE boolean
+static INLINE void
 trace_context_draw_elements(struct pipe_context *_pipe,
                           struct pipe_buffer *_indexBuffer,
                           unsigned indexSize,
@@ -220,10 +215,9 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
-   boolean result;
 
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
-      return 0;
+      return;
 
    trace_context_draw_block(tr_ctx, 1);
 
@@ -238,19 +232,15 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    trace_dump_arg(uint, start);
    trace_dump_arg(uint, count);
 
-   result = pipe->draw_elements(pipe, indexBuffer, indexSize, mode, start, count);
-
-   trace_dump_ret(bool, result);
+   pipe->draw_elements(pipe, indexBuffer, indexSize, mode, start, count);
 
    trace_dump_call_end();
 
    trace_context_draw_block(tr_ctx, 2);
-
-   return result;
 }
 
 
-static INLINE boolean
+static INLINE void
 trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   struct pipe_buffer *_indexBuffer,
                                   unsigned indexSize,
@@ -264,10 +254,9 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
-   boolean result;
 
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
-      return 0;
+      return;
 
    trace_context_draw_block(tr_ctx, 1);
 
@@ -284,18 +273,14 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    trace_dump_arg(uint, start);
    trace_dump_arg(uint, count);
 
-   result = pipe->draw_range_elements(pipe,
-                                      indexBuffer,
-                                      indexSize, minIndex, maxIndex,
-                                      mode, start, count);
-
-   trace_dump_ret(bool, result);
+   pipe->draw_range_elements(pipe,
+                             indexBuffer,
+                             indexSize, minIndex, maxIndex,
+                             mode, start, count);
 
    trace_dump_call_end();
 
    trace_context_draw_block(tr_ctx, 2);
-
-   return result;
 }
 
 
