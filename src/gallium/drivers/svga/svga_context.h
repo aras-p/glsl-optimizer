@@ -369,7 +369,7 @@ struct svga_context
 #define SVGA_NEW_FRAME_BUFFER        0x800
 #define SVGA_NEW_STIPPLE             0x1000
 #define SVGA_NEW_SCISSOR             0x2000
-#define SVGA_NEW_BLEND_COLOR         0x5000
+#define SVGA_NEW_BLEND_COLOR         0x4000
 #define SVGA_NEW_CLIP                0x8000
 #define SVGA_NEW_VIEWPORT            0x10000
 #define SVGA_NEW_PRESCALE            0x20000
