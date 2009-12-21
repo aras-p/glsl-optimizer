@@ -612,6 +612,8 @@ intelInitContext(struct intel_context *intel,
 
    if (IS_GEN6(intel->intelScreen->deviceID)) {
       intel->gen = 6;
+      intel->needs_ff_sync = GL_TRUE;
+      intel->has_luminance_srgb = GL_TRUE;
    } else if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
