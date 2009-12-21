@@ -1227,13 +1227,8 @@ static void r700UpdatePolygonMode(GLcontext * ctx)
 		/* Handle GL_CW (clock wise and GL_CCW (counter clock wise)
 		 * correctly by selecting the correct front and back face
 		 */
-		if (ctx->Polygon.FrontFace == GL_CCW) {
-			f = ctx->Polygon.FrontMode;
-			b = ctx->Polygon.BackMode;
-		} else {
-			f = ctx->Polygon.BackMode;
-			b = ctx->Polygon.FrontMode;
-		}
+		f = ctx->Polygon.FrontMode;
+		b = ctx->Polygon.BackMode;
 
 		/* Enable polygon mode */
 		SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DUAL_MODE, POLY_MODE_shift, POLY_MODE_mask);
