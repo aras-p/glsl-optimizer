@@ -109,18 +109,13 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog,
-#if 0
    &brw_wm_prog,
 
-   /* Once all the programs are done, we know how large urb entry
-    * sizes need to be and can decide if we need to change the urb
-    * layout.
-    */
-   &brw_curbe_offsets,
-#endif
    &gen6_clip_vp,
    &gen6_sf_vp,
    &gen6_cc_vp,
+
+   /* Command packets: */
    &gen6_viewport_state,	/* must do after *_vp stages */
 
    &gen6_urb,
@@ -133,42 +128,29 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
 
+   &brw_wm_samplers,
+
    &gen6_vs_state,
    &gen6_gs_state,
    &gen6_clip_state,
-#if 0
-   &brw_wm_samplers,
-
-   &brw_wm_unit,
-#endif
    &gen6_sf_state,
+   /* &gen6_wm_state, */
 
    &gen6_scissor_state,
 
-#if 0
-   /* Command packets:
-    */
    &brw_invarient_state,
-#endif
 
    &brw_state_base_address,
 
-#if 0
-   &brw_binding_table_pointers,
-   &brw_blend_constant_color,
-#endif
+   &gen6_binding_table_pointers,
 
    &brw_depthbuffer,
 
-#if 0
    &brw_polygon_stipple,
    &brw_polygon_stipple_offset,
 
    &brw_line_stipple,
    &brw_aa_line_parameters,
-
-   &brw_psp_urb_cbs,
-#endif
 
    &brw_drawing_rect,
 

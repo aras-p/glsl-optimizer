@@ -485,6 +485,8 @@ const struct brw_tracked_state brw_line_stipple = {
 
 static void upload_invarient_state( struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
+
    {
       /* 0x61040000  Pipeline Select */
       /*     PipelineSelect            : 0 */
@@ -496,7 +498,7 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &ps);
    }
 
-   {
+   if (intel->gen < 6) {
       struct brw_global_depth_offset_clamp gdo;
       memset(&gdo, 0, sizeof(gdo));
 
