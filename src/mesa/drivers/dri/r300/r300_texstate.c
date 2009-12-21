@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
@@ -84,6 +83,7 @@ static const struct tx_table {
 	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
 #endif
+	_ASSIGN(XRGB8888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
@@ -156,11 +156,11 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
+	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat) {
 	case MESA_FORMAT_Z16:
 		format = formats[0];
 		break;
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_Z24:
 		format = formats[1];
 		break;
 	case MESA_FORMAT_Z32:
@@ -203,19 +203,17 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 {
 	const struct gl_texture_image *firstImage;
-	int firstlevel = t->mt ? t->mt->firstLevel : 0;
-	    
-	firstImage = t->base.Image[0][firstlevel];
+	firstImage = t->base.Image[0][t->minLod];
 
 	if (!t->image_override
-	    && VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
-		if (firstImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+	    && VALID_FORMAT(firstImage->TexFormat)) {
+		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->pp_txformat = tx_table[firstImage->TexFormat->MesaFormat].format;
+			t->pp_txformat = tx_table[firstImage->TexFormat].format;
 		}
 
-		t->pp_txfilter |= tx_table[firstImage->TexFormat->MesaFormat].filter;
+		t->pp_txfilter |= tx_table[firstImage->TexFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
@@ -228,7 +226,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	t->pp_txsize = (((R300_TX_WIDTHMASK_MASK & ((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)))
 			| ((R300_TX_HEIGHTMASK_MASK & ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)))
 			| ((R300_TX_DEPTHMASK_MASK & ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)))
-			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
+			| ((R300_TX_MAX_MIP_LEVEL_MASK & ((t->maxLod - t->minLod) << R300_TX_MAX_MIP_LEVEL_SHIFT))));
 
 	t->tile_bits = 0;
 
@@ -239,7 +237,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
-		unsigned int align = (64 / t->mt->bpp) - 1;
+		unsigned int align = (64 / _mesa_get_format_bytes(firstImage->TexFormat)) - 1;
 		t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 		if (!t->image_override)
 			t->pp_txpitch = ((firstImage->Width + align) & ~align) - 1;
@@ -438,20 +436,13 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
-	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
-							internalFormat,
-							type, format, 0);
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;

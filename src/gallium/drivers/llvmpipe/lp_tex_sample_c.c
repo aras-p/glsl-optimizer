@@ -544,7 +544,7 @@ compute_lambda(struct tgsi_sampler *tgsi_sampler,
       float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
       dsdx = fabsf(dsdx);
       dsdy = fabsf(dsdy);
-      rho = MAX2(dsdx, dsdy) * texture->width[0];
+      rho = MAX2(dsdx, dsdy) * texture->width0;
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
@@ -552,7 +552,7 @@ compute_lambda(struct tgsi_sampler *tgsi_sampler,
       float max;
       dtdx = fabsf(dtdx);
       dtdy = fabsf(dtdy);
-      max = MAX2(dtdx, dtdy) * texture->height[0];
+      max = MAX2(dtdx, dtdy) * texture->height0;
       rho = MAX2(rho, max);
    }
    if (p) {
@@ -561,7 +561,7 @@ compute_lambda(struct tgsi_sampler *tgsi_sampler,
       float max;
       dpdx = fabsf(dpdx);
       dpdy = fabsf(dpdy);
-      max = MAX2(dpdx, dpdy) * texture->depth[0];
+      max = MAX2(dpdx, dpdy) * texture->depth0;
       rho = MAX2(rho, max);
    }
 
@@ -726,9 +726,9 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
    const struct pipe_texture *texture = samp->texture;
    const struct pipe_sampler_state *sampler = samp->sampler;
 
-   if (x < 0 || x >= (int) texture->width[level] ||
-       y < 0 || y >= (int) texture->height[level] ||
-       z < 0 || z >= (int) texture->depth[level]) {
+   if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
+       y < 0 || y >= (int) u_minify(texture->height0, level) ||
+       z < 0 || z >= (int) u_minify(texture->depth0, level)) {
       rgba[0][j] = sampler->border_color[0];
       rgba[1][j] = sampler->border_color[1];
       rgba[2][j] = sampler->border_color[2];
@@ -1093,8 +1093,8 @@ lp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
 
    assert(sampler->normalized_coords);
 
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
 
@@ -1250,9 +1250,9 @@ lp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
 
    assert(sampler->normalized_coords);
 
-   width = texture->width[level0];
-   height = texture->height[level0];
-   depth = texture->depth[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
+   depth = u_minify(texture->depth0, level0);
 
    assert(width > 0);
    assert(height > 0);
@@ -1394,8 +1394,8 @@ lp_get_samples_rect(struct tgsi_sampler *tgsi_sampler,
    /* texture RECTS cannot be mipmapped */
    assert(level0 == level1);
 
-   width = texture->width[level0];
-   height = texture->height[level0];
+   width = u_minify(texture->width0, level0);
+   height = u_minify(texture->height0, level0);
 
    assert(width > 0);
 
@@ -1513,8 +1513,8 @@ lp_get_samples(struct tgsi_sampler *tgsi_sampler,
 
    /* Do this elsewhere: 
     */
-   samp->xpot = util_unsigned_logbase2( samp->texture->width[0] );
-   samp->ypot = util_unsigned_logbase2( samp->texture->height[0] );
+   samp->xpot = util_unsigned_logbase2( samp->texture->width0 );
+   samp->ypot = util_unsigned_logbase2( samp->texture->height0 );
 
    /* Try to hook in a faster sampler.  Ultimately we'll have to
     * code-generate these.  Luckily most of this looks like it is

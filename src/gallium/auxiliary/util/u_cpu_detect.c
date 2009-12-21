@@ -67,18 +67,20 @@
 
 #if defined(PIPE_OS_WINDOWS)
 #include <windows.h>
+#if defined(MSVC)
+#include <intrin.h>
+#endif
 #endif
 
 
 struct util_cpu_caps util_cpu_caps;
 
 static int has_cpuid(void);
-static int cpuid(uint32_t ax, uint32_t *p);
 
 #if defined(PIPE_ARCH_X86)
 
 /* The sigill handlers */
-#if defined(PIPE_OS_LINUX) //&& defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
+#if defined(PIPE_OS_LINUX) /*&& defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)*/
 static void
 sigill_handler_sse(int signal, struct sigcontext sc)
 {
@@ -238,7 +240,7 @@ check_os_katmai_support(void)
       __asm __volatile ("xorps %xmm0, %xmm0");
 #elif defined(PIPE_CC_MSVC)
       __asm {
-          xorps xmm0, xmm0        // executing SSE instruction
+          xorps xmm0, xmm0        /* executing SSE instruction */
       }
 #else
 #error Unsupported compiler
@@ -281,7 +283,7 @@ check_os_katmai_support(void)
     * and therefore to be safe I'm going to leave this test in here.
     */
    if (util_cpu_caps.has_sse) {
-      //      test_os_katmai_exception_support();
+      /* test_os_katmai_exception_support(); */
    }
 
    /* Restore the original signal handlers.
@@ -337,12 +339,11 @@ static int has_cpuid(void)
 
 /**
  * @sa cpuid.h included in gcc-4.3 onwards.
+ * @sa http://msdn.microsoft.com/en-us/library/hskdteyh.aspx
  */
-static INLINE int
+static INLINE void
 cpuid(uint32_t ax, uint32_t *p)
 {
-   int ret = -1;
-
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
    __asm __volatile (
      "xchgl %%ebx, %1\n\t"
@@ -354,7 +355,6 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64)
    __asm __volatile (
      "cpuid\n\t"
@@ -364,14 +364,14 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_MSVC)
-   __cpuid(ax, p);
-
-   ret = 0;
+   __cpuid(p, ax);
+#else
+   p[0] = 0;
+   p[1] = 0;
+   p[2] = 0;
+   p[3] = 0;
 #endif
-
-   return ret;
 }
 #endif /* X86 or X86_64 */
 

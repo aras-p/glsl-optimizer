@@ -60,6 +60,7 @@ extern "C" {
 #define PIPE_MAX_COLOR_BUFS        8
 #define PIPE_MAX_CONSTANT         32
 #define PIPE_MAX_SAMPLERS         16
+#define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
@@ -343,9 +344,9 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned width[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned height[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned width0;
+   unsigned height0;
+   unsigned depth0;
 
    struct pipe_format_block block;
    unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */

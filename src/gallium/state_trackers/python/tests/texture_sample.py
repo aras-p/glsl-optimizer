@@ -216,7 +216,7 @@ class TextureColorSampleTest(TestCase):
     
         # vertex shader
         vs = Shader('''
-            VERT1.1
+            VERT
             DCL IN[0], POSITION, CONSTANT
             DCL IN[1], GENERIC, CONSTANT
             DCL OUT[0], POSITION, CONSTANT
@@ -236,7 +236,7 @@ class TextureColorSampleTest(TestCase):
             PIPE_TEXTURE_CUBE: "CUBE",
         }[target]
         fs = Shader('''
-            FRAG1.1
+            FRAG
             DCL IN[0], GENERIC[0], LINEAR
             DCL OUT[0], COLOR, CONSTANT
             DCL SAMP[0], CONSTANT
@@ -415,7 +415,7 @@ class TextureDepthSampleTest(TestCase):
     
         # vertex shader
         vs = Shader('''
-            VERT1.1
+            VERT
             DCL IN[0], POSITION, CONSTANT
             DCL IN[1], GENERIC, CONSTANT
             DCL OUT[0], POSITION, CONSTANT
@@ -435,7 +435,7 @@ class TextureDepthSampleTest(TestCase):
             PIPE_TEXTURE_CUBE: "CUBE",
         }[target]
         fs = Shader('''
-            FRAG1.1
+            FRAG
             DCL IN[0], GENERIC[0], LINEAR
             DCL SAMP[0], CONSTANT
             DCL OUT[0].z, POSITION

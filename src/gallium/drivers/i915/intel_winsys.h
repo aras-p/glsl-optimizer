@@ -42,21 +42,21 @@ enum intel_buffer_usage
    INTEL_USAGE_2D_TARGET = 0x04,
    INTEL_USAGE_2D_SOURCE = 0x08,
    /* use on vertex */
-   INTEL_USAGE_VERTEX    = 0x10,
+   INTEL_USAGE_VERTEX    = 0x10
 };
 
 enum intel_buffer_type
 {
    INTEL_NEW_TEXTURE,
    INTEL_NEW_SCANOUT, /**< a texture used for scanning out from */
-   INTEL_NEW_VERTEX,
+   INTEL_NEW_VERTEX
 };
 
 enum intel_buffer_tile
 {
    INTEL_TILE_NONE,
    INTEL_TILE_X,
-   INTEL_TILE_Y,
+   INTEL_TILE_Y
 };
 
 struct intel_batchbuffer {

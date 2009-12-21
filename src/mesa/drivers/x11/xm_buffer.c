@@ -32,6 +32,7 @@
 #include "glxheader.h"
 #include "xmesaP.h"
 #include "main/imports.h"
+#include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 
@@ -338,18 +339,15 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
 
       if (visual->rgbMode) {
          xrb->Base.InternalFormat = GL_RGBA;
+         xrb->Base.Format = MESA_FORMAT_RGBA8888;
          xrb->Base._BaseFormat = GL_RGBA;
          xrb->Base.DataType = GL_UNSIGNED_BYTE;
-         xrb->Base.RedBits = visual->redBits;
-         xrb->Base.GreenBits = visual->greenBits;
-         xrb->Base.BlueBits = visual->blueBits;
-         xrb->Base.AlphaBits = visual->alphaBits;
       }
       else {
          xrb->Base.InternalFormat = GL_COLOR_INDEX;
+         xrb->Base.Format = MESA_FORMAT_CI8;
          xrb->Base._BaseFormat = GL_COLOR_INDEX;
          xrb->Base.DataType = GL_UNSIGNED_INT;
-         xrb->Base.IndexBits = visual->indexBits;
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }

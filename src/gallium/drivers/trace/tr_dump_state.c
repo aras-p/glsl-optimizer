@@ -83,15 +83,15 @@ void trace_dump_template(const struct pipe_texture *templat)
    trace_dump_member(format, templat, format);
 
    trace_dump_member_begin("width");
-   trace_dump_array(uint, templat->width, 1);
+   trace_dump_uint(templat->width0);
    trace_dump_member_end();
 
    trace_dump_member_begin("height");
-   trace_dump_array(uint, templat->height, 1);
+   trace_dump_uint(templat->height0);
    trace_dump_member_end();
 
    trace_dump_member_begin("depth");
-   trace_dump_array(uint, templat->depth, 1);
+   trace_dump_uint(templat->depth0);
    trace_dump_member_end();
 
    trace_dump_member_begin("block");

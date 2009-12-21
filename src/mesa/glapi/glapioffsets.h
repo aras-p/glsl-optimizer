@@ -29,6 +29,8 @@
 #if !defined( _GLAPI_OFFSETS_H_ )
 #  define _GLAPI_OFFSETS_H_
 
+/* this file should not be included directly in mesa */
+
 #define _gloffset_NewList 0
 #define _gloffset_EndList 1
 #define _gloffset_CallList 2
@@ -438,7 +440,7 @@
 #define _gloffset_MultiTexCoord4sARB 406
 #define _gloffset_MultiTexCoord4svARB 407
 
-#if !defined(IN_DRI_DRIVER)
+#if !defined(_GLAPI_USE_REMAP_TABLE)
 
 #define _gloffset_AttachShader 408
 #define _gloffset_CreateProgram 409
@@ -1219,6 +1221,6 @@
 #define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
 #define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
 
-#endif /* !defined(IN_DRI_DRIVER) */
+#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 
 #endif /* !defined( _GLAPI_OFFSETS_H_ ) */

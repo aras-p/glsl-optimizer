@@ -86,7 +86,8 @@ st_print_current(void)
    }
 #endif
 
-   tgsi_dump( st->vp->state.tokens, 0 );
+   if (st->vp->varients)
+      tgsi_dump( st->vp->varients[0].state.tokens, 0 );
    if (st->vp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->vp->Base.Base.Parameters);
 

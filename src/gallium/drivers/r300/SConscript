@@ -9,8 +9,6 @@ env.Append(CPPPATH = ['#/src/mesa/drivers/dri/r300/compiler', '#/include', '#/sr
 r300 = env.ConvenienceLibrary(
     target = 'r300',
     source = [
-        'r3xx_fs.c',
-        'r5xx_fs.c',
         'r300_chipset.c',
         'r300_clear.c',
         'r300_context.c',
@@ -25,7 +23,6 @@ r300 = env.ConvenienceLibrary(
         'r300_state_derived.c',
         'r300_state_invariant.c',
         'r300_vs.c',
-        'r300_surface.c',
         'r300_texture.c',
         'r300_tgsi_to_rc.c',
     ] + r300compiler) + r300compiler

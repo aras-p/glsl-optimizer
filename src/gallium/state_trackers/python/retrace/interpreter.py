@@ -279,9 +279,9 @@ class Screen(Object):
     def texture_create(self, templat):
         return self.real.texture_create(
             format = templat.format,
-            width = templat.width[0],
-            height = templat.height[0],
-            depth = templat.depth[0],
+            width = templat.width0,
+            height = templat.height0,
+            depth = templat.depth0,
             last_level = templat.last_level,
             target = templat.target,
             tex_usage = templat.tex_usage,
@@ -314,7 +314,7 @@ class Screen(Object):
         if texture is None:
             return None
         transfer = Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
-        if transfer and usage & gallium.PIPE_TRANSFER_READ
+        if transfer and usage & gallium.PIPE_TRANSFER_READ:
             if self.interpreter.options.all:
                 self.interpreter.present(transfer.surface, 'transf_read', x, y, w, h)
         return transfer
@@ -388,7 +388,7 @@ class Context(Object):
     def delete_sampler_state(self, state):
         pass
 
-    def bind_sampler_states(self, num_states, states):
+    def bind_fragment_sampler_states(self, num_states, states):
         for i in range(num_states):
             self.real.set_sampler(i, states[i])
         
@@ -459,7 +459,7 @@ class Context(Object):
         sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, buffer):
-        if buffer is not None:
+        if buffer is not None and buffer.buffer is not None:
             self.real.set_constant_buffer(shader, index, buffer.buffer)
 
             self.dump_constant_buffer(buffer.buffer)
@@ -486,7 +486,7 @@ class Context(Object):
     def set_viewport_state(self, state):
         self.real.set_viewport(state)
 
-    def set_sampler_textures(self, num_textures, textures):
+    def set_fragment_sampler_textures(self, num_textures, textures):
         for i in range(num_textures):
             self.real.set_sampler_texture(i, textures[i])
 

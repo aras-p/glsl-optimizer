@@ -426,7 +426,7 @@ static void mask_using_texture(struct pipe_texture *texture,
    if (!surface)
       return;
    if (!intersect_rectangles(surface->width, surface->height,
-                             texture->width[0], texture->height[0],
+                             texture->width0, texture->height0,
                              x, y, width, height,
                              offsets, loc))
       return;
@@ -493,9 +493,9 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       pt.format = PIPE_FORMAT_A8R8G8B8_UNORM;
       pf_get_block(PIPE_FORMAT_A8R8G8B8_UNORM, &pt.block);
       pt.last_level = 0;
-      pt.width[0] = width;
-      pt.height[0] = height;
-      pt.depth[0] = 1;
+      pt.width0 = width;
+      pt.height0 = height;
+      pt.depth0 = 1;
       pt.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
       pt.compressed = 0;
 
@@ -607,8 +607,8 @@ void mask_render_to(struct path *path,
    struct vg_mask_layer *temp_layer;
    VGint width, height;
 
-   width = fb_buffers->alpha_mask->width[0];
-   height = fb_buffers->alpha_mask->width[0];
+   width = fb_buffers->alpha_mask->width0;
+   height = fb_buffers->alpha_mask->width0;
 
    temp_layer = mask_layer_create(width, height);
 

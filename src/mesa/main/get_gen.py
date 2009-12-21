@@ -1006,7 +1006,7 @@ StateVars = [
 	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
 	  ["ctx->Const.MaxVertexTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
-	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxCombinedTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 
 	# GL_ARB_shader_objects
 	# Actually, this token isn't part of GL_ARB_shader_objects, but is
@@ -1046,7 +1046,7 @@ def ConversionFunc(fromType, toType):
 	elif fromType == GLint and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	elif fromType == GLint and toType == GLint64:
-		return ""
+		return "(GLint64)"
 	elif fromType == GLint64 and toType == GLfloat: # but not GLfloatN!
 		return "(GLfloat)"
 	else:

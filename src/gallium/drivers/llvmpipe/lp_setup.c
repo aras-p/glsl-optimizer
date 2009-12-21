@@ -33,7 +33,6 @@
  */
 
 #include "lp_context.h"
-#include "lp_prim_setup.h"
 #include "lp_quad.h"
 #include "lp_setup.h"
 #include "lp_state.h"
@@ -89,6 +88,8 @@ struct setup_context {
 
    float oneoverarea;
    int facing;
+
+   float pixel_offset;
 
    struct quad_header quad[MAX_QUADS];
    struct quad_header *quad_ptrs[MAX_QUADS];
@@ -483,6 +484,16 @@ static boolean setup_sort_vertices( struct setup_context *setup,
       ((det > 0.0) ^ 
        (setup->llvmpipe->rasterizer->front_winding == PIPE_WINDING_CW));
 
+   /* Prepare pixel offset for rasterisation:
+    *  - pixel center (0.5, 0.5) for GL, or
+    *  - assume (0.0, 0.0) for other APIs.
+    */
+   if (setup->llvmpipe->rasterizer->gl_rasterization_rules) {
+      setup->pixel_offset = 0.5f;
+   } else {
+      setup->pixel_offset = 0.0f;
+   }
+
    return TRUE;
 }
 
@@ -508,7 +519,7 @@ static void tri_pos_coeff( struct setup_context *setup,
 
    /* calculate a0 as the value which would be sampled for the
     * fragment at (0,0), taking into account that we want to sample at
-    * pixel centers, in other words (0.5, 0.5).
+    * pixel centers, in other words (pixel_offset, pixel_offset).
     *
     * this is neat but unfortunately not a good way to do things for
     * triangles with very large values of dadx or dady as it will
@@ -519,8 +530,8 @@ static void tri_pos_coeff( struct setup_context *setup,
     * instead - i'll switch to this later.
     */
    setup->coef.a0[0][i] = (setup->vmin[vertSlot][i] -
-                           (dadx * (setup->vmin[0][0] - 0.5f) +
-                            dady * (setup->vmin[0][1] - 0.5f)));
+                           (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                            dady * (setup->vmin[0][1] - setup->pixel_offset)));
 
    /*
    debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
@@ -609,8 +620,8 @@ static void tri_linear_coeff( struct setup_context *setup,
        * instead - i'll switch to this later.
        */
       setup->coef.a0[1 + attrib][i] = (setup->vmin[vertSlot][i] -
-                     (dadx * (setup->vmin[0][0] - 0.5f) +
-                      dady * (setup->vmin[0][1] - 0.5f)));
+                     (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                      dady * (setup->vmin[0][1] - setup->pixel_offset)));
 
       /*
       debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
@@ -661,8 +672,8 @@ static void tri_persp_coeff( struct setup_context *setup,
       setup->coef.dadx[1 + attrib][i] = dadx;
       setup->coef.dady[1 + attrib][i] = dady;
       setup->coef.a0[1 + attrib][i] = (mina -
-                     (dadx * (setup->vmin[0][0] - 0.5f) +
-                      dady * (setup->vmin[0][1] - 0.5f)));
+                     (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                      dady * (setup->vmin[0][1] - setup->pixel_offset)));
    }
 }
 
@@ -746,12 +757,12 @@ static void setup_tri_coefficients( struct setup_context *setup )
 
 static void setup_tri_edges( struct setup_context *setup )
 {
-   float vmin_x = setup->vmin[0][0] + 0.5f;
-   float vmid_x = setup->vmid[0][0] + 0.5f;
+   float vmin_x = setup->vmin[0][0] + setup->pixel_offset;
+   float vmid_x = setup->vmid[0][0] + setup->pixel_offset;
 
-   float vmin_y = setup->vmin[0][1] - 0.5f;
-   float vmid_y = setup->vmid[0][1] - 0.5f;
-   float vmax_y = setup->vmax[0][1] - 0.5f;
+   float vmin_y = setup->vmin[0][1] - setup->pixel_offset;
+   float vmid_y = setup->vmid[0][1] - setup->pixel_offset;
+   float vmax_y = setup->vmax[0][1] - setup->pixel_offset;
 
    setup->emaj.sy = ceilf(vmin_y);
    setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
@@ -950,8 +961,8 @@ linear_pos_coeff(struct setup_context *setup,
    setup->coef.dadx[0][i] = dadx;
    setup->coef.dady[0][i] = dady;
    setup->coef.a0[0][i] = (setup->vmin[vertSlot][i] -
-                           (dadx * (setup->vmin[0][0] - 0.5f) +
-                            dady * (setup->vmin[0][1] - 0.5f)));
+                           (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                            dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
 
 
@@ -972,8 +983,8 @@ line_linear_coeff(struct setup_context *setup,
       setup->coef.dadx[1 + attrib][i] = dadx;
       setup->coef.dady[1 + attrib][i] = dady;
       setup->coef.a0[1 + attrib][i] = (setup->vmin[vertSlot][i] -
-                     (dadx * (setup->vmin[0][0] - 0.5f) +
-                      dady * (setup->vmin[0][1] - 0.5f)));
+                     (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                      dady * (setup->vmin[0][1] - setup->pixel_offset)));
    }
 }
 
@@ -998,8 +1009,8 @@ line_persp_coeff(struct setup_context *setup,
       setup->coef.dadx[1 + attrib][i] = dadx;
       setup->coef.dady[1 + attrib][i] = dady;
       setup->coef.a0[1 + attrib][i] = (setup->vmin[vertSlot][i] -
-                     (dadx * (setup->vmin[0][0] - 0.5f) +
-                      dady * (setup->vmin[0][1] - 0.5f)));
+                     (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                      dady * (setup->vmin[0][1] - setup->pixel_offset)));
    }
 }
 

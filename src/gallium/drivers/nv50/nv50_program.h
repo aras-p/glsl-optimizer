@@ -17,8 +17,7 @@ struct nv50_program_exec {
 
 struct nv50_sreg4 {
 	uint8_t hw;
-	uint8_t id_vp;
-	uint8_t id_fp;
+	uint8_t id; /* tgsi index, nv50 needs them sorted: flat ones last */
 
 	uint8_t mask;
 	boolean linear;

@@ -36,7 +36,7 @@ static GLint win = 0;
 
 static GLfloat xRot = 20.0f, yRot = 0.0f, zRot = 0.0f;
 
-static GLuint tangentAttrib;
+static GLint tangentAttrib;
 
 static GLboolean Anim = GL_FALSE;
 

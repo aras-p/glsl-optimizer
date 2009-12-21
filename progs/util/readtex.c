@@ -109,6 +109,7 @@ static rawImageRec *RawImageOpen(const char *fileName)
          raw->file = fopen(baseName + 1, "rb");
       if(raw->file == NULL) {
          perror(fileName);
+         free(raw);
          return NULL;
       }
    }
@@ -129,6 +130,12 @@ static rawImageRec *RawImageOpen(const char *fileName)
    if (raw->tmp == NULL || raw->tmpR == NULL || raw->tmpG == NULL ||
        raw->tmpB == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      free(raw->tmp);
+      free(raw->tmpR);
+      free(raw->tmpG);
+      free(raw->tmpB);
+      free(raw->tmpA);
+      free(raw);
       return NULL;
    }
 
@@ -138,6 +145,14 @@ static rawImageRec *RawImageOpen(const char *fileName)
       raw->rowSize = (GLint *)malloc(x);
       if (raw->rowStart == NULL || raw->rowSize == NULL) {
          fprintf(stderr, "Out of memory!\n");
+         free(raw->tmp);
+         free(raw->tmpR);
+         free(raw->tmpG);
+         free(raw->tmpB);
+         free(raw->tmpA);
+         free(raw->rowStart);
+         free(raw->rowSize);
+         free(raw);
          return NULL;
       }
       raw->rleEnd = 512 + (2 * x);
@@ -215,6 +230,7 @@ static void RawImageGetData(rawImageRec *raw, TK_RGBImageRec *final)
    final->data = (unsigned char *)malloc((raw->sizeX+1)*(raw->sizeY+1)*4);
    if (final->data == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      return;
    }
 
    ptr = final->data;
@@ -250,6 +266,7 @@ static TK_RGBImageRec *tkRGBImageLoad(const char *fileName)
    final = (TK_RGBImageRec *)malloc(sizeof(TK_RGBImageRec));
    if (final == NULL) {
       fprintf(stderr, "Out of memory!\n");
+      RawImageClose(raw);
       return NULL;
    }
    final->sizeX = raw->sizeX;
@@ -305,6 +322,7 @@ GLboolean LoadRGBMipmaps2( const char *imageFile, GLenum target,
       fprintf(stderr,
               "Error in LoadRGBMipmaps %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return GL_FALSE;
    }
 
@@ -356,6 +374,7 @@ GLubyte *LoadRGBImage( const char *imageFile, GLint *width, GLint *height,
       fprintf(stderr,
               "Error in LoadRGBImage %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return NULL;
    }
 
@@ -364,8 +383,10 @@ GLubyte *LoadRGBImage( const char *imageFile, GLint *width, GLint *height,
 
    bytes = image->sizeX * image->sizeY * image->components;
    buffer = (GLubyte *) malloc(bytes);
-   if (!buffer)
+   if (!buffer) {
+      FreeImage(image);
       return NULL;
+   }
 
    memcpy( (void *) buffer, (void *) image->data, bytes );
 
@@ -438,6 +459,7 @@ GLushort *LoadYUVImage( const char *imageFile, GLint *width, GLint *height )
       fprintf(stderr,
               "Error in LoadYUVImage %d-component images not implemented\n",
               image->components );
+      FreeImage(image);
       return NULL;
    }
 

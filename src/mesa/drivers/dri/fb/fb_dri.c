@@ -437,7 +437,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       /* XXX double-check these parameters (bpp vs cpp, etc) */
       {
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA,
+         driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                                    driScrnPriv->pFB,
                                                    driScrnPriv->fbBPP / 8,
                                                    driScrnPriv->fbOrigin,
@@ -451,7 +451,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
          /* XXX what are the correct origin/stride values? */
          GLvoid *backBuf = _mesa_malloc(driScrnPriv->fbStride
                                         * driScrnPriv->fbHeight);
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA,
+         driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                                    backBuf,
                                                    driScrnPriv->fbBPP /8,
                                                    driScrnPriv->fbOrigin,

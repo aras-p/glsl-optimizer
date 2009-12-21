@@ -97,7 +97,7 @@ static INLINE struct tgsi_token *tokens_from_assembly(const char *txt, int num_t
 
 /*
 static const char max_shader_preamble[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], POSITION, LINEAR\n"
    "DCL IN[1], GENERIC[0], PERSPECTIVE\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
@@ -168,7 +168,7 @@ create_preamble(char *txt,
    --end_temp;
    --end_sampler;
 
-   sprintf(txt, "FRAG1.1\n");
+   sprintf(txt, "FRAG\n");
 
    if (declare_input) {
       sprintf(txt + strlen(txt), "DCL IN[0], POSITION, LINEAR\n");

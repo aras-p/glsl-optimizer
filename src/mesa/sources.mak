@@ -33,6 +33,7 @@ MAIN_SOURCES = \
 	main/feedback.c \
 	main/ffvertex_prog.c \
 	main/fog.c \
+	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
 	main/getstring.c \
@@ -55,6 +56,7 @@ MAIN_SOURCES = \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
+	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
 	main/shaders.c \
@@ -67,6 +69,7 @@ MAIN_SOURCES = \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
 	main/texenvprogram.c \
+	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
 	main/texgetimage.c \

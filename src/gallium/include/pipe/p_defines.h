@@ -34,6 +34,23 @@
 extern "C" {
 #endif
 
+/**
+ * Gallium error codes.
+ *
+ * - A zero value always means success.
+ * - A negative value always means failure.
+ * - The meaning of a positive value is function dependent.
+ */
+enum pipe_error {
+   PIPE_OK = 0,
+   PIPE_ERROR = -1,    /**< Generic error */
+   PIPE_ERROR_BAD_INPUT = -2,
+   PIPE_ERROR_OUT_OF_MEMORY = -3,
+   PIPE_ERROR_RETRY = -4
+   /* TODO */
+};
+
+
 #define PIPE_BLENDFACTOR_ONE                 0x1
 #define PIPE_BLENDFACTOR_SRC_COLOR           0x2
 #define PIPE_BLENDFACTOR_SRC_ALPHA           0x3
@@ -208,9 +225,10 @@ enum pipe_transfer_usage {
 };
 
 
-/**
+/*
  * Buffer usage flags
  */
+
 #define PIPE_BUFFER_USAGE_CPU_READ  (1 << 0)
 #define PIPE_BUFFER_USAGE_CPU_WRITE (1 << 1)
 #define PIPE_BUFFER_USAGE_GPU_READ  (1 << 2)
@@ -219,9 +237,63 @@ enum pipe_transfer_usage {
 #define PIPE_BUFFER_USAGE_VERTEX    (1 << 5)
 #define PIPE_BUFFER_USAGE_INDEX     (1 << 6)
 #define PIPE_BUFFER_USAGE_CONSTANT  (1 << 7)
+
+/*
+ * CPU access flags.
+ *
+ * These flags should only be used for texture transfers or when mapping
+ * buffers.
+ *
+ * Note that the PIPE_BUFFER_USAGE_CPU_xxx flags above are also used for
+ * mapping. Either PIPE_BUFFER_USAGE_CPU_READ or PIPE_BUFFER_USAGE_CPU_WRITE
+ * must be set.
+ */
+
+/**
+ * Discards the memory within the mapped region.
+ *
+ * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
+ *
+ * See also:
+ * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
+ * - Direct3D's D3DLOCK_DISCARD flag.
+ */
 #define PIPE_BUFFER_USAGE_DISCARD   (1 << 8)
+
+/**
+ * Fail if the resource cannot be mapped immediately.
+ *
+ * See also:
+ * - Direct3D's D3DLOCK_DONOTWAIT flag.
+ * - Mesa3D's MESA_MAP_NOWAIT_BIT flag.
+ * - WDDM's D3DDDICB_LOCKFLAGS.DonotWait flag.
+ */
 #define PIPE_BUFFER_USAGE_DONTBLOCK (1 << 9)
-#define PIPE_BUFFER_USAGE_FLUSH_EXPLICIT (1 << 10) /**< See pipe_screen::buffer_flush_mapped_range */
+
+/**
+ * Do not attempt to synchronize pending operations on the resource when mapping.
+ *
+ * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
+ *
+ * See also:
+ * - OpenGL's ARB_map_buffer_range extension, MAP_UNSYNCHRONIZED_BIT flag.
+ * - Direct3D's D3DLOCK_NOOVERWRITE flag.
+ * - WDDM's D3DDDICB_LOCKFLAGS.IgnoreSync flag.
+ */
+#define PIPE_BUFFER_USAGE_UNSYNCHRONIZED (1 << 10)
+
+/**
+ * Written ranges will be notified later with
+ * pipe_screen::buffer_flush_mapped_range.
+ *
+ * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
+ *
+ * See also:
+ * - pipe_screen::buffer_flush_mapped_range
+ * - OpenGL's ARB_map_buffer_range extension, MAP_FLUSH_EXPLICIT_BIT flag.
+ */
+#define PIPE_BUFFER_USAGE_FLUSH_EXPLICIT (1 << 11)
+
 /** Pipe driver custom usage flags should be greater or equal to this value */
 #define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
 
@@ -316,6 +388,10 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
 #define PIPE_CAP_TGSI_CONT_SUPPORTED     27
 #define PIPE_CAP_BLEND_EQUATION_SEPARATE 28
+#define PIPE_CAP_SM3                     29  /*< Shader Model 3 supported */
+#define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
+#define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
+                                                 and fragment shaders combined */
 
 
 /**

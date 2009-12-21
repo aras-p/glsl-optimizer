@@ -55,16 +55,18 @@
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_stencil_two_side
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
-#include "extension_helper.h"
+#include "main/remap_helper.h"
+#include "utils.h"
 
 /**
  * Extension strings exported by the driver.
  */
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
    {"GL_ARB_fragment_shader", NULL},
    {"GL_ARB_map_buffer_range", GL_ARB_map_buffer_range_functions},
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
@@ -83,6 +85,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_env_combine", NULL},
    {"GL_ARB_texture_env_dot3", NULL},
    {"GL_ARB_texture_mirrored_repeat", NULL},
+   {"GL_ARB_texture_non_power_of_two", NULL},
    {"GL_ARB_texture_rectangle", NULL},
    {"GL_ARB_vertex_array_object", GL_ARB_vertex_array_object_functions},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
@@ -102,6 +105,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_EXT_pixel_buffer_object", NULL},
    {"GL_EXT_provoking_vertex", GL_EXT_provoking_vertex_functions},
    {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
+   {"GL_EXT_stencil_two_side", GL_EXT_stencil_two_side_functions},
    {"GL_EXT_stencil_wrap", NULL},
    {"GL_EXT_texture_edge_clamp", NULL},
    {"GL_EXT_texture_env_combine", NULL},
@@ -127,10 +131,7 @@ dri_init_extensions(struct dri_context *ctx)
     * capabilities of the pipe_screen. This is actually something
     * that can/should be done inside st_create_context().
     */
-   if (ctx)
-      driInitExtensions(ctx->st->ctx, card_extensions, GL_TRUE);
-   else
-      driInitExtensions(NULL, card_extensions, GL_FALSE);
+   driInitExtensions(ctx->st->ctx, card_extensions, GL_TRUE);
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

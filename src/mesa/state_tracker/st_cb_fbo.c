@@ -65,13 +65,7 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
       assert( 0 );
    }
 
-   strb->Base._ActualFormat = info.base_format;
-   strb->Base.RedBits = info.red_bits;
-   strb->Base.GreenBits = info.green_bits;
-   strb->Base.BlueBits = info.blue_bits;
-   strb->Base.AlphaBits = info.alpha_bits;
-   strb->Base.DepthBits = info.depth_bits;
-   strb->Base.StencilBits = info.stencil_bits;
+   strb->Base.Format = info.mesa_format;
    strb->Base.DataType = st_format_datatype(pipeFormat);
 
    return info.size;
@@ -134,9 +128,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       template.target = PIPE_TEXTURE_2D;
       template.format = format;
       pf_get_block(format, &template.block);
-      template.width[0] = width;
-      template.height[0] = height;
-      template.depth[0] = 1;
+      template.width0 = width;
+      template.height0 = height;
+      template.depth0 = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (pf_is_depth_stencil(format)) {
@@ -271,30 +265,24 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_A4R4G4B4_UNORM:
    case PIPE_FORMAT_R5G6B5_UNORM:
       strb->Base.InternalFormat = GL_RGBA;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT16;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_Z32_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
-      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
-      strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
    case PIPE_FORMAT_S8_UNORM:
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
-      strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
-      strb->Base._BaseFormat = GL_RGBA;
       break;
    default:
       _mesa_problem(NULL,
@@ -388,7 +376,7 @@ st_render_texture(GLcontext *ctx,
    rb->_BaseFormat = texImage->_BaseFormat;
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
-   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
+   /*printf("***** pipe texture %d x %d\n", pt->width0, pt->height0);*/
 
    pipe_texture_reference( &strb->texture, pt );
 

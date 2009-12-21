@@ -47,6 +47,7 @@
 #include "prog_instruction.h"
 #include "nvfragparse.h"
 #include "nvvertparse.h"
+#include "arbprogparse.h"
 #include "nvprogram.h"
 
 
@@ -595,6 +596,12 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (!ctx->Extensions.NV_vertex_program
+       && !ctx->Extensions.NV_fragment_program) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV()");
+      return;
+   }
+
    if (id == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glLoadProgramNV(id)");
       return;
@@ -627,7 +634,13 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
          }
          _mesa_HashInsert(ctx->Shared->Programs, id, vprog);
       }
-      _mesa_parse_nv_vertex_program(ctx, target, program, len, vprog);
+
+      if (ctx->Extensions.ARB_vertex_program
+	  && (strncmp((char *) program, "!!ARB", 5) == 0)) {
+	 _mesa_parse_arb_vertex_program(ctx, target, program, len, vprog);
+      } else {
+	 _mesa_parse_nv_vertex_program(ctx, target, program, len, vprog);
+      }
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV
             && ctx->Extensions.NV_fragment_program) {
@@ -642,6 +655,20 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
          _mesa_HashInsert(ctx->Shared->Programs, id, fprog);
       }
       _mesa_parse_nv_fragment_program(ctx, target, program, len, fprog);
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_ARB
+            && ctx->Extensions.ARB_fragment_program) {
+      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
+      if (!fprog || prog == &_mesa_DummyProgram) {
+         fprog = (struct gl_fragment_program *)
+            ctx->Driver.NewProgram(ctx, target, id);
+         if (!fprog) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
+            return;
+         }
+         _mesa_HashInsert(ctx->Shared->Programs, id, fprog);
+      }
+      _mesa_parse_arb_fragment_program(ctx, target, program, len, fprog);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glLoadProgramNV(target)");

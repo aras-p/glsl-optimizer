@@ -203,20 +203,20 @@ static void Init( void )
    }
 
 
-   program_local_parameter4fv = glutGetProcAddress( "glProgramLocalParameter4fvARB" );
-   program_env_parameter4fv = glutGetProcAddress( "glProgramEnvParameter4fvARB" );
+   program_local_parameter4fv = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC) glutGetProcAddress( "glProgramLocalParameter4fvARB" );
+   program_env_parameter4fv = (PFNGLPROGRAMENVPARAMETER4FVARBPROC) glutGetProcAddress( "glProgramEnvParameter4fvARB" );
 
-   get_program_local_parameterfv = glutGetProcAddress( "glGetProgramLocalParameterfvARB" );
-   get_program_env_parameterfv = glutGetProcAddress( "glGetProgramEnvParameterfvARB" );
+   get_program_local_parameterfv = (PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC) glutGetProcAddress( "glGetProgramLocalParameterfvARB" );
+   get_program_env_parameterfv = (PFNGLGETPROGRAMENVPARAMETERFVARBPROC) glutGetProcAddress( "glGetProgramEnvParameterfvARB" );
 
-   bind_program = glutGetProcAddress( "glBindProgramARB" );
-   get_program = glutGetProcAddress( "glGetProgramivARB" );
+   bind_program = (PFNGLBINDPROGRAMARBPROC) glutGetProcAddress( "glBindProgramARB" );
+   get_program = (PFNGLGETPROGRAMIVARBPROC) glutGetProcAddress( "glGetProgramivARB" );
 
    if ( glutExtensionSupported("GL_EXT_gpu_program_parameters") ) {
       printf("GL_EXT_gpu_program_parameters available, testing that path.\n");
 
-      program_local_parameters4fv = glutGetProcAddress( "glProgramLocalParameters4fvEXT" );
-      program_env_parameters4fv = glutGetProcAddress( "glProgramEnvParameters4fvEXT" );
+      program_local_parameters4fv = (PFNGLPROGRAMLOCALPARAMETERS4FVEXTPROC) glutGetProcAddress( "glProgramLocalParameters4fvEXT" );
+      program_env_parameters4fv = (PFNGLPROGRAMENVPARAMETERS4FVEXTPROC) glutGetProcAddress( "glProgramEnvParameters4fvEXT" );
    }
    else {
       printf("GL_EXT_gpu_program_parameters not available.\n");

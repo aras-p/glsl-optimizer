@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/image.h"
 #include "main/mipmap.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -196,6 +195,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 			     GLenum pname, const GLfloat * params)
 {
 	radeonTexObj* t = radeon_tex_obj(texObj);
+	GLenum texBaseFormat;
 
 	if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
 		fprintf(stderr, "%s( %s )\n", __FUNCTION__,
@@ -223,23 +223,16 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MAX_LEVEL:
 	case GL_TEXTURE_MIN_LOD:
 	case GL_TEXTURE_MAX_LOD:
-		/* This isn't the most efficient solution but there doesn't appear to
-		 * be a nice alternative.  Since there's no LOD clamping,
-		 * we just have to rely on loading the right subset of mipmap levels
-		 * to simulate a clamped LOD.
-		 */
-		if (t->mt) {
-			radeon_miptree_unreference(t->mt);
-			t->mt = 0;
-			t->validated = GL_FALSE;
-		}
+		t->validated = GL_FALSE;
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
 		if (!texObj->Image[0][texObj->BaseLevel])
 			return;
-		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
-		    == GL_DEPTH_COMPONENT) {
+		texBaseFormat = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
+
+		if (texBaseFormat == GL_DEPTH_COMPONENT ||
+			texBaseFormat == GL_DEPTH_STENCIL) {
 			r300SetDepthTexMode(texObj);
 			break;
 		} else {
@@ -268,7 +261,11 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 
 	if (rmesa) {
 		int i;
-		radeon_firevertices(&rmesa->radeon);
+		struct radeon_bo *bo;
+		bo = !t->mt ? t->bo : t->mt->bo;
+		if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->radeon.cmdbuf.cs)) {
+			radeon_firevertices(&rmesa->radeon);
+		}
 
 		for(i = 0; i < R300_MAX_TEXTURE_UNITS; ++i)
 			if (rmesa->hw.textures[i] == t)
@@ -280,10 +277,8 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 		t->bo = NULL;
 	}
 
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = 0;
-	}
+	radeon_miptree_unreference(&t->mt);
+
 	_mesa_delete_texture_object(ctx, texObj);
 }
 

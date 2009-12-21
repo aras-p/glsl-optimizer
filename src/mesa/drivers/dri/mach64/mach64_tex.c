@@ -41,7 +41,6 @@
 #include "main/simple_list.h"
 #include "main/enums.h"
 #include "main/texstore.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/imports.h"
@@ -138,7 +137,7 @@ mach64AllocTexObj( struct gl_texture_object *texObj )
 
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
-static const struct gl_texture_format *
+static gl_format
 mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			   GLenum format, GLenum type )
 {
@@ -167,15 +166,15 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA2:
    case GL_COMPRESSED_RGBA:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888;
+         return MESA_FORMAT_ARGB8888;
       else
-         return &_mesa_texformat_argb4444;
+         return MESA_FORMAT_ARGB4444;
 
    case GL_RGB5_A1:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888;
+         return MESA_FORMAT_ARGB8888;
       else
-         return &_mesa_texformat_argb1555;
+         return MESA_FORMAT_ARGB1555;
 
    case GL_RGBA8:
    case GL_RGB10_A2:
@@ -183,9 +182,9 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA16:
    case GL_RGBA4:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888;
+         return MESA_FORMAT_ARGB8888;
       else
-         return &_mesa_texformat_argb4444;
+         return MESA_FORMAT_ARGB4444;
 
    case 3:
    case GL_RGB:
@@ -198,9 +197,9 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB16:
    case GL_COMPRESSED_RGB:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888;
+         return MESA_FORMAT_ARGB8888;
       else
-         return &_mesa_texformat_rgb565;
+         return MESA_FORMAT_RGB565;
 
    case 1:
    case GL_LUMINANCE:
@@ -210,9 +209,9 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888; /* inefficient but accurate */
+         return MESA_FORMAT_ARGB8888; /* inefficient but accurate */
       else
-         return &_mesa_texformat_argb1555;
+         return MESA_FORMAT_ARGB1555;
 
    case GL_INTENSITY4:
    case GL_INTENSITY:
@@ -221,9 +220,9 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
       if (mmesa->mach64Screen->cpp == 4)
-         return &_mesa_texformat_argb8888; /* inefficient but accurate */
+         return MESA_FORMAT_ARGB8888; /* inefficient but accurate */
       else
-         return &_mesa_texformat_argb4444;
+         return MESA_FORMAT_ARGB4444;
 
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
@@ -232,18 +231,18 @@ mach64ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
-      return &_mesa_texformat_ci8;
+      return MESA_FORMAT_CI8;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
           type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    default:
       _mesa_problem( ctx, "unexpected format in %s", __FUNCTION__ );
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 

@@ -23,6 +23,12 @@
 #include "nv50_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
+#define NV50_CBUF_FORMAT_CASE(n) \
+	case PIPE_FORMAT_##n: so_data(so, NV50TCL_RT_FORMAT_##n); break
+
+#define NV50_ZETA_FORMAT_CASE(n) \
+	case PIPE_FORMAT_##n: so_data(so, NV50TCL_ZETA_FORMAT_##n); break
+
 static void
 nv50_state_validate_fb(struct nv50_context *nv50)
 {
@@ -30,6 +36,15 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	struct nouveau_stateobj *so = so_new(128, 18);
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned i, w, h, gw = 0;
+
+	/* Set nr of active RTs and select RT for each colour output.
+	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.
+	 * Ambiguous assignment results in no rendering (no DATA_ERROR).
+	 */
+	so_method(so, tesla, 0x121c, 1);
+	so_data  (so, fb->nr_cbufs |
+		  (0 <<  4) | (1 <<  7) | (2 << 10) | (3 << 13) |
+		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct pipe_texture *pt = fb->cbufs[i]->texture;
@@ -54,15 +69,14 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_reloc (so, bo, fb->cbufs[i]->offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->cbufs[i]->format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
-			break;
-		case PIPE_FORMAT_X8R8G8B8_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
-			break;
-		case PIPE_FORMAT_R5G6B5_UNORM:
-			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
-			break;
+		NV50_CBUF_FORMAT_CASE(A8R8G8B8_UNORM);
+		NV50_CBUF_FORMAT_CASE(X8R8G8B8_UNORM);
+		NV50_CBUF_FORMAT_CASE(R5G6B5_UNORM);
+		NV50_CBUF_FORMAT_CASE(R16G16B16A16_SNORM);
+		NV50_CBUF_FORMAT_CASE(R16G16B16A16_UNORM);
+		NV50_CBUF_FORMAT_CASE(R32G32B32A32_FLOAT);
+		NV50_CBUF_FORMAT_CASE(R16G16_SNORM);
+		NV50_CBUF_FORMAT_CASE(R16G16_UNORM);
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
 				    pf_name(fb->cbufs[i]->format));
@@ -96,18 +110,10 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_reloc (so, bo, fb->zsbuf->offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->zsbuf->format) {
-		case PIPE_FORMAT_Z32_FLOAT:
-			so_data(so, NV50TCL_ZETA_FORMAT_Z32_FLOAT);
-			break;
-		case PIPE_FORMAT_Z24S8_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_Z24S8_UNORM);
-			break;
-		case PIPE_FORMAT_X8Z24_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_X8Z24_UNORM);
-			break;
-		case PIPE_FORMAT_S8Z24_UNORM:
-			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
-			break;
+		NV50_ZETA_FORMAT_CASE(S8Z24_UNORM);
+		NV50_ZETA_FORMAT_CASE(X8Z24_UNORM);
+		NV50_ZETA_FORMAT_CASE(Z24S8_UNORM);
+		NV50_ZETA_FORMAT_CASE(Z32_FLOAT);
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
 				    pf_name(fb->zsbuf->format));
@@ -124,6 +130,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_data  (so, fb->zsbuf->width);
 		so_data  (so, fb->zsbuf->height);
 		so_data  (so, 0x00010001);
+	} else {
+		so_method(so, tesla, 0x1538, 1);
+		so_data  (so, 0);
 	}
 
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
@@ -192,7 +201,8 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
 		so_emit(chan, nv50->state.fragprog);
-	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+				 NV50_NEW_RASTERIZER))
 		so_emit(chan, nv50->state.programs);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
 		so_emit(chan, nv50->state.rast);
@@ -255,7 +265,8 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
 		nv50_fragprog_validate(nv50);
 
-	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG))
+	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
+			   NV50_NEW_RASTERIZER))
 		nv50_linkage_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
@@ -276,7 +287,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		so = so_new(33, 0);
 		so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
-			so_data(so, nv50->stipple.stipple[i]);
+			so_data(so, util_bswap32(nv50->stipple.stipple[i]));
 		so_ref(so, &nv50->state.stipple);
 		so_ref(NULL, &so);
 	}

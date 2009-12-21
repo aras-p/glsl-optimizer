@@ -302,7 +302,10 @@ util_unpack_color_ub(enum pipe_format format, const void *src,
 static INLINE void
 util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
 {
-   ubyte r, g, b, a;
+   ubyte r = 0;
+   ubyte g = 0;
+   ubyte b = 0;
+   ubyte a = 0;
 
    if (pf_size_x(format) <= 8) {
       /* format uses 8-bit components or less */

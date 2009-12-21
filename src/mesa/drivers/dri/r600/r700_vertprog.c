@@ -111,6 +111,15 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 		}
 	}
 
+    for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
+	{
+		unBit = 1 << i;
+		if(mesa_vp->Base.OutputsWritten & unBit)
+		{
+			pAsm->ucVP_OutputMap[i] = unTotal++;
+		}
+	}
+
 	return (unTotal - unStart);
 }
 
@@ -235,6 +244,8 @@ void Map_Vertex_Program(GLcontext *ctx,
         pAsm->number_used_registers += mesa_vp->Base.NumTemporaries;
     }
 
+    pAsm->flag_reg_index = pAsm->number_used_registers++;
+
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
@@ -324,7 +335,10 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 		return NULL;
 	}
 
-	if(GL_FALSE == AssembleInstr(vp->mesa_program->Base.NumInstructions,
+    InitShaderProgram(&(vp->r700AsmCode));
+
+	if(GL_FALSE == AssembleInstr(0,
+                                 vp->mesa_program->Base.NumInstructions,
                                  &(vp->mesa_program->Base.Instructions[0]),
                                  &(vp->r700AsmCode)) )
 	{
@@ -334,6 +348,11 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
     if(GL_FALSE == Process_Vertex_Exports(&(vp->r700AsmCode), vp->mesa_program->Base.OutputsWritten) )
     {
         return NULL;
+    }
+
+    if( GL_FALSE == RelocProgram(&(vp->r700AsmCode)) )
+    {
+        return GL_FALSE;
     }
 
     vp->r700Shader.nRegs = (vp->r700AsmCode.number_used_registers == 0) ? 0 
@@ -515,6 +534,11 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
     unsigned int unBit = mesa_vp->Base.InputsRead;
     context->nNumActiveAos = 0;
 
+    if (mesa_vp->IsPositionInvariant)
+    {
+        unBit |= VERT_BIT_POS;
+    }
+
     while(unBit) 
     {
         if(unBit & 1)
@@ -607,6 +631,12 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     paramList = vp->mesa_program->Base.Parameters;
 
     if(NULL != paramList) {
+        /* vp->mesa_program was cloned, not updated by glsl shader api. */
+        /* _mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current */
+        /* so, use ctx->VertexProgem._Current */       
+        struct gl_program_parameter_list *paramListOrginal = 
+                         paramListOrginal = ctx->VertexProgram._Current->Base.Parameters;
+         
 	    _mesa_load_state_parameters(ctx, paramList);
 
 	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
@@ -619,10 +649,20 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		    r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		    r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		    r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		    r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
+            {
+                r700->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
+            }
+            else
+            {
+		        r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+            }
 	    }
     } else
 	    r700->vs.num_consts = 0;

@@ -64,7 +64,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST)->FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST)->Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -157,7 +157,7 @@ emit_fetch(
    unsigned index,
    const unsigned chan_index )
 {
-   const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[index];
+   const struct tgsi_full_src_register *reg = &inst->Src[index];
    unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    LLVMValueRef res;
 
@@ -167,9 +167,9 @@ emit_fetch(
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
 
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT: {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->SrcRegister.Index*4 + swizzle, 0);
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
          LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
          LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
          res = lp_build_broadcast_scalar(&bld->base, scalar);
@@ -177,17 +177,17 @@ emit_fetch(
       }
 
       case TGSI_FILE_IMMEDIATE:
-         res = bld->immediates[reg->SrcRegister.Index][swizzle];
+         res = bld->immediates[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_INPUT:
-         res = bld->inputs[reg->SrcRegister.Index][swizzle];
+         res = bld->inputs[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_TEMPORARY:
-         res = bld->temps[reg->SrcRegister.Index][swizzle];
+         res = bld->temps[reg->Register.Index][swizzle];
          if(!res)
             return bld->base.undef;
          break;
@@ -267,7 +267,7 @@ emit_store(
    unsigned chan_index,
    LLVMValueRef value)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[index];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[index];
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -287,13 +287,13 @@ emit_store(
       assert(0);
    }
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      bld->outputs[reg->DstRegister.Index][chan_index] = value;
+      bld->outputs[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_TEMPORARY:
-      bld->temps[reg->DstRegister.Index][chan_index] = value;
+      bld->temps[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_ADDRESS:
@@ -319,14 +319,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           boolean projected,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    LLVMValueRef lodbias;
    LLVMValueRef oow;
    LLVMValueRef coords[3];
    unsigned num_coords;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
       break;
@@ -375,7 +375,7 @@ emit_kil(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst )
 {
-   const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[0];
+   const struct tgsi_full_src_register *reg = &inst->Src[0];
    LLVMValueRef terms[NUM_CHANNELS];
    LLVMValueRef mask;
    unsigned chan_index;
@@ -423,15 +423,15 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 {
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      const struct tgsi_full_src_register *reg = &inst->Src[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
-      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->DstRegister.Indirect)
+      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    return FALSE;

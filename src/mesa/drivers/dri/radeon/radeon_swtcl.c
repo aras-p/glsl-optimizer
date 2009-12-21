@@ -179,7 +179,7 @@ static void radeonSetVertexFormat( GLcontext *ctx )
 
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-	    GLuint sz = VB->TexCoordPtr[i]->size;
+	    GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
 	    switch (sz) {
 	    case 1:
@@ -309,7 +309,7 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    radeonEmitState(&rmesa->radeon);
    radeonEmitVertexAOS( rmesa,
 			rmesa->radeon.swtcl.vertex_size,
-			first_elem(&rmesa->radeon.dma.reserved)->bo,
+			rmesa->radeon.swtcl.bo,
 			current_offset);
 
 		      

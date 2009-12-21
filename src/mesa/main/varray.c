@@ -51,9 +51,8 @@
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
  * \param ptr  the address (or offset inside VBO) of the array data
- * \return GL_TRUE if no error, GL_FALSE if error
  */
-static GLboolean
+static void
 update_array(GLcontext *ctx, struct gl_client_array *array,
              GLbitfield dirtyBit, GLsizei elementSize,
              GLint size, GLenum type, GLenum format,
@@ -68,7 +67,7 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
        */
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glVertex/Normal/EtcPointer(non-VBO array)");
-      return GL_FALSE;
+      return;
    }
 
    array->Size = size;
@@ -85,8 +84,6 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
 
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= dirtyBit;
-
-   return GL_TRUE;
 }
 
 
@@ -140,12 +137,8 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
-                     elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr))
-      return;
-
-   if (ctx->Driver.VertexPointer)
-      ctx->Driver.VertexPointer( ctx, size, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
+                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
 }
 
 
@@ -192,12 +185,8 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
-                     elementSize, 3, type, GL_RGBA, stride, GL_TRUE, ptr))
-      return;
-
-   if (ctx->Driver.NormalPointer)
-      ctx->Driver.NormalPointer( ctx, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
+                elementSize, 3, type, GL_RGBA, stride, GL_TRUE, ptr);
 }
 
 
@@ -272,12 +261,8 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
-                     elementSize, size, type, format, stride, GL_TRUE, ptr))
-      return;
-
-   if (ctx->Driver.ColorPointer)
-      ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
+                elementSize, size, type, format, stride, GL_TRUE, ptr);
 }
 
 
@@ -305,12 +290,8 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
-                     elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr))
-      return;
-
-   if (ctx->Driver.FogCoordPointer)
-      ctx->Driver.FogCoordPointer( ctx, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
+                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
 }
 
 
@@ -347,12 +328,8 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
-                     elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr))
-      return;
-
-   if (ctx->Driver.IndexPointer)
-      ctx->Driver.IndexPointer( ctx, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
+                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
 }
 
 
@@ -423,13 +400,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor,
-                     _NEW_ARRAY_COLOR1, elementSize, size, type,
-                     format, stride, GL_TRUE, ptr))
-      return;
-
-   if (ctx->Driver.SecondaryColorPointer)
-      ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
+                elementSize, size, type, format, stride, GL_TRUE, ptr);
 }
 
 
@@ -485,13 +457,9 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
-                     _NEW_ARRAY_TEXCOORD(unit),
-                     elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr))
-      return;
-
-   if (ctx->Driver.TexCoordPointer)
-      ctx->Driver.TexCoordPointer( ctx, size, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
+                _NEW_ARRAY_TEXCOORD(unit),
+                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
 }
 
 
@@ -506,13 +474,9 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
       return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
-                     sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
-                     stride, GL_FALSE, ptr))
-      return;
-
-   if (ctx->Driver.EdgeFlagPointer)
-      ctx->Driver.EdgeFlagPointer( ctx, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
+                sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
+                stride, GL_FALSE, ptr);
 }
 
 
@@ -620,13 +584,9 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
-                     _NEW_ARRAY_ATTRIB(index),
-                     elementSize, size, type, format, stride, normalized, ptr))
-      return;
-
-   if (ctx->Driver.VertexAttribPointer)
-      ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
+   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                _NEW_ARRAY_ATTRIB(index),
+                elementSize, size, type, format, stride, normalized, ptr);
 }
 #endif
 
@@ -720,13 +680,9 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   if (!update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
-                     _NEW_ARRAY_ATTRIB(index),
-                     elementSize, size, type, format, stride, normalized, ptr))
-      return;
-
-   if (ctx->Driver.VertexAttribPointer)
-      ctx->Driver.VertexAttribPointer(ctx, index, size, type, stride, ptr);
+   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                _NEW_ARRAY_ATTRIB(index),
+                elementSize, size, type, format, stride, normalized, ptr);
 }
 #endif
 
@@ -989,9 +945,6 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
 
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ALL;
-
-   if (ctx->Driver.LockArraysEXT)
-      ctx->Driver.LockArraysEXT( ctx, first, count );
 }
 
 
@@ -1013,9 +966,6 @@ _mesa_UnlockArraysEXT( void )
    ctx->Array.LockCount = 0;
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ALL;
-
-   if (ctx->Driver.UnlockArraysEXT)
-      ctx->Driver.UnlockArraysEXT( ctx );
 }
 
 

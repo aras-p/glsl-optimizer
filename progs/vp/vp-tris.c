@@ -99,9 +99,11 @@ static void Init( void )
    sz = (GLuint) fread(buf, 1, sizeof(buf), f);
    if (!feof(f)) {
       fprintf(stderr, "file too long\n");
+      fclose(f);
       exit(1);
    }
 
+   fclose(f);
    fprintf(stderr, "%.*s\n", sz, buf);
 
    if (strncmp( buf, "!!VP", 4 ) == 0) {

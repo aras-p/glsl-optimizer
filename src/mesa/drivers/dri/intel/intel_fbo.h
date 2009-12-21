@@ -28,6 +28,7 @@
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
 
+#include "main/formats.h"
 #include "intel_screen.h"
 
 struct intel_context;
@@ -61,7 +62,7 @@ struct intel_renderbuffer
    struct gl_renderbuffer Base;
    struct intel_region *region;
 
-   const struct gl_texture_format *texformat;
+   gl_format texformat;
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
@@ -114,7 +115,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat);
+intel_create_renderbuffer(gl_format format);
 
 
 extern void

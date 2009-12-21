@@ -66,6 +66,7 @@ struct intel_texture_image
     * Else there is no image data.
     */
    struct intel_mipmap_tree *mt;
+   GLboolean used_as_render_target;
 };
 
 static INLINE struct intel_texture_object *

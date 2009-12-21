@@ -43,6 +43,7 @@
 #include "main/depth.h"
 #include "main/enable.h"
 #include "main/fbobject.h"
+#include "main/formats.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
@@ -1025,7 +1026,7 @@ init_blit_depth_pixels(GLcontext *ctx)
 
 
 /**
- * Try to do a glBiltFramebuffer using no-copy texturing.
+ * Try to do a glBlitFramebuffer using no-copy texturing.
  * We can do this when the src renderbuffer is actually a texture.
  * But if the src buffer == dst buffer we cannot do this.
  *
@@ -2083,7 +2084,7 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
 
    srcLevel = texObj->BaseLevel;
    baseImage = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
-   if (!baseImage || baseImage->IsCompressed) {
+   if (!baseImage || _mesa_is_format_compressed(baseImage->TexFormat)) {
       return GL_TRUE;
    }
 
@@ -2463,7 +2464,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
                GLenum internalFormat, GLint x, GLint y,
                GLsizei width, GLsizei height, GLint border)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
@@ -2471,8 +2471,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    GLint bpp;
    void *buf;
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 
    format = _mesa_base_tex_format(ctx, internalFormat);
@@ -2492,11 +2491,11 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }
 
-   if (texImage->TexFormat == &_mesa_null_texformat)
-	texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
-							      internalFormat,
-							      format,
-							      type);
+   if (texImage->TexFormat == MESA_FORMAT_NONE)
+      texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
+                                                            internalFormat,
+                                                            format,
+                                                            type);
 
    _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
 
@@ -2582,18 +2581,16 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLenum format, type;
    GLint bpp;
    void *buf;
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
-   format = texImage->TexFormat->BaseFormat;
+   format = _mesa_get_format_base_format(texImage->TexFormat);
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {

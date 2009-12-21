@@ -73,7 +73,7 @@ struct stw_winsys
                           HANDLE hSharedSurface);
 
    /**
-    * Open a shared surface (optional).
+    * Close a shared surface (optional).
     */
    void
    (*shared_surface_close)(struct pipe_screen *screen,

@@ -26,6 +26,12 @@
 #include "glheader.h"
 #include "context.h"
 #include "shaders.h"
+#include "shader/shader_api.h"
+
+
+/** Define this to enable shader substitution (see below) */
+#define SHADER_SUBST 0
+
 
 
 /**
@@ -404,7 +410,6 @@ _mesa_read_shader(const char *fname)
 }
 
 
-
 /**
  * Called via glShaderSource() and glShaderSourceARB() API functions.
  * Basically, concatenate the source code strings into one long string
@@ -418,6 +423,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    GLint *offsets;
    GLsizei i, totalLength;
    GLcharARB *source;
+   GLuint checksum;
 
    if (!shaderObj || string == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
@@ -469,14 +475,15 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    source[totalLength - 1] = '\0';
    source[totalLength - 2] = '\0';
 
-   if (0) {
+   if (SHADER_SUBST) {
       /* Compute the shader's source code checksum then try to open a file
        * named newshader_<CHECKSUM>.  If it exists, use it in place of the
        * original shader source code.  For debugging.
        */
-      const GLuint checksum = _mesa_str_checksum(source);
       char filename[100];
       GLcharARB *newSource;
+
+      checksum = _mesa_str_checksum(source);
 
       sprintf(filename, "newshader_%d", checksum);
 
@@ -490,6 +497,12 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    }      
 
    ctx->Driver.ShaderSource(ctx, shaderObj, source);
+
+   if (SHADER_SUBST) {
+      struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
+      if (sh)
+         sh->SourceChecksum = checksum; /* save original checksum */
+   }
 
    _mesa_free(offsets);
 }

@@ -69,7 +69,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_framebuffer_object
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20061018"
 
@@ -79,7 +79,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Extension strings exported by the R100 driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
@@ -109,7 +109,7 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
 };

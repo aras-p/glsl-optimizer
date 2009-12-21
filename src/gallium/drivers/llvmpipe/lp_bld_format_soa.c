@@ -34,66 +34,17 @@
 #include "lp_bld_format.h"
 
 
-/**
- * Gather elements from scatter positions in memory into a single vector.
- *
- * @param src_width src element width
- * @param dst_width result element width (source will be expanded to fit)
- * @param length length of the offsets,
- * @param base_ptr base pointer, should be a i8 pointer type.
- * @param offsets vector with offsets
- */
-LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
-                unsigned length,
-                unsigned src_width,
-                unsigned dst_width,
-                LLVMValueRef base_ptr,
-                LLVMValueRef offsets)
-{
-   LLVMTypeRef src_type = LLVMIntType(src_width);
-   LLVMTypeRef src_ptr_type = LLVMPointerType(src_type, 0);
-   LLVMTypeRef dst_elem_type = LLVMIntType(dst_width);
-   LLVMTypeRef dst_vec_type = LLVMVectorType(dst_elem_type, length);
-   LLVMValueRef res;
-   unsigned i;
-
-   res = LLVMGetUndef(dst_vec_type);
-   for(i = 0; i < length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef elem_offset;
-      LLVMValueRef elem_ptr;
-      LLVMValueRef elem;
-
-      elem_offset = LLVMBuildExtractElement(builder, offsets, index, "");
-      elem_ptr = LLVMBuildGEP(builder, base_ptr, &elem_offset, 1, "");
-      elem_ptr = LLVMBuildBitCast(builder, elem_ptr, src_ptr_type, "");
-      elem = LLVMBuildLoad(builder, elem_ptr, "");
-
-      assert(src_width <= dst_width);
-      if(src_width > dst_width)
-         elem = LLVMBuildTrunc(builder, elem, dst_elem_type, "");
-      if(src_width < dst_width)
-         elem = LLVMBuildZExt(builder, elem, dst_elem_type, "");
-
-      res = LLVMBuildInsertElement(builder, res, elem, index, "");
-   }
-
-   return res;
-}
-
-
 static LLVMValueRef
-lp_build_format_swizzle(struct lp_type type,
-                        const LLVMValueRef *inputs,
-                        enum util_format_swizzle swizzle)
+lp_build_format_swizzle_chan_soa(struct lp_type type,
+                                 const LLVMValueRef *unswizzled,
+                                 enum util_format_swizzle swizzle)
 {
    switch (swizzle) {
    case UTIL_FORMAT_SWIZZLE_X:
    case UTIL_FORMAT_SWIZZLE_Y:
    case UTIL_FORMAT_SWIZZLE_Z:
    case UTIL_FORMAT_SWIZZLE_W:
-      return inputs[swizzle];
+      return unswizzled[swizzle];
    case UTIL_FORMAT_SWIZZLE_0:
       return lp_build_zero(type);
    case UTIL_FORMAT_SWIZZLE_1:
@@ -103,6 +54,28 @@ lp_build_format_swizzle(struct lp_type type,
    default:
       assert(0);
       return lp_build_undef(type);
+   }
+}
+
+
+void
+lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
+                            struct lp_type type,
+                            const LLVMValueRef *unswizzled,
+                            LLVMValueRef *swizzled)
+{
+   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      enum util_format_swizzle swizzle = format_desc->swizzle[0];
+      LLVMValueRef depth = lp_build_format_swizzle_chan_soa(type, unswizzled, swizzle);
+      swizzled[2] = swizzled[1] = swizzled[0] = depth;
+      swizzled[3] = lp_build_one(type);
+   }
+   else {
+      unsigned chan;
+      for (chan = 0; chan < 4; ++chan) {
+         enum util_format_swizzle swizzle = format_desc->swizzle[chan];
+         swizzled[chan] = lp_build_format_swizzle_chan_soa(type, unswizzled, swizzle);
+      }
    }
 }
 
@@ -172,38 +145,5 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
       start = stop;
    }
 
-   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-      enum util_format_swizzle swizzle = format_desc->swizzle[0];
-      LLVMValueRef depth = lp_build_format_swizzle(type, inputs, swizzle);
-      rgba[2] = rgba[1] = rgba[0] = depth;
-      rgba[3] = lp_build_one(type);
-   }
-   else {
-      for (chan = 0; chan < 4; ++chan) {
-         enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-         rgba[chan] = lp_build_format_swizzle(type, inputs, swizzle);
-      }
-   }
-}
-
-
-void
-lp_build_load_rgba_soa(LLVMBuilderRef builder,
-                       const struct util_format_description *format_desc,
-                       struct lp_type type,
-                       LLVMValueRef base_ptr,
-                       LLVMValueRef offsets,
-                       LLVMValueRef *rgba)
-{
-   LLVMValueRef packed;
-
-   assert(format_desc->block.width == 1);
-   assert(format_desc->block.height == 1);
-   assert(format_desc->block.bits <= type.width);
-
-   packed = lp_build_gather(builder,
-                            type.length, format_desc->block.bits, type.width,
-                            base_ptr, offsets);
-
-   lp_build_unpack_rgba_soa(builder, format_desc, type, packed, rgba);
+   lp_build_format_swizzle_soa(format_desc, type, inputs, rgba);
 }

@@ -25,7 +25,6 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
-#include "main/texformat.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
 #include "main/mm.h"
@@ -53,7 +52,7 @@ static void i810SetTexImages( i810ContextPtr imesa,
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    t->texelBytes = 2;
-   switch (baseImage->TexFormat->MesaFormat) {
+   switch (baseImage->TexFormat) {
    case MESA_FORMAT_ARGB1555:
       textureFormat = MI1_FMT_16BPP | MI1_PF_16BPP_ARGB1555;
       break;

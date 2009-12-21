@@ -1499,6 +1499,41 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 
 
 /**
+ * Print basic shader info (for debug).
+ */
+static void
+print_shader_info(const struct gl_shader_program *shProg)
+{
+   GLuint i;
+
+   _mesa_printf("Mesa: glUseProgram(%u)\n", shProg->Name);
+   for (i = 0; i < shProg->NumShaders; i++) {
+      const char *s;
+      switch (shProg->Shaders[i]->Type) {
+      case GL_VERTEX_SHADER:
+         s = "vertex";
+         break;
+      case GL_FRAGMENT_SHADER:
+         s = "fragment";
+         break;
+      case GL_GEOMETRY_SHADER:
+         s = "geometry";
+         break;
+      default:
+         s = "";
+      }
+      _mesa_printf("  %s shader %u, checksum %u\n", s, 
+                   shProg->Shaders[i]->Name,
+                   shProg->Shaders[i]->SourceChecksum);
+   }
+   if (shProg->VertexProgram)
+      _mesa_printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
+   if (shProg->FragmentProgram)
+      _mesa_printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+}
+
+
+/**
  * Called via ctx->Driver.UseProgram()
  */
 void
@@ -1511,8 +1546,6 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       /* no-op */
       return;
    }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
@@ -1527,38 +1560,17 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 
       /* debug code */
       if (ctx->Shader.Flags & GLSL_USE_PROG) {
-         GLuint i;
-         _mesa_printf("Mesa: glUseProgram(%u)\n", shProg->Name);
-         for (i = 0; i < shProg->NumShaders; i++) {
-            const char *s;
-            switch (shProg->Shaders[i]->Type) {
-            case GL_VERTEX_SHADER:
-               s = "vertex";
-               break;
-            case GL_FRAGMENT_SHADER:
-               s = "fragment";
-               break;
-            case GL_GEOMETRY_SHADER:
-               s = "geometry";
-               break;
-            default:
-               s = "";
-            }
-            _mesa_printf("  %s shader %u, checksum %u\n", s, 
-                         shProg->Shaders[i]->Name,
-                         shProg->Shaders[i]->SourceChecksum);
-         }
-         if (shProg->VertexProgram)
-            _mesa_printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
-         if (shProg->FragmentProgram)
-            _mesa_printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+         print_shader_info(shProg);
       }
    }
    else {
       shProg = NULL;
    }
 
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
+   if (ctx->Shader.CurrentProgram != shProg) {
+      FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+      _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
+   }
 }
 
 

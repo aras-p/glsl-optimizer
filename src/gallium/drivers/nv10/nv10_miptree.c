@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
 
 #include "nv10_context.h"
 #include "nv10_screen.h"
@@ -10,7 +11,7 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 {
 	struct pipe_texture *pt = &nv10mt->base;
 	boolean swizzled = FALSE;
-	uint width = pt->width[0], height = pt->height[0];
+	uint width = pt->width0, height = pt->height0;
 	uint offset = 0;
 	int nr_faces, l, f;
 
@@ -21,8 +22,7 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 	}
 	
 	for (l = 0; l <= pt->last_level; l++) {
-		pt->width[l] = width;
-		pt->height[l] = height;
+
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
@@ -35,15 +35,15 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 		nv10mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
-		width  = MAX2(1, width  >> 1);
-		height = MAX2(1, height >> 1);
+		width  = u_minify(width, 1);
+		height = u_minify(height, 1);
 
 	}
 
 	for (f = 0; f < nr_faces; f++) {
 		for (l = 0; l <= pt->last_level; l++) {
 			nv10mt->level[l].image_offset[f] = offset;
-			offset += nv10mt->level[l].pitch * pt->height[l];
+			offset += nv10mt->level[l].pitch * u_minify(pt->height0, l);
 		}
 	}
 
@@ -58,7 +58,7 @@ nv10_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
-	    pt->depth[0] != 1)
+	    pt->depth0 != 1)
 		return NULL;
 
 	mt = CALLOC_STRUCT(nv10_miptree);
@@ -133,8 +133,8 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		return NULL;
 	pipe_texture_reference(&ns->base.texture, pt);
 	ns->base.format = pt->format;
-	ns->base.width = pt->width[level];
-	ns->base.height = pt->height[level];
+	ns->base.width = u_minify(pt->width0, level);
+	ns->base.height = u_minify(pt->height0, level);
 	ns->base.usage = flags;
 	pipe_reference_init(&ns->base.reference, 1);
 	ns->base.face = face;

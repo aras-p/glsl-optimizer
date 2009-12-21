@@ -27,6 +27,7 @@
 
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "cell_context.h"
 #include "cell_gen_fragment.h"
 #include "cell_state.h"
@@ -299,9 +300,9 @@ cell_emit_state(struct cell_context *cell)
                for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
                   texture->start[level] = (ct->mapped +
                                            ct->level_offset[level]);
-                  texture->width[level] = ct->base.width[level];
-                  texture->height[level] = ct->base.height[level];
-                  texture->depth[level] = ct->base.depth[level];
+                  texture->width[level] = u_minify(ct->base.width0, level);
+                  texture->height[level] = u_minify(ct->base.height0, level);
+                  texture->depth[level] = u_minify(ct->base.depth0, level);
                }
                texture->target = ct->base.target;
             }

@@ -59,7 +59,7 @@
 #include "texmem.h"
 
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #include "xmlpool.h"
 
@@ -436,7 +436,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
        __driUtilMessage("Not enough texture memory. "
 			"Falling back to indirect rendering.");
-       Xfree(imesa);
+       _mesa_free(imesa);
        return GL_FALSE;
    }
 
@@ -574,7 +574,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       _mesa_destroy_context(imesa->glCtx);
 
       /* no longer use vertex_dma_buf*/
-      Xfree(imesa);
+      _mesa_free(imesa);
    }
 }
 
@@ -602,7 +602,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_FRONT,
                                  screen->cpp,
@@ -615,7 +615,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_BACK,
                                  screen->cpp,
@@ -628,7 +628,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -639,7 +639,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_S8_Z24,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -651,7 +651,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+            = driNewRenderbuffer(MESA_FORMAT_S8,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -979,18 +979,6 @@ savageInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
    if (!savageInitDriver(psp))
        return NULL;

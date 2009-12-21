@@ -56,7 +56,7 @@ static void do_vs_prog( struct brw_context *brw,
    c.prog_data.inputs_read = vp->program.Base.InputsRead;
 
    if (c.key.copy_edgeflag) {
-      c.prog_data.outputs_written |= 1<<VERT_RESULT_EDGE;
+      c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_EDGE);
       c.prog_data.inputs_read |= 1<<VERT_ATTRIB_EDGEFLAG;
    }
 

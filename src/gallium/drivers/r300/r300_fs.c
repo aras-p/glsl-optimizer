@@ -1,6 +1,7 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
  *                Joakim Sindholt <opensource@zhasha.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +32,41 @@
 #include "radeon_code.h"
 #include "radeon_compiler.h"
 
+/* Convert info about FS input semantics to r300_shader_semantics. */
+static void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
+                                       struct r300_shader_semantics* fs_inputs)
+{
+    int i;
+    unsigned index;
+
+    r300_shader_semantics_reset(fs_inputs);
+
+    for (i = 0; i < info->num_inputs; i++) {
+        index = info->input_semantic_index[i];
+
+        switch (info->input_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                fs_inputs->color[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_GENERIC:
+                assert(index <= ATTR_GENERIC_COUNT);
+                fs_inputs->generic[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_FOG:
+                assert(index == 0);
+                fs_inputs->fog = i;
+                break;
+
+            default:
+                assert(0);
+        }
+    }
+}
+
+
 static void find_output_registers(struct r300_fragment_program_compiler * compiler,
                                   struct r300_fragment_shader * fs)
 {
@@ -58,37 +94,23 @@ static void allocate_hardware_inputs(
     void (*allocate)(void * data, unsigned input, unsigned hwreg),
     void * mydata)
 {
-    struct tgsi_shader_info* info = &((struct r300_fragment_shader*)c->UserData)->info;
-    int total_colors = 0;
-    int colors = 0;
-    int total_generic = 0;
-    int generic = 0;
-    int i;
+    struct r300_shader_semantics* inputs =
+        &((struct r300_fragment_shader*)c->UserData)->inputs;
+    int i, reg = 0;
 
-    for (i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
-            case TGSI_SEMANTIC_COLOR:
-                total_colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                total_generic++;
-                break;
+    /* Allocate input registers. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (inputs->color[i] != ATTR_UNUSED) {
+            allocate(mydata, inputs->color[i], reg++);
         }
     }
-
-    for(i = 0; i < info->num_inputs; i++) {
-        switch (info->input_semantic_name[i]) {
-            case TGSI_SEMANTIC_COLOR:
-                allocate(mydata, i, colors);
-                colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                allocate(mydata, i, total_colors + generic);
-                generic++;
-                break;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (inputs->generic[i] != ATTR_UNUSED) {
+            allocate(mydata, inputs->generic[i], reg++);
         }
+    }
+    if (inputs->fog != ATTR_UNUSED) {
+        allocate(mydata, inputs->fog, reg++);
     }
 }
 
@@ -98,6 +120,10 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
 
+    /* Initialize. */
+    r300_shader_read_fs_inputs(&fs->info, &fs->inputs);
+
+    /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
     rc_init(&compiler.Base);
     compiler.Base.Debug = DBG_ON(r300, DBG_FP);
@@ -107,7 +133,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = fs;
 
-    /* TODO: Program compilation depends on texture compare modes,
+    /* XXX: Program compilation depends on texture compare modes,
      * which are sampler state. Therefore, programs need to be recompiled
      * depending on this state as in the classic Mesa driver.
      *
@@ -133,6 +159,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
         /* XXX failover maybe? */
         DBG(r300, DBG_FP, "r300: Error compiling fragment program: %s\n",
             compiler.Base.ErrorMsg);
+        assert(0);
     }
 
     /* And, finally... */

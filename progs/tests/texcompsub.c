@@ -35,6 +35,8 @@ LoadCompressedImage(void)
    unsigned char ImgDataTemp[ImgSize / 4];
    unsigned i;
    const GLenum filter = GL_LINEAR;
+   const int half = ImgSize / 2;
+
    glTexImage2D(Target, 0, CompFormat, ImgWidth, ImgHeight, 0,
                 GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
@@ -42,11 +44,11 @@ LoadCompressedImage(void)
    glCompressedTexSubImage2DARB(Target, 0,
                                 0, 0, /* pos */
                                 ImgWidth, ImgHeight / 2,
-                                CompFormat, ImgSize / 2, ImgData + ImgSize / 2);
+                                CompFormat, ImgSize / 2, ImgData /*+ ImgSize / 2*/);
 
    /* top left */
    for (i = 0; i < ImgHeight / 8; i++) {
-      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[i * 2 * ImgWidth], ImgWidth);
+      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[half + i * 2 * ImgWidth], ImgWidth);
    }
    glCompressedTexSubImage2DARB(Target, 0,
                                 0, ImgHeight / 2, /* pos */
@@ -55,7 +57,7 @@ LoadCompressedImage(void)
 
    /* top right */
    for (i = 0; i < ImgHeight / 8; i++) {
-      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[i * 2 * ImgWidth + ImgWidth], ImgWidth);
+      memcpy(&ImgDataTemp[i * ImgWidth], &ImgData[half + i * 2 * ImgWidth + ImgWidth], ImgWidth);
    }
    glCompressedTexSubImage2DARB(Target, 0,
                                 ImgWidth / 2, ImgHeight / 2, /* pos */

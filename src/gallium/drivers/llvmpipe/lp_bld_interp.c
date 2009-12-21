@@ -109,32 +109,6 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
 
 
 /**
- * Small vector x scale multiplication optimization.
- *
- * TODO: Should be elsewhere.
- */
-static LLVMValueRef
-coeff_multiply(struct lp_build_interp_soa_context *bld,
-               LLVMValueRef coeff,
-               int step)
-{
-   LLVMValueRef factor;
-
-   switch(step) {
-   case 0:
-      return bld->base.zero;
-   case 1:
-      return coeff;
-   case 2:
-      return lp_build_add(&bld->base, coeff, coeff);
-   default:
-      factor = lp_build_const_scalar(bld->base.type, (double)step);
-      return lp_build_mul(&bld->base, coeff, factor);
-   }
-}
-
-
-/**
  * Multiply the dadx and dady with the xstep and ystep respectively.
  */
 static void
@@ -149,8 +123,8 @@ coeffs_update(struct lp_build_interp_soa_context *bld)
       if (mode != TGSI_INTERPOLATE_CONSTANT) {
          for(chan = 0; chan < NUM_CHANNELS; ++chan) {
             if(mask & (1 << chan)) {
-               bld->dadx[attrib][chan] = coeff_multiply(bld, bld->dadx[attrib][chan], bld->xstep);
-               bld->dady[attrib][chan] = coeff_multiply(bld, bld->dady[attrib][chan], bld->ystep);
+               bld->dadx[attrib][chan] = lp_build_mul_imm(&bld->base, bld->dadx[attrib][chan], bld->xstep);
+               bld->dady[attrib][chan] = lp_build_mul_imm(&bld->base, bld->dady[attrib][chan], bld->ystep);
             }
          }
       }
@@ -329,8 +303,8 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
             unsigned first, last, mask;
             unsigned attrib;
 
-            first = decl->DeclarationRange.First;
-            last = decl->DeclarationRange.Last;
+            first = decl->Range.First;
+            last = decl->Range.Last;
             mask = decl->Declaration.UsageMask;
 
             for( attrib = first; attrib <= last; ++attrib ) {

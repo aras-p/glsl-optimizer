@@ -27,21 +27,18 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include <stdlib.h>
+#include "main/context.h"
+#include "main/enums.h"
+#include "main/macros.h"
 #include "main/mm.h"
+#include "main/imports.h"
+#include "main/simple_list.h"
+
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
 #include "mgatris.h"
 #include "mgaioctl.h"
-
-#include "main/context.h"
-#include "main/enums.h"
-#include "main/macros.h"
-#include "main/imports.h"
-
-#include "main/simple_list.h"
-#include "main/texformat.h"
 
 #define MGA_USE_TABLE_FOR_FORMAT
 #ifdef MGA_USE_TABLE_FOR_FORMAT
@@ -94,14 +91,14 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	return;
     }
 #else
-    if ( (baseImage->TexFormat->MesaFormat >= TMC_nr_tformat)
-	 || (TMC_tformat[ baseImage->TexFormat->MesaFormat ] == 0) )
+    if ( (baseImage->TexFormat >= TMC_nr_tformat)
+	 || (TMC_tformat[ baseImage->TexFormat ] == 0) )
     {
 	_mesa_problem(NULL, "unexpected texture format in %s", __FUNCTION__);
 	return;
     }
 
-    txformat = TMC_tformat[ baseImage->TexFormat->MesaFormat ];
+    txformat = TMC_tformat[ baseImage->TexFormat ];
 
 #endif /* MGA_USE_TABLE_FOR_FORMAT */
 
@@ -131,7 +128,7 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	 break;
 
       size = texImage->Width * texImage->Height *
-         baseImage->TexFormat->TexelBytes;
+         _mesa_get_format_bytes(baseImage->TexFormat);
 
       t->offsets[i] = totalSize;
       t->base.dirty_images[0] |= (1<<i);

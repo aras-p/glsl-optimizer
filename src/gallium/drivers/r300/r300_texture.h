@@ -33,6 +33,9 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen);
 
 unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level);
 
+unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
+                                 unsigned zslice, unsigned face);
+
 /* Note the signature of R300_EASY_TX_FORMAT(A, R, G, B, FORMAT)... */
 static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 {
@@ -40,6 +43,8 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         /* X8 */
         case PIPE_FORMAT_I8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
+        case PIPE_FORMAT_L8_UNORM:
+            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
         /* X16 */
         case PIPE_FORMAT_R16_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16);
@@ -48,6 +53,9 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
                 R300_TX_FORMAT_SIGNED;
         case PIPE_FORMAT_Z16_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16);
+        /* Y8X8 */
+        case PIPE_FORMAT_A8L8_UNORM:
+            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
         /* W8Z8Y8X8 */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
             return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
@@ -82,6 +90,7 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         case PIPE_FORMAT_Z24S8_UNORM:
         case PIPE_FORMAT_Z24X8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
+
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported texture format %s in %s\n",

@@ -648,9 +648,9 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_blend_state = nv50_blend_state_delete;
 
 	nv50->pipe.create_sampler_state = nv50_sampler_state_create;
-	nv50->pipe.bind_sampler_states = nv50_sampler_state_bind;
+	nv50->pipe.bind_fragment_sampler_states = nv50_sampler_state_bind;
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
-	nv50->pipe.set_sampler_textures = nv50_set_sampler_texture;
+	nv50->pipe.set_fragment_sampler_textures = nv50_set_sampler_texture;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;

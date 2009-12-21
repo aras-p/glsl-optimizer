@@ -117,8 +117,6 @@ struct intel_context
                                struct intel_region * depth_region,
 			       GLuint num_regions);
 
-      GLuint (*flush_cmd) (void);
-
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
 
@@ -136,14 +134,6 @@ struct intel_context
       void (*meta_draw_region) (struct intel_context * intel,
                                 struct intel_region * draw_region,
                                 struct intel_region * depth_region);
-
-      void (*meta_draw_quad)(struct intel_context *intel,
-			     GLfloat x0, GLfloat x1,
-			     GLfloat y0, GLfloat y1,
-			     GLfloat z,
-			     GLuint color, /* ARGB32 */
-			     GLfloat s0, GLfloat s1,
-			     GLfloat t0, GLfloat t1);
 
       void (*meta_color_mask) (struct intel_context * intel, GLboolean);
 
@@ -176,27 +166,24 @@ struct intel_context
 
    struct dri_metaops meta;
 
-   GLint refcount;
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
 
    dri_bufmgr *bufmgr;
    unsigned int maxBatchSize;
 
+   /**
+    * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
+    */
+   int gen;
+
    struct intel_region *front_region;
    struct intel_region *back_region;
    struct intel_region *depth_region;
 
-   /**
-    * This value indicates that the kernel memory manager is being used
-    * instead of the fake client-side memory manager.
-    */
-   GLboolean ttm;
-
    struct intel_batchbuffer *batch;
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
-   unsigned batch_id;
 
    struct
    {
@@ -216,10 +203,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   GLuint ClearColor565;
-   GLuint ClearColor8888;
-
-
    /* Offsets of fields within the current vertex:
     */
    GLuint coloroffset;
@@ -236,6 +219,7 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
+   GLboolean no_hw;
    GLboolean always_flush_batch;
    GLboolean always_flush_cache;
 
@@ -301,13 +285,6 @@ struct intel_context
    GLboolean use_early_z;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
-   int perf_boxes;
-
-   GLuint do_usleeps;
-   int do_irqs;
-   GLuint irqsEmitted;
-
-   GLboolean scissor;
    drm_clip_rect_t draw_rect;
    drm_clip_rect_t scissor_rect;
 
@@ -323,8 +300,6 @@ struct intel_context
    volatile drm_i915_sarea_t *sarea;
 
    GLuint lastStamp;
-
-   GLboolean no_hw;
 
    /**
     * Configuration cache
@@ -353,34 +328,24 @@ extern char *__progname;
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 #define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
+static inline uint32_t
+U_FIXED(float value, uint32_t frac_bits)
+{
+   value *= (1 << frac_bits);
+   return value < 0 ? 0 : value;
+}
+
+static inline uint32_t
+S_FIXED(float value, uint32_t frac_bits)
+{
+   return value * (1 << frac_bits);
+}
+
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\
       (intel)->prim.flush(intel);		\
 } while (0)
-
-/* ================================================================
- * Color packing:
- */
-
-#define INTEL_PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define INTEL_PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define INTEL_PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-#define INTEL_PACKCOLOR8888(r,g,b,a) \
-  ((a<<24) | (r<<16) | (g<<8) | b)
-
-#define INTEL_PACKCOLOR(format, r,  g,  b, a)		\
-(format == DV_PF_555 ? INTEL_PACKCOLOR1555(r,g,b,a) :	\
- (format == DV_PF_565 ? INTEL_PACKCOLOR565(r,g,b) :	\
-  (format == DV_PF_8888 ? INTEL_PACKCOLOR8888(r,g,b,a) :	\
-   0)))
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
@@ -572,6 +537,27 @@ static INLINE GLboolean
 is_power_of_two(uint32_t value)
 {
    return (value & (value - 1)) == 0;
+}
+
+static inline void
+intel_bo_map_gtt_preferred(struct intel_context *intel,
+			   drm_intel_bo *bo,
+			   GLboolean write)
+{
+   if (intel->intelScreen->kernel_exec_fencing)
+      drm_intel_gem_bo_map_gtt(bo);
+   else
+      drm_intel_bo_map(bo, write);
+}
+
+static inline void
+intel_bo_unmap_gtt_preferred(struct intel_context *intel,
+			     drm_intel_bo *bo)
+{
+   if (intel->intelScreen->kernel_exec_fencing)
+      drm_intel_gem_bo_unmap_gtt(bo);
+   else
+      drm_intel_bo_unmap(bo);
 }
 
 #endif

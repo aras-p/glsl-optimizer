@@ -208,6 +208,10 @@ struct radeon_tex_obj {
 	 * and so on.
 	 */
 	GLboolean validated;
+	/* Minimum LOD to be used during rendering */
+	unsigned minLod;
+	/* Miximum LOD to be used during rendering */
+	unsigned maxLod;
 
 	GLuint override_offset;
 	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
@@ -324,6 +328,7 @@ struct radeon_swtcl_info {
 	GLuint vertex_attr_count;
 
 	GLuint emit_prediction;
+        struct radeon_bo *bo;
 };
 
 #define RADEON_MAX_AOS_ARRAYS		16
@@ -502,7 +507,6 @@ struct radeon_context {
 
    struct {
 	struct radeon_query_object *current;
-	struct radeon_query_object not_flushed_head;
 	struct radeon_state_atom queryobj;
    } query;
 

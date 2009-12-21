@@ -903,14 +903,14 @@ static void sisRenderStart( GLcontext *ctx )
 
    /* projective textures are not supported by the hardware */
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
-      if (VB->TexCoordPtr[0]->size > 2)
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size > 2)
 	 tex_fallback = GL_TRUE;
       EMIT_ATTR(_TNL_ATTRIB_TEX0, EMIT_2F);
       AGPParseSet |= SiS_PS_HAS_UV0;
    }
    /* Will only hit tex1 on SiS300 */
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 )) {
-      if (VB->TexCoordPtr[1]->size > 2)
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX1]->size > 2)
 	 tex_fallback = GL_TRUE;
       EMIT_ATTR(_TNL_ATTRIB_TEX1, EMIT_2F);
       AGPParseSet |= SiS_PS_HAS_UV1;

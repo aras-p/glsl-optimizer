@@ -48,6 +48,11 @@ if env['dri']:
 	#	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
 	#	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
 
+	if 'vmware' in env['winsys']:
+		SConscript([
+			'vmware/SConscript',
+		])
+
 	if 'intel' in env['winsys']:
 		SConscript([
 			'intel/SConscript',

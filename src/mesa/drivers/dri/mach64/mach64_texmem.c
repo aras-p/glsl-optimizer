@@ -31,18 +31,17 @@
  *   Jose Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+
 #include "mach64_context.h"
 #include "mach64_state.h"
 #include "mach64_ioctl.h"
 #include "mach64_vb.h"
 #include "mach64_tris.h"
 #include "mach64_tex.h"
-
-#include "main/context.h"
-#include "main/macros.h"
-#include "main/simple_list.h"
-#include "main/texformat.h"
-#include "main/imports.h"
 
 
 /* Destroy hardware state associated with texture `t'.
@@ -76,6 +75,7 @@ static void mach64UploadAGPSubImage( mach64ContextPtr mmesa,
    struct gl_texture_image *image;
    int texelsPerDword = 0;
    int dwords;
+   GLuint texelBytes;
 
    /* Ensure we have a valid texture to upload */
    if ( ( level < 0 ) || ( level > mmesa->glCtx->Const.MaxTextureLevels ) )
@@ -85,7 +85,9 @@ static void mach64UploadAGPSubImage( mach64ContextPtr mmesa,
    if ( !image )
       return;
 
-   switch ( image->TexFormat->TexelBytes ) {
+   texelBytes = _mesa_get_format_bytes(image->TexFormat);
+
+   switch ( texelBytes ) {
    case 1: texelsPerDword = 4; break;
    case 2: texelsPerDword = 2; break;
    case 4: texelsPerDword = 1; break;
@@ -118,8 +120,8 @@ static void mach64UploadAGPSubImage( mach64ContextPtr mmesa,
    {
       CARD32 *dst = (CARD32 *)((char *)mach64Screen->agpTextures.map + t->base.memBlock->ofs);
       const GLubyte *src = (const GLubyte *) image->Data +
-	 (y * image->Width + x) * image->TexFormat->TexelBytes;
-      const GLuint bytes = width * height * image->TexFormat->TexelBytes;
+	 (y * image->Width + x) * texelBytes;
+      const GLuint bytes = width * height * texelBytes;
       memcpy(dst, src, bytes);
    }
 
@@ -140,6 +142,7 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
    const int maxdwords = (MACH64_BUFFER_MAX_DWORDS - (MACH64_HOSTDATA_BLIT_OFFSET / 4));
    CARD32 pitch, offset;
    int i;
+   GLuint texelBytes;
 
    /* Ensure we have a valid texture to upload */
    if ( ( level < 0 ) || ( level > mmesa->glCtx->Const.MaxTextureLevels ) )
@@ -149,7 +152,9 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
    if ( !image )
       return;
 
-   switch ( image->TexFormat->TexelBytes ) {
+   texelBytes = _mesa_get_format_bytes(image->TexFormat);
+
+   switch ( texelBytes ) {
    case 1: texelsPerDword = 4; break;
    case 2: texelsPerDword = 2; break;
    case 4: texelsPerDword = 1; break;
@@ -259,7 +264,7 @@ static void mach64UploadLocalSubImage( mach64ContextPtr mmesa,
 
        {
           const GLubyte *src = (const GLubyte *) image->Data +
-             (y * image->Width + x) * image->TexFormat->TexelBytes;
+             (y * image->Width + x) * texelBytes;
 
           mach64FireBlitLocked( mmesa, (void *)src, offset, pitch, format,
 				x, y, width, height );

@@ -75,6 +75,10 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
 
+   if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+      intel->front_buffer_dirty = GL_TRUE;
+   }
+
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);
 

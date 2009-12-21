@@ -335,7 +335,11 @@ def generate(env):
         if msvc:
             cppdefines += [
                 'VC_EXTRALEAN',
+                '_USE_MATH_DEFINES',
+                '_CRT_SECURE_NO_WARNINGS',
                 '_CRT_SECURE_NO_DEPRECATE',
+                '_SCL_SECURE_NO_WARNINGS',
+                '_SCL_SECURE_NO_DEPRECATE',
             ]
         if debug:
             cppdefines += ['_DEBUG']
@@ -402,8 +406,6 @@ def generate(env):
             ccflags += ['-O0', '-g3'] # mingw 4.2.1 optimizer is broken
         else:
             ccflags += ['-O3', '-g0']
-        if env['profile']:
-            ccflags += ['-pg']
         if env['machine'] == 'x86':
             ccflags += [
                 '-m32',
@@ -445,11 +447,6 @@ def generate(env):
               '/Oi', # enable intrinsic functions
               '/Ot', # favor code speed
               #'/fp:fast', # fast floating point 
-            ]
-        if env['profile']:
-            ccflags += [
-                '/Gh', # enable _penter hook function
-                '/GH', # enable _pexit hook function
             ]
         ccflags += [
             '/W3', # warning level

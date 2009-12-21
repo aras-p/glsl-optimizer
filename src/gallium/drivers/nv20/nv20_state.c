@@ -546,9 +546,9 @@ nv20_init_state_functions(struct nv20_context *nv20)
 	nv20->pipe.delete_blend_state = nv20_blend_state_delete;
 
 	nv20->pipe.create_sampler_state = nv20_sampler_state_create;
-	nv20->pipe.bind_sampler_states = nv20_sampler_state_bind;
+	nv20->pipe.bind_fragment_sampler_states = nv20_sampler_state_bind;
 	nv20->pipe.delete_sampler_state = nv20_sampler_state_delete;
-	nv20->pipe.set_sampler_textures = nv20_set_sampler_texture;
+	nv20->pipe.set_fragment_sampler_textures = nv20_set_sampler_texture;
 
 	nv20->pipe.create_rasterizer_state = nv20_rasterizer_state_create;
 	nv20->pipe.bind_rasterizer_state = nv20_rasterizer_state_bind;

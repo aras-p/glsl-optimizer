@@ -11,6 +11,7 @@
 #define DRIRENDERBUFFER_H
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "dri_util.h"
 
 
@@ -63,7 +64,7 @@ typedef struct {
 
 
 extern driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLvoid *addr,
+driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
                    __DRIdrawablePrivate *dPriv);
 

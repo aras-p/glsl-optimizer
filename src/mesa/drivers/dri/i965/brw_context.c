@@ -105,11 +105,13 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
+   ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
                                      ctx->Const.MaxTextureImageUnits);
    ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
+   ctx->Const.MaxCombinedTextureImageUnits = 0;
 
    /* Mesa limits textures to 4kx4k; it would be nice to fix that someday
     */

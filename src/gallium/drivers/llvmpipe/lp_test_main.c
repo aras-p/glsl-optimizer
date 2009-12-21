@@ -37,7 +37,20 @@
 #include "util/u_cpu_detect.h"
 
 #include "lp_bld_const.h"
+#include "lp_bld_misc.h"
 #include "lp_test.h"
+
+
+#ifdef PIPE_CC_MSVC
+static INLINE double
+round(double x)
+{
+   if (x >= 0.0)
+      return floor(x + 0.5);
+   else
+      return ceil(x - 0.5);
+}
+#endif
 
 
 void
@@ -367,10 +380,8 @@ int main(int argc, char **argv)
          n = atoi(argv[i]);
    }
 
-#ifdef LLVM_NATIVE_ARCH
    LLVMLinkInJIT();
    LLVMInitializeNativeTarget();
-#endif
 
    util_cpu_detect();
 

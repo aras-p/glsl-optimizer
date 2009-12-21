@@ -528,8 +528,8 @@ st_sample_surface(struct st_surface *surface, float *rgba)
 {
    struct pipe_texture *texture = surface->texture;
    struct pipe_screen *screen = texture->screen;
-   unsigned width = texture->width[surface->level];
-   unsigned height = texture->height[surface->level];
+   unsigned width = u_minify(texture->width0, surface->level);
+   unsigned height = u_minify(texture->height0, surface->level);
    uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;

@@ -58,8 +58,10 @@ translate_wrap_mode(unsigned wrap)
       return TEXCOORDMODE_CLAMP_EDGE;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return TEXCOORDMODE_CLAMP_BORDER;
-//   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
-//      return TEXCOORDMODE_MIRROR;
+/*
+   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
+      return TEXCOORDMODE_MIRROR;
+*/
    default:
       return TEXCOORDMODE_WRAP;
    }
@@ -765,7 +767,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.delete_blend_state = i915_delete_blend_state;
 
    i915->base.create_sampler_state = i915_create_sampler_state;
-   i915->base.bind_sampler_states = i915_bind_sampler_states;
+   i915->base.bind_fragment_sampler_states = i915_bind_sampler_states;
    i915->base.delete_sampler_state = i915_delete_sampler_state;
 
    i915->base.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
@@ -789,7 +791,7 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->base.set_polygon_stipple = i915_set_polygon_stipple;
    i915->base.set_scissor_state = i915_set_scissor_state;
-   i915->base.set_sampler_textures = i915_set_sampler_textures;
+   i915->base.set_fragment_sampler_textures = i915_set_sampler_textures;
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_vertex_elements = i915_set_vertex_elements;

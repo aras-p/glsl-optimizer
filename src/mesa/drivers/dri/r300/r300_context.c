@@ -90,10 +90,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
@@ -145,7 +145,7 @@ const struct dri_extension card_extensions[] = {
 };
 
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_blit",	GL_EXT_framebuffer_blit_functions },
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
@@ -155,7 +155,7 @@ const struct dri_extension mm_extensions[] = {
  * The GL 2.0 functions are needed to make display lists work with
  * functions added by GL_ATI_separate_stencil.
  */
-const struct dri_extension gl_20_extension[] = {
+static const struct dri_extension gl_20_extension[] = {
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 };
 
@@ -439,11 +439,11 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (r300->options.stencil_two_side_disabled)
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
-	if (r300->options.s3tc_force_enabled) {
+	if (r300->options.s3tc_force_disabled) {
+		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+	} else if (ctx->Mesa_DXTn || r300->options.s3tc_force_enabled) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 		_mesa_enable_extension(ctx, "GL_S3_s3tc");
-	} else if (r300->options.s3tc_force_disabled) {
-		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {

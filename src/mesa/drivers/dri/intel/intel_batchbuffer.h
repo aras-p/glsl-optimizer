@@ -62,6 +62,7 @@ struct intel_batchbuffer
    } emit;
 
    GLuint dirty_state;
+   GLuint reserved_space;
 };
 
 struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
@@ -95,6 +96,7 @@ GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
+void intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
@@ -104,7 +106,7 @@ GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 static INLINE GLint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
-   return (batch->size - BATCH_RESERVED) - (batch->ptr - batch->map);
+   return (batch->size - batch->reserved_space) - (batch->ptr - batch->map);
 }
 
 
@@ -172,13 +174,5 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
    }									\
    intel->batch->emit.start_ptr = NULL;					\
 } while(0)
-
-
-static INLINE void
-intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
-{
-   intel_batchbuffer_require_space(batch, 4, IGNORE_CLIPRECTS);
-   intel_batchbuffer_emit_dword(batch, MI_FLUSH);
-}
 
 #endif

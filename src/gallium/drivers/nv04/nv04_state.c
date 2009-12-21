@@ -425,9 +425,9 @@ nv04_init_state_functions(struct nv04_context *nv04)
 	nv04->pipe.delete_blend_state = nv04_blend_state_delete;
 
 	nv04->pipe.create_sampler_state = nv04_sampler_state_create;
-	nv04->pipe.bind_sampler_states = nv04_sampler_state_bind;
+	nv04->pipe.bind_fragment_sampler_states = nv04_sampler_state_bind;
 	nv04->pipe.delete_sampler_state = nv04_sampler_state_delete;
-	nv04->pipe.set_sampler_textures = nv04_set_sampler_texture;
+	nv04->pipe.set_fragment_sampler_textures = nv04_set_sampler_texture;
 
 	nv04->pipe.create_rasterizer_state = nv04_rasterizer_state_create;
 	nv04->pipe.bind_rasterizer_state = nv04_rasterizer_state_bind;

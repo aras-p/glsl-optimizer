@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
@@ -78,7 +77,7 @@ void r600UpdateTextureState(GLcontext * ctx)
 	}
 }
 
-static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_format)
+static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa_format)
 {
 	radeonTexObj *t = radeon_tex_obj(tObj);
 
@@ -87,9 +86,19 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
+		 FORMAT_COMP_X_shift, FORMAT_COMP_X_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
+		 FORMAT_COMP_Y_shift, FORMAT_COMP_Y_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
+		 FORMAT_COMP_X_shift, FORMAT_COMP_Z_mask);
+	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
+		 FORMAT_COMP_W_shift, FORMAT_COMP_W_mask);
+
 	switch (mesa_format) /* This is mesa format. */
 	{
 	case MESA_FORMAT_RGBA8888:
+	case MESA_FORMAT_SIGNED_RGBA8888:
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -101,8 +110,19 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
+		if (mesa_format == MESA_FORMAT_SIGNED_RGBA8888) {
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_X_shift, FORMAT_COMP_X_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_Y_shift, FORMAT_COMP_Y_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_Z_shift, FORMAT_COMP_Z_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_W_shift, FORMAT_COMP_W_mask);
+		}
 		break;
 	case MESA_FORMAT_RGBA8888_REV:
+	case MESA_FORMAT_SIGNED_RGBA8888_REV:
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
 			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
@@ -114,6 +134,16 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
+		if (mesa_format == MESA_FORMAT_SIGNED_RGBA8888_REV) {
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_X_shift, FORMAT_COMP_X_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_Y_shift, FORMAT_COMP_Y_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_Z_shift, FORMAT_COMP_Z_mask);
+			SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_SIGNED,
+				 FORMAT_COMP_W_shift, FORMAT_COMP_W_mask);
+		}
 		break;
 	case MESA_FORMAT_ARGB8888:
 		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
@@ -480,11 +510,19 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		break;
 	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_X8_Z24:
+	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z24_S8:
 	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_S8:
 		switch (mesa_format) {
 		case MESA_FORMAT_Z16:
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_16,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		case MESA_FORMAT_X8_Z24:
+		case MESA_FORMAT_S8_Z24:
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_8_24,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 			break;
 		case MESA_FORMAT_Z24_S8:
@@ -494,6 +532,12 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_fo
 		case MESA_FORMAT_Z32:
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_32,
 				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		case MESA_FORMAT_S8:
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_8,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		default:
 			break;
 		};
 		switch (tObj->DepthMode) {
@@ -591,7 +635,7 @@ void r600SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = radeon_tex_obj(tObj);
 
-	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat);
+	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat);
 
 }
 
@@ -605,7 +649,6 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 {
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	const struct gl_texture_image *firstImage;
-	int firstlevel = t->mt ? t->mt->firstLevel : 0;
 	GLuint uTexelPitch, row_align;
 
 	if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled &&
@@ -613,10 +656,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	    t->bo)
 		return;
 
-	firstImage = t->base.Image[0][firstlevel];
+	firstImage = t->base.Image[0][t->minLod];
 
 	if (!t->image_override) {
-		if (!r600GetTexFormat(texObj, firstImage->TexFormat->MesaFormat)) {
+		if (!r600GetTexFormat(texObj, firstImage->TexFormat)) {
 			radeon_error("unexpected texture format in %s\n",
 				      __FUNCTION__);
 			return;
@@ -648,7 +691,8 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	}
 
 	row_align = rmesa->radeon.texture_row_align - 1;
-	uTexelPitch = ((firstImage->Width * t->mt->bpp + row_align) & ~row_align) / t->mt->bpp;
+	uTexelPitch = (_mesa_format_row_stride(firstImage->TexFormat, firstImage->Width) + row_align) & ~row_align;
+	uTexelPitch = uTexelPitch / _mesa_get_format_bytes(firstImage->TexFormat);
 	uTexelPitch = (uTexelPitch + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
 
@@ -662,10 +706,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	SETfield(t->SQ_TEX_RESOURCE1, firstImage->Height - 1,
 		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
 
-	if ((t->mt->lastLevel - t->mt->firstLevel) > 0) {
-		t->SQ_TEX_RESOURCE3 = t->mt->levels[0].size / 256;
-		SETfield(t->SQ_TEX_RESOURCE4, t->mt->firstLevel, BASE_LEVEL_shift, BASE_LEVEL_mask);
-		SETfield(t->SQ_TEX_RESOURCE5, t->mt->lastLevel, LAST_LEVEL_shift, LAST_LEVEL_mask);
+	if ((t->maxLod - t->minLod) > 0) {
+		t->SQ_TEX_RESOURCE3 = t->mt->levels[t->minLod].size / 256;
+		SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask);
+		SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
 	}
 }
 
@@ -764,9 +808,8 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	radeonTexObjPtr t = radeon_tex_obj(tObj);
-	int firstlevel = t->mt ? t->mt->firstLevel : 0;
 	const struct gl_texture_image *firstImage;
-	uint32_t pitch_val, size, row_align, bpp;
+	uint32_t pitch_val, size, row_align;
 
 	if (!tObj)
 		return;
@@ -776,13 +819,9 @@ void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	if (!offset)
 		return;
 
-	bpp = depth / 8;
-	if (bpp == 3) 
-		bpp = 4;
-
-	firstImage = t->base.Image[0][firstlevel];
+	firstImage = t->base.Image[0][t->minLod];
 	row_align = rmesa->radeon.texture_row_align - 1;
-	size = ((firstImage->Width * bpp + row_align) & ~row_align) * firstImage->Height;
+	size = ((_mesa_format_row_stride(firstImage->TexFormat, firstImage->Width) + row_align) & ~row_align) * firstImage->Height;
 	if (t->bo) {
 		radeon_bo_unref(t->bo);
 		t->bo = NULL;
@@ -905,20 +944,14 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
-	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
-							internalFormat,
-							type, format, 0);
+
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;

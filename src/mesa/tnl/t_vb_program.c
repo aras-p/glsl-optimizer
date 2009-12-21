@@ -329,7 +329,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    /* make list of outputs to save some time below */
    numOutputs = 0;
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (program->Base.OutputsWritten & (1 << i)) {
+      if (program->Base.OutputsWritten & BITFIELD64_BIT(i)) {
          outputs[numOutputs++] = i;
       }
    }
@@ -407,14 +407,14 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    /* Fixup fog and point size results if needed */
    if (program->IsNVProgram) {
       if (ctx->Fog.Enabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
+          (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_FOGC)) == 0) {
          for (i = 0; i < VB->Count; i++) {
             store->results[VERT_RESULT_FOGC].data[i][0] = 1.0;
          }
       }
 
       if (ctx->VertexProgram.PointSizeEnabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
+          (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_PSIZ)) == 0) {
          for (i = 0; i < VB->Count; i++) {
             store->results[VERT_RESULT_PSIZ].data[i][0] = ctx->Point.Size;
          }
@@ -454,25 +454,20 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       VB->ClipPtr->count = VB->Count;
    }
 
-   VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
-   VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
-   VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
-   VB->SecondaryColorPtr[1] = &store->results[VERT_RESULT_BFC1];
-   VB->FogCoordPtr = &store->results[VERT_RESULT_FOGC];
-
    VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];
    VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->results[VERT_RESULT_COL1];
    VB->AttribPtr[VERT_ATTRIB_FOG] = &store->results[VERT_RESULT_FOGC];
    VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VERT_RESULT_PSIZ];
+   VB->BackfaceColorPtr = &store->results[VERT_RESULT_BFC0];
+   VB->BackfaceSecondaryColorPtr = &store->results[VERT_RESULT_BFC1];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      VB->TexCoordPtr[i] = 
       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]
          = &store->results[VERT_RESULT_TEX0 + i];
    }
 
    for (i = 0; i < ctx->Const.MaxVarying; i++) {
-      if (program->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+      if (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_VAR0 + i)) {
          /* Note: varying results get put into the generic attributes */
 	 VB->AttribPtr[VERT_ATTRIB_GENERIC0+i]
             = &store->results[VERT_RESULT_VAR0 + i];

@@ -176,6 +176,8 @@ MeasureDownloadRate(void)
    orig_getImage = (GLubyte *) malloc(image_bytes + ALIGN);
    if (!orig_texImage || !orig_getImage) {
       DownloadRate = 0.0;
+      free(orig_texImage);
+      free(orig_getImage);
       return;
    }
 

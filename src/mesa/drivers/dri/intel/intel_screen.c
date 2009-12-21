@@ -349,7 +349,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
    else {
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
-      GLenum rgbFormat;
+      gl_format rgbFormat;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -359,11 +359,11 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
       if (mesaVis->redBits == 5)
-	 rgbFormat = GL_RGB5;
+	 rgbFormat = MESA_FORMAT_RGB565;
       else if (mesaVis->alphaBits == 0)
-	 rgbFormat = GL_RGB8;
+	 rgbFormat = MESA_FORMAT_XRGB8888;
       else
-	 rgbFormat = GL_RGBA8;
+	 rgbFormat = MESA_FORMAT_ARGB8888;
 
       /* setup the hardware-based renderbuffers */
       intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
@@ -382,7 +382,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 if (mesaVis->stencilBits == 8) {
 	    /* combined depth/stencil buffer */
 	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT);
+	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
 	    /* note: bind RB to two attachment points */
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthStencilRb->Base);
@@ -390,7 +390,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				   &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24);
+	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthRb->Base);
 	 }
@@ -398,7 +398,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-	    = intel_create_renderbuffer(GL_DEPTH_COMPONENT16);
+	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
@@ -605,7 +605,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
 static GLboolean
 intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
-   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
    int gem_kernel = 0;
    GLboolean gem_supported;
    struct drm_i915_getparam gp;
@@ -622,43 +621,24 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
     */
-   intelScreen->ttm = GL_FALSE;
    if (intelScreen->driScrnPriv->dri2.enabled)
        gem_supported = GL_TRUE;
    else if (intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
 	    gem_kernel &&
 	    intelScreen->front.bo_handle != -1)
        gem_supported = GL_TRUE;
-   else
-       gem_supported = GL_FALSE;
-
-   if (!gem_disable && gem_supported) {
-      intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-      if (intelScreen->bufmgr != NULL)
-	 intelScreen->ttm = GL_TRUE;
+   else {
+      fprintf(stderr, "[%s:%u] Error initializing GEM.\n",
+	      __func__, __LINE__);
+      return GL_FALSE;
    }
+
+   intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
    /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
-      if (gem_disable) {
-	 _mesa_warning(NULL, "GEM disabled.  Using classic.");
-      } else {
-	 _mesa_warning(NULL,
-                       "Failed to initialize GEM.  Falling back to classic.");
-      }
-
-      if (intelScreen->tex.size == 0) {
-	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
-		 __func__, __LINE__);
-	 return GL_FALSE;
-      }
-
-      intelScreen->bufmgr =
-	 intel_bufmgr_fake_init(spriv->fd,
-				intelScreen->tex.offset,
-				intelScreen->tex.map,
-				intelScreen->tex.size,
-				(unsigned int * volatile)
-				&intelScreen->sarea->last_dispatch);
+      fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+	      __func__, __LINE__);
+      return GL_FALSE;
    }
 
    if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))
@@ -696,18 +676,6 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
-	   
    if (!intelInitDriver(psp))
        return NULL;
 
@@ -759,18 +727,6 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
    __DRIconfig **configs = NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
 
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));

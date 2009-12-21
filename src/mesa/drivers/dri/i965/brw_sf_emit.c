@@ -56,7 +56,7 @@ static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
 static GLboolean have_attr(struct brw_sf_compile *c,
 			   GLuint attr)
 {
-   return (c->key.attrs & (1<<attr)) ? 1 : 0;
+   return (c->key.attrs & BITFIELD64_BIT(attr)) ? 1 : 0;
 }
 
 /*********************************************************************** 
@@ -122,8 +122,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
  * Flat shading
  */
 
-#define VERT_RESULT_COLOR_BITS ((1<<VERT_RESULT_COL0) | \
-                                 (1<<VERT_RESULT_COL1))
+#define VERT_RESULT_COLOR_BITS (BITFIELD64_BIT(VERT_RESULT_COL0) | \
+				BITFIELD64_BIT(VERT_RESULT_COL1))
 
 static void copy_colors( struct brw_sf_compile *c,
 		     struct brw_reg dst,
@@ -312,8 +312,8 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLushort *pc_linear)
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLuint persp_mask;
-   GLuint linear_mask;
+   GLbitfield64 persp_mask;
+   GLbitfield64 linear_mask;
 
    if (c->key.do_flat_shading || c->key.linear_color)
       persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
@@ -331,10 +331,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_persp = 0xf;
 
-   if (linear_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -342,10 +342,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_persp |= 0xf0;
 
-      if (linear_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_linear |= 0xf0;
    }
 
@@ -551,7 +551,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	  if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
+	  if (c->key.sprite_origin_lower_left) {
 	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
 		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
 	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
@@ -570,7 +570,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
       {
 	 brw_set_predicate_control_flag_value(p, pc); 
 	 if (tex->CoordReplace) {
-	     if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
+	     if (c->key.sprite_origin_lower_left) {
 		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
 		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
 	     }

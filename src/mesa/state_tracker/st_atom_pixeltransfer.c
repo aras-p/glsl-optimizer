@@ -145,7 +145,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    const GLuint gSize = ctx->PixelMaps.GtoG.Size;
    const GLuint bSize = ctx->PixelMaps.BtoB.Size;
    const GLuint aSize = ctx->PixelMaps.AtoA.Size;
-   const uint texSize = pt->width[0];
+   const uint texSize = pt->width0;
    uint *dest;
    uint i, j;
 

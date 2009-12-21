@@ -47,6 +47,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 #include "util/u_string.h"
 #include "util/u_cpu_detect.h"
 
@@ -361,6 +362,8 @@ lp_build_mul(struct lp_build_context *bld,
              LLVMValueRef b)
 {
    const struct lp_type type = bld->type;
+   LLVMValueRef shift;
+   LLVMValueRef res;
 
    if(a == bld->zero)
       return bld->zero;
@@ -394,10 +397,84 @@ lp_build_mul(struct lp_build_context *bld,
       assert(0);
    }
 
-   if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      return LLVMConstMul(a, b);
+   if(type.fixed)
+      shift = lp_build_int_const_scalar(type, type.width/2);
+   else
+      shift = NULL;
 
-   return LLVMBuildMul(bld->builder, a, b, "");
+   if(LLVMIsConstant(a) && LLVMIsConstant(b)) {
+      res =  LLVMConstMul(a, b);
+      if(shift) {
+         if(type.sign)
+            res = LLVMConstAShr(res, shift);
+         else
+            res = LLVMConstLShr(res, shift);
+      }
+   }
+   else {
+      res = LLVMBuildMul(bld->builder, a, b, "");
+      if(shift) {
+         if(type.sign)
+            res = LLVMBuildAShr(bld->builder, res, shift, "");
+         else
+            res = LLVMBuildLShr(bld->builder, res, shift, "");
+      }
+   }
+
+   return res;
+}
+
+
+/**
+ * Small vector x scale multiplication optimization.
+ */
+LLVMValueRef
+lp_build_mul_imm(struct lp_build_context *bld,
+                 LLVMValueRef a,
+                 int b)
+{
+   LLVMValueRef factor;
+
+   if(b == 0)
+      return bld->zero;
+
+   if(b == 1)
+      return a;
+
+   if(b == -1)
+      return LLVMBuildNeg(bld->builder, a, "");
+
+   if(b == 2 && bld->type.floating)
+      return lp_build_add(bld, a, a);
+
+   if(util_is_pot(b)) {
+      unsigned shift = ffs(b) - 1;
+
+      if(bld->type.floating) {
+#if 0
+         /*
+          * Power of two multiplication by directly manipulating the mantissa.
+          *
+          * XXX: This might not be always faster, it will introduce a small error
+          * for multiplication by zero, and it will produce wrong results
+          * for Inf and NaN.
+          */
+         unsigned mantissa = lp_mantissa(bld->type);
+         factor = lp_build_int_const_scalar(bld->type, (unsigned long long)shift << mantissa);
+         a = LLVMBuildBitCast(bld->builder, a, lp_build_int_vec_type(bld->type), "");
+         a = LLVMBuildAdd(bld->builder, a, factor, "");
+         a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->type), "");
+         return a;
+#endif
+      }
+      else {
+         factor = lp_build_const_scalar(bld->type, shift);
+         return LLVMBuildShl(bld->builder, a, factor, "");
+      }
+   }
+
+   factor = lp_build_const_scalar(bld->type, (double)b);
+   return lp_build_mul(bld, a, factor);
 }
 
 
@@ -432,13 +509,36 @@ lp_build_div(struct lp_build_context *bld,
 }
 
 
+/**
+ * Linear interpolation.
+ *
+ * This also works for integer values with a few caveats.
+ *
+ * @sa http://www.stereopsis.com/doubleblend.html
+ */
 LLVMValueRef
 lp_build_lerp(struct lp_build_context *bld,
               LLVMValueRef x,
               LLVMValueRef v0,
               LLVMValueRef v1)
 {
-   return lp_build_add(bld, v0, lp_build_mul(bld, x, lp_build_sub(bld, v1, v0)));
+   LLVMValueRef delta;
+   LLVMValueRef res;
+
+   delta = lp_build_sub(bld, v1, v0);
+
+   res = lp_build_mul(bld, x, delta);
+
+   res = lp_build_add(bld, v0, res);
+
+   if(bld->type.fixed)
+      /* XXX: This step is necessary for lerping 8bit colors stored on 16bits,
+       * but it will be wrong for other uses. Basically we need a more
+       * powerful lp_type, capable of further distinguishing the values
+       * interpretation from the value storage. */
+      res = LLVMBuildAnd(bld->builder, res, lp_build_int_const_scalar(bld->type, (1 << bld->type.width/2) - 1), "");
+
+   return res;
 }
 
 

@@ -136,7 +136,12 @@ radeonBufferSubData(GLcontext * ctx,
                     const GLvoid * data,
                     struct gl_buffer_object *obj)
 {
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
+
+    if (radeon_bo_is_referenced_by_cs(radeon_obj->bo, radeon->cmdbuf.cs)) {
+        radeon_firevertices(radeon);
+    }
 
     radeon_bo_map(radeon_obj->bo, GL_TRUE);
 

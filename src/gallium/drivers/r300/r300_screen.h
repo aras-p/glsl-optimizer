@@ -27,6 +27,8 @@
 
 #include "r300_chipset.h"
 
+struct r300_winsys;
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;

@@ -64,6 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_queryobj.h"
 
 #include "r700_state.h"
 #include "r700_ioctl.h"
@@ -73,11 +74,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-/* hw_tcl_on derives from future_hw_tcl_on when its safe to change it. */
-int future_hw_tcl_on = 1;
-int hw_tcl_on = 1;
+//#define R600_ENABLE_GLSL_TEST 1
 
 #define need_GL_VERSION_2_0
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_equation_separate
@@ -92,12 +92,14 @@ int hw_tcl_on = 1;
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
+  {"GL_ARB_depth_clamp",                NULL},
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
+  {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
@@ -109,6 +111,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_env_crossbar",	NULL},
   {"GL_ARB_texture_env_dot3",		NULL},
   {"GL_ARB_texture_mirrored_repeat",	NULL},
+  {"GL_ARB_texture_non_power_of_two",   NULL},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
@@ -145,7 +148,7 @@ const struct dri_extension card_extensions[] = {
 };
 
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
 };
@@ -154,8 +157,12 @@ const struct dri_extension mm_extensions[] = {
  * The GL 2.0 functions are needed to make display lists work with
  * functions added by GL_ATI_separate_stencil.
  */
-const struct dri_extension gl_20_extension[] = {
+static const struct dri_extension gl_20_extension[] = {
+#ifdef R600_ENABLE_GLSL_TEST
+    {"GL_ARB_shading_language_100",			GL_VERSION_2_0_functions },
+#else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
+#endif /* R600_ENABLE_GLSL_TEST */
 };
 
 static const struct tnl_pipeline_stage *r600_pipeline[] = {
@@ -204,6 +211,24 @@ static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 		context->radeon.Fallback &= ~bit;
 }
 
+static void r600_emit_query_finish(radeonContextPtr radeon)
+{
+	context_t *context = (context_t*) radeon;
+	BATCH_LOCALS(&context->radeon);
+
+	struct radeon_query_object *query = radeon->query.current;
+
+	BEGIN_BATCH_NO_AUTOSTATE(4 + 2);
+	R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 2));
+	R600_OUT_BATCH(ZPASS_DONE);
+	R600_OUT_BATCH(query->curr_offset + 8); /* hw writes qwords */
+	R600_OUT_BATCH(0x00000000);
+	R600_OUT_BATCH_RELOC(VGT_EVENT_INITIATOR, query->bo, 0, 0, RADEON_GEM_DOMAIN_GTT, 0);
+	END_BATCH();
+	assert(query->curr_offset < RADEON_QUERY_PAGE_SIZE);
+	query->emitted_begin = GL_FALSE;
+}
+
 static void r600_init_vtbl(radeonContextPtr radeon)
 {
 	radeon->vtbl.get_lock = r600_get_lock;
@@ -212,6 +237,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.swtcl_flush = NULL;
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
+	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -289,6 +315,26 @@ static void r600InitGLExtensions(GLcontext *ctx)
 	if (r600->radeon.radeonScreen->kernel_mm)
 	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
 
+#ifdef R600_ENABLE_GLSL_TEST
+    driInitExtensions(ctx, gl_20_extension, GL_TRUE);
+    //_mesa_enable_2_0_extensions(ctx);
+    //1.5
+    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
+    //2.0
+    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+    ctx->Extensions.ARB_point_sprite = GL_TRUE;
+    ctx->Extensions.ARB_shader_objects = GL_TRUE;
+    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
+    ctx->Extensions.ATI_separate_stencil = GL_TRUE;
+
+    /* glsl compiler has problem if this is not GL_TRUE */
+    ctx->Shader.EmitCondCodes = GL_TRUE;
+#endif /* R600_ENABLE_GLSL_TEST */
+
 	if (driQueryOptionb
 	    (&r600->radeon.optionCache, "disable_stencil_two_side"))
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
@@ -302,6 +348,10 @@ static void r600InitGLExtensions(GLcontext *ctx)
 	{
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
+
+	/* XXX: RV740 only seems to report results from half of its DBs */
+	if (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740)
+		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 }
 
 /* Create the device specific rendering context.
@@ -340,6 +390,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r700InitStateFuncs(&functions);
 	r600InitTextureFuncs(&functions);
 	r700InitShaderFuncs(&functions);
+	radeonInitQueryObjFunctions(&functions);
 	r700InitIoctlFuncs(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 

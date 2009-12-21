@@ -31,7 +31,6 @@
                    
 
 #include "main/mtypes.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "shader/prog_parameter.h"
 
@@ -70,7 +69,8 @@ static GLuint translate_tex_target( GLenum target )
 }
 
 
-static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
+static GLuint translate_tex_format( gl_format mesa_format,
+                                    GLenum internal_format,
 				    GLenum depth_mode )
 {
    switch( mesa_format ) {
@@ -86,6 +86,9 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
    case MESA_FORMAT_AL88:
       return BRW_SURFACEFORMAT_L8A8_UNORM;
 
+   case MESA_FORMAT_AL1616:
+      return BRW_SURFACEFORMAT_L16A16_UNORM;
+
    case MESA_FORMAT_RGB888:
       assert(0);		/* not supported for sampling */
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
@@ -96,7 +99,11 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
       else
 	 return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
+   case MESA_FORMAT_XRGB8888:
+      return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+
    case MESA_FORMAT_RGBA8888_REV:
+      _mesa_problem(NULL, "unexpected format in i965:translate_tex_format()");
       if (internal_format == GL_RGB)
 	 return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
       else
@@ -287,7 +294,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
       key.bo = NULL;
       key.offset = intelObj->textureOffset;
    } else {
-      key.format = firstImage->TexFormat->MesaFormat;
+      key.format = firstImage->TexFormat;
       key.internal_format = firstImage->InternalFormat;
       key.pitch = intelObj->mt->pitch;
       key.depth = firstImage->Depth;
@@ -354,7 +361,10 @@ brw_create_constant_surface( struct brw_context *brw,
 			 NULL, NULL);
 
    if (key->bo) {
-      /* Emit relocation to surface contents */
+      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
+       * bspec ("Data Cache") says that the data cache does not exist as
+       * a separate cache and is just the sampler cache.
+       */
       dri_bo_emit_reloc(bo,
 			I915_GEM_DOMAIN_SAMPLER, 0,
 			0,
@@ -527,9 +537,12 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 break;
+      case MESA_FORMAT_XRGB8888:
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
 	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -541,8 +554,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->texformat);
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
@@ -564,6 +576,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.cpp = 4;
       key.draw_offset = 0;
    }
+   /* _NEW_COLOR */
    memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
@@ -696,7 +709,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
-   /* _NEW_BUFFERS */
+   /* _NEW_BUFFERS | _NEW_COLOR */
    /* Update surfaces for drawing buffers */
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
@@ -709,7 +722,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;
-   brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
+   brw->wm.nr_surfaces = BRW_MAX_DRAW_BUFFERS;
 
    if (brw->wm.surf_bo[SURF_INDEX_FRAG_CONST_BUFFER] != NULL)
        brw->wm.nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;

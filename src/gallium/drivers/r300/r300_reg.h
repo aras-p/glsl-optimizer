@@ -661,20 +661,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_SUPER_TILE_B		(1 << 15)
 #	define R300_GB_SUBPIXEL_1_12		(0 << 16)
 #	define R300_GB_SUBPIXEL_1_16		(1 << 16)
-#	define GB_TILE_CONFIG_QUADS_PER_RAS_4   (0 << 17)
-#	define GB_TILE_CONFIG_QUADS_PER_RAS_8   (1 << 17)
-#	define GB_TILE_CONFIG_QUADS_PER_RAS_16  (2 << 17)
-#	define GB_TILE_CONFIG_QUADS_PER_RAS_32  (3 << 17)
-#	define GB_TILE_CONFIG_BB_SCAN_INTERCEPT (0 << 19)
-#	define GB_TILE_CONFIG_BB_SCAN_BOUND_BOX (1 << 19)
-#	define GB_TILE_CONFIG_ALT_SCAN_EN_LR    (0 << 20)
-#	define GB_TILE_CONFIG_ALT_SCAN_EN_LRL   (1 << 20)
-#	define GB_TILE_CONFIG_ALT_OFFSET        (0 << 21)
-#	define GB_TILE_CONFIG_SUBPRECISION      (0 << 22)
-#	define GB_TILE_CONFIG_ALT_TILING_DEF    (0 << 23)
-#	define GB_TILE_CONFIG_ALT_TILING_3_2    (1 << 23)
-#	define GB_TILE_CONFIG_Z_EXTENDED_24_1   (0 << 24)
-#	define GB_TILE_CONFIG_Z_EXTENDED_S25_1  (1 << 24)
+#	define R300_GB_TILE_CONFIG_QUADS_PER_RAS_4   (0 << 17)
+#	define R300_GB_TILE_CONFIG_QUADS_PER_RAS_8   (1 << 17)
+#	define R300_GB_TILE_CONFIG_QUADS_PER_RAS_16  (2 << 17)
+#	define R300_GB_TILE_CONFIG_QUADS_PER_RAS_32  (3 << 17)
+#	define R300_GB_TILE_CONFIG_BB_SCAN_INTERCEPT (0 << 19)
+#	define R300_GB_TILE_CONFIG_BB_SCAN_BOUND_BOX (1 << 19)
+#	define R300_GB_TILE_CONFIG_ALT_SCAN_EN_LR    (0 << 20)
+#	define R300_GB_TILE_CONFIG_ALT_SCAN_EN_LRL   (1 << 20)
+#	define R300_GB_TILE_CONFIG_ALT_OFFSET        (0 << 21)
+#	define R300_GB_TILE_CONFIG_SUBPRECISION      (0 << 22)
+#	define R300_GB_TILE_CONFIG_ALT_TILING_DEF    (0 << 23)
+#	define R300_GB_TILE_CONFIG_ALT_TILING_3_2    (1 << 23)
+#	define R300_GB_TILE_CONFIG_Z_EXTENDED_24_1   (0 << 24)
+#	define R300_GB_TILE_CONFIG_Z_EXTENDED_S25_1  (1 << 24)
 
 /* Specifies the sizes of the various FIFO`s in the sc/rs/us. This register must be the first one written */
 #define R300_GB_FIFO_SIZE	0x4024
@@ -700,9 +700,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_OFIFO_HIGHWATER_SHIFT	22	/* two bits only */
 #	define R300_CUBE_FIFO_HIGHWATER_COL_SHIFT	24
 
-#define GB_Z_PEQ_CONFIG                          0x4028
-#	define GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_4_4    (0 << 0)
-#	define GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8    (1 << 0)
+#define R300_GB_Z_PEQ_CONFIG                          0x4028
+#	define R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_4_4    (0 << 0)
+#	define R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8    (1 << 0)
 
 /* Specifies various polygon specific selects (fog, depth, perspective). */
 #define R300_GB_SELECT                           0x401c
@@ -725,39 +725,39 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Specifies the graphics pipeline configuration for antialiasing. */
 #define R300_GB_AA_CONFIG                         0x4020
-#	define GB_AA_CONFIG_AA_DISABLE           (0 << 0)
-#	define GB_AA_CONFIG_AA_ENABLE            (1 << 0)
-#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2  (0 << 1)
-#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3  (1 << 1)
-#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4  (2 << 1)
-#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6  (3 << 1)
+#	define R300_GB_AA_CONFIG_AA_DISABLE           (0 << 0)
+#	define R300_GB_AA_CONFIG_AA_ENABLE            (1 << 0)
+#	define R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2  (0 << 1)
+#	define R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3  (1 << 1)
+#	define R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4  (2 << 1)
+#	define R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6  (3 << 1)
 
 /* Selects which of 4 pipes are active. */
-#define GB_PIPE_SELECT                           0x402c
-#	define GB_PIPE_SELECT_PIPE0_ID_SHIFT  0
-#	define GB_PIPE_SELECT_PIPE1_ID_SHIFT  2
-#	define GB_PIPE_SELECT_PIPE2_ID_SHIFT  4
-#	define GB_PIPE_SELECT_PIPE3_ID_SHIFT  6
-#	define GB_PIPE_SELECT_PIPE_MASK_SHIFT 8
-#	define GB_PIPE_SELECT_MAX_PIPE        12
-#	define GB_PIPE_SELECT_BAD_PIPES       14
-#	define GB_PIPE_SELECT_CONFIG_PIPES    18
+#define R300_GB_PIPE_SELECT                           0x402c
+#	define R300_GB_PIPE_SELECT_PIPE0_ID_SHIFT  0
+#	define R300_GB_PIPE_SELECT_PIPE1_ID_SHIFT  2
+#	define R300_GB_PIPE_SELECT_PIPE2_ID_SHIFT  4
+#	define R300_GB_PIPE_SELECT_PIPE3_ID_SHIFT  6
+#	define R300_GB_PIPE_SELECT_PIPE_MASK_SHIFT 8
+#	define R300_GB_PIPE_SELECT_MAX_PIPE        12
+#	define R300_GB_PIPE_SELECT_BAD_PIPES       14
+#	define R300_GB_PIPE_SELECT_CONFIG_PIPES    18
 
 
 /* Specifies the sizes of the various FIFO`s in the sc/rs. */
-#define GB_FIFO_SIZE1                            0x4070
+#define R300_GB_FIFO_SIZE1                            0x4070
 /* High water mark for SC input fifo */
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_SHIFT 0
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_MASK  0x0000003f
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_SHIFT 0
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_MASK  0x0000003f
 /* High water mark for SC input fifo (B) */
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_SHIFT 6
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_MASK  0x00000fc0
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_SHIFT 6
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_MASK  0x00000fc0
 /* High water mark for RS colors' fifo */
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_COL_SHIFT   12
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_COL_MASK    0x0003f000
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_COL_SHIFT   12
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_COL_MASK    0x0003f000
 /* High water mark for RS textures' fifo */
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_TEX_SHIFT   18
-#	define GB_FIFO_SIZE1_SC_HIGHWATER_TEX_MASK    0x00fc0000
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_TEX_SHIFT   18
+#	define R300_GB_FIFO_SIZE1_SC_HIGHWATER_TEX_MASK    0x00fc0000
 
 /* This table specifies the source location and format for up to 16 texture
  * addresses (i[0]:i[15]) and four colors (c[0]:c[3])
@@ -862,10 +862,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_POINTSIZE_X_MASK          0xffff0000
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
-/* Blue fill color */
+/* Red fill color */
 #define R500_GA_FILL_R                                0x4220
 
-/* Blue fill color */
+/* Green fill color */
 #define R500_GA_FILL_G                                0x4224
 
 /* Blue fill color */
@@ -1293,7 +1293,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #        define R500_RS_INST_TEX_ID(x)                  ((x) << 0)
 #define R500_RS_INST_TEX_CN_WRITE			(1 << 4)
 #define R500_RS_INST_TEX_ADDR_SHIFT			5
-#        define R500_RS_INST_TEX_ADDR(x)                ((x) << 0)
+#        define R500_RS_INST_TEX_ADDR(x)                ((x) << 5)
 #define R500_RS_INST_COL_ID_SHIFT			12
 #        define R500_RS_INST_COL_ID(x)                  ((x) << 12)
 #define R500_RS_INST_COL_CN_NO_WRITE			(0 << 16)
@@ -1463,6 +1463,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MIN_FILTER_MIP_NEAREST    (1 << 13)
 #	define R300_TX_MIN_FILTER_MIP_LINEAR     (2 << 13)
 #	define R300_TX_MIN_FILTER_MIP_MASK       (3 << 13)
+#       define R300_TX_MAX_MIP_LEVEL_SHIFT       17
+#       define R300_TX_MAX_MIP_LEVEL_MASK        (0xf << 17)
 #	define R300_TX_MAX_ANISO_1_TO_1          (0 << 21)
 #	define R300_TX_MAX_ANISO_2_TO_1          (1 << 21)
 #	define R300_TX_MAX_ANISO_4_TO_1          (2 << 21)
@@ -1471,6 +1473,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MAX_ANISO_MASK            (7 << 21)
 #       define R300_TX_WRAP_S(x)                 ((x) << 0)
 #       define R300_TX_WRAP_T(x)                 ((x) << 3)
+#       define R300_TX_MAX_MIP_LEVEL(x)          ((x) << 17)
 
 #define R300_TX_FILTER1_0                      0x4440
 #	define R300_CHROMA_KEY_MODE_DISABLE    0
@@ -1500,8 +1503,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
 #	define R300_TX_DEPTHMASK_SHIFT           22
 #	define R300_TX_DEPTHMASK_MASK            (0xf << 22)
-#       define R300_TX_MAX_MIP_LEVEL_SHIFT       26
-#       define R300_TX_MAX_MIP_LEVEL_MASK        (0xf << 26)
 #       define R300_TX_SIZE_PROJECTED            (1 << 30)
 #       define R300_TX_PITCH_EN                  (1 << 31)
 #       define R300_TX_WIDTH(x)                  ((x) << 0)
@@ -1884,6 +1885,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RGB_ADDR0(x)                ((x) << 0)
 #       define R300_RGB_ADDR1(x)                ((x) << 6)
 #       define R300_RGB_ADDR2(x)                ((x) << 12)
+#       define R300_RGB_TARGET(x)               ((x) << 29)
 
 #define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
 #       define R300_ALU_SRC0A_SHIFT             0
@@ -1901,9 +1903,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTA_REG                (1 << 23)
 #       define R300_ALU_DSTA_OUTPUT             (1 << 24)
 #		define R300_ALU_DSTA_DEPTH              (1 << 27)
-#       define R300_ALPHA_ADDR0(x)                ((x) << 0)
-#       define R300_ALPHA_ADDR1(x)                ((x) << 6)
-#       define R300_ALPHA_ADDR2(x)                ((x) << 12)
+#       define R300_ALPHA_ADDR0(x)              ((x) << 0)
+#       define R300_ALPHA_ADDR1(x)              ((x) << 6)
+#       define R300_ALPHA_ADDR2(x)              ((x) << 12)
+#       define R300_ALPHA_TARGET(x)             ((x) << 25)
 
 #define R300_US_ALU_RGB_INST_0                   0x48C0
 #       define R300_ALU_ARGC_SRC0C_XYZ          0
@@ -2416,6 +2419,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_Z_WRITE_ENABLE		 (1 << 2)
 #	define R300_Z_SIGNED_COMPARE		 (1 << 3)
 #	define R300_STENCIL_FRONT_BACK		 (1 << 4)
+#   define R500_STENCIL_ZSIGNED_MAGNITUDE (1 << 5)
+#   define R500_STENCIL_REFMASK_FRONT_BACK (1 << 6)
 
 #define R300_ZB_ZSTENCILCNTL                   0x4f04
 	/* functions */

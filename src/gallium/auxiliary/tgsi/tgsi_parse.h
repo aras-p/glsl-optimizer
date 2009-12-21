@@ -34,11 +34,6 @@
 extern "C" {
 #endif
 
-struct tgsi_full_version
-{
-   struct tgsi_version  Version;
-};
-
 struct tgsi_full_header
 {
    struct tgsi_header      Header;
@@ -47,25 +42,22 @@ struct tgsi_full_header
 
 struct tgsi_full_dst_register
 {
-   struct tgsi_dst_register               DstRegister;
-   struct tgsi_src_register               DstRegisterInd;
-   struct tgsi_dst_register_ext_concode   DstRegisterExtConcode;
-   struct tgsi_dst_register_ext_modulate  DstRegisterExtModulate;
+   struct tgsi_dst_register               Register;
+   struct tgsi_src_register               Indirect;
 };
 
 struct tgsi_full_src_register
 {
-   struct tgsi_src_register         SrcRegister;
-   struct tgsi_src_register_ext_mod SrcRegisterExtMod;
-   struct tgsi_src_register         SrcRegisterInd;
-   struct tgsi_dimension            SrcRegisterDim;
-   struct tgsi_src_register         SrcRegisterDimInd;
+   struct tgsi_src_register         Register;
+   struct tgsi_src_register         Indirect;
+   struct tgsi_dimension            Dimension;
+   struct tgsi_src_register         DimIndirect;
 };
 
 struct tgsi_full_declaration
 {
    struct tgsi_declaration Declaration;
-   struct tgsi_declaration_range DeclarationRange;
+   struct tgsi_declaration_range Range;
    struct tgsi_declaration_semantic Semantic;
 };
 
@@ -81,12 +73,11 @@ struct tgsi_full_immediate
 struct tgsi_full_instruction
 {
    struct tgsi_instruction             Instruction;
-   struct tgsi_instruction_ext_nv      InstructionExtNv;
-   struct tgsi_instruction_ext_label   InstructionExtLabel;
-   struct tgsi_instruction_ext_texture InstructionExtTexture;
-   struct tgsi_full_dst_register       FullDstRegisters[TGSI_FULL_MAX_DST_REGISTERS];
-   struct tgsi_full_src_register       FullSrcRegisters[TGSI_FULL_MAX_SRC_REGISTERS];
-   uint Flags;  /**< user-defined usage */
+   struct tgsi_instruction_predicate   Predicate;
+   struct tgsi_instruction_label       Label;
+   struct tgsi_instruction_texture     Texture;
+   struct tgsi_full_dst_register       Dst[TGSI_FULL_MAX_DST_REGISTERS];
+   struct tgsi_full_src_register       Src[TGSI_FULL_MAX_SRC_REGISTERS];
 };
 
 union tgsi_full_token
@@ -97,19 +88,10 @@ union tgsi_full_token
    struct tgsi_full_instruction  FullInstruction;
 };
 
-void
-tgsi_full_token_init(
-   union tgsi_full_token *full_token );
-
-void
-tgsi_full_token_free(
-   union tgsi_full_token *full_token );
-
 struct tgsi_parse_context
 {
    const struct tgsi_token    *Tokens;
    unsigned                   Position;
-   struct tgsi_full_version   FullVersion;
    struct tgsi_full_header    FullHeader;
    union tgsi_full_token      FullToken;
 };

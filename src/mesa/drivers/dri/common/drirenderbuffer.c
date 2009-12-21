@@ -1,5 +1,6 @@
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/imports.h"
@@ -53,7 +54,7 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
  * \param pitch   pixels per row
  */
 driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLvoid *addr,
+driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
                    __DRIdrawablePrivate *dPriv)
 {
@@ -79,56 +80,47 @@ driNewRenderbuffer(GLenum format, GLvoid *addr,
       /* Make sure we're using a null-valued GetPointer routine */
       assert(drb->Base.GetPointer(NULL, &drb->Base, 0, 0) == NULL);
 
-      drb->Base.InternalFormat = format;
-
-      if (format == GL_RGBA || format == GL_RGB5 || format == GL_RGBA8) {
-         /* Color */
-         drb->Base._BaseFormat = GL_RGBA;
+      switch (format) {
+      case MESA_FORMAT_ARGB8888:
+         if (cpp == 2) {
+            /* override format */
+            format = MESA_FORMAT_RGB565;
+         }
          drb->Base.DataType = GL_UNSIGNED_BYTE;
-         if (format == GL_RGB5) {
-            drb->Base.RedBits = 5;
-            drb->Base.GreenBits = 6;
-            drb->Base.BlueBits = 5;
-         }
-         else {
-            drb->Base.RedBits =
-            drb->Base.GreenBits =
-            drb->Base.BlueBits =
-            drb->Base.AlphaBits = 8;
-         }
-      }
-      else if (format == GL_DEPTH_COMPONENT16) {
+         break;
+      case MESA_FORMAT_Z16:
          /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 16;
-      }
-      else if (format == GL_DEPTH_COMPONENT24) {
+         assert(cpp == 2);
+         break;
+      case MESA_FORMAT_Z32:
          /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
          /* we always Get/Put 32-bit Z values */
          drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 24;
-      }
-      else if (format == GL_DEPTH_COMPONENT32) {
-         /* Depth */
-         drb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-         /* we always Get/Put 32-bit Z values */
-         drb->Base.DataType = GL_UNSIGNED_INT;
-         drb->Base.DepthBits = 32;
-      }
-      else {
+         assert(cpp == 4);
+         break;
+      case MESA_FORMAT_Z24_S8:
+         drb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+         assert(cpp == 4);
+         break;
+      case MESA_FORMAT_S8_Z24:
+         drb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+         assert(cpp == 4);
+         break;
+      case MESA_FORMAT_S8:
          /* Stencil */
-         ASSERT(format == GL_STENCIL_INDEX8_EXT);
-         drb->Base._BaseFormat = GL_STENCIL_INDEX;
          drb->Base.DataType = GL_UNSIGNED_BYTE;
-         drb->Base.StencilBits = 8;
+         break;
+      default:
+         _mesa_problem(NULL, "Bad format 0x%x in driNewRenderbuffer", format);
+         return NULL;
       }
 
-      /* XXX if we were allocating a user-created renderbuffer, we'd have
-       * to fill in the Red/Green/Blue/.../Bits values too.
-       */
+      drb->Base.Format = format;
+
+      drb->Base.InternalFormat =
+      drb->Base._BaseFormat = _mesa_get_format_base_format(format);
 
       drb->Base.AllocStorage = driRenderbufferStorage;
       drb->Base.Delete = driDeleteRenderbuffer;

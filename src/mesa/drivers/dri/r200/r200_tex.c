@@ -38,7 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -386,16 +385,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:
    case GL_TEXTURE_MAX_LOD:
-      /* This isn't the most efficient solution but there doesn't appear to
-       * be a nice alternative.  Since there's no LOD clamping,
-       * we just have to rely on loading the right subset of mipmap levels
-       * to simulate a clamped LOD.
-       */
-      if (t->mt) {
-         radeon_miptree_unreference(t->mt);
-	 t->mt = 0;
-	 t->validated = GL_FALSE;
-      }
+      t->validated = GL_FALSE;
       break;
 
    default:
@@ -414,7 +404,7 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	      (void *)texObj,
 	      _mesa_lookup_enum_by_nr(texObj->Target));
    }
-   
+
    if (rmesa) {
       int i;
       radeon_firevertices(&rmesa->radeon);
@@ -426,11 +416,9 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	 }
       }      
    }
-   
-   if (t->mt) {
-      radeon_miptree_unreference(t->mt);
-      t->mt = 0;
-   }
+
+   radeon_miptree_unreference(&t->mt);
+
    _mesa_delete_texture_object(ctx, texObj);
 }
 

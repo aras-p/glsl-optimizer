@@ -32,7 +32,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
@@ -588,8 +587,9 @@ i915_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->texformat) {
       case MESA_FORMAT_ARGB8888:
+      case MESA_FORMAT_XRGB8888:
 	 value |= DV_PF_8888;
 	 break;
       case MESA_FORMAT_RGB565:
@@ -603,7 +603,7 @@ i915_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->texformat);
       }
    }
 
@@ -667,15 +667,6 @@ i915_new_batch(struct intel_context *intel)
     * difficulties associated with them (physical address requirements).
     */
    i915->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
-}
-
-static GLuint
-i915_flush_cmd(void)
-{
-   return MI_FLUSH | FLUSH_MAP_CACHE;
 }
 
 static void 
@@ -699,7 +690,6 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;
    i915->intel.vtbl.set_draw_region = i915_set_draw_region;
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
-   i915->intel.vtbl.flush_cmd = i915_flush_cmd;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
    i915->intel.vtbl.finish_batch = intel_finish_vb;
 }

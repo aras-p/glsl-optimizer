@@ -44,17 +44,24 @@ static void prepare_cc_vp( struct brw_context *brw )
 
    memset(&ccv, 0, sizeof(ccv));
 
-   /* _NEW_VIEWPORT */
-   ccv.min_depth = ctx->Viewport.Near;
-   ccv.max_depth = ctx->Viewport.Far;
+   /* _NEW_TRANSOFORM */
+   if (ctx->Transform.DepthClamp) {
+      /* _NEW_VIEWPORT */
+      ccv.min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
+      ccv.max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+   } else {
+      ccv.min_depth = 0.0;
+      ccv.max_depth = 1.0;
+   }
 
    dri_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
+   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
+				  NULL, 0);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
    .dirty = {
-      .mesa = _NEW_VIEWPORT,
+      .mesa = _NEW_VIEWPORT | _NEW_TRANSFORM,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },

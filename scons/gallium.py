@@ -263,6 +263,7 @@ def generate(env):
         if msvc and env['toolchain'] != 'winddk':
             cppdefines += [
                 'VC_EXTRALEAN',
+                '_USE_MATH_DEFINES',
                 '_CRT_SECURE_NO_WARNINGS',
                 '_CRT_SECURE_NO_DEPRECATE',
                 '_SCL_SECURE_NO_WARNINGS',
@@ -365,7 +366,7 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wmissing-field-initializers',
-            '-Wpointer-arith',
+            '-Werror=pointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
@@ -390,11 +391,6 @@ def generate(env):
             ccflags += [
                 '/O2', # optimize for speed
                 #'/fp:fast', # fast floating point 
-            ]
-        if env['profile']:
-            ccflags += [
-                '/Gh', # enable _penter hook function
-                '/GH', # enable _pexit hook function
             ]
         ccflags += [
             '/W3', # warning level

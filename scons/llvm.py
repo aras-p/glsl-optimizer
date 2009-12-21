@@ -58,45 +58,47 @@ def generate(env):
 
         env.PrependENVPath('PATH', llvm_bin_dir)
 
-    if env['msvc']:
+    if env['platform'] == 'windows':
         # XXX: There is no llvm-config on Windows, so assume a standard layout
         if llvm_dir is not None:
             env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
+            env.AppendUnique(CPPDEFINES = [
+                '__STDC_LIMIT_MACROS', 
+                '__STDC_CONSTANT_MACROS',
+            ])
             env.Prepend(LIBPATH = [os.path.join(llvm_dir, 'lib')])
             env.Prepend(LIBS = [
+                'LLVMX86AsmParser',
+                'LLVMX86AsmPrinter',
+                'LLVMX86CodeGen',
+                'LLVMX86Info',
+                'LLVMLinker',
+                'LLVMipo',
+                'LLVMInterpreter',
+                'LLVMInstrumentation',
+                'LLVMJIT',
+                'LLVMExecutionEngine',
+                'LLVMDebugger',
                 'LLVMBitWriter',
-                'LLVMCore',
-                'LLVMSupport',
-                'LLVMSystem',
-                'LLVMSupport',
-                'LLVMSystem',
-                'LLVMCore',
-                'LLVMCodeGen',
+                'LLVMAsmParser',
+                'LLVMArchive',
+                'LLVMBitReader',
                 'LLVMSelectionDAG',
                 'LLVMAsmPrinter',
-                'LLVMBitReader',
-                'LLVMBitWriter',
-                'LLVMTransformUtils',
-                'LLVMInstrumentation',
+                'LLVMCodeGen',
                 'LLVMScalarOpts',
-                'LLVMipo',
-                'LLVMHello',
-                'LLVMLinker',
-                'LLVMAnalysis',
+                'LLVMTransformUtils',
                 'LLVMipa',
-                'LLVMX86CodeGen',
-                'LLVMX86AsmPrinter',
-                'LLVMExecutionEngine',
-                'LLVMInterpreter',
-                'LLVMJIT',
+                'LLVMAnalysis',
                 'LLVMTarget',
-                'LLVMAsmParser',
-                'LLVMDebugger',
-                'LLVMArchive',
+                'LLVMMC',
+                'LLVMCore',
+                'LLVMSupport',
+                'LLVMSystem',
                 'imagehlp',
                 'psapi',
             ])
-            env['LLVM_VERSION'] = '2.5'
+            env['LLVM_VERSION'] = '2.6'
         return
     elif env.Detect('llvm-config'):
         version = env.backtick('llvm-config --version').rstrip()

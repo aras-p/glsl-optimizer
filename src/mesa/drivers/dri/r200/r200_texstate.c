@@ -36,7 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
@@ -825,20 +824,14 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_bo_unref(rImage->bo);
 		rImage->bo = NULL;
 	}
-	if (t->mt) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = NULL;
-	}
-	if (rImage->mt) {
-		radeon_miptree_unreference(rImage->mt);
-		rImage->mt = NULL;
-	}
+
+	radeon_miptree_unreference(&t->mt);
+	radeon_miptree_unreference(&rImage->mt);
+
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
-	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
-							internalFormat,
-							type, format, 0);
+
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;
@@ -1426,10 +1419,9 @@ void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
  */
 static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 {
-   int firstlevel = t->mt ? t->mt->firstLevel : 0;
-   const struct gl_texture_image *firstImage = t->base.Image[0][firstlevel];
+   const struct gl_texture_image *firstImage = t->base.Image[0][t->minLod];
    GLint log2Width, log2Height, log2Depth, texelBytes;
-   
+
    if ( t->bo ) {
        return;
    }
@@ -1437,11 +1429,11 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
-   texelBytes = firstImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
 
 
    if (!t->image_override) {
-      if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
+      if (VALID_FORMAT(firstImage->TexFormat)) {
 	 const struct tx_table *table = _mesa_little_endian() ? tx_table_le :
 	    tx_table_be;
 	 
@@ -1449,17 +1441,17 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 			     R200_TXFORMAT_ALPHA_IN_MAP);
 	 t->pp_txfilter &= ~R200_YUV_TO_RGB;
 	 
-	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
-	 t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
+	 t->pp_txformat |= table[ firstImage->TexFormat ].format;
+	 t->pp_txfilter |= table[ firstImage->TexFormat ].filter;
       } else {
 	 _mesa_problem(NULL, "unexpected texture format in %s",
 		       __FUNCTION__);
 	 return;
       }
    }
-   
+
    t->pp_txfilter &= ~R200_MAX_MIP_LEVEL_MASK;
-   t->pp_txfilter |= (t->mt->lastLevel - t->mt->firstLevel) << R200_MAX_MIP_LEVEL_SHIFT;
+   t->pp_txfilter |= (t->maxLod - t->minLod) << R200_MAX_MIP_LEVEL_SHIFT;
 	
    t->pp_txformat &= ~(R200_TXFORMAT_WIDTH_MASK |
 		       R200_TXFORMAT_HEIGHT_MASK |
@@ -1504,7 +1496,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 		   | ((firstImage->Height - 1) << R200_PP_TX_HEIGHTMASK_SHIFT));
 
    if ( !t->image_override ) {
-      if (firstImage->IsCompressed)
+      if (_mesa_is_format_compressed(firstImage->TexFormat))
          t->pp_txpitch = (firstImage->Width + 63) & ~(63);
       else
          t->pp_txpitch = ((firstImage->Width * texelBytes) + 63) & ~(63);

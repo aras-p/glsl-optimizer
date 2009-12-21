@@ -649,6 +649,13 @@ AC_ARG_WITH([dri-driverdir],
     [DRI_DRIVER_INSTALL_DIR="$withval"],
     [DRI_DRIVER_INSTALL_DIR='${libdir}/dri'])
 AC_SUBST([DRI_DRIVER_INSTALL_DIR])
+dnl Extra search path for DRI drivers
+AC_ARG_WITH([dri-searchpath],
+    [AS_HELP_STRING([--with-dri-searchpath=DIRS...],
+        [semicolon delimited DRI driver search directories @<:@${libdir}/dri@:>@])],
+    [DRI_DRIVER_SEARCH_DIR="$withval"],
+    [DRI_DRIVER_SEARCH_DIR='${DRI_DRIVER_INSTALL_DIR}'])
+AC_SUBST([DRI_DRIVER_SEARCH_DIR])
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
@@ -1181,6 +1188,19 @@ AC_ARG_WITH([max-height],
      AS_IF([test "${withval}" -gt "4096"],
            [AC_MSG_WARN([Large framebuffer: see s_tritemp.h comments.])])]
 )
+
+dnl
+dnl Gallium SVGA configuration
+dnl
+AC_ARG_ENABLE([gallium-svga],
+    [AS_HELP_STRING([--disable-gallium-svga],
+        [build gallium SVGA @<:@default=enabled@:>@])],
+    [enable_gallium_svga="$enableval"],
+    [enable_gallium_svga=yes])
+if test "x$enable_gallium_svga" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS vmware"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+fi
 
 dnl
 dnl Gallium Intel configuration

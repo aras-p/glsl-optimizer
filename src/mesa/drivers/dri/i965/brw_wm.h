@@ -67,18 +67,19 @@ struct brw_wm_prog_key {
    GLuint flat_shade:1;
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint runtime_check_aads_emit:1;
+   GLuint nr_color_regions:2;
    
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
 
-   GLuint tex_swizzles[BRW_MAX_TEX_UNIT];
+   GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
 
+   GLushort origin_x, origin_y;
+   GLushort drawable_height;
+   GLbitfield64 vp_outputs_written;
    GLuint program_string_id:32;
-   GLuint origin_x, origin_y;
-   GLuint drawable_height;
-   GLuint vp_outputs_written;
 };
 
 
@@ -153,15 +154,16 @@ struct brw_wm_instruction {
 };
 
 
-#define BRW_WM_MAX_INSN  (MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS*3 + FRAG_ATTRIB_MAX + 3)
+#define BRW_WM_MAX_INSN  (MAX_PROGRAM_INSTRUCTIONS*3 + FRAG_ATTRIB_MAX + 3)
 #define BRW_WM_MAX_GRF   128		/* hardware limit */
 #define BRW_WM_MAX_VREG  (BRW_WM_MAX_INSN * 4)
 #define BRW_WM_MAX_REF   (BRW_WM_MAX_INSN * 12)
 #define BRW_WM_MAX_PARAM 256
 #define BRW_WM_MAX_CONST 256
-#define BRW_WM_MAX_KILLS MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS
 #define BRW_WM_MAX_SUBROUTINE 16
 
+/* used in masks next to WRITEMASK_*. */
+#define SATURATE (1<<5)
 
 
 /* New opcodes to track internal operations required for WM unit.
@@ -200,7 +202,7 @@ struct brw_wm_compile {
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
     */
-   struct prog_instruction prog_instructions[BRW_WM_MAX_INSN];
+   struct prog_instruction *prog_instructions;
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
@@ -211,7 +213,7 @@ struct brw_wm_compile {
    struct prog_src_register pixel_w;
 
 
-   struct brw_wm_value vreg[BRW_WM_MAX_VREG];
+   struct brw_wm_value *vreg;
    GLuint nr_vreg;
 
    struct brw_wm_value creg[BRW_WM_MAX_PARAM];
@@ -228,10 +230,10 @@ struct brw_wm_compile {
    struct brw_wm_ref undef_ref;
    struct brw_wm_value undef_value;
 
-   struct brw_wm_ref refs[BRW_WM_MAX_REF];
+   struct brw_wm_ref *refs;
    GLuint nr_refs;
 
-   struct brw_wm_instruction instruction[BRW_WM_MAX_INSN];
+   struct brw_wm_instruction *instruction;
    GLuint nr_insns;
 
    struct brw_wm_constref constref[BRW_WM_MAX_CONST];
@@ -271,6 +273,12 @@ struct brw_wm_compile {
 };
 
 
+/** Bits for prog_instruction::Aux field */
+#define INST_AUX_EOT      0x1
+#define INST_AUX_TARGET(T)  (T << 1)
+#define INST_AUX_GET_TARGET(AUX) ((AUX) >> 1)
+
+
 GLuint brw_wm_nr_args( GLuint opcode );
 GLuint brw_wm_is_scalar_result( GLuint opcode );
 
@@ -300,10 +308,141 @@ void brw_wm_lookup_iz( GLuint line_aa,
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
+/* brw_wm_emit.c */
+void emit_alu1(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0);
+void emit_alu2(struct brw_compile *p,
+	       struct brw_instruction *(*func)(struct brw_compile *,
+					       struct brw_reg,
+					       struct brw_reg,
+					       struct brw_reg),
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0,
+	       const struct brw_reg *arg1);
+void emit_cinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0);
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
 	       GLboolean is_ddx,
 	       const struct brw_reg *arg0);
+void emit_delta_xy(struct brw_compile *p,
+		   const struct brw_reg *dst,
+		   GLuint mask,
+		   const struct brw_reg *arg0);
+void emit_dp3(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_dp4(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_dph(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_fb_write(struct brw_wm_compile *c,
+		   struct brw_reg *arg0,
+		   struct brw_reg *arg1,
+		   struct brw_reg *arg2,
+		   GLuint target,
+		   GLuint eot);
+void emit_frontfacing(struct brw_compile *p,
+		      const struct brw_reg *dst,
+		      GLuint mask);
+void emit_linterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas);
+void emit_lrp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2);
+void emit_mad(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2);
+void emit_math1(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0);
+void emit_math2(struct brw_wm_compile *c,
+		GLuint function,
+		const struct brw_reg *dst,
+		GLuint mask,
+		const struct brw_reg *arg0,
+		const struct brw_reg *arg1);
+void emit_min(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_max(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_pinterp(struct brw_compile *p,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas,
+		  const struct brw_reg *w);
+void emit_pixel_xy(struct brw_wm_compile *c,
+		   const struct brw_reg *dst,
+		   GLuint mask);
+void emit_pixel_w(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0,
+		  const struct brw_reg *deltas);
+void emit_sop(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      GLuint cond,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
+void emit_tex(struct brw_wm_compile *c,
+	      struct brw_reg *dst,
+	      GLuint dst_flags,
+	      struct brw_reg *arg,
+	      struct brw_reg depth_payload,
+	      GLuint tex_idx,
+	      GLuint sampler,
+	      GLboolean shadow);
+void emit_txb(struct brw_wm_compile *c,
+	      struct brw_reg *dst,
+	      GLuint dst_flags,
+	      struct brw_reg *arg,
+	      struct brw_reg depth_payload,
+	      GLuint tex_idx,
+	      GLuint sampler);
+void emit_wpos_xy(struct brw_wm_compile *c,
+		  const struct brw_reg *dst,
+		  GLuint mask,
+		  const struct brw_reg *arg0);
+void emit_xpd(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1);
 
 #endif

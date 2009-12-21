@@ -22,8 +22,6 @@
 
 #include "draw/draw_context.h"
 
-#include "pipe/p_inlines.h"
-
 #include "tgsi/tgsi_scan.h"
 
 #include "util/u_hash_table.h"
@@ -71,31 +69,32 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->blend_color_state);
     FREE(r300->rs_block);
     FREE(r300->scissor_state);
+    FREE(r300->vertex_info);
     FREE(r300->viewport_state);
     FREE(r300);
 }
 
 static unsigned int
-r300_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
+r300_is_texture_referenced(struct pipe_context *pipe,
+                           struct pipe_texture *texture,
+                           unsigned face, unsigned level)
 {
-   /**
-    * FIXME: Optimize.
-    */
+    struct pipe_buffer* buf = 0;
 
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    r300_get_texture_buffer(texture, &buf, NULL);
+
+    return pipe->is_buffer_referenced(pipe, buf);
 }
 
 static unsigned int
-r300_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
+r300_is_buffer_referenced(struct pipe_context *pipe,
+                          struct pipe_buffer *buf)
 {
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    /* This only checks to see whether actual hardware buffers are
+     * referenced. Since we use managed BOs and transfers, it's actually not
+     * possible for pipe_buffers to ever reference the actual hardware, so
+     * buffers are never referenced. */
+    return 0;
 }
 
 static void r300_flush_cb(void *data)
@@ -109,6 +108,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct r300_winsys* r300_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
+    struct r300_screen* r300screen = r300_screen(screen);
 
     if (!r300)
         return NULL;
@@ -124,9 +124,25 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.clear = r300_clear;
 
-    r300->context.draw_arrays = r300_draw_arrays;
-    r300->context.draw_elements = r300_draw_elements;
-    r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+    if (r300screen->caps->has_tcl) {
+        r300->context.draw_arrays = r300_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_draw_range_elements;
+    } else {
+        r300->context.draw_arrays = r300_swtcl_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+
+        /* Create a Draw. This is used for SW TCL. */
+        r300->draw = draw_create();
+        /* Enable our renderer. */
+        draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
+        /* Enable Draw's clipping. */
+        draw_set_driver_clipping(r300->draw, FALSE);
+        /* Force Draw to never do viewport transform, since we can do
+         * transform in hardware, always. */
+        draw_set_viewport_state(r300->draw, &r300_viewport_identity);
+    }
 
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
@@ -137,21 +153,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
+    r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
     r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
-
-    /* Create a Draw. This is used for vert collation and SW TCL. */
-    r300->draw = draw_create();
-    /* Enable our renderer. */
-    draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
-    /* Disable Draw's clipping if TCL is present. */
-    draw_set_driver_clipping(r300->draw, r300_screen(screen)->caps->has_tcl);
-    /* Force Draw to never do viewport transform, since (again) we can do
-     * transform in hardware, always. */
-    draw_set_viewport_state(r300->draw, &r300_viewport_identity);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
+    make_empty_list(&r300->query_list);
 
     r300_init_flush_functions(r300);
 
@@ -166,6 +174,5 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
-    make_empty_list(&r300->query_list);
     return &r300->context;
 }

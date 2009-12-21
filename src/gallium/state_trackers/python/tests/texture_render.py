@@ -171,7 +171,7 @@ class TextureTest(TestCase):
     
         # vertex shader
         vs = Shader('''
-            VERT1.1
+            VERT
             DCL IN[0], POSITION, CONSTANT
             DCL IN[1], GENERIC, CONSTANT
             DCL OUT[0], POSITION, CONSTANT
@@ -185,7 +185,7 @@ class TextureTest(TestCase):
     
         # fragment shader
         fs = Shader('''
-            FRAG1.1
+            FRAG
             DCL IN[0], GENERIC[0], LINEAR
             DCL OUT[0], COLOR, CONSTANT
             DCL SAMP[0], CONSTANT

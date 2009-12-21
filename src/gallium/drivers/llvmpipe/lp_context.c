@@ -31,13 +31,13 @@
  */
 
 #include "draw/draw_context.h"
+#include "draw/draw_vbuf.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_flush.h"
-#include "lp_prim_setup.h"
 #include "lp_prim_vbuf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
@@ -180,7 +180,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
 
    llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
-   llvmpipe->pipe.bind_sampler_states  = llvmpipe_bind_sampler_states;
+   llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
    llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
 
    llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
@@ -205,7 +205,7 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_sampler_textures = llvmpipe_set_sampler_textures;
+   llvmpipe->pipe.set_fragment_sampler_textures = llvmpipe_set_sampler_textures;
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
@@ -264,21 +264,21 @@ llvmpipe_create( struct pipe_screen *screen )
                          (struct tgsi_sampler **)
                             llvmpipe->tgsi.vert_samplers_list);
 
-   llvmpipe->setup = lp_draw_render_stage(llvmpipe);
-   if (!llvmpipe->setup)
-      goto fail;
-
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   if (debug_get_bool_option( "LP_NO_VBUF", FALSE )) {
-      /* Deprecated path -- vbuf is the intended interface to the draw module:
-       */
-      draw_set_rasterize_stage(llvmpipe->draw, llvmpipe->setup);
-   }
-   else {
-      lp_init_vbuf(llvmpipe);
-   }
+   llvmpipe->vbuf_backend = lp_create_vbuf_backend(llvmpipe);
+   if (!llvmpipe->vbuf_backend)
+      goto fail;
+
+   llvmpipe->vbuf = draw_vbuf_stage(llvmpipe->draw, llvmpipe->vbuf_backend);
+   if (!llvmpipe->vbuf)
+      goto fail;
+
+   draw_set_rasterize_stage(llvmpipe->draw, llvmpipe->vbuf);
+   draw_set_render(llvmpipe->draw, llvmpipe->vbuf_backend);
+
+
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(llvmpipe->draw, &llvmpipe->pipe);

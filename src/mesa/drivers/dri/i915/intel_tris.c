@@ -1088,6 +1088,7 @@ intelRenderStart(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   intel_check_front_buffer_rendering(intel);
    intel->vtbl.render_start(intel_context(ctx));
    intel->vtbl.emit_state(intel);
 }
@@ -1249,81 +1250,6 @@ union fi
    GLint i;
 };
 
-
-/**********************************************************************/
-/*             Used only with the metaops callbacks.                  */
-/**********************************************************************/
-static void
-intel_meta_draw_poly(struct intel_context *intel,
-                     GLuint n,
-                     GLfloat xy[][2],
-                     GLfloat z, GLuint color, GLfloat tex[][2])
-{
-   union fi *vb;
-   GLint i;
-   unsigned int saved_vertex_size = intel->vertex_size;
-
-   LOCK_HARDWARE(intel);
-
-   intel->vertex_size = 6;
-
-   /* All 3d primitives should be emitted with LOOP_CLIPRECTS,
-    * otherwise the drawing origin (DR4) might not be set correctly.
-    */
-   intel_set_prim(intel, PRIM3D_TRIFAN);
-   vb = (union fi *) intel_get_prim_space(intel, n);
-
-   for (i = 0; i < n; i++) {
-      vb[0].f = xy[i][0];
-      vb[1].f = xy[i][1];
-      vb[2].f = z;
-      vb[3].i = color;
-      vb[4].f = tex[i][0];
-      vb[5].f = tex[i][1];
-      vb += 6;
-   }
-
-   INTEL_FIREVERTICES(intel);
-
-   intel->vertex_size = saved_vertex_size;
-
-   UNLOCK_HARDWARE(intel);
-}
-
-static void
-intel_meta_draw_quad(struct intel_context *intel,
-                     GLfloat x0, GLfloat x1,
-                     GLfloat y0, GLfloat y1,
-                     GLfloat z,
-                     GLuint color,
-                     GLfloat s0, GLfloat s1, GLfloat t0, GLfloat t1)
-{
-   GLfloat xy[4][2];
-   GLfloat tex[4][2];
-
-   xy[0][0] = x0;
-   xy[0][1] = y0;
-   xy[1][0] = x1;
-   xy[1][1] = y0;
-   xy[2][0] = x1;
-   xy[2][1] = y1;
-   xy[3][0] = x0;
-   xy[3][1] = y1;
-
-   tex[0][0] = s0;
-   tex[0][1] = t0;
-   tex[1][0] = s1;
-   tex[1][1] = t0;
-   tex[2][0] = s1;
-   tex[2][1] = t1;
-   tex[3][0] = s0;
-   tex[3][1] = t1;
-
-   intel_meta_draw_poly(intel, 4, xy, z, color, tex);
-}
-
-
-
 /**********************************************************************/
 /*                            Initialization.                         */
 /**********************************************************************/
@@ -1332,7 +1258,6 @@ intel_meta_draw_quad(struct intel_context *intel,
 void
 intelInitTriFuncs(GLcontext * ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;
 
@@ -1349,6 +1274,4 @@ intelInitTriFuncs(GLcontext * ctx)
    tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
    tnl->Driver.Render.CopyPV = _tnl_copy_pv;
    tnl->Driver.Render.Interp = _tnl_interp;
-
-   intel->vtbl.meta_draw_quad = intel_meta_draw_quad;
 }

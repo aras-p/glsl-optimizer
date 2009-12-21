@@ -676,6 +676,31 @@ emit_inverted_wpos( struct st_translate *t,
 
 
 /**
+ * OpenGL's fragment gl_FrontFace input is 1 for front-facing, 0 for back.
+ * TGSI uses +1 for front, -1 for back.
+ * This function converts the TGSI value to the GL value.  Simply clamping/
+ * saturating the value to [0,1] does the job.
+ */
+static void
+emit_face_var( struct st_translate *t,
+               const struct gl_program *program )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst face_temp = ureg_DECL_temporary( ureg );
+   struct ureg_src face_input = t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]];
+
+   /* MOV_SAT face_temp, input[face]
+    */
+   face_temp = ureg_saturate( face_temp );
+   ureg_MOV( ureg, face_temp, face_input );
+
+   /* Use face_temp as face input from here on:
+    */
+   t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
+}
+
+
+/**
  * Translate Mesa program to TGSI format.
  * \param program  the program to translate
  * \param numInputs  number of input registers used
@@ -704,12 +729,10 @@ st_translate_mesa_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   const GLbitfield inputFlags[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   const GLbitfield outputFlags[] )
+   const ubyte outputSemanticIndex[] )
 {
    struct st_translate translate, *t;
    struct ureg_program *ureg;
@@ -746,6 +769,10 @@ st_translate_mesa_program(
           * emitting constant references, below:
           */
          emit_inverted_wpos( t, program );
+      }
+
+      if (program->InputsRead & FRAG_BIT_FACE) {
+         emit_face_var( t, program );
       }
 
       /*

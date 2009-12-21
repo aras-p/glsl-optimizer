@@ -117,12 +117,13 @@
 #include "syncobj.h"
 #endif
 #include "rastpos.h"
+#include "remap.h"
 #include "scissor.h"
 #include "shared.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
-#include "texcompress.h"
+#include "texcompress_s3tc.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
@@ -132,7 +133,6 @@
 #include "viewport.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
-#include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"
@@ -407,6 +407,8 @@ one_time_init( GLcontext *ctx )
 
       _mesa_get_cpu_features();
 
+      _mesa_init_remap_table();
+
       _mesa_init_sqrt_table();
 
       for (i = 0; i < 256; i++) {
@@ -573,6 +575,7 @@ _mesa_init_constants(GLcontext *ctx)
 
 #if FEATURE_ARB_vertex_shader
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
@@ -599,9 +602,11 @@ _mesa_init_constants(GLcontext *ctx)
    ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
    ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
 
-   /* check that we don't exceed various 32-bit bitfields */
-   ASSERT(VERT_RESULT_MAX <= 32);
-   ASSERT(FRAG_ATTRIB_MAX <= 32);
+   /* check that we don't exceed the size of various bitfields */
+   ASSERT(VERT_RESULT_MAX <=
+	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
+   ASSERT(FRAG_ATTRIB_MAX <=
+	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 }
 
 
@@ -701,12 +706,7 @@ init_attrib_groups(GLcontext *ctx)
    if (!_mesa_init_texture( ctx ))
       return GL_FALSE;
 
-#if FEATURE_texture_s3tc
    _mesa_init_texture_s3tc( ctx );
-#endif
-#if FEATURE_texture_fxt1
-   _mesa_init_texture_fxt1( ctx );
-#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;

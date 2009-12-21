@@ -32,6 +32,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/matrix.h"
 #include "main/state.h"
 #include "main/simple_list.h"
@@ -65,7 +66,7 @@
 #define need_GL_ARB_point_parameters
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20060710"
 
@@ -163,24 +164,28 @@ viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
    if (format == GL_RGBA) {
       /* Color */
       rb->_BaseFormat = GL_RGBA;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
    else if (format == GL_DEPTH_COMPONENT16) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else if (format == GL_DEPTH_COMPONENT24) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z32;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else {
       /* Stencil */
       ASSERT(format == GL_STENCIL_INDEX8_EXT);
       rb->_BaseFormat = GL_STENCIL_INDEX;
+      rb->Format = MESA_FORMAT_S8;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
 
@@ -362,7 +367,7 @@ void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 
 /* Extension strings exported by the Unichrome driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },

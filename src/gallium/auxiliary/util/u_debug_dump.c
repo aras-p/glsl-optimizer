@@ -187,3 +187,83 @@ debug_dump_func_short_names[] = {
 };
 
 DEFINE_DEBUG_DUMP_CONTINUOUS(func)
+
+
+static const char *
+debug_dump_tex_target_names[] = {
+   "PIPE_TEXTURE_1D",
+   "PIPE_TEXTURE_2D",
+   "PIPE_TEXTURE_3D",
+   "PIPE_TEXTURE_CUBE"
+};
+
+static const char *
+debug_dump_tex_target_short_names[] = {
+   "1d",
+   "2d",
+   "3d",
+   "cube"
+};
+
+DEFINE_DEBUG_DUMP_CONTINUOUS(tex_target)
+
+
+static const char *
+debug_dump_tex_wrap_names[] = {
+   "PIPE_TEX_WRAP_REPEAT",
+   "PIPE_TEX_WRAP_CLAMP",
+   "PIPE_TEX_WRAP_CLAMP_TO_EDGE",
+   "PIPE_TEX_WRAP_CLAMP_TO_BORDER",
+   "PIPE_TEX_WRAP_MIRROR_REPEAT",
+   "PIPE_TEX_WRAP_MIRROR_CLAMP",
+   "PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE",
+   "PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER"
+};
+
+static const char *
+debug_dump_tex_wrap_short_names[] = {
+   "repeat",
+   "clamp",
+   "clamp_to_edge",
+   "clamp_to_border",
+   "mirror_repeat",
+   "mirror_clamp",
+   "mirror_clamp_to_edge",
+   "mirror_clamp_to_border"
+};
+
+DEFINE_DEBUG_DUMP_CONTINUOUS(tex_wrap)
+
+
+static const char *
+debug_dump_tex_mipfilter_names[] = {
+   "PIPE_TEX_MIPFILTER_NEAREST",
+   "PIPE_TEX_MIPFILTER_LINEAR",
+   "PIPE_TEX_MIPFILTER_NONE"
+};
+
+static const char *
+debug_dump_tex_mipfilter_short_names[] = {
+   "nearest",
+   "linear",
+   "none"
+};
+
+DEFINE_DEBUG_DUMP_CONTINUOUS(tex_mipfilter)
+
+
+static const char *
+debug_dump_tex_filter_names[] = {
+   "PIPE_TEX_FILTER_NEAREST",
+   "PIPE_TEX_FILTER_LINEAR",
+   "PIPE_TEX_FILTER_ANISO"
+};
+
+static const char *
+debug_dump_tex_filter_short_names[] = {
+   "nearest",
+   "linear",
+   "aniso"
+};
+
+DEFINE_DEBUG_DUMP_CONTINUOUS(tex_filter)

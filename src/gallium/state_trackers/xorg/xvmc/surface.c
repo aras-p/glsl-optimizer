@@ -103,9 +103,9 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
    /* XXX: Needs to match the drawable's format? */
    template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
    template.last_level = 0;
-   template.width[0] = width;
-   template.height[0] = height;
-   template.depth[0] = 1;
+   template.width0 = width;
+   template.height0 = height;
+   template.depth0 = 1;
    pf_get_block(template.format, &template.block);
    template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
 

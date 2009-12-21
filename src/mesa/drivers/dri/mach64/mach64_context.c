@@ -76,7 +76,7 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },

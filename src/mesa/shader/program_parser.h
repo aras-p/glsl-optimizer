@@ -35,7 +35,7 @@ enum asm_type {
    at_attrib,
    at_param,
    at_temp,
-   at_output,
+   at_output
 };
 
 struct asm_symbol {

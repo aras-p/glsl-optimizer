@@ -28,17 +28,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
-#include "sis_context.h"
-#include "sis_alloc.h"
-#include "sis_tex.h"
-
 #include "swrast/swrast.h"
 #include "main/imports.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 
+#include "sis_context.h"
+#include "sis_alloc.h"
+#include "sis_tex.h"
 #include "xmlpool.h"
 
 #define ALIGN(value, align) (GLubyte *)((long)(value + align - 1) & ~(align - 1))
@@ -65,7 +63,7 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
 
    if (t->format == 0) {
       t->format = image->_BaseFormat;
-      switch (image->TexFormat->MesaFormat)
+      switch (image->TexFormat)
       {
       case MESA_FORMAT_ARGB8888:
          t->hwformat = TEXEL_ARGB_8888_32;
@@ -101,13 +99,12 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
          t->hwformat = TEXEL_VUY422;
          break;
       default:
-         sis_fatal_error("Bad texture format 0x%x.\n",
-			 image->TexFormat->MesaFormat);
+         sis_fatal_error("Bad texture format 0x%x.\n", image->TexFormat);
       }
    }
    assert(t->format == image->_BaseFormat);
 
-   texel_size = image->TexFormat->TexelBytes;
+   texel_size = _mesa_get_format_bytes(image->TexFormat);
    size = image->Width * image->Height * texel_size + TEXTURE_HW_PLUS;
 
    addr = sisAllocFB( smesa, size, &t->image[level].handle );
@@ -230,7 +227,7 @@ static GLboolean sisIsTextureResident( GLcontext * ctx,
   return (texObj->DriverData != NULL);
 }
 
-static const struct gl_texture_format *
+static gl_format
 sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			  GLenum format, GLenum type )
 {
@@ -248,15 +245,15 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       switch ( type ) {
       case GL_UNSIGNED_INT_10_10_10_2:
       case GL_UNSIGNED_INT_2_10_10_10_REV:
-	 return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+	 return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555;
       case GL_UNSIGNED_SHORT_4_4_4_4:
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return &_mesa_texformat_argb4444;
+	 return MESA_FORMAT_ARGB4444;
       case GL_UNSIGNED_SHORT_5_5_5_1:
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return &_mesa_texformat_argb1555;
+	 return MESA_FORMAT_ARGB1555;
       default:
-         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+         return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
       }
 
    case 3:
@@ -265,46 +262,46 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       switch ( type ) {
       case GL_UNSIGNED_SHORT_4_4_4_4:
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return &_mesa_texformat_argb4444;
+	 return MESA_FORMAT_ARGB4444;
       case GL_UNSIGNED_SHORT_5_5_5_1:
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return &_mesa_texformat_argb1555;
+	 return MESA_FORMAT_ARGB1555;
       case GL_UNSIGNED_SHORT_5_6_5:
       case GL_UNSIGNED_SHORT_5_6_5_REV:
-	 return &_mesa_texformat_rgb565;
+	 return MESA_FORMAT_RGB565;
       default:
-         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+         return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_RGB565;
       }
 
    case GL_RGBA8:
    case GL_RGBA12:
    case GL_RGBA16:
       return !force16bpt ?
-	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+	  MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
 
    case GL_RGB10_A2:
       return !force16bpt ?
-	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+	  MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555;
 
    case GL_RGBA4:
    case GL_RGBA2:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
 
    case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      return MESA_FORMAT_ARGB1555;
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      return !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_RGB565;
 
    case GL_RGB5:
    case GL_RGB4:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
 
    case GL_R3_G3_B2:
-      return &_mesa_texformat_rgb332;
+      return MESA_FORMAT_RGB332;
 
    case GL_ALPHA:
    case GL_ALPHA4:		/* FIXME: This could use its own texstore */
@@ -312,7 +309,7 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_a8;
+      return MESA_FORMAT_A8;
 
    case 1:
    case GL_LUMINANCE:
@@ -321,7 +318,7 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_l8;
+      return MESA_FORMAT_L8;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -332,7 +329,7 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      return &_mesa_texformat_al88;
+      return MESA_FORMAT_AL88;
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -340,19 +337,19 @@ sisChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      return &_mesa_texformat_i8;
+      return MESA_FORMAT_I8;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
           type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    default:
       _mesa_problem(ctx, "unexpected format in sisDDChooseTextureFormat: %d",
          internalFormat);
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 
@@ -425,7 +422,7 @@ static void sisTexSubImage1D( GLcontext *ctx,
 
    /* Upload the texture */
    WaitEngIdle(smesa);
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    copySize = width * texelBytes;
    src = (char *)texImage->Data + xoffset * texelBytes;
@@ -513,7 +510,7 @@ static void sisTexSubImage2D( GLcontext *ctx,
 
    /* Upload the texture */
    WaitEngIdle(smesa);
-   texelBytes = texImage->TexFormat->TexelBytes;
+   texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
 
    copySize = width * texelBytes;
    src = (char *)texImage->Data + (xoffset + yoffset * texImage->Width) *

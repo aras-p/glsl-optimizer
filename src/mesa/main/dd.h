@@ -184,8 +184,8 @@ struct dd_function_table {
     * functions.  The driver should examine \p internalFormat and return a
     * pointer to an appropriate gl_texture_format.
     */
-   const struct gl_texture_format *(*ChooseTextureFormat)( GLcontext *ctx,
-                      GLint internalFormat, GLenum srcFormat, GLenum srcType );
+   GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
+                                     GLenum srcFormat, GLenum srcType );
 
    /**
     * Called by glTexImage1D().
@@ -475,13 +475,6 @@ struct dd_function_table {
                                  struct gl_texture_object *texObj,
                                  struct gl_texture_image *texImage);
 
-   /**
-    * Called to query number of bytes of storage needed to store the
-    * specified compressed texture.
-    */
-   GLuint (*CompressedTextureSize)( GLcontext *ctx, GLsizei width,
-                                    GLsizei height, GLsizei depth,
-                                    GLenum format );
    /*@}*/
 
    /**
@@ -713,34 +706,6 @@ struct dd_function_table {
                         GLenum pname, const GLfloat *params);
    /** Set the viewport */
    void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-   /*@}*/
-
-
-   /**
-    * \name Vertex array functions
-    *
-    * Called by the corresponding OpenGL functions.
-    */
-   /*@{*/
-   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*NormalPointer)(GLcontext *ctx, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*FogCoordPointer)(GLcontext *ctx, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*IndexPointer)(GLcontext *ctx, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-				 GLsizei stride, const GLvoid *ptr);
-   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
-   void (*VertexAttribPointer)(GLcontext *ctx, GLuint index, GLint size,
-                               GLenum type, GLsizei stride, const GLvoid *ptr);
-   void (*LockArraysEXT)( GLcontext *ctx, GLint first, GLsizei count );
-   void (*UnlockArraysEXT)( GLcontext *ctx );
    /*@}*/
 
 

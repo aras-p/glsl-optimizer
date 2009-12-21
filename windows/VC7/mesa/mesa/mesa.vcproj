@@ -365,6 +365,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\remap.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.c">
 			</File>
 			<File
@@ -585,6 +588,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\texfetch.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texformat.c">
@@ -945,6 +951,9 @@
 				RelativePath="..\..\..\..\src\mesa\main\rastpos.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\remap.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.h">
 			</File>
 			<File
@@ -1158,10 +1167,13 @@
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texfetch.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\texformat.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\texformat_tmp.h">
+				RelativePath="..\..\..\..\src\mesa\main\texfetch_tmp.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.h">

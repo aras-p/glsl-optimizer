@@ -46,7 +46,6 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
-#include "main/texformat.h"
 
 #include "r600_context.h"
 
@@ -55,7 +54,7 @@
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
 
-
+void r600UpdateTextureState(GLcontext * ctx);
 static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
 static void r700UpdatePolygonMode(GLcontext * ctx);
 static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
@@ -190,6 +189,67 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
     }
 
     context->radeon.NewGLState |= new_state;
+}
+
+static void r700SetDBRenderState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	struct r700_fragment_program *fp = (struct r700_fragment_program *)
+		(ctx->FragmentProgram._Current);
+
+	R600_STATECHANGE(context, db);
+
+	SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
+	SETfield(r700->DB_SHADER_CONTROL.u32All, EARLY_Z_THEN_LATE_Z, Z_ORDER_shift, Z_ORDER_mask);
+	/* XXX need to enable htile for hiz/s */
+	SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
+	SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
+	SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+	if (context->radeon.query.current)
+	{
+		SETbit(r700->DB_RENDER_OVERRIDE.u32All, NOOP_CULL_DISABLE_bit);
+		if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+		{
+			SETbit(r700->DB_RENDER_CONTROL.u32All, PERFECT_ZPASS_COUNTS_bit);
+		}
+	}
+	else
+	{
+		CLEARbit(r700->DB_RENDER_OVERRIDE.u32All, NOOP_CULL_DISABLE_bit);
+		if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+		{
+			CLEARbit(r700->DB_RENDER_CONTROL.u32All, PERFECT_ZPASS_COUNTS_bit);
+		}
+	}
+
+	if (fp)
+	{
+		if (fp->r700Shader.killIsUsed)
+		{
+			SETbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
+		}
+		else
+		{
+			CLEARbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
+		}
+
+		if (fp->r700Shader.depthIsExported)
+		{
+			SETbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
+		}
+		else
+		{
+			CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
+		}
+	}
+}
+
+void r700UpdateShaderStates(GLcontext * ctx)
+{
+	r700SetDBRenderState(ctx);
+	r600UpdateTextureState(ctx);
 }
 
 static void r700SetDepthState(GLcontext * ctx)
@@ -1031,6 +1091,7 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 	GLfloat tz = v[MAT_TZ] * depthScale;
 
 	R600_STATECHANGE(context, vpt);
+	R600_STATECHANGE(context, cl);
 
 	r700->viewport[id].PA_CL_VPORT_XSCALE.f32All  = sx;
 	r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
@@ -1040,6 +1101,18 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 
 	r700->viewport[id].PA_CL_VPORT_ZSCALE.f32All  = sz;
 	r700->viewport[id].PA_CL_VPORT_ZOFFSET.f32All = tz;
+
+	if (ctx->Transform.DepthClamp) {
+		r700->viewport[id].PA_SC_VPORT_ZMIN_0.f32All = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
+		r700->viewport[id].PA_SC_VPORT_ZMAX_0.f32All = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+		SETbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_NEAR_DISABLE_bit);
+		SETbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_FAR_DISABLE_bit);
+	} else {
+		r700->viewport[id].PA_SC_VPORT_ZMIN_0.f32All = 0.0;
+		r700->viewport[id].PA_SC_VPORT_ZMAX_0.f32All = 1.0;
+		CLEARbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_NEAR_DISABLE_bit);
+		CLEARbit(r700->PA_CL_CLIP_CNTL.u32All, ZCLIP_FAR_DISABLE_bit);
+	}
 
 	r700->viewport[id].enabled = GL_TRUE;
 
@@ -1346,8 +1419,6 @@ void r700SetScissor(context_t *context) //---------------
 	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_BR.u32All, y2,
 		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
 
-	r700->viewport[id].PA_SC_VPORT_ZMIN_0.u32All = 0;
-	r700->viewport[id].PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 	r700->viewport[id].enabled = GL_TRUE;
 }
 
@@ -1662,19 +1733,10 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
     r700DepthMask(ctx, ctx->Depth.Mask);
     r700DepthFunc(ctx, ctx->Depth.Func);
-    SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
-
     r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
-
-    r700->DB_RENDER_CONTROL.u32All  = 0;
     SETbit(r700->DB_RENDER_CONTROL.u32All, STENCIL_COMPRESS_DISABLE_bit);
     SETbit(r700->DB_RENDER_CONTROL.u32All, DEPTH_COMPRESS_DISABLE_bit);
-    r700->DB_RENDER_OVERRIDE.u32All = 0;
-    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
-	    SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+    r700SetDBRenderState(ctx);
 
     r700->DB_ALPHA_TO_MASK.u32All = 0;
     SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET0_shift, ALPHA_TO_MASK_OFFSET0_mask);

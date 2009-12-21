@@ -23,28 +23,23 @@
  */
 
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <GL/gl.h>
-
+#include "main/context.h"
 #include "main/mm.h"
-#include "savagecontext.h"
-#include "savagetex.h"
-#include "savagetris.h"
-#include "savageioctl.h"
-#include "main/simple_list.h"
-#include "main/enums.h"
-#include "savage_bci.h"
-
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/texobj.h"
 #include "main/convolve.h"
 #include "main/colormac.h"
+#include "main/simple_list.h"
+#include "main/enums.h"
 
 #include "swrast/swrast.h"
+
+#include "savagecontext.h"
+#include "savagetex.h"
+#include "savagetris.h"
+#include "savageioctl.h"
+#include "savage_bci.h"
 
 #include "xmlpool.h"
 
@@ -527,6 +522,11 @@ savageAllocTexObj( struct gl_texture_object *texObj )
  * components to white. This way we get the correct result.
  */
 
+#if 0
+/* Using MESA_FORMAT_RGBA8888 to store alpha-only textures should
+ * work but is space inefficient.
+ */
+
 static GLboolean
 _savage_texstore_a1114444(TEXSTORE_PARAMS);
 
@@ -590,10 +590,11 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
 	return GL_FALSE;
     _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
+        GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr
-           + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
+           + dstImageOffsets[dstZoffset + img] * texelBytes
            + dstYoffset * dstRowStride
-           + dstXoffset * dstFormat->TexelBytes;
+           + dstXoffset * texelBytes;
 	for (row = 0; row < srcHeight; row++) {
             GLushort *dstUI = (GLushort *) dstRow;
 	    for (col = 0; col < srcWidth; col++) {
@@ -629,10 +630,11 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 	return GL_FALSE;
     _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
     for (img = 0; img < srcDepth; img++) {
+        GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
         GLubyte *dstRow = (GLubyte *) dstAddr
-           + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
+           + dstImageOffsets[dstZoffset + img] * texelBytes
            + dstYoffset * dstRowStride
-           + dstXoffset * dstFormat->TexelBytes;
+           + dstXoffset * texelBytes;
 	for (row = 0; row < srcHeight; row++) {
             GLuint *dstUI = (GLuint *) dstRow;
 	    for (col = 0; col < srcWidth; col++) {
@@ -647,10 +649,11 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
 
     return GL_TRUE;
 }
+#endif
 
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
-static const struct gl_texture_format *
+static gl_format
 savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			   GLenum format, GLenum type )
 {
@@ -669,15 +672,15 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       switch ( type ) {
       case GL_UNSIGNED_INT_10_10_10_2:
       case GL_UNSIGNED_INT_2_10_10_10_REV:
-	 return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+	 return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555;
       case GL_UNSIGNED_SHORT_4_4_4_4:
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return &_mesa_texformat_argb4444;
+	 return MESA_FORMAT_ARGB4444;
       case GL_UNSIGNED_SHORT_5_5_5_1:
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return &_mesa_texformat_argb1555;
+	 return MESA_FORMAT_ARGB1555;
       default:
-         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+         return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
       }
 
    case 3:
@@ -686,129 +689,152 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       switch ( type ) {
       case GL_UNSIGNED_SHORT_4_4_4_4:
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return &_mesa_texformat_argb4444;
+	 return MESA_FORMAT_ARGB4444;
       case GL_UNSIGNED_SHORT_5_5_5_1:
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return &_mesa_texformat_argb1555;
+	 return MESA_FORMAT_ARGB1555;
       case GL_UNSIGNED_SHORT_5_6_5:
       case GL_UNSIGNED_SHORT_5_6_5_REV:
-	 return &_mesa_texformat_rgb565;
+	 return MESA_FORMAT_RGB565;
       default:
-         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+         return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_RGB565;
       }
 
    case GL_RGBA8:
    case GL_RGBA12:
    case GL_RGBA16:
       return !force16bpt ?
-	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+	  MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
 
    case GL_RGB10_A2:
       return !force16bpt ?
-	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+	  MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555;
 
    case GL_RGBA4:
    case GL_RGBA2:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
 
    case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      return MESA_FORMAT_ARGB1555;
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      return !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_RGB565;
 
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      return &_mesa_texformat_rgb565;
+      return MESA_FORMAT_RGB565;
 
    case GL_ALPHA:
    case GL_COMPRESSED_ALPHA:
-      return isSavage4 ? &_mesa_texformat_a8 : (
+#if 0
+      return isSavage4 ? MESA_FORMAT_a8 : (
 	 do32bpt ? &_savage_texformat_a1118888 : &_savage_texformat_a1114444);
+#else
+      if (isSavage4)
+         return MESA_FORMAT_A8;
+      else if (do32bpt)
+         return MESA_FORMAT_ARGB8888;
+      else
+         return MESA_FORMAT_ARGB4444;
+#endif
    case GL_ALPHA4:
-      return isSavage4 ? &_mesa_texformat_a8 : &_savage_texformat_a1114444;
+#if 0
+      return isSavage4 ? MESA_FORMAT_a8 : &_savage_texformat_a1114444;
+#else
+      if (isSavage4)
+         return MESA_FORMAT_A8;
+      else
+         return MESA_FORMAT_ARGB4444;
+#endif
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
-      return isSavage4 ? &_mesa_texformat_a8 : (
+#if 0
+      return isSavage4 ? MESA_FORMAT_a8 : (
 	 !force16bpt ? &_savage_texformat_a1118888 : &_savage_texformat_a1114444);
-
+#else
+      if (isSavage4)
+         return MESA_FORMAT_A8;
+      else if (force16bpt)
+         return MESA_FORMAT_ARGB4444;
+      else
+         return MESA_FORMAT_ARGB8888;
+#endif
    case 1:
    case GL_LUMINANCE:
    case GL_COMPRESSED_LUMINANCE:
       /* no alpha, but use argb1555 in 16bit case to get pure grey values */
-      return isSavage4 ? &_mesa_texformat_l8 : (
-	 do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555);
+      return isSavage4 ? MESA_FORMAT_L8 : (
+	 do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555);
    case GL_LUMINANCE4:
-      return isSavage4 ? &_mesa_texformat_l8 : &_mesa_texformat_argb1555;
+      return isSavage4 ? MESA_FORMAT_L8 : MESA_FORMAT_ARGB1555;
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
-      return isSavage4 ? &_mesa_texformat_l8 : (
-	 !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555);
+      return isSavage4 ? MESA_FORMAT_L8 : (
+	 !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB1555);
 
    case 2:
    case GL_LUMINANCE_ALPHA:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
       /* Savage4 has a al44 texture format. But it's not supported by Mesa. */
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
    case GL_LUMINANCE4_ALPHA4:
    case GL_LUMINANCE6_ALPHA2:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
    case GL_LUMINANCE8_ALPHA8:
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
-      return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
 #if 0
    /* TFT_I8 produces garbage on ProSavageDDR and subsequent texture
     * disable keeps rendering garbage. Disabled for now. */
    case GL_INTENSITY:
    case GL_COMPRESSED_INTENSITY:
-      return isSavage4 ? &_mesa_texformat_i8 : (
-	 do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444);
+      return isSavage4 ? MESA_FORMAT_i8 : (
+	 do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444);
    case GL_INTENSITY4:
-      return isSavage4 ? &_mesa_texformat_i8 : &_mesa_texformat_argb4444;
+      return isSavage4 ? MESA_FORMAT_i8 : MESA_FORMAT_ARGB4444;
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
-      return isSavage4 ? &_mesa_texformat_i8 : (
-	 !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444);
+      return isSavage4 ? MESA_FORMAT_i8 : (
+	 !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444);
 #else
    case GL_INTENSITY:
    case GL_COMPRESSED_INTENSITY:
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return do32bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
    case GL_INTENSITY4:
-      return &_mesa_texformat_argb4444;
+      return MESA_FORMAT_ARGB4444;
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
-      return !force16bpt ? &_mesa_texformat_argb8888 :
-	  &_mesa_texformat_argb4444;
+      return !force16bpt ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB4444;
 #endif
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgb_dxt1;
+      return MESA_FORMAT_RGB_DXT1;
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
+      return MESA_FORMAT_RGBA_DXT1;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return &_mesa_texformat_rgba_dxt3;
+      return MESA_FORMAT_RGBA_DXT3;
 
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
       if (!isSavage4)
 	 /* Not the best choice but Savage3D/MX/IX don't support DXT3 or DXT5. */
-	 return &_mesa_texformat_rgba_dxt1;
+	 return MESA_FORMAT_RGBA_DXT1;
       /* fall through */
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
+      return MESA_FORMAT_RGBA_DXT5;
 
 /*
    case GL_COLOR_INDEX:
@@ -822,7 +848,7 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 */
    default:
       _mesa_problem(ctx, "unexpected texture format in %s", __FUNCTION__);
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 
@@ -837,7 +863,7 @@ static void savageSetTexImages( savageContextPtr imesa,
    assert(t);
    assert(image);
 
-   switch (image->TexFormat->MesaFormat) {
+   switch (image->TexFormat) {
    case MESA_FORMAT_ARGB8888:
       textureFormat = TFT_ARGB8888;
       t->texelBytes = tileIndex = 4;
@@ -2083,6 +2109,7 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
 
    /* Texel fetching with our custom texture formats works just like
     * the standard argb formats. */
+#if 0
    _savage_texformat_a1114444.FetchTexel1D = _mesa_texformat_argb4444.FetchTexel1D;
    _savage_texformat_a1114444.FetchTexel2D = _mesa_texformat_argb4444.FetchTexel2D;
    _savage_texformat_a1114444.FetchTexel3D = _mesa_texformat_argb4444.FetchTexel3D;
@@ -2096,4 +2123,5 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
    _savage_texformat_a1118888.FetchTexel1Df= _mesa_texformat_argb8888.FetchTexel1Df;
    _savage_texformat_a1118888.FetchTexel2Df= _mesa_texformat_argb8888.FetchTexel2Df;
    _savage_texformat_a1118888.FetchTexel3Df= _mesa_texformat_argb8888.FetchTexel3Df;
+#endif
 }

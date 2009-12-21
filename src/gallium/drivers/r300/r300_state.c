@@ -49,52 +49,69 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 {
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
 
+    if (state->blend_enable)
     {
-	unsigned eqRGB = state->rgb_func;
-	unsigned srcRGB = state->rgb_src_factor;
-	unsigned dstRGB = state->rgb_dst_factor;
+        unsigned eqRGB = state->rgb_func;
+        unsigned srcRGB = state->rgb_src_factor;
+        unsigned dstRGB = state->rgb_dst_factor;
 
-	unsigned eqA = state->alpha_func;
-	unsigned srcA = state->alpha_src_factor;
-	unsigned dstA = state->alpha_dst_factor;
+        unsigned eqA = state->alpha_func;
+        unsigned srcA = state->alpha_src_factor;
+        unsigned dstA = state->alpha_dst_factor;
 
-	if (srcA != srcRGB ||
-	    dstA != dstRGB ||
-	    eqA != eqRGB) {
-	    blend->alpha_blend_control =
-		r300_translate_blend_function(eqA) |
-		(r300_translate_blend_factor(srcA) <<
-                    R300_SRC_BLEND_SHIFT) |
-                (r300_translate_blend_factor(dstA) <<
-		 R300_DST_BLEND_SHIFT);
-	    blend->blend_control |= R300_ALPHA_BLEND_ENABLE |
-		R300_SEPARATE_ALPHA_ENABLE;
-	} else {
-	    blend->alpha_blend_control = R300_COMB_FCN_ADD_CLAMP |
-		(R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
-		(R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
-	}
-    }
-    if (state->blend_enable) {
-        /* XXX for now, always do separate alpha...
-         * is it faster to do it with one reg? */
-        blend->blend_control |= R300_READ_ENABLE |
-                r300_translate_blend_function(state->rgb_func) |
-                (r300_translate_blend_factor(state->rgb_src_factor) <<
-                    R300_SRC_BLEND_SHIFT) |
-                (r300_translate_blend_factor(state->rgb_dst_factor) <<
-                    R300_DST_BLEND_SHIFT);
-    } else {
-	blend->blend_control = 
-	    R300_COMB_FCN_ADD_CLAMP |
-	    (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
-	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
+        /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
+         * this is just the crappy D3D naming */
+        blend->blend_control = R300_ALPHA_BLEND_ENABLE |
+            r300_translate_blend_function(eqRGB) |
+            ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
+            ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
+
+        /* optimization: some operations do not require the destination color */
+        if (eqRGB == PIPE_BLEND_MIN || eqA == PIPE_BLEND_MIN ||
+            eqRGB == PIPE_BLEND_MAX || eqA == PIPE_BLEND_MAX ||
+            dstRGB != PIPE_BLENDFACTOR_ZERO ||
+            dstA != PIPE_BLENDFACTOR_ZERO ||
+            srcRGB == PIPE_BLENDFACTOR_DST_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_DST_ALPHA ||
+            srcRGB == PIPE_BLENDFACTOR_INV_DST_COLOR ||
+            srcRGB == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_DST_COLOR ||
+            srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
+            srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
+            srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA)
+            blend->blend_control |= R300_READ_ENABLE;
+
+        /* XXX implement the optimization with DISCARD_SRC_PIXELS*/
+        /* XXX implement the optimization with SRC_ALPHA_?_NO_READ */
+
+        /* separate alpha */
+        if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
+            blend->blend_control |= R300_SEPARATE_ALPHA_ENABLE;
+            blend->alpha_blend_control =
+                r300_translate_blend_function(eqA) |
+                (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
+                (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
+        }
     }
 
     /* PIPE_LOGICOP_* don't need to be translated, fortunately. */
     if (state->logicop_enable) {
         blend->rop = R300_RB3D_ROPCNTL_ROP_ENABLE |
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
+    }
+
+    /* Color Channel Mask */
+    if (state->colormask & PIPE_MASK_R) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_RED_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_G) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_B) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0;
+    }
+    if (state->colormask & PIPE_MASK_A) {
+        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0;
     }
 
     if (state->dither) {
@@ -122,25 +139,29 @@ static void r300_delete_blend_state(struct pipe_context* pipe,
     FREE(state);
 }
 
+/* Convert float to 10bit integer */
+static unsigned float_to_fixed10(float f)
+{
+    return CLAMP((unsigned)(f * 1023.9f), 0, 1023);
+}
+
 /* Set blend color.
  * Setup both R300 and R500 registers, figure out later which one to write. */
 static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
-    ubyte ur, ug, ub, ua;
-
-    ur = float_to_ubyte(color->color[0]);
-    ug = float_to_ubyte(color->color[1]);
-    ub = float_to_ubyte(color->color[2]);
-    ua = float_to_ubyte(color->color[3]);
 
     util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM,
             &r300->blend_color_state->blend_color);
 
-    /* XXX this is wrong */
-    r300->blend_color_state->blend_color_red_alpha = ur | (ua << 16);
-    r300->blend_color_state->blend_color_green_blue = ub | (ug << 16);
+    /* XXX if FP16 blending is enabled, we should use the FP16 format */
+    r300->blend_color_state->blend_color_red_alpha =
+        float_to_fixed10(color->color[0]) |
+        (float_to_fixed10(color->color[3]) << 16);
+    r300->blend_color_state->blend_color_green_blue =
+        float_to_fixed10(color->color[2]) |
+        (float_to_fixed10(color->color[1]) << 16);
 
     r300->dirty_state |= R300_NEW_BLEND_COLOR;
 }
@@ -159,31 +180,6 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     }
 }
 
-static void
-    r300_set_constant_buffer(struct pipe_context* pipe,
-                             uint shader, uint index,
-                             const struct pipe_constant_buffer* buffer)
-{
-    struct r300_context* r300 = r300_context(pipe);
-
-    /* This entire chunk of code seems ever-so-slightly baked.
-     * It's as if I've got pipe_buffer* matryoshkas... */
-    if (buffer && buffer->buffer && buffer->buffer->size) {
-        void* map = pipe->winsys->buffer_map(pipe->winsys, buffer->buffer,
-                                             PIPE_BUFFER_USAGE_CPU_READ);
-        memcpy(r300->shader_constants[shader].constants,
-            map, buffer->buffer->size);
-        pipe->winsys->buffer_unmap(pipe->winsys, buffer->buffer);
-
-        r300->shader_constants[shader].count =
-            buffer->buffer->size / (sizeof(float) * 4);
-    } else {
-        r300->shader_constants[shader].count = 0;
-    }
-
-    r300->dirty_state |= R300_NEW_CONSTANTS;
-}
-
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
  *
  * This contains the depth buffer, stencil buffer, alpha test, and such.
@@ -193,6 +189,8 @@ static void*
         r300_create_dsa_state(struct pipe_context* pipe,
                               const struct pipe_depth_stencil_alpha_state* state)
 {
+    struct r300_capabilities *caps =
+        r300_screen(r300_context(pipe)->context.screen)->caps;
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
     /* Depth test setup. */
@@ -237,9 +235,16 @@ static void*
             (r300_translate_stencil_op(state->stencil[1].zfail_op) <<
                 R300_S_BACK_ZFAIL_OP_SHIFT);
 
-            dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
-                (state->stencil[1].valuemask << R300_STENCILMASK_SHIFT) |
-                (state->stencil[1].writemask << R300_STENCILWRITEMASK_SHIFT);
+            /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
+            if (caps->is_r500)
+            {
+                dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
+                dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
+                    (state->stencil[1].valuemask <<
+                    R300_STENCILMASK_SHIFT) |
+                    (state->stencil[1].writemask <<
+                    R300_STENCILWRITEMASK_SHIFT);
+            }
         }
     }
 
@@ -248,8 +253,13 @@ static void*
         dsa->alpha_function =
             r300_translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
-        dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
-                                     0, 1023);
+
+        /* XXX figure out why emitting 10bit alpha ref causes CS to dump */
+        /* always use 8bit alpha ref */
+        dsa->alpha_function |= float_to_ubyte(state->alpha.ref_value);
+
+        if (caps->is_r500)
+            dsa->alpha_function |= R500_FG_ALPHA_FUNC_8BIT;
     }
 
     return (void*)dsa;
@@ -285,7 +295,9 @@ static void
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_flush(r300->draw);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+    }
 
     r300->framebuffer_state = *state;
 
@@ -324,7 +336,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 
     r300->fs = fs;
 
-    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;
+    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 /* Delete fragment shader state. */
@@ -386,24 +398,51 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
+    /* XXX I think there is something wrong with the polygon mode,
+     * XXX re-test when r300g is in a better shape */
+
+    /* Enable polygon mode */
+    if (state->fill_cw != PIPE_POLYGON_MODE_FILL ||
+        state->fill_ccw != PIPE_POLYGON_MODE_FILL) {
+        rs->polygon_mode = R300_GA_POLY_MODE_DUAL;
+    }
+
     /* Radeons don't think in "CW/CCW", they think in "front/back". */
     if (state->front_winding == PIPE_WINDING_CW) {
         rs->cull_mode = R300_FRONT_FACE_CW;
 
+        /* Polygon offset */
         if (state->offset_cw) {
             rs->polygon_offset_enable |= R300_FRONT_ENABLE;
         }
         if (state->offset_ccw) {
             rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+
+        /* Polygon mode */
+        if (rs->polygon_mode) {
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_front(state->fill_cw);
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_back(state->fill_ccw);
         }
     } else {
         rs->cull_mode = R300_FRONT_FACE_CCW;
 
+        /* Polygon offset */
         if (state->offset_ccw) {
             rs->polygon_offset_enable |= R300_FRONT_ENABLE;
         }
         if (state->offset_cw) {
             rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+
+        /* Polygon mode */
+        if (rs->polygon_mode) {
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_front(state->fill_ccw);
+            rs->polygon_mode |=
+                r300_translate_polygon_mode_back(state->fill_cw);
         }
     }
     if (state->front_winding & state->cull_mode) {
@@ -448,10 +487,13 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
 
-    draw_flush(r300->draw);
-    draw_set_rasterizer_state(r300->draw, &rs->rs);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_rasterizer_state(r300->draw, &rs->rs);
+    }
 
     r300->rs_state = rs;
+    /* XXX Clean these up when we move to atom emits */
     r300->dirty_state |= R300_NEW_RASTERIZER;
     r300->dirty_state |= R300_NEW_RS_BLOCK;
     r300->dirty_state |= R300_NEW_SCISSOR;
@@ -480,6 +522,11 @@ static void*
     sampler->filter0 |= r300_translate_tex_filters(state->min_img_filter,
                                                    state->mag_img_filter,
                                                    state->min_mip_filter);
+
+    /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
+    /* We must pass these to the emit function to clamp them properly. */
+    sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
+    sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
 
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
@@ -529,18 +576,28 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
                                       struct pipe_texture** texture)
 {
     struct r300_context* r300 = r300_context(pipe);
+    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     int i;
 
     /* XXX magic num */
     if (count > 8) {
         return;
     }
+    
+    r300->context.flush(&r300->context, 0, NULL);
 
     for (i = 0; i < count; i++) {
         if (r300->textures[i] != (struct r300_texture*)texture[i]) {
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
                 texture[i]);
             r300->dirty_state |= (R300_NEW_TEXTURE << i);
+
+            /* R300-specific - set the texrect factor in a fragment shader */
+            if (!is_r500 && r300->textures[i]->is_npot) {
+                /* XXX It would be nice to re-emit just 1 constant,
+                 * XXX not all of them */
+                r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+            }
         }
     }
 
@@ -589,17 +646,14 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     r300->viewport_state->vte_control = R300_VTX_W0_FMT;
 
     if (state->scale[0] != 1.0f) {
-        assert(state->scale[0] != 0.0f);
         r300->viewport_state->xscale = state->scale[0];
         r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
     }
     if (state->scale[1] != 1.0f) {
-        assert(state->scale[1] != 0.0f);
         r300->viewport_state->yscale = state->scale[1];
         r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
     }
     if (state->scale[2] != 1.0f) {
-        assert(state->scale[2] != 0.0f);
         r300->viewport_state->zscale = state->scale[2];
         r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
     }
@@ -625,13 +679,16 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    memcpy(r300->vertex_buffers, buffers,
+    memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
-
     r300->vertex_buffer_count = count;
 
-    draw_flush(r300->draw);
-    draw_set_vertex_buffers(r300->draw, count, buffers);
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_vertex_buffers(r300->draw, count, buffers);
+    }
+
+    r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
 }
 
 static void r300_set_vertex_elements(struct pipe_context* pipe,
@@ -640,8 +697,15 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_flush(r300->draw);
-    draw_set_vertex_elements(r300->draw, count, elements);
+    memcpy(r300->vertex_element,
+           elements,
+           sizeof(struct pipe_vertex_element) * count);
+    r300->vertex_element_count = count;
+
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_vertex_elements(r300->draw, count, elements);
+    }
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -657,9 +721,6 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 
         tgsi_scan_shader(shader->tokens, &vs->info);
 
-        /* Appease Draw. */
-        vs->draw = draw_create_vertex_shader(r300->draw, shader);
-
         return (void*)vs;
     } else {
         return draw_create_vertex_shader(r300->draw, shader);
@@ -669,8 +730,6 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
-
-    draw_flush(r300->draw);
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
@@ -682,10 +741,10 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
             r300_translate_vertex_shader(r300, vs);
         }
 
-        draw_bind_vertex_shader(r300->draw, vs->draw);
         r300->vs = vs;
-        r300->dirty_state |= R300_NEW_VERTEX_SHADER;
+        r300->dirty_state |= R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS;
     } else {
+        draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)shader);
     }
@@ -699,13 +758,37 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
         rc_constants_destroy(&vs->code.constants);
-        draw_delete_vertex_shader(r300->draw, vs->draw);
         FREE((void*)vs->state.tokens);
         FREE(shader);
     } else {
         draw_delete_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)shader);
     }
+}
+
+static void r300_set_constant_buffer(struct pipe_context *pipe,
+                                     uint shader, uint index,
+                                     const struct pipe_constant_buffer *buf)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    void *mapped;
+
+    if (buf == NULL || buf->buffer->size == 0 ||
+        (mapped = pipe_buffer_map(pipe->screen, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
+    {
+        r300->shader_constants[shader].count = 0;
+        return;
+    }
+
+    assert((buf->buffer->size % 4 * sizeof(float)) == 0);
+    memcpy(r300->shader_constants[shader].constants, mapped, buf->buffer->size);
+    r300->shader_constants[shader].count = buf->buffer->size / (4 * sizeof(float));
+    pipe_buffer_unmap(pipe->screen, buf->buffer);
+
+    if (shader == PIPE_SHADER_VERTEX)
+        r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+    else if (shader == PIPE_SHADER_FRAGMENT)
+        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 void r300_init_state_functions(struct r300_context* r300)
@@ -739,10 +822,10 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.delete_rasterizer_state = r300_delete_rs_state;
 
     r300->context.create_sampler_state = r300_create_sampler_state;
-    r300->context.bind_sampler_states = r300_bind_sampler_states;
+    r300->context.bind_fragment_sampler_states = r300_bind_sampler_states;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
-    r300->context.set_sampler_textures = r300_set_sampler_textures;
+    r300->context.set_fragment_sampler_textures = r300_set_sampler_textures;
 
     r300->context.set_scissor_state = r300_set_scissor_state;
 

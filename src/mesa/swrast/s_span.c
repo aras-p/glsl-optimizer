@@ -880,13 +880,13 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       stipple_polygon_span(ctx, span);
    }
 
-   if (ctx->Transform.DepthClamp)
-      _swrast_depth_clamp_span(ctx, span);
-
    /* Stencil and Z testing */
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
 
       if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
@@ -1356,6 +1356,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
+
       if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {

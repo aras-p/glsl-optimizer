@@ -42,6 +42,7 @@
 
 #include "fxdrv.h"
 #include "main/enums.h"
+#include "main/formats.h"
 #include "main/texstore.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -91,7 +92,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
       GLint _w, _h, maxSize = 1 << fxMesa->textureMaxLod;
       if ((mml->width > maxSize) || (mml->height > maxSize)) {
          /* need to rescale */
-         GLint texelBytes = texImage->TexFormat->TexelBytes;
+         GLint texelBytes = _mesa_get_format_bytes(texImage->TexFormat->MesaFormat);
          GLvoid *texImage_Data = texImage->Data;
          _w = MIN2(texImage->Width, maxSize);
          _h = MIN2(texImage->Height, maxSize);

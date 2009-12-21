@@ -38,6 +38,39 @@
 
 static GLboolean dbg = GL_FALSE;
 
+/* Returns the mask of channels read from the given srcreg in this instruction.
+ */
+static GLuint
+get_src_arg_mask(const struct prog_instruction *inst, int arg)
+{
+   int writemask = inst->DstReg.WriteMask;
+
+   if (inst->CondUpdate)
+      writemask = WRITEMASK_XYZW;
+
+   switch (inst->Opcode) {
+   case OPCODE_MOV:
+   case OPCODE_ABS:
+   case OPCODE_ADD:
+   case OPCODE_MUL:
+   case OPCODE_SUB:
+      return writemask;
+   case OPCODE_RCP:
+   case OPCODE_SIN:
+   case OPCODE_COS:
+   case OPCODE_RSQ:
+   case OPCODE_POW:
+   case OPCODE_EX2:
+      return WRITEMASK_X;
+   case OPCODE_DP2:
+      return WRITEMASK_XY;
+   case OPCODE_DP3:
+   case OPCODE_XPD:
+      return WRITEMASK_XYZ;
+   default:
+      return WRITEMASK_XYZW;
+   }
+}
 
 /**
  * In 'prog' remove instruction[i] if removeFlags[i] == TRUE.
@@ -73,6 +106,12 @@ remove_instructions(struct gl_program *prog, const GLboolean *removeFlags)
             removeStart = removeCount = 0; /* reset removal info */
          }
       }
+   }
+   /* Finish removing if the first instruction was to be removed. */
+   if (removeCount > 0) {
+      GLint removeStart = removeEnd - removeCount + 1;
+      _mesa_delete_instructions(prog, removeStart, removeCount);
+      removeStart = removeCount = 0; /* reset removal info */
    }
    return totalRemoved;
 }
@@ -187,11 +226,10 @@ _mesa_consolidate_registers(struct gl_program *prog)
 static void
 _mesa_remove_dead_code(struct gl_program *prog)
 {
-   GLboolean tempWritten[MAX_PROGRAM_TEMPS], tempRead[MAX_PROGRAM_TEMPS];
+   GLboolean tempRead[MAX_PROGRAM_TEMPS][4];
    GLboolean *removeInst; /* per-instruction removal flag */
-   GLuint i, rem;
+   GLuint i, rem = 0, comp;
 
-   memset(tempWritten, 0, sizeof(tempWritten));
    memset(tempRead, 0, sizeof(tempRead));
 
    if (dbg) {
@@ -212,16 +250,37 @@ _mesa_remove_dead_code(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
             const GLuint index = inst->SrcReg[j].Index;
+            GLuint read_mask;
             ASSERT(index < MAX_PROGRAM_TEMPS);
+	    read_mask = get_src_arg_mask(inst, j);
 
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
                   _mesa_printf("abort remove dead code (indirect temp)\n");
-               _mesa_free(removeInst);
-               return;
+               goto done;
             }
 
-            tempRead[index] = GL_TRUE;
+	    for (comp = 0; comp < 4; comp++) {
+	       GLuint swz = (inst->SrcReg[j].Swizzle >> (3 * comp)) & 0x7;
+
+	       if ((read_mask & (1 << comp)) == 0)
+		  continue;
+
+	       switch (swz) {
+	       case SWIZZLE_X:
+		  tempRead[index][0] = GL_TRUE;
+		  break;
+	       case SWIZZLE_Y:
+		  tempRead[index][1] = GL_TRUE;
+		  break;
+	       case SWIZZLE_Z:
+		  tempRead[index][2] = GL_TRUE;
+		  break;
+	       case SWIZZLE_W:
+		  tempRead[index][3] = GL_TRUE;
+		  break;
+	       }
+	    }
          }
       }
 
@@ -233,50 +292,63 @@ _mesa_remove_dead_code(struct gl_program *prog)
          if (inst->DstReg.RelAddr) {
             if (dbg)
                _mesa_printf("abort remove dead code (indirect temp)\n");
-            _mesa_free(removeInst);
-            return;
+            goto done;
          }
 
-         tempWritten[index] = GL_TRUE;
          if (inst->CondUpdate) {
             /* If we're writing to this register and setting condition
              * codes we cannot remove the instruction.  Prevent removal
              * by setting the 'read' flag.
              */
-            tempRead[index] = GL_TRUE;
+            tempRead[index][0] = GL_TRUE;
+            tempRead[index][1] = GL_TRUE;
+            tempRead[index][2] = GL_TRUE;
+            tempRead[index][3] = GL_TRUE;
          }
-      }
-   }
-
-   if (dbg) {
-      for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-         if (tempWritten[i] && !tempRead[i])
-            _mesa_printf("Remove writes to tmp %u\n", i);
       }
    }
 
    /* find instructions that write to dead registers, flag for removal */
    for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-         GLint index = inst->DstReg.Index;
-         removeInst[i] = (tempWritten[index] && !tempRead[index]);
-         if (dbg && removeInst[i]) {
-            _mesa_printf("Remove inst %u: ", i);
-            _mesa_print_instruction(inst);
-         }
+      struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint numDst = _mesa_num_inst_dst_regs(inst->Opcode);
+
+      if (numDst != 0 && inst->DstReg.File == PROGRAM_TEMPORARY) {
+         GLint chan, index = inst->DstReg.Index;
+
+	 for (chan = 0; chan < 4; chan++) {
+	    if (!tempRead[index][chan] &&
+		inst->DstReg.WriteMask & (1 << chan)) {
+	       if (dbg) {
+		  _mesa_printf("Remove writemask on %u.%c\n", i,
+			       chan == 3 ? 'w' : 'x' + chan);
+	       }
+	       inst->DstReg.WriteMask &= ~(1 << chan);
+	       rem++;
+	    }
+	 }
+
+	 if (inst->DstReg.WriteMask == 0) {
+	    /* If we cleared all writes, the instruction can be removed. */
+	    if (dbg)
+	       _mesa_printf("Remove instruction %u: \n", i);
+	    removeInst[i] = GL_TRUE;
+	 }
       }
    }
 
    /* now remove the instructions which aren't needed */
    rem = remove_instructions(prog, removeInst);
 
-   _mesa_free(removeInst);
-
    if (dbg) {
-      _mesa_printf("Optimize: End dead code removal.  %u instructions removed\n", rem);
+      _mesa_printf("Optimize: End dead code removal.\n");
+      _mesa_printf("  %u channel writes removed\n", rem);
+      _mesa_printf("  %u instructions removed\n", rem);
       /*_mesa_print_program(prog);*/
    }
+
+done:
+   _mesa_free(removeInst);
 }
 
 
@@ -325,6 +397,132 @@ find_next_temp_use(const struct gl_program *prog, GLuint start, GLuint index)
    return END;
 }
 
+static GLboolean _mesa_is_flow_control_opcode(enum prog_opcode opcode)
+{
+   switch (opcode) {
+   case OPCODE_BGNLOOP:
+   case OPCODE_BGNSUB:
+   case OPCODE_BRA:
+   case OPCODE_CAL:
+   case OPCODE_CONT:
+   case OPCODE_IF:
+   case OPCODE_ELSE:
+   case OPCODE_END:
+   case OPCODE_ENDIF:
+   case OPCODE_ENDLOOP:
+   case OPCODE_ENDSUB:
+   case OPCODE_RET:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+/**
+ * Try to remove use of extraneous MOV instructions, to free them up for dead
+ * code removal.
+ */
+static void
+_mesa_remove_extra_move_use(struct gl_program *prog)
+{
+   GLuint i, j;
+
+   if (dbg) {
+      _mesa_printf("Optimize: Begin remove extra move use\n");
+      _mesa_print_program(prog);
+   }
+
+   /*
+    * Look for sequences such as this:
+    *    MOV tmpX, arg0;
+    *    ...
+    *    FOO tmpY, tmpX, arg1;
+    * and convert into:
+    *    MOV tmpX, arg0;
+    *    ...
+    *    FOO tmpY, arg0, arg1;
+    */
+
+   for (i = 0; i + 1 < prog->NumInstructions; i++) {
+      const struct prog_instruction *mov = prog->Instructions + i;
+
+      if (mov->Opcode != OPCODE_MOV ||
+	  mov->DstReg.File != PROGRAM_TEMPORARY ||
+	  mov->DstReg.RelAddr ||
+	  mov->DstReg.CondMask != COND_TR ||
+	  mov->SaturateMode != SATURATE_OFF ||
+	  mov->SrcReg[0].RelAddr)
+	 continue;
+
+      /* Walk through remaining instructions until the or src reg gets
+       * rewritten or we get into some flow-control, eliminating the use of
+       * this MOV.
+       */
+      for (j = i + 1; j < prog->NumInstructions; j++) {
+	 struct prog_instruction *inst2 = prog->Instructions + j;
+	 int arg;
+
+	 if (_mesa_is_flow_control_opcode(inst2->Opcode))
+	     break;
+
+	 /* First rewrite this instruction's args if appropriate. */
+	 for (arg = 0; arg < _mesa_num_inst_src_regs(inst2->Opcode); arg++) {
+	    int comp;
+	    int read_mask = get_src_arg_mask(inst2, arg);
+
+	    if (inst2->SrcReg[arg].File != mov->DstReg.File ||
+		inst2->SrcReg[arg].Index != mov->DstReg.Index ||
+		inst2->SrcReg[arg].RelAddr ||
+		inst2->SrcReg[arg].Abs)
+	       continue;
+
+	    /* Check that all the sources for this arg of inst2 come from inst1
+	     * or constants.
+	     */
+	    for (comp = 0; comp < 4; comp++) {
+	       int src_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
+
+	       /* If the MOV didn't write that channel, can't use it. */
+	       if ((read_mask & (1 << comp)) &&
+		   src_swz <= SWIZZLE_W &&
+		   (mov->DstReg.WriteMask & (1 << src_swz)) == 0)
+		  break;
+	    }
+	    if (comp != 4)
+	       continue;
+
+	    /* Adjust the swizzles of inst2 to point at MOV's source */
+	    for (comp = 0; comp < 4; comp++) {
+	       int inst2_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
+
+	       if (inst2_swz <= SWIZZLE_W) {
+		  GLuint s = GET_SWZ(mov->SrcReg[0].Swizzle, inst2_swz);
+		  inst2->SrcReg[arg].Swizzle &= ~(7 << (3 * comp));
+		  inst2->SrcReg[arg].Swizzle |= s << (3 * comp);
+		  inst2->SrcReg[arg].Negate ^= (((mov->SrcReg[0].Negate >>
+						  inst2_swz) & 0x1) << comp);
+	       }
+	    }
+	    inst2->SrcReg[arg].File = mov->SrcReg[0].File;
+	    inst2->SrcReg[arg].Index = mov->SrcReg[0].Index;
+	 }
+
+	 /* If this instruction overwrote part of the move, our time is up. */
+	 if ((inst2->DstReg.File == mov->DstReg.File &&
+	      (inst2->DstReg.RelAddr ||
+	       inst2->DstReg.Index == mov->DstReg.Index)) ||
+	     (inst2->DstReg.File == mov->SrcReg[0].File &&
+	      (inst2->DstReg.RelAddr ||
+	       inst2->DstReg.Index == mov->SrcReg[0].Index)))
+	    break;
+      }
+   }
+
+   if (dbg) {
+      _mesa_printf("Optimize: End remove extra move use.\n");
+      /*_mesa_print_program(prog);*/
+   }
+}
 
 /**
  * Try to remove extraneous MOV instructions from the given program.
@@ -823,6 +1021,8 @@ _mesa_reallocate_registers(struct gl_program *prog)
 void
 _mesa_optimize_program(GLcontext *ctx, struct gl_program *program)
 {
+   _mesa_remove_extra_move_use(program);
+
    if (1)
       _mesa_remove_dead_code(program);
 

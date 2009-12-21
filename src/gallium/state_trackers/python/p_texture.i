@@ -59,15 +59,15 @@
    }
    
    unsigned get_width(unsigned level=0) {
-      return $self->width[level];
+      return u_minify($self->width0, level);
    }
    
    unsigned get_height(unsigned level=0) {
-      return $self->height[level];
+      return u_minify($self->height0, level);
    }
    
    unsigned get_depth(unsigned level=0) {
-      return $self->depth[level];
+      return u_minify($self->depth0, level);
    }
    
    unsigned get_nblocksx(unsigned level=0) {
@@ -88,7 +88,7 @@
          SWIG_exception(SWIG_ValueError, "face out of bounds");
       if(level > $self->last_level)
          SWIG_exception(SWIG_ValueError, "level out of bounds");
-      if(zslice >= $self->depth[level])
+      if(zslice >= u_minify($self->depth0, level))
          SWIG_exception(SWIG_ValueError, "zslice out of bounds");
       
       surface = CALLOC_STRUCT(st_surface);
@@ -375,13 +375,13 @@ struct st_surface
    static unsigned
    st_surface_width_get(struct st_surface *surface)
    {
-      return surface->texture->width[surface->level];
+      return u_minify(surface->texture->width0, surface->level);
    }
    
    static unsigned
    st_surface_height_get(struct st_surface *surface)
    {
-      return surface->texture->height[surface->level];
+      return u_minify(surface->texture->height0, surface->level);
    }
 
    static unsigned

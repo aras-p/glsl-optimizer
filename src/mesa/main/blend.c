@@ -72,7 +72,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+   if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendFuncSeparate %s %s %s %s\n",
                   _mesa_lookup_enum_by_nr(sfactorRGB),
                   _mesa_lookup_enum_by_nr(dfactorRGB),
@@ -250,7 +250,7 @@ _mesa_BlendEquation( GLenum mode )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+   if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquation %s\n",
                   _mesa_lookup_enum_by_nr(mode));
 
@@ -278,7 +278,7 @@ _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+   if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquationSeparateEXT %s %s\n",
                   _mesa_lookup_enum_by_nr(modeRGB),
                   _mesa_lookup_enum_by_nr(modeA));

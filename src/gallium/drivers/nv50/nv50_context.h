@@ -69,6 +69,18 @@ struct nv50_sampler_stateobj {
 	unsigned tsc[8];
 };
 
+static INLINE unsigned
+get_tile_height(uint32_t tile_mode)
+{
+        return 1 << ((tile_mode & 0xf) + 2);
+}
+
+static INLINE unsigned
+get_tile_depth(uint32_t tile_mode)
+{
+        return 1 << (tile_mode >> 4);
+}
+
 struct nv50_miptree_level {
 	int *image_offset;
 	unsigned pitch;
@@ -196,7 +208,8 @@ extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
 extern void nv50_vertprog_validate(struct nv50_context *nv50);
 extern void nv50_fragprog_validate(struct nv50_context *nv50);
 extern void nv50_linkage_validate(struct nv50_context *nv50);
-extern void nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p);
+extern void nv50_program_destroy(struct nv50_context *nv50,
+				 struct nv50_program *p);
 
 /* nv50_state_validate.c */
 extern boolean nv50_state_validate(struct nv50_context *nv50);
@@ -209,5 +222,13 @@ extern void nv50_so_init_sifc(struct nv50_context *nv50,
 
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);
+
+/* nv50_transfer.c */
+extern void
+nv50_upload_sifc(struct nv50_context *nv50,
+		 struct nouveau_bo *bo, unsigned dst_offset, unsigned reloc,
+		 unsigned dst_format, int dst_w, int dst_h, int dst_pitch,
+		 void *src, unsigned src_format, int src_pitch,
+		 int x, int y, int w, int h, int cpp);
 
 #endif

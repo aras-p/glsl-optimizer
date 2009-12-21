@@ -73,7 +73,6 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
 			      ctx->TextureMatrixStack[i].Top,
 			      VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]);
 
-         VB->TexCoordPtr[i] = 
 	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = &store->texcoord[i];
       }
    }

@@ -29,4 +29,8 @@ void xorg_solid(struct exa_context *exa,
                 struct exa_pixmap_priv *pixmap,
                 int x0, int y0, int x1, int y1);
 
+
+void
+xorg_composite_done(struct exa_context *exa);
+
 #endif

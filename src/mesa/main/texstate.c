@@ -318,10 +318,17 @@ _mesa_ClientActiveTextureARB(GLenum texture)
    GLuint texUnit = texture - GL_TEXTURE0;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glClientActiveTexture %s\n",
+                  _mesa_lookup_enum_by_nr(texture));
+
    if (texUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glClientActiveTexture(texture)");
       return;
    }
+
+   if (ctx->Array.ActiveTexture == texUnit)
+      return;
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ActiveTexture = texUnit;

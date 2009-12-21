@@ -102,15 +102,24 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
 
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
-		return (format == front->format);
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
 	} else
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_Z24S8_UNORM:
 		case PIPE_FORMAT_Z24X8_UNORM:
-			return (front->format == PIPE_FORMAT_A8R8G8B8_UNORM);
+			return TRUE;
 		case PIPE_FORMAT_Z16_UNORM:
-			return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			if (front) {
+				return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			}
+			return TRUE;
 		default:
 			break;
 		}

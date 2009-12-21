@@ -68,13 +68,13 @@
 #define need_GL_EXT_paletted_texture
 /* #define need_GL_EXT_secondary_color */
 /* #define need_GL_NV_vertex_program */
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 
 /**
  * Common extension strings exported by all cards
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
@@ -107,7 +107,7 @@ const struct dri_extension card_extensions[] =
 /**
  * Extension strings exported only by Naplam (e.g., Voodoo4 & Voodoo5) cards.
  */
-const struct dri_extension napalm_extensions[] =
+static const struct dri_extension napalm_extensions[] =
 {
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },

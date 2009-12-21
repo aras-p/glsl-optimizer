@@ -33,7 +33,7 @@ tgsi_util_get_full_src_register_swizzle(
    unsigned component )
 {
    return tgsi_util_get_src_register_swizzle(
-      reg->SrcRegister,
+      reg->Register,
       component );
 }
 
@@ -45,10 +45,10 @@ tgsi_util_get_full_src_register_sign_mode(
 {
    unsigned sign_mode;
 
-   if( reg->SrcRegisterExtMod.Absolute ) {
+   if( reg->RegisterExtMod.Absolute ) {
       /* Consider only the post-abs negation. */
 
-      if( reg->SrcRegisterExtMod.Negate ) {
+      if( reg->RegisterExtMod.Negate ) {
          sign_mode = TGSI_UTIL_SIGN_SET;
       }
       else {
@@ -60,8 +60,8 @@ tgsi_util_get_full_src_register_sign_mode(
 
       unsigned negate;
 
-      negate = reg->SrcRegister.Negate;
-      if( reg->SrcRegisterExtMod.Negate ) {
+      negate = reg->Register.Negate;
+      if( reg->RegisterExtMod.Negate ) {
          negate = !negate;
       }
 

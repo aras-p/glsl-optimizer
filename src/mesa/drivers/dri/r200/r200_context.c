@@ -75,7 +75,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_NV_vertex_program
 #define need_GL_ARB_point_parameters
 #define need_GL_EXT_framebuffer_object
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20060602"
 
@@ -115,7 +115,7 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
 
 /* Extension strings exported by the R200 driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_occlusion_query",		   GL_ARB_occlusion_query_functions},
@@ -146,31 +146,31 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-const struct dri_extension blend_extensions[] = {
+static const struct dri_extension blend_extensions[] = {
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
     { NULL,                                NULL }
 };
 
-const struct dri_extension ARB_vp_extension[] = {
+static const struct dri_extension ARB_vp_extension[] = {
     { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
 };
 
-const struct dri_extension NV_vp_extension[] = {
+static const struct dri_extension NV_vp_extension[] = {
     { "GL_NV_vertex_program",              GL_NV_vertex_program_functions }
 };
 
-const struct dri_extension ATI_fs_extension[] = {
+static const struct dri_extension ATI_fs_extension[] = {
     { "GL_ATI_fragment_shader",            GL_ATI_fragment_shader_functions }
 };
 
-const struct dri_extension point_extensions[] = {
+static const struct dri_extension point_extensions[] = {
     { "GL_ARB_point_sprite",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
     { NULL,                                NULL }
 };
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
 };
