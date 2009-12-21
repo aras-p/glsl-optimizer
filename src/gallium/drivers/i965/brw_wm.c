@@ -180,7 +180,7 @@ static enum pipe_error do_wm_prog( struct brw_context *brw,
       /* XXX: GLSL support
        */
       exit(1);
-      //brw_wm_branching_shader_emit(brw, c);
+      /* brw_wm_branching_shader_emit(brw, c); */
    }
    else {
       c->dispatch_width = 16;

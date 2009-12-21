@@ -197,7 +197,7 @@ struct brw_fragment_shader {
    struct brw_immediate_data immediates;
 
    unsigned iz_lookup;
-   //unsigned wm_lookup;
+   /*unsigned wm_lookup;*/
    
    unsigned  uses_depth:1;
    unsigned  has_flow_control:1;
@@ -722,7 +722,7 @@ struct brw_context
       /** Input sizes, calculated from active vertex program.
        * One bit per fragment program input attribute.
        */
-      //GLbitfield input_size_masks[4];
+      /*GLbitfield input_size_masks[4];*/
 
       /** Array of surface default colors (texture border color) */
       struct brw_winsys_buffer *sdc_bo[BRW_MAX_TEX_UNIT];

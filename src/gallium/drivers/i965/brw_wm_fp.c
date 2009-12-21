@@ -957,15 +957,15 @@ static struct brw_fp_dst translate_dst( struct brw_wm_compile *c,
 {
    struct brw_fp_dst out;
 
-   out.file = dst->DstRegister.File;
-   out.index = dst->DstRegister.Index;
-   out.writemask = dst->DstRegister.WriteMask;
-   out.indirect = dst->DstRegister.Indirect;
+   out.file = dst->Register.File;
+   out.index = dst->Register.Index;
+   out.writemask = dst->Register.WriteMask;
+   out.indirect = dst->Register.Indirect;
    out.saturate = (saturate == TGSI_SAT_ZERO_ONE);
    
    if (out.indirect) {
-      assert(dst->DstRegisterInd.File == TGSI_FILE_ADDRESS);
-      assert(dst->DstRegisterInd.Index == 0);
+      assert(dst->Indirect.File == TGSI_FILE_ADDRESS);
+      assert(dst->Indirect.Index == 0);
    }
    
    return out;
@@ -977,14 +977,14 @@ static struct brw_fp_src translate_src( struct brw_wm_compile *c,
 {
    struct brw_fp_src out;
 
-   out.file = src->SrcRegister.File;
-   out.index = src->SrcRegister.Index;
-   out.indirect = src->SrcRegister.Indirect;
+   out.file = src->Register.File;
+   out.index = src->Register.Index;
+   out.indirect = src->Register.Indirect;
 
-   out.swizzle = ((src->SrcRegister.SwizzleX << 0) |
-		  (src->SrcRegister.SwizzleY << 2) |
-		  (src->SrcRegister.SwizzleZ << 4) |
-		  (src->SrcRegister.SwizzleW << 6));
+   out.swizzle = ((src->Register.SwizzleX << 0) |
+		  (src->Register.SwizzleY << 2) |
+		  (src->Register.SwizzleZ << 4) |
+		  (src->Register.SwizzleW << 6));
    
    switch (tgsi_util_get_full_src_register_sign_mode( src, 0 )) {
    case TGSI_UTIL_SIGN_CLEAR:
@@ -1010,8 +1010,8 @@ static struct brw_fp_src translate_src( struct brw_wm_compile *c,
    }
 
    if (out.indirect) {
-      assert(src->SrcRegisterInd.File == TGSI_FILE_ADDRESS);
-      assert(src->SrcRegisterInd.Index == 0);
+      assert(src->Indirect.File == TGSI_FILE_ADDRESS);
+      assert(src->Indirect.Index == 0);
    }
    
    return out;
@@ -1027,11 +1027,11 @@ static void emit_insn( struct brw_wm_compile *c,
    struct brw_fp_src src[3];
    int i;
 
-   dst = translate_dst( c, &inst->FullDstRegisters[0],
+   dst = translate_dst( c, &inst->Dst[0],
 			inst->Instruction.Saturate );
 
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++)
-      src[i] = translate_src( c, &inst->FullSrcRegisters[i] );
+      src[i] = translate_src( c, &inst->Src[i] );
    
    switch (opcode) {
    case TGSI_OPCODE_ABS:
@@ -1063,7 +1063,7 @@ static void emit_insn( struct brw_wm_compile *c,
 
    case TGSI_OPCODE_TEX:
       precalc_tex(c, dst,
-		  inst->InstructionExtTexture.Texture,
+		  inst->Texture.Texture,
 		  src[1].index,	/* use sampler unit for tex idx */
 		  src[0],       /* coord */
                   src[1]);      /* sampler */
@@ -1071,7 +1071,7 @@ static void emit_insn( struct brw_wm_compile *c,
 
    case TGSI_OPCODE_TXP:
       precalc_txp(c, dst,
-		  inst->InstructionExtTexture.Texture,
+		  inst->Texture.Texture,
 		  src[1].index,	/* use sampler unit for tex idx */
 		  src[0],       /* coord */
                   src[1]);      /* sampler */
@@ -1081,7 +1081,7 @@ static void emit_insn( struct brw_wm_compile *c,
       /* XXX: TXB not done
        */
       precalc_tex(c, dst,
-		  inst->InstructionExtTexture.Texture,
+		  inst->Texture.Texture,
 		  src[1].index,	/* use sampler unit for tex idx*/
 		  src[0],
                   src[1]);
@@ -1169,14 +1169,14 @@ int brw_wm_pass_fp( struct brw_wm_compile *c )
             unsigned first, last, mask;
             unsigned attrib;
 
-            first = decl->DeclarationRange.First;
-            last = decl->DeclarationRange.Last;
+            first = decl->Range.First;
+            last = decl->Range.Last;
             mask = decl->Declaration.UsageMask;
 
             for (attrib = first; attrib <= last; attrib++) {
 	       emit_interp(c, 
 			   attrib, 
-			   decl->Semantic.SemanticName,
+			   decl->Semantic.Name,
 			   decl->Declaration.Interpolate );
             }
          }

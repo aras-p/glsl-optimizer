@@ -69,7 +69,7 @@ clip_unit_populate_key(struct brw_context *brw, struct brw_clip_unit_key *key)
    key->urb_size = brw->urb.vsize;
 
    /*  */
-   key->depth_clamp = 0; // XXX: add this to gallium: ctx->Transform.DepthClamp;
+   key->depth_clamp = 0; /* XXX: add this to gallium: ctx->Transform.DepthClamp; */
 }
 
 static enum pipe_error

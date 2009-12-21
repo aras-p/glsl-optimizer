@@ -108,7 +108,7 @@ static int brw_emit_prim(struct brw_context *brw,
       prim_packet.start_vert_location += brw->ib.start_vertex_offset;
    prim_packet.instance_count = 1;
    prim_packet.start_instance_location = 0;
-   prim_packet.base_vert_location = 0; // prim->basevertex; XXX: add this to gallium
+   prim_packet.base_vert_location = 0; /* prim->basevertex; XXX: add this to gallium */
 
 
    /* If we're set to always flush, do it before and after the primitive emit.

@@ -110,10 +110,6 @@ brw_tex_set_level_info(struct brw_texture *tex,
    assert(tex->image_offset[level] == NULL);
    assert(nr_images >= 1);
 
-   tex->base.width[level] = w;
-   tex->base.height[level] = h;
-   tex->base.depth[level] = d;
-
    tex->level_offset[level] = (x + y * tex->pitch) * tex->cpp;
    tex->nr_images[level] = nr_images;
 
@@ -147,14 +143,14 @@ static void brw_layout_2d( struct brw_texture *tex )
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
-   GLuint width = tex->base.width[0];
-   GLuint height = tex->base.height[0];
+   GLuint width = tex->base.width0;
+   GLuint height = tex->base.height0;
 
-   tex->pitch = tex->base.width[0];
+   tex->pitch = tex->base.width0;
    brw_tex_alignment_unit(tex->base.format, &align_w, &align_h);
 
    if (tex->compressed) {
-       tex->pitch = align(tex->base.width[0], align_w);
+       tex->pitch = align(tex->base.width0, align_w);
    }
 
    /* May need to adjust pitch to accomodate the placement of
@@ -166,11 +162,11 @@ static void brw_layout_2d( struct brw_texture *tex )
        GLuint mip1_width;
 
        if (tex->compressed) {
-           mip1_width = align(minify(tex->base.width[0]), align_w)
-               + align(minify(minify(tex->base.width[0])), align_w);
+          mip1_width = (align(u_minify(tex->base.width0, 1), align_w) + 
+                        align(u_minify(tex->base.width0, 2), align_w));
        } else {
-           mip1_width = align(minify(tex->base.width[0]), align_w)
-               + minify(minify(tex->base.width[0]));
+          mip1_width = (align(u_minify(tex->base.width0, 1), align_w) + 
+                        u_minify(tex->base.width0, 2));
        }
 
        if (mip1_width > tex->pitch) {
@@ -209,8 +205,8 @@ static void brw_layout_2d( struct brw_texture *tex )
 	 y += img_height;
       }
 
-      width  = minify(width);
-      height = minify(height);
+      width  = u_minify(width, 1);
+      height = u_minify(height, 1);
    }
 }
 
@@ -222,28 +218,28 @@ brw_layout_cubemap_idgng( struct brw_texture *tex )
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
-   GLuint width = tex->base.width[0];
-   GLuint height = tex->base.height[0];
+   GLuint width = tex->base.width0;
+   GLuint height = tex->base.height0;
    GLuint qpitch = 0;
    GLuint y_pitch = 0;
 
-   tex->pitch = tex->base.width[0];
+   tex->pitch = tex->base.width0;
    brw_tex_alignment_unit(tex->base.format, &align_w, &align_h);
    y_pitch = align(height, align_h);
 
    if (tex->compressed) {
-      tex->pitch = align(tex->base.width[0], align_w);
+      tex->pitch = align(tex->base.width0, align_w);
    }
 
    if (tex->base.last_level != 0) {
       GLuint mip1_width;
 
       if (tex->compressed) {
-	 mip1_width = (align(minify(tex->base.width[0]), align_w) +
-		       align(minify(minify(tex->base.width[0])), align_w));
+	 mip1_width = (align(u_minify(tex->base.width0, 1), align_w) +
+		       align(u_minify(tex->base.width0, 2), align_w));
       } else {
-	 mip1_width = (align(minify(tex->base.width[0]), align_w) +
-		       minify(minify(tex->base.width[0])));
+	 mip1_width = (align(u_minify(tex->base.width0, 1), align_w) +
+		       u_minify(tex->base.width0, 2));
       }
 
       if (mip1_width > tex->pitch) {
@@ -255,19 +251,19 @@ brw_layout_cubemap_idgng( struct brw_texture *tex )
 
    if (tex->compressed) {
       qpitch = ((y_pitch + 
-		 align(minify(y_pitch), align_h) +
+		 align(u_minify(y_pitch, 1), align_h) +
 		 11 * align_h) / 4) * tex->pitch * tex->cpp;
 
       tex->total_height = ((y_pitch + 
-			    align(minify(y_pitch), align_h) + 
+			    align(u_minify(y_pitch, 1), align_h) + 
 			    11 * align_h) / 4) * 6;
    } else {
       qpitch = (y_pitch + 
-		align(minify(y_pitch), align_h) + 
+		align(u_minify(y_pitch, 1), align_h) + 
 		11 * align_h) * tex->pitch * tex->cpp;
 
       tex->total_height = (y_pitch +
-			   align(minify(y_pitch), align_h) +
+			   align(u_minify(y_pitch, 1), align_h) +
 			   11 * align_h) * 6;
    }
 
@@ -293,8 +289,8 @@ brw_layout_cubemap_idgng( struct brw_texture *tex )
 	 y += img_height;
       }
 
-      width  = minify(width);
-      height = minify(height);
+      width  = u_minify(width, 1);
+      height = u_minify(height, 1);
    }
 
    return TRUE;
@@ -304,9 +300,9 @@ brw_layout_cubemap_idgng( struct brw_texture *tex )
 static boolean
 brw_layout_3d_cube( struct brw_texture *tex )
 {
-   GLuint width  = tex->base.width[0];
-   GLuint height = tex->base.height[0];
-   GLuint depth = tex->base.depth[0];
+   GLuint width  = tex->base.width0;
+   GLuint height = tex->base.height0;
+   GLuint depth = tex->base.depth0;
    GLuint pack_x_pitch, pack_x_nr;
    GLuint pack_y_pitch;
    GLuint level;
@@ -320,8 +316,8 @@ brw_layout_3d_cube( struct brw_texture *tex )
       tex->pitch = align(width, align_w);
       pack_y_pitch = (height + 3) / 4;
    } else {
-      tex->pitch = brw_tex_pitch_align(tex, tex->base.width[0]);
-      pack_y_pitch = align(tex->base.height[0], align_h);
+      tex->pitch = brw_tex_pitch_align(tex, tex->base.width0);
+      pack_y_pitch = align(tex->base.height0, align_h);
    }
 
    pack_x_pitch = width;
@@ -349,9 +345,9 @@ brw_layout_3d_cube( struct brw_texture *tex )
 
 
       tex->total_height += y;
-      width  = minify(width);
-      height = minify(height);
-      depth  = minify(depth);
+      width  = u_minify(width, 1);
+      height = u_minify(height, 1);
+      depth  = u_minify(depth, 1);
 
       if (tex->compressed) {
 	 pack_y_pitch = (height + 3) / 4;

@@ -1067,22 +1067,22 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 {
    struct brw_reg reg;
 
-   if (src->SrcRegister.File == TGSI_FILE_NULL)
+   if (src->Register.File == TGSI_FILE_NULL)
       return brw_null_reg();
 
    reg = get_src_reg(c, argIndex,
-		     src->SrcRegister.File,
-		     src->SrcRegister.Index,
-		     src->SrcRegister.Indirect);
+		     src->Register.File,
+		     src->Register.Index,
+		     src->Register.Indirect);
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
-   reg.dw1.bits.swizzle = BRW_SWIZZLE4(src->SrcRegister.SwizzleX,
-				       src->SrcRegister.SwizzleY,
-				       src->SrcRegister.SwizzleZ,
-				       src->SrcRegister.SwizzleW);
+   reg.dw1.bits.swizzle = BRW_SWIZZLE4(src->Register.SwizzleX,
+				       src->Register.SwizzleY,
+				       src->Register.SwizzleZ,
+				       src->Register.SwizzleW);
 
-   reg.negate = src->SrcRegister.Negate ? 1 : 0;   
+   reg.negate = src->Register.Negate ? 1 : 0;   
 
    /* XXX: abs, absneg
     */
@@ -1353,7 +1353,7 @@ static void emit_insn(struct brw_vs_compile *c,
 		      const struct tgsi_full_instruction *inst)
 {
    unsigned opcode = inst->Instruction.Opcode;
-   unsigned label = inst->InstructionExtLabel.Label;
+   unsigned label = inst->Label.Label;
    struct brw_compile *p = &c->func;
    struct brw_reg args[3], dst;
    GLuint i;
@@ -1366,7 +1366,7 @@ static void emit_insn(struct brw_vs_compile *c,
    /* Get argument regs.
     */
    for (i = 0; i < 3; i++) {
-      args[i] = get_arg(c, &inst->FullSrcRegisters[i], i);
+      args[i] = get_arg(c, &inst->Src[i], i);
    }
 
    /* Get dest regs.  Note that it is possible for a reg to be both
@@ -1374,9 +1374,9 @@ static void emit_insn(struct brw_vs_compile *c,
     * care needs to be taken emitting multi-operation instructions.
     */ 
    dst = get_dst(c, 
-		 inst->FullDstRegisters[0].DstRegister.File,
-		 inst->FullDstRegisters[0].DstRegister.Index,
-		 inst->FullDstRegisters[0].DstRegister.WriteMask);
+		 inst->Dst[0].Register.File,
+		 inst->Dst[0].Register.Index,
+		 inst->Dst[0].Register.WriteMask);
 
    /* XXX: saturate
     */
@@ -1619,7 +1619,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction *inst;
 
-//   if (BRW_DEBUG & DEBUG_VS)
+   if (BRW_DEBUG & DEBUG_VS)
       tgsi_dump(c->vp->tokens, 0); 
 
    c->stack_index = brw_indirect(0, 0);

@@ -259,8 +259,8 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
     */
    tex->ss.ss1.base_addr = 0; /* reloc */
    tex->ss.ss2.mip_count = tex->base.last_level;
-   tex->ss.ss2.width = tex->base.width[0] - 1;
-   tex->ss.ss2.height = tex->base.height[0] - 1;
+   tex->ss.ss2.width = tex->base.width0 - 1;
+   tex->ss.ss2.height = tex->base.height0 - 1;
 
    switch (tex->tiling) {
    case BRW_TILING_NONE:
@@ -278,7 +278,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    }
 
    tex->ss.ss3.pitch = (tex->pitch * tex->cpp) - 1;
-   tex->ss.ss3.depth = tex->base.depth[0] - 1;
+   tex->ss.ss3.depth = tex->base.depth0 - 1;
 
    tex->ss.ss4.min_lod = 0;
  
@@ -478,7 +478,7 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 
    if (templ->target != PIPE_TEXTURE_2D ||
        templ->last_level != 0 ||
-       templ->depth[0] != 1)
+       templ->depth0 != 1)
       return NULL;
 
    if (pf_is_compressed(templ->format))
@@ -529,8 +529,8 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
     */
    tex->ss.ss1.base_addr = 0; /* reloc */
    tex->ss.ss2.mip_count = tex->base.last_level;
-   tex->ss.ss2.width = tex->base.width[0] - 1;
-   tex->ss.ss2.height = tex->base.height[0] - 1;
+   tex->ss.ss2.width = tex->base.width0 - 1;
+   tex->ss.ss2.height = tex->base.height0 - 1;
 
    switch (tex->tiling) {
    case BRW_TILING_NONE:
@@ -548,7 +548,7 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
    }
 
    tex->ss.ss3.pitch = (tex->pitch * tex->cpp) - 1;
-   tex->ss.ss3.depth = tex->base.depth[0] - 1;
+   tex->ss.ss3.depth = tex->base.depth0 - 1;
 
    tex->ss.ss4.min_lod = 0;
 

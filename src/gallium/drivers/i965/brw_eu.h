@@ -34,7 +34,7 @@
 #define BRW_EU_H
 
 #include "util/u_debug.h"
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 
 #include "brw_structs.h"
 #include "brw_defines.h"

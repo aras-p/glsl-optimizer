@@ -33,12 +33,12 @@
 #ifndef BRW_STATE_H
 #define BRW_STATE_H
 
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 #include "util/u_memory.h"
 
 #include "brw_context.h"
 
-static inline void
+static INLINE void
 brw_add_validated_bo(struct brw_context *brw, struct brw_winsys_buffer *bo)
 {
    assert(brw->state.validated_bo_count < Elements(brw->state.validated_bos));

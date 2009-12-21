@@ -38,7 +38,7 @@
 
 const struct brw_tracked_state *atoms[] =
 {
-//   &brw_wm_input_sizes,
+/*   &brw_wm_input_sizes, */
    &brw_vs_prog,
    &brw_gs_prog, 
    &brw_clip_prog, 
@@ -56,7 +56,7 @@ const struct brw_tracked_state *atoms[] =
    &brw_cc_unit,
 
    &brw_vs_surfaces,		/* must do before unit */
-   //&brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
+   /*&brw_wm_constant_surface,*/	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
    &brw_wm_samplers,
 

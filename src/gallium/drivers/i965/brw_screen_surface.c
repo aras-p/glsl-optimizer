@@ -31,6 +31,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
+#include "util/u_math.h"
 
 #include "pipe/p_screen.h"
 #include "brw_screen.h"
@@ -138,8 +139,8 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
    assert(id.bits.zslice == 0);
 
    surface->base.format = tex->base.format;
-   surface->base.width = tex->base.width[id.bits.level];
-   surface->base.height = tex->base.height[id.bits.level];
+   surface->base.width = u_minify(tex->base.width0, id.bits.level);
+   surface->base.height = u_minify(tex->base.height0, id.bits.level);
    surface->base.offset = tex->image_offset[id.bits.level][id.bits.face];
    surface->base.usage = usage;
    surface->base.zslice = id.bits.zslice;

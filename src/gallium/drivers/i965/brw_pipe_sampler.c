@@ -204,15 +204,29 @@ static void brw_set_sampler_textures(struct pipe_context *pipe,
    brw->state.dirty.mesa |= PIPE_NEW_BOUND_TEXTURES;
 }
 
+static void brw_set_vertex_sampler_textures(struct pipe_context *pipe,
+                                            unsigned num,
+                                            struct pipe_texture **texture)
+{
+}
+
+static void brw_bind_vertex_sampler_state(struct pipe_context *pipe,
+                                          unsigned num, void **sampler)
+{
+}
+
 
 void brw_pipe_sampler_init( struct brw_context *brw )
 {
-   brw->base.set_sampler_textures = brw_set_sampler_textures;
    brw->base.create_sampler_state = brw_create_sampler_state;
-   brw->base.bind_sampler_states = brw_bind_sampler_state;
    brw->base.delete_sampler_state = brw_delete_sampler_state;
 
-   brw->base.set_sampler_textures = brw_set_sampler_textures;
+   brw->base.set_fragment_sampler_textures = brw_set_sampler_textures;
+   brw->base.bind_fragment_sampler_states = brw_bind_sampler_state;
+
+   brw->base.set_vertex_sampler_textures = brw_set_vertex_sampler_textures;
+   brw->base.bind_vertex_sampler_states = brw_bind_vertex_sampler_state;
+
 }
 void brw_pipe_sampler_cleanup( struct brw_context *brw )
 {
