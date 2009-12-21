@@ -184,7 +184,7 @@ extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
-extern boolean nv40_draw_elements_swtnl(struct pipe_context *pipe,
+extern void nv40_draw_elements_swtnl(struct pipe_context *pipe,
 					struct pipe_buffer *idxbuf,
 					unsigned ib_size, unsigned mode,
 					unsigned start, unsigned count);
@@ -220,9 +220,9 @@ extern struct nv40_state_entry nv40_state_vbo;
 extern struct nv40_state_entry nv40_state_vtxfmt;
 
 /* nv40_vbo.c */
-extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv40_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv40_draw_elements(struct pipe_context *pipe,
+extern void nv40_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,

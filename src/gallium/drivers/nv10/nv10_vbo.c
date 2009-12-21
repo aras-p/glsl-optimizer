@@ -9,7 +9,7 @@
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
 
-boolean nv10_draw_elements( struct pipe_context *pipe,
+void nv10_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count)
@@ -64,14 +64,12 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 		pipe_buffer_unmap(pscreen, indexBuffer);
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
-
-	return TRUE;
 }
 
-boolean nv10_draw_arrays( struct pipe_context *pipe,
-				 unsigned prim, unsigned start, unsigned count)
+void nv10_draw_arrays( struct pipe_context *pipe,
+                       unsigned prim, unsigned start, unsigned count)
 {
-	return nv10_draw_elements(pipe, NULL, 0, prim, start, count);
+	nv10_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 

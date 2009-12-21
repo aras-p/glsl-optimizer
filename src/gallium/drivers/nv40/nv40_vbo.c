@@ -164,7 +164,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 	return TRUE;
 }
 
-boolean
+void
 nv40_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
@@ -174,8 +174,9 @@ nv40_draw_arrays(struct pipe_context *pipe,
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
 	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
-		return nv40_draw_elements_swtnl(pipe, NULL, 0,
-						mode, start, count);
+		nv40_draw_elements_swtnl(pipe, NULL, 0,
+                                         mode, start, count);
+                return;
 	}
 
 	while (count) {
@@ -221,7 +222,6 @@ nv40_draw_arrays(struct pipe_context *pipe,
 	}
 
 	pipe->flush(pipe, 0, NULL);
-	return TRUE;
 }
 
 static INLINE void
@@ -362,7 +362,7 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 	}
 }
 
-static boolean
+static void
 nv40_draw_elements_inline(struct pipe_context *pipe,
 			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
@@ -393,10 +393,9 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 	}
 
 	pipe_buffer_unmap(pscreen, ib);
-	return TRUE;
 }
 
-static boolean
+static void
 nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
@@ -445,11 +444,9 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		count -= vc;
 		start = restart;
 	}
-
-	return TRUE;
 }
 
-boolean
+void
 nv40_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
@@ -459,8 +456,9 @@ nv40_draw_elements(struct pipe_context *pipe,
 
 	idxbuf = nv40_vbo_set_idxbuf(nv40, indexBuffer, indexSize);
 	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
-		return nv40_draw_elements_swtnl(pipe, NULL, 0,
-						mode, start, count);
+		nv40_draw_elements_swtnl(pipe, NULL, 0,
+                                         mode, start, count);
+                return;
 	}
 
 	if (idxbuf) {
@@ -471,7 +469,6 @@ nv40_draw_elements(struct pipe_context *pipe,
 	}
 
 	pipe->flush(pipe, 0, NULL);
-	return TRUE;
 }
 
 static boolean

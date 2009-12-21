@@ -213,7 +213,7 @@ validate:
 }
 
 /* This is the fast-path drawing & emission for HW TCL. */
-boolean r300_draw_range_elements(struct pipe_context* pipe,
+void r300_draw_range_elements(struct pipe_context* pipe,
                                  struct pipe_buffer* indexBuffer,
                                  unsigned indexSize,
                                  unsigned minIndex,
@@ -225,30 +225,33 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
     if (count > 65535) {
-        return FALSE;
+       /* XXX: use aux/indices functions to split this into smaller
+        * primitives.
+        */
+        return;
     }
 
     if (r300_nothing_to_draw(r300)) {
-        return TRUE;
+        return;
     }
 
     r300_update_derived_state(r300);
 
     if (!r300_setup_vertex_buffers(r300)) {
-        return FALSE;
+        return;
     }
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
-        return FALSE;
+        return;
     }
 
     if (!r300->winsys->validate(r300->winsys)) {
-        return FALSE;
+        return;
     }
 
     r300_emit_dirty_state(r300);
@@ -257,41 +260,42 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
                             mode, start, count);
-
-    return TRUE;
 }
 
 /* Simple helpers for context setup. Should probably be moved to util. */
-boolean r300_draw_elements(struct pipe_context* pipe,
-                           struct pipe_buffer* indexBuffer,
-                           unsigned indexSize, unsigned mode,
-                           unsigned start, unsigned count)
+void r300_draw_elements(struct pipe_context* pipe,
+                        struct pipe_buffer* indexBuffer,
+                        unsigned indexSize, unsigned mode,
+                        unsigned start, unsigned count)
 {
-    return pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0, ~0,
-                                     mode, start, count);
+   pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0, ~0,
+                             mode, start, count);
 }
 
-boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
+void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                          unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
     if (count > 65535) {
-        return FALSE;
+        /* XXX: driver needs to handle this -- use the functions in
+         * aux/indices to split this into several smaller primitives.
+         */
+        return;
     }
 
     if (r300_nothing_to_draw(r300)) {
-        return TRUE;
+        return;
     }
 
     r300_update_derived_state(r300);
 
     if (!r300_setup_vertex_buffers(r300)) {
-        return FALSE;
+        return;
     }
 
     r300_emit_dirty_state(r300);
@@ -299,8 +303,6 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     r300_emit_aos(r300, start);
 
     r300_emit_draw_arrays(r300, mode, count);
-
-    return TRUE;
 }
 
 /****************************************************************************
@@ -309,7 +311,7 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
  ***************************************************************************/
 
 /* SW TCL arrays, using Draw. */
-boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
+void r300_swtcl_draw_arrays(struct pipe_context* pipe,
                                unsigned mode,
                                unsigned start,
                                unsigned count)
@@ -318,11 +320,11 @@ boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
     int i;
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
     if (r300_nothing_to_draw(r300)) {
-        return TRUE;
+        return;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
@@ -345,12 +347,10 @@ boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
         pipe_buffer_unmap(pipe->screen, r300->vertex_buffer[i].buffer);
         draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
     }
-
-    return TRUE;
 }
 
 /* SW TCL elements, using Draw. */
-boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
+void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        struct pipe_buffer* indexBuffer,
                                        unsigned indexSize,
                                        unsigned minIndex,
@@ -363,11 +363,11 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     int i;
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
     if (r300_nothing_to_draw(r300)) {
-        return TRUE;
+        return;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
@@ -397,8 +397,6 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     pipe_buffer_unmap(pipe->screen, indexBuffer);
     draw_set_mapped_element_buffer_range(r300->draw, 0, start,
                                          start + count - 1, NULL);
-
-    return TRUE;
 }
 
 /* Object for rendering using Draw. */

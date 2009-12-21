@@ -152,7 +152,7 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 	return (hw_type | hw_size);
 }
 
-boolean
+void
 nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
 {
@@ -182,7 +182,9 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
-	return ret;
+        /* XXX: not sure what to do if ret != TRUE: flush and retry?
+         */
+        assert(ret);
 }
 
 static INLINE boolean
@@ -275,7 +277,7 @@ nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 	return TRUE;
 }
 
-boolean
+void
 nv50_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
@@ -317,8 +319,10 @@ nv50_draw_elements(struct pipe_context *pipe,
 	OUT_RING  (chan, 0);
 
 	pipe_buffer_unmap(pscreen, indexBuffer);
-
-	return ret;
+        
+        /* XXX: what to do if ret != TRUE?  Flush and retry?
+         */
+	assert(ret);
 }
 
 static INLINE boolean
