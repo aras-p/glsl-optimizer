@@ -19,11 +19,26 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
 				   const struct pipe_vertex_buffer *buffers)
 {
    struct brw_context *brw = brw_context(pipe);
+   unsigned i;
 
-   /* XXX: don't we need to take some references here?  It's a bit
-    * awkward to do so, though.
-    */
-   memcpy(brw->curr.vertex_buffer, buffers, count * sizeof(buffers[0]));
+   /* Check for no change */
+   if (count == brw->curr.num_vertex_buffers &&
+       memcmp(brw->curr.vertex_buffer,
+              buffers,
+              count * sizeof buffers[0]) == 0)
+      return;
+
+   /* Adjust refcounts */
+   for (i = 0; i < count; i++) 
+      pipe_buffer_reference(&brw->curr.vertex_buffer[i].buffer, 
+                            buffers[i].buffer);
+
+   for ( ; i < brw->curr.num_vertex_buffers; i++)
+      pipe_buffer_reference(&brw->curr.vertex_buffer[i].buffer,
+                            NULL);
+
+   /* Copy remaining data */
+   memcpy(brw->curr.vertex_buffer, buffers, count * sizeof buffers[0]);
    brw->curr.num_vertex_buffers = count;
 
    brw->state.dirty.mesa |= PIPE_NEW_VERTEX_BUFFER;
