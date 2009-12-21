@@ -57,7 +57,7 @@ static void setup_shaders(struct renderer *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe);
+   ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
 }
 
 static struct pipe_buffer *
