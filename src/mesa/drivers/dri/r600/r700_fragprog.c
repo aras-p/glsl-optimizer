@@ -473,6 +473,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     unsigned int unNumOfReg;
     unsigned int unBit;
     GLuint exportCount;
+    GLboolean point_sprite = GL_FALSE;
 
     if(GL_FALSE == fp->loaded)
     {
@@ -539,15 +540,30 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
     }
 
-
-    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+    /* see if we need any point_sprite replacements */
+    for (i = VERT_RESULT_TEX0; i<= VERT_RESULT_TEX7; i++)
     {
-        ui++;
-        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        if(ctx->Point.CoordReplace[i - VERT_RESULT_TEX0] == GL_TRUE)
+            point_sprite = GL_TRUE;
+    }
+
+    if ((mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC)) || point_sprite)
+    {
+        /* for FRAG_ATTRIB_PNTC we need to increase num_interp */
+        if(mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+        {
+            ui++;
+            SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        }
         SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
-        //SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_0, PNT_SPRITE_OVRD_Z_shift, PNT_SPRITE_OVRD_Z_mask);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_1, PNT_SPRITE_OVRD_W_shift, PNT_SPRITE_OVRD_W_mask);
+        if(ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
+            SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+        else
+            CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
     }
     else
     {
@@ -640,6 +656,11 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 			     SEMANTIC_shift, SEMANTIC_mask);
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		    /* ARB_point_sprite */
+		    if(ctx->Point.CoordReplace[i] == GL_TRUE)
+		    {
+			     SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+		    }
 	    }
     }
 
