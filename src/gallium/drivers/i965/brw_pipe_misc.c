@@ -30,14 +30,6 @@ static void brw_set_scissor_state( struct pipe_context *pipe,
    brw->state.dirty.mesa |= PIPE_NEW_SCISSOR;
 }
 
-static void brw_set_viewport_state( struct pipe_context *pipe,
-                                    const struct pipe_viewport_state *viewport )
-{
-   struct brw_context *brw = brw_context(pipe);
-
-   brw->curr.viewport = *viewport;
-   brw->state.dirty.mesa |= PIPE_NEW_VIEWPORT;
-}
 
 static void brw_set_clip_state( struct pipe_context *pipe,
                                 const struct pipe_clip_state *clip )
@@ -54,7 +46,6 @@ void brw_pipe_misc_init( struct brw_context *brw )
    brw->base.set_polygon_stipple = brw_set_polygon_stipple;
    brw->base.set_scissor_state = brw_set_scissor_state;
    brw->base.set_clip_state = brw_set_clip_state;
-   brw->base.set_viewport_state = brw_set_viewport_state;
 }
 
 
