@@ -92,7 +92,6 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
   glNormal3f(0.0, 0.0, -1.0);
 
-#if 0
   /* draw back face */
   glBegin(GL_QUAD_STRIP);
   for (i = 0; i <= teeth; i++) {
@@ -161,7 +160,6 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5);
   }
   glEnd();
-#endif
 
 }
 
@@ -197,7 +195,6 @@ draw(void)
       glCallList(gear1);
     glPopMatrix();
 
-#if 0
     glPushMatrix();
       glTranslatef(3.1, -2.0, 0.0);
       glRotatef(-2.0 * angle - 9.0, 0.0, 0.0, 1.0);
@@ -209,16 +206,12 @@ draw(void)
       glRotatef(-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
       glCallList(gear3);
     glPopMatrix();
-#endif
 
   glPopMatrix();
 
   glutSwapBuffers();
 
   Frames++;
-
-  if (Frames == 2)
-     exit(0);
 
   {
     GLint t = glutGet(GLUT_ELAPSED_TIME);
