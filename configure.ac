@@ -243,24 +243,28 @@ GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
 GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
 GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
 OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
+EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
 GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
 GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
 OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
+EGL_LIB_GLOB='lib$(EGL_LIB).*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
+AC_SUBST([EGL_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
 AC_SUBST([GLUT_LIB_GLOB])
 AC_SUBST([GLW_LIB_GLOB])
 AC_SUBST([OSMESA_LIB_GLOB])
+AC_SUBST([EGL_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -900,17 +904,15 @@ AC_ARG_ENABLE([egl],
     [enable_egl=yes])
 if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
-
-    if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([EGL], [x11])
-        EGL_LIB_DEPS="$EGL_LIBS"
-    else
-        # should check these...
-        EGL_LIB_DEPS="$X_LIBS -lX11"
+    EGL_LIB_DEPS="$DLOPEN_LIBS -lpthread"
+    EGL_DRIVERS_DIRS=""
+    if test "$enable_static" != yes && test "$mesa_driver" != osmesa; then
+        # build egl_glx when libGL is built
+        EGL_DRIVERS_DIRS="glx"
     fi
-    EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 fi
 AC_SUBST([EGL_LIB_DEPS])
+AC_SUBST([EGL_DRIVERS_DIRS])
 
 dnl
 dnl GLU configuration
