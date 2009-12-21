@@ -198,8 +198,35 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
             srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
             srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
-            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
+            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE) {
+            /* Enable reading from the colorbuffer. */
             blend->blend_control |= R300_READ_ENABLE;
+
+            if (r300_screen(r300_context(pipe)->context.screen)->caps->is_r500) {
+                /* Optimization: Depending on incoming pixels, we can
+                 * conditionally disable the reading in hardware... */
+                if (eqRGB != PIPE_BLEND_MIN && eqA != PIPE_BLEND_MIN &&
+                    eqRGB != PIPE_BLEND_MAX && eqA != PIPE_BLEND_MAX) {
+                    /* Disable reading if SRC_ALPHA == 0. */
+                    if ((dstRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+                         dstRGB == PIPE_BLENDFACTOR_ZERO) &&
+                        (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
+                         dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+                         dstA == PIPE_BLENDFACTOR_ZERO)) {
+                         blend->blend_control |= R500_SRC_ALPHA_0_NO_READ;
+                    }
+
+                    /* Disable reading if SRC_ALPHA == 1. */
+                    if ((dstRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+                         dstRGB == PIPE_BLENDFACTOR_ZERO) &&
+                        (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+                         dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+                         dstA == PIPE_BLENDFACTOR_ZERO)) {
+                         blend->blend_control |= R500_SRC_ALPHA_1_NO_READ;
+                    }
+                }
+            }
+        }
 
         /* Optimization: discard pixels which don't change the colorbuffer.
          *
@@ -245,8 +272,6 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                     R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1;
             }
         }
-
-        /* XXX implement the optimization with SRC_ALPHA_?_NO_READ */
 
         /* separate alpha */
         if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {

@@ -2186,6 +2186,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1     (4 << 3)
 #       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_1     (5 << 3)
 #       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1     (6 << 3)
+#       define R500_SRC_ALPHA_0_NO_READ                (1 << 30)
+#       define R500_SRC_ALPHA_1_NO_READ                (1 << 31)
 
 /* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
