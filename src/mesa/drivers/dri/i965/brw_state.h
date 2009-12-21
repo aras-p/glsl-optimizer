@@ -105,6 +105,7 @@ const struct brw_tracked_state gen6_sf_vp;
 const struct brw_tracked_state gen6_urb;
 const struct brw_tracked_state gen6_viewport_state;
 const struct brw_tracked_state gen6_vs_state;
+const struct brw_tracked_state gen6_wm_state;
 
 /**
  * Use same key for WM and VS surfaces.

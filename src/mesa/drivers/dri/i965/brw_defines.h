@@ -955,8 +955,70 @@
 /* DW18: attr 0-7 wrap shortest enables */
 /* DW19: attr 8-16 wrap shortest enables */
 
+#define CMD_3D_WM_STATE		      0x7814 /* GEN6+ */
+/* DW1: kernel pointer */
+/* DW2 */
+# define GEN6_WM_SPF_MODE				(1 << 31)
+# define GEN6_WM_VECTOR_MASK_ENABLE			(1 << 30)
+# define GEN6_WM_SAMPLER_COUNT_SHIFT			27
+# define GEN6_WM_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
+/* DW3: scratch space */
+/* DW4 */
+# define GEN6_WM_STATISTICS_ENABLE			(1 << 31)
+# define GEN6_WM_DEPTH_CLEAR				(1 << 30)
+# define GEN6_WM_DEPTH_RESOLVE				(1 << 28)
+# define GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE		(1 << 27)
+# define GEN6_WM_DISPATCH_START_GRF_SHIFT_0		16
+# define GEN6_WM_DISPATCH_START_GRF_SHIFT_1		8
+# define GEN6_WM_DISPATCH_START_GRF_SHIFT_2		0
+/* DW5 */
+# define GEN6_WM_MAX_THREADS_SHIFT			25
+# define GEN6_WM_KILL_ENABLE				(1 << 22)
+# define GEN6_WM_COMPUTED_DEPTH				(1 << 21)
+# define GEN6_WM_USES_SOURCE_DEPTH			(1 << 20)
+# define GEN6_WM_DISPATCH_ENABLE			(1 << 19)
+# define GEN6_WM_LINE_END_CAP_AA_WIDTH_0_5		(0 << 16)
+# define GEN6_WM_LINE_END_CAP_AA_WIDTH_1_0		(1 << 16)
+# define GEN6_WM_LINE_END_CAP_AA_WIDTH_2_0		(2 << 16)
+# define GEN6_WM_LINE_END_CAP_AA_WIDTH_4_0		(3 << 16)
+# define GEN6_WM_LINE_AA_WIDTH_0_5			(0 << 14)
+# define GEN6_WM_LINE_AA_WIDTH_1_0			(1 << 14)
+# define GEN6_WM_LINE_AA_WIDTH_2_0			(2 << 14)
+# define GEN6_WM_LINE_AA_WIDTH_4_0			(3 << 14)
+# define GEN6_WM_POLYGON_STIPPLE_ENABLE			(1 << 13)
+# define GEN6_WM_LINE_STIPPLE_ENABLE			(1 << 12)
+# define GEN6_WM_OMASK_TO_RENDER_TARGET			(1 << 9)
+# define GEN6_WM_USES_SOURCE_W				(1 << 8)
+# define GEN6_WM_DUAL_SOURCE_BLEND_ENABLE		(1 << 7)
+# define GEN6_WM_32_DISPATCH_ENABLE			(1 << 2)
+# define GEN6_WM_16_DISPATCH_ENABLE			(1 << 1)
+# define GEN6_WM_8_DISPATCH_ENABLE			(1 << 0)
+/* DW6 */
+# define GEN6_WM_NUM_SF_OUTPUTS_SHIFT			20
+# define GEN6_WM_POSOFFSET_NONE				(0 << 18)
+# define GEN6_WM_POSOFFSET_CENTROID			(2 << 18)
+# define GEN6_WM_POSOFFSET_SAMPLE			(3 << 18)
+# define GEN6_WM_POSITION_ZW_PIXEL			(0 << 16)
+# define GEN6_WM_POSITION_ZW_CENTROID			(2 << 16)
+# define GEN6_WM_POSITION_ZW_SAMPLE			(3 << 16)
+# define GEN6_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC	(1 << 15)
+# define GEN6_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC	(1 << 14)
+# define GEN6_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC	(1 << 13)
+# define GEN6_WM_PERSPECTIVE_SAMPLE_BARYCENTRIC		(1 << 12)
+# define GEN6_WM_PERSPECTIVE_CENTROID_BARYCENTRIC	(1 << 11)
+# define GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC		(1 << 10)
+# define GEN6_WM_POINT_RASTRULE_UPPER_RIGHT		(1 << 9)
+# define GEN6_WM_MSRAST_OFF_PIXEL			(0 << 1)
+# define GEN6_WM_MSRAST_OFF_PATTERN			(1 << 1)
+# define GEN6_WM_MSRAST_ON_PIXEL			(2 << 1)
+# define GEN6_WM_MSRAST_ON_PATTERN			(3 << 1)
+# define GEN6_WM_MSDISPMODE_PERPIXEL			(1 << 0)
+/* DW7: kernel 1 pointer */
+/* DW8: kernel 2 pointer */
+
 #define CMD_3D_CONSTANT_VS_STATE	      0x7815 /* GEN6+ */
 #define CMD_3D_CONSTANT_GS_STATE	      0x7816 /* GEN6+ */
+#define CMD_3D_CONSTANT_PS_STATE	      0x7817 /* GEN6+ */
 # define GEN6_CONSTANT_BUFFER_3_ENABLE			(1 << 15)
 # define GEN6_CONSTANT_BUFFER_2_ENABLE			(1 << 14)
 # define GEN6_CONSTANT_BUFFER_1_ENABLE			(1 << 13)
