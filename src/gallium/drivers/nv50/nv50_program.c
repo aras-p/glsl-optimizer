@@ -1702,8 +1702,8 @@ emit_ddx(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	assert(src->type == P_TEMP);
 
-	e->inst[0] = 0xc0140000;
-	e->inst[1] = 0x89800000;
+	e->inst[0] = (src->mod & NV50_MOD_NEG) ? 0xc0240000 : 0xc0140000;
+	e->inst[1] = (src->mod & NV50_MOD_NEG) ? 0x86400000 : 0x89800000;
 	set_long(pc, e);
 	set_dst(pc, dst, e);
 	set_src_0(pc, src, e);
@@ -1715,25 +1715,16 @@ emit_ddx(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 static void
 emit_ddy(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	struct nv50_reg *r = src;
 	struct nv50_program_exec *e = exec(pc);
 
 	assert(src->type == P_TEMP);
 
-	if (!(src->mod & NV50_MOD_NEG)) { /* ! double negation */
-		r = alloc_temp(pc, NULL);
-		emit_neg(pc, r, src);
-	}
-
-	e->inst[0] = 0xc0150000;
-	e->inst[1] = 0x8a400000;
+	e->inst[0] = (src->mod & NV50_MOD_NEG) ? 0xc0250000 : 0xc0150000;
+	e->inst[1] = (src->mod & NV50_MOD_NEG) ? 0x85800000 : 0x8a400000;
 	set_long(pc, e);
 	set_dst(pc, dst, e);
-	set_src_0(pc, r, e);
-	set_src_2(pc, r, e);
-
-	if (r != src)
-		free_temp(pc, r);
+	set_src_0(pc, src, e);
+	set_src_2(pc, src, e);
 
 	emit(pc, e);
 }
@@ -1791,6 +1782,7 @@ static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
 	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_DDX:
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
