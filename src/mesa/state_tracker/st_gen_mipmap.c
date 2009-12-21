@@ -215,6 +215,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    /* find expected last mipmap level */
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
+   if (lastLevel == 0)
+      return;
+
    if (pt->last_level < lastLevel) {
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
