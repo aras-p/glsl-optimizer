@@ -51,7 +51,69 @@
 of the device&#8217;s 3D rendering pipeline.</p>
 <div class="section" id="methods">
 <h2>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
-<p>XXX</p>
+<div class="section" id="cso-state">
+<h3>CSO State<a class="headerlink" href="#cso-state" title="Permalink to this headline">¶</a></h3>
+<p>All CSO state is created, bound, and destroyed, with triplets of methods that
+all follow a specific naming scheme. For example, <tt class="docutils literal"><span class="pre">create_blend_state</span></tt>,
+<tt class="docutils literal"><span class="pre">bind_blend_state</span></tt>, and <tt class="docutils literal"><span class="pre">destroy_blend_state</span></tt>.</p>
+<p>CSO objects handled by the context object:</p>
+<ul class="simple">
+<li><a class="reference external" href="cso/blend.html#blend"><em>Blend</em></a>: <tt class="docutils literal"><span class="pre">*_blend_state</span></tt></li>
+<li><a class="reference external" href="cso/sampler.html#sampler"><em>Sampler</em></a>: These are special; they can be bound to either vertex or
+fragment samplers, and they are bound in groups.
+<tt class="docutils literal"><span class="pre">bind_fragment_sampler_states</span></tt>, <tt class="docutils literal"><span class="pre">bind_vertex_sampler_states</span></tt></li>
+<li><a class="reference external" href="cso/rasterizer.html#rasterizer"><em>Rasterizer</em></a>: <tt class="docutils literal"><span class="pre">*_rasterizer_state</span></tt></li>
+<li><a class="reference external" href="cso/dsa.html#depth-stencil-alpha"><em>Depth, Stencil, &amp; Alpha</em></a>: <tt class="docutils literal"><span class="pre">*_depth_stencil_alpha_state</span></tt></li>
+<li><a class="reference external" href="cso/shader.html#shader"><em>Shader</em></a>: These have two sets of methods. <tt class="docutils literal"><span class="pre">*_fs_state</span></tt> is for
+fragment shaders, and <tt class="docutils literal"><span class="pre">*_vs_state</span></tt> is for vertex shaders.</li>
+</ul>
+</div>
+<div class="section" id="non-cso-state">
+<h3>Non-CSO State<a class="headerlink" href="#non-cso-state" title="Permalink to this headline">¶</a></h3>
+<p>These pieces of state are too small, variable, and/or trivial to have CSO
+objects. They all follow simple, one-method binding calls, e.g.
+<tt class="docutils literal"><span class="pre">set_edgeflags</span></tt>.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">set_edgeflags</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_blend_color</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_clip_state</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_constant_buffer</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_framebuffer_state</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_polygon_stipple</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_scissor_state</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_viewport_state</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_fragment_sampler_textures</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_vertex_sampler_textures</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_vertex_buffers</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">set_vertex_elements</span></tt></li>
+</ul>
+</div>
+<div class="section" id="queries">
+<h3>Queries<a class="headerlink" href="#queries" title="Permalink to this headline">¶</a></h3>
+<p>Queries can be created with <tt class="docutils literal"><span class="pre">create_query</span></tt> and deleted with
+<tt class="docutils literal"><span class="pre">destroy_query</span></tt>. To enable a query, use <tt class="docutils literal"><span class="pre">begin_query</span></tt>, and when finished,
+use <tt class="docutils literal"><span class="pre">end_query</span></tt> to stop the query. Finally, <tt class="docutils literal"><span class="pre">get_query_result</span></tt> is used
+to retrieve the results.</p>
+</div>
+<div class="section" id="vbo-drawing">
+<h3>VBO Drawing<a class="headerlink" href="#vbo-drawing" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">draw_arrays</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">draw_elements</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">draw_range_elements</span></tt></p>
+<p><tt class="docutils literal"><span class="pre">flush</span></tt></p>
+</div>
+<div class="section" id="surface-drawing">
+<h3>Surface Drawing<a class="headerlink" href="#surface-drawing" title="Permalink to this headline">¶</a></h3>
+<p>These methods emulate classic blitter controls. They are not guaranteed to be
+available; if they are set to NULL, then they are not present.</p>
+<p><tt class="docutils literal"><span class="pre">surface_fill</span></tt> performs a fill operation on a section of a surface.</p>
+<p><tt class="docutils literal"><span class="pre">surface_copy</span></tt> blits a region of a surface to a region of another surface,
+provided that both surfaces are the same format. The source and destination
+may be the same surface, and overlapping blits are permitted.</p>
+<p><tt class="docutils literal"><span class="pre">clear</span></tt> initializes entire buffers to an RGBA, depth, or stencil value,
+depending on the formats of the buffers. Use <tt class="docutils literal"><span class="pre">set_framebuffer_state</span></tt> to
+specify the buffers to clear.</p>
+</div>
 </div>
 </div>
 
@@ -64,7 +126,14 @@ of the device&#8217;s 3D rendering pipeline.</p>
             <h3><a href="index.html">Table Of Contents</a></h3>
             <ul>
 <li><a class="reference external" href="">Context</a><ul>
-<li><a class="reference external" href="#methods">Methods</a></li>
+<li><a class="reference external" href="#methods">Methods</a><ul>
+<li><a class="reference external" href="#cso-state">CSO State</a></li>
+<li><a class="reference external" href="#non-cso-state">Non-CSO State</a></li>
+<li><a class="reference external" href="#queries">Queries</a></li>
+<li><a class="reference external" href="#vbo-drawing">VBO Drawing</a></li>
+<li><a class="reference external" href="#surface-drawing">Surface Drawing</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
