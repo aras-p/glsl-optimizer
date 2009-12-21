@@ -80,7 +80,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_WM_SURFACES),
    DEFINE_BIT(BRW_NEW_xxx),
    DEFINE_BIT(BRW_NEW_INDICES),
-   DEFINE_BIT(BRW_NEW_VERTICES),
    {0, 0, 0}
 };
 

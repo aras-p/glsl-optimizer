@@ -92,6 +92,10 @@ static int brw_emit_prim(struct brw_context *brw,
    struct brw_3d_primitive prim_packet;
    int ret;
 
+   if (BRW_DEBUG & DEBUG_PRIMS)
+      debug_printf("%s start %d count %d indexed %d hw_prim %d\n",
+                   __FUNCTION__, start, count, indexed, hw_prim); 
+
    prim_packet.header.opcode = CMD_3D_PRIM;
    prim_packet.header.length = sizeof(prim_packet)/4 - 2;
    prim_packet.header.pad = 0;
@@ -187,7 +191,8 @@ brw_draw_range_elements(struct pipe_context *pipe,
    hw_prim = brw_set_prim(brw, mode);
 
    if (BRW_DEBUG & DEBUG_PRIMS)
-      debug_printf("PRIM: %s %d %d\n", u_prim_name(mode), start, count);
+      debug_printf("PRIM: %s start %d count %d index_buffer %p\n",
+                   u_prim_name(mode), start, count, (void *)index_buffer);
 
    /* Potentially trigger upload of new index buffer.
     *

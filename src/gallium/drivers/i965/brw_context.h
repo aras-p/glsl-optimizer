@@ -257,7 +257,7 @@ struct brw_sampler {
 #define BRW_NEW_WM_SURFACES		0x1000
 #define BRW_NEW_xxx                     0x2000 /* was FENCE */
 #define BRW_NEW_INDICES			0x4000
-#define BRW_NEW_VERTICES		0x8000
+
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.  Need to re-emit these fresh in each

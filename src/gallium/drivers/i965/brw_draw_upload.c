@@ -405,8 +405,9 @@ static int brw_emit_vertices( struct brw_context *brw )
 
 const struct brw_tracked_state brw_vertices = {
    .dirty = {
-      .mesa = PIPE_NEW_INDEX_RANGE,
-      .brw = BRW_NEW_BATCH | BRW_NEW_VERTICES,
+      .mesa = (PIPE_NEW_INDEX_RANGE |
+               PIPE_NEW_VERTEX_BUFFER),
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = brw_prepare_vertices,
