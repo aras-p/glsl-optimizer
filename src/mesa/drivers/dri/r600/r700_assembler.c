@@ -1262,7 +1262,15 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             }
 
             pAsm->S[fld].src.rtype = SRC_REG_CONSTANT;
-            pAsm->S[fld].src.reg   = pILInst->SrcReg[src].Index;
+            if(pILInst->SrcReg[src].Index < 0)
+            {
+                WARN_ONCE("Negative register offsets not supported yet!\n");
+                pAsm->S[fld].src.reg  = 0;
+            } 
+            else
+            {
+                pAsm->S[fld].src.reg = pILInst->SrcReg[src].Index;
+            }
             break;      
         case PROGRAM_INPUT:
             setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE); 
