@@ -160,8 +160,9 @@ xlib_brw_bo_alloc( struct brw_winsys_screen *sws,
    struct xlib_brw_winsys *xbw = xlib_brw_winsys(sws);
    struct xlib_brw_buffer *buf;
 
-   debug_printf("%s type %s sz %d align %d\n",
-                __FUNCTION__, names[type], size, alignment );
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s type %s sz %d align %d\n",
+                   __FUNCTION__, names[type], size, alignment );
 
    buf = CALLOC_STRUCT(xlib_brw_buffer);
    if (!buf)
@@ -209,10 +210,11 @@ xlib_brw_bo_emit_reloc( struct brw_winsys_buffer *buffer,
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
    struct xlib_brw_buffer *buf2 = xlib_brw_buffer(buffer2);
 
-   debug_printf("%s buf %p offset %x val %x + %x buf2 %p/%s/%s\n",
-                __FUNCTION__, (void *)buffer, offset,
-                buf2->offset, delta,
-                (void *)buffer2, names[buf2->type], usages[usage]);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s buf %p offset %x val %x + %x buf2 %p/%s/%s\n",
+                   __FUNCTION__, (void *)buffer, offset,
+                   buf2->offset, delta,
+                   (void *)buffer2, names[buf2->type], usages[usage]);
 
    *(uint32_t *)(buf->virtual + offset) = buf2->offset + delta;
 
@@ -223,7 +225,8 @@ static int
 xlib_brw_bo_exec( struct brw_winsys_buffer *buffer,
 		     unsigned bytes_used )
 {
-   debug_printf("execute buffer %p, bytes %d\n", (void *)buffer, bytes_used);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("execute buffer %p, bytes %d\n", (void *)buffer, bytes_used);
 
    return 0;
 }
@@ -244,11 +247,12 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    struct xlib_brw_winsys *xbw = xlib_brw_winsys(buffer->sws);
    unsigned i;
 
-   debug_printf("%s buf %p off %d sz %d %s relocs: %d\n", 
-                __FUNCTION__, 
-                (void *)buffer, offset, size, 
-                data_types[data_type],
-                nr_relocs);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s buf %p off %d sz %d %s relocs: %d\n", 
+                   __FUNCTION__, 
+                   (void *)buffer, offset, size, 
+                   data_types[data_type],
+                   nr_relocs);
 
    assert(buf->base.size >= offset + size);
    memcpy(buf->virtual + offset, data, size);
@@ -256,9 +260,10 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
    /* Apply the relocations:
     */
    for (i = 0; i < nr_relocs; i++) {
-      debug_printf("\treloc[%d] usage %s off %d value %x+%x\n", 
-                   i, usages[reloc[i].usage], reloc[i].offset,
-                   xlib_brw_buffer(reloc[i].bo)->offset, reloc[i].delta);
+      if (BRW_DEBUG & DEBUG_WINSYS)
+         debug_printf("\treloc[%d] usage %s off %d value %x+%x\n", 
+                      i, usages[reloc[i].usage], reloc[i].offset,
+                      xlib_brw_buffer(reloc[i].bo)->offset, reloc[i].delta);
 
       *(unsigned *)(buf->virtual + offset + reloc[i].offset) = 
          xlib_brw_buffer(reloc[i].bo)->offset + reloc[i].delta;
@@ -278,7 +283,8 @@ xlib_brw_bo_subdata(struct brw_winsys_buffer *buffer,
 static boolean 
 xlib_brw_bo_is_busy(struct brw_winsys_buffer *buffer)
 {
-   debug_printf("%s %p\n", __FUNCTION__, (void *)buffer);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s %p\n", __FUNCTION__, (void *)buffer);
    return TRUE;
 }
 
@@ -286,7 +292,8 @@ static boolean
 xlib_brw_bo_references(struct brw_winsys_buffer *a,
 			  struct brw_winsys_buffer *b)
 {
-   debug_printf("%s %p %p\n", __FUNCTION__, (void *)a, (void *)b);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s %p %p\n", __FUNCTION__, (void *)a, (void *)b);
    return TRUE;
 }
 
@@ -301,9 +308,10 @@ xlib_brw_check_aperture_space( struct brw_winsys_screen *iws,
    for (i = 0; i < count; i++)
       tot_size += buffers[i]->size;
 
-   debug_printf("%s %d bufs, tot_size: %d kb\n", 
-                __FUNCTION__, count, 
-                (tot_size + 1023) / 1024);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s %d bufs, tot_size: %d kb\n", 
+                   __FUNCTION__, count, 
+                   (tot_size + 1023) / 1024);
 
    return PIPE_OK;
 }
@@ -319,9 +327,10 @@ xlib_brw_bo_map(struct brw_winsys_buffer *buffer,
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   debug_printf("%s %p %s %s\n", __FUNCTION__, (void *)buffer, 
-                write ? "read/write" : "read",
-                write ? data_types[data_type] : "");
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s %p %s %s\n", __FUNCTION__, (void *)buffer, 
+                   write ? "read/write" : "read",
+                   write ? data_types[data_type] : "");
 
    if (write)
       buf->modified = 1;
@@ -344,7 +353,8 @@ xlib_brw_bo_unmap(struct brw_winsys_buffer *buffer)
 {
    struct xlib_brw_buffer *buf = xlib_brw_buffer(buffer);
 
-   debug_printf("%s %p\n", __FUNCTION__, (void *)buffer);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s %p\n", __FUNCTION__, (void *)buffer);
 
    --buf->map_count;
    assert(buf->map_count >= 0);
@@ -415,11 +425,12 @@ xlib_i965_display_surface(struct xmesa_buffer *xm_buffer,
    struct brw_surface *surface = brw_surface(surf);
    struct xlib_brw_buffer *bo = xlib_brw_buffer(surface->bo);
 
-   debug_printf("%s offset %x+%x sz %dx%d\n", __FUNCTION__, 
-                bo->offset,
-                surface->draw_offset,
-                surf->width,
-                surf->height);
+   if (BRW_DEBUG & DEBUG_WINSYS)
+      debug_printf("%s offset %x+%x sz %dx%d\n", __FUNCTION__, 
+                   bo->offset,
+                   surface->draw_offset,
+                   surf->width,
+                   surf->height);
 }
 
 static void
