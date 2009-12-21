@@ -73,7 +73,7 @@ points into circles or ovals.</dd>
 <dt>point_size_per_vertex</dt>
 <dd>Whether vertices have a point size element.</dd>
 <dt>multisample</dt>
-<dd>Whether MSAA is enabled.</dd>
+<dd>Whether <em class="xref">MSAA</em> is enabled.</dd>
 <dt>line_smooth</dt>
 <dd>Whether lines should be smoothed. Line smoothing is simply anti-aliasing.</dd>
 <dt>line_stipple_enable</dt>
@@ -118,13 +118,14 @@ clip away vertices that are not visible.</p>
 <h3>flatshade_first<a class="headerlink" href="#flatshade-first" title="Permalink to this headline">¶</a></h3>
 <p>There are several important exceptions to the specification of this rule.</p>
 <ul class="simple">
-<li>PIPE_PRIMITIVE_POLYGON: The provoking vertex is always the first vertex.
-If the caller wishes to change the provoking vertex, they merely need to
-rotate the vertices themselves.</li>
-<li>PIPE_PRIMITIVE_QUAD, PIPE_PRIMITIVE_QUAD_STRIP: This option has no effect.</li>
-<li>PIPE_PRIMITIVE_TRIANGLE_FAN: When set, the provoking vertex is the second
-vertex, not the first. This permits each segment of the fan to have a
-different color.</li>
+<li><tt class="docutils literal"><span class="pre">PIPE_PRIMITIVE_POLYGON</span></tt>: The provoking vertex is always the first
+vertex. If the caller wishes to change the provoking vertex, they merely
+need to rotate the vertices themselves.</li>
+<li><tt class="docutils literal"><span class="pre">PIPE_PRIMITIVE_QUAD</span></tt>, <tt class="docutils literal"><span class="pre">PIPE_PRIMITIVE_QUAD_STRIP</span></tt>: This option has no
+effect; the provoking vertex is always the last vertex.</li>
+<li><tt class="docutils literal"><span class="pre">PIPE_PRIMITIVE_TRIANGLE_FAN</span></tt>: When set, the provoking vertex is the
+second vertex, not the first. This permits each segment of the fan to have
+a different color.</li>
 </ul>
 </div>
 </div>

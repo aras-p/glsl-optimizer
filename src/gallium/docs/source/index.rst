@@ -16,6 +16,7 @@ Contents:
    screen
    context
    cso
+   glossary
 
 Indices and tables
 ==================
