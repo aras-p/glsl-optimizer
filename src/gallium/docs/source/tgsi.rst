@@ -155,10 +155,6 @@ TGSI Instruction Specification
   dst.w = src0.w * src1.w + src2.w
 
 
-1.2  GL_ATI_fragment_shader
----------------------------
-
-
 1.2.1  SUB - Subtract
 
   dst.x = src0.x - src1.x
@@ -167,17 +163,7 @@ TGSI Instruction Specification
   dst.w = src0.w - src1.w
 
 
-1.2.2  DOT3 - 3-component Dot Product
-
-  Alias for DP3.
-
-
-1.2.3  DOT4 - 4-component Dot Product
-
-  Alias for DP4.
-
-
-1.2.4  LERP - Linear Interpolate
+1.2.4  LRP - Linear Interpolate
 
   dst.x = src0.x * (src1.x - src2.x) + src2.x
   dst.y = src0.y * (src1.y - src2.y) + src2.y
@@ -193,35 +179,12 @@ TGSI Instruction Specification
   dst.w = (src2.w > 0.5) ? src0.w : src1.w
 
 
-1.2.6  CND0 - Condition Zero
-
-       Removed.  Use (CMP src2, src1, src0) instead.
-
-1.2.7  DOT2ADD - 2-component Dot Product And Add
+1.2.7  DP2A - 2-component Dot Product And Add
 
   dst.x = src0.x * src1.x + src0.y * src1.y + src2.x
   dst.y = src0.x * src1.x + src0.y * src1.y + src2.x
   dst.z = src0.x * src1.x + src0.y * src1.y + src2.x
   dst.w = src0.x * src1.x + src0.y * src1.y + src2.x
-
-
-1.3  GL_EXT_vertex_shader
--------------------------
-
-
-1.3.1  INDEX - Array Lookup
-
-  Considered for removal from language.
-
-
-1.3.2  NEGATE - Negate
-
-  Considered for removal from language.
-
-
-1.3.3  MADD - Multiply And Add
-
-  Alias for MAD.
 
 
 1.3.4  FRAC - Fraction
@@ -232,16 +195,6 @@ TGSI Instruction Specification
   dst.w = src.w - floor(src.w)
 
 
-1.3.5  SETGE - Set On Greater Equal
-
-  Alias for SGE.
-
-
-1.3.6  SETLT - Set On Less Than
-
-  Alias for SLT.
-
-
 1.3.7  CLAMP - Clamp
 
   dst.x = clamp(src0.x, src1.x, src2.x)
@@ -250,7 +203,7 @@ TGSI Instruction Specification
   dst.w = clamp(src0.w, src1.w, src2.w)
 
 
-1.3.8  FLOOR - Floor
+1.3.8  FLR - Floor
 
   dst.x = floor(src.x)
   dst.y = floor(src.y)
@@ -266,7 +219,7 @@ TGSI Instruction Specification
   dst.w = round(src.w)
 
 
-1.3.10  EXPBASE2 - Exponential Base 2
+1.3.10  EX2 - Exponential Base 2
 
   dst.x = pow(2.0, src.x)
   dst.y = pow(2.0, src.x)
@@ -274,7 +227,7 @@ TGSI Instruction Specification
   dst.w = pow(2.0, src.x)
 
 
-1.3.11  LOGBASE2 - Logarithm Base 2
+1.3.11  LG2 - Logarithm Base 2
 
   dst.x = lg2(src.x)
   dst.y = lg2(src.x)
@@ -282,39 +235,19 @@ TGSI Instruction Specification
   dst.w = lg2(src.x)
 
 
-1.3.12  POWER - Power
+1.3.12  POW - Power
 
   dst.x = pow(src0.x, src1.x)
   dst.y = pow(src0.x, src1.x)
   dst.z = pow(src0.x, src1.x)
   dst.w = pow(src0.x, src1.x)
 
-
-1.3.13  RECIP - Reciprocal
-
-  Alias for RCP.
-
-
-1.3.14  RECIPSQRT - Reciprocal Square Root
-
-  Alias for RSQ.
-
-
-1.3.15  CROSSPRODUCT - Cross Product
+1.3.15  XPD - Cross Product
 
   dst.x = src0.y * src1.z - src1.y * src0.z
   dst.y = src0.z * src1.x - src1.z * src0.x
   dst.z = src0.x * src1.y - src1.x * src0.y
   dst.w = 1.0
-
-
-1.3.16  MULTIPLYMATRIX - Multiply Matrix
-
-  Considered for removal from language.
-
-
-1.4  GL_NV_vertex_program1_1
-----------------------------
 
 
 1.4.1  ABS - Absolute
@@ -341,10 +274,6 @@ TGSI Instruction Specification
   dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
 
 
-1.5  GL_NV_fragment_program
----------------------------
-
-
 1.5.1  COS - Cosine
 
   dst.x = cos(src.x)
@@ -369,34 +298,9 @@ TGSI Instruction Specification
   dst.w = partialy(src.w)
 
 
-1.5.4  EX2 - Exponential Base 2
-
-  Alias for EXPBASE2.
-
-
-1.5.5  FLR - Floor
-
-  Alias for FLOOR.
-
-
-1.5.6  FRC - Fraction
-
-  Alias for FRAC.
-
-
 1.5.7  KILP - Predicated Discard
 
   discard
-
-
-1.5.8  LG2 - Logarithm Base 2
-
-  Alias for LOGBASE2.
-
-
-1.5.9  LRP - Linear Interpolate
-
-  Alias for LERP.
 
 
 1.5.10  PK2H - Pack Two 16-bit Floats
@@ -419,17 +323,14 @@ TGSI Instruction Specification
   TBD
 
 
-1.5.14  POW - Power
-
-  Alias for POWER.
-
-
 1.5.15  RFL - Reflection Vector
 
   dst.x = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.x - src1.x
   dst.y = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.y - src1.y
   dst.z = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.z - src1.z
   dst.w = 1.0
+
+ Considered for removal.
 
 
 1.5.16  SEQ - Set On Equal
@@ -447,6 +348,7 @@ TGSI Instruction Specification
   dst.z = 0.0
   dst.w = 0.0
 
+ Considered for removal.
 
 1.5.18  SGT - Set On Greater Than
 
@@ -507,21 +409,25 @@ TGSI Instruction Specification
 
   TBD
 
+  Considered for removal.
 
 1.5.27  UP2US - Unpack Two Unsigned 16-Bit Scalars
 
   TBD
 
+  Considered for removal.
 
 1.5.28  UP4B - Unpack Four Signed 8-Bit Values
 
   TBD
 
+  Considered for removal.
 
 1.5.29  UP4UB - Unpack Four Unsigned 8-Bit Scalars
 
   TBD
 
+  Considered for removal.
 
 1.5.30  X2D - 2D Coordinate Transformation
 
@@ -529,6 +435,8 @@ TGSI Instruction Specification
   dst.y = src0.y + src1.x * src2.z + src1.y * src2.w
   dst.z = src0.x + src1.x * src2.x + src1.y * src2.y
   dst.w = src0.y + src1.x * src2.z + src1.y * src2.w
+
+  Considered for removal.
 
 
 1.6  GL_NV_vertex_program2
@@ -539,6 +447,7 @@ TGSI Instruction Specification
 
   TBD
 
+  Considered for removal.
 
 1.6.2  ARR - Address Register Load With Round
 
@@ -552,6 +461,7 @@ TGSI Instruction Specification
 
   pc = target
 
+  Considered for removal.
 
 1.6.4  CAL - Subroutine Call
 
@@ -563,6 +473,8 @@ TGSI Instruction Specification
 
   pc = pop()
 
+  Potential restrictions:  
+  * Only occurs at end of function.
 
 1.6.6  SSG - Set Sign
 
@@ -570,27 +482,6 @@ TGSI Instruction Specification
   dst.y = (src.y > 0.0) ? 1.0 : (src.y < 0.0) ? -1.0 : 0.0
   dst.z = (src.z > 0.0) ? 1.0 : (src.z < 0.0) ? -1.0 : 0.0
   dst.w = (src.w > 0.0) ? 1.0 : (src.w < 0.0) ? -1.0 : 0.0
-
-
-1.7  GL_ARB_vertex_program
---------------------------
-
-
-1.7.1  SWZ - Extended Swizzle
-
-  dst.x = src.x
-  dst.y = src.y
-  dst.z = src.z
-  dst.w = src.w
-
-
-1.7.2  XPD - Cross Product
-
-  Alias for CROSSPRODUCT.
-
-
-1.8  GL_ARB_fragment_program
-----------------------------
 
 
 1.8.1  CMP - Compare
@@ -621,10 +512,6 @@ TGSI Instruction Specification
   TBD
 
 
-1.9  GL_NV_fragment_program2
-----------------------------
-
-
 1.9.1  NRM - 3-component Vector Normalise
 
   dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z)
@@ -647,11 +534,6 @@ TGSI Instruction Specification
   dst.y = src0.x * src1.x + src0.y * src1.y
   dst.z = src0.x * src1.x + src0.y * src1.y
   dst.w = src0.x * src1.x + src0.y * src1.y
-
-
-1.9.4  DP2A - 2-component Dot Product And Add
-
-  Alias for DOT2ADD.
 
 
 1.9.5  TXL - Texture Lookup With LOD
@@ -682,6 +564,8 @@ TGSI Instruction Specification
   Note: The destination must be a loop register.
         The source must be a constant register.
 
+  Considered for cleanup / removal.
+
 
 1.9.9  REP - Repeat
 
@@ -709,14 +593,11 @@ TGSI Instruction Specification
 
   Note: The destination must be a loop register.
 
+  Considered for cleanup / removal.
 
 1.9.13  ENDREP - End Repeat
 
   TBD
-
-
-1.10  GL_NV_vertex_program3
----------------------------
 
 
 1.10.1  PUSHA - Push Address Register On Stack
@@ -726,6 +607,7 @@ TGSI Instruction Specification
   push(src.z)
   push(src.w)
 
+  Considered for cleanup / removal.
 
 1.10.2  POPA - Pop Address Register From Stack
 
@@ -734,10 +616,13 @@ TGSI Instruction Specification
   dst.y = pop()
   dst.x = pop()
 
+  Considered for cleanup / removal.
+
 
 1.11  GL_NV_gpu_program4
 ------------------------
 
+Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.1  CEIL - Ceiling
 
@@ -880,86 +765,11 @@ TGSI Instruction Specification
   TBD
 
 
-1.13.5  INT - Truncate
-
-  Alias for TRUNC.
-
-
-1.13.6  NOISE1 - 1D Noise
-
-  TBD
-
-
-1.13.7  NOISE2 - 2D Noise
-
-  TBD
-
-
-1.13.8  NOISE3 - 3D Noise
-
-  TBD
-
-
-1.13.9  NOISE4 - 4D Noise
-
-  TBD
-
 
 1.13.10  NOP - No Operation
 
   Do nothing.
 
-
-1.14  ps_1_1
-------------
-
-
-1.14.1  TEXKILL - Conditional Discard
-
-  Alias for KIL.
-
-
-1.15  ps_1_4
-------------
-
-
-1.15.1  TEXLD - Texture Lookup
-
-  Alias for TEX.
-
-
-1.16  ps_2_0
-------------
-
-
-1.16.1  M4X4 - Multiply Matrix
-
-  Alias for MULTIPLYMATRIX.
-
-
-1.16.2  M4X3 - Multiply Matrix
-
-  Considered for removal from language.
-
-
-1.16.3  M3X4 - Multiply Matrix
-
-  Considered for removal from language.
-
-
-1.16.4  M3X3 - Multiply Matrix
-
-  Considered for removal from language.
-
-
-1.16.5  M3X2 - Multiply Matrix
-
-  Considered for removal from language.
-
-
-1.16.6  CRS - Cross Product
-
-  Alias for XPD.
 
 
 1.16.7  NRM4 - 4-component Vector Normalise
@@ -970,28 +780,8 @@ TGSI Instruction Specification
   dst.w = src.w / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
 
 
-1.16.8  SINCOS - Sine Cosine
-
-  Alias for SCS.
-
-
-1.16.9  TEXLDB - Texture Lookup With Bias
-
-  Alias for TXB.
-
-
-1.16.10  DP2ADD - 2-component Dot Product And Add
-
-  Alias for DP2A.
-
-
 1.17  ps_2_x
 ------------
-
-
-1.17.1  CALL - Subroutine Call
-
-  Alias for CAL.
 
 
 1.17.2  CALLNZ - Subroutine Call If Not Zero
@@ -1004,67 +794,9 @@ TGSI Instruction Specification
   TBD
 
 
-1.17.4  BREAK - Break
-
-  Alias for BRK.
-
-
 1.17.5  BREAKC - Break Conditional
 
   TBD
-
-
-1.17.6  DSX - Derivative Relative To X
-
-  Alias for DDX.
-
-
-1.17.7  DSY - Derivative Relative To Y
-
-  Alias for DDY.
-
-
-1.17.8  TEXLDD - Texture Lookup with Derivatives
-
-  Alias for TXD.
-
-
-1.18  vs_1_1
-------------
-
-
-1.18.1  EXPP - Approximate Exponential Base 2
-
-  Use EXP. See also 1.19.3.
-
-
-1.18.2  LOGP - Logarithm Base 2
-
-  Use LOG. See also 1.19.4.
-
-
-1.19  vs_2_0
-------------
-
-
-1.19.1  SGN - Set Sign
-
-  Alias for SSG.
-
-
-1.19.2  MOVA - Move Address Register
-
-  Alias for ARR.
-
-
-1.19.3  EXPP - Approximate Exponential Base 2
-
-  Use EX2.
-
-
-1.19.4  LOGP - Logarithm Base 2
-
-  Use LG2.
 
 
 2  Explanation of symbols used
