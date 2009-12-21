@@ -191,7 +191,7 @@ enum pipe_error brw_validate_state( struct brw_context *brw )
       const struct brw_fragment_shader *fp = brw->curr.fragment_shader;
       if (fp) {
          assert(fp->info.file_max[TGSI_FILE_SAMPLER] < (int)brw->curr.num_samplers);
-	 assert(fp->info.texture_max <= brw->curr.num_textures);
+	 /*assert(fp->info.texture_max <= brw->curr.num_textures);*/
       }
    }
 

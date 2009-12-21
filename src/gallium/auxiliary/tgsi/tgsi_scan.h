@@ -61,9 +61,6 @@ struct tgsi_shader_info
    boolean uses_kill;  /**< KIL or KILP instruction used? */
    boolean uses_fogcoord; /**< fragment shader uses fog coord? */
    boolean uses_frontfacing; /**< fragment shader uses front/back-face flag? */
-
-   uint texture_max;
-   uint texture_mask;
 };
 
 
