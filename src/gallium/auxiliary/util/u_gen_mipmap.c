@@ -63,7 +63,7 @@ struct gen_mipmap_state
    struct pipe_sampler_state sampler;
 
    void *vs;
-   void *fs;
+   void *fs2d, *fsCube;
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -1319,7 +1319,8 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    }
 
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+   ctx->fs2d = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+   ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
 
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
@@ -1427,7 +1428,8 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    struct pipe_context *pipe = ctx->pipe;
 
    pipe->delete_vs_state(pipe, ctx->vs);
-   pipe->delete_fs_state(pipe, ctx->fs);
+   pipe->delete_fs_state(pipe, ctx->fs2d);
+   pipe->delete_fs_state(pipe, ctx->fsCube);
 
    pipe_buffer_reference(&ctx->vbuf, NULL);
 
@@ -1465,6 +1467,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
+   void *fs = (pt->target == PIPE_TEXTURE_CUBE) ? ctx->fsCube : ctx->fs2d;
    uint dstLevel;
    uint zslice = 0;
    uint offset;
@@ -1502,7 +1505,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
 
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_fragment_shader_handle(ctx->cso, fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* init framebuffer state */
