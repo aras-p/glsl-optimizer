@@ -53,7 +53,7 @@ GLUnurbsObj *theNurb;
  *  Initializes the control points of the surface to a small hill.
  *  The control points range from -3 to +3 in x, y, and z
  */
-void init_surface(void)
+static void init_surface(void)
 {
     int u, v;
     for (u = 0; u < 4; u++) {
@@ -71,7 +71,7 @@ void init_surface(void)
 
 /*  Initialize material property and depth buffer.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat mat_diffuse[] = { 0.7, 0.7, 0.7, 1.0 };
     GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -100,7 +100,7 @@ void myinit(void)
     glTranslatef (0.0, 0.0, -5.0);
 }
 
-void display(void)
+static void display(void)
 {
     GLfloat knots[8] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0};
     int i, j;
@@ -140,7 +140,7 @@ void display(void)
     glutSwapBuffers();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -150,7 +150,7 @@ void reshape(int w, int h)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void
+static void
 menu(int value)
 {
     switch (value) {
@@ -171,7 +171,7 @@ menu(int value)
 int down = 0, lastx;
 
 /* ARGSUSED1 */
-void
+static void
 motion(int x, int y)
 {
     if (down) {
@@ -182,7 +182,7 @@ motion(int x, int y)
 }
 
 /* ARGSUSED3 */
-void
+static void
 mouse(int button, int state, int x, int y)
 {
     if (button == GLUT_LEFT_BUTTON) {

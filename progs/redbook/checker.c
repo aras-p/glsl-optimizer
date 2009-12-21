@@ -50,7 +50,7 @@
 #define	checkImageHeight 64
 GLubyte checkImage[checkImageWidth][checkImageHeight][3];
 
-void makeCheckImage(void)
+static void makeCheckImage(void)
 {
     int i, j, c;
 
@@ -64,7 +64,7 @@ void makeCheckImage(void)
     }
 }
 
-void myinit(void)
+static void myinit(void)
 {
     glClearColor (0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
@@ -84,7 +84,7 @@ void myinit(void)
     glShadeModel(GL_FLAT);
 }
 
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBegin(GL_QUADS);
@@ -101,7 +101,7 @@ void display(void)
     glutSwapBuffers();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

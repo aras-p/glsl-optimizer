@@ -61,7 +61,7 @@ GLuint list;
 /*  Make four display lists, 
  *  each with a different tessellated object. 
  */
-void makeNewLists (void) {
+static void makeNewLists (void) {
    int i;
    static GLdouble rects[12][3] = 
       {{ 50.0,  50.0, 0.0}, {300.0,  50.0, 0.0}, 
@@ -153,7 +153,7 @@ void makeNewLists (void) {
    glEndList();
 }
 
-void display (void) {
+static void display (void) {
    glClear(GL_COLOR_BUFFER_BIT);
    glColor3f(1.0, 1.0, 1.0);
    glPushMatrix(); 
@@ -168,12 +168,12 @@ void display (void) {
    glFlush();
 }
 
-void CALLBACK beginCallback(GLenum which)
+static void CALLBACK beginCallback(GLenum which)
 {
    glBegin(which);
 }
 
-void CALLBACK errorCallback(GLenum errorCode)
+static void CALLBACK errorCallback(GLenum errorCode)
 {
    const GLubyte *estring;
 
@@ -182,7 +182,7 @@ void CALLBACK errorCallback(GLenum errorCode)
    exit(0);
 }
 
-void CALLBACK endCallback(void)
+static void CALLBACK endCallback(void)
 {
    glEnd();
 }
@@ -193,7 +193,7 @@ void CALLBACK endCallback(void)
  *  coordinate data.
  */
 /* ARGSUSED */
-void CALLBACK combineCallback(GLdouble coords[3], GLdouble *data[4],
+static void CALLBACK combineCallback(GLdouble coords[3], GLdouble *data[4],
                      GLfloat weight[4], GLdouble **dataOut )
 {
    GLdouble *vertex;
@@ -205,7 +205,7 @@ void CALLBACK combineCallback(GLdouble coords[3], GLdouble *data[4],
    *dataOut = vertex;
 }
 
-void init(void) 
+static void init(void) 
 {
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_FLAT);    
@@ -226,7 +226,7 @@ void init(void)
    makeNewLists();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -240,7 +240,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 'w':

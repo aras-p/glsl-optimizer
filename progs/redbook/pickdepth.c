@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <GL/glut.h>
 
-void
+static void
 myinit(void)
 {
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -65,7 +65,7 @@ myinit(void)
  *  each rectangle is given the same name.  Note that
  *  each rectangle is drawn with a different z value.
  */
-void
+static void
 drawRects(GLenum mode)
 {
   if (mode == GL_SELECT)
@@ -100,7 +100,7 @@ drawRects(GLenum mode)
 /*  processHits() prints out the contents of the
  *  selection array.
  */
-void
+static void
 processHits(GLint hits, GLuint buffer[])
 {
   GLint i;
@@ -131,7 +131,7 @@ processHits(GLint hits, GLuint buffer[])
  */
 #define BUFSIZE 512
 
-void
+static void
 pickRects(int button, int state, int x, int y)
 {
   GLuint selectBuf[BUFSIZE];
@@ -164,7 +164,7 @@ pickRects(int button, int state, int x, int y)
   processHits(hits, selectBuf);
 }
 
-void
+static void
 display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -172,7 +172,7 @@ display(void)
   glutSwapBuffers();
 }
 
-void
+static void
 myReshape(int w, int h)
 {
   glViewport(0, 0, w, h);

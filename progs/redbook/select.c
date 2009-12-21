@@ -57,7 +57,7 @@
 /* draw a triangle with vertices at (x1, y1), (x2, y2) 
  * and (x3, y3) at z units away from the origin.
  */
-void drawTriangle (GLfloat x1, GLfloat y1, GLfloat x2, 
+static void drawTriangle (GLfloat x1, GLfloat y1, GLfloat x2, 
     GLfloat y2, GLfloat x3, GLfloat y3, GLfloat z)
 {
    glBegin (GL_TRIANGLES);
@@ -68,8 +68,8 @@ void drawTriangle (GLfloat x1, GLfloat y1, GLfloat x2,
 }
 
 /* draw a rectangular box with these outer x, y, and z values */
-void drawViewVolume (GLfloat x1, GLfloat x2, GLfloat y1, 
-                     GLfloat y2, GLfloat z1, GLfloat z2)
+static void drawViewVolume (GLfloat x1, GLfloat x2, GLfloat y1, 
+                            GLfloat y2, GLfloat z1, GLfloat z2)
 {
    glColor3f (1.0, 1.0, 1.0);
    glBegin (GL_LINE_LOOP);
@@ -101,7 +101,7 @@ void drawViewVolume (GLfloat x1, GLfloat x2, GLfloat y1,
 /* drawScene draws 4 triangles and a wire frame
  * which represents the viewing volume.
  */
-void drawScene (void)
+static void drawScene (void)
 {
    glMatrixMode (GL_PROJECTION);
    glLoadIdentity ();
@@ -122,7 +122,7 @@ void drawScene (void)
 
 /* processHits prints out the contents of the selection array
  */
-void processHits (GLint hits, GLuint buffer[])
+static void processHits (GLint hits, GLuint buffer[])
 {
    GLint i;
    GLuint j, names, *ptr;
@@ -150,7 +150,7 @@ void processHits (GLint hits, GLuint buffer[])
  */
 #define BUFSIZE 512
 
-void selectObjects(void)
+static void selectObjects(void)
 {
    GLuint selectBuf[BUFSIZE];
    GLint hits;
@@ -181,13 +181,13 @@ void selectObjects(void)
    processHits (hits, selectBuf);
 } 
 
-void init (void) 
+static void init (void) 
 {
    glEnable(GL_DEPTH_TEST);
    glShadeModel(GL_FLAT);
 }
 
-void display(void)
+static void display(void)
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -197,7 +197,7 @@ void display(void)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

@@ -61,7 +61,7 @@
 
 GLuint startList;
 
-void display (void) {
+static void display (void) {
    glClear(GL_COLOR_BUFFER_BIT);
    glColor3f(1.0, 1.0, 1.0);
    glCallList(startList);
@@ -69,12 +69,12 @@ void display (void) {
    glFlush();
 }
 
-void CALLBACK beginCallback(GLenum which)
+static void CALLBACK beginCallback(GLenum which)
 {
    glBegin(which);
 }
 
-void CALLBACK errorCallback(GLenum errorCode)
+static void CALLBACK errorCallback(GLenum errorCode)
 {
    const GLubyte *estring;
 
@@ -83,12 +83,12 @@ void CALLBACK errorCallback(GLenum errorCode)
    exit(0);
 }
 
-void CALLBACK endCallback(void)
+static void CALLBACK endCallback(void)
 {
    glEnd();
 }
 
-void CALLBACK vertexCallback(GLvoid *vertex)
+static void CALLBACK vertexCallback(GLvoid *vertex)
 {
    const GLdouble *pointer;
 
@@ -102,7 +102,7 @@ void CALLBACK vertexCallback(GLvoid *vertex)
  *  but weight[4] may be used to average color, normal, or texture
  *  coordinate data.  In this program, color is weighted.
  */
-void CALLBACK combineCallback(GLdouble coords[3],
+static void CALLBACK combineCallback(GLdouble coords[3],
                      GLdouble *vertex_data[4],
                      GLfloat weight[4], GLdouble **dataOut )
 {
@@ -122,7 +122,7 @@ void CALLBACK combineCallback(GLdouble coords[3],
    *dataOut = vertex;
 }
 
-void init (void)
+static void init (void)
 {
    GLUtesselator *tobj;
    GLdouble rect[4][3] = {{50.0, 50.0, 0.0},
@@ -199,7 +199,7 @@ void init (void)
    gluDeleteTess(tobj);
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -208,7 +208,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:
