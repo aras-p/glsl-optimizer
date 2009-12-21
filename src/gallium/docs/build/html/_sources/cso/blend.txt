@@ -9,4 +9,4 @@ XXX it is unresolved what behavior should result if blend_enable is off.
 Members
 -------
 
-XXX
+XXX undocumented members

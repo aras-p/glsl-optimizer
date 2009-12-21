@@ -47,6 +47,11 @@
             
   <div class="section" id="cso">
 <h1>CSO<a class="headerlink" href="#cso" title="Permalink to this headline">¶</a></h1>
+<p>CSO, Constant State Objects, are a core part of Gallium&#8217;s API.</p>
+<p>CSO work on the principle of reusable state; they are created by filling
+out a state object with the desired properties, then passing that object
+to a context. The context returns an opaque context-specific handle which
+can be bound at any time for the desired effect.</p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="cso/blend.html">Blend</a><ul>
 <li class="toctree-l2"><a class="reference external" href="cso/blend.html#members">Members</a></li>
@@ -60,6 +65,12 @@
 </li>
 <li class="toctree-l1"><a class="reference external" href="cso/rasterizer.html">Rasterizer</a><ul>
 <li class="toctree-l2"><a class="reference external" href="cso/rasterizer.html#members">Members</a></li>
+<li class="toctree-l2"><a class="reference external" href="cso/rasterizer.html#notes">Notes</a><ul>
+<li class="toctree-l3"><a class="reference external" href="cso/rasterizer.html#flatshade">flatshade</a></li>
+<li class="toctree-l3"><a class="reference external" href="cso/rasterizer.html#bypass-vs-clip-and-viewport">bypass_vs_clip_and_viewport</a></li>
+<li class="toctree-l3"><a class="reference external" href="cso/rasterizer.html#flatshade-first">flatshade_first</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="cso/sampler.html">Sampler</a><ul>

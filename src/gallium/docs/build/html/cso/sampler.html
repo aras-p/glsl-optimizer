@@ -51,9 +51,43 @@
 <h1>Sampler<a class="headerlink" href="#sampler" title="Permalink to this headline">¶</a></h1>
 <p>Texture units have many options for selecting texels from loaded textures;
 this state controls an individual texture unit&#8217;s texel-sampling settings.</p>
+<p>Texture coordinates are always treated as four-dimensional, and referred to
+with the traditional (S, T, R, Q) notation.</p>
 <div class="section" id="members">
 <h2>Members<a class="headerlink" href="#members" title="Permalink to this headline">¶</a></h2>
-<p>XXX</p>
+<p>XXX undocumented compare_mode, compare_func</p>
+<dl class="docutils">
+<dt>wrap_s</dt>
+<dd>How to wrap the S coordinate. One of PIPE_TEX_WRAP.</dd>
+<dt>wrap_t</dt>
+<dd>How to wrap the T coordinate. One of PIPE_TEX_WRAP.</dd>
+<dt>wrap_r</dt>
+<dd>How to wrap the R coordinate. One of PIPE_TEX_WRAP.</dd>
+<dt>min_img_filter</dt>
+<dd>The filter to use when minifying texels. One of PIPE_TEX_FILTER.</dd>
+<dt>min_mip_filter</dt>
+<dd>The filter to use when minifying mipmapped textures. One of
+PIPE_TEX_FILTER.</dd>
+<dt>mag_img_filter</dt>
+<dd>The filter to use when magnifying texels. One of PIPE_TEX_FILTER.</dd>
+<dt>normalized_coords</dt>
+<dd>Whether the texture coordinates are normalized. If normalized, they will
+always be in [0, 1]. If not, they will be in the range of each dimension
+of the loaded texture.</dd>
+<dt>prefilter</dt>
+<dd>XXX From the Doxy, &#8220;weird sampling state exposed by some APIs.&#8221; Refine.</dd>
+<dt>lod_bias</dt>
+<dd>The bias to apply to the level of detail.</dd>
+<dt>min_lod</dt>
+<dd>Minimum level of detail, used to clamp LoD after bias.</dd>
+<dt>max_lod</dt>
+<dd>Maximum level of detail, used to clamp LoD after bias.</dd>
+<dt>border_color</dt>
+<dd>RGBA color used for out-of-bounds coordinates.</dd>
+<dt>max_anisotropy</dt>
+<dd>Maximum filtering to apply anisotropically to textures. Setting this to
+1.0 effectively disables anisotropic filtering.</dd>
+</dl>
 </div>
 </div>
 

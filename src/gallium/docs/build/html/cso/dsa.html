@@ -53,17 +53,55 @@
 discard fragments that have passed through the fragment shader.</p>
 <p>Traditionally, these three tests have been clumped together in hardware, so
 they are all stored in one structure.</p>
+<p>During actual execution, the order of operations done on fragments is always:</p>
+<ul class="simple">
+<li>Stencil</li>
+<li>Depth</li>
+<li>Alpha</li>
+</ul>
 <div class="section" id="depth-members">
 <h2>Depth Members<a class="headerlink" href="#depth-members" title="Permalink to this headline">¶</a></h2>
-<p>XXX</p>
+<dl class="docutils">
+<dt>enabled</dt>
+<dd>Whether the depth test is enabled.</dd>
+<dt>writemask</dt>
+<dd>Whether the depth buffer receives depth writes.</dd>
+<dt>func</dt>
+<dd>The depth test function. One of PIPE_FUNC.</dd>
+</dl>
 </div>
 <div class="section" id="stencil-members">
 <h2>Stencil Members<a class="headerlink" href="#stencil-members" title="Permalink to this headline">¶</a></h2>
-<p>XXX</p>
+<p>XXX document valuemask, writemask</p>
+<dl class="docutils">
+<dt>enabled</dt>
+<dd>Whether the stencil test is enabled. For the second stencil, whether the
+two-sided stencil is enabled.</dd>
+<dt>func</dt>
+<dd>The stencil test function. One of PIPE_FUNC.</dd>
+<dt>ref_value</dt>
+<dd>Stencil test reference value; used for certain functions.</dd>
+<dt>fail_op</dt>
+<dd>The operation to carry out if the stencil test fails. One of
+PIPE_STENCIL_OP.</dd>
+<dt>zfail_op</dt>
+<dd>The operation to carry out if the stencil test passes but the depth test
+fails. One of PIPE_STENCIL_OP.</dd>
+<dt>zpass_op</dt>
+<dd>The operation to carry out if the stencil test and depth test both pass.
+One of PIPE_STENCIL_OP.</dd>
+</dl>
 </div>
 <div class="section" id="alpha-members">
 <h2>Alpha Members<a class="headerlink" href="#alpha-members" title="Permalink to this headline">¶</a></h2>
-<p>XXX</p>
+<dl class="docutils">
+<dt>enabled</dt>
+<dd>Whether the alpha test is enabled.</dd>
+<dt>func</dt>
+<dd>The alpha test function. One of PIPE_FUNC.</dd>
+<dt>ref_value</dt>
+<dd>Alpha test reference value; used for certain functions.</dd>
+</dl>
 </div>
 </div>
 
