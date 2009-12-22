@@ -54,14 +54,11 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled) {
 			radeonTexObj *t = r700->textures[i];
-			uint32_t offset;
 			if (t) {
 				if (!t->image_override) {
 					bo = t->mt->bo;
-					offset = get_base_teximage_offset(t);
 				} else {
 					bo = t->bo;
-					offset = 0;
 				}
 				if (bo) {
 
@@ -81,7 +78,7 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
 					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
 							     bo,
-							     offset,
+							     r700->textures[i]->SQ_TEX_RESOURCE2,
 							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
 							     bo,
