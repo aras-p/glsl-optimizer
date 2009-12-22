@@ -70,6 +70,7 @@
 #include "util/u_stream.h" 
 #include "util/u_math.h" 
 #include "util/u_tile.h" 
+#include "util/u_prim.h" 
 
 
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
@@ -599,6 +600,32 @@ const char *pf_name( enum pipe_format format )
 {
    return debug_dump_enum(pipe_format_names, format);
 }
+
+
+
+static const struct debug_named_value pipe_prim_names[] = {
+#ifdef DEBUG
+   DEBUG_NAMED_VALUE(PIPE_PRIM_POINTS),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINES),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINE_LOOP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINE_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLES),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLE_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLE_FAN),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_QUADS),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_QUAD_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_POLYGON),
+#endif
+   DEBUG_NAMED_VALUE_END
+};
+
+
+const char *u_prim_name( unsigned prim )
+{
+   return debug_dump_enum(pipe_prim_names, prim);
+}
+
+
 
 
 #ifdef DEBUG

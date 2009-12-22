@@ -583,6 +583,19 @@ do {                                     \
 #endif
 
 
+static INLINE uint32_t util_unsigned_fixed(float value, unsigned frac_bits)
+{
+   value *= (1<<frac_bits);
+   return value < 0 ? 0 : value;
+}
+
+static INLINE int32_t util_signed_fixed(float value, unsigned frac_bits)
+{
+   return value * (1<<frac_bits);
+}
+
+
+
 #ifdef __cplusplus
 }
 #endif

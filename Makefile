@@ -105,6 +105,7 @@ irix6-n32-static \
 irix6-o32 \
 irix6-o32-static \
 linux \
+linux-i965 \
 linux-alpha \
 linux-alpha-static \
 linux-cell \

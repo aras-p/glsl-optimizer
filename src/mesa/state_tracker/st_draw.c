@@ -538,6 +538,20 @@ check_uniforms(GLcontext *ctx)
 }
 
 
+static unsigned translate_prim( GLcontext *ctx,
+                                unsigned prim )
+{
+   /* Avoid quadstrips if it's easy to do so:
+    */
+   if (prim == GL_QUAD_STRIP &&
+       ctx->Light.ShadeModel != GL_FLAT &&
+       ctx->Polygon.FrontMode == GL_FILL &&
+       ctx->Polygon.BackMode == GL_FILL)
+      prim = GL_TRIANGLE_STRIP;
+
+   return prim;
+}
+
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
@@ -564,7 +578,8 @@ st_draw_vbo(GLcontext *ctx,
 
    /* Gallium probably doesn't want this in some cases. */
    if (!index_bounds_valid)
-      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
@@ -633,6 +648,7 @@ st_draw_vbo(GLcontext *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       struct pipe_buffer *indexBuf = NULL;
       unsigned indexSize, indexOffset, i;
+      unsigned prim;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -675,10 +691,12 @@ st_draw_vbo(GLcontext *ctx,
                          prims[i].start + indexOffset, prims[i].count,
                          arrays[VERT_ATTRIB_EDGEFLAG]);
 
+         prim = translate_prim( ctx, prims[i].mode );
+
          pipe->draw_range_elements(pipe, indexBuf, indexSize,
                                    min_index,
                                    max_index,
-                                   prims[i].mode,
+                                   prim,
                                    prims[i].start + indexOffset, prims[i].count);
       }
       else {
@@ -686,9 +704,11 @@ st_draw_vbo(GLcontext *ctx,
             setup_edgeflags(ctx, prims[i].mode,
                             prims[i].start + indexOffset, prims[i].count,
                             arrays[VERT_ATTRIB_EDGEFLAG]);
+
+            prim = translate_prim( ctx, prims[i].mode );
             
             pipe->draw_elements(pipe, indexBuf, indexSize,
-                                prims[i].mode,
+                                prim,
                                 prims[i].start + indexOffset, prims[i].count);
          }
       }
@@ -698,12 +718,16 @@ st_draw_vbo(GLcontext *ctx,
    else {
       /* non-indexed */
       GLuint i;
+      GLuint prim;
+
       for (i = 0; i < nr_prims; i++) {
          setup_edgeflags(ctx, prims[i].mode,
                          prims[i].start, prims[i].count,
                          arrays[VERT_ATTRIB_EDGEFLAG]);
 
-         pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
+         prim = translate_prim( ctx, prims[i].mode );
+
+         pipe->draw_arrays(pipe, prim, prims[i].start, prims[i].count);
       }
    }
 

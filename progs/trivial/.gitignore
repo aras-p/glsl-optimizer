@@ -147,6 +147,7 @@ vbo-drawarrays
 vbo-drawelements
 vbo-drawrange
 vbo-noninterleaved
+vbo-tri
 vp-array
 vp-array-int
 vp-clip

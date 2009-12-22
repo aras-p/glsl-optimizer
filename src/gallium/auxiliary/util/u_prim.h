@@ -135,4 +135,6 @@ static INLINE unsigned u_reduced_prim( unsigned pipe_prim )
    }
 }
 
+const char *u_prim_name( unsigned pipe_prim );
+
 #endif
