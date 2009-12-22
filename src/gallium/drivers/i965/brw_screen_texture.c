@@ -31,6 +31,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
+#include "util/u_format.h"
 
 #include "brw_screen.h"
 #include "brw_defines.h"
@@ -201,8 +202,8 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 
    /* XXX: compressed textures need special treatment here
     */
-   tex->cpp = pf_get_size(tex->base.format);
-   tex->compressed = pf_is_compressed(tex->base.format);
+   tex->cpp = util_format_get_blocksize(tex->base.format);
+   tex->compressed = util_format_is_compressed(tex->base.format);
 
    make_empty_list(&tex->views[0]);
    make_empty_list(&tex->views[1]);
@@ -213,7 +214,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
        !bscreen->no_tiling) 
    {
       if (bscreen->chipset.is_965 &&
-	  pf_is_depth_or_stencil(templ->format))
+	  util_format_is_depth_or_stencil(templ->format))
 	 tex->tiling = BRW_TILING_Y;
       else
 	 tex->tiling = BRW_TILING_X;
@@ -391,14 +392,10 @@ brw_get_tex_transfer(struct pipe_screen *screen,
    trans = CALLOC_STRUCT(brw_transfer);
    if (trans) {
       pipe_texture_reference(&trans->base.texture, texture);
-      trans->base.format = trans->base.format;
       trans->base.x = x;
       trans->base.y = y;
       trans->base.width = w;
       trans->base.height = h;
-      trans->base.block = texture->block;
-      trans->base.nblocksx = texture->nblocksx[level];
-      trans->base.nblocksy = texture->nblocksy[level];
       trans->base.stride = tex->pitch * tex->cpp;
       trans->offset = offset;
       trans->base.usage = usage;
@@ -426,9 +423,11 @@ brw_transfer_map(struct pipe_screen *screen,
    if (!map)
       return NULL;
 
+   /* XXX: blocksize and compressed textures
+    */
    return map + brw_transfer(transfer)->offset +
-      transfer->y / transfer->block.height * transfer->stride +
-      transfer->x / transfer->block.width * transfer->block.size;
+      transfer->y /* / transfer->block.height */ * transfer->stride +
+      transfer->x /* / transfer->block.width */ * brw_texture(transfer->texture)->cpp;
 }
 
 static void
@@ -481,7 +480,7 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
        templ->depth0 != 1)
       return NULL;
 
-   if (pf_is_compressed(templ->format))
+   if (util_format_is_compressed(templ->format))
       return NULL;
 
    tex = CALLOC_STRUCT(brw_texture);
@@ -492,7 +491,9 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
    pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
 
-   tex->cpp = pf_get_size(tex->base.format);
+   /* XXX: cpp vs. blocksize
+    */
+   tex->cpp = util_format_get_blocksize(tex->base.format);
    tex->tiling = tiling;
 
    make_empty_list(&tex->views[0]);

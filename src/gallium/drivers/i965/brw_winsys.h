@@ -244,7 +244,7 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
 {
    struct brw_winsys_buffer *old_buf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
+   if (pipe_reference(&(*ptr)->reference, &buf->reference))
       old_buf->sws->bo_destroy(old_buf);
 }
 
