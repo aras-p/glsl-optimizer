@@ -6,8 +6,11 @@ for describing shaders. Since Gallium is inherently shaderful, shaders are
 an important part of the API. TGSI is the only intermediate representation
 used by all drivers.
 
+Instruction Set
+---------------
+
 From GL_NV_vertex_program
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 ARL - Address Register Load
@@ -633,8 +636,8 @@ X2D - 2D Coordinate Transformation
 Considered for removal.
 
 
-GL_NV_vertex_program2
---------------------------
+From GL_NV_vertex_program2
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 ARA - Address Register Add
@@ -850,8 +853,8 @@ POPA - Pop Address Register From Stack
   Considered for cleanup / removal.
 
 
-GL_NV_gpu_program4
-------------------------
+From GL_NV_gpu_program4
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Support for these opcodes indicated by a special pipe capability bit (TBD).
 
@@ -1015,8 +1018,8 @@ CONT - Continue
   TBD
 
 
-GL_NV_geometry_program4
------------------------------
+From GL_NV_geometry_program4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 EMIT - Emit
@@ -1029,8 +1032,8 @@ ENDPRIM - End Primitive
   TBD
 
 
-GLSL
-----------
+From GLSL
+^^^^^^^^^^
 
 
 BGNLOOP - Begin a Loop
@@ -1072,7 +1075,7 @@ NRM4 - 4-component Vector Normalise
 
 
 ps_2_x
-------------
+^^^^^^^^^^^^
 
 
 CALLNZ - Subroutine Call If Not Zero
@@ -1091,11 +1094,11 @@ BREAKC - Break Conditional
 
 
 Explanation of symbols used
-==============================
+------------------------------
 
 
 Functions
---------------
+^^^^^^^^^^^^^^
 
 
   :math:`|x|`       Absolute value of `x`.
@@ -1131,7 +1134,7 @@ Functions
 
 
 Keywords
--------------
+^^^^^^^^^^^^^
 
 
   discard           Discard fragment.
@@ -1154,11 +1157,11 @@ Keywords
 
 
 Other tokens
-===============
+---------------
 
 
 Declaration Semantic
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 
   Follows Declaration token if Semantic bit is set.
@@ -1179,7 +1182,7 @@ Declaration Semantic
 
 
 FACE
-^^^^
+""""
 
   Valid only in a fragment shader INPUT declaration.
 

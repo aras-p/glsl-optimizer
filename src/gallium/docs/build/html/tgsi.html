@@ -51,8 +51,10 @@
 for describing shaders. Since Gallium is inherently shaderful, shaders are
 an important part of the API. TGSI is the only intermediate representation
 used by all drivers.</p>
+<div class="section" id="instruction-set">
+<h2>Instruction Set<a class="headerlink" href="#instruction-set" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="from-gl-nv-vertex-program">
-<h2>From GL_NV_vertex_program<a class="headerlink" href="#from-gl-nv-vertex-program" title="Permalink to this headline">¶</a></h2>
+<h3>From GL_NV_vertex_program<a class="headerlink" href="#from-gl-nv-vertex-program" title="Permalink to this headline">¶</a></h3>
 <p>ARL - Address Register Load</p>
 <div class="math">
 <p><img src="_images/math/a6a788a4144ea0b8be244aad870806646081b809.png" alt="dst.x = \lfloor src.x\rfloor
@@ -478,8 +480,8 @@ dst.z = src0.x + src1.x \times src2.x + src1.y \times src2.y
 dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w" /></p>
 </div><p>Considered for removal.</p>
 </div>
-<div class="section" id="gl-nv-vertex-program2">
-<h2>GL_NV_vertex_program2<a class="headerlink" href="#gl-nv-vertex-program2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="from-gl-nv-vertex-program2">
+<h3>From GL_NV_vertex_program2<a class="headerlink" href="#from-gl-nv-vertex-program2" title="Permalink to this headline">¶</a></h3>
 <p>ARA - Address Register Add</p>
 <blockquote>
 <p>TBD</p>
@@ -637,8 +639,8 @@ dst.x = pop()</p>
 <p>Considered for cleanup / removal.</p>
 </blockquote>
 </div>
-<div class="section" id="gl-nv-gpu-program4">
-<h2>GL_NV_gpu_program4<a class="headerlink" href="#gl-nv-gpu-program4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="from-gl-nv-gpu-program4">
+<h3>From GL_NV_gpu_program4<a class="headerlink" href="#from-gl-nv-gpu-program4" title="Permalink to this headline">¶</a></h3>
 <p>Support for these opcodes indicated by a special pipe capability bit (TBD).</p>
 <p>CEIL - Ceiling</p>
 <div class="math">
@@ -750,8 +752,8 @@ TBD</blockquote>
 <blockquote>
 TBD</blockquote>
 </div>
-<div class="section" id="gl-nv-geometry-program4">
-<h2>GL_NV_geometry_program4<a class="headerlink" href="#gl-nv-geometry-program4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="from-gl-nv-geometry-program4">
+<h3>From GL_NV_geometry_program4<a class="headerlink" href="#from-gl-nv-geometry-program4" title="Permalink to this headline">¶</a></h3>
 <p>EMIT - Emit</p>
 <blockquote>
 TBD</blockquote>
@@ -759,8 +761,8 @@ TBD</blockquote>
 <blockquote>
 TBD</blockquote>
 </div>
-<div class="section" id="glsl">
-<h2>GLSL<a class="headerlink" href="#glsl" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="from-glsl">
+<h3>From GLSL<a class="headerlink" href="#from-glsl" title="Permalink to this headline">¶</a></h3>
 <p>BGNLOOP - Begin a Loop</p>
 <blockquote>
 TBD</blockquote>
@@ -787,7 +789,7 @@ dst.z = \frac{src.z}{src.x \times src.x + src.y \times src.y + src.z \times src.
 dst.w = \frac{src.w}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}" /></p>
 </div></div>
 <div class="section" id="ps-2-x">
-<h2>ps_2_x<a class="headerlink" href="#ps-2-x" title="Permalink to this headline">¶</a></h2>
+<h3>ps_2_x<a class="headerlink" href="#ps-2-x" title="Permalink to this headline">¶</a></h3>
 <p>CALLNZ - Subroutine Call If Not Zero</p>
 <blockquote>
 TBD</blockquote>
@@ -800,9 +802,9 @@ TBD</blockquote>
 </div>
 </div>
 <div class="section" id="explanation-of-symbols-used">
-<h1>Explanation of symbols used<a class="headerlink" href="#explanation-of-symbols-used" title="Permalink to this headline">¶</a></h1>
+<h2>Explanation of symbols used<a class="headerlink" href="#explanation-of-symbols-used" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <p><img class="math" src="_images/math/49428192d366caf373c0af3c3261687f12b4c883.png" alt="|x|"/>       Absolute value of <cite>x</cite>.</p>
 <p><img class="math" src="_images/math/1a7cd7095a9b123f81967d8d3b14d1e02b0174e7.png" alt="\lceil x \rceil"/> Ceiling of <cite>x</cite>.</p>
@@ -828,7 +830,7 @@ TBD</blockquote>
 </blockquote>
 </div>
 <div class="section" id="keywords">
-<h2>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h2>
+<h3>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <p>discard           Discard fragment.</p>
 <p>dst               First destination register.</p>
@@ -843,9 +845,9 @@ TBD</blockquote>
 </div>
 </div>
 <div class="section" id="other-tokens">
-<h1>Other tokens<a class="headerlink" href="#other-tokens" title="Permalink to this headline">¶</a></h1>
+<h2>Other tokens<a class="headerlink" href="#other-tokens" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="declaration-semantic">
-<h2>Declaration Semantic<a class="headerlink" href="#declaration-semantic" title="Permalink to this headline">¶</a></h2>
+<h3>Declaration Semantic<a class="headerlink" href="#declaration-semantic" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <p>Follows Declaration token if Semantic bit is set.</p>
 <p>Since its purpose is to link a shader with other stages of the pipeline,
@@ -860,12 +862,13 @@ is 0.</p>
 sections.</p>
 </blockquote>
 <div class="section" id="face">
-<h3>FACE<a class="headerlink" href="#face" title="Permalink to this headline">¶</a></h3>
+<h4>FACE<a class="headerlink" href="#face" title="Permalink to this headline">¶</a></h4>
 <blockquote>
 <p>Valid only in a fragment shader INPUT declaration.</p>
 <p>FACE.x is negative when the primitive is back facing. FACE.x is positive
 when the primitive is front facing.</p>
 </blockquote>
+</div>
 </div>
 </div>
 </div>
@@ -879,11 +882,12 @@ when the primitive is front facing.</p>
             <h3><a href="index.html">Table Of Contents</a></h3>
             <ul>
 <li><a class="reference external" href="">TGSI</a><ul>
+<li><a class="reference external" href="#instruction-set">Instruction Set</a><ul>
 <li><a class="reference external" href="#from-gl-nv-vertex-program">From GL_NV_vertex_program</a></li>
-<li><a class="reference external" href="#gl-nv-vertex-program2">GL_NV_vertex_program2</a></li>
-<li><a class="reference external" href="#gl-nv-gpu-program4">GL_NV_gpu_program4</a></li>
-<li><a class="reference external" href="#gl-nv-geometry-program4">GL_NV_geometry_program4</a></li>
-<li><a class="reference external" href="#glsl">GLSL</a></li>
+<li><a class="reference external" href="#from-gl-nv-vertex-program2">From GL_NV_vertex_program2</a></li>
+<li><a class="reference external" href="#from-gl-nv-gpu-program4">From GL_NV_gpu_program4</a></li>
+<li><a class="reference external" href="#from-gl-nv-geometry-program4">From GL_NV_geometry_program4</a></li>
+<li><a class="reference external" href="#from-glsl">From GLSL</a></li>
 <li><a class="reference external" href="#ps-2-x">ps_2_x</a></li>
 </ul>
 </li>
@@ -895,6 +899,8 @@ when the primitive is front facing.</p>
 <li><a class="reference external" href="#other-tokens">Other tokens</a><ul>
 <li><a class="reference external" href="#declaration-semantic">Declaration Semantic</a><ul>
 <li><a class="reference external" href="#face">FACE</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
