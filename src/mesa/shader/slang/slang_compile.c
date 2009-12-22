@@ -2579,7 +2579,6 @@ compile_with_grammar(const char *source,
                      slang_info_log *infolog,
                      slang_code_unit *builtin,
                      struct gl_shader *shader,
-                     const struct gl_extensions *extensions,
                      struct gl_sl_pragmas *pragmas,
                      unsigned int shader_type,
                      unsigned int parsing_builtin)
@@ -2592,7 +2591,8 @@ compile_with_grammar(const char *source,
    unsigned int maxVersion;
    int result;
    char errmsg[200] = "";
-   unsigned int errline = 0;
+
+   assert(shader_type == 1 || shader_type == 2);
 
    memset(&options, 0, sizeof(options));
 
@@ -2711,7 +2711,6 @@ compile_object(const char *source,
                slang_unit_type type,
                slang_info_log *infolog,
                struct gl_shader *shader,
-               const struct gl_extensions *extensions,
                struct gl_sl_pragmas *pragmas)
 {
    slang_code_unit *builtins = NULL;
@@ -2792,11 +2791,8 @@ compile_object(const char *source,
       }
 
       /* disable language extensions */
-#if NEW_SLANG /* allow-built-ins */
-      parsing_builtin = 1;
-#else
       parsing_builtin = 0;
-#endif
+
       builtins = object->builtin;
    }
 
@@ -2807,38 +2803,10 @@ compile_object(const char *source,
                                infolog,
                                builtins,
                                shader,
-                               extensions,
                                pragmas,
                                shader_type,
                                parsing_builtin);
 }
-
-
-static GLboolean
-compile_shader(GLcontext *ctx, slang_code_object * object,
-               slang_unit_type type, slang_info_log * infolog,
-               struct gl_shader *shader)
-{
-#if 0 /* for debug */
-   _mesa_printf("********* COMPILE SHADER ***********\n");
-   _mesa_printf("%s\n", shader->Source);
-   _mesa_printf("************************************\n");
-#endif
-
-   assert(shader->Program);
-
-   _slang_code_object_dtr(object);
-   _slang_code_object_ctr(object);
-
-   return compile_object(shader->Source,
-                         object,
-                         type,
-                         infolog,
-                         shader,
-                         &ctx->Extensions,
-                         &shader->Pragmas);
-}
-
 
 
 GLboolean
@@ -2881,7 +2849,12 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    slang_info_log_construct(&info_log);
    _slang_code_object_ctr(&obj);
 
-   success = compile_shader(ctx, &obj, type, &info_log, shader);
+   success = compile_object(shader->Source,
+                            &obj,
+                            type,
+                            &info_log,
+                            shader,
+                            &shader->Pragmas);
 
    /* free shader's prev info log */
    if (shader->InfoLog) {
