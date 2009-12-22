@@ -1239,13 +1239,3 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 }
 
 /*@}*/
-
-
-/**
- * Wrapper for exit().
- */
-void
-_mesa_exit( int status )
-{
-   exit(status);
-}

@@ -1311,7 +1311,7 @@ static void r300SetupTextures(GLcontext * ctx)
 		fprintf(stderr,
 			"Aiiee ! mtu=%d is greater than R300_MAX_TEXTURE_UNITS=%d\n",
 			mtu, R300_MAX_TEXTURE_UNITS);
-		_mesa_exit(-1);
+		exit(-1);
 	}
 
 	/* We cannot let disabled tmu offsets pass DRM */

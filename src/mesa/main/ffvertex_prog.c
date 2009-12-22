@@ -357,7 +357,7 @@ static struct ureg get_temp( struct tnl_program *p )
    int bit = _mesa_ffs( ~p->temp_in_use );
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)

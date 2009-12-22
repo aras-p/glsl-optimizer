@@ -1230,7 +1230,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 		fprintf(stderr, "drmRadeonCmdBuffer: %d. Kernel failed to "
 				"parse or rejected command stream. See dmesg "
 				"for more info.\n", ret);
-		_mesa_exit(ret);
+		exit(ret);
 	}
 
 	return ret;

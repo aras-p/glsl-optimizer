@@ -256,7 +256,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 			if (txformat < 0) {
 				_mesa_problem(rmesa->radeon.glCtx, "%s: Invalid format %s",
 							  __FUNCTION__, _mesa_get_format_name(firstImage->TexFormat));
-				_mesa_exit(1);
+				exit(1);
 			}
 			t->pp_txformat = (uint32_t) txformat;
 		}

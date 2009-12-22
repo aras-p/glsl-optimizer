@@ -230,7 +230,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
          case VAR:
             break;
          default:
-            _mesa_exit(1);
+            exit(1);
          }
       }
    }

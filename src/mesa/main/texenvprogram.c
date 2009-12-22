@@ -606,7 +606,7 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)
@@ -634,7 +634,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)

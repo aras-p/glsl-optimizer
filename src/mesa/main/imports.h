@@ -618,10 +618,6 @@ _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
 extern void
 _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
 
-extern void 
-_mesa_exit( int status );
-
-
 #ifdef __cplusplus
 }
 #endif

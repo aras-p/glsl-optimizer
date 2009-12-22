@@ -117,7 +117,7 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes)
 
 	if (first_free_texcoord > 8) {
 		fprintf(stderr, "\tout of free texcoords\n");
-		_mesa_exit(-1);
+		exit(-1);
 	}
 
 	return ret;

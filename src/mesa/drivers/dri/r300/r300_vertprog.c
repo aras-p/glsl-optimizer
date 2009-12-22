@@ -365,7 +365,7 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 			break;
 		default:
 			fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
-			_mesa_exit(-1);
+			exit(-1);
 	}
 }
 
