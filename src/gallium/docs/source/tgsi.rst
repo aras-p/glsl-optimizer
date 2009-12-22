@@ -44,7 +44,7 @@ LIT - Light Coefficients
 
   dst.y = max(src.x, 0.0)
 
-  dst.z = (src.x > 0.0) ? pow(max(src.y, 0.0), clamp(src.w, -128.0, 128.0)) : 0.0
+  dst.z = (src.x > 0.0) ? max(src.y, 0.0)^{clamp(src.w, -128.0, 128.0))} : 0.0
 
   dst.w = 1.0
 
@@ -66,24 +66,24 @@ RSQ - Reciprocal Square Root
 
 .. math::
 
-  dst.x = 1.0 / sqrt(abs(src.x))
+  dst.x = 1.0 / \sqrt{abs(src.x)}
 
-  dst.y = 1.0 / sqrt(abs(src.x))
+  dst.y = 1.0 / \sqrt{abs(src.x)}
 
-  dst.z = 1.0 / sqrt(abs(src.x))
+  dst.z = 1.0 / \sqrt{abs(src.x)}
 
-  dst.w = 1.0 / sqrt(abs(src.x))
+  dst.w = 1.0 / \sqrt{abs(src.x)}
 
 
 EXP - Approximate Exponential Base 2
 
 .. math::
 
-  dst.x = pow(2.0, \lfloor src.x\rfloor)
+  dst.x = 2^{\lfloor src.x\rfloor}
 
   dst.y = src.x - \lfloor src.x\rfloor
 
-  dst.z = pow(2.0, src.x)
+  dst.z = 2^{src.x}
 
   dst.w = 1.0
 
@@ -94,7 +94,7 @@ LOG - Approximate Logarithm Base 2
 
   dst.x = \lfloor lg2(abs(src.x)))\rfloor
 
-  dst.y = abs(src.x) / pow(2.0, \lfloor lg2(abs(src.x))\rfloor )
+  dst.y = abs(src.x) / 2^{\lfloor lg2(abs(src.x))\rfloor}
 
   dst.z = lg2(abs(src.x))
 
@@ -331,14 +331,17 @@ This is identical to ARL.
   dst.w = round(src.w)
 
 
-1.3.10  EX2 - Exponential Base 2
+EX2 - Exponential Base 2
 
 .. math::
 
-  dst.x = pow(2.0, src.x)
-  dst.y = pow(2.0, src.x)
-  dst.z = pow(2.0, src.x)
-  dst.w = pow(2.0, src.x)
+  dst.x = 2^{src.x}
+
+  dst.y = 2^{src.x}
+
+  dst.z = 2^{src.x}
+
+  dst.w = 2^{src.x}
 
 
 1.3.11  LG2 - Logarithm Base 2
@@ -351,14 +354,17 @@ This is identical to ARL.
   dst.w = lg2(src.x)
 
 
-1.3.12  POW - Power
+POW - Power
 
 .. math::
 
-  dst.x = pow(src0.x, src1.x)
-  dst.y = pow(src0.x, src1.x)
-  dst.z = pow(src0.x, src1.x)
-  dst.w = pow(src0.x, src1.x)
+  dst.x = src0.x^{src1.x}
+
+  dst.y = src0.x^{src1.x}
+
+  dst.z = src0.x^{src1.x}
+
+  dst.w = src0.x^{src1.x}
 
 1.3.15  XPD - Cross Product
 
@@ -1016,7 +1022,7 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
   clamp(x,y,z)      Clamp x between y and z.
                     (x < y) ? y : (x > z) ? z : x
 
-  :math:`\lfloor x\rfloor` Floor of x.
+  :math:`\lfloor x\rfloor` Floor of `x`.
 
   lg2(x)            Logarithm base 2 of x.
 
@@ -1032,13 +1038,11 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
   pop()             Pop from stack.
 
-  pow(x,y)          Raise x to power of y.
+  :math:`x^y`       `x` to the power `y`.
 
   push(x)           Push x on stack.
 
   round(x)          Round x.
-
-  sqrt(x)           Square root of x.
 
   trunc(x)          Truncate x.
 
