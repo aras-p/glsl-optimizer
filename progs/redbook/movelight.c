@@ -58,7 +58,7 @@ static int spin = 0;
 /*  Initialize material property, light source, lighting model,
  *  and depth buffer.
  */
-void init(void) 
+static void init(void) 
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_SMOOTH);
@@ -72,7 +72,7 @@ void init(void)
  *  light at a new position in world coordinates.  The cube
  *  represents the position of the light.
  */
-void display(void)
+static void display(void)
 {
    GLfloat position[] = { 0.0, 0.0, 1.5, 1.0 };
 
@@ -96,7 +96,7 @@ void display(void)
    glFlush ();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode (GL_PROJECTION);
@@ -107,7 +107,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED2 */
-void mouse(int button, int state, int x, int y)
+static void mouse(int button, int state, int x, int y)
 {
    switch (button) {
       case GLUT_LEFT_BUTTON:
@@ -122,7 +122,7 @@ void mouse(int button, int state, int x, int y)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

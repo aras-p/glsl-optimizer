@@ -42,7 +42,7 @@ static void Init(void)
    static const char *prog1 =
       "!!ARBfp1.0\n"
       "MOV  result.color, fragment.texcoord[1];\n"
-//      "MOV  result.color, fragment.color;\n"
+      /* "MOV  result.color, fragment.color;\n" */
       "END\n";
 
 

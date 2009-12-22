@@ -47,7 +47,7 @@
 
 /*  Initialize material property, light source, and lighting model.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
 /*   mat_specular and mat_shininess are NOT default values	*/
@@ -75,7 +75,7 @@ void myinit(void)
     glEnable(GL_DEPTH_TEST);
 }
 
-void drawPlane(void)
+static void drawPlane(void)
 {
     glBegin (GL_QUADS);
     glNormal3f (0.0, 0.0, 1.0);
@@ -104,7 +104,7 @@ void drawPlane(void)
     glEnd();
 }
 
-void display (void)
+static void display (void)
 {
     GLfloat infinite_light[] = { 1.0, 1.0, 1.0, 0.0 };
     GLfloat local_light[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -125,7 +125,7 @@ void display (void)
     glFlush ();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport (0, 0, w, h);
     glMatrixMode (GL_PROJECTION);

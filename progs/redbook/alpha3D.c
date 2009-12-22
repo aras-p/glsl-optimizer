@@ -80,7 +80,7 @@ static void init(void)
    glEndList();
 }
 
-void display(void)
+static void display(void)
 {
    GLfloat mat_solid[] = { 0.75, 0.75, 0.0, 1.0 };
    GLfloat mat_zero[] = { 0.0, 0.0, 0.0, 1.0 };
@@ -113,7 +113,7 @@ void display(void)
    glutSwapBuffers();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLint) w, (GLint) h);
    glMatrixMode(GL_PROJECTION);
@@ -128,7 +128,7 @@ void reshape(int w, int h)
    glLoadIdentity();
 }
 
-void animate(void)
+static void animate(void)
 {
    static double t0 = -1.;
    if (solidZ <= MINZ || transparentZ >= MAXZ)
@@ -150,7 +150,7 @@ void animate(void)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 'a':

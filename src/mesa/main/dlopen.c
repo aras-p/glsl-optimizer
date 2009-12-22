@@ -68,7 +68,7 @@ GenericFunc
 _mesa_dlsym(void *handle, const char *fname)
 {
 #if defined(__blrts)
-   return (GenericFunc) NULL
+   return (GenericFunc) NULL;
 #elif defined(__DJGPP__)
    /* need '_' prefix on symbol names */
    char fname2[1000];

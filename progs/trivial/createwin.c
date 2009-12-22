@@ -116,6 +116,6 @@ int main(int argc, char **argv)
     glutReshapeFunc(Reshape);
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
-//    glutMainLoop();
+    /* glutMainLoop(); */
 	return 0;
 }

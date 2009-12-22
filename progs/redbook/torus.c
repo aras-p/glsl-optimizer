@@ -89,7 +89,7 @@ static void init(void)
 }
 
 /* Clear window and draw torus */
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
    glColor3f (1.0, 1.0, 1.0);
@@ -98,7 +98,7 @@ void display(void)
 }
 
 /* Handle window resize */
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -112,7 +112,7 @@ void reshape(int w, int h)
 /* Rotate about x-axis when "x" typed; rotate about y-axis
    when "y" typed; "i" returns torus to original view */
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
    case 'x':
