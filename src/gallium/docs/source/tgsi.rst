@@ -53,26 +53,26 @@ RCP - Reciprocal
 
 .. math::
 
-  dst.x = 1.0 / src.x
+  dst.x = \frac{1}{src.x}
 
-  dst.y = 1.0 / src.x
+  dst.y = \frac{1}{src.x}
 
-  dst.z = 1.0 / src.x
+  dst.z = \frac{1}{src.x}
 
-  dst.w = 1.0 / src.x
+  dst.w = \frac{1}{src.x}
 
 
 RSQ - Reciprocal Square Root
 
 .. math::
 
-  dst.x = 1.0 / \sqrt{abs(src.x)}
+  dst.x = \frac{1}{\sqrt{|src.x|}}
 
-  dst.y = 1.0 / \sqrt{abs(src.x)}
+  dst.y = \frac{1}{\sqrt{|src.x|}}
 
-  dst.z = 1.0 / \sqrt{abs(src.x)}
+  dst.z = \frac{1}{\sqrt{|src.x|}}
 
-  dst.w = 1.0 / \sqrt{abs(src.x)}
+  dst.w = \frac{1}{\sqrt{|src.x|}}
 
 
 EXP - Approximate Exponential Base 2
@@ -92,13 +92,13 @@ LOG - Approximate Logarithm Base 2
 
 .. math::
 
-  dst.x = \lfloor lg2(abs(src.x)))\rfloor
+  dst.x = \lfloor\log_2{|src.x|}\rfloor
 
-  dst.y = abs(src.x) / 2^{\lfloor lg2(abs(src.x))\rfloor}
+  dst.y = \frac{|src.x|}{2^{\lfloor\log_2{|src.x|}\rfloor}}
 
-  dst.z = lg2(abs(src.x))
+  dst.z = \log_2{|src.x|}
 
-  dst.w = 1.0
+  dst.w = 1
 
 
 MUL - Multiply
@@ -344,14 +344,17 @@ EX2 - Exponential Base 2
   dst.w = 2^{src.x}
 
 
-1.3.11  LG2 - Logarithm Base 2
+LG2 - Logarithm Base 2
 
 .. math::
 
-  dst.x = lg2(src.x)
-  dst.y = lg2(src.x)
-  dst.z = lg2(src.x)
-  dst.w = lg2(src.x)
+  dst.x = \log_2{src.x}
+
+  dst.y = \log_2{src.x}
+
+  dst.z = \log_2{src.x}
+
+  dst.w = \log_2{src.x}
 
 
 POW - Power
@@ -376,14 +379,17 @@ POW - Power
   dst.w = 1.0
 
 
-1.4.1  ABS - Absolute
+ABS - Absolute
 
 .. math::
 
-  dst.x = abs(src.x)
-  dst.y = abs(src.y)
-  dst.z = abs(src.z)
-  dst.w = abs(src.w)
+  dst.x = |src.x|
+
+  dst.y = |src.y|
+
+  dst.z = |src.z|
+
+  dst.w = |src.w|
 
 
 1.4.2  RCC - Reciprocal Clamped
@@ -807,14 +813,17 @@ SCS - Sine Cosine
 
 Support for these opcodes indicated by a special pipe capability bit (TBD).
 
-1.11.1  CEIL - Ceiling
+CEIL - Ceiling
 
 .. math::
 
-  dst.x = ceil(src.x)
-  dst.y = ceil(src.y)
-  dst.z = ceil(src.z)
-  dst.w = ceil(src.w)
+  dst.x = \lceil src.x\rceil
+
+  dst.y = \lceil src.y\rceil
+
+  dst.z = \lceil src.z\rceil
+
+  dst.w = \lceil src.w\rceil
 
 
 1.11.2  I2F - Integer To Float
@@ -907,14 +916,17 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
   dst.w = src0.w ^ src1.w
 
 
-1.11.11  SAD - Sum Of Absolute Differences
+SAD - Sum Of Absolute Differences
 
 .. math::
 
-  dst.x = abs(src0.x - src1.x) + src2.x
-  dst.y = abs(src0.y - src1.y) + src2.y
-  dst.z = abs(src0.z - src1.z) + src2.z
-  dst.w = abs(src0.w - src1.w) + src2.w
+  dst.x = |src0.x - src1.x| + src2.x
+
+  dst.y = |src0.y - src1.y| + src2.y
+
+  dst.z = |src0.z - src1.z| + src2.z
+
+  dst.w = |src0.w - src1.w| + src2.w
 
 
 1.11.12  TXF - Texel Fetch
@@ -1014,17 +1026,16 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 --------------
 
 
-  abs(x)            Absolute value of x.
-                    (x < 0.0) ? -x : x
+  :math:`|x|`       Absolute value of `x`.
 
-  ceil(x)           Ceiling of x.
+  :math:`\lceil x \rceil` Ceiling of `x`.
 
   clamp(x,y,z)      Clamp x between y and z.
                     (x < y) ? y : (x > z) ? z : x
 
   :math:`\lfloor x\rfloor` Floor of `x`.
 
-  lg2(x)            Logarithm base 2 of x.
+  :math:`\log_2{x}` Logarithm of `x`, base 2.
 
   max(x,y)          Maximum of x and y.
                     (x > y) ? x : y
