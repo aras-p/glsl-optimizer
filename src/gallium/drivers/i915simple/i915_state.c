@@ -58,8 +58,10 @@ translate_wrap_mode(unsigned wrap)
       return TEXCOORDMODE_CLAMP_EDGE;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return TEXCOORDMODE_CLAMP_BORDER;
-//   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
-//      return TEXCOORDMODE_MIRROR;
+   /*         
+   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
+      return TEXCOORDMODE_MIRROR;
+    */
    default:
       return TEXCOORDMODE_WRAP;
    }
