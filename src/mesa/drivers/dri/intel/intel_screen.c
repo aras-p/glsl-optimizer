@@ -606,7 +606,6 @@ static GLboolean
 intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
    int gem_kernel = 0;
-   GLboolean gem_supported;
    struct drm_i915_getparam gp;
    __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
@@ -621,13 +620,8 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
     */
-   if (intelScreen->driScrnPriv->dri2.enabled)
-       gem_supported = GL_TRUE;
-   else if (intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-	    gem_kernel &&
-	    intelScreen->front.bo_handle != -1)
-       gem_supported = GL_TRUE;
-   else {
+   if (!intelScreen->driScrnPriv->dri2.enabled &&
+       intelScreen->driScrnPriv->ddx_version.minor < 9) {
       fprintf(stderr, "[%s:%u] Error initializing GEM.\n",
 	      __func__, __LINE__);
       return GL_FALSE;

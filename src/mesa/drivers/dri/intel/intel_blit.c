@@ -52,7 +52,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 {
 
    struct intel_context *intel;
-   const intelScreenPrivate *intelScreen;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -61,8 +60,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
    intel = intelScreenContext(dPriv->driScreenPriv->private);
    if (!intel)
       return;
-
-   intelScreen = intel->intelScreen;
 
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.

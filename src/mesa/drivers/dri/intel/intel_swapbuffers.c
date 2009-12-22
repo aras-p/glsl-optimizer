@@ -56,7 +56,7 @@ intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv)
 				     .y2 = sarea->planeB_y + sarea->planeB_h };
       GLint areaA = driIntersectArea( drw_rect, planeA_rect );
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
-      GLuint flags = dPriv->vblFlags;
+      GLuint flags;
 
       /* Update vblank info
        */

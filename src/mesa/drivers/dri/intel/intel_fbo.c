@@ -398,8 +398,6 @@ static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
 {
-   gl_format texFormat;
-
    if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
@@ -434,8 +432,6 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    }
 
    irb->Base.Format = texImage->TexFormat;
-
-   texFormat = texImage->TexFormat;
 
    irb->Base.InternalFormat = texImage->InternalFormat;
    irb->Base._BaseFormat = _mesa_base_fbo_format(ctx, irb->Base.InternalFormat);
