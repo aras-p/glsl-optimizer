@@ -51,6 +51,823 @@
 for describing shaders. Since Gallium is inherently shaderful, shaders are
 an important part of the API. TGSI is the only intermediate representation
 used by all drivers.</p>
+<div class="section" id="from-gl-nv-vertex-program">
+<h2>From GL_NV_vertex_program<a class="headerlink" href="#from-gl-nv-vertex-program" title="Permalink to this headline">¶</a></h2>
+<p>ARL - Address Register Load</p>
+<div class="math">
+<p><img src="_images/math/a6a788a4144ea0b8be244aad870806646081b809.png" alt="dst.x = \lfloor src.x\rfloor
+
+dst.y = \lfloor src.y\rfloor
+
+dst.z = \lfloor src.z\rfloor
+
+dst.w = \lfloor src.w\rfloor" /></p>
+</div><p>MOV - Move</p>
+<div class="math">
+<p><img src="_images/math/723d0548eae0d4f8738fcf051e2e56bce034e7d4.png" alt="dst.x = src.x
+
+dst.y = src.y
+
+dst.z = src.z
+
+dst.w = src.w" /></p>
+</div><p>LIT - Light Coefficients</p>
+<div class="math">
+<p><img src="_images/math/758e5c32fbcca15fadbbf1ee7cb5967466f056e9.png" alt="dst.x = 1
+
+dst.y = max(src.x, 0)
+
+dst.z = (src.x &gt; 0) ? max(src.y, 0)^{clamp(src.w, -128, 128))} : 0
+
+dst.w = 1" /></p>
+</div><p>RCP - Reciprocal</p>
+<div class="math">
+<p><img src="_images/math/c9bc0e532b3b63ed42567436058b919bc78442ce.png" alt="dst.x = \frac{1}{src.x}
+
+dst.y = \frac{1}{src.x}
+
+dst.z = \frac{1}{src.x}
+
+dst.w = \frac{1}{src.x}" /></p>
+</div><p>RSQ - Reciprocal Square Root</p>
+<div class="math">
+<p><img src="_images/math/70d1866ff09388f68ff5f0f88719006a59e19187.png" alt="dst.x = \frac{1}{\sqrt{|src.x|}}
+
+dst.y = \frac{1}{\sqrt{|src.x|}}
+
+dst.z = \frac{1}{\sqrt{|src.x|}}
+
+dst.w = \frac{1}{\sqrt{|src.x|}}" /></p>
+</div><p>EXP - Approximate Exponential Base 2</p>
+<div class="math">
+<p><img src="_images/math/61a735a5ca4687a35d98a8d42c127cb425b16eed.png" alt="dst.x = 2^{\lfloor src.x\rfloor}
+
+dst.y = src.x - \lfloor src.x\rfloor
+
+dst.z = 2^{src.x}
+
+dst.w = 1" /></p>
+</div><p>LOG - Approximate Logarithm Base 2</p>
+<div class="math">
+<p><img src="_images/math/f71ea96f5550b90a162f1d7a8b754eeb9b0d126e.png" alt="dst.x = \lfloor\log_2{|src.x|}\rfloor
+
+dst.y = \frac{|src.x|}{2^{\lfloor\log_2{|src.x|}\rfloor}}
+
+dst.z = \log_2{|src.x|}
+
+dst.w = 1" /></p>
+</div><p>MUL - Multiply</p>
+<div class="math">
+<p><img src="_images/math/8d727b11852ddbb13fb91083a0ce71ea2a47306f.png" alt="dst.x = src0.x \times src1.x
+
+dst.y = src0.y \times src1.y
+
+dst.z = src0.z \times src1.z
+
+dst.w = src0.w \times src1.w" /></p>
+</div><p>ADD - Add</p>
+<div class="math">
+<p><img src="_images/math/419ee673cdf363cbe29df99a84db18bf74b83cc4.png" alt="dst.x = src0.x + src1.x
+
+dst.y = src0.y + src1.y
+
+dst.z = src0.z + src1.z
+
+dst.w = src0.w + src1.w" /></p>
+</div><p>DP3 - 3-component Dot Product</p>
+<div class="math">
+<p><img src="_images/math/cd11030c4826718fe39618e48ae07d9298184a65.png" alt="dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
+
+dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
+
+dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
+
+dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z" /></p>
+</div><p>DP4 - 4-component Dot Product</p>
+<div class="math">
+<p><img src="_images/math/efbae5a733577ba979c4f08fa0e1de5e31953b92.png" alt="dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
+
+dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
+
+dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
+
+dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w" /></p>
+</div><p>DST - Distance Vector</p>
+<div class="math">
+<p><img src="_images/math/6d0d5702a6e475d584f295bd4f0fa80a70b70ee5.png" alt="dst.x = 1
+
+dst.y = src0.y \times src1.y
+
+dst.z = src0.z
+
+dst.w = src1.w" /></p>
+</div><p>MIN - Minimum</p>
+<div class="math">
+<p><img src="_images/math/73dec9e78c22629aa3379d21ccc96b1a5c5d2dbd.png" alt="dst.x = min(src0.x, src1.x)
+
+dst.y = min(src0.y, src1.y)
+
+dst.z = min(src0.z, src1.z)
+
+dst.w = min(src0.w, src1.w)" /></p>
+</div><p>MAX - Maximum</p>
+<div class="math">
+<p><img src="_images/math/1ad10aa070bc12ee93fca94040edb8900468ae29.png" alt="dst.x = max(src0.x, src1.x)
+
+dst.y = max(src0.y, src1.y)
+
+dst.z = max(src0.z, src1.z)
+
+dst.w = max(src0.w, src1.w)" /></p>
+</div><p>SLT - Set On Less Than</p>
+<div class="math">
+<p><img src="_images/math/b1db3ad26718bdcf3d1afeb866f1fc595230786d.png" alt="dst.x = (src0.x &lt; src1.x) ? 1 : 0
+
+dst.y = (src0.y &lt; src1.y) ? 1 : 0
+
+dst.z = (src0.z &lt; src1.z) ? 1 : 0
+
+dst.w = (src0.w &lt; src1.w) ? 1 : 0" /></p>
+</div><p>SGE - Set On Greater Equal Than</p>
+<div class="math">
+<p><img src="_images/math/bb15ac1bdb0b295273a7c57060899063cf618a95.png" alt="dst.x = (src0.x &gt;= src1.x) ? 1 : 0
+
+dst.y = (src0.y &gt;= src1.y) ? 1 : 0
+
+dst.z = (src0.z &gt;= src1.z) ? 1 : 0
+
+dst.w = (src0.w &gt;= src1.w) ? 1 : 0" /></p>
+</div><p>MAD - Multiply And Add</p>
+<div class="math">
+<p><img src="_images/math/cb4e90af76c03c927762a3c33e989ce2c41f5be5.png" alt="dst.x = src0.x \times src1.x + src2.x
+
+dst.y = src0.y \times src1.y + src2.y
+
+dst.z = src0.z \times src1.z + src2.z
+
+dst.w = src0.w \times src1.w + src2.w" /></p>
+</div><p>SUB - Subtract</p>
+<div class="math">
+<p><img src="_images/math/d96d8a97260276b9db5e903a05339b869391856f.png" alt="dst.x = src0.x - src1.x
+
+dst.y = src0.y - src1.y
+
+dst.z = src0.z - src1.z
+
+dst.w = src0.w - src1.w" /></p>
+</div><p>LRP - Linear Interpolate</p>
+<div class="math">
+<p><img src="_images/math/cf94ae7663599af8dc7ada12a43b33ca5083044a.png" alt="dst.x = src0.x \times (src1.x - src2.x) + src2.x
+
+dst.y = src0.y \times (src1.y - src2.y) + src2.y
+
+dst.z = src0.z \times (src1.z - src2.z) + src2.z
+
+dst.w = src0.w \times (src1.w - src2.w) + src2.w" /></p>
+</div><p>CND - Condition</p>
+<div class="math">
+<p><img src="_images/math/f9be0a9bff61d950cb768b8d10c66a45377f3124.png" alt="dst.x = (src2.x &gt; 0.5) ? src0.x : src1.x
+
+dst.y = (src2.y &gt; 0.5) ? src0.y : src1.y
+
+dst.z = (src2.z &gt; 0.5) ? src0.z : src1.z
+
+dst.w = (src2.w &gt; 0.5) ? src0.w : src1.w" /></p>
+</div><p>DP2A - 2-component Dot Product And Add</p>
+<div class="math">
+<p><img src="_images/math/abcd8a9f57fcaecc5e5c14835fa7438b08b4009d.png" alt="dst.x = src0.x \times src1.x + src0.y \times src1.y + src2.x
+
+dst.y = src0.x \times src1.x + src0.y \times src1.y + src2.x
+
+dst.z = src0.x \times src1.x + src0.y \times src1.y + src2.x
+
+dst.w = src0.x \times src1.x + src0.y \times src1.y + src2.x" /></p>
+</div><p>FRAC - Fraction</p>
+<div class="math">
+<p><img src="_images/math/df45d09eb32da9798269d030845962e4d92e26de.png" alt="dst.x = src.x - \lfloor src.x\rfloor
+
+dst.y = src.y - \lfloor src.y\rfloor
+
+dst.z = src.z - \lfloor src.z\rfloor
+
+dst.w = src.w - \lfloor src.w\rfloor" /></p>
+</div><p>CLAMP - Clamp</p>
+<div class="math">
+<p><img src="_images/math/56093f3e51016bf4a7784ed66cb8628202f58b2d.png" alt="dst.x = clamp(src0.x, src1.x, src2.x)
+
+dst.y = clamp(src0.y, src1.y, src2.y)
+
+dst.z = clamp(src0.z, src1.z, src2.z)
+
+dst.w = clamp(src0.w, src1.w, src2.w)" /></p>
+</div><p>FLR - Floor</p>
+<p>This is identical to ARL.</p>
+<div class="math">
+<p><img src="_images/math/a6a788a4144ea0b8be244aad870806646081b809.png" alt="dst.x = \lfloor src.x\rfloor
+
+dst.y = \lfloor src.y\rfloor
+
+dst.z = \lfloor src.z\rfloor
+
+dst.w = \lfloor src.w\rfloor" /></p>
+</div><p>ROUND - Round</p>
+<div class="math">
+<p><img src="_images/math/226c98a475a610bdeb91b4fbf51261cf8721d8f6.png" alt="dst.x = round(src.x)
+
+dst.y = round(src.y)
+
+dst.z = round(src.z)
+
+dst.w = round(src.w)" /></p>
+</div><p>EX2 - Exponential Base 2</p>
+<div class="math">
+<p><img src="_images/math/0210d258bc676109314169f2dd4320059387500c.png" alt="dst.x = 2^{src.x}
+
+dst.y = 2^{src.x}
+
+dst.z = 2^{src.x}
+
+dst.w = 2^{src.x}" /></p>
+</div><p>LG2 - Logarithm Base 2</p>
+<div class="math">
+<p><img src="_images/math/1b910bba9c9c6d11618b234335f33413d4f76ee6.png" alt="dst.x = \log_2{src.x}
+
+dst.y = \log_2{src.x}
+
+dst.z = \log_2{src.x}
+
+dst.w = \log_2{src.x}" /></p>
+</div><p>POW - Power</p>
+<div class="math">
+<p><img src="_images/math/290ad5e39fd561a8616e6eb9abc488c8615b36c7.png" alt="dst.x = src0.x^{src1.x}
+
+dst.y = src0.x^{src1.x}
+
+dst.z = src0.x^{src1.x}
+
+dst.w = src0.x^{src1.x}" /></p>
+</div><p>XPD - Cross Product</p>
+<div class="math">
+<p><img src="_images/math/751ec5401cf0d30257850404124ddad65cd5c0b2.png" alt="dst.x = src0.y \times src1.z - src1.y \times src0.z
+
+dst.y = src0.z \times src1.x - src1.z \times src0.x
+
+dst.z = src0.x \times src1.y - src1.x \times src0.y
+
+dst.w = 1" /></p>
+</div><p>ABS - Absolute</p>
+<div class="math">
+<p><img src="_images/math/ad452a9162cb4c5aeb7638cac156cf04155c968a.png" alt="dst.x = |src.x|
+
+dst.y = |src.y|
+
+dst.z = |src.z|
+
+dst.w = |src.w|" /></p>
+</div><p>RCC - Reciprocal Clamped</p>
+<p>XXX cleanup on aisle three</p>
+<div class="math">
+<p><img src="_images/math/f5fe168fde58a4d9fb87b5ef1e8b532f02f3a7cb.png" alt="dst.x = (1 / src.x) &gt; 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+dst.y = (1 / src.x) &gt; 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+dst.z = (1 / src.x) &gt; 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+dst.w = (1 / src.x) &gt; 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)" /></p>
+</div><p>DPH - Homogeneous Dot Product</p>
+<div class="math">
+<p><img src="_images/math/2049740526a3bf3b01a0793817069df1d2b217a6.png" alt="dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
+dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
+dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
+dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w" /></p>
+</div><p>COS - Cosine</p>
+<div class="math">
+<p><img src="_images/math/ade7e8ec73d74fb03022a40c9a69055c7a0a937b.png" alt="dst.x = \cos{src.x}
+
+dst.y = \cos{src.x}
+
+dst.z = \cos{src.x}
+
+dst.w = \cos{src.w}" /></p>
+</div><p>DDX - Derivative Relative To X</p>
+<div class="math">
+<p><img src="_images/math/5846a9ccdaf9e3c8c9ffa099acee7e80c7cc0d4b.png" alt="dst.x = partialx(src.x)
+
+dst.y = partialx(src.y)
+
+dst.z = partialx(src.z)
+
+dst.w = partialx(src.w)" /></p>
+</div><p>DDY - Derivative Relative To Y</p>
+<div class="math">
+<p><img src="_images/math/f89c54b3cac95d930ef70dffa6dc62db5fac05a6.png" alt="dst.x = partialy(src.x)
+
+dst.y = partialy(src.y)
+
+dst.z = partialy(src.z)
+
+dst.w = partialy(src.w)" /></p>
+</div><p>KILP - Predicated Discard</p>
+<blockquote>
+discard</blockquote>
+<p>PK2H - Pack Two 16-bit Floats</p>
+<blockquote>
+TBD</blockquote>
+<p>PK2US - Pack Two Unsigned 16-bit Scalars</p>
+<blockquote>
+TBD</blockquote>
+<p>PK4B - Pack Four Signed 8-bit Scalars</p>
+<blockquote>
+TBD</blockquote>
+<p>PK4UB - Pack Four Unsigned 8-bit Scalars</p>
+<blockquote>
+TBD</blockquote>
+<p>RFL - Reflection Vector</p>
+<div class="math">
+<p><img src="_images/math/6dfa1d81b7272fac743c04c8f5fbd74bb42639b4.png" alt="dst.x = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.x - src1.x
+
+dst.y = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.y - src1.y
+
+dst.z = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.z - src1.z
+
+dst.w = 1" /></p>
+</div><p>Considered for removal.</p>
+<p>SEQ - Set On Equal</p>
+<div class="math">
+<p><img src="_images/math/5eac00cd4b387d141630ace602ed89d9a2ccc0ef.png" alt="dst.x = (src0.x == src1.x) ? 1 : 0
+dst.y = (src0.y == src1.y) ? 1 : 0
+dst.z = (src0.z == src1.z) ? 1 : 0
+dst.w = (src0.w == src1.w) ? 1 : 0" /></p>
+</div><p>SFL - Set On False</p>
+<div class="math">
+<p><img src="_images/math/15f738543d3cfe86879e953e69536effdc1d97f5.png" alt="dst.x = 0
+dst.y = 0
+dst.z = 0
+dst.w = 0" /></p>
+</div><p>Considered for removal.</p>
+<p>SGT - Set On Greater Than</p>
+<div class="math">
+<p><img src="_images/math/2bbfc816656154cb764d951002e595719a0cfce1.png" alt="dst.x = (src0.x &gt; src1.x) ? 1 : 0
+dst.y = (src0.y &gt; src1.y) ? 1 : 0
+dst.z = (src0.z &gt; src1.z) ? 1 : 0
+dst.w = (src0.w &gt; src1.w) ? 1 : 0" /></p>
+</div><p>SIN - Sine</p>
+<div class="math">
+<p><img src="_images/math/0e5562f4fdf39c2754c17f761d76dcdb738dd233.png" alt="dst.x = \sin{src.x}
+
+dst.y = \sin{src.x}
+
+dst.z = \sin{src.x}
+
+dst.w = \sin{src.w}" /></p>
+</div><p>SLE - Set On Less Equal Than</p>
+<div class="math">
+<p><img src="_images/math/3f4ffe13f32660772fc7dbde7b56fff6308b347c.png" alt="dst.x = (src0.x &lt;= src1.x) ? 1 : 0
+dst.y = (src0.y &lt;= src1.y) ? 1 : 0
+dst.z = (src0.z &lt;= src1.z) ? 1 : 0
+dst.w = (src0.w &lt;= src1.w) ? 1 : 0" /></p>
+</div><p>SNE - Set On Not Equal</p>
+<div class="math">
+<p><img src="_images/math/7a206759bbd06a8ef2385b8b7cf42b07521d36a8.png" alt="dst.x = (src0.x != src1.x) ? 1 : 0
+dst.y = (src0.y != src1.y) ? 1 : 0
+dst.z = (src0.z != src1.z) ? 1 : 0
+dst.w = (src0.w != src1.w) ? 1 : 0" /></p>
+</div><p>STR - Set On True</p>
+<div class="math">
+<p><img src="_images/math/9a8aa4392d07b8c3fd7f2bc7ddee9eecd87e2c21.png" alt="dst.x = 1
+dst.y = 1
+dst.z = 1
+dst.w = 1" /></p>
+</div><p>TEX - Texture Lookup</p>
+<blockquote>
+TBD</blockquote>
+<p>TXD - Texture Lookup with Derivatives</p>
+<blockquote>
+TBD</blockquote>
+<p>TXP - Projective Texture Lookup</p>
+<blockquote>
+TBD</blockquote>
+<p>UP2H - Unpack Two 16-Bit Floats</p>
+<blockquote>
+<p>TBD</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>UP2US - Unpack Two Unsigned 16-Bit Scalars</p>
+<blockquote>
+<p>TBD</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>UP4B - Unpack Four Signed 8-Bit Values</p>
+<blockquote>
+<p>TBD</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>UP4UB - Unpack Four Unsigned 8-Bit Scalars</p>
+<blockquote>
+<p>TBD</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>X2D - 2D Coordinate Transformation</p>
+<div class="math">
+<p><img src="_images/math/f94a20471877c44c7f623279934018e5c7348e83.png" alt="dst.x = src0.x + src1.x \times src2.x + src1.y \times src2.y
+dst.y = src0.y + src1.x \times src2.z + src1.y \times src2.w
+dst.z = src0.x + src1.x \times src2.x + src1.y \times src2.y
+dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w" /></p>
+</div><p>Considered for removal.</p>
+</div>
+<div class="section" id="gl-nv-vertex-program2">
+<h2>GL_NV_vertex_program2<a class="headerlink" href="#gl-nv-vertex-program2" title="Permalink to this headline">¶</a></h2>
+<p>ARA - Address Register Add</p>
+<blockquote>
+<p>TBD</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>ARR - Address Register Load With Round</p>
+<div class="math">
+<p><img src="_images/math/226c98a475a610bdeb91b4fbf51261cf8721d8f6.png" alt="dst.x = round(src.x)
+
+dst.y = round(src.y)
+
+dst.z = round(src.z)
+
+dst.w = round(src.w)" /></p>
+</div><p>BRA - Branch</p>
+<blockquote>
+<p>pc = target</p>
+<p>Considered for removal.</p>
+</blockquote>
+<p>CAL - Subroutine Call</p>
+<blockquote>
+push(pc)
+pc = target</blockquote>
+<p>RET - Subroutine Call Return</p>
+<blockquote>
+<p>pc = pop()</p>
+<p>Potential restrictions:
+times Only occurs at end of function.</p>
+</blockquote>
+<p>SSG - Set Sign</p>
+<div class="math">
+<p><img src="_images/math/096db0cc9a735fa08397a0d940cb96025db3e3c8.png" alt="dst.x = (src.x &gt; 0) ? 1 : (src.x &lt; 0) ? -1 : 0
+
+dst.y = (src.y &gt; 0) ? 1 : (src.y &lt; 0) ? -1 : 0
+
+dst.z = (src.z &gt; 0) ? 1 : (src.z &lt; 0) ? -1 : 0
+
+dst.w = (src.w &gt; 0) ? 1 : (src.w &lt; 0) ? -1 : 0" /></p>
+</div><p>CMP - Compare</p>
+<div class="math">
+<p><img src="_images/math/53961253955fd2148f7cef66c79f2274c76f1954.png" alt="dst.x = (src0.x &lt; 0) ? src1.x : src2.x
+
+dst.y = (src0.y &lt; 0) ? src1.y : src2.y
+
+dst.z = (src0.z &lt; 0) ? src1.z : src2.z
+
+dst.w = (src0.w &lt; 0) ? src1.w : src2.w" /></p>
+</div><p>KIL - Conditional Discard</p>
+<div class="math">
+<p><img src="_images/math/ef0c42df6cde68a9c411ff8ce9ad1603b2715daf.png" alt="if (src.x &lt; 0 || src.y &lt; 0 || src.z &lt; 0 || src.w &lt; 0)
+  discard
+endif" /></p>
+</div><p>SCS - Sine Cosine</p>
+<div class="math">
+<p><img src="_images/math/1ed3a5293ecdad1b4847367fba55be005fe7f6ba.png" alt="dst.x = \cos{src.x}
+
+dst.y = \sin{src.x}
+
+dst.z = 0
+
+dst.y = 1" /></p>
+</div><p>TXB - Texture Lookup With Bias</p>
+<blockquote>
+TBD</blockquote>
+<p>NRM - 3-component Vector Normalise</p>
+<div class="math">
+<p><img src="_images/math/a6403ef2be1ec6b8eafb37e12b4e44adf240444e.png" alt="dst.x = src.x / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+
+dst.y = src.y / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+
+dst.z = src.z / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+
+dst.w = 1" /></p>
+</div><p>DIV - Divide</p>
+<div class="math">
+<p><img src="_images/math/f8d904588ef4d267803f5aee2f5789d9eda5b0e4.png" alt="dst.x = \frac{src0.x}{src1.x}
+
+dst.y = \frac{src0.y}{src1.y}
+
+dst.z = \frac{src0.z}{src1.z}
+
+dst.w = \frac{src0.w}{src1.w}" /></p>
+</div><p>DP2 - 2-component Dot Product</p>
+<div class="math">
+<p><img src="_images/math/052e6cb10c4892efcc9dfdd69fd3480adbae7bba.png" alt="dst.x = src0.x \times src1.x + src0.y \times src1.y
+
+dst.y = src0.x \times src1.x + src0.y \times src1.y
+
+dst.z = src0.x \times src1.x + src0.y \times src1.y
+
+dst.w = src0.x \times src1.x + src0.y \times src1.y" /></p>
+</div><p>TXL - Texture Lookup With LOD</p>
+<blockquote>
+TBD</blockquote>
+<p>BRK - Break</p>
+<blockquote>
+TBD</blockquote>
+<p>IF - If</p>
+<blockquote>
+TBD</blockquote>
+<p>BGNFOR - Begin a For-Loop</p>
+<blockquote>
+<p>dst.x = floor(src.x)
+dst.y = floor(src.y)
+dst.z = floor(src.z)</p>
+<dl class="docutils">
+<dt>if (dst.y &lt;= 0)</dt>
+<dd>pc = [matching ENDFOR] + 1</dd>
+</dl>
+<p>endif</p>
+<dl class="docutils">
+<dt>Note: The destination must be a loop register.</dt>
+<dd>The source must be a constant register.</dd>
+</dl>
+<p>Considered for cleanup / removal.</p>
+</blockquote>
+<p>REP - Repeat</p>
+<blockquote>
+TBD</blockquote>
+<p>ELSE - Else</p>
+<blockquote>
+TBD</blockquote>
+<p>ENDIF - End If</p>
+<blockquote>
+TBD</blockquote>
+<p>ENDFOR - End a For-Loop</p>
+<blockquote>
+<p>dst.x = dst.x + dst.z
+dst.y = dst.y - 1.0</p>
+<dl class="docutils">
+<dt>if (dst.y &gt; 0)</dt>
+<dd>pc = [matching BGNFOR instruction] + 1</dd>
+</dl>
+<p>endif</p>
+<p>Note: The destination must be a loop register.</p>
+<p>Considered for cleanup / removal.</p>
+</blockquote>
+<p>ENDREP - End Repeat</p>
+<blockquote>
+TBD</blockquote>
+<p>PUSHA - Push Address Register On Stack</p>
+<blockquote>
+<p>push(src.x)
+push(src.y)
+push(src.z)
+push(src.w)</p>
+<p>Considered for cleanup / removal.</p>
+</blockquote>
+<p>POPA - Pop Address Register From Stack</p>
+<blockquote>
+<p>dst.w = pop()
+dst.z = pop()
+dst.y = pop()
+dst.x = pop()</p>
+<p>Considered for cleanup / removal.</p>
+</blockquote>
+</div>
+<div class="section" id="gl-nv-gpu-program4">
+<h2>GL_NV_gpu_program4<a class="headerlink" href="#gl-nv-gpu-program4" title="Permalink to this headline">¶</a></h2>
+<p>Support for these opcodes indicated by a special pipe capability bit (TBD).</p>
+<p>CEIL - Ceiling</p>
+<div class="math">
+<p><img src="_images/math/03e47c613e946131569cb8ab9b88ae7b31a7a436.png" alt="dst.x = \lceil src.x\rceil
+
+dst.y = \lceil src.y\rceil
+
+dst.z = \lceil src.z\rceil
+
+dst.w = \lceil src.w\rceil" /></p>
+</div><p>I2F - Integer To Float</p>
+<div class="math">
+<p><img src="_images/math/fa38e14d5e8d8fcf15c70890e66ae5727443e531.png" alt="dst.x = (float) src.x
+
+dst.y = (float) src.y
+
+dst.z = (float) src.z
+
+dst.w = (float) src.w" /></p>
+</div><p>NOT - Bitwise Not</p>
+<div class="math">
+<p><img src="_images/math/ae28f3acd0883602c612198d7bcd7fc277972f31.png" alt="dst.x = ~src.x
+
+dst.y = ~src.y
+
+dst.z = ~src.z
+
+dst.w = ~src.w" /></p>
+</div><p>TRUNC - Truncate</p>
+<p>XXX how is this different from floor?</p>
+<div class="math">
+<p><img src="_images/math/4a413dd124842171577a13c5de2f45c92f1a0c59.png" alt="dst.x = trunc(src.x)
+
+dst.y = trunc(src.y)
+
+dst.z = trunc(src.z)
+
+dst.w = trunc(src.w)" /></p>
+</div><p>SHL - Shift Left</p>
+<div class="math">
+<p><img src="_images/math/6d8f34db37f5d0909f568cbd49dbb9bbd376629d.png" alt="dst.x = src0.x &lt;&lt; src1.x
+
+dst.y = src0.y &lt;&lt; src1.x
+
+dst.z = src0.z &lt;&lt; src1.x
+
+dst.w = src0.w &lt;&lt; src1.x" /></p>
+</div><p>SHR - Shift Right</p>
+<div class="math">
+<p><img src="_images/math/8bb711dcf8af2b6a34bd4cb19311c1c2c445ef5e.png" alt="dst.x = src0.x &gt;&gt; src1.x
+
+dst.y = src0.y &gt;&gt; src1.x
+
+dst.z = src0.z &gt;&gt; src1.x
+
+dst.w = src0.w &gt;&gt; src1.x" /></p>
+</div><p>AND - Bitwise And</p>
+<div class="math">
+<p><img src="_images/math/a37f2da4dd31c01e7c3afd0adab9bdf27c9d4805.png" alt="dst.x = src0.x &amp; src1.x
+
+dst.y = src0.y &amp; src1.y
+
+dst.z = src0.z &amp; src1.z
+
+dst.w = src0.w &amp; src1.w" /></p>
+</div><p>OR - Bitwise Or</p>
+<div class="math">
+<p><img src="_images/math/84549dcb2fc79ba332fa86d8b6bdac239d32097f.png" alt="dst.x = src0.x | src1.x
+
+dst.y = src0.y | src1.y
+
+dst.z = src0.z | src1.z
+
+dst.w = src0.w | src1.w" /></p>
+</div><p>MOD - Modulus</p>
+<div class="math">
+<p><img src="_images/math/10d8720201a3a554b1610687157a80fae1871f6d.png" alt="dst.x = src0.x \bmod src1.x
+
+dst.y = src0.y \bmod src1.y
+
+dst.z = src0.z \bmod src1.z
+
+dst.w = src0.w \bmod src1.w" /></p>
+</div><p>XOR - Bitwise Xor</p>
+<div class="math">
+<p><img src="_images/math/0f7e82c35f1b87f2d11da3fbc639085a54a5e7ec.png" alt="dst.x = src0.x ^ src1.x
+
+dst.y = src0.y ^ src1.y
+
+dst.z = src0.z ^ src1.z
+
+dst.w = src0.w ^ src1.w" /></p>
+</div><p>SAD - Sum Of Absolute Differences</p>
+<div class="math">
+<p><img src="_images/math/a4a04906e15ff687e62dcad0046baa9ae05eabb5.png" alt="dst.x = |src0.x - src1.x| + src2.x
+
+dst.y = |src0.y - src1.y| + src2.y
+
+dst.z = |src0.z - src1.z| + src2.z
+
+dst.w = |src0.w - src1.w| + src2.w" /></p>
+</div><p>TXF - Texel Fetch</p>
+<blockquote>
+TBD</blockquote>
+<p>TXQ - Texture Size Query</p>
+<blockquote>
+TBD</blockquote>
+<p>CONT - Continue</p>
+<blockquote>
+TBD</blockquote>
+</div>
+<div class="section" id="gl-nv-geometry-program4">
+<h2>GL_NV_geometry_program4<a class="headerlink" href="#gl-nv-geometry-program4" title="Permalink to this headline">¶</a></h2>
+<p>EMIT - Emit</p>
+<blockquote>
+TBD</blockquote>
+<p>ENDPRIM - End Primitive</p>
+<blockquote>
+TBD</blockquote>
+</div>
+<div class="section" id="glsl">
+<h2>GLSL<a class="headerlink" href="#glsl" title="Permalink to this headline">¶</a></h2>
+<p>BGNLOOP - Begin a Loop</p>
+<blockquote>
+TBD</blockquote>
+<p>BGNSUB - Begin Subroutine</p>
+<blockquote>
+TBD</blockquote>
+<p>ENDLOOP - End a Loop</p>
+<blockquote>
+TBD</blockquote>
+<p>ENDSUB - End Subroutine</p>
+<blockquote>
+TBD</blockquote>
+<p>NOP - No Operation</p>
+<blockquote>
+Do nothing.</blockquote>
+<p>NRM4 - 4-component Vector Normalise</p>
+<div class="math">
+<p><img src="_images/math/740c183de3654a7e7ee772a640badd3b2844da81.png" alt="dst.x = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+dst.y = \frac{src.y}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+dst.z = \frac{src.z}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+dst.w = \frac{src.w}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}" /></p>
+</div></div>
+<div class="section" id="ps-2-x">
+<h2>ps_2_x<a class="headerlink" href="#ps-2-x" title="Permalink to this headline">¶</a></h2>
+<p>CALLNZ - Subroutine Call If Not Zero</p>
+<blockquote>
+TBD</blockquote>
+<p>IFC - If</p>
+<blockquote>
+TBD</blockquote>
+<p>BREAKC - Break Conditional</p>
+<blockquote>
+TBD</blockquote>
+</div>
+</div>
+<div class="section" id="explanation-of-symbols-used">
+<h1>Explanation of symbols used<a class="headerlink" href="#explanation-of-symbols-used" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<p><img class="math" src="_images/math/49428192d366caf373c0af3c3261687f12b4c883.png" alt="|x|"/>       Absolute value of <cite>x</cite>.</p>
+<p><img class="math" src="_images/math/1a7cd7095a9b123f81967d8d3b14d1e02b0174e7.png" alt="\lceil x \rceil"/> Ceiling of <cite>x</cite>.</p>
+<dl class="docutils">
+<dt>clamp(x,y,z)      Clamp x between y and z.</dt>
+<dd>(x &lt; y) ? y : (x &gt; z) ? z : x</dd>
+</dl>
+<p><img class="math" src="_images/math/441416e660d25335f27e55334ac2a06e51541c97.png" alt="\lfloor x\rfloor"/> Floor of <cite>x</cite>.</p>
+<p><img class="math" src="_images/math/1ce288a883e98c3d1027d27f6246e7d3fdc4d78c.png" alt="\log_2{x}"/> Logarithm of <cite>x</cite>, base 2.</p>
+<dl class="docutils">
+<dt>max(x,y)          Maximum of x and y.</dt>
+<dd>(x &gt; y) ? x : y</dd>
+<dt>min(x,y)          Minimum of x and y.</dt>
+<dd>(x &lt; y) ? x : y</dd>
+</dl>
+<p>partialx(x)       Derivative of x relative to fragment&#8217;s X.</p>
+<p>partialy(x)       Derivative of x relative to fragment&#8217;s Y.</p>
+<p>pop()             Pop from stack.</p>
+<p><img class="math" src="_images/math/8f9af910fe749481919573c0dd2b132118f19d19.png" alt="x^y"/>       <cite>x</cite> to the power <cite>y</cite>.</p>
+<p>push(x)           Push x on stack.</p>
+<p>round(x)          Round x.</p>
+<p>trunc(x)          Truncate x.</p>
+</blockquote>
+</div>
+<div class="section" id="keywords">
+<h2>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<p>discard           Discard fragment.</p>
+<p>dst               First destination register.</p>
+<p>dst0              First destination register.</p>
+<p>pc                Program counter.</p>
+<p>src               First source register.</p>
+<p>src0              First source register.</p>
+<p>src1              Second source register.</p>
+<p>src2              Third source register.</p>
+<p>target            Label of target instruction.</p>
+</blockquote>
+</div>
+</div>
+<div class="section" id="other-tokens">
+<h1>Other tokens<a class="headerlink" href="#other-tokens" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="declaration-semantic">
+<h2>Declaration Semantic<a class="headerlink" href="#declaration-semantic" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<p>Follows Declaration token if Semantic bit is set.</p>
+<p>Since its purpose is to link a shader with other stages of the pipeline,
+it is valid to follow only those Declaration tokens that declare a register
+either in INPUT or OUTPUT file.</p>
+<p>SemanticName field contains the semantic name of the register being declared.
+There is no default value.</p>
+<p>SemanticIndex is an optional subscript that can be used to distinguish
+different register declarations with the same semantic name. The default value
+is 0.</p>
+<p>The meanings of the individual semantic names are explained in the following
+sections.</p>
+</blockquote>
+<div class="section" id="face">
+<h3>FACE<a class="headerlink" href="#face" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<p>Valid only in a fragment shader INPUT declaration.</p>
+<p>FACE.x is negative when the primitive is back facing. FACE.x is positive
+when the primitive is front facing.</p>
+</blockquote>
+</div>
+</div>
 </div>
 
 
@@ -59,6 +876,31 @@ used by all drivers.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">TGSI</a><ul>
+<li><a class="reference external" href="#from-gl-nv-vertex-program">From GL_NV_vertex_program</a></li>
+<li><a class="reference external" href="#gl-nv-vertex-program2">GL_NV_vertex_program2</a></li>
+<li><a class="reference external" href="#gl-nv-gpu-program4">GL_NV_gpu_program4</a></li>
+<li><a class="reference external" href="#gl-nv-geometry-program4">GL_NV_geometry_program4</a></li>
+<li><a class="reference external" href="#glsl">GLSL</a></li>
+<li><a class="reference external" href="#ps-2-x">ps_2_x</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#explanation-of-symbols-used">Explanation of symbols used</a><ul>
+<li><a class="reference external" href="#functions">Functions</a></li>
+<li><a class="reference external" href="#keywords">Keywords</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#other-tokens">Other tokens</a><ul>
+<li><a class="reference external" href="#declaration-semantic">Declaration Semantic</a><ul>
+<li><a class="reference external" href="#face">FACE</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
             <h4>Previous topic</h4>
             <p class="topless"><a href="intro.html"
                                   title="previous chapter">Introduction</a></p>
