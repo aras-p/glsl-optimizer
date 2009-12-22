@@ -1141,12 +1141,6 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    int i;
    GLuint len_vertext_header = 2;
 
-   if (c->key.copy_edgeflag) {
-      brw_MOV(p, 
-              get_reg(c, TGSI_FILE_OUTPUT, c->prog_data.output_edgeflag),
-              brw_imm_f(1));
-   }
-
    /* Build ndc coords */
    ndc = get_tmp(c);
    /* ndc = 1.0 / pos.w */

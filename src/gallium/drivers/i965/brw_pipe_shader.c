@@ -215,14 +215,11 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
          else
             vs->output_bfc1 = i;
          break;
-#if 0
       case TGSI_SEMANTIC_EDGEFLAG:
          vs->output_edgeflag = i;
          break;
-#endif
       }
    }
-
 
    
    /* Done:

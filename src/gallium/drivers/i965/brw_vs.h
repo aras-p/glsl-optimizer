@@ -41,7 +41,6 @@
 struct brw_vs_prog_key {
    GLuint program_string_id;
    GLuint nr_userclip:4;
-   GLuint copy_edgeflag:1;
    GLuint pad:26;
    struct brw_fs_signature fs_signature;
 };
@@ -65,8 +64,6 @@ struct brw_vs_compile {
    GLuint nr_outputs;
    GLuint nr_immediates;
    GLfloat immediate[128][4];
-
-   GLboolean copy_edgeflag;
 
    GLuint overflow_grf_start;
    GLuint overflow_count;

@@ -58,18 +58,6 @@ static enum pipe_error do_vs_prog( struct brw_context *brw,
    c.prog_data.nr_outputs = vp->info.num_outputs;
    c.prog_data.nr_inputs = vp->info.num_inputs;
 
-   /* XXX: we want edgeflag handling to be integrated to the vertex
-    * shader, but are currently faking the edgeflag output:
-    */
-   if (c.key.copy_edgeflag) {
-      c.prog_data.output_edgeflag = c.prog_data.nr_outputs;
-      c.prog_data.nr_outputs++;
-   }
-   else {
-      c.prog_data.output_edgeflag = ~0;
-   }
-
-
    if (1)
       tgsi_dump(c.vp->tokens, 0);
 
@@ -108,8 +96,6 @@ static enum pipe_error brw_upload_vs_prog(struct brw_context *brw)
 
    key.program_string_id = vp->id;
    key.nr_userclip = brw->curr.ucp.nr;
-   key.copy_edgeflag = (brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL ||
-			brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL);
 
    memcpy(&key.fs_signature, sig, brw_fs_signature_size(sig));
 

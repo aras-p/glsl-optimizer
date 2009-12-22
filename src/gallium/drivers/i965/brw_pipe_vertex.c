@@ -44,19 +44,12 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
    brw->state.dirty.mesa |= PIPE_NEW_VERTEX_BUFFER;
 }
 
-static void brw_set_edgeflags( struct pipe_context *pipe,
-			       const unsigned *bitfield )
-{
-   /* XXX */
-}
-
 
 void 
 brw_pipe_vertex_init( struct brw_context *brw )
 {
    brw->base.set_vertex_buffers = brw_set_vertex_buffers;
    brw->base.set_vertex_elements = brw_set_vertex_elements;
-   brw->base.set_edgeflags = brw_set_edgeflags;
 }
 
 
