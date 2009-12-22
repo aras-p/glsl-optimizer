@@ -335,6 +335,7 @@ def generate(env):
         if msvc:
             cppdefines += [
                 'VC_EXTRALEAN',
+                '_USE_MATH_DEFINES',
                 '_CRT_SECURE_NO_DEPRECATE',
             ]
         if debug:
