@@ -503,6 +503,7 @@ intel_texture_bitmap(GLcontext * ctx,
    meta_restore_fragment_program(&intel->meta);
    meta_restore_vertex_program(&intel->meta);
 
+   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
 
