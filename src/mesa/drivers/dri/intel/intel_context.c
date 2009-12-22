@@ -68,7 +68,7 @@ int INTEL_DEBUG = (0);
 #endif
 
 
-#define DRIVER_DATE                     "20090712 2009Q2 RC3"
+#define DRIVER_DATE                     "20091221 2009Q4"
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 
