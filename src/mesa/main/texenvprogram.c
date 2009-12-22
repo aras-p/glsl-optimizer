@@ -1040,8 +1040,6 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 
    assert(nr <= MAX_COMBINER_TERMS);
 
-   tmp = undef; /* silence warning (bug 5318) */
-
    for (i = 0; i < nr; i++)
       src[i] = emit_combine_source( p, mask, unit, opt[i].Source, opt[i].Operand );
 
