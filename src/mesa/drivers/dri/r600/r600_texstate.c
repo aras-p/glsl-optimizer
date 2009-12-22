@@ -91,7 +91,7 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
 		 FORMAT_COMP_Y_shift, FORMAT_COMP_Y_mask);
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
-		 FORMAT_COMP_X_shift, FORMAT_COMP_Z_mask);
+		 FORMAT_COMP_Z_shift, FORMAT_COMP_Z_mask);
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
 		 FORMAT_COMP_W_shift, FORMAT_COMP_W_mask);
 
@@ -731,8 +731,10 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 	SETfield(t->SQ_TEX_RESOURCE1, firstImage->Height - 1,
 		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
 
+	t->SQ_TEX_RESOURCE2 = get_base_teximage_offset(t) / 256;
+
 	if ((t->maxLod - t->minLod) > 0) {
-		t->SQ_TEX_RESOURCE3 = t->mt->levels[t->minLod].size / 256;
+		t->SQ_TEX_RESOURCE3 = radeon_miptree_image_offset(t->mt, 0, t->minLod + 1) / 256;
 		SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask);
 		SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
 	}
