@@ -105,13 +105,13 @@ MUL - Multiply
 
 .. math::
 
-  dst.x = src0.x * src1.x
+  dst.x = src0.x \times src1.x
 
-  dst.y = src0.y * src1.y
+  dst.y = src0.y \times src1.y
 
-  dst.z = src0.z * src1.z
+  dst.z = src0.z \times src1.z
 
-  dst.w = src0.w * src1.w
+  dst.w = src0.w \times src1.w
 
 
 ADD - Add
@@ -131,26 +131,26 @@ DP3 - 3-component Dot Product
 
 .. math::
 
-  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
 
-  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
 
-  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
 
-  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
 
 
 DP4 - 4-component Dot Product
 
 .. math::
 
-  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
 
-  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
 
-  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
 
-  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
 
 
 DST - Distance Vector
@@ -159,7 +159,7 @@ DST - Distance Vector
 
   dst.x = 1.0
 
-  dst.y = src0.y * src1.y
+  dst.y = src0.y \times src1.y
 
   dst.z = src0.z
 
@@ -222,13 +222,13 @@ MAD - Multiply And Add
 
 .. math::
 
-  dst.x = src0.x * src1.x + src2.x
+  dst.x = src0.x \times src1.x + src2.x
 
-  dst.y = src0.y * src1.y + src2.y
+  dst.y = src0.y \times src1.y + src2.y
 
-  dst.z = src0.z * src1.z + src2.z
+  dst.z = src0.z \times src1.z + src2.z
 
-  dst.w = src0.w * src1.w + src2.w
+  dst.w = src0.w \times src1.w + src2.w
 
 
 SUB - Subtract
@@ -248,13 +248,13 @@ LRP - Linear Interpolate
 
 .. math::
 
-  dst.x = src0.x * (src1.x - src2.x) + src2.x
+  dst.x = src0.x \times (src1.x - src2.x) + src2.x
 
-  dst.y = src0.y * (src1.y - src2.y) + src2.y
+  dst.y = src0.y \times (src1.y - src2.y) + src2.y
 
-  dst.z = src0.z * (src1.z - src2.z) + src2.z
+  dst.z = src0.z \times (src1.z - src2.z) + src2.z
 
-  dst.w = src0.w * (src1.w - src2.w) + src2.w
+  dst.w = src0.w \times (src1.w - src2.w) + src2.w
 
 
 CND - Condition
@@ -274,13 +274,13 @@ DP2A - 2-component Dot Product And Add
 
 .. math::
 
-  dst.x = src0.x * src1.x + src0.y * src1.y + src2.x
+  dst.x = src0.x \times src1.x + src0.y \times src1.y + src2.x
 
-  dst.y = src0.x * src1.x + src0.y * src1.y + src2.x
+  dst.y = src0.x \times src1.x + src0.y \times src1.y + src2.x
 
-  dst.z = src0.x * src1.x + src0.y * src1.y + src2.x
+  dst.z = src0.x \times src1.x + src0.y \times src1.y + src2.x
 
-  dst.w = src0.x * src1.x + src0.y * src1.y + src2.x
+  dst.w = src0.x \times src1.x + src0.y \times src1.y + src2.x
 
 
 FRAC - Fraction
@@ -373,9 +373,9 @@ POW - Power
 
 .. math::
 
-  dst.x = src0.y * src1.z - src1.y * src0.z
-  dst.y = src0.z * src1.x - src1.z * src0.x
-  dst.z = src0.x * src1.y - src1.x * src0.y
+  dst.x = src0.y \times src1.z - src1.y \times src0.z
+  dst.y = src0.z \times src1.x - src1.z \times src0.x
+  dst.z = src0.x \times src1.y - src1.x \times src0.y
   dst.w = 1.0
 
 
@@ -406,10 +406,10 @@ ABS - Absolute
 
 .. math::
 
-  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
-  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
-  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
-  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
+  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
 
 
 COS - Cosine
@@ -476,9 +476,9 @@ COS - Cosine
 
 .. math::
 
-  dst.x = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.x - src1.x
-  dst.y = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.y - src1.y
-  dst.z = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.z - src1.z
+  dst.x = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.x - src1.x
+  dst.y = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.y - src1.y
+  dst.z = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.z - src1.z
   dst.w = 1.0
 
 Considered for removal.
@@ -601,10 +601,10 @@ SIN - Sine
 
 .. math::
 
-  dst.x = src0.x + src1.x * src2.x + src1.y * src2.y
-  dst.y = src0.y + src1.x * src2.z + src1.y * src2.w
-  dst.z = src0.x + src1.x * src2.x + src1.y * src2.y
-  dst.w = src0.y + src1.x * src2.z + src1.y * src2.w
+  dst.x = src0.x + src1.x \times src2.x + src1.y \times src2.y
+  dst.y = src0.y + src1.x \times src2.z + src1.y \times src2.w
+  dst.z = src0.x + src1.x \times src2.x + src1.y \times src2.y
+  dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w
 
 Considered for removal.
 
@@ -646,7 +646,7 @@ Considered for removal.
   pc = pop()
 
   Potential restrictions:  
-  * Only occurs at end of function.
+  \times Only occurs at end of function.
 
 1.6.6  SSG - Set Sign
 
@@ -699,9 +699,9 @@ SCS - Sine Cosine
 
 .. math::
 
-  dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z)
-  dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z)
-  dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z)
+  dst.x = src.x / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+  dst.y = src.y / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+  dst.z = src.z / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
   dst.w = 1.0
 
 
@@ -719,10 +719,10 @@ SCS - Sine Cosine
 
 .. math::
 
-  dst.x = src0.x * src1.x + src0.y * src1.y
-  dst.y = src0.x * src1.x + src0.y * src1.y
-  dst.z = src0.x * src1.x + src0.y * src1.y
-  dst.w = src0.x * src1.x + src0.y * src1.y
+  dst.x = src0.x \times src1.x + src0.y \times src1.y
+  dst.y = src0.x \times src1.x + src0.y \times src1.y
+  dst.z = src0.x \times src1.x + src0.y \times src1.y
+  dst.w = src0.x \times src1.x + src0.y \times src1.y
 
 
 1.9.5  TXL - Texture Lookup With LOD
@@ -993,10 +993,10 @@ SAD - Sum Of Absolute Differences
 
 .. math::
 
-  dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
-  dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
-  dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
-  dst.w = src.w / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
+  dst.x = src.x / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
+  dst.y = src.y / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
+  dst.z = src.z / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
+  dst.w = src.w / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
 
 
 1.17  ps_2_x
