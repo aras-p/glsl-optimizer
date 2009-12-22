@@ -3246,6 +3246,25 @@ exec_instruction(
    case TGSI_OPCODE_NOP:
       break;
 
+   case TGSI_OPCODE_BREAKC:
+      FETCH(&r[0], 0, CHAN_X);
+      /* update CondMask */
+      if (r[0].u[0] && (mach->ExecMask & 0x1)) {
+         mach->LoopMask &= ~0x1;
+      }
+      if (r[0].u[1] && (mach->ExecMask & 0x2)) {
+         mach->LoopMask &= ~0x2;
+      }
+      if (r[0].u[2] && (mach->ExecMask & 0x4)) {
+         mach->LoopMask &= ~0x4;
+      }
+      if (r[0].u[3] && (mach->ExecMask & 0x8)) {
+         mach->LoopMask &= ~0x8;
+      }
+      /* Todo: if mach->LoopMask == 0, jump to end of loop */
+      UPDATE_EXEC_MASK(mach);
+      break;
+
    default:
       assert( 0 );
    }
