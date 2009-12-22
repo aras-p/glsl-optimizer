@@ -1814,7 +1814,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* Done emitting loop code.  Now walk over the loop's linked list of
     * BREAK and CONT nodes, filling in their BranchTarget fields (which
-    * will point to the ENDLOOP+1 or BGNLOOP instructions, respectively).
+    * will point to the corresponding ENDLOOP instruction.
     */
    for (ir = n->List; ir; ir = ir->List) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
@@ -1823,8 +1823,8 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
-         /* go to instruction after end of loop */
-         inst->BranchTarget = endInstLoc + 1;
+         /* go to instruction at end of loop */
+         inst->BranchTarget = endInstLoc;
       }
       else {
          assert(ir->Opcode == IR_CONT ||

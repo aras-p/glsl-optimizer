@@ -698,12 +698,26 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_ENDSUB:      /* end subroutine */
          break;
       case OPCODE_BRA:         /* branch (conditional) */
-         /* fall-through */
-      case OPCODE_BRK:         /* break out of loop (conditional) */
-         /* fall-through */
-      case OPCODE_CONT:        /* continue loop (conditional) */
          if (eval_condition(machine, inst)) {
             /* take branch */
+            /* Subtract 1 here since we'll do pc++ below */
+            pc = inst->BranchTarget - 1;
+         }
+         break;
+      case OPCODE_BRK:         /* break out of loop (conditional) */
+         ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                == OPCODE_ENDLOOP);
+         if (eval_condition(machine, inst)) {
+            /* break out of loop */
+            /* pc++ at end of for-loop will put us after the ENDLOOP inst */
+            pc = inst->BranchTarget;
+         }
+         break;
+      case OPCODE_CONT:        /* continue loop (conditional) */
+         ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                == OPCODE_ENDLOOP);
+         if (eval_condition(machine, inst)) {
+            /* continue at ENDLOOP */
             /* Subtract 1 here since we'll do pc++ at end of for-loop */
             pc = inst->BranchTarget - 1;
          }
