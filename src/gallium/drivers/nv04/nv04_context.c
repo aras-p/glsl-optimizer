@@ -27,11 +27,6 @@ nv04_destroy(struct pipe_context *pipe)
 	FREE(nv04);
 }
 
-static void
-nv04_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-}
-
 static boolean
 nv04_init_hwctx(struct nv04_context *nv04)
 {
@@ -83,7 +78,6 @@ nv04_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv04->pipe.winsys = ws;
 	nv04->pipe.screen = pscreen;
 	nv04->pipe.destroy = nv04_destroy;
-	nv04->pipe.set_edgeflags = nv04_set_edgeflags;
 	nv04->pipe.draw_arrays = nv04_draw_arrays;
 	nv04->pipe.draw_elements = nv04_draw_elements;
 	nv04->pipe.clear = nv04_clear;

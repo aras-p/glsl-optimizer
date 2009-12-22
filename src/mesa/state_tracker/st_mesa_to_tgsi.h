@@ -30,6 +30,7 @@
 #define ST_MESA_TO_TGSI_H
 
 #include "main/mtypes.h"
+#include "tgsi/tgsi_ureg.h"
 
 
 #if defined __cplusplus
@@ -39,10 +40,11 @@ extern "C" {
 struct tgsi_token;
 struct gl_program;
 
-const struct tgsi_token *
+enum pipe_error
 st_translate_mesa_program(
    GLcontext *ctx,
    uint procType,
+   struct ureg_program *ureg,
    const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
@@ -52,7 +54,8 @@ st_translate_mesa_program(
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[] );
+   const ubyte outputSemanticIndex[],
+   boolean passthrough_edgeflags );
 
 void
 st_free_tokens(const struct tgsi_token *tokens);

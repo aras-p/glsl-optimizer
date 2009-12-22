@@ -718,6 +718,16 @@ emit_face_var( struct st_translate *t,
    t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
 }
 
+static void
+emit_edgeflags( struct st_translate *t,
+                 const struct gl_program *program )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VERT_RESULT_EDGE]];
+   struct ureg_src edge_src = t->inputs[t->inputMapping[VERT_ATTRIB_EDGEFLAG]];
+
+   ureg_MOV( ureg, edge_dst, edge_src );
+}
 
 /**
  * Translate Mesa program to TGSI format.
@@ -738,10 +748,11 @@ emit_face_var( struct st_translate *t,
  *
  * \return  array of translated tokens, caller's responsibility to free
  */
-const struct tgsi_token *
+enum pipe_error
 st_translate_mesa_program(
    GLcontext *ctx,
    uint procType,
+   struct ureg_program *ureg,
    const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
@@ -751,11 +762,10 @@ st_translate_mesa_program(
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[] )
+   const ubyte outputSemanticIndex[],
+   boolean passthrough_edgeflags )
 {
    struct st_translate translate, *t;
-   struct ureg_program *ureg;
-   const struct tgsi_token *tokens = NULL;
    unsigned i;
 
    t = &translate;
@@ -764,11 +774,7 @@ st_translate_mesa_program(
    t->procType = procType;
    t->inputMapping = inputMapping;
    t->outputMapping = outputMapping;
-   t->ureg = ureg_create( procType );
-   if (t->ureg == NULL)
-      return NULL;
-
-   ureg = t->ureg;
+   t->ureg = ureg;
 
    /*_mesa_print_program(program);*/
 
@@ -828,6 +834,8 @@ st_translate_mesa_program(
                                            outputSemanticName[i],
                                            outputSemanticIndex[i] );
       }
+      if (passthrough_edgeflags)
+         emit_edgeflags( t, program );
    }
 
    /* Declare address register.
@@ -899,8 +907,7 @@ st_translate_mesa_program(
                         t->insn[t->labels[i].branch_target] );
    }
 
-   tokens = ureg_get_tokens( ureg, NULL );
-   ureg_destroy( ureg );
+   return PIPE_OK;
 
 out:
    FREE(t->insn);
@@ -909,17 +916,9 @@ out:
 
    if (t->error) {
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
-      FREE((void *)tokens);
-      tokens = NULL;
    }
 
-   if (!tokens) {
-      debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
-      _mesa_print_program(program);
-      debug_assert(0);
-   }
-
-   return tokens;
+   return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 

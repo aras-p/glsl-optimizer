@@ -55,6 +55,7 @@ struct bitmap_cache;
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
 #define ST_NEW_FRAMEBUFFER             0x8
+#define ST_NEW_EDGEFLAGS_DATA          0x10
 
 
 struct st_state_flags {
@@ -120,6 +121,7 @@ struct st_context
    struct st_state_flags dirty;
 
    GLboolean missing_textures;
+   GLboolean vertdata_edgeflags;
 
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;

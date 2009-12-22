@@ -95,25 +95,6 @@ trace_surface_unwrap(struct trace_context *tr_ctx,
 
 
 static INLINE void
-trace_context_set_edgeflags(struct pipe_context *_pipe,
-                            const unsigned *bitfield)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct pipe_context *pipe = tr_ctx->pipe;
-
-   trace_dump_call_begin("pipe_context", "set_edgeflags");
-
-   trace_dump_arg(ptr, pipe);
-   /* FIXME: we don't know how big this array is */
-   trace_dump_arg(ptr, bitfield);
-
-   pipe->set_edgeflags(pipe, bitfield);
-
-   trace_dump_call_end();
-}
-
-
-static INLINE void
 trace_context_draw_block(struct trace_context *tr_ctx, int flag)
 {
    int k;
@@ -1298,7 +1279,6 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.winsys = _screen->winsys;
    tr_ctx->base.screen = _screen;
    tr_ctx->base.destroy = trace_context_destroy;
-   tr_ctx->base.set_edgeflags = trace_context_set_edgeflags;
    tr_ctx->base.draw_arrays = trace_context_draw_arrays;
    tr_ctx->base.draw_elements = trace_context_draw_elements;
    tr_ctx->base.draw_range_elements = trace_context_draw_range_elements;

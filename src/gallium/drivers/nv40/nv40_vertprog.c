@@ -621,6 +621,10 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 			return FALSE;
 		}
 		break;
+	case TGSI_SEMANTIC_EDGEFLAG:
+		/* not really an error just a fallback */
+		NOUVEAU_ERR("cannot handle edgeflag output\n");
+		return FALSE;
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;

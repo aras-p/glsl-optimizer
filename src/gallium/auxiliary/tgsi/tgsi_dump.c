@@ -121,7 +121,8 @@ static const char *semantic_names[] =
    "PSIZE",
    "GENERIC",
    "NORMAL",
-   "FACE"
+   "FACE",
+   "EDGEFLAG"
 };
 
 static const char *immediate_type_names[] =

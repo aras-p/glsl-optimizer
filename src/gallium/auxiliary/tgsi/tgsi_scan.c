@@ -139,15 +139,19 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
                   info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->num_outputs++;
+
+                  /* extra info for special outputs */
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
+                     info->writes_z = TRUE;
+                  }
+                  if (procType == TGSI_PROCESSOR_VERTEX &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG) {
+                     info->writes_edgeflag = TRUE;
+                  }
                }
 
-               /* special case */
-               if (procType == TGSI_PROCESSOR_FRAGMENT &&
-                   file == TGSI_FILE_OUTPUT &&
-                   fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
-                  info->writes_z = TRUE;
-               }
-            }
+             }
          }
          break;
 

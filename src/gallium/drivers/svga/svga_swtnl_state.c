@@ -120,10 +120,6 @@ static int update_swtnl_draw( struct svga_context *svga,
       draw_set_mrd(svga->swtnl.draw, 
                    svga->curr.depthscale);
 
-   if (dirty & SVGA_NEW_EDGEFLAGS)
-      draw_set_edgeflags( svga->swtnl.draw, 
-                          svga->curr.edgeflags );
-
    return 0;
 }
 
@@ -138,8 +134,7 @@ struct svga_tracked_state svga_update_swtnl_draw =
     SVGA_NEW_VIEWPORT |
     SVGA_NEW_RAST |
     SVGA_NEW_FRAME_BUFFER |
-    SVGA_NEW_REDUCED_PRIMITIVE |
-    SVGA_NEW_EDGEFLAGS),
+    SVGA_NEW_REDUCED_PRIMITIVE),
    update_swtnl_draw
 };
 

@@ -672,16 +672,6 @@ nv30_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
 
-static void
-nv30_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-	struct nv30_context *nv30 = nv30_context(pipe);
-
-	nv30->edgeflags = bitfield;
-	nv30->dirty |= NV30_NEW_ARRAYS;
-	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
-}
-
 void
 nv30_init_state_functions(struct nv30_context *nv30)
 {
@@ -721,7 +711,6 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.set_scissor_state = nv30_set_scissor_state;
 	nv30->pipe.set_viewport_state = nv30_set_viewport_state;
 
-	nv30->pipe.set_edgeflags = nv30_set_edgeflags;
 	nv30->pipe.set_vertex_buffers = nv30_set_vertex_buffers;
 	nv30->pipe.set_vertex_elements = nv30_set_vertex_elements;
 }

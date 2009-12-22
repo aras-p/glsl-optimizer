@@ -485,11 +485,6 @@ nv30_vbo_validate(struct nv30_context *nv30)
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
-	if (nv30->edgeflags) {
-		/*nv30->fallback_swtnl |= NV30_NEW_ARRAYS;*/
-		return FALSE;
-	}
-
 	vtxbuf = so_new(20, 18);
 	so_method(vtxbuf, rankine, NV34TCL_VTXBUF_ADDRESS(0), nv30->vtxelt_nr);
 	vtxfmt = so_new(17, 0);

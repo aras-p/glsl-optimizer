@@ -45,17 +45,6 @@ identity_destroy(struct pipe_context *_pipe)
    free(id_pipe);
 }
 
-static void
-identity_set_edgeflags(struct pipe_context *_pipe,
-                       const unsigned *bitfield)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct pipe_context *pipe = id_pipe->pipe;
-
-   pipe->set_edgeflags(pipe,
-                       bitfield);
-}
-
 static boolean
 identity_draw_arrays(struct pipe_context *_pipe,
                      unsigned prim,
@@ -707,7 +696,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;
-   id_pipe->base.set_edgeflags = identity_set_edgeflags;
    id_pipe->base.draw_arrays = identity_draw_arrays;
    id_pipe->base.draw_elements = identity_draw_elements;
    id_pipe->base.draw_range_elements = identity_draw_range_elements;

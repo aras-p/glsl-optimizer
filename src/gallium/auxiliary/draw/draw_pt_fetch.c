@@ -42,10 +42,10 @@ struct pt_fetch {
    struct translate *translate;
 
    unsigned vertex_size;
-   boolean need_edgeflags;
 
    struct translate_cache *cache;
 };
+
 
 /* Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
@@ -120,7 +120,12 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {
-         static struct vertex_header vh = { 0, 1, 0, UNDEFINED_VERTEX_ID, { .0f, .0f, .0f, .0f } };
+         static struct vertex_header vh = { 0,
+                                            1,
+                                            0,
+                                            UNDEFINED_VERTEX_ID,
+                                            { .0f, .0f, .0f, .0f } };
+
 	 fetch->translate->set_buffer(fetch->translate,
 				      draw->pt.nr_vertex_buffers,
 				      &vh,
@@ -128,9 +133,6 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       }
    }
 
-   fetch->need_edgeflags = ((draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-                             draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) &&
-                            draw->pt.user.edgeflag);
 }
 
 
@@ -158,17 +160,6 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			count,
 			verts );
 
-   /* Edgeflags are hard to fit into a translate program, populate
-    * them separately if required.  In the setup above they are
-    * defaulted to one, so only need this if there is reason to change
-    * that default:
-    */
-   if (fetch->need_edgeflags) {
-      for (i = 0; i < count; i++) {
-         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
-         vh->edgeflag = draw_pt_get_edgeflag( draw, elts[i] );
-      }
-   }
 }
 
 
@@ -193,18 +184,6 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
                    start,
                    count,
                    verts );
-
-   /* Edgeflags are hard to fit into a translate program, populate
-    * them separately if required.  In the setup above they are
-    * defaulted to one, so only need this if there is reason to change
-    * that default:
-    */
-   if (fetch->need_edgeflags) {
-      for (i = 0; i < count; i++) {
-         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
-         vh->edgeflag = draw_pt_get_edgeflag( draw, start + i );
-      }
-   }
 }
 
 

@@ -77,6 +77,11 @@ static void r300_shader_read_vs_outputs(
                 vs_outputs->fog = i;
                 break;
 
+            case TGSI_SEMANTIC_EDGEFLAG:
+                assert(index == 0);
+                fprintf(stderr, "r300 VP: cannot handle edgeflag output\n");
+                assert(0);
+                break;
             default:
                 assert(0);
         }

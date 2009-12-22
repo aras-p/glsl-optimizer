@@ -283,13 +283,6 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
     FREE(state);
 }
 
-static void r300_set_edgeflags(struct pipe_context* pipe,
-                               const unsigned* bitfield)
-{
-    /* XXX you know it's bad when i915 has this blank too */
-    /* XXX and even worse, I have no idea WTF the bitfield is */
-}
-
 static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
                                   struct r300_scissor_regs *scissor,
                                   boolean is_r500)
@@ -849,8 +842,6 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
-
-    r300->context.set_edgeflags = r300_set_edgeflags;
 
     r300->context.set_framebuffer_state = r300_set_framebuffer_state;
 

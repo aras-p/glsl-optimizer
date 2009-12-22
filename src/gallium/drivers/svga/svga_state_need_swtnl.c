@@ -108,6 +108,7 @@ static int update_need_pipeline( struct svga_context *svga,
 {
    
    boolean need_pipeline = FALSE;
+   struct svga_vertex_shader *vs = svga->curr.vs;
 
    /* SVGA_NEW_RAST, SVGA_NEW_REDUCED_PRIMITIVE
     */
@@ -119,11 +120,9 @@ static int update_need_pipeline( struct svga_context *svga,
       need_pipeline = TRUE;
    }
 
-   /* SVGA_NEW_EDGEFLAGS
+   /* EDGEFLAGS
     */
-   if (svga->curr.rast->hw_unfilled != PIPE_POLYGON_MODE_FILL &&
-       svga->curr.reduced_prim == PIPE_PRIM_TRIANGLES && 
-       svga->curr.edgeflags != NULL) {
+    if (vs->base.info.writes_edgeflag) {
       SVGA_DBG(DEBUG_SWTNL, "%s: edgeflags\n", __FUNCTION__);
       need_pipeline = TRUE;
    }
@@ -150,6 +149,7 @@ struct svga_tracked_state svga_update_need_pipeline =
    "need pipeline",
    (SVGA_NEW_RAST |
     SVGA_NEW_CLIP |
+    SVGA_NEW_VS |
     SVGA_NEW_REDUCED_PRIMITIVE),
    update_need_pipeline
 };

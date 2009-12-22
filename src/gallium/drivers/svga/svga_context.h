@@ -202,8 +202,6 @@ struct svga_state
    struct pipe_clip_state clip;
    struct pipe_viewport_state viewport;
 
-   const unsigned *edgeflags;
-
    unsigned num_samplers;
    unsigned num_textures;
    unsigned num_vertex_elements;
@@ -380,9 +378,8 @@ struct svga_context
 #define SVGA_NEW_NEED_SWTNL          0x400000
 #define SVGA_NEW_FS_RESULT           0x800000
 #define SVGA_NEW_VS_RESULT           0x1000000
-#define SVGA_NEW_EDGEFLAGS           0x2000000
-#define SVGA_NEW_ZERO_STRIDE         0x4000000
-#define SVGA_NEW_TEXTURE_FLAGS       0x8000000
+#define SVGA_NEW_ZERO_STRIDE         0x2000000
+#define SVGA_NEW_TEXTURE_FLAGS       0x4000000
 
 
 

@@ -142,8 +142,6 @@ struct draw_context
 
       /* user-space vertex data, buffers */
       struct {
-         const unsigned *edgeflag;
-
          /** vertex element/index buffer (ex: glDrawElements) */
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
@@ -184,6 +182,7 @@ struct draw_context
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
       uint position_output;
+      uint edgeflag_output;
 
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;

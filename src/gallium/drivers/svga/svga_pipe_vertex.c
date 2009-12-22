@@ -84,18 +84,6 @@ static void svga_set_vertex_elements(struct pipe_context *pipe,
 }
 
 
-static void svga_set_edgeflags(struct pipe_context *pipe,
-                               const unsigned *bitfield)
-{
-   struct svga_context *svga = svga_context(pipe);
-
-   if (bitfield != NULL || svga->curr.edgeflags != NULL) {
-      svga->curr.edgeflags = bitfield;
-      svga->dirty |= SVGA_NEW_EDGEFLAGS;
-   }
-}
-
-
 void svga_cleanup_vertex_state( struct svga_context *svga )
 {
    unsigned i;
@@ -109,7 +97,6 @@ void svga_init_vertex_functions( struct svga_context *svga )
 {
    svga->pipe.set_vertex_buffers = svga_set_vertex_buffers;
    svga->pipe.set_vertex_elements = svga_set_vertex_elements;
-   svga->pipe.set_edgeflags = svga_set_edgeflags;
 }
 
 

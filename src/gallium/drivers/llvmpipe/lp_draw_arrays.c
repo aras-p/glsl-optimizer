@@ -133,10 +133,3 @@ llvmpipe_draw_elements(struct pipe_context *pipe,
                                         mode, start, count );
 }
 
-
-void
-llvmpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
-{
-   struct llvmpipe_context *lp = llvmpipe_context(pipe);
-   draw_set_edgeflags(lp->draw, edgeflags);
-}

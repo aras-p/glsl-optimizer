@@ -507,10 +507,6 @@ class Context(Object):
             self.real.set_vertex_element(i, elements[i])
         self.real.set_vertex_elements(num_elements)
 
-    def set_edgeflags(self, bitfield):
-        # FIXME
-        pass
-    
     def dump_vertices(self, start, count):
         if not self.interpreter.verbosity(2):
             return

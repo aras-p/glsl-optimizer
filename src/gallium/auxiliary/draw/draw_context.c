@@ -366,13 +366,6 @@ void draw_set_render( struct draw_context *draw,
    draw->render = render;
 }
 
-void draw_set_edgeflags( struct draw_context *draw,
-                         const unsigned *edgeflag )
-{
-   draw->pt.user.edgeflag = edgeflag;
-}
-
-
 
 
 /**

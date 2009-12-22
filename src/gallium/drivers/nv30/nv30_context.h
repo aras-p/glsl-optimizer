@@ -144,7 +144,6 @@ struct nv30_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	const unsigned *edgeflags;
 };
 
 static INLINE struct nv30_context *

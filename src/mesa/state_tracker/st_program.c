@@ -115,6 +115,9 @@ st_prepare_vertex_program(struct st_context *st,
          stvp->num_inputs++;
       }
    }
+   /* bit of a hack, presetup potentially unused edgeflag input */
+   stvp->input_to_index[VERT_ATTRIB_EDGEFLAG] = stvp->num_inputs;
+   stvp->index_to_input[stvp->num_inputs] = VERT_ATTRIB_EDGEFLAG;
 
    /* Compute mapping of vertex program outputs to slots.
     */
@@ -184,6 +187,10 @@ st_prepare_vertex_program(struct st_context *st,
          }
       }
    }
+   /* similar hack to above, presetup potentially unused edgeflag output */
+   stvp->result_to_output[VERT_RESULT_EDGE] = stvp->num_outputs;
+   stvp->output_semantic_name[stvp->num_outputs] = TGSI_SEMANTIC_EDGEFLAG;
+   stvp->output_semantic_index[stvp->num_outputs] = 0;
 }
 
 
@@ -194,22 +201,47 @@ st_translate_vertex_program(struct st_context *st,
 {
    struct st_vp_varient *vpv = CALLOC_STRUCT(st_vp_varient);
    struct pipe_context *pipe = st->pipe;
+   struct ureg_program *ureg;
+   enum pipe_error error;
+   unsigned num_outputs;
 
-   vpv->state.tokens = 
+   ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
+   if (ureg == NULL)
+      return NULL;
+
+   vpv->num_inputs = stvp->num_inputs;
+   num_outputs = stvp->num_outputs;
+   if (key->passthrough_edgeflags) {
+      vpv->num_inputs++;
+      num_outputs++;
+   }
+
+   error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
+                                ureg,
                                 &stvp->Base.Base,
                                 /* inputs */
-                                stvp->num_inputs,
+                                vpv->num_inputs,
                                 stvp->input_to_index,
                                 NULL, /* input semantic name */
                                 NULL, /* input semantic index */
                                 NULL,
                                 /* outputs */
-                                stvp->num_outputs,
+                                num_outputs,
                                 stvp->result_to_output,
                                 stvp->output_semantic_name,
-                                stvp->output_semantic_index );
+                                stvp->output_semantic_index,
+                                key->passthrough_edgeflags );
+
+   if (error)
+      goto fail;
+
+   vpv->state.tokens = ureg_get_tokens( ureg, NULL );
+   if (!vpv->state.tokens)
+      goto fail;
+
+   ureg_destroy( ureg );
 
    vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
 
@@ -224,6 +256,14 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    return vpv;
+
+fail:
+   debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
+   _mesa_print_program(&stvp->Base.Base);
+   debug_assert(0);
+
+   ureg_destroy( ureg );
+   return NULL;
 }
 
 
@@ -244,7 +284,9 @@ st_translate_fragment_program(struct st_context *st,
    GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
+   enum pipe_error error;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
+   struct ureg_program *ureg;
    GLuint vslot = 0;
 
    uint fs_num_inputs = 0;
@@ -379,9 +421,15 @@ st_translate_fragment_program(struct st_context *st,
    if (!inputMapping)
       inputMapping = defaultInputMapping;
 
-   stfp->state.tokens = 
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return;
+
+
+   error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_FRAGMENT,
+                                ureg,
                                 &stfp->Base.Base,
                                 /* inputs */
                                 fs_num_inputs,
@@ -393,8 +441,10 @@ st_translate_fragment_program(struct st_context *st,
                                 fs_num_outputs,
                                 outputMapping,
                                 fs_output_semantic_name,
-                                fs_output_semantic_index );
+                                fs_output_semantic_index, FALSE );
 
+   stfp->state.tokens = ureg_get_tokens( ureg, NULL );
+   ureg_destroy( ureg );
    stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
