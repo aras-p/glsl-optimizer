@@ -1728,6 +1728,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          if (!inst) {
             return NULL;
          }
+         prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions - 1;
       }
       else {
          /* jump to endif instruction */
@@ -1737,8 +1738,8 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          }
          inst_comment(inst, "else");
          inst->DstReg.CondMask = COND_TR;  /* always branch */
+         prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
       }
-      prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
       emit(emitInfo, n->Children[2]);
    }
    else {
@@ -1753,8 +1754,14 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       }
    }
 
-   if (n->Children[2]) {
-      prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions;
+   if (elseInstLoc) {
+      /* point ELSE instruction BranchTarget at ENDIF */
+      if (emitInfo->EmitHighLevelInstructions) {
+         prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions - 1;
+      }
+      else {
+         prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions;
+      }
    }
    return NULL;
 }
@@ -1824,7 +1831,12 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
          /* go to instruction at end of loop */
-         inst->BranchTarget = endInstLoc;
+         if (emitInfo->EmitHighLevelInstructions) {
+            inst->BranchTarget = endInstLoc;
+         }
+         else {
+            inst->BranchTarget = endInstLoc + 1;
+         }
       }
       else {
          assert(ir->Opcode == IR_CONT ||
@@ -1942,7 +1954,7 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
          }
 
          emitInfo->prog->Instructions[ifInstLoc].BranchTarget
-            = emitInfo->prog->NumInstructions;
+            = emitInfo->prog->NumInstructions - 1;
          return inst;
       }
    }

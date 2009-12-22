@@ -5717,11 +5717,11 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
 
-        case OPCODE_IF   : 
+        case OPCODE_IF:
             {                
                 GLboolean bHasElse = GL_FALSE;
 
-                if(pILInst[pILInst[i].BranchTarget - 1].Opcode == OPCODE_ELSE)
+                if(pILInst[pILInst[i].BranchTarget].Opcode == OPCODE_ELSE)
                 {
                     bHasElse = GL_TRUE;
                 }

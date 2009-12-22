@@ -910,6 +910,10 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_IF:
          {
             GLboolean cond;
+            ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                   == OPCODE_ELSE ||
+                   program->Instructions[inst->BranchTarget].Opcode
+                   == OPCODE_ENDIF);
             /* eval condition */
             if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
                GLfloat a[4];
@@ -929,14 +933,16 @@ _mesa_execute_program(GLcontext * ctx,
             else {
                /* go to the instruction after ELSE or ENDIF */
                assert(inst->BranchTarget >= 0);
-               pc = inst->BranchTarget - 1;
+               pc = inst->BranchTarget;
             }
          }
          break;
       case OPCODE_ELSE:
          /* goto ENDIF */
+         ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                == OPCODE_ENDIF);
          assert(inst->BranchTarget >= 0);
-         pc = inst->BranchTarget - 1;
+         pc = inst->BranchTarget;
          break;
       case OPCODE_ENDIF:
          /* nothing */
