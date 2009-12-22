@@ -25,7 +25,7 @@ CORE_MESA = \
 	$(TOP)/src/mesa/libmesa.a \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/glsl/cl/libglslcl.a \
-	$(TOP)/src/glsl/cl/libglslpp.a
+	$(TOP)/src/glsl/pp/libglslpp.a
 else
 CORE_MESA =
 endif
