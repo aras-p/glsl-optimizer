@@ -275,8 +275,9 @@ fxDDTexEnv(GLcontext * ctx, GLenum target, GLenum pname,
    /* apply any lod biasing right now */
    if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
       GLfloat bias = *param;
-      CLAMP_SELF(bias, -ctx->Const.MaxTextureLodBias,
-                        ctx->Const.MaxTextureLodBias - 0.25);
+      bias = CLAMP(bias,
+		   -ctx->Const.MaxTextureLodBias,
+		   ctx->Const.MaxTextureLodBias - 0.25);
 
       grTexLodBiasValue(GR_TMU0, bias);
 

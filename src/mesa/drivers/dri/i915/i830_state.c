@@ -620,7 +620,7 @@ i830LineWidth(GLcontext * ctx, GLfloat widthf)
    DBG("%s\n", __FUNCTION__);
    
    width = (int) (widthf * 2);
-   CLAMP_SELF(width, 1, 15);
+   width = CLAMP(width, 1, 15);
 
    state5 = i830->state.Ctx[I830_CTXREG_STATE5] & ~FIXED_LINE_WIDTH_MASK;
    state5 |= (ENABLE_FIXED_LINE_WIDTH | FIXED_LINE_WIDTH(width));
@@ -639,7 +639,7 @@ i830PointSize(GLcontext * ctx, GLfloat size)
 
    DBG("%s\n", __FUNCTION__);
    
-   CLAMP_SELF(point_size, 1, 256);
+   point_size = CLAMP(point_size, 1, 256);
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_STATE5] &= ~FIXED_POINT_WIDTH_MASK;
    i830->state.Ctx[I830_CTXREG_STATE5] |= (ENABLE_FIXED_POINT_WIDTH |
