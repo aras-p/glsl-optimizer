@@ -6,196 +6,299 @@ for describing shaders. Since Gallium is inherently shaderful, shaders are
 an important part of the API. TGSI is the only intermediate representation
 used by all drivers.
 
-
-TGSI Instruction Specification
-==============================
-
-
-1  Instruction Set Operations
-=============================
-
-
-1.1  GL_NV_vertex_program
+From GL_NV_vertex_program
 -------------------------
 
 
-1.1.1  ARL - Address Register Load
+ARL - Address Register Load
+
+.. math::
 
   dst.x = floor(src.x)
+
   dst.y = floor(src.y)
+
   dst.z = floor(src.z)
+
   dst.w = floor(src.w)
 
 
-1.1.2  MOV - Move
+MOV - Move
+
+.. math::
 
   dst.x = src.x
+
   dst.y = src.y
+
   dst.z = src.z
+
   dst.w = src.w
 
 
-1.1.3  LIT - Light Coefficients
+LIT - Light Coefficients
+
+.. math::
 
   dst.x = 1.0
+
   dst.y = max(src.x, 0.0)
+
   dst.z = (src.x > 0.0) ? pow(max(src.y, 0.0), clamp(src.w, -128.0, 128.0)) : 0.0
+
   dst.w = 1.0
 
 
-1.1.4  RCP - Reciprocal
+RCP - Reciprocal
+
+.. math::
 
   dst.x = 1.0 / src.x
+
   dst.y = 1.0 / src.x
+
   dst.z = 1.0 / src.x
+
   dst.w = 1.0 / src.x
 
 
-1.1.5  RSQ - Reciprocal Square Root
+RSQ - Reciprocal Square Root
+
+.. math::
 
   dst.x = 1.0 / sqrt(abs(src.x))
+
   dst.y = 1.0 / sqrt(abs(src.x))
+
   dst.z = 1.0 / sqrt(abs(src.x))
+
   dst.w = 1.0 / sqrt(abs(src.x))
 
 
-1.1.6  EXP - Approximate Exponential Base 2
+EXP - Approximate Exponential Base 2
+
+.. math::
 
   dst.x = pow(2.0, floor(src.x))
+
   dst.y = src.x - floor(src.x)
+
   dst.z = pow(2.0, src.x)
+
   dst.w = 1.0
 
 
-1.1.7  LOG - Approximate Logarithm Base 2
+LOG - Approximate Logarithm Base 2
+
+.. math::
 
   dst.x = floor(lg2(abs(src.x)))
+
   dst.y = abs(src.x) / pow(2.0, floor(lg2(abs(src.x))))
+
   dst.z = lg2(abs(src.x))
+
   dst.w = 1.0
 
 
-1.1.8  MUL - Multiply
+MUL - Multiply
+
+.. math::
 
   dst.x = src0.x * src1.x
+
   dst.y = src0.y * src1.y
+
   dst.z = src0.z * src1.z
+
   dst.w = src0.w * src1.w
 
 
-1.1.9  ADD - Add
+ADD - Add
+
+.. math::
 
   dst.x = src0.x + src1.x
+
   dst.y = src0.y + src1.y
+
   dst.z = src0.z + src1.z
+
   dst.w = src0.w + src1.w
 
 
-1.1.10  DP3 - 3-component Dot Product
+DP3 - 3-component Dot Product
+
+.. math::
 
   dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+
   dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+
   dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+
   dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
 
 
-1.1.11  DP4 - 4-component Dot Product
+DP4 - 4-component Dot Product
+
+.. math::
 
   dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+
   dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+
   dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+
   dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
 
 
-1.1.12  DST - Distance Vector
+DST - Distance Vector
+
+.. math::
 
   dst.x = 1.0
+
   dst.y = src0.y * src1.y
+
   dst.z = src0.z
+
   dst.w = src1.w
 
 
-1.1.13  MIN - Minimum
+MIN - Minimum
+
+.. math::
 
   dst.x = min(src0.x, src1.x)
+
   dst.y = min(src0.y, src1.y)
+
   dst.z = min(src0.z, src1.z)
+
   dst.w = min(src0.w, src1.w)
 
 
-1.1.14  MAX - Maximum
+MAX - Maximum
+
+.. math::
 
   dst.x = max(src0.x, src1.x)
+
   dst.y = max(src0.y, src1.y)
+
   dst.z = max(src0.z, src1.z)
+
   dst.w = max(src0.w, src1.w)
 
 
-1.1.15  SLT - Set On Less Than
+SLT - Set On Less Than
+
+.. math::
 
   dst.x = (src0.x < src1.x) ? 1.0 : 0.0
+
   dst.y = (src0.y < src1.y) ? 1.0 : 0.0
+
   dst.z = (src0.z < src1.z) ? 1.0 : 0.0
+
   dst.w = (src0.w < src1.w) ? 1.0 : 0.0
 
 
-1.1.16  SGE - Set On Greater Equal Than
+SGE - Set On Greater Equal Than
+
+.. math::
 
   dst.x = (src0.x >= src1.x) ? 1.0 : 0.0
+
   dst.y = (src0.y >= src1.y) ? 1.0 : 0.0
+
   dst.z = (src0.z >= src1.z) ? 1.0 : 0.0
+
   dst.w = (src0.w >= src1.w) ? 1.0 : 0.0
 
 
-1.1.17  MAD - Multiply And Add
+MAD - Multiply And Add
+
+.. math::
 
   dst.x = src0.x * src1.x + src2.x
+
   dst.y = src0.y * src1.y + src2.y
+
   dst.z = src0.z * src1.z + src2.z
+
   dst.w = src0.w * src1.w + src2.w
 
 
-1.2.1  SUB - Subtract
+SUB - Subtract
+
+.. math::
 
   dst.x = src0.x - src1.x
+
   dst.y = src0.y - src1.y
+
   dst.z = src0.z - src1.z
+
   dst.w = src0.w - src1.w
 
 
-1.2.4  LRP - Linear Interpolate
+LRP - Linear Interpolate
+
+.. math::
 
   dst.x = src0.x * (src1.x - src2.x) + src2.x
+
   dst.y = src0.y * (src1.y - src2.y) + src2.y
+
   dst.z = src0.z * (src1.z - src2.z) + src2.z
+
   dst.w = src0.w * (src1.w - src2.w) + src2.w
 
 
-1.2.5  CND - Condition
+CND - Condition
+
+.. math::
 
   dst.x = (src2.x > 0.5) ? src0.x : src1.x
+
   dst.y = (src2.y > 0.5) ? src0.y : src1.y
+
   dst.z = (src2.z > 0.5) ? src0.z : src1.z
+
   dst.w = (src2.w > 0.5) ? src0.w : src1.w
 
 
-1.2.7  DP2A - 2-component Dot Product And Add
+DP2A - 2-component Dot Product And Add
+
+.. math::
 
   dst.x = src0.x * src1.x + src0.y * src1.y + src2.x
+
   dst.y = src0.x * src1.x + src0.y * src1.y + src2.x
+
   dst.z = src0.x * src1.x + src0.y * src1.y + src2.x
+
   dst.w = src0.x * src1.x + src0.y * src1.y + src2.x
 
 
-1.3.4  FRAC - Fraction
+FRAC - Fraction
+
+.. math::
 
   dst.x = src.x - floor(src.x)
+
   dst.y = src.y - floor(src.y)
+
   dst.z = src.z - floor(src.z)
+
   dst.w = src.w - floor(src.w)
 
 
-1.3.7  CLAMP - Clamp
+CLAMP - Clamp
+
+.. math::
 
   dst.x = clamp(src0.x, src1.x, src2.x)
   dst.y = clamp(src0.y, src1.y, src2.y)
@@ -205,6 +308,8 @@ TGSI Instruction Specification
 
 1.3.8  FLR - Floor
 
+.. math::
+
   dst.x = floor(src.x)
   dst.y = floor(src.y)
   dst.z = floor(src.z)
@@ -212,6 +317,8 @@ TGSI Instruction Specification
 
 
 1.3.9  ROUND - Round
+
+.. math::
 
   dst.x = round(src.x)
   dst.y = round(src.y)
@@ -221,6 +328,8 @@ TGSI Instruction Specification
 
 1.3.10  EX2 - Exponential Base 2
 
+.. math::
+
   dst.x = pow(2.0, src.x)
   dst.y = pow(2.0, src.x)
   dst.z = pow(2.0, src.x)
@@ -228,6 +337,8 @@ TGSI Instruction Specification
 
 
 1.3.11  LG2 - Logarithm Base 2
+
+.. math::
 
   dst.x = lg2(src.x)
   dst.y = lg2(src.x)
@@ -237,12 +348,16 @@ TGSI Instruction Specification
 
 1.3.12  POW - Power
 
+.. math::
+
   dst.x = pow(src0.x, src1.x)
   dst.y = pow(src0.x, src1.x)
   dst.z = pow(src0.x, src1.x)
   dst.w = pow(src0.x, src1.x)
 
 1.3.15  XPD - Cross Product
+
+.. math::
 
   dst.x = src0.y * src1.z - src1.y * src0.z
   dst.y = src0.z * src1.x - src1.z * src0.x
@@ -252,6 +367,8 @@ TGSI Instruction Specification
 
 1.4.1  ABS - Absolute
 
+.. math::
+
   dst.x = abs(src.x)
   dst.y = abs(src.y)
   dst.z = abs(src.z)
@@ -259,6 +376,8 @@ TGSI Instruction Specification
 
 
 1.4.2  RCC - Reciprocal Clamped
+
+.. math::
 
   dst.x = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
   dst.y = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
@@ -268,6 +387,8 @@ TGSI Instruction Specification
 
 1.4.3  DPH - Homogeneous Dot Product
 
+.. math::
+
   dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
   dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
   dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
@@ -275,6 +396,8 @@ TGSI Instruction Specification
 
 
 1.5.1  COS - Cosine
+
+.. math::
 
   dst.x = cos(src.x)
   dst.y = cos(src.x)
@@ -284,6 +407,8 @@ TGSI Instruction Specification
 
 1.5.2  DDX - Derivative Relative To X
 
+.. math::
+
   dst.x = partialx(src.x)
   dst.y = partialx(src.y)
   dst.z = partialx(src.z)
@@ -292,6 +417,8 @@ TGSI Instruction Specification
 
 1.5.3  DDY - Derivative Relative To Y
 
+.. math::
+
   dst.x = partialy(src.x)
   dst.y = partialy(src.y)
   dst.z = partialy(src.z)
@@ -299,6 +426,8 @@ TGSI Instruction Specification
 
 
 1.5.7  KILP - Predicated Discard
+
+.. math::
 
   discard
 
@@ -325,15 +454,19 @@ TGSI Instruction Specification
 
 1.5.15  RFL - Reflection Vector
 
+.. math::
+
   dst.x = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.x - src1.x
   dst.y = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.y - src1.y
   dst.z = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.z - src1.z
   dst.w = 1.0
 
- Considered for removal.
+Considered for removal.
 
 
 1.5.16  SEQ - Set On Equal
+
+.. math::
 
   dst.x = (src0.x == src1.x) ? 1.0 : 0.0
   dst.y = (src0.y == src1.y) ? 1.0 : 0.0
@@ -343,14 +476,18 @@ TGSI Instruction Specification
 
 1.5.17  SFL - Set On False
 
+.. math::
+
   dst.x = 0.0
   dst.y = 0.0
   dst.z = 0.0
   dst.w = 0.0
 
- Considered for removal.
+Considered for removal.
 
 1.5.18  SGT - Set On Greater Than
+
+.. math::
 
   dst.x = (src0.x > src1.x) ? 1.0 : 0.0
   dst.y = (src0.y > src1.y) ? 1.0 : 0.0
@@ -360,6 +497,8 @@ TGSI Instruction Specification
 
 1.5.19  SIN - Sine
 
+.. math::
+
   dst.x = sin(src.x)
   dst.y = sin(src.x)
   dst.z = sin(src.x)
@@ -367,6 +506,8 @@ TGSI Instruction Specification
 
 
 1.5.20  SLE - Set On Less Equal Than
+
+.. math::
 
   dst.x = (src0.x <= src1.x) ? 1.0 : 0.0
   dst.y = (src0.y <= src1.y) ? 1.0 : 0.0
@@ -376,6 +517,8 @@ TGSI Instruction Specification
 
 1.5.21  SNE - Set On Not Equal
 
+.. math::
+
   dst.x = (src0.x != src1.x) ? 1.0 : 0.0
   dst.y = (src0.y != src1.y) ? 1.0 : 0.0
   dst.z = (src0.z != src1.z) ? 1.0 : 0.0
@@ -383,6 +526,8 @@ TGSI Instruction Specification
 
 
 1.5.22  STR - Set On True
+
+.. math::
 
   dst.x = 1.0
   dst.y = 1.0
@@ -431,12 +576,14 @@ TGSI Instruction Specification
 
 1.5.30  X2D - 2D Coordinate Transformation
 
+.. math::
+
   dst.x = src0.x + src1.x * src2.x + src1.y * src2.y
   dst.y = src0.y + src1.x * src2.z + src1.y * src2.w
   dst.z = src0.x + src1.x * src2.x + src1.y * src2.y
   dst.w = src0.y + src1.x * src2.z + src1.y * src2.w
 
-  Considered for removal.
+Considered for removal.
 
 
 1.6  GL_NV_vertex_program2
@@ -450,6 +597,8 @@ TGSI Instruction Specification
   Considered for removal.
 
 1.6.2  ARR - Address Register Load With Round
+
+.. math::
 
   dst.x = round(src.x)
   dst.y = round(src.y)
@@ -478,6 +627,8 @@ TGSI Instruction Specification
 
 1.6.6  SSG - Set Sign
 
+.. math::
+
   dst.x = (src.x > 0.0) ? 1.0 : (src.x < 0.0) ? -1.0 : 0.0
   dst.y = (src.y > 0.0) ? 1.0 : (src.y < 0.0) ? -1.0 : 0.0
   dst.z = (src.z > 0.0) ? 1.0 : (src.z < 0.0) ? -1.0 : 0.0
@@ -485,6 +636,8 @@ TGSI Instruction Specification
 
 
 1.8.1  CMP - Compare
+
+.. math::
 
   dst.x = (src0.x < 0.0) ? src1.x : src2.x
   dst.y = (src0.y < 0.0) ? src1.y : src2.y
@@ -494,12 +647,16 @@ TGSI Instruction Specification
 
 1.8.2  KIL - Conditional Discard
 
+.. math::
+
   if (src.x < 0.0 || src.y < 0.0 || src.z < 0.0 || src.w < 0.0)
     discard
   endif
 
 
 1.8.3  SCS - Sine Cosine
+
+.. math::
 
   dst.x = cos(src.x)
   dst.y = sin(src.x)
@@ -514,6 +671,8 @@ TGSI Instruction Specification
 
 1.9.1  NRM - 3-component Vector Normalise
 
+.. math::
+
   dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z)
   dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z)
   dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z)
@@ -522,6 +681,8 @@ TGSI Instruction Specification
 
 1.9.2  DIV - Divide
 
+.. math::
+
   dst.x = src0.x / src1.x
   dst.y = src0.y / src1.y
   dst.z = src0.z / src1.z
@@ -529,6 +690,8 @@ TGSI Instruction Specification
 
 
 1.9.3  DP2 - 2-component Dot Product
+
+.. math::
 
   dst.x = src0.x * src1.x + src0.y * src1.y
   dst.y = src0.x * src1.x + src0.y * src1.y
@@ -626,6 +789,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.1  CEIL - Ceiling
 
+.. math::
+
   dst.x = ceil(src.x)
   dst.y = ceil(src.y)
   dst.z = ceil(src.z)
@@ -633,6 +798,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
 1.11.2  I2F - Integer To Float
+
+.. math::
 
   dst.x = (float) src.x
   dst.y = (float) src.y
@@ -642,6 +809,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.3  NOT - Bitwise Not
 
+.. math::
+
   dst.x = ~src.x
   dst.y = ~src.y
   dst.z = ~src.z
@@ -649,6 +818,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
 1.11.4  TRUNC - Truncate
+
+.. math::
 
   dst.x = trunc(src.x)
   dst.y = trunc(src.y)
@@ -658,6 +829,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.5  SHL - Shift Left
 
+.. math::
+
   dst.x = src0.x << src1.x
   dst.y = src0.y << src1.x
   dst.z = src0.z << src1.x
@@ -665,6 +838,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
 1.11.6  SHR - Shift Right
+
+.. math::
 
   dst.x = src0.x >> src1.x
   dst.y = src0.y >> src1.x
@@ -674,6 +849,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.7  AND - Bitwise And
 
+.. math::
+
   dst.x = src0.x & src1.x
   dst.y = src0.y & src1.y
   dst.z = src0.z & src1.z
@@ -681,6 +858,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
 1.11.8  OR - Bitwise Or
+
+.. math::
 
   dst.x = src0.x | src1.x
   dst.y = src0.y | src1.y
@@ -690,6 +869,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.9  MOD - Modulus
 
+.. math::
+
   dst.x = src0.x % src1.x
   dst.y = src0.y % src1.y
   dst.z = src0.z % src1.z
@@ -698,6 +879,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.11.10  XOR - Bitwise Xor
 
+.. math::
+
   dst.x = src0.x ^ src1.x
   dst.y = src0.y ^ src1.y
   dst.z = src0.z ^ src1.z
@@ -705,6 +888,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
 1.11.11  SAD - Sum Of Absolute Differences
+
+.. math::
 
   dst.x = abs(src0.x - src1.x) + src2.x
   dst.y = abs(src0.y - src1.y) + src2.y
@@ -774,6 +959,8 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 1.16.7  NRM4 - 4-component Vector Normalise
 
+.. math::
+
   dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
   dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
   dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
@@ -808,7 +995,6 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
 
   abs(x)            Absolute value of x.
-                    '|x|'
                     (x < 0.0) ? -x : x
 
   ceil(x)           Ceiling of x.
