@@ -684,9 +684,13 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_BGNLOOP:
          /* no-op */
+         ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                == OPCODE_ENDLOOP);
          break;
       case OPCODE_ENDLOOP:
          /* subtract 1 here since pc is incremented by for(pc) loop */
+         ASSERT(program->Instructions[inst->BranchTarget].Opcode
+                == OPCODE_BGNLOOP);
          pc = inst->BranchTarget - 1;   /* go to matching BNGLOOP */
          break;
       case OPCODE_BGNSUB:      /* begin subroutine */
