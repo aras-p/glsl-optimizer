@@ -14,13 +14,13 @@ ARL - Address Register Load
 
 .. math::
 
-  dst.x = floor(src.x)
+  dst.x = \lfloor src.x\rfloor
 
-  dst.y = floor(src.y)
+  dst.y = \lfloor src.y\rfloor
 
-  dst.z = floor(src.z)
+  dst.z = \lfloor src.z\rfloor
 
-  dst.w = floor(src.w)
+  dst.w = \lfloor src.w\rfloor
 
 
 MOV - Move
@@ -79,9 +79,9 @@ EXP - Approximate Exponential Base 2
 
 .. math::
 
-  dst.x = pow(2.0, floor(src.x))
+  dst.x = pow(2.0, \lfloor src.x\rfloor)
 
-  dst.y = src.x - floor(src.x)
+  dst.y = src.x - \lfloor src.x\rfloor
 
   dst.z = pow(2.0, src.x)
 
@@ -92,9 +92,9 @@ LOG - Approximate Logarithm Base 2
 
 .. math::
 
-  dst.x = floor(lg2(abs(src.x)))
+  dst.x = \lfloor lg2(abs(src.x)))\rfloor
 
-  dst.y = abs(src.x) / pow(2.0, floor(lg2(abs(src.x))))
+  dst.y = abs(src.x) / pow(2.0, \lfloor lg2(abs(src.x))\rfloor )
 
   dst.z = lg2(abs(src.x))
 
@@ -287,13 +287,13 @@ FRAC - Fraction
 
 .. math::
 
-  dst.x = src.x - floor(src.x)
+  dst.x = src.x - \lfloor src.x\rfloor
 
-  dst.y = src.y - floor(src.y)
+  dst.y = src.y - \lfloor src.y\rfloor
 
-  dst.z = src.z - floor(src.z)
+  dst.z = src.z - \lfloor src.z\rfloor
 
-  dst.w = src.w - floor(src.w)
+  dst.w = src.w - \lfloor src.w\rfloor
 
 
 CLAMP - Clamp
@@ -306,14 +306,19 @@ CLAMP - Clamp
   dst.w = clamp(src0.w, src1.w, src2.w)
 
 
-1.3.8  FLR - Floor
+FLR - Floor
+
+This is identical to ARL.
 
 .. math::
 
-  dst.x = floor(src.x)
-  dst.y = floor(src.y)
-  dst.z = floor(src.z)
-  dst.w = floor(src.w)
+  dst.x = \lfloor src.x\rfloor
+
+  dst.y = \lfloor src.y\rfloor
+
+  dst.z = \lfloor src.z\rfloor
+
+  dst.w = \lfloor src.w\rfloor
 
 
 1.3.9  ROUND - Round
@@ -395,14 +400,17 @@ CLAMP - Clamp
   dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
 
 
-1.5.1  COS - Cosine
+COS - Cosine
 
 .. math::
 
-  dst.x = cos(src.x)
-  dst.y = cos(src.x)
-  dst.z = cos(src.x)
-  dst.w = cos(src.w)
+  dst.x = \cos{src.x}
+
+  dst.y = \cos{src.x}
+
+  dst.z = \cos{src.x}
+
+  dst.w = \cos{src.w}
 
 
 1.5.2  DDX - Derivative Relative To X
@@ -495,14 +503,17 @@ Considered for removal.
   dst.w = (src0.w > src1.w) ? 1.0 : 0.0
 
 
-1.5.19  SIN - Sine
+SIN - Sine
 
 .. math::
 
-  dst.x = sin(src.x)
-  dst.y = sin(src.x)
-  dst.z = sin(src.x)
-  dst.w = sin(src.w)
+  dst.x = \sin{src.x}
+
+  dst.y = \sin{src.x}
+
+  dst.z = \sin{src.x}
+
+  dst.w = \sin{src.w}
 
 
 1.5.20  SLE - Set On Less Equal Than
@@ -654,13 +665,16 @@ Considered for removal.
   endif
 
 
-1.8.3  SCS - Sine Cosine
+SCS - Sine Cosine
 
 .. math::
 
-  dst.x = cos(src.x)
-  dst.y = sin(src.x)
+  dst.x = \cos{src.x}
+
+  dst.y = \sin{src.x}
+
   dst.z = 0.0
+
   dst.y = 1.0
 
 
@@ -1002,9 +1016,7 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
   clamp(x,y,z)      Clamp x between y and z.
                     (x < y) ? y : (x > z) ? z : x
 
-  cos(x)            Cosine of x.
-
-  floor(x)          Floor of x.
+  :math:`\lfloor x\rfloor` Floor of x.
 
   lg2(x)            Logarithm base 2 of x.
 
@@ -1025,8 +1037,6 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
   push(x)           Push x on stack.
 
   round(x)          Round x.
-
-  sin(x)            Sine of x.
 
   sqrt(x)           Square root of x.
 
