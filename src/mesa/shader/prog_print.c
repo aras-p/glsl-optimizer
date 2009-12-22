@@ -821,8 +821,10 @@ _mesa_print_program(const struct gl_program *prog)
 
 
 /**
- * Return binary representation of value (as a string).
+ * Return binary representation of 64-bit value (as a string).
  * Insert a comma to separate each group of 8 bits.
+ * Note we return a pointer to local static storage so this is not
+ * re-entrant, etc.
  * XXX move to imports.[ch] if useful elsewhere.
  */
 static const char *
@@ -831,7 +833,7 @@ binary(GLbitfield64 val)
    static char buf[80];
    GLint i, len = 0;
    for (i = 63; i >= 0; --i) {
-      if (val & (1 << i))
+      if (val & (1ULL << i))
          buf[len++] = '1';
       else if (len > 0 || i == 0)
          buf[len++] = '0';
@@ -855,7 +857,7 @@ _mesa_fprint_program_parameters(FILE *f,
 
    _mesa_fprintf(f, "InputsRead: 0x%x (0b%s)\n",
                  prog->InputsRead, binary(prog->InputsRead));
-   _mesa_fprintf(f, "OutputsWritten: 0x%x (0b%s)\n",
+   _mesa_fprintf(f, "OutputsWritten: 0x%llx (0b%s)\n",
                  prog->OutputsWritten, binary(prog->OutputsWritten));
    _mesa_fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
    _mesa_fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
