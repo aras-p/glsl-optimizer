@@ -40,13 +40,13 @@ LIT - Light Coefficients
 
 .. math::
 
-  dst.x = 1.0
+  dst.x = 1
 
-  dst.y = max(src.x, 0.0)
+  dst.y = max(src.x, 0)
 
-  dst.z = (src.x > 0.0) ? max(src.y, 0.0)^{clamp(src.w, -128.0, 128.0))} : 0.0
+  dst.z = (src.x > 0) ? max(src.y, 0)^{clamp(src.w, -128, 128))} : 0
 
-  dst.w = 1.0
+  dst.w = 1
 
 
 RCP - Reciprocal
@@ -85,7 +85,7 @@ EXP - Approximate Exponential Base 2
 
   dst.z = 2^{src.x}
 
-  dst.w = 1.0
+  dst.w = 1
 
 
 LOG - Approximate Logarithm Base 2
@@ -157,7 +157,7 @@ DST - Distance Vector
 
 .. math::
 
-  dst.x = 1.0
+  dst.x = 1
 
   dst.y = src0.y \times src1.y
 
@@ -196,26 +196,26 @@ SLT - Set On Less Than
 
 .. math::
 
-  dst.x = (src0.x < src1.x) ? 1.0 : 0.0
+  dst.x = (src0.x < src1.x) ? 1 : 0
 
-  dst.y = (src0.y < src1.y) ? 1.0 : 0.0
+  dst.y = (src0.y < src1.y) ? 1 : 0
 
-  dst.z = (src0.z < src1.z) ? 1.0 : 0.0
+  dst.z = (src0.z < src1.z) ? 1 : 0
 
-  dst.w = (src0.w < src1.w) ? 1.0 : 0.0
+  dst.w = (src0.w < src1.w) ? 1 : 0
 
 
 SGE - Set On Greater Equal Than
 
 .. math::
 
-  dst.x = (src0.x >= src1.x) ? 1.0 : 0.0
+  dst.x = (src0.x >= src1.x) ? 1 : 0
 
-  dst.y = (src0.y >= src1.y) ? 1.0 : 0.0
+  dst.y = (src0.y >= src1.y) ? 1 : 0
 
-  dst.z = (src0.z >= src1.z) ? 1.0 : 0.0
+  dst.z = (src0.z >= src1.z) ? 1 : 0
 
-  dst.w = (src0.w >= src1.w) ? 1.0 : 0.0
+  dst.w = (src0.w >= src1.w) ? 1 : 0
 
 
 MAD - Multiply And Add
@@ -301,8 +301,11 @@ CLAMP - Clamp
 .. math::
 
   dst.x = clamp(src0.x, src1.x, src2.x)
+
   dst.y = clamp(src0.y, src1.y, src2.y)
+
   dst.z = clamp(src0.z, src1.z, src2.z)
+
   dst.w = clamp(src0.w, src1.w, src2.w)
 
 
@@ -321,13 +324,16 @@ This is identical to ARL.
   dst.w = \lfloor src.w\rfloor
 
 
-1.3.9  ROUND - Round
+ROUND - Round
 
 .. math::
 
   dst.x = round(src.x)
+
   dst.y = round(src.y)
+
   dst.z = round(src.z)
+
   dst.w = round(src.w)
 
 
@@ -369,14 +375,17 @@ POW - Power
 
   dst.w = src0.x^{src1.x}
 
-1.3.15  XPD - Cross Product
+XPD - Cross Product
 
 .. math::
 
   dst.x = src0.y \times src1.z - src1.y \times src0.z
+
   dst.y = src0.z \times src1.x - src1.z \times src0.x
+
   dst.z = src0.x \times src1.y - src1.x \times src0.y
-  dst.w = 1.0
+
+  dst.w = 1
 
 
 ABS - Absolute
@@ -392,23 +401,31 @@ ABS - Absolute
   dst.w = |src.w|
 
 
-1.4.2  RCC - Reciprocal Clamped
+RCC - Reciprocal Clamped
+
+XXX cleanup on aisle three
 
 .. math::
 
-  dst.x = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
-  dst.y = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
-  dst.z = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
-  dst.w = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
+  dst.x = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+  dst.y = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+  dst.z = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+
+  dst.w = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
 
 
-1.4.3  DPH - Homogeneous Dot Product
+DPH - Homogeneous Dot Product
 
 .. math::
 
   dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
   dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
   dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+
   dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
 
 
@@ -425,94 +442,101 @@ COS - Cosine
   dst.w = \cos{src.w}
 
 
-1.5.2  DDX - Derivative Relative To X
+DDX - Derivative Relative To X
 
 .. math::
 
   dst.x = partialx(src.x)
+
   dst.y = partialx(src.y)
+
   dst.z = partialx(src.z)
+
   dst.w = partialx(src.w)
 
 
-1.5.3  DDY - Derivative Relative To Y
+DDY - Derivative Relative To Y
 
 .. math::
 
   dst.x = partialy(src.x)
+
   dst.y = partialy(src.y)
+
   dst.z = partialy(src.z)
+
   dst.w = partialy(src.w)
 
 
-1.5.7  KILP - Predicated Discard
-
-.. math::
+KILP - Predicated Discard
 
   discard
 
 
-1.5.10  PK2H - Pack Two 16-bit Floats
+PK2H - Pack Two 16-bit Floats
 
   TBD
 
 
-1.5.11  PK2US - Pack Two Unsigned 16-bit Scalars
+PK2US - Pack Two Unsigned 16-bit Scalars
 
   TBD
 
 
-1.5.12  PK4B - Pack Four Signed 8-bit Scalars
+PK4B - Pack Four Signed 8-bit Scalars
 
   TBD
 
 
-1.5.13  PK4UB - Pack Four Unsigned 8-bit Scalars
+PK4UB - Pack Four Unsigned 8-bit Scalars
 
   TBD
 
 
-1.5.15  RFL - Reflection Vector
+RFL - Reflection Vector
 
 .. math::
 
-  dst.x = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.x - src1.x
-  dst.y = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.y - src1.y
-  dst.z = 2.0 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.z - src1.z
-  dst.w = 1.0
+  dst.x = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.x - src1.x
+
+  dst.y = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.y - src1.y
+
+  dst.z = 2 \times (src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z) / (src0.x \times src0.x + src0.y \times src0.y + src0.z \times src0.z) \times src0.z - src1.z
+
+  dst.w = 1
 
 Considered for removal.
 
 
-1.5.16  SEQ - Set On Equal
+SEQ - Set On Equal
 
 .. math::
 
-  dst.x = (src0.x == src1.x) ? 1.0 : 0.0
-  dst.y = (src0.y == src1.y) ? 1.0 : 0.0
-  dst.z = (src0.z == src1.z) ? 1.0 : 0.0
-  dst.w = (src0.w == src1.w) ? 1.0 : 0.0
+  dst.x = (src0.x == src1.x) ? 1 : 0
+  dst.y = (src0.y == src1.y) ? 1 : 0
+  dst.z = (src0.z == src1.z) ? 1 : 0
+  dst.w = (src0.w == src1.w) ? 1 : 0
 
 
-1.5.17  SFL - Set On False
+SFL - Set On False
 
 .. math::
 
-  dst.x = 0.0
-  dst.y = 0.0
-  dst.z = 0.0
-  dst.w = 0.0
+  dst.x = 0
+  dst.y = 0
+  dst.z = 0
+  dst.w = 0
 
 Considered for removal.
 
-1.5.18  SGT - Set On Greater Than
+SGT - Set On Greater Than
 
 .. math::
 
-  dst.x = (src0.x > src1.x) ? 1.0 : 0.0
-  dst.y = (src0.y > src1.y) ? 1.0 : 0.0
-  dst.z = (src0.z > src1.z) ? 1.0 : 0.0
-  dst.w = (src0.w > src1.w) ? 1.0 : 0.0
+  dst.x = (src0.x > src1.x) ? 1 : 0
+  dst.y = (src0.y > src1.y) ? 1 : 0
+  dst.z = (src0.z > src1.z) ? 1 : 0
+  dst.w = (src0.w > src1.w) ? 1 : 0
 
 
 SIN - Sine
@@ -528,76 +552,76 @@ SIN - Sine
   dst.w = \sin{src.w}
 
 
-1.5.20  SLE - Set On Less Equal Than
+SLE - Set On Less Equal Than
 
 .. math::
 
-  dst.x = (src0.x <= src1.x) ? 1.0 : 0.0
-  dst.y = (src0.y <= src1.y) ? 1.0 : 0.0
-  dst.z = (src0.z <= src1.z) ? 1.0 : 0.0
-  dst.w = (src0.w <= src1.w) ? 1.0 : 0.0
+  dst.x = (src0.x <= src1.x) ? 1 : 0
+  dst.y = (src0.y <= src1.y) ? 1 : 0
+  dst.z = (src0.z <= src1.z) ? 1 : 0
+  dst.w = (src0.w <= src1.w) ? 1 : 0
 
 
-1.5.21  SNE - Set On Not Equal
-
-.. math::
-
-  dst.x = (src0.x != src1.x) ? 1.0 : 0.0
-  dst.y = (src0.y != src1.y) ? 1.0 : 0.0
-  dst.z = (src0.z != src1.z) ? 1.0 : 0.0
-  dst.w = (src0.w != src1.w) ? 1.0 : 0.0
-
-
-1.5.22  STR - Set On True
+SNE - Set On Not Equal
 
 .. math::
 
-  dst.x = 1.0
-  dst.y = 1.0
-  dst.z = 1.0
-  dst.w = 1.0
+  dst.x = (src0.x != src1.x) ? 1 : 0
+  dst.y = (src0.y != src1.y) ? 1 : 0
+  dst.z = (src0.z != src1.z) ? 1 : 0
+  dst.w = (src0.w != src1.w) ? 1 : 0
 
 
-1.5.23  TEX - Texture Lookup
+STR - Set On True
+
+.. math::
+
+  dst.x = 1
+  dst.y = 1
+  dst.z = 1
+  dst.w = 1
+
+
+TEX - Texture Lookup
+
+  TBD
+
+
+TXD - Texture Lookup with Derivatives
 
   TBD
 
 
-1.5.24  TXD - Texture Lookup with Derivatives
+TXP - Projective Texture Lookup
 
   TBD
 
 
-1.5.25  TXP - Projective Texture Lookup
-
-  TBD
-
-
-1.5.26  UP2H - Unpack Two 16-Bit Floats
-
-  TBD
-
-  Considered for removal.
-
-1.5.27  UP2US - Unpack Two Unsigned 16-Bit Scalars
-
-  TBD
-
-  Considered for removal.
-
-1.5.28  UP4B - Unpack Four Signed 8-Bit Values
-
-  TBD
-
-  Considered for removal.
-
-1.5.29  UP4UB - Unpack Four Unsigned 8-Bit Scalars
+UP2H - Unpack Two 16-Bit Floats
 
   TBD
 
   Considered for removal.
 
-1.5.30  X2D - 2D Coordinate Transformation
+UP2US - Unpack Two Unsigned 16-Bit Scalars
+
+  TBD
+
+  Considered for removal.
+
+UP4B - Unpack Four Signed 8-Bit Values
+
+  TBD
+
+  Considered for removal.
+
+UP4UB - Unpack Four Unsigned 8-Bit Scalars
+
+  TBD
+
+  Considered for removal.
+
+X2D - 2D Coordinate Transformation
 
 .. math::
 
@@ -609,70 +633,79 @@ SIN - Sine
 Considered for removal.
 
 
-1.6  GL_NV_vertex_program2
+GL_NV_vertex_program2
 --------------------------
 
 
-1.6.1  ARA - Address Register Add
+ARA - Address Register Add
 
   TBD
 
   Considered for removal.
 
-1.6.2  ARR - Address Register Load With Round
+ARR - Address Register Load With Round
 
 .. math::
 
   dst.x = round(src.x)
+
   dst.y = round(src.y)
+
   dst.z = round(src.z)
+
   dst.w = round(src.w)
 
 
-1.6.3  BRA - Branch
+BRA - Branch
 
   pc = target
 
   Considered for removal.
 
-1.6.4  CAL - Subroutine Call
+CAL - Subroutine Call
 
   push(pc)
   pc = target
 
 
-1.6.5  RET - Subroutine Call Return
+RET - Subroutine Call Return
 
   pc = pop()
 
   Potential restrictions:  
   \times Only occurs at end of function.
 
-1.6.6  SSG - Set Sign
+SSG - Set Sign
 
 .. math::
 
-  dst.x = (src.x > 0.0) ? 1.0 : (src.x < 0.0) ? -1.0 : 0.0
-  dst.y = (src.y > 0.0) ? 1.0 : (src.y < 0.0) ? -1.0 : 0.0
-  dst.z = (src.z > 0.0) ? 1.0 : (src.z < 0.0) ? -1.0 : 0.0
-  dst.w = (src.w > 0.0) ? 1.0 : (src.w < 0.0) ? -1.0 : 0.0
+  dst.x = (src.x > 0) ? 1 : (src.x < 0) ? -1 : 0
+
+  dst.y = (src.y > 0) ? 1 : (src.y < 0) ? -1 : 0
+
+  dst.z = (src.z > 0) ? 1 : (src.z < 0) ? -1 : 0
+
+  dst.w = (src.w > 0) ? 1 : (src.w < 0) ? -1 : 0
 
 
-1.8.1  CMP - Compare
-
-.. math::
-
-  dst.x = (src0.x < 0.0) ? src1.x : src2.x
-  dst.y = (src0.y < 0.0) ? src1.y : src2.y
-  dst.z = (src0.z < 0.0) ? src1.z : src2.z
-  dst.w = (src0.w < 0.0) ? src1.w : src2.w
-
-
-1.8.2  KIL - Conditional Discard
+CMP - Compare
 
 .. math::
 
-  if (src.x < 0.0 || src.y < 0.0 || src.z < 0.0 || src.w < 0.0)
+  dst.x = (src0.x < 0) ? src1.x : src2.x
+
+  dst.y = (src0.y < 0) ? src1.y : src2.y
+
+  dst.z = (src0.z < 0) ? src1.z : src2.z
+
+  dst.w = (src0.w < 0) ? src1.w : src2.w
+
+
+KIL - Conditional Discard
+
+.. math::
+
+  if (src.x < 0 || src.y < 0 || src.z < 0 || src.w < 0)
     discard
   endif
 
@@ -685,62 +718,71 @@ SCS - Sine Cosine
 
   dst.y = \sin{src.x}
 
-  dst.z = 0.0
+  dst.z = 0
 
-  dst.y = 1.0
+  dst.y = 1
 
 
-1.8.4  TXB - Texture Lookup With Bias
+TXB - Texture Lookup With Bias
 
   TBD
 
 
-1.9.1  NRM - 3-component Vector Normalise
+NRM - 3-component Vector Normalise
 
 .. math::
 
   dst.x = src.x / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+
   dst.y = src.y / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
+
   dst.z = src.z / (src.x \times src.x + src.y \times src.y + src.z \times src.z)
-  dst.w = 1.0
+
+  dst.w = 1
 
 
-1.9.2  DIV - Divide
+DIV - Divide
 
 .. math::
 
-  dst.x = src0.x / src1.x
-  dst.y = src0.y / src1.y
-  dst.z = src0.z / src1.z
-  dst.w = src0.w / src1.w
+  dst.x = \frac{src0.x}{src1.x}
+
+  dst.y = \frac{src0.y}{src1.y}
+
+  dst.z = \frac{src0.z}{src1.z}
+
+  dst.w = \frac{src0.w}{src1.w}
 
 
-1.9.3  DP2 - 2-component Dot Product
+DP2 - 2-component Dot Product
 
 .. math::
 
   dst.x = src0.x \times src1.x + src0.y \times src1.y
+
   dst.y = src0.x \times src1.x + src0.y \times src1.y
+
   dst.z = src0.x \times src1.x + src0.y \times src1.y
+
   dst.w = src0.x \times src1.x + src0.y \times src1.y
 
 
-1.9.5  TXL - Texture Lookup With LOD
+TXL - Texture Lookup With LOD
 
   TBD
 
 
-1.9.6  BRK - Break
+BRK - Break
 
   TBD
 
 
-1.9.7  IF - If
+IF - If
 
   TBD
 
 
-1.9.8  BGNFOR - Begin a For-Loop
+BGNFOR - Begin a For-Loop
 
   dst.x = floor(src.x)
   dst.y = floor(src.y)
@@ -756,22 +798,22 @@ SCS - Sine Cosine
   Considered for cleanup / removal.
 
 
-1.9.9  REP - Repeat
+REP - Repeat
 
   TBD
 
 
-1.9.10  ELSE - Else
+ELSE - Else
 
   TBD
 
 
-1.9.11  ENDIF - End If
+ENDIF - End If
 
   TBD
 
 
-1.9.12  ENDFOR - End a For-Loop
+ENDFOR - End a For-Loop
 
   dst.x = dst.x + dst.z
   dst.y = dst.y - 1.0
@@ -784,12 +826,12 @@ SCS - Sine Cosine
 
   Considered for cleanup / removal.
 
-1.9.13  ENDREP - End Repeat
+ENDREP - End Repeat
 
   TBD
 
 
-1.10.1  PUSHA - Push Address Register On Stack
+PUSHA - Push Address Register On Stack
 
   push(src.x)
   push(src.y)
@@ -798,7 +840,7 @@ SCS - Sine Cosine
 
   Considered for cleanup / removal.
 
-1.10.2  POPA - Pop Address Register From Stack
+POPA - Pop Address Register From Stack
 
   dst.w = pop()
   dst.z = pop()
@@ -808,7 +850,7 @@ SCS - Sine Cosine
   Considered for cleanup / removal.
 
 
-1.11  GL_NV_gpu_program4
+GL_NV_gpu_program4
 ------------------------
 
 Support for these opcodes indicated by a special pipe capability bit (TBD).
@@ -826,93 +868,122 @@ CEIL - Ceiling
   dst.w = \lceil src.w\rceil
 
 
-1.11.2  I2F - Integer To Float
+I2F - Integer To Float
 
 .. math::
 
   dst.x = (float) src.x
+
   dst.y = (float) src.y
+
   dst.z = (float) src.z
+
   dst.w = (float) src.w
 
 
-1.11.3  NOT - Bitwise Not
+NOT - Bitwise Not
 
 .. math::
 
   dst.x = ~src.x
+
   dst.y = ~src.y
+
   dst.z = ~src.z
+
   dst.w = ~src.w
 
 
-1.11.4  TRUNC - Truncate
+TRUNC - Truncate
+
+XXX how is this different from floor?
 
 .. math::
 
   dst.x = trunc(src.x)
+
   dst.y = trunc(src.y)
+
   dst.z = trunc(src.z)
+
   dst.w = trunc(src.w)
 
 
-1.11.5  SHL - Shift Left
+SHL - Shift Left
 
 .. math::
 
   dst.x = src0.x << src1.x
+
   dst.y = src0.y << src1.x
+
   dst.z = src0.z << src1.x
+
   dst.w = src0.w << src1.x
 
 
-1.11.6  SHR - Shift Right
+SHR - Shift Right
 
 .. math::
 
   dst.x = src0.x >> src1.x
+
   dst.y = src0.y >> src1.x
+
   dst.z = src0.z >> src1.x
+
   dst.w = src0.w >> src1.x
 
 
-1.11.7  AND - Bitwise And
+AND - Bitwise And
 
 .. math::
 
   dst.x = src0.x & src1.x
+
   dst.y = src0.y & src1.y
+
   dst.z = src0.z & src1.z
+
   dst.w = src0.w & src1.w
 
 
-1.11.8  OR - Bitwise Or
+OR - Bitwise Or
 
 .. math::
 
   dst.x = src0.x | src1.x
+
   dst.y = src0.y | src1.y
+
   dst.z = src0.z | src1.z
+
   dst.w = src0.w | src1.w
 
 
-1.11.9  MOD - Modulus
+MOD - Modulus
 
 .. math::
 
-  dst.x = src0.x % src1.x
-  dst.y = src0.y % src1.y
-  dst.z = src0.z % src1.z
-  dst.w = src0.w % src1.w
+  dst.x = src0.x \bmod src1.x
+
+  dst.y = src0.y \bmod src1.y
+
+  dst.z = src0.z \bmod src1.z
+
+  dst.w = src0.w \bmod src1.w
 
 
-1.11.10  XOR - Bitwise Xor
+XOR - Bitwise Xor
 
 .. math::
 
   dst.x = src0.x ^ src1.x
+
   dst.y = src0.y ^ src1.y
+
   dst.z = src0.z ^ src1.z
+
   dst.w = src0.w ^ src1.w
 
 
@@ -929,100 +1000,101 @@ SAD - Sum Of Absolute Differences
   dst.w = |src0.w - src1.w| + src2.w
 
 
-1.11.12  TXF - Texel Fetch
+TXF - Texel Fetch
 
   TBD
 
 
-1.11.13  TXQ - Texture Size Query
+TXQ - Texture Size Query
 
   TBD
 
 
-1.11.14  CONT - Continue
+CONT - Continue
 
   TBD
 
 
-1.12  GL_NV_geometry_program4
+GL_NV_geometry_program4
 -----------------------------
 
 
-1.12.1  EMIT - Emit
+EMIT - Emit
 
   TBD
 
 
-1.12.2  ENDPRIM - End Primitive
+ENDPRIM - End Primitive
 
   TBD
 
 
-1.13  GLSL
+GLSL
 ----------
 
 
-1.13.1  BGNLOOP - Begin a Loop
+BGNLOOP - Begin a Loop
 
   TBD
 
 
-1.13.2  BGNSUB - Begin Subroutine
+BGNSUB - Begin Subroutine
 
   TBD
 
 
-1.13.3  ENDLOOP - End a Loop
+ENDLOOP - End a Loop
 
   TBD
 
 
-1.13.4  ENDSUB - End Subroutine
+ENDSUB - End Subroutine
 
   TBD
 
 
 
-1.13.10  NOP - No Operation
+NOP - No Operation
 
-  Do nothing.
+ Do nothing.
 
-
-
-1.16.7  NRM4 - 4-component Vector Normalise
+NRM4 - 4-component Vector Normalise
 
 .. math::
 
-  dst.x = src.x / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
-  dst.y = src.y / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
-  dst.z = src.z / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
-  dst.w = src.w / (src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w)
+  dst.x = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+  dst.y = \frac{src.y}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+  dst.z = \frac{src.z}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+
+  dst.w = \frac{src.w}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
 
 
-1.17  ps_2_x
+ps_2_x
 ------------
 
 
-1.17.2  CALLNZ - Subroutine Call If Not Zero
+CALLNZ - Subroutine Call If Not Zero
 
   TBD
 
 
-1.17.3  IFC - If
+IFC - If
 
   TBD
 
 
-1.17.5  BREAKC - Break Conditional
+BREAKC - Break Conditional
 
   TBD
 
 
-2  Explanation of symbols used
+Explanation of symbols used
 ==============================
 
 
-2.1  Functions
+Functions
 --------------
 
 
@@ -1058,7 +1130,7 @@ SAD - Sum Of Absolute Differences
   trunc(x)          Truncate x.
 
 
-2.2  Keywords
+Keywords
 -------------
 
 
@@ -1081,11 +1153,11 @@ SAD - Sum Of Absolute Differences
   target            Label of target instruction.
 
 
-3  Other tokens
+Other tokens
 ===============
 
 
-3.1  Declaration Semantic
+Declaration Semantic
 -------------------------
 
 
@@ -1106,7 +1178,8 @@ SAD - Sum Of Absolute Differences
   sections.
 
 
-3.1.1  FACE
+FACE
+^^^^
 
   Valid only in a fragment shader INPUT declaration.
 
