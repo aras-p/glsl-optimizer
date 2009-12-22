@@ -75,16 +75,68 @@ vmw_ioctl_get_param(struct vmw_driver *vmw, uint32_t param, uint64_t *out)
 }
 
 int
-vmw_ioctl_supports_overlay(struct vmw_driver *vmw)
+vmw_ioctl_supports_streams(struct vmw_driver *vmw)
 {
     uint64_t value;
     int ret;
 
-    ret = vmw_ioctl_get_param(vmw, DRM_VMW_PARAM_OVERLAY_IOCTL, &value);
+    ret = vmw_ioctl_get_param(vmw, DRM_VMW_PARAM_NUM_STREAMS, &value);
     if (ret)
 	return ret;
 
     return value ? 0 : -ENOSYS;
+}
+
+int
+vmw_ioctl_num_streams(struct vmw_driver *vmw,
+		      uint32_t *ntot, uint32_t *nfree)
+{
+    uint64_t v1, v2;
+    int ret;
+
+    ret = vmw_ioctl_get_param(vmw, DRM_VMW_PARAM_NUM_STREAMS, &v1);
+    if (ret)
+	return ret;
+
+    ret = vmw_ioctl_get_param(vmw, DRM_VMW_PARAM_NUM_FREE_STREAMS, &v2);
+    if (ret)
+	return ret;
+
+    *ntot = (uint32_t)v1;
+    *nfree = (uint32_t)v2;
+
+    return 0;
+}
+
+int
+vmw_ioctl_claim_stream(struct vmw_driver *vmw, uint32_t *out)
+{
+    struct drm_vmw_stream_arg s_arg;
+    int ret;
+
+    ret = drmCommandRead(vmw->fd, DRM_VMW_CLAIM_STREAM,
+			 &s_arg, sizeof(s_arg));
+
+    if (ret)
+	return -1;
+
+    *out = s_arg.stream_id;
+    return 0;
+}
+
+int
+vmw_ioctl_unref_stream(struct vmw_driver *vmw, uint32_t stream_id)
+{
+    struct drm_vmw_stream_arg s_arg;
+    int ret;
+
+    memset(&s_arg, 0, sizeof(s_arg));
+    s_arg.stream_id = stream_id;
+
+    ret = drmCommandRead(vmw->fd, DRM_VMW_CLAIM_STREAM,
+			 &s_arg, sizeof(s_arg));
+
+    return 0;
 }
 
 int

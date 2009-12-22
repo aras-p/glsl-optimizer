@@ -73,8 +73,6 @@ void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
  * vmw_ioctl.c
  */
 
-int vmw_ioctl_supports_overlay(struct vmw_driver *vmw);
-
 int vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot);
 
 struct vmw_dma_buffer * vmw_ioctl_buffer_create(struct vmw_driver *vmw,
@@ -89,6 +87,15 @@ void vmw_ioctl_buffer_unmap(struct vmw_driver *vmw,
 
 void vmw_ioctl_buffer_destroy(struct vmw_driver *vmw,
 			      struct vmw_dma_buffer *buf);
+
+int vmw_ioctl_supports_streams(struct vmw_driver *vmw);
+
+int vmw_ioctl_num_streams(struct vmw_driver *vmw,
+			  uint32_t *ntot, uint32_t *nfree);
+
+int vmw_ioctl_unref_stream(struct vmw_driver *vmw, uint32_t stream_id);
+
+int vmw_ioctl_claim_stream(struct vmw_driver *vmw, uint32_t *out);
 
 
 #endif

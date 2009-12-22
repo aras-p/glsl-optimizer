@@ -25,28 +25,32 @@
  *
  **************************************************************************/
 
-#ifndef _VMWGFX_DRM_H_
-#define _VMWGFX_DRM_H_
+#ifndef __VMWGFX_DRM_H__
+#define __VMWGFX_DRM_H__
 
 #define DRM_VMW_MAX_SURFACE_FACES 6
 #define DRM_VMW_MAX_MIP_LEVELS 24
 
 #define DRM_VMW_EXT_NAME_LEN 128
 
-#define DRM_VMW_GET_PARAM            1
-#define DRM_VMW_EXTENSION            2
-#define DRM_VMW_CREATE_CONTEXT       3
-#define DRM_VMW_UNREF_CONTEXT        4
-#define DRM_VMW_CREATE_SURFACE       5
-#define DRM_VMW_UNREF_SURFACE        6
-#define DRM_VMW_REF_SURFACE          7
-#define DRM_VMW_EXECBUF              8
-#define DRM_VMW_ALLOC_DMABUF         9
-#define DRM_VMW_UNREF_DMABUF         10
-#define DRM_VMW_FIFO_DEBUG           11
-#define DRM_VMW_FENCE_WAIT           12
-#define DRM_VMW_OVERLAY              13
-#define DRM_VMW_CURSOR_BYPASS        14
+#define DRM_VMW_GET_PARAM            0
+#define DRM_VMW_ALLOC_DMABUF         1
+#define DRM_VMW_UNREF_DMABUF         2
+#define DRM_VMW_CURSOR_BYPASS        3
+/* guarded by DRM_VMW_PARAM_NUM_STREAMS != 0*/
+#define DRM_VMW_CONTROL_STREAM       4
+#define DRM_VMW_CLAIM_STREAM         5
+#define DRM_VMW_UNREF_STREAM         6
+/* guarded by DRM_VMW_PARAM_3D == 1 */
+#define DRM_VMW_CREATE_CONTEXT       7
+#define DRM_VMW_UNREF_CONTEXT        8
+#define DRM_VMW_CREATE_SURFACE       9
+#define DRM_VMW_UNREF_SURFACE        10
+#define DRM_VMW_REF_SURFACE          11
+#define DRM_VMW_EXECBUF              12
+#define DRM_VMW_FIFO_DEBUG           13
+#define DRM_VMW_FENCE_WAIT           14
+
 
 /*************************************************************************/
 /**
@@ -60,8 +64,11 @@
  * Does the driver support the overlay ioctl.
  */
 
-#define DRM_VMW_PARAM_FIFO_OFFSET    0
-#define DRM_VMW_PARAM_OVERLAY_IOCTL  1
+#define DRM_VMW_PARAM_NUM_STREAMS      0
+#define DRM_VMW_PARAM_NUM_FREE_STREAMS 1
+#define DRM_VMW_PARAM_3D               2
+#define DRM_VMW_PARAM_FIFO_OFFSET      3
+
 
 /**
  * struct drm_vmw_getparam_arg
@@ -444,7 +451,7 @@ struct drm_vmw_fence_wait_arg {
 
 /*************************************************************************/
 /**
- * DRM_VMW_OVERLAY - Control overlays.
+ * DRM_VMW_CONTROL_STREAM - Control overlays, aka streams.
  *
  * This IOCTL controls the overlay units of the svga device.
  * The SVGA overlay units does not work like regular hardware units in
@@ -469,7 +476,7 @@ struct drm_vmw_rect {
 };
 
 /**
- * struct drm_vmw_overlay_arg
+ * struct drm_vmw_control_stream_arg
  *
  * @stream_id: Stearm to control
  * @enabled: If false all following arguments are ignored.
@@ -483,10 +490,10 @@ struct drm_vmw_rect {
  * @src: Source rect, must be within the defined area above.
  * @dst: Destination rect, x and y may be negative.
  *
- * Argument to the DRM_VMW_OVERLAY Ioctl.
+ * Argument to the DRM_VMW_CONTROL_STREAM Ioctl.
  */
 
-struct drm_vmw_overlay_arg {
+struct drm_vmw_control_stream_arg {
 	uint32_t stream_id;
 	uint32_t enabled;
 
@@ -536,5 +543,32 @@ struct drm_vmw_cursor_bypass_arg {
 	int32_t xhot;
 	int32_t yhot;
 };
+
+/*************************************************************************/
+/**
+ * DRM_VMW_CLAIM_STREAM - Claim a single stream.
+ */
+
+/**
+ * struct drm_vmw_context_arg
+ *
+ * @stream_id: Device unique context ID.
+ *
+ * Output argument to the DRM_VMW_CREATE_CONTEXT Ioctl.
+ * Input argument to the DRM_VMW_UNREF_CONTEXT Ioctl.
+ */
+
+struct drm_vmw_stream_arg {
+	uint32_t stream_id;
+	uint32_t pad64;
+};
+
+/*************************************************************************/
+/**
+ * DRM_VMW_UNREF_STREAM - Unclaim a stream.
+ *
+ * Return a single stream that was claimed by this process. Also makes
+ * sure that the stream has been stopped.
+ */
 
 #endif

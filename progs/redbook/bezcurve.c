@@ -45,7 +45,7 @@ GLfloat ctrlpoints[4][3] = {
 	{ -4.0, -4.0, 0.0}, { -2.0, 4.0, 0.0}, 
 	{2.0, -4.0, 0.0}, {4.0, 4.0, 0.0}};
 
-void init(void)
+static void init(void)
 {
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_FLAT);
@@ -53,7 +53,7 @@ void init(void)
    glEnable(GL_MAP1_VERTEX_3);
 }
 
-void display(void)
+static void display(void)
 {
    int i;
 
@@ -73,7 +73,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -89,7 +89,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

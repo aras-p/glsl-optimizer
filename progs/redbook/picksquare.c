@@ -49,7 +49,7 @@
 int board[3][3];   /*  amount of color for each square	*/
 
 /*  Clear color value for every square on the board   */
-void init(void)
+static void init(void)
 {
    int i, j;
    for (i = 0; i < 3; i++) 
@@ -64,7 +64,7 @@ void init(void)
  *  square is determined by its position on the grid, and 
  *  the value in the board[][] array.
  */
-void drawSquares(GLenum mode)
+static void drawSquares(GLenum mode)
 {
    GLuint i, j;
    for (i = 0; i < 3; i++) {
@@ -85,7 +85,7 @@ void drawSquares(GLenum mode)
 /*  processHits prints out the contents of the 
  *  selection array.
  */
-void processHits (GLint hits, GLuint buffer[])
+static void processHits (GLint hits, GLuint buffer[])
 {
    GLint i;
    GLuint j, ii = 0, jj = 0, names, *ptr;
@@ -117,7 +117,7 @@ void processHits (GLint hits, GLuint buffer[])
  */
 #define BUFSIZE 512
 
-void pickSquares(int button, int state, int x, int y)
+static void pickSquares(int button, int state, int x, int y)
 {
    GLuint selectBuf[BUFSIZE];
    GLint hits;
@@ -152,14 +152,14 @@ void pickSquares(int button, int state, int x, int y)
    glutPostRedisplay();
 } 
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
    drawSquares (GL_RENDER);
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, w, h);
    glMatrixMode(GL_PROJECTION);
@@ -170,7 +170,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

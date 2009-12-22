@@ -344,6 +344,9 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 #if DEBUG_PRINT
     debug_printf("ExaPrepareSolid(0x%x)\n", fg);
 #endif
+    if (!exa->accel)
+	return FALSE;
+
     if (!exa->pipe)
 	XORG_FALLBACK("accle not enabled");
 
@@ -362,7 +365,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
     }
 
-    return exa->accel && xorg_solid_bind_state(exa, priv, fg);
+    return xorg_solid_bind_state(exa, priv, fg);
 }
 
 static void
@@ -418,6 +421,10 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 #if DEBUG_PRINT
     debug_printf("ExaPrepareCopy\n");
 #endif
+
+    if (!exa->accel)
+	return FALSE;
+
     if (!exa->pipe)
 	XORG_FALLBACK("accle not enabled");
 
@@ -491,7 +498,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     }
 
 
-    return exa->accel;
+    return TRUE;
 }
 
 static void
@@ -599,15 +606,19 @@ ExaCheckComposite(int op,
    ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
-   boolean accelerated = xorg_composite_accelerated(op,
-                                                    pSrcPicture,
-                                                    pMaskPicture,
-                                                    pDstPicture);
+
 #if DEBUG_PRINT
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
 #endif
-   return exa->accel && accelerated;
+
+   if (!exa->accel)
+       return FALSE;
+
+   return xorg_composite_accelerated(op,
+				     pSrcPicture,
+				     pMaskPicture,
+				     pDstPicture);
 }
 
 
@@ -620,6 +631,9 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv;
+
+   if (!exa->accel)
+       return FALSE;
 
 #if DEBUG_PRINT
    debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
@@ -679,8 +693,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                        render_format_name(pMaskPicture->format));
    }
 
-   return exa->accel &&
-          xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
+   return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
                                     pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
                                     pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,

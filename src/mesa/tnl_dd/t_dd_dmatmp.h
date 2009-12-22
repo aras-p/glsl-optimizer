@@ -241,6 +241,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	       tmp = ALLOC_VERTS(nr+1);
 	       tmp = TAG(emit_verts)( ctx, j, nr, tmp );
 	       tmp = TAG(emit_verts)( ctx, start, 1, tmp );
+	       (void) tmp;
 	    }
 	    else {
 	       TAG(emit_verts)( ctx, j, nr, ALLOC_VERTS(nr) );
@@ -254,6 +255,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	 tmp = ALLOC_VERTS(2);
 	 tmp = TAG(emit_verts)( ctx, start+1, 1, tmp );
 	 tmp = TAG(emit_verts)( ctx, start, 1, tmp );
+	 (void) tmp;
       }
 
       FLUSH();
@@ -358,6 +360,7 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 	 tmp = ALLOC_VERTS( nr );
 	 tmp = TAG(emit_verts)( ctx, start, 1, tmp );
 	 tmp = TAG(emit_verts)( ctx, j, nr - 1, tmp );
+	 (void) tmp;
 	 currentsz = dmasz;
       }
 
@@ -397,6 +400,7 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 	 tmp = ALLOC_VERTS( nr );
 	 tmp = TAG(emit_verts)( ctx, start, 1, tmp );
 	 tmp = TAG(emit_verts)( ctx, j, nr - 1, tmp );
+	 (void) tmp;
 	 currentsz = dmasz;
       }
 
@@ -634,6 +638,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 	 /* Send v1, v2, v3
 	  */
 	 tmp = EMIT_VERTS(ctx, j + 1, 3, tmp);
+	 (void) tmp;
       }
    }
    else {
@@ -820,6 +825,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 	       tmp = ALLOC_ELTS(nr+1);
 	       tmp = TAG(emit_elts)( ctx, elts+j, nr, tmp );
 	       tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
+	       (void) tmp;
 	    }
 	    else {
 	       TAG(emit_elts)( ctx, elts+j, nr, ALLOC_ELTS(nr) );
@@ -833,6 +839,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 	 tmp = ALLOC_ELTS(2);
 	 tmp = TAG(emit_elts)( ctx, elts+start+1, 1, tmp );
 	 tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
+	 (void) tmp;
       }
 
       FLUSH();
@@ -946,6 +953,7 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 	 tmp = ALLOC_ELTS( nr );
 	 tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
 	 tmp = TAG(emit_elts)( ctx, elts+j, nr - 1, tmp );
+	 (void) tmp;
 	 FLUSH();
 	 currentsz = dmasz;
       }
@@ -983,6 +991,7 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 	 tmp = ALLOC_ELTS( nr );
 	 tmp = TAG(emit_elts)( ctx, elts+start, 1, tmp );
 	 tmp = TAG(emit_elts)( ctx, elts+j, nr - 1, tmp );
+	 (void) tmp;
 	 FLUSH();
 	 currentsz = dmasz;
       }

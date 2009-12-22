@@ -337,6 +337,8 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
    GLint ch = ctx->DrawBuffer->_Ymax - cy;
 
    /* XXX FIX ME: the cx,cy,cw,ch vars are currently ignored! */
+   (void) ch;
+   (void) cw;
 
    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
        fprintf (stderr, "%s\n", __FUNCTION__);

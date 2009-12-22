@@ -705,6 +705,10 @@ static void r700UpdateCulling(GLcontext * ctx)
             CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit); /* default: ccw */
             break;
     }
+
+    /* Winding is inverted when rendering to FBO */
+    if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+	    r700->PA_SU_SC_MODE_CNTL.u32All ^= FACE_bit;
 }
 
 static void r700UpdateLineStipple(GLcontext * ctx)

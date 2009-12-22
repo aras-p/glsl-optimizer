@@ -553,6 +553,9 @@ affine_span(GLcontext *ctx, SWspan *span,
    info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   info.er = 0;					\
+   info.eg = 0;					\
+   info.eb = 0;					\
    span.arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
@@ -815,6 +818,9 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   info.er = 0;					\
+   info.eg = 0;					\
+   info.eb = 0;					\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\

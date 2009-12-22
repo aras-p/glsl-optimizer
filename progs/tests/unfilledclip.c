@@ -31,6 +31,7 @@
 
 static int win_width, win_height;
 
+#if 0
 static void
 line(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
@@ -39,6 +40,7 @@ line(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 	glVertex2f(x2, y2);
 	glEnd();
 }
+#endif
 
 static void
 line3(GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2, GLfloat z2)

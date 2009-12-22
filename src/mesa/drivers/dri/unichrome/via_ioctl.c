@@ -885,7 +885,6 @@ void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags)
    }
    else if (vmesa->numClipRects) {
       drm_clip_rect_t *pbox = vmesa->pClipRects;
-      __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
 
       for (i = 0; i < vmesa->numClipRects; i++) {
 	 drm_clip_rect_t b;

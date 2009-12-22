@@ -234,7 +234,7 @@ extern "C" {
 #elif defined(__APPLE__)
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
-#elif defined(_AIX)
+#elif (defined(_AIX) || defined(__blrts))
 #define CPU_TO_LE32( x )        x = ((x & 0x000000ff) << 24) | \
                                     ((x & 0x0000ff00) <<  8) | \
                                     ((x & 0x00ff0000) >>  8) | \

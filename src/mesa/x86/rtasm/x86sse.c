@@ -7,10 +7,12 @@
 #define DISASSEM 0
 #define X86_TWOB 0x0f
 
+#if 0
 static unsigned char *cptr( void (*label)() )
 {
    return (unsigned char *)(unsigned long)label;
 }
+#endif
 
 
 static void do_realloc( struct x86_function *p )

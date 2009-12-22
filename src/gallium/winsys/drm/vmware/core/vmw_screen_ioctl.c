@@ -468,6 +468,15 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    VMW_FUNC;
 
    memset(&gp_arg, 0, sizeof(gp_arg));
+   gp_arg.param = DRM_VMW_PARAM_3D;
+   ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
+			     &gp_arg, sizeof(gp_arg));
+   if (ret || gp_arg.value == 0) {
+      debug_printf("No 3D enabled (%i, %s)\n", ret, strerror(-ret));
+      goto out_err1;
+   }
+
+   memset(&gp_arg, 0, sizeof(gp_arg));
    gp_arg.param = DRM_VMW_PARAM_FIFO_OFFSET;
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
 			     &gp_arg, sizeof(gp_arg));

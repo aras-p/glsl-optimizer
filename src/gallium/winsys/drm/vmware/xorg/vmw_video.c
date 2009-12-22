@@ -273,11 +273,17 @@ vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     XF86VideoAdaptorPtr *overlayAdaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
     int numAdaptors;
+    unsigned int ntot, nfree;
 
     debug_printf("%s: enter\n", __func__);
 
-    if (vmw_ioctl_supports_overlay(vmw) != 0) {
-        debug_printf("No overlay ioctl support\n");
+    if (vmw_ioctl_num_streams(vmw, &ntot, &nfree) != 0) {
+        debug_printf("No stream ioctl support\n");
+        return FALSE;
+    }
+
+    if (nfree == 0) {
+        debug_printf("No free streams\n");
         return FALSE;
     }
 
@@ -353,6 +359,7 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
 	/* make sure the port is stoped as well */
 	vmw_xv_stop_video(pScrn, &video->port[i], TRUE);
+	vmw_ioctl_unref_stream(vmw, video->port[i].streamId);
     }
 
     /* XXX: I'm sure this function is missing code for turning off Xv */
@@ -448,7 +455,7 @@ vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
     adaptor->pPortPrivates = video->port_ptr;
 
     for (i = 0; i < VMWARE_VID_NUM_PORTS; ++i) {
-        video->port[i].streamId = i;
+        vmw_ioctl_claim_stream(vmw, &video->port[i].streamId);
         video->port[i].play = vmw_video_port_init;
         video->port[i].flags = SVGA_VIDEO_FLAG_COLORKEY;
         video->port[i].colorKey = VMWARE_VIDEO_COLORKEY;
@@ -577,7 +584,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
                     short height, RegionPtr clipBoxes)
 {
     struct vmw_driver *vmw = vmw_driver(pScrn);
-    struct drm_vmw_overlay_arg arg;
+    struct drm_vmw_control_stream_arg arg;
     unsigned short w, h;
     int size;
     int ret;
@@ -636,7 +643,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
         }
     }
 
-    ret = drmCommandWrite(vmw->fd, DRM_VMW_OVERLAY, &arg, sizeof(arg));
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CONTROL_STREAM, &arg, sizeof(arg));
     if (ret) {
 	vmw_video_port_cleanup(pScrn, port);
 	return XvBadAlloc;
@@ -846,7 +853,7 @@ vmw_xv_stop_video(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
 {
     struct vmw_driver *vmw = vmw_driver(pScrn);
     struct vmw_video_port *port = data;
-    struct drm_vmw_overlay_arg arg;
+    struct drm_vmw_control_stream_arg arg;
     int ret;
 
     debug_printf("%s: cleanup is %s\n", __func__, cleanup ? "TRUE" : "FALSE");
@@ -862,7 +869,7 @@ vmw_xv_stop_video(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
     arg.stream_id = port->streamId;
     arg.enabled = FALSE;
 
-    ret = drmCommandWrite(vmw->fd, DRM_VMW_OVERLAY, &arg, sizeof(arg));
+    ret = drmCommandWrite(vmw->fd, DRM_VMW_CONTROL_STREAM, &arg, sizeof(arg));
     assert(ret == 0);
 
     vmw_video_port_cleanup(pScrn, port);

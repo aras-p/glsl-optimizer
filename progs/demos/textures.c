@@ -57,7 +57,7 @@ Idle(void)
 {
    Xrot = glutGet(GLUT_ELAPSED_TIME) * 0.02;
    Yrot = glutGet(GLUT_ELAPSED_TIME) * 0.04;
-   /*Zrot += 2.0;*/
+   /* Zrot += 2.0; */
    glutPostRedisplay();
 }
 
