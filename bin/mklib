@@ -25,6 +25,50 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+# Given a list of files, look for .a archives and unpack them.
+# Return the original list of files minus the .a files plus the unpacked files.
+expand_archives() {
+    FILES=$@
+    NEWFILES=""
+    for FILE in $FILES ; do
+        case $FILE in
+            *.a)
+                # extract the .o files from this .a archive
+                MEMBERS=`ar t $FILE`
+                ar x $FILE
+                NEWFILES="$NEWFILES $MEMBERS"
+                ;;
+            *)
+                # other file type, just add to list
+                NEWFILES="$NEWFILES $FILE"
+                ;;
+        esac
+    done
+    echo $NEWFILES
+}
+
+
+# Given a list of files, look for .a archives and return a list of all objects
+# in the .a archives.
+contents_of_archives() {
+    FILES=$@
+    NEWFILES=""
+    for FILE in $FILES ; do
+        case $FILE in
+            *.a)
+                # get list of members in this .a archive
+                MEMBERS=`ar t $FILE`
+                NEWFILES="$NEWFILES $MEMBERS"
+                ;;
+            *)
+                # skip other file types
+                ;;
+        esac
+    done
+    echo $NEWFILES
+}
+
+
 #
 # Option defaults
 #
@@ -269,45 +313,29 @@ case $ARCH in
             # finish up
             FINAL_LIBS="${LIBNAME}"
         elif [ $STATIC = 1 ] ; then
+	    # make a static .a library
             LIBNAME="lib${LIBNAME}.a"     # prefix with "lib", suffix with ".a"
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
-            LINK="ar"
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
+
+	    # expand .a into .o files
+	    NEW_OBJECTS=`expand_archives $OBJECTS`
+
+            # make static lib
             rm -f ${LIBNAME}
-
-	    # expand any .a objects into constituent .o files.
-	    NEWOBJECTS=""
-	    DELETIA=""
-	    for OBJ in $OBJECTS ; do
-		case $OBJ in
-		    *.a)
-			# extract the .o files from this .a archive
-			FILES=`ar t $OBJ`
-			ar x $OBJ
-			NEWOBJECTS="$NEWOBJECTS $FILES"
-			# keep track of temporary .o files and delete them below
-			DELETIA="$DELETIA $FILES"
-			;;
-		    *)
-			# ordinary .o file
-			NEWOBJECTS="$NEWOBJECTS $OBJ"
-			;;
-		esac
-	    done
-
-            # make lib
-            ${LINK} ${OPTS} ${LIBNAME} ${NEWOBJECTS}
+            ar ${OPTS} ${LIBNAME} ${NEW_OBJECTS}
             ranlib ${LIBNAME}
 
 	    # remove temporary extracted .o files
-	    rm -f ${DELETIA}
+	    rm -f `contents_of_archives $OBJECTS`
 
             # finish up
             FINAL_LIBS=${LIBNAME}
         else
+	    # make dynamic library
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 	    case $ARCH in 'Linux' | 'GNU' | GNU/*)
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
@@ -489,13 +517,24 @@ case $ARCH in
 	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	    FINAL_LIBS=${LIBNAME}
         elif [ $STATIC = 1 ] ; then
+	    # make a static .a library
 	    STLIB="lib${LIBNAME}.a"
 	    echo "mklib: Making FreeBSD static library: " ${STLIB}
+
+	    # expand .a into .o files
+	    NEW_OBJECTS=`expand_archives $OBJECTS`
+
+            # make static lib
 	    rm -f ${STLIB}
-	    ar cq ${STLIB} ${OBJECTS}
+	    ar cq ${STLIB} ${NEW_OBJECTS}
 	    ranlib ${STLIB}
+
+	    # remove temporary extracted .o files
+	    rm -f `contents_of_archives $OBJECTS`
+
 	    FINAL_LIBS=${STLIB}
 	else
+	    # make dynamic library
 	    SHLIB="lib${LIBNAME}.so.${MAJOR}"
 	    OPTS="-shared -Wl,-soname,${SHLIB}"
             if [ "${ALTOPTS}" ] ; then
