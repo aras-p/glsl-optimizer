@@ -221,6 +221,7 @@ softpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
    struct sp_geometry_shader *state =
       (struct sp_geometry_shader *)gs;
 
-   draw_delete_geometry_shader(softpipe->draw, state->draw_data);
+   draw_delete_geometry_shader(softpipe->draw,
+                               (state) ? state->draw_data : 0);
    FREE(state);
 }
