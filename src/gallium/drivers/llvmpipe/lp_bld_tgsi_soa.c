@@ -1315,7 +1315,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       /* deprecated? */
       assert(0);
       return 0;

@@ -264,7 +264,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_NOT                 85
 #define TGSI_OPCODE_TRUNC               86
 #define TGSI_OPCODE_SHL                 87
-#define TGSI_OPCODE_SHR                 88
+                                /* gap */
 #define TGSI_OPCODE_AND                 89
 #define TGSI_OPCODE_OR                  90
 #define TGSI_OPCODE_MOD                 91
