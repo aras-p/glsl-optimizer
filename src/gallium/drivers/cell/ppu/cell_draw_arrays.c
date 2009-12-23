@@ -85,7 +85,7 @@ cell_unmap_constant_buffers(struct cell_context *sp)
  *
  * XXX should the element buffer be specified/bound with a separate function?
  */
-static boolean
+static void
 cell_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_buffer *indexBuffer,
                          unsigned indexSize,
@@ -145,29 +145,27 @@ cell_draw_range_elements(struct pipe_context *pipe,
 
    /* Note: leave drawing surfaces mapped */
    cell_unmap_constant_buffers(sp);
-
-   return TRUE;
 }
 
 
-static boolean
+static void
 cell_draw_elements(struct pipe_context *pipe,
                    struct pipe_buffer *indexBuffer,
                    unsigned indexSize,
                    unsigned mode, unsigned start, unsigned count)
 {
-   return cell_draw_range_elements( pipe, indexBuffer,
-                                    indexSize,
-                                    0, 0xffffffff,
-                                    mode, start, count );
+   cell_draw_range_elements( pipe, indexBuffer,
+                             indexSize,
+                             0, 0xffffffff,
+                             mode, start, count );
 }
 
 
-static boolean
+static void
 cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   return cell_draw_elements(pipe, NULL, 0, mode, start, count);
+   cell_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
