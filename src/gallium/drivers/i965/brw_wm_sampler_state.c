@@ -131,7 +131,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       const float *bc;
 
-      if (util_is_depth_or_stencil(tex->base.format)) {
+      if (util_format_is_depth_or_stencil(tex->base.format)) {
 	 float bordercolor[4] = {
 	    sampler->border_color[0],
 	    sampler->border_color[0],
