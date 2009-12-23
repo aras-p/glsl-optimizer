@@ -46,6 +46,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_tile.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_dump.h"

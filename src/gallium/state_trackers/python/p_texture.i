@@ -132,8 +132,8 @@ struct st_surface
       struct pipe_transfer *transfer;
       unsigned stride;
 
-      stride = pf_get_stride(texture->format, w);
-      *LENGTH = pf_get_nblocksy(texture->format, h) * stride;
+      stride = util_format_get_stride(texture->format, w);
+      *LENGTH = util_format_get_nblocksy(texture->format, h) * stride;
       *STRING = (char *) malloc(*LENGTH);
       if(!*STRING)
          return;
@@ -159,9 +159,9 @@ struct st_surface
       struct pipe_transfer *transfer;
      
       if(stride == 0)
-         stride = pf_get_stride(texture->format, w);
+         stride = util_format_get_stride(texture->format, w);
       
-      if(LENGTH < pf_get_nblocksy(texture->format, h) * stride)
+      if(LENGTH < util_format_get_nblocksy(texture->format, h) * stride)
          SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
          
       transfer = screen->get_tex_transfer(screen,
