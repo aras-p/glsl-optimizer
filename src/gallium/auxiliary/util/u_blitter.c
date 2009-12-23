@@ -48,6 +48,8 @@
 #include "util/u_simple_shaders.h"
 #include "util/u_texture.h"
 
+#define INVALID_PTR ((void*)~0)
+
 struct blitter_context_priv
 {
    struct blitter_context blitter;
@@ -110,6 +112,11 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->pipe = pipe;
 
    /* init state objects for them to be considered invalid */
+   ctx->blitter.saved_blend_state = INVALID_PTR;
+   ctx->blitter.saved_dsa_state = INVALID_PTR;
+   ctx->blitter.saved_rs_state = INVALID_PTR;
+   ctx->blitter.saved_fs = INVALID_PTR;
+   ctx->blitter.saved_vs = INVALID_PTR;
    ctx->blitter.saved_fb_state.nr_cbufs = ~0;
    ctx->blitter.saved_num_textures = ~0;
    ctx->blitter.saved_num_sampler_states = ~0;
@@ -234,11 +241,11 @@ void util_blitter_destroy(struct blitter_context *blitter)
 static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
 {
    /* make sure these CSOs have been saved */
-   assert(ctx->blitter.saved_blend_state &&
-          ctx->blitter.saved_dsa_state &&
-          ctx->blitter.saved_rs_state &&
-          ctx->blitter.saved_fs &&
-          ctx->blitter.saved_vs);
+   assert(ctx->blitter.saved_blend_state != INVALID_PTR &&
+          ctx->blitter.saved_dsa_state != INVALID_PTR &&
+          ctx->blitter.saved_rs_state != INVALID_PTR &&
+          ctx->blitter.saved_fs != INVALID_PTR &&
+          ctx->blitter.saved_vs != INVALID_PTR);
 }
 
 static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
@@ -252,11 +259,11 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    pipe->bind_fs_state(pipe, ctx->blitter.saved_fs);
    pipe->bind_vs_state(pipe, ctx->blitter.saved_vs);
 
-   ctx->blitter.saved_blend_state = 0;
-   ctx->blitter.saved_dsa_state = 0;
-   ctx->blitter.saved_rs_state = 0;
-   ctx->blitter.saved_fs = 0;
-   ctx->blitter.saved_vs = 0;
+   ctx->blitter.saved_blend_state = INVALID_PTR;
+   ctx->blitter.saved_dsa_state = INVALID_PTR;
+   ctx->blitter.saved_rs_state = INVALID_PTR;
+   ctx->blitter.saved_fs = INVALID_PTR;
+   ctx->blitter.saved_vs = INVALID_PTR;
 
    /* restore the state objects which are required to be saved before copy/fill
     */
