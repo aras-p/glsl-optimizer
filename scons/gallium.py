@@ -156,6 +156,12 @@ def symlink(target, source, env):
         os.remove(target)
     os.symlink(os.path.basename(source), target)
 
+def install_program(env, source):
+    source = str(source[0])
+    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'bin')
+    target_name = str(source)
+    env.InstallAs(os.path.join(target_dir, target_name), source)
+
 def install_shared_library(env, source, version = ()):
     source = str(source[0])
     version = tuple(map(str, version))
@@ -169,6 +175,7 @@ def install_shared_library(env, source, version = ()):
         last = env.Command(os.path.join(target_dir, target_name), last, action) 
 
 def createInstallMethods(env):
+    env.AddMethod(install_program, 'InstallProgram')
     env.AddMethod(install_shared_library, 'InstallSharedLibrary')
 
 

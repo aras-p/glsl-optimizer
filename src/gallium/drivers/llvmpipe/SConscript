@@ -76,19 +76,17 @@ env = env.Clone()
 
 env.Prepend(LIBS = [llvmpipe] + auxiliaries)
 
-env.Program(
-    target = 'lp_test_format',
-    source = ['lp_test_format.c', 'lp_test_main.c'],
-)
+tests = [
+    'format',
+    'blend',
+    'conv',
+]
 
-env.Program(
-    target = 'lp_test_blend',
-    source = ['lp_test_blend.c', 'lp_test_main.c'],
-)
-
-env.Program(
-    target = 'lp_test_conv',
-    source = ['lp_test_conv.c', 'lp_test_main.c'],
-)
+for test in tests:
+    target = env.Program(
+        target = 'lp_test_' + test,
+        source = ['lp_test_' + test + '.c', 'lp_test_main.c'],
+    )
+    env.InstallProgram(target)
 
 Export('llvmpipe')
