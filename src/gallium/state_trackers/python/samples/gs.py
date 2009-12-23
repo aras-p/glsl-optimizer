@@ -180,14 +180,14 @@ def test(dev):
         DCL OUT[1], COLOR, CONSTANT
         0:MOV OUT[0], IN[0][0]
         1:MOV OUT[1], IN[0][1]
-        2:EMIT_VERTEX
+        2:EMIT
         3:MOV OUT[0], IN[1][0]
         4:MOV OUT[1], IN[1][1]
-        5:EMIT_VERTEX
+        5:EMIT
         6:MOV OUT[0], IN[2][0]
         7:MOV OUT[1], IN[2][1]
-        8:EMIT_VERTEX
-        9:END_PRIMITIVE
+        8:EMIT
+        9:ENDPRIM
         10:END
     ''')
     ctx.set_geometry_shader(gs)
