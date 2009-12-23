@@ -315,9 +315,9 @@ ES_FILES = \
 	$(DIRECTORY)/src/mesa/es/glapi/*.py				\
 	$(DIRECTORY)/src/mesa/es/state_tracker/*.[ch]			\
 	$(DIRECTORY)/src/mesa/es/main/*.[ch]				\
+	$(DIRECTORY)/src/mesa/es/main/*.xml				\
 	$(DIRECTORY)/src/mesa/es/main/*.py				\
-	$(DIRECTORY)/src/mesa/es/main/*.txt				\
-	$(DIRECTORY)/src/mesa/es/main/es*_special			\
+	$(DIRECTORY)/src/mesa/es/main/*.dtd				\
 	$(DIRECTORY)/src/mesa/es/Makefile				\
 	$(DIRECTORY)/src/mesa/es/sources.mak				\
 
