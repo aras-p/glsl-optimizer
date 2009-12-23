@@ -364,6 +364,7 @@ struct pipe_vertex_buffer
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
+   unsigned instance_divisor;    /**< instance data rate divisor, 0 means per-vertex data */
    struct pipe_buffer *buffer;  /**< the actual buffer */
 };
 
