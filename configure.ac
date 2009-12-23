@@ -1154,14 +1154,22 @@ yes)
         test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
 
-        if test "$tracker" = egl && test "x$enable_egl" != xyes; then
-            AC_MSG_ERROR([cannot build egl state tracker without EGL library])
-        fi
-        if test "$tracker" = xorg; then
+        case "$tracker" in
+        egl)
+            if test "x$enable_egl" != xyes; then
+                AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+            fi
+            ;;
+        xorg)
 	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
                   HAVE_XEXTPROTO_71="no")
-        fi
+            ;;
+        es)
+            # mesa/es is required to build es state tracker
+            SRC_DIRS="mesa/es $SRC_DIRS"
+            ;;
+        esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
