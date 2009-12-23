@@ -2040,6 +2040,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_ELSE:
+		assert(if_depth > 0);
 		if_inst[if_depth-1]  = brw_ELSE(p, if_inst[if_depth-1]);
 		break;
 	    case OPCODE_ENDIF:
@@ -2095,7 +2096,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
                   if (intel->is_ironlake)
                      br = 2;
- 
+
+		  assert(loop_depth > 0);
                   loop_depth--;
                   inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
                   /* patch all the BREAK/CONT instructions from last BGNLOOP */
