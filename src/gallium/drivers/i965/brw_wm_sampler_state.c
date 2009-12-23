@@ -30,6 +30,7 @@
   */
                    
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -130,7 +131,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       const float *bc;
 
-      if (pf_is_depth_or_stencil(tex->base.format)) {
+      if (util_is_depth_or_stencil(tex->base.format)) {
 	 float bordercolor[4] = {
 	    sampler->border_color[0],
 	    sampler->border_color[0],
