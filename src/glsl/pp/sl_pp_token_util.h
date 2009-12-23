@@ -46,72 +46,24 @@ struct sl_pp_token_buffer {
    struct sl_pp_token_info *tokens;
 };
 
-static int
+int
 sl_pp_token_buffer_init(struct sl_pp_token_buffer *buffer,
-                        struct sl_pp_context *context)
-{
-   buffer->context = context;
-   buffer->size = 0;
-   buffer->capacity = 64;
-   buffer->tokens = malloc(buffer->capacity * sizeof(struct sl_pp_token_info));
-   if (!buffer->tokens) {
-      return -1;
-   }
-   return 0;
-}
+                        struct sl_pp_context *context);
 
-static void
-sl_pp_token_buffer_destroy(struct sl_pp_token_buffer *buffer)
-{
-   free(buffer->tokens);
-}
+void
+sl_pp_token_buffer_destroy(struct sl_pp_token_buffer *buffer);
 
-static int
+int
 sl_pp_token_buffer_get(struct sl_pp_token_buffer *buffer,
-                       struct sl_pp_token_info *out)
-{
-   /* Pop from stack first if not empty. */
-   if (buffer->size) {
-      *out = buffer->tokens[--buffer->size];
-      return 0;
-   }
+                       struct sl_pp_token_info *out);
 
-   assert(buffer->context);
-   return sl_pp_token_get(buffer->context, out);
-}
-
-static void
+void
 sl_pp_token_buffer_unget(struct sl_pp_token_buffer *buffer,
-                         const struct sl_pp_token_info *in)
-{
-   /* Resize if needed. */
-   if (buffer->size == buffer->capacity) {
-      buffer->capacity += 64;
-      buffer->tokens = realloc(buffer->tokens,
-                               buffer->capacity * sizeof(struct sl_pp_token_info));
-      assert(buffer->tokens);
-   }
+                         const struct sl_pp_token_info *in);
 
-   /* Push token on stack. */
-   buffer->tokens[buffer->size++] = *in;
-}
-
-static int
+int
 sl_pp_token_buffer_skip_white(struct sl_pp_token_buffer *buffer,
-                              struct sl_pp_token_info *out)
-{
-   if (sl_pp_token_buffer_get(buffer, out)) {
-      return -1;
-   }
-
-   while (out->token == SL_PP_WHITESPACE) {
-      if (sl_pp_token_buffer_get(buffer, out)) {
-         return -1;
-      }
-   }
-
-   return 0;
-}
+                              struct sl_pp_token_info *out);
 
 
 /*
@@ -126,86 +78,26 @@ struct sl_pp_token_peek {
    struct sl_pp_token_info *tokens;
 };
 
-static int
+int
 sl_pp_token_peek_init(struct sl_pp_token_peek *peek,
-                      struct sl_pp_token_buffer *buffer)
-{
-   peek->buffer = buffer;
-   peek->size = 0;
-   peek->capacity = 64;
-   peek->tokens = malloc(peek->capacity * sizeof(struct sl_pp_token_info));
-   if (!peek->tokens) {
-      return -1;
-   }
-   return 0;
-}
+                      struct sl_pp_token_buffer *buffer);
 
-static void
-sl_pp_token_peek_destroy(struct sl_pp_token_peek *peek)
-{
-   /* Abort. */
-   while (peek->size) {
-      sl_pp_token_buffer_unget(peek->buffer, &peek->tokens[--peek->size]);
-   }
-   free(peek->tokens);
-}
+void
+sl_pp_token_peek_destroy(struct sl_pp_token_peek *peek);
 
-static int
+int
 sl_pp_token_peek_get(struct sl_pp_token_peek *peek,
-                     struct sl_pp_token_info *out)
-{
-   /* Get token from buffer. */
-   if (sl_pp_token_buffer_get(peek->buffer, out)) {
-      return -1;
-   }
+                     struct sl_pp_token_info *out);
 
-   /* Save it. */
-   if (peek->size == peek->capacity) {
-      peek->capacity += 64;
-      peek->tokens = realloc(peek->tokens,
-                             peek->capacity * sizeof(struct sl_pp_token_info));
-      assert(peek->tokens);
-   }
-   peek->tokens[peek->size++] = *out;
-   return 0;
-}
+void
+sl_pp_token_peek_commit(struct sl_pp_token_peek *peek);
 
-static void
-sl_pp_token_peek_commit(struct sl_pp_token_peek *peek)
-{
-   peek->size = 0;
-}
-
-static int
+int
 sl_pp_token_peek_to_buffer(const struct sl_pp_token_peek *peek,
-                           struct sl_pp_token_buffer *buffer)
-{
-   unsigned int i;
+                           struct sl_pp_token_buffer *buffer);
 
-   if (sl_pp_token_buffer_init(buffer, NULL)) {
-      return -1;
-   }
-   for (i = peek->size; i > 0; i--) {
-      sl_pp_token_buffer_unget(buffer, &peek->tokens[i - 1]);
-   }
-   return 0;
-}
-
-static int
+int
 sl_pp_token_peek_skip_white(struct sl_pp_token_peek *peek,
-                            struct sl_pp_token_info *out)
-{
-   if (sl_pp_token_peek_get(peek, out)) {
-      return -1;
-   }
-
-   while (out->token == SL_PP_WHITESPACE) {
-      if (sl_pp_token_peek_get(peek, out)) {
-         return -1;
-      }
-   }
-
-   return 0;
-}
+                            struct sl_pp_token_info *out);
 
 #endif /* SL_PP_TOKEN_UTIL_H */

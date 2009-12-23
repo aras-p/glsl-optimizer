@@ -20,6 +20,7 @@ C_SOURCES = \
 	sl_pp_process.c \
 	sl_pp_purify.c \
 	sl_pp_token.c \
+	sl_pp_token_util.c \
 	sl_pp_version.c
 
 include ../Makefile.template

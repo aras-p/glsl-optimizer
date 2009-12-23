@@ -18,6 +18,7 @@ sources = [
     'pp/sl_pp_process.c',
     'pp/sl_pp_purify.c',
     'pp/sl_pp_token.c',
+    'pp/sl_pp_token_util.c',
     'pp/sl_pp_version.c',
     'cl/sl_cl_parse.c',
 ]
