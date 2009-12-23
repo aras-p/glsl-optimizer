@@ -289,7 +289,28 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
                                 /* gap */
-#define TGSI_OPCODE_LAST                119
+#define TGSI_OPCODE_F2I                 119
+#define TGSI_OPCODE_IDIV                120
+#define TGSI_OPCODE_IMAX                121
+#define TGSI_OPCODE_IMIN                122
+#define TGSI_OPCODE_INEG                123
+#define TGSI_OPCODE_ISGE                124
+#define TGSI_OPCODE_ISHR                125
+#define TGSI_OPCODE_ISLT                126
+#define TGSI_OPCODE_F2U                 127
+#define TGSI_OPCODE_U2F                 128
+#define TGSI_OPCODE_UADD                129
+#define TGSI_OPCODE_UDIV                130
+#define TGSI_OPCODE_UMAD                131
+#define TGSI_OPCODE_UMAX                132
+#define TGSI_OPCODE_UMIN                133
+#define TGSI_OPCODE_UMUL                134
+#define TGSI_OPCODE_USEQ                135
+#define TGSI_OPCODE_USGE                136
+#define TGSI_OPCODE_USHR                137
+#define TGSI_OPCODE_USLT                138
+#define TGSI_OPCODE_USNE                139
+#define TGSI_OPCODE_LAST                140
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
