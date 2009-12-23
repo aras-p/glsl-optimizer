@@ -28,6 +28,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_format.h"
 #include "util/u_network.h"
 #include "util/u_tile.h"
 
@@ -73,7 +74,7 @@ static void dump(unsigned width, unsigned height,
 
    util_snprintf(filename, 512, "%s.bmp", pf_name(src_format));
 
-   if (pf_is_compressed(src_format)) {
+   if (util_format_is_compressed(src_format)) {
       debug_printf("skipping: %s\n", filename);
       return;
    }
