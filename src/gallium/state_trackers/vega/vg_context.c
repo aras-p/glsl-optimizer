@@ -231,6 +231,7 @@ static void update_clip_state(struct vg_context *ctx)
    if (state->scissoring) {
       struct pipe_blend_state *blend = &ctx->state.g3d.blend;
       struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
+      int i;
       dsa->depth.writemask = 1;/*glDepthMask(TRUE);*/
       dsa->depth.func = PIPE_FUNC_ALWAYS;
       dsa->depth.enabled = 1;
@@ -254,7 +255,7 @@ static void update_clip_state(struct vg_context *ctx)
       cso_set_blend(ctx->cso_context, blend);
 
       /* enable scissoring */
-      for (int i = 0; i < state->scissor_rects_num; ++i) {
+      for (i = 0; i < state->scissor_rects_num; ++i) {
          const float x      = state->scissor_rects[i * 4 + 0].f;
          const float y      = state->scissor_rects[i * 4 + 1].f;
          const float width  = state->scissor_rects[i * 4 + 2].f;

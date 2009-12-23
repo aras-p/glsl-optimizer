@@ -537,8 +537,9 @@ static INLINE int num_beziers_needed(struct arc *arc)
       double d_eta = (max_eta - min_eta) / n;
       if (d_eta <= 0.5 * M_PI) {
          double eta_b = min_eta;
+         int i;
          found = VG_TRUE;
-         for (int i = 0; found && (i < n); ++i) {
+         for (i = 0; found && (i < n); ++i) {
             double etaA = eta_b;
             eta_b += d_eta;
             found = (estimate_error(arc, etaA, eta_b) <= threshold);
@@ -559,6 +560,7 @@ static void arc_to_beziers(struct arc *arc,
       sin_eta_b, a_cos_eta_b, b_sin_eta_b, a_sin_eta_b,
       b_cos_eta_b, x_b, y_b, x_b_dot, y_b_dot, lx, ly;
    double t, alpha;
+   int i;
 
    { /* always move to the start of the arc */
       VGfloat x = arc->x1;
@@ -607,7 +609,7 @@ static void arc_to_beziers(struct arc *arc,
    t     = tan(0.5 * d_eta);
    alpha = sin(d_eta) * (sqrt(4 + 3 * t * t) - 1) / 3;
 
-   for (int i = 0; i < n; ++i) {
+   for (i = 0; i < n; ++i) {
       struct bezier bezier;
       double xA    = x_b;
       double yA    = y_b;
