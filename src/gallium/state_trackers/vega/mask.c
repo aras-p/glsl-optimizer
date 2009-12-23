@@ -217,7 +217,7 @@ static void setup_mask_framebuffer(struct pipe_surface *surf,
 static void setup_mask_operation(VGMaskOperation operation)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_constant_buffer *cbuf = &ctx->mask.cbuf;
+   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
    const VGfloat ones[4] = {1.f, 1.f, 1.f, 1.f};
    void *shader = 0;
@@ -225,17 +225,17 @@ static void setup_mask_operation(VGMaskOperation operation)
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(ctx->pipe->screen, 1,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer,
+   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf,
                                     0, param_bytes, ones);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
    switch (operation) {
    case VG_UNION_MASK: {
       if (!ctx->mask.union_fs) {
@@ -320,22 +320,22 @@ static void setup_mask_samplers(struct pipe_texture *umask)
 static void setup_mask_fill(const VGfloat color[4])
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_constant_buffer *cbuf = &ctx->mask.cbuf;
+   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(ctx->pipe->screen, 1,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer, 0, param_bytes, color);
+   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf, 0, param_bytes, color);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
    cso_set_fragment_shader_handle(ctx->cso_context,
                                   shaders_cache_fill(ctx->sc,
                                                      VEGA_SOLID_FILL_SHADER));

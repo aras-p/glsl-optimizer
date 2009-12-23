@@ -929,7 +929,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->vertex_elems[7].nr_components = 2;
    r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vs_const_buf.buffer = pipe_buffer_create
+   r->vs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
       DEFAULT_BUF_ALIGNMENT,
@@ -937,7 +937,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       sizeof(struct vertex_shader_consts)
    );
 
-   r->fs_const_buf.buffer = pipe_buffer_create
+   r->fs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
       DEFAULT_BUF_ALIGNMENT,
@@ -946,11 +946,11 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    memcpy
    (
-      pipe_buffer_map(r->pipe->screen, r->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+      pipe_buffer_map(r->pipe->screen, r->fs_const_buf, PIPE_BUFFER_USAGE_CPU_WRITE),
       &fs_consts, sizeof(struct fragment_shader_consts)
    );
 
-   pipe_buffer_unmap(r->pipe->screen, r->fs_const_buf.buffer);
+   pipe_buffer_unmap(r->pipe->screen, r->fs_const_buf);
 
    return true;
 }
@@ -962,8 +962,8 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   pipe_buffer_reference(&r->vs_const_buf.buffer, NULL);
-   pipe_buffer_reference(&r->fs_const_buf.buffer, NULL);
+   pipe_buffer_reference(&r->vs_const_buf, NULL);
+   pipe_buffer_reference(&r->fs_const_buf, NULL);
 
    for (i = 0; i < 3; ++i)
       pipe_buffer_reference(&r->vertex_bufs.all[i].buffer, NULL);
@@ -1273,19 +1273,19 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    vs_consts = pipe_buffer_map
    (
-      r->pipe->screen, r->vs_const_buf.buffer,
+      r->pipe->screen, r->vs_const_buf,
       PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
    );
 
    vs_consts->denorm.x = r->surface->width0;
    vs_consts->denorm.y = r->surface->height0;
 
-   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf.buffer);
+   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf);
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
-                                &r->vs_const_buf);
+                                r->vs_const_buf);
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_FRAGMENT, 0,
-                                &r->fs_const_buf);
+                                r->fs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);

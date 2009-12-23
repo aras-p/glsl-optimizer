@@ -118,10 +118,7 @@ struct st_context {
    void set_constant_buffer(unsigned shader, unsigned index,
                             struct pipe_buffer *buffer ) 
    {
-      struct pipe_constant_buffer state;
-      memset(&state, 0, sizeof(state));
-      state.buffer = buffer;
-      $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
+      $self->pipe->set_constant_buffer($self->pipe, shader, index, buffer);
    }
 
    void set_framebuffer(const struct pipe_framebuffer_state *state ) 

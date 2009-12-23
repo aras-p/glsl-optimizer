@@ -379,14 +379,14 @@ struct xorg_renderer * renderer_create(struct pipe_context *pipe)
 
 void renderer_destroy(struct xorg_renderer *r)
 {
-   struct pipe_constant_buffer *vsbuf = &r->vs_const_buffer;
-   struct pipe_constant_buffer *fsbuf = &r->fs_const_buffer;
+   struct pipe_buffer **vsbuf = &r->vs_const_buffer;
+   struct pipe_buffer **fsbuf = &r->fs_const_buffer;
 
-   if (vsbuf && vsbuf->buffer)
-      pipe_buffer_reference(&vsbuf->buffer, NULL);
+   if (*vsbuf)
+      pipe_buffer_reference(vsbuf, NULL);
 
-   if (fsbuf && fsbuf->buffer)
-      pipe_buffer_reference(&fsbuf->buffer, NULL);
+   if (*fsbuf)
+      pipe_buffer_reference(fsbuf, NULL);
 
    if (r->shaders) {
       xorg_shaders_destroy(r->shaders);
@@ -409,20 +409,20 @@ void renderer_set_constants(struct xorg_renderer *r,
                             const float *params,
                             int param_bytes)
 {
-   struct pipe_constant_buffer *cbuf =
+   struct pipe_buffer **cbuf =
       (shader_type == PIPE_SHADER_VERTEX) ? &r->vs_const_buffer :
       &r->fs_const_buffer;
 
-   pipe_buffer_reference(&cbuf->buffer, NULL);
-   cbuf->buffer = pipe_buffer_create(r->pipe->screen, 16,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
+   pipe_buffer_reference(cbuf, NULL);
+   *cbuf = pipe_buffer_create(r->pipe->screen, 16,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
 
-   if (cbuf->buffer) {
-      pipe_buffer_write(r->pipe->screen, cbuf->buffer,
+   if (*cbuf) {
+      pipe_buffer_write(r->pipe->screen, *cbuf,
                         0, param_bytes, params);
    }
-   r->pipe->set_constant_buffer(r->pipe, shader_type, 0, cbuf);
+   r->pipe->set_constant_buffer(r->pipe, shader_type, 0, *cbuf);
 }
 
 

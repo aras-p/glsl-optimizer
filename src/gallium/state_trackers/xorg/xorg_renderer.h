@@ -23,8 +23,8 @@ struct xorg_renderer {
 
    int fb_width;
    int fb_height;
-   struct pipe_constant_buffer vs_const_buffer;
-   struct pipe_constant_buffer fs_const_buffer;
+   struct pipe_buffer *vs_const_buffer;
+   struct pipe_buffer *fs_const_buffer;
 
    float buffer[BUF_SIZE];
    int buffer_size;
