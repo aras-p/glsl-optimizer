@@ -177,6 +177,10 @@ softpipe_create_gs_state(struct pipe_context *pipe,
    if (state == NULL )
       goto fail;
 
+   /* debug */
+   if (softpipe->dump_gs)
+      tgsi_dump(templ->tokens, 0);
+
    /* copy shader tokens, the ones passed in will go away.
     */
    state->shader.tokens = tgsi_dup_tokens(templ->tokens);

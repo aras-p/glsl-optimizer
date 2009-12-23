@@ -148,6 +148,7 @@ struct softpipe_context {
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;
+   unsigned dump_gs : 1;
    unsigned no_rast : 1;
 };
 

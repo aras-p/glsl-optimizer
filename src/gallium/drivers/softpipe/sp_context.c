@@ -191,6 +191,7 @@ softpipe_create( struct pipe_screen *screen )
 #endif
 
    softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
+   softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
    softpipe->pipe.winsys = screen->winsys;
    softpipe->pipe.screen = screen;
