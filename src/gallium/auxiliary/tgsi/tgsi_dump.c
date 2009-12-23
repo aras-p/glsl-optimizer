@@ -176,7 +176,7 @@ static const char *primitive_names[] =
 
 
 static void
-_dump_register(
+_dump_register_decl(
    struct dump_ctx *ctx,
    uint file,
    int first,
@@ -196,6 +196,52 @@ _dump_register(
       SID( last );
    }
    CHR( ']' );
+}
+
+static void
+_dump_register_dst(
+   struct dump_ctx *ctx,
+   uint file,
+   int index)
+{
+   ENM( file, file_names );
+
+   CHR( '[' );
+   SID( index );
+   CHR( ']' );
+}
+
+
+static void
+_dump_register_src(
+   struct dump_ctx *ctx,
+   const struct tgsi_full_src_register *src )
+{
+   if (src->Register.Indirect) {
+      ENM( src->Register.File, file_names );
+      CHR( '[' );
+      ENM( src->Indirect.File, file_names );
+      CHR( '[' );
+      SID( src->Indirect.Index );
+      TXT( "]." );
+      ENM( src->Indirect.SwizzleX, swizzle_names );
+      if (src->Register.Index != 0) {
+         if (src->Register.Index > 0)
+            CHR( '+' );
+         SID( src->Register.Index );
+      }
+      CHR( ']' );
+   } else {
+      ENM( src->Register.File, file_names );
+      CHR( '[' );
+      SID( src->Register.Index );
+      CHR( ']' );
+   }
+   if (src->Register.Dimension) {
+      CHR( '[' );
+      SID( src->Dimension.Index );
+      CHR( ']' );
+   }
 }
 
 static void
@@ -252,7 +298,7 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   _dump_register(
+   _dump_register_decl(
       ctx,
       decl->Declaration.File,
       decl->Range.First,
@@ -443,10 +489,9 @@ iter_instruction(
             dst->Indirect.SwizzleX );
       }
       else {
-         _dump_register(
+         _dump_register_dst(
             ctx,
             dst->Register.File,
-            dst->Register.Index,
             dst->Register.Index );
       }
       _dump_writemask( ctx, dst->Register.WriteMask );
@@ -466,22 +511,7 @@ iter_instruction(
       if (src->Register.Absolute)
          CHR( '|' );
 
-      if (src->Register.Indirect) {
-         _dump_register_ind(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Indirect.File,
-            src->Indirect.Index,
-            src->Indirect.SwizzleX );
-      }
-      else {
-         _dump_register(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Register.Index );
-      }
+      _dump_register_src(ctx, src);
 
       if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
           src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
