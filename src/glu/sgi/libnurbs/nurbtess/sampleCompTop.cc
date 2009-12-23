@@ -172,7 +172,7 @@ void sampleTopRightWithGridLine(Real* topVertex,
     return;
   }
 
-  Int segIndexSmall, segIndexLarge;
+  Int segIndexSmall = 0, segIndexLarge;
   findTopRightSegment(rightChain,
                       rightStart,
                       rightEnd,
@@ -294,7 +294,7 @@ void sampleTopLeftWithGridLine(Real* topVertex,
                                 primStream* pStream
                                 )
 {
-  Int segIndexSmall, segIndexLarge;
+  Int segIndexSmall = 0, segIndexLarge;
   //if left chain is empty, then there is only one top vertex with one grid 
   //  line
   if(leftEnd < leftStart) {
