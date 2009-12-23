@@ -146,6 +146,9 @@ sl_pp_process_get(struct sl_pp_context *context,
                      found_eof = 1;
                      found_eol = 1;
                      break;
+
+                  default:
+                     break;
                   }
                }
 
