@@ -1877,10 +1877,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
 
-	dst_flags = inst->DstReg.WriteMask;
-	if (inst->SaturateMode == SATURATE_ZERO_ONE)
-	    dst_flags |= SATURATE;
-
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
 		emit_pixel_xy(c, dst, dst_flags);
