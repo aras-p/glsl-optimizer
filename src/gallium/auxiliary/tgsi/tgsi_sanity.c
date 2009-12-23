@@ -445,7 +445,9 @@ iter_immediate(
 
    /* Check data type validity.
     */
-   if (imm->Immediate.DataType != TGSI_IMM_FLOAT32) {
+   if (imm->Immediate.DataType != TGSI_IMM_FLOAT32 &&
+       imm->Immediate.DataType != TGSI_IMM_UINT32 &&
+       imm->Immediate.DataType != TGSI_IMM_INT32) {
       report_error( ctx, "(%u): Invalid immediate data type", imm->Immediate.DataType );
       return TRUE;
    }

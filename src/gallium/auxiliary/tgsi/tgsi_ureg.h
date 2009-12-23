@@ -148,6 +148,16 @@ ureg_DECL_immediate( struct ureg_program *,
                      unsigned nr );
 
 struct ureg_src
+ureg_DECL_immediate_uint( struct ureg_program *,
+                          const unsigned *v,
+                          unsigned nr );
+
+struct ureg_src
+ureg_DECL_immediate_int( struct ureg_program *,
+                         const int *v,
+                         unsigned nr );
+
+struct ureg_src
 ureg_DECL_constant( struct ureg_program *,
                     unsigned index );
 
@@ -219,6 +229,90 @@ ureg_imm1f( struct ureg_program *ureg,
    float v[1];
    v[0] = a;
    return ureg_DECL_immediate( ureg, v, 1 );
+}
+
+static INLINE struct ureg_src
+ureg_imm4u( struct ureg_program *ureg,
+            unsigned a, unsigned b,
+            unsigned c, unsigned d)
+{
+   unsigned v[4];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   v[3] = d;
+   return ureg_DECL_immediate_uint( ureg, v, 4 );
+}
+
+static INLINE struct ureg_src
+ureg_imm3u( struct ureg_program *ureg,
+            unsigned a, unsigned b,
+            unsigned c)
+{
+   unsigned v[3];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   return ureg_DECL_immediate_uint( ureg, v, 3 );
+}
+
+static INLINE struct ureg_src
+ureg_imm2u( struct ureg_program *ureg,
+            unsigned a, unsigned b)
+{
+   unsigned v[2];
+   v[0] = a;
+   v[1] = b;
+   return ureg_DECL_immediate_uint( ureg, v, 2 );
+}
+
+static INLINE struct ureg_src
+ureg_imm1u( struct ureg_program *ureg,
+            unsigned a)
+{
+   return ureg_DECL_immediate_uint( ureg, &a, 1 );
+}
+
+static INLINE struct ureg_src
+ureg_imm4i( struct ureg_program *ureg,
+            int a, int b,
+            int c, int d)
+{
+   int v[4];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   v[3] = d;
+   return ureg_DECL_immediate_int( ureg, v, 4 );
+}
+
+static INLINE struct ureg_src
+ureg_imm3i( struct ureg_program *ureg,
+            int a, int b,
+            int c)
+{
+   int v[3];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   return ureg_DECL_immediate_int( ureg, v, 3 );
+}
+
+static INLINE struct ureg_src
+ureg_imm2i( struct ureg_program *ureg,
+            int a, int b)
+{
+   int v[2];
+   v[0] = a;
+   v[1] = b;
+   return ureg_DECL_immediate_int( ureg, v, 2 );
+}
+
+static INLINE struct ureg_src
+ureg_imm1i( struct ureg_program *ureg,
+            int a)
+{
+   return ureg_DECL_immediate_int( ureg, &a, 1 );
 }
 
 /***********************************************************************

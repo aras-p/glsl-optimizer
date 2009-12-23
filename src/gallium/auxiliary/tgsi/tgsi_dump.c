@@ -128,7 +128,9 @@ static const char *semantic_names[] =
 
 static const char *immediate_type_names[] =
 {
-   "FLT32"
+   "FLT32",
+   "UINT32",
+   "INT32"
 };
 
 static const char *swizzle_names[] =
@@ -411,6 +413,12 @@ iter_immediate(
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          FLT( imm->u[i].Float );
+         break;
+      case TGSI_IMM_UINT32:
+         UID(imm->u[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         SID(imm->u[i].Int);
          break;
       default:
          assert( 0 );
