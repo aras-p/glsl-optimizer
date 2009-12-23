@@ -183,6 +183,12 @@ _dump_register(
    int last )
 {
    ENM( file, file_names );
+
+   /* all geometry shader inputs are two dimensional */
+   if (file == TGSI_FILE_INPUT &&
+       ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY)
+      TXT("[]");
+
    CHR( '[' );
    SID( first );
    if (first != last) {
