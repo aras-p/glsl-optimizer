@@ -1025,7 +1025,7 @@ tgsi_build_full_property(
    size++;
 
    *property = tgsi_build_property(
-      TGSI_PROPERTY_GS_INPUT_PRIM,
+      full_prop->Property.PropertyName,
       header );
 
    assert( full_prop->Property.NrTokens <= 8 + 1 );
