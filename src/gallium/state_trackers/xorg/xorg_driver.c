@@ -179,10 +179,12 @@ static Bool
 crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    //ScreenPtr pScreen = pScrn->pScreen;
-    //PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
-    //Bool fbAccessDisabled;
-    //CARD8 *fbstart;
+    /*
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    Bool fbAccessDisabled;
+    CARD8 *fbstart;
+     */
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;

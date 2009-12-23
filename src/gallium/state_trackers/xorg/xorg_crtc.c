@@ -64,7 +64,7 @@ struct crtc_private
 static void
 crtc_dpms(xf86CrtcPtr crtc, int mode)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 
     switch (mode) {
     case DPMSModeOn:
@@ -141,7 +141,7 @@ crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
 static void
 crtc_load_lut(xf86CrtcPtr crtc)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 }
 #endif
 
@@ -154,7 +154,7 @@ crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
 static void *
 crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 
     return NULL;
 }
@@ -162,7 +162,7 @@ crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 static PixmapPtr
 crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 
     return NULL;
 }
@@ -170,7 +170,7 @@ crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 static void
 crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 {
-    //ScrnInfoPtr pScrn = crtc->scrn;
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 }
 
 static void
