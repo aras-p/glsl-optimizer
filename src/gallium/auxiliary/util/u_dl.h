@@ -30,6 +30,18 @@
 #define U_DL_H_
 
 
+#include "pipe/p_config.h"
+
+
+#if defined(PIPE_OS_WINDOWS)
+#  define UTIL_DL_EXT ".dll"
+#elif defined(PIPE_OS_APPLE)
+#  define UTIL_DL_EXT ".dylib"
+#else
+#  define UTIL_DL_EXT ".so"
+#endif
+
+
 struct util_dl_library;
 
 
