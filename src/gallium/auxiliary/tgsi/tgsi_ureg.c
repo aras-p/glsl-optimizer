@@ -495,9 +495,10 @@ static int
 match_or_expand_immediate( const unsigned *v,
                            unsigned nr,
                            unsigned *v2,
-                           unsigned *nr2,
+                           unsigned *pnr2,
                            unsigned *swizzle )
 {
+   unsigned nr2 = *pnr2;
    unsigned i, j;
 
    *swizzle = 0;
@@ -505,7 +506,7 @@ match_or_expand_immediate( const unsigned *v,
    for (i = 0; i < nr; i++) {
       boolean found = FALSE;
 
-      for (j = 0; j < *nr2 && !found; j++) {
+      for (j = 0; j < nr2 && !found; j++) {
          if (v[i] == v2[j]) {
             *swizzle |= j << (i * 2);
             found = TRUE;
@@ -513,16 +514,19 @@ match_or_expand_immediate( const unsigned *v,
       }
 
       if (!found) {
-         if (*nr2 >= 4) {
+         if (nr2 >= 4) {
             return FALSE;
          }
 
-         v2[*nr2] = v[i];
-         *swizzle |= *nr2 << (i * 2);
-         (*nr2)++;
+         v2[nr2] = v[i];
+         *swizzle |= nr2 << (i * 2);
+         nr2++;
       }
    }
 
+   /* Actually expand immediate only when fully succeeded.
+    */
+   *pnr2 = nr2;
    return TRUE;
 }
 
