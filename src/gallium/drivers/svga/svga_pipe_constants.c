@@ -49,7 +49,7 @@ struct svga_constbuf
 
 static void svga_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_constant_buffer *buf)
+                                     const struct pipe_buffer *buf)
 {
    struct svga_context *svga = svga_context(pipe);
 
@@ -57,7 +57,7 @@ static void svga_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    pipe_buffer_reference( &svga->curr.cb[shader],
-                          buf->buffer );
+                          buf );
 
    if (shader == PIPE_SHADER_FRAGMENT)
       svga->dirty |= SVGA_NEW_FS_CONST_BUFFER;

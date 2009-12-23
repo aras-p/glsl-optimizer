@@ -495,7 +495,7 @@ failover_set_vertex_elements(struct pipe_context *pipe,
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf)
+                             const struct pipe_buffer *buf)
 {
    struct failover_context *failover = failover_context(pipe);
 
