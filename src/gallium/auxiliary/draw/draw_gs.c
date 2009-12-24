@@ -188,12 +188,12 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
       /*debug_printf("Slot = %d (semantic = %d)\n", slot,
         shader->info.input_semantic_name[slot]);*/
       if (shader->info.input_semantic_name[slot] ==
-          TGSI_SEMANTIC_VERTICES) {
+          TGSI_SEMANTIC_PRIMID) {
          for (j = 0; j < num_primitives; ++j) {
-            machine->Inputs[idx].xyzw[0].f[j] = (float)num_vertices;
-            machine->Inputs[idx].xyzw[1].f[j] = (float)num_vertices;
-            machine->Inputs[idx].xyzw[2].f[j] = (float)num_vertices;
-            machine->Inputs[idx].xyzw[3].f[j] = (float)num_vertices;
+            machine->Inputs[idx].xyzw[0].f[j] = (float)start_primitive + j;
+            machine->Inputs[idx].xyzw[1].f[j] = (float)start_primitive + j;
+            machine->Inputs[idx].xyzw[2].f[j] = (float)start_primitive + j;
+            machine->Inputs[idx].xyzw[3].f[j] = (float)start_primitive + j;
          }
          ++idx;
       } else {
@@ -296,8 +296,7 @@ void draw_geometry_shader_run(struct draw_geometry_shader *shader,
    machine->Consts = constants;
 
    for (i = 0; i < shader->info.num_inputs; ++i) {
-      if (shader->info.input_semantic_name[i] != TGSI_SEMANTIC_VERTICES &&
-          shader->info.input_semantic_name[i] != TGSI_SEMANTIC_PRIMID)
+      if (shader->info.input_semantic_name[i] != TGSI_SEMANTIC_PRIMID)
          ++inputs_from_vs;
    }
 

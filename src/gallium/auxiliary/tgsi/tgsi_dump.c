@@ -123,7 +123,6 @@ static const char *semantic_names[] =
    "NORMAL",
    "FACE",
    "EDGEFLAG",
-   "VERTICES_IN",
    "PRIM_ID"
 };
 

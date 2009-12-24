@@ -932,7 +932,6 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "GENERIC",
    "NORMAL",
    "FACE",
-   "VERTICES_IN",
    "PRIM_ID"
 };
 
