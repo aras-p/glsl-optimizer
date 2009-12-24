@@ -861,13 +861,76 @@ is 0.</p>
 <p>The meanings of the individual semantic names are explained in the following
 sections.</p>
 </blockquote>
-<div class="section" id="face">
-<h4>FACE<a class="headerlink" href="#face" title="Permalink to this headline">¶</a></h4>
-<blockquote>
-<p>Valid only in a fragment shader INPUT declaration.</p>
-<p>FACE.x is negative when the primitive is back facing. FACE.x is positive
-when the primitive is front facing.</p>
-</blockquote>
+<div class="section" id="tgsi-semantic-position">
+<h4>TGSI_SEMANTIC_POSITION<a class="headerlink" href="#tgsi-semantic-position" title="Permalink to this headline">¶</a></h4>
+<p>Position, sometimes known as HPOS or WPOS for historical reasons, is the
+location of the vertex in space, in <tt class="docutils literal"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z,</span> <span class="pre">w)</span></tt> format. <tt class="docutils literal"><span class="pre">x</span></tt>, <tt class="docutils literal"><span class="pre">y</span></tt>, and <tt class="docutils literal"><span class="pre">z</span></tt>
+are the Cartesian coordinates, and <tt class="docutils literal"><span class="pre">w</span></tt> is the homogenous coordinate and used
+for the perspective divide, if enabled.</p>
+<p>As a vertex shader output, position should be scaled to the viewport. When
+used in fragment shaders, position will &#8212;</p>
+<p>XXX &#8212; wait a minute. Should position be in [0,1] for x and y?</p>
+<p>XXX additionally, is there a way to configure the perspective divide? it&#8217;s
+accelerated on most chipsets AFAIK...</p>
+<p>Position, if not specified, usually defaults to <tt class="docutils literal"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">1)</span></tt>, and can
+be partially specified as <tt class="docutils literal"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">0,</span> <span class="pre">1)</span></tt> or <tt class="docutils literal"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z,</span> <span class="pre">1)</span></tt>.</p>
+<p>XXX usually? can we solidify that?</p>
+</div>
+<div class="section" id="tgsi-semantic-color">
+<h4>TGSI_SEMANTIC_COLOR<a class="headerlink" href="#tgsi-semantic-color" title="Permalink to this headline">¶</a></h4>
+<p>Colors are used to, well, color the primitives. Colors are always in
+<tt class="docutils literal"><span class="pre">(r,</span> <span class="pre">g,</span> <span class="pre">b,</span> <span class="pre">a)</span></tt> format.</p>
+<p>If alpha is not specified, it defaults to 1.</p>
+</div>
+<div class="section" id="tgsi-semantic-bcolor">
+<h4>TGSI_SEMANTIC_BCOLOR<a class="headerlink" href="#tgsi-semantic-bcolor" title="Permalink to this headline">¶</a></h4>
+<p>Back-facing colors are only used for back-facing polygons, and are only valid
+in vertex shader outputs. After rasterization, all polygons are front-facing
+and COLOR and BCOLOR end up occupying the same slots in the fragment, so
+all BCOLORs effectively become regular COLORs in the fragment shader.</p>
+</div>
+<div class="section" id="tgsi-semantic-fog">
+<h4>TGSI_SEMANTIC_FOG<a class="headerlink" href="#tgsi-semantic-fog" title="Permalink to this headline">¶</a></h4>
+<p>The fog coordinate historically has been used to replace the depth coordinate
+for generation of fog in dedicated fog blocks. Gallium, however, does not use
+dedicated fog acceleration, placing it entirely in the fragment shader
+instead.</p>
+<p>The fog coordinate should be written in <tt class="docutils literal"><span class="pre">(f,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">1)</span></tt> format. Only the first
+component matters when writing from the vertex shader; the driver will ensure
+that the coordinate is in this format when used as a fragment shader input.</p>
+</div>
+<div class="section" id="tgsi-semantic-psize">
+<h4>TGSI_SEMANTIC_PSIZE<a class="headerlink" href="#tgsi-semantic-psize" title="Permalink to this headline">¶</a></h4>
+<p>PSIZE, or point size, is used to specify point sizes per-vertex. It should
+be in <tt class="docutils literal"><span class="pre">(p,</span> <span class="pre">n,</span> <span class="pre">x,</span> <span class="pre">f)</span></tt> format, where <tt class="docutils literal"><span class="pre">p</span></tt> is the point size, <tt class="docutils literal"><span class="pre">n</span></tt> is the minimum
+size, <tt class="docutils literal"><span class="pre">x</span></tt> is the maximum size, and <tt class="docutils literal"><span class="pre">f</span></tt> is the fade threshold.</p>
+<p>XXX this is arb_vp. is this what we actually do? should double-check...</p>
+<p>When using this semantic, be sure to set the appropriate state in the
+<a class="reference external" href="cso/rasterizer.html#rasterizer"><em>Rasterizer</em></a> first.</p>
+</div>
+<div class="section" id="tgsi-semantic-generic">
+<h4>TGSI_SEMANTIC_GENERIC<a class="headerlink" href="#tgsi-semantic-generic" title="Permalink to this headline">¶</a></h4>
+<p>Generic semantics are nearly always used for texture coordinate attributes,
+in <tt class="docutils literal"><span class="pre">(s,</span> <span class="pre">t,</span> <span class="pre">r,</span> <span class="pre">q)</span></tt> format. <tt class="docutils literal"><span class="pre">t</span></tt> and <tt class="docutils literal"><span class="pre">r</span></tt> may be unused for certain kinds
+of lookups, and <tt class="docutils literal"><span class="pre">q</span></tt> is the level-of-detail bias for biased sampling.</p>
+<p>These attributes are called &#8220;generic&#8221; because they may be used for anything
+else, including parameters, texture generation information, or anything that
+can be stored inside a four-component vector.</p>
+</div>
+<div class="section" id="tgsi-semantic-normal">
+<h4>TGSI_SEMANTIC_NORMAL<a class="headerlink" href="#tgsi-semantic-normal" title="Permalink to this headline">¶</a></h4>
+<p>XXX no clue.</p>
+</div>
+<div class="section" id="tgsi-semantic-face">
+<h4>TGSI_SEMANTIC_FACE<a class="headerlink" href="#tgsi-semantic-face" title="Permalink to this headline">¶</a></h4>
+<p>FACE is the facing bit, to store the facing information for the fragment
+shader. <tt class="docutils literal"><span class="pre">(f,</span> <span class="pre">0,</span> <span class="pre">0,</span> <span class="pre">1)</span></tt> is the format. The first component will be positive
+when the fragment is front-facing, and negative when the component is
+back-facing.</p>
+</div>
+<div class="section" id="tgsi-semantic-edgeflag">
+<h4>TGSI_SEMANTIC_EDGEFLAG<a class="headerlink" href="#tgsi-semantic-edgeflag" title="Permalink to this headline">¶</a></h4>
+<p>XXX no clue</p>
 </div>
 </div>
 </div>
@@ -898,7 +961,15 @@ when the primitive is front facing.</p>
 </li>
 <li><a class="reference external" href="#other-tokens">Other tokens</a><ul>
 <li><a class="reference external" href="#declaration-semantic">Declaration Semantic</a><ul>
-<li><a class="reference external" href="#face">FACE</a></li>
+<li><a class="reference external" href="#tgsi-semantic-position">TGSI_SEMANTIC_POSITION</a></li>
+<li><a class="reference external" href="#tgsi-semantic-color">TGSI_SEMANTIC_COLOR</a></li>
+<li><a class="reference external" href="#tgsi-semantic-bcolor">TGSI_SEMANTIC_BCOLOR</a></li>
+<li><a class="reference external" href="#tgsi-semantic-fog">TGSI_SEMANTIC_FOG</a></li>
+<li><a class="reference external" href="#tgsi-semantic-psize">TGSI_SEMANTIC_PSIZE</a></li>
+<li><a class="reference external" href="#tgsi-semantic-generic">TGSI_SEMANTIC_GENERIC</a></li>
+<li><a class="reference external" href="#tgsi-semantic-normal">TGSI_SEMANTIC_NORMAL</a></li>
+<li><a class="reference external" href="#tgsi-semantic-face">TGSI_SEMANTIC_FACE</a></li>
+<li><a class="reference external" href="#tgsi-semantic-edgeflag">TGSI_SEMANTIC_EDGEFLAG</a></li>
 </ul>
 </li>
 </ul>

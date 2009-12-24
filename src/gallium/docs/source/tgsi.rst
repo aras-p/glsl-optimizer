@@ -1180,11 +1180,92 @@ Declaration Semantic
   The meanings of the individual semantic names are explained in the following
   sections.
 
+TGSI_SEMANTIC_POSITION
+""""""""""""""""""""""
 
-FACE
-""""
+Position, sometimes known as HPOS or WPOS for historical reasons, is the
+location of the vertex in space, in ``(x, y, z, w)`` format. ``x``, ``y``, and ``z``
+are the Cartesian coordinates, and ``w`` is the homogenous coordinate and used
+for the perspective divide, if enabled.
 
-  Valid only in a fragment shader INPUT declaration.
+As a vertex shader output, position should be scaled to the viewport. When
+used in fragment shaders, position will ---
 
-  FACE.x is negative when the primitive is back facing. FACE.x is positive
-  when the primitive is front facing.
+XXX --- wait a minute. Should position be in [0,1] for x and y?
+
+XXX additionally, is there a way to configure the perspective divide? it's
+accelerated on most chipsets AFAIK...
+
+Position, if not specified, usually defaults to ``(0, 0, 0, 1)``, and can
+be partially specified as ``(x, y, 0, 1)`` or ``(x, y, z, 1)``.
+
+XXX usually? can we solidify that?
+
+TGSI_SEMANTIC_COLOR
+"""""""""""""""""""
+
+Colors are used to, well, color the primitives. Colors are always in
+``(r, g, b, a)`` format.
+
+If alpha is not specified, it defaults to 1.
+
+TGSI_SEMANTIC_BCOLOR
+""""""""""""""""""""
+
+Back-facing colors are only used for back-facing polygons, and are only valid
+in vertex shader outputs. After rasterization, all polygons are front-facing
+and COLOR and BCOLOR end up occupying the same slots in the fragment, so
+all BCOLORs effectively become regular COLORs in the fragment shader.
+
+TGSI_SEMANTIC_FOG
+"""""""""""""""""
+
+The fog coordinate historically has been used to replace the depth coordinate
+for generation of fog in dedicated fog blocks. Gallium, however, does not use
+dedicated fog acceleration, placing it entirely in the fragment shader
+instead.
+
+The fog coordinate should be written in ``(f, 0, 0, 1)`` format. Only the first
+component matters when writing from the vertex shader; the driver will ensure
+that the coordinate is in this format when used as a fragment shader input.
+
+TGSI_SEMANTIC_PSIZE
+"""""""""""""""""""
+
+PSIZE, or point size, is used to specify point sizes per-vertex. It should
+be in ``(p, n, x, f)`` format, where ``p`` is the point size, ``n`` is the minimum
+size, ``x`` is the maximum size, and ``f`` is the fade threshold.
+
+XXX this is arb_vp. is this what we actually do? should double-check...
+
+When using this semantic, be sure to set the appropriate state in the
+:ref:`rasterizer` first.
+
+TGSI_SEMANTIC_GENERIC
+"""""""""""""""""""""
+
+Generic semantics are nearly always used for texture coordinate attributes,
+in ``(s, t, r, q)`` format. ``t`` and ``r`` may be unused for certain kinds
+of lookups, and ``q`` is the level-of-detail bias for biased sampling.
+
+These attributes are called "generic" because they may be used for anything
+else, including parameters, texture generation information, or anything that
+can be stored inside a four-component vector.
+
+TGSI_SEMANTIC_NORMAL
+""""""""""""""""""""
+
+XXX no clue.
+
+TGSI_SEMANTIC_FACE
+""""""""""""""""""
+
+FACE is the facing bit, to store the facing information for the fragment
+shader. ``(f, 0, 0, 1)`` is the format. The first component will be positive
+when the fragment is front-facing, and negative when the component is
+back-facing.
+
+TGSI_SEMANTIC_EDGEFLAG
+""""""""""""""""""""""
+
+XXX no clue
