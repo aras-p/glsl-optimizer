@@ -280,8 +280,6 @@ static const __DRIextension *loader_extensions[] = {
    NULL
 };
 
-#ifndef GLX_USE_APPLEGL
-
 /**
  * Perform the required libGL-side initialization and call the client-side
  * driver's \c __driCreateNewScreen function.
@@ -474,17 +472,6 @@ CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
 
    return NULL;
 }
-
-#else /* !GLX_USE_APPLEGL */
-
-static void *
-CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
-                    __GLXDRIdisplayPrivate * driDpy)
-{
-   return NULL;
-}
-
-#endif /* !GLX_USE_APPLEGL */
 
 static void
 driDestroyContext(__GLXDRIcontext * context,
