@@ -229,7 +229,8 @@ void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_ou
 /**
  * Introduce standard code fragment to deal with fragment.position.
  */
-void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input)
+void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input,
+                                int full_vtransform)
 {
 	unsigned tempregi = rc_find_free_temporary(c);
 	struct rc_instruction * inst_rcp;
@@ -279,12 +280,18 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 	inst_mad->U.I.SrcReg[0].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
 	inst_mad->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
-	inst_mad->U.I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_WINDOW_DIMENSION, 0);
 	inst_mad->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
 	inst_mad->U.I.SrcReg[2].File = RC_FILE_CONSTANT;
-	inst_mad->U.I.SrcReg[2].Index = inst_mad->U.I.SrcReg[1].Index;
 	inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
+
+	if (full_vtransform) {
+		inst_mad->U.I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_VIEWPORT_SCALE, 0);
+		inst_mad->U.I.SrcReg[2].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_VIEWPORT_OFFSET, 0);
+	} else {
+		inst_mad->U.I.SrcReg[1].Index =
+		inst_mad->U.I.SrcReg[2].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_WINDOW_DIMENSION, 0);
+	}
 
 	for (inst = inst_mad->Next; inst != &c->Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
