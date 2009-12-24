@@ -398,7 +398,6 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
 #define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
                                                  and fragment shaders combined */
-#define PIPE_CAP_GEOMETRY_SHADER4        32
 
 
 /**
