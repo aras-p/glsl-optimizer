@@ -556,6 +556,10 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300->fs = fs;
     r300_pick_fragment_shader(r300);
 
+    if (r300->vs && r300_vertex_shader_setup_wpos(r300)) {
+        r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
+    }
+
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
@@ -974,7 +978,13 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         }
 
         r300->vs = vs;
-        r300->dirty_state |= R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS;
+        if (r300->fs) {
+            r300_vertex_shader_setup_wpos(r300);
+        }
+
+        r300->dirty_state |=
+            R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS |
+            R300_NEW_VERTEX_FORMAT;
     } else {
         draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,

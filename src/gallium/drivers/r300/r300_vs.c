@@ -22,6 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_vs.h"
+#include "r300_fs.h"
 
 #include "r300_context.h"
 #include "r300_screen.h"
@@ -90,10 +91,10 @@ static void r300_shader_read_vs_outputs(
     }
 }
 
-static void r300_shader_vap_output_fmt(
-    struct r300_shader_semantics* vs_outputs,
-    uint* hwfmt)
+static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
 {
+    struct r300_shader_semantics* vs_outputs = &vs->outputs;
+    uint32_t* hwfmt = vs->hwfmt;
     int i, gen_count;
 
     /* Do the actual vertex_info setup.
@@ -146,15 +147,11 @@ static void r300_shader_vap_output_fmt(
         gen_count++;
     }
 
-    /* WPOS. */
-    if (vs_outputs->wpos != ATTR_UNUSED) {
-        hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
-        hwfmt[3] |= (4 << (3 * gen_count));
-        gen_count++;
-    }
-
     /* XXX magic */
     assert(gen_count <= 8);
+
+    /* WPOS. */
+    vs->wpos_tex_output = gen_count;
 }
 
 /* Sets up stream mapping to equivalent VS outputs if TCL is bypassed
@@ -210,9 +207,6 @@ static void r300_stream_locations_notcl(
         stream_loc[tabi++] = 6 + gen_count;
         gen_count++;
     }
-
-    /* XXX magic */
-    assert(gen_count <= 8);
 
     for (; tabi < 16;) {
         stream_loc[tabi++] = -1;
@@ -296,7 +290,6 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
-    boolean use_wpos = TRUE;
 
     /* Initialize. */
     r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
@@ -319,15 +312,13 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
 
-    compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+use_wpos));
+    compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+1));
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
 
     /* Insert the WPOS output. */
-    if (use_wpos) {
-        r300_insert_wpos(&compiler, &vs->outputs);
-    }
+    r300_insert_wpos(&compiler, &vs->outputs);
 
-    r300_shader_vap_output_fmt(&vs->outputs, vs->hwfmt);
+    r300_shader_vap_output_fmt(vs);
     r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
 
     /* Invoke the compiler */
@@ -341,4 +332,31 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     /* And, finally... */
     rc_destroy(&compiler.Base);
     vs->translated = TRUE;
+}
+
+boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
+{
+    struct r300_vertex_shader* vs = r300->vs;
+    int tex_output = r300->vs->wpos_tex_output;
+    uint32_t tex_fmt = R300_INPUT_CNTL_TC0 << tex_output;
+    uint32_t* hwfmt = vs->hwfmt;
+
+    if (r300->fs->inputs.wpos != ATTR_UNUSED) {
+        /* Enable WPOS in VAP. */
+        if (!(hwfmt[1] & tex_fmt)) {
+            hwfmt[1] |= tex_fmt;
+            hwfmt[3] |= (4 << (3 * tex_output));
+
+            assert(tex_output < 8);
+            return TRUE;
+        }
+    } else {
+        /* Disable WPOS in VAP. */
+        if (hwfmt[1] & tex_fmt) {
+            hwfmt[1] &= ~tex_fmt;
+            hwfmt[3] &= ~(4 << (3 * tex_output));
+            return TRUE;
+        }
+    }
+    return FALSE;
 }

@@ -411,23 +411,13 @@ static void r300_update_rs_block(struct r300_context* r300,
     }
 
     /* Rasterize WPOS. */
-    if (vs_outputs->wpos != ATTR_UNUSED) {
-        /* Always rasterize if it's written by the VS,
-         * otherwise it locks up. */
+    /* If the FS doesn't need it, it's not written by the VS. */
+    if (fs_inputs->wpos != ATTR_UNUSED) {
         rX00_rs_tex(rs, tex_count, tex_count, FALSE);
+        rX00_rs_tex_write(rs, tex_count, fp_offset);
 
-        /* Write it to the FS input register if it's used by the FS. */
-        if (fs_inputs->wpos != ATTR_UNUSED) {
-            rX00_rs_tex_write(rs, tex_count, fp_offset);
-            fp_offset++;
-        }
+        fp_offset++;
         tex_count++;
-    } else {
-        /* Skip the FS input register, leave it uninitialized. */
-        /* If we try to set it to (0,0,0,1), it will lock up. */
-        if (fs_inputs->wpos != ATTR_UNUSED) {
-            fp_offset++;
-        }
     }
 
     /* Rasterize at least one color, or bad things happen. */
