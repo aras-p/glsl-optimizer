@@ -120,6 +120,13 @@
 
 #define BRW_MAX_CURBE                    (32*16)
 
+
+/* Need a value to say a particular vertex shader output isn't
+ * present.  Limits us to 63 outputs currently.
+ */
+#define BRW_OUTPUT_NOT_PRESENT           ((1<<6)-1)
+
+
 struct brw_context;
 
 struct brw_depth_stencil_state {
@@ -334,8 +341,6 @@ struct brw_vs_prog_data {
    GLuint nr_inputs;
 
    GLuint nr_params;       /**< number of TGSI_FILE_CONSTANT's */
-
-   GLuint output_edgeflag;
 
    GLboolean writes_psiz;
 

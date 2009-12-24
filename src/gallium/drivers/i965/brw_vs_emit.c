@@ -79,18 +79,12 @@ static void release_tmps( struct brw_vs_compile *c )
 static boolean is_position_output( struct brw_vs_compile *c,
                                    unsigned vs_output )
 {
-   struct brw_vertex_shader *vs = c->vp;
-
-   if (vs_output == c->prog_data.output_edgeflag) {
-      return FALSE;
-   }
-   else {
-      unsigned semantic = vs->info.output_semantic_name[vs_output];
-      unsigned index = vs->info.output_semantic_index[vs_output];
+   const struct brw_vertex_shader *vs = c->vp;
+   unsigned semantic = vs->info.output_semantic_name[vs_output];
+   unsigned index = vs->info.output_semantic_index[vs_output];
       
-      return (semantic == TGSI_SEMANTIC_POSITION &&
-              index == 0);
-   }
+   return (semantic == TGSI_SEMANTIC_POSITION &&
+           index == 0);
 }
 
 
@@ -98,23 +92,16 @@ static boolean find_output_slot( struct brw_vs_compile *c,
                                   unsigned vs_output,
                                   unsigned *fs_input_slot )
 {
-   struct brw_vertex_shader *vs = c->vp;
+   const struct brw_vertex_shader *vs = c->vp;
+   unsigned semantic = vs->info.output_semantic_name[vs_output];
+   unsigned index = vs->info.output_semantic_index[vs_output];
+   unsigned i;
 
-   if (vs_output == c->prog_data.output_edgeflag) {
-      *fs_input_slot = c->key.fs_signature.nr_inputs;
-      return TRUE;
-   }
-   else {
-      unsigned semantic = vs->info.output_semantic_name[vs_output];
-      unsigned index = vs->info.output_semantic_index[vs_output];
-      unsigned i;
-
-      for (i = 0; i < c->key.fs_signature.nr_inputs; i++) {
-         if (c->key.fs_signature.input[i].semantic == semantic &&
+   for (i = 0; i < c->key.fs_signature.nr_inputs; i++) {
+      if (c->key.fs_signature.input[i].semantic == semantic &&
           c->key.fs_signature.input[i].semantic_index == index) {
-            *fs_input_slot = i;
-            return TRUE;
-         }
+         *fs_input_slot = i;
+         return TRUE;
       }
    }
 

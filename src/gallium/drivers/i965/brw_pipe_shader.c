@@ -197,6 +197,13 @@ static void *brw_create_vs_state( struct pipe_context *pipe,
    vs->id = brw->program_id++;
    vs->has_flow_control = has_flow_control(&vs->info);
 
+   vs->output_hpos = BRW_OUTPUT_NOT_PRESENT;
+   vs->output_color0 = BRW_OUTPUT_NOT_PRESENT;
+   vs->output_color1 = BRW_OUTPUT_NOT_PRESENT;
+   vs->output_bfc0 = BRW_OUTPUT_NOT_PRESENT;
+   vs->output_bfc1 = BRW_OUTPUT_NOT_PRESENT;
+   vs->output_edgeflag = BRW_OUTPUT_NOT_PRESENT;
+
    for (i = 0; i < vs->info.num_outputs; i++) {
       int index = vs->info.output_semantic_index[i];
       switch (vs->info.output_semantic_name[i]) {

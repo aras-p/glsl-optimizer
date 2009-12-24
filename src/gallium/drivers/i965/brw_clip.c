@@ -83,19 +83,19 @@ compile_clip_prog( struct brw_context *brw,
 
    c.offset_hpos = delta + c.key.output_hpos * ATTR_SIZE;
 
-   if (c.key.output_color0)
+   if (c.key.output_color0 != BRW_OUTPUT_NOT_PRESENT)
       c.offset_color0 = delta + c.key.output_color0 * ATTR_SIZE;
 
-   if (c.key.output_color1)
+   if (c.key.output_color1 != BRW_OUTPUT_NOT_PRESENT)
       c.offset_color1 = delta + c.key.output_color1 * ATTR_SIZE;
 
-   if (c.key.output_bfc0)
+   if (c.key.output_bfc0 != BRW_OUTPUT_NOT_PRESENT)
       c.offset_bfc0 = delta + c.key.output_bfc0 * ATTR_SIZE;
 
-   if (c.key.output_bfc1)
+   if (c.key.output_bfc1 != BRW_OUTPUT_NOT_PRESENT)
       c.offset_bfc1 = delta + c.key.output_bfc1 * ATTR_SIZE;
 
-   if (c.key.output_edgeflag)
+   if (c.key.output_edgeflag != BRW_OUTPUT_NOT_PRESENT)
       c.offset_edgeflag = delta + c.key.output_edgeflag * ATTR_SIZE;
    
    if (BRW_IS_IGDNG(brw))
@@ -182,7 +182,6 @@ upload_clip_prog(struct brw_context *brw)
     */
    /* CACHE_NEW_VS_PROG */
    key.nr_attrs        = brw->vs.prog_data->nr_outputs;
-   key.output_edgeflag = brw->vs.prog_data->output_edgeflag;
 
    /* PIPE_NEW_VS */
    key.output_hpos     = vs->output_hpos;
@@ -190,6 +189,7 @@ upload_clip_prog(struct brw_context *brw)
    key.output_color1   = vs->output_color1;
    key.output_bfc0     = vs->output_bfc0;
    key.output_bfc1     = vs->output_bfc1;
+   key.output_edgeflag = vs->output_edgeflag;
 
    /* PIPE_NEW_CLIP */
    key.nr_userclip = brw->curr.ucp.nr;
