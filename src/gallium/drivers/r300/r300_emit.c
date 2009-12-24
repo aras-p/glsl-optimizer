@@ -283,6 +283,22 @@ void r300_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
+static void r300_emit_fragment_depth_config(struct r300_context* r300,
+                                            struct r300_fragment_shader* fs)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(4);
+    if (r300_fragment_shader_writes_depth(fs)) {
+        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
+        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W24 | R300_W_SRC_US);
+    } else {
+        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SCAN);
+        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0 | R300_W_SRC_US);
+    }
+    END_CS;
+}
+
 void r500_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code)
 {
@@ -1036,6 +1052,7 @@ validate:
     }
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
+        r300_emit_fragment_depth_config(r300, r300->fs);
         if (r300screen->caps->is_r500) {
             r500_emit_fragment_program_code(r300, &r300->fs->shader->code);
         } else {

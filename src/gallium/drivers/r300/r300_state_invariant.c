@@ -43,7 +43,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(20 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(16 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
@@ -66,8 +66,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x0);
     OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x0);
     OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x0);
-    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x0);
-    OUT_CS_REG(R300_US_W_FMT, 0x0);
 
     /*** VAP ***/
     /* Sign/normalize control */
