@@ -45,7 +45,7 @@ util_clear(struct pipe_context *pipe,
 {
    if (buffers & PIPE_CLEAR_COLOR) {
       struct pipe_surface *ps = framebuffer->cbufs[0];
-      unsigned color;
+      unsigned color = 0;
 
       util_pack_color(rgba, ps->format, &color);
       pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
