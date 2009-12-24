@@ -16,6 +16,7 @@ Contents:
    screen
    context
    cso
+   distro
    glossary
 
 Indices and tables
