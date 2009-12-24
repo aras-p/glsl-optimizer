@@ -292,6 +292,14 @@ tgsi_exec_machine_bind_shader(
                                    * sizeof(struct tgsi_full_declaration));
             maxDeclarations += 10;
          }
+         if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_OUTPUT) {
+            unsigned reg;
+            for (reg = parse.FullToken.FullDeclaration.Range.First;
+                 reg <= parse.FullToken.FullDeclaration.Range.Last;
+                 ++reg) {
+               ++mach->NumOutputs;
+            }
+         }
          memcpy(declarations + numDeclarations,
                 &parse.FullToken.FullDeclaration,
                 sizeof(declarations[0]));
@@ -1471,7 +1479,7 @@ store_dest(
       dst = &mach->Outputs[offset + index].xyzw[chan_index];
 #if 0
       if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
-         fprintf(stderr, "STORING OUT[%d] mask(%d), = (", index, execmask);
+         fprintf(stderr, "STORING OUT[%d] mask(%d), = (", offset + index, execmask);
          for (i = 0; i < QUAD_SIZE; i++)
             if (execmask & (1 << i))
                fprintf(stderr, "%f, ", chan->f[i]);

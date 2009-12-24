@@ -210,6 +210,7 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
                const float (*input)[4];
                input = (const float (*)[4])(
                   (const char *)prim_ptr + (k * input_vertex_stride));
+               vidx = k * TGSI_EXEC_MAX_INPUT_ATTRIBS + slot;
                debug_printf("\t%d)(%d) Input vert:\n", vidx, k);
 #if 1
                assert(!util_is_inf_or_nan(input[vs_slot][0]));
