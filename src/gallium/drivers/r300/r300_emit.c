@@ -121,8 +121,15 @@ void r300_emit_dsa_state(struct r300_context* r300,
     }*/
 
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
-    OUT_CS(dsa->z_buffer_control);
-    OUT_CS(dsa->z_stencil_control);
+
+    if (r300->framebuffer_state.zsbuf) {
+        OUT_CS(dsa->z_buffer_control);
+        OUT_CS(dsa->z_stencil_control);
+    } else {
+        OUT_CS(0);
+        OUT_CS(0);
+    }
+
     OUT_CS(dsa->stencil_ref_mask);
     OUT_CS_REG(R300_ZB_ZTOP, r300->ztop_state.z_buffer_top);
 

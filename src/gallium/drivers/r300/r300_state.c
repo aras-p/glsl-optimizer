@@ -522,6 +522,7 @@ static void
     }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
     r300->dirty_state |= R300_NEW_BLEND;
+    r300->dirty_state |= R300_NEW_DSA;
 }
 
 /* Create fragment shader state. */
