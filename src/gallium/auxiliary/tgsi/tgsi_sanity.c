@@ -27,7 +27,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
+#include "util/u_prim.h"
 #include "cso_cache/cso_hash.h"
 #include "tgsi_sanity.h"
 #include "tgsi_info.h"
@@ -463,8 +463,7 @@ iter_property(
 
    if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY &&
        prop->Property.PropertyName == TGSI_PROPERTY_GS_INPUT_PRIM) {
-      ctx->implied_array_size =
-         pipe_vertices_per_primitive(prop->u[0].Data);
+      ctx->implied_array_size = u_vertices_per_prim(prop->u[0].Data);
    }
    return TRUE;
 }

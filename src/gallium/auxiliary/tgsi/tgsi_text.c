@@ -27,6 +27,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "tgsi_text.h"
@@ -1187,8 +1188,7 @@ static boolean parse_property( struct translate_ctx *ctx )
       }
       if (property_name == TGSI_PROPERTY_GS_INPUT_PRIM &&
           ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
-         ctx->implied_array_size =
-            pipe_vertices_per_primitive(values[0]);
+         ctx->implied_array_size = u_vertices_per_prim(values[0]);
       }
       break;
    default:

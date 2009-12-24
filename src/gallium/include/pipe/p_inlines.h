@@ -192,38 +192,6 @@ pipe_transfer_buffer_flags( struct pipe_transfer *transf )
    }
 }
 
-static INLINE unsigned
-pipe_vertices_per_primitive(int primitive)
-{
-   switch(primitive) {
-   case PIPE_PRIM_POINTS:
-      return 1;
-   case PIPE_PRIM_LINES:
-   case PIPE_PRIM_LINE_LOOP:
-   case PIPE_PRIM_LINE_STRIP:
-      return 2;
-   case PIPE_PRIM_TRIANGLES:
-   case PIPE_PRIM_TRIANGLE_STRIP:
-   case PIPE_PRIM_TRIANGLE_FAN:
-      return 3;
-   case PIPE_PRIM_LINES_ADJACENCY:
-   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      return 4;
-   case PIPE_PRIM_TRIANGLES_ADJACENCY:
-   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      return 6;
-
-   /* following primitives should never be used
-    * with geometry shaders */
-   case PIPE_PRIM_POLYGON:
-   case PIPE_PRIM_QUADS:
-   case PIPE_PRIM_QUAD_STRIP:
-   default:
-      debug_printf("Unrecognized geometry shader primitive");
-      return 3;
-   }
-}
-
 #ifdef __cplusplus
 }
 #endif
