@@ -114,18 +114,18 @@ static void color_clear(struct brw_context *brw,
                         const float *rgba )
 {
    enum pipe_error ret;
-   unsigned value;
+   union util_color value;
 
    util_pack_color( rgba, bsurface->base.format, &value );
 
    if (bsurface->cpp == 2)
-      value |= value << 16;
+      value.ui |= value.ui << 16;
 
-   ret = try_clear( brw, bsurface, value );
+   ret = try_clear( brw, bsurface, value.ui );
 
    if (ret != 0) {
       brw_context_flush( brw );
-      ret = try_clear( brw, bsurface, value );
+      ret = try_clear( brw, bsurface, value.ui );
       assert( ret == 0 );
    }
 }
