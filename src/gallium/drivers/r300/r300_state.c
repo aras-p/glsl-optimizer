@@ -757,6 +757,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
+    int i;
 
     /* Copy rasterizer state for Draw. */
     rs->rs = *state;
@@ -851,6 +852,30 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     rs->clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
+    /* Point sprites */
+    if (state->sprite_coord_enable) {
+        rs->stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
+	for (i = 0; i < 8; i++) {
+	    if (state->sprite_coord_enable & (1 << i))
+		rs->stuffing_enable |=
+		    R300_GB_TEX_STR << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
+	}
+
+        rs->point_texcoord_left = 0.0f;
+        rs->point_texcoord_right = 1.0f;
+
+        switch (state->sprite_coord_mode) {
+            case PIPE_SPRITE_COORD_UPPER_LEFT:
+                rs->point_texcoord_top = 0.0f;
+                rs->point_texcoord_bottom = 1.0f;
+                break;
+            case PIPE_SPRITE_COORD_LOWER_LEFT:
+                rs->point_texcoord_top = 1.0f;
+                rs->point_texcoord_bottom = 0.0f;
+                break;
+        }
+    }
+
     return (void*)rs;
 }
 
@@ -859,6 +884,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
+    int last_sprite_coord_enable = r300->sprite_coord_enable;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -867,12 +893,18 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (rs) {
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
+        r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
     } else {
         r300->polygon_offset_enabled = FALSE;
+        r300->sprite_coord_enable = 0;
     }
 
     UPDATE_STATE(state, r300->rs_state);
-    r300->rs_state.size = 19 + (r300->polygon_offset_enabled ? 5 : 0);
+    r300->rs_state.size = 26 + (r300->polygon_offset_enabled ? 5 : 0);
+
+    if (last_sprite_coord_enable != r300->sprite_coord_enable) {
+        r300->rs_block_state.dirty = TRUE;
+    }
 }
 
 /* Free rasterizer state. */

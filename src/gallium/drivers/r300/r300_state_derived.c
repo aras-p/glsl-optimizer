@@ -37,6 +37,12 @@
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
+enum r300_rs_swizzle {
+    SWIZ_XYZW = 0,
+    SWIZ_X001,
+    SWIZ_XY01,
+};
+
 static void r300_draw_emit_attrib(struct r300_context* r300,
                                   enum attrib_emit emit,
                                   enum interp_mode interp,
@@ -180,12 +186,18 @@ static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
 }
 
 static void r300_rs_tex(struct r300_rs_block* rs, int id, int ptr,
-                        boolean swizzle_X001)
+                        enum r300_rs_swizzle swiz)
 {
-    if (swizzle_X001) {
+    if (swiz == SWIZ_X001) {
         rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_K0) |
+                      R300_RS_SEL_R(R300_RS_SEL_K0) |
+                      R300_RS_SEL_Q(R300_RS_SEL_K1);
+    } else if (swiz == SWIZ_XY01) {
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+                      R300_RS_SEL_S(R300_RS_SEL_C0) |
+                      R300_RS_SEL_T(R300_RS_SEL_C1) |
                       R300_RS_SEL_R(R300_RS_SEL_K0) |
                       R300_RS_SEL_Q(R300_RS_SEL_K1);
     } else {
@@ -223,13 +235,18 @@ static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
 }
 
 static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
-                        boolean swizzle_X001)
+			enum r300_rs_swizzle swiz)
 {
     int rs_tex_comp = ptr*4;
 
-    if (swizzle_X001) {
+    if (swiz == SWIZ_X001) {
         rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
                       R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+                      R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
+    } else if (swiz == SWIZ_XY01) {
+        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+                      R500_RS_SEL_T(rs_tex_comp + 1) |
                       R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
     } else {
@@ -260,7 +277,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
-    void (*rX00_rs_tex)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
                               vs_outputs->bcolor[1] != ATTR_UNUSED;
@@ -302,14 +319,19 @@ static void r300_update_rs_block(struct r300_context* r300,
 
     /* Rasterize texture coordinates. */
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
-        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+	bool sprite_coord = !!(r300->sprite_coord_enable & (1 << i));
+
+        if (vs_outputs->generic[i] != ATTR_UNUSED || sprite_coord) {
             /* Always rasterize if it's written by the VS,
              * otherwise it locks up. */
-            rX00_rs_tex(&rs, tex_count, tex_count, FALSE);
+            rX00_rs_tex(&rs, tex_count, tex_count,
+			sprite_coord ? SWIZ_XY01 : SWIZ_XYZW);
 
             /* Write it to the FS input register if it's used by the FS. */
             if (fs_inputs->generic[i] != ATTR_UNUSED) {
                 rX00_rs_tex_write(&rs, tex_count, fp_offset);
+                if (sprite_coord)
+                    debug_printf("r300: SpriteCoord (generic index %i) is being written to reg %i\n", i, fp_offset);
                 fp_offset++;
             }
             tex_count++;
@@ -326,7 +348,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     if (vs_outputs->fog != ATTR_UNUSED) {
         /* Always rasterize if it's written by the VS,
          * otherwise it locks up. */
-        rX00_rs_tex(&rs, tex_count, tex_count, TRUE);
+        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_X001);
 
         /* Write it to the FS input register if it's used by the FS. */
         if (fs_inputs->fog != ATTR_UNUSED) {
@@ -345,7 +367,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     /* Rasterize WPOS. */
     /* If the FS doesn't need it, it's not written by the VS. */
     if (vs_outputs->wpos != ATTR_UNUSED && fs_inputs->wpos != ATTR_UNUSED) {
-        rX00_rs_tex(&rs, tex_count, tex_count, FALSE);
+        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 
         fp_offset++;
