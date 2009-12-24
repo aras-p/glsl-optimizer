@@ -44,13 +44,9 @@ void r300_emit_invariant_state(struct r300_context* r300,
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(14 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(12 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
-    /* Various GB enables */
-    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-                               R300_GB_LINE_STUFF_ENABLE  |
-                               R300_GB_TRIANGLE_STUFF_ENABLE);
     /* Subpixel multisampling for AA
      * These are commented out because glisse's CS checker doesn't like them.
      * I presume these will be re-enabled later.
@@ -78,7 +74,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) +
+    BEGIN_CS(40 + (caps->has_tcl ? 7 : 0) +
              (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
 
     if (caps->has_tcl) {
@@ -90,11 +86,6 @@ void r300_emit_invariant_state(struct r300_context* r300,
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
     }
-    /* XXX point tex stuffing */
-    OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
-    OUT_CS_32F(0.0);
-    OUT_CS_REG_SEQ(R300_GA_POINT_S1, 1);
-    OUT_CS_32F(1.0);
     /* XXX line tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_LINE_S0, 1);
     OUT_CS_32F(0.0);

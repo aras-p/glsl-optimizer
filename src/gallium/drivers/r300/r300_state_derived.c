@@ -178,7 +178,8 @@ static void r300_update_rs_block(struct r300_context* r300,
 
     /* Rasterize texture coordinates. */
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
-        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED ||
+            r300->sprite_coord_index == i) {
             /* Always rasterize if it's written by the VS,
              * otherwise it locks up. */
             rX00_rs_tex(&rs, tex_count, tex_count, FALSE);
@@ -186,6 +187,8 @@ static void r300_update_rs_block(struct r300_context* r300,
             /* Write it to the FS input register if it's used by the FS. */
             if (fs_inputs->generic[i] != ATTR_UNUSED) {
                 rX00_rs_tex_write(&rs, tex_count, fp_offset);
+                if (r300->sprite_coord_index == i)
+                    debug_printf("r300: SpriteCoord (generic index %i) is being written to reg %i\n", i, fp_offset);
                 fp_offset++;
             }
             tex_count++;

@@ -616,6 +616,12 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
     OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
+    OUT_CS_REG(R300_GB_ENABLE, rs->stuffing_enable);
+    OUT_CS_REG_SEQ(R300_GA_POINT_S0, 4);
+    OUT_CS_32F(rs->point_texcoord_left);
+    OUT_CS_32F(rs->point_texcoord_bottom);
+    OUT_CS_32F(rs->point_texcoord_right);
+    OUT_CS_32F(rs->point_texcoord_top);
     END_CS;
 }
 

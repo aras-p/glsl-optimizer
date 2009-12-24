@@ -202,6 +202,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_setup_atoms(r300);
 
+    r300->sprite_coord_index = -1;
+
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
