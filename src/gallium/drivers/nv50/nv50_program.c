@@ -2241,6 +2241,11 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			set_pred(pc, 0x6, 1, pc->p->exec_tail); /* @NSF */
 		}
 		break;
+	case TGSI_OPCODE_CONT:
+		assert(pc->loop_lvl > 0);
+		emit_branch(pc, -1, 0)->param.index =
+			pc->loop_pos[pc->loop_lvl - 1];
+		break;
 	case TGSI_OPCODE_COS:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
