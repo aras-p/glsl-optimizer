@@ -208,6 +208,56 @@ cmds = [
 def dump_cmds():
     print r'''
 void            
+svga_dump_command(uint32_t cmd_id, const void *data, uint32_t size)
+{
+   const uint8_t *body = (const uint8_t *)data;
+   const uint8_t *next = body + size;
+'''
+    print '   switch(cmd_id) {'
+    indexes = 'ijklmn'
+    for id, header, body, footer in cmds:
+        print '   case %s:' % id
+        print '      _debug_printf("\\t%s\\n");' % id
+        print '      {'
+        print '         const %s *cmd = (const %s *)body;' % (header, header)
+        if len(body):
+            print '         unsigned ' + ', '.join(indexes[:len(body)]) + ';'
+        print '         dump_%s(cmd);' % header
+        print '         body = (const uint8_t *)&cmd[1];'
+        for i in range(len(body)):
+            struct, count = body[i]
+            idx = indexes[i]
+            print '         for(%s = 0; %s < cmd->%s; ++%s) {' % (idx, idx, count, idx)
+            print '            dump_%s((const %s *)body);' % (struct, struct)
+            print '            body += sizeof(%s);' % struct
+            print '         }'
+        if footer is not None:
+            print '         while(body + sizeof(%s) <= next) {' % footer
+            print '            dump_%s((const %s *)body);' % (footer, footer)
+            print '            body += sizeof(%s);' % footer
+            print '         }'
+        if id == 'SVGA_3D_CMD_SHADER_DEFINE':
+            print '         svga_shader_dump((const uint32_t *)body,'
+            print '                          (unsigned)(next - body)/sizeof(uint32_t),'
+            print '                          FALSE);'
+            print '         body = next;'
+        print '      }'
+        print '      break;'
+    print '   default:'
+    print '      _debug_printf("\\t0x%08x\\n", cmd_id);'
+    print '      break;'
+    print '   }'
+    print r'''
+   while(body + sizeof(uint32_t) <= next) {
+      _debug_printf("\t\t0x%08x\n", *(const uint32_t *)body);
+      body += sizeof(uint32_t);
+   }
+   while(body + sizeof(uint32_t) <= next)
+      _debug_printf("\t\t0x%02x\n", *body++);
+}
+'''
+    print r'''
+void            
 svga_dump_commands(const void *commands, uint32_t size)
 {
    const uint8_t *next = commands;
@@ -222,51 +272,11 @@ svga_dump_commands(const void *commands, uint32_t size)
          const SVGA3dCmdHeader *header = (const SVGA3dCmdHeader *)next;
          const uint8_t *body = (const uint8_t *)&header[1];
 
-         next = (const uint8_t *)body + header->size;
+         next = body + header->size;
          if(next > last)
             break;
-'''
 
-    print '         switch(cmd_id) {'
-    indexes = 'ijklmn'
-    for id, header, body, footer in cmds:
-        print '         case %s:' % id
-        print '            _debug_printf("\\t%s\\n");' % id
-        print '            {'
-        print '               const %s *cmd = (const %s *)body;' % (header, header)
-        if len(body):
-            print '               unsigned ' + ', '.join(indexes[:len(body)]) + ';'
-        print '               dump_%s(cmd);' % header
-        print '               body = (const uint8_t *)&cmd[1];'
-        for i in range(len(body)):
-            struct, count = body[i]
-            idx = indexes[i]
-            print '               for(%s = 0; %s < cmd->%s; ++%s) {' % (idx, idx, count, idx)
-            print '                  dump_%s((const %s *)body);' % (struct, struct)
-            print '                  body += sizeof(%s);' % struct
-            print '               }'
-        if footer is not None:
-            print '               while(body + sizeof(%s) <= next) {' % footer
-            print '                  dump_%s((const %s *)body);' % (footer, footer)
-            print '                  body += sizeof(%s);' % footer
-            print '               }'
-        if id == 'SVGA_3D_CMD_SHADER_DEFINE':
-            print '               sh_svga_dump((const uint32_t *)body, (unsigned)(next - body)/sizeof(uint32_t));'
-            print '               body = next;'
-        print '            }'
-        print '            break;'
-    print '         default:'
-    print '            _debug_printf("\\t0x%08x\\n", cmd_id);'
-    print '            break;'
-    print '         }'
-            
-    print r'''
-         while(body + sizeof(uint32_t) <= next) {
-            _debug_printf("\t\t0x%08x\n", *(const uint32_t *)body);
-            body += sizeof(uint32_t);
-         }
-         while(body + sizeof(uint32_t) <= next)
-            _debug_printf("\t\t0x%02x\n", *body++);
+         svga_dump_command(cmd_id, body, header->size);
       }
       else if(cmd_id == SVGA_CMD_FENCE) {
          _debug_printf("\tSVGA_CMD_FENCE\n");
