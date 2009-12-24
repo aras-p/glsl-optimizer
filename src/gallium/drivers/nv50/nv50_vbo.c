@@ -372,6 +372,10 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		so_data  (so, fui(v[1]));
 		break;
 	case 1:
+		if (attrib == nv50->vertprog->cfg.edgeflag_in) {
+			so_method(so, tesla, 0x15e4, 1);
+			so_data  (so, v[0] ? 1 : 0);
+		}
 		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 1);
 		so_data  (so, fui(v[0]));
 		break;
@@ -400,6 +404,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		if (nv50->vtxbuf[i].stride &&
 		    !(nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX))
 			nv50->vbo_fifo = 0xffff;
+
+	if (nv50->vertprog->cfg.edgeflag_in < 16)
+		nv50->vbo_fifo = 0xffff; /* vertprog can't set edgeflag */
 
 	n_ve = MAX2(nv50->vtxelt_nr, nv50->state.vtxelt_nr);
 
@@ -479,6 +486,9 @@ struct nv50_vbo_emitctx
 	unsigned nr_ve;
 	unsigned vtx_dwords;
 	unsigned vtx_max;
+
+	float edgeflag;
+	unsigned ve_edgeflag;
 };
 
 static INLINE void
@@ -622,6 +632,9 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 	if (nv50_map_vbufs(nv50) == FALSE)
 		return FALSE;
 
+	emit->ve_edgeflag = nv50->vertprog->cfg.edgeflag_in;
+
+	emit->edgeflag = 0.5f;
 	emit->nr_ve = 0;
 	emit->vtx_dwords = 0;
 
@@ -644,7 +657,8 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 		desc = util_format_description(ve->src_format);
 		assert(desc);
 
-		size = util_format_get_component_bits(ve->src_format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+		size = util_format_get_component_bits(
+			ve->src_format, UTIL_FORMAT_COLORSPACE_RGB, 0);
 
 		assert(ve->nr_components > 0 && ve->nr_components <= 4);
 
@@ -686,8 +700,29 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 	}
 
 	emit->vtx_max = 512 / emit->vtx_dwords;
+	if (emit->ve_edgeflag < 16)
+		emit->vtx_max = 1;
 
 	return TRUE;
+}
+
+static INLINE void
+set_edgeflag(struct nouveau_channel *chan,
+	     struct nouveau_grobj *tesla,
+	     struct nv50_vbo_emitctx *emit, uint32_t index)
+{
+	unsigned i = emit->ve_edgeflag;
+
+	if (i < 16) {
+		float f = *((float *)(emit->map[i] + index * emit->stride[i]));
+
+		if (emit->edgeflag != f) {
+			emit->edgeflag = f;
+
+			BEGIN_RING(chan, tesla, 0x15e4, 1);
+			OUT_RING  (chan, f ? 1 : 0);
+		}
+	}
 }
 
 static boolean
@@ -703,6 +738,8 @@ nv50_push_arrays(struct nv50_context *nv50, unsigned start, unsigned count)
 	while (count) {
 		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
 	        dw = nr * emit.vtx_dwords;
+
+		set_edgeflag(chan, tesla, &emit, 0); /* nr will be 1 */
 
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_DATA | 0x40000000, dw);
 		for (i = 0; i < nr; ++i)
@@ -729,6 +766,8 @@ nv50_push_elements_u32(struct nv50_context *nv50, uint32_t *map, unsigned count)
 		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
 	        dw = nr * emit.vtx_dwords;
 
+		set_edgeflag(chan, tesla, &emit, *map);
+
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_DATA | 0x40000000, dw);
 		for (i = 0; i < nr; ++i)
 			emit_vtx(chan, &emit, *map++);
@@ -754,6 +793,8 @@ nv50_push_elements_u16(struct nv50_context *nv50, uint16_t *map, unsigned count)
 		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
 	        dw = nr * emit.vtx_dwords;
 
+		set_edgeflag(chan, tesla, &emit, *map);
+
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_DATA | 0x40000000, dw);
 		for (i = 0; i < nr; ++i)
 			emit_vtx(chan, &emit, *map++);
@@ -778,6 +819,8 @@ nv50_push_elements_u08(struct nv50_context *nv50, uint8_t *map, unsigned count)
 	while (count) {
 		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
 	        dw = nr * emit.vtx_dwords;
+
+		set_edgeflag(chan, tesla, &emit, *map);
 
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_DATA | 0x40000000, dw);
 		for (i = 0; i < nr; ++i)

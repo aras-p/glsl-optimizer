@@ -159,6 +159,8 @@ struct nv50_pc {
 	unsigned insn_nr;
 
 	boolean allow32;
+
+	uint8_t edgeflag_out;
 };
 
 static INLINE struct nv50_reg *
@@ -2554,10 +2556,16 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	mask = dst->WriteMask;
 
         if (dst->File == TGSI_FILE_TEMPORARY)
-                reg = pc->temp;
+		reg = pc->temp;
         else
-        if (dst->File == TGSI_FILE_OUTPUT)
-                reg = pc->result;
+	if (dst->File == TGSI_FILE_OUTPUT) {
+		reg = pc->result;
+
+		if (insn->Instruction.Opcode == TGSI_OPCODE_MOV &&
+		    dst->Index == pc->edgeflag_out &&
+		    insn->Src[0].Register.File == TGSI_FILE_INPUT)
+			pc->p->cfg.edgeflag_in = insn->Src[0].Register.Index;
+	}
 
 	if (reg) {
 		for (c = 0; c < 4; c++) {
@@ -2856,6 +2864,9 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					if (p->cfg.io_nr > first)
 						p->cfg.io_nr = first;
 					break;
+				case TGSI_SEMANTIC_EDGEFLAG:
+					pc->edgeflag_out = first;
+					break;
 					/*
 				case TGSI_SEMANTIC_CLIP_DISTANCE:
 					p->cfg.clpd = MIN2(p->cfg.clpd, first);
@@ -3103,6 +3114,8 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 
 	p->cfg.two_side[0].hw = 0x40;
 	p->cfg.two_side[1].hw = 0x40;
+
+	p->cfg.edgeflag_in = pc->edgeflag_out = 0xff;
 
 	switch (p->type) {
 	case PIPE_SHADER_VERTEX:
