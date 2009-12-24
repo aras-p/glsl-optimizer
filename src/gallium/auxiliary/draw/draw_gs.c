@@ -185,8 +185,8 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
    int idx = 0;
 
    for (slot = 0, vs_slot = 0; slot < shader->info.num_inputs; slot++) {
-      debug_printf("Slot = %d (semantic = %d)\n", slot,
-                   shader->info.input_semantic_name[slot]);
+      /*debug_printf("Slot = %d (semantic = %d)\n", slot,
+        shader->info.input_semantic_name[slot]);*/
       if (shader->info.input_semantic_name[slot] ==
           TGSI_SEMANTIC_VERTICES) {
          for (j = 0; j < num_primitives; ++j) {
@@ -200,8 +200,8 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
          for (j = 0; j < num_primitives; ++j) {
             int vidx = idx;
             const float (*prim_ptr)[4];
-            debug_printf("    %d) Prim (num_verts = %d)\n", start_primitive + j,
-                         num_vertices);
+            /*debug_printf("    %d) Prim (num_verts = %d)\n", start_primitive + j,
+              num_vertices);*/
             prim_ptr = (const float (*)[4])(
                (const char *)input_ptr +
                (j * num_vertices * input_vertex_stride));
@@ -211,7 +211,7 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
                input = (const float (*)[4])(
                   (const char *)prim_ptr + (k * input_vertex_stride));
                vidx = k * TGSI_EXEC_MAX_INPUT_ATTRIBS + slot;
-               debug_printf("\t%d)(%d) Input vert:\n", vidx, k);
+               /*debug_printf("\t%d)(%d) Input vert:\n", vidx, k);*/
 #if 1
                assert(!util_is_inf_or_nan(input[vs_slot][0]));
                assert(!util_is_inf_or_nan(input[vs_slot][1]));
