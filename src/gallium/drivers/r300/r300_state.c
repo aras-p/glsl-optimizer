@@ -719,6 +719,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     r300->dirty_state |= R300_NEW_RS_BLOCK;
     r300->dirty_state |= R300_NEW_SCISSOR;
     r300->dirty_state |= R300_NEW_VIEWPORT;
+    if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
+        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+    }
 }
 
 /* Free rasterizer state. */
@@ -897,6 +900,9 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     }
 
     r300->dirty_state |= R300_NEW_VIEWPORT;
+    if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
+        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+    }
 }
 
 static void r300_set_vertex_buffers(struct pipe_context* pipe,

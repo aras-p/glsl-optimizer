@@ -33,6 +33,8 @@
 
 #include "radeon_compiler.h"
 
+#include "util/u_math.h"
+
 /* Convert info about VS output semantics into r300_shader_semantics. */
 static void r300_shader_read_vs_outputs(
     struct tgsi_shader_info* info,
@@ -144,6 +146,13 @@ static void r300_shader_vap_output_fmt(
         gen_count++;
     }
 
+    /* WPOS. */
+    if (vs_outputs->wpos != ATTR_UNUSED) {
+        hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
+        hwfmt[3] |= (4 << (3 * gen_count));
+        gen_count++;
+    }
+
     /* XXX magic */
     assert(gen_count <= 8);
 }
@@ -190,6 +199,13 @@ static void r300_stream_locations_notcl(
 
     /* Fog coordinates. */
     if (vs_outputs->fog != ATTR_UNUSED) {
+        assert(tabi < 16);
+        stream_loc[tabi++] = 6 + gen_count;
+        gen_count++;
+    }
+
+    /* WPOS. */
+    if (vs_outputs->wpos != ATTR_UNUSED) {
         assert(tabi < 16);
         stream_loc[tabi++] = 6 + gen_count;
         gen_count++;
@@ -246,6 +262,33 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     if (outputs->fog != ATTR_UNUSED) {
         c->code->outputs[outputs->fog] = reg++;
     }
+
+    /* WPOS. */
+    if (outputs->wpos != ATTR_UNUSED) {
+        c->code->outputs[outputs->wpos] = reg++;
+    }
+}
+
+static void r300_insert_wpos(struct r300_vertex_program_compiler* c,
+                             struct r300_shader_semantics* outputs)
+{
+    int i, lastOutput = 0;
+
+    /* Find the max output index. */
+    lastOutput = MAX2(lastOutput, outputs->psize);
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        lastOutput = MAX2(lastOutput, outputs->color[i]);
+        lastOutput = MAX2(lastOutput, outputs->bcolor[i]);
+    }
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        lastOutput = MAX2(lastOutput, outputs->generic[i]);
+    }
+    lastOutput = MAX2(lastOutput, outputs->fog);
+
+    /* Set WPOS after the last output. */
+    lastOutput++;
+    rc_copy_output(&c->Base, 0, lastOutput); /* out[lastOutput] = out[0]; */
+    outputs->wpos = lastOutput;
 }
 
 void r300_translate_vertex_shader(struct r300_context* r300,
@@ -253,11 +296,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
+    boolean use_wpos = TRUE;
 
     /* Initialize. */
     r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
-    r300_shader_vap_output_fmt(&vs->outputs, vs->hwfmt);
-    r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -277,8 +319,16 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
 
-    compiler.RequiredOutputs = ~(~0 << vs->info.num_outputs);
+    compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+use_wpos));
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
+
+    /* Insert the WPOS output. */
+    if (use_wpos) {
+        r300_insert_wpos(&compiler, &vs->outputs);
+    }
+
+    r300_shader_vap_output_fmt(&vs->outputs, vs->hwfmt);
+    r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
 
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);

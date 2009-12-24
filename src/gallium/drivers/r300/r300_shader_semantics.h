@@ -40,6 +40,7 @@ struct r300_shader_semantics {
     int bcolor[ATTR_COLOR_COUNT];
     int generic[ATTR_GENERIC_COUNT];
     int fog;
+    int wpos;
 };
 
 static INLINE void r300_shader_semantics_reset(
@@ -50,6 +51,7 @@ static INLINE void r300_shader_semantics_reset(
     info->pos = ATTR_UNUSED;
     info->psize = ATTR_UNUSED;
     info->fog = ATTR_UNUSED;
+    info->wpos = ATTR_UNUSED;
 
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         info->color[i] = ATTR_UNUSED;

@@ -63,6 +63,11 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
                 fs_inputs->fog = i;
                 break;
 
+            case TGSI_SEMANTIC_POSITION:
+                assert(index == 0);
+                fs_inputs->wpos = i;
+                break;
+
             default:
                 assert(0);
         }
@@ -114,6 +119,9 @@ static void allocate_hardware_inputs(
     if (inputs->fog != ATTR_UNUSED) {
         allocate(mydata, inputs->fog, reg++);
     }
+    if (inputs->wpos != ATTR_UNUSED) {
+        allocate(mydata, inputs->wpos, reg++);
+    }
 }
 
 static void get_compare_state(
@@ -144,6 +152,7 @@ static void r300_translate_fragment_shader(
     struct r300_fragment_shader* fs = r300->fs;
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
+    int wpos = fs->inputs.wpos;
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
@@ -170,6 +179,18 @@ static void r300_translate_fragment_shader(
     r300_tgsi_to_rc(&ttr, fs->state.tokens);
 
     fs->shadow_samplers = compiler.Base.Program.ShadowSamplers;
+
+    /**
+     * Transform the program to support WPOS.
+     *
+     * Introduce a small fragment at the start of the program that will be
+     * the only code that directly reads the WPOS input.
+     * All other code pieces that reference that input will be rewritten
+     * to read from a newly allocated temporary. */
+    if (wpos != ATTR_UNUSED) {
+        /* Moving the input to some other reg is not really necessary. */
+        rc_transform_fragment_wpos(&compiler.Base, wpos, wpos, TRUE);
+    }
 
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);

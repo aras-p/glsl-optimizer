@@ -165,6 +165,28 @@ static const float * get_shader_constant(
                     vec[3] = 0;
                     break;
 
+                case RC_STATE_R300_VIEWPORT_SCALE:
+                    if (r300->rs_state->enable_vte) {
+                        vec[0] = r300->viewport_state->xscale;
+                        vec[1] = r300->viewport_state->yscale;
+                        vec[2] = r300->viewport_state->zscale;
+                    } else {
+                        vec[0] = 1;
+                        vec[1] = 1;
+                        vec[2] = 1;
+                    }
+                    break;
+
+                case RC_STATE_R300_VIEWPORT_OFFSET:
+                    if (r300->rs_state->enable_vte) {
+                        vec[0] = r300->viewport_state->xoffset;
+                        vec[1] = r300->viewport_state->yoffset;
+                        vec[2] = r300->viewport_state->zoffset;
+                    } else {
+                        /* Zeros. */
+                    }
+                    break;
+
                 default:
                     debug_printf("r300: Implementation error: "
                         "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
