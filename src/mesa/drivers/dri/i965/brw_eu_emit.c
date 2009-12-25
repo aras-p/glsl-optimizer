@@ -852,7 +852,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
-   assert(jmp_insn->bits1.da1.src1_reg_file = BRW_IMMEDIATE_VALUE);
+   assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
 
    jmp_insn->bits3.ud = jmpi * ((landing - jmp_insn) - 1);
 }
