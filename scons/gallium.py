@@ -243,6 +243,8 @@ def generate(env):
     env['build'] = build_dir
     env.SConsignFile(os.path.join(build_dir, '.sconsign'))
     env.CacheDir('build/cache')
+    env['CONFIGUREDIR'] = os.path.join(build_dir, 'conf')
+    env['CONFIGURELOG'] = os.path.join(os.path.abspath(build_dir), 'config.log')
 
     # Parallel build
     if env.GetOption('num_jobs') <= 1:
