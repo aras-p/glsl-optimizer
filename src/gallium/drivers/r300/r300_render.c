@@ -335,8 +335,9 @@ boolean r300_swtcl_draw_arrays(struct pipe_context* pipe,
     draw_set_mapped_element_buffer(r300->draw, 0, NULL);
 
     draw_set_mapped_constant_buffer(r300->draw,
-            r300->shader_constants[PIPE_SHADER_VERTEX].constants,
-            r300->shader_constants[PIPE_SHADER_VERTEX].count *
+				    PIPE_SHADER_VERTEX,
+				    r300->shader_constants[PIPE_SHADER_VERTEX].constants,
+				    r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
 
     draw_arrays(r300->draw, mode, start, count);
@@ -383,6 +384,7 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                          minIndex, maxIndex, indices);
 
     draw_set_mapped_constant_buffer(r300->draw,
+				    PIPE_SHADER_VERTEX,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
             r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
