@@ -426,7 +426,7 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
    struct pipe_transfer *transfer = tr_trans->transfer;
 
    if(tr_trans->map) {
-      size_t size = util_format_get_nblocksy(transfer->texture->format, transfer->width) * transfer->stride;
+      size_t size = util_format_get_nblocksy(transfer->texture->format, transfer->height) * transfer->stride;
 
       trace_dump_call_begin("pipe_screen", "transfer_write");
 
