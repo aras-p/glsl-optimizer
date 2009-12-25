@@ -187,7 +187,7 @@ static void r300_stream_locations_notcl(
     /* Texture coordinates. */
     gen_count = 0;
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
-        if (vs_outputs->bcolor[i] != ATTR_UNUSED) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
             assert(tabi < 16);
             stream_loc[tabi++] = 6 + gen_count;
             gen_count++;
