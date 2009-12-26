@@ -69,7 +69,14 @@ softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->fs = (struct sp_fragment_shader *) fs;
+   draw_flush(softpipe->draw);
+
+   if (softpipe->fs == fs)
+      return;
+
+   draw_flush(softpipe->draw);
+
+   softpipe->fs = fs;
 
    softpipe->dirty |= SP_NEW_FS;
 }
@@ -158,6 +165,8 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
+
+   draw_flush(softpipe->draw);
 
    /* note: reference counting */
    pipe_buffer_reference(&softpipe->constants[shader].buffer,
