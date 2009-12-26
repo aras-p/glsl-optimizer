@@ -58,7 +58,7 @@ static void nv04_emit_control(struct nv04_context* nv04)
 {
 	uint32_t control = nv04->dsa->control;
 
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_CONTROL, 1);
+	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
 	OUT_RING(control);
 }
 
@@ -75,7 +75,7 @@ static void nv04_emit_blend(struct nv04_context* nv04)
 	blend|=(nv04_blend_func(nv04->blend->b_src)<<24);
 	blend|=(nv04_blend_func(nv04->blend->b_dst)<<28);
 
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_BLEND, 1);
+	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_BLEND, 1);
 	OUT_RING(blend);
 }
 
@@ -84,7 +84,7 @@ static void nv04_emit_sampler(struct nv04_context *nv04, int unit)
 	struct nv04_miptree *nv04mt = nv04->tex_miptree[unit];
 	struct pipe_texture *pt = &nv04mt->base;
 
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_OFFSET, 3);
+	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 3);
 	OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	OUT_RELOCd(nv04mt->buffer, (nv04->fragtex.format | nv04->sampler[unit]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
 	OUT_RING(nv04->sampler[unit]->filter);
@@ -163,7 +163,7 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 	if (nv04->dirty & NV04_NEW_CONTROL) {
 		nv04->dirty &= ~NV04_NEW_CONTROL;
 
-		BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_CONTROL, 1);
+		BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
 		OUT_RING(nv04->dsa->control);
 	}
 
@@ -218,7 +218,7 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 		if (!(nv04->fp_samplers & (1 << i)))
 			continue;
 		struct nv04_miptree *nv04mt = nv04->tex_miptree[i];
-		BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_OFFSET, 2);
+		BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 2);
 		OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 		OUT_RELOCd(nv04mt->buffer, (nv04->fragtex.format | nv04->sampler[i]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
 	}
