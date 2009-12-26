@@ -52,9 +52,14 @@ struct st_context {
       cso_set_blend($self->cso, state);
    }
    
-   void set_sampler( unsigned index, const struct pipe_sampler_state *state ) {
+   void set_fragment_sampler( unsigned index, const struct pipe_sampler_state *state ) {
       cso_single_sampler($self->cso, index, state);
       cso_single_sampler_done($self->cso);
+   }
+
+   void set_vertex_sampler( unsigned index, const struct pipe_sampler_state *state ) {
+      cso_single_vertex_sampler($self->cso, index, state);
+      cso_single_vertex_sampler_done($self->cso);
    }
 
    void set_rasterizer( const struct pipe_rasterizer_state *state ) {
@@ -161,14 +166,24 @@ struct st_context {
       cso_set_viewport($self->cso, state);
    }
 
-   void set_sampler_texture(unsigned index,
-                            struct pipe_texture *texture) {
+   void set_fragment_sampler_texture(unsigned index,
+                                     struct pipe_texture *texture) {
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->sampler_textures[index], texture);
-      $self->pipe->set_fragment_sampler_textures($self->pipe, 
+      pipe_texture_reference(&$self->fragment_sampler_textures[index], texture);
+      $self->pipe->set_fragment_sampler_textures($self->pipe,
                                                  PIPE_MAX_SAMPLERS,
-                                                 $self->sampler_textures);
+                                                 $self->fragment_sampler_textures);
+   }
+
+   void set_vertex_sampler_texture(unsigned index,
+                                   struct pipe_texture *texture) {
+      if(!texture)
+         texture = $self->default_texture;
+      pipe_texture_reference(&$self->vertex_sampler_textures[index], texture);
+      $self->pipe->set_vertex_sampler_textures($self->pipe,
+                                               PIPE_MAX_VERTEX_SAMPLERS,
+                                               $self->vertex_sampler_textures);
    }
 
    void set_vertex_buffer(unsigned index,

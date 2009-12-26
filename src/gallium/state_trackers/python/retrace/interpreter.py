@@ -278,9 +278,9 @@ class Screen(Object):
     def texture_create(self, templat):
         return self.real.texture_create(
             format = templat.format,
-            width = templat.width0,
-            height = templat.height0,
-            depth = templat.depth0,
+            width = templat.width,
+            height = templat.height,
+            depth = templat.depth,
             last_level = templat.last_level,
             target = templat.target,
             tex_usage = templat.tex_usage,
@@ -387,9 +387,13 @@ class Context(Object):
     def delete_sampler_state(self, state):
         pass
 
+    def bind_vertex_sampler_states(self, num_states, states):
+        for i in range(num_states):
+            self.real.set_vertex_sampler(i, states[i])
+        
     def bind_fragment_sampler_states(self, num_states, states):
         for i in range(num_states):
-            self.real.set_sampler(i, states[i])
+            self.real.set_fragment_sampler(i, states[i])
         
     def create_rasterizer_state(self, state):
         return state
@@ -487,7 +491,11 @@ class Context(Object):
 
     def set_fragment_sampler_textures(self, num_textures, textures):
         for i in range(num_textures):
-            self.real.set_sampler_texture(i, textures[i])
+            self.real.set_fragment_sampler_texture(i, textures[i])
+
+    def set_vertex_sampler_textures(self, num_textures, textures):
+        for i in range(num_textures):
+            self.real.set_vertex_sampler_texture(i, textures[i])
 
     def set_vertex_buffers(self, num_buffers, buffers):
         self.vbufs = buffers[0:num_buffers]

@@ -118,7 +118,7 @@ def test(dev):
     sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.normalized_coords = 1
-    ctx.set_sampler(0, sampler)
+    ctx.set_fragment_sampler(0, sampler)
 
     # scissor
     scissor = Scissor()
