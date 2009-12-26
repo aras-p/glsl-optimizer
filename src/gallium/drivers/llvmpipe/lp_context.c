@@ -140,6 +140,7 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    unsigned i;
 
+   /* check if any of the bound drawing surfaces are this texture */
    if(llvmpipe->dirty_render_cache) {
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
          if(llvmpipe->framebuffer.cbufs[i] && 
@@ -149,6 +150,13 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
       if(llvmpipe->framebuffer.zsbuf && 
          llvmpipe->framebuffer.zsbuf->texture == texture)
          return PIPE_REFERENCED_FOR_WRITE;
+   }
+
+   /* check if any of the tex_cache textures are this texture */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      if (llvmpipe->tex_cache[i] &&
+            llvmpipe->tex_cache[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ;
    }
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       if (llvmpipe->vertex_tex_cache[i] &&
