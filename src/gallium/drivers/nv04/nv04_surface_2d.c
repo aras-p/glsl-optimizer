@@ -77,7 +77,7 @@ nv04_scaled_image_format(enum pipe_format format)
 }
 
 static INLINE unsigned
-nv04_swizzle_bits(unsigned x, unsigned y)
+nv04_swizzle_bits_square(unsigned x, unsigned y)
 {
 	unsigned u = (x & 0x001) << 0 |
 	             (x & 0x002) << 1 |
@@ -105,6 +105,15 @@ nv04_swizzle_bits(unsigned x, unsigned y)
 	             (y & 0x400) << 11 |
 	             (y & 0x800) << 12;
 	return v | u;
+}
+
+/* rectangular swizzled textures are linear concatenations of swizzled square tiles */
+static INLINE unsigned
+nv04_swizzle_bits(unsigned x, unsigned y, unsigned w, unsigned h)
+{
+	unsigned s = MIN2(w, h);
+	unsigned m = s - 1;
+	return (((x | y) & ~m) * s) | nv04_swizzle_bits_square(x & m, y & m);
 }
 
 static int
@@ -159,10 +168,10 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    sub_w = MIN2(sub_w, w - x);
 
 	    /* Must be 64-byte aligned */
-	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format)) & 63));
+	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y, w, h) * util_format_get_blocksize(dst->texture->format)) & 63));
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format),
+	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y, w, h) * util_format_get_blocksize(dst->texture->format),
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
