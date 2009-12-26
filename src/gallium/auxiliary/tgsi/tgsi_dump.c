@@ -506,7 +506,7 @@ iter_instruction(
       CHR( ' ' );
 
       if (src->Register.Negate)
-         TXT( "-(" );
+         CHR( '-' );
       if (src->Register.Absolute)
          CHR( '|' );
 
@@ -525,8 +525,6 @@ iter_instruction(
 
       if (src->Register.Absolute)
          CHR( '|' );
-      if (src->Register.Negate)
-         CHR( ')' );
 
       first_reg = FALSE;
    }
