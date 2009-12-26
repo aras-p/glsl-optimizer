@@ -51,6 +51,8 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
    uint i;
 
+   draw_flush(lp->draw);
+
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       /* check if changing cbuf */
       if (lp->framebuffer.cbufs[i] != fb->cbufs[i]) {
