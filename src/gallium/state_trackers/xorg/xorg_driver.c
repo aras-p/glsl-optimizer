@@ -220,6 +220,12 @@ static Bool
 drv_init_resource_management(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+    /*
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    Bool fbAccessDisabled;
+    CARD8 *fbstart;
+     */
 
     if (ms->screen || ms->kms)
 	return TRUE;

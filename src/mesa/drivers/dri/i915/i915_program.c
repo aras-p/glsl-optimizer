@@ -245,7 +245,7 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
    }
    else {
       assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
-      assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
+      assert(dest == UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
       /* Can't use unsaved temps for coords, as the phase boundary would result
        * in the contents becoming undefined.
        */

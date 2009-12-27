@@ -256,7 +256,6 @@ static enum shift_result good_offset(const struct bezier *b1,
    const float max_dist_normal = threshold*offset;
    const float spacing = 0.25;
    float i;
-
    for (i = spacing; i < 0.99; i += spacing) {
       float p1[2],p2[2], d, l;
       float normal[2];
@@ -343,6 +342,8 @@ static enum shift_result shift(const struct bezier *orig,
    float bounds[4];
    float points_shifted[4][2];
    float prev_normal[2];
+
+   int i;
 
    points[np][0] = orig->x1;
    points[np][1] = orig->y1;

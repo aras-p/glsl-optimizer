@@ -452,7 +452,8 @@ debug_dump_flags(const struct debug_named_value *names,
 	    util_strncat(output, "|", sizeof(output));
 	 else
 	    first = 0;
-	 util_strncat(output, names->name, sizeof(output));
+	 util_strncat(output, names->name, sizeof(output) - 1);
+	 output[sizeof(output) - 1] = '\0';
 	 value &= ~names->value;
       }
       ++names;
@@ -465,7 +466,8 @@ debug_dump_flags(const struct debug_named_value *names,
 	 first = 0;
       
       util_snprintf(rest, sizeof(rest), "0x%08lx", value);
-      util_strncat(output, rest, sizeof(output));
+      util_strncat(output, rest, sizeof(output) - 1);
+      output[sizeof(output) - 1] = '\0';
    }
    
    if(first)

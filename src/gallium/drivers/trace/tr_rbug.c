@@ -44,7 +44,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define sleep Sleep
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_APPLE)
 void usleep(int);
 #  define sleep usleep
 #else
@@ -179,7 +179,7 @@ static int
 trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct rbug_proto_texture_info *gpti = (struct rbug_proto_texture_info *)header;
    struct tr_list *ptr;
    struct pipe_texture *t;
@@ -220,7 +220,7 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct rbug_proto_texture_read *gptr = (struct rbug_proto_texture_read *)header;
 
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct tr_list *ptr;
 
    struct pipe_screen *screen = tr_scr->screen;

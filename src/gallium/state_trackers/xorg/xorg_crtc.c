@@ -70,6 +70,8 @@ struct crtc_private
 static void
 crtc_dpms(xf86CrtcPtr crtc, int mode)
 {
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
+
     switch (mode) {
     case DPMSModeOn:
     case DPMSModeStandby:
@@ -146,18 +148,23 @@ crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
 static void *
 crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
+
     return NULL;
 }
 
 static PixmapPtr
 crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 {
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
+
     return NULL;
 }
 
 static void
 crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 {
+    /* ScrnInfoPtr pScrn = crtc->scrn; */
 }
 
 /*

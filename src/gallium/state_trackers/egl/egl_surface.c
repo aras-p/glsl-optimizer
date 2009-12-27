@@ -171,9 +171,9 @@ drm_takedown_shown_screen(_EGLDisplay *dpy, struct drm_screen *screen)
 	drmModeSetCrtc(
 		dev->drmFD,
 		screen->crtcID,
-		0, // FD
+		0, /* FD */
 		0, 0,
-		NULL, 0, // List of output ids
+		NULL, 0, /* List of output ids */
 		NULL);
 
 	drmModeRmFB(dev->drmFD, screen->fbID);
