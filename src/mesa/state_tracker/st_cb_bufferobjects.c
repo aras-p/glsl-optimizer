@@ -170,15 +170,19 @@ st_bufferobj_data(GLcontext *ctx,
 
    pipe_buffer_reference( &st_obj->buffer, NULL );
 
-   st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
+   if (size != 0) {
+      st_obj->buffer = pipe_buffer_create(pipe->screen, 32, buffer_usage, size);
 
-   if (!st_obj->buffer) {
-      return GL_FALSE;
+      if (!st_obj->buffer) {
+         return GL_FALSE;
+      }
+
+      if (data)
+         st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
+				       size, data);
+      return GL_TRUE;
    }
 
-   if (data)
-      st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
-				    size, data);
    return GL_TRUE;
 }
 
