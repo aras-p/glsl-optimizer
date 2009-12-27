@@ -1,10 +1,15 @@
-TARGET     = modesetting_drv.so
-CFILES     = $(wildcard ./*.c)
-OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
-GALLIUMDIR = ../../../..
 TOP        = ../../../../../..
 
+
+GALLIUMDIR = $(TOP)/src/gallium
+
+TARGET     = radeong_drv.so
+
+CFILES     = $(wildcard ./*.c)
+
 include ${TOP}/configs/current
+
+OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
 
 CFLAGS = -DHAVE_CONFIG_H \
          -g -Wall -Wimplicit-function-declaration -fPIC \
@@ -24,15 +29,20 @@ LIBS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(GALLIUM_AUXILIARIES)
 
+TARGET_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
 #############################################
 
+all default: $(TARGET) $(TARGET_STAGING)
 
-
-all default: $(TARGET)
-
-$(TARGET): $(OBJECTS) Makefile $(GALLIUMDIR)/state_trackers/xorg/libxorgtracker.a
+$(TARGET): $(OBJECTS) Makefile $(GALLIUMDIR)/state_trackers/xorg/libxorgtracker.a $(LIBS)
 	$(TOP)/bin/mklib -noprefix -o $@ \
 	$(OBJECTS) $(LIBS) $(shell pkg-config --libs libdrm) -ldrm_radeon
+
+$(TOP)/$(LIB_DIR)/gallium:
+	mkdir -p $@
+
+$(TARGET_STAGING): $(TARGET) $(TOP)/$(LIB_DIR)/gallium
+	$(INSTALL) $(TARGET) $(TOP)/$(LIB_DIR)/gallium
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET)
