@@ -291,6 +291,8 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
       return MESA_FORMAT_ARGB8888;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       return MESA_FORMAT_XRGB8888;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return MESA_FORMAT_ARGB8888_REV;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
