@@ -598,7 +598,6 @@ intelInitContext(struct intel_context *intel,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-   int fthrottle_mode;
    int bo_reuse_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
@@ -739,8 +738,6 @@ intelInitContext(struct intel_context *intel,
       intel->polygon_offset_scale /= 0xffff;
 
    intel->RenderIndex = ~0;
-
-   fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
 
    if (intel->gen >= 4 && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
