@@ -126,7 +126,7 @@ nv30_transfer_del(struct pipe_transfer *ptx)
 
 		dst = pscreen->get_tex_surface(pscreen, ptx->texture,
 	                                       ptx->face, ptx->level, ptx->zslice,
-	                                       PIPE_BUFFER_USAGE_GPU_WRITE);
+	                                       PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER);
 
 		/* TODO: Check if SIFM can deal with x,y,w,h when swizzling */
 		nvscreen->eng2d->copy(nvscreen->eng2d,

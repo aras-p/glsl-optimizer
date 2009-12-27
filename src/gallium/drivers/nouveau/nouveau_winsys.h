@@ -23,6 +23,9 @@
 #define NOUVEAU_BUFFER_USAGE_ZETA     (1 << 17)
 #define NOUVEAU_BUFFER_USAGE_TRANSFER (1 << 18)
 
+/* use along with GPU_WRITE for 2D-only writes */
+#define NOUVEAU_BUFFER_USAGE_NO_RENDER (1 << 19)
+
 extern struct pipe_screen *
 nv04_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 

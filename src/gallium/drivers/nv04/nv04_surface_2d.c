@@ -491,3 +491,49 @@ nv04_surface_2d_init(struct nouveau_screen *screen)
 	ctx->fill = nv04_surface_fill;
 	return ctx;
 }
+
+struct nv04_surface*
+nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns)
+{
+	int temp_flags;
+
+	// printf("creating temp, flags is %i!\n", flags);
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_DISCARD)
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_DISCARD;
+	}
+	else
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_GPU_READ;
+	}
+
+	struct nv40_screen* screen = (struct nv40_screen*)pscreen;
+	ns->base.usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+
+	struct pipe_texture templ;
+	memset(&templ, 0, sizeof(templ));
+	templ.format = ns->base.texture->format;
+	templ.target = PIPE_TEXTURE_2D;
+	templ.width0 = ns->base.width;
+	templ.height0 = ns->base.height;
+	templ.depth0 = 1;
+	templ.last_level = 0;
+
+	// TODO: this is probably wrong and we should specifically handle multisampling somehow once it is implemented
+	templ.nr_samples = ns->base.texture->nr_samples;
+
+	templ.tex_usage = ns->base.texture->tex_usage | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+	struct pipe_texture* temp_tex = pscreen->texture_create(pscreen, &templ);
+	struct nv04_surface* temp_ns = (struct nv04_surface*)pscreen->get_tex_surface(pscreen, temp_tex, 0, 0, 0, temp_flags);
+	temp_ns->backing = ns;
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_GPU_READ)
+		eng2d->copy(eng2d, &temp_ns->backing->base, 0, 0, &ns->base, 0, 0, ns->base.width, ns->base.height);
+
+	return temp_ns;
+}
+

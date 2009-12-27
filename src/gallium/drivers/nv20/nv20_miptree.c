@@ -6,6 +6,7 @@
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
+#include "../nv04/nv04_surface_2d.h"
 
 static void
 nv20_miptree_layout(struct nv20_miptree *nv20mt)
@@ -127,6 +128,12 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
 		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 
+	/* apparently we can't render to swizzled surfaces smaller than 64 bytes, so make them linear.
+	 * If the user did not ask for a render target, they can still render to it, but it will cost them an extra copy.
+	 * This also happens for small mipmaps of large textures. */
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET && util_format_get_stride(pt->format, pt->width0) < 64)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+
 	nv20_miptree_layout(mt);
 
 	mt->buffer = screen->buffer_create(screen, 256, buf_usage, mt->total_size);
@@ -183,12 +190,27 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		ns->base.offset = nv20mt->level[level].image_offset[0];
 	}
 
+	/* create a linear temporary that we can render into if necessary.
+	 * Note that ns->pitch is always a multiple of 64 for linear surfaces and swizzled surfaces are POT, so
+	 * ns->pitch & 63 is equivalent to (ns->pitch < 64 && swizzled)*/
+	if((ns->pitch & 63) && (ns->base.usage & (PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER)) == PIPE_BUFFER_USAGE_GPU_WRITE)
+		return &nv04_surface_wrap_for_render(screen, ((struct nv20_screen*)screen)->eng2d, ns)->base;
+
 	return &ns->base;
 }
 
 static void
 nv20_miptree_surface_destroy(struct pipe_surface *ps)
 {
+	struct nv04_surface* ns = (struct nv04_surface*)ps;
+	if(ns->backing)
+	{
+		struct nv20_screen* screen = (struct nv20_screen*)ps->texture->screen;
+		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
+		nv20_miptree_surface_destroy(&ns->backing->base);
+	}
+	
 	pipe_texture_reference(&ps->texture, NULL);
 	FREE(ps);
 }
