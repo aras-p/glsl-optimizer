@@ -499,15 +499,6 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	union {
-		float f;
-		uint32_t ui;
-	} u;
-	u.ui = pc->immd_buf[imm->hw];
-
-	u.f = (imm->mod & NV50_MOD_ABS) ? fabsf(u.f) : u.f;
-	u.f = (imm->mod & NV50_MOD_NEG) ? -u.f : u.f;
-
 	set_long(pc, e);
 	/* XXX: can't be predicated - bits overlap; cases where both
 	 * are required should be avoided by using pc->allow32 */
@@ -515,8 +506,8 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 	set_pred_wr(pc, 0, 0, e);
 
 	e->inst[1] |= 0x00000002 | 0x00000001;
-	e->inst[0] |= (u.ui & 0x3f) << 16;
-	e->inst[1] |= (u.ui >> 6) << 2;
+	e->inst[0] |= (pc->immd_buf[imm->hw] & 0x3f) << 16;
+	e->inst[1] |= (pc->immd_buf[imm->hw] >> 6) << 2;
 }
 
 static INLINE void
@@ -888,7 +879,7 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
 	if (src1->type == P_IMMD && !is_long(e)) {
-		if (src0->mod & NV50_MOD_NEG)
+		if (src0->mod ^ src1->mod)
 			e->inst[0] |= 0x00008000;
 		set_immd(pc, src1, e);
 	} else {
@@ -998,6 +989,8 @@ emit_bitop2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	if (op != TGSI_OPCODE_AND && op != TGSI_OPCODE_OR &&
 	    op != TGSI_OPCODE_XOR)
 		assert(!"invalid bit op");
+
+	assert(!(src0->mod | src1->mod));
 
 	if (src1->type == P_IMMD && src0->type == P_TEMP && pc->allow32) {
 		set_immd(pc, src1, e);
