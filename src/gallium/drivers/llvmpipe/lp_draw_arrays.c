@@ -103,7 +103,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    draw_arrays(draw, mode, start, count);
 
    /*
-    * unmap vertex/index buffers - will cause draw module to flush
+    * unmap vertex/index buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
@@ -112,6 +112,12 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
+   /*
+    * TODO: Flush only when a user vertex/index buffer is present
+    * (or even better, modify draw module to do this
+    * internally when this condition is seen?)
+    */
+   draw_flush(draw);
 
    /* Note: leave drawing surfaces mapped */
 
