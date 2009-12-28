@@ -656,6 +656,7 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
 }
 
+/* Never apply nv50_reg::mod in emit_mov, or carefully check the code !!! */
 static void
 emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
@@ -1043,6 +1044,14 @@ emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	src2->mod ^= NV50_MOD_NEG;
 }
 
+#define NV50_FLOP_RCP 0
+#define NV50_FLOP_RSQ 2
+#define NV50_FLOP_LG2 3
+#define NV50_FLOP_SIN 4
+#define NV50_FLOP_COS 5
+#define NV50_FLOP_EX2 6
+
+/* rcp, rsqrt, lg2 support neg and abs */
 static void
 emit_flop(struct nv50_pc *pc, unsigned sub,
 	  struct nv50_reg *dst, struct nv50_reg *src)
@@ -1050,17 +1059,20 @@ emit_flop(struct nv50_pc *pc, unsigned sub,
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] |= 0x90000000;
-	if (sub) {
+	if (sub || src->mod) {
 		set_long(pc, e);
 		e->inst[1] |= (sub << 29);
 	}
 
 	set_dst(pc, dst, e);
+	set_src_0_restricted(pc, src, e);
 
-	if (sub == 0 || sub == 2)
-		set_src_0_restricted(pc, src, e);
-	else
-		set_src_0(pc, src, e);
+	assert(!src->mod || sub < 4);
+
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
 
 	emit(pc, e);
 }
@@ -1077,6 +1089,11 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	set_long(pc, e);
 	e->inst[1] |= (6 << 29) | 0x00004000;
 
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
+
 	emit(pc, e);
 }
 
@@ -1091,6 +1108,11 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	set_src_0(pc, src, e);
 	set_long(pc, e);
 	e->inst[1] |= (6 << 29);
+
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
 
 	emit(pc, e);
 }
@@ -1226,10 +1248,10 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 {
 	struct nv50_reg *temp = alloc_temp(pc, NULL);
 
-	emit_flop(pc, 3, temp, v);
+	emit_flop(pc, NV50_FLOP_LG2, temp, v);
 	emit_mul(pc, temp, temp, e);
 	emit_preex2(pc, temp, temp);
-	emit_flop(pc, 6, dst, temp);
+	emit_flop(pc, NV50_FLOP_EX2, dst, temp);
 
 	free_temp(pc, temp);
 }
@@ -1453,7 +1475,7 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 	if (arg == 4) /* there is no textureProj(samplerCubeShadow) */
 		emit_mov(pc, t[3], src[3]);
 
-	emit_flop(pc, 0, t[2], t[2]);
+	emit_flop(pc, NV50_FLOP_RCP, t[2], t[2]);
 
 	emit_mul(pc, t[0], src[0], t[2]);
 	emit_mul(pc, t[1], src[1], t[2]);
@@ -1471,7 +1493,7 @@ load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 
 		t[3]->rhw = src[3]->rhw;
 		emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
-		emit_flop(pc, 0, t[3], t[3]);
+		emit_flop(pc, NV50_FLOP_RCP, t[3], t[3]);
 
 		for (c = 0; c < dim; ++c) {
 			t[c]->rhw = src[c]->rhw;
@@ -1485,7 +1507,7 @@ load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 		/* XXX: for some reason the blob sometimes uses MAD
 		 * (mad f32 $rX $rY $rZ neg $r63)
 		 */
-		emit_flop(pc, 0, t[3], src[3]);
+		emit_flop(pc, NV50_FLOP_RCP, t[3], src[3]);
 		for (c = 0; c < dim; ++c)
 			emit_mul(pc, t[c], src[c], t[3]);
 		if (arg != dim) /* depth reference value */
@@ -1777,20 +1799,24 @@ static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
 	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_ADD:
+	case TGSI_OPCODE_COS:
 	case TGSI_OPCODE_DDX:
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
-	case TGSI_OPCODE_MUL:
+	case TGSI_OPCODE_EX2:
 	case TGSI_OPCODE_KIL:
-	case TGSI_OPCODE_ADD:
-	case TGSI_OPCODE_SUB:
+	case TGSI_OPCODE_LG2:
 	case TGSI_OPCODE_MAD:
-		return TRUE;
+	case TGSI_OPCODE_MUL:
 	case TGSI_OPCODE_POW:
-		if (i == 1)
-			return TRUE;
-		return FALSE;
+	case TGSI_OPCODE_RCP:
+	case TGSI_OPCODE_RSQ: /* ignored, RSQ = rsqrt(abs(src.x)) */
+	case TGSI_OPCODE_SCS:
+	case TGSI_OPCODE_SIN:
+	case TGSI_OPCODE_SUB:
+		return TRUE;
 	default:
 		return FALSE;
 	}
@@ -2242,14 +2268,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_COS:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
-			emit_flop(pc, 5, dst[3], temp);
+			emit_flop(pc, NV50_FLOP_COS, dst[3], temp);
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
 				temp = brdc = temp_temp(pc);
 		}
 		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 5, brdc, temp);
+		emit_flop(pc, NV50_FLOP_COS, brdc, temp);
 		break;
 	case TGSI_OPCODE_DDX:
 		for (c = 0; c < 4; c++) {
@@ -2323,7 +2349,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
-		emit_flop(pc, 6, brdc, temp);
+		emit_flop(pc, NV50_FLOP_EX2, brdc, temp);
 		break;
 	case TGSI_OPCODE_FLR:
 		for (c = 0; c < 4; c++) {
@@ -2363,7 +2389,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
-		emit_flop(pc, 3, brdc, src[0][0]);
+		emit_flop(pc, NV50_FLOP_LG2, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_LRP:
 		temp = temp_temp(pc);
@@ -2413,7 +2439,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_pow(pc, brdc, src[0][0], src[1][0]);
 		break;
 	case TGSI_OPCODE_RCP:
-		emit_flop(pc, 0, brdc, src[0][0]);
+		emit_flop(pc, NV50_FLOP_RCP, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_RET:
 		if (pc->p->type == PIPE_SHADER_FRAGMENT)
@@ -2421,16 +2447,17 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_ret(pc, -1, 0);
 		break;
 	case TGSI_OPCODE_RSQ:
-		emit_flop(pc, 2, brdc, src[0][0]);
+		src[0][0]->mod |= NV50_MOD_ABS;
+		emit_flop(pc, NV50_FLOP_RSQ, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_SCS:
 		temp = temp_temp(pc);
 		if (mask & 3)
 			emit_precossin(pc, temp, src[0][0]);
 		if (mask & (1 << 0))
-			emit_flop(pc, 5, dst[0], temp);
+			emit_flop(pc, NV50_FLOP_COS, dst[0], temp);
 		if (mask & (1 << 1))
-			emit_flop(pc, 4, dst[1], temp);
+			emit_flop(pc, NV50_FLOP_SIN, dst[1], temp);
 		if (mask & (1 << 2))
 			emit_mov_immdval(pc, dst[2], 0.0);
 		if (mask & (1 << 3))
@@ -2439,14 +2466,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_SIN:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
-			emit_flop(pc, 4, dst[3], temp);
+			emit_flop(pc, NV50_FLOP_SIN, dst[3], temp);
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
 				temp = brdc = temp_temp(pc);
 		}
 		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 4, brdc, temp);
+		emit_flop(pc, NV50_FLOP_SIN, brdc, temp);
 		break;
 	case TGSI_OPCODE_SLT:
 	case TGSI_OPCODE_SGE:
@@ -2781,7 +2808,7 @@ load_interpolant(struct nv50_pc *pc, struct nv50_reg *reg)
 		iv->rhw = popcnt4(pc->p->cfg.regs[1] >> 24) - 1;
 
 		emit_interp(pc, iv, NULL, mode & INTERP_CENTROID);
-		emit_flop(pc, 0, iv, iv);
+		emit_flop(pc, NV50_FLOP_RCP, iv, iv);
 
 		/* XXX: when loading interpolants dynamically, move these
 		 * to the program head, or make sure it can't be skipped.
