@@ -644,6 +644,7 @@ register_with_display(Display *dpy)
       XExtCodes *c = XAddExtension(dpy);
       ext = dpy->ext_procs;  /* new extension is at head of list */
       assert(c->extension == ext->codes.extension);
+      (void) c;
       ext->name = _mesa_strdup(extName);
       ext->close_display = close_display_callback;
    }
