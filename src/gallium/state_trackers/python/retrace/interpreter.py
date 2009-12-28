@@ -52,10 +52,10 @@ def make_image(surface, x=None, y=None, w=None, h=None):
         w = surface.width - x
     if h is None:
         h = surface.height - y
-    data = surface.get_tile_rgba8(0, 0, surface.width, surface.height)
+    data = surface.get_tile_rgba8(x, y, surface.width, surface.height)
 
     import Image
-    outimage = Image.fromstring('RGBA', (surface.width, surface.height), data, "raw", 'RGBA', 0, 1)
+    outimage = Image.fromstring('RGBA', (w, h), data, "raw", 'RGBA', 0, 1)
     return outimage
 
 def save_image(filename, surface, x=None, y=None, w=None, h=None):
