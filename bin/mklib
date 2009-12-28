@@ -69,6 +69,38 @@ contents_of_archives() {
 }
 
 
+# Make static library with 'ar'
+# params:
+#    options to ar
+#    1 or 0 to indicate if ranlib should be run
+#    libname to make
+#    list of object files
+# Return name of library we made
+# Example: "make_ar_static_lib -ru 1 libfoo.a foo.o bar.o"
+make_ar_static_lib() {
+    OPTS=$1
+    shift;
+    RANLIB=$1
+    shift;
+    LIBNAME=$1
+    shift;
+    OBJECTS=$@
+
+    # remove existing lib, if present
+    rm -f ${LIBNAME}
+
+    # make static lib
+    ar ${OPTS} ${LIBNAME} ${OBJECTS}
+
+    # run ranlib
+    if [ ${RANLIB} = 1 ] ; then
+        ranlib ${LIBNAME}
+    fi
+
+    echo ${LIBNAME}
+}
+
+
 # Print usage info.
 usage() {
     echo 'Usage: mklib [options] objects'
@@ -331,15 +363,10 @@ case $ARCH in
 	    NEW_OBJECTS=`expand_archives $OBJECTS`
 
             # make static lib
-            rm -f ${LIBNAME}
-            ar ${OPTS} ${LIBNAME} ${NEW_OBJECTS}
-            ranlib ${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
 
 	    # remove temporary extracted .o files
 	    rm -f `contents_of_archives $OBJECTS`
-
-            # finish up
-            FINAL_LIBS=${LIBNAME}
         else
 	    # make dynamic library
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
@@ -402,9 +429,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making SunOS static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    if [ $NOPREFIX = 0 ] ; then
 		LIBNAME="lib${LIBNAME}.so"
@@ -530,15 +555,10 @@ case $ARCH in
 	    # expand .a into .o files
 	    NEW_OBJECTS=`expand_archives $OBJECTS`
 
-            # make static lib
-	    rm -f ${STLIB}
-	    ar cq ${STLIB} ${NEW_OBJECTS}
-	    ranlib ${STLIB}
+	    FINAL_LIBS=`make_ar_static_lib cq 1 ${STLIB} ${NEW_OBJECTS}`
 
 	    # remove temporary extracted .o files
 	    rm -f `contents_of_archives $OBJECTS`
-
-	    FINAL_LIBS=${STLIB}
 	else
 	    # make dynamic library
 	    SHLIB="lib${LIBNAME}.so.${MAJOR}"
@@ -558,10 +578,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}_pic.a"
 	    echo "mklib: Making NetBSD PIC static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar cq ${LIBNAME} ${OBJECTS}
-	    ranlib ${LIBNAME}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib cq 1 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
 	    echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
@@ -574,9 +591,7 @@ case $ARCH in
     'IRIX' | 'IRIX64')
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
-	    rm -f ${LIBNAME}
-	    ar rc ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib rc 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 
@@ -627,9 +642,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making HP-UX static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
             # HP uses a .2 for their current GL/GLU libraries
 	    if [ ${LIBNAME} = "GL" -o ${LIBNAME} = "GLU" ] ; then
@@ -659,8 +672,7 @@ case $ARCH in
 	if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making AIX static library: " ${LIBNAME}
-	    ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    EXPFILE="lib${LIBNAME}.exp"
 	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
@@ -711,9 +723,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making OSF/1 static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    VERSION="${MAJOR}.${MINOR}"
 	    LIBNAME="lib${LIBNAME}.so"
@@ -800,16 +810,14 @@ case $ARCH in
     'LynxOS')
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making LynxOS static library: " ${LIBNAME}
-	rm -f ${LIBNAME}
-	ar ru ${LIBNAME} ${OBJECTS}
-	FINAL_LIBS=${LIBNAME}
+        FINAL_LIBS=`make_ar_static_lib -ru 0 ${LIBNAME} ${OBJECTS}`
 	;;
 
     'BeOS')
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making BeOS static library: " ${LIBNAME}
-            ar -cru "${LIBNAME}" ${OBJECTS}
+            FINAL_LIBS=`make_ar_static_lib -cru 0 ${LIBNAME} ${OBJECTS}`
         else
 	    LIBNAME="lib${LIBNAME}.so"
 	    echo "mklib: Making BeOS shared library: " ${LIBNAME}
@@ -888,9 +896,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making AIX GCC static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar ru ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+            FINAL_LIBS=`make_ar_static_lib ru 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 	    echo "mklib: Making AIX GCC shared library: " ${LIBNAME}
@@ -911,9 +917,7 @@ case $ARCH in
 	fi
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making static library for Ultrix: " ${LIBNAME}
-	rm -f ${LIBNAME}
-	ar ru ${LIBNAME} ${OBJECTS}
-	FINAL_LIBS="${LIBNAME}"
+        FINAL_LIBS=`make_ar_static_lib ru 0 ${LIBNAME} ${OBJECTS}`
 	;;
 
      CYGWIN*)
@@ -933,17 +937,13 @@ case $ARCH in
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
         if [ $STATIC = 1 ] ; then
-            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
-            LINK="ar"
+	    LIBNAME=${LIBNAME}.a
+            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            # make lib
-            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
-	    ranlib ${LIBNAME}.a
-            # finish up
-            FINAL_LIBS=${LIBNAME}.a
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${OBJECTS}`
         else
 	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
@@ -981,9 +981,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making static library for example arch: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar rv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS="${LIBNAME}"
+            FINAL_LIBS=`make_ar_static_lib rv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 	    echo "mklib: Making shared library for example arch: " ${LIBNAME}
