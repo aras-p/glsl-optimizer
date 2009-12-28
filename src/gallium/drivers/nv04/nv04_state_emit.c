@@ -57,13 +57,19 @@ static uint32_t nv04_blend_func(uint32_t f)
 static void nv04_emit_control(struct nv04_context* nv04)
 {
 	uint32_t control = nv04->dsa->control;
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
 
-	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
-	OUT_RING(control);
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
+	OUT_RING(chan, control);
 }
 
 static void nv04_emit_blend(struct nv04_context* nv04)
 {
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
 	uint32_t blend;
 
 	blend=0x4; // texture MODULATE_ALPHA
@@ -75,19 +81,23 @@ static void nv04_emit_blend(struct nv04_context* nv04)
 	blend|=(nv04_blend_func(nv04->blend->b_src)<<24);
 	blend|=(nv04_blend_func(nv04->blend->b_dst)<<28);
 
-	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_BLEND, 1);
-	OUT_RING(blend);
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_BLEND, 1);
+	OUT_RING(chan, blend);
 }
 
 static void nv04_emit_sampler(struct nv04_context *nv04, int unit)
 {
 	struct nv04_miptree *nv04mt = nv04->tex_miptree[unit];
 	struct pipe_texture *pt = &nv04mt->base;
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
+	struct nouveau_bo *bo = nouveau_bo(nv04mt->buffer);
 
-	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 3);
-	OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-	OUT_RELOCd(nv04mt->buffer, (nv04->fragtex.format | nv04->sampler[unit]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
-	OUT_RING(nv04->sampler[unit]->filter);
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 3);
+	OUT_RELOCl(chan, bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCd(chan, bo, (nv04->fragtex.format | nv04->sampler[unit]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
+	OUT_RING(chan, nv04->sampler[unit]->filter);
 }
 
 static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
@@ -97,6 +107,10 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 	uint32_t rt_format, w, h;
 	int colour_format = 0, zeta_format = 0;
 	struct nv04_miptree *nv04mt = 0;
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *context_surfaces_3d = screen->context_surfaces_3d;
+	struct nouveau_bo *bo;
 
 	w = fb->cbufs[0]->width;
 	h = fb->cbufs[0]->height;
@@ -128,24 +142,29 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 		assert(0);
 	}
 
-	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
-	OUT_RING(rt_format);
+	BEGIN_RING(chan, context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
+	OUT_RING(chan, rt_format);
 
 	nv04mt = (struct nv04_miptree *)rt->base.texture;
+	bo = nouveau_bo(nv04mt->buffer);
 	/* FIXME pitches have to be aligned ! */
-	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(rt->pitch|(zeta->pitch<<16));
-	OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	BEGIN_RING(chan, context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
+	OUT_RING(chan, rt->pitch|(zeta->pitch<<16));
+	OUT_RELOCl(chan, bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	if (fb->zsbuf) {
 		nv04mt = (struct nv04_miptree *)zeta->base.texture;
-		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
-		OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(chan, context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
+		OUT_RELOCl(chan, bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	}
 }
 
 void
 nv04_emit_hw_state(struct nv04_context *nv04)
 {
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
+	struct nouveau_grobj *context_surfaces_3d = screen->context_surfaces_3d;
 	int i;
 
 	if (nv04->dirty & NV04_NEW_VERTPROG) {
@@ -163,8 +182,8 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 	if (nv04->dirty & NV04_NEW_CONTROL) {
 		nv04->dirty &= ~NV04_NEW_CONTROL;
 
-		BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
-		OUT_RING(nv04->dsa->control);
+		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
+		OUT_RING(chan, nv04->dsa->control);
 	}
 
 	if (nv04->dirty & NV04_NEW_BLEND) {
@@ -205,12 +224,12 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 	unsigned rt_pitch = ((struct nv04_surface *)nv04->rt)->pitch;
 	unsigned zeta_pitch = ((struct nv04_surface *)nv04->zeta)->pitch;
 
-	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(rt_pitch|(zeta_pitch<<16));
-	OUT_RELOCl(nv04->rt, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	BEGIN_RING(chan, context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
+	OUT_RING(chan, rt_pitch|(zeta_pitch<<16));
+	OUT_RELOCl(chan, nouveau_bo(nv04->rt), 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	if (nv04->zeta) {
-		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
-		OUT_RELOCl(nv04->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(chan, context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
+		OUT_RELOCl(chan, nouveau_bo(nv04->zeta), 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	}
 
 	/* Texture images */
@@ -218,9 +237,10 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 		if (!(nv04->fp_samplers & (1 << i)))
 			continue;
 		struct nv04_miptree *nv04mt = nv04->tex_miptree[i];
-		BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 2);
-		OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-		OUT_RELOCd(nv04mt->buffer, (nv04->fragtex.format | nv04->sampler[i]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
+		struct nouveau_bo *bo = nouveau_bo(nv04mt->buffer);
+		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_OFFSET, 2);
+		OUT_RELOCl(chan, bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+		OUT_RELOCd(chan, bo, (nv04->fragtex.format | nv04->sampler[i]->format), NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
 	}
 }
 

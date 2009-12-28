@@ -169,7 +169,9 @@ nv40_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_channel *chan = nv40->screen->base.channel;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned restart;
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
@@ -187,17 +189,17 @@ nv40_draw_arrays(struct pipe_context *pipe,
 		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (nvgl_primitive(mode));
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(curie, NV40TCL_VB_VERTEX_BATCH, 1);
-			OUT_RING  (((nr - 1) << 24) | start);
+			BEGIN_RING(chan, curie, NV40TCL_VB_VERTEX_BATCH, 1);
+			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
 
@@ -207,15 +209,15 @@ nv40_draw_arrays(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(curie, NV40TCL_VB_VERTEX_BATCH, push);
+			BEGIN_RING_NI(chan, curie, NV40TCL_VB_VERTEX_BATCH, push);
 			while (push--) {
-				OUT_RING(((0x100 - 1) << 24) | start);
+				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, 0);
 
 		count -= vc;
 		start = restart;
@@ -228,7 +230,9 @@ static INLINE void
 nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->screen->base.channel;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -239,17 +243,17 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 		count -= vc;
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (nvgl_primitive(mode));
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(curie, NV40TCL_VB_ELEMENT_U32, 1);
-			OUT_RING  (elts[0]);
+			BEGIN_RING(chan, curie, NV40TCL_VB_ELEMENT_U32, 1);
+			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
 
@@ -258,16 +262,16 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(curie, NV40TCL_VB_ELEMENT_U16, push >> 1);
+			BEGIN_RING_NI(chan, curie, NV40TCL_VB_ELEMENT_U16, push >> 1);
 			for (i = 0; i < push; i+=2)
-				OUT_RING((elts[i+1] << 16) | elts[i]);
+				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
 			vc -= push;
 			elts += push;
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, 0);
 
 		start = restart;
 	}
@@ -277,7 +281,9 @@ static INLINE void
 nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->screen->base.channel;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -288,17 +294,17 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 		count -= vc;
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (nvgl_primitive(mode));
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(curie, NV40TCL_VB_ELEMENT_U32, 1);
-			OUT_RING  (elts[0]);
+			BEGIN_RING(chan, curie, NV40TCL_VB_ELEMENT_U32, 1);
+			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
 
@@ -307,16 +313,16 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(curie, NV40TCL_VB_ELEMENT_U16, push >> 1);
+			BEGIN_RING_NI(chan, curie, NV40TCL_VB_ELEMENT_U16, push >> 1);
 			for (i = 0; i < push; i+=2)
-				OUT_RING((elts[i+1] << 16) | elts[i]);
+				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
 			vc -= push;
 			elts += push;
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, 0);
 
 		start = restart;
 	}
@@ -326,7 +332,9 @@ static INLINE void
 nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->screen->base.channel;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -337,26 +345,26 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 5, 1,
 					mode, start, count, &restart);
 		if (vc == 0) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 		count -= vc;
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (nvgl_primitive(mode));
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, nvgl_primitive(mode));
 
 		while (vc) {
 			push = MIN2(vc, 2047);
 
-			BEGIN_RING_NI(curie, NV40TCL_VB_ELEMENT_U32, push);
-			OUT_RINGp    (elts, push);
+			BEGIN_RING_NI(chan, curie, NV40TCL_VB_ELEMENT_U32, push);
+			OUT_RINGp    (chan, elts, push);
 
 			vc -= push;
 			elts += push;
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, 0);
 
 		start = restart;
 	}
@@ -400,7 +408,9 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_channel *chan = nv40->screen->base.channel;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned restart;
 
 	while (count) {
@@ -411,17 +421,17 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 		
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (nvgl_primitive(mode));
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(curie, NV40TCL_VB_INDEX_BATCH, 1);
-			OUT_RING  (((nr - 1) << 24) | start);
+			BEGIN_RING(chan, curie, NV40TCL_VB_INDEX_BATCH, 1);
+			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
 
@@ -431,15 +441,15 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(curie, NV40TCL_VB_INDEX_BATCH, push);
+			BEGIN_RING_NI(chan, curie, NV40TCL_VB_INDEX_BATCH, push);
 			while (push--) {
-				OUT_RING(((0x100 - 1) << 24) | start);
+				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, 0);
 
 		count -= vc;
 		start = restart;

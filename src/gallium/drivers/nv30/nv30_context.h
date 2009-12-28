@@ -14,10 +14,6 @@
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_context.h"
-
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv30_screen *ctx = nv30->screen
-#include "nouveau/nouveau_push.h"
 #include "nouveau/nouveau_stateobj.h"
 
 #include "nv30_state.h"

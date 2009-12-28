@@ -834,7 +834,9 @@ static boolean
 nv40_vertprog_validate(struct nv40_context *nv40)
 { 
 	struct pipe_screen *pscreen = nv40->pipe.screen;
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	struct nv40_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -974,9 +976,9 @@ check_gpu_resources:
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(curie, NV40TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (i + vp->data->start);
-			OUT_RINGp ((uint32_t *)vpd->value, 4);
+			BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (chan, i + vp->data->start);
+			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
 
 		if (constbuf)
@@ -993,11 +995,11 @@ check_gpu_resources:
 			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(curie, NV40TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->exec->start);
+		BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_FROM_ID, 1);
+		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(curie, NV40TCL_VP_UPLOAD_INST(0), 4);
-			OUT_RINGp (vp->insns[i].data, 4);
+			BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_INST(0), 4);
+			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}
 

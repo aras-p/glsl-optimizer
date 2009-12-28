@@ -10,15 +10,20 @@ nv30_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
+	struct nv30_screen *screen = nv30->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *rankine = screen->rankine;
 
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		BEGIN_RING(rankine, 0x1fd8, 1);
-		OUT_RING  (2);
-		BEGIN_RING(rankine, 0x1fd8, 1);
-		OUT_RING  (1);
+		BEGIN_RING(chan, rankine, 0x1fd8, 1);
+		OUT_RING  (chan, 2);
+		BEGIN_RING(chan, rankine, 0x1fd8, 1);
+		OUT_RING  (chan, 1);
 	}
 
-	FIRE_RING(fence);
+	FIRE_RING(chan);
+	if (fence)
+		*fence = NULL;
 }
 
 static void

@@ -31,6 +31,9 @@ nv40_render_stage(struct draw_stage *stage)
 static INLINE void
 nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 {
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned i;
 
 	for (i = 0; i < nv40->swtnl.nr_attribs; i++) {
@@ -41,30 +44,30 @@ nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 		case EMIT_OMIT:
 			break;
 		case EMIT_1F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_1F(hw), 1);
-			OUT_RING  (fui(v->data[idx][0]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_1F(hw), 1);
+			OUT_RING  (chan, fui(v->data[idx][0]));
 			break;
 		case EMIT_2F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_2F_X(hw), 2);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_2F_X(hw), 2);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
 			break;
 		case EMIT_3F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_3F_X(hw), 3);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
-			OUT_RING  (fui(v->data[idx][2]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_3F_X(hw), 3);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
+			OUT_RING  (chan, fui(v->data[idx][2]));
 			break;
 		case EMIT_4F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_4F_X(hw), 4);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
-			OUT_RING  (fui(v->data[idx][2]));
-			OUT_RING  (fui(v->data[idx][3]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_4F_X(hw), 4);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
+			OUT_RING  (chan, fui(v->data[idx][2]));
+			OUT_RING  (chan, fui(v->data[idx][3]));
 			break;
 		case EMIT_4UB:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_4UB(hw), 1);
-			OUT_RING  (pack_ub4(float_to_ubyte(v->data[idx][0]),
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_4UB(hw), 1);
+			OUT_RING  (chan, pack_ub4(float_to_ubyte(v->data[idx][0]),
 					    float_to_ubyte(v->data[idx][1]),
 					    float_to_ubyte(v->data[idx][2]),
 					    float_to_ubyte(v->data[idx][3])));
@@ -82,7 +85,11 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 {
 	struct nv40_render_stage *rs = nv40_render_stage(stage);
 	struct nv40_context *nv40 = rs->nv40;
-	struct nouveau_pushbuf *pb = nv40->screen->base.channel->pushbuf;
+
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_pushbuf *pb = chan->pushbuf;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned i;
 
 	/* Ensure there's room for 4xfloat32 + potentially 3 begin/end */
@@ -91,19 +98,19 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			NOUVEAU_ERR("AIII, missed flush\n");
 			assert(0);
 		}
-		FIRE_RING(NULL);
+		FIRE_RING(chan);
 		nv40_state_emit(nv40);
 	}
 
 	/* Switch primitive modes if necessary */
 	if (rs->prim != mode) {
 		if (rs->prim != NV40TCL_BEGIN_END_STOP) {
-			BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-			OUT_RING  (NV40TCL_BEGIN_END_STOP);	
+			BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+			OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (mode);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, mode);
 		rs->prim = mode;
 	}
 
@@ -115,8 +122,8 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	 * off the primitive now.
 	 */
 	if (pb->remaining < ((count * 20) + 6)) {
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (NV40TCL_BEGIN_END_STOP);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		rs->prim = NV40TCL_BEGIN_END_STOP;
 	}
 }
@@ -144,10 +151,13 @@ nv40_render_flush(struct draw_stage *draw, unsigned flags)
 {
 	struct nv40_render_stage *rs = nv40_render_stage(draw);
 	struct nv40_context *nv40 = rs->nv40;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	if (rs->prim != NV40TCL_BEGIN_END_STOP) {
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (NV40TCL_BEGIN_END_STOP);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		rs->prim = NV40TCL_BEGIN_END_STOP;
 	}
 }

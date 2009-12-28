@@ -15,10 +15,6 @@
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_context.h"
 
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv20_screen *ctx = nv20->screen
-#include "nouveau/nouveau_push.h"
-
 #include "nv20_state.h"
 
 #define NOUVEAU_ERR(fmt, args...) \

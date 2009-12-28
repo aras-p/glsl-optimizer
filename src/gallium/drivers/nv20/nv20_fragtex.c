@@ -52,6 +52,9 @@ nv20_fragtex_build(struct nv20_context *nv20, int unit)
 	struct nv20_miptree *nv20mt = nv20->tex_miptree[unit];
 	struct pipe_texture *pt = &nv20mt->base;
 	struct nv20_texture_format *tf;
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	uint32_t txf, txs, txp;
 
 	tf = nv20_fragtex_format(pt->format);
@@ -82,15 +85,15 @@ nv20_fragtex_build(struct nv20_context *nv20, int unit)
 		return;
 	}
 
-	BEGIN_RING(kelvin, NV10TCL_TX_OFFSET(unit), 8);
-	OUT_RELOCl(nv20mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-	OUT_RELOCd(nv20mt->buffer,txf,NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
-	OUT_RING  (ps->wrap);
-	OUT_RING  (0x40000000); /* enable */
-	OUT_RING  (txs);
-	OUT_RING  (ps->filt | 0x2000 /* magic */);
-	OUT_RING  ((pt->width0 << 16) | pt->height0);
-	OUT_RING  (ps->bcol);
+	BEGIN_RING(chan, kelvin, NV10TCL_TX_OFFSET(unit), 8);
+	OUT_RELOCl(chan, nouveau_bo(nv20mt->buffer), 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCd(chan, nouveau_bo(nv20mt->buffer),txf,NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
+	OUT_RING  (chan, ps->wrap);
+	OUT_RING  (chan, 0x40000000); /* enable */
+	OUT_RING  (chan, txs);
+	OUT_RING  (chan, ps->filt | 0x2000 /* magic */);
+	OUT_RING  (chan, (pt->width0 << 16) | pt->height0);
+	OUT_RING  (chan, ps->bcol);
 #endif
 }
 
@@ -99,6 +102,9 @@ nv20_fragtex_bind(struct nv20_context *nv20)
 {
 #if 0
 	struct nv20_fragment_program *fp = nv20->fragprog.active;
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	unsigned samplers, unit;
 
 	samplers = nv20->fp_samplers & ~fp->samplers;
@@ -106,8 +112,8 @@ nv20_fragtex_bind(struct nv20_context *nv20)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		BEGIN_RING(kelvin, NV10TCL_TX_ENABLE(unit), 1);
-		OUT_RING  (0);
+		BEGIN_RING(chan, kelvin, NV10TCL_TX_ENABLE(unit), 1);
+		OUT_RING  (chan, 0);
 	}
 
 	samplers = nv20->dirty_samplers & fp->samplers;

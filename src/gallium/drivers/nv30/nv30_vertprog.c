@@ -650,7 +650,9 @@ static boolean
 nv30_vertprog_validate(struct nv30_context *nv30)
 { 
 	struct pipe_screen *pscreen = nv30->pipe.screen;
-	struct nouveau_grobj *rankine = nv30->screen->rankine;
+	struct nv30_screen *screen = nv30->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *rankine = screen->rankine;
 	struct nv30_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -770,9 +772,9 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (i + vp->data->start);
-			OUT_RINGp ((uint32_t *)vpd->value, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (chan, i + vp->data->start);
+			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
 
 		if (constbuf)
@@ -788,11 +790,11 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				vp->insns[i].data[2], vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->exec->start);
+		BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
+		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
-			OUT_RINGp (vp->insns[i].data, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
+			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}
 
