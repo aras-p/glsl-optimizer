@@ -25,6 +25,12 @@ static void
 nv30_destroy(struct pipe_context *pipe)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
+	unsigned i;
+
+	for (i = 0; i < NV30_STATE_MAX; i++) {
+		if (nv30->state.hw[i])
+			so_ref(NULL, &nv30->state.hw[i]);
+	}
 
 	if (nv30->draw)
 		draw_destroy(nv30->draw);

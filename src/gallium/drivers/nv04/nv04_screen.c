@@ -119,6 +119,8 @@ nv04_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_grobj_free(&screen->fahrenheit);
 	nv04_surface_2d_takedown(&screen->eng2d);
 
+	nouveau_screen_fini(&screen->base);
+
 	FREE(pscreen);
 }
 

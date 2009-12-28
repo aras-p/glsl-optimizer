@@ -165,6 +165,21 @@ static void
 nv50_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv50_screen *screen = nv50_screen(pscreen);
+	unsigned i;
+
+	for (i = 0; i < 2; i++) {
+		if (screen->constbuf_parm[i])
+			nouveau_bo_ref(NULL, &screen->constbuf_parm[i]);
+	}
+
+	if (screen->constbuf_misc[0])
+		nouveau_bo_ref(NULL, &screen->constbuf_misc[0]);
+	if (screen->tic)
+		nouveau_bo_ref(NULL, &screen->tic);
+	if (screen->tsc)
+		nouveau_bo_ref(NULL, &screen->tsc);
+	if (screen->static_init)
+		so_ref(NULL, &screen->static_init);
 
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->tesla);
