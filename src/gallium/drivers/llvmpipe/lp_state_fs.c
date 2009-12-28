@@ -676,6 +676,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct lp_fragment_shader_variant *variant;
 
    assert(fs != llvmpipe->fs);
+   (void) llvmpipe;
 
    variant = shader->variants;
    while(variant) {

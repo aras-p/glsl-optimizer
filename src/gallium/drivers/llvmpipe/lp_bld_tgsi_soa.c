@@ -321,7 +321,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 {
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    LLVMValueRef lodbias;
-   LLVMValueRef oow;
+   LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
    unsigned num_coords;
    unsigned i;

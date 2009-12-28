@@ -35,7 +35,7 @@
 #define LP_WINSYS_H
 
 
-#include "pipe/p_compiler.h" // for boolean
+#include "pipe/p_compiler.h" /* for boolean */
 #include "pipe/p_format.h"
 
 
