@@ -515,6 +515,7 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 #endif
 
    debug_assert(priv == exa->copy.dst);
+   (void) priv;
 
    if (exa->copy.use_surface_copy) {
       /* XXX: consider exposing >1 box in surface_copy interface.

@@ -437,6 +437,7 @@ void renderer_copy_prepare(struct xorg_renderer *r,
                                       PIPE_TEXTURE_2D,
                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                       0));
+   (void) screen;
 
 
    /* set misc state we care about */

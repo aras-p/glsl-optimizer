@@ -492,6 +492,7 @@ create_fs(struct pipe_context *pipe,
 
    /* it has to be either a fill, a composite op or a yuv conversion */
    debug_assert((is_fill ^ is_composite) ^ is_yuv);
+   (void) is_yuv;
 
    out = ureg_DECL_output(ureg,
                           TGSI_SEMANTIC_COLOR,
