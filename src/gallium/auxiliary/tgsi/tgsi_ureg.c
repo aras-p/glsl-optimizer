@@ -780,8 +780,8 @@ ureg_insn(struct ureg_program *ureg,
    unsigned i;
    boolean saturate;
    boolean predicate;
-   boolean negate;
-   unsigned swizzle[4];
+   boolean negate = FALSE;
+   unsigned swizzle[4] = { 0 };
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
@@ -827,8 +827,8 @@ ureg_tex_insn(struct ureg_program *ureg,
    unsigned i;
    boolean saturate;
    boolean predicate;
-   boolean negate;
-   unsigned swizzle[4];
+   boolean negate = FALSE;
+   unsigned swizzle[4] = { 0 };
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
