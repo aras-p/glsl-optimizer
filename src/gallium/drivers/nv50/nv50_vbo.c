@@ -99,19 +99,19 @@ nv50_vbo_size_to_hw(unsigned size, unsigned nr_c)
 {
 	static const uint32_t hw_values[] = {
 		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_8_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_16_16_16_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8_8,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16_16,
 		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_SIZE_32_32_32_32 };
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32,
+		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32_32 };
 
 	/* we'd also have R11G11B10 and R10G10B10A2 */
 
@@ -198,7 +198,7 @@ nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 		return nv50_push_elements_u08(nv50, map, count);
 
 	if (count & 1) {
-		BEGIN_RING(chan, tesla, 0x15e8, 1);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (chan, map[0]);
 		map++;
 		count--;
@@ -208,7 +208,7 @@ nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 		unsigned nr = count > 2046 ? 2046 : count;
 		int i;
 
-		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x40000000, nr >> 1);
 		for (i = 0; i < nr; i += 2)
 			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
@@ -231,7 +231,7 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 		return nv50_push_elements_u16(nv50, map, count);
 
 	if (count & 1) {
-		BEGIN_RING(chan, tesla, 0x15e8, 1);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (chan, map[0]);
 		map++;
 		count--;
@@ -241,7 +241,7 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 		unsigned nr = count > 2046 ? 2046 : count;
 		int i;
 
-		BEGIN_RING(chan, tesla, 0x400015f0, nr >> 1);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x40000000, nr >> 1);
 		for (i = 0; i < nr; i += 2)
 			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
 
@@ -266,7 +266,7 @@ nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 	while (count) {
 		unsigned nr = count > 2047 ? 2047 : count;
 
-		BEGIN_RING(chan, tesla, 0x400015e8, nr);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x40000000, nr);
 		OUT_RINGp (chan, map, nr);
 
 		count -= nr;
@@ -373,7 +373,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		break;
 	case 1:
 		if (attrib == nv50->vertprog->cfg.edgeflag_in) {
-			so_method(so, tesla, 0x15e4, 1);
+			so_method(so, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
 			so_data  (so, v[0] ? 1 : 0);
 		}
 		so_method(so, tesla, NV50TCL_VTX_ATTR_1F(attrib), 1);
@@ -452,7 +452,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 
 		/* vertex array limits */
-		so_method(vtxbuf, tesla, 0x1080 + (i * 8), 2);
+		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_LIMIT_HIGH(i), 2);
 		so_reloc (vtxbuf, bo, vb->buffer->size - 1,
 			  NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
 			  NOUVEAU_BO_HIGH, 0, 0);

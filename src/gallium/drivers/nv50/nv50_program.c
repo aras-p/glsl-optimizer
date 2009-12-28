@@ -3498,7 +3498,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_FP_RESULT_COUNT, 1);
 	so_data  (so, p->cfg.high_result);
-	so_method(so, tesla, NV50TCL_FP_CTRL_UNK19A8, 1);
+	so_method(so, tesla, NV50TCL_FP_CONTROL, 1);
 	so_data  (so, p->cfg.regs[2]);
 	so_method(so, tesla, NV50TCL_FP_CTRL_UNK196C, 1);
 	so_data  (so, p->cfg.regs[3]);
@@ -3670,7 +3670,7 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_FP_INTERPOLANT_CTRL, 1);
 	so_data  (so, reg[4]);
 
-	so_method(so, tesla, 0x1540, 4);
+	so_method(so, tesla, NV50TCL_NOPERSPECTIVE_BITMAP(0), 4);
 	so_datap (so, lin, 4);
 
 	if (nv50->rasterizer->pipe.point_sprite) {

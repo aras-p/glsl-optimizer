@@ -47,7 +47,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_IN, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_IN, 1);
+			NV04_MEMORY_TO_MEMORY_FORMAT_PITCH_IN, 1);
 		OUT_RING  (chan, src_pitch);
 		src_offset += (sy * src_pitch) + (sx * cpp);
 	} else {
@@ -66,7 +66,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_OUT, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_OUT, 1);
+			NV04_MEMORY_TO_MEMORY_FORMAT_PITCH_OUT, 1);
 		OUT_RING  (chan, dst_pitch);
 		dst_offset += (dy * dst_pitch) + (dx * cpp);
 	} else {
@@ -89,7 +89,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RELOCh(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCh(chan, dst_bo, dst_offset, dst_reloc);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
+			NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
 		OUT_RELOCl(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
 		if (src_bo->tile_flags) {
@@ -107,7 +107,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			dst_offset += (line_count * dst_pitch);
 		}
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_LINE_LENGTH_IN, 4);
+			NV04_MEMORY_TO_MEMORY_FORMAT_LINE_LENGTH_IN, 4);
 		OUT_RING  (chan, width * cpp);
 		OUT_RING  (chan, line_count);
 		OUT_RING  (chan, 0x00000101);
@@ -291,7 +291,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 	/* NV50_2D_OPERATION_SRCCOPY assumed already set */
 
-	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_UNK0800, 2);
+	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_BITMAP_ENABLE, 2);
 	OUT_RING  (chan, 0);
 	OUT_RING  (chan, src_format);
 	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_WIDTH, 10);
@@ -334,6 +334,6 @@ nv50_upload_sifc(struct nv50_context *nv50,
 		src += src_pitch;
 	}
 
-	BEGIN_RING(chan, tesla, 0x1440, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);
 	OUT_RING  (chan, 0);
 }
