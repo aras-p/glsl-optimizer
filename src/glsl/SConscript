@@ -23,7 +23,7 @@ sources = [
     'cl/sl_cl_parse.c',
 ]
 
-glsl = env.StaticLibrary(
+glsl = env.ConvenienceLibrary(
     target = 'glsl',
     source = sources,
 )
