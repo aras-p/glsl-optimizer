@@ -476,7 +476,7 @@ static enum intersection_type line_intersect(const VGfloat *l1,
                                              const VGfloat *l2,
                                              float *intersection_point)
 {
-   VGfloat isect[2];
+   VGfloat isect[2] = { 0 };
    enum intersection_type type;
    VGboolean dx_zero, ldx_zero;
 
@@ -649,7 +649,7 @@ static void create_joins(struct stroker *stroker,
       VGfloat prev_line[] = {stroker->back2_x, stroker->back2_y,
                              stroker->back1_x, stroker->back1_y};
 
-      VGfloat isect[2];
+      VGfloat isect[2] = { 0 };
       enum intersection_type type = line_intersect(prev_line, next_line, isect);
 
       if (join == SquareJoin) {

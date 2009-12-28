@@ -232,10 +232,7 @@ static void update_clip_state(struct vg_context *ctx)
       struct pipe_blend_state *blend = &ctx->state.g3d.blend;
       struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
       int i;
-<<<<<<< HEAD:src/gallium/state_trackers/vega/vg_context.c
 
-=======
->>>>>>> mesa_7_6_branch:src/gallium/state_trackers/vega/vg_context.c
       dsa->depth.writemask = 1;/*glDepthMask(TRUE);*/
       dsa->depth.func = PIPE_FUNC_ALWAYS;
       dsa->depth.enabled = 1;

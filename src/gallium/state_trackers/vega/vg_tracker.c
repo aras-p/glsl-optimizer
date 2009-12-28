@@ -33,6 +33,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,

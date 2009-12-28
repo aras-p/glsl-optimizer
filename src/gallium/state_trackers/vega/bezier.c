@@ -343,8 +343,6 @@ static enum shift_result shift(const struct bezier *orig,
    float points_shifted[4][2];
    float prev_normal[2];
 
-   int i;
-
    points[np][0] = orig->x1;
    points[np][1] = orig->y1;
    map[0] = 0;
