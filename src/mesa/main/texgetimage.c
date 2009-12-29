@@ -103,7 +103,7 @@ get_tex_color_index(GLcontext *ctx, GLuint dimensions,
 
    for (img = 0; img < depth; img++) {
       for (row = 0; row < height; row++) {
-         GLuint indexRow[MAX_WIDTH];
+         GLuint indexRow[MAX_WIDTH] = { 0 };
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
