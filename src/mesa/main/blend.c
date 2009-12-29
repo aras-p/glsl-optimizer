@@ -564,7 +564,7 @@ void _mesa_init_color( GLcontext * ctx )
    ctx->Color.AlphaEnabled = GL_FALSE;
    ctx->Color.AlphaFunc = GL_ALWAYS;
    ctx->Color.AlphaRef = 0;
-   ctx->Color.BlendEnabled = GL_FALSE;
+   ctx->Color.BlendEnabled = 0x0;
    ctx->Color.BlendSrcRGB = GL_ONE;
    ctx->Color.BlendDstRGB = GL_ZERO;
    ctx->Color.BlendSrcA = GL_ONE;

@@ -581,7 +581,7 @@ struct gl_colorbuffer_attrib
     * \name Blending
     */
    /*@{*/
-   GLboolean BlendEnabled;		/**< Blending enabled flag */
+   GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
    GLenum BlendSrcRGB;			/**< Blending source operator */
    GLenum BlendDstRGB;			/**< Blending destination operator */
    GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */

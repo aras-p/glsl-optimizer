@@ -132,7 +132,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = ctx->Color.BlendEnabled;
+         params[0] = (ctx->Color.BlendEnabled & 1);
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_BOOLEAN(ctx->Color.BlendDstRGB);
@@ -1967,7 +1967,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_FLOAT((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_FLOAT(ctx->Color.BlendDstRGB);
@@ -3802,7 +3802,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->DrawBuffer->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_INT(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_INT((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_INT(ctx->Color.BlendDstRGB);
@@ -5638,7 +5638,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_INT64(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_INT64((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_INT64(ctx->Color.BlendDstRGB);

@@ -1479,7 +1479,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
             if (ctx->Color._LogicOpEnabled) {
                _swrast_logicop_rgba_span(ctx, rb, span);
             }
-            else if (ctx->Color.BlendEnabled) {
+            else if ((ctx->Color.BlendEnabled >> buf) & 1) {
                _swrast_blend_span(ctx, rb, span);
             }
 

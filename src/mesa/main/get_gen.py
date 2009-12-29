@@ -82,7 +82,7 @@ StateVars = [
 	( "GL_AUTO_NORMAL", GLboolean, ["ctx->Eval.AutoNormal"], "", None ),
 	( "GL_AUX_BUFFERS", GLint, ["ctx->DrawBuffer->Visual.numAuxBuffers"],
 	  "", None ),
-	( "GL_BLEND", GLboolean, ["ctx->Color.BlendEnabled"], "", None ),
+	( "GL_BLEND", GLboolean, ["(ctx->Color.BlendEnabled & 1)"], "", None ),
 	( "GL_BLEND_DST", GLenum, ["ctx->Color.BlendDstRGB"], "", None ),
 	( "GL_BLEND_SRC", GLenum, ["ctx->Color.BlendSrcRGB"], "", None ),
 	( "GL_BLEND_SRC_RGB_EXT", GLenum, ["ctx->Color.BlendSrcRGB"], "", None ),

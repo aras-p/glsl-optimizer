@@ -107,7 +107,7 @@ struct save_state
    GLboolean AlphaEnabled;
 
    /** META_BLEND */
-   GLboolean BlendEnabled;
+   GLbitfield BlendEnabled;
    GLboolean ColorLogicOpEnabled;
 
    /** META_COLOR_MASK */
@@ -335,8 +335,12 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_BLEND) {
       save->BlendEnabled = ctx->Color.BlendEnabled;
-      if (ctx->Color.BlendEnabled)
-         _mesa_set_enable(ctx, GL_BLEND, GL_FALSE);
+      if (ctx->Color.BlendEnabled) {
+         GLuint i;
+         for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+            _mesa_set_enablei(ctx, GL_BLEND, i, GL_FALSE);
+         }
+      }
       save->ColorLogicOpEnabled = ctx->Color.ColorLogicOpEnabled;
       if (ctx->Color.ColorLogicOpEnabled)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, GL_FALSE);
@@ -566,8 +570,12 @@ _mesa_meta_end(GLcontext *ctx)
    }
 
    if (state & META_BLEND) {
-      if (ctx->Color.BlendEnabled != save->BlendEnabled)
-         _mesa_set_enable(ctx, GL_BLEND, save->BlendEnabled);
+      if (ctx->Color.BlendEnabled != save->BlendEnabled) {
+         GLuint i;
+         for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+            _mesa_set_enablei(ctx, GL_BLEND, i, (save->BlendEnabled >> i) & 1);
+         }
+      }
       if (ctx->Color.ColorLogicOpEnabled != save->ColorLogicOpEnabled)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, save->ColorLogicOpEnabled);
    }

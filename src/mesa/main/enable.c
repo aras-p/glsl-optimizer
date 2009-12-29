@@ -278,10 +278,13 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Eval.AutoNormal = state;
          break;
       case GL_BLEND:
-         if (ctx->Color.BlendEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_COLOR);
-         ctx->Color.BlendEnabled = state;
+         {
+            GLbitfield newEnabled = state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
+            if (newEnabled != ctx->Color.BlendEnabled) {
+               FLUSH_VERTICES(ctx, _NEW_COLOR);
+               ctx->Color.BlendEnabled = newEnabled;
+            }
+         }
          break;
 #if FEATURE_userclip
       case GL_CLIP_PLANE0:
@@ -1020,6 +1023,77 @@ _mesa_Disable( GLenum cap )
 }
 
 
+
+/**
+ * Enable/disable an indexed state var.
+ */
+void
+_mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
+{
+   ASSERT(state == 0 || state == 1);
+   switch (cap) {
+   case GL_BLEND:
+      if (index >= ctx->Const.MaxDrawBuffers) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
+                     state ? "glEnableIndexed" : "glDisableIndexed", index);
+         return;
+      }
+      if (((ctx->Color.BlendEnabled >> index) & 1) != state) {
+         FLUSH_VERTICES(ctx, _NEW_COLOR);
+         if (state)
+            ctx->Color.BlendEnabled |= (1 << index);
+         else
+            ctx->Color.BlendEnabled &= ~(1 << index);
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
+                  state ? "glEnableIndexed" : "glDisableIndexed",
+                  _mesa_lookup_enum_by_nr(cap));
+   }
+}
+
+
+void GLAPIENTRY
+_mesa_DisableIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   _mesa_set_enablei(ctx, cap, index, GL_FALSE);
+}
+
+
+void GLAPIENTRY
+_mesa_EnableIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   _mesa_set_enablei(ctx, cap, index, GL_TRUE);
+}
+
+
+GLboolean GLAPIENTRY
+_mesa_IsEnabledIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   switch (cap) {
+   case GL_BLEND:
+      if (index >= ctx->Const.MaxDrawBuffers) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glIsEnabledIndexed(index=%u)",
+                     index);
+         return GL_FALSE;
+      }
+      return (ctx->Color.BlendEnabled >> index) & 1;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabledIndexed(cap=%s)",
+                  _mesa_lookup_enum_by_nr(cap));
+      return GL_FALSE;
+   }
+}
+
+
+
+
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME)			\
    if (!ctx->Extensions.EXTNAME) {			\
@@ -1066,7 +1140,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_AUTO_NORMAL:
 	 return ctx->Eval.AutoNormal;
       case GL_BLEND:
-         return ctx->Color.BlendEnabled;
+         return ctx->Color.BlendEnabled & 1;  /* return state for buffer[0] */
       case GL_CLIP_PLANE0:
       case GL_CLIP_PLANE1:
       case GL_CLIP_PLANE2:

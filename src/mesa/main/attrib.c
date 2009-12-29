@@ -499,7 +499,12 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 	}
 
    TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
-   TEST_AND_UPDATE(ctx->Color.BlendEnabled, enable->Blend, GL_BLEND);
+   if (ctx->Color.BlendEnabled != enable->Blend) {
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         _mesa_set_enablei(ctx, GL_BLEND, i, (enable->Blend >> i) & 1);
+      }
+   }
 
    for (i=0;i<MAX_CLIP_PLANES;i++) {
       const GLuint mask = 1 << i;
@@ -906,6 +911,7 @@ _mesa_PopAttrib(void)
          case GL_COLOR_BUFFER_BIT:
             {
                const struct gl_colorbuffer_attrib *color;
+
                color = (const struct gl_colorbuffer_attrib *) attr->data;
                _mesa_ClearIndex((GLfloat) color->ClearIndex);
                _mesa_ClearColor(color->ClearColor[0],
@@ -948,7 +954,13 @@ _mesa_PopAttrib(void)
                }
                _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
                _mesa_AlphaFunc(color->AlphaFunc, color->AlphaRef);
-               _mesa_set_enable(ctx, GL_BLEND, color->BlendEnabled);
+               if (ctx->Color.BlendEnabled != color->BlendEnabled) {
+                  GLuint i;
+                  for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+                     _mesa_set_enablei(ctx, GL_BLEND, i,
+                                       (color->BlendEnabled >> i) & 1);
+                  }
+               }
                _mesa_BlendFuncSeparateEXT(color->BlendSrcRGB,
                                           color->BlendDstRGB,
                                           color->BlendSrcA,
