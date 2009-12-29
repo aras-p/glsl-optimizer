@@ -743,7 +743,7 @@ static void emit_kil(struct brw_wm_compile *c)
     struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
     brw_push_insn_state(p);
     brw_set_mask_control(p, BRW_MASK_DISABLE);
-    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
     brw_AND(p, depth, c->emit_mask_reg, depth);
     brw_pop_insn_state(p);
 }

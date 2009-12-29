@@ -354,14 +354,14 @@ extern char *__progname;
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 #define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
-static inline uint32_t
+static INLINE uint32_t
 U_FIXED(float value, uint32_t frac_bits)
 {
    value *= (1 << frac_bits);
    return value < 0 ? 0 : value;
 }
 
-static inline uint32_t
+static INLINE uint32_t
 S_FIXED(float value, uint32_t frac_bits)
 {
    return value * (1 << frac_bits);
@@ -588,7 +588,7 @@ is_power_of_two(uint32_t value)
    return (value & (value - 1)) == 0;
 }
 
-static inline void
+static INLINE void
 intel_bo_map_gtt_preferred(struct intel_context *intel,
 			   drm_intel_bo *bo,
 			   GLboolean write)
@@ -599,7 +599,7 @@ intel_bo_map_gtt_preferred(struct intel_context *intel,
       drm_intel_bo_map(bo, write);
 }
 
-static inline void
+static INLINE void
 intel_bo_unmap_gtt_preferred(struct intel_context *intel,
 			     drm_intel_bo *bo)
 {

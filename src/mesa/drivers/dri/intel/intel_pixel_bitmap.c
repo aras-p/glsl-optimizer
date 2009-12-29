@@ -166,7 +166,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
  * Returns the low Y value of the vertical range given, flipped according to
  * whether the framebuffer is or not.
  */
-static inline int
+static INLINE int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
    if (fb->Name != 0)

@@ -109,7 +109,7 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   //   intelFlush(ctx);
+   /* intelFlush(ctx); */
    LOCK_HARDWARE(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,

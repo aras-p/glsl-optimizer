@@ -199,7 +199,7 @@ void brw_set_src1( struct brw_instruction *insn,
        * in the future:
        */
       assert (reg.address_mode == BRW_ADDRESS_DIRECT);
-      //assert (reg.file == BRW_GENERAL_REGISTER_FILE);
+      /* assert (reg.file == BRW_GENERAL_REGISTER_FILE); */
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits3.da1.src1_subreg_nr = reg.subnr;

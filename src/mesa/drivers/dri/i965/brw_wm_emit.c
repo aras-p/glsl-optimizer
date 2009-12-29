@@ -1084,7 +1084,7 @@ static void emit_kil_nv( struct brw_wm_compile *c )
 
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
    brw_AND(p, r0uw, c->emit_mask_reg, r0uw);
    brw_pop_insn_state(p);
 }
