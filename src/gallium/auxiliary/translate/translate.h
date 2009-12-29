@@ -103,8 +103,13 @@ static INLINE int translate_keysize( const struct translate_key *key )
 static INLINE int translate_key_compare( const struct translate_key *a,
                                          const struct translate_key *b )
 {
-   int keysize = translate_keysize(a);
-   return memcmp(a, b, keysize);
+   int keysize_a = translate_keysize(a);
+   int keysize_b = translate_keysize(b);
+
+   if (keysize_a != keysize_b) {
+      return keysize_a - keysize_b;
+   }
+   return memcmp(a, b, keysize_a);
 }
 
 
