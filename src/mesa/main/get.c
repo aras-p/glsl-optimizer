@@ -210,10 +210,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = ctx->Polygon.CullFlag;
@@ -2045,10 +2045,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = (GLfloat)(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = (GLfloat)(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = (GLfloat)(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = (GLfloat)(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = (GLfloat)(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = (GLfloat)(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = (GLfloat)(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = (GLfloat)(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_FLOAT(ctx->Polygon.CullFlag);
@@ -3880,10 +3880,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = ctx->Color.ColorMask[RCOMP] ? 1 : 0;
-         params[1] = ctx->Color.ColorMask[GCOMP] ? 1 : 0;
-         params[2] = ctx->Color.ColorMask[BCOMP] ? 1 : 0;
-         params[3] = ctx->Color.ColorMask[ACOMP] ? 1 : 0;
+         params[0] = ctx->Color.ColorMask[0][RCOMP] ? 1 : 0;
+         params[1] = ctx->Color.ColorMask[0][GCOMP] ? 1 : 0;
+         params[2] = ctx->Color.ColorMask[0][BCOMP] ? 1 : 0;
+         params[3] = ctx->Color.ColorMask[0][ACOMP] ? 1 : 0;
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_INT(ctx->Polygon.CullFlag);
@@ -5716,10 +5716,10 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = ENUM_TO_INT64(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = (GLint64)(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = (GLint64)(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = (GLint64)(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = (GLint64)(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = (GLint64)(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = (GLint64)(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = (GLint64)(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = (GLint64)(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_INT64(ctx->Polygon.CullFlag);
@@ -7448,10 +7448,19 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 
    switch (pname) {
       case GL_BLEND:
-         if (index >= MAX_DRAW_BUFFERS) {
+         if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
          }
          params[0] = INT_TO_BOOLEAN(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      case GL_COLOR_WRITEMASK:
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+         }
+         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
+         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
+         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
+         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
@@ -7472,10 +7481,19 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
 
    switch (pname) {
       case GL_BLEND:
-         if (index >= MAX_DRAW_BUFFERS) {
+         if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
          }
          params[0] = ((ctx->Color.BlendEnabled >> index) & 1);
+         break;
+      case GL_COLOR_WRITEMASK:
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+         }
+         params[0] = ctx->Color.ColorMask[index][RCOMP] ? 1 : 0;
+         params[1] = ctx->Color.ColorMask[index][GCOMP] ? 1 : 0;
+         params[2] = ctx->Color.ColorMask[index][BCOMP] ? 1 : 0;
+         params[3] = ctx->Color.ColorMask[index][ACOMP] ? 1 : 0;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
@@ -7497,10 +7515,19 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 
    switch (pname) {
       case GL_BLEND:
-         if (index >= MAX_DRAW_BUFFERS) {
+         if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
          }
          params[0] = (GLint64)(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      case GL_COLOR_WRITEMASK:
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+         }
+         params[0] = (GLint64)(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
+         params[1] = (GLint64)(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
+         params[2] = (GLint64)(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
+         params[3] = (GLint64)(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);

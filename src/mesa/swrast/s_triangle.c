@@ -1030,10 +1030,10 @@ _swrast_choose_triangle( GLcontext *ctx )
           ctx->Depth.Func == GL_LESS &&
           !ctx->Stencil._Enabled) {
          if ((rgbmode &&
-              ctx->Color.ColorMask[0] == 0 &&
-              ctx->Color.ColorMask[1] == 0 &&
-              ctx->Color.ColorMask[2] == 0 &&
-              ctx->Color.ColorMask[3] == 0)
+              ctx->Color.ColorMask[0][0] == 0 &&
+              ctx->Color.ColorMask[0][1] == 0 &&
+              ctx->Color.ColorMask[0][2] == 0 &&
+              ctx->Color.ColorMask[0][3] == 0)
              ||
              (!rgbmode && ctx->Color.IndexMask == 0)) {
             USE(occlusion_zless_triangle);

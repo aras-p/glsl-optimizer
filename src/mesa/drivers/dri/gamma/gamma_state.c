@@ -813,10 +813,10 @@ static void gammaUpdateMasks( GLcontext *ctx )
 
 
    GLuint mask = gammaPackColor( gmesa->gammaScreen->cpp,
-				ctx->Color.ColorMask[RCOMP],
-				ctx->Color.ColorMask[GCOMP],
-				ctx->Color.ColorMask[BCOMP],
-				ctx->Color.ColorMask[ACOMP] );
+				ctx->Color.ColorMask[0][RCOMP],
+				ctx->Color.ColorMask[0][GCOMP],
+				ctx->Color.ColorMask[0][BCOMP],
+				ctx->Color.ColorMask[0][ACOMP] );
 
    if (gmesa->gammaScreen->cpp == 2) mask |= mask << 16;
 

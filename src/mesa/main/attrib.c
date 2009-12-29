@@ -919,10 +919,22 @@ _mesa_PopAttrib(void)
                                 color->ClearColor[2],
                                 color->ClearColor[3]);
                _mesa_IndexMask(color->IndexMask);
-               _mesa_ColorMask((GLboolean) (color->ColorMask[0] != 0),
-                               (GLboolean) (color->ColorMask[1] != 0),
-                               (GLboolean) (color->ColorMask[2] != 0),
-                               (GLboolean) (color->ColorMask[3] != 0));
+               if (1/*ctx->Extensions.EXT_draw_buffers2*/) {
+                  _mesa_ColorMask((GLboolean) (color->ColorMask[0][0] != 0),
+                                  (GLboolean) (color->ColorMask[0][1] != 0),
+                                  (GLboolean) (color->ColorMask[0][2] != 0),
+                                  (GLboolean) (color->ColorMask[0][3] != 0));
+               }
+               else {
+                  GLuint i;
+                  for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+                     _mesa_ColorMaskIndexed(i, 
+                                  (GLboolean) (color->ColorMask[i][0] != 0),
+                                  (GLboolean) (color->ColorMask[i][1] != 0),
+                                  (GLboolean) (color->ColorMask[i][2] != 0),
+                                  (GLboolean) (color->ColorMask[i][3] != 0));
+                  }
+               }
                {
                   /* Need to determine if more than one color output is
                    * specified.  If so, call glDrawBuffersARB, else call

@@ -575,7 +575,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.draw_offset = 0;
    }
    /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask,
+   memcpy(key.color_mask, ctx->Color.ColorMask[0],
 	  sizeof(key.color_mask));
 
    /* As mentioned above, disable writes to the alpha component when the

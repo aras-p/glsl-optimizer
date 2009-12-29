@@ -407,10 +407,10 @@ dfbClear( GLcontext *ctx, GLbitfield mask )
 #define BUFFER_BIT_MASK (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT | \
                          BUFFER_BIT_BACK_LEFT  | BUFFER_BIT_BACK_RIGHT  )
      if (mask & BUFFER_BIT_MASK  &&
-         ctx->Color.ColorMask[0] &&
-         ctx->Color.ColorMask[1] &&
-         ctx->Color.ColorMask[2] &&
-         ctx->Color.ColorMask[3])
+         ctx->Color.ColorMask[0][0] &&
+         ctx->Color.ColorMask[0][1] &&
+         ctx->Color.ColorMask[0][2] &&
+         ctx->Color.ColorMask[0][3])
      {
           DFBRegion clip;
           GLubyte   a, r, g, b;

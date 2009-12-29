@@ -50,7 +50,7 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);
     __DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
-    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
     GLbitfield swrast_mask = 0, tri_mask = 0;
     int i;
     struct gl_framebuffer *fb = ctx->DrawBuffer;

@@ -200,13 +200,13 @@ update_blend( struct st_context *st )
    }
 
    /* Colormask - maybe reverse these bits? */
-   if (st->ctx->Color.ColorMask[0])
+   if (st->ctx->Color.ColorMask[0][0])
       blend->colormask |= PIPE_MASK_R;
-   if (st->ctx->Color.ColorMask[1])
+   if (st->ctx->Color.ColorMask[0][1])
       blend->colormask |= PIPE_MASK_G;
-   if (st->ctx->Color.ColorMask[2])
+   if (st->ctx->Color.ColorMask[0][2])
       blend->colormask |= PIPE_MASK_B;
-   if (st->ctx->Color.ColorMask[3])
+   if (st->ctx->Color.ColorMask[0][3])
       blend->colormask |= PIPE_MASK_A;
 
    if (st->ctx->Color.DitherFlag)

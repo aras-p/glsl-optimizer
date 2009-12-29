@@ -360,15 +360,15 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
    depthMask = 0;
    switch (imesa->savageScreen->cpp) {
    case 2:
-       colorMask = PACK_COLOR_565(ctx->Color.ColorMask[0],
-				  ctx->Color.ColorMask[1],
-				  ctx->Color.ColorMask[2]);
+       colorMask = PACK_COLOR_565(ctx->Color.ColorMask[0][0],
+				  ctx->Color.ColorMask[0][1],
+				  ctx->Color.ColorMask[0][2]);
        break;
    case 4:
-       colorMask = PACK_COLOR_8888(ctx->Color.ColorMask[3],
-				   ctx->Color.ColorMask[2],
-				   ctx->Color.ColorMask[1],
-				   ctx->Color.ColorMask[0]);
+       colorMask = PACK_COLOR_8888(ctx->Color.ColorMask[0][3],
+				   ctx->Color.ColorMask[0][2],
+				   ctx->Color.ColorMask[0][1],
+				   ctx->Color.ColorMask[0][0]);
        break;
    }
 

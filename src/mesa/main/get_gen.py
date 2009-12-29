@@ -126,10 +126,10 @@ StateVars = [
 	( "GL_COLOR_MATERIAL_PARAMETER", GLenum,
 	  ["ctx->Light.ColorMaterialMode"], "", None ),
 	( "GL_COLOR_WRITEMASK", GLint,
-	  [ "ctx->Color.ColorMask[RCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[GCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[BCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[ACOMP] ? 1 : 0" ], "", None ),
+	  [ "ctx->Color.ColorMask[0][RCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][GCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][BCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][ACOMP] ? 1 : 0" ], "", None ),
 	( "GL_CULL_FACE", GLboolean, ["ctx->Polygon.CullFlag"], "", None ),
 	( "GL_CULL_FACE_MODE", GLenum, ["ctx->Polygon.CullFaceMode"], "", None ),
 	( "GL_CURRENT_COLOR", GLfloatN,
@@ -1035,7 +1035,14 @@ StateVars = [
 
 # These are queried via glGetIntegetIndexdvEXT() or glGetIntegeri_v()
 IndexedStateVars = [
-	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"], "MAX_DRAW_BUFFERS", None ),
+	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"],
+	  "ctx->Const.MaxDrawBuffers", None ),
+	( "GL_COLOR_WRITEMASK", GLint,
+	  [ "ctx->Color.ColorMask[index][RCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][GCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][BCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][ACOMP] ? 1 : 0" ],
+	  "ctx->Const.MaxDrawBuffers", None ),
 	# XXX more to come...
 ]
 

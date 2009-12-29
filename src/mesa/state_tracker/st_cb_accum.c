@@ -229,7 +229,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   const GLubyte *colormask = ctx->Color.ColorMask;
+   const GLubyte *colormask = ctx->Color.ColorMask[0];
    enum pipe_transfer_usage usage;
    struct pipe_transfer *color_trans;
    size_t stride = acc_strb->stride;

@@ -564,7 +564,7 @@ struct gl_colorbuffer_attrib
    GLclampf ClearColor[4];		/**< Color to use for glClear */
 
    GLuint IndexMask;			/**< Color index write mask */
-   GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
+   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];/**< Each flag is 0xff or 0x0 */
 
    GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
 

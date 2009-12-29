@@ -1278,7 +1278,7 @@ void
 _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
+   const GLuint *colorMask = (GLuint *) ctx->Color.ColorMask;
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield origArrayAttribs = span->arrayAttribs;
@@ -1389,7 +1389,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.
     */
-   if (colorMask == 0x0) {
+   if (fb->_NumColorDrawBuffers == 1 && colorMask[0] == 0x0) {
       /* no colors to write */
       goto end;
    }
@@ -1483,8 +1483,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                _swrast_blend_span(ctx, rb, span);
             }
 
-            if (colorMask != 0xffffffff) {
-               _swrast_mask_rgba_span(ctx, rb, span);
+            if (colorMask[buf] != 0xffffffff) {
+               _swrast_mask_rgba_span(ctx, rb, span, buf);
             }
 
             if (span->arrayMask & SPAN_XY) {

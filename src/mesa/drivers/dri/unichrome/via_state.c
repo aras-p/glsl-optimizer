@@ -1238,12 +1238,12 @@ static void viaChooseColorState(GLcontext *ctx)
     else
         vmesa->regHROP = HC_HROP_P;
 
-    vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0],
-					ctx->Color.ColorMask[1],
-					ctx->Color.ColorMask[2]);
-    vmesa->regHROP |= ctx->Color.ColorMask[3];
+    vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0][0],
+					ctx->Color.ColorMask[0][1],
+					ctx->Color.ColorMask[0][2]);
+    vmesa->regHROP |= ctx->Color.ColorMask[0][3];
 
-    if (ctx->Color.ColorMask[3])
+    if (ctx->Color.ColorMask[0][3])
         vmesa->regEnable |= HC_HenAW_MASK;
     else
         vmesa->regEnable &= ~HC_HenAW_MASK;

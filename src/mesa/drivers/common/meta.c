@@ -111,7 +111,7 @@ struct save_state
    GLboolean ColorLogicOpEnabled;
 
    /** META_COLOR_MASK */
-   GLubyte ColorMask[4];
+   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];
 
    /** META_DEPTH_TEST */
    struct gl_depthbuffer_attrib Depth;
@@ -347,11 +347,12 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    }
 
    if (state & META_COLOR_MASK) {
-      COPY_4V(save->ColorMask, ctx->Color.ColorMask);
-      if (!ctx->Color.ColorMask[0] ||
-          !ctx->Color.ColorMask[1] ||
-          !ctx->Color.ColorMask[2] ||
-          !ctx->Color.ColorMask[3])
+      memcpy(save->ColorMask, ctx->Color.ColorMask,
+             sizeof(ctx->Color.ColorMask));
+      if (!ctx->Color.ColorMask[0][0] ||
+          !ctx->Color.ColorMask[0][1] ||
+          !ctx->Color.ColorMask[0][2] ||
+          !ctx->Color.ColorMask[0][3])
          _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
    }
 
@@ -581,9 +582,22 @@ _mesa_meta_end(GLcontext *ctx)
    }
 
    if (state & META_COLOR_MASK) {
-      if (!TEST_EQ_4V(ctx->Color.ColorMask, save->ColorMask))
-         _mesa_ColorMask(save->ColorMask[0], save->ColorMask[1],
-                         save->ColorMask[2], save->ColorMask[3]);
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         if (!TEST_EQ_4V(ctx->Color.ColorMask[i], save->ColorMask[i])) {
+            if (i == 0) {
+               _mesa_ColorMask(save->ColorMask[i][0], save->ColorMask[i][1],
+                               save->ColorMask[i][2], save->ColorMask[i][3]);
+            }
+            else {
+               _mesa_ColorMaskIndexed(i,
+                                      save->ColorMask[i][0],
+                                      save->ColorMask[i][1],
+                                      save->ColorMask[i][2],
+                                      save->ColorMask[i][3]);
+            }
+         }
+      }
    }
 
    if (state & META_DEPTH_TEST) {

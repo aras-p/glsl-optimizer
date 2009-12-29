@@ -527,10 +527,10 @@ static void mach64UpdateMasks( GLcontext *ctx )
    /* mach64 can't color mask with alpha blending enabled */
    if ( !ctx->Color.BlendEnabled ) {
       mask = mach64PackColor( mmesa->mach64Screen->cpp,
-			      ctx->Color.ColorMask[RCOMP],
-			      ctx->Color.ColorMask[GCOMP],
-			      ctx->Color.ColorMask[BCOMP],
-			      ctx->Color.ColorMask[ACOMP] );
+			      ctx->Color.ColorMask[0][RCOMP],
+			      ctx->Color.ColorMask[0][GCOMP],
+			      ctx->Color.ColorMask[0][BCOMP],
+			      ctx->Color.ColorMask[0][ACOMP] );
    }
 
    if ( mmesa->setup.dp_write_mask != mask ) {

@@ -1768,9 +1768,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 	radeon_firevertices(&r300->radeon);
 
 	r300ColorMask(ctx,
-		      ctx->Color.ColorMask[RCOMP],
-		      ctx->Color.ColorMask[GCOMP],
-		      ctx->Color.ColorMask[BCOMP], ctx->Color.ColorMask[ACOMP]);
+		      ctx->Color.ColorMask[0][RCOMP],
+		      ctx->Color.ColorMask[0][GCOMP],
+		      ctx->Color.ColorMask[0][BCOMP],
+                      ctx->Color.ColorMask[0][ACOMP]);
 
 	r300Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
 	r300DepthMask(ctx, ctx->Depth.Mask);
