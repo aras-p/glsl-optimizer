@@ -364,7 +364,6 @@ struct pipe_vertex_buffer
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
-   unsigned instance_divisor;    /**< instance data rate divisor, 0 means per-vertex data */
    struct pipe_buffer *buffer;  /**< the actual buffer */
 };
 
@@ -376,6 +375,11 @@ struct pipe_vertex_element
 {
    /** Offset of this attribute, in bytes, from the start of the vertex */
    unsigned src_offset;
+
+   /** Instance data rate divisor. 0 means this is per-vertex data,
+    *  n means per-instance data used for n consecutive instances (n > 0).
+    */
+   unsigned instance_divisor;
 
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
