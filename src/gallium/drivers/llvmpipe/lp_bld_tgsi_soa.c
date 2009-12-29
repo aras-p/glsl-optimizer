@@ -446,7 +446,12 @@ emit_instruction(
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
-   LLVMValueRef tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+   LLVMValueRef tmp0, tmp1, tmp2;
+   LLVMValueRef tmp3 = NULL;
+   LLVMValueRef tmp4 = NULL;
+   LLVMValueRef tmp5 = NULL;
+   LLVMValueRef tmp6 = NULL;
+   LLVMValueRef tmp7 = NULL;
    LLVMValueRef res;
    LLVMValueRef dst0[NUM_CHANNELS];
 

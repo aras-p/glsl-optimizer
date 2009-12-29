@@ -115,7 +115,7 @@ extern const struct llvmpipe_cached_tex_tile *
 lp_find_cached_tex_tile(struct llvmpipe_tex_tile_cache *tc,
                         union tex_tile_address addr );
 
-static INLINE const union tex_tile_address
+static INLINE union tex_tile_address
 tex_tile_address( unsigned x,
                   unsigned y,
                   unsigned z,
