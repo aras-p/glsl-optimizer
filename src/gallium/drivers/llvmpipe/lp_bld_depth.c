@@ -90,7 +90,7 @@ lp_depth_type(const struct util_format_description *format_desc,
 
    if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
       type.floating = TRUE;
-      assert(swizzle = 0);
+      assert(swizzle == 0);
       assert(format_desc->channel[swizzle].size == format_desc->block.bits);
    }
    else if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED) {
