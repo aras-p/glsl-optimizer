@@ -179,7 +179,8 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions2(
                                       context->stream_desc[i].size,
                                       context->stream_desc[i].element,
                                       context->stream_desc[i]._signed,
-                                      context->stream_desc[i].normalize,						            
+                                      context->stream_desc[i].normalize,
+                                      context->stream_desc[i].format,
                                      &vtxFetchMethod);
     }
 
@@ -308,6 +309,7 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 		vp->aos_desc[i].size   = context->stream_desc[i].size;
 		vp->aos_desc[i].stride = context->stream_desc[i].stride;
 		vp->aos_desc[i].type   = context->stream_desc[i].type;
+		vp->aos_desc[i].format = context->stream_desc[i].format;
 	}
 
 	if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
@@ -368,7 +370,8 @@ void r700SelectVertexShader(GLcontext *ctx)
 	match = GL_TRUE;
 	for(i=0; i<context->nNumActiveAos; i++)
 	{
-		if (vp->aos_desc[i].size != context->stream_desc[i].size)
+		if (vp->aos_desc[i].size != context->stream_desc[i].size ||
+		    vp->aos_desc[i].format != context->stream_desc[i].format)
 		{
 			match = GL_FALSE;
 			break;
@@ -471,6 +474,7 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
 	pStreamDesc->size = input->Size;
 	pStreamDesc->dst_loc = context->nNumActiveAos;
 	pStreamDesc->element = unLoc;
+	pStreamDesc->format = input->Format;
 
 	switch (pStreamDesc->type) 
 	{ //GetSurfaceFormat

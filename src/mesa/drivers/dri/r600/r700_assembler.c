@@ -798,6 +798,7 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
                                        GLubyte             element,
                                        GLuint              _signed,
                                        GLboolean           normalize,
+                                       GLenum              format,
                                        VTX_FETCH_METHOD  * pFetchMethod)
 {
     GLuint client_size_inbyte;
@@ -846,10 +847,21 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
 	vfetch_instruction_ptr->m_Word0.f.src_sel_x        = SQ_SEL_X;
 	vfetch_instruction_ptr->m_Word0.f.mega_fetch_count = mega_fetch_count;
 
-	vfetch_instruction_ptr->m_Word1.f.dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_X;
-	vfetch_instruction_ptr->m_Word1.f.dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
-	vfetch_instruction_ptr->m_Word1.f.dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_Z;
-	vfetch_instruction_ptr->m_Word1.f.dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+	if(format == GL_BGRA)
+	{
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_Z;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_X;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+	}
+	else
+	{
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_x        = (size < 1) ? SQ_SEL_0 : SQ_SEL_X;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_y        = (size < 2) ? SQ_SEL_0 : SQ_SEL_Y;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_z        = (size < 3) ? SQ_SEL_0 : SQ_SEL_Z;
+		vfetch_instruction_ptr->m_Word1.f.dst_sel_w        = (size < 4) ? SQ_SEL_1 : SQ_SEL_W;
+
+	}
 
 	vfetch_instruction_ptr->m_Word1.f.use_const_fields = 1;
     vfetch_instruction_ptr->m_Word1.f.data_format      = data_format;
