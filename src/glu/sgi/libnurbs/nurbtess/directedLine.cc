@@ -309,6 +309,8 @@ directedLine::directedLine()
   nextPolygon = NULL;
   rootBit = 0;/*important to initilzae to 0 meaning not root yet*/
   rootLink = NULL;
+  direction = INCREASING;
+  sline = NULL;
 }
 
 directedLine::~directedLine()
