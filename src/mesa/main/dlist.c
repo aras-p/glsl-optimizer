@@ -220,6 +220,7 @@ typedef enum
    OPCODE_CLEAR_STENCIL,
    OPCODE_CLIP_PLANE,
    OPCODE_COLOR_MASK,
+   OPCODE_COLOR_MASK_INDEXED,
    OPCODE_COLOR_MATERIAL,
    OPCODE_COLOR_TABLE,
    OPCODE_COLOR_TABLE_PARAMETER_FV,
@@ -244,9 +245,11 @@ typedef enum
    OPCODE_DEPTH_MASK,
    OPCODE_DEPTH_RANGE,
    OPCODE_DISABLE,
+   OPCODE_DISABLE_INDEXED,
    OPCODE_DRAW_BUFFER,
    OPCODE_DRAW_PIXELS,
    OPCODE_ENABLE,
+   OPCODE_ENABLE_INDEXED,
    OPCODE_EVALMESH1,
    OPCODE_EVALMESH2,
    OPCODE_FOG,
@@ -1358,6 +1361,27 @@ save_ColorMask(GLboolean red, GLboolean green,
 
 
 static void GLAPIENTRY
+save_ColorMaskIndexed(GLuint buf, GLboolean red, GLboolean green,
+                      GLboolean blue, GLboolean alpha)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_COLOR_MASK_INDEXED, 5);
+   if (n) {
+      n[1].ui = buf;
+      n[2].b = red;
+      n[3].b = green;
+      n[4].b = blue;
+      n[5].b = alpha;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ColorMaskIndexedEXT(ctx->Exec, (buf, red, green, blue, alpha));*/
+   }
+}
+
+
+static void GLAPIENTRY
 save_ColorMaterial(GLenum face, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1916,6 +1940,23 @@ save_Disable(GLenum cap)
 
 
 static void GLAPIENTRY
+save_DisableIndexed(GLuint index, GLenum cap)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DISABLE_INDEXED, 2);
+   if (n) {
+      n[1].ui = index;
+      n[2].e = cap;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_DisableIndexedEXT(ctx->Exec, (index, cap));*/
+   }
+}
+
+
+static void GLAPIENTRY
 save_DrawBuffer(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1968,6 +2009,24 @@ save_Enable(GLenum cap)
    }
    if (ctx->ExecuteFlag) {
       CALL_Enable(ctx->Exec, (cap));
+   }
+}
+
+
+
+static void GLAPIENTRY
+save_EnableIndexed(GLuint index, GLenum cap)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_ENABLE_INDEXED, 2);
+   if (n) {
+      n[1].ui = index;
+      n[2].e = cap;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_EnableIndexed(ctx->Exec, (index, cap));*/
    }
 }
 
@@ -6624,6 +6683,12 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_COLOR_MASK:
             CALL_ColorMask(ctx->Exec, (n[1].b, n[2].b, n[3].b, n[4].b));
             break;
+         case OPCODE_COLOR_MASK_INDEXED:
+            /*
+            CALL_ColorMaskIndexedEXT(ctx->Exec, (n[1].ui, n[2].b, n[3].b,
+                                                 n[4].b, n[5].b));
+            */
+            break;
          case OPCODE_COLOR_MATERIAL:
             CALL_ColorMaterial(ctx->Exec, (n[1].e, n[2].e));
             break;
@@ -6766,6 +6831,9 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_DISABLE:
             CALL_Disable(ctx->Exec, (n[1].e));
             break;
+         case OPCODE_DISABLE_INDEXED:
+            /*CALL_DisableIndexed(ctx->Exec, (n[1].ui, n[2].e));*/
+            break;
          case OPCODE_DRAW_BUFFER:
             CALL_DrawBuffer(ctx->Exec, (n[1].e));
             break;
@@ -6780,6 +6848,9 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_ENABLE:
             CALL_Enable(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_ENABLE_INDEXED:
+            /*CALL_EnableIndexed(ctx->Exec, (n[1].ui, n[2].e));*/
             break;
          case OPCODE_EVALMESH1:
             CALL_EvalMesh1(ctx->Exec, (n[1].e, n[2].i, n[3].i));
@@ -8540,6 +8611,8 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_ClearStencil(table, save_ClearStencil);
    SET_ClipPlane(table, save_ClipPlane);
    SET_ColorMask(table, save_ColorMask);
+   /*SET_ColorMaskIndexedEXT(table, save_ColorMaskIndexed);*/
+   (void) save_ColorMaskIndexed;
    SET_ColorMaterial(table, save_ColorMaterial);
    SET_CopyPixels(table, save_CopyPixels);
    SET_CullFace(table, save_CullFace);
@@ -8548,9 +8621,13 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_DepthMask(table, save_DepthMask);
    SET_DepthRange(table, save_DepthRange);
    SET_Disable(table, save_Disable);
+   /*SET_DisableIndexed(table, save_DisableIndexed);*/
+   (void) save_DisableIndexed;
    SET_DrawBuffer(table, save_DrawBuffer);
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
+   /*SET_EnableIndexed(table, save_EnableIndexed);*/
+   (void) save_EnableIndexed;
    SET_EndList(table, _mesa_EndList);
    SET_EvalMesh1(table, save_EvalMesh1);
    SET_EvalMesh2(table, save_EvalMesh2);
