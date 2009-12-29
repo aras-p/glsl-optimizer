@@ -14,14 +14,14 @@ nv30_state_stipple_validate(struct nv30_context *nv30)
 	if (rast->poly_stipple_enable) {
 		unsigned i;
 
-		so = so_new(35, 0);
+		so = so_new(2, 33, 0);
 		so_method(so, rankine, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, rankine, NV34TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
 			so_data(so, nv30->stipple[i]);
 	} else {
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, rankine, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 		so_data  (so, 0);
 	}

@@ -106,7 +106,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 
 	txs = tf->swizzle;
 
-	so = so_new(16, 2);
+	so = so_new(1, 8, 2);
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
@@ -135,7 +135,7 @@ nv30_fragtex_validate(struct nv30_context *nv30)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, nv30->screen->rankine, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);

@@ -176,7 +176,6 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
-	BIND_RING(chan, screen->kelvin, 7);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(&screen->base);

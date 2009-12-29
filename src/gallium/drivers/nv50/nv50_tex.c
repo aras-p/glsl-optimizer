@@ -199,16 +199,18 @@ nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_stateobj *so;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	unsigned p, push, nrlc;
+	unsigned p, start, push, nrlc;
 
-	for (nrlc = 0, push = 0, p = 0; p < PIPE_SHADER_TYPES; ++p) {
+	for (nrlc = 0, start = 0, push = 0, p = 0; p < PIPE_SHADER_TYPES; ++p) {
+		start += MAX2(nv50->miptree_nr[p], nv50->state.miptree_nr[p]);
 		push += MAX2(nv50->miptree_nr[p], nv50->state.miptree_nr[p]);
 		nrlc += nv50->miptree_nr[p];
 	}
-	push = push * 11 + 23 * PIPE_SHADER_TYPES + 4;
+	start = start * 2 + 4 * PIPE_SHADER_TYPES + 2;
+	push = push * 9 + 19 * PIPE_SHADER_TYPES + 2;
 	nrlc = nrlc * 2 + 2 * PIPE_SHADER_TYPES;
 
-	so = so_new(push, nrlc);
+	so = so_new(start, push, nrlc);
 
 	if (nv50_validate_textures(nv50, so, PIPE_SHADER_VERTEX) == FALSE ||
 	    nv50_validate_textures(nv50, so, PIPE_SHADER_FRAGMENT) == FALSE) {

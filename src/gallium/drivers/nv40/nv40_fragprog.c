@@ -919,7 +919,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
 	nv40_fragprog_upload(nv40, fp);
 
-	so = so_new(4, 1);
+	so = so_new(2, 2, 1);
 	so_method(so, nv40->screen->curie, NV40TCL_FP_ADDRESS, 1);
 	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |

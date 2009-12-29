@@ -19,7 +19,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	struct nv04_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
-	struct nouveau_stateobj *so = so_new(64, 10);
+	struct nouveau_stateobj *so = so_new(18, 24, 10);
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;

@@ -837,7 +837,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
-	so = so_new(8, 1);
+	so = so_new(4, 4, 1);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
 	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |

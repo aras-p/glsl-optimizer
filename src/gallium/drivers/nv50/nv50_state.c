@@ -35,7 +35,7 @@ static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
-	struct nouveau_stateobj *so = so_new(64, 0);
+	struct nouveau_stateobj *so = so_new(5, 24, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_blend_stateobj *bso = CALLOC_STRUCT(nv50_blend_stateobj);
 	unsigned cmask = 0, i;
@@ -280,7 +280,7 @@ static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nouveau_stateobj *so = so_new(64, 0);
+	struct nouveau_stateobj *so = so_new(15, 21, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_rasterizer_stateobj *rso =
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
@@ -425,7 +425,7 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_zsa_stateobj *zsa = CALLOC_STRUCT(nv50_zsa_stateobj);
-	struct nouveau_stateobj *so = so_new(64, 0);
+	struct nouveau_stateobj *so = so_new(8, 22, 0);
 
 	so_method(so, tesla, NV50TCL_DEPTH_WRITE_ENABLE, 1);
 	so_data  (so, cso->depth.writemask ? 1 : 0);

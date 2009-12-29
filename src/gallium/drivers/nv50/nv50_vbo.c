@@ -354,7 +354,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 
 	so = *pso;
 	if (!so)
-		*pso = so = so_new(nv50->vtxelt_nr * 5, 0);
+		*pso = so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 4, 0);
 
 	switch (ve->nr_components) {
 	case 4:
@@ -415,8 +415,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	n_ve = MAX2(nv50->vtxelt_nr, nv50->state.vtxelt_nr);
 
 	vtxattr = NULL;
-	vtxbuf = so_new(n_ve * 7, nv50->vtxelt_nr * 4);
-	vtxfmt = so_new(n_ve + 1, 0);
+	vtxbuf = so_new(n_ve * 2, n_ve * 5, nv50->vtxelt_nr * 4);
+	vtxfmt = so_new(1, n_ve, 0);
 	so_method(vtxfmt, tesla, NV50TCL_VERTEX_ARRAY_ATTRIB(0), n_ve);
 
 	for (i = 0; i < nv50->vtxelt_nr; i++) {

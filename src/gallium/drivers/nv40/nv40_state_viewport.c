@@ -19,7 +19,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 		return FALSE;
 	nv40->state.viewport_bypass = bypass;
 
-	so = so_new(11, 0);
+	so = so_new(2, 9, 0);
 	if (!bypass) {
 		so_method(so, nv40->screen->curie,
 			  NV40TCL_VIEWPORT_TRANSLATE_X, 8);

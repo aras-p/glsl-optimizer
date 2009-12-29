@@ -251,7 +251,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
-	BIND_RING(chan, screen->m2mf, 1);
 
 	/* 2D object */
 	ret = nouveau_grobj_alloc(chan, 0xbeef502d, NV50_2D, &screen->eng2d);
@@ -260,7 +259,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
-	BIND_RING(chan, screen->eng2d, 2);
 
 	/* 3D object */
 	switch (chipset & 0xf0) {
@@ -296,7 +294,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
-	BIND_RING(chan, screen->tesla, 3);
 
 	/* Sync notifier */
 	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
@@ -307,7 +304,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Static M2MF init */
-	so = so_new(32, 0);
+	so = so_new(1, 3, 0);
 	so_method(so, screen->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 3);
 	so_data  (so, screen->sync->handle);
 	so_data  (so, chan->vram->handle);
@@ -316,7 +313,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_ref (NULL, &so);
 
 	/* Static 2D init */
-	so = so_new(64, 0);
+	so = so_new(4, 7, 0);
 	so_method(so, screen->eng2d, NV50_2D_DMA_NOTIFY, 4);
 	so_data  (so, screen->sync->handle);
 	so_data  (so, chan->vram->handle);
@@ -332,7 +329,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_ref(NULL, &so);
 
 	/* Static tesla init */
-	so = so_new(256, 20);
+	so = so_new(40, 84, 20);
 
 	so_method(so, screen->tesla, NV50TCL_COND_MODE, 1);
 	so_data  (so, NV50TCL_COND_MODE_ALWAYS);

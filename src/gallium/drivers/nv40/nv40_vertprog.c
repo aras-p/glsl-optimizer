@@ -886,7 +886,7 @@ check_gpu_resources:
 				assert(0);
 		}
 
-		so = so_new(7, 0);
+		so = so_new(3, 4, 0);
 		so_method(so, curie, NV40TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_method(so, curie, NV40TCL_VP_ATTRIB_EN, 2);

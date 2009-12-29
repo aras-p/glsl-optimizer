@@ -491,9 +491,9 @@ nv30_vbo_validate(struct nv30_context *nv30)
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
-	vtxbuf = so_new(20, 18);
+	vtxbuf = so_new(3, 17, 18);
 	so_method(vtxbuf, rankine, NV34TCL_VTXBUF_ADDRESS(0), nv30->vtxelt_nr);
-	vtxfmt = so_new(17, 0);
+	vtxfmt = so_new(1, 16, 0);
 	so_method(vtxfmt, rankine, NV34TCL_VTXFMT(0), nv30->vtxelt_nr);
 
 	for (hw = 0; hw < nv30->vtxelt_nr; hw++) {
@@ -506,7 +506,7 @@ nv30_vbo_validate(struct nv30_context *nv30)
 
 		if (!vb->stride) {
 			if (!sattr)
-				sattr = so_new(16 * 5, 0);
+				sattr = so_new(16, 16 * 4, 0);
 
 			if (nv30_vbo_static_attrib(nv30, sattr, hw, ve, vb)) {
 				so_data(vtxbuf, 0);

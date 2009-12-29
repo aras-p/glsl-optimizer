@@ -3579,7 +3579,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(13, 2);
+	so = so_new(5, 8, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_HIGH, 0, 0);
@@ -3615,7 +3615,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(64, 2);
+	so = so_new(6, 7, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		      NOUVEAU_BO_HIGH, 0, 0);
@@ -3783,7 +3783,7 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	}
 
 	/* now fill the stateobj */
-	so = so_new(64, 0);
+	so = so_new(6, 58, 0);
 
 	n = (m + 3) / 4;
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);

@@ -14,7 +14,7 @@ nv30_blend_state_create(struct pipe_context *pipe,
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	struct nv30_blend_state *bso = CALLOC(1, sizeof(*bso));
-	struct nouveau_stateobj *so = so_new(16, 0);
+	struct nouveau_stateobj *so = so_new(5, 8, 0);
 
 	if (cso->blend_enable) {
 		so_method(so, rankine, NV34TCL_BLEND_FUNC_ENABLE, 3);
@@ -300,7 +300,7 @@ nv30_rasterizer_state_create(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
-	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_stateobj *so = so_new(9, 19, 0);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 
 	/*XXX: ignored:
@@ -435,7 +435,7 @@ nv30_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
-	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_stateobj *so = so_new(5, 21, 0);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 
 	so_method(so, rankine, NV34TCL_DEPTH_FUNC, 3);

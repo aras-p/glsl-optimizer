@@ -19,7 +19,7 @@ nv30_state_viewport_validate(struct nv30_context *nv30)
 		return FALSE;
 	nv30->state.viewport_bypass = bypass;
 
-	so = so_new(11, 0);
+	so = so_new(3, 10, 0);
 	if (!bypass) {
 		so_method(so, nv30->screen->rankine,
 			  NV34TCL_VIEWPORT_TRANSLATE_X, 8);

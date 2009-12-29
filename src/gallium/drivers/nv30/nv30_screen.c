@@ -233,7 +233,6 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
-	BIND_RING(chan, screen->rankine, 7);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(&screen->base);
@@ -270,7 +269,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Static rankine initialisation */
-	so = so_new(128, 0);
+	so = so_new(36, 60, 0);
 	so_method(so, screen->rankine, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_TEXTURE0, 2);

@@ -686,7 +686,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				assert(0);
 		}
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_ref(so, &vp->so);
