@@ -3763,6 +3763,14 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 #endif
       }
 
+      if (var->type.qualifier == SLANG_QUAL_UNIFORM &&
+          !A->allow_uniform_initializers) {
+         slang_info_log_error(A->log,
+                              "initializer for uniform %s not allowed",
+                              varName);
+         return NULL;
+      }
+
       /* IR for the variable we're initializing */
       varRef = new_var(A, var);
       if (!varRef) {
