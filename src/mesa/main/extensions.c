@@ -103,6 +103,7 @@ static const struct {
    { OFF, "GL_EXT_convolution",                F(EXT_convolution) },
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
+   { OFF, "GL_EXT_draw_buffers2",              F(EXT_draw_buffers2) },
    { ON,  "GL_EXT_draw_range_elements",        F(EXT_draw_range_elements) },
    { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
    { OFF, "GL_EXT_framebuffer_multisample",    F(EXT_framebuffer_multisample) },

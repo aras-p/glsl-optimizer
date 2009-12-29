@@ -1036,13 +1036,13 @@ StateVars = [
 # These are queried via glGetIntegetIndexdvEXT() or glGetIntegeri_v()
 IndexedStateVars = [
 	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"],
-	  "ctx->Const.MaxDrawBuffers", None ),
+	  "ctx->Const.MaxDrawBuffers", ["EXT_draw_buffers2"] ),
 	( "GL_COLOR_WRITEMASK", GLint,
 	  [ "ctx->Color.ColorMask[index][RCOMP] ? 1 : 0",
 		"ctx->Color.ColorMask[index][GCOMP] ? 1 : 0",
 		"ctx->Color.ColorMask[index][BCOMP] ? 1 : 0",
 		"ctx->Color.ColorMask[index][ACOMP] ? 1 : 0" ],
-	  "ctx->Const.MaxDrawBuffers", None ),
+	  "ctx->Const.MaxDrawBuffers", ["EXT_draw_buffers2"] ),
 	# XXX more to come...
 ]
 
@@ -1137,11 +1137,6 @@ def EmitGetFunction(stateVars, returnType, indexed):
 			(name, varType, state, optionalCode, extensions) = state
 			indexMax = 0
 		print "      case " + name + ":"
-		if indexMax:
-			print ('         if (index >= %s) {' % indexMax)
-			print ('            _mesa_error(ctx, GL_INVALID_VALUE, "gl%s(index=%%u), index", pname);' % function)
-			print ('         }')
-
 		if extensions:
 			if len(extensions) == 1:
 				print ('         CHECK_EXT1(%s, "%s");' %
@@ -1156,6 +1151,11 @@ def EmitGetFunction(stateVars, returnType, indexed):
 				assert len(extensions) == 4
 				print ('         CHECK_EXT4(%s, %s, %s, %s, "%s");' %
 					   (extensions[0], extensions[1], extensions[2], extensions[3], function))
+		if indexMax:
+			print ('         if (index >= %s) {' % indexMax)
+			print ('            _mesa_error(ctx, GL_INVALID_VALUE, "gl%s(index=%%u), index", pname);' % function)
+			print ('         }')
+
 		conversion = ConversionFunc(varType, returnType)
 		if optionalCode:
 			optionalCode = string.replace(optionalCode, "CONVERSION", conversion);	

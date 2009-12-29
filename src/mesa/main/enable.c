@@ -1033,6 +1033,9 @@ _mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
    ASSERT(state == 0 || state == 1);
    switch (cap) {
    case GL_BLEND:
+      if (!ctx->Extensions.EXT_draw_buffers2) {
+         goto bad_cap_error;
+      }
       if (index >= ctx->Const.MaxDrawBuffers) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
                      state ? "glEnableIndexed" : "glDisableIndexed", index);
@@ -1047,10 +1050,14 @@ _mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
       }
       break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
-                  state ? "glEnableIndexed" : "glDisableIndexed",
-                  _mesa_lookup_enum_by_nr(cap));
+      goto bad_cap_error;
    }
+   return;
+
+bad_cap_error:
+    _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
+                state ? "glEnablei" : "glDisablei",
+                _mesa_lookup_enum_by_nr(cap));
 }
 
 

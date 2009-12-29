@@ -7448,12 +7448,14 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 
    switch (pname) {
       case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
          }
          params[0] = INT_TO_BOOLEAN(((ctx->Color.BlendEnabled >> index) & 1));
          break;
       case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
          }
@@ -7481,12 +7483,14 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
 
    switch (pname) {
       case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
          }
          params[0] = ((ctx->Color.BlendEnabled >> index) & 1);
          break;
       case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
          }
@@ -7515,12 +7519,14 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 
    switch (pname) {
       case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
          }
          params[0] = (GLint64)(((ctx->Color.BlendEnabled >> index) & 1));
          break;
       case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
          }
