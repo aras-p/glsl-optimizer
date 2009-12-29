@@ -125,6 +125,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       hw_key.element[i].input_buffer = src_buffer;
       hw_key.element[i].input_offset = src_offset;
+      hw_key.element[i].instance_divisor = 0;
       hw_key.element[i].output_format = output_format;
       hw_key.element[i].output_offset = dst_offset;
 
@@ -204,6 +205,7 @@ void draw_pt_emit( struct pt_emit *emit,
    translate->run( translate,
 		   0, 
 		   vertex_count,
+                   draw->instance_id,
 		   hw_verts );
 
    render->unmap_vertices( render, 
@@ -263,6 +265,7 @@ void draw_pt_emit_linear(struct pt_emit *emit,
    translate->run(translate,
                   0,
                   count,
+                  draw->instance_id,
                   hw_verts);
 
    if (0) {

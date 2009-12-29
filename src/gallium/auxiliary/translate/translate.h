@@ -50,6 +50,7 @@ struct translate_element
    enum pipe_format output_format;
    unsigned input_buffer:8;
    unsigned input_offset:24;
+   unsigned instance_divisor;
    unsigned output_offset;
 };
 
@@ -79,6 +80,7 @@ struct translate {
    void (PIPE_CDECL *run)( struct translate *,
                            unsigned start,
                            unsigned count,
+                           unsigned instance_id,
                            void *output_buffer);
 };
 

@@ -184,3 +184,54 @@ softpipe_draw_elements(struct pipe_context *pipe,
                                         0, 0xffffffff,
                                         mode, start, count );
 }
+
+boolean
+softpipe_draw_arrays_instanced(struct pipe_context *pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count,
+                               unsigned startInstance,
+                               unsigned instanceCount)
+{
+   struct softpipe_context *sp = softpipe_context(pipe);
+   struct draw_context *draw = sp->draw;
+   unsigned i;
+
+   sp->reduced_api_prim = u_reduced_prim(mode);
+
+   if (sp->dirty) {
+      softpipe_update_derived(sp);
+   }
+
+   softpipe_map_transfers(sp);
+   softpipe_map_constant_buffers(sp);
+
+   /* Map vertex buffers */
+   for (i = 0; i < sp->num_vertex_buffers; i++) {
+      void *buf;
+
+      buf = pipe_buffer_map(pipe->screen,
+                            sp->vertex_buffer[i].buffer,
+                            PIPE_BUFFER_USAGE_CPU_READ);
+      draw_set_mapped_vertex_buffer(draw, i, buf);
+   }
+
+   draw_set_mapped_element_buffer_range(draw, 0, start,
+                                        start + count - 1, NULL);
+
+   /* draw! */
+   draw_arrays_instanced(draw, mode, start, count, startInstance, instanceCount);
+
+   /* unmap vertex/index buffers - will cause draw module to flush */
+   for (i = 0; i < sp->num_vertex_buffers; i++) {
+      draw_set_mapped_vertex_buffer(draw, i, NULL);
+      pipe_buffer_unmap(pipe->screen, sp->vertex_buffer[i].buffer);
+   }
+
+   /* Note: leave drawing surfaces mapped */
+   softpipe_unmap_constant_buffers(sp);
+
+   sp->dirty_render_cache = TRUE;
+
+   return TRUE;
+}

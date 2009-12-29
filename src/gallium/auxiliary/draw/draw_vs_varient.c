@@ -180,6 +180,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
 
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->instance_id,
                     output_buffer );
 
    FREE(temp_buffer);
@@ -202,6 +203,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    vsvg->fetch->run( vsvg->fetch, 
                      start,
                      count,
+                     vsvg->draw->instance_id,
                      temp_buffer );
 
    vsvg->base.vs->run_linear( vsvg->base.vs, 
@@ -238,6 +240,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->instance_id,
                     output_buffer );
 
    FREE(temp_buffer);
@@ -283,6 +286,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
       fetch.element[i].input_format = key->element[i].in.format;
       fetch.element[i].input_buffer = key->element[i].in.buffer;
       fetch.element[i].input_offset = key->element[i].in.offset;
+      fetch.element[i].instance_divisor = 0;
       fetch.element[i].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       fetch.element[i].output_offset = i * 4 * sizeof(float);
       assert(fetch.element[i].output_offset < fetch.output_stride);
@@ -297,6 +301,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
          emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          emit.element[i].input_buffer = 0;
          emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
+         emit.element[i].instance_divisor = 0;
          emit.element[i].output_format = draw_translate_vinfo_format(key->element[i].out.format);
          emit.element[i].output_offset = key->element[i].out.offset;
          assert(emit.element[i].input_offset <= fetch.output_stride);
@@ -305,6 +310,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
          emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;
          emit.element[i].input_buffer = 1;
          emit.element[i].input_offset = 0;
+         emit.element[i].instance_divisor = 0;
          emit.element[i].output_format = PIPE_FORMAT_R32_FLOAT;
          emit.element[i].output_offset = key->element[i].out.offset;
       }

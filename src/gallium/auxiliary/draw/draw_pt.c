@@ -312,5 +312,28 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 #endif
 
    /* drawing done here: */
+   draw->instance_id = 0;
    draw_pt_arrays(draw, prim, start, count);
+}
+
+void
+draw_arrays_instanced(struct draw_context *draw,
+                      unsigned mode,
+                      unsigned start,
+                      unsigned count,
+                      unsigned startInstance,
+                      unsigned instanceCount)
+{
+   unsigned reduced_prim = u_reduced_prim(mode);
+   unsigned instance;
+
+   if (reduced_prim != draw->reduced_prim) {
+      draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
+      draw->reduced_prim = reduced_prim;
+   }
+
+   for (instance = 0; instance < instanceCount; instance++) {
+      draw->instance_id = instance + startInstance;
+      draw_pt_arrays(draw, mode, start, count);
+   }
 }

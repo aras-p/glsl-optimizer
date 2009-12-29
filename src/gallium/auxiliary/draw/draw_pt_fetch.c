@@ -81,6 +81,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;
       key.element[nr].input_buffer = draw->pt.nr_vertex_buffers;
       key.element[nr].input_offset = 0;
+      key.element[nr].instance_divisor = 0;
       key.element[nr].output_format = PIPE_FORMAT_R32_FLOAT;
       key.element[nr].output_offset = dst_offset;
       dst_offset += 1 * sizeof(float);
@@ -100,6 +101,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       key.element[nr].input_format = draw->pt.vertex_element[i].src_format;
       key.element[nr].input_buffer = draw->pt.vertex_element[i].vertex_buffer_index;
       key.element[nr].input_offset = draw->pt.vertex_element[i].src_offset;
+      key.element[nr].instance_divisor = draw->pt.vertex_element[i].instance_divisor;
       key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       key.element[nr].output_offset = dst_offset;
 
@@ -183,6 +185,7 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
    translate->run( translate,
                    start,
                    count,
+                   draw->instance_id,
                    verts );
 }
 

@@ -49,6 +49,7 @@ struct translate_generic {
       fetch_func fetch;
       unsigned buffer;
       unsigned input_offset;
+      unsigned instance_divisor;
 
       emit_func emit;
       unsigned output_offset;
@@ -607,6 +608,7 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 static void PIPE_CDECL generic_run( struct translate *translate,
                                     unsigned start,
                                     unsigned count,
+                                    unsigned instance_id,
                                     void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
@@ -622,12 +624,19 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-
-	 const char *src = (tg->attrib[attr].input_ptr + 
-			    tg->attrib[attr].input_stride * elt);
+         const char *src;
 
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
+
+         if (tg->attrib[attr].instance_divisor) {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride *
+                  (instance_id / tg->attrib[attr].instance_divisor);
+         } else {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * elt;
+         }
 
 	 tg->attrib[attr].fetch( src, data );
 
@@ -687,6 +696,7 @@ struct translate *translate_generic_create( const struct translate_key *key )
       tg->attrib[i].fetch = get_fetch_func(key->element[i].input_format);
       tg->attrib[i].buffer = key->element[i].input_buffer;
       tg->attrib[i].input_offset = key->element[i].input_offset;
+      tg->attrib[i].instance_divisor = key->element[i].instance_divisor;
 
       tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
       tg->attrib[i].output_offset = key->element[i].output_offset;

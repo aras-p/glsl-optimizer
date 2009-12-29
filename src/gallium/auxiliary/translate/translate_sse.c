@@ -637,6 +637,7 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 static void PIPE_CDECL translate_sse_run( struct translate *translate,
 			 unsigned start,
 			 unsigned count,
+                         unsigned instance_id,
 			 void *output_buffer )
 {
    struct translate_sse *p = (struct translate_sse *)translate;

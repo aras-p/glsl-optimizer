@@ -226,6 +226,8 @@ struct draw_context
 
    unsigned reduced_prim;
 
+   unsigned instance_id;
+
    void *driver_private;
 };
 

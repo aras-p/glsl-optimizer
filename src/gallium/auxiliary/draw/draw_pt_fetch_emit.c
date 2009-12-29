@@ -169,6 +169,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       key.element[i].input_format = input_format;
       key.element[i].input_buffer = input_buffer;
       key.element[i].input_offset = input_offset;
+      key.element[i].instance_divisor = src->instance_divisor;
       key.element[i].output_format = output_format;
       key.element[i].output_offset = dst_offset;
       
@@ -314,6 +315,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    feme->translate->run( feme->translate,
                          start,
                          count,
+                         draw->instance_id,
                          hw_verts );
 
    if (0) {
@@ -374,6 +376,7 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    feme->translate->run( feme->translate,
                          start,
                          count,
+                         draw->instance_id,
                          hw_verts );
 
    draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
