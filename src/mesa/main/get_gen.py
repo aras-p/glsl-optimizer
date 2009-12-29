@@ -1033,6 +1033,14 @@ StateVars = [
 ]
 
 
+# These are queried via glGetIntegetIndexdvEXT() or glGetIntegeri_v()
+IndexedStateVars = [
+	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"], "MAX_DRAW_BUFFERS", None ),
+	# XXX more to come...
+]
+
+
+
 def ConversionFunc(fromType, toType):
 	"""Return the name of the macro to convert between two data types."""
 	if fromType == toType:
@@ -1059,7 +1067,7 @@ def ConversionFunc(fromType, toType):
 		return fromStr + "_TO_" + toStr
 
 
-def EmitGetFunction(stateVars, returnType):
+def EmitGetFunction(stateVars, returnType, indexed):
 	"""Emit the code to implement glGetBooleanv, glGetIntegerv or glGetFloatv."""
 	assert (returnType == GLboolean or
 			returnType == GLint or
@@ -1068,22 +1076,35 @@ def EmitGetFunction(stateVars, returnType):
 
 	strType = TypeStrings[returnType]
 	# Capitalize first letter of return type
-	if returnType == GLint:
-		function = "GetIntegerv"
-	elif returnType == GLboolean:
-		function = "GetBooleanv"
-	elif returnType == GLfloat:
-		function = "GetFloatv"
-	elif returnType == GLint64:
-		function = "GetInteger64v"
+	if indexed:
+		if returnType == GLint:
+			function = "GetIntegerIndexedv"
+		elif returnType == GLboolean:
+			function = "GetBooleanIndexedv"
+		elif returnType == GLint64:
+			function = "GetInteger64Indexedv"
+		else:
+			function = "Foo"
 	else:
-		abort()
+		if returnType == GLint:
+			function = "GetIntegerv"
+		elif returnType == GLboolean:
+			function = "GetBooleanv"
+		elif returnType == GLfloat:
+			function = "GetFloatv"
+		elif returnType == GLint64:
+			function = "GetInteger64v"
+		else:
+			abort()
 
 	if returnType == GLint64:
 		print "#if FEATURE_ARB_sync"
 
 	print "void GLAPIENTRY"
-	print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
+	if indexed:
+		print "_mesa_%s( GLenum pname, GLuint index, %s *params )" % (function, strType)
+	else:
+		print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
 	print "{"
 	print "   GET_CURRENT_CONTEXT(ctx);"
 	print "   ASSERT_OUTSIDE_BEGIN_END(ctx);"
@@ -1094,14 +1115,26 @@ def EmitGetFunction(stateVars, returnType):
 	print "   if (ctx->NewState)"
 	print "      _mesa_update_state(ctx);"
 	print ""
-	print "   if (ctx->Driver.%s &&" % function
-	print "       ctx->Driver.%s(ctx, pname, params))" % function
-	print "      return;"
-	print ""
+	if indexed == 0:
+		print "   if (ctx->Driver.%s &&" % function
+		print "       ctx->Driver.%s(ctx, pname, params))" % function
+		print "      return;"
+		print ""
 	print "   switch (pname) {"
 
-	for (name, varType, state, optionalCode, extensions) in stateVars:
+	for state in stateVars:
+		if indexed:
+			(name, varType, state, indexMax, extensions) = state
+			optionalCode = 0
+		else:
+			(name, varType, state, optionalCode, extensions) = state
+			indexMax = 0
 		print "      case " + name + ":"
+		if indexMax:
+			print ('         if (index >= %s) {' % indexMax)
+			print ('            _mesa_error(ctx, GL_INVALID_VALUE, "gl%s(index=%%u), index", pname);' % function)
+			print ('         }')
+
 		if extensions:
 			if len(extensions) == 1:
 				print ('         CHECK_EXT1(%s, "%s");' %
@@ -1249,9 +1282,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
 EmitHeader()
 # XXX Maybe sort the StateVars list
-EmitGetFunction(StateVars, GLboolean)
-EmitGetFunction(StateVars, GLfloat)
-EmitGetFunction(StateVars, GLint)
-EmitGetFunction(StateVars, GLint64)
+EmitGetFunction(StateVars, GLboolean, 0)
+EmitGetFunction(StateVars, GLfloat, 0)
+EmitGetFunction(StateVars, GLint, 0)
+EmitGetFunction(StateVars, GLint64, 0)
 EmitGetDoublev()
+
+EmitGetFunction(IndexedStateVars, GLboolean, 1)
+EmitGetFunction(IndexedStateVars, GLint, 1)
+EmitGetFunction(IndexedStateVars, GLint64, 1)
 

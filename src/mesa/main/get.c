@@ -7434,3 +7434,77 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       params[i] = (GLdouble) values[i];
 }
 
+void GLAPIENTRY
+_mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         if (index >= MAX_DRAW_BUFFERS) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+         }
+         params[0] = INT_TO_BOOLEAN(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
+   }
+}
+
+void GLAPIENTRY
+_mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         if (index >= MAX_DRAW_BUFFERS) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+         }
+         params[0] = ((ctx->Color.BlendEnabled >> index) & 1);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
+   }
+}
+
+#if FEATURE_ARB_sync
+void GLAPIENTRY
+_mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         if (index >= MAX_DRAW_BUFFERS) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+         }
+         params[0] = (GLint64)(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);
+   }
+}
+#endif /* FEATURE_ARB_sync */
+
