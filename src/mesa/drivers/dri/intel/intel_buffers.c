@@ -291,6 +291,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
    }
 
+   /* If we have a (packed) stencil buffer attached but no depth buffer,
+    * we still need to set up the shared depth/stencil state so we can use it.
+    */
+   if (depthRegion == NULL && irbStencil && irbStencil->region)
+      depthRegion = irbStencil->region;
+
    /*
     * Update depth and stencil test state
     */

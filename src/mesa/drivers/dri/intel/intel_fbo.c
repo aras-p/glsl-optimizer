@@ -591,7 +591,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
    int i;
 
-   if (stencilRb && stencilRb != depthRb) {
+   if (depthRb && stencilRb && stencilRb != depthRb) {
       /* we only support combined depth/stencil buffers, not separate
        * stencil buffers.
        */
