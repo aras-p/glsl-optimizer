@@ -931,6 +931,12 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
     ScreenPtr pScreen = pScrn->pScreen;
     PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
 
+    /* XXX Do something with the rootPixmap.
+     * This currently works fine but if we are getting crashes in
+     * the fb functions after VT switches maybe look more into it.
+     */
+    (void)rootPixmap;
+
     if (!ms->root_bo)
 	return TRUE;
 
