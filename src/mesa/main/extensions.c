@@ -700,3 +700,28 @@ _mesa_make_extension_string( GLcontext *ctx )
 
    return (GLubyte *) s;
 }
+
+
+/**
+ * Return number of enabled extensions.
+ */
+GLuint
+_mesa_get_extension_count(GLcontext *ctx)
+{
+   GLuint i;
+
+   /* only count once */
+   if (!ctx->Extensions.Count) {
+      for (i = 0; i < Elements(default_extensions); i++) {
+         if (extension_enabled(ctx, i)) {
+            ctx->Extensions.Count++;
+         }
+      }
+   }
+
+   if (0)
+      _mesa_debug(ctx, "%u of %d extensions enabled\n", ctx->Extensions.Count,
+                  Elements(default_extensions));
+
+   return ctx->Extensions.Count;
+}

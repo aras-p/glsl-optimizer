@@ -1030,6 +1030,9 @@ StateVars = [
 	# GL_ARB_sync
 	( "GL_MAX_SERVER_WAIT_TIMEOUT", GLint64, ["ctx->Const.MaxServerWaitTimeout"], "",
 	  ["ARB_sync"] ),
+
+	# GL3
+	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", None ),
 ]
 
 

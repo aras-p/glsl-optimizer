@@ -64,6 +64,10 @@ extern void _mesa_init_extensions(GLcontext *ctx);
 
 extern GLubyte *_mesa_make_extension_string(GLcontext *ctx);
 
+extern GLuint
+_mesa_get_extension_count(GLcontext *ctx);
+
+
 #else
 
 /** No-op */

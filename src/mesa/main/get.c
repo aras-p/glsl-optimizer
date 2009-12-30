@@ -1899,6 +1899,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_sync, "GetBooleanv");
          params[0] = INT64_TO_BOOLEAN(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3733,6 +3736,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_MAX_SERVER_WAIT_TIMEOUT:
          CHECK_EXT1(ARB_sync, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxServerWaitTimeout);
+         break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
@@ -5569,6 +5575,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXT1(ARB_sync, "GetIntegerv");
          params[0] = INT64_TO_INT(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = _mesa_get_extension_count(ctx);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -7404,6 +7413,9 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
       case GL_MAX_SERVER_WAIT_TIMEOUT:
          CHECK_EXT1(ARB_sync, "GetInteger64v");
          params[0] = ctx->Const.MaxServerWaitTimeout;
+         break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = (GLint64)(_mesa_get_extension_count(ctx));
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);

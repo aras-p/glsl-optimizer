@@ -2512,6 +2512,8 @@ struct gl_extensions
    GLboolean S3_s3tc;
    /** The extension string */
    const GLubyte *String;
+   /** Number of supported extensions */
+   GLuint Count;
 };
 
 
