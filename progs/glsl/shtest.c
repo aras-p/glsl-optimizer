@@ -493,7 +493,9 @@ ReadConfigFile(const char *filename, struct config_file *conf)
 
    /* ugly but functional parser */
    while (!feof(f)) {
-      fgets(line, sizeof(line), f);
+      char *result;
+      result = fgets(line, sizeof(line), f);
+      (void) result;
       if (!feof(f) && line[0]) {
          if (strncmp(line, "vs ", 3) == 0) {
             VertShaderFile = strdup(line + 3);
