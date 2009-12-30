@@ -255,9 +255,19 @@ static Bool
 drv_close_resource_management(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+    int i;
 
-    if (ms->screen)
+    if (ms->screen) {
+	assert(ms->ctx == NULL);
+
+	for (i = 0; i < XORG_NR_FENCES; i++) {
+	    if (ms->fence[i]) {
+		ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
+		ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
+	    }
+	}
 	ms->screen->destroy(ms->screen);
+    }
     ms->screen = NULL;
 
     if (ms->api && ms->api->destroy)
