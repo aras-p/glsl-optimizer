@@ -55,6 +55,7 @@ typedef void (PIPE_CDECL *run_func)( struct translate *translate,
 typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
                                           const unsigned *elts,
                                           unsigned count,
+                                          unsigned instance_id,
                                           void *output_buffer );
 
 struct translate_buffer {
@@ -693,6 +694,7 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
    p->gen_run_elts( translate,
 		    elts,
 		    count,
+                    0,
 		    output_buffer );
 }
 
