@@ -38,7 +38,7 @@
 
 struct GridVertex {
     long 		gparam[2];
-			GridVertex( void ) {}
+			GridVertex( void ) { gparam[0] = 0, gparam[1] = 0; }
 			GridVertex( long u, long v ) { gparam[0] = u, gparam[1] = v; }
     void		set( long u, long v ) { gparam[0] = u, gparam[1] = v; }
     long		nextu() { return gparam[0]++; }
