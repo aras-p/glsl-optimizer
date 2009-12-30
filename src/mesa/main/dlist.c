@@ -218,6 +218,10 @@ typedef enum
    OPCODE_CLEAR_DEPTH,
    OPCODE_CLEAR_INDEX,
    OPCODE_CLEAR_STENCIL,
+   OPCODE_CLEAR_BUFFER_IV,
+   OPCODE_CLEAR_BUFFER_UIV,
+   OPCODE_CLEAR_BUFFER_FV,
+   OPCODE_CLEAR_BUFFER_FI,
    OPCODE_CLIP_PLANE,
    OPCODE_COLOR_MASK,
    OPCODE_COLOR_MASK_INDEXED,
@@ -1229,6 +1233,110 @@ save_Clear(GLbitfield mask)
    }
    if (ctx->ExecuteFlag) {
       CALL_Clear(ctx->Exec, (mask));
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_IV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].i = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].i = value[1];
+         n[5].i = value[2];
+         n[6].i = value[3];
+      }
+      else {
+         n[4].i = 0;
+         n[5].i = 0;
+         n[6].i = 0;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_UIV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].ui = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].ui = value[1];
+         n[5].ui = value[2];
+         n[6].ui = value[3];
+      }
+      else {
+         n[4].ui = 0;
+         n[5].ui = 0;
+         n[6].ui = 0;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferuiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_FV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].f = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].f = value[1];
+         n[5].f = value[2];
+         n[6].f = value[3];
+      }
+      else {
+         n[4].f = 0.0F;
+         n[5].f = 0.0F;
+         n[6].f = 0.0F;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferuiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferfi(GLenum buffer, GLint drawbuffer,
+                   GLfloat depth, GLint stencil)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_FI, 4);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].f = depth;
+      n[4].i = stencil;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferfi(ctx->Exec, (buffer, drawbuffer, depth, stencil));*/
    }
 }
 
@@ -6655,6 +6763,39 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_CLEAR:
             CALL_Clear(ctx->Exec, (n[1].bf));
             break;
+         case OPCODE_CLEAR_BUFFER_IV:
+            {
+               GLint value[4];
+               value[0] = n[3].i;
+               value[1] = n[4].i;
+               value[2] = n[5].i;
+               value[3] = n[6].i;
+               /*CALL_ClearBufferiv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_UIV:
+            {
+               GLuint value[4];
+               value[0] = n[3].ui;
+               value[1] = n[4].ui;
+               value[2] = n[5].ui;
+               value[3] = n[6].ui;
+               /*CALL_ClearBufferiv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_FV:
+            {
+               GLfloat value[4];
+               value[0] = n[3].f;
+               value[1] = n[4].f;
+               value[2] = n[5].f;
+               value[3] = n[6].f;
+               /*CALL_ClearBufferfv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_FI:
+            /*CALL_ClearBufferfi(ctx->Exec, (n[1].e, n[2].i, n[3].f, n[4].i));*/
+            break;
          case OPCODE_CLEAR_COLOR:
             CALL_ClearColor(ctx->Exec, (n[1].f, n[2].f, n[3].f, n[4].f));
             break;
@@ -9169,6 +9310,19 @@ _mesa_init_save_table(struct _glapi_table *table)
 
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
+
+   /* GL 3.0 */
+#if 0
+   SET_ClearBufferiv(table, save_ClearBufferiv);
+   SET_ClearBufferuiv(table, save_ClearBufferuiv);
+   SET_ClearBufferfv(table, save_ClearBufferfv);
+   SET_ClearBufferfi(table, save_ClearBufferfi);
+#else
+   (void) save_ClearBufferiv;
+   (void) save_ClearBufferuiv;
+   (void) save_ClearBufferfv;
+   (void) save_ClearBufferfi;
+#endif
 }
 
 
