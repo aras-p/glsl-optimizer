@@ -163,20 +163,6 @@ struct nv50_pc {
 	uint8_t edgeflag_out;
 };
 
-static INLINE struct nv50_reg *
-reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
-{
-	struct nv50_reg *ri;
-
-	assert(pc->reg_instance_nr < 16);
-	ri = &pc->reg_instances[pc->reg_instance_nr++];
-	if (reg) {
-		*ri = *reg;
-		reg->mod = 0;
-	}
-	return ri;
-}
-
 static INLINE void
 ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 {
@@ -253,6 +239,21 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 	}
 
 	assert(0);
+}
+
+static INLINE struct nv50_reg *
+reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
+{
+	struct nv50_reg *ri;
+
+	assert(pc->reg_instance_nr < 16);
+	ri = &pc->reg_instances[pc->reg_instance_nr++];
+	if (reg) {
+		alloc_reg(pc, reg);
+		*ri = *reg;
+		reg->mod = 0;
+	}
+	return ri;
 }
 
 /* XXX: For shaders that aren't executed linearly (e.g. shaders that
