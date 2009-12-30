@@ -919,7 +919,7 @@ _mesa_PopAttrib(void)
                                 color->ClearColor[2],
                                 color->ClearColor[3]);
                _mesa_IndexMask(color->IndexMask);
-               if (1/*ctx->Extensions.EXT_draw_buffers2*/) {
+               if (!ctx->Extensions.EXT_draw_buffers2) {
                   _mesa_ColorMask((GLboolean) (color->ColorMask[0][0] != 0),
                                   (GLboolean) (color->ColorMask[0][1] != 0),
                                   (GLboolean) (color->ColorMask[0][2] != 0),
