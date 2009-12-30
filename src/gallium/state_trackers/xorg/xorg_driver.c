@@ -467,7 +467,7 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
         * quite small.  Let us get a fair way ahead of hardware before
         * throttling.
         */
-       for (j = 0; j < XORG_NR_FENCES; j++)
+       for (j = 0; j < XORG_NR_FENCES - 1; j++)
           ms->screen->fence_reference(ms->screen,
                                       &ms->fence[j],
                                       ms->fence[j+1]);
