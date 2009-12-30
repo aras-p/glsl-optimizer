@@ -239,6 +239,7 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.draw_elements = softpipe_draw_elements;
    softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
    softpipe->pipe.draw_arrays_instanced = softpipe_draw_arrays_instanced;
+   softpipe->pipe.draw_elements_instanced = softpipe_draw_elements_instanced;
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;

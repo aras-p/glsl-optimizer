@@ -193,6 +193,26 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                unsigned startInstance,
                                unsigned instanceCount)
 {
+   return softpipe_draw_elements_instanced(pipe,
+                                           NULL,
+                                           0,
+                                           mode,
+                                           start,
+                                           count,
+                                           startInstance,
+                                           instanceCount);
+}
+
+boolean
+softpipe_draw_elements_instanced(struct pipe_context *pipe,
+                                 struct pipe_buffer *indexBuffer,
+                                 unsigned indexSize,
+                                 unsigned mode,
+                                 unsigned start,
+                                 unsigned count,
+                                 unsigned startInstance,
+                                 unsigned instanceCount)
+{
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    unsigned i;
@@ -216,8 +236,26 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
-   draw_set_mapped_element_buffer_range(draw, 0, start,
-                                        start + count - 1, NULL);
+   /* Map index buffer, if present */
+   if (indexBuffer) {
+      void *mapped_indexes;
+
+      mapped_indexes = pipe_buffer_map(pipe->screen,
+                                       indexBuffer,
+                                       PIPE_BUFFER_USAGE_CPU_READ);
+      draw_set_mapped_element_buffer_range(draw,
+                                           indexSize,
+                                           0,
+                                           0xffffffff,
+                                           mapped_indexes);
+   } else {
+      /* no index/element buffer */
+      draw_set_mapped_element_buffer_range(draw,
+                                           0,
+                                           start,
+                                           start + count - 1,
+                                           NULL);
+   }
 
    /* draw! */
    draw_arrays_instanced(draw, mode, start, count, startInstance, instanceCount);
@@ -226,6 +264,10 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
       pipe_buffer_unmap(pipe->screen, sp->vertex_buffer[i].buffer);
+   }
+   if (indexBuffer) {
+      draw_set_mapped_element_buffer(draw, 0, NULL);
+      pipe_buffer_unmap(pipe->screen, indexBuffer);
    }
 
    /* Note: leave drawing surfaces mapped */
