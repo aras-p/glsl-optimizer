@@ -524,19 +524,33 @@ _mesa_disable_extension( GLcontext *ctx, const char *name )
 
 
 /**
+ * Check if the i-th extension is enabled.
+ */
+static GLboolean
+extension_enabled(GLcontext *ctx, GLuint index)
+{
+   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
+   if (!default_extensions[index].flag_offset ||
+       *(base + default_extensions[index].flag_offset)) {
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Test if the named extension is enabled in this context.
  */
 GLboolean
 _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
 {
-   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
    GLuint i;
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
-         if (!default_extensions[i].flag_offset)
-            return GL_TRUE;
-         return *(base + default_extensions[i].flag_offset);
+         return extension_enabled(ctx, i);
       }
    }
    return GL_FALSE;
@@ -644,7 +658,6 @@ _mesa_init_extensions( GLcontext *ctx )
 GLubyte *
 _mesa_make_extension_string( GLcontext *ctx )
 {
-   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
    const char *extraExt = get_extension_override(ctx);
    GLuint extStrLen = 0;
    char *s;
@@ -652,8 +665,7 @@ _mesa_make_extension_string( GLcontext *ctx )
 
    /* first, compute length of the extension string */
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (!default_extensions[i].flag_offset ||
-          *(base + default_extensions[i].flag_offset)) {
+      if (extension_enabled(ctx, i)) {
          extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
       }
    }
@@ -669,8 +681,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    /* second, build the extension string */
    extStrLen = 0;
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (!default_extensions[i].flag_offset ||
-          *(base + default_extensions[i].flag_offset)) {
+      if (extension_enabled(ctx, i)) {
          GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
          _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
