@@ -821,15 +821,21 @@
 #define _gloffset_BufferParameteriAPPLE 784
 #define _gloffset_FlushMappedBufferRangeAPPLE 785
 #define _gloffset_FramebufferTextureLayerEXT 786
-#define _gloffset_ProvokingVertexEXT 787
-#define _gloffset_GetTexParameterPointervAPPLE 788
-#define _gloffset_TextureRangeAPPLE 789
-#define _gloffset_StencilFuncSeparateATI 790
-#define _gloffset_ProgramEnvParameters4fvEXT 791
-#define _gloffset_ProgramLocalParameters4fvEXT 792
-#define _gloffset_GetQueryObjecti64vEXT 793
-#define _gloffset_GetQueryObjectui64vEXT 794
-#define _gloffset_FIRST_DYNAMIC 795
+#define _gloffset_ColorMaskIndexedEXT 787
+#define _gloffset_DisableIndexedEXT 788
+#define _gloffset_EnableIndexedEXT 789
+#define _gloffset_GetBooleanIndexedvEXT 790
+#define _gloffset_GetIntegerIndexedvEXT 791
+#define _gloffset_IsEnabledIndexedEXT 792
+#define _gloffset_ProvokingVertexEXT 793
+#define _gloffset_GetTexParameterPointervAPPLE 794
+#define _gloffset_TextureRangeAPPLE 795
+#define _gloffset_StencilFuncSeparateATI 796
+#define _gloffset_ProgramEnvParameters4fvEXT 797
+#define _gloffset_ProgramLocalParameters4fvEXT 798
+#define _gloffset_GetQueryObjecti64vEXT 799
+#define _gloffset_GetQueryObjectui64vEXT 800
+#define _gloffset_FIRST_DYNAMIC 801
 
 #else
 
@@ -1212,6 +1218,12 @@
 #define _gloffset_BufferParameteriAPPLE driDispatchRemapTable[BufferParameteriAPPLE_remap_index]
 #define _gloffset_FlushMappedBufferRangeAPPLE driDispatchRemapTable[FlushMappedBufferRangeAPPLE_remap_index]
 #define _gloffset_FramebufferTextureLayerEXT driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index]
+#define _gloffset_ColorMaskIndexedEXT driDispatchRemapTable[ColorMaskIndexedEXT_remap_index]
+#define _gloffset_DisableIndexedEXT driDispatchRemapTable[DisableIndexedEXT_remap_index]
+#define _gloffset_EnableIndexedEXT driDispatchRemapTable[EnableIndexedEXT_remap_index]
+#define _gloffset_GetBooleanIndexedvEXT driDispatchRemapTable[GetBooleanIndexedvEXT_remap_index]
+#define _gloffset_GetIntegerIndexedvEXT driDispatchRemapTable[GetIntegerIndexedvEXT_remap_index]
+#define _gloffset_IsEnabledIndexedEXT driDispatchRemapTable[IsEnabledIndexedEXT_remap_index]
 #define _gloffset_ProvokingVertexEXT driDispatchRemapTable[ProvokingVertexEXT_remap_index]
 #define _gloffset_GetTexParameterPointervAPPLE driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index]
 #define _gloffset_TextureRangeAPPLE driDispatchRemapTable[TextureRangeAPPLE_remap_index]

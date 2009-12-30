@@ -12242,6 +12242,9 @@
 
 <xi:include href="EXT_provoking_vertex.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="EXT_draw_buffers2.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+
 <category name="GL_APPLE_flush_buffer_range" number="321">
     <enum name="BUFFER_SERIALIZED_MODIFY_APPLE" count="1" value="0x8A12">
         <size name="GetBufferParameteriv" mode="get"/>
