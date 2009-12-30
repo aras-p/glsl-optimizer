@@ -500,9 +500,14 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 
    TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
    if (ctx->Color.BlendEnabled != enable->Blend) {
-      GLuint i;
-      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-         _mesa_set_enablei(ctx, GL_BLEND, i, (enable->Blend >> i) & 1);
+      if (ctx->Extensions.EXT_draw_buffers2) {
+         GLuint i;
+         for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+            _mesa_set_enablei(ctx, GL_BLEND, i, (enable->Blend >> i) & 1);
+         }
+      }
+      else {
+         _mesa_set_enable(ctx, GL_BLEND, (enable->Blend & 1));
       }
    }
 
@@ -967,10 +972,15 @@ _mesa_PopAttrib(void)
                _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
                _mesa_AlphaFunc(color->AlphaFunc, color->AlphaRef);
                if (ctx->Color.BlendEnabled != color->BlendEnabled) {
-                  GLuint i;
-                  for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-                     _mesa_set_enablei(ctx, GL_BLEND, i,
-                                       (color->BlendEnabled >> i) & 1);
+                  if (ctx->Extensions.EXT_draw_buffers2) {
+                     GLuint i;
+                     for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+                        _mesa_set_enablei(ctx, GL_BLEND, i,
+                                          (color->BlendEnabled >> i) & 1);
+                     }
+                  }
+                  else {
+                     _mesa_set_enable(ctx, GL_BLEND, (color->BlendEnabled & 1));
                   }
                }
                _mesa_BlendFuncSeparateEXT(color->BlendSrcRGB,
