@@ -453,6 +453,7 @@ static INLINE void
 set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx,
 	 struct nv50_program_exec *e)
 {
+	assert(!is_immd(e));
 	set_long(pc, e);
 	e->inst[1] &= ~((0x1f << 7) | (0x3 << 12));
 	e->inst[1] |= (pred << 7) | (idx << 12);
@@ -2117,6 +2118,8 @@ nv50_kill_branch(struct nv50_pc *pc)
 	int lvl = pc->if_lvl;
 
 	if (pc->if_insn[lvl]->next != pc->p->exec_tail)
+		return FALSE;
+	if (is_immd(pc->p->exec_tail))
 		return FALSE;
 
 	/* if ccode == 'true', the BRA is from an ELSE and the predicate
