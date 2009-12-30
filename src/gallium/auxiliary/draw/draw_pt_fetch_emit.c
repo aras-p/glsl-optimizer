@@ -166,6 +166,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 	 continue;
       }
 
+      key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
       key.element[i].input_format = input_format;
       key.element[i].input_buffer = input_buffer;
       key.element[i].input_offset = input_offset;

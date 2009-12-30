@@ -194,6 +194,7 @@ static int update_zero_stride( struct svga_context *svga,
 
          key.output_stride = 4 * sizeof(float);
          key.nr_elements = 1;
+         key.element[0].type = TRANSLATE_ELEMENT_NORMAL;
          key.element[0].input_format = vel->src_format;
          key.element[0].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          key.element[0].input_buffer = vel->vertex_buffer_index;

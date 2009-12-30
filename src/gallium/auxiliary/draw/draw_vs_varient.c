@@ -284,6 +284,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    fetch.nr_elements = key->nr_inputs;
    fetch.output_stride = vsvg->temp_vertex_stride;
    for (i = 0; i < key->nr_inputs; i++) {
+      fetch.element[i].type = TRANSLATE_ELEMENT_NORMAL;
       fetch.element[i].input_format = key->element[i].in.format;
       fetch.element[i].input_buffer = key->element[i].in.buffer;
       fetch.element[i].input_offset = key->element[i].in.offset;
@@ -299,6 +300,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    for (i = 0; i < key->nr_outputs; i++) {
       if (key->element[i].out.format != EMIT_1F_PSIZE)
       {      
+         emit.element[i].type = TRANSLATE_ELEMENT_NORMAL;
          emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          emit.element[i].input_buffer = 0;
          emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
@@ -308,6 +310,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
          assert(emit.element[i].input_offset <= fetch.output_stride);
       }
       else {
+         emit.element[i].type = TRANSLATE_ELEMENT_NORMAL;
          emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;
          emit.element[i].input_buffer = 1;
          emit.element[i].input_offset = 0;

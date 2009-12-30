@@ -58,12 +58,14 @@ struct pt_fetch {
  */
 void draw_pt_fetch_prepare( struct pt_fetch *fetch,
                             unsigned vs_input_count,
-			    unsigned vertex_size )
+                            unsigned vertex_size,
+                            unsigned instance_id_index )
 {
    struct draw_context *draw = fetch->draw;
    unsigned nr_inputs;
-   unsigned i, nr = 0;
+   unsigned i, nr = 0, ei = 0;
    unsigned dst_offset = 0;
+   unsigned num_extra_inputs = 0;
    struct translate_key key;
 
    fetch->vertex_size = vertex_size;
@@ -78,6 +80,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    {
       /* Need to set header->vertex_id = 0xffff somehow.
        */
+      key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
       key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;
       key.element[nr].input_buffer = draw->pt.nr_vertex_buffers;
       key.element[nr].input_offset = 0;
@@ -92,16 +95,27 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
        */
       dst_offset += 4 * sizeof(float);
    }
-      
-   assert( draw->pt.nr_vertex_elements >= vs_input_count );
 
-   nr_inputs = MIN2( vs_input_count, draw->pt.nr_vertex_elements );
+   if (instance_id_index != ~0) {
+      num_extra_inputs++;
+   }
+
+   assert(draw->pt.nr_vertex_elements + num_extra_inputs >= vs_input_count);
+
+   nr_inputs = MIN2(vs_input_count, draw->pt.nr_vertex_elements + num_extra_inputs);
 
    for (i = 0; i < nr_inputs; i++) {
-      key.element[nr].input_format = draw->pt.vertex_element[i].src_format;
-      key.element[nr].input_buffer = draw->pt.vertex_element[i].vertex_buffer_index;
-      key.element[nr].input_offset = draw->pt.vertex_element[i].src_offset;
-      key.element[nr].instance_divisor = draw->pt.vertex_element[i].instance_divisor;
+      if (i == instance_id_index) {
+         key.element[nr].type = TRANSLATE_ELEMENT_INSTANCE_ID;
+         key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;    /* XXX: Make it UINT. */
+      } else {
+         key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
+         key.element[nr].input_format = draw->pt.vertex_element[ei].src_format;
+         key.element[nr].input_buffer = draw->pt.vertex_element[ei].vertex_buffer_index;
+         key.element[nr].input_offset = draw->pt.vertex_element[ei].src_offset;
+         key.element[nr].instance_divisor = draw->pt.vertex_element[ei].instance_divisor;
+         ei++;
+      }
       key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       key.element[nr].output_offset = dst_offset;
 

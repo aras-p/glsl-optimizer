@@ -121,7 +121,8 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 	 emit_sz = 0;
 	 break;
       }
-      
+
+      hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
       hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       hw_key.element[i].input_buffer = src_buffer;
       hw_key.element[i].input_offset = src_offset;

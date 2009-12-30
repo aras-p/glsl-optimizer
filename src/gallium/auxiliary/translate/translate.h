@@ -44,8 +44,14 @@
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 
+enum translate_element_type {
+   TRANSLATE_ELEMENT_NORMAL,
+   TRANSLATE_ELEMENT_INSTANCE_ID
+};
+
 struct translate_element 
 {
+   enum translate_element_type type;
    enum pipe_format input_format;
    enum pipe_format output_format;
    unsigned input_buffer:8;

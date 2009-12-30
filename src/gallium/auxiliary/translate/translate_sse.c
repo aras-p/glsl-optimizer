@@ -50,13 +50,15 @@ typedef void (PIPE_CDECL *run_func)( struct translate *translate,
                                      unsigned start,
                                      unsigned count,
                                      unsigned instance_id,
-                                     void *output_buffer );
+                                     void *output_buffer,
+                                     float instance_id_float );
 
 typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
                                           const unsigned *elts,
                                           unsigned count,
                                           unsigned instance_id,
-                                          void *output_buffer );
+                                          void *output_buffer,
+                                          float instance_id_float );
 
 struct translate_buffer {
    const void *base_ptr;
@@ -68,6 +70,9 @@ struct translate_buffer_varient {
    unsigned instance_divisor;
    void *ptr;                    /* updated either per vertex or per instance */
 };
+
+
+#define ELEMENT_BUFFER_INSTANCE_ID  1001
 
 
 struct translate_sse {
@@ -97,6 +102,7 @@ struct translate_sse {
 
    boolean use_instancing;
    unsigned instance_id;
+   float instance_id_float;   /* XXX: needed while no integer support in TGSI */
 
    run_func      gen_run;
    run_elts_func gen_run_elts;
@@ -443,6 +449,10 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
                                       unsigned var_idx,
                                       struct x86_reg elt )
 {
+   if (var_idx == ELEMENT_BUFFER_INSTANCE_ID) {
+      return x86_make_disp(p->machine_EDX,
+                           get_offset(p, &p->instance_id_float));
+   }
    if (linear && p->nr_buffer_varients == 1) {
       return p->idx_EBX;
    }
@@ -577,6 +587,14 @@ static boolean build_vertex_emit( struct translate_sse *p,
       x86_mov(p->func,
               x86_make_disp(p->machine_EDX, get_offset(p, &p->instance_id)),
               p->tmp_EAX);
+
+      /* XXX: temporary */
+      x86_mov(p->func,
+              p->tmp_EAX,
+              x86_fn_arg(p->func, 6));
+      x86_mov(p->func,
+              x86_make_disp(p->machine_EDX, get_offset(p, &p->instance_id_float)),
+              p->tmp_EAX);
    }
 
    /* Get vertex count, compare to zero
@@ -697,7 +715,8 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 		    elts,
 		    count,
                     instance_id,
-		    output_buffer );
+                    output_buffer,
+                    (float)instance_id );
 }
 
 static void PIPE_CDECL translate_sse_run( struct translate *translate,
@@ -712,7 +731,8 @@ static void PIPE_CDECL translate_sse_run( struct translate *translate,
 	       start,
 	       count,
                instance_id,
-	       output_buffer );
+               output_buffer,
+               (float)instance_id);
 }
 
 
@@ -735,29 +755,35 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    p->translate.run = translate_sse_run;
 
    for (i = 0; i < key->nr_elements; i++) {
-      unsigned j;
+      if (key->element[i].type == TRANSLATE_ELEMENT_NORMAL) {
+         unsigned j;
 
-      p->nr_buffers = MAX2( p->nr_buffers, key->element[i].input_buffer + 1 );
+         p->nr_buffers = MAX2(p->nr_buffers, key->element[i].input_buffer + 1);
 
-      if (key->element[i].instance_divisor) {
-         p->use_instancing = TRUE;
-      }
-
-      /*
-       * Map vertex element to vertex buffer varient.
-       */
-      for (j = 0; j < p->nr_buffer_varients; j++) {
-         if (p->buffer_varient[j].buffer_index == key->element[i].input_buffer &&
-             p->buffer_varient[j].instance_divisor == key->element[i].instance_divisor) {
-            break;
+         if (key->element[i].instance_divisor) {
+            p->use_instancing = TRUE;
          }
+
+         /*
+          * Map vertex element to vertex buffer varient.
+          */
+         for (j = 0; j < p->nr_buffer_varients; j++) {
+            if (p->buffer_varient[j].buffer_index == key->element[i].input_buffer &&
+                p->buffer_varient[j].instance_divisor == key->element[i].instance_divisor) {
+               break;
+            }
+         }
+         if (j == p->nr_buffer_varients) {
+            p->buffer_varient[j].buffer_index = key->element[i].input_buffer;
+            p->buffer_varient[j].instance_divisor = key->element[i].instance_divisor;
+            p->nr_buffer_varients++;
+         }
+         p->element_to_buffer_varient[i] = j;
+      } else {
+         assert(key->element[i].type == TRANSLATE_ELEMENT_INSTANCE_ID);
+
+         p->element_to_buffer_varient[i] = ELEMENT_BUFFER_INSTANCE_ID;
       }
-      if (j == p->nr_buffer_varients) {
-         p->buffer_varient[j].buffer_index = key->element[i].input_buffer;
-         p->buffer_varient[j].instance_divisor = key->element[i].instance_divisor;
-         p->nr_buffer_varients++;
-      }
-      p->element_to_buffer_varient[i] = j;
    }
 
    if (0) debug_printf("nr_buffers: %d\n", p->nr_buffers);

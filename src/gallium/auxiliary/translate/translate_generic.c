@@ -46,6 +46,8 @@ struct translate_generic {
    struct translate translate;
 
    struct {
+      enum translate_element_type type;
+
       fetch_func fetch;
       unsigned buffer;
       unsigned input_offset;
@@ -632,21 +634,26 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-         const char *src;
 
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
 
-         if (tg->attrib[attr].instance_divisor) {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride *
-                  (instance_id / tg->attrib[attr].instance_divisor);
-         } else {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride * elt;
-         }
+         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+            const char *src;
 
-	 tg->attrib[attr].fetch( src, data );
+            if (tg->attrib[attr].instance_divisor) {
+               src = tg->attrib[attr].input_ptr +
+                     tg->attrib[attr].input_stride *
+                     (instance_id / tg->attrib[attr].instance_divisor);
+            } else {
+               src = tg->attrib[attr].input_ptr +
+                     tg->attrib[attr].input_stride * elt;
+            }
+
+            tg->attrib[attr].fetch( src, data );
+         } else {
+            data[0] = (float)instance_id;
+         }
 
          if (0) debug_printf("vert %d attr %d: %f %f %f %f\n",
                              i, attr, data[0], data[1], data[2], data[3]);
@@ -700,6 +707,7 @@ struct translate *translate_generic_create( const struct translate_key *key )
    tg->translate.run = generic_run;
 
    for (i = 0; i < key->nr_elements; i++) {
+      tg->attrib[i].type = key->element[i].type;
 
       tg->attrib[i].fetch = get_fetch_func(key->element[i].input_format);
       tg->attrib[i].buffer = key->element[i].input_buffer;
