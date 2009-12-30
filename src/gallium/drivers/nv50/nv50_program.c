@@ -285,22 +285,6 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 	return NULL;
 }
 
-/* Assign the hw of the discarded temporary register src
- * to the tgsi register dst and free src.
- */
-static void
-assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
-{
-	assert(src->index == -1 && src->hw != -1);
-
-	if (dst->hw != -1)
-		pc->r_temp[dst->hw] = NULL;
-	pc->r_temp[src->hw] = dst;
-	dst->hw = src->hw;
-
-	FREE(src);
-}
-
 /* release the hardware resource held by r */
 static void
 release_hw(struct nv50_pc *pc, struct nv50_reg *r)
@@ -719,6 +703,34 @@ emit_mov_immdval(struct nv50_pc *pc, struct nv50_reg *dst, float f)
 	struct nv50_reg *imm = alloc_immd(pc, f);
 	emit_mov(pc, dst, imm);
 	FREE(imm);
+}
+
+/* Assign the hw of the discarded temporary register src
+ * to the tgsi register dst and free src.
+ */
+static void
+assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	assert(src->index == -1 && src->hw != -1);
+
+	if (pc->if_lvl || pc->loop_lvl ||
+	    (dst->type != P_TEMP) ||
+	    (src->hw < pc->result_nr * 4 &&
+	     pc->p->type == PIPE_SHADER_FRAGMENT) ||
+	    pc->p->info.opcode_count[TGSI_OPCODE_CAL] ||
+	    pc->p->info.opcode_count[TGSI_OPCODE_BRA]) {
+
+		emit_mov(pc, dst, src);
+		free_temp(pc, src);
+		return;
+	}
+
+	if (dst->hw != -1)
+		pc->r_temp[dst->hw] = NULL;
+	pc->r_temp[src->hw] = dst;
+	dst->hw = src->hw;
+
+	FREE(src);
 }
 
 static void
