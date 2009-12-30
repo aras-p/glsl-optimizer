@@ -1899,6 +1899,10 @@ struct gl_query_state
    struct _mesa_HashTable *QueryObjects;
    struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
    struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
+
+   /** GL_NV_conditional_render */
+   struct gl_query_object *CondRenderQuery;
+   GLenum CondRenderMode;
 };
 
 

@@ -15,6 +15,7 @@ MAIN_SOURCES = \
 	main/clear.c \
 	main/clip.c \
 	main/colortab.c \
+	main/condrender.c \
 	main/context.c \
 	main/convolve.c \
 	main/cpuinfo.c \

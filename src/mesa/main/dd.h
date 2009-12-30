@@ -1016,6 +1016,11 @@ struct dd_function_table {
 			  GLbitfield, GLuint64);
    /*@}*/
 #endif
+
+   /** GL_NV_conditional_render */
+   void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
+                                  GLenum mode);
+   void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
 };
 
 
