@@ -569,6 +569,7 @@ static emit_func get_emit_func( enum pipe_format format )
 static void PIPE_CDECL generic_run_elts( struct translate *translate,
                                          const unsigned *elts,
                                          unsigned count,
+                                         unsigned instance_id,
                                          void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
@@ -584,12 +585,19 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-
-	 const char *src = (tg->attrib[attr].input_ptr + 
-			    tg->attrib[attr].input_stride * elt);
+         const char *src;
 
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
+
+         if (tg->attrib[attr].instance_divisor) {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride *
+                  (instance_id / tg->attrib[attr].instance_divisor);
+         } else {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * elt;
+         }
 
 	 tg->attrib[attr].fetch( src, data );
 

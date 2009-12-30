@@ -160,6 +160,7 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
    translate->run_elts( translate,
 			elts, 
 			count,
+                        draw->instance_id,
 			verts );
 
 }

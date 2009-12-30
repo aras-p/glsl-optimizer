@@ -376,13 +376,14 @@ static boolean init_inputs( struct translate_sse *p,
                             boolean linear )
 {
    unsigned i;
-   if (linear) {
-      struct x86_reg instance_id = x86_make_disp(p->machine_EDX,
-                                                 get_offset(p, &p->instance_id));
+   struct x86_reg instance_id = x86_make_disp(p->machine_EDX,
+                                              get_offset(p, &p->instance_id));
 
-      for (i = 0; i < p->nr_buffer_varients; i++) {
-         struct translate_buffer_varient *varient = &p->buffer_varient[i];
-         struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
+   for (i = 0; i < p->nr_buffer_varients; i++) {
+      struct translate_buffer_varient *varient = &p->buffer_varient[i];
+      struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
+
+      if (linear || varient->instance_divisor) {
          struct x86_reg buf_stride   = x86_make_disp(p->machine_EDX,
                                                      get_offset(p, &buffer->stride));
          struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDX,
@@ -426,7 +427,7 @@ static boolean init_inputs( struct translate_sse *p,
          /* In the linear case, keep the buffer pointer instead of the
           * index number.
           */
-         if (p->nr_buffer_varients == 1) 
+         if (linear && p->nr_buffer_varients == 1)
             x86_mov(p->func, elt, tmp_EAX);
          else
             x86_mov(p->func, buf_ptr, tmp_EAX);
@@ -445,7 +446,7 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
    if (linear && p->nr_buffer_varients == 1) {
       return p->idx_EBX;
    }
-   else if (linear) {
+   else if (linear || p->buffer_varient[var_idx].instance_divisor) {
       struct x86_reg ptr = p->tmp_EAX;
       struct x86_reg buf_ptr = 
          x86_make_disp(p->machine_EDX, 
@@ -687,6 +688,7 @@ static void translate_sse_release( struct translate *translate )
 static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 			      const unsigned *elts,
 			      unsigned count,
+                              unsigned instance_id,
 			      void *output_buffer )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
@@ -694,7 +696,7 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
    p->gen_run_elts( translate,
 		    elts,
 		    count,
-                    0,
+                    instance_id,
 		    output_buffer );
 }
 

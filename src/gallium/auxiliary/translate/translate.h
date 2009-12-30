@@ -75,6 +75,7 @@ struct translate {
    void (PIPE_CDECL *run_elts)( struct translate *,
                                 const unsigned *elts,
                                 unsigned count,
+                                unsigned instance_id,
                                 void *output_buffer);
 
    void (PIPE_CDECL *run)( struct translate *,
