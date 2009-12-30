@@ -167,20 +167,19 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	  for (x = 0; x < w; x += sub_w) {
 	    sub_w = MIN2(sub_w, w - x);
 
-	    /* Must be 64-byte aligned */
-	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y, w, h) * util_format_get_blocksize(dst->texture->format)) & 63));
+	    assert(!(dst->offset & 63));
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y, w, h) * util_format_get_blocksize(dst->texture->format),
+	    OUT_RELOCl(chan, dst_bo, dst->offset,
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	    OUT_RING  (chan, nv04_scaled_image_format(src->format));
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_SIZE_H_SHIFT | sub_w);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_SIZE_H_SHIFT | sub_w);
 	    OUT_RING  (chan, 1 << 20);
 	    OUT_RING  (chan, 1 << 20);
