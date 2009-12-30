@@ -1021,6 +1021,9 @@ xorg_exa_close(ScrnInfoPtr pScrn)
 
    if (exa->pipe)
       exa->pipe->destroy(exa->pipe);
+   exa->pipe = NULL;
+   /* Since this was shared be proper with the pointer */
+   ms->ctx = NULL;
 
    exaDriverFini(pScrn->pScreen);
    xfree(exa);
