@@ -1840,7 +1840,9 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_DST:
 		return mask & (c ? 0xa : 0x6);
 	case TGSI_OPCODE_EX2:
+	case TGSI_OPCODE_EXP:
 	case TGSI_OPCODE_LG2:
+	case TGSI_OPCODE_LOG:
 	case TGSI_OPCODE_POW:
 	case TGSI_OPCODE_RCP:
 	case TGSI_OPCODE_RSQ:
@@ -2062,6 +2064,8 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 			assert(0);
 			return 0x0;
 		}
+	case TGSI_OPCODE_EXP:
+	case TGSI_OPCODE_LOG:
 	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_TEX:
@@ -2366,6 +2370,33 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_preex2(pc, temp, src[0][0]);
 		emit_flop(pc, NV50_FLOP_EX2, brdc, temp);
 		break;
+	case TGSI_OPCODE_EXP:
+	{
+		struct nv50_reg *t[2];
+
+		assert(!temp);
+		t[0] = temp_temp(pc);
+		t[1] = temp_temp(pc);
+
+		if (mask & 0x6)
+			emit_mov(pc, t[0], src[0][0]);
+		if (mask & 0x3)
+			emit_flr(pc, t[1], src[0][0]);
+
+		if (mask & (1 << 1))
+			emit_sub(pc, dst[1], t[0], t[1]);
+		if (mask & (1 << 0)) {
+			emit_preex2(pc, t[1], t[1]);
+			emit_flop(pc, NV50_FLOP_EX2, dst[0], t[1]);
+		}
+		if (mask & (1 << 2)) {
+			emit_preex2(pc, t[0], t[0]);
+			emit_flop(pc, NV50_FLOP_EX2, dst[2], t[0]);
+		}
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0f);
+	}
+		break;
 	case TGSI_OPCODE_FLR:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
@@ -2405,6 +2436,34 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_LG2:
 		emit_flop(pc, NV50_FLOP_LG2, brdc, src[0][0]);
+		break;
+	case TGSI_OPCODE_LOG:
+	{
+		struct nv50_reg *t[2];
+
+		t[0] = temp_temp(pc);
+		if (mask & (1 << 1))
+			t[1] = temp_temp(pc);
+		else
+			t[1] = t[0];
+
+		emit_abs(pc, t[0], src[0][0]);
+		emit_flop(pc, NV50_FLOP_LG2, t[1], t[0]);
+		if (mask & (1 << 2))
+			emit_mov(pc, dst[2], t[1]);
+		emit_flr(pc, t[1], t[1]);
+		if (mask & (1 << 0))
+			emit_mov(pc, dst[0], t[1]);
+		if (mask & (1 << 1)) {
+			t[1]->mod = NV50_MOD_NEG;
+			emit_preex2(pc, t[1], t[1]);
+			t[1]->mod = 0;
+			emit_flop(pc, NV50_FLOP_EX2, t[1], t[1]);
+			emit_mul(pc, dst[1], t[0], t[1]);
+		}
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0f);
+	}
 		break;
 	case TGSI_OPCODE_LRP:
 		temp = temp_temp(pc);
