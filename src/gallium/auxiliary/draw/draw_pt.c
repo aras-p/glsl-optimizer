@@ -280,40 +280,7 @@ void
 draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
-   unsigned reduced_prim = u_reduced_prim(prim);
-   if (reduced_prim != draw->reduced_prim) {
-      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-      draw->reduced_prim = reduced_prim;
-   }
-
-   if (0)
-      draw_print_arrays(draw, prim, start, MIN2(count, 20));
-
-#if 0
-   {
-      int i;
-      debug_printf("draw_arrays(prim=%u start=%u count=%u):\n",
-                   prim, start, count);
-      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
-      debug_printf("Elements:\n");
-      for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
-         debug_printf("  format=%s comps=%u\n",
-                      pf_name(draw->pt.vertex_element[i].src_format),
-                      draw->pt.vertex_element[i].nr_components);
-      }
-      debug_printf("Buffers:\n");
-      for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  stride=%u offset=%u ptr=%p\n",
-                      draw->pt.vertex_buffer[i].stride,
-                      draw->pt.vertex_buffer[i].buffer_offset,
-                      draw->pt.user.vbuffer[i]);
-      }
-   }
-#endif
-
-   /* drawing done here: */
-   draw->instance_id = 0;
-   draw_pt_arrays(draw, prim, start, count);
+   draw_arrays_instanced(draw, prim, start, count, 0, 1);
 }
 
 void
@@ -331,6 +298,31 @@ draw_arrays_instanced(struct draw_context *draw,
       draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
       draw->reduced_prim = reduced_prim;
    }
+
+   if (0)
+      draw_print_arrays(draw, mode, start, MIN2(count, 20));
+
+#if 0
+   {
+      int i;
+      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
+                   mode, start, count);
+      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
+      debug_printf("Elements:\n");
+      for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+         debug_printf("  format=%s comps=%u\n",
+                      pf_name(draw->pt.vertex_element[i].src_format),
+                      draw->pt.vertex_element[i].nr_components);
+      }
+      debug_printf("Buffers:\n");
+      for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+         debug_printf("  stride=%u offset=%u ptr=%p\n",
+                      draw->pt.vertex_buffer[i].stride,
+                      draw->pt.vertex_buffer[i].buffer_offset,
+                      draw->pt.user.vbuffer[i]);
+      }
+   }
+#endif
 
    for (instance = 0; instance < instanceCount; instance++) {
       draw->instance_id = instance + startInstance;
