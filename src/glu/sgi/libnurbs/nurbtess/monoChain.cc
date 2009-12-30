@@ -127,6 +127,7 @@ monoChain::monoChain(directedLine* cHead, directedLine* cTail)
     current = chainTail;
 
   isKey = 0;
+  keyY = 0;
 }
 
 //insert a new line between prev and this
