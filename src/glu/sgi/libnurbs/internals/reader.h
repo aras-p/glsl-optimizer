@@ -106,7 +106,7 @@ struct O_nurbssurface : public PooledObj {
     int			save;		/* 1 if in display list		*/
     int			used;		/* 1 if prev called in block	*/
 			O_nurbssurface( long _type ) 
-			   { type = _type; owner = 0; next = 0; used = 0; }
+			   { bezier_patches = 0; type = _type; owner = 0; next = 0; save = 0; used = 0; }
     };
 
 struct O_surface : public PooledObj {
