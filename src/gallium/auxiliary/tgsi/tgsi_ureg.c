@@ -64,6 +64,7 @@ struct ureg_tokens {
 };
 
 #define UREG_MAX_INPUT PIPE_MAX_ATTRIBS
+#define UREG_MAX_SYSTEM_VALUE PIPE_MAX_ATTRIBS
 #define UREG_MAX_OUTPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_CONSTANT_RANGE 32
 #define UREG_MAX_IMMEDIATE 32
@@ -93,6 +94,13 @@ struct ureg_program
       unsigned index;
    } gs_input[UREG_MAX_INPUT];
    unsigned nr_gs_inputs;
+
+   struct {
+      unsigned index;
+      unsigned semantic_name;
+      unsigned semantic_index;
+   } system_value[UREG_MAX_SYSTEM_VALUE];
+   unsigned nr_system_values;
 
    struct {
       unsigned semantic_name;
@@ -296,6 +304,25 @@ ureg_DECL_gs_input(struct ureg_program *ureg,
 
    /* XXX: Add suport for true 2D input registers. */
    return ureg_src_register(TGSI_FILE_INPUT, index);
+}
+
+
+struct ureg_src
+ureg_DECL_system_value(struct ureg_program *ureg,
+                       unsigned index,
+                       unsigned semantic_name,
+                       unsigned semantic_index)
+{
+   if (ureg->nr_system_values < UREG_MAX_SYSTEM_VALUE) {
+      ureg->system_value[ureg->nr_system_values].index = index;
+      ureg->system_value[ureg->nr_system_values].semantic_name = semantic_name;
+      ureg->system_value[ureg->nr_system_values].semantic_index = semantic_index;
+      ureg->nr_system_values++;
+   } else {
+      set_bad(ureg);
+   }
+
+   return ureg_src_register(TGSI_FILE_SYSTEM_VALUE, index);
 }
 
 
@@ -1001,6 +1028,15 @@ static void emit_decls( struct ureg_program *ureg )
                          ureg->gs_input[i].index,
                          1);
       }
+   }
+
+   for (i = 0; i < ureg->nr_system_values; i++) {
+      emit_decl(ureg,
+                TGSI_FILE_SYSTEM_VALUE,
+                ureg->system_value[i].index,
+                ureg->system_value[i].semantic_name,
+                ureg->system_value[i].semantic_index,
+                TGSI_INTERPOLATE_CONSTANT);
    }
 
    for (i = 0; i < ureg->nr_outputs; i++) {
