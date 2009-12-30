@@ -725,3 +725,23 @@ _mesa_get_extension_count(GLcontext *ctx)
 
    return ctx->Extensions.Count;
 }
+
+
+/**
+ * Return name of i-th enabled extension
+ */
+const GLubyte *
+_mesa_get_enabled_extension(GLcontext *ctx, GLuint index)
+{
+   GLuint i;
+
+   for (i = 0; i < Elements(default_extensions); i++) {
+      if (extension_enabled(ctx, i)) {
+         if (index == 0)
+            return (const GLubyte *) default_extensions[i].name;
+         index--;
+      }
+   }
+
+   return NULL;
+}
