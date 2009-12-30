@@ -1951,7 +1951,7 @@ save_DisableIndexed(GLuint index, GLenum cap)
       n[2].e = cap;
    }
    if (ctx->ExecuteFlag) {
-      /*CALL_DisableIndexedEXT(ctx->Exec, (index, cap));*/
+      CALL_DisableIndexedEXT(ctx->Exec, (index, cap));
    }
 }
 
@@ -2026,7 +2026,7 @@ save_EnableIndexed(GLuint index, GLenum cap)
       n[2].e = cap;
    }
    if (ctx->ExecuteFlag) {
-      /*CALL_EnableIndexed(ctx->Exec, (index, cap));*/
+      CALL_EnableIndexedEXT(ctx->Exec, (index, cap));
    }
 }
 
@@ -6832,7 +6832,7 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_Disable(ctx->Exec, (n[1].e));
             break;
          case OPCODE_DISABLE_INDEXED:
-            /*CALL_DisableIndexed(ctx->Exec, (n[1].ui, n[2].e));*/
+            CALL_DisableIndexedEXT(ctx->Exec, (n[1].ui, n[2].e));
             break;
          case OPCODE_DRAW_BUFFER:
             CALL_DrawBuffer(ctx->Exec, (n[1].e));
@@ -6850,7 +6850,7 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_Enable(ctx->Exec, (n[1].e));
             break;
          case OPCODE_ENABLE_INDEXED:
-            /*CALL_EnableIndexed(ctx->Exec, (n[1].ui, n[2].e));*/
+            CALL_EnableIndexedEXT(ctx->Exec, (n[1].ui, n[2].e));
             break;
          case OPCODE_EVALMESH1:
             CALL_EvalMesh1(ctx->Exec, (n[1].e, n[2].i, n[3].i));
@@ -8621,13 +8621,11 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_DepthMask(table, save_DepthMask);
    SET_DepthRange(table, save_DepthRange);
    SET_Disable(table, save_Disable);
-   /*SET_DisableIndexed(table, save_DisableIndexed);*/
-   (void) save_DisableIndexed;
+   SET_DisableIndexedEXT(table, save_DisableIndexed);
    SET_DrawBuffer(table, save_DrawBuffer);
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
-   /*SET_EnableIndexed(table, save_EnableIndexed);*/
-   (void) save_EnableIndexed;
+   SET_EnableIndexedEXT(table, save_EnableIndexed);
    SET_EndList(table, _mesa_EndList);
    SET_EvalMesh1(table, save_EvalMesh1);
    SET_EvalMesh2(table, save_EvalMesh2);
