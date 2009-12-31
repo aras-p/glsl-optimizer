@@ -8751,7 +8751,6 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_ClipPlane(table, save_ClipPlane);
    SET_ColorMask(table, save_ColorMask);
    SET_ColorMaskIndexedEXT(table, save_ColorMaskIndexed);
-   (void) save_ColorMaskIndexed;
    SET_ColorMaterial(table, save_ColorMaterial);
    SET_CopyPixels(table, save_CopyPixels);
    SET_CullFace(table, save_CullFace);
