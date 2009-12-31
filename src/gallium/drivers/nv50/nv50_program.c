@@ -1566,7 +1566,13 @@ emit_texlod_sequence(struct nv50_pc *pc, struct nv50_reg *tlod,
 		     struct nv50_reg *src, struct nv50_program_exec *tex)
 {
 	struct nv50_program_exec *join_at;
-	unsigned i, target = pc->p->exec_size + 7 * 2;
+	unsigned i, target = pc->p->exec_size + 9 * 2;
+
+	if (pc->p->type != PIPE_SHADER_FRAGMENT) {
+		emit(pc, tex);
+		return;
+	}
+	pc->allow32 = FALSE;
 
 	/* Subtract lod of each pixel from lod of top left pixel, jump
 	 * texlod insn if result is 0, then repeat for 2 other pixels.
@@ -1692,6 +1698,7 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 		emit(pc, e);
 	} else
 	if (bias_lod < 0) {
+		assert(pc->p->type == PIPE_SHADER_FRAGMENT);
 		e->inst[0] |= arg << 22;
 		e->inst[1] |= 0x20000000; /* texbias */
 		emit_mov(pc, t[arg], src[3]);
