@@ -6825,10 +6825,8 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_ColorMask(ctx->Exec, (n[1].b, n[2].b, n[3].b, n[4].b));
             break;
          case OPCODE_COLOR_MASK_INDEXED:
-            /*
             CALL_ColorMaskIndexedEXT(ctx->Exec, (n[1].ui, n[2].b, n[3].b,
                                                  n[4].b, n[5].b));
-            */
             break;
          case OPCODE_COLOR_MATERIAL:
             CALL_ColorMaterial(ctx->Exec, (n[1].e, n[2].e));
@@ -8752,7 +8750,7 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_ClearStencil(table, save_ClearStencil);
    SET_ClipPlane(table, save_ClipPlane);
    SET_ColorMask(table, save_ColorMask);
-   /*SET_ColorMaskIndexedEXT(table, save_ColorMaskIndexed);*/
+   SET_ColorMaskIndexedEXT(table, save_ColorMaskIndexed);
    (void) save_ColorMaskIndexed;
    SET_ColorMaterial(table, save_ColorMaterial);
    SET_CopyPixels(table, save_CopyPixels);
