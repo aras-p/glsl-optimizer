@@ -154,6 +154,9 @@ struct nv50_pc {
 	int if_lvl, loop_lvl;
 	unsigned loop_pos[NV50_MAX_LOOP_NESTING];
 
+	unsigned *insn_pos; /* actual program offset of each TGSI insn */
+	boolean in_subroutine;
+
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
 	unsigned insn_nr;
@@ -450,6 +453,14 @@ static boolean
 is_immd(struct nv50_program_exec *e)
 {
 	if (is_long(e) && (e->inst[1] & 3) == 3)
+		return TRUE;
+	return FALSE;
+}
+
+static boolean
+is_join(struct nv50_program_exec *e)
+{
+	if (is_long(e) && (e->inst[1] & 3) == 2)
 		return TRUE;
 	return FALSE;
 }
@@ -1354,66 +1365,53 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static struct nv50_program_exec *
+emit_control_flow(struct nv50_pc *pc, unsigned op, int pred, unsigned cc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = (op << 28) | 2;
+	set_long(pc, e);
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+
+	emit(pc, e);
+	return e;
+}
+
+static INLINE struct nv50_program_exec *
 emit_breakaddr(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x40000002;
-	set_long(pc, e);
-
-	emit(pc, e);
-	return e;
+	return emit_control_flow(pc, 0x4, -1, 0);
 }
 
-static void
+static INLINE void
 emit_break(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x50000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-
-	emit(pc, e);
+	emit_control_flow(pc, 0x5, pred, cc);
 }
 
-static struct nv50_program_exec *
+static INLINE struct nv50_program_exec *
 emit_joinat(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xa0000002;
-	set_long(pc, e);
-
-	emit(pc, e);
-	return e;
+	return emit_control_flow(pc, 0xa, -1, 0);
 }
 
-static struct nv50_program_exec *
+static INLINE struct nv50_program_exec *
 emit_branch(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x10000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-	emit(pc, e);
-	return pc->p->exec_tail;
+	return emit_control_flow(pc, 0x1, pred, cc);
 }
 
-static void
+static INLINE struct nv50_program_exec *
+emit_call(struct nv50_pc *pc, int pred, unsigned cc)
+{
+	return emit_control_flow(pc, 0x2, pred, cc);
+}
+
+static INLINE void
 emit_ret(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x30000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-
-	emit(pc, e);
+	emit_control_flow(pc, 0x3, pred, cc);
 }
 
 #define QOP_ADD 0
@@ -2237,9 +2235,21 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->loop_pos[pc->loop_lvl++] = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_BGNSUB:
+		assert(!pc->in_subroutine);
+		pc->in_subroutine = TRUE;
+		/* probably not necessary, but align to 8 byte boundary */
+		if (!is_long(pc->p->exec_tail))
+			convert_to_long(pc, pc->p->exec_tail);
+		break;
 	case TGSI_OPCODE_BRK:
 		assert(pc->loop_lvl > 0);
 		emit_break(pc, -1, 0);
+		break;
+	case TGSI_OPCODE_CAL:
+		assert(inst->Label.Label < pc->insn_nr);
+		emit_call(pc, -1, 0)->param.index = inst->Label.Label;
+		/* replaced by actual offset in nv50_program_fixup_insns */
 		break;
 	case TGSI_OPCODE_CEIL:
 		for (c = 0; c < 4; c++) {
@@ -2348,6 +2358,10 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->loop_brka[pc->loop_lvl]->param.index = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_ENDSUB:
+		assert(pc->in_subroutine);
+		pc->in_subroutine = FALSE;
+		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
 		emit_flop(pc, NV50_FLOP_EX2, brdc, temp);
@@ -2443,7 +2457,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_flop(pc, NV50_FLOP_RCP, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_RET:
-		if (pc->p->type == PIPE_SHADER_FRAGMENT)
+		if (pc->p->type == PIPE_SHADER_FRAGMENT && !pc->in_subroutine)
 			nv50_fp_move_results(pc);
 		emit_ret(pc, -1, 0);
 		break;
@@ -2538,6 +2552,17 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mov_immdval(pc, dst[3], 1.0);
 		break;
 	case TGSI_OPCODE_END:
+		if (pc->p->type == PIPE_SHADER_FRAGMENT)
+			nv50_fp_move_results(pc);
+
+		/* last insn must be long so it can have the exit bit set */
+		if (!is_long(pc->p->exec_tail))
+			convert_to_long(pc, pc->p->exec_tail);
+		else
+		if (is_immd(pc->p->exec_tail) || is_join(pc->p->exec_tail))
+			emit_nop(pc);
+
+		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
 		break;
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", inst->Instruction.Opcode);
@@ -3231,16 +3256,6 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 		if (e->param.index >= 0 && !e->param.mask)
 			bra_list[n++] = e;
 
-	/* last instruction must be long so it can have the exit bit set */
-	if (!is_long(pc->p->exec_tail))
-		convert_to_long(pc, pc->p->exec_tail);
-	/* set exit bit */
-	pc->p->exec_tail->inst[1] |= 1;
-
-	/* !immd on exit insn simultaneously means !join */
-	assert(!is_immd(pc->p->exec_head));
-	assert(!is_immd(pc->p->exec_tail));
-
 	/* Make sure we don't have any single 32 bit instructions. */
 	for (e = pc->p->exec_head, pos = 0; e; e = e->next) {
 		pos += is_long(e) ? 2 : 1;
@@ -3249,12 +3264,24 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 			for (i = 0; i < n; ++i)
 				if (bra_list[i]->param.index >= pos)
 					bra_list[i]->param.index += 1;
+			for (i = 0; i < pc->insn_nr; ++i)
+				if (pc->insn_pos[i] >= pos)
+					pc->insn_pos[i] += 1;
 			convert_to_long(pc, e);
 			++pos;
 		}
 	}
 
 	FREE(bra_list);
+
+	if (!pc->p->info.opcode_count[TGSI_OPCODE_CAL])
+		return;
+
+	/* fill in CALL offsets */
+	for (e = pc->p->exec_head; e; e = e->next) {
+		if ((e->inst[0] & 2) && (e->inst[0] >> 28) == 0x2)
+			e->param.index = pc->insn_pos[e->param.index];
+	}
 }
 
 static boolean
@@ -3276,19 +3303,20 @@ nv50_program_tx(struct nv50_program *p)
 	if (ret == FALSE)
 		goto out_cleanup;
 
+	pc->insn_pos = MALLOC(pc->insn_nr * sizeof(unsigned));
+
 	tgsi_parse_init(&parse, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		const union tgsi_full_token *tok = &parse.FullToken;
 
-		/* don't allow half insn/immd on first and last instruction */
+		/* previously allow32 was FALSE for first & last instruction */
 		pc->allow32 = TRUE;
-		if (pc->insn_cur == 0 || pc->insn_cur + 2 == pc->insn_nr)
-			pc->allow32 = FALSE;
 
 		tgsi_parse_token(&parse);
 
 		switch (tok->Token.Type) {
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
+			pc->insn_pos[pc->insn_cur] = pc->p->exec_size;
 			++pc->insn_cur;
 			ret = nv50_tgsi_insn(pc, tok);
 			if (ret == FALSE)
@@ -3298,9 +3326,6 @@ nv50_program_tx(struct nv50_program *p)
 			break;
 		}
 	}
-
-	if (pc->p->type == PIPE_SHADER_FRAGMENT)
-		nv50_fp_move_results(pc);
 
 	nv50_program_fixup_insns(pc);
 
