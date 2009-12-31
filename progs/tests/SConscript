@@ -64,6 +64,7 @@ progs = [
     'crossbar',
     'cva',
     'drawbuffers',
+    'drawbuffers2',
     'exactrast',
     'ext422square',
     'fbotest1',
