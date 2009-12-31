@@ -24,6 +24,7 @@
 
 
 #include "main/glheader.h"
+#include "main/condrender.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "s_context.h"
@@ -566,6 +567,9 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
       GL_STENCIL_BUFFER_BIT
    };
    GLint i;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't clear */
 
    if (!ctx->DrawBuffer->_NumColorDrawBuffers)
       return;

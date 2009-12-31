@@ -24,6 +24,7 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
+#include "main/condrender.h"
 #include "main/formats.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -299,6 +300,9 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
       assert((buffers & (~legalBits)) == 0);
    }
 #endif
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't clear */
 
    swrast_render_start(ctx);
 
