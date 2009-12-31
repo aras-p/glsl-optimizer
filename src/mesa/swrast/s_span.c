@@ -1766,9 +1766,7 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Get RGBA pixels from the given renderbuffer.  Put the pixel colors into
- * the span's specular color arrays.  The specular color arrays should no
- * longer be needed by time this function is called.
+ * Get RGBA pixels from the given renderbuffer.
  * Used by blending, logicop and masking functions.
  * \return pointer to the colors we read.
  */
@@ -1779,10 +1777,8 @@ _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
    const GLuint pixelSize = RGBA_PIXEL_SIZE(span->array->ChanType);
    void *rbPixels;
 
-   /*
-    * Point rbPixels to a temporary space (use specular color arrays).
-    */
-   rbPixels = span->array->attribs[FRAG_ATTRIB_COL1];
+   /* Point rbPixels to a temporary space */
+   rbPixels = span->array->attribs[FRAG_ATTRIB_MAX - 1];
 
    /* Get destination values from renderbuffer */
    if (span->arrayMask & SPAN_XY) {
