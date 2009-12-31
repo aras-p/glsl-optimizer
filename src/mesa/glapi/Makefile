@@ -60,7 +60,8 @@ API_XML = gl_API.xml \
 	EXT_framebuffer_object.xml \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
-	EXT_texture_array.xml
+	EXT_texture_array.xml \
+	NV_conditional_render.xml
 
 COMMON = gl_XML.py glX_XML.py license.py $(API_XML) typeexpr.py
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py

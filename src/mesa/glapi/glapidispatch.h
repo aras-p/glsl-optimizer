@@ -2440,6 +2440,12 @@
 #define CALL_IsEnabledIndexedEXT(disp, parameters) (*((disp)->IsEnabledIndexedEXT)) parameters
 #define GET_IsEnabledIndexedEXT(disp) ((disp)->IsEnabledIndexedEXT)
 #define SET_IsEnabledIndexedEXT(disp, fn) ((disp)->IsEnabledIndexedEXT = fn)
+#define CALL_BeginConditionalRenderNV(disp, parameters) (*((disp)->BeginConditionalRenderNV)) parameters
+#define GET_BeginConditionalRenderNV(disp) ((disp)->BeginConditionalRenderNV)
+#define SET_BeginConditionalRenderNV(disp, fn) ((disp)->BeginConditionalRenderNV = fn)
+#define CALL_EndConditionalRenderNV(disp, parameters) (*((disp)->EndConditionalRenderNV)) parameters
+#define GET_EndConditionalRenderNV(disp) ((disp)->EndConditionalRenderNV)
+#define SET_EndConditionalRenderNV(disp, fn) ((disp)->EndConditionalRenderNV = fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) (*((disp)->ProvokingVertexEXT)) parameters
 #define GET_ProvokingVertexEXT(disp) ((disp)->ProvokingVertexEXT)
 #define SET_ProvokingVertexEXT(disp, fn) ((disp)->ProvokingVertexEXT = fn)
@@ -2467,7 +2473,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 393
+#define driDispatchRemapTable_size 395
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2855,14 +2861,16 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define GetBooleanIndexedvEXT_remap_index 382
 #define GetIntegerIndexedvEXT_remap_index 383
 #define IsEnabledIndexedEXT_remap_index 384
-#define ProvokingVertexEXT_remap_index 385
-#define GetTexParameterPointervAPPLE_remap_index 386
-#define TextureRangeAPPLE_remap_index 387
-#define StencilFuncSeparateATI_remap_index 388
-#define ProgramEnvParameters4fvEXT_remap_index 389
-#define ProgramLocalParameters4fvEXT_remap_index 390
-#define GetQueryObjecti64vEXT_remap_index 391
-#define GetQueryObjectui64vEXT_remap_index 392
+#define BeginConditionalRenderNV_remap_index 385
+#define EndConditionalRenderNV_remap_index 386
+#define ProvokingVertexEXT_remap_index 387
+#define GetTexParameterPointervAPPLE_remap_index 388
+#define TextureRangeAPPLE_remap_index 389
+#define StencilFuncSeparateATI_remap_index 390
+#define ProgramEnvParameters4fvEXT_remap_index 391
+#define ProgramLocalParameters4fvEXT_remap_index 392
+#define GetQueryObjecti64vEXT_remap_index 393
+#define GetQueryObjectui64vEXT_remap_index 394
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4019,6 +4027,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_IsEnabledIndexedEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[IsEnabledIndexedEXT_remap_index], parameters)
 #define GET_IsEnabledIndexedEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsEnabledIndexedEXT_remap_index])
 #define SET_IsEnabledIndexedEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsEnabledIndexedEXT_remap_index], fn)
+#define CALL_BeginConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), driDispatchRemapTable[BeginConditionalRenderNV_remap_index], parameters)
+#define GET_BeginConditionalRenderNV(disp) GET_by_offset(disp, driDispatchRemapTable[BeginConditionalRenderNV_remap_index])
+#define SET_BeginConditionalRenderNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginConditionalRenderNV_remap_index], fn)
+#define CALL_EndConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndConditionalRenderNV_remap_index], parameters)
+#define GET_EndConditionalRenderNV(disp) GET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index])
+#define SET_EndConditionalRenderNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index], fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ProvokingVertexEXT_remap_index], parameters)
 #define GET_ProvokingVertexEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index])
 #define SET_ProvokingVertexEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index], fn)

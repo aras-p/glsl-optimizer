@@ -827,15 +827,17 @@
 #define _gloffset_GetBooleanIndexedvEXT 790
 #define _gloffset_GetIntegerIndexedvEXT 791
 #define _gloffset_IsEnabledIndexedEXT 792
-#define _gloffset_ProvokingVertexEXT 793
-#define _gloffset_GetTexParameterPointervAPPLE 794
-#define _gloffset_TextureRangeAPPLE 795
-#define _gloffset_StencilFuncSeparateATI 796
-#define _gloffset_ProgramEnvParameters4fvEXT 797
-#define _gloffset_ProgramLocalParameters4fvEXT 798
-#define _gloffset_GetQueryObjecti64vEXT 799
-#define _gloffset_GetQueryObjectui64vEXT 800
-#define _gloffset_FIRST_DYNAMIC 801
+#define _gloffset_BeginConditionalRenderNV 793
+#define _gloffset_EndConditionalRenderNV 794
+#define _gloffset_ProvokingVertexEXT 795
+#define _gloffset_GetTexParameterPointervAPPLE 796
+#define _gloffset_TextureRangeAPPLE 797
+#define _gloffset_StencilFuncSeparateATI 798
+#define _gloffset_ProgramEnvParameters4fvEXT 799
+#define _gloffset_ProgramLocalParameters4fvEXT 800
+#define _gloffset_GetQueryObjecti64vEXT 801
+#define _gloffset_GetQueryObjectui64vEXT 802
+#define _gloffset_FIRST_DYNAMIC 803
 
 #else
 
@@ -1224,6 +1226,8 @@
 #define _gloffset_GetBooleanIndexedvEXT driDispatchRemapTable[GetBooleanIndexedvEXT_remap_index]
 #define _gloffset_GetIntegerIndexedvEXT driDispatchRemapTable[GetIntegerIndexedvEXT_remap_index]
 #define _gloffset_IsEnabledIndexedEXT driDispatchRemapTable[IsEnabledIndexedEXT_remap_index]
+#define _gloffset_BeginConditionalRenderNV driDispatchRemapTable[BeginConditionalRenderNV_remap_index]
+#define _gloffset_EndConditionalRenderNV driDispatchRemapTable[EndConditionalRenderNV_remap_index]
 #define _gloffset_ProvokingVertexEXT driDispatchRemapTable[ProvokingVertexEXT_remap_index]
 #define _gloffset_GetTexParameterPointervAPPLE driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index]
 #define _gloffset_TextureRangeAPPLE driDispatchRemapTable[TextureRangeAPPLE_remap_index]
