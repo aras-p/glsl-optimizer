@@ -26,6 +26,7 @@
  */
 
 #include "main/glheader.h"
+#include "main/condrender.h"
 #include "main/context.h"
 #include "main/imports.h"
 #include "main/state.h"
@@ -385,6 +386,9 @@ void _tnl_draw_prims( GLcontext *ctx,
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
    GLuint max_basevertex = prim->basevertex;
    GLuint i;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't draw */
 
    for (i = 1; i < nr_prims; i++)
       max_basevertex = MAX2(max_basevertex, prim[i].basevertex);
