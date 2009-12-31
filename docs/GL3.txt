@@ -13,7 +13,7 @@ Feature                                               Status
 GL 3.0:
 
 GLSL changes (GL_EXT_gpu_shader4, etc)                not started
-Conditional rendering (GL_NV_conditional_render)      not started
+Conditional rendering (GL_NV_conditional_render)      DONE (swrast only)
 Map buffer subranges (GL_APPLE_flush_buffer_range)    not started
 Float textures, renderbuffers                         some infrastructure done
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
