@@ -7,22 +7,13 @@ env = env.Clone()
 
 env.Append(CPPDEFINES = [
     'GLEW_BUILD',
-    'GLEW_STATIC',
+    #'GLEW_STATIC',
     #'GLEW_MX', # Multiple Rendering Contexts support
 ])
 
 env.PrependUnique(CPPPATH = [
     '#/include',
 ])
-
-glew = env.StaticLibrary(
-    target = 'glew',
-    source = [
-        'glew.c',
-    ],
-)
-
-env = env.Clone()
 
 if env['platform'] == 'windows':
     env.PrependUnique(LIBS = [
@@ -37,6 +28,24 @@ else:
         'GL',
         'X11',
     ])
+
+if env['platform'] == 'windows':
+    target = 'glew'
+else:
+    target = 'GLEW'
+
+glew = env.SharedLibrary(
+    target = target,
+    source = [
+        'glew.c',
+    ],
+)
+
+if env['platform'] == 'windows':
+    glew = env.FindIxes(glew, 'LIBPREFIX', 'LIBSUFFIX')
+
+env = env.Clone()
+
 env.Prepend(LIBS = [glew])
 
 env.Program(
@@ -48,3 +57,5 @@ env.Program(
     target = 'visualinfo',
     source = ['visualinfo.c'],
 )
+
+Export('glew')

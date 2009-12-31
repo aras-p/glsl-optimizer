@@ -177,7 +177,7 @@ if env['platform'] != common.default_platform:
 
     SConscript(
         'src/glsl/SConscript',
-        variant_dir = env['build'] + '/host',
+        variant_dir = os.path.join(env['build'], 'host'),
         duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
         exports={'env':host_env},
     )
@@ -185,5 +185,11 @@ if env['platform'] != common.default_platform:
 SConscript(
 	'src/SConscript',
 	variant_dir = env['build'],
+	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)
+
+SConscript(
+	'progs/SConscript',
+	variant_dir = os.path.join('progs', env['build']),
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
