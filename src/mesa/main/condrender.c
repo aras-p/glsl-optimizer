@@ -89,6 +89,8 @@ _mesa_EndConditionalRender(void)
 {
    GET_CURRENT_CONTEXT(ctx);
 
+   FLUSH_VERTICES(ctx, 0x0);
+
    if (!ctx->Extensions.NV_conditional_render || !ctx->Query.CondRenderQuery) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEndConditionalRender()");
       return;
@@ -103,12 +105,14 @@ _mesa_EndConditionalRender(void)
 
 
 /**
- * This function is called by software rendering commands to determine if
- * subsequent drawing commands should be executed or discarded depending
- * on the current conditional rendering state.
- * Ideally, this check would be implemented by the GPU when doing hardware
- * rendering.
- * XXX should this function be called via a new driver hook?
+ * This function is called by software rendering commands (all point,
+ * line triangle drawing, glClear, glDrawPixels, glCopyPixels, and
+ * glBitmap, glBlitFramebuffer) to determine if subsequent drawing
+ * commands should be
+ * executed or discarded depending on the current conditional
+ * rendering state.  Ideally, this check would be implemented by the
+ * GPU when doing hardware rendering.  XXX should this function be
+ * called via a new driver hook?
  *
  * \return GL_TRUE if we should render, GL_FALSE if we should discard
  */
