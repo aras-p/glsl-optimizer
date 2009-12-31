@@ -38,116 +38,6 @@ import SCons.Action
 import SCons.Builder
 import SCons.Scanner
 
-import fixes
-
-
-def quietCommandLines(env):
-    # Quiet command lines
-    # See also http://www.scons.org/wiki/HidingCommandLinesInOutput
-    env['ASCOMSTR'] = "  Assembling $SOURCE ..."
-    env['ASPPCOMSTR'] = "  Assembling $SOURCE ..."
-    env['CCCOMSTR'] = "  Compiling $SOURCE ..."
-    env['SHCCCOMSTR'] = "  Compiling $SOURCE ..."
-    env['CXXCOMSTR'] = "  Compiling $SOURCE ..."
-    env['SHCXXCOMSTR'] = "  Compiling $SOURCE ..."
-    env['ARCOMSTR'] = "  Archiving $TARGET ..."
-    env['RANLIBCOMSTR'] = "  Indexing $TARGET ..."
-    env['LINKCOMSTR'] = "  Linking $TARGET ..."
-    env['SHLINKCOMSTR'] = "  Linking $TARGET ..."
-    env['LDMODULECOMSTR'] = "  Linking $TARGET ..."
-    env['SWIGCOMSTR'] = "  Generating $TARGET ..."
-
-
-def createConvenienceLibBuilder(env):
-    """This is a utility function that creates the ConvenienceLibrary
-    Builder in an Environment if it is not there already.
-
-    If it is already there, we return the existing one.
-
-    Based on the stock StaticLibrary and SharedLibrary builders.
-    """
-
-    try:
-        convenience_lib = env['BUILDERS']['ConvenienceLibrary']
-    except KeyError:
-        action_list = [ SCons.Action.Action("$ARCOM", "$ARCOMSTR") ]
-        if env.Detect('ranlib'):
-            ranlib_action = SCons.Action.Action("$RANLIBCOM", "$RANLIBCOMSTR")
-            action_list.append(ranlib_action)
-
-        convenience_lib = SCons.Builder.Builder(action = action_list,
-                                  emitter = '$LIBEMITTER',
-                                  prefix = '$LIBPREFIX',
-                                  suffix = '$LIBSUFFIX',
-                                  src_suffix = '$SHOBJSUFFIX',
-                                  src_builder = 'SharedObject')
-        env['BUILDERS']['ConvenienceLibrary'] = convenience_lib
-
-    return convenience_lib
-
-
-# TODO: handle import statements with multiple modules
-# TODO: handle from import statements
-import_re = re.compile(r'^import\s+(\S+)$', re.M)
-
-def python_scan(node, env, path):
-    # http://www.scons.org/doc/0.98.5/HTML/scons-user/c2781.html#AEN2789
-    contents = node.get_contents()
-    source_dir = node.get_dir()
-    imports = import_re.findall(contents)
-    results = []
-    for imp in imports:
-        for dir in path:
-            file = os.path.join(str(dir), imp.replace('.', os.sep) + '.py')
-            if os.path.exists(file):
-                results.append(env.File(file))
-                break
-            file = os.path.join(str(dir), imp.replace('.', os.sep), '__init__.py')
-            if os.path.exists(file):
-                results.append(env.File(file))
-                break
-    return results
-
-python_scanner = SCons.Scanner.Scanner(function = python_scan, skeys = ['.py'])
-
-
-def code_generate(env, script, target, source, command):
-    """Method to simplify code generation via python scripts.
-
-    http://www.scons.org/wiki/UsingCodeGenerators
-    http://www.scons.org/doc/0.98.5/HTML/scons-user/c2768.html
-    """
-
-    # We're generating code using Python scripts, so we have to be
-    # careful with our scons elements.  This entry represents
-    # the generator file *in the source directory*.
-    script_src = env.File(script).srcnode()
-
-    # This command creates generated code *in the build directory*.
-    command = command.replace('$SCRIPT', script_src.path)
-    code = env.Command(target, source, command)
-
-    # Explicitly mark that the generated code depends on the generator,
-    # and on implicitly imported python modules
-    path = (script_src.get_dir(),)
-    deps = [script_src]
-    deps += script_src.get_implicit_deps(env, python_scanner, path)
-    env.Depends(code, deps)
-
-    # Running the Python script causes .pyc files to be generated in the
-    # source directory.  When we clean up, they should go too. So add side
-    # effects for .pyc files
-    for dep in deps:
-        pyc = env.File(str(dep) + 'c')
-        env.SideEffect(pyc, code)
-
-    return code
-
-
-def createCodeGenerateMethod(env):
-    env.Append(SCANNERS = python_scanner)
-    env.AddMethod(code_generate, 'CodeGenerate')
-
 
 def symlink(target, source, env):
     target = str(target[0])
@@ -200,9 +90,6 @@ def num_jobs():
 
 def generate(env):
     """Common environment generation code"""
-
-    if env.get('quiet', True):
-        quietCommandLines(env)
 
     # Toolchain
     platform = env['platform']
@@ -543,8 +430,7 @@ def generate(env):
     env.Append(LIBS = [])
 
     # Custom builders and methods
-    createConvenienceLibBuilder(env)
-    createCodeGenerateMethod(env)
+    env.Tool('custom')
     createInstallMethods(env)
 
     # for debugging

@@ -166,11 +166,14 @@ if env['platform'] != common.default_platform:
     host_env = Environment(
         # options are ignored
         # default tool is used
+        tools = ['default', 'custom'],
         toolpath = ['#scons'],	
         ENV = os.environ,
     )
 
     host_env['platform'] = common.default_platform
+    host_env['machine'] = common.default_machine
+    host_env['debug'] = env['debug']
 
     SConscript(
         'src/glsl/SConscript',
