@@ -61,13 +61,7 @@ VG_MINOR = 0
 VG_TINY = 0
 
 GALLIUM_LIBS = \
-	$(GALLIUM)/src/gallium/auxiliary/pipebuffer/libpipebuffer.a \
-	$(GALLIUM)/src/gallium/auxiliary/draw/libdraw.a \
-	$(GALLIUM)/src/gallium/auxiliary/rtasm/librtasm.a \
-	$(GALLIUM)/src/gallium/auxiliary/translate/libtranslate.a \
-	$(GALLIUM)/src/gallium/auxiliary/cso_cache/libcso_cache.a \
-	$(GALLIUM)/src/gallium/auxiliary/util/libutil.a \
-	$(GALLIUM)/src/gallium/auxiliary/tgsi/libtgsi.a
+	$(GALLIUM)/src/gallium/auxiliary/libgallium.a
 
 .SUFFIXES : .cpp
 

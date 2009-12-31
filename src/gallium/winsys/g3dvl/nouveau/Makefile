@@ -19,11 +19,7 @@ CFLAGS		+= -g -Wall -Werror=implicit-function-declaration -fPIC	\
 LDFLAGS		+= -L${DRMDIR}/lib				\
 		   -L${DRIDIR}/lib				\
 		   -L${GALLIUMDIR}/winsys/drm/nouveau/common	\
-		   -L${GALLIUMDIR}/auxiliary/draw		\
-		   -L${GALLIUMDIR}/auxiliary/tgsi		\
-		   -L${GALLIUMDIR}/auxiliary/translate		\
-		   -L${GALLIUMDIR}/auxiliary/rtasm		\
-		   -L${GALLIUMDIR}/auxiliary/cso_cache		\
+		   -L${GALLIUMDIR}/auxiliary			\
 		   -L${GALLIUMDIR}/drivers/nv04			\
 		   -L${GALLIUMDIR}/drivers/nv10			\
 		   -L${GALLIUMDIR}/drivers/nv20			\
@@ -31,7 +27,7 @@ LDFLAGS		+= -L${DRMDIR}/lib				\
 		   -L${GALLIUMDIR}/drivers/nv40			\
 		   -L${GALLIUMDIR}/drivers/nv50
 
-LIBS		+= -lnouveaudrm -ldriclient -ldrm_nouveau -ldrm -lnv04 -lnv10 -lnv20 -lnv30 -lnv40 -lnv50 -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lm
+LIBS		+= -lnouveaudrm -ldriclient -ldrm_nouveau -ldrm -lnv04 -lnv10 -lnv20 -lnv30 -lnv40 -lnv50 -lgallium -lm
 
 #############################################
 
