@@ -51,6 +51,7 @@
 #include "clear.h"
 #include "clip.h"
 #include "colortab.h"
+#include "condrender.h"
 #include "context.h"
 #include "convolve.h"
 #include "depth.h"
@@ -754,4 +755,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_EnableIndexedEXT(exec, _mesa_EnableIndexed);
    SET_DisableIndexedEXT(exec, _mesa_DisableIndexed);
    SET_IsEnabledIndexedEXT(exec, _mesa_IsEnabledIndexed);
+
+   /* GL_NV_conditional_render */
+   SET_BeginConditionalRenderNV(exec, _mesa_BeginConditionalRender);
+   SET_EndConditionalRenderNV(exec, _mesa_EndConditionalRender);
 }
