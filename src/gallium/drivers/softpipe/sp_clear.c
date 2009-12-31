@@ -36,6 +36,7 @@
 #include "util/u_pack_color.h"
 #include "sp_clear.h"
 #include "sp_context.h"
+#include "sp_query.h"
 #include "sp_tile_cache.h"
 
 
@@ -53,6 +54,9 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
    uint i;
 
    if (softpipe->no_rast)
+      return;
+
+   if (!softpipe_check_render_cond(softpipe))
       return;
 
 #if 0

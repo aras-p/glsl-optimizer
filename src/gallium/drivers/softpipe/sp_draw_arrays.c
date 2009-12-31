@@ -38,6 +38,7 @@
 #include "util/u_prim.h"
 
 #include "sp_context.h"
+#include "sp_query.h"
 #include "sp_state.h"
 
 #include "draw/draw_context.h"
@@ -121,6 +122,9 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    unsigned i;
+
+   if (!softpipe_check_render_cond(sp))
+      return TRUE;
 
    sp->reduced_api_prim = u_reduced_prim(mode);
 
