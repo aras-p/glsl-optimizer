@@ -2864,7 +2864,7 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 	pc->r_brdc = NULL;
 
-	if (!deqs)
+	if (!deqs || (!rdep[0] && !rdep[1] && !rdep[2] && !rdep[3]))
 		return nv50_program_tx_insn(pc, &insn);
 
 	deqs = nv50_revdep_reorder(m, rdep);
