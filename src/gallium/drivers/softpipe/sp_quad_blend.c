@@ -229,7 +229,7 @@ blend_quad(struct quad_stage *qs,
    static const float zero[4] = { 0, 0, 0, 0 };
    static const float one[4] = { 1, 1, 1, 1 };
    struct softpipe_context *softpipe = qs->softpipe;
-   float source[4][QUAD_SIZE];
+   float source[4][QUAD_SIZE] = { { 0 } };
 
    /*
     * Compute src/first term RGB

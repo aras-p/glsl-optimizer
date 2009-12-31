@@ -1572,7 +1572,7 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
     tdfxTexInfo *ti;
     tdfxMipMapLevel *mml;
     gl_format mesaFormat;
-    GLuint compressedSize;
+    GLuint compressedSize = 0;
 
     if (TDFX_DEBUG & DEBUG_VERBOSE_DRI) {
         fprintf(stderr, "tdfxCompressedTexImage2D: id=%d int 0x%x  %dx%d\n",

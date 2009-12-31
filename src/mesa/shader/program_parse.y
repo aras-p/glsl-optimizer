@@ -74,6 +74,9 @@ static void init_src_reg(struct asm_src_register *r);
 static void set_src_reg(struct asm_src_register *r,
                         gl_register_file file, GLint index);
 
+static void set_src_reg_swz(struct asm_src_register *r,
+                            gl_register_file file, GLint index, GLuint swizzle);
+
 static void asm_instruction_set_operands(struct asm_instruction *inst,
     const struct prog_dst_register *dst, const struct asm_src_register *src0,
     const struct asm_src_register *src1, const struct asm_src_register *src2);
@@ -588,7 +591,9 @@ scalarUse:  srcReg scalarSuffix
 	   temp_sym.param_binding_begin = ~0;
 	   initialize_symbol_from_const(state->prog, & temp_sym, & $1);
 
-	   set_src_reg(& $$, PROGRAM_CONSTANT, temp_sym.param_binding_begin);
+	   set_src_reg_swz(& $$, PROGRAM_CONSTANT,
+                           temp_sym.param_binding_begin,
+                           temp_sym.param_binding_swizzle);
 	}
 	;
 
@@ -790,7 +795,9 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	      set_src_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_param:
-	      set_src_reg(& $$, s->param_binding_type, s->param_binding_begin);
+              set_src_reg_swz(& $$, s->param_binding_type,
+                              s->param_binding_begin,
+                              s->param_binding_swizzle);
 	      break;
 	   case at_attrib:
 	      set_src_reg(& $$, PROGRAM_INPUT, s->attrib_binding);
@@ -841,7 +848,8 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
            gl_register_file file = ($1.name != NULL) 
 	      ? $1.param_binding_type
 	      : PROGRAM_CONSTANT;
-	   set_src_reg(& $$, file, $1.param_binding_begin);
+           set_src_reg_swz(& $$, file, $1.param_binding_begin,
+                           $1.param_binding_swizzle);
 	}
 	;
 
@@ -1210,6 +1218,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	      s->param_binding_type = $3.param_binding_type;
 	      s->param_binding_begin = $3.param_binding_begin;
 	      s->param_binding_length = $3.param_binding_length;
+              s->param_binding_swizzle = SWIZZLE_XYZW;
 	      s->param_is_array = 0;
 	   }
 	}
@@ -1233,6 +1242,7 @@ PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 		 s->param_binding_type = $6.param_binding_type;
 		 s->param_binding_begin = $6.param_binding_begin;
 		 s->param_binding_length = $6.param_binding_length;
+                 s->param_binding_swizzle = SWIZZLE_XYZW;
 		 s->param_is_array = 1;
 	      }
 	   }
@@ -2310,19 +2320,29 @@ init_src_reg(struct asm_src_register *r)
 }
 
 
-/** Like init_src_reg() but set the File and Index fields. */
+/** Like init_src_reg() but set the File and Index fields.
+ * \return GL_TRUE if a valid src register, GL_FALSE otherwise
+ */
 void
 set_src_reg(struct asm_src_register *r, gl_register_file file, GLint index)
 {
+   set_src_reg_swz(r, file, index, SWIZZLE_XYZW);
+}
+
+
+void
+set_src_reg_swz(struct asm_src_register *r, gl_register_file file, GLint index,
+                GLuint swizzle)
+{
    const GLint maxIndex = (1 << INST_INDEX_BITS) - 1;
    const GLint minIndex = -(1 << INST_INDEX_BITS);
+   ASSERT(file < PROGRAM_FILE_MAX);
    ASSERT(index >= minIndex);
    ASSERT(index <= maxIndex);
-   ASSERT(file < PROGRAM_FILE_MAX);
    memset(r, 0, sizeof(*r));
    r->Base.File = file;
    r->Base.Index = index;
-   r->Base.Swizzle = SWIZZLE_NOOP;
+   r->Base.Swizzle = swizzle;
    r->Symbol = NULL;
 }
 
@@ -2454,15 +2474,20 @@ initialize_symbol_from_state(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == ~0U)
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
+            param_var->param_binding_swizzle = SWIZZLE_XYZW;
+         }
+
 	 param_var->param_binding_length++;
       }
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == ~0U)
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
+         param_var->param_binding_swizzle = SWIZZLE_XYZW;
+      }
       param_var->param_binding_length++;
    }
 
@@ -2502,15 +2527,19 @@ initialize_symbol_from_param(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == ~0U)
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
+            param_var->param_binding_swizzle = SWIZZLE_XYZW;
+         }
 	 param_var->param_binding_length++;
       }
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == ~0U)
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
+         param_var->param_binding_swizzle = SWIZZLE_XYZW;
+      }
       param_var->param_binding_length++;
    }
 
@@ -2518,20 +2547,29 @@ initialize_symbol_from_param(struct gl_program *prog,
 }
 
 
+/**
+ * Put a float/vector constant/literal into the parameter list.
+ * \param param_var  returns info about the parameter/constant's location,
+ *                   binding, type, etc.
+ * \param vec  the vector/constant to add
+ * \return index of the constant in the parameter list.
+ */
 int
 initialize_symbol_from_const(struct gl_program *prog,
 			     struct asm_symbol *param_var, 
 			     const struct asm_vector *vec)
 {
-   const int idx = _mesa_add_parameter(prog->Parameters, PROGRAM_CONSTANT,
-				       NULL, vec->count, GL_NONE, vec->data,
-				       NULL, 0x0);
+   unsigned swizzle;
+   const int idx = _mesa_add_unnamed_constant(prog->Parameters,
+                                              vec->data, vec->count, &swizzle);
 
    param_var->type = at_param;
    param_var->param_binding_type = PROGRAM_CONSTANT;
 
-   if (param_var->param_binding_begin == ~0U)
+   if (param_var->param_binding_begin == ~0U) {
       param_var->param_binding_begin = idx;
+      param_var->param_binding_swizzle = swizzle;
+   }
    param_var->param_binding_length++;
 
    return idx;

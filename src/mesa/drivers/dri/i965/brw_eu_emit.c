@@ -199,7 +199,7 @@ void brw_set_src1( struct brw_instruction *insn,
        * in the future:
        */
       assert (reg.address_mode == BRW_ADDRESS_DIRECT);
-      //assert (reg.file == BRW_GENERAL_REGISTER_FILE);
+      /* assert (reg.file == BRW_GENERAL_REGISTER_FILE); */
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits3.da1.src1_subreg_nr = reg.subnr;
@@ -862,7 +862,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
-   assert(jmp_insn->bits1.da1.src1_reg_file = BRW_IMMEDIATE_VALUE);
+   assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
 
    jmp_insn->bits3.ud = jmpi * ((landing - jmp_insn) - 1);
 }

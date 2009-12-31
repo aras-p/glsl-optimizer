@@ -52,6 +52,7 @@ trace_buffer_unwrap(struct trace_context *tr_ctx,
 
    assert(tr_buf->buffer);
    assert(tr_buf->buffer->screen == tr_scr->screen);
+   (void) tr_scr;
    return tr_buf->buffer;
 }
 
@@ -90,6 +91,7 @@ trace_surface_unwrap(struct trace_context *tr_ctx,
 
    assert(tr_surf->surface);
    assert(tr_surf->surface->texture->screen == tr_scr->screen);
+   (void) tr_scr;
    return tr_surf->surface;
 }
 

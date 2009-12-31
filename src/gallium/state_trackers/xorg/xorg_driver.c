@@ -220,6 +220,12 @@ static Bool
 drv_init_resource_management(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+    /*
+    ScreenPtr pScreen = pScrn->pScreen;
+    PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+    Bool fbAccessDisabled;
+    CARD8 *fbstart;
+     */
 
     if (ms->screen || ms->kms)
 	return TRUE;
@@ -249,9 +255,19 @@ static Bool
 drv_close_resource_management(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+    int i;
 
-    if (ms->screen)
+    if (ms->screen) {
+	assert(ms->ctx == NULL);
+
+	for (i = 0; i < XORG_NR_FENCES; i++) {
+	    if (ms->fence[i]) {
+		ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
+		ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
+	    }
+	}
 	ms->screen->destroy(ms->screen);
+    }
     ms->screen = NULL;
 
     if (ms->api && ms->api->destroy)
@@ -461,7 +477,7 @@ static void drv_block_handler(int i, pointer blockData, pointer pTimeout,
         * quite small.  Let us get a fair way ahead of hardware before
         * throttling.
         */
-       for (j = 0; j < XORG_NR_FENCES; j++)
+       for (j = 0; j < XORG_NR_FENCES - 1; j++)
           ms->screen->fence_reference(ms->screen,
                                       &ms->fence[j],
                                       ms->fence[j+1]);
@@ -914,6 +930,12 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     ScreenPtr pScreen = pScrn->pScreen;
     PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
+
+    /* XXX Do something with the rootPixmap.
+     * This currently works fine but if we are getting crashes in
+     * the fb functions after VT switches maybe look more into it.
+     */
+    (void)rootPixmap;
 
     if (!ms->root_bo)
 	return TRUE;

@@ -334,11 +334,13 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    free(tokens);
 }
 
+#if 0
 static void
 create_field_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static void
 create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
@@ -442,11 +444,13 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    free(tokens);
 }
 
+#if 0
 static void
 create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static void
 create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
@@ -532,11 +536,13 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    free(tokens);
 }
 
+#if 0
 static void
 create_field_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static void
 create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
@@ -658,11 +664,13 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    free(tokens);
 }
 
+#if 0
 static void
 create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static void
 xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
@@ -1080,6 +1088,9 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
    assert(mb);
    assert(ycbcr_vb);
    assert(pos < r->macroblocks_per_batch);
+
+   mo_vec[1].x = 0;
+   mo_vec[1].y = 0;
 
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:

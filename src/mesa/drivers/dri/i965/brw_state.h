@@ -35,7 +35,7 @@
 
 #include "brw_context.h"
 
-static inline void
+static INLINE void
 brw_add_validated_bo(struct brw_context *brw, dri_bo *bo)
 {
    assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));

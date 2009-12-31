@@ -152,6 +152,7 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	int num_screens = 0;
 	EGLint i;
 	int fd;
+	_EGLConfig *config;
 
 	dev = (struct drm_device *) calloc(1, sizeof(struct drm_device));
 	if (!dev)
@@ -206,7 +207,7 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	disp->DriverData = dev;
 
 	/* for now we only have one config */
-	_EGLConfig *config = calloc(1, sizeof(*config));
+	config = calloc(1, sizeof(*config));
 	memset(config, 1, sizeof(*config));
 	_eglInitConfig(config, 1);
 	_eglSetConfigAttrib(config, EGL_RED_SIZE, 8);

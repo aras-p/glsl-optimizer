@@ -115,6 +115,10 @@ Bool XF86DRIGetDeviceInfo(Display * dpy, int screen,
                           int *fbSize, int *fbStride, int *devPrivateSize,
                           void **pDevPrivate);
 
+Bool XF86DRIOpenFullScreen(Display * dpy, int screen, Drawable drawable);
+
+Bool XF86DRICloseFullScreen(Display * dpy, int screen, Drawable drawable);
+
 _XFUNCPROTOEND
 #endif /* _XF86DRI_SERVER_ */
 #endif /* _XF86DRI_H_ */

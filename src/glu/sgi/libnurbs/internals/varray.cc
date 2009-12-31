@@ -53,8 +53,16 @@ inline long sgn( REAL x )
 
 Varray::Varray( void )
 {
+    int i;
+
     varray = 0;
     size = 0;
+    numquads = 0;
+
+    for (i = 0; i < 1000; i++) {
+        vval[i] = 0;
+        voffset[i] = 0;
+    }
 }
 
 Varray::~Varray( void )
