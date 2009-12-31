@@ -62,7 +62,6 @@ VG_TINY = 0
 
 GALLIUM_LIBS = \
 	$(GALLIUM)/src/gallium/auxiliary/pipebuffer/libpipebuffer.a \
-	$(GALLIUM)/src/gallium/auxiliary/sct/libsct.a \
 	$(GALLIUM)/src/gallium/auxiliary/draw/libdraw.a \
 	$(GALLIUM)/src/gallium/auxiliary/rtasm/librtasm.a \
 	$(GALLIUM)/src/gallium/auxiliary/translate/libtranslate.a \
