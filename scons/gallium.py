@@ -153,8 +153,6 @@ def generate(env):
             #'UNICODE',
             ('_WIN32_WINNT', '0x0501'), # minimum required OS version
             ('WINVER', '0x0501'),
-            # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
-            'WIN32_LEAN_AND_MEAN',
         ]
         if msvc and env['toolchain'] != 'winddk':
             cppdefines += [
