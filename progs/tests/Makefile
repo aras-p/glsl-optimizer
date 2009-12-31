@@ -37,6 +37,7 @@ SOURCES = \
 	bug_3195.c \
 	bug_texstore_i8.c \
 	calibrate_rast.c \
+	condrender.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \

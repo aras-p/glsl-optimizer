@@ -59,6 +59,7 @@ progs = [
     'bug_3195',
     'bug_texstore_i8',
     'calibrate_rast',
+    'condrender',
     'copypixrate',
     'crossbar',
     'cva',
