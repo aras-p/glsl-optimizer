@@ -74,7 +74,7 @@ llvmpipe = env.ConvenienceLibrary(
 
 env = env.Clone()
 
-env.Prepend(LIBS = [llvmpipe] + auxiliaries)
+env.Prepend(LIBS = [llvmpipe] + gallium)
 
 tests = [
     'format',

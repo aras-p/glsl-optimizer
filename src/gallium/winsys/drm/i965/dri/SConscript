@@ -14,6 +14,6 @@ drivers = [
 env.LoadableModule(
     target ='i965_dri.so',
     source = COMMON_GALLIUM_SOURCES,
-    LIBS = drivers + mesa + auxiliaries + env['LIBS'],
+    LIBS = drivers + mesa + gallium + env['LIBS'],
     SHLIBPREFIX = '',
 )

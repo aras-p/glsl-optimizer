@@ -38,7 +38,7 @@ if env['platform'] == 'linux':
 		st_xorg,
 		svgadrm,
 		svga,
-                auxiliaries,
+                gallium,
 	])
 
 	sources = [

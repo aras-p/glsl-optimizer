@@ -43,5 +43,5 @@ if 'python' in env['statetrackers']:
         source = [
             'st_hardpipe_winsys.c',
         ],
-        LIBS = [pyst, softpipe, trace] + auxiliaries + env['LIBS'],
+        LIBS = [pyst, softpipe, trace] + gallium + env['LIBS'],
     )

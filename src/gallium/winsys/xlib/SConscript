@@ -46,7 +46,7 @@ if env['platform'] == 'linux' \
     libgl = env.SharedLibrary(
         target ='GL',
         source = sources,
-        LIBS = st_xlib + glapi + mesa + glsl + drivers + auxiliaries + env['LIBS'],
+        LIBS = st_xlib + glapi + mesa + glsl + drivers + gallium + env['LIBS'],
     )
 
     env.InstallSharedLibrary(libgl, version=(1, 5))

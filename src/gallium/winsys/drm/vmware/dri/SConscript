@@ -48,7 +48,7 @@ if env['platform'] == 'linux':
             svgadrm,
             svga,
             mesa,
-            auxiliaries,
+            gallium,
             ])
       
       # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions

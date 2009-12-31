@@ -13,5 +13,5 @@ drivers = [
 env.SharedLibrary(
     target ='radeon_dri.so',
     source = COMMON_GALLIUM_SOURCES,
-    LIBS = st_dri + radeonwinsys + mesa + drivers + auxiliaries + env['LIBS'],
+    LIBS = st_dri + radeonwinsys + mesa + drivers + gallium + env['LIBS'],
 )
