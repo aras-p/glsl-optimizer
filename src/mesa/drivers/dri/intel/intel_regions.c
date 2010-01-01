@@ -362,14 +362,12 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
-   LOCK_HARDWARE(intel);
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
                    dst->pitch,
                    dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    intel_region_unmap(intel, dst);
-   UNLOCK_HARDWARE(intel);
 }
 
 /* Copy rectangular sub-regions. Need better logic about when to
@@ -485,7 +483,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    /* Now blit from the texture buffer to the new buffer: 
     */
 
-   LOCK_HARDWARE(intel);
    ok = intelEmitCopyBlit(intel,
                           region->cpp,
                           region->pitch, pbo->buffer, 0, region->tiling,
@@ -494,7 +491,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
                           region->pitch, region->height,
                           GL_COPY);
    assert(ok);
-   UNLOCK_HARDWARE(intel);
 }
 
 dri_bo *

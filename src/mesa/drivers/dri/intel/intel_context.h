@@ -295,8 +295,6 @@ struct intel_context
    drm_clip_rect_t draw_rect;
    drm_clip_rect_t scissor_rect;
 
-   drm_context_t hHWContext;
-   drmLock *driHwLock;
    int driFd;
 
    __DRIcontext *driContext;
@@ -319,11 +317,6 @@ struct intel_context
    GLuint swap_count;
    GLuint swap_missed_count;
 };
-
-/* These are functions now:
- */
-void LOCK_HARDWARE( struct intel_context *intel );
-void UNLOCK_HARDWARE( struct intel_context *intel );
 
 extern char *__progname;
 
@@ -442,8 +435,6 @@ extern GLboolean intelInitContext(struct intel_context *intel,
                                   __DRIcontext * driContextPriv,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);
-
-extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);

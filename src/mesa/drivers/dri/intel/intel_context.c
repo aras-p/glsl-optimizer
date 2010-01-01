@@ -611,6 +611,7 @@ intelInitContext(struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
+   intel->driFd = sPriv->fd;
 
    if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
@@ -631,11 +632,6 @@ intelInitContext(struct intel_context *intel,
       intel->has_luminance_srgb = GL_TRUE;
       intel->is_g4x = GL_TRUE;
    }
-
-   /* Dri stuff */
-   intel->hHWContext = driContextPriv->hHWContext;
-   intel->driFd = sPriv->fd;
-   intel->driHwLock = sPriv->lock;
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum,
@@ -1027,128 +1023,3 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
 
    return GL_TRUE;
 }
-
-static void
-intelContendedLock(struct intel_context *intel, GLuint flags)
-{
-   __DRIdrawable *dPriv = intel->driDrawable;
-   __DRIscreen *sPriv = intel->driScreen;
-   volatile drm_i915_sarea_t *sarea = intel->sarea;
-   int me = intel->hHWContext;
-
-   drmGetLock(intel->driFd, intel->hHWContext, flags);
-
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - got contended lock\n", __progname);
-
-   /* If the window moved, may need to set a new cliprect now.
-    *
-    * NOTE: This releases and regains the hw lock, so all state
-    * checking must be done *after* this call:
-    */
-   if (dPriv)
-       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
-
-   if (sarea && sarea->ctxOwner != me) {
-      if (INTEL_DEBUG & DEBUG_BUFMGR) {
-	 fprintf(stderr, "Lost Context: sarea->ctxOwner %x me %x\n",
-		 sarea->ctxOwner, me);
-      }
-      sarea->ctxOwner = me;
-   }
-
-   /* Drawable changed?
-    */
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-       intelWindowMoved(intel);
-       intel->lastStamp = dPriv->lastStamp;
-   }
-}
-
-
-_glthread_DECLARE_STATIC_MUTEX(lockMutex);
-
-/* Lock the hardware and validate our state.  
- */
-void LOCK_HARDWARE( struct intel_context *intel )
-{
-    __DRIdrawable *dPriv = intel->driDrawable;
-    __DRIscreen *sPriv = intel->driScreen;
-    char __ret = 0;
-    struct intel_framebuffer *intel_fb = NULL;
-    struct intel_renderbuffer *intel_rb = NULL;
-
-    intel->locked++;
-    if (intel->locked >= 2)
-       return;
-
-    if (!sPriv->dri2.enabled)
-       _glthread_LOCK_MUTEX(lockMutex);
-
-    if (intel->driDrawable) {
-       intel_fb = intel->driDrawable->driverPrivate;
-
-       if (intel_fb)
-	  intel_rb =
-	     intel_get_renderbuffer(&intel_fb->Base,
-				    intel_fb->Base._ColorDrawBufferIndexes[0]);
-    }
-
-    if (intel_rb && dPriv->vblFlags &&
-	!(dPriv->vblFlags & VBLANK_FLAG_NO_IRQ) &&
-	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
-	drmVBlank vbl;
-
-	vbl.request.type = DRM_VBLANK_ABSOLUTE;
-
-	if ( dPriv->vblFlags & VBLANK_FLAG_SECONDARY ) {
-	    vbl.request.type |= DRM_VBLANK_SECONDARY;
-	}
-
-	vbl.request.sequence = intel_rb->vbl_pending;
-	drmWaitVBlank(intel->driFd, &vbl);
-	intel_fb->vbl_waited = vbl.reply.sequence;
-    }
-
-    if (!sPriv->dri2.enabled) {
-	DRM_CAS(intel->driHwLock, intel->hHWContext,
-		(DRM_LOCK_HELD|intel->hHWContext), __ret);
-
-	if (__ret)
-	    intelContendedLock( intel, 0 );
-    }
-
-
-    if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - locked\n", __progname);
-}
-
-
-/* Unlock the hardware using the global current context 
- */
-void UNLOCK_HARDWARE( struct intel_context *intel )
-{
-    __DRIscreen *sPriv = intel->driScreen;
-
-   intel->locked--;
-   if (intel->locked > 0)
-      return;
-
-   assert(intel->locked == 0);
-
-   if (!sPriv->dri2.enabled) {
-      DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
-      _glthread_UNLOCK_MUTEX(lockMutex);
-   }
-
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - unlocked\n", __progname);
-
-   /**
-    * Nothing should be left in batch outside of LOCK/UNLOCK which references
-    * cliprects.
-    */
-   if (intel->batch->cliprect_mode == REFERENCES_CLIPRECTS)
-      intel_batchbuffer_flush(intel->batch);
-}
-

@@ -235,7 +235,6 @@ try_pbo_upload(struct intel_context *intel,
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
@@ -245,11 +244,9 @@ try_pbo_upload(struct intel_context *intel,
 			     dst_stride, dst_buffer, 0, GL_FALSE,
 			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }
@@ -469,8 +466,6 @@ intelTexImage(GLcontext * ctx,
 					   pixels, unpack, "glTexImage");
    }
 
-   LOCK_HARDWARE(intel);
-
    if (intelImage->mt) {
       if (pixels != NULL) {
 	 /* Flush any queued rendering with the texture before mapping. */
@@ -551,8 +546,6 @@ intelTexImage(GLcontext * ctx,
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 

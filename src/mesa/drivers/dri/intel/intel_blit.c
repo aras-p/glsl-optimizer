@@ -117,7 +117,6 @@ intelEmitCopyBlit(struct intel_context *intel,
    } while (pass < 2);
 
    if (pass >= 2) {
-       LOCK_HARDWARE(intel);
        dri_bo_map(dst_buffer, GL_TRUE);
        dri_bo_map(src_buffer, GL_FALSE);
        _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
@@ -131,7 +130,6 @@ intelEmitCopyBlit(struct intel_context *intel,
        
        dri_bo_unmap(src_buffer);
        dri_bo_unmap(dst_buffer);
-       UNLOCK_HARDWARE(intel);
 
        return GL_TRUE;
    }
@@ -238,8 +236,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    if ((mask & BUFFER_BIT_DEPTH) && (mask & BUFFER_BIT_STENCIL)) {
       skipBuffers = BUFFER_BIT_STENCIL;
    }
-
-   LOCK_HARDWARE(intel);
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects) {
@@ -412,8 +408,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
          }
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 GLboolean

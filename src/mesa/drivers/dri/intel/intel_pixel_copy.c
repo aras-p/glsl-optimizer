@@ -134,8 +134,6 @@ do_blit_copypixels(GLcontext * ctx,
 
    intelFlush(&intel->ctx);
 
-   LOCK_HARDWARE(intel);
-
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects != 0) {
       GLint delta_x;
@@ -214,13 +212,11 @@ do_blit_copypixels(GLcontext * ctx,
 				ctx->Color.ColorLogicOpEnabled ?
 				ctx->Color.LogicOp : GL_COPY)) {
 	    DBG("%s: blit failure\n", __FUNCTION__);
-	    UNLOCK_HARDWARE(intel);
 	    return GL_FALSE;
 	 }
       }
    }
 out:
-   UNLOCK_HARDWARE(intel);
 
    intel_check_front_buffer_rendering(intel);
 

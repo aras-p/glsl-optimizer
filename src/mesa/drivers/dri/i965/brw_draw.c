@@ -339,10 +339,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * so can't access it earlier.
     */
 
-   LOCK_HARDWARE(intel);
-
    if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
-      UNLOCK_HARDWARE(intel);
       return GL_TRUE;
    }
 
@@ -404,7 +401,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    if (intel->always_flush_batch)
       intel_batchbuffer_flush(intel->batch);
  out:
-   UNLOCK_HARDWARE(intel);
 
    brw_state_cache_check_size(brw);
 

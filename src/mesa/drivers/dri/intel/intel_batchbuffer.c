@@ -129,8 +129,7 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 /* TODO: Push this whole function into bufmgr.
  */
 static void
-do_flush_locked(struct intel_batchbuffer *batch,
-		GLuint used, GLboolean allow_unlock)
+do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
 {
    struct intel_context *intel = batch->intel;
    int ret = 0;
@@ -160,18 +159,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
 		  (x_off & 0xffff) | (y_off << 16));
    }
 
-   if (batch->cliprect_mode == LOOP_CLIPRECTS && num_cliprects == 0) {
-      if (allow_unlock) {
-	 /* If we are not doing any actual user-visible rendering,
-	  * do a sched_yield to keep the app from pegging the cpu while
-	  * achieving nothing.
-	  */
-         UNLOCK_HARDWARE(intel);
-         sched_yield();
-         LOCK_HARDWARE(intel);
-      }
-   }
-
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
@@ -183,7 +170,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
    }
 
    if (ret != 0) {
-      UNLOCK_HARDWARE(intel);
       exit(1);
    }
    intel->vtbl.new_batch(intel);
@@ -252,9 +238,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
-   LOCK_HARDWARE(intel);
-   do_flush_locked(batch, used, GL_FALSE);
-   UNLOCK_HARDWARE(intel);
+   do_flush_locked(batch, used);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "waiting for idle\n");
