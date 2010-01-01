@@ -238,7 +238,6 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
-    &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
@@ -695,7 +694,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .GetSwapInfo		 = intelGetSwapInfo,
    .GetDrawableMSC	 = driDrawableGetMSC32,
    .WaitForMSC		 = driWaitForMSC32,
-   .CopySubBuffer	 = intelCopySubBuffer,
 
    .InitScreen2		 = intelInitScreen2,
 };

@@ -141,34 +141,6 @@ intelSwapBuffers(__DRIdrawable * dPriv)
 
 
 /**
- * Called from driCopySubBuffer()
- */
-void
-intelCopySubBuffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
-{
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      struct intel_context *intel =
-         (struct intel_context *) dPriv->driContextPriv->driverPrivate;
-      GLcontext *ctx = &intel->ctx;
-
-      if (ctx->Visual.doubleBufferMode) {
-         drm_clip_rect_t rect;
-         rect.x1 = x + dPriv->x;
-         rect.y1 = (dPriv->h - y - h) + dPriv->y;
-         rect.x2 = rect.x1 + w;
-         rect.y2 = rect.y1 + h;
-         _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-         intelCopyBuffer(dPriv, &rect);
-      }
-   }
-   else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
-   }
-}
-
-
-/**
  * This will be called whenever the currently bound window is moved/resized.
  * XXX: actually, it seems to NOT be called when the window is only moved (BP).
  */
