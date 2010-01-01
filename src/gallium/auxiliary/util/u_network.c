@@ -117,7 +117,7 @@ u_socket_connect(const char *hostname, uint16_t port)
    if (!host)
       return -1;
 
-   memcpy((char *)&sa.sin_addr,host->h_addr,host->h_length);
+   memcpy((char *)&sa.sin_addr,host->h_addr_list[0],host->h_length);
    sa.sin_family= host->h_addrtype;
    sa.sin_port = htons(port);
 
