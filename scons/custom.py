@@ -149,36 +149,6 @@ def createCodeGenerateMethod(env):
     env.AddMethod(code_generate, 'CodeGenerate')
 
 
-def symlink(target, source, env):
-    target = str(target[0])
-    source = str(source[0])
-    if os.path.islink(target) or os.path.exists(target):
-        os.remove(target)
-    os.symlink(os.path.basename(source), target)
-
-def install_program(env, source):
-    source = str(source[0])
-    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'bin')
-    target_name = str(source)
-    env.InstallAs(os.path.join(target_dir, target_name), source)
-
-def install_shared_library(env, source, version = ()):
-    source = str(source[0])
-    version = tuple(map(str, version))
-    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'lib')
-    target_name = '.'.join((str(source),) + version)
-    last = env.InstallAs(os.path.join(target_dir, target_name), source)
-    while len(version):
-        version = version[:-1]
-        target_name = '.'.join((str(source),) + version)
-        action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
-        last = env.Command(os.path.join(target_dir, target_name), last, action) 
-
-def createInstallMethods(env):
-    env.AddMethod(install_program, 'InstallProgram')
-    env.AddMethod(install_shared_library, 'InstallSharedLibrary')
-
-
 def generate(env):
     """Common environment generation code"""
 
@@ -188,7 +158,6 @@ def generate(env):
     # Custom builders and methods
     createConvenienceLibBuilder(env)
     createCodeGenerateMethod(env)
-    createInstallMethods(env)
 
     # for debugging
     #print env.Dump()
