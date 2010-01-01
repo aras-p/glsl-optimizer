@@ -362,6 +362,7 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     int i;
+    void* indices;
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return FALSE;
@@ -378,8 +379,8 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
         draw_set_mapped_vertex_buffer(r300->draw, i, buf);
     }
 
-    void* indices = pipe_buffer_map(pipe->screen, indexBuffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+    indices = pipe_buffer_map(pipe->screen, indexBuffer,
+                              PIPE_BUFFER_USAGE_CPU_READ);
     draw_set_mapped_element_buffer_range(r300->draw, indexSize,
                                          minIndex, maxIndex, indices);
 
@@ -476,7 +477,7 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
     r300render->vbo_ptr = pipe_buffer_map(screen, r300render->vbo,
                                           PIPE_BUFFER_USAGE_CPU_WRITE);
 
-    return (r300render->vbo_ptr + r300render->vbo_offset);
+    return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
 }
 
 static void r300_render_unmap_vertices(struct vbuf_render* render,
