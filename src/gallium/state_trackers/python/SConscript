@@ -38,6 +38,8 @@ if 'python' in env['statetrackers']:
         ],
     )
 
+    env['no_import_lib'] = 1
+
     env.SharedLibrary(
         target = '_gallium',
         source = [
