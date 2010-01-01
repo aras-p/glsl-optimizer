@@ -688,7 +688,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyContext	 = intelDestroyContext,
    .CreateBuffer	 = intelCreateBuffer,
    .DestroyBuffer	 = intelDestroyBuffer,
-   .SwapBuffers		 = intelSwapBuffers,
    .MakeCurrent		 = intelMakeCurrent,
    .UnbindContext	 = intelUnbindContext,
    .GetSwapInfo		 = intelGetSwapInfo,

@@ -80,66 +80,6 @@ intelFixupVblank(struct intel_context *intel, __DRIdrawable *dPriv)
    }
 }
 
-
-/**
- * Called from driSwapBuffers()
- */
-void
-intelSwapBuffers(__DRIdrawable * dPriv)
-{
-   __DRIscreen *psp = dPriv->driScreenPriv;
-
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      GET_CURRENT_CONTEXT(ctx);
-      struct intel_context *intel;
-
-      if (ctx == NULL)
-	 return;
-
-      intel = intel_context(ctx);
-
-      if (ctx->Visual.doubleBufferMode) {
-	 GLboolean missed_target;
-	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-	 int64_t ust;
-         
-	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-
-	/*
-	 * The old swapping ioctl was incredibly racy, just wait for vblank
-	 * and do the swap ourselves.
-	 */
-	 driWaitForVBlank(dPriv, &missed_target);
-
-	 /*
-	  * Update each buffer's vbl_pending so we don't get too out of
-	  * sync
-	  */
-	 intel_get_renderbuffer(&intel_fb->Base,
-		   		BUFFER_BACK_LEFT)->vbl_pending = dPriv->vblSeq;
-         intel_get_renderbuffer(&intel_fb->Base,
-		   		BUFFER_FRONT_LEFT)->vbl_pending = dPriv->vblSeq;
-
-	 intelCopyBuffer(dPriv, NULL);
-
-	 intel_fb->swap_count++;
-	 (*psp->systemTime->getUST) (&ust);
-	 if (missed_target) {
-	    intel_fb->swap_missed_count++;
-	    intel_fb->swap_missed_ust = ust - intel_fb->swap_ust;
-	 }
-
-	 intel_fb->swap_ust = ust;
-      }
-      drmCommandNone(intel->driFd, DRM_I915_GEM_THROTTLE);
-   }
-   else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
-   }
-}
-
-
 /**
  * This will be called whenever the currently bound window is moved/resized.
  * XXX: actually, it seems to NOT be called when the window is only moved (BP).
