@@ -37,7 +37,7 @@
 #include "queryobj.h"
 
 
-GLAPI void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
 {
    struct gl_query_object *q;
@@ -84,7 +84,7 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
 }
 
 
-GLAPI void APIENTRY
+void APIENTRY
 _mesa_EndConditionalRender(void)
 {
    GET_CURRENT_CONTEXT(ctx);
