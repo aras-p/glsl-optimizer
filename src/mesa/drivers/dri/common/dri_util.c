@@ -841,20 +841,12 @@ const __DRIlegacyExtension driLegacyExtension = {
     driCreateNewContext,
 };
 
-/** Legacy DRI interface */
+/** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
     { __DRI_DRI2, __DRI_DRI2_VERSION },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
-};
-
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driLegacyExtension.base,
-    &driDRI2Extension.base,
-    NULL
 };
 
 static int

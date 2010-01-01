@@ -64,6 +64,7 @@ typedef struct __DRIswapInfoRec        __DRIswapInfo;
  */
 extern const __DRIlegacyExtension driLegacyExtension;
 extern const __DRIcoreExtension driCoreExtension;
+extern const __DRIdri2Extension driDRI2Extension;
 extern const __DRIextension driReadDrawableExtension;
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;

@@ -356,3 +356,10 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
 };
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
+};
