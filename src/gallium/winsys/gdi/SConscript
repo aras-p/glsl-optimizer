@@ -42,6 +42,8 @@ if env['platform'] == 'windows':
         
     drivers += [trace]
 
+    env['no_import_lib'] = 1
+
     env.SharedLibrary(
         target ='opengl32',
         source = sources,
