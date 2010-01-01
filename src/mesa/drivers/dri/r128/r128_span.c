@@ -50,8 +50,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreen *sPriv = rmesa->driScreen;			\
+   __DRIdrawable *dPriv = rmesa->driDrawable;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    GLuint p;								\
@@ -60,8 +60,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_DEPTH_VARS						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
    r128ScreenPtr r128scrn = rmesa->r128Screen;				\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreen *sPriv = rmesa->driScreen;			\
+   __DRIdrawable *dPriv = rmesa->driDrawable;			\
    GLuint height = dPriv->h;						\
    (void) r128scrn; (void) sPriv; (void) height
 

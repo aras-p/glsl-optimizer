@@ -299,10 +299,10 @@ struct intel_context
    drmLock *driHwLock;
    int driFd;
 
-   __DRIcontextPrivate *driContext;
-   __DRIdrawablePrivate *driDrawable;
-   __DRIdrawablePrivate *driReadDrawable;
-   __DRIscreenPrivate *driScreen;
+   __DRIcontext *driContext;
+   __DRIdrawable *driDrawable;
+   __DRIdrawable *driReadDrawable;
+   __DRIscreen *driScreen;
    intelScreenPrivate *intelScreen;
    volatile drm_i915_sarea_t *sarea;
 
@@ -439,7 +439,7 @@ extern int INTEL_DEBUG;
 
 extern GLboolean intelInitContext(struct intel_context *intel,
                                   const __GLcontextModes * mesaVis,
-                                  __DRIcontextPrivate * driContextPriv,
+                                  __DRIcontext * driContextPriv,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);
 

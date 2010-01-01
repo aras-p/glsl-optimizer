@@ -41,7 +41,7 @@
  * When considering multiple crtcs.
  */
 GLuint
-intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv)
+intelFixupVblank(struct intel_context *intel, __DRIdrawable *dPriv)
 {
    if (!intel->intelScreen->driScrnPriv->dri2.enabled &&
        intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
@@ -85,9 +85,9 @@ intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv)
  * Called from driSwapBuffers()
  */
 void
-intelSwapBuffers(__DRIdrawablePrivate * dPriv)
+intelSwapBuffers(__DRIdrawable * dPriv)
 {
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
+   __DRIscreen *psp = dPriv->driScreenPriv;
 
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       GET_CURRENT_CONTEXT(ctx);
@@ -144,7 +144,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
  * Called from driCopySubBuffer()
  */
 void
-intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
+intelCopySubBuffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       struct intel_context *intel =
@@ -176,7 +176,7 @@ void
 intelWindowMoved(struct intel_context *intel)
 {
    GLcontext *ctx = &intel->ctx;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   __DRIdrawable *dPriv = intel->driDrawable;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
    if (!intel->intelScreen->driScrnPriv->dri2.enabled &&

@@ -64,9 +64,9 @@ typedef struct {
    GLcontext *glCtx;		/* Mesa context */
 
    struct {
-      __DRIcontextPrivate *context;	
-      __DRIscreenPrivate *screen;	
-      __DRIdrawablePrivate *drawable; /* drawable bound to this ctx */
+      __DRIcontext *context;	
+      __DRIscreen *screen;	
+      __DRIdrawable *drawable; /* drawable bound to this ctx */
    } dri;
    
 } fbContext, *fbContextPtr;
@@ -313,14 +313,14 @@ fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 /* Initialize the driver specific screen private data.
  */
 static GLboolean
-fbInitDriver( __DRIscreenPrivate *sPriv )
+fbInitDriver( __DRIscreen *sPriv )
 {
    sPriv->private = NULL;
    return GL_TRUE;
 }
 
 static void
-fbDestroyScreen( __DRIscreenPrivate *sPriv )
+fbDestroyScreen( __DRIscreen *sPriv )
 {
 }
 
@@ -329,7 +329,7 @@ fbDestroyScreen( __DRIscreenPrivate *sPriv )
  */
 static GLboolean
 fbCreateContext( const __GLcontextModes *glVisual,
-		 __DRIcontextPrivate *driContextPriv,
+		 __DRIcontext *driContextPriv,
 		 void *sharedContextPrivate)
 {
    fbContextPtr fbmesa;
@@ -384,7 +384,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
 
 
 static void
-fbDestroyContext( __DRIcontextPrivate *driContextPriv )
+fbDestroyContext( __DRIcontext *driContextPriv )
 {
    GET_CURRENT_CONTEXT(ctx);
    fbContextPtr fbmesa = (fbContextPtr) driContextPriv->driverPrivate;
@@ -415,8 +415,8 @@ fbDestroyContext( __DRIcontextPrivate *driContextPriv )
  * data.
  */
 static GLboolean
-fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-		__DRIdrawablePrivate *driDrawPriv,
+fbCreateBuffer( __DRIscreen *driScrnPriv,
+		__DRIdrawable *driDrawPriv,
 		const __GLcontextModes *mesaVis,
 		GLboolean isPixmap )
 {
@@ -478,7 +478,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+fbDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
@@ -488,7 +488,7 @@ fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 /* If the backbuffer is on a videocard, this is extraordinarily slow!
  */
 static void
-fbSwapBuffers( __DRIdrawablePrivate *dPriv )
+fbSwapBuffers( __DRIdrawable *dPriv )
 {
    struct gl_framebuffer *mesa_framebuffer = (struct gl_framebuffer *)dPriv->driverPrivate;
    struct gl_renderbuffer * front_renderbuffer = mesa_framebuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
@@ -532,9 +532,9 @@ fbSwapBuffers( __DRIdrawablePrivate *dPriv )
  * buffer `b'.
  */
 static GLboolean
-fbMakeCurrent( __DRIcontextPrivate *driContextPriv,
-	       __DRIdrawablePrivate *driDrawPriv,
-	       __DRIdrawablePrivate *driReadPriv )
+fbMakeCurrent( __DRIcontext *driContextPriv,
+	       __DRIdrawable *driDrawPriv,
+	       __DRIdrawable *driReadPriv )
 {
    if ( driContextPriv ) {
       fbContextPtr newFbCtx = 
@@ -556,7 +556,7 @@ fbMakeCurrent( __DRIcontextPrivate *driContextPriv,
 /* Force the context `c' to be unbound from its buffer.
  */
 static GLboolean
-fbUnbindContext( __DRIcontextPrivate *driContextPriv )
+fbUnbindContext( __DRIcontext *driContextPriv )
 {
    return GL_TRUE;
 }
@@ -657,7 +657,7 @@ struct DRIDriverRec __driDriver = {
 };
 
 static __GLcontextModes *
-fbFillInModes( __DRIscreenPrivate *psp,
+fbFillInModes( __DRIscreen *psp,
 	       unsigned pixel_bits, unsigned depth_bits,
 	       unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -745,7 +745,7 @@ fbFillInModes( __DRIscreenPrivate *psp,
  * with the \c __GLcontextModes that the driver can support for windows or
  * pbuffers.
  * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ * \return A pointer to a \c __DRIscreen on success, or \c NULL on 
  *         failure.
  */
 PUBLIC
@@ -759,7 +759,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
                                    int internal_api_version,
                                    __GLcontextModes ** driver_modes )
 {
-   __DRIscreenPrivate *psp;
+   __DRIscreen *psp;
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 5, 0 };

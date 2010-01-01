@@ -49,7 +49,7 @@ static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
 void r700Clear(GLcontext * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);
-    __DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
+    __DRIdrawable *dPriv = radeon_get_drawable(&context->radeon);
     const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
     GLbitfield swrast_mask = 0, tri_mask = 0;
     int i;

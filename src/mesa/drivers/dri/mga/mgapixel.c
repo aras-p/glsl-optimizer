@@ -299,7 +299,7 @@ mgaTryReadPixels( GLcontext *ctx,
 
 #if 0
    {
-      __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+      __DRIdrawable *dPriv = mmesa->driDrawable;
       int nbox, retcode, i;
 
       UPDATE_LOCK( mmesa, DRM_LOCK_FLUSH | DRM_LOCK_QUIESCENT );
@@ -399,7 +399,7 @@ static void do_draw_pix( GLcontext *ctx,
 #if 0
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    drmMGABlit blit;
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
    drm_clip_rect_t pbox = dPriv->pClipRects;
    int nbox = dPriv->numClipRects;
    int retcode, i;

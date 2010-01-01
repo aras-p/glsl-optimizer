@@ -105,7 +105,7 @@ struct via_renderbuffer {
    int drawW;                  
    int drawH;    
 
-   __DRIdrawablePrivate *dPriv;
+   __DRIdrawable *dPriv;
 };
 
 
@@ -294,14 +294,14 @@ struct via_context {
    /**
     * DRI drawable bound to this context for drawing.
     */
-   __DRIdrawablePrivate	*driDrawable;
+   __DRIdrawable	*driDrawable;
 
    /**
     * DRI drawable bound to this context for reading.
     */
-   __DRIdrawablePrivate	*driReadable;
+   __DRIdrawable	*driReadable;
 
-   __DRIscreenPrivate *driScreen;
+   __DRIscreen *driScreen;
    viaScreenPrivate *viaScreen;
    drm_via_sarea_t *sarea;
    volatile GLuint* regMMIOBase;

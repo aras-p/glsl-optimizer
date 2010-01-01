@@ -345,10 +345,10 @@ static void r600InitGLExtensions(GLcontext *ctx)
 /* Create the device specific rendering context.
  */
 GLboolean r600CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	context_t *r600;

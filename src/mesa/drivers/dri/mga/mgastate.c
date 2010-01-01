@@ -746,7 +746,7 @@ static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 
 static void mga_set_cliprects(mgaContextPtr mmesa)
 {
-   __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
+   __DRIdrawable *driDrawable = mmesa->driDrawable;
 
    if ((mmesa->draw_buffer != MGA_FRONT)
        || (driDrawable->numBackClipRects == 0)) {
@@ -774,8 +774,8 @@ static void mga_set_cliprects(mgaContextPtr mmesa)
 
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
-   __DRIdrawablePrivate *const driDrawable = mmesa->driDrawable;
-   __DRIdrawablePrivate *const driReadable = mmesa->driReadable;
+   __DRIdrawable *const driDrawable = mmesa->driDrawable;
+   __DRIdrawable *const driReadable = mmesa->driReadable;
 
    mmesa->dirty_cliprects = 0;	
 

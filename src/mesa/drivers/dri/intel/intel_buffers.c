@@ -102,7 +102,7 @@ intel_get_cliprects(struct intel_context *intel,
 		    unsigned int *num_cliprects,
 		    int *x_off, int *y_off)
 {
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   __DRIdrawable *dPriv = intel->driDrawable;
 
    if (intel->constant_cliprect) {
       /* FBO or DRI2 rendering, which can just use the fb's size. */

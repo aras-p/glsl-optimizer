@@ -318,7 +318,7 @@ do {									\
  * i915_context.c
  */
 extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
-                                   __DRIcontextPrivate * driContextPriv,
+                                   __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 

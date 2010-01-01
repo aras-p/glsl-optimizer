@@ -62,7 +62,7 @@
 #include "drirenderbuffer.h"
 
 static GLboolean
-ffbInitDriver(__DRIscreenPrivate *sPriv)
+ffbInitDriver(__DRIscreen *sPriv)
 {
 	ffbScreenPrivate *ffbScreen;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
@@ -154,7 +154,7 @@ ffbInitDriver(__DRIscreenPrivate *sPriv)
 
 
 static void
-ffbDestroyScreen(__DRIscreenPrivate *sPriv)
+ffbDestroyScreen(__DRIscreen *sPriv)
 {
 	ffbScreenPrivate *ffbScreen = sPriv->private;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
@@ -183,12 +183,12 @@ static const struct tnl_pipeline_stage *ffb_pipeline[] = {
 /* Create and initialize the Mesa and driver specific context data */
 static GLboolean
 ffbCreateContext(const __GLcontextModes *mesaVis,
-                 __DRIcontextPrivate *driContextPriv,
+                 __DRIcontext *driContextPriv,
                  void *sharedContextPrivate)
 {
 	ffbContextPtr fmesa;
 	GLcontext *ctx, *shareCtx;
-	__DRIscreenPrivate *sPriv;
+	__DRIscreen *sPriv;
 	ffbScreenPrivate *ffbScreen;
 	char *debug;
 	struct dd_function_table functions;
@@ -306,7 +306,7 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 }
 
 static void
-ffbDestroyContext(__DRIcontextPrivate *driContextPriv)
+ffbDestroyContext(__DRIcontext *driContextPriv)
 {
 	ffbContextPtr fmesa = (ffbContextPtr) driContextPriv->driverPrivate;
 
@@ -328,8 +328,8 @@ ffbDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 /* Create and initialize the Mesa and driver specific pixmap buffer data */
 static GLboolean
-ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
-                __DRIdrawablePrivate *driDrawPriv,
+ffbCreateBuffer(__DRIscreen *driScrnPriv,
+                __DRIdrawable *driDrawPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap )
 {
@@ -392,7 +392,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
 
 static void
-ffbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+ffbDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
@@ -401,7 +401,7 @@ ffbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 #define USE_FAST_SWAP
 
 static void
-ffbSwapBuffers( __DRIdrawablePrivate *dPriv )
+ffbSwapBuffers( __DRIdrawable *dPriv )
 {
 	ffbContextPtr fmesa = (ffbContextPtr) dPriv->driContextPriv->driverPrivate;
 	unsigned int fbc, wid, wid_reg_val, dac_db_bit;
@@ -532,9 +532,9 @@ static void ffb_init_wid(ffbContextPtr fmesa, unsigned int wid)
 /* Force the context `c' to be the current context and associate with it
    buffer `b' */
 static GLboolean
-ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
-               __DRIdrawablePrivate *driDrawPriv,
-               __DRIdrawablePrivate *driReadPriv)
+ffbMakeCurrent(__DRIcontext *driContextPriv,
+               __DRIdrawable *driDrawPriv,
+               __DRIdrawable *driReadPriv)
 {
 	if (driContextPriv) {
 		ffbContextPtr fmesa = (ffbContextPtr) driContextPriv->driverPrivate;
@@ -581,15 +581,15 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 /* Force the context `c' to be unbound from its buffer */
 static GLboolean
-ffbUnbindContext(__DRIcontextPrivate *driContextPriv)
+ffbUnbindContext(__DRIcontext *driContextPriv)
 {
 	return GL_TRUE;
 }
 
 void ffbXMesaUpdateState(ffbContextPtr fmesa)
 {
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
-	__DRIscreenPrivate *sPriv = fmesa->driScreen;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
+	__DRIscreen *sPriv = fmesa->driScreen;
 	int stamp = dPriv->lastStamp;
 
 	DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
@@ -607,7 +607,7 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 }
 
 static const __DRIconfig **
-ffbFillInModes( __DRIscreenPrivate *psp,
+ffbFillInModes( __DRIscreen *psp,
 		unsigned pixel_bits, unsigned depth_bits,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {

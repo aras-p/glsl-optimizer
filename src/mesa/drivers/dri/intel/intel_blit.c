@@ -47,7 +47,7 @@
  * Used for SwapBuffers().
  */
 void
-intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
+intelCopyBuffer(const __DRIdrawable * dPriv,
                 const drm_clip_rect_t * rect)
 {
 

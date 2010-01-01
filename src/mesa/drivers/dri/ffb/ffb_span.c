@@ -45,7 +45,7 @@
 		UNLOCK_HARDWARE(fmesa); \
 
 #define LOCAL_VARS						\
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;	\
+	__DRIdrawable *dPriv = fmesa->driDrawable;	\
 	GLuint height = dPriv->h;				\
         GLuint p;						\
 	char *buf; 						\

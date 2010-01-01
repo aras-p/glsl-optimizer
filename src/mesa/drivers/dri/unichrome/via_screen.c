@@ -90,7 +90,7 @@ static void via_free_empty_buffers( drmBufMapPtr bufs )
 
 
 static GLboolean
-viaInitDriver(__DRIscreenPrivate *sPriv)
+viaInitDriver(__DRIscreen *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
@@ -184,7 +184,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 }
 
 static void
-viaDestroyScreen(__DRIscreenPrivate *sPriv)
+viaDestroyScreen(__DRIscreen *sPriv)
 {
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
@@ -203,8 +203,8 @@ viaDestroyScreen(__DRIscreenPrivate *sPriv)
 
 
 static GLboolean
-viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
-                __DRIdrawablePrivate *driDrawPriv,
+viaCreateBuffer(__DRIscreen *driScrnPriv,
+                __DRIdrawable *driDrawPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
@@ -314,13 +314,13 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
 
 static void
-viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+viaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static const __DRIconfig **
-viaFillInModes( __DRIscreenPrivate *psp,
+viaFillInModes( __DRIscreen *psp,
 		unsigned pixel_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
@@ -377,7 +377,7 @@ viaFillInModes( __DRIscreenPrivate *psp,
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-viaInitScreen(__DRIscreenPrivate *psp)
+viaInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { VIA_DRIDDX_VERSION_MAJOR,
                                               VIA_DRIDDX_VERSION_MINOR,
@@ -405,7 +405,7 @@ viaInitScreen(__DRIscreenPrivate *psp)
  * Get information about previous buffer swaps.
  */
 static int
-getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
 {
    struct via_context *vmesa;
 

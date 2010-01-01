@@ -208,10 +208,10 @@ static void r100_init_vtbl(radeonContextPtr radeon)
  */
 GLboolean
 r100CreateContext( const __GLcontextModes *glVisual,
-                     __DRIcontextPrivate *driContextPriv,
+                     __DRIcontext *driContextPriv,
                      void *sharedContextPrivate)
 {
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r100ContextPtr rmesa;

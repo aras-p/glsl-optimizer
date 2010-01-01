@@ -572,7 +572,7 @@ static void r128UpdateClipping( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( rmesa->driDrawable ) {
-      __DRIdrawablePrivate *drawable = rmesa->driDrawable;
+      __DRIdrawable *drawable = rmesa->driDrawable;
       int x1 = 0;
       int y1 = 0;
       int x2 = drawable->w - 1;

@@ -248,7 +248,7 @@ static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void r128CopyBuffer( __DRIdrawablePrivate *dPriv )
+void r128CopyBuffer( __DRIdrawable *dPriv )
 {
    r128ContextPtr rmesa;
    GLint nbox, i, ret;
@@ -327,7 +327,7 @@ void r128CopyBuffer( __DRIdrawablePrivate *dPriv )
 #endif
 }
 
-void r128PageFlip( __DRIdrawablePrivate *dPriv )
+void r128PageFlip( __DRIdrawable *dPriv )
 {
    r128ContextPtr rmesa;
    GLint ret;
@@ -401,7 +401,7 @@ void r128PageFlip( __DRIdrawablePrivate *dPriv )
 static void r128Clear( GLcontext *ctx, GLbitfield mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
+   __DRIdrawable *dPriv = rmesa->driDrawable;
    drm_r128_clear_t clear;
    GLuint flags = 0;
    GLint i;

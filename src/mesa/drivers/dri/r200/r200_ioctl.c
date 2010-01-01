@@ -61,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r200KernelClear(GLcontext *ctx, GLuint flags)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLint cx, cy, cw, ch, ret;
    GLuint i;
 
@@ -185,7 +185,7 @@ static void r200KernelClear(GLcontext *ctx, GLuint flags)
 static void r200Clear( GLcontext *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLuint orig_mask = mask;

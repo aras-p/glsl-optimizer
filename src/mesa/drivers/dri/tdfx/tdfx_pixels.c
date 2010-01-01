@@ -495,7 +495,7 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
    {
       tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
       GrLfbInfo_t info;
-      __DRIdrawablePrivate *const readable = fxMesa->driReadable;
+      __DRIdrawable *const readable = fxMesa->driReadable;
       const GLint winX = readable->x;
       const GLint winY = readable->y + readable->h - 1;
       const GLint scrX = winX + x;
@@ -553,7 +553,7 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
    {
       tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
       GrLfbInfo_t info;
-      __DRIdrawablePrivate *const readable = fxMesa->driReadable;
+      __DRIdrawable *const readable = fxMesa->driReadable;
       const GLint winX = readable->x;
       const GLint winY = readable->y + readable->h - 1;
       const GLint scrX = winX + x;

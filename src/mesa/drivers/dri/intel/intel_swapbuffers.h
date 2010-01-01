@@ -37,13 +37,13 @@ struct intel_framebuffer;
 
 
 extern void
-intelSwapBuffers(__DRIdrawablePrivate * dPriv);
+intelSwapBuffers(__DRIdrawable * dPriv);
 
 extern void
-intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
+intelCopySubBuffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
 
 extern GLuint
-intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv);
+intelFixupVblank(struct intel_context *intel, __DRIdrawable *dPriv);
 
 extern void
 intelWindowMoved(struct intel_context *intel);

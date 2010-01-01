@@ -245,8 +245,8 @@ do {                                                                       \
 #ifdef DO_VALIDATE
 #define VALIDATE_DRAWABLE_INFO_NO_LOCK(gcp)                                \
 do {                                                                       \
-    /*__DRIscreenPrivate *psp = gcp->driScreen;*/                          \
-    __DRIdrawablePrivate *pdp = gcp->driDrawable;                          \
+    /*__DRIscreen *psp = gcp->driScreen;*/                          \
+    __DRIdrawable *pdp = gcp->driDrawable;                          \
                                                                            \
     if (*(pdp->pStamp) != pdp->lastStamp) {                                \
 	int old_index = pdp->index;                                        \
@@ -301,7 +301,7 @@ do {                                                                       \
 
 #define VALIDATE_DRAWABLE_INFO(gcp)                                    \
 do {                                                                       \
-    __DRIscreenPrivate *psp = gcp->driScreen;                          \
+    __DRIscreen *psp = gcp->driScreen;                          \
 if (gcp->driDrawable) { \
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);            \
     VALIDATE_DRAWABLE_INFO_NO_LOCK(gcp);                               \

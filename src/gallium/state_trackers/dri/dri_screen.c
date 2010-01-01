@@ -202,7 +202,7 @@ dri_fill_in_modes(struct dri_screen *screen,
  * Get information about previous buffer swaps.
  */
 static int
-dri_get_swap_info(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
+dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
 {
    if (dPriv == NULL || dPriv->driverPrivate == NULL || sInfo == NULL)
       return -1;
@@ -220,7 +220,7 @@ dri_copy_version(struct dri1_api_version *dst,
 }
 
 static const __DRIconfig **
-dri_init_screen(__DRIscreenPrivate * sPriv)
+dri_init_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen;
    const __DRIconfig **configs;
@@ -285,7 +285,7 @@ dri_init_screen(__DRIscreenPrivate * sPriv)
  * Returns the __GLcontextModes supported by this driver.
  */
 static const __DRIconfig **
-dri_init_screen2(__DRIscreenPrivate * sPriv)
+dri_init_screen2(__DRIscreen * sPriv)
 {
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;
@@ -319,7 +319,7 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
 }
 
 static void
-dri_destroy_screen(__DRIscreenPrivate * sPriv)
+dri_destroy_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
 

@@ -330,7 +330,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   __DRIdrawablePrivate *dPriv = brw->intel.driDrawable;
+   __DRIdrawable *dPriv = brw->intel.driDrawable;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));

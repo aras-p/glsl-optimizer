@@ -54,7 +54,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "GL/internal/dri_interface.h"
 
 static const __DRIconfig **
-i810FillInModes( __DRIscreenPrivate *psp,
+i810FillInModes( __DRIscreen *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -255,7 +255,7 @@ i810InitScreen(__DRIscreen *sPriv)
 }
 
 static void
-i810DestroyScreen(__DRIscreenPrivate *sPriv)
+i810DestroyScreen(__DRIscreen *sPriv)
 {
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
 
@@ -274,8 +274,8 @@ i810DestroyScreen(__DRIscreenPrivate *sPriv)
  * Create a buffer which corresponds to the window.
  */
 static GLboolean
-i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                  __DRIdrawablePrivate *driDrawPriv,
+i810CreateBuffer( __DRIscreen *driScrnPriv,
+                  __DRIdrawable *driDrawPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
@@ -335,7 +335,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-i810DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+i810DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }

@@ -92,7 +92,7 @@ struct radeon_renderbuffer
 
 	GLuint pf_pending;  /**< sequence number of pending flip */
 	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
-	__DRIdrawablePrivate *dPriv;
+	__DRIdrawable *dPriv;
 };
 
 struct radeon_framebuffer
@@ -381,8 +381,8 @@ struct radeon_store {
 };
 
 struct radeon_dri_mirror {
-	__DRIcontextPrivate *context;	/* DRI context */
-	__DRIscreenPrivate *screen;	/* DRI screen */
+	__DRIcontext *context;	/* DRI context */
+	__DRIscreen *screen;	/* DRI screen */
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
@@ -523,12 +523,12 @@ struct radeon_context {
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
 
-static inline __DRIdrawablePrivate* radeon_get_drawable(radeonContextPtr radeon)
+static inline __DRIdrawable* radeon_get_drawable(radeonContextPtr radeon)
 {
 	return radeon->dri.context->driDrawablePriv;
 }
 
-static inline __DRIdrawablePrivate* radeon_get_readable(radeonContextPtr radeon)
+static inline __DRIdrawable* radeon_get_readable(radeonContextPtr radeon)
 {
 	return radeon->dri.context->driReadablePriv;
 }
@@ -581,16 +581,16 @@ static INLINE uint32_t radeonPackFloat24(float f)
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
 			    const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate);
 
 void radeonCleanupContext(radeonContextPtr radeon);
-GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
+GLboolean radeonUnbindContext(__DRIcontext * driContextPriv);
 void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 				 GLboolean front_only);
-GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
-			    __DRIdrawablePrivate * driDrawPriv,
-			    __DRIdrawablePrivate * driReadPriv);
-extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
+GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
+			    __DRIdrawable * driDrawPriv,
+			    __DRIdrawable * driReadPriv);
+extern void radeonDestroyContext(__DRIcontext * driContextPriv);
 
 #endif

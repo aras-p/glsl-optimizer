@@ -181,10 +181,10 @@ static void radeonInitDriverFuncs(struct dd_function_table *functions)
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
 			    const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	GLcontext* ctx;
 	GLcontext* shareCtx;
@@ -291,7 +291,7 @@ static void radeon_destroy_atom_list(radeonContextPtr radeon)
  * Cleanup common context fields.
  * Called by r200DestroyContext/r300DestroyContext
  */
-void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
+void radeonDestroyContext(__DRIcontext *driContextPriv )
 {
 #ifdef RADEON_BO_TRACK
 	FILE *track;
@@ -355,7 +355,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 
 /* Force the context `c' to be unbound from its buffer.
  */
-GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv)
+GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 {
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 
@@ -720,9 +720,9 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 /* Force the context `c' to be the current context and associate with it
  * buffer `b'.
  */
-GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
-			    __DRIdrawablePrivate * driDrawPriv,
-			    __DRIdrawablePrivate * driReadPriv)
+GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
+			    __DRIdrawable * driDrawPriv,
+			    __DRIdrawable * driReadPriv)
 {
 	radeonContextPtr radeon;
 	struct radeon_framebuffer *drfb;

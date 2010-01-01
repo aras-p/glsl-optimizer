@@ -66,7 +66,7 @@ typedef struct {
    unsigned int logTextureGranularity[SAVAGE_NR_TEX_HEAPS];
    drmAddress texVirtual[SAVAGE_NR_TEX_HEAPS];
   
-   __DRIscreenPrivate *driScrnPriv;
+   __DRIscreen *driScrnPriv;
 
    savageRegion aperture;
    savageRegion agpTextures;

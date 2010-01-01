@@ -77,7 +77,7 @@ do_texture_readpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    intelScreenPrivate *screen = intel->intelScreen;
    GLint pitch = pack->RowLength ? pack->RowLength : width;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   __DRIdrawable *dPriv = intel->driDrawable;
    int textureFormat;
    GLenum glTextureFormat;
    int destFormat, depthFormat, destPitch;
@@ -233,7 +233,7 @@ do_blit_readpixels(GLcontext * ctx,
       dri_bo *dst_buffer = intel_bufferobj_buffer(intel, dst,
 						  all ? INTEL_WRITE_FULL :
 						  INTEL_WRITE_PART);
-      __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+      __DRIdrawable *dPriv = intel->driReadDrawable;
       int nbox = dPriv->numClipRects;
       drm_clip_rect_t *box = dPriv->pClipRects;
       drm_clip_rect_t rect;

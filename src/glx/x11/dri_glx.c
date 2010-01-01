@@ -292,7 +292,7 @@ static const __DRIextension *loader_extensions[] = {
  * \param driDpy DRI display information.
  * \param createNewScreen  Pointer to the client-side driver's
  *               \c __driCreateNewScreen function.
- * \returns A pointer to the \c __DRIscreenPrivate structure returned by
+ * \returns A pointer to the \c __DRIscreen structure returned by
  *          the client-side driver on success, or \c NULL on failure.
  */
 static void *

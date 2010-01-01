@@ -449,7 +449,7 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 static void radeonKernelClear(GLcontext *ctx, GLuint flags)
 {
      r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
    uint32_t clear;
    GLint ret, i;
@@ -570,7 +570,7 @@ static void radeonKernelClear(GLcontext *ctx, GLuint flags)
 static void radeonClear( GLcontext *ctx, GLbitfield mask )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLuint orig_mask = mask;

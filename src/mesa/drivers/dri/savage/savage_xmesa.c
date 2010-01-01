@@ -168,7 +168,7 @@ PUBLIC const __DRIextension *savageScreenExtensions[] = {
 };
 
 static GLboolean
-savageInitDriver(__DRIscreenPrivate *sPriv)
+savageInitDriver(__DRIscreen *sPriv)
 {
   savageScreenPrivate *savageScreen;
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
@@ -272,7 +272,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 /* Accessed by dlsym from dri_mesa_init.c
  */
 static void
-savageDestroyScreen(__DRIscreenPrivate *sPriv)
+savageDestroyScreen(__DRIscreen *sPriv)
 {
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
 
@@ -288,12 +288,12 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
 
 static GLboolean
 savageCreateContext( const __GLcontextModes *mesaVis,
-		     __DRIcontextPrivate *driContextPriv,
+		     __DRIcontext *driContextPriv,
 		     void *sharedContextPrivate )
 {
    GLcontext *ctx, *shareCtx;
    savageContextPtr imesa;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct dd_function_table functions;
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
    drm_savage_sarea_t *saPriv=(drm_savage_sarea_t *)(((char*)sPriv->pSAREA)+
@@ -546,7 +546,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 }
 
 static void
-savageDestroyContext(__DRIcontextPrivate *driContextPriv)
+savageDestroyContext(__DRIcontext *driContextPriv)
 {
    savageContextPtr imesa = (savageContextPtr) driContextPriv->driverPrivate;
    GLuint i;
@@ -580,8 +580,8 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 
 static GLboolean
-savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-		    __DRIdrawablePrivate *driDrawPriv,
+savageCreateBuffer( __DRIscreen *driScrnPriv,
+		    __DRIdrawable *driDrawPriv,
 		    const __GLcontextModes *mesaVis,
 		    GLboolean isPixmap)
 {
@@ -675,13 +675,13 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 }
 
 static void
-savageDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+savageDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 #if 0
-void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
+void XMesaSwapBuffers(__DRIdrawable *driDrawPriv)
 {
    /* XXX should do swap according to the buffer, not the context! */
    savageContextPtr imesa = savageCtx; 
@@ -694,7 +694,7 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 
 void savageXMesaSetClipRects(savageContextPtr imesa)
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   __DRIdrawable *dPriv = imesa->driDrawable;
 
    if ((dPriv->numBackClipRects == 0)
        || (imesa->glCtx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)) {
@@ -715,8 +715,8 @@ void savageXMesaSetClipRects(savageContextPtr imesa)
 
 static void savageXMesaWindowMoved( savageContextPtr imesa ) 
 {
-   __DRIdrawablePrivate *const drawable = imesa->driDrawable;
-   __DRIdrawablePrivate *const readable = imesa->driReadable;
+   __DRIdrawable *const drawable = imesa->driDrawable;
+   __DRIdrawable *const readable = imesa->driReadable;
 
    if (0)
       fprintf(stderr, "savageXMesaWindowMoved\n\n");
@@ -731,7 +731,7 @@ static void savageXMesaWindowMoved( savageContextPtr imesa )
 
 
 static GLboolean
-savageUnbindContext(__DRIcontextPrivate *driContextPriv)
+savageUnbindContext(__DRIcontext *driContextPriv)
 {
    savageContextPtr savage = (savageContextPtr) driContextPriv->driverPrivate;
    if (savage)
@@ -742,7 +742,7 @@ savageUnbindContext(__DRIcontextPrivate *driContextPriv)
 
 #if 0
 static GLboolean
-savageOpenFullScreen(__DRIcontextPrivate *driContextPriv)
+savageOpenFullScreen(__DRIcontext *driContextPriv)
 {
     
   
@@ -761,7 +761,7 @@ savageOpenFullScreen(__DRIcontextPrivate *driContextPriv)
 }
 
 static GLboolean
-savageCloseFullScreen(__DRIcontextPrivate *driContextPriv)
+savageCloseFullScreen(__DRIcontext *driContextPriv)
 {
     
     if (driContextPriv) {
@@ -777,9 +777,9 @@ savageCloseFullScreen(__DRIcontextPrivate *driContextPriv)
 #endif
 
 static GLboolean
-savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
-		  __DRIdrawablePrivate *driDrawPriv,
-		  __DRIdrawablePrivate *driReadPriv)
+savageMakeCurrent(__DRIcontext *driContextPriv,
+		  __DRIdrawable *driDrawPriv,
+		  __DRIdrawable *driReadPriv)
 {
    if (driContextPriv) {
       savageContextPtr imesa
@@ -816,9 +816,9 @@ savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 void savageGetLock( savageContextPtr imesa, GLuint flags ) 
 {
-   __DRIdrawablePrivate *const drawable = imesa->driDrawable;
-   __DRIdrawablePrivate *const readable = imesa->driReadable;
-   __DRIscreenPrivate *sPriv = imesa->driScreen;
+   __DRIdrawable *const drawable = imesa->driDrawable;
+   __DRIdrawable *const readable = imesa->driReadable;
+   __DRIscreen *sPriv = imesa->driScreen;
    drm_savage_sarea_t *sarea = imesa->sarea;
    int me = imesa->hHWContext;
    int stamp = drawable->lastStamp; 
@@ -883,7 +883,7 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
 }
 
 static const  __DRIconfig **
-savageFillInModes( __DRIscreenPrivate *psp,
+savageFillInModes( __DRIscreen *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -967,7 +967,7 @@ savageFillInModes( __DRIscreenPrivate *psp,
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-savageInitScreen(__DRIscreenPrivate *psp)
+savageInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 2, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };

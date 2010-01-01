@@ -590,13 +590,13 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 GLboolean
 intelInitContext(struct intel_context *intel,
                  const __GLcontextModes * mesaVis,
-                 __DRIcontextPrivate * driContextPriv,
+                 __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
                  struct dd_function_table *functions)
 {
    GLcontext *ctx = &intel->ctx;
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    int bo_reuse_mode;
 
@@ -801,7 +801,7 @@ intelInitContext(struct intel_context *intel,
 }
 
 void
-intelDestroyContext(__DRIcontextPrivate * driContextPriv)
+intelDestroyContext(__DRIcontext * driContextPriv)
 {
    struct intel_context *intel =
       (struct intel_context *) driContextPriv->driverPrivate;
@@ -857,7 +857,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
        * to avoid many layers of "if" constructs.
        */
       do {
-         __DRIdrawablePrivate * driDrawPriv = intel->driDrawable;
+         __DRIdrawable * driDrawPriv = intel->driDrawable;
          struct intel_framebuffer *intel_fb;
          struct intel_renderbuffer *irbDepth, *irbStencil;
          if (!driDrawPriv) {
@@ -910,7 +910,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 }
 
 GLboolean
-intelUnbindContext(__DRIcontextPrivate * driContextPriv)
+intelUnbindContext(__DRIcontext * driContextPriv)
 {
    struct intel_context *intel =
       (struct intel_context *) driContextPriv->driverPrivate;
@@ -924,11 +924,11 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 }
 
 GLboolean
-intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
-                 __DRIdrawablePrivate * driDrawPriv,
-                 __DRIdrawablePrivate * driReadPriv)
+intelMakeCurrent(__DRIcontext * driContextPriv,
+                 __DRIdrawable * driDrawPriv,
+                 __DRIdrawable * driReadPriv)
 {
-   __DRIscreenPrivate *psp = driDrawPriv->driScreenPriv;
+   __DRIscreen *psp = driDrawPriv->driScreenPriv;
    struct intel_context *intel;
    GET_CURRENT_CONTEXT(curCtx);
 
@@ -1031,8 +1031,8 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 static void
 intelContendedLock(struct intel_context *intel, GLuint flags)
 {
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   __DRIscreenPrivate *sPriv = intel->driScreen;
+   __DRIdrawable *dPriv = intel->driDrawable;
+   __DRIscreen *sPriv = intel->driScreen;
    volatile drm_i915_sarea_t *sarea = intel->sarea;
    int me = intel->hHWContext;
 

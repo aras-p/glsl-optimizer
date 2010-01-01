@@ -214,10 +214,10 @@ static const GLuint __driNConfigOptions = 17;
 
 #endif
 
-static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
+static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
 static int
-radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
+radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
   int ret;
   drm_radeon_getparam_t gp = { 0 };
@@ -249,7 +249,7 @@ radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 }
 
 static const __DRIconfig **
-radeonFillInModes( __DRIscreenPrivate *psp,
+radeonFillInModes( __DRIscreen *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -911,7 +911,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 /* Create the device specific screen private data struct.
  */
 static radeonScreenPtr
-radeonCreateScreen( __DRIscreenPrivate *sPriv )
+radeonCreateScreen( __DRIscreen *sPriv )
 {
    radeonScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
@@ -1250,7 +1250,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 }
 
 static radeonScreenPtr
-radeonCreateScreen2(__DRIscreenPrivate *sPriv)
+radeonCreateScreen2(__DRIscreen *sPriv)
 {
    radeonScreenPtr screen;
    int i;
@@ -1401,7 +1401,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 /* Destroy the device specific screen private data struct.
  */
 static void
-radeonDestroyScreen( __DRIscreenPrivate *sPriv )
+radeonDestroyScreen( __DRIscreen *sPriv )
 {
     radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
 
@@ -1435,7 +1435,7 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 /* Initialize the driver specific screen private data.
  */
 static GLboolean
-radeonInitDriver( __DRIscreenPrivate *sPriv )
+radeonInitDriver( __DRIscreen *sPriv )
 {
     if (sPriv->dri2.enabled) {
         sPriv->private = (void *) radeonCreateScreen2( sPriv );
@@ -1459,8 +1459,8 @@ radeonInitDriver( __DRIscreenPrivate *sPriv )
  * pbuffers.
  */
 static GLboolean
-radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                    __DRIdrawablePrivate *driDrawPriv,
+radeonCreateBuffer( __DRIscreen *driScrnPriv,
+                    __DRIdrawable *driDrawPriv,
                     const __GLcontextModes *mesaVis,
                     GLboolean isPixmap )
 {
@@ -1559,7 +1559,7 @@ static void radeon_cleanup_renderbuffers(struct radeon_framebuffer *rfb)
 }
 
 void
-radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
     struct radeon_framebuffer *rfb;
     if (!driDrawPriv)
@@ -1581,7 +1581,7 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-radeonInitScreen(__DRIscreenPrivate *psp)
+radeonInitScreen(__DRIscreen *psp)
 {
 #if defined(RADEON_R100)
    static const char *driver_name = "Radeon";
@@ -1631,7 +1631,7 @@ radeonInitScreen(__DRIscreenPrivate *psp)
  * \return the __GLcontextModes supported by this driver
  */
 static const
-__DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
+__DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
    GLenum fb_format[3];
    GLenum fb_type[3];
@@ -1698,7 +1698,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
  * Get information about previous buffer swaps.
  */
 static int
-getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
 {
     struct radeon_framebuffer *rfb;
 

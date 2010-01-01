@@ -109,7 +109,7 @@ static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
  * \return GL_TRUE if success, GL_FALSE if error.
  */
 GLboolean
-intelMapScreenRegions(__DRIscreenPrivate * sPriv)
+intelMapScreenRegions(__DRIscreen * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
@@ -140,7 +140,7 @@ intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
 
 static void
 intelPrintDRIInfo(intelScreenPrivate * intelScreen,
-                  __DRIscreenPrivate * sPriv, I830DRIPtr gDRIPriv)
+                  __DRIscreen * sPriv, I830DRIPtr gDRIPriv)
 {
    fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->front.size, intelScreen->front.offset,
@@ -248,7 +248,7 @@ static const __DRIextension *intelScreenExtensions[] = {
 };
 
 static GLboolean
-intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
+intel_get_param(__DRIscreen *psp, int param, int *value)
 {
    int ret;
    struct drm_i915_getparam gp;
@@ -265,7 +265,7 @@ intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
    return GL_TRUE;
 }
 
-static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
+static GLboolean intelInitDriver(__DRIscreen *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
@@ -321,7 +321,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
 
 static void
-intelDestroyScreen(__DRIscreenPrivate * sPriv)
+intelDestroyScreen(__DRIscreen * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
@@ -338,8 +338,8 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
  * This is called when we need to set up GL rendering to a new X window.
  */
 static GLboolean
-intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
-                  __DRIdrawablePrivate * driDrawPriv,
+intelCreateBuffer(__DRIscreen * driScrnPriv,
+                  __DRIdrawable * driDrawPriv,
                   const __GLcontextModes * mesaVis, GLboolean isPixmap)
 {
    if (isPixmap) {
@@ -415,7 +415,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 }
 
 static void
-intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
+intelDestroyBuffer(__DRIdrawable * driDrawPriv)
 {
    struct intel_framebuffer *intel_fb = driDrawPriv->driverPrivate;
    struct intel_renderbuffer *depth_rb;
@@ -449,7 +449,7 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
  * Get information about previous buffer swaps.
  */
 static int
-intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
+intelGetSwapInfo(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
 {
    struct intel_framebuffer *intel_fb;
 
@@ -476,22 +476,22 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
  * functions.
  */
 extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
-                                   __DRIcontextPrivate * driContextPriv,
+                                   __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
-                                   __DRIcontextPrivate * driContextPriv,
+                                   __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
-				  __DRIcontextPrivate * driContextPriv,
+				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(const __GLcontextModes * mesaVis,
-                   __DRIcontextPrivate * driContextPriv,
+                   __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
 #ifdef I915
@@ -514,7 +514,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 
 
 static __DRIconfig **
-intelFillInModes(__DRIscreenPrivate *psp,
+intelFillInModes(__DRIscreen *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
                  unsigned stencil_bits, GLboolean have_back_buffer)
 {
@@ -606,7 +606,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
    int gem_kernel = 0;
    struct drm_i915_getparam gp;
-   __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
+   __DRIscreen *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
 
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
@@ -650,7 +650,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
  *
  * \return the __GLcontextModes supported by this driver
  */
-static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **intelInitScreen(__DRIscreen *psp)
 {
    intelScreenPrivate *intelScreen;
 #ifdef I915
@@ -706,7 +706,7 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
  * \return the __GLcontextModes supported by this driver
  */
 static const
-__DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
+__DRIconfig **intelInitScreen2(__DRIscreen *psp)
 {
    intelScreenPrivate *intelScreen;
    GLenum fb_format[3];

@@ -59,11 +59,6 @@
 
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
 
-/* Typedefs to avoid rewriting the world. */
-typedef struct __DRIscreenRec	__DRIscreenPrivate;
-typedef struct __DRIdrawableRec	__DRIdrawablePrivate;
-typedef struct __DRIcontextRec	__DRIcontextPrivate;
-
 /**
  * Extensions.
  */
