@@ -170,7 +170,11 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 2, 0, 0, 0, 0, "USGE", TGSI_OPCODE_USGE },
    { 1, 2, 0, 0, 0, 0, "USHR", TGSI_OPCODE_USHR },
    { 1, 2, 0, 0, 0, 0, "USLT", TGSI_OPCODE_USLT },
-   { 1, 2, 0, 0, 0, 0, "USNE", TGSI_OPCODE_USNE }
+   { 1, 2, 0, 0, 0, 0, "USNE", TGSI_OPCODE_USNE },
+   { 0, 1, 0, 0, 0, 0, "SWITCH", TGSI_OPCODE_SWITCH },
+   { 0, 1, 0, 0, 0, 0, "CASE", TGSI_OPCODE_CASE },
+   { 0, 0, 0, 0, 0, 0, "DEFAULT", TGSI_OPCODE_DEFAULT },
+   { 0, 0, 0, 0, 0, 0, "ENDSWITCH", TGSI_OPCODE_ENDSWITCH }
 };
 
 const struct tgsi_opcode_info *

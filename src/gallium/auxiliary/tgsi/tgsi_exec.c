@@ -123,7 +123,7 @@
 
 /** The execution mask depends on the conditional mask and the loop mask */
 #define UPDATE_EXEC_MASK(MACH) \
-      MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->FuncMask
+      MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->Switch.mask & MACH->FuncMask
 
 
 static const union tgsi_exec_channel ZeroVec =
@@ -1796,6 +1796,90 @@ exec_vector_trinary(struct tgsi_exec_machine *mach,
 }
 
 static void
+exec_break(struct tgsi_exec_machine *mach)
+{
+   if (mach->BreakType == TGSI_EXEC_BREAK_INSIDE_LOOP) {
+      /* turn off loop channels for each enabled exec channel */
+      mach->LoopMask &= ~mach->ExecMask;
+      /* Todo: if mach->LoopMask == 0, jump to end of loop */
+      UPDATE_EXEC_MASK(mach);
+   } else {
+      assert(mach->BreakType == TGSI_EXEC_BREAK_INSIDE_SWITCH);
+
+      mach->Switch.mask = 0x0;
+
+      UPDATE_EXEC_MASK(mach);
+   }
+}
+
+static void
+exec_switch(struct tgsi_exec_machine *mach,
+            const struct tgsi_full_instruction *inst)
+{
+   assert(mach->SwitchStackTop < TGSI_EXEC_MAX_SWITCH_NESTING);
+   assert(mach->BreakStackTop < TGSI_EXEC_MAX_BREAK_STACK);
+
+   mach->SwitchStack[mach->SwitchStackTop++] = mach->Switch;
+   fetch_source(mach, &mach->Switch.selector, &inst->Src[0], CHAN_X);
+   mach->Switch.mask = 0x0;
+   mach->Switch.defaultMask = 0x0;
+
+   mach->BreakStack[mach->BreakStackTop++] = mach->BreakType;
+   mach->BreakType = TGSI_EXEC_BREAK_INSIDE_SWITCH;
+
+   UPDATE_EXEC_MASK(mach);
+}
+
+static void
+exec_case(struct tgsi_exec_machine *mach,
+          const struct tgsi_full_instruction *inst)
+{
+   uint prevMask = mach->SwitchStack[mach->SwitchStackTop - 1].mask;
+   union tgsi_exec_channel src;
+   uint mask = 0;
+
+   fetch_source(mach, &src, &inst->Src[0], CHAN_X);
+
+   if (mach->Switch.selector.u[0] == src.u[0]) {
+      mask |= 0x1;
+   }
+   if (mach->Switch.selector.u[1] == src.u[1]) {
+      mask |= 0x2;
+   }
+   if (mach->Switch.selector.u[2] == src.u[2]) {
+      mask |= 0x4;
+   }
+   if (mach->Switch.selector.u[3] == src.u[3]) {
+      mask |= 0x8;
+   }
+
+   mach->Switch.defaultMask |= mask;
+
+   mach->Switch.mask |= mask & prevMask;
+
+   UPDATE_EXEC_MASK(mach);
+}
+
+static void
+exec_default(struct tgsi_exec_machine *mach)
+{
+   uint prevMask = mach->SwitchStack[mach->SwitchStackTop - 1].mask;
+
+   mach->Switch.mask |= ~mach->Switch.defaultMask & prevMask;
+
+   UPDATE_EXEC_MASK(mach);
+}
+
+static void
+exec_endswitch(struct tgsi_exec_machine *mach)
+{
+   mach->Switch = mach->SwitchStack[--mach->SwitchStackTop];
+   mach->BreakType = mach->BreakStack[--mach->BreakStackTop];
+
+   UPDATE_EXEC_MASK(mach);
+}
+
+static void
 micro_i2f(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src)
 {
@@ -2841,6 +2925,8 @@ exec_instruction(
          mach->CallStack[mach->CallStackTop].CondStackTop = mach->CondStackTop;
          mach->CallStack[mach->CallStackTop].LoopStackTop = mach->LoopStackTop;
          mach->CallStack[mach->CallStackTop].ContStackTop = mach->ContStackTop;
+         mach->CallStack[mach->CallStackTop].SwitchStackTop = mach->SwitchStackTop;
+         mach->CallStack[mach->CallStackTop].BreakStackTop = mach->BreakStackTop;
          /* note that PC was already incremented above */
          mach->CallStack[mach->CallStackTop].ReturnAddr = *pc;
 
@@ -2848,12 +2934,17 @@ exec_instruction(
 
          /* Second, push the Cond, Loop, Cont, Func stacks */
          assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
-         mach->CondStack[mach->CondStackTop++] = mach->CondMask;
          assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
-         mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
          assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
-         mach->ContStack[mach->ContStackTop++] = mach->ContMask;
+         assert(mach->SwitchStackTop < TGSI_EXEC_MAX_SWITCH_NESTING);
+         assert(mach->BreakStackTop < TGSI_EXEC_MAX_BREAK_STACK);
          assert(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
+
+         mach->CondStack[mach->CondStackTop++] = mach->CondMask;
+         mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
+         mach->ContStack[mach->ContStackTop++] = mach->ContMask;
+         mach->SwitchStack[mach->SwitchStackTop++] = mach->Switch;
+         mach->BreakStack[mach->BreakStackTop++] = mach->BreakType;
          mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
 
          /* Finally, jump to the subroutine */
@@ -2885,6 +2976,12 @@ exec_instruction(
 
          mach->ContStackTop = mach->CallStack[mach->CallStackTop].ContStackTop;
          mach->ContMask = mach->ContStack[mach->ContStackTop];
+
+         mach->SwitchStackTop = mach->CallStack[mach->CallStackTop].SwitchStackTop;
+         mach->Switch = mach->SwitchStack[mach->SwitchStackTop];
+
+         mach->BreakStackTop = mach->CallStack[mach->CallStackTop].BreakStackTop;
+         mach->BreakType = mach->BreakStack[mach->BreakStackTop];
 
          assert(mach->FuncStackTop > 0);
          mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
@@ -3180,11 +3277,15 @@ exec_instruction(
    case TGSI_OPCODE_BGNLOOP:
       /* push LoopMask and ContMasks */
       assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
-      mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
       assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
-      mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       assert(mach->LoopLabelStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      assert(mach->BreakStackTop < TGSI_EXEC_MAX_BREAK_STACK);
+
+      mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
+      mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       mach->LoopLabelStack[mach->LoopLabelStackTop++] = *pc - 1;
+      mach->BreakStack[mach->BreakStackTop++] = mach->BreakType;
+      mach->BreakType = TGSI_EXEC_BREAK_INSIDE_LOOP;
       break;
 
    case TGSI_OPCODE_ENDFOR:
@@ -3231,6 +3332,8 @@ exec_instruction(
          --mach->LoopLabelStackTop;
          assert(mach->LoopCounterStackTop > 0);
          --mach->LoopCounterStackTop;
+
+         mach->BreakType = mach->BreakStack[--mach->BreakStackTop];
       }
       UPDATE_EXEC_MASK(mach);
       break;
@@ -3254,15 +3357,14 @@ exec_instruction(
          mach->ContMask = mach->ContStack[--mach->ContStackTop];
          assert(mach->LoopLabelStackTop > 0);
          --mach->LoopLabelStackTop;
+
+         mach->BreakType = mach->BreakStack[--mach->BreakStackTop];
       }
       UPDATE_EXEC_MASK(mach);
       break;
 
    case TGSI_OPCODE_BRK:
-      /* turn off loop channels for each enabled exec channel */
-      mach->LoopMask &= ~mach->ExecMask;
-      /* Todo: if mach->LoopMask == 0, jump to end of loop */
-      UPDATE_EXEC_MASK(mach);
+      exec_break(mach);
       break;
 
    case TGSI_OPCODE_CONT:
@@ -3292,6 +3394,12 @@ exec_instruction(
 
       mach->ContStackTop = mach->CallStack[mach->CallStackTop].ContStackTop;
       mach->ContMask = mach->ContStack[mach->ContStackTop];
+
+      mach->SwitchStackTop = mach->CallStack[mach->CallStackTop].SwitchStackTop;
+      mach->Switch = mach->SwitchStack[mach->SwitchStackTop];
+
+      mach->BreakStackTop = mach->CallStack[mach->CallStackTop].BreakStackTop;
+      mach->BreakType = mach->BreakStack[mach->BreakStackTop];
 
       assert(mach->FuncStackTop > 0);
       mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
@@ -3407,6 +3515,22 @@ exec_instruction(
       exec_vector_binary(mach, inst, micro_usne);
       break;
 
+   case TGSI_OPCODE_SWITCH:
+      exec_switch(mach, inst);
+      break;
+
+   case TGSI_OPCODE_CASE:
+      exec_case(mach, inst);
+      break;
+
+   case TGSI_OPCODE_DEFAULT:
+      exec_default(mach);
+      break;
+
+   case TGSI_OPCODE_ENDSWITCH:
+      exec_endswitch(mach);
+      break;
+
    default:
       assert( 0 );
    }
@@ -3431,9 +3555,13 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
+   mach->Switch.mask = 0xf;
+
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);
+   assert(mach->SwitchStackTop == 0);
+   assert(mach->BreakStackTop == 0);
    assert(mach->CallStackTop == 0);
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
@@ -3534,6 +3662,8 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);
+   assert(mach->SwitchStackTop == 0);
+   assert(mach->BreakStackTop == 0);
    assert(mach->CallStackTop == 0);
 
    return ~mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0];

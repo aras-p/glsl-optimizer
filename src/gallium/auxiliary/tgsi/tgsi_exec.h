@@ -179,6 +179,7 @@ struct tgsi_exec_labels
 
 #define TGSI_EXEC_MAX_COND_NESTING  32
 #define TGSI_EXEC_MAX_LOOP_NESTING  32
+#define TGSI_EXEC_MAX_SWITCH_NESTING 32
 #define TGSI_EXEC_MAX_CALL_NESTING  32
 
 /* The maximum number of input attributes per vertex. For 2D
@@ -206,8 +207,28 @@ struct tgsi_call_record
    uint CondStackTop;
    uint LoopStackTop;
    uint ContStackTop;
+   int SwitchStackTop;
+   int BreakStackTop;
    uint ReturnAddr;
 };
+
+
+/* Switch-case block state. */
+struct tgsi_switch_record {
+   uint mask;                          /**< execution mask */
+   union tgsi_exec_channel selector;   /**< a value case statements are compared to */
+   uint defaultMask;                   /**< non-execute mask for default case */
+};
+
+
+enum tgsi_break_type {
+   TGSI_EXEC_BREAK_INSIDE_LOOP,
+   TGSI_EXEC_BREAK_INSIDE_SWITCH
+};
+
+
+#define TGSI_EXEC_MAX_BREAK_STACK (TGSI_EXEC_MAX_LOOP_NESTING + TGSI_EXEC_MAX_SWITCH_NESTING)
+
 
 /**
  * Run-time virtual machine state for executing TGSI shader.
@@ -251,6 +272,12 @@ struct tgsi_exec_machine
    uint FuncMask;  /**< For function calls */
    uint ExecMask;  /**< = CondMask & LoopMask */
 
+   /* Current switch-case state. */
+   struct tgsi_switch_record Switch;
+
+   /* Current break type. */
+   enum tgsi_break_type BreakType;
+
    /** Condition mask stack (for nested conditionals) */
    uint CondStack[TGSI_EXEC_MAX_COND_NESTING];
    int CondStackTop;
@@ -270,6 +297,13 @@ struct tgsi_exec_machine
    /** Loop continue mask stack (see comments in tgsi_exec.c) */
    uint ContStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int ContStackTop;
+
+   /** Switch case stack */
+   struct tgsi_switch_record SwitchStack[TGSI_EXEC_MAX_SWITCH_NESTING];
+   int SwitchStackTop;
+
+   enum tgsi_break_type BreakStack[TGSI_EXEC_MAX_BREAK_STACK];
+   int BreakStackTop;
 
    /** Function execution mask stack (for executing subroutine code) */
    uint FuncStack[TGSI_EXEC_MAX_CALL_NESTING];

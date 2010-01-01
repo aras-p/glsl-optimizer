@@ -314,7 +314,11 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_USHR                137
 #define TGSI_OPCODE_USLT                138
 #define TGSI_OPCODE_USNE                139
-#define TGSI_OPCODE_LAST                140
+#define TGSI_OPCODE_SWITCH              140
+#define TGSI_OPCODE_CASE                141
+#define TGSI_OPCODE_DEFAULT             142
+#define TGSI_OPCODE_ENDSWITCH           143
+#define TGSI_OPCODE_LAST                144
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
