@@ -56,13 +56,17 @@ def install_shared_library(env, source, version = ()):
     source = str(source[0])
     version = tuple(map(str, version))
     target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'lib')
-    target_name = '.'.join((str(source),) + version)
-    last = env.InstallAs(os.path.join(target_dir, target_name), source)
-    while len(version):
-        version = version[:-1]
+    if env['SHLIBSUFFIX'] == '.so':
         target_name = '.'.join((str(source),) + version)
-        action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
-        last = env.Command(os.path.join(target_dir, target_name), last, action) 
+        last = env.InstallAs(os.path.join(target_dir, target_name), source)
+        while len(version):
+            version = version[:-1]
+            target_name = '.'.join((str(source),) + version)
+            action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
+            last = env.Command(os.path.join(target_dir, target_name), last, action) 
+    else:
+        target_name = str(source)
+        env.InstallAs(os.path.join(target_dir, target_name), source)
 
 def createInstallMethods(env):
     env.AddMethod(install_program, 'InstallProgram')
