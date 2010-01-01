@@ -125,7 +125,7 @@ struct Property : public PooledObj {
 			Property( long _type, long _tag, INREAL _value )
 			{ type = _type; tag = _tag; value = (REAL) _value; }
 			Property( long _tag, INREAL _value )
-			{ type = 0; tag = _tag; value = (REAL) _value; }
+			{ type = 0; tag = _tag; value = (REAL) _value; save = 0; }
     };
 
 class NurbsTessellator;
