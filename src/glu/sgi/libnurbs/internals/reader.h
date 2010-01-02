@@ -95,7 +95,7 @@ struct O_trim : public PooledObj {
     O_curve		*o_curve;	/* closed trim loop	 	*/
     O_trim *		next;		/* next loop along trim 	*/
     int			save;		/* 1 if in display list		*/
-			O_trim() { next = 0; o_curve = 0; }
+			O_trim() { next = 0; o_curve = 0; save = 0; }
     };
 
 struct O_nurbssurface : public PooledObj {
