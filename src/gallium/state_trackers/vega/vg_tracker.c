@@ -36,6 +36,9 @@
 #include "util/u_math.h"
 #include "util/u_rect.h"
 
+/* advertise OpenVG support */
+PUBLIC const int st_api_OpenVG = 1;
+
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
                VGint width, VGint height)
