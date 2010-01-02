@@ -467,6 +467,7 @@ create_window(struct winthread *wt, EGLContext shareCtx)
                         EGL_GREEN_SIZE, 1,
                         EGL_BLUE_SIZE, 1,
                         EGL_DEPTH_SIZE, 1,
+                        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
                         EGL_NONE };
    EGLConfig config;
    EGLint num_configs;

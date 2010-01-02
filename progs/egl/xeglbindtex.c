@@ -53,6 +53,7 @@ make_pbuffer(int width, int height)
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
       EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
    EGLint pbuf_attribs[] = {
@@ -126,6 +127,7 @@ make_window(Display *x_dpy, const char *name,
       EGL_BLUE_SIZE, 8,
       EGL_ALPHA_SIZE, 8,
       EGL_DEPTH_SIZE, 8,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
 

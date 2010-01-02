@@ -120,6 +120,7 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
       EGL_GREEN_SIZE, 1,
       EGL_BLUE_SIZE, 1,
       EGL_DEPTH_SIZE, 1,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
 
