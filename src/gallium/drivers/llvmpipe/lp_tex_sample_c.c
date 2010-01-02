@@ -1085,7 +1085,7 @@ lp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
    const struct pipe_sampler_state *sampler = samp->sampler;
    unsigned level0, level1, j, imgFilter;
    int width, height;
-   float levelBlend;
+   float levelBlend = 0.0F;
 
    choose_mipmap_levels(tgsi_sampler, s, t, p, 
                         lodbias,
