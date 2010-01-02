@@ -31,7 +31,6 @@
 #include "main/renderbuffer.h"
 
 #include "utils.h"
-#include "vblank.h"
 #include "xmlpool.h"
 
 #include "intel_batchbuffer.h"
@@ -41,7 +40,6 @@
 #include "intel_extensions.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
-#include "intel_swapbuffers.h"
 #include "intel_screen.h"
 #include "intel_span.h"
 #include "intel_tex.h"
@@ -117,9 +115,6 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
-    &driSwapControlExtension.base,
-    &driFrameTrackingExtension.base,
-    &driMediaStreamCounterExtension.base,
     &intelTexOffsetExtension.base,
     &intelTexBufferExtension.base,
     NULL
@@ -265,33 +260,6 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
 
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
-
-
-/**
- * Get information about previous buffer swaps.
- */
-static int
-intelGetSwapInfo(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
-{
-   struct intel_framebuffer *intel_fb;
-
-   if ((dPriv == NULL) || (dPriv->driverPrivate == NULL)
-       || (sInfo == NULL)) {
-      return -1;
-   }
-
-   intel_fb = dPriv->driverPrivate;
-   sInfo->swap_count = intel_fb->swap_count;
-   sInfo->swap_ust = intel_fb->swap_ust;
-   sInfo->swap_missed_count = intel_fb->swap_missed_count;
-
-   sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-      ? driCalculateSwapUsage(dPriv, 0, intel_fb->swap_missed_ust)
-      : 0.0;
-
-   return 0;
-}
-
 
 /* There are probably better ways to do this, such as an
  * init-designated function to register chipids and createcontext
@@ -513,10 +481,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer	 = intelDestroyBuffer,
    .MakeCurrent		 = intelMakeCurrent,
    .UnbindContext	 = intelUnbindContext,
-   .GetSwapInfo		 = intelGetSwapInfo,
-   .GetDrawableMSC	 = driDrawableGetMSC32,
-   .WaitForMSC		 = driWaitForMSC32,
-
    .InitScreen2		 = intelInitScreen2,
 };
 

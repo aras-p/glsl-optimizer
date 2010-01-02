@@ -34,7 +34,6 @@ DRIVER_SOURCES = \
 	intel_pixel_read.c \
 	intel_buffers.c \
 	intel_blit.c \
-	intel_swapbuffers.c \
 	i915_tex_layout.c \
 	i915_texstate.c \
 	i915_context.c \

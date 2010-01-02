@@ -41,16 +41,6 @@ struct intel_framebuffer
    struct gl_framebuffer Base;
 
    struct intel_renderbuffer *color_rb[2];
-
-   /* VBI
-    */
-   GLuint vbl_waited;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
 };
 
 
@@ -61,8 +51,6 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-
-   GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
    uint8_t *span_cache;
    unsigned long span_cache_offset;

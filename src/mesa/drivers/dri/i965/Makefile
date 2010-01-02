@@ -24,7 +24,6 @@ DRIVER_SOURCES = \
 	intel_pixel_draw.c \
 	intel_pixel_read.c \
 	intel_state.c \
-	intel_swapbuffers.c \
 	intel_syncobj.c \
 	intel_tex.c \
 	intel_tex_copy.c \

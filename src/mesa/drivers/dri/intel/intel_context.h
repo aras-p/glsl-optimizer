@@ -298,20 +298,11 @@ struct intel_context
    __DRIdrawable *driReadDrawable;
    __DRIscreen *driScreen;
    intelScreenPrivate *intelScreen;
-   volatile drm_i915_sarea_t *sarea;
-
-   GLuint lastStamp;
 
    /**
     * Configuration cache
     */
    driOptionCache optionCache;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
 };
 
 extern char *__progname;
