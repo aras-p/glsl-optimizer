@@ -104,127 +104,6 @@ const GLuint __driNConfigOptions = 11;
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
-/**
- * Map all the memory regions described by the screen.
- * \return GL_TRUE if success, GL_FALSE if error.
- */
-GLboolean
-intelMapScreenRegions(__DRIscreen * sPriv)
-{
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-
-   if (0)
-      _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);
-   if (intelScreen->tex.size != 0) {
-      if (drmMap(sPriv->fd,
-		 intelScreen->tex.handle,
-		 intelScreen->tex.size,
-		 (drmAddress *) & intelScreen->tex.map) != 0) {
-	 intelUnmapScreenRegions(intelScreen);
-	 return GL_FALSE;
-      }
-   }
-
-   return GL_TRUE;
-}
-
-void
-intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
-{
-   if (intelScreen->tex.map) {
-      drmUnmap(intelScreen->tex.map, intelScreen->tex.size);
-      intelScreen->tex.map = NULL;
-   }
-}
-
-
-static void
-intelPrintDRIInfo(intelScreenPrivate * intelScreen,
-                  __DRIscreen * sPriv, I830DRIPtr gDRIPriv)
-{
-   fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->front.size, intelScreen->front.offset,
-           intelScreen->pitch);
-   fprintf(stderr, "*** Back size:    0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->back.size, intelScreen->back.offset,
-           intelScreen->pitch);
-   fprintf(stderr, "*** Depth size:   0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->depth.size, intelScreen->depth.offset,
-           intelScreen->pitch);
-   fprintf(stderr, "*** Texture size: 0x%x  offset: 0x%x\n",
-           intelScreen->tex.size, intelScreen->tex.offset);
-   fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
-}
-
-
-static void
-intelPrintSAREA(const drm_i915_sarea_t * sarea)
-{
-   fprintf(stderr, "SAREA: sarea width %d  height %d\n", sarea->width,
-           sarea->height);
-   fprintf(stderr, "SAREA: pitch: %d\n", sarea->pitch);
-   fprintf(stderr,
-           "SAREA: front offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
-           sarea->front_offset, sarea->front_size,
-           (unsigned) sarea->front_handle, sarea->front_tiled);
-   fprintf(stderr,
-           "SAREA: back  offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
-           sarea->back_offset, sarea->back_size,
-           (unsigned) sarea->back_handle, sarea->back_tiled);
-   fprintf(stderr, "SAREA: depth offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
-           sarea->depth_offset, sarea->depth_size,
-           (unsigned) sarea->depth_handle, sarea->depth_tiled);
-   fprintf(stderr, "SAREA: tex   offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
-           sarea->tex_offset, sarea->tex_size, (unsigned) sarea->tex_handle);
-}
-
-
-/**
- * A number of the screen parameters are obtained/computed from
- * information in the SAREA.  This function updates those parameters.
- */
-static void
-intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           drm_i915_sarea_t * sarea)
-{
-   intelScreen->width = sarea->width;
-   intelScreen->height = sarea->height;
-   intelScreen->pitch = sarea->pitch;
-
-   intelScreen->front.offset = sarea->front_offset;
-   intelScreen->front.handle = sarea->front_handle;
-   intelScreen->front.size = sarea->front_size;
-   intelScreen->front.tiled = sarea->front_tiled;
-
-   intelScreen->back.offset = sarea->back_offset;
-   intelScreen->back.handle = sarea->back_handle;
-   intelScreen->back.size = sarea->back_size;
-   intelScreen->back.tiled = sarea->back_tiled;
-
-   intelScreen->depth.offset = sarea->depth_offset;
-   intelScreen->depth.handle = sarea->depth_handle;
-   intelScreen->depth.size = sarea->depth_size;
-   intelScreen->depth.tiled = sarea->depth_tiled;
-
-   if (intelScreen->driScrnPriv->ddx_version.minor >= 9) {
-      intelScreen->front.bo_handle = sarea->front_bo_handle;
-      intelScreen->back.bo_handle = sarea->back_bo_handle;
-      intelScreen->depth.bo_handle = sarea->depth_bo_handle;
-   } else {
-      intelScreen->front.bo_handle = -1;
-      intelScreen->back.bo_handle = -1;
-      intelScreen->depth.bo_handle = -1;
-   }
-
-   intelScreen->tex.offset = sarea->tex_offset;
-   intelScreen->logTextureGranularity = sarea->log_tex_granularity;
-   intelScreen->tex.handle = sarea->tex_handle;
-   intelScreen->tex.size = sarea->tex_size;
-
-   if (0)
-      intelPrintSAREA(sarea);
-}
-
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
    { __DRI_TEX_OFFSET },
    intelSetTexOffset,
@@ -264,68 +143,12 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
    return GL_TRUE;
 }
 
-static GLboolean intelInitDriver(__DRIscreen *sPriv)
-{
-   intelScreenPrivate *intelScreen;
-   I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
-   drm_i915_sarea_t *sarea;
-
-   if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
-      fprintf(stderr,
-              "\nERROR!  sizeof(I830DRIRec) does not match passed size from device driver\n");
-      return GL_FALSE;
-   }
-
-   /* Allocate the private area */
-   intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));
-   if (!intelScreen) {
-      fprintf(stderr, "\nERROR!  Allocating private area failed\n");
-      return GL_FALSE;
-   }
-   /* parse information in __driConfigOptions */
-   driParseOptionInfo(&intelScreen->optionCache,
-                      __driConfigOptions, __driNConfigOptions);
-
-   intelScreen->driScrnPriv = sPriv;
-   sPriv->private = (void *) intelScreen;
-   sarea = (drm_i915_sarea_t *)
-      (((GLubyte *) sPriv->pSAREA) + gDRIPriv->sarea_priv_offset);
-   intelScreen->sarea = sarea;
-
-   intelScreen->deviceID = gDRIPriv->deviceID;
-
-   intelUpdateScreenFromSAREA(intelScreen, sarea);
-
-   if (!intelMapScreenRegions(sPriv)) {
-      fprintf(stderr, "\nERROR!  mapping regions\n");
-      _mesa_free(intelScreen);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
-
-   if (0)
-      intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
-
-   intelScreen->drmMinor = sPriv->drm_version.minor;
-
-   /* Determine if IRQs are active? */
-   if (!intel_get_param(sPriv, I915_PARAM_IRQ_ACTIVE,
-			&intelScreen->irq_active))
-      return GL_FALSE;
-
-   sPriv->extensions = intelScreenExtensions;
-
-   return GL_TRUE;
-}
-
-
 static void
 intelDestroyScreen(__DRIscreen * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
-   intelUnmapScreenRegions(intelScreen);
    driDestroyOptionInfo(&intelScreen->optionCache);
 
    FREE(intelScreen);

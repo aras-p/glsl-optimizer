@@ -184,10 +184,6 @@ struct intel_context
 
    int urb_size;
 
-   struct intel_region *front_region;
-   struct intel_region *back_region;
-   struct intel_region *depth_region;
-
    struct intel_batchbuffer *batch;
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;

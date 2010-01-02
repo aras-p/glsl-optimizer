@@ -609,7 +609,6 @@ intelInitContext(struct intel_context *intel,
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
    intel->driScreen = sPriv;
-   intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
@@ -746,9 +745,6 @@ intelInitContext(struct intel_context *intel,
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 
-   if (!sPriv->dri2.enabled)
-      intel_recreate_static_regions(intel);
-
    intel->batch = intel_batchbuffer_alloc(intel);
 
    intel_fbo_init(intel);
@@ -844,57 +840,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
           */
       }
 
-      /* XXX In intelMakeCurrent() below, the context's static regions are 
-       * referenced inside the frame buffer; it's listed as a hack,
-       * with a comment of "XXX FBO temporary fix-ups!", but
-       * as long as it's there, we should release the regions here.
-       * The do/while loop around the block is used to allow the
-       * "continue" statements inside the block to exit the block,
-       * to avoid many layers of "if" constructs.
-       */
-      do {
-         __DRIdrawable * driDrawPriv = intel->driDrawable;
-         struct intel_framebuffer *intel_fb;
-         struct intel_renderbuffer *irbDepth, *irbStencil;
-         if (!driDrawPriv) {
-            /* We're already detached from the drawable; exit this block. */
-            continue;
-         }
-         intel_fb = (struct intel_framebuffer *) driDrawPriv->driverPrivate;
-         if (!intel_fb) {
-            /* The frame buffer is already gone; exit this block. */
-            continue;
-         }
-         irbDepth = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-         irbStencil = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-
-         /* If the regions of the frame buffer still match the regions
-          * of the context, release them.  If they've changed somehow,
-          * leave them alone.
-          */
-         if (intel_fb->color_rb[0] && intel_fb->color_rb[0]->region == intel->front_region) {
-	    intel_renderbuffer_set_region(intel_fb->color_rb[0], NULL);
-         }
-         if (intel_fb->color_rb[1] && intel_fb->color_rb[1]->region == intel->back_region) {
-	    intel_renderbuffer_set_region(intel_fb->color_rb[1], NULL);
-         }
-
-         if (irbDepth && irbDepth->region == intel->depth_region) {
-	    intel_renderbuffer_set_region(irbDepth, NULL);
-         }
-         /* Usually, the stencil buffer is the same as the depth buffer;
-          * but they're handled separately in MakeCurrent, so we'll
-          * handle them separately here.
-          */
-         if (irbStencil && irbStencil->region == intel->depth_region) {
-	    intel_renderbuffer_set_region(irbStencil, NULL);
-         }
-      } while (0);
-
-      intel_region_release(&intel->front_region);
-      intel_region_release(&intel->back_region);
-      intel_region_release(&intel->depth_region);
-
       driDestroyOptionCache(&intel->optionCache);
 
       /* free the Mesa context */
@@ -946,37 +891,9 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
  
-      if (driContextPriv->driScreenPriv->dri2.enabled) {     
-          intel_update_renderbuffers(driContextPriv, driDrawPriv);
-          if (driDrawPriv != driReadPriv)
-              intel_update_renderbuffers(driContextPriv, driReadPriv);
-      } else {
-          /* XXX FBO temporary fix-ups!  These are released in 
-           * intelDextroyContext(), above.  Changes here should be
-           * reflected there.
-           */
-          /* if the renderbuffers don't have regions, init them from the context */
-         struct intel_renderbuffer *irbDepth
-            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-         struct intel_renderbuffer *irbStencil
-            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-
-         if (intel_fb->color_rb[0]) {
-	    intel_renderbuffer_set_region(intel_fb->color_rb[0],
-					  intel->front_region);
-         }
-         if (intel_fb->color_rb[1]) {
-	    intel_renderbuffer_set_region(intel_fb->color_rb[1],
-					  intel->back_region);
-         }
-
-         if (irbDepth) {
-	    intel_renderbuffer_set_region(irbDepth, intel->depth_region);
-         }
-         if (irbStencil) {
-	    intel_renderbuffer_set_region(irbStencil, intel->depth_region);
-         }
-      }
+      intel_update_renderbuffers(driContextPriv, driDrawPriv);
+      if (driDrawPriv != driReadPriv)
+	 intel_update_renderbuffers(driContextPriv, driReadPriv);
 
       /* set GLframebuffer size to match window, if needed */
       driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
