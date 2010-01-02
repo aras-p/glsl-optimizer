@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
+#include <GL/glew.h>
 #include "apple_glx.h"
 #include "glcontextmodes.h"
 #include "apple_glx_context.h"

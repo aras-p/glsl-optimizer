@@ -31,6 +31,7 @@ SOURCES = \
 	apple_glx_surface.c \
 	apple_visual.c \
 	apple_xgl_api.c \
+	apple_xgl_api_additional.c \
 	apple_xgl_api_read.c \
 	apple_xgl_api_stereo.c \
 	apple_xgl_api_viewport.c \
@@ -71,15 +72,12 @@ INCLUDES = -I. -Iinclude -I..\
 
 ##### RULES #####
 
-$(OBJECTS) : include/GL/gl.h apple_xgl_api.h
+$(OBJECTS) : apple_xgl_api.h
 
 apple_xgl_api.c : apple_xgl_api.h
 
 apple_xgl_api.h : gen_api_header.tcl  gen_api_library.tcl  gen_code.tcl  gen_defs.tcl  gen_exports.tcl  gen_funcs.tcl  gen_types.tcl
 	$(TCLSH) gen_code.tcl
-
-include/GL/gl.h: include/GL/gl.h.template gen_gl_h.sh
-	./gen_gl_h.sh include/GL/gl.h.template $@
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(EXTRA_DEFINES) $< -o $@
@@ -115,10 +113,7 @@ install_headers: include/GL/gl.h
 install_libraries: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 	$(MAKE) -C $(TOP)/src/mesa install-libgl
 
-install: install_headers install_libraries
-
-#%.c : ../%.c
-#	ln -s $<
+install: install_libraries
 
 # Remove .o and backup files
 clean:

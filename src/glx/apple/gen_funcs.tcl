@@ -72,6 +72,8 @@ proc is-extension-supported? name {
 }
 
 #This is going to need to be updated for OpenGL >= 2.1 in SnowLeopard.
+# TextureComponentCount is GLenum in SL for everything
+# It is GLint in mesa, but is GLenum for glTexImage3DEXT
 array set typemap {
     void void
     List GLuint
@@ -126,7 +128,7 @@ array set typemap {
     ShadingModel GLenum
     TextureTarget GLenum
     TextureParameterName GLenum
-    TextureComponentCount GLenum
+    TextureComponentCount GLint
     PixelFormat GLenum
     PixelType GLenum
     TextureEnvTarget GLenum
@@ -412,14 +414,7 @@ proc translate-parameters {func parameters} {
 	
 	set type $typemap($ptype)
 	
-	#In the gl.spec file is MultiDrawArrays first and count
-	#are really 'in' so we make them const.
-	#The gl.spec notes this problem.
-	if {("MultiDrawArrays" eq $func) && ("first" eq $var)} {
-	    set final_type "const $type *"
-	} elseif {("MultiDrawArrays" eq $func) && ("count" eq $var)} {
-	    set final_type "const $type *"
-	} elseif {"array" eq [lindex $p 3]} {
+	if {"array" eq [lindex $p 3]} {
 	    if {"in" eq [lindex $p 2]} {
 		set final_type "const $type *"
 	    } else {
