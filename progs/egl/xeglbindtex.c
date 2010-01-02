@@ -79,8 +79,6 @@ make_pbuffer(int width, int height)
       printf("failed to allocate pbuffer\n");
       exit(1);
    }
-
-   glGenTextures(1, &tex_pbuf);
 }
 
 static void
@@ -114,6 +112,8 @@ use_pbuffer(void)
       glTranslatef(0.0, 0.0, -5.0);
 
       glClearColor(0.2, 0.2, 0.2, 0.0);
+
+      glGenTextures(1, &tex_pbuf);
    }
 }
 
