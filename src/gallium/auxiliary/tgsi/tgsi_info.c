@@ -165,6 +165,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 3, 0, 0, 0, 0, "UMAD", TGSI_OPCODE_UMAD },
    { 1, 2, 0, 0, 0, 0, "UMAX", TGSI_OPCODE_UMAX },
    { 1, 2, 0, 0, 0, 0, "UMIN", TGSI_OPCODE_UMIN },
+   { 1, 2, 0, 0, 0, 0, "UMOD", TGSI_OPCODE_UMOD },
    { 1, 2, 0, 0, 0, 0, "UMUL", TGSI_OPCODE_UMUL },
    { 1, 2, 0, 0, 0, 0, "USEQ", TGSI_OPCODE_USEQ },
    { 1, 2, 0, 0, 0, 0, "USGE", TGSI_OPCODE_USGE },

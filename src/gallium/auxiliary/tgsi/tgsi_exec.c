@@ -2090,6 +2090,16 @@ micro_umin(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_umod(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->u[0] = src[0].u[0] % src[1].u[0];
+   dst->u[1] = src[0].u[1] % src[1].u[1];
+   dst->u[2] = src[0].u[2] % src[1].u[2];
+   dst->u[3] = src[0].u[3] % src[1].u[3];
+}
+
+static void
 micro_umul(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src)
 {
@@ -3489,6 +3499,10 @@ exec_instruction(
 
    case TGSI_OPCODE_UMIN:
       exec_vector_binary(mach, inst, micro_umin);
+      break;
+
+   case TGSI_OPCODE_UMOD:
+      exec_vector_binary(mach, inst, micro_umod);
       break;
 
    case TGSI_OPCODE_UMUL:
