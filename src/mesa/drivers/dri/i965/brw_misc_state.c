@@ -78,9 +78,6 @@ static void upload_drawing_rect(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
 
-   if (!intel->constant_cliprect)
-      return;
-
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
    OUT_BATCH(0); /* xmin, ymin */

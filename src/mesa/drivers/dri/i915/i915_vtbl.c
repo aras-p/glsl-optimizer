@@ -369,16 +369,13 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {
-      GLuint count = 9;
+      GLuint count = 15;
 
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
 
       if (state->depth_region)
           count += 3;
-
-      if (intel->constant_cliprect)
-          count += 6;
 
       BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
@@ -402,15 +399,13 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR2]);
 
-      if (intel->constant_cliprect) {
-	 assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT4]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT5]);
-      }
+      assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT4]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT5]);
 
       ADVANCE_BATCH();
    }
@@ -619,23 +614,14 @@ i915_state_draw_region(struct intel_context *intel,
    }
    state->Buffer[I915_DESTREG_DV1] = value;
 
-   if (intel->constant_cliprect) {
-      state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
-      state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
-      state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
-      state->Buffer[I915_DESTREG_DRAWRECT3] =
-	 (ctx->DrawBuffer->Width & 0xffff) |
-	 (ctx->DrawBuffer->Height << 16);
-      state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
-      state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
-   } else {
-      state->Buffer[I915_DESTREG_DRAWRECT0] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT1] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT2] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT3] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT4] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT5] = MI_NOOP;
-   }
+   state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
+   state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
+   state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
+   state->Buffer[I915_DESTREG_DRAWRECT3] =
+      (ctx->DrawBuffer->Width & 0xffff) |
+      (ctx->DrawBuffer->Height << 16);
+   state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
+   state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
 }

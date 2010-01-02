@@ -248,19 +248,6 @@ struct intel_context
    intel_tri_func draw_tri;
 
    /**
-    * Set to true if a single constant cliprect should be used in the
-    * batchbuffer.  Otherwise, cliprects must be calculated at batchbuffer
-    * flush time while the lock is held.
-    */
-   GLboolean constant_cliprect;
-
-   /**
-    * In !constant_cliprect mode, set to true if the front cliprects should be
-    * used instead of back.
-    */
-   GLboolean front_cliprects;
-
-   /**
     * Set if rendering has occured to the drawable's front buffer.
     *
     * This is used in the DRI2 case to detect that glFlush should also copy

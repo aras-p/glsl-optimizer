@@ -339,10 +339,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * so can't access it earlier.
     */
 
-   if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
-      return GL_TRUE;
-   }
-
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
 
