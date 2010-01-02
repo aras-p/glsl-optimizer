@@ -5,4 +5,6 @@ alias DeleteTexturesEXT DeleteTextures
 alias GenTexturesEXT GenTextures
 alias IsTextureEXT IsTexture
 alias PrioritizeTexturesEXT PrioritizeTextures
-alias TexImage3DEXT TexImage3D
+
+# Due to type conflicts, we handle this differently
+#alias TexImage3DEXT TexImage3D
