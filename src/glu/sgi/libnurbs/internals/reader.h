@@ -114,7 +114,7 @@ struct O_surface : public PooledObj {
     O_trim *		o_trim;		/* list of trim loops		*/
     int			save;		/* 1 if in display list		*/
     long		nuid;
-			O_surface() { o_trim = 0; o_nurbssurface = 0; }
+			O_surface() { o_trim = 0; o_nurbssurface = 0; save = 0; nuid = 0; }
     };
 
 struct Property : public PooledObj {
