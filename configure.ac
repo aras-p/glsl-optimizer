@@ -420,7 +420,6 @@ WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
-GALLIUM_AUXILIARY_DIRS="rbug draw translate cso_cache pipebuffer tgsi sct rtasm util indices vl"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
@@ -447,7 +446,6 @@ AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
-AC_SUBST([GALLIUM_AUXILIARY_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 AC_SUBST([RADEON_CFLAGS])
 AC_SUBST([RADEON_LDFLAGS])
@@ -1306,7 +1304,6 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium dirs:    $GALLIUM_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
-    echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
 else
