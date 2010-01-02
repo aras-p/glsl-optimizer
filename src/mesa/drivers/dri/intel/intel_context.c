@@ -389,9 +389,6 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     void (*old_viewport)(GLcontext *ctx, GLint x, GLint y,
 			 GLsizei w, GLsizei h);
 
-    if (!driContext->driScreenPriv->dri2.enabled)
-	return;
-
     if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        /* If we're rendering to the fake front buffer, make sure all the pending
 	* drawing has landed on the real front buffer.  Otherwise when we
@@ -474,13 +471,6 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
-
-   /* Emit a flush so that any frontbuffer rendering that might have occurred
-    * lands onscreen in a timely manner, even if the X Server doesn't trigger
-    * a flush for us.
-    */
-   if (!intel->driScreen->dri2.enabled && needs_mi_flush)
-      intel_batchbuffer_emit_mi_flush(intel->batch);
 
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);

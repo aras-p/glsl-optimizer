@@ -278,27 +278,10 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 static GLboolean
 intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
-   int gem_kernel = 0;
-   struct drm_i915_getparam gp;
    __DRIscreen *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
 
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
-
-   gp.param = I915_PARAM_HAS_GEM;
-   gp.value = &gem_kernel;
-
-   (void) drmCommandWriteRead(spriv->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-
-   /* If we've got a new enough DDX that's initializing GEM and giving us
-    * object handles for the shared buffers, use that.
-    */
-   if (!intelScreen->driScrnPriv->dri2.enabled &&
-       intelScreen->driScrnPriv->ddx_version.minor < 9) {
-      fprintf(stderr, "[%s:%u] Error initializing GEM.\n",
-	      __func__, __LINE__);
-      return GL_FALSE;
-   }
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
    /* Otherwise, use the classic buffer manager. */
