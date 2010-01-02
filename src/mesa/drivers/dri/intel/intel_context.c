@@ -412,7 +412,6 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     old_viewport = ctx->Driver.Viewport;
     ctx->Driver.Viewport = NULL;
     intel->driDrawable = driContext->driDrawablePriv;
-    intelWindowMoved(intel);
     intel_draw_buffer(ctx, intel->ctx.DrawBuffer);
     ctx->Driver.Viewport = old_viewport;
 }
@@ -929,7 +928,6 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
             }
          }
          intel->driDrawable = driDrawPriv;
-         intelWindowMoved(intel);
       }
 
       intel_draw_buffer(&intel->ctx, &intel_fb->Base);
