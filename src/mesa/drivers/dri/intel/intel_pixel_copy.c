@@ -35,28 +35,33 @@
 #include "intel_buffers.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
+#include "intel_fbo.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static struct intel_region *
 copypix_src_region(struct intel_context *intel, GLenum type)
 {
+   struct intel_renderbuffer *depth;
+
+   depth = (struct intel_renderbuffer *)
+      &intel->ctx.DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+
    switch (type) {
    case GL_COLOR:
       return intel_readbuf_region(intel);
    case GL_DEPTH:
-      /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
-       */
-      if (intel->depth_region && intel->depth_region->cpp == 2)
-         return intel->depth_region;
+      /* Don't think this is really possible execpt at 16bpp, when we
+       * have no stencil. */
+      if (depth && depth->region->cpp == 2)
+         return depth->region;
    case GL_STENCIL:
-      /* Don't think this is really possible. 
-       */
+      /* Don't think this is really possible. */
       break;
    case GL_DEPTH_STENCIL_EXT:
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
-      return intel->depth_region;
+      return depth->region;
    default:
       break;
    }
