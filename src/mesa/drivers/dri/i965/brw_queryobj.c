@@ -188,7 +188,7 @@ brw_emit_query_begin(struct brw_context *brw)
    if (brw->query.active || is_empty_list(&brw->query.active_head))
       return;
 
-   BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL |
 	     PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_WRITE_DEPTH_COUNT);
@@ -227,7 +227,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.active)
       return;
 
-   BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL |
 	     PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_WRITE_DEPTH_COUNT);

@@ -174,7 +174,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(17, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(17);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -220,7 +220,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit(intel, state, size )		     \
-   intel_batchbuffer_data(intel->batch, state, size, IGNORE_CLIPRECTS )
+   intel_batchbuffer_data(intel->batch, state, size)
 
 static GLuint
 get_dirty(struct i915_hw_state *state)
@@ -301,13 +301,9 @@ i915_emit_state(struct intel_context *intel)
     * It might be better to talk about explicit places where
     * scheduling is allowed, rather than assume that it is whenever a
     * batchbuffer fills up.
-    *
-    * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
-    * will be emitted under.
     */
    intel_batchbuffer_require_space(intel->batch,
-				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
-				   LOOP_CLIPRECTS);
+				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE);
    count = 0;
  again:
    aper_count = 0;
@@ -384,7 +380,7 @@ i915_emit_state(struct intel_context *intel)
       if (intel->constant_cliprect)
           count += 6;
 
-      BEGIN_BATCH(count, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -441,7 +437,7 @@ i915_emit_state(struct intel_context *intel)
          if (dirty & I915_UPLOAD_TEX(i))
             nr++;
 
-      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_MAP_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)
@@ -465,7 +461,7 @@ i915_emit_state(struct intel_context *intel)
          }
       ADVANCE_BATCH();
 
-      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_SAMPLER_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)

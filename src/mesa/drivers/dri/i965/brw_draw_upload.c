@@ -494,7 +494,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     * a VE loads from them.
     */
    if (brw->vb.nr_enabled == 0) {
-      BEGIN_BATCH(3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(3);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
       OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
 		BRW_VE0_VALID |
@@ -514,7 +514,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     * are interleaved or from the same VBO.  TBD if this makes a
     * performance difference.
     */
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4);
    OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
 	     ((1 + brw->vb.nr_enabled * 4) - 2));
 
@@ -537,7 +537,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
    ADVANCE_BATCH();
 
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
@@ -704,7 +704,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
       ib.header.bits.index_format = get_index_type(index_buffer->type);
       ib.header.bits.cut_index_enable = 0;
 
-      BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(4);
       OUT_BATCH( ib.header.dword );
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
