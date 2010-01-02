@@ -1,8 +1,5 @@
 Import('*')
 
-if env['platform'] not in ['windows', 'linux']:
-    Return()
-
 # Shared environment settings
 env = env.Clone()
 
