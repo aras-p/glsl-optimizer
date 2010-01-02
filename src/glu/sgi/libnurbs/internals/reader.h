@@ -77,7 +77,7 @@ struct O_nurbscurve : public PooledObj {
     int			save;		/* 1 if in display list		*/
     O_curve *		owner;		/* owning curve 		*/
 			O_nurbscurve( long _type ) 
-			   { type = _type; owner = 0; next = 0; used = 0; }
+			   { bezier_curves = 0; type = _type; tesselation = 0; method = 0; next = 0; used = 0; save = 0; owner = 0; }
     };
  
 class O_pwlcurve : public PooledObj {
