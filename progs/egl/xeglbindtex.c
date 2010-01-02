@@ -66,7 +66,8 @@ make_pbuffer(int width, int height)
    EGLConfig config;
    EGLint num_configs;
 
-   if (!eglChooseConfig(dpy, config_attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig(dpy, config_attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       printf("Error: couldn't get an EGL visual config for pbuffer\n");
       exit(1);
    }
@@ -144,7 +145,8 @@ make_window(Display *x_dpy, const char *name,
    scrnum = DefaultScreen( x_dpy );
    root = RootWindow( x_dpy, scrnum );
 
-   if (!eglChooseConfig(dpy, attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig(dpy, attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       printf("Error: couldn't get an EGL visual config\n");
       exit(1);
    }

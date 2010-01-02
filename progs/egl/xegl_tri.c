@@ -139,7 +139,8 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
    scrnum = DefaultScreen( x_dpy );
    root = RootWindow( x_dpy, scrnum );
 
-   if (!eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       printf("Error: couldn't get an EGL visual config\n");
       exit(1);
    }

@@ -485,7 +485,8 @@ create_window(struct winthread *wt, EGLContext shareCtx)
    scrnum = DefaultScreen(wt->Dpy);
    root = RootWindow(wt->Dpy, scrnum);
 
-   if (!eglChooseConfig(wt->Display, attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig(wt->Display, attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       Error("Unable to choose an EGL config");
    }
 
