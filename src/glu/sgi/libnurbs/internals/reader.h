@@ -123,7 +123,7 @@ struct Property : public PooledObj {
     REAL		value;
     int			save;		/* 1 if in display list		*/
 			Property( long _type, long _tag, INREAL _value )
-			{ type = _type; tag = _tag; value = (REAL) _value; }
+			{ type = _type; tag = _tag; value = (REAL) _value; save = 0; }
 			Property( long _tag, INREAL _value )
 			{ type = 0; tag = _tag; value = (REAL) _value; save = 0; }
     };
