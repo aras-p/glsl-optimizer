@@ -222,7 +222,6 @@ static void
 intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 		     GLuint width, GLuint height)
 {
-   struct intel_framebuffer *intel_fb = (struct intel_framebuffer*)fb;
    int i;
 
    _mesa_resize_framebuffer(ctx, fb, width, height);
@@ -233,9 +232,10 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
       return;
    }
 
+
    /* Make sure all window system renderbuffers are up to date */
-   for (i = 0; i < 2; i++) {
-      struct gl_renderbuffer *rb = &intel_fb->color_rb[i]->Base;
+   for (i = BUFFER_FRONT_LEFT; i <= BUFFER_BACK_RIGHT; i++) {
+      struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
 
       /* only resize if size is changing */
       if (rb && (rb->Width != width || rb->Height != height)) {

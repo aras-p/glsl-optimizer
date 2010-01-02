@@ -34,17 +34,6 @@
 struct intel_context;
 
 /**
- * Intel framebuffer, derived from gl_framebuffer.
- */
-struct intel_framebuffer
-{
-   struct gl_framebuffer Base;
-
-   struct intel_renderbuffer *color_rb[2];
-};
-
-
-/**
  * Intel renderbuffer, derived from gl_renderbuffer.
  */
 struct intel_renderbuffer
@@ -109,7 +98,7 @@ intel_fbo_init(struct intel_context *intel);
 
 
 extern void
-intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
+intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
 
 static INLINE struct intel_region *

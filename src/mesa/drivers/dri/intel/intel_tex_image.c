@@ -725,7 +725,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   GLint glx_texture_format,
 		   __DRIdrawable *dPriv)
 {
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct gl_framebuffer *fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
    GLcontext *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
@@ -744,7 +744,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intel_update_renderbuffers(pDRICtx, dPriv);
 
-   rb = intel_fb->color_rb[0];
+   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    /* If the region isn't set, then intel_update_renderbuffers was unable
     * to get the buffers for the drawable.
     */

@@ -159,6 +159,8 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                   __DRIdrawable * driDrawPriv,
                   const __GLcontextModes * mesaVis, GLboolean isPixmap)
 {
+   struct intel_renderbuffer *rb;
+
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
    }
@@ -167,12 +169,12 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
                              mesaVis->depthBits != 24);
       gl_format rgbFormat;
 
-      struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
+      struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
 
-      if (!intel_fb)
+      if (!fb)
 	 return GL_FALSE;
 
-      _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
+      _mesa_initialize_framebuffer(fb, mesaVis);
 
       if (mesaVis->redBits == 5)
 	 rgbFormat = MESA_FORMAT_RGB565;
@@ -182,16 +184,12 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 	 rgbFormat = MESA_FORMAT_ARGB8888;
 
       /* setup the hardware-based renderbuffers */
-      intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
-      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-			     &intel_fb->color_rb[0]->Base);
+      rb = intel_create_renderbuffer(rgbFormat);
+      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base);
 
       if (mesaVis->doubleBufferMode) {
-	 intel_fb->color_rb[1] = intel_create_renderbuffer(rgbFormat);
-
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&intel_fb->color_rb[1]->Base);
-
+	 rb = intel_create_renderbuffer(rgbFormat);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base);
       }
 
       if (mesaVis->depthBits == 24) {
@@ -200,32 +198,29 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 	    struct intel_renderbuffer *depthStencilRb
 	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
 	    /* note: bind RB to two attachment points */
-	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				   &depthStencilRb->Base);
-	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
-				   &depthStencilRb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
 	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
-	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				   &depthRb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
 	 }
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
 	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
 
       /* now add any/all software-based renderbuffers we may need */
-      _mesa_add_soft_renderbuffers(&intel_fb->Base,
+      _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* never sw color */
                                    GL_FALSE, /* never sw depth */
                                    swStencil, mesaVis->accumRedBits > 0,
                                    GL_FALSE, /* never sw alpha */
                                    GL_FALSE  /* never sw aux */ );
-      driDrawPriv->driverPrivate = (void *) intel_fb;
+      driDrawPriv->driverPrivate = fb;
 
       return GL_TRUE;
    }
@@ -234,31 +229,9 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 static void
 intelDestroyBuffer(__DRIdrawable * driDrawPriv)
 {
-   struct intel_framebuffer *intel_fb = driDrawPriv->driverPrivate;
-   struct intel_renderbuffer *depth_rb;
-   struct intel_renderbuffer *stencil_rb;
-
-   if (intel_fb) {
-      if (intel_fb->color_rb[0]) {
-         intel_renderbuffer_set_region(intel_fb->color_rb[0], NULL);
-      }
-
-      if (intel_fb->color_rb[1]) {
-         intel_renderbuffer_set_region(intel_fb->color_rb[1], NULL);
-      }
-
-      depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-      if (depth_rb) {
-         intel_renderbuffer_set_region(depth_rb, NULL);
-      }
-
-      stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-      if (stencil_rb) {
-         intel_renderbuffer_set_region(stencil_rb, NULL);
-      }
-   }
-
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+    struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
+  
+    _mesa_reference_framebuffer(&fb, NULL);
 }
 
 /* There are probably better ways to do this, such as an
