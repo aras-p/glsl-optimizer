@@ -299,21 +299,6 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    return GL_TRUE;
 }
 
-struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
-{
-  /*
-   * This should probably change to have the screen allocate a dummy
-   * context at screen creation. For now just use the current context.
-   */
-
-  GET_CURRENT_CONTEXT(ctx);
-  if (ctx == NULL) {
-     _mesa_problem(NULL, "No current context in intelScreenContext\n");
-     return NULL;
-  }
-  return intel_context(ctx);
-}
-
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
