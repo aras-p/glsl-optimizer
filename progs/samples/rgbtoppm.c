@@ -25,7 +25,7 @@ typedef struct _ImageRec {
     int *rowSize;
 } ImageRec;
 
-void
+static void
 rgbtorgb(unsigned char *r,unsigned char *g,unsigned char *b,unsigned char *l,int n) {
     while(n--) {
         l[0] = r[0];
@@ -170,7 +170,7 @@ ImageGetRow(ImageRec *image, unsigned char *buf, int y, int z) {
     }
 }
 
-GLubyte *
+static GLubyte *
 read_alpha_texture(char *name, int *width, int *height)
 {
     unsigned char *base, *lptr;
@@ -200,7 +200,7 @@ read_alpha_texture(char *name, int *width, int *height)
     return (unsigned char *) base;
 }
 
-GLubyte *
+static GLubyte *
 read_rgb_texture(char *name, int *width, int *height)
 {
     unsigned char *base, *ptr;

@@ -67,7 +67,7 @@ int cCount, cIndex[2], cStep;
 GLenum op = OP_NOOP;
 
 
-void DrawImage(void)
+static void DrawImage(void)
 {
 
     glRasterPos2i(0, 0);
@@ -84,7 +84,7 @@ void DrawImage(void)
 		 image->data);
 }
 
-void DrawPoint(void)
+static void DrawPoint(void)
 {
     int i;
 
@@ -102,7 +102,7 @@ void DrawPoint(void)
     }
 }
 
-void InitVList(void)
+static void InitVList(void)
 {
 
     vList[0].x = 0.0;
@@ -141,7 +141,7 @@ void InitVList(void)
     vList[4].tY = cList[0].y / (float)imageSizeY;
 }
 
-void ScaleImage(int sizeX, int sizeY)
+static void ScaleImage(int sizeX, int sizeY)
 {
     GLubyte *buf;
 
@@ -154,7 +154,7 @@ void ScaleImage(int sizeX, int sizeY)
     image->sizeY = sizeY;
 }
 
-void SetPoint(int x, int y)
+static void SetPoint(int x, int y)
 {
 
     cList[cCount].x = (float)x;
@@ -162,7 +162,7 @@ void SetPoint(int x, int y)
     cCount++;
 }
 
-void Stretch(void)
+static void Stretch(void)
 {
 
     glBegin(GL_TRIANGLES);
@@ -221,7 +221,7 @@ void Stretch(void)
     }
 }
 
-void Key(unsigned char key, int x, int y)
+static void Key(unsigned char key, int x, int y)
 {
 
     switch (key) {
@@ -245,7 +245,7 @@ void Key(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
-void Mouse(int button, int state, int mouseX, int mouseY)
+static void Mouse(int button, int state, int mouseX, int mouseY)
 {
 
     if (state != GLUT_DOWN)
@@ -263,7 +263,7 @@ void Mouse(int button, int state, int mouseX, int mouseY)
     glutPostRedisplay();
 }
 
-void Animate(void)
+static void Animate(void)
 {
     static double t0 = -1.;
     double t, dt;
@@ -322,7 +322,7 @@ static GLenum Args(int argc, char **argv)
 #define GLUTCALLBACK
 #endif
 
-void GLUTCALLBACK glut_post_redisplay_p(void)
+static void GLUTCALLBACK glut_post_redisplay_p(void)
 {
       glutPostRedisplay();
 }

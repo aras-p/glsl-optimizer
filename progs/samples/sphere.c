@@ -445,7 +445,7 @@ GLfloat identity[16] = {
 };
 
 
-void BuildCylinder(int numEdges)
+static void BuildCylinder(int numEdges)
 {
     int i, top = 1.0, bottom = -1.0;
     float x[100], y[100], angle;
@@ -481,7 +481,7 @@ void BuildCylinder(int numEdges)
     glEndList();
 }
 
-void BuildTorus(float rc, int numc, float rt, int numt)
+static void BuildTorus(float rc, int numc, float rt, int numt)
 {
     int i, j, k;
     double s, t;
@@ -515,7 +515,7 @@ void BuildTorus(float rc, int numc, float rt, int numt)
     glEndList();
 }
 
-void BuildCage(void)
+static void BuildCage(void)
 {
     int i;
     float inc;
@@ -609,7 +609,7 @@ void BuildCage(void)
     glEndList();
 }
 
-void BuildCube(void)
+static void BuildCube(void)
 {
     int i, j;
 
@@ -628,7 +628,7 @@ void BuildCube(void)
     glEndList();
 }
 
-void BuildLists(void)
+static void BuildLists(void)
 {
 
     cube = glGenLists(1);
@@ -646,7 +646,7 @@ void BuildLists(void)
     genericObject = torus;
 }
 
-void SetDefaultSettings(void)
+static void SetDefaultSettings(void)
 {
 
     magFilter = nnearest;
@@ -657,7 +657,7 @@ void SetDefaultSettings(void)
     autoRotate = GL_TRUE;
 }
 
-unsigned char *AlphaPadImage(int bufSize, unsigned char *inData, int alpha)
+static unsigned char *AlphaPadImage(int bufSize, unsigned char *inData, int alpha)
 {
     unsigned char *outData, *out_ptr, *in_ptr;
     int i;
@@ -677,7 +677,7 @@ unsigned char *AlphaPadImage(int bufSize, unsigned char *inData, int alpha)
     return outData;
 }
 
-void Init(void)
+static void Init(void)
 {
     float ambient[] = {0.0, 0.0, 0.0, 1.0};
     float diffuse[] = {1.0, 1.0, 1.0, 1.0};
@@ -753,7 +753,7 @@ void Init(void)
     BuildLists();
 }
 
-void ReInit(void)
+static void ReInit(void)
 {
     if (genericObject == torus) {
 	glEnable(GL_DEPTH_TEST);
@@ -773,7 +773,7 @@ void ReInit(void)
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, textureEnvironment);
 }
 
-void Draw(void)
+static void Draw(void)
 {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -806,7 +806,7 @@ void Draw(void)
     glutSwapBuffers();
 }
 
-void Reshape(int width, int height)
+static void Reshape(int width, int height)
 {
     W = width;
     H = height;
@@ -818,7 +818,7 @@ void Reshape(int width, int height)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Idle(void)
+static void Idle(void)
 {
    static double t0 = -1.;
    double t, dt;
@@ -833,7 +833,7 @@ void Idle(void)
    glutPostRedisplay();
 }
 
-void Key2(int key, int x, int y)
+static void Key2(int key, int x, int y)
 {
 
     switch (key) {
@@ -863,7 +863,7 @@ void Key2(int key, int x, int y)
     glutPostRedisplay();
 }
 
-void Key(unsigned char key, int x, int y)
+static void Key(unsigned char key, int x, int y)
 {
 
     switch (key) {
@@ -950,7 +950,7 @@ void Key(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
-GLenum Args(int argc, char **argv)
+static GLenum Args(int argc, char **argv)
 {
     GLint i;
 

@@ -69,19 +69,19 @@ starRec stars[MAXSTARS];
 float sinTable[MAXANGLES];
 
 
-float Sin(float angle)
+static float Sin(float angle)
 {
 
     return (sinTable[(GLint)angle]);
 }
 
-float Cos(float angle)
+static float Cos(float angle)
 {
 
     return (sinTable[((GLint)angle+(MAXANGLES/4))%MAXANGLES]);
 }
 
-void NewStar(GLint n, GLint d)
+static void NewStar(GLint n, GLint d)
 {
 
     if (rand()%4 == 0) {
@@ -103,7 +103,7 @@ void NewStar(GLint n, GLint d)
     }
 }
 
-void RotatePoint(float *x, float *y, float rotation)
+static void RotatePoint(float *x, float *y, float rotation)
 {
     float tmpX, tmpY;
 
@@ -113,7 +113,7 @@ void RotatePoint(float *x, float *y, float rotation)
     *y = tmpY;
 }
 
-void MoveStars(void)
+static void MoveStars(void)
 {
     float offset;
     GLint n;
@@ -134,7 +134,7 @@ void MoveStars(void)
     }
 }
 
-GLenum StarPoint(GLint n)
+static GLenum StarPoint(GLint n)
 {
     float x0, y0, x1, y1, width;
     GLint i;
@@ -182,7 +182,7 @@ GLenum StarPoint(GLint n)
     }
 }
 
-void ShowStars(void)
+static void ShowStars(void)
 {
     GLint n;
 
@@ -221,7 +221,7 @@ static void Init(void)
     glDisable(GL_DITHER);
 }
 
-void Reshape(int width, int height)
+static void Reshape(int width, int height)
 {
 
     windW = (GLint)width;
@@ -262,7 +262,7 @@ static void Key(unsigned char key, int x, int y)
     }
 }
 
-void Idle(void)
+static void Idle(void)
 {
 
     if (overlayInit == GL_FALSE) {

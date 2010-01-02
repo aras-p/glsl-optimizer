@@ -92,7 +92,7 @@ GLubyte contourTexture2[] = {
 #endif
 
 
-void GLUTCALLBACK glut_post_redisplay_p(void)
+static void GLUTCALLBACK glut_post_redisplay_p(void)
 {
     static double t0 = -1.;
     double t, dt;
