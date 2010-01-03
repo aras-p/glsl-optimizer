@@ -65,6 +65,26 @@
 #define FAST_MATH 1
 
 static void
+micro_arl(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->i[0] = (int)floorf(src->f[0]);
+   dst->i[1] = (int)floorf(src->f[1]);
+   dst->i[2] = (int)floorf(src->f[2]);
+   dst->i[3] = (int)floorf(src->f[3]);
+}
+
+static void
+micro_arr(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->i[0] = (int)floorf(src->f[0] + 0.5f);
+   dst->i[1] = (int)floorf(src->f[1] + 0.5f);
+   dst->i[2] = (int)floorf(src->f[2] + 0.5f);
+   dst->i[3] = (int)floorf(src->f[3] + 0.5f);
+}
+
+static void
 micro_iabs(union tgsi_exec_channel *dst,
            const union tgsi_exec_channel *src)
 {
@@ -1025,10 +1045,10 @@ fetch_source(const struct tgsi_exec_machine *mach,
          &indir_index );
 
       /* add value of address register to the offset */
-      index.i[0] += (int) indir_index.f[0];
-      index.i[1] += (int) indir_index.f[1];
-      index.i[2] += (int) indir_index.f[2];
-      index.i[3] += (int) indir_index.f[3];
+      index.i[0] += indir_index.i[0];
+      index.i[1] += indir_index.i[1];
+      index.i[2] += indir_index.i[2];
+      index.i[3] += indir_index.i[3];
 
       /* for disabled execution channels, zero-out the index to
        * avoid using a potential garbage value.
@@ -1105,10 +1125,10 @@ fetch_source(const struct tgsi_exec_machine *mach,
             &index2,
             &indir_index );
 
-         index.i[0] += (int) indir_index.f[0];
-         index.i[1] += (int) indir_index.f[1];
-         index.i[2] += (int) indir_index.f[2];
-         index.i[3] += (int) indir_index.f[3];
+         index.i[0] += indir_index.i[0];
+         index.i[1] += indir_index.i[1];
+         index.i[2] += indir_index.i[2];
+         index.i[3] += indir_index.i[3];
 
          /* for disabled execution channels, zero-out the index to
           * avoid using a potential garbage value.
@@ -1202,7 +1222,7 @@ store_dest(struct tgsi_exec_machine *mach,
          &indir_index );
 
       /* save indirection offset */
-      offset = (int) indir_index.f[0];
+      offset = indir_index.i[0];
    }
 
    switch (reg->Register.File) {
@@ -2187,14 +2207,7 @@ exec_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-   case TGSI_OPCODE_FLR:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_flr(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_arl, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_MOV:
@@ -2537,8 +2550,17 @@ exec_instruction(
       }
       break;
 
+   case TGSI_OPCODE_FLR:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         micro_flr(&d[chan_index], &r[0]);
+      }
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&d[chan_index], 0, chan_index);
+      }
+      break;
+
    case TGSI_OPCODE_ROUND:
-   case TGSI_OPCODE_ARR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_rnd(&d[chan_index], &r[0]);
@@ -2923,6 +2945,10 @@ exec_instruction(
 
    case TGSI_OPCODE_ARA:
       assert (0);
+      break;
+
+   case TGSI_OPCODE_ARR:
+      exec_vector_unary(mach, inst, micro_arr, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_BRA:
