@@ -142,7 +142,7 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
 
 enum lp_build_blend_swizzle {
    LP_BUILD_BLEND_SWIZZLE_RGBA = 0,
-   LP_BUILD_BLEND_SWIZZLE_AAAA = 1,
+   LP_BUILD_BLEND_SWIZZLE_AAAA = 1
 };
 
 
