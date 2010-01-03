@@ -64,7 +64,7 @@ struct O_curve : public PooledObj {
     int			save;		/* 1 if in display list		*/
     long		nuid;
     			O_curve() { next = 0; used = 0; owner = 0; 
-				    curve.o_pwlcurve = 0; }
+				    curve.o_pwlcurve = 0; curvetype = ct_none; save = 0; nuid = 0; }
     };
 
 struct O_nurbscurve : public PooledObj {
