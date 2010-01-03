@@ -29,6 +29,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
+#include "util/u_bitmask.h"
 #include "util/u_upload_mgr.h"
 
 #include "svga_context.h"
@@ -60,6 +61,9 @@ static void svga_destroy( struct pipe_context *pipe )
 
    u_upload_destroy( svga->upload_vb );
    u_upload_destroy( svga->upload_ib );
+
+   util_bitmask_destroy( svga->vs_bm );
+   util_bitmask_destroy( svga->fs_bm );
 
    for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
       pipe_buffer_reference( &svga->curr.cb[shader], NULL );
@@ -167,6 +171,14 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
    if (!svga_init_swtnl(svga))
       goto no_swtnl;
 
+   svga->fs_bm = util_bitmask_create();
+   if (svga->fs_bm == NULL)
+      goto no_fs_bm;
+
+   svga->vs_bm = util_bitmask_create();
+   if (svga->vs_bm == NULL)
+      goto no_vs_bm;
+
    svga->upload_ib = u_upload_create( svga->pipe.screen,
                                       32 * 1024,
                                       16,
@@ -216,6 +228,10 @@ no_hwtnl:
 no_upload_vb:
    u_upload_destroy( svga->upload_ib );
 no_upload_ib:
+   util_bitmask_destroy( svga->vs_bm );
+no_vs_bm:
+   util_bitmask_destroy( svga->fs_bm );
+no_fs_bm:
    svga_destroy_swtnl(svga);
 no_swtnl:
    svga->swc->destroy(svga->swc);

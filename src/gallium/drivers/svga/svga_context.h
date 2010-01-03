@@ -41,6 +41,7 @@
 struct draw_vertex_shader;
 struct svga_shader_result;
 struct SVGACmdMemory;
+struct util_bitmask;
 struct u_upload_mgr;
 
 
@@ -321,12 +322,14 @@ struct svga_context
       boolean new_vdecl;
    } swtnl;
 
+   /* Bitmask of used shader IDs */
+   struct util_bitmask *fs_bm;
+   struct util_bitmask *vs_bm;
+
    struct {
       unsigned dirty[4];
 
       unsigned texture_timestamp;
-      unsigned next_fs_id;
-      unsigned next_vs_id;
 
       /* Internally generated shaders:
        */

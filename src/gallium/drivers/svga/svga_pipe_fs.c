@@ -26,6 +26,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_bitmask.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_text.h"
 
@@ -106,6 +107,8 @@ void svga_delete_fs_state(struct pipe_context *pipe, void *shader)
                                     SVGA3D_SHADERTYPE_PS );
          assert(ret == PIPE_OK);
       }
+
+      util_bitmask_clear( svga->fs_bm, result->id );
 
       svga_destroy_shader_result( result );
    }
