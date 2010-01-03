@@ -1194,7 +1194,7 @@ esac
 AC_ARG_WITH([egl-displays],
     [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
         [comma delimited native displays libEGL supports, e.g.
-        "x11" @<:@default=auto@:>@])],
+        "x11,kms" @<:@default=auto@:>@])],
     [with_egl_displays="$withval"],
     [with_egl_displays=yes])
 
