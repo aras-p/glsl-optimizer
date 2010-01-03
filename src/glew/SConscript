@@ -42,7 +42,7 @@ glew = lib_env.SharedLibrary(
     ],
 )
 
-env.InstallSharedLibrary(glew, version=(1, 5))
+env.InstallSharedLibrary(glew, version=(1, 5, 2))
 
 if lib_env['platform'] == 'windows':
     glew = lib_env.FindIxes(glew, 'LIBPREFIX', 'LIBSUFFIX')
