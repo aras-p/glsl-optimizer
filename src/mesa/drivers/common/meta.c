@@ -336,9 +336,14 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    if (state & META_BLEND) {
       save->BlendEnabled = ctx->Color.BlendEnabled;
       if (ctx->Color.BlendEnabled) {
-         GLuint i;
-         for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-            _mesa_set_enablei(ctx, GL_BLEND, i, GL_FALSE);
+         if (ctx->Extensions.EXT_draw_buffers2) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+               _mesa_set_enablei(ctx, GL_BLEND, i, GL_FALSE);
+            }
+         }
+         else {
+            _mesa_set_enable(ctx, GL_BLEND, GL_FALSE);
          }
       }
       save->ColorLogicOpEnabled = ctx->Color.ColorLogicOpEnabled;
@@ -572,9 +577,14 @@ _mesa_meta_end(GLcontext *ctx)
 
    if (state & META_BLEND) {
       if (ctx->Color.BlendEnabled != save->BlendEnabled) {
-         GLuint i;
-         for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-            _mesa_set_enablei(ctx, GL_BLEND, i, (save->BlendEnabled >> i) & 1);
+         if (ctx->Extensions.EXT_draw_buffers2) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+               _mesa_set_enablei(ctx, GL_BLEND, i, (save->BlendEnabled >> i) & 1);
+            }
+         }
+         else {
+            _mesa_set_enable(ctx, GL_BLEND, (save->BlendEnabled & 1));
          }
       }
       if (ctx->Color.ColorLogicOpEnabled != save->ColorLogicOpEnabled)
