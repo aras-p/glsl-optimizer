@@ -2211,7 +2211,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-      exec_vector_unary(mach, inst, micro_mov, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      exec_vector_unary(mach, inst, micro_mov, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_LIT:
