@@ -122,7 +122,8 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     drm_mode.vrefresh = mode->VRefresh;
     if (!mode->name)
 	xf86SetModeDefaultName(mode);
-    strncpy(drm_mode.name, mode->name, DRM_DISPLAY_MODE_LEN);
+    strncpy(drm_mode.name, mode->name, DRM_DISPLAY_MODE_LEN - 1);
+    drm_mode.name[DRM_DISPLAY_MODE_LEN - 1] = '\0';
 
     ret = drmModeSetCrtc(ms->fd, drm_crtc->crtc_id, ms->fb_id, x, y,
 			 &drm_connector->connector_id, 1, &drm_mode);
