@@ -1188,7 +1188,7 @@ exercise_buffer_objects(enum Map_Buffer_Usage usage)
    GLuint bufferID;
    GLint bufferMapped;
    static GLubyte data[BUFFER_DATA_SIZE] = {0};
-   float *dataPtr;
+   float *dataPtr = NULL;
 
    /* Get the function pointers we need.  These are from
     * GL_ARB_vertex_buffer_object and are required in all
