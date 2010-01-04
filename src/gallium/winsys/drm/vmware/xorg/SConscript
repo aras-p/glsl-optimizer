@@ -44,6 +44,7 @@ if env['platform'] == 'linux':
 	sources = [
 		'vmw_ioctl.c',
 		'vmw_screen.c',
+		'vmw_video.c',
 		'vmw_xorg.c',
 	]
 
