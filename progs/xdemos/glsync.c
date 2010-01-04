@@ -117,8 +117,7 @@ int main(int argc, char *argv[])
 	int dummy;
 	Atom wmDelete;
 	enum sync_type waitforsync = none;
-	int width = 500, height = 500, verbose = 0,
-		countonly = 0, interval = 1;
+	int width = 500, height = 500, verbose = 0, interval = 1;
 	int c, i = 1;
 	int ret;
 	int attribs[] = { GLX_RGBA,
@@ -283,13 +282,10 @@ int main(int argc, char *argv[])
 			glFlush();
 		} else if (waitforsync == buffer_swap) {
 			glXSwapBuffers(disp, winGL);
-		}
-
-		if (countonly) {
-			video_sync(2, 1, &count);
-			fprintf(stderr, "current count: %d\n", count);
+		} else {
+			video_sync_get(&count);
 			sleep(1);
-			continue;
+			glFinish();
 		}
 
 		if (verbose) {
