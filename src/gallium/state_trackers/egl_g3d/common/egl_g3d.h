@@ -34,6 +34,8 @@
 #include "eglcontext.h"
 #include "eglsurface.h"
 #include "eglconfig.h"
+#include "eglscreen.h"
+#include "eglmode.h"
 
 #include "native.h"
 #include "egl_st.h"
@@ -78,6 +80,11 @@ struct egl_g3d_config {
    const struct native_config *native;
 };
 
+struct egl_g3d_screen {
+   _EGLScreen base;
+   const struct native_connector *native;
+   const struct native_mode **native_modes;
+};
 
 static INLINE struct egl_g3d_driver *
 egl_g3d_driver(_EGLDriver *drv)
@@ -108,6 +115,12 @@ static INLINE struct egl_g3d_config *
 egl_g3d_config(_EGLConfig *conf)
 {
    return (struct egl_g3d_config *) conf;
+}
+
+static INLINE struct egl_g3d_screen *
+egl_g3d_screen(_EGLScreen *scr)
+{
+   return (struct egl_g3d_screen *) scr;
 }
 
 #endif /* _EGL_G3D_H_ */

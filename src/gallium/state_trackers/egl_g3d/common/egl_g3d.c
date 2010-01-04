@@ -327,6 +327,69 @@ get_mode_api_mask(const __GLcontextModes *mode, EGLint api_mask)
    return api_mask;
 }
 
+#ifdef EGL_MESA_screen_surface
+
+static void
+egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   const struct native_connector **native_connectors;
+   EGLint num_connectors, i;
+
+   native_connectors =
+      gdpy->native->modeset->get_connectors(gdpy->native, &num_connectors, NULL);
+   if (!num_connectors) {
+      if (native_connectors)
+         free(native_connectors);
+      return;
+   }
+
+   for (i = 0; i < num_connectors; i++) {
+      const struct native_connector *nconn = native_connectors[i];
+      struct egl_g3d_screen *gscr;
+      const struct native_mode **native_modes;
+      EGLint num_modes, j;
+
+      /* TODO support for hotplug */
+      native_modes =
+         gdpy->native->modeset->get_modes(gdpy->native, nconn, &num_modes);
+      if (!num_modes) {
+         if (native_modes)
+            free(native_modes);
+         continue;
+      }
+
+      gscr = CALLOC_STRUCT(egl_g3d_screen);
+      if (!gscr) {
+         free(native_modes);
+         continue;
+      }
+
+      _eglInitScreen(&gscr->base);
+
+      for (j = 0; j < num_modes; j++) {
+         const struct native_mode *nmode = native_modes[j];
+         _EGLMode *mode;
+
+         mode = _eglAddNewMode(&gscr->base, nmode->width, nmode->height,
+               nmode->refresh_rate, nmode->desc);
+         if (!mode)
+            break;
+         /* gscr->native_modes and gscr->base.Modes should be consistent */
+         assert(mode == &gscr->base.Modes[j]);
+      }
+
+      gscr->native = nconn;
+      gscr->native_modes = native_modes;
+
+      _eglAddScreen(dpy, &gscr->base);
+   }
+
+   free(native_connectors);
+}
+
+#endif /* EGL_MESA_screen_surface */
+
 /**
  * Add configs to display and return the next config ID.
  */
@@ -365,8 +428,17 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       _eglInitConfig(&gconf->base, id);
       valid = _eglConfigFromContextModesRec(&gconf->base,
             &native_configs[i]->mode, api_mask, api_mask);
-      if (valid)
+      if (valid) {
+#ifdef EGL_MESA_screen_surface
+         /* check if scanout surface bit is set */
+         if (native_configs[i]->scanout_bit) {
+            EGLint val = GET_CONFIG_ATTRIB(&gconf->base, EGL_SURFACE_TYPE);
+            val |= EGL_SCREEN_BIT_MESA;
+            SET_CONFIG_ATTRIB(&gconf->base, EGL_SURFACE_TYPE, val);
+         }
+#endif
          valid = _eglValidateConfig(&gconf->base, EGL_FALSE);
+      }
       if (!valid) {
          _eglLog(_EGL_DEBUG, "skip invalid config 0x%x",
                native_configs[i]->mode.visualID);
@@ -403,9 +475,19 @@ static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   EGLint i;
 
    _eglReleaseDisplayResources(drv, dpy);
    _eglCleanupDisplay(dpy);
+
+   if (dpy->Screens) {
+      for (i = 0; i < dpy->NumScreens; i++) {
+         struct egl_g3d_screen *gscr = egl_g3d_screen(dpy->Screens[i]);
+         free(gscr->native_modes);
+         free(gscr);
+      }
+      free(dpy->Screens);
+   }
 
    if (gdpy->native)
       gdpy->native->destroy(gdpy->native);
@@ -443,6 +525,14 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;
    }
+
+#ifdef EGL_MESA_screen_surface
+   /* enable MESA_screen_surface */
+   if (gdpy->native->modeset) {
+      dpy->Extensions.MESA_screen_surface = EGL_TRUE;
+      egl_g3d_add_screens(drv, dpy);
+   }
+#endif
 
    *major = 1;
    *minor = 4;
@@ -863,6 +953,99 @@ egl_g3d_release_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
    return EGL_TRUE;
 }
 
+#ifdef EGL_MESA_screen_surface
+
+static _EGLSurface *
+egl_g3d_create_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
+                              _EGLConfig *conf, const EGLint *attribs)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct egl_g3d_config *gconf = egl_g3d_config(conf);
+   struct egl_g3d_surface *gsurf;
+
+   gsurf = CALLOC_STRUCT(egl_g3d_surface);
+   if (!gsurf) {
+      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
+      return NULL;
+   }
+
+   if (!_eglInitSurface(drv, &gsurf->base,
+            EGL_SCREEN_BIT_MESA, conf, attribs)) {
+      free(gsurf);
+      return NULL;
+   }
+
+   gsurf->native =
+      gdpy->native->modeset->create_scanout_surface(gdpy->native,
+            gconf->native, gsurf->base.Width, gsurf->base.Height);
+   if (!gsurf->native) {
+      free(gsurf);
+      return NULL;
+   }
+
+   gsurf->render_att = (!gconf->native->mode.doubleBufferMode) ?
+      NATIVE_ATTACHMENT_FRONT_LEFT : NATIVE_ATTACHMENT_BACK_LEFT;
+
+   return &gsurf->base;
+}
+
+static EGLBoolean
+egl_g3d_show_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
+                            _EGLScreen *scr, _EGLSurface *surf,
+                            _EGLMode *mode)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct egl_g3d_screen *gscr = egl_g3d_screen(scr);
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+   struct native_surface *nsurf;
+   const struct native_mode *nmode;
+   EGLBoolean changed;
+
+   if (gsurf) {
+      EGLint idx;
+
+      if (!mode)
+         return _eglError(EGL_BAD_MATCH, "eglShowSurfaceMESA");
+      if (gsurf->base.Type != EGL_SCREEN_BIT_MESA)
+         return _eglError(EGL_BAD_SURFACE, "eglShowScreenSurfaceMESA");
+      if (gsurf->base.Width < mode->Width || gsurf->base.Height < mode->Height)
+         return _eglError(EGL_BAD_MATCH,
+               "eglShowSurfaceMESA(surface smaller than mode size)");
+
+      /* find the index of the mode */
+      for (idx = 0; idx < gscr->base.NumModes; idx++)
+         if (mode == &gscr->base.Modes[idx])
+            break;
+      if (idx >= gscr->base.NumModes) {
+         return _eglError(EGL_BAD_MODE_MESA,
+               "eglShowSurfaceMESA(unknown mode)");
+      }
+
+      nsurf = gsurf->native;
+      nmode = gscr->native_modes[idx];
+   }
+   else {
+      if (mode)
+         return _eglError(EGL_BAD_MATCH, "eglShowSurfaceMESA");
+
+      /* disable the screen */
+      nsurf = NULL;
+      nmode = NULL;
+   }
+
+   /* TODO surface panning by CRTC choosing */
+   changed = gdpy->native->modeset->program(gdpy->native, 0, nsurf,
+         gscr->base.OriginX, gscr->base.OriginY, &gscr->native, 1, nmode);
+   if (changed) {
+      gscr->base.CurrentSurface = &gsurf->base;
+      gscr->base.CurrentMode = mode;
+   }
+
+   return changed;
+}
+
+#endif /* EGL_MESA_screen_surface */
+
 static void
 egl_g3d_unload(_EGLDriver *drv)
 {
@@ -902,6 +1085,11 @@ _eglMain(const char *args)
 
    gdrv->base.API.BindTexImage = egl_g3d_bind_tex_image;
    gdrv->base.API.ReleaseTexImage = egl_g3d_release_tex_image;
+
+#ifdef EGL_MESA_screen_surface
+   gdrv->base.API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;
+   gdrv->base.API.ShowScreenSurfaceMESA = egl_g3d_show_screen_surface;
+#endif
 
    gdrv->base.Name = driver_name;
    gdrv->base.Unload = egl_g3d_unload;
