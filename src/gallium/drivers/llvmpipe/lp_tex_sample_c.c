@@ -1085,7 +1085,7 @@ lp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
    const struct pipe_sampler_state *sampler = samp->sampler;
    unsigned level0, level1, j, imgFilter;
    int width, height;
-   float levelBlend;
+   float levelBlend = 0.0f;
 
    choose_mipmap_levels(tgsi_sampler, s, t, p, 
                         lodbias,
@@ -1241,7 +1241,7 @@ lp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
    /* get/map pipe_surfaces corresponding to 3D tex slices */
    unsigned level0, level1, j, imgFilter;
    int width, height, depth;
-   float levelBlend;
+   float levelBlend = 0.0f;
    const uint face = 0;
 
    choose_mipmap_levels(tgsi_sampler, s, t, p, 
