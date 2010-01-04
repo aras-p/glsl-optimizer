@@ -899,8 +899,6 @@ NOT - Bitwise Not
 
 TRUNC - Truncate
 
-XXX how is this different from floor?
-
 .. math::
 
   dst.x = trunc(src.x)
@@ -1130,7 +1128,7 @@ Functions
 
   round(x)          Round x.
 
-  trunc(x)          Truncate x.
+  trunc(x)          Truncate x, i.e. drop the fraction bits.
 
 
 Keywords
