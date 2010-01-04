@@ -51,7 +51,7 @@
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
     struct r300_winsys* cs_winsys = cs_context_copy->winsys; \
-    int cs_count = 0;
+    int cs_count = 0
 
 #define CHECK_CS(size) \
     cs_winsys->check_cs(cs_winsys, (size))
