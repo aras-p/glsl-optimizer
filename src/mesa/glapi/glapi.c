@@ -108,6 +108,8 @@ warn(const char *func)
    return 0;
 }
 
+#ifdef DEBUG
+
 #define KEYWORD1 static
 #define KEYWORD1_ALT static
 #define KEYWORD2 GLAPIENTRY
@@ -121,10 +123,25 @@ warn(const char *func)
 #define RETURN_DISPATCH(func, args, msg)				      \
    return warn(#func);
 
+#define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
+
+#else
+
+static void
+NoOpGeneric(void)
+{
+   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+       && warning_func) {
+      warning_func(NULL, "GL User Error: calling GL function");
+   }
+}
+
+#define TABLE_ENTRY(name) (_glapi_proc) NoOpGeneric
+
+#endif
+
 #define DISPATCH_TABLE_NAME __glapi_noop_table
 #define UNUSED_TABLE_NAME __unused_noop_functions
-
-#define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
 
 static GLint NoOpUnused(void)
 {
