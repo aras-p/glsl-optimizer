@@ -380,25 +380,6 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t)
 		texImg->Depth, t->tile_bits);
 }
 
-/* Although we use the image_offset[] array to store relative offsets
- * to cube faces, Mesa doesn't know anything about this and expects
- * each cube face to be treated as a separate image.
- *
- * These functions present that view to mesa:
- */
-void
-radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level, GLuint *offsets)
-{
-	if (mt->target != GL_TEXTURE_3D || mt->faces == 1) {
-		offsets[0] = 0;
-	} else {
-		int i;
-		for (i = 0; i < 6; i++) {
-			offsets[i] = mt->levels[level].faces[i].offset;
-		}
-	}
-}
-
 GLuint
 radeon_miptree_image_offset(radeon_mipmap_tree *mt,
 			    GLuint face, GLuint level)
