@@ -237,7 +237,7 @@ PUBLIC void *_glapi_Context = NULL;
  * We should call this periodically from a function such as glXMakeCurrent
  * in order to test if multiple threads are being used.
  */
-void
+PUBLIC void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS) && !defined(GLX_USE_TLS)
