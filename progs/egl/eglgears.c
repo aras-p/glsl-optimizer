@@ -374,7 +374,8 @@ main(int argc, char *argv[])
 	EGLint screenAttribs[10];
 	EGLModeMESA mode[MAX_MODES];
 	EGLScreenMESA screen;
-	EGLint count, chosenMode;
+	EGLint count;
+	EGLint chosenMode = 0;
 	GLboolean printInfo = GL_FALSE;
 	EGLint width = 0, height = 0;
 	
