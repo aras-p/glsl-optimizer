@@ -1253,7 +1253,8 @@ can be stored inside a four-component vector.
 TGSI_SEMANTIC_NORMAL
 """"""""""""""""""""
 
-XXX no clue.
+Vertex normal; could be used to implement per-pixel lighting for legacy APIs
+that allow mixing fixed-function and programmable stages.
 
 TGSI_SEMANTIC_FACE
 """"""""""""""""""
