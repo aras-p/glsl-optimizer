@@ -522,7 +522,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       GLubyte color_mask[4];
       GLboolean color_blend;
       uint32_t tiling;
-      uint32_t draw_offset;
+      uint32_t draw_x;
+      uint32_t draw_y;
    } key;
 
    memset(&key, 0, sizeof(key));
@@ -564,7 +565,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       }
       key.pitch = region->pitch;
       key.cpp = region->cpp;
-      key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
+      key.draw_x = region->draw_x;
+      key.draw_y = region->draw_y;
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
@@ -572,7 +574,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
-      key.draw_offset = 0;
+      key.draw_x = 0;
+      key.draw_y = 0;
    }
    /* _NEW_COLOR */
    memcpy(key.color_mask, ctx->Color.ColorMask,
@@ -602,25 +605,32 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       surf.ss0.surface_format = key.surface_format;
       surf.ss0.surface_type = key.surface_type;
       if (key.tiling == I915_TILING_NONE) {
-	 surf.ss1.base_addr = key.draw_offset;
+	 surf.ss1.base_addr = (key.draw_x + key.draw_y * key.pitch) * key.cpp;
       } else {
-	 uint32_t tile_offset = key.draw_offset % 4096;
+	 uint32_t tile_base, tile_x, tile_y;
+	 uint32_t pitch = key.pitch * key.cpp;
 
-	 surf.ss1.base_addr = key.draw_offset - tile_offset;
-
-	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
-	 if (BRW_IS_G4X(brw)) {
-	    if (key.tiling == I915_TILING_X) {
-	       /* Note that the low bits of these fields are missing, so
-		* there's the possibility of getting in trouble.
-		*/
-	       surf.ss5.x_offset = (tile_offset % 512) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 512 / 2;
-	    } else {
-	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 128 / 2;
-	    }
+	 if (key.tiling == I915_TILING_X) {
+	    tile_x = key.draw_x % (512 / key.cpp);
+	    tile_y = key.draw_y % 8;
+	    tile_base = ((key.draw_y / 8) * (8 * pitch));
+	    tile_base += (key.draw_x - tile_x) / (512 / key.cpp) * 4096;
+	 } else {
+	    /* Y */
+	    tile_x = key.draw_x % (128 / key.cpp);
+	    tile_y = key.draw_y % 32;
+	    tile_base = ((key.draw_y / 32) * (32 * pitch));
+	    tile_base += (key.draw_x - tile_x) / (128 / key.cpp) * 4096;
 	 }
+	 assert(BRW_IS_G4X(brw) || (tile_x == 0 && tile_y == 0));
+	 assert(tile_x % 4 == 0);
+	 assert(tile_y % 2 == 0);
+	 /* Note that the low bits of these fields are missing, so
+	  * there's the possibility of getting in trouble.
+	  */
+	 surf.ss1.base_addr = tile_base;
+	 surf.ss5.x_offset = tile_x / 4;
+	 surf.ss5.y_offset = tile_y / 2;
       }
       if (region_bo != NULL)
 	 surf.ss1.base_addr += region_bo->offset; /* reloc */
