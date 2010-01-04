@@ -251,13 +251,13 @@ LRP - Linear Interpolate
 
 .. math::
 
-  dst.x = src0.x \times (src1.x - src2.x) + src2.x
+  dst.x = src0.x \times src1.x + (1 - src0.x) \times src2.x
 
-  dst.y = src0.y \times (src1.y - src2.y) + src2.y
+  dst.y = src0.y \times src1.y + (1 - src0.y) \times src2.y
 
-  dst.z = src0.z \times (src1.z - src2.z) + src2.z
+  dst.z = src0.z \times src1.z + (1 - src0.z) \times src2.z
 
-  dst.w = src0.w \times (src1.w - src2.w) + src2.w
+  dst.w = src0.w \times src1.w + (1 - src0.w) \times src2.w
 
 
 CND - Condition
