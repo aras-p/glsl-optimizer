@@ -145,6 +145,10 @@ lp_build_flow_destroy(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Begin/push a new flow control construct, such as a loop, skip block
+ * or variable scope.
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_push(struct lp_build_flow_context *flow,
                    enum lp_build_flow_construct_kind kind)
@@ -158,6 +162,10 @@ lp_build_flow_push(struct lp_build_flow_context *flow,
 }
 
 
+/**
+ * Return the current/top flow control construct on the stack.
+ * \param kind  the expected type of the top-most construct
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_peek(struct lp_build_flow_context *flow,
                    enum lp_build_flow_construct_kind kind)
@@ -174,6 +182,10 @@ lp_build_flow_peek(struct lp_build_flow_context *flow,
 }
 
 
+/**
+ * End/pop the current/top flow control construct on the stack.
+ * \param kind  the expected type of the top-most construct
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_pop(struct lp_build_flow_context *flow,
                   enum lp_build_flow_construct_kind kind)
@@ -213,11 +225,11 @@ lp_build_flow_scope_begin(struct lp_build_flow_context *flow)
  *
  * A variable is a named entity which can have different LLVMValueRef's at
  * different points of the program. This is relevant for control flow because
- * when there are mutiple branches to a same location we need to replace
+ * when there are multiple branches to a same location we need to replace
  * the variable's value with a Phi function as explained in
  * http://en.wikipedia.org/wiki/Static_single_assignment_form .
  *
- * We keep track of variables by keeping around a pointer to where their
+ * We keep track of variables by keeping around a pointer to where they're
  * current.
  *
  * There are a few cautions to observe:
@@ -386,6 +398,9 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Check if the mask predicate is zero.  If so, jump to the end of the block.
+ */
 static void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
