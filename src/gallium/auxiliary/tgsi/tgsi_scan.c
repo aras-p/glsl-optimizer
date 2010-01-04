@@ -229,8 +229,8 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
 
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
-                src->Register.File != TGSI_FILE_INPUT ||
-                src->Register.File != TGSI_FILE_SYSTEM_VALUE ||
+                (src->Register.File != TGSI_FILE_INPUT &&
+                 src->Register.File != TGSI_FILE_SYSTEM_VALUE) ||
                 dst->Register.File != TGSI_FILE_OUTPUT ||
                 src->Register.Index != dst->Register.Index ||
 
