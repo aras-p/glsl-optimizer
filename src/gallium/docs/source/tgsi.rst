@@ -1054,10 +1054,10 @@ ENDSUB - End Subroutine
   TBD
 
 
-
 NOP - No Operation
 
- Do nothing.
+  Do nothing.
+
 
 NRM4 - 4-component Vector Normalise
 
