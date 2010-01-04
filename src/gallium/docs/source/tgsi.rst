@@ -442,7 +442,7 @@ COS - Cosine
 
   dst.z = \cos{src.x}
 
-  dst.w = \cos{src.w}
+  dst.w = \cos{src.x}
 
 
 DDX - Derivative Relative To X
@@ -552,7 +552,7 @@ SIN - Sine
 
   dst.z = \sin{src.x}
 
-  dst.w = \sin{src.w}
+  dst.w = \sin{src.x}
 
 
 SLE - Set On Less Equal Than
