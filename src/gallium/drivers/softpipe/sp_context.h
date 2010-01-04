@@ -116,6 +116,10 @@ struct softpipe_context {
 
    unsigned line_stipple_counter;
 
+   /** Conditional query object and mode */
+   struct pipe_query *render_cond_query;
+   uint render_cond_mode;
+
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;

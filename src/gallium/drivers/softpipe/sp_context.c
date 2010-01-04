@@ -176,6 +176,19 @@ softpipe_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
+static void
+softpipe_render_condition( struct pipe_context *pipe,
+                           struct pipe_query *query,
+                           uint mode )
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+
+   softpipe->render_cond_query = query;
+   softpipe->render_cond_mode = mode;
+}
+
+
+
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen )
 {
@@ -251,6 +264,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
+
+   softpipe->pipe.render_condition = softpipe_render_condition;
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.

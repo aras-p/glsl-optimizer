@@ -355,6 +355,15 @@ enum pipe_transfer_usage {
 
 
 /**
+ * Conditional rendering modes
+ */
+#define PIPE_RENDER_COND_WAIT              0
+#define PIPE_RENDER_COND_NO_WAIT           1
+#define PIPE_RENDER_COND_BY_REGION_WAIT    2
+#define PIPE_RENDER_COND_BY_REGION_NO_WAIT 3
+
+
+/**
  * Point sprite coord modes
  */
 #define PIPE_SPRITE_COORD_NONE       0
