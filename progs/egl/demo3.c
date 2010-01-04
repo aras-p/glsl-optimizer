@@ -564,11 +564,8 @@ main(int argc, char *argv[])
    EGLint numConfigs, count;
    EGLBoolean b;
    const GLubyte *bitmap;
-   const EGLint screenAttribs[] = {
-      EGL_WIDTH, 1024,
-      EGL_HEIGHT, 768,
-      EGL_NONE
-   };
+   EGLint screenAttribs[32];
+   EGLint i;
 
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
    assert(d);
@@ -590,11 +587,19 @@ main(int argc, char *argv[])
    eglGetScreensMESA(d, &screen, 1, &count);
    eglGetModesMESA(d, screen, &mode, 1, &count);
 
+   eglBindAPI(EGL_OPENGL_API);
    ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
    if (ctx == EGL_NO_CONTEXT) {
       printf("failed to create context\n");
       return 0;
    }
+
+   i = 0;
+   screenAttribs[i++] = EGL_WIDTH;
+   eglGetModeAttribMESA(d, mode, EGL_WIDTH, &screenAttribs[i++]);
+   screenAttribs[i++] = EGL_HEIGHT;
+   eglGetModeAttribMESA(d, mode, EGL_HEIGHT, &screenAttribs[i++]);
+   screenAttribs[i] = EGL_NONE;
 
    screen_surf = eglCreateScreenSurfaceMESA(d, configs[0], screenAttribs);
    if (screen_surf == EGL_NO_SURFACE) {
