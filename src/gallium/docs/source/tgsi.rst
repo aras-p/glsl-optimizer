@@ -676,7 +676,7 @@ RET - Subroutine Call Return
   pc = pop()
 
   Potential restrictions:  
-  \times Only occurs at end of function.
+  * Only occurs at end of function.
 
 SSG - Set Sign
 
