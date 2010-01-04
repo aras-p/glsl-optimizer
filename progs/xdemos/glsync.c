@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
 	int width = 500, height = 500, verbose = 0,
 		countonly = 0, interval = 1;
 	int c, i = 1;
+	int ret;
 	int attribs[] = { GLX_RGBA,
                      GLX_RED_SIZE, 1,
                      GLX_GREEN_SIZE, 1,
@@ -234,7 +235,10 @@ int main(int argc, char *argv[])
 	}
 
 	XMapWindow(disp, winGL);
-	glXMakeCurrent(disp, winGL, context);
+	ret = glXMakeCurrent(disp, winGL, context);
+	if (ret) {
+		fprintf(stderr, "failed to make context current: %d\n", ret);
+	}
 
 	video_sync_get = glXGetProcAddress((unsigned char *)"glXGetVideoSyncSGI");
 	video_sync = glXGetProcAddress((unsigned char *)"glXWaitVideoSyncSGI");
