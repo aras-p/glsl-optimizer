@@ -33,8 +33,10 @@
     <enum name="WAIT_FAILED"                              value="0x911D"/>
 
     <enum name="SYNC_FLUSH_COMMANDS_BIT"                  value="0x00000001"/>
-    <enum name="TIMEOUT_IGNORED"                  value="0xFFFFFFFFFFFFFFFF"/>
 
+    <!-- Not really an enum:
+    <enum name="TIMEOUT_IGNORED"                  value="0xFFFFFFFFFFFFFFFF"/>
+    -->
 
 
     <function name="FenceSync" offset="assign">
