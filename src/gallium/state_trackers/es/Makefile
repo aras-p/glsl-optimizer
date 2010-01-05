@@ -26,13 +26,6 @@ ES1_OBJECTS = st_es1.o
 ES2_OBJECTS = st_es2.o
 
 
-# we only need the gallium libs that the state trackers directly use:
-GALLIUM_LIBS = \
-	$(TOP)/src/gallium/auxiliary/cso_cache/libcso_cache.a \
-	$(TOP)/src/gallium/auxiliary/rtasm/librtasm.a \
-	$(TOP)/src/gallium/auxiliary/tgsi/libtgsi.a \
-	$(TOP)/src/gallium/auxiliary/util/libutil.a
-
 ES1_LIBS = \
 	$(TOP)/src/mesa/es/libes1gallium.a \
 	$(TOP)/src/mesa/es/libes1api.a
@@ -44,35 +37,36 @@ ES2_LIBS = \
 SYS_LIBS = -lm -pthread
 
 
+INCLUDE_DIRS = \
+	-I$(TOP)/src/gallium/include
+
 .c.o:
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
 
 
 # Default: make both GL ES 1.1 and GL ES 2.0 libraries
 default: $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME)
 
 # Make the shared libs
-$(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME): $(ES1_OBJECTS) $(ES1_LIBS)
-	$(TOP)/bin/mklib -o $(GLES_1_LIB) \
+$(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME): $(ES1_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES)
+	$(MKLIB) -o $(GLES_1_LIB) \
 		-major $(GLES_1_VERSION_MAJOR) \
 		-minor $(GLES_1_VERSION_MINOR) \
 		-patch $(GLES_1_VERSION_PATCH) \
-		-install $(TOP)/$(LIB_DIR) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(ES1_OBJECTS) \
 		-Wl,--whole-archive $(ES1_LIBS) -Wl,--no-whole-archive \
-		-Wl,--start-group $(GALLIUM_LIBS) -Wl,--end-group  \
-		$(SYS_LIBS)
+		$(GALLIUM_AUXILIARIES) $(SYS_LIBS)
 
-$(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME): $(ES2_OBJECTS) $(ES1_LIBS)
-	$(TOP)/bin/mklib -o $(GLES_2_LIB) \
+$(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME): $(ES2_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES)
+	$(MKLIB) -o $(GLES_2_LIB) \
 		-major $(GLES_2_VERSION_MAJOR) \
 		-minor $(GLES_2_VERSION_MINOR) \
 		-patch $(GLES_2_VERSION_PATCH) \
-		-install $(TOP)/$(LIB_DIR) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(ES2_OBJECTS) \
 		-Wl,--whole-archive $(ES2_LIBS) -Wl,--no-whole-archive \
-		-Wl,--start-group $(GALLIUM_LIBS) -Wl,--end-group  \
-		$(SYS_LIBS)
+		$(GALLIUM_AUXILIARIES) $(SYS_LIBS)
 
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/include/GLES
@@ -86,3 +80,5 @@ install: default
 clean:
 	-rm -f *.o *~
 	-rm -f $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME)* $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME)*
+
+depend:
