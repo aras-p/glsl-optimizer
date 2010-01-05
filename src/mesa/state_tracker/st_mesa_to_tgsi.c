@@ -174,6 +174,7 @@ src_register( struct st_translate *t,
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_ENV_PARAM:
+   case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
    case PROGRAM_CONSTANT:       /* ie, immediate */
       return t->constants[index];
