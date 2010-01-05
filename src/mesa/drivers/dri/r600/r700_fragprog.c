@@ -362,8 +362,11 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 {
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
-	GLuint    unBit;
+	GLuint    unBit, shadow_unit;
 	int i;
+	struct prog_instruction *inst;
+	gl_state_index shadow_ambient[STATE_LENGTH]
+	    = { STATE_INTERNAL, STATE_SHADOW_AMBIENT, 0, 0, 0};
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
@@ -371,6 +374,23 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
     if(mesa_fp->Base.InputsRead & FRAG_BIT_WPOS)
     {
         insert_wpos_code(ctx, mesa_fp);
+    }
+
+    /* add/map  consts for ARB_shadow_ambient */
+    if(mesa_fp->Base.ShadowSamplers)
+    {
+        inst = mesa_fp->Base.Instructions;
+        for (i = 0; i < mesa_fp->Base.NumInstructions; i++)
+        {
+            if(inst->TexShadow == 1)
+            {
+                shadow_unit = inst->TexSrcUnit;
+                shadow_ambient[2] = shadow_unit;
+                fp->r700AsmCode.shadow_regs[shadow_unit] = 
+                    _mesa_add_state_reference(mesa_fp->Base.Parameters, shadow_ambient);
+            }
+            inst++;
+        }
     }
 
     Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 

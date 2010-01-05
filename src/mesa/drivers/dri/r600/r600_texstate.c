@@ -626,6 +626,31 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 	return GL_TRUE;
 }
 
+static GLuint r600_translate_shadow_func(GLenum func)
+{
+   switch (func) {
+   case GL_NEVER:
+      return SQ_TEX_DEPTH_COMPARE_NEVER;
+   case GL_LESS:
+      return SQ_TEX_DEPTH_COMPARE_LESS;
+   case GL_LEQUAL:
+      return SQ_TEX_DEPTH_COMPARE_LESSEQUAL;
+   case GL_GREATER:
+      return SQ_TEX_DEPTH_COMPARE_GREATER;
+   case GL_GEQUAL:
+      return SQ_TEX_DEPTH_COMPARE_GREATEREQUAL;
+   case GL_NOTEQUAL:
+      return SQ_TEX_DEPTH_COMPARE_NOTEQUAL;
+   case GL_EQUAL:
+      return SQ_TEX_DEPTH_COMPARE_EQUAL;
+   case GL_ALWAYS:
+      return SQ_TEX_DEPTH_COMPARE_ALWAYS;
+   default:
+      WARN_ONCE("Unknown shadow compare function! %d", func);
+      return 0;
+   }
+}
+
 void r600SetDepthTexMode(struct gl_texture_object *tObj)
 {
 	radeonTexObjPtr t;
@@ -711,6 +736,15 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 		SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask);
 		SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
 	}
+	if(texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
+	{
+		SETfield(t->SQ_TEX_SAMPLER0, r600_translate_shadow_func(texObj->CompareFunc), DEPTH_COMPARE_FUNCTION_shift, DEPTH_COMPARE_FUNCTION_mask);
+	}
+	else
+	{
+		CLEARfield(t->SQ_TEX_SAMPLER0, DEPTH_COMPARE_FUNCTION_mask);
+	}
+
 }
 
 /**

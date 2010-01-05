@@ -487,6 +487,8 @@ typedef struct r700_AssemblerBase
 
     GLuint    unVetTexBits;
 
+    GLuint    shadow_regs[R700_MAX_TEXTURE_UNITS];
+
 } r700_AssemblerBase;
 
 //Internal use

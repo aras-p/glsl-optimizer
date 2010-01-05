@@ -4397,7 +4397,10 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
             pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_L;
             break;
         default:
-            pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
+            if(pAsm->pILInst[pAsm->uiCurInst].TexShadow == 1)
+                pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE_C;
+            else
+                pAsm->D.dst.opcode = SQ_TEX_INST_SAMPLE;
     }
 
     pAsm->is_tex = GL_TRUE;
@@ -4443,10 +4446,45 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
         pAsm->S[0].src.swizzlew = SQ_SEL_Y;
     }
  
+    if(pAsm->pILInst[pAsm->uiCurInst].TexShadow == 1)
+    {
+        /* compare value goes to w chan ? */
+        pAsm->S[0].src.swizzlew = SQ_SEL_Z;
+    }
+
     if ( GL_FALSE == next_ins(pAsm) )
         {
             return GL_FALSE;
         }
+
+    /* add ARB shadow ambient but clamp to 0..1 */
+    if(pAsm->pILInst[pAsm->uiCurInst].TexShadow == 1)
+    {
+	/* ADD_SAT dst,  dst,  ambient[texunit] */
+	pAsm->D.dst.opcode = SQ_OP2_INST_ADD;
+
+	if( GL_FALSE == assemble_dst(pAsm) )
+	{
+	    return GL_FALSE;
+	}
+	pAsm->D2.dst2.SaturateMode = 1;
+
+	pAsm->S[0].src.rtype = pAsm->D.dst.rtype;
+	pAsm->S[0].src.reg = pAsm->D.dst.reg;
+	noswizzle_PVSSRC(&(pAsm->S[0].src));
+	noneg_PVSSRC(&(pAsm->S[0].src));
+
+	pAsm->S[1].src.rtype = SRC_REG_CONSTANT;
+	pAsm->S[1].src.reg = pAsm->shadow_regs[pAsm->pILInst[pAsm->uiCurInst].TexSrcUnit];
+	noswizzle_PVSSRC(&(pAsm->S[1].src));
+	noneg_PVSSRC(&(pAsm->S[1].src));
+
+	if( GL_FALSE == next_ins(pAsm) )
+	{
+	    return GL_FALSE;
+	}
+
+    }
 
     return GL_TRUE;
 }

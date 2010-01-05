@@ -99,6 +99,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_ARB_depth_clamp",                NULL},
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
+  {"GL_ARB_fragment_program_shadow",	NULL},
   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
@@ -163,6 +164,7 @@ static const struct dri_extension gl_20_extension[] = {
 #else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 #endif /* R600_ENABLE_GLSL_TEST */
+  {NULL, NULL}
 };
 
 static const struct tnl_pipeline_stage *r600_pipeline[] = {
