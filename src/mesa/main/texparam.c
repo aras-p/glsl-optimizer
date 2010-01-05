@@ -511,7 +511,10 @@ set_tex_parameterf(GLcontext *ctx,
 
    case GL_TEXTURE_BORDER_COLOR:
       flush(ctx, texObj);
-      COPY_4V(texObj->BorderColor.f, params);
+      texObj->BorderColor.f[RCOMP] = params[0];
+      texObj->BorderColor.f[GCOMP] = params[1];
+      texObj->BorderColor.f[BCOMP] = params[2];
+      texObj->BorderColor.f[ACOMP] = params[3];
       return GL_TRUE;
 
    default:
@@ -726,6 +729,68 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
       ctx->Driver.TexParameter(ctx, target, texObj, pname, fparams);
    }
 }
+
+
+/**
+ * Set tex parameter to integer value(s).  Primarily intended to set
+ * integer-valued texture border color (for integer-valued textures).
+ * New in GL 3.0.
+ */
+void GLAPIENTRY
+_mesa_TexParameterIiv(GLenum target, GLenum pname, const GLint *params)
+{
+   struct gl_texture_object *texObj;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   texObj = get_texobj(ctx, target, GL_FALSE);
+   if (!texObj)
+      return;
+
+   switch (pname) {
+   case GL_TEXTURE_BORDER_COLOR:
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      /* set the integer-valued border color */
+      COPY_4V(texObj->BorderColor.i, params);
+      break;
+   default:
+      _mesa_TexParameteriv(target, pname, params);
+      break;
+   }
+   /* XXX no driver hook for TexParameterIiv() yet */
+}
+
+
+/**
+ * Set tex parameter to unsigned integer value(s).  Primarily intended to set
+ * uint-valued texture border color (for integer-valued textures).
+ * New in GL 3.0
+ */
+void GLAPIENTRY
+_mesa_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params)
+{
+   struct gl_texture_object *texObj;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   texObj = get_texobj(ctx, target, GL_FALSE);
+   if (!texObj)
+      return;
+
+   switch (pname) {
+   case GL_TEXTURE_BORDER_COLOR:
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      /* set the unsigned integer-valued border color */
+      COPY_4V(texObj->BorderColor.ui, params);
+      break;
+   default:
+      _mesa_TexParameteriv(target, pname, (const GLint *) params);
+      break;
+   }
+   /* XXX no driver hook for TexParameterIuiv() yet */
+}
+
+
 
 
 void GLAPIENTRY
@@ -1293,4 +1358,54 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 		  pname);
 
    _mesa_unlock_texture(ctx, obj);
+}
+
+
+/** New in GL 3.0 */
+void GLAPIENTRY
+_mesa_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params)
+{
+   struct gl_texture_object *texObj;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   texObj = get_texobj(ctx, target, GL_TRUE);
+   
+   switch (pname) {
+   case GL_TEXTURE_BORDER_COLOR:
+      COPY_4V(params, texObj->BorderColor.i);
+      break;
+   default:
+      _mesa_GetTexParameteriv(target, pname, params);
+   }
+}
+
+
+/** New in GL 3.0 */
+void GLAPIENTRY
+_mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
+{
+   struct gl_texture_object *texObj;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   texObj = get_texobj(ctx, target, GL_TRUE);
+   
+   switch (pname) {
+   case GL_TEXTURE_BORDER_COLOR:
+      COPY_4V(params, texObj->BorderColor.i);
+      break;
+   default:
+      {
+         GLint ip[4];
+         _mesa_GetTexParameteriv(target, pname, ip);
+         params[0] = ip[0];
+         if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT || 
+             pname == GL_TEXTURE_CROP_RECT_OES) {
+            params[1] = ip[1];
+            params[2] = ip[2];
+            params[3] = ip[3];
+         }
+      }
+   }
 }
