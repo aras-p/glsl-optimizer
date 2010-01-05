@@ -160,13 +160,14 @@ dst_register( struct st_translate *t,
 static struct ureg_src
 src_register( struct st_translate *t,
               gl_register_file file,
-              GLuint index )
+              GLint index )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
       return ureg_src_undef();
 
    case PROGRAM_TEMPORARY:
+      ASSERT(index >= 0);
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
       return ureg_src(t->temps[index]);
@@ -176,8 +177,13 @@ src_register( struct st_translate *t,
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
-   case PROGRAM_CONSTANT:       /* ie, immediate */
+      ASSERT(index >= 0);
       return t->constants[index];
+   case PROGRAM_CONSTANT:       /* ie, immediate */
+      if (index < 0)
+         return ureg_DECL_constant( t->ureg, 0 );
+      else
+         return t->constants[index];
 
    case PROGRAM_INPUT:
       return t->inputs[t->inputMapping[index]];
@@ -264,9 +270,14 @@ translate_src( struct st_translate *t,
    if (SrcReg->Abs) 
       src = ureg_abs(src);
 
-   if (SrcReg->RelAddr) 
+   if (SrcReg->RelAddr) {
       src = ureg_src_indirect( src, ureg_src(t->address[0]));
-   
+      /* If SrcReg->Index was negative, it was set to zero in
+       * src_register().  Reassign it now.
+       */
+      src.Index = SrcReg->Index;
+   }
+
    return src;
 }
 
@@ -806,6 +817,7 @@ st_translate_mesa_program(
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
+         case PROGRAM_LOCAL_PARAM:
          case PROGRAM_STATE_VAR:
          case PROGRAM_NAMED_PARAM:
          case PROGRAM_UNIFORM:
