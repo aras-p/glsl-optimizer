@@ -195,7 +195,7 @@ is_any_register_declared(
    struct cso_hash_iter iter =
       cso_hash_first_node(ctx->regs_decl);
 
-   while (cso_hash_iter_is_null(iter)) {
+   while (!cso_hash_iter_is_null(iter)) {
       scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
       if (reg->file == file)
          return TRUE;
@@ -488,7 +488,7 @@ epilog(
       struct cso_hash_iter iter =
          cso_hash_first_node(ctx->regs_decl);
 
-      while (cso_hash_iter_is_null(iter)) {
+      while (!cso_hash_iter_is_null(iter)) {
          scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
          if (!is_register_used(ctx, reg) && !is_ind_register_used(ctx, reg)) {
             report_warning( ctx, "%s[%u]: Register never used",
