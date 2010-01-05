@@ -61,27 +61,27 @@ struct pipe_context {
     * VBO drawing (return false on fallbacks (temporary??))
     */
    /*@{*/
-   boolean (*draw_arrays)( struct pipe_context *pipe,
-			   unsigned mode, unsigned start, unsigned count);
+   void (*draw_arrays)( struct pipe_context *pipe,
+                        unsigned mode, unsigned start, unsigned count);
 
-   boolean (*draw_elements)( struct pipe_context *pipe,
-			     struct pipe_buffer *indexBuffer,
-			     unsigned indexSize,
-			     unsigned mode, unsigned start, unsigned count);
+   void (*draw_elements)( struct pipe_context *pipe,
+                          struct pipe_buffer *indexBuffer,
+                          unsigned indexSize,
+                          unsigned mode, unsigned start, unsigned count);
 
    /* XXX: this is (probably) a temporary entrypoint, as the range
     * information should be available from the vertex_buffer state.
     * Using this to quickly evaluate a specialized path in the draw
     * module.
     */
-   boolean (*draw_range_elements)( struct pipe_context *pipe,
-                                   struct pipe_buffer *indexBuffer,
-                                   unsigned indexSize,
-                                   unsigned minIndex,
-                                   unsigned maxIndex,
-                                   unsigned mode, 
-                                   unsigned start, 
-                                   unsigned count);
+   void (*draw_range_elements)( struct pipe_context *pipe,
+                                struct pipe_buffer *indexBuffer,
+                                unsigned indexSize,
+                                unsigned minIndex,
+                                unsigned maxIndex,
+                                unsigned mode, 
+                                unsigned start, 
+                                unsigned count);
    /*@}*/
 
    /**

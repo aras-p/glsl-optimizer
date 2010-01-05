@@ -226,7 +226,7 @@ nv40_draw_render_stage(struct nv40_context *nv40)
 	return &render->stage;
 }
 
-boolean
+void
 nv40_draw_elements_swtnl(struct pipe_context *pipe,
 			 struct pipe_buffer *idxbuf, unsigned idxbuf_size,
 			 unsigned mode, unsigned start, unsigned count)
@@ -237,7 +237,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	void *map;
 
 	if (!nv40_state_validate_swtnl(nv40))
-		return FALSE;
+		return;
 	nv40->state.dirty &= ~(1ULL << NV40_STATE_VTXBUF);
 	nv40_state_emit(nv40);
 
@@ -278,8 +278,6 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 
 	draw_flush(nv40->draw);
 	pipe->flush(pipe, 0, NULL);
-
-	return TRUE;
 }
 
 static INLINE void

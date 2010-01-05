@@ -191,9 +191,9 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 
 /* nv50_vbo.c */
-extern boolean nv50_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv50_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv50_draw_elements(struct pipe_context *pipe,
+extern void nv50_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,

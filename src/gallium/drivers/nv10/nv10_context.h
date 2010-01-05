@@ -144,9 +144,9 @@ extern void nv10_emit_hw_state(struct nv10_context *nv10);
 extern void nv10_state_tex_update(struct nv10_context *nv10);
 
 /* nv10_vbo.c */
-extern boolean nv10_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv10_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv10_draw_elements( struct pipe_context *pipe,
+extern void nv10_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count);

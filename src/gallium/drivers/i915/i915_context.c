@@ -45,7 +45,7 @@
  */
 
 
-static boolean
+static void
 i915_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_buffer *indexBuffer,
                          unsigned indexSize,
@@ -106,27 +106,25 @@ i915_draw_range_elements(struct pipe_context *pipe,
       pipe_buffer_unmap(pipe->screen, indexBuffer);
       draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
-
-   return TRUE;
 }
 
-static boolean
+static void
 i915_draw_elements(struct pipe_context *pipe,
                    struct pipe_buffer *indexBuffer,
                    unsigned indexSize,
                    unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_range_elements(pipe, indexBuffer,
-                                   indexSize,
-                                   0, 0xffffffff,
-                                   prim, start, count);
+   i915_draw_range_elements(pipe, indexBuffer,
+                            indexSize,
+                            0, 0xffffffff,
+                            prim, start, count);
 }
 
-static boolean
+static void
 i915_draw_arrays(struct pipe_context *pipe,
                  unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_elements(pipe, NULL, 0, prim, start, count);
+   i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 

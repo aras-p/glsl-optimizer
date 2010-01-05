@@ -45,7 +45,7 @@ identity_destroy(struct pipe_context *_pipe)
    free(id_pipe);
 }
 
-static boolean
+static void
 identity_draw_arrays(struct pipe_context *_pipe,
                      unsigned prim,
                      unsigned start,
@@ -54,13 +54,13 @@ identity_draw_arrays(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   return pipe->draw_arrays(pipe,
-                            prim,
-                            start,
-                            count);
+   pipe->draw_arrays(pipe,
+                     prim,
+                     start,
+                     count);
 }
 
-static boolean
+static void
 identity_draw_elements(struct pipe_context *_pipe,
                        struct pipe_buffer *_indexBuffer,
                        unsigned indexSize,
@@ -73,15 +73,15 @@ identity_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_elements(pipe,
-                              indexBuffer,
-                              indexSize,
-                              prim,
-                              start,
-                              count);
+   pipe->draw_elements(pipe,
+                       indexBuffer,
+                       indexSize,
+                       prim,
+                       start,
+                       count);
 }
 
-static boolean
+static void
 identity_draw_range_elements(struct pipe_context *_pipe,
                              struct pipe_buffer *_indexBuffer,
                              unsigned indexSize,
@@ -96,14 +96,14 @@ identity_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_range_elements(pipe,
-                                    indexBuffer,
-                                    indexSize,
-                                    minIndex,
-                                    maxIndex,
-                                    mode,
-                                    start,
-                                    count);
+   pipe->draw_range_elements(pipe,
+                             indexBuffer,
+                             indexSize,
+                             minIndex,
+                             maxIndex,
+                             mode,
+                             start,
+                             count);
 }
 
 static struct pipe_query *

@@ -98,11 +98,11 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 }
 
 
-boolean
+void
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   return softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
+   softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -111,7 +111,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
-boolean
+void
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
                              unsigned indexSize,
@@ -181,19 +181,17 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    softpipe_unmap_constant_buffers(sp);
 
    sp->dirty_render_cache = TRUE;
-   
-   return TRUE;
 }
 
 
-boolean
+void
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
-   return softpipe_draw_range_elements( pipe, indexBuffer,
-                                        indexSize,
-                                        0, 0xffffffff,
-                                        mode, start, count );
+   softpipe_draw_range_elements( pipe, indexBuffer,
+                                 indexSize,
+                                 0, 0xffffffff,
+                                 mode, start, count );
 }

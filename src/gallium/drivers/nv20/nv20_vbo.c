@@ -9,7 +9,7 @@
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
 
-boolean nv20_draw_elements( struct pipe_context *pipe,
+void nv20_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count)
@@ -67,13 +67,12 @@ boolean nv20_draw_elements( struct pipe_context *pipe,
 	}
 
 	draw_flush(nv20->draw);
-	return TRUE;
 }
 
-boolean nv20_draw_arrays( struct pipe_context *pipe,
+void nv20_draw_arrays( struct pipe_context *pipe,
 				 unsigned prim, unsigned start, unsigned count)
 {
-	return nv20_draw_elements(pipe, NULL, 0, prim, start, count);
+	nv20_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 

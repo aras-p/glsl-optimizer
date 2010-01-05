@@ -198,9 +198,9 @@ extern struct nv30_state_entry nv30_state_fragtex;
 extern struct nv30_state_entry nv30_state_vbo;
 
 /* nv30_vbo.c */
-extern boolean nv30_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv30_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv30_draw_elements(struct pipe_context *pipe,
+extern void nv30_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
