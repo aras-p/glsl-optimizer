@@ -476,7 +476,7 @@ void viaEmitState(struct via_context *vmesa)
     */
    if (ctx->Polygon.StippleFlag) {
       GLuint *stipple = &ctx->PolygonStipple[0];
-      __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+      __DRIdrawable *dPriv = vmesa->driDrawable;
       struct via_renderbuffer *const vrb = 
 	(struct via_renderbuffer *) dPriv->driverPrivate;
       GLint i;
@@ -722,7 +722,7 @@ static void viaColorMask(GLcontext *ctx,
 void viaCalcViewport(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+    __DRIdrawable *dPriv = vmesa->driDrawable;
     struct via_renderbuffer *const vrb = 
       (struct via_renderbuffer *) dPriv->driverPrivate;
     const GLfloat *v = ctx->Viewport._WindowMap.m;

@@ -44,17 +44,17 @@
 #define VBLANK_FLAG_SECONDARY (1U << 8)  /* Wait for secondary vblank.
 					  */
 
-extern int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count );
-extern int driDrawableGetMSC32( __DRIscreenPrivate * priv,
-				__DRIdrawablePrivate * drawablePrivate,
+extern int driGetMSC32( __DRIscreen * priv, int64_t * count );
+extern int driDrawableGetMSC32( __DRIscreen * priv,
+				__DRIdrawable * drawablePrivate,
 				int64_t * count);
-extern int driWaitForMSC32( __DRIdrawablePrivate *priv,
+extern int driWaitForMSC32( __DRIdrawable *priv,
     int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * msc );
 extern GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache );
-extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv );
-extern unsigned driGetVBlankInterval( const  __DRIdrawablePrivate *priv );
-extern void driGetCurrentVBlank( __DRIdrawablePrivate *priv );
-extern int driWaitForVBlank( __DRIdrawablePrivate *priv,
+extern void driDrawableInitVBlank ( __DRIdrawable *priv );
+extern unsigned driGetVBlankInterval( const  __DRIdrawable *priv );
+extern void driGetCurrentVBlank( __DRIdrawable *priv );
+extern int driWaitForVBlank( __DRIdrawable *priv,
 			     GLboolean * missed_deadline );
 
 #undef usleep

@@ -30,7 +30,7 @@
 
 #include "intel_context.h"
 
-extern void intelCopyBuffer(const __DRIdrawablePrivate * dpriv,
+extern void intelCopyBuffer(const __DRIdrawable * dpriv,
                             const drm_clip_rect_t * rect);
 
 extern void intelClearWithBlit(GLcontext * ctx, GLbitfield mask);

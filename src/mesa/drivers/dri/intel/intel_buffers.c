@@ -102,33 +102,15 @@ intel_get_cliprects(struct intel_context *intel,
 		    unsigned int *num_cliprects,
 		    int *x_off, int *y_off)
 {
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   intel->fboRect.x1 = 0;
+   intel->fboRect.y1 = 0;
+   intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
+   intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
 
-   if (intel->constant_cliprect) {
-      /* FBO or DRI2 rendering, which can just use the fb's size. */
-      intel->fboRect.x1 = 0;
-      intel->fboRect.y1 = 0;
-      intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
-      intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
-
-      *cliprects = &intel->fboRect;
-      *num_cliprects = 1;
-      *x_off = 0;
-      *y_off = 0;
-   } else if (intel->front_cliprects || dPriv->numBackClipRects == 0) {
-      /* use the front clip rects */
-      *cliprects = dPriv->pClipRects;
-      *num_cliprects = dPriv->numClipRects;
-      *x_off = dPriv->x;
-      *y_off = dPriv->y;
-   }
-   else {
-      /* use the back clip rects */
-      *num_cliprects = dPriv->numBackClipRects;
-      *cliprects = dPriv->pBackClipRects;
-      *x_off = dPriv->backX;
-      *y_off = dPriv->backY;
-   }
+   *cliprects = &intel->fboRect;
+   *num_cliprects = 1;
+   *x_off = 0;
+   *y_off = 0;
 }
 
 
@@ -202,7 +184,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
        || (fb->_NumColorDrawBuffers == 0)) {
       /* writing to 0  */
       colorRegions[0] = NULL;
-      intel->constant_cliprect = GL_TRUE;
    }
    else if (fb->_NumColorDrawBuffers > 1) {
        int i;
@@ -212,34 +193,23 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
            irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
            colorRegions[i] = irb ? irb->region : NULL;
        }
-       intel->constant_cliprect = GL_TRUE;
    }
    else {
       /* Get the intel_renderbuffer for the single colorbuffer we're drawing
-       * into, and set up cliprects if it's a DRI1 window front buffer.
+       * into.
        */
       if (fb->Name == 0) {
-	 intel->constant_cliprect = intel->driScreen->dri2.enabled;
 	 /* drawing to window system buffer */
-	 if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-	    if (!intel->constant_cliprect && !intel->front_cliprects)
-	       intel_batchbuffer_flush(intel->batch);
-	    intel->front_cliprects = GL_TRUE;
+	 if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-	 }
-	 else {
-	    if (!intel->constant_cliprect && intel->front_cliprects)
-	       intel_batchbuffer_flush(intel->batch);
-	    intel->front_cliprects = GL_FALSE;
+	 else
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-	 }
       }
       else {
 	 /* drawing to user-created FBO */
 	 struct intel_renderbuffer *irb;
 	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
 	 colorRegions[0] = (irb && irb->region) ? irb->region : NULL;
-	 intel->constant_cliprect = GL_TRUE;
       }
    }
 

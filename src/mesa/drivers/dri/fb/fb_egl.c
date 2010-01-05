@@ -84,9 +84,9 @@ typedef struct fb_context
    _EGLContext Base;  /* base class/object */
    GLcontext *glCtx;
    struct {
-      __DRIcontextPrivate *context;	
-      __DRIscreenPrivate *screen;	
-      __DRIdrawablePrivate *drawable; /* drawable bound to this ctx */
+      __DRIcontext *context;	
+      __DRIscreen *screen;	
+      __DRIdrawable *drawable; /* drawable bound to this ctx */
    } dri;
 } fbContext, *fbContextPtr;
 

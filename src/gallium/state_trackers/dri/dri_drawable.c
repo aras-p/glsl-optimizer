@@ -118,7 +118,7 @@ dri2_check_if_pixmap(__DRIbuffer *buffers, int count)
  * This will be called a drawable is known to have been resized.
  */
 void
-dri_get_buffers(__DRIdrawablePrivate * dPriv)
+dri_get_buffers(__DRIdrawable * dPriv)
 {
 
    struct dri_drawable *drawable = dri_drawable(dPriv);
@@ -299,8 +299,8 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
  * This is called when we need to set up GL rendering to a new X window.
  */
 boolean
-dri_create_buffer(__DRIscreenPrivate * sPriv,
-		  __DRIdrawablePrivate * dPriv,
+dri_create_buffer(__DRIscreen * sPriv,
+		  __DRIdrawable * dPriv,
 		  const __GLcontextModes * visual, boolean isPixmap)
 {
    struct dri_screen *screen = sPriv->private;
@@ -416,7 +416,7 @@ dri_swap_fences_push_back(struct dri_drawable *draw,
 }
 
 void
-dri_destroy_buffer(__DRIdrawablePrivate * dPriv)
+dri_destroy_buffer(__DRIdrawable * dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_fence_handle *fence;
@@ -434,8 +434,8 @@ dri_destroy_buffer(__DRIdrawablePrivate * dPriv)
 
 static void
 dri1_update_drawables_locked(struct dri_context *ctx,
-			     __DRIdrawablePrivate * driDrawPriv,
-			     __DRIdrawablePrivate * driReadPriv)
+			     __DRIdrawable * driDrawPriv,
+			     __DRIdrawable * driReadPriv)
 {
    if (ctx->stLostLock) {
       ctx->stLostLock = FALSE;
@@ -458,8 +458,8 @@ dri1_update_drawables_locked(struct dri_context *ctx,
 static void
 dri1_propagate_drawable_change(struct dri_context *ctx)
 {
-   __DRIdrawablePrivate *dPriv = ctx->dPriv;
-   __DRIdrawablePrivate *rPriv = ctx->rPriv;
+   __DRIdrawable *dPriv = ctx->dPriv;
+   __DRIdrawable *rPriv = ctx->rPriv;
    boolean flushed = FALSE;
 
    if (dPriv && ctx->d_stamp != dPriv->lastStamp) {
@@ -532,7 +532,7 @@ static void
 dri1_swap_copy(struct dri_context *ctx,
 	       struct pipe_surface *dst,
 	       struct pipe_surface *src,
-	       __DRIdrawablePrivate * dPriv, const struct drm_clip_rect *bbox)
+	       __DRIdrawable * dPriv, const struct drm_clip_rect *bbox)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct drm_clip_rect clip;
@@ -563,7 +563,7 @@ dri1_swap_copy(struct dri_context *ctx,
 static void
 dri1_copy_to_front(struct dri_context *ctx,
 		   struct pipe_surface *surf,
-		   __DRIdrawablePrivate * dPriv,
+		   __DRIdrawable * dPriv,
 		   const struct drm_clip_rect *sub_box,
 		   struct pipe_fence_handle **fence)
 {
@@ -636,7 +636,7 @@ dri1_flush_frontbuffer(struct pipe_screen *screen,
 }
 
 void
-dri_swap_buffers(__DRIdrawablePrivate * dPriv)
+dri_swap_buffers(__DRIdrawable * dPriv)
 {
    struct dri_context *ctx;
    struct pipe_surface *back_surf;
@@ -668,7 +668,7 @@ dri_swap_buffers(__DRIdrawablePrivate * dPriv)
 }
 
 void
-dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
+dri_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
 {
    struct pipe_screen *screen = dri_screen(dPriv->driScreenPriv)->pipe_screen;
    struct drm_clip_rect sub_bbox;

@@ -351,7 +351,7 @@ static struct {
 
 #define LOCAL_VARS(n)				\
    ffbContextPtr fmesa = FFB_CONTEXT(ctx);	\
-   __DRIdrawablePrivate *dPriv = fmesa->driDrawable; \
+   __DRIdrawable *dPriv = fmesa->driDrawable; \
    ffb_color color[n] = { { 0 } };		\
    (void) color; (void) dPriv;
 

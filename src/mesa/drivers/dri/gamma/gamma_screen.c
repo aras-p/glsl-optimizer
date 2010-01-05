@@ -29,7 +29,7 @@
 
 #include "main/imports.h"
 
-gammaScreenPtr gammaCreateScreen( __DRIscreenPrivate *sPriv )
+gammaScreenPtr gammaCreateScreen( __DRIscreen *sPriv )
 {
    gammaScreenPtr gammaScreen;
    GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)sPriv->pDevPriv;
@@ -129,7 +129,7 @@ gammaScreenPtr gammaCreateScreen( __DRIscreenPrivate *sPriv )
 
 /* Destroy the device specific screen private data struct.
  */
-void gammaDestroyScreen( __DRIscreenPrivate *sPriv )
+void gammaDestroyScreen( __DRIscreen *sPriv )
 {
     gammaScreenPtr gammaScreen = (gammaScreenPtr)sPriv->private;
 

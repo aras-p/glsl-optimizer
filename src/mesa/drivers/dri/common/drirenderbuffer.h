@@ -43,10 +43,10 @@ typedef struct {
    GLint flippedPitch;
    GLvoid *flippedData;  /* mmap'd address of buffer memory, if used */
 
-   /* Pointer to corresponding __DRIdrawablePrivate.  This is used to compute
+   /* Pointer to corresponding __DRIdrawable.  This is used to compute
     * the window's position within the framebuffer.
     */
-   __DRIdrawablePrivate *dPriv;
+   __DRIdrawable *dPriv;
 
    /* XXX this is for radeon/r200 only.  We should really create a new
     * r200Renderbuffer class, derived from this class...  not a huge deal.
@@ -66,14 +66,14 @@ typedef struct {
 extern driRenderbuffer *
 driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
-                   __DRIdrawablePrivate *dPriv);
+                   __DRIdrawable *dPriv);
 
 extern void
 driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);
 
 
 extern void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv);
 
 
 #endif /* DRIRENDERBUFFER_H */

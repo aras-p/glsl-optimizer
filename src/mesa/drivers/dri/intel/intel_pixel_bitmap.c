@@ -236,8 +236,6 @@ do_blit_bitmap( GLcontext *ctx,
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
 
-   LOCK_HARDWARE(intel);
-
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects != 0) {
       GLuint i;
@@ -325,7 +323,6 @@ do_blit_bitmap( GLcontext *ctx,
       }
    }
 out:
-   UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_SYNC)
       intel_batchbuffer_flush(intel->batch);

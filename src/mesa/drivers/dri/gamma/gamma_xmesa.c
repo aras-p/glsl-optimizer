@@ -36,7 +36,7 @@
 #include "vbo/vbo.h"
 
 static GLboolean 
-gammaInitDriver(__DRIscreenPrivate *sPriv)
+gammaInitDriver(__DRIscreen *sPriv)
 {
     sPriv->private = (void *) gammaCreateScreen( sPriv );
 
@@ -49,7 +49,7 @@ gammaInitDriver(__DRIscreenPrivate *sPriv)
 }
 
 static void 
-gammaDestroyContext(__DRIcontextPrivate *driContextPriv)
+gammaDestroyContext(__DRIcontext *driContextPriv)
 {
     gammaContextPtr gmesa = (gammaContextPtr)driContextPriv->driverPrivate;
 
@@ -72,8 +72,8 @@ gammaDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 
 static GLboolean
-gammaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                   __DRIdrawablePrivate *driDrawPriv,
+gammaCreateBuffer( __DRIscreen *driScrnPriv,
+                   __DRIdrawable *driDrawPriv,
                    const __GLcontextModes *mesaVis,
                    GLboolean isPixmap )
 {
@@ -94,17 +94,17 @@ gammaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-gammaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+gammaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void
-gammaSwapBuffers( __DRIdrawablePrivate *dPriv )
+gammaSwapBuffers( __DRIdrawable *dPriv )
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
     gammaContextPtr gmesa;
-    __DRIscreenPrivate *driScrnPriv;
+    __DRIscreen *driScrnPriv;
     GLcontext *ctx;
 
     gmesa = (gammaContextPtr) dPriv->driContextPriv->driverPrivate;
@@ -127,7 +127,7 @@ gammaSwapBuffers( __DRIdrawablePrivate *dPriv )
 	int i;
 	int nRect = dPriv->numClipRects;
 	drm_clip_rect_t *pRect = dPriv->pClipRects;
-	__DRIscreenPrivate *driScrnPriv = gmesa->driScreen;
+	__DRIscreen *driScrnPriv = gmesa->driScreen;
    	GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)driScrnPriv->pDevPriv;
 
 	CHECK_DMA_BUFFER(gmesa, 2);
@@ -193,9 +193,9 @@ gammaSwapBuffers( __DRIdrawablePrivate *dPriv )
 }
 
 static GLboolean 
-gammaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-		 __DRIdrawablePrivate *driDrawPriv,
-		 __DRIdrawablePrivate *driReadPriv)
+gammaMakeCurrent(__DRIcontext *driContextPriv,
+		 __DRIdrawable *driDrawPriv,
+		 __DRIdrawable *driReadPriv)
 {
     if (driContextPriv) {
 	GET_CURRENT_CONTEXT(ctx);
@@ -232,7 +232,7 @@ newGammaCtx->new_state |= GAMMA_NEW_WINDOW; /* FIXME */
 
 
 static GLboolean 
-gammaUnbindContext( __DRIcontextPrivate *driContextPriv )
+gammaUnbindContext( __DRIcontext *driContextPriv )
 {
    return GL_TRUE;
 }
@@ -254,12 +254,19 @@ const struct __DriverAPIRec driDriverAPI = {
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
+ * Return:  pointer to a __DRIscreen.
  */
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
-   __DRIscreenPrivate *psp;
+   __DRIscreen *psp;
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &gammaAPI);
    return (void *) psp;
 }
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
+};

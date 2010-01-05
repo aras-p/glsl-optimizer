@@ -77,7 +77,7 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 }
 
 GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
+			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate)
 {
    struct dd_function_table functions;

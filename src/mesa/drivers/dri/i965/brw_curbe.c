@@ -340,7 +340,7 @@ static void emit_constant_buffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
-   BEGIN_BATCH(2, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(2);
    if (sz == 0) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);

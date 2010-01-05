@@ -110,7 +110,6 @@ do_copy_texsubimage(struct intel_context *intel,
    }
 
    /* intelFlush(ctx); */
-   LOCK_HARDWARE(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
@@ -132,13 +131,12 @@ do_copy_texsubimage(struct intel_context *intel,
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
-	 const __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+	 const __DRIdrawable *dPriv = intel->driReadDrawable;
 	 y = dPriv->y + (dPriv->h - (y + height));
 	 x += dPriv->x;
 
@@ -170,12 +168,9 @@ do_copy_texsubimage(struct intel_context *intel,
 			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }

@@ -463,10 +463,10 @@ static void r300InitIoctlFuncs(struct dd_function_table *functions)
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	r300ContextPtr r300;

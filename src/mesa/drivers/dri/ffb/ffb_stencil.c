@@ -48,7 +48,7 @@ static void FFBWriteStencilSpan( GLcontext *ctx,
 #endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+		__DRIdrawable *dPriv = fmesa->driDrawable;
 		GLuint *zptr;
 		GLuint i;
 
@@ -93,7 +93,7 @@ static void FFBWriteStencilPixels( GLcontext *ctx,
 #endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+		__DRIdrawable *dPriv = fmesa->driDrawable;
 		char *zbase;
 		GLuint i;
 
@@ -136,7 +136,7 @@ static void FFBReadStencilSpan( GLcontext *ctx,
 {
         GLubyte *stencil = (GLubyte *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
 	GLuint *zptr;
 	GLuint i;
 
@@ -176,7 +176,7 @@ static void FFBReadStencilPixels( GLcontext *ctx,
 {
         GLubyte *stencil = (GLubyte *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
 	char *zbase;
 	GLuint i;
 

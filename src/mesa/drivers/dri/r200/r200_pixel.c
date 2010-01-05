@@ -214,7 +214,7 @@ r200TryReadPixels( GLcontext *ctx,
    }
 
    {
-      __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+      __DRIdrawable *dPriv = rmesa->radeon.dri.drawable;
       driRenderbuffer *drb = (driRenderbuffer *) ctx->ReadBuffer->_ColorReadBuffer;
       int nbox = dPriv->numClipRects;
       int src_offset = drb->offset
@@ -298,7 +298,7 @@ static void do_draw_pix( GLcontext *ctx,
 
 #if 0
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    drm_clip_rect_t *box = dPriv->pClipRects;
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorDrawBuffers[0];
    driRenderbuffer *drb = (driRenderbuffer *) rb;

@@ -58,10 +58,10 @@ typedef union {
 #define MAX_TEXTURE_STACK       2
 
 extern void	  gammaDDUpdateHWState(GLcontext *ctx);
-extern gammaScreenPtr	  gammaCreateScreen(__DRIscreenPrivate *sPriv);
-extern void	  gammaDestroyScreen(__DRIscreenPrivate *sPriv);
+extern gammaScreenPtr	  gammaCreateScreen(__DRIscreen *sPriv);
+extern void	  gammaDestroyScreen(__DRIscreen *sPriv);
 extern GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
-                                     __DRIcontextPrivate *driContextPriv,
+                                     __DRIcontext *driContextPriv,
                                      void *sharedContextPrivate);
 
 #define GAMMA_UPLOAD_ALL	0xffffffff
@@ -230,9 +230,9 @@ typedef void (*gamma_point_func)( gammaContextPtr,
 struct gamma_context {
 	GLcontext 		*glCtx;		/* Mesa context */
 
-	__DRIcontextPrivate	*driContext;
-	__DRIscreenPrivate	*driScreen;
-	__DRIdrawablePrivate	*driDrawable;
+	__DRIcontext	*driContext;
+	__DRIscreen	*driScreen;
+	__DRIdrawable	*driDrawable;
 
 	GLuint 			new_gl_state;
 	GLuint 			new_state;

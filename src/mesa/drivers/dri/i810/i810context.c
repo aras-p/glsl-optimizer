@@ -170,12 +170,12 @@ static const struct dri_debug_control debug_control[] =
 
 GLboolean
 i810CreateContext( const __GLcontextModes *mesaVis,
-                   __DRIcontextPrivate *driContextPriv,
+                   __DRIcontext *driContextPriv,
                    void *sharedContextPrivate )
 {
    GLcontext *ctx, *shareCtx;
    i810ContextPtr imesa;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
    I810SAREAPtr saPriv = (I810SAREAPtr)
       (((GLubyte *)sPriv->pSAREA) + i810Screen->sarea_priv_offset);
@@ -337,7 +337,7 @@ i810CreateContext( const __GLcontextModes *mesaVis,
 }
 
 void
-i810DestroyContext(__DRIcontextPrivate *driContextPriv)
+i810DestroyContext(__DRIcontext *driContextPriv)
 {
    i810ContextPtr imesa = (i810ContextPtr) driContextPriv->driverPrivate;
 
@@ -378,7 +378,7 @@ i810DestroyContext(__DRIcontextPrivate *driContextPriv)
 
 void i810XMesaSetFrontClipRects( i810ContextPtr imesa )
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   __DRIdrawable *dPriv = imesa->driDrawable;
 
    imesa->numClipRects = dPriv->numClipRects;
    imesa->pClipRects = dPriv->pClipRects;
@@ -392,7 +392,7 @@ void i810XMesaSetFrontClipRects( i810ContextPtr imesa )
 
 void i810XMesaSetBackClipRects( i810ContextPtr imesa )
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   __DRIdrawable *dPriv = imesa->driDrawable;
 
    if (imesa->sarea->pf_enabled == 0 && dPriv->numBackClipRects == 0)
    {
@@ -430,7 +430,7 @@ static void i810XMesaWindowMoved( i810ContextPtr imesa )
 
 
 GLboolean
-i810UnbindContext(__DRIcontextPrivate *driContextPriv)
+i810UnbindContext(__DRIcontext *driContextPriv)
 {
    i810ContextPtr imesa = (i810ContextPtr) driContextPriv->driverPrivate;
    if (imesa) {
@@ -444,9 +444,9 @@ i810UnbindContext(__DRIcontextPrivate *driContextPriv)
 
 
 GLboolean
-i810MakeCurrent(__DRIcontextPrivate *driContextPriv,
-                __DRIdrawablePrivate *driDrawPriv,
-                __DRIdrawablePrivate *driReadPriv)
+i810MakeCurrent(__DRIcontext *driContextPriv,
+                __DRIdrawable *driDrawPriv,
+                __DRIdrawable *driReadPriv)
 {
    if (driContextPriv) {
       i810ContextPtr imesa = (i810ContextPtr) driContextPriv->driverPrivate;
@@ -504,8 +504,8 @@ i810UpdatePageFlipping( i810ContextPtr imesa )
 
 void i810GetLock( i810ContextPtr imesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-   __DRIscreenPrivate *sPriv = imesa->driScreen;
+   __DRIdrawable *dPriv = imesa->driDrawable;
+   __DRIscreen *sPriv = imesa->driScreen;
    I810SAREAPtr sarea = imesa->sarea;
    int me = imesa->hHWContext;
    unsigned i;
@@ -551,7 +551,7 @@ void i810GetLock( i810ContextPtr imesa, GLuint flags )
 
 
 void
-i810SwapBuffers( __DRIdrawablePrivate *dPriv )
+i810SwapBuffers( __DRIdrawable *dPriv )
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       i810ContextPtr imesa;

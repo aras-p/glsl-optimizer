@@ -137,7 +137,7 @@ void radeon_get_cliprects(radeonContextPtr radeon,
 			  unsigned int *num_cliprects,
 			  int *x_off, int *y_off)
 {
-	__DRIdrawablePrivate *dPriv = radeon_get_drawable(radeon);
+	__DRIdrawable *dPriv = radeon_get_drawable(radeon);
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 
 	if (radeon->constant_cliprect) {
@@ -169,8 +169,8 @@ void radeon_get_cliprects(radeonContextPtr radeon,
  */
 void radeonSetCliprects(radeonContextPtr radeon)
 {
-	__DRIdrawablePrivate *const drawable = radeon_get_drawable(radeon);
-	__DRIdrawablePrivate *const readable = radeon_get_readable(radeon);
+	__DRIdrawable *const drawable = radeon_get_drawable(radeon);
+	__DRIdrawable *const readable = radeon_get_readable(radeon);
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 	int x_off, y_off;
@@ -229,7 +229,7 @@ void radeonUpdateScissor( GLcontext *ctx )
 	}
 	if (!rmesa->radeonScreen->kernel_mm) {
 	   /* Fix scissors for dri 1 */
-	   __DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
+	   __DRIdrawable *dPriv = radeon_get_drawable(rmesa);
 	   x1 += dPriv->x;
 	   x2 += dPriv->x + 1;
 	   min_x += dPriv->x;
@@ -428,7 +428,7 @@ static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)
 
 /* Copy the back color buffer to the front color buffer.
  */
-void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
+void radeonCopyBuffer( __DRIdrawable *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
 	radeonContextPtr rmesa;
@@ -496,7 +496,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	UNLOCK_HARDWARE( rmesa );
 }
 
-static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_target)
+static int radeonScheduleSwap(__DRIdrawable *dPriv, GLboolean *missed_target)
 {
 	radeonContextPtr rmesa;
 
@@ -519,11 +519,11 @@ static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_tar
 	return 0;
 }
 
-static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
+static GLboolean radeonPageFlip( __DRIdrawable *dPriv )
 {
 	radeonContextPtr radeon;
 	GLint ret;
-	__DRIscreenPrivate *psp;
+	__DRIscreen *psp;
 	struct radeon_renderbuffer *rrb;
 	struct radeon_framebuffer *rfb;
 
@@ -571,10 +571,10 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 /**
  * Swap front and back buffer.
  */
-void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
+void radeonSwapBuffers(__DRIdrawable * dPriv)
 {
 	int64_t ust;
-	__DRIscreenPrivate *psp;
+	__DRIscreen *psp;
 
 	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
 		radeonContextPtr radeon;
@@ -615,7 +615,7 @@ void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
 	}
 }
 
-void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+void radeonCopySubBuffer(__DRIdrawable * dPriv,
 			 int x, int y, int w, int h )
 {
 	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
@@ -1130,7 +1130,7 @@ flush_front:
 
 		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)
 			&& (screen->dri2.loader->flushFrontBuffer != NULL)) {
-			__DRIdrawablePrivate * drawable = radeon_get_drawable(radeon);
+			__DRIdrawable * drawable = radeon_get_drawable(radeon);
 			(*screen->dri2.loader->flushFrontBuffer)(drawable, drawable->loaderPrivate);
 
 			/* Only clear the dirty bit if front-buffer rendering is no longer

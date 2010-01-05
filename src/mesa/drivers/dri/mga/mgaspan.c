@@ -36,9 +36,9 @@
 
 #define LOCAL_VARS					\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
+   __DRIscreen *sPriv = mmesa->driScreen;	\
    driRenderbuffer *drb = (driRenderbuffer *) rb;	\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;	\
+   const __DRIdrawable *dPriv = drb->dPriv;	\
    GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
    char *buf = (char *)(sPriv->pFB +			\
@@ -52,9 +52,9 @@
 
 #define LOCAL_DEPTH_VARS						\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
+   __DRIscreen *sPriv = mmesa->driScreen;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;			\
+   const __DRIdrawable *dPriv = drb->dPriv;			\
    GLuint pitch = drb->pitch;						\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\

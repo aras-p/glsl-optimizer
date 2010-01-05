@@ -78,10 +78,7 @@ static void upload_drawing_rect(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
 
-   if (!intel->constant_cliprect)
-      return;
-
-   BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
    OUT_BATCH(0); /* xmin, ymin */
    OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
@@ -116,7 +113,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(6, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(6);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    if (brw->vs.bind_bo != NULL)
       OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
@@ -150,7 +147,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(7, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(7);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    if (brw->gs.prog_active)
@@ -215,7 +212,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    unsigned int len = (intel->is_g4x || intel->is_ironlake) ? 6 : 5;
 
    if (region == NULL) {
-      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
 		(BRW_SURFACE_NULL << 29));
@@ -247,7 +244,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       assert(region->tiling != I915_TILING_X);
 
-      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
@@ -330,7 +327,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   __DRIdrawablePrivate *dPriv = brw->intel.driDrawable;
+   __DRIdrawable *dPriv = brw->intel.driDrawable;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));
@@ -513,7 +510,7 @@ static void upload_state_base_address( struct brw_context *brw )
     * batchbuffer, so we can emit relocations inline.
     */
    if (intel->is_ironlake) {
-       BEGIN_BATCH(8, IGNORE_CLIPRECTS);
+       BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
        OUT_BATCH(1); /* Surface state base address */
@@ -524,7 +521,7 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_BATCH(1); /* Instruction access upper bound */
        ADVANCE_BATCH();
    } else {
-       BEGIN_BATCH(6, IGNORE_CLIPRECTS);
+       BEGIN_BATCH(6);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
        OUT_BATCH(1); /* General state base address */
        OUT_BATCH(1); /* Surface state base address */

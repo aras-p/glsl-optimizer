@@ -543,9 +543,9 @@ struct r300_context {
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
-extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
+extern void r300DestroyContext(__DRIcontext * driContextPriv);
 extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
-				   __DRIcontextPrivate * driContextPriv,
+				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 
 extern void r300InitShaderFuncs(struct dd_function_table *functions);

@@ -1400,7 +1400,7 @@ static void radeonClearStencil( GLcontext *ctx, GLint s )
 void radeonUpdateWindow( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1455,7 +1455,7 @@ static void radeonDepthRange( GLcontext *ctx, GLclampd nearval,
 void radeonUpdateViewportOffset( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;

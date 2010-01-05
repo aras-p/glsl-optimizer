@@ -235,7 +235,6 @@ try_pbo_upload(struct intel_context *intel,
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
@@ -245,11 +244,9 @@ try_pbo_upload(struct intel_context *intel,
 			     dst_stride, dst_buffer, 0, GL_FALSE,
 			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }
@@ -469,8 +466,6 @@ intelTexImage(GLcontext * ctx,
 					   pixels, unpack, "glTexImage");
    }
 
-   LOCK_HARDWARE(intel);
-
    if (intelImage->mt) {
       if (pixels != NULL) {
 	 /* Flush any queued rendering with the texture before mapping. */
@@ -551,8 +546,6 @@ intelTexImage(GLcontext * ctx,
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 
@@ -732,7 +725,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   GLint glx_texture_format,
 		   __DRIdrawable *dPriv)
 {
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct gl_framebuffer *fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
    GLcontext *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
@@ -751,7 +744,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intel_update_renderbuffers(pDRICtx, dPriv);
 
-   rb = intel_fb->color_rb[0];
+   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    /* If the region isn't set, then intel_update_renderbuffers was unable
     * to get the buffers for the drawable.
     */

@@ -517,7 +517,6 @@ intelSpanRenderStart(GLcontext * ctx)
    GLuint i;
 
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
@@ -553,8 +552,6 @@ intelSpanRenderFinish(GLcontext * ctx)
    intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_FALSE);
    if (ctx->ReadBuffer != ctx->DrawBuffer)
       intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
-
-   UNLOCK_HARDWARE(intel);
 }
 
 

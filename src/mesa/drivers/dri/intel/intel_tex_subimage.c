@@ -72,8 +72,6 @@ intelTexSubimage(GLcontext * ctx,
    if (!pixels)
       return;
 
-   LOCK_HARDWARE(intel);
-
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */
@@ -129,8 +127,6 @@ intelTexSubimage(GLcontext * ctx,
       intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 

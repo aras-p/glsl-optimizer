@@ -89,7 +89,6 @@ intel_flush_inline_primitive(struct intel_context *intel)
 
 static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 {
-   uint32_t batch_flags = LOOP_CLIPRECTS;
    BATCH_LOCALS;
 
    intel->vtbl.emit_state(intel);
@@ -101,7 +100,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
    /* Emit a slot which will be filled with the inline primitive
     * command later.
     */
-   BEGIN_BATCH(2, batch_flags);
+   BEGIN_BATCH(2);
    OUT_BATCH(0);
 
    assert((intel->batch->dirty_state & (1<<1)) == 0);
@@ -252,7 +251,7 @@ void intel_flush_prim(struct intel_context *intel)
 #endif
 
    if (intel->gen >= 3) {
-      BEGIN_BATCH(5, LOOP_CLIPRECTS);
+      BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
       assert((offset & !S0_VB_OFFSET_MASK) == 0);
@@ -270,7 +269,7 @@ void intel_flush_prim(struct intel_context *intel)
    } else {
       struct i830_context *i830 = i830_context(&intel->ctx);
 
-      BEGIN_BATCH(5, LOOP_CLIPRECTS);
+      BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */

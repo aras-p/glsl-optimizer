@@ -34,7 +34,6 @@ DRIVER_SOURCES = \
 	intel_pixel_read.c \
 	intel_buffers.c \
 	intel_blit.c \
-	intel_swapbuffers.c \
 	i915_tex_layout.c \
 	i915_texstate.c \
 	i915_context.c \
@@ -64,7 +63,8 @@ DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
 	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
-DRI_LIB_DEPS += -ldrm_intel
+INCLUDES += $(INTEL_CFLAGS)
+DRI_LIB_DEPS += $(INTEL_LIBS)
 
 include ../Makefile.template
 

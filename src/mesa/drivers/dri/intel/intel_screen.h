@@ -66,7 +66,7 @@ typedef struct
 
    int logTextureGranularity;
 
-   __DRIscreenPrivate *driScrnPriv;
+   __DRIscreen *driScrnPriv;
 
    volatile drm_i915_sarea_t *sarea;
 
@@ -88,18 +88,18 @@ typedef struct
 
 
 
-extern GLboolean intelMapScreenRegions(__DRIscreenPrivate * sPriv);
+extern GLboolean intelMapScreenRegions(__DRIscreen * sPriv);
 
 extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
-extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
+extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
-extern GLboolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
+extern GLboolean intelUnbindContext(__DRIcontext * driContextPriv);
 
 extern GLboolean
-intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
-                 __DRIdrawablePrivate * driDrawPriv,
-                 __DRIdrawablePrivate * driReadPriv);
+intelMakeCurrent(__DRIcontext * driContextPriv,
+                 __DRIdrawable * driDrawPriv,
+                 __DRIdrawable * driReadPriv);
 
 extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 

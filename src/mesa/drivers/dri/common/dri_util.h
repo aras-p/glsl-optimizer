@@ -59,16 +59,12 @@
 
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
 
-/* Typedefs to avoid rewriting the world. */
-typedef struct __DRIscreenRec	__DRIscreenPrivate;
-typedef struct __DRIdrawableRec	__DRIdrawablePrivate;
-typedef struct __DRIcontextRec	__DRIcontextPrivate;
-
 /**
  * Extensions.
  */
 extern const __DRIlegacyExtension driLegacyExtension;
 extern const __DRIcoreExtension driCoreExtension;
+extern const __DRIdri2Extension driDRI2Extension;
 extern const __DRIextension driReadDrawableExtension;
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;

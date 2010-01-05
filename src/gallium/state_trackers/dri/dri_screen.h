@@ -42,7 +42,7 @@
 struct dri_screen
 {
    /* dri */
-   __DRIscreenPrivate *sPriv;
+   __DRIscreen *sPriv;
 
    /**
     * Configuration cache with default values for all contexts
@@ -63,7 +63,7 @@ struct dri_screen
 
 /** cast wrapper */
 static INLINE struct dri_screen *
-dri_screen(__DRIscreenPrivate * sPriv)
+dri_screen(__DRIscreen * sPriv)
 {
    return (struct dri_screen *)sPriv->private;
 }

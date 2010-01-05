@@ -43,7 +43,7 @@
 #undef LOCAL_VARS
 #define LOCAL_VARS                                                   	\
     struct via_renderbuffer *vrb = (struct via_renderbuffer *) rb;   	\
-    __DRIdrawablePrivate *dPriv = vrb->dPriv;                           \
+    __DRIdrawable *dPriv = vrb->dPriv;                           \
     GLuint pitch = vrb->pitch;                                          \
     GLuint height = dPriv->h;                                        	\
     GLint p = 0;							\
@@ -80,7 +80,7 @@
  */
 #define LOCAL_DEPTH_VARS                                            \
     struct via_renderbuffer *vrb = (struct via_renderbuffer *) rb;  \
-    __DRIdrawablePrivate *dPriv = vrb->dPriv;                       \
+    __DRIdrawable *dPriv = vrb->dPriv;                       \
     GLuint depth_pitch = vrb->pitch;                                \
     GLuint height = dPriv->h;                                       \
     char *buf = (char *)(vrb->map)

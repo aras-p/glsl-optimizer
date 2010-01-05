@@ -19,8 +19,8 @@ int prevLockLine = 0;
  */
 void gammaGetLock( gammaContextPtr gmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = gmesa->driDrawable;
-   __DRIscreenPrivate *sPriv = gmesa->driScreen;
+   __DRIdrawable *dPriv = gmesa->driDrawable;
+   __DRIscreen *sPriv = gmesa->driScreen;
 
    drmGetLock( gmesa->driFd, gmesa->hHWContext, flags );
 

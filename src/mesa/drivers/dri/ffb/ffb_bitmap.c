@@ -46,7 +46,7 @@ ffb_bitmap(GLcontext *ctx, GLint px, GLint py,
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	ffb_fbcPtr ffb = fmesa->regs;
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
 	unsigned int ppc, pixel;
 	GLint row, col, row_stride;
 	const GLubyte *src;

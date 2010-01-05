@@ -157,7 +157,7 @@ static void brw_emit_prim(struct brw_context *brw,
    }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
-			      sizeof(prim_packet), LOOP_CLIPRECTS);
+			      sizeof(prim_packet));
    }
    if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(intel->batch);
@@ -339,13 +339,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * so can't access it earlier.
     */
 
-   LOCK_HARDWARE(intel);
-
-   if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
-      UNLOCK_HARDWARE(intel);
-      return GL_TRUE;
-   }
-
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
 
@@ -356,8 +349,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				      LOOP_CLIPRECTS);
+      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4);
 
       hw_prim = brw_set_prim(brw, prim[i].mode);
 
@@ -404,7 +396,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    if (intel->always_flush_batch)
       intel_batchbuffer_flush(intel->batch);
  out:
-   UNLOCK_HARDWARE(intel);
 
    brw_state_cache_check_size(brw);
 

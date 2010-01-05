@@ -184,10 +184,6 @@ struct intel_context
 
    int urb_size;
 
-   struct intel_region *front_region;
-   struct intel_region *back_region;
-   struct intel_region *depth_region;
-
    struct intel_batchbuffer *batch;
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
@@ -252,19 +248,6 @@ struct intel_context
    intel_tri_func draw_tri;
 
    /**
-    * Set to true if a single constant cliprect should be used in the
-    * batchbuffer.  Otherwise, cliprects must be calculated at batchbuffer
-    * flush time while the lock is held.
-    */
-   GLboolean constant_cliprect;
-
-   /**
-    * In !constant_cliprect mode, set to true if the front cliprects should be
-    * used instead of back.
-    */
-   GLboolean front_cliprects;
-
-   /**
     * Set if rendering has occured to the drawable's front buffer.
     *
     * This is used in the DRI2 case to detect that glFlush should also copy
@@ -295,35 +278,19 @@ struct intel_context
    drm_clip_rect_t draw_rect;
    drm_clip_rect_t scissor_rect;
 
-   drm_context_t hHWContext;
-   drmLock *driHwLock;
    int driFd;
 
-   __DRIcontextPrivate *driContext;
-   __DRIdrawablePrivate *driDrawable;
-   __DRIdrawablePrivate *driReadDrawable;
-   __DRIscreenPrivate *driScreen;
+   __DRIcontext *driContext;
+   __DRIdrawable *driDrawable;
+   __DRIdrawable *driReadDrawable;
+   __DRIscreen *driScreen;
    intelScreenPrivate *intelScreen;
-   volatile drm_i915_sarea_t *sarea;
-
-   GLuint lastStamp;
 
    /**
     * Configuration cache
     */
    driOptionCache optionCache;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
 };
-
-/* These are functions now:
- */
-void LOCK_HARDWARE( struct intel_context *intel );
-void UNLOCK_HARDWARE( struct intel_context *intel );
 
 extern char *__progname;
 
@@ -439,11 +406,9 @@ extern int INTEL_DEBUG;
 
 extern GLboolean intelInitContext(struct intel_context *intel,
                                   const __GLcontextModes * mesaVis,
-                                  __DRIcontextPrivate * driContextPriv,
+                                  __DRIcontext * driContextPriv,
                                   void *sharedContextPrivate,
                                   struct dd_function_table *functions);
-
-extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);

@@ -556,7 +556,7 @@ static void uploadTextureImages( tdfxContextPtr fxMesa )
  */
 void tdfxUploadClipping( tdfxContextPtr fxMesa )
 {
-   __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;
+   __DRIdrawable *dPriv = fxMesa->driDrawable;
 
    assert(dPriv);
 

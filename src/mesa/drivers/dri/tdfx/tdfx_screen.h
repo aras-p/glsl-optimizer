@@ -61,7 +61,7 @@ typedef struct {
    int textureOffset;
    int textureSize;
 
-   __DRIscreenPrivate *driScrnPriv;
+   __DRIscreen *driScrnPriv;
    unsigned int sarea_priv_offset;
 
    /* Configuration cache with default values for all contexts */
