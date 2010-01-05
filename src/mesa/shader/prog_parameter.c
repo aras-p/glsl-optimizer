@@ -230,9 +230,8 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
  * Add a new unnamed constant to the parameter list.  This will be used
  * when a fragment/vertex program contains something like this:
  *    MOV r, { 0, 1, 2, 3 };
- * We'll search the parameter list for an existing instance of the
- * constant.  If swizzleOut is non-null, we'll try swizzling when
- * looking for a match.
+ * If swizzleOut is non-null we'll search the parameter list for an
+ * existing instance of the constant which matches with a swizzle.
  *
  * \param paramList  the parameter list
  * \param values  four float values
@@ -248,7 +247,8 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
    ASSERT(size >= 1);
    ASSERT(size <= 4);
 
-   if (_mesa_lookup_parameter_constant(paramList, values,
+   if (swizzleOut &&
+       _mesa_lookup_parameter_constant(paramList, values,
                                        size, &pos, swizzleOut)) {
       return pos;
    }
