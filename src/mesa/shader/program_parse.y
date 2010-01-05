@@ -2516,9 +2516,12 @@ initialize_symbol_from_param(struct gl_program *prog,
    assert((state_tokens[1] == STATE_ENV)
 	  || (state_tokens[1] == STATE_LOCAL));
 
+   /*
+    * The param type is STATE_VAR.  The program parameter entry will
+    * effectively be a pointer into the LOCAL or ENV parameter array.
+    */
    param_var->type = at_param;
-   param_var->param_binding_type = (state_tokens[1] == STATE_ENV)
-     ? PROGRAM_ENV_PARAM : PROGRAM_LOCAL_PARAM;
+   param_var->param_binding_type = PROGRAM_STATE_VAR;
 
    /* If we are adding a STATE_ENV or STATE_LOCAL that has multiple elements,
     * we need to unroll it and call add_state_reference() for each row
