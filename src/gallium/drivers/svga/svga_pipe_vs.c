@@ -176,6 +176,13 @@ static void svga_delete_vs_state(struct pipe_context *pipe, void *shader)
       util_bitmask_clear( svga->vs_bm, result->id );
 
       svga_destroy_shader_result( result );
+
+      /*
+       * Remove stale references to this result to ensure a new result on the
+       * same address will be detected as a change.
+       */
+      if(result == svga->state.hw_draw.vs)
+         svga->state.hw_draw.vs = NULL;
    }
 
    FREE((void *)vs->base.tokens);

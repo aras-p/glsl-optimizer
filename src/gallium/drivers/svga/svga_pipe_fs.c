@@ -111,6 +111,13 @@ void svga_delete_fs_state(struct pipe_context *pipe, void *shader)
       util_bitmask_clear( svga->fs_bm, result->id );
 
       svga_destroy_shader_result( result );
+
+      /*
+       * Remove stale references to this result to ensure a new result on the
+       * same address will be detected as a change.
+       */
+      if(result == svga->state.hw_draw.fs)
+         svga->state.hw_draw.fs = NULL;
    }
 
    FREE((void *)fs->base.tokens);
