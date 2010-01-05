@@ -44,13 +44,15 @@
 
 /**
  * Make simple vertex pass-through shader.
+ * \param num_attribs  number of attributes to pass through
+ * \param semantic_names  array of semantic names for each attribute
+ * \param semantic_indexes  array of semantic indexes for each attribute
  */
 void *
 util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     uint num_attribs,
                                     const uint *semantic_names,
                                     const uint *semantic_indexes)
-                                    
 {
    struct ureg_program *ureg;
    uint i;
@@ -76,8 +78,6 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
-
-
 
 
 /**
@@ -125,6 +125,12 @@ util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
+
+/**
+ * Make a simple fragment shader that sets the output color to a color
+ * taken from a texture.
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
 void *
 util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target )
 {
@@ -132,6 +138,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target )
                                                    tex_target,
                                                    TGSI_WRITEMASK_XYZW );
 }
+
 
 /**
  * Make a simple fragment texture shader which reads an X component from
@@ -177,6 +184,7 @@ util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
+
 /**
  * Make simple fragment color pass-through shader.
  */
@@ -186,6 +194,10 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
    return util_make_fragment_clonecolor_shader(pipe, 1);
 }
 
+
+/**
+ * Make a fragment shader that copies the input color to N output colors.
+ */
 void *
 util_make_fragment_clonecolor_shader(struct pipe_context *pipe, int num_cbufs)
 {
