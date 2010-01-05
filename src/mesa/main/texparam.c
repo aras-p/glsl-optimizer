@@ -78,17 +78,19 @@ validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
 
 /**
  * Get current texture object for given target.
- * Return NULL if any error.
+ * Return NULL if any error (and record the error).
  * Note that this is different from _mesa_select_tex_object() in that proxy
  * targets are not accepted.
+ * Only the glGetTexLevelParameter() functions accept proxy targets.
  */
 static struct gl_texture_object *
-get_texobj(GLcontext *ctx, GLenum target)
+get_texobj(GLcontext *ctx, GLenum target, GLboolean get)
 {
    struct gl_texture_unit *texUnit;
 
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(current unit)");
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "gl%sTexParameter(current unit)", get ? "Get" : "");
       return NULL;
    }
 
@@ -125,7 +127,8 @@ get_texobj(GLcontext *ctx, GLenum target)
       ;
    }
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(target)");
+   _mesa_error(ctx, GL_INVALID_ENUM,
+                  "gl%sTexParameter(target)", get ? "Get" : "");
    return NULL;
 }
 
@@ -529,7 +532,7 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   texObj = get_texobj(ctx, target);
+   texObj = get_texobj(ctx, target, GL_FALSE);
    if (!texObj)
       return;
 
@@ -577,7 +580,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   texObj = get_texobj(ctx, target);
+   texObj = get_texobj(ctx, target, GL_FALSE);
    if (!texObj)
       return;
 
@@ -635,7 +638,7 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   texObj = get_texobj(ctx, target);
+   texObj = get_texobj(ctx, target, GL_FALSE);
    if (!texObj)
       return;
 
@@ -679,7 +682,7 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   texObj = get_texobj(ctx, target);
+   texObj = get_texobj(ctx, target, GL_FALSE);
    if (!texObj)
       return;
 
@@ -978,25 +981,14 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 void GLAPIENTRY
 _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *obj;
    GLboolean error = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetTexParameterfv(current unit)");
+   obj = get_texobj(ctx, target, GL_TRUE);
+   if (!obj)
       return;
-   }
-
-   texUnit = _mesa_get_current_tex_unit(ctx);
-
-   obj = _mesa_select_tex_object(ctx, texUnit, target);
-   if (!obj) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(target)");
-      return;
-   }
 
    _mesa_lock_texture(ctx, obj);
    switch (pname) {
@@ -1145,25 +1137,14 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *obj;
    GLboolean error = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetTexParameteriv(current unit)");
-      return;
-   }
-
-   texUnit = _mesa_get_current_tex_unit(ctx);
-
-   obj = _mesa_select_tex_object(ctx, texUnit, target);
-   if (!obj) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(target)");
-      return;
-   }
+    obj = get_texobj(ctx, target, GL_TRUE);
+    if (!obj)
+       return;
 
    _mesa_lock_texture(ctx, obj);
    switch (pname) {
