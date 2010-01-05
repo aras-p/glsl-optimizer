@@ -149,7 +149,7 @@ emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 				sizeof(uint32_t) * 4);
 		}
 
-		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);	
+		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);
 		break;
 	case NV40SR_NONE:
 		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
@@ -445,10 +445,11 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_CMP:
-		tmp = temp(fpc);
-		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
+		tmp = nv40_sr(NV40SR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
+		dst.cc_test = NV40_VP_INST_COND_GE;
+		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
 		dst.cc_test = NV40_VP_INST_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
@@ -573,13 +574,28 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		      neg(swz(tmp, X, X, X, X)), none, none);
 		break;
 	case TGSI_OPCODE_SCS:
-		if (mask & MASK_X) {
-			arith(fpc, sat, COS, dst, MASK_X,
-			      swz(src[0], X, X, X, X), none, none);
+		/* avoid overwriting the source */
+		if(src[0].swz[SWZ_X] != SWZ_X)
+		{
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
-		if (mask & MASK_Y) {
-			arith(fpc, sat, SIN, dst, MASK_Y,
-			      swz(src[0], X, X, X, X), none, none);
+		else
+		{
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
 		break;
 	case TGSI_OPCODE_SEQ:
@@ -752,7 +768,7 @@ nv40_fragprog_prepare(struct nv40_fpc *fpc)
 		{
 			struct tgsi_full_immediate *imm;
 			float vals[4];
-			
+
 			imm = &p.FullToken.FullImmediate;
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
@@ -836,7 +852,7 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	fp->insn[fpc->inst_offset + 1] = 0x00000000;
 	fp->insn[fpc->inst_offset + 2] = 0x00000000;
 	fp->insn[fpc->inst_offset + 3] = 0x00000000;
-	
+
 	fp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
@@ -917,7 +933,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 update_constants:
 	if (fp->nr_consts) {
 		float *map;
-		
+
 		map = pipe_buffer_map(pscreen, constbuf,
 				      PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
@@ -948,6 +964,12 @@ void
 nv40_fragprog_destroy(struct nv40_context *nv40,
 		      struct nv40_fragment_program *fp)
 {
+	if (fp->buffer)
+		pipe_buffer_reference(&fp->buffer, NULL);
+
+	if (fp->so)
+		so_ref(NULL, &fp->so);
+
 	if (fp->insn_len)
 		FREE(fp->insn);
 }

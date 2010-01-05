@@ -31,7 +31,7 @@ nouveau_screen_bo_skel(struct pipe_screen *pscreen, struct nouveau_bo *bo,
 		       unsigned alignment, unsigned usage, unsigned size)
 {
 	struct pipe_buffer *pb;
-	
+
 	pb = CALLOC(1, sizeof(struct pipe_buffer)+sizeof(struct nouveau_bo *));
 	if (!pb) {
 		nouveau_bo_ref(NULL, &bo);
@@ -239,5 +239,6 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 void
 nouveau_screen_fini(struct nouveau_screen *screen)
 {
+	nouveau_channel_free(&screen->channel);
 }
 

@@ -42,6 +42,7 @@
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_hash.h"
+#include "cso_context.h"
 
 struct cso_context {
    struct pipe_context *pipe;
@@ -85,8 +86,8 @@ struct cso_context {
    void *blend, *blend_saved;
    void *depth_stencil, *depth_stencil_saved;
    void *rasterizer, *rasterizer_saved;
-   void *fragment_shader, *fragment_shader_saved;
-   void *vertex_shader, *vertex_shader_saved;
+   void *fragment_shader, *fragment_shader_saved, *geometry_shader;
+   void *vertex_shader, *vertex_shader_saved, *geometry_shader_saved;
 
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
@@ -1026,4 +1027,39 @@ enum pipe_error cso_set_blend_color(struct cso_context *ctx,
       ctx->pipe->set_blend_color(ctx->pipe, bc);
    }
    return PIPE_OK;
+}
+
+enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,
+                                               void *handle)
+{
+   if (ctx->geometry_shader != handle) {
+      ctx->geometry_shader = handle;
+      ctx->pipe->bind_gs_state(ctx->pipe, handle);
+   }
+   return PIPE_OK;
+}
+
+void cso_delete_geometry_shader(struct cso_context *ctx, void *handle)
+{
+    if (handle == ctx->geometry_shader) {
+      /* unbind before deleting */
+      ctx->pipe->bind_gs_state(ctx->pipe, NULL);
+      ctx->geometry_shader = NULL;
+   }
+   ctx->pipe->delete_gs_state(ctx->pipe, handle);
+}
+
+void cso_save_geometry_shader(struct cso_context *ctx)
+{
+   assert(!ctx->geometry_shader_saved);
+   ctx->geometry_shader_saved = ctx->geometry_shader;
+}
+
+void cso_restore_geometry_shader(struct cso_context *ctx)
+{
+   if (ctx->geometry_shader_saved != ctx->geometry_shader) {
+      ctx->pipe->bind_gs_state(ctx->pipe, ctx->geometry_shader_saved);
+      ctx->geometry_shader = ctx->geometry_shader_saved;
+   }
+   ctx->geometry_shader_saved = NULL;
 }

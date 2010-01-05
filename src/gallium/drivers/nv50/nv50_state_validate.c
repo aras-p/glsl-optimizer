@@ -41,7 +41,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.
 	 * Ambiguous assignment results in no rendering (no DATA_ERROR).
 	 */
-	so_method(so, tesla, 0x121c, 1);
+	so_method(so, tesla, NV50TCL_RT_CONTROL, 1);
 	so_data  (so, fb->nr_cbufs |
 		  (0 <<  4) | (1 <<  7) | (2 << 10) | (3 << 13) |
 		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
@@ -87,7 +87,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 				level[fb->cbufs[i]->level].tile_mode << 4);
 		so_data(so, 0x00000000);
 
-		so_method(so, tesla, 0x1224, 1);
+		so_method(so, tesla, NV50TCL_RT_ARRAY_MODE, 1);
 		so_data  (so, 1);
 	}
 
@@ -124,22 +124,22 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 				level[fb->zsbuf->level].tile_mode << 4);
 		so_data(so, 0x00000000);
 
-		so_method(so, tesla, 0x1538, 1);
+		so_method(so, tesla, NV50TCL_ZETA_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, tesla, NV50TCL_ZETA_HORIZ, 3);
 		so_data  (so, fb->zsbuf->width);
 		so_data  (so, fb->zsbuf->height);
 		so_data  (so, 0x00010001);
 	} else {
-		so_method(so, tesla, 0x1538, 1);
+		so_method(so, tesla, NV50TCL_ZETA_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
+	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ(0), 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
 	/* set window lower left corner */
-	so_method(so, tesla, NV50TCL_WINDOW_LEFT, 2);
+	so_method(so, tesla, NV50TCL_WINDOW_OFFSET_X, 2);
 	so_data  (so, 0);
 	so_data  (so, 0);
 	/* set screen scissor rectangle */
@@ -325,7 +325,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		nv50->state.scissor_enabled = rast->scissor;
 
 		so = so_new(3, 0);
-		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
+		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ(0), 2);
 		if (nv50->state.scissor_enabled) {
 			so_data(so, (s->maxx << 16) | s->minx);
 			so_data(so, (s->maxy << 16) | s->miny);
@@ -355,11 +355,11 @@ scissor_uptodate:
 
 		so = so_new(14, 0);
 		if (!bypass) {
-			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE(0), 3);
+			so_method(so, tesla, NV50TCL_VIEWPORT_TRANSLATE_X(0), 3);
 			so_data  (so, fui(nv50->viewport.translate[0]));
 			so_data  (so, fui(nv50->viewport.translate[1]));
 			so_data  (so, fui(nv50->viewport.translate[2]));
-			so_method(so, tesla, NV50TCL_VIEWPORT_SCALE(0), 3);
+			so_method(so, tesla, NV50TCL_VIEWPORT_SCALE_X(0), 3);
 			so_data  (so, fui(nv50->viewport.scale[0]));
 			so_data  (so, fui(nv50->viewport.scale[1]));
 			so_data  (so, fui(nv50->viewport.scale[2]));
@@ -440,7 +440,7 @@ void nv50_so_init_sifc(struct nv50_context *nv50,
 	so_data  (so, 1);
 	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, bo, offset, reloc | NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, eng2d, NV50_2D_SIFC_UNK0800, 2);
+	so_method(so, eng2d, NV50_2D_SIFC_BITMAP_ENABLE, 2);
 	so_data  (so, 0);
 	so_data  (so, NV50_2D_SIFC_FORMAT_R8_UNORM);
 	so_method(so, eng2d, NV50_2D_SIFC_WIDTH, 10);

@@ -702,10 +702,10 @@ static void r128UpdateMasks( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    GLuint mask = r128PackColor( rmesa->r128Screen->cpp,
-				ctx->Color.ColorMask[RCOMP],
-				ctx->Color.ColorMask[GCOMP],
-				ctx->Color.ColorMask[BCOMP],
-				ctx->Color.ColorMask[ACOMP] );
+				ctx->Color.ColorMask[0][RCOMP],
+				ctx->Color.ColorMask[0][GCOMP],
+				ctx->Color.ColorMask[0][BCOMP],
+				ctx->Color.ColorMask[0][ACOMP] );
 
    if ( rmesa->setup.plane_3d_mask_c != mask ) {
       rmesa->setup.plane_3d_mask_c = mask;

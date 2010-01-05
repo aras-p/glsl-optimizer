@@ -184,6 +184,34 @@ _mesa_GetString( GLenum name )
 
 
 /**
+ * GL3
+ */
+const GLubyte * GLAPIENTRY
+_mesa_GetStringi(GLenum name, GLuint index)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!ctx)
+      return NULL;
+
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
+
+   switch (name) {
+   case GL_EXTENSIONS:
+      if (index >= _mesa_get_extension_count(ctx)) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glGetStringi(index=%u)", index);
+         return (const GLubyte *) 0;
+      }
+      return _mesa_get_enabled_extension(ctx, index);
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+      return (const GLubyte *) 0;
+   }
+}
+
+
+
+/**
  * Return pointer-valued state, such as a vertex array pointer.
  *
  * \param pname  names state to be queried

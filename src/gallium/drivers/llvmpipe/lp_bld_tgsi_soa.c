@@ -321,7 +321,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 {
    const uint unit = inst->Src[1].Register.Index;
    LLVMValueRef lodbias;
-   LLVMValueRef oow;
+   LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
    unsigned num_coords;
    unsigned i;
@@ -446,7 +446,12 @@ emit_instruction(
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
-   LLVMValueRef tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+   LLVMValueRef tmp0, tmp1, tmp2;
+   LLVMValueRef tmp3 = NULL;
+   LLVMValueRef tmp4 = NULL;
+   LLVMValueRef tmp5 = NULL;
+   LLVMValueRef tmp6 = NULL;
+   LLVMValueRef tmp7 = NULL;
    LLVMValueRef res;
    LLVMValueRef dst0[NUM_CHANNELS];
 
@@ -1310,7 +1315,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       /* deprecated? */
       assert(0);
       return 0;

@@ -552,7 +552,7 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_SHL:
       break;
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       break;
    case TGSI_OPCODE_AND:
       break;
@@ -919,7 +919,7 @@ translate_instructionir(llvm::Module *module,
       break;
    case TGSI_OPCODE_SHL:
       break;
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       break;
    case TGSI_OPCODE_AND:
       break;

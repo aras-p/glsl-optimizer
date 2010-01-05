@@ -77,7 +77,7 @@ nv04_scaled_image_format(enum pipe_format format)
 }
 
 static INLINE unsigned
-nv04_swizzle_bits(unsigned x, unsigned y)
+nv04_swizzle_bits_square(unsigned x, unsigned y)
 {
 	unsigned u = (x & 0x001) << 0 |
 	             (x & 0x002) << 1 |
@@ -105,6 +105,15 @@ nv04_swizzle_bits(unsigned x, unsigned y)
 	             (y & 0x400) << 11 |
 	             (y & 0x800) << 12;
 	return v | u;
+}
+
+/* rectangular swizzled textures are linear concatenations of swizzled square tiles */
+static INLINE unsigned
+nv04_swizzle_bits(unsigned x, unsigned y, unsigned w, unsigned h)
+{
+	unsigned s = MIN2(w, h);
+	unsigned m = s - 1;
+	return (((x | y) & ~m) * s) | nv04_swizzle_bits_square(x & m, y & m);
 }
 
 static int
@@ -158,20 +167,19 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	  for (x = 0; x < w; x += sub_w) {
 	    sub_w = MIN2(sub_w, w - x);
 
-	    /* Must be 64-byte aligned */
-	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format)) & 63));
+	    assert(!(dst->offset & 63));
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y) * util_format_get_blocksize(dst->texture->format),
+	    OUT_RELOCl(chan, dst_bo, dst->offset,
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	    OUT_RING  (chan, nv04_scaled_image_format(src->format));
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_SIZE_H_SHIFT | sub_w);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_SIZE_H_SHIFT | sub_w);
 	    OUT_RING  (chan, 1 << 20);
 	    OUT_RING  (chan, 1 << 20);
@@ -491,3 +499,49 @@ nv04_surface_2d_init(struct nouveau_screen *screen)
 	ctx->fill = nv04_surface_fill;
 	return ctx;
 }
+
+struct nv04_surface*
+nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns)
+{
+	int temp_flags;
+
+	// printf("creating temp, flags is %i!\n", flags);
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_DISCARD)
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_DISCARD;
+	}
+	else
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_GPU_READ;
+	}
+
+	struct nv40_screen* screen = (struct nv40_screen*)pscreen;
+	ns->base.usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+
+	struct pipe_texture templ;
+	memset(&templ, 0, sizeof(templ));
+	templ.format = ns->base.texture->format;
+	templ.target = PIPE_TEXTURE_2D;
+	templ.width0 = ns->base.width;
+	templ.height0 = ns->base.height;
+	templ.depth0 = 1;
+	templ.last_level = 0;
+
+	// TODO: this is probably wrong and we should specifically handle multisampling somehow once it is implemented
+	templ.nr_samples = ns->base.texture->nr_samples;
+
+	templ.tex_usage = ns->base.texture->tex_usage | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+	struct pipe_texture* temp_tex = pscreen->texture_create(pscreen, &templ);
+	struct nv04_surface* temp_ns = (struct nv04_surface*)pscreen->get_tex_surface(pscreen, temp_tex, 0, 0, 0, temp_flags);
+	temp_ns->backing = ns;
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_GPU_READ)
+		eng2d->copy(eng2d, &temp_ns->backing->base, 0, 0, &ns->base, 0, 0, ns->base.width, ns->base.height);
+
+	return temp_ns;
+}
+

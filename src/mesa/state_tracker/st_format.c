@@ -93,7 +93,8 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       if (format == PIPE_FORMAT_A1R5G5B5_UNORM || format == PIPE_FORMAT_R5G6B5_UNORM) {
          pinfo->datatype = GL_UNSIGNED_SHORT;
       }
-      else if (format == PIPE_FORMAT_S8Z24_UNORM) {
+      else if (format == PIPE_FORMAT_S8Z24_UNORM ||
+               format == PIPE_FORMAT_Z24S8_UNORM) {
          pinfo->datatype = GL_UNSIGNED_INT_24_8;
       }
       else {
@@ -285,6 +286,8 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
       return MESA_FORMAT_ARGB8888;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       return MESA_FORMAT_XRGB8888;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return MESA_FORMAT_ARGB8888_REV;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:

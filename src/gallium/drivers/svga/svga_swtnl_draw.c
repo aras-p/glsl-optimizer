@@ -90,7 +90,7 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
                             PIPE_BUFFER_USAGE_CPU_READ);
       assert(map);
       draw_set_mapped_constant_buffer(
-         draw, 
+         draw, PIPE_SHADER_VERTEX,
          map,
          svga->curr.cb[PIPE_SHADER_VERTEX]->size);
    }

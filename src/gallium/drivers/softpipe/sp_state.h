@@ -50,6 +50,7 @@
 #define SP_NEW_VERTEX        0x1000
 #define SP_NEW_VS            0x2000
 #define SP_NEW_QUERY         0x4000
+#define SP_NEW_GS            0x8000
 
 
 struct tgsi_sampler;
@@ -90,6 +91,11 @@ struct sp_vertex_shader {
    int max_sampler;             /* -1 if no samplers */
 };
 
+/** Subclass of pipe_shader_state */
+struct sp_geometry_shader {
+   struct pipe_shader_state shader;
+   struct draw_geometry_shader *draw_data;
+};
 
 
 void *
@@ -143,6 +149,10 @@ void *softpipe_create_vs_state(struct pipe_context *,
                                const struct pipe_shader_state *);
 void softpipe_bind_vs_state(struct pipe_context *, void *);
 void softpipe_delete_vs_state(struct pipe_context *, void *);
+void *softpipe_create_gs_state(struct pipe_context *,
+                               const struct pipe_shader_state *);
+void softpipe_bind_gs_state(struct pipe_context *, void *);
+void softpipe_delete_gs_state(struct pipe_context *, void *);
 
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );

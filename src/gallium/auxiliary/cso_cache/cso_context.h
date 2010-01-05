@@ -146,6 +146,13 @@ void cso_save_vertex_shader(struct cso_context *cso);
 void cso_restore_vertex_shader(struct cso_context *cso);
 
 
+enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,
+                                               void *handle);
+void cso_delete_geometry_shader(struct cso_context *ctx, void *handle);
+void cso_save_geometry_shader(struct cso_context *cso);
+void cso_restore_geometry_shader(struct cso_context *cso);
+
+
 
 enum pipe_error cso_set_framebuffer(struct cso_context *cso,
                                     const struct pipe_framebuffer_state *fb);

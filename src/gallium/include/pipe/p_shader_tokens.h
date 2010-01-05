@@ -121,17 +121,18 @@ struct tgsi_declaration_range
    unsigned Last    : 16; /**< UINT */
 };
 
-#define TGSI_SEMANTIC_POSITION 0
-#define TGSI_SEMANTIC_COLOR    1
-#define TGSI_SEMANTIC_BCOLOR   2 /**< back-face color */
-#define TGSI_SEMANTIC_FOG      3
-#define TGSI_SEMANTIC_PSIZE    4
-#define TGSI_SEMANTIC_GENERIC  5
-#define TGSI_SEMANTIC_NORMAL   6
-#define TGSI_SEMANTIC_FACE     7
-#define TGSI_SEMANTIC_EDGEFLAG 8
-#define TGSI_SEMANTIC_INSTANCEID 9
-#define TGSI_SEMANTIC_COUNT      10 /**< number of semantic values */
+#define TGSI_SEMANTIC_POSITION   0
+#define TGSI_SEMANTIC_COLOR      1
+#define TGSI_SEMANTIC_BCOLOR     2  /**< back-face color */
+#define TGSI_SEMANTIC_FOG        3
+#define TGSI_SEMANTIC_PSIZE      4
+#define TGSI_SEMANTIC_GENERIC    5
+#define TGSI_SEMANTIC_NORMAL     6
+#define TGSI_SEMANTIC_FACE       7
+#define TGSI_SEMANTIC_EDGEFLAG   8
+#define TGSI_SEMANTIC_PRIMID     9
+#define TGSI_SEMANTIC_INSTANCEID 10
+#define TGSI_SEMANTIC_COUNT      11 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
@@ -141,6 +142,8 @@ struct tgsi_declaration_semantic
 };
 
 #define TGSI_IMM_FLOAT32   0
+#define TGSI_IMM_UINT32    1
+#define TGSI_IMM_INT32     2
 
 struct tgsi_immediate
 {
@@ -153,6 +156,8 @@ struct tgsi_immediate
 union tgsi_immediate_data
 {
    float Float;
+   unsigned Uint;
+   int Int;
 };
 
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
@@ -264,7 +269,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_NOT                 85
 #define TGSI_OPCODE_TRUNC               86
 #define TGSI_OPCODE_SHL                 87
-#define TGSI_OPCODE_SHR                 88
+                                /* gap */
 #define TGSI_OPCODE_AND                 89
 #define TGSI_OPCODE_OR                  90
 #define TGSI_OPCODE_MOD                 91
@@ -289,7 +294,33 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
                                 /* gap */
-#define TGSI_OPCODE_LAST                119
+#define TGSI_OPCODE_F2I                 119
+#define TGSI_OPCODE_IDIV                120
+#define TGSI_OPCODE_IMAX                121
+#define TGSI_OPCODE_IMIN                122
+#define TGSI_OPCODE_INEG                123
+#define TGSI_OPCODE_ISGE                124
+#define TGSI_OPCODE_ISHR                125
+#define TGSI_OPCODE_ISLT                126
+#define TGSI_OPCODE_F2U                 127
+#define TGSI_OPCODE_U2F                 128
+#define TGSI_OPCODE_UADD                129
+#define TGSI_OPCODE_UDIV                130
+#define TGSI_OPCODE_UMAD                131
+#define TGSI_OPCODE_UMAX                132
+#define TGSI_OPCODE_UMIN                133
+#define TGSI_OPCODE_UMOD                134
+#define TGSI_OPCODE_UMUL                135
+#define TGSI_OPCODE_USEQ                136
+#define TGSI_OPCODE_USGE                137
+#define TGSI_OPCODE_USHR                138
+#define TGSI_OPCODE_USLT                139
+#define TGSI_OPCODE_USNE                140
+#define TGSI_OPCODE_SWITCH              141
+#define TGSI_OPCODE_CASE                142
+#define TGSI_OPCODE_DEFAULT             143
+#define TGSI_OPCODE_ENDSWITCH           144
+#define TGSI_OPCODE_LAST                145
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

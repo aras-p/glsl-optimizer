@@ -37,10 +37,12 @@ SOURCES = \
 	bug_3195.c \
 	bug_texstore_i8.c \
 	calibrate_rast.c \
+	condrender.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
 	drawbuffers.c \
+	drawbuffers2.c \
 	exactrast.c \
 	ext422square.c \
 	floattex.c \

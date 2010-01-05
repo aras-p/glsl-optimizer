@@ -69,7 +69,7 @@
  */
 #ifdef PTHREADS
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return (unsigned long) pthread_self();
@@ -123,7 +123,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 #define USE_LOCK_FOR_KEY	/* undef this to try a version without
 				   lock for the global key... */
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    abort();   /* XXX not implemented yet */
@@ -201,7 +201,7 @@ void InsteadOf_exit(int nCode)
    DWORD dwErr=GetLastError();
 }
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return GetCurrentThreadId();
@@ -251,7 +251,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  */
 #ifdef BEOS_THREADS
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return (unsigned long) find_thread(NULL);
@@ -293,7 +293,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  * no-op functions
  */
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return 0;

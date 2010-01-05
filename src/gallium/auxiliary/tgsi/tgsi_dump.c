@@ -123,12 +123,15 @@ static const char *semantic_names[] =
    "NORMAL",
    "FACE",
    "EDGEFLAG",
+   "PRIM_ID",
    "INSTANCEID"
 };
 
 static const char *immediate_type_names[] =
 {
-   "FLT32"
+   "FLT32",
+   "UINT32",
+   "INT32"
 };
 
 static const char *swizzle_names[] =
@@ -175,13 +178,19 @@ static const char *primitive_names[] =
 
 
 static void
-_dump_register(
+_dump_register_decl(
    struct dump_ctx *ctx,
    uint file,
    int first,
    int last )
 {
    ENM( file, file_names );
+
+   /* all geometry shader inputs are two dimensional */
+   if (file == TGSI_FILE_INPUT &&
+       ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY)
+      TXT("[]");
+
    CHR( '[' );
    SID( first );
    if (first != last) {
@@ -189,6 +198,52 @@ _dump_register(
       SID( last );
    }
    CHR( ']' );
+}
+
+static void
+_dump_register_dst(
+   struct dump_ctx *ctx,
+   uint file,
+   int index)
+{
+   ENM( file, file_names );
+
+   CHR( '[' );
+   SID( index );
+   CHR( ']' );
+}
+
+
+static void
+_dump_register_src(
+   struct dump_ctx *ctx,
+   const struct tgsi_full_src_register *src )
+{
+   if (src->Register.Indirect) {
+      ENM( src->Register.File, file_names );
+      CHR( '[' );
+      ENM( src->Indirect.File, file_names );
+      CHR( '[' );
+      SID( src->Indirect.Index );
+      TXT( "]." );
+      ENM( src->Indirect.SwizzleX, swizzle_names );
+      if (src->Register.Index != 0) {
+         if (src->Register.Index > 0)
+            CHR( '+' );
+         SID( src->Register.Index );
+      }
+      CHR( ']' );
+   } else {
+      ENM( src->Register.File, file_names );
+      CHR( '[' );
+      SID( src->Register.Index );
+      CHR( ']' );
+   }
+   if (src->Register.Dimension) {
+      CHR( '[' );
+      SID( src->Dimension.Index );
+      CHR( ']' );
+   }
 }
 
 static void
@@ -245,7 +300,7 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   _dump_register(
+   _dump_register_decl(
       ctx,
       decl->Declaration.File,
       decl->Range.First,
@@ -360,6 +415,12 @@ iter_immediate(
       case TGSI_IMM_FLOAT32:
          FLT( imm->u[i].Float );
          break;
+      case TGSI_IMM_UINT32:
+         UID(imm->u[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         SID(imm->u[i].Int);
+         break;
       default:
          assert( 0 );
       }
@@ -436,10 +497,9 @@ iter_instruction(
             dst->Indirect.SwizzleX );
       }
       else {
-         _dump_register(
+         _dump_register_dst(
             ctx,
             dst->Register.File,
-            dst->Register.Index,
             dst->Register.Index );
       }
       _dump_writemask( ctx, dst->Register.WriteMask );
@@ -455,26 +515,11 @@ iter_instruction(
       CHR( ' ' );
 
       if (src->Register.Negate)
-         TXT( "-(" );
+         CHR( '-' );
       if (src->Register.Absolute)
          CHR( '|' );
 
-      if (src->Register.Indirect) {
-         _dump_register_ind(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Indirect.File,
-            src->Indirect.Index,
-            src->Indirect.SwizzleX );
-      }
-      else {
-         _dump_register(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Register.Index );
-      }
+      _dump_register_src(ctx, src);
 
       if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
           src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
@@ -489,8 +534,6 @@ iter_instruction(
 
       if (src->Register.Absolute)
          CHR( '|' );
-      if (src->Register.Negate)
-         CHR( ')' );
 
       first_reg = FALSE;
    }

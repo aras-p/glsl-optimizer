@@ -68,7 +68,7 @@ static void
 intelClear(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
    GLbitfield tri_mask = 0;
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;

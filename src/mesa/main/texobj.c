@@ -228,10 +228,10 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->Target = src->Target;
    dest->Name = src->Name;
    dest->Priority = src->Priority;
-   dest->BorderColor[0] = src->BorderColor[0];
-   dest->BorderColor[1] = src->BorderColor[1];
-   dest->BorderColor[2] = src->BorderColor[2];
-   dest->BorderColor[3] = src->BorderColor[3];
+   dest->BorderColor.f[0] = src->BorderColor.f[0];
+   dest->BorderColor.f[1] = src->BorderColor.f[1];
+   dest->BorderColor.f[2] = src->BorderColor.f[2];
+   dest->BorderColor.f[3] = src->BorderColor.f[3];
    dest->WrapS = src->WrapS;
    dest->WrapT = src->WrapT;
    dest->WrapR = src->WrapR;

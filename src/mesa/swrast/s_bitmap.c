@@ -30,6 +30,7 @@
 
 #include "main/glheader.h"
 #include "main/bufferobj.h"
+#include "main/condrender.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/pixel.h"
@@ -55,6 +56,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    SWspan span;
 
    ASSERT(ctx->RenderMode == GL_RENDER);
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't draw */
 
    bitmap = (const GLubyte *) _mesa_map_pbo_source(ctx, unpack, bitmap);
    if (!bitmap)

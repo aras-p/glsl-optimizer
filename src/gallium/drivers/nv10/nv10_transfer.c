@@ -16,14 +16,14 @@ struct nv10_transfer {
 };
 
 static void
-nv10_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
+nv10_compatible_transfer_tex(struct pipe_texture *pt, unsigned width, unsigned height,
                              struct pipe_texture *template)
 {
 	memset(template, 0, sizeof(struct pipe_texture));
 	template->target = pt->target;
 	template->format = pt->format;
-	template->width0 = u_minify(pt->width0, level);
-	template->height0 = u_minify(pt->height0, level);
+	template->width0 = width;
+	template->height0 = height;
 	template->depth0 = 1;
 	template->last_level = 0;
 	template->nr_samples = pt->nr_samples;
@@ -71,7 +71,7 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	tx->direct = false;
 
-	nv10_compatible_transfer_tex(pt, level, &tx_tex_template);
+	nv10_compatible_transfer_tex(pt, w, h, &tx_tex_template);
 
 	tx_tex = pscreen->texture_create(pscreen, &tx_tex_template);
 	if (!tx_tex)
@@ -79,6 +79,8 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		FREE(tx);
 		return NULL;
 	}
+
+	tx->base.stride = ((struct nv10_miptree*)tx_tex)->level[0].pitch;
 
 	tx->surface = pscreen->get_tex_surface(pscreen, tx_tex,
 	                                       face, level, zslice,
@@ -105,8 +107,8 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		/* TODO: Check if SIFM can un-swizzle */
 		nvscreen->eng2d->copy(nvscreen->eng2d,
 		                      tx->surface, 0, 0,
-		                      src, 0, 0,
-		                      src->width, src->height);
+		                      src, x, y,
+		                      w, h);
 
 		pipe_surface_reference(&src, NULL);
 	}
@@ -130,9 +132,9 @@ nv10_transfer_del(struct pipe_transfer *ptx)
 
 		/* TODO: Check if SIFM can deal with x,y,w,h when swizzling */
 		nvscreen->eng2d->copy(nvscreen->eng2d,
-		                      dst, 0, 0,
+		                      dst, tx->base.x, tx->base.y,
 		                      tx->surface, 0, 0,
-		                      dst->width, dst->height);
+		                      tx->base.width, tx->base.height);
 
 		pipe_surface_reference(&dst, NULL);
 	}
@@ -151,8 +153,10 @@ nv10_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 	void *map = pipe_buffer_map(pscreen, mt->buffer,
 	                            pipe_transfer_buffer_flags(ptx));
 
-	return map + ns->base.offset +
-	       ptx->y * ns->pitch + ptx->x * util_format_get_blocksize(ptx->texture->format);
+	if(!tx->direct)
+		return map + ns->base.offset;
+	else
+		return map + ns->base.offset + ptx->y * ns->pitch + ptx->x * util_format_get_blocksize(ptx->texture->format);
 }
 
 static void

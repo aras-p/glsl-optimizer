@@ -5,6 +5,7 @@
 #include "util/u_math.h"
 
 #include "nv30_context.h"
+#include "../nv04/nv04_surface_2d.h"
 
 static void
 nv30_miptree_layout(struct nv30_miptree *nv30mt)
@@ -108,6 +109,12 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
 		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 
+	/* apparently we can't render to swizzled surfaces smaller than 64 bytes, so make them linear.
+	 * If the user did not ask for a render target, they can still render to it, but it will cost them an extra copy.
+	 * This also happens for small mipmaps of large textures. */
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET && util_format_get_stride(pt->format, pt->width0) < 64)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+
 	nv30_miptree_layout(mt);
 
 	mt->buffer = pscreen->buffer_create(pscreen, 256, buf_usage,
@@ -196,12 +203,27 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		ns->base.offset = nv30mt->level[level].image_offset[0];
 	}
 
+	/* create a linear temporary that we can render into if necessary.
+	 * Note that ns->pitch is always a multiple of 64 for linear surfaces and swizzled surfaces are POT, so
+	 * ns->pitch & 63 is equivalent to (ns->pitch < 64 && swizzled)*/
+	if((ns->pitch & 63) && (ns->base.usage & (PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER)) == PIPE_BUFFER_USAGE_GPU_WRITE)
+		return &nv04_surface_wrap_for_render(pscreen, ((struct nv30_screen*)pscreen)->eng2d, ns)->base;
+
 	return &ns->base;
 }
 
 static void
 nv30_miptree_surface_del(struct pipe_surface *ps)
 {
+	struct nv04_surface* ns = (struct nv04_surface*)ps;
+	if(ns->backing)
+	{
+		struct nv30_screen* screen = (struct nv30_screen*)ps->texture->screen;
+		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
+		nv30_miptree_surface_del(&ns->backing->base);
+	}
+
 	pipe_texture_reference(&ps->texture, NULL);
 	FREE(ps);
 }

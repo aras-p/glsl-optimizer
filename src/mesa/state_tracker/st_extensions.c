@@ -306,4 +306,8 @@ void st_init_extensions(struct st_context *st)
       /* we support always support GL_EXT_framebuffer_blit */
       ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
+
+   if (st->pipe->render_condition) {
+      ctx->Extensions.NV_conditional_render = GL_TRUE;
+   }
 }

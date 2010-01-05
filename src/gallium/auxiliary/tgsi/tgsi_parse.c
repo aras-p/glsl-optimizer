@@ -119,17 +119,29 @@ tgsi_parse_token(
    case TGSI_TOKEN_TYPE_IMMEDIATE:
    {
       struct tgsi_full_immediate *imm = &ctx->FullToken.FullImmediate;
+      uint imm_count;
 
       memset(imm, 0, sizeof *imm);
       copy_token(&imm->Immediate, &token);
 
+      imm_count = imm->Immediate.NrTokens - 1;
+
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
-         {
-            uint imm_count = imm->Immediate.NrTokens - 1;
-            for (i = 0; i < imm_count; i++) {
-               next_token(ctx, &imm->u[i]);
-            }
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Float);
+         }
+         break;
+
+      case TGSI_IMM_UINT32:
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Uint);
+         }
+         break;
+
+      case TGSI_IMM_INT32:
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Int);
          }
          break;
 

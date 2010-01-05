@@ -206,7 +206,7 @@ static boolean radeon_shared_handle_from_texture(struct drm_api *api,
     int retval, fd;
     struct drm_gem_flink flink;
     struct radeon_pipe_buffer* radeon_buffer;
-    struct pipe_buffer *buffer;
+    struct pipe_buffer *buffer = NULL;
 
     if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
         return FALSE;
@@ -239,7 +239,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
                                                 unsigned *stride,
                                                 unsigned *handle)
 {
-    struct pipe_buffer *buffer;
+    struct pipe_buffer *buffer = NULL;
     if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
         return FALSE;
     }

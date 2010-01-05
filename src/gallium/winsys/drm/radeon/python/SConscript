@@ -29,5 +29,5 @@ if env['platform'] == 'linux':
     env.SharedLibrary(
         target ='_gallium',
         source = sources,
-        LIBS = [pyst] + drivers + auxiliaries + env['LIBS'],
+        LIBS = [pyst] + drivers + gallium + env['LIBS'],
     )

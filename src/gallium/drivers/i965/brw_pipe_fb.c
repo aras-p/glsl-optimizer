@@ -3,6 +3,7 @@
 #include "pipe/p_state.h"
 
 #include "brw_context.h"
+#include "brw_debug.h"
 
 /**
  * called from intelDrawBuffer()
@@ -51,8 +52,14 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
    struct brw_context *brw = brw_context(pipe);
 
    brw->curr.viewport = *viewport;
-   brw->curr.ccv.min_depth = 0.0;         /* XXX: near */
-   brw->curr.ccv.max_depth = 1.0;         /* XXX: far */
+   brw->curr.ccv.min_depth = viewport->scale[2] * -1.0 + viewport->translate[2];
+   brw->curr.ccv.max_depth = viewport->scale[2] *  1.0 + viewport->translate[2];
+
+   if (0)
+      debug_printf("%s depth range %f .. %f\n",
+                   __FUNCTION__,
+                   brw->curr.ccv.min_depth,
+                   brw->curr.ccv.max_depth);
 
    brw->state.dirty.mesa |= PIPE_NEW_VIEWPORT;
 }

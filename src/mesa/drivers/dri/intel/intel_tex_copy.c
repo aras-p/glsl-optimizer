@@ -109,7 +109,7 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   //   intelFlush(ctx);
+   /* intelFlush(ctx); */
    LOCK_HARDWARE(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
@@ -160,13 +160,14 @@ do_copy_texsubimage(struct intel_context *intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
 			     src->buffer,
-			     src->draw_offset,
+			     0,
 			     src->tiling,
 			     intelImage->mt->pitch,
 			     dst_bo,
 			     0,
 			     intelImage->mt->region->tiling,
-			     x, y, image_x + dstx, image_y + dsty,
+			     src->draw_x + x, src->draw_y + y,
+			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
 	 UNLOCK_HARDWARE(intel);

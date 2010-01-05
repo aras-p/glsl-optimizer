@@ -132,7 +132,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = ctx->Color.BlendEnabled;
+         params[0] = (ctx->Color.BlendEnabled & 1);
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_BOOLEAN(ctx->Color.BlendDstRGB);
@@ -210,10 +210,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = ctx->Polygon.CullFlag;
@@ -1899,6 +1899,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_sync, "GetBooleanv");
          params[0] = INT64_TO_BOOLEAN(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -1967,7 +1970,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_FLOAT((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_FLOAT(ctx->Color.BlendDstRGB);
@@ -2045,10 +2048,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = (GLfloat)(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = (GLfloat)(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = (GLfloat)(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = (GLfloat)(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = (GLfloat)(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = (GLfloat)(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = (GLfloat)(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = (GLfloat)(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_FLOAT(ctx->Polygon.CullFlag);
@@ -3734,6 +3737,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(ARB_sync, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
    }
@@ -3802,7 +3808,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->DrawBuffer->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_INT(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_INT((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_INT(ctx->Color.BlendDstRGB);
@@ -3880,10 +3886,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = ctx->Color.ColorMask[RCOMP] ? 1 : 0;
-         params[1] = ctx->Color.ColorMask[GCOMP] ? 1 : 0;
-         params[2] = ctx->Color.ColorMask[BCOMP] ? 1 : 0;
-         params[3] = ctx->Color.ColorMask[ACOMP] ? 1 : 0;
+         params[0] = ctx->Color.ColorMask[0][RCOMP] ? 1 : 0;
+         params[1] = ctx->Color.ColorMask[0][GCOMP] ? 1 : 0;
+         params[2] = ctx->Color.ColorMask[0][BCOMP] ? 1 : 0;
+         params[3] = ctx->Color.ColorMask[0][ACOMP] ? 1 : 0;
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_INT(ctx->Polygon.CullFlag);
@@ -5569,6 +5575,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXT1(ARB_sync, "GetIntegerv");
          params[0] = INT64_TO_INT(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = _mesa_get_extension_count(ctx);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -5638,7 +5647,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
-         params[0] = BOOLEAN_TO_INT64(ctx->Color.BlendEnabled);
+         params[0] = BOOLEAN_TO_INT64((ctx->Color.BlendEnabled & 1));
          break;
       case GL_BLEND_DST:
          params[0] = ENUM_TO_INT64(ctx->Color.BlendDstRGB);
@@ -5716,10 +5725,10 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = ENUM_TO_INT64(ctx->Light.ColorMaterialMode);
          break;
       case GL_COLOR_WRITEMASK:
-         params[0] = (GLint64)(ctx->Color.ColorMask[RCOMP] ? 1 : 0);
-         params[1] = (GLint64)(ctx->Color.ColorMask[GCOMP] ? 1 : 0);
-         params[2] = (GLint64)(ctx->Color.ColorMask[BCOMP] ? 1 : 0);
-         params[3] = (GLint64)(ctx->Color.ColorMask[ACOMP] ? 1 : 0);
+         params[0] = (GLint64)(ctx->Color.ColorMask[0][RCOMP] ? 1 : 0);
+         params[1] = (GLint64)(ctx->Color.ColorMask[0][GCOMP] ? 1 : 0);
+         params[2] = (GLint64)(ctx->Color.ColorMask[0][BCOMP] ? 1 : 0);
+         params[3] = (GLint64)(ctx->Color.ColorMask[0][ACOMP] ? 1 : 0);
          break;
       case GL_CULL_FACE:
          params[0] = BOOLEAN_TO_INT64(ctx->Polygon.CullFlag);
@@ -7405,6 +7414,9 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          CHECK_EXT1(ARB_sync, "GetInteger64v");
          params[0] = ctx->Const.MaxServerWaitTimeout;
          break;
+      case GL_NUM_EXTENSIONS:
+         params[0] = (GLint64)(_mesa_get_extension_count(ctx));
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);
    }
@@ -7433,4 +7445,111 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    for (i = 0; i < 16 && values[i] != magic; i++)
       params[i] = (GLdouble) values[i];
 }
+
+void GLAPIENTRY
+_mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+         }
+         params[0] = INT_TO_BOOLEAN(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+         }
+         params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
+         params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
+         params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
+         params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
+   }
+}
+
+void GLAPIENTRY
+_mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+         }
+         params[0] = ((ctx->Color.BlendEnabled >> index) & 1);
+         break;
+      case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+         }
+         params[0] = ctx->Color.ColorMask[index][RCOMP] ? 1 : 0;
+         params[1] = ctx->Color.ColorMask[index][GCOMP] ? 1 : 0;
+         params[2] = ctx->Color.ColorMask[index][BCOMP] ? 1 : 0;
+         params[3] = ctx->Color.ColorMask[index][ACOMP] ? 1 : 0;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
+   }
+}
+
+#if FEATURE_ARB_sync
+void GLAPIENTRY
+_mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!params)
+      return;
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   switch (pname) {
+      case GL_BLEND:
+         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+         }
+         params[0] = (GLint64)(((ctx->Color.BlendEnabled >> index) & 1));
+         break;
+      case GL_COLOR_WRITEMASK:
+         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
+         if (index >= ctx->Const.MaxDrawBuffers) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+         }
+         params[0] = (GLint64)(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
+         params[1] = (GLint64)(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
+         params[2] = (GLint64)(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
+         params[3] = (GLint64)(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);
+   }
+}
+#endif /* FEATURE_ARB_sync */
 

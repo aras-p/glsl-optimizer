@@ -77,9 +77,9 @@ nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
-	BEGIN_RING(chan, tesla, 0x1530, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_SAMPLECNT_RESET, 1);
 	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, tesla, 0x1514, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_SAMPLECNT_ENABLE, 1);
 	OUT_RING  (chan, 1);
 
 	q->ready = FALSE;

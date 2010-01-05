@@ -135,7 +135,9 @@ st_context_destroy(struct st_context *st_ctx)
          st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], NULL);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], NULL);
+      for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], NULL);
       pipe_texture_reference(&st_ctx->default_texture, NULL);
 
       FREE(st_ctx);
@@ -276,9 +278,12 @@ st_context_create(struct st_device *st_dev)
       }
    
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], st_ctx->default_texture);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], st_ctx->default_texture);
+      for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], st_ctx->default_texture);
       
-      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->sampler_textures);
+      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->fragment_sampler_textures);
+      cso_set_vertex_sampler_textures(st_ctx->cso, PIPE_MAX_VERTEX_SAMPLERS, st_ctx->vertex_sampler_textures);
    }
    
    /* vertex shader */

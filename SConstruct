@@ -46,7 +46,7 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'cell', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'vmware', 'intel', 'i965', 'gdi', 'radeon']))
 
@@ -166,15 +166,18 @@ if env['platform'] != common.default_platform:
     host_env = Environment(
         # options are ignored
         # default tool is used
+        tools = ['default', 'custom'],
         toolpath = ['#scons'],	
         ENV = os.environ,
     )
 
     host_env['platform'] = common.default_platform
+    host_env['machine'] = common.default_machine
+    host_env['debug'] = env['debug']
 
     SConscript(
         'src/glsl/SConscript',
-        variant_dir = env['build'] + '/host',
+        variant_dir = os.path.join(env['build'], 'host'),
         duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
         exports={'env':host_env},
     )
@@ -182,5 +185,11 @@ if env['platform'] != common.default_platform:
 SConscript(
 	'src/SConscript',
 	variant_dir = env['build'],
+	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)
+
+SConscript(
+	'progs/SConscript',
+	variant_dir = os.path.join('progs', env['build']),
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

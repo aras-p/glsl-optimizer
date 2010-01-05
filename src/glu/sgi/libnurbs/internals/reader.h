@@ -64,7 +64,7 @@ struct O_curve : public PooledObj {
     int			save;		/* 1 if in display list		*/
     long		nuid;
     			O_curve() { next = 0; used = 0; owner = 0; 
-				    curve.o_pwlcurve = 0; }
+				    curve.o_pwlcurve = 0; curvetype = ct_none; save = 0; nuid = 0; }
     };
 
 struct O_nurbscurve : public PooledObj {
@@ -77,7 +77,7 @@ struct O_nurbscurve : public PooledObj {
     int			save;		/* 1 if in display list		*/
     O_curve *		owner;		/* owning curve 		*/
 			O_nurbscurve( long _type ) 
-			   { type = _type; owner = 0; next = 0; used = 0; }
+			   { bezier_curves = 0; type = _type; tesselation = 0; method = 0; next = 0; used = 0; save = 0; owner = 0; }
     };
  
 class O_pwlcurve : public PooledObj {
@@ -95,7 +95,7 @@ struct O_trim : public PooledObj {
     O_curve		*o_curve;	/* closed trim loop	 	*/
     O_trim *		next;		/* next loop along trim 	*/
     int			save;		/* 1 if in display list		*/
-			O_trim() { next = 0; o_curve = 0; }
+			O_trim() { next = 0; o_curve = 0; save = 0; }
     };
 
 struct O_nurbssurface : public PooledObj {
@@ -106,7 +106,7 @@ struct O_nurbssurface : public PooledObj {
     int			save;		/* 1 if in display list		*/
     int			used;		/* 1 if prev called in block	*/
 			O_nurbssurface( long _type ) 
-			   { type = _type; owner = 0; next = 0; used = 0; }
+			   { bezier_patches = 0; type = _type; owner = 0; next = 0; save = 0; used = 0; }
     };
 
 struct O_surface : public PooledObj {
@@ -114,7 +114,7 @@ struct O_surface : public PooledObj {
     O_trim *		o_trim;		/* list of trim loops		*/
     int			save;		/* 1 if in display list		*/
     long		nuid;
-			O_surface() { o_trim = 0; o_nurbssurface = 0; }
+			O_surface() { o_trim = 0; o_nurbssurface = 0; save = 0; nuid = 0; }
     };
 
 struct Property : public PooledObj {
@@ -123,9 +123,9 @@ struct Property : public PooledObj {
     REAL		value;
     int			save;		/* 1 if in display list		*/
 			Property( long _type, long _tag, INREAL _value )
-			{ type = _type; tag = _tag; value = (REAL) _value; }
+			{ type = _type; tag = _tag; value = (REAL) _value; save = 0; }
 			Property( long _tag, INREAL _value )
-			{ type = 0; tag = _tag; value = (REAL) _value; }
+			{ type = 0; tag = _tag; value = (REAL) _value; save = 0; }
     };
 
 class NurbsTessellator;

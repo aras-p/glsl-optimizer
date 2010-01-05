@@ -156,7 +156,7 @@ int svga_swtnl_update_vdecl( struct svga_context *svga )
    memset(vdecl, 0, sizeof(vdecl));
 
    /* always add position */
-   src = draw_find_vs_output(draw, TGSI_SEMANTIC_POSITION, 0);
+   src = draw_find_shader_output(draw, TGSI_SEMANTIC_POSITION, 0);
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src);
    vinfo->attrib[0].emit = EMIT_4F;
    vdecl[0].array.offset = offset;
@@ -169,7 +169,7 @@ int svga_swtnl_update_vdecl( struct svga_context *svga )
    for (i = 0; i < fs->base.info.num_inputs; i++) {
       unsigned name = fs->base.info.input_semantic_name[i];
       unsigned index = fs->base.info.input_semantic_index[i];
-      src = draw_find_vs_output(draw, name, index);
+      src = draw_find_shader_output(draw, name, index);
       vdecl[nr_decls].array.offset = offset;
       vdecl[nr_decls].identity.usageIndex = fs->base.info.input_semantic_index[i];
 

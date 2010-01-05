@@ -128,6 +128,7 @@ sp_vbuf_unmap_vertices(struct vbuf_render *vbr,
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    assert( cvbr->vertex_buffer_size >= (max_index+1) * cvbr->vertex_size );
+   (void) cvbr;
    /* do nothing */
 }
 

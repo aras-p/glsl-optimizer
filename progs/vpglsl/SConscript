@@ -1,13 +1,6 @@
-Import('env')
+Import('*')
 
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(LIBS = ['$GLUT_LIB'])
-
-env.Program(
+progs_env.Program(
         target = 'vp-tris',
         source = ['vp-tris.c'],
     )

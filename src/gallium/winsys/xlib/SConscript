@@ -22,7 +22,7 @@ if env['platform'] == 'linux' \
         'xlib.c',
     ]
 
-    drivers = []
+    drivers = [trace]
         
     if 'softpipe' in env['drivers']:
         env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
@@ -42,16 +42,11 @@ if env['platform'] == 'linux' \
         sources += ['xlib_cell.c']
         drivers += [cell]
 
-    if 'trace' in env['drivers']:
-        env.Append(CPPDEFINES = 'GALLIUM_TRACE')
-        sources += ['xlib_trace.c']
-        drivers += [trace]
-
     # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
     libgl = env.SharedLibrary(
         target ='GL',
         source = sources,
-        LIBS = st_xlib + glapi + mesa + drivers + auxiliaries + env['LIBS'],
+        LIBS = st_xlib + glapi + mesa + glsl + drivers + gallium + env['LIBS'],
     )
 
     env.InstallSharedLibrary(libgl, version=(1, 5))

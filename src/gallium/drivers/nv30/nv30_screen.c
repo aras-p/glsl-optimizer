@@ -156,6 +156,12 @@ static void
 nv30_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv30_screen *screen = nv30_screen(pscreen);
+	unsigned i;
+
+	for (i = 0; i < NV30_STATE_MAX; i++) {
+		if (screen->state[i])
+			so_ref(NULL, &screen->state[i]);
+	}
 
 	nouveau_resource_free(&screen->vp_exec_heap);
 	nouveau_resource_free(&screen->vp_data_heap);
@@ -163,6 +169,9 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->rankine);
+	nv04_surface_2d_takedown(&screen->eng2d);
+
+	nouveau_screen_fini(&screen->base);
 
 	FREE(pscreen);
 }

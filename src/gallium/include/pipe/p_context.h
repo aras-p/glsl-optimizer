@@ -100,6 +100,14 @@ struct pipe_context {
                                    unsigned count);
    /*@}*/
 
+   /**
+    * Predicate subsequent rendering on occlusion query result
+    * \param query  the query predicate, or NULL if no predicate
+    * \param mode  one of PIPE_COND_RENDER_x
+    */
+   void (*render_condition)( struct pipe_context *pipe,
+                             struct pipe_query *query,
+                             uint mode );
 
    /**
     * Query objects
@@ -158,6 +166,12 @@ struct pipe_context {
                              const struct pipe_shader_state *);
    void   (*bind_vs_state)(struct pipe_context *, void *);
    void   (*delete_vs_state)(struct pipe_context *, void *);
+
+   void * (*create_gs_state)(struct pipe_context *,
+                             const struct pipe_shader_state *);
+   void   (*bind_gs_state)(struct pipe_context *, void *);
+   void   (*delete_gs_state)(struct pipe_context *, void *);
+
    /*@}*/
 
    /**

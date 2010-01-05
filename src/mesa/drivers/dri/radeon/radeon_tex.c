@@ -341,7 +341,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      radeonSetTexBorderColor( t, texObj->BorderColor );
+      radeonSetTexBorderColor( t, texObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -428,7 +428,7 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    radeonSetTexWrap( t, t->base.WrapS, t->base.WrapT );
    radeonSetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
    radeonSetTexFilter( t, t->base.MinFilter, t->base.MagFilter );
-   radeonSetTexBorderColor( t, t->base.BorderColor );
+   radeonSetTexBorderColor( t, t->base.BorderColor.f );
    return &t->base;
 }
 

@@ -521,10 +521,10 @@ static void radeonColorMask( GLcontext *ctx,
      return;
 
    mask = radeonPackColor( rrb->cpp,
-			   ctx->Color.ColorMask[RCOMP],
-			   ctx->Color.ColorMask[GCOMP],
-			   ctx->Color.ColorMask[BCOMP],
-			   ctx->Color.ColorMask[ACOMP] );
+			   ctx->Color.ColorMask[0][RCOMP],
+			   ctx->Color.ColorMask[0][GCOMP],
+			   ctx->Color.ColorMask[0][BCOMP],
+			   ctx->Color.ColorMask[0][ACOMP] );
 
    if ( rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK] != mask ) {
       RADEON_STATECHANGE( rmesa, msk );

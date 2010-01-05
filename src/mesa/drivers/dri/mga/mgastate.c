@@ -374,13 +374,11 @@ static void mgaDDColorMask(GLcontext *ctx,
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;
-
-
    GLuint mask = mgaPackColor(mgaScreen->cpp,
-			      ctx->Color.ColorMask[RCOMP],
-			      ctx->Color.ColorMask[GCOMP],
-			      ctx->Color.ColorMask[BCOMP],
-			      ctx->Color.ColorMask[ACOMP]);
+			      ctx->Color.ColorMask[0][RCOMP],
+			      ctx->Color.ColorMask[0][GCOMP],
+			      ctx->Color.ColorMask[0][BCOMP],
+			      ctx->Color.ColorMask[0][ACOMP]);
 
    if (mgaScreen->cpp == 2)
       mask = mask | (mask << 16);

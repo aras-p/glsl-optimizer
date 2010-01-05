@@ -108,6 +108,7 @@ typedef struct StreamDesc
 	GLint   size;   //number of data element
 	GLenum  type;  //data element type
 	GLsizei stride;
+	GLenum  format; // GL_RGBA,GLBGRA 
 
 	struct radeon_bo *bo;
 	GLint  bo_offset;

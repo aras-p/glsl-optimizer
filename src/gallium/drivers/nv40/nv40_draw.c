@@ -261,7 +261,8 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 		map = pipe_buffer_map(pscreen,
 				      nv40->constbuf[PIPE_SHADER_VERTEX],
 				      PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_constant_buffer(nv40->draw, map, nr);
+		draw_set_mapped_constant_buffer(nv40->draw, PIPE_SHADER_VERTEX,
+                                                map, nr);
 	}
 
 	draw_arrays(nv40->draw, mode, start, count);
@@ -285,7 +286,7 @@ static INLINE void
 emit_attrib(struct nv40_context *nv40, unsigned hw, unsigned emit,
 	    unsigned semantic, unsigned index)
 {
-	unsigned draw_out = draw_find_vs_output(nv40->draw, semantic, index);
+	unsigned draw_out = draw_find_shader_output(nv40->draw, semantic, index);
 	unsigned a = nv40->swtnl.nr_attribs++;
 
 	nv40->swtnl.hw[a] = hw;

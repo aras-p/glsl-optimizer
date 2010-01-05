@@ -61,6 +61,9 @@ void Knotvector::init( long _knotcount, long _stride, long _order, INREAL *_knot
 
 Knotvector::Knotvector( void )
 {
+    knotcount = 0;
+    stride = 0;
+    order = 0;
     knotlist = 0;
 }
 

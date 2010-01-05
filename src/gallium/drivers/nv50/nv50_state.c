@@ -295,7 +295,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :
 				       NV50TCL_SHADE_MODEL_SMOOTH);
-	so_method(so, tesla, 0x1684, 1);
+	so_method(so, tesla, NV50TCL_PROVOKING_VERTEX_LAST, 1);
 	so_data  (so, cso->flatshade_first ? 0 : 1);
 
 	so_method(so, tesla, NV50TCL_VERTEX_TWO_SIDE_ENABLE, 1);
@@ -392,7 +392,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_FACTOR, 1);
 		so_data  (so, fui(cso->offset_scale));
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_UNITS, 1);
-		so_data  (so, fui(cso->offset_units));
+		so_data  (so, fui(cso->offset_units * 2.0f));
 	}
 
 	rso->pipe = *cso;
@@ -439,9 +439,8 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, 0);
 	}
 
-	/* XXX: keep hex values until header is updated (names reversed) */
 	if (cso->stencil[0].enabled) {
-		so_method(so, tesla, 0x1380, 8);
+		so_method(so, tesla, NV50TCL_STENCIL_FRONT_ENABLE, 8);
 		so_data  (so, 1);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
@@ -451,23 +450,23 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, cso->stencil[0].valuemask);
 	} else {
-		so_method(so, tesla, 0x1380, 1);
+		so_method(so, tesla, NV50TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, tesla, 0x1594, 5);
+		so_method(so, tesla, NV50TCL_STENCIL_BACK_ENABLE, 5);
 		so_data  (so, 1);
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_method(so, tesla, 0x0f54, 3);
+		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 3);
 		so_data  (so, cso->stencil[1].ref_value);
 		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, cso->stencil[1].valuemask);
 	} else {
-		so_method(so, tesla, 0x1594, 1);
+		so_method(so, tesla, NV50TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 

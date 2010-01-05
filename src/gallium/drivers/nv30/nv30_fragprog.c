@@ -435,10 +435,11 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_CMP:
-		tmp = temp(fpc);
-		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
+		tmp = nv30_sr(NV30SR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
+		dst.cc_test = NV30_VP_INST_COND_GE;
+		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
 		dst.cc_test = NV30_VP_INST_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
@@ -517,13 +518,28 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, RSQ, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
 		break;
 	case TGSI_OPCODE_SCS:
-		if (mask & MASK_X) {
-			arith(fpc, sat, COS, dst, MASK_X,
-			      swz(src[0], X, X, X, X), none, none);
+		/* avoid overwriting the source */
+		if(src[0].swz[SWZ_X] != SWZ_X)
+		{
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
-		if (mask & MASK_Y) {
-			arith(fpc, sat, SIN, dst, MASK_Y,
-			      swz(src[0], X, X, X, X), none, none);
+		else
+		{
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
 		break;
 	case TGSI_OPCODE_SIN:
@@ -870,6 +886,12 @@ void
 nv30_fragprog_destroy(struct nv30_context *nv30,
 		      struct nv30_fragment_program *fp)
 {
+	if (fp->buffer)
+		pipe_buffer_reference(&fp->buffer, NULL);
+
+	if (fp->so)
+		so_ref(NULL, &fp->so);
+
 	if (fp->insn_len)
 		FREE(fp->insn);
 }

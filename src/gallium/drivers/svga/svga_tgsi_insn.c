@@ -2109,7 +2109,7 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
    case TGSI_OPCODE_I2F:
    case TGSI_OPCODE_NOT:
    case TGSI_OPCODE_SHL:
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
    case TGSI_OPCODE_XOR:
       return FALSE;
 

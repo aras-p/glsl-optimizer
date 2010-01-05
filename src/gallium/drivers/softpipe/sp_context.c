@@ -176,6 +176,19 @@ softpipe_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
+static void
+softpipe_render_condition( struct pipe_context *pipe,
+                           struct pipe_query *query,
+                           uint mode )
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+
+   softpipe->render_cond_query = query;
+   softpipe->render_cond_mode = mode;
+}
+
+
+
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen )
 {
@@ -191,6 +204,7 @@ softpipe_create( struct pipe_screen *screen )
 #endif
 
    softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
+   softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
    softpipe->pipe.winsys = screen->winsys;
    softpipe->pipe.screen = screen;
@@ -222,6 +236,10 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
    softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
 
+   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
+   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
+   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
+
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
@@ -248,6 +266,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
+
+   softpipe->pipe.render_condition = softpipe_render_condition;
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.

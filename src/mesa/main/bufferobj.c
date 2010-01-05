@@ -1389,6 +1389,48 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
 }
 
 
+/**
+ * New in GL 3.2
+ * This is pretty much a duplicate of GetBufferParameteriv() but the
+ * GL_BUFFER_SIZE_ARB attribute will be 64-bits on a 64-bit system.
+ */
+void GLAPIENTRY
+_mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   bufObj = get_buffer(ctx, target);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "GetBufferParameteri64v(target)" );
+      return;
+   }
+   if (!_mesa_is_bufferobj(bufObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "GetBufferParameteri64v" );
+      return;
+   }
+
+   switch (pname) {
+      case GL_BUFFER_SIZE_ARB:
+         *params = bufObj->Size;
+         break;
+      case GL_BUFFER_USAGE_ARB:
+         *params = bufObj->Usage;
+         break;
+      case GL_BUFFER_ACCESS_ARB:
+         *params = simplified_access_mode(bufObj->AccessFlags);
+         break;
+      case GL_BUFFER_MAPPED_ARB:
+         *params = _mesa_bufferobj_mapped(bufObj);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname)");
+         return;
+   }
+}
+
+
 void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 {

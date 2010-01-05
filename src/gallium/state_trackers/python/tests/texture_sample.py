@@ -169,7 +169,7 @@ class TextureColorSampleTest(TestCase):
         sampler.normalized_coords = 1
         sampler.min_lod = 0
         sampler.max_lod = PIPE_MAX_TEXTURE_LEVELS - 1
-        ctx.set_sampler(0, sampler)
+        ctx.set_fragment_sampler(0, sampler)
     
         #  texture 
         texture = dev.texture_create(
@@ -189,7 +189,7 @@ class TextureColorSampleTest(TestCase):
             zslice = zslice,
         ).sample_rgba(expected_rgba)
         
-        ctx.set_sampler_texture(0, texture)
+        ctx.set_fragment_sampler_texture(0, texture)
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
@@ -359,7 +359,7 @@ class TextureDepthSampleTest(TestCase):
         sampler.normalized_coords = 1
         sampler.min_lod = 0
         sampler.max_lod = PIPE_MAX_TEXTURE_LEVELS - 1
-        ctx.set_sampler(0, sampler)
+        ctx.set_fragment_sampler(0, sampler)
     
         #  texture 
         texture = dev.texture_create(
@@ -379,7 +379,7 @@ class TextureDepthSampleTest(TestCase):
             zslice = zslice,
         ).sample_rgba(expected_rgba)
         
-        ctx.set_sampler_texture(0, texture)
+        ctx.set_fragment_sampler_texture(0, texture)
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(

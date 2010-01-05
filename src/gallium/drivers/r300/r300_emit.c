@@ -997,7 +997,7 @@ validate:
             goto validate;
         }
     } else {
-        // debug_printf("No VBO while emitting dirty state!\n");
+        /* debug_printf("No VBO while emitting dirty state!\n"); */
     }
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
@@ -1129,7 +1129,7 @@ validate:
     */
 
     /* Finally, emit the VBO. */
-    //r300_emit_vertex_buffer(r300);
+    /* r300_emit_vertex_buffer(r300); */
 
     r300->dirty_hw++;
 }

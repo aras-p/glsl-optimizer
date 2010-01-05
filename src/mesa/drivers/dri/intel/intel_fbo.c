@@ -427,7 +427,8 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       DBG("Render to DEPTH_STENCIL texture OK\n");
    }
    else {
-      DBG("Render to texture BAD FORMAT %d\n", texImage->TexFormat);
+      DBG("Render to texture BAD FORMAT %s\n",
+	  _mesa_get_format_name(texImage->TexFormat));
       return GL_FALSE;
    }
 
@@ -590,11 +591,21 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
    int i;
 
-   if (stencilRb && stencilRb != depthRb) {
-      /* we only support combined depth/stencil buffers, not separate
-       * stencil buffers.
-       */
-      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   if (depthRb && stencilRb && stencilRb != depthRb) {
+      if (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
+	  ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
+	  (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Texture->Name ==
+	   ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Texture->Name)) {
+	 /* OK */
+      } else {
+	 /* we only support combined depth/stencil buffers, not separate
+	  * stencil buffers.
+	  */
+	 DBG("Only supports combined depth/stencil (found %s, %s)\n",
+	     depthRb ? _mesa_get_format_name(depthRb->Base.Format): "NULL",
+	     stencilRb ? _mesa_get_format_name(stencilRb->Base.Format): "NULL");
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      }
    }
 
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
@@ -605,6 +616,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	 continue;
 
       if (irb == NULL) {
+	 DBG("software rendering renderbuffer\n");
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 continue;
       }

@@ -83,10 +83,10 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
             ctx->Depth.Test ||
             ctx->Fog.Enabled ||
             ctx->Stencil._Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
+            !ctx->Color.ColorMask[0][0] ||
+            !ctx->Color.ColorMask[0][1] ||
+            !ctx->Color.ColorMask[0][2] ||
+            !ctx->Color.ColorMask[0][3] ||
             ctx->Texture._EnabledUnits ||
 	    ctx->FragmentProgram._Enabled ||
 	    ctx->Color.BlendEnabled);

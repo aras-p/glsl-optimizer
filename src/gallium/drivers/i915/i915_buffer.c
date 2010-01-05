@@ -111,6 +111,7 @@ i915_buffer_unmap(struct pipe_screen *screen,
 {
    struct i915_buffer *buf = i915_buffer(buffer);
    assert(!buf->ibuf);
+   (void) buf;
 }
 
 static void

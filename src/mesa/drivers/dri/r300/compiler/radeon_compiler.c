@@ -232,12 +232,16 @@ void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_ou
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input)
 {
 	unsigned tempregi = rc_find_free_temporary(c);
+	struct rc_instruction * inst_rcp;
+	struct rc_instruction * inst_mul;
+	struct rc_instruction * inst_mad;
+	struct rc_instruction * inst;
 
 	c->Program.InputsRead &= ~(1 << wpos);
 	c->Program.InputsRead |= 1 << new_input;
 
 	/* perspective divide */
-	struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, &c->Program.Instructions);
+	inst_rcp = rc_insert_new_instruction(c, &c->Program.Instructions);
 	inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
 
 	inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
@@ -248,7 +252,7 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 	inst_rcp->U.I.SrcReg[0].Index = new_input;
 	inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
 
-	struct rc_instruction * inst_mul = rc_insert_new_instruction(c, inst_rcp);
+	inst_mul = rc_insert_new_instruction(c, inst_rcp);
 	inst_mul->U.I.Opcode = RC_OPCODE_MUL;
 
 	inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
@@ -263,7 +267,7 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 	inst_mul->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
 
 	/* viewport transformation */
-	struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_mul);
+	inst_mad = rc_insert_new_instruction(c, inst_mul);
 	inst_mad->U.I.Opcode = RC_OPCODE_MAD;
 
 	inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
@@ -282,7 +286,6 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 	inst_mad->U.I.SrcReg[2].Index = inst_mad->U.I.SrcReg[1].Index;
 	inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
 
-	struct rc_instruction * inst;
 	for (inst = inst_mad->Next; inst != &c->Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		unsigned i;

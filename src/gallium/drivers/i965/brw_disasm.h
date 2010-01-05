@@ -23,6 +23,8 @@
 #ifndef BRW_DISASM_H
 #define BRW_DISASM_H
 
+#include <stdio.h>
+
 struct brw_instruction;
 
 int brw_disasm_insn (FILE *file, const struct brw_instruction *inst);

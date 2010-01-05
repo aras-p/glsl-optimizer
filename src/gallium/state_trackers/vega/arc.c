@@ -528,7 +528,6 @@ static INLINE int num_beziers_needed(struct arc *arc)
    double threshold = 0.05;
    VGboolean found = VG_FALSE;
    int n = 1;
-   int i;
    double min_eta, max_eta;
 
    min_eta = MIN2(arc->eta1, arc->eta2);
@@ -538,6 +537,7 @@ static INLINE int num_beziers_needed(struct arc *arc)
       double d_eta = (max_eta - min_eta) / n;
       if (d_eta <= 0.5 * M_PI) {
          double eta_b = min_eta;
+         int i;
          found = VG_TRUE;
          for (i = 0; found && (i < n); ++i) {
             double etaA = eta_b;

@@ -1,11 +1,4 @@
-Import('env')
-
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(LIBS = ['$GLUT_LIB'])
+Import('*')
 
 progs = [
     'clear-fbo-tex',
@@ -154,7 +147,7 @@ progs = [
 ]
 
 for prog in progs:
-    prog = env.Program(
+    prog = progs_env.Program(
         target = prog,
         source = prog + '.c',
     )

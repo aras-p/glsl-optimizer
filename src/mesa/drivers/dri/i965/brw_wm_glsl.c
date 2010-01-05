@@ -743,7 +743,7 @@ static void emit_kil(struct brw_wm_compile *c)
     struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
     brw_push_insn_state(p);
     brw_set_mask_control(p, BRW_MASK_DISABLE);
-    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
     brw_AND(p, depth, c->emit_mask_reg, depth);
     brw_pop_insn_state(p);
 }
@@ -1877,10 +1877,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
 
-	dst_flags = inst->DstReg.WriteMask;
-	if (inst->SaturateMode == SATURATE_ZERO_ONE)
-	    dst_flags |= SATURATE;
-
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
 		emit_pixel_xy(c, dst, dst_flags);
@@ -2044,6 +2040,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_ELSE:
+		assert(if_depth > 0);
 		if_inst[if_depth-1]  = brw_ELSE(p, if_inst[if_depth-1]);
 		break;
 	    case OPCODE_ENDIF:
@@ -2099,7 +2096,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
                   if (intel->is_ironlake)
                      br = 2;
- 
+
+		  assert(loop_depth > 0);
                   loop_depth--;
                   inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
                   /* patch all the BREAK/CONT instructions from last BGNLOOP */

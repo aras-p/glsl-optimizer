@@ -11,10 +11,11 @@ if env['platform'] in ['windows']:
     	'.',
     ])
      
-    env.Append(CPPDEFINES = [
+    env.AppendUnique(CPPDEFINES = [
         '_GDI32_', # prevent wgl* being declared __declspec(dllimport)
         'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
         'WIN32_THREADS', # use Win32 thread API
+        'WIN32_LEAN_AND_MEAN', # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx
     ])
      
     sources = [

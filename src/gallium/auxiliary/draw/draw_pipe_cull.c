@@ -55,7 +55,7 @@ static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
 static void cull_tri( struct draw_stage *stage,
 		      struct prim_header *header )
 {
-   const unsigned pos = stage->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(stage->draw);
 
    /* Window coords: */
    const float *v0 = header->v[0]->data[pos];

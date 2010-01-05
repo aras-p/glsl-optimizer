@@ -83,6 +83,7 @@ static struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
+#if 0
 static struct dri_extension card_extensions_6326[] =
 {
     /*{ "GL_ARB_texture_border_clamp",       NULL },*/
@@ -90,6 +91,7 @@ static struct dri_extension card_extensions_6326[] =
     /*{ "GL_MESA_ycbcr_texture",             NULL },*/
     { NULL,                                NULL }
 };
+#endif
 
 static const struct dri_debug_control debug_control[] =
 {

@@ -454,6 +454,8 @@ _fetch_token(struct parse_context *ctx,
       case SL_PP_EOF:
          ctx->tokens_read++;
          break;
+      default:
+         ; /* no-op */
       }
    }
    return &ctx->tokens[pos];

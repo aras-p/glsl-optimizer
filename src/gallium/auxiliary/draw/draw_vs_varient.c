@@ -148,11 +148,12 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                              (const float (*)[4])vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);
 
+   /* FIXME: geometry shading? */
 
    if (vsvg->base.key.clip) {
       /* not really handling clipping, just do the rhw so we can
@@ -210,7 +211,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                              (const float (*)[4])vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);

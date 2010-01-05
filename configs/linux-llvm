@@ -6,8 +6,6 @@ include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-llvm
 
-#GALLIUM_AUXILIARY_DIRS += gallivm
-
 # Add llvmpipe driver
 GALLIUM_DRIVERS_DIRS += llvmpipe
 

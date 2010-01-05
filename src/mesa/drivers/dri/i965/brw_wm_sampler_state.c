@@ -262,10 +262,10 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0]
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0]
 	    };
 	    /* GL specs that border color for depth textures is taken from the
 	     * R channel, while the hardware uses A.  Spam R into all the
@@ -274,7 +274,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw, bordercolor);
 	 } else {
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw,
-							texObj->BorderColor);
+							texObj->BorderColor.f);
 	 }
 	 key->sampler_count = unit + 1;
       }

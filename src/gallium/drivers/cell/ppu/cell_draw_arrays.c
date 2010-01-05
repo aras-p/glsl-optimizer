@@ -59,7 +59,7 @@ cell_map_constant_buffers(struct cell_context *sp)
       }
    }
 
-   draw_set_mapped_constant_buffer(sp->draw,
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX,
                                    sp->mapped_constants[PIPE_SHADER_VERTEX],
                                    sp->constants[PIPE_SHADER_VERTEX].buffer->size);
 }

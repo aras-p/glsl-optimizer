@@ -673,7 +673,12 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   llvmpipe->fs = (struct lp_fragment_shader *) fs;
+   if (llvmpipe->fs == fs)
+      return;
+
+   draw_flush(llvmpipe->draw);
+
+   llvmpipe->fs = fs;
 
    llvmpipe->dirty |= LP_NEW_FS;
 }
@@ -688,6 +693,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct lp_fragment_shader_variant *variant;
 
    assert(fs != llvmpipe->fs);
+   (void) llvmpipe;
 
    variant = shader->variants;
    while(variant) {
@@ -723,8 +729,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   if(shader == PIPE_SHADER_VERTEX)
-      draw_flush(llvmpipe->draw);
+   draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
    pipe_buffer_reference(&llvmpipe->constants[shader].buffer, buffer);
@@ -734,7 +739,8 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    }
 
    if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(llvmpipe->draw, data, size);
+      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX,
+                                      data, size);
    }
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;

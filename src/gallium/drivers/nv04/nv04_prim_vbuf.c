@@ -93,7 +93,7 @@ nv04_vbuf_render_set_primitive( struct vbuf_render *render,
 
 static INLINE void nv04_2triangles(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2, ushort v3, ushort v4, ushort v5)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xA),49);
+	BEGIN_RING(fahrenheit,NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xA),49);
 	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
@@ -105,7 +105,7 @@ static INLINE void nv04_2triangles(struct nv04_context* nv04, unsigned char* buf
 
 static INLINE void nv04_1triangle(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xD),25);
+	BEGIN_RING(fahrenheit,NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xD),25);
 	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
@@ -114,7 +114,7 @@ static INLINE void nv04_1triangle(struct nv04_context* nv04, unsigned char* buff
 
 static INLINE void nv04_1quad(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2, ushort v3)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xC),33);
+	BEGIN_RING(fahrenheit,NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xC),33);
 	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
 	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
@@ -166,11 +166,11 @@ static void nv04_vbuf_render_tri_strip_elts(struct nv04_vbuf_render* render, con
 		if (numvert<3)
 			break;
 
-		BEGIN_RING( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), numvert*8 );
+		BEGIN_RING( fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), numvert*8 );
 		for(j = 0; j<numvert; j++)
 			OUT_RINGp( buffer + VERTEX_SIZE * indices [i+j], 8 );
 
-		BEGIN_RING_NI( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2 );
+		BEGIN_RING_NI( fahrenheit, NV04_TEXTURED_TRIANGLE_DRAWPRIMITIVE(0), (numtri+1)/2 );
 		for(j = 0; j<numtri/2; j++ )
 			OUT_RING(striptbl[j]);
 		if (numtri%2)
@@ -185,7 +185,7 @@ static void nv04_vbuf_render_tri_fan_elts(struct nv04_vbuf_render* render, const
 	struct nv04_context* nv04 = render->nv04;
 	int i,j;
 
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), 8);
+	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), 8);
 	OUT_RINGp(buffer + VERTEX_SIZE * indices[0], 8);
 
 	for(i = 1; i<nr_indices; i+=14)
@@ -195,12 +195,12 @@ static void nv04_vbuf_render_tri_fan_elts(struct nv04_vbuf_render* render, const
 		if (numvert < 3)
 			break;
 
-		BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x1), numvert*8);
+		BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x1), numvert*8);
 
 		for(j=0;j<numvert;j++)
 			OUT_RINGp( buffer + VERTEX_SIZE * indices[ i+j ], 8 );
 
-		BEGIN_RING_NI(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2);
+		BEGIN_RING_NI(fahrenheit, NV04_TEXTURED_TRIANGLE_DRAWPRIMITIVE(0), (numtri+1)/2);
 		for(j = 0; j<numtri/2; j++)
 			OUT_RING(fantbl[j]);
 		if (numtri%2)

@@ -154,26 +154,17 @@ struct nv50_pc {
 	int if_lvl, loop_lvl;
 	unsigned loop_pos[NV50_MAX_LOOP_NESTING];
 
+	unsigned *insn_pos; /* actual program offset of each TGSI insn */
+	boolean in_subroutine;
+
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
 	unsigned insn_nr;
 
 	boolean allow32;
+
+	uint8_t edgeflag_out;
 };
-
-static INLINE struct nv50_reg *
-reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
-{
-	struct nv50_reg *ri;
-
-	assert(pc->reg_instance_nr < 16);
-	ri = &pc->reg_instances[pc->reg_instance_nr++];
-	if (reg) {
-		*ri = *reg;
-		reg->mod = 0;
-	}
-	return ri;
-}
 
 static INLINE void
 ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
@@ -253,6 +244,21 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 	assert(0);
 }
 
+static INLINE struct nv50_reg *
+reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
+{
+	struct nv50_reg *ri;
+
+	assert(pc->reg_instance_nr < 16);
+	ri = &pc->reg_instances[pc->reg_instance_nr++];
+	if (reg) {
+		alloc_reg(pc, reg);
+		*ri = *reg;
+		reg->mod = 0;
+	}
+	return ri;
+}
+
 /* XXX: For shaders that aren't executed linearly (e.g. shaders that
  * contain loops), we need to assign all hw regs to TGSI TEMPs early,
  * lest we risk temp_temps overwriting regs alloc'd "later".
@@ -277,22 +283,6 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 
 	assert(0);
 	return NULL;
-}
-
-/* Assign the hw of the discarded temporary register src
- * to the tgsi register dst and free src.
- */
-static void
-assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
-{
-	assert(src->index == -1 && src->hw != -1);
-
-	if (dst->hw != -1)
-		pc->r_temp[dst->hw] = NULL;
-	pc->r_temp[src->hw] = dst;
-	dst->hw = src->hw;
-
-	FREE(src);
 }
 
 /* release the hardware resource held by r */
@@ -451,10 +441,19 @@ is_immd(struct nv50_program_exec *e)
 	return FALSE;
 }
 
+static boolean
+is_join(struct nv50_program_exec *e)
+{
+	if (is_long(e) && (e->inst[1] & 3) == 2)
+		return TRUE;
+	return FALSE;
+}
+
 static INLINE void
 set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx,
 	 struct nv50_program_exec *e)
 {
+	assert(!is_immd(e));
 	set_long(pc, e);
 	e->inst[1] &= ~((0x1f << 7) | (0x3 << 12));
 	e->inst[1] |= (pred << 7) | (idx << 12);
@@ -497,15 +496,6 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	union {
-		float f;
-		uint32_t ui;
-	} u;
-	u.ui = pc->immd_buf[imm->hw];
-
-	u.f = (imm->mod & NV50_MOD_ABS) ? fabsf(u.f) : u.f;
-	u.f = (imm->mod & NV50_MOD_NEG) ? -u.f : u.f;
-
 	set_long(pc, e);
 	/* XXX: can't be predicated - bits overlap; cases where both
 	 * are required should be avoided by using pc->allow32 */
@@ -513,8 +503,8 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 	set_pred_wr(pc, 0, 0, e);
 
 	e->inst[1] |= 0x00000002 | 0x00000001;
-	e->inst[0] |= (u.ui & 0x3f) << 16;
-	e->inst[1] |= (u.ui >> 6) << 2;
+	e->inst[0] |= (pc->immd_buf[imm->hw] & 0x3f) << 16;
+	e->inst[1] |= (pc->immd_buf[imm->hw] >> 6) << 2;
 }
 
 static INLINE void
@@ -663,6 +653,7 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
 }
 
+/* Never apply nv50_reg::mod in emit_mov, or carefully check the code !!! */
 static void
 emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
@@ -713,6 +704,34 @@ emit_mov_immdval(struct nv50_pc *pc, struct nv50_reg *dst, float f)
 	struct nv50_reg *imm = alloc_immd(pc, f);
 	emit_mov(pc, dst, imm);
 	FREE(imm);
+}
+
+/* Assign the hw of the discarded temporary register src
+ * to the tgsi register dst and free src.
+ */
+static void
+assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	assert(src->index == -1 && src->hw != -1);
+
+	if (pc->if_lvl || pc->loop_lvl ||
+	    (dst->type != P_TEMP) ||
+	    (src->hw < pc->result_nr * 4 &&
+	     pc->p->type == PIPE_SHADER_FRAGMENT) ||
+	    pc->p->info.opcode_count[TGSI_OPCODE_CAL] ||
+	    pc->p->info.opcode_count[TGSI_OPCODE_BRA]) {
+
+		emit_mov(pc, dst, src);
+		free_temp(pc, src);
+		return;
+	}
+
+	if (dst->hw != -1)
+		pc->r_temp[dst->hw] = NULL;
+	pc->r_temp[src->hw] = dst;
+	dst->hw = src->hw;
+
+	FREE(src);
 }
 
 static void
@@ -886,7 +905,7 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
 	if (src1->type == P_IMMD && !is_long(e)) {
-		if (src0->mod & NV50_MOD_NEG)
+		if (src0->mod ^ src1->mod)
 			e->inst[0] |= 0x00008000;
 		set_immd(pc, src1, e);
 	} else {
@@ -997,6 +1016,8 @@ emit_bitop2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	    op != TGSI_OPCODE_XOR)
 		assert(!"invalid bit op");
 
+	assert(!(src0->mod | src1->mod));
+
 	if (src1->type == P_IMMD && src0->type == P_TEMP && pc->allow32) {
 		set_immd(pc, src1, e);
 		if (op == TGSI_OPCODE_OR)
@@ -1048,6 +1069,14 @@ emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	src2->mod ^= NV50_MOD_NEG;
 }
 
+#define NV50_FLOP_RCP 0
+#define NV50_FLOP_RSQ 2
+#define NV50_FLOP_LG2 3
+#define NV50_FLOP_SIN 4
+#define NV50_FLOP_COS 5
+#define NV50_FLOP_EX2 6
+
+/* rcp, rsqrt, lg2 support neg and abs */
 static void
 emit_flop(struct nv50_pc *pc, unsigned sub,
 	  struct nv50_reg *dst, struct nv50_reg *src)
@@ -1055,17 +1084,20 @@ emit_flop(struct nv50_pc *pc, unsigned sub,
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] |= 0x90000000;
-	if (sub) {
+	if (sub || src->mod) {
 		set_long(pc, e);
 		e->inst[1] |= (sub << 29);
 	}
 
 	set_dst(pc, dst, e);
+	set_src_0_restricted(pc, src, e);
 
-	if (sub == 0 || sub == 2)
-		set_src_0_restricted(pc, src, e);
-	else
-		set_src_0(pc, src, e);
+	assert(!src->mod || sub < 4);
+
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
 
 	emit(pc, e);
 }
@@ -1082,6 +1114,11 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	set_long(pc, e);
 	e->inst[1] |= (6 << 29) | 0x00004000;
 
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
+
 	emit(pc, e);
 }
 
@@ -1096,6 +1133,11 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	set_src_0(pc, src, e);
 	set_long(pc, e);
 	e->inst[1] |= (6 << 29);
+
+	if (src->mod & NV50_MOD_NEG)
+		e->inst[1] |= 0x04000000;
+	if (src->mod & NV50_MOD_ABS)
+		e->inst[1] |= 0x00100000;
 
 	emit(pc, e);
 }
@@ -1231,10 +1273,10 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 {
 	struct nv50_reg *temp = alloc_temp(pc, NULL);
 
-	emit_flop(pc, 3, temp, v);
+	emit_flop(pc, NV50_FLOP_LG2, temp, v);
 	emit_mul(pc, temp, temp, e);
 	emit_preex2(pc, temp, temp);
-	emit_flop(pc, 6, dst, temp);
+	emit_flop(pc, NV50_FLOP_EX2, dst, temp);
 
 	free_temp(pc, temp);
 }
@@ -1336,66 +1378,53 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static struct nv50_program_exec *
+emit_control_flow(struct nv50_pc *pc, unsigned op, int pred, unsigned cc)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = (op << 28) | 2;
+	set_long(pc, e);
+	if (pred >= 0)
+		set_pred(pc, cc, pred, e);
+
+	emit(pc, e);
+	return e;
+}
+
+static INLINE struct nv50_program_exec *
 emit_breakaddr(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x40000002;
-	set_long(pc, e);
-
-	emit(pc, e);
-	return e;
+	return emit_control_flow(pc, 0x4, -1, 0);
 }
 
-static void
+static INLINE void
 emit_break(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x50000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-
-	emit(pc, e);
+	emit_control_flow(pc, 0x5, pred, cc);
 }
 
-static struct nv50_program_exec *
+static INLINE struct nv50_program_exec *
 emit_joinat(struct nv50_pc *pc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xa0000002;
-	set_long(pc, e);
-
-	emit(pc, e);
-	return e;
+	return emit_control_flow(pc, 0xa, -1, 0);
 }
 
-static struct nv50_program_exec *
+static INLINE struct nv50_program_exec *
 emit_branch(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x10000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-	emit(pc, e);
-	return pc->p->exec_tail;
+	return emit_control_flow(pc, 0x1, pred, cc);
 }
 
-static void
+static INLINE struct nv50_program_exec *
+emit_call(struct nv50_pc *pc, int pred, unsigned cc)
+{
+	return emit_control_flow(pc, 0x2, pred, cc);
+}
+
+static INLINE void
 emit_ret(struct nv50_pc *pc, int pred, unsigned cc)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0x30000002;
-	set_long(pc, e);
-	if (pred >= 0)
-		set_pred(pc, cc, pred, e);
-
-	emit(pc, e);
+	emit_control_flow(pc, 0x3, pred, cc);
 }
 
 #define QOP_ADD 0
@@ -1458,7 +1487,7 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 	if (arg == 4) /* there is no textureProj(samplerCubeShadow) */
 		emit_mov(pc, t[3], src[3]);
 
-	emit_flop(pc, 0, t[2], t[2]);
+	emit_flop(pc, NV50_FLOP_RCP, t[2], t[2]);
 
 	emit_mul(pc, t[0], src[0], t[2]);
 	emit_mul(pc, t[1], src[1], t[2]);
@@ -1476,7 +1505,7 @@ load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 
 		t[3]->rhw = src[3]->rhw;
 		emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
-		emit_flop(pc, 0, t[3], t[3]);
+		emit_flop(pc, NV50_FLOP_RCP, t[3], t[3]);
 
 		for (c = 0; c < dim; ++c) {
 			t[c]->rhw = src[c]->rhw;
@@ -1490,7 +1519,7 @@ load_proj_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 		/* XXX: for some reason the blob sometimes uses MAD
 		 * (mad f32 $rX $rY $rZ neg $r63)
 		 */
-		emit_flop(pc, 0, t[3], src[3]);
+		emit_flop(pc, NV50_FLOP_RCP, t[3], src[3]);
 		for (c = 0; c < dim; ++c)
 			emit_mul(pc, t[c], src[c], t[3]);
 		if (arg != dim) /* depth reference value */
@@ -1537,7 +1566,13 @@ emit_texlod_sequence(struct nv50_pc *pc, struct nv50_reg *tlod,
 		     struct nv50_reg *src, struct nv50_program_exec *tex)
 {
 	struct nv50_program_exec *join_at;
-	unsigned i, target = pc->p->exec_size + 7 * 2;
+	unsigned i, target = pc->p->exec_size + 9 * 2;
+
+	if (pc->p->type != PIPE_SHADER_FRAGMENT) {
+		emit(pc, tex);
+		return;
+	}
+	pc->allow32 = FALSE;
 
 	/* Subtract lod of each pixel from lod of top left pixel, jump
 	 * texlod insn if result is 0, then repeat for 2 other pixels.
@@ -1663,6 +1698,7 @@ emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 		emit(pc, e);
 	} else
 	if (bias_lod < 0) {
+		assert(pc->p->type == PIPE_SHADER_FRAGMENT);
 		e->inst[0] |= arg << 22;
 		e->inst[1] |= 0x20000000; /* texbias */
 		emit_mov(pc, t[arg], src[3]);
@@ -1782,20 +1818,24 @@ static boolean
 negate_supported(const struct tgsi_full_instruction *insn, int i)
 {
 	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_ADD:
+	case TGSI_OPCODE_COS:
 	case TGSI_OPCODE_DDX:
 	case TGSI_OPCODE_DDY:
 	case TGSI_OPCODE_DP3:
 	case TGSI_OPCODE_DP4:
-	case TGSI_OPCODE_MUL:
+	case TGSI_OPCODE_EX2:
 	case TGSI_OPCODE_KIL:
-	case TGSI_OPCODE_ADD:
-	case TGSI_OPCODE_SUB:
+	case TGSI_OPCODE_LG2:
 	case TGSI_OPCODE_MAD:
-		return TRUE;
+	case TGSI_OPCODE_MUL:
 	case TGSI_OPCODE_POW:
-		if (i == 1)
-			return TRUE;
-		return FALSE;
+	case TGSI_OPCODE_RCP:
+	case TGSI_OPCODE_RSQ: /* ignored, RSQ = rsqrt(abs(src.x)) */
+	case TGSI_OPCODE_SCS:
+	case TGSI_OPCODE_SIN:
+	case TGSI_OPCODE_SUB:
+		return TRUE;
 	default:
 		return FALSE;
 	}
@@ -1820,7 +1860,9 @@ nv50_tgsi_src_mask(const struct tgsi_full_instruction *insn, int c)
 	case TGSI_OPCODE_DST:
 		return mask & (c ? 0xa : 0x6);
 	case TGSI_OPCODE_EX2:
+	case TGSI_OPCODE_EXP:
 	case TGSI_OPCODE_LG2:
+	case TGSI_OPCODE_LOG:
 	case TGSI_OPCODE_POW:
 	case TGSI_OPCODE_RCP:
 	case TGSI_OPCODE_RSQ:
@@ -2042,6 +2084,8 @@ nv50_tgsi_dst_revdep(unsigned op, int s, int c)
 			assert(0);
 			return 0x0;
 		}
+	case TGSI_OPCODE_EXP:
+	case TGSI_OPCODE_LOG:
 	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_TEX:
@@ -2081,6 +2125,8 @@ nv50_kill_branch(struct nv50_pc *pc)
 	int lvl = pc->if_lvl;
 
 	if (pc->if_insn[lvl]->next != pc->p->exec_tail)
+		return FALSE;
+	if (is_immd(pc->p->exec_tail))
 		return FALSE;
 
 	/* if ccode == 'true', the BRA is from an ELSE and the predicate
@@ -2215,9 +2261,21 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->loop_pos[pc->loop_lvl++] = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_BGNSUB:
+		assert(!pc->in_subroutine);
+		pc->in_subroutine = TRUE;
+		/* probably not necessary, but align to 8 byte boundary */
+		if (!is_long(pc->p->exec_tail))
+			convert_to_long(pc, pc->p->exec_tail);
+		break;
 	case TGSI_OPCODE_BRK:
 		assert(pc->loop_lvl > 0);
 		emit_break(pc, -1, 0);
+		break;
+	case TGSI_OPCODE_CAL:
+		assert(inst->Label.Label < pc->insn_nr);
+		emit_call(pc, -1, 0)->param.index = inst->Label.Label;
+		/* replaced by actual offset in nv50_program_fixup_insns */
 		break;
 	case TGSI_OPCODE_CEIL:
 		for (c = 0; c < 4; c++) {
@@ -2239,17 +2297,22 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			set_pred(pc, 0x6, 1, pc->p->exec_tail); /* @NSF */
 		}
 		break;
+	case TGSI_OPCODE_CONT:
+		assert(pc->loop_lvl > 0);
+		emit_branch(pc, -1, 0)->param.index =
+			pc->loop_pos[pc->loop_lvl - 1];
+		break;
 	case TGSI_OPCODE_COS:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
-			emit_flop(pc, 5, dst[3], temp);
+			emit_flop(pc, NV50_FLOP_COS, dst[3], temp);
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
 				temp = brdc = temp_temp(pc);
 		}
 		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 5, brdc, temp);
+		emit_flop(pc, NV50_FLOP_COS, brdc, temp);
 		break;
 	case TGSI_OPCODE_DDX:
 		for (c = 0; c < 4; c++) {
@@ -2321,9 +2384,40 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->loop_brka[pc->loop_lvl]->param.index = pc->p->exec_size;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_ENDSUB:
+		assert(pc->in_subroutine);
+		pc->in_subroutine = FALSE;
+		break;
 	case TGSI_OPCODE_EX2:
 		emit_preex2(pc, temp, src[0][0]);
-		emit_flop(pc, 6, brdc, temp);
+		emit_flop(pc, NV50_FLOP_EX2, brdc, temp);
+		break;
+	case TGSI_OPCODE_EXP:
+	{
+		struct nv50_reg *t[2];
+
+		assert(!temp);
+		t[0] = temp_temp(pc);
+		t[1] = temp_temp(pc);
+
+		if (mask & 0x6)
+			emit_mov(pc, t[0], src[0][0]);
+		if (mask & 0x3)
+			emit_flr(pc, t[1], src[0][0]);
+
+		if (mask & (1 << 1))
+			emit_sub(pc, dst[1], t[0], t[1]);
+		if (mask & (1 << 0)) {
+			emit_preex2(pc, t[1], t[1]);
+			emit_flop(pc, NV50_FLOP_EX2, dst[0], t[1]);
+		}
+		if (mask & (1 << 2)) {
+			emit_preex2(pc, t[0], t[0]);
+			emit_flop(pc, NV50_FLOP_EX2, dst[2], t[0]);
+		}
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0f);
+	}
 		break;
 	case TGSI_OPCODE_FLR:
 		for (c = 0; c < 4; c++) {
@@ -2363,7 +2457,35 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
-		emit_flop(pc, 3, brdc, src[0][0]);
+		emit_flop(pc, NV50_FLOP_LG2, brdc, src[0][0]);
+		break;
+	case TGSI_OPCODE_LOG:
+	{
+		struct nv50_reg *t[2];
+
+		t[0] = temp_temp(pc);
+		if (mask & (1 << 1))
+			t[1] = temp_temp(pc);
+		else
+			t[1] = t[0];
+
+		emit_abs(pc, t[0], src[0][0]);
+		emit_flop(pc, NV50_FLOP_LG2, t[1], t[0]);
+		if (mask & (1 << 2))
+			emit_mov(pc, dst[2], t[1]);
+		emit_flr(pc, t[1], t[1]);
+		if (mask & (1 << 0))
+			emit_mov(pc, dst[0], t[1]);
+		if (mask & (1 << 1)) {
+			t[1]->mod = NV50_MOD_NEG;
+			emit_preex2(pc, t[1], t[1]);
+			t[1]->mod = 0;
+			emit_flop(pc, NV50_FLOP_EX2, t[1], t[1]);
+			emit_mul(pc, dst[1], t[0], t[1]);
+		}
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0f);
+	}
 		break;
 	case TGSI_OPCODE_LRP:
 		temp = temp_temp(pc);
@@ -2413,24 +2535,25 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_pow(pc, brdc, src[0][0], src[1][0]);
 		break;
 	case TGSI_OPCODE_RCP:
-		emit_flop(pc, 0, brdc, src[0][0]);
+		emit_flop(pc, NV50_FLOP_RCP, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_RET:
-		if (pc->p->type == PIPE_SHADER_FRAGMENT)
+		if (pc->p->type == PIPE_SHADER_FRAGMENT && !pc->in_subroutine)
 			nv50_fp_move_results(pc);
 		emit_ret(pc, -1, 0);
 		break;
 	case TGSI_OPCODE_RSQ:
-		emit_flop(pc, 2, brdc, src[0][0]);
+		src[0][0]->mod |= NV50_MOD_ABS;
+		emit_flop(pc, NV50_FLOP_RSQ, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_SCS:
 		temp = temp_temp(pc);
 		if (mask & 3)
 			emit_precossin(pc, temp, src[0][0]);
 		if (mask & (1 << 0))
-			emit_flop(pc, 5, dst[0], temp);
+			emit_flop(pc, NV50_FLOP_COS, dst[0], temp);
 		if (mask & (1 << 1))
-			emit_flop(pc, 4, dst[1], temp);
+			emit_flop(pc, NV50_FLOP_SIN, dst[1], temp);
 		if (mask & (1 << 2))
 			emit_mov_immdval(pc, dst[2], 0.0);
 		if (mask & (1 << 3))
@@ -2439,14 +2562,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_SIN:
 		if (mask & 8) {
 			emit_precossin(pc, temp, src[0][3]);
-			emit_flop(pc, 4, dst[3], temp);
+			emit_flop(pc, NV50_FLOP_SIN, dst[3], temp);
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
 				temp = brdc = temp_temp(pc);
 		}
 		emit_precossin(pc, temp, src[0][0]);
-		emit_flop(pc, 4, brdc, temp);
+		emit_flop(pc, NV50_FLOP_SIN, brdc, temp);
 		break;
 	case TGSI_OPCODE_SLT:
 	case TGSI_OPCODE_SGE:
@@ -2510,6 +2633,17 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mov_immdval(pc, dst[3], 1.0);
 		break;
 	case TGSI_OPCODE_END:
+		if (pc->p->type == PIPE_SHADER_FRAGMENT)
+			nv50_fp_move_results(pc);
+
+		/* last insn must be long so it can have the exit bit set */
+		if (!is_long(pc->p->exec_tail))
+			convert_to_long(pc, pc->p->exec_tail);
+		else
+		if (is_immd(pc->p->exec_tail) || is_join(pc->p->exec_tail))
+			emit_nop(pc);
+
+		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
 		break;
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", inst->Instruction.Opcode);
@@ -2554,10 +2688,16 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 	mask = dst->WriteMask;
 
         if (dst->File == TGSI_FILE_TEMPORARY)
-                reg = pc->temp;
+		reg = pc->temp;
         else
-        if (dst->File == TGSI_FILE_OUTPUT)
-                reg = pc->result;
+	if (dst->File == TGSI_FILE_OUTPUT) {
+		reg = pc->result;
+
+		if (insn->Instruction.Opcode == TGSI_OPCODE_MOV &&
+		    dst->Index == pc->edgeflag_out &&
+		    insn->Src[0].Register.File == TGSI_FILE_INPUT)
+			pc->p->cfg.edgeflag_in = insn->Src[0].Register.Index;
+	}
 
 	if (reg) {
 		for (c = 0; c < 4; c++) {
@@ -2724,7 +2864,7 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 	pc->r_brdc = NULL;
 
-	if (!deqs)
+	if (!deqs || (!rdep[0] && !rdep[1] && !rdep[2] && !rdep[3]))
 		return nv50_program_tx_insn(pc, &insn);
 
 	deqs = nv50_revdep_reorder(m, rdep);
@@ -2775,7 +2915,7 @@ load_interpolant(struct nv50_pc *pc, struct nv50_reg *reg)
 		iv->rhw = popcnt4(pc->p->cfg.regs[1] >> 24) - 1;
 
 		emit_interp(pc, iv, NULL, mode & INTERP_CENTROID);
-		emit_flop(pc, 0, iv, iv);
+		emit_flop(pc, NV50_FLOP_RCP, iv, iv);
 
 		/* XXX: when loading interpolants dynamically, move these
 		 * to the program head, or make sure it can't be skipped.
@@ -2855,6 +2995,9 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					p->cfg.psiz = first;
 					if (p->cfg.io_nr > first)
 						p->cfg.io_nr = first;
+					break;
+				case TGSI_SEMANTIC_EDGEFLAG:
+					pc->edgeflag_out = first;
 					break;
 					/*
 				case TGSI_SEMANTIC_CLIP_DISTANCE:
@@ -3104,6 +3247,8 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 	p->cfg.two_side[0].hw = 0x40;
 	p->cfg.two_side[1].hw = 0x40;
 
+	p->cfg.edgeflag_in = pc->edgeflag_out = 0xff;
+
 	switch (p->type) {
 	case PIPE_SHADER_VERTEX:
 		p->cfg.psiz = 0x40;
@@ -3192,16 +3337,6 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 		if (e->param.index >= 0 && !e->param.mask)
 			bra_list[n++] = e;
 
-	/* last instruction must be long so it can have the exit bit set */
-	if (!is_long(pc->p->exec_tail))
-		convert_to_long(pc, pc->p->exec_tail);
-	/* set exit bit */
-	pc->p->exec_tail->inst[1] |= 1;
-
-	/* !immd on exit insn simultaneously means !join */
-	assert(!is_immd(pc->p->exec_head));
-	assert(!is_immd(pc->p->exec_tail));
-
 	/* Make sure we don't have any single 32 bit instructions. */
 	for (e = pc->p->exec_head, pos = 0; e; e = e->next) {
 		pos += is_long(e) ? 2 : 1;
@@ -3210,12 +3345,24 @@ nv50_program_fixup_insns(struct nv50_pc *pc)
 			for (i = 0; i < n; ++i)
 				if (bra_list[i]->param.index >= pos)
 					bra_list[i]->param.index += 1;
+			for (i = 0; i < pc->insn_nr; ++i)
+				if (pc->insn_pos[i] >= pos)
+					pc->insn_pos[i] += 1;
 			convert_to_long(pc, e);
 			++pos;
 		}
 	}
 
 	FREE(bra_list);
+
+	if (!pc->p->info.opcode_count[TGSI_OPCODE_CAL])
+		return;
+
+	/* fill in CALL offsets */
+	for (e = pc->p->exec_head; e; e = e->next) {
+		if ((e->inst[0] & 2) && (e->inst[0] >> 28) == 0x2)
+			e->param.index = pc->insn_pos[e->param.index];
+	}
 }
 
 static boolean
@@ -3237,19 +3384,20 @@ nv50_program_tx(struct nv50_program *p)
 	if (ret == FALSE)
 		goto out_cleanup;
 
+	pc->insn_pos = MALLOC(pc->insn_nr * sizeof(unsigned));
+
 	tgsi_parse_init(&parse, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		const union tgsi_full_token *tok = &parse.FullToken;
 
-		/* don't allow half insn/immd on first and last instruction */
+		/* previously allow32 was FALSE for first & last instruction */
 		pc->allow32 = TRUE;
-		if (pc->insn_cur == 0 || pc->insn_cur + 2 == pc->insn_nr)
-			pc->allow32 = FALSE;
 
 		tgsi_parse_token(&parse);
 
 		switch (tok->Token.Type) {
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
+			pc->insn_pos[pc->insn_cur] = pc->p->exec_size;
 			++pc->insn_cur;
 			ret = nv50_tgsi_insn(pc, tok);
 			if (ret == FALSE)
@@ -3259,9 +3407,6 @@ nv50_program_tx(struct nv50_program *p)
 			break;
 		}
 	}
-
-	if (pc->p->type == PIPE_SHADER_FRAGMENT)
-		nv50_fp_move_results(pc);
 
 	nv50_program_fixup_insns(pc);
 
@@ -3480,7 +3625,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_FP_RESULT_COUNT, 1);
 	so_data  (so, p->cfg.high_result);
-	so_method(so, tesla, NV50TCL_FP_CTRL_UNK19A8, 1);
+	so_method(so, tesla, NV50TCL_FP_CONTROL, 1);
 	so_data  (so, p->cfg.regs[2]);
 	so_method(so, tesla, NV50TCL_FP_CTRL_UNK196C, 1);
 	so_data  (so, p->cfg.regs[3]);
@@ -3652,7 +3797,7 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_FP_INTERPOLANT_CTRL, 1);
 	so_data  (so, reg[4]);
 
-	so_method(so, tesla, 0x1540, 4);
+	so_method(so, tesla, NV50TCL_NOPERSPECTIVE_BITMAP(0), 4);
 	so_datap (so, lin, 4);
 
 	if (nv50->rasterizer->pipe.point_sprite) {

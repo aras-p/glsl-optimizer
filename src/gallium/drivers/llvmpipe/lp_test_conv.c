@@ -330,7 +330,7 @@ test_one(unsigned verbose,
          fprintf(stderr, "conv.bc written\n");
          fprintf(stderr, "Invoke as \"llc -o - conv.bc\"\n");
          firsttime = FALSE;
-         //abort();
+         /* abort(); */
       }
    }
 

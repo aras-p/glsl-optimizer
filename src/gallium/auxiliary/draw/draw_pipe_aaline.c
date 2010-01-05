@@ -660,13 +660,13 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* update vertex attrib info */
-   aaline->tex_slot = draw->vs.num_vs_outputs;
-   aaline->pos_slot = draw->vs.position_output;
+   aaline->tex_slot = draw_current_shader_outputs(draw);
+   aaline->pos_slot = draw_current_shader_position_output(draw);;
 
    /* advertise the extra post-transformed vertex attribute */
-   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_vp_outputs.semantic_index = aaline->fs->generic_attrib;
-   draw->extra_vp_outputs.slot = aaline->tex_slot;
+   draw->extra_shader_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
+   draw->extra_shader_outputs.semantic_index = aaline->fs->generic_attrib;
+   draw->extra_shader_outputs.slot = aaline->tex_slot;
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
@@ -707,7 +707,7 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
                                        aaline->state.texture);
    draw->suspend_flushing = FALSE;
 
-   draw->extra_vp_outputs.slot = 0;
+   draw->extra_shader_outputs.slot = 0;
 }
 
 

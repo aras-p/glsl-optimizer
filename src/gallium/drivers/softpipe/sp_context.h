@@ -58,6 +58,7 @@ struct softpipe_context {
    struct pipe_rasterizer_state *rasterizer;
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
+   struct sp_geometry_shader *gs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -115,6 +116,10 @@ struct softpipe_context {
 
    unsigned line_stipple_counter;
 
+   /** Conditional query object and mode */
+   struct pipe_query *render_cond_query;
+   uint render_cond_mode;
+
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;
@@ -147,6 +152,7 @@ struct softpipe_context {
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;
+   unsigned dump_gs : 1;
    unsigned no_rast : 1;
 };
 

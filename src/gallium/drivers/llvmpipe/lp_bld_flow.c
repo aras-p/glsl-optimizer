@@ -47,7 +47,7 @@
  */
 enum lp_build_flow_construct_kind {
    lP_BUILD_FLOW_SCOPE,
-   LP_BUILD_FLOW_SKIP,
+   LP_BUILD_FLOW_SKIP
 };
 
 

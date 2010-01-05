@@ -57,7 +57,6 @@
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
    DRI_CONF_SECTION_PERFORMANCE
-      DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
       DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_ALWAYS_SYNC)
       /* Options correspond to DRI_CONF_BO_REUSE_DISABLED,
        * DRI_CONF_BO_REUSE_ALL
@@ -99,7 +98,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 12;
+const GLuint __driNConfigOptions = 11;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

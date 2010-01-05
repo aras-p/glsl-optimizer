@@ -218,8 +218,13 @@ typedef enum
    OPCODE_CLEAR_DEPTH,
    OPCODE_CLEAR_INDEX,
    OPCODE_CLEAR_STENCIL,
+   OPCODE_CLEAR_BUFFER_IV,
+   OPCODE_CLEAR_BUFFER_UIV,
+   OPCODE_CLEAR_BUFFER_FV,
+   OPCODE_CLEAR_BUFFER_FI,
    OPCODE_CLIP_PLANE,
    OPCODE_COLOR_MASK,
+   OPCODE_COLOR_MASK_INDEXED,
    OPCODE_COLOR_MATERIAL,
    OPCODE_COLOR_TABLE,
    OPCODE_COLOR_TABLE_PARAMETER_FV,
@@ -244,9 +249,11 @@ typedef enum
    OPCODE_DEPTH_MASK,
    OPCODE_DEPTH_RANGE,
    OPCODE_DISABLE,
+   OPCODE_DISABLE_INDEXED,
    OPCODE_DRAW_BUFFER,
    OPCODE_DRAW_PIXELS,
    OPCODE_ENABLE,
+   OPCODE_ENABLE_INDEXED,
    OPCODE_EVALMESH1,
    OPCODE_EVALMESH2,
    OPCODE_FOG,
@@ -1231,6 +1238,110 @@ save_Clear(GLbitfield mask)
 
 
 static void GLAPIENTRY
+save_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_IV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].i = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].i = value[1];
+         n[5].i = value[2];
+         n[6].i = value[3];
+      }
+      else {
+         n[4].i = 0;
+         n[5].i = 0;
+         n[6].i = 0;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_UIV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].ui = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].ui = value[1];
+         n[5].ui = value[2];
+         n[6].ui = value[3];
+      }
+      else {
+         n[4].ui = 0;
+         n[5].ui = 0;
+         n[6].ui = 0;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferuiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_FV, 6);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].f = value[0];
+      if (buffer == GL_COLOR) {
+         n[4].f = value[1];
+         n[5].f = value[2];
+         n[6].f = value[3];
+      }
+      else {
+         n[4].f = 0.0F;
+         n[5].f = 0.0F;
+         n[6].f = 0.0F;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferuiv(ctx->Exec, (buffer, drawbuffer, value));*/
+   }
+}
+
+
+static void GLAPIENTRY
+save_ClearBufferfi(GLenum buffer, GLint drawbuffer,
+                   GLfloat depth, GLint stencil)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLEAR_BUFFER_FI, 4);
+   if (n) {
+      n[1].e = buffer;
+      n[2].i = drawbuffer;
+      n[3].f = depth;
+      n[4].i = stencil;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ClearBufferfi(ctx->Exec, (buffer, drawbuffer, depth, stencil));*/
+   }
+}
+
+
+static void GLAPIENTRY
 save_ClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1353,6 +1464,27 @@ save_ColorMask(GLboolean red, GLboolean green,
    }
    if (ctx->ExecuteFlag) {
       CALL_ColorMask(ctx->Exec, (red, green, blue, alpha));
+   }
+}
+
+
+static void GLAPIENTRY
+save_ColorMaskIndexed(GLuint buf, GLboolean red, GLboolean green,
+                      GLboolean blue, GLboolean alpha)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_COLOR_MASK_INDEXED, 5);
+   if (n) {
+      n[1].ui = buf;
+      n[2].b = red;
+      n[3].b = green;
+      n[4].b = blue;
+      n[5].b = alpha;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ColorMaskIndexedEXT(ctx->Exec, (buf, red, green, blue, alpha));*/
    }
 }
 
@@ -1916,6 +2048,23 @@ save_Disable(GLenum cap)
 
 
 static void GLAPIENTRY
+save_DisableIndexed(GLuint index, GLenum cap)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DISABLE_INDEXED, 2);
+   if (n) {
+      n[1].ui = index;
+      n[2].e = cap;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_DisableIndexedEXT(ctx->Exec, (index, cap));
+   }
+}
+
+
+static void GLAPIENTRY
 save_DrawBuffer(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1968,6 +2117,24 @@ save_Enable(GLenum cap)
    }
    if (ctx->ExecuteFlag) {
       CALL_Enable(ctx->Exec, (cap));
+   }
+}
+
+
+
+static void GLAPIENTRY
+save_EnableIndexed(GLuint index, GLenum cap)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_ENABLE_INDEXED, 2);
+   if (n) {
+      n[1].ui = index;
+      n[2].e = cap;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_EnableIndexedEXT(ctx->Exec, (index, cap));
    }
 }
 
@@ -6596,6 +6763,39 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_CLEAR:
             CALL_Clear(ctx->Exec, (n[1].bf));
             break;
+         case OPCODE_CLEAR_BUFFER_IV:
+            {
+               GLint value[4];
+               value[0] = n[3].i;
+               value[1] = n[4].i;
+               value[2] = n[5].i;
+               value[3] = n[6].i;
+               /*CALL_ClearBufferiv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_UIV:
+            {
+               GLuint value[4];
+               value[0] = n[3].ui;
+               value[1] = n[4].ui;
+               value[2] = n[5].ui;
+               value[3] = n[6].ui;
+               /*CALL_ClearBufferiv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_FV:
+            {
+               GLfloat value[4];
+               value[0] = n[3].f;
+               value[1] = n[4].f;
+               value[2] = n[5].f;
+               value[3] = n[6].f;
+               /*CALL_ClearBufferfv(ctx->Exec, (n[1].e, n[2].i, value));*/
+            }
+            break;
+         case OPCODE_CLEAR_BUFFER_FI:
+            /*CALL_ClearBufferfi(ctx->Exec, (n[1].e, n[2].i, n[3].f, n[4].i));*/
+            break;
          case OPCODE_CLEAR_COLOR:
             CALL_ClearColor(ctx->Exec, (n[1].f, n[2].f, n[3].f, n[4].f));
             break;
@@ -6623,6 +6823,10 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_COLOR_MASK:
             CALL_ColorMask(ctx->Exec, (n[1].b, n[2].b, n[3].b, n[4].b));
+            break;
+         case OPCODE_COLOR_MASK_INDEXED:
+            CALL_ColorMaskIndexedEXT(ctx->Exec, (n[1].ui, n[2].b, n[3].b,
+                                                 n[4].b, n[5].b));
             break;
          case OPCODE_COLOR_MATERIAL:
             CALL_ColorMaterial(ctx->Exec, (n[1].e, n[2].e));
@@ -6766,6 +6970,9 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_DISABLE:
             CALL_Disable(ctx->Exec, (n[1].e));
             break;
+         case OPCODE_DISABLE_INDEXED:
+            CALL_DisableIndexedEXT(ctx->Exec, (n[1].ui, n[2].e));
+            break;
          case OPCODE_DRAW_BUFFER:
             CALL_DrawBuffer(ctx->Exec, (n[1].e));
             break;
@@ -6780,6 +6987,9 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_ENABLE:
             CALL_Enable(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_ENABLE_INDEXED:
+            CALL_EnableIndexedEXT(ctx->Exec, (n[1].ui, n[2].e));
             break;
          case OPCODE_EVALMESH1:
             CALL_EvalMesh1(ctx->Exec, (n[1].e, n[2].i, n[3].i));
@@ -8540,6 +8750,7 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_ClearStencil(table, save_ClearStencil);
    SET_ClipPlane(table, save_ClipPlane);
    SET_ColorMask(table, save_ColorMask);
+   SET_ColorMaskIndexedEXT(table, save_ColorMaskIndexed);
    SET_ColorMaterial(table, save_ColorMaterial);
    SET_CopyPixels(table, save_CopyPixels);
    SET_CullFace(table, save_CullFace);
@@ -8548,9 +8759,11 @@ _mesa_init_save_table(struct _glapi_table *table)
    SET_DepthMask(table, save_DepthMask);
    SET_DepthRange(table, save_DepthRange);
    SET_Disable(table, save_Disable);
+   SET_DisableIndexedEXT(table, save_DisableIndexed);
    SET_DrawBuffer(table, save_DrawBuffer);
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
+   SET_EnableIndexedEXT(table, save_EnableIndexed);
    SET_EndList(table, _mesa_EndList);
    SET_EvalMesh1(table, save_EvalMesh1);
    SET_EvalMesh2(table, save_EvalMesh2);
@@ -9094,6 +9307,19 @@ _mesa_init_save_table(struct _glapi_table *table)
 
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
+
+   /* GL 3.0 */
+#if 0
+   SET_ClearBufferiv(table, save_ClearBufferiv);
+   SET_ClearBufferuiv(table, save_ClearBufferuiv);
+   SET_ClearBufferfv(table, save_ClearBufferfv);
+   SET_ClearBufferfi(table, save_ClearBufferfi);
+#else
+   (void) save_ClearBufferiv;
+   (void) save_ClearBufferuiv;
+   (void) save_ClearBufferfv;
+   (void) save_ClearBufferfi;
+#endif
 }
 
 

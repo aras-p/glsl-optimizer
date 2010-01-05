@@ -176,11 +176,11 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	if (ret)
 		return;
 
-	BEGIN_RING(chan, eng2d, 0x0580, 3);
-	OUT_RING  (chan, 4);
+	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_SHAPE, 3);
+	OUT_RING  (chan, NV50_2D_DRAW_SHAPE_RECTANGLES);
 	OUT_RING  (chan, format);
 	OUT_RING  (chan, value);
-	BEGIN_RING(chan, eng2d, NV50_2D_RECT_X1, 4);
+	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_POINT32_X(0), 4);
 	OUT_RING  (chan, destx);
 	OUT_RING  (chan, desty);
 	OUT_RING  (chan, width);

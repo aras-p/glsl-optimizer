@@ -71,9 +71,9 @@ static void r300_draw_emit_attrib(struct r300_context* r300,
     struct tgsi_shader_info* info = &r300->vs->info;
     int output;
 
-    output = draw_find_vs_output(r300->draw,
-                                 info->output_semantic_name[index],
-                                 info->output_semantic_index[index]);
+    output = draw_find_shader_output(r300->draw,
+                                     info->output_semantic_name[index],
+                                     info->output_semantic_index[index]);
     draw_emit_vertex_attr(&r300->vertex_info->vinfo, emit, interp, output);
 }
 

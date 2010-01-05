@@ -625,6 +625,8 @@ struct dd_function_table {
    /** Enable and disable writing of frame buffer color components */
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );
+   void (*ColorMaskIndexed)(GLcontext *ctx, GLuint buf, GLboolean rmask,
+                            GLboolean gmask, GLboolean bmask, GLboolean amask);
    /** Cause a material color to track the current color */
    void (*ColorMaterial)(GLcontext *ctx, GLenum face, GLenum mode);
    /** Specify whether front- or back-facing facets can be culled */
@@ -1014,6 +1016,11 @@ struct dd_function_table {
 			  GLbitfield, GLuint64);
    /*@}*/
 #endif
+
+   /** GL_NV_conditional_render */
+   void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
+                                  GLenum mode);
+   void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
 };
 
 
