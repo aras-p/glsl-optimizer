@@ -44,9 +44,11 @@ LOCAL_ES2_API_ASM := $(subst es1,es2, $(LOCAL_ES1_API_ASM))
 LOCAL_ES2_INCLUDES := $(subst es1,es2, $(LOCAL_ES1_INCLUDES))
 
 # MESA sources
+# Ideally, the omit list should be replaced by features.
 
 MAIN_OMITTED :=				\
 	main/api_exec.c			\
+	main/condrender.c		\
 	main/dlopen.c			\
 	main/enums.c			\
 	main/get.c
@@ -68,10 +70,7 @@ STATETRACKER_OMITTED :=				\
 STATETRACKER_SOURCES := $(filter-out $(STATETRACKER_OMITTED), $(STATETRACKER_SOURCES))
 
 SHADER_OMITTED :=			\
-	shader/atifragshader.c		\
-	shader/nvfragparse.c		\
-	shader/nvprogram.c		\
-	shader/nvvertparse.c
+	shader/atifragshader.c
 SHADER_SOURCES := $(filter-out $(SHADER_OMITTED), $(SHADER_SOURCES))
 
 MESA_ES1_SOURCES :=			\
