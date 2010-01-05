@@ -64,6 +64,21 @@
 
 #define FAST_MATH 1
 
+#define TILE_TOP_LEFT     0
+#define TILE_TOP_RIGHT    1
+#define TILE_BOTTOM_LEFT  2
+#define TILE_BOTTOM_RIGHT 3
+
+static void
+micro_abs(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = fabsf(src->f[0]);
+   dst->f[1] = fabsf(src->f[1]);
+   dst->f[2] = fabsf(src->f[2]);
+   dst->f[3] = fabsf(src->f[3]);
+}
+
 static void
 micro_arl(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src)
@@ -82,6 +97,100 @@ micro_arr(union tgsi_exec_channel *dst,
    dst->i[1] = (int)floorf(src->f[1] + 0.5f);
    dst->i[2] = (int)floorf(src->f[2] + 0.5f);
    dst->i[3] = (int)floorf(src->f[3] + 0.5f);
+}
+
+static void
+micro_ceil(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->f[0] = ceilf(src->f[0]);
+   dst->f[1] = ceilf(src->f[1]);
+   dst->f[2] = ceilf(src->f[2]);
+   dst->f[3] = ceilf(src->f[3]);
+}
+
+static void
+micro_cos(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = cosf(src->f[0]);
+   dst->f[1] = cosf(src->f[1]);
+   dst->f[2] = cosf(src->f[2]);
+   dst->f[3] = cosf(src->f[3]);
+}
+
+static void
+micro_ddx(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] =
+   dst->f[1] =
+   dst->f[2] =
+   dst->f[3] = src->f[TILE_BOTTOM_RIGHT] - src->f[TILE_BOTTOM_LEFT];
+}
+
+static void
+micro_ddy(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] =
+   dst->f[1] =
+   dst->f[2] =
+   dst->f[3] = src->f[TILE_BOTTOM_LEFT] - src->f[TILE_TOP_LEFT];
+}
+
+static void
+micro_exp2(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+#if FAST_MATH
+   dst->f[0] = util_fast_exp2(src->f[0]);
+   dst->f[1] = util_fast_exp2(src->f[1]);
+   dst->f[2] = util_fast_exp2(src->f[2]);
+   dst->f[3] = util_fast_exp2(src->f[3]);
+#else
+#if DEBUG
+   /* Inf is okay for this instruction, so clamp it to silence assertions. */
+   uint i;
+   union tgsi_exec_channel clamped;
+
+   for (i = 0; i < 4; i++) {
+      if (src->f[i] > 127.99999f) {
+         clamped.f[i] = 127.99999f;
+      } else if (src->f[i] < -126.99999f) {
+         clamped.f[i] = -126.99999f;
+      } else {
+         clamped.f[i] = src->f[i];
+      }
+   }
+   src = &clamped;
+#endif /* DEBUG */
+
+   dst->f[0] = powf(2.0f, src->f[0]);
+   dst->f[1] = powf(2.0f, src->f[1]);
+   dst->f[2] = powf(2.0f, src->f[2]);
+   dst->f[3] = powf(2.0f, src->f[3]);
+#endif /* FAST_MATH */
+}
+
+static void
+micro_flr(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = floorf(src->f[0]);
+   dst->f[1] = floorf(src->f[1]);
+   dst->f[2] = floorf(src->f[2]);
+   dst->f[3] = floorf(src->f[3]);
+}
+
+static void
+micro_frc(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src->f[0] - floorf(src->f[0]);
+   dst->f[1] = src->f[1] - floorf(src->f[1]);
+   dst->f[2] = src->f[2] - floorf(src->f[2]);
+   dst->f[3] = src->f[3] - floorf(src->f[3]);
 }
 
 static void
@@ -105,6 +214,43 @@ micro_ineg(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_lg2(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+#if FAST_MATH
+   dst->f[0] = util_fast_log2(src->f[0]);
+   dst->f[1] = util_fast_log2(src->f[1]);
+   dst->f[2] = util_fast_log2(src->f[2]);
+   dst->f[3] = util_fast_log2(src->f[3]);
+#else
+   dst->f[0] = logf(src->f[0]) * 1.442695f;
+   dst->f[1] = logf(src->f[1]) * 1.442695f;
+   dst->f[2] = logf(src->f[2]) * 1.442695f;
+   dst->f[3] = logf(src->f[3]) * 1.442695f;
+#endif
+}
+
+static void
+micro_lrp(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] * (src[1].f[0] - src[2].f[0]) + src[2].f[0];
+   dst->f[1] = src[0].f[1] * (src[1].f[1] - src[2].f[1]) + src[2].f[1];
+   dst->f[2] = src[0].f[2] * (src[1].f[2] - src[2].f[2]) + src[2].f[2];
+   dst->f[3] = src[0].f[3] * (src[1].f[3] - src[2].f[3]) + src[2].f[3];
+}
+
+static void
+micro_mad(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] * src[1].f[0] + src[2].f[0];
+   dst->f[1] = src[0].f[1] * src[1].f[1] + src[2].f[1];
+   dst->f[2] = src[0].f[2] * src[1].f[2] + src[2].f[2];
+   dst->f[3] = src[0].f[3] * src[1].f[3] + src[2].f[3];
+}
+
+static void
 micro_mov(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src)
 {
@@ -114,10 +260,126 @@ micro_mov(union tgsi_exec_channel *dst,
    dst->u[3] = src->u[3];
 }
 
-#define TILE_TOP_LEFT     0
-#define TILE_TOP_RIGHT    1
-#define TILE_BOTTOM_LEFT  2
-#define TILE_BOTTOM_RIGHT 3
+static void
+micro_rcp(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = 1.0f / src->f[0];
+   dst->f[1] = 1.0f / src->f[1];
+   dst->f[2] = 1.0f / src->f[2];
+   dst->f[3] = 1.0f / src->f[3];
+}
+
+static void
+micro_rnd(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = floorf(src->f[0] + 0.5f);
+   dst->f[1] = floorf(src->f[1] + 0.5f);
+   dst->f[2] = floorf(src->f[2] + 0.5f);
+   dst->f[3] = floorf(src->f[3] + 0.5f);
+}
+
+static void
+micro_rsq(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = 1.0f / sqrtf(fabsf(src->f[0]));
+   dst->f[1] = 1.0f / sqrtf(fabsf(src->f[1]));
+   dst->f[2] = 1.0f / sqrtf(fabsf(src->f[2]));
+   dst->f[3] = 1.0f / sqrtf(fabsf(src->f[3]));
+}
+
+static void
+micro_seq(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] == src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] == src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] == src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] == src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_sge(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] >= src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] >= src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] >= src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] >= src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_sgn(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src->f[0] < 0.0f ? -1.0f : src->f[0] > 0.0f ? 1.0f : 0.0f;
+   dst->f[1] = src->f[1] < 0.0f ? -1.0f : src->f[1] > 0.0f ? 1.0f : 0.0f;
+   dst->f[2] = src->f[2] < 0.0f ? -1.0f : src->f[2] > 0.0f ? 1.0f : 0.0f;
+   dst->f[3] = src->f[3] < 0.0f ? -1.0f : src->f[3] > 0.0f ? 1.0f : 0.0f;
+}
+
+static void
+micro_sgt(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] > src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] > src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] > src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] > src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_sin(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = sinf(src->f[0]);
+   dst->f[1] = sinf(src->f[1]);
+   dst->f[2] = sinf(src->f[2]);
+   dst->f[3] = sinf(src->f[3]);
+}
+
+static void
+micro_sle(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] <= src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] <= src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] <= src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] <= src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_slt(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] < src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] < src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] < src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] < src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_sne(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->f[0] = src[0].f[0] != src[1].f[0] ? 1.0f : 0.0f;
+   dst->f[1] = src[0].f[1] != src[1].f[1] ? 1.0f : 0.0f;
+   dst->f[2] = src[0].f[2] != src[1].f[2] ? 1.0f : 0.0f;
+   dst->f[3] = src[0].f[3] != src[1].f[3] ? 1.0f : 0.0f;
+}
+
+static void
+micro_trunc(union tgsi_exec_channel *dst,
+            const union tgsi_exec_channel *src)
+{
+   dst->f[0] = (float)(int)src->f[0];
+   dst->f[1] = (float)(int)src->f[1];
+   dst->f[2] = (float)(int)src->f[2];
+   dst->f[3] = (float)(int)src->f[3];
+}
+
 
 #define CHAN_X  0
 #define CHAN_Y  1
@@ -476,18 +738,6 @@ tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
    align_free(mach);
 }
 
-
-static void
-micro_abs(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = fabsf( src->f[0] );
-   dst->f[1] = fabsf( src->f[1] );
-   dst->f[2] = fabsf( src->f[2] );
-   dst->f[3] = fabsf( src->f[3] );
-}
-
 static void
 micro_add(
    union tgsi_exec_channel *dst,
@@ -498,50 +748,6 @@ micro_add(
    dst->f[1] = src0->f[1] + src1->f[1];
    dst->f[2] = src0->f[2] + src1->f[2];
    dst->f[3] = src0->f[3] + src1->f[3];
-}
-
-static void
-micro_ceil(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = ceilf( src->f[0] );
-   dst->f[1] = ceilf( src->f[1] );
-   dst->f[2] = ceilf( src->f[2] );
-   dst->f[3] = ceilf( src->f[3] );
-}
-
-static void
-micro_cos(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = cosf( src->f[0] );
-   dst->f[1] = cosf( src->f[1] );
-   dst->f[2] = cosf( src->f[2] );
-   dst->f[3] = cosf( src->f[3] );
-}
-
-static void
-micro_ddx(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] =
-   dst->f[1] =
-   dst->f[2] =
-   dst->f[3] = src->f[TILE_BOTTOM_RIGHT] - src->f[TILE_BOTTOM_LEFT];
-}
-
-static void
-micro_ddy(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] =
-   dst->f[1] =
-   dst->f[2] =
-   dst->f[3] = src->f[TILE_BOTTOM_LEFT] - src->f[TILE_TOP_LEFT];
 }
 
 static void
@@ -562,56 +768,6 @@ micro_div(
    if (src1->f[3] != 0) {
       dst->f[3] = src0->f[3] / src1->f[3];
    }
-}
-
-static void
-micro_eq(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src0,
-   const union tgsi_exec_channel *src1,
-   const union tgsi_exec_channel *src2,
-   const union tgsi_exec_channel *src3 )
-{
-   dst->f[0] = src0->f[0] == src1->f[0] ? src2->f[0] : src3->f[0];
-   dst->f[1] = src0->f[1] == src1->f[1] ? src2->f[1] : src3->f[1];
-   dst->f[2] = src0->f[2] == src1->f[2] ? src2->f[2] : src3->f[2];
-   dst->f[3] = src0->f[3] == src1->f[3] ? src2->f[3] : src3->f[3];
-}
-
-static void
-micro_exp2(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src)
-{
-#if FAST_MATH
-   dst->f[0] = util_fast_exp2( src->f[0] );
-   dst->f[1] = util_fast_exp2( src->f[1] );
-   dst->f[2] = util_fast_exp2( src->f[2] );
-   dst->f[3] = util_fast_exp2( src->f[3] );
-#else
-
-#if DEBUG
-   /* Inf is okay for this instruction, so clamp it to silence assertions. */
-   uint i;
-   union tgsi_exec_channel clamped;
-
-   for (i = 0; i < 4; i++) {
-      if (src->f[i] > 127.99999f) {
-         clamped.f[i] = 127.99999f;
-      } else if (src->f[i] < -126.99999f) {
-         clamped.f[i] = -126.99999f;
-      } else {
-         clamped.f[i] = src->f[i];
-      }
-   }
-   src = &clamped;
-#endif
-
-   dst->f[0] = powf( 2.0f, src->f[0] );
-   dst->f[1] = powf( 2.0f, src->f[1] );
-   dst->f[2] = powf( 2.0f, src->f[2] );
-   dst->f[3] = powf( 2.0f, src->f[3] );
-#endif
 }
 
 static void
@@ -638,60 +794,6 @@ micro_float_clamp(union tgsi_exec_channel *dst,
             dst->f[i] = src->f[i];
       }
    }
-}
-
-static void
-micro_flr(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = floorf( src->f[0] );
-   dst->f[1] = floorf( src->f[1] );
-   dst->f[2] = floorf( src->f[2] );
-   dst->f[3] = floorf( src->f[3] );
-}
-
-static void
-micro_frc(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = src->f[0] - floorf( src->f[0] );
-   dst->f[1] = src->f[1] - floorf( src->f[1] );
-   dst->f[2] = src->f[2] - floorf( src->f[2] );
-   dst->f[3] = src->f[3] - floorf( src->f[3] );
-}
-
-static void
-micro_lg2(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-#if FAST_MATH
-   dst->f[0] = util_fast_log2( src->f[0] );
-   dst->f[1] = util_fast_log2( src->f[1] );
-   dst->f[2] = util_fast_log2( src->f[2] );
-   dst->f[3] = util_fast_log2( src->f[3] );
-#else
-   dst->f[0] = logf( src->f[0] ) * 1.442695f;
-   dst->f[1] = logf( src->f[1] ) * 1.442695f;
-   dst->f[2] = logf( src->f[2] ) * 1.442695f;
-   dst->f[3] = logf( src->f[3] ) * 1.442695f;
-#endif
-}
-
-static void
-micro_le(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src0,
-   const union tgsi_exec_channel *src1,
-   const union tgsi_exec_channel *src2,
-   const union tgsi_exec_channel *src3 )
-{
-   dst->f[0] = src0->f[0] <= src1->f[0] ? src2->f[0] : src3->f[0];
-   dst->f[1] = src0->f[1] <= src1->f[1] ? src2->f[1] : src3->f[1];
-   dst->f[2] = src0->f[2] <= src1->f[2] ? src2->f[2] : src3->f[2];
-   dst->f[3] = src0->f[3] <= src1->f[3] ? src2->f[3] : src3->f[3];
 }
 
 static void
@@ -826,50 +928,6 @@ micro_pow(
    dst->f[2] = powf( src0->f[2], src1->f[2] );
    dst->f[3] = powf( src0->f[3], src1->f[3] );
 #endif
-}
-
-static void
-micro_rnd(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = floorf( src->f[0] + 0.5f );
-   dst->f[1] = floorf( src->f[1] + 0.5f );
-   dst->f[2] = floorf( src->f[2] + 0.5f );
-   dst->f[3] = floorf( src->f[3] + 0.5f );
-}
-
-static void
-micro_sgn(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = src->f[0] < 0.0f ? -1.0f : src->f[0] > 0.0f ? 1.0f : 0.0f;
-   dst->f[1] = src->f[1] < 0.0f ? -1.0f : src->f[1] > 0.0f ? 1.0f : 0.0f;
-   dst->f[2] = src->f[2] < 0.0f ? -1.0f : src->f[2] > 0.0f ? 1.0f : 0.0f;
-   dst->f[3] = src->f[3] < 0.0f ? -1.0f : src->f[3] > 0.0f ? 1.0f : 0.0f;
-}
-
-static void
-micro_trunc(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src0 )
-{
-   dst->f[0] = (float) (int) src0->f[0];
-   dst->f[1] = (float) (int) src0->f[1];
-   dst->f[2] = (float) (int) src0->f[2];
-   dst->f[3] = (float) (int) src0->f[3];
-}
-
-static void
-micro_sin(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->f[0] = sinf( src->f[0] );
-   dst->f[1] = sinf( src->f[1] );
-   dst->f[2] = sinf( src->f[2] );
-   dst->f[3] = sinf( src->f[3] );
 }
 
 static void
@@ -1762,6 +1820,26 @@ typedef void (* micro_op)(union tgsi_exec_channel *dst,
                           const union tgsi_exec_channel *src);
 
 static void
+exec_scalar_unary(struct tgsi_exec_machine *mach,
+                  const struct tgsi_full_instruction *inst,
+                  micro_op op,
+                  enum tgsi_exec_datatype dst_datatype,
+                  enum tgsi_exec_datatype src_datatype)
+{
+   unsigned int chan;
+   union tgsi_exec_channel src;
+   union tgsi_exec_channel dst;
+
+   fetch_source(mach, &src, &inst->Src[0], CHAN_X, src_datatype);
+   op(&dst, &src);
+   for (chan = 0; chan < NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         store_dest(mach, &dst, &inst->Dst[0], inst, chan, dst_datatype);
+      }
+   }
+}
+
+static void
 exec_vector_unary(struct tgsi_exec_machine *mach,
                   const struct tgsi_full_instruction *inst,
                   micro_op op,
@@ -2248,23 +2326,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_RCP:
-   /* TGSI_OPCODE_RECIP */
-      FETCH( &r[0], 0, CHAN_X );
-      micro_div( &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_rcp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_RSQ:
-   /* TGSI_OPCODE_RECIPSQRT */
-      FETCH( &r[0], 0, CHAN_X );
-      micro_abs( &r[0], &r[0] );
-      micro_sqrt( &r[0], &r[0] );
-      micro_div( &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_rsq, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_EXP:
@@ -2435,41 +2501,15 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SLT:
-   /* TGSI_OPCODE_SETLT */
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_lt(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_slt, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SGE:
-   /* TGSI_OPCODE_SETGE */
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_le(&d[chan_index], &r[1], &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_sge, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_MAD:
-   /* TGSI_OPCODE_MADD */
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_mul( &r[0], &r[0], &r[1] );
-         FETCH( &r[1], 2, chan_index );
-         micro_add(&d[chan_index], &r[0], &r[1]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_trinary(mach, inst, micro_mad, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SUB:
@@ -2484,17 +2524,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_LRP:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH(&r[0], 0, chan_index);
-         FETCH(&r[1], 1, chan_index);
-         FETCH(&r[2], 2, chan_index);
-         micro_sub( &r[1], &r[1], &r[2] );
-         micro_mul( &r[0], &r[0], &r[1] );
-         micro_add(&d[chan_index], &r[0], &r[2]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_trinary(mach, inst, micro_lrp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_CND:
@@ -2528,13 +2558,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_FRC:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_frc(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_frc, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_CLAMP:
@@ -2551,41 +2575,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_FLR:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_flr(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_flr, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_ROUND:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_rnd(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_rnd, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_EX2:
-      FETCH(&r[0], 0, CHAN_X);
-
-      micro_exp2( &r[0], &r[0] );
-
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_exp2, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_LG2:
-      FETCH( &r[0], 0, CHAN_X );
-      micro_lg2( &r[0], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_lg2, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_POW:
@@ -2638,15 +2640,9 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_ABS:
-       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-          FETCH(&r[0], 0, chan_index);
-          micro_abs(&d[chan_index], &r[0]);
-       }
-       FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
-       break;
+   case TGSI_OPCODE_ABS:
+      exec_vector_unary(mach, inst, micro_abs, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
+      break;
 
    case TGSI_OPCODE_RCC:
       FETCH(&r[0], 0, CHAN_X);
@@ -2685,33 +2681,15 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_COS:
-      FETCH(&r[0], 0, CHAN_X);
-
-      micro_cos( &r[0], &r[0] );
-
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_cos, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DDX:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_ddx(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_ddx, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DDY:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_ddy(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_ddy, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_KILP:
@@ -2788,14 +2766,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SEQ:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_eq(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_seq, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SFL:
@@ -2805,44 +2776,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SGT:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_le(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_sgt, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SIN:
-      FETCH( &r[0], 0, CHAN_X );
-      micro_sin( &r[0], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( &r[0], 0, chan_index );
-      }
+      exec_scalar_unary(mach, inst, micro_sin, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SLE:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_le(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_sle, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SNE:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         FETCH( &r[1], 1, chan_index );
-         micro_eq(&d[chan_index], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_binary(mach, inst, micro_sne, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_STR:
@@ -3038,14 +2984,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-   /* TGSI_OPCODE_SGN */
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_sgn(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_sgn, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_CMP:
@@ -3229,13 +3168,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CEIL:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_ceil(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_ceil, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_I2F:
@@ -3247,13 +3180,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TRUNC:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( &r[0], 0, chan_index );
-         micro_trunc(&d[chan_index], &r[0]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_unary(mach, inst, micro_trunc, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SHL:
