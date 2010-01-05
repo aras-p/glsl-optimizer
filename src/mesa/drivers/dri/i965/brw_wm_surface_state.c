@@ -511,7 +511,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
 				unsigned int unit)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;;
+   GLcontext *ctx = &intel->ctx;
    dri_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
@@ -622,7 +623,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	    tile_base = ((key.draw_y / 32) * (32 * pitch));
 	    tile_base += (key.draw_x - tile_x) / (128 / key.cpp) * 4096;
 	 }
-	 assert(BRW_IS_G4X(brw) || (tile_x == 0 && tile_y == 0));
+	 assert(intel->is_g4x || (tile_x == 0 && tile_y == 0));
 	 assert(tile_x % 4 == 0);
 	 assert(tile_y % 2 == 0);
 	 /* Note that the low bits of these fields are missing, so
