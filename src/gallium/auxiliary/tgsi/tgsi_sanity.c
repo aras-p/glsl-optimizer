@@ -247,7 +247,7 @@ check_register_usage(
    boolean indirect_access )
 {
    if (!check_file_name( ctx, reg->file )) {
-      free(reg);
+      FREE(reg);
       return FALSE;
    }
 
@@ -261,7 +261,7 @@ check_register_usage(
       if (!is_ind_register_used(ctx, reg))
          cso_hash_insert(ctx->regs_ind_used, reg->file, reg);
       else
-         free(reg);
+         FREE(reg);
    }
    else {
       if (!is_register_declared( ctx, reg )) {
@@ -275,7 +275,7 @@ check_register_usage(
       if (!is_register_used( ctx, reg ))
          cso_hash_insert(ctx->regs_used, scan_register_key(reg), reg);
       else
-         free(reg);
+         FREE(reg);
    }
    return TRUE;
 }
@@ -513,7 +513,7 @@ regs_hash_destroy(struct cso_hash *hash)
    while (!cso_hash_iter_is_null(iter)) {
       scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
       iter = cso_hash_erase(hash, iter);
-      free(reg);
+      FREE(reg);
    }
    cso_hash_delete(hash);
 }
