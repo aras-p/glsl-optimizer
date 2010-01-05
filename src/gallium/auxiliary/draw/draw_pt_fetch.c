@@ -107,19 +107,24 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    for (i = 0; i < nr_inputs; i++) {
       if (i == instance_id_index) {
          key.element[nr].type = TRANSLATE_ELEMENT_INSTANCE_ID;
-         key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;    /* XXX: Make it UINT. */
+         key.element[nr].input_format = PIPE_FORMAT_R32_USCALED;
+         key.element[nr].output_format = PIPE_FORMAT_R32_USCALED;
+         key.element[nr].output_offset = dst_offset;
+
+         dst_offset += sizeof(uint);
       } else {
          key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
          key.element[nr].input_format = draw->pt.vertex_element[ei].src_format;
          key.element[nr].input_buffer = draw->pt.vertex_element[ei].vertex_buffer_index;
          key.element[nr].input_offset = draw->pt.vertex_element[ei].src_offset;
          key.element[nr].instance_divisor = draw->pt.vertex_element[ei].instance_divisor;
-         ei++;
-      }
-      key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      key.element[nr].output_offset = dst_offset;
+         key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         key.element[nr].output_offset = dst_offset;
 
-      dst_offset += 4 * sizeof(float);
+         ei++;
+         dst_offset += 4 * sizeof(float);
+      }
+
       nr++;
    }
 

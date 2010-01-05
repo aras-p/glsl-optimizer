@@ -50,15 +50,13 @@ typedef void (PIPE_CDECL *run_func)( struct translate *translate,
                                      unsigned start,
                                      unsigned count,
                                      unsigned instance_id,
-                                     void *output_buffer,
-                                     float instance_id_float );
+                                     void *output_buffer);
 
 typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
                                           const unsigned *elts,
                                           unsigned count,
                                           unsigned instance_id,
-                                          void *output_buffer,
-                                          float instance_id_float );
+                                          void *output_buffer);
 
 struct translate_buffer {
    const void *base_ptr;
@@ -102,7 +100,6 @@ struct translate_sse {
 
    boolean use_instancing;
    unsigned instance_id;
-   float instance_id_float;   /* XXX: needed while no integer support in TGSI */
 
    run_func      gen_run;
    run_elts_func gen_run_elts;
@@ -451,7 +448,7 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
 {
    if (var_idx == ELEMENT_BUFFER_INSTANCE_ID) {
       return x86_make_disp(p->machine_EDX,
-                           get_offset(p, &p->instance_id_float));
+                           get_offset(p, &p->instance_id));
    }
    if (linear && p->nr_buffer_varients == 1) {
       return p->idx_EBX;
@@ -587,14 +584,6 @@ static boolean build_vertex_emit( struct translate_sse *p,
       x86_mov(p->func,
               x86_make_disp(p->machine_EDX, get_offset(p, &p->instance_id)),
               p->tmp_EAX);
-
-      /* XXX: temporary */
-      x86_mov(p->func,
-              p->tmp_EAX,
-              x86_fn_arg(p->func, 6));
-      x86_mov(p->func,
-              x86_make_disp(p->machine_EDX, get_offset(p, &p->instance_id_float)),
-              p->tmp_EAX);
    }
 
    /* Get vertex count, compare to zero
@@ -715,8 +704,7 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 		    elts,
 		    count,
                     instance_id,
-                    output_buffer,
-                    (float)instance_id );
+                    output_buffer);
 }
 
 static void PIPE_CDECL translate_sse_run( struct translate *translate,
@@ -731,8 +719,7 @@ static void PIPE_CDECL translate_sse_run( struct translate *translate,
 	       start,
 	       count,
                instance_id,
-               output_buffer,
-               (float)instance_id);
+               output_buffer);
 }
 
 
