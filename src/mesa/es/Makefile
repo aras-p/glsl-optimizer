@@ -63,23 +63,23 @@ $(ES2_OBJ_DIR)/%.o: $(MESA)/%.c
 $(ES2_OBJ_DIR)/%.o: $(MESA)/%.S
 	$(call es-compile,2)
 
-libes1.a: $(ES1_OBJECTS)
-	@$(TOP)/bin/mklib -o es1 -static $(ES1_OBJECTS)
+libes1.a: $(ES1_OBJECTS) $(GLSL_LIBS)
+	@$(MKLIB) -o es1 -static $(ES1_OBJECTS) $(GLSL_LIBS)
 
-libes2.a: $(ES2_OBJECTS)
-	@$(TOP)/bin/mklib -o es2 -static $(ES1_OBJECTS)
+libes2.a: $(ES2_OBJECTS) $(GLSL_LIBS)
+	@$(MKLIB) -o es2 -static $(ES1_OBJECTS) $(GLSL_LIBS)
 
-libes1gallium.a: $(ES1_GALLIUM_OBJECTS)
-	@$(TOP)/bin/mklib -o es1gallium -static $(ES1_GALLIUM_OBJECTS)
+libes1gallium.a: $(ES1_GALLIUM_OBJECTS) $(GLSL_LIBS)
+	@$(MKLIB) -o es1gallium -static $(ES1_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
-libes2gallium.a: $(ES2_GALLIUM_OBJECTS)
-	@$(TOP)/bin/mklib -o es2gallium -static $(ES2_GALLIUM_OBJECTS)
+libes2gallium.a: $(ES2_GALLIUM_OBJECTS) $(GLSL_LIBS)
+	@$(MKLIB) -o es2gallium -static $(ES2_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
 libes1api.a: $(ES1_API_OBJECTS)
-	@$(TOP)/bin/mklib -o es1api -static $(ES1_API_OBJECTS)
+	@$(MKLIB) -o es1api -static $(ES1_API_OBJECTS)
 
 libes2api.a: $(ES2_API_OBJECTS)
-	@$(TOP)/bin/mklib -o es2api -static $(ES2_API_OBJECTS)
+	@$(MKLIB) -o es2api -static $(ES2_API_OBJECTS)
 
 GENERATED_SOURCES :=		\
 	main/api_exec_es1.c	\
@@ -115,6 +115,7 @@ glapi/glapi-stamp:
 
 subdirs: glapi/glapi-stamp
 	$(MAKE) -C $(MESA) asm_subdirs
+	$(MAKE) -C $(MESA) glsl_builtin
 
 # remove generated sources because "depend" is checked even when "make clean"
 DEPEND_SOURCES := $(filter-out $(GENERATED_SOURCES), $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES))

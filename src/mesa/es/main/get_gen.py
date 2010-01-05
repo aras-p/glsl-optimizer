@@ -209,9 +209,9 @@ StateVars_common = [
 
 	# GL_OES_read_format
 	( "GL_IMPLEMENTATION_COLOR_READ_TYPE_OES", GLint,
-	  ["ctx->Const.ColorReadType"], "", None),
+	  ["_mesa_get_color_read_type(ctx)"], "", ["OES_read_format"] ),
 	( "GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES", GLint,
-	  ["ctx->Const.ColorReadFormat"], "", None),
+	  ["_mesa_get_color_read_format(ctx)"], "", ["OES_read_format"] ),
 
 	# GL_OES_framebuffer_object
 	( "GL_FRAMEBUFFER_BINDING_EXT", GLint, ["ctx->DrawBuffer->Name"], "",
@@ -655,6 +655,7 @@ def EmitHeader():
 #include "main/mtypes.h"
 #include "main/state.h"
 #include "main/texcompress.h"
+#include "main/framebuffer.h"
 
 
 /* ES1 tokens that should be in gl.h but aren't */
