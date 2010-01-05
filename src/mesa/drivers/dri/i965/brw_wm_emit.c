@@ -692,7 +692,7 @@ void emit_xpd(struct brw_compile *p,
 {
    GLuint i;
 
-   assert(!(mask & WRITEMASK_W) == WRITEMASK_X);
+   assert(!(mask & WRITEMASK_W) == WRITEMASK_W);
    
    for (i = 0 ; i < 3; i++) {
       if (mask & (1<<i)) {
