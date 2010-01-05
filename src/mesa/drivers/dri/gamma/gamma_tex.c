@@ -145,7 +145,7 @@ static void gammaTexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      gammaSetTexBorderColor( gmesa, t, tObj->BorderColor );
+      gammaSetTexBorderColor( gmesa, t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -349,7 +349,7 @@ static void gammaBindTexture( GLcontext *ctx, GLenum target,
 
 	 gammaSetTexWrapping( t, tObj->WrapS, tObj->WrapT );
 	 gammaSetTexFilter( gmesa, t, tObj->MinFilter, tObj->MagFilter, bias );
-	 gammaSetTexBorderColor( gmesa, t, tObj->BorderColor );
+	 gammaSetTexBorderColor( gmesa, t, tObj->BorderColor.f );
       }
 }
 

@@ -891,10 +891,10 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[0] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[0] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[2]));
-	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
             }
 
 	    if (texUnit0->LodBias != 0.0f) {
@@ -924,10 +924,10 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[1] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[1] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[2]));
-	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
             }
 
 

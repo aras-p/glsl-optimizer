@@ -835,7 +835,7 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
 
          _mesa_BindTexture(target, obj->Name);
 
-         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, obj->BorderColor);
+         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, obj->BorderColor.f);
          _mesa_TexParameterf(target, GL_TEXTURE_PRIORITY, obj->Priority);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, obj->WrapS);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, obj->WrapT);

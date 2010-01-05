@@ -208,7 +208,7 @@ update_samplers(struct st_context *st)
             assert(sampler->min_lod <= sampler->max_lod);
          }
 
-         xlate_border_color(texobj->BorderColor,
+         xlate_border_color(texobj->BorderColor.f,
                             teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 

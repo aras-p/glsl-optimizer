@@ -511,10 +511,7 @@ set_tex_parameterf(GLcontext *ctx,
 
    case GL_TEXTURE_BORDER_COLOR:
       flush(ctx, texObj);
-      texObj->BorderColor[RCOMP] = params[0];
-      texObj->BorderColor[GCOMP] = params[1];
-      texObj->BorderColor[BCOMP] = params[2];
-      texObj->BorderColor[ACOMP] = params[3];
+      COPY_4V(texObj->BorderColor.f, params);
       return GL_TRUE;
 
    default:
@@ -1008,10 +1005,10 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(obj->WrapR);
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         params[0] = CLAMP(obj->BorderColor[0], 0.0F, 1.0F);
-         params[1] = CLAMP(obj->BorderColor[1], 0.0F, 1.0F);
-         params[2] = CLAMP(obj->BorderColor[2], 0.0F, 1.0F);
-         params[3] = CLAMP(obj->BorderColor[3], 0.0F, 1.0F);
+         params[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
+         params[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
+         params[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
+         params[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
          break;
       case GL_TEXTURE_RESIDENT:
          {
@@ -1166,10 +1163,10 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat b[4];
-            b[0] = CLAMP(obj->BorderColor[0], 0.0F, 1.0F);
-            b[1] = CLAMP(obj->BorderColor[1], 0.0F, 1.0F);
-            b[2] = CLAMP(obj->BorderColor[2], 0.0F, 1.0F);
-            b[3] = CLAMP(obj->BorderColor[3], 0.0F, 1.0F);
+            b[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
+            b[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
+            b[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
+            b[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
             params[0] = FLOAT_TO_INT(b[0]);
             params[1] = FLOAT_TO_INT(b[1]);
             params[2] = FLOAT_TO_INT(b[2]);

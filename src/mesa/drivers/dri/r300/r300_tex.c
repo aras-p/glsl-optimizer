@@ -215,7 +215,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
-		r300SetTexBorderColor(t, texObj->BorderColor);
+		r300SetTexBorderColor(t, texObj->BorderColor.f);
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -307,7 +307,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	/* Initialize hardware state */
 	r300UpdateTexWrap(t);
 	r300SetTexFilter(t, t->base.MinFilter, t->base.MagFilter, t->base.MaxAnisotropy);
-	r300SetTexBorderColor(t, t->base.BorderColor);
+	r300SetTexBorderColor(t, t->base.BorderColor.f);
 
 	return &t->base;
 }

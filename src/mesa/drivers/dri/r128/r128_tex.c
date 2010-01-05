@@ -169,7 +169,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
       r128SetTexWrap( t, texObj->WrapS, texObj->WrapT );
       r128SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      r128SetTexBorderColor( t, texObj->BorderColor );
+      r128SetTexBorderColor( t, texObj->BorderColor.f );
    }
 
    return t;
@@ -535,7 +535,7 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexBorderColor( t, tObj->BorderColor );
+      r128SetTexBorderColor( t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
