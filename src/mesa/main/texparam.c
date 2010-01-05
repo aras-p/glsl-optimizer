@@ -1165,6 +1165,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       return;
    }
 
+   _mesa_lock_texture(ctx, obj);
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
          *params = (GLint) obj->MagFilter;
