@@ -475,13 +475,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
                IndirectAPI = __glXNewIndirectAPI();
             _glapi_set_dispatch(IndirectAPI);
 
-#ifdef GLX_USE_APPLEGL
-            do {
-               extern void XAppleDRIUseIndirectDispatch(void);
-               XAppleDRIUseIndirectDispatch();
-            } while (0);
-#endif
-
             state = (__GLXattribute *) (gc->client_state_private);
 
             gc->currentContextTag = reply.contextTag;

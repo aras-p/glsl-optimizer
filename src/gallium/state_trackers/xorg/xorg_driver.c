@@ -181,8 +181,7 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
     if (!pScreen->ModifyPixmapHeader(rootPixmap, width, height, -1, -1, -1, NULL))
 	return FALSE;
 
-    /* HW dependent - FIXME */
-    pScrn->displayWidth = pScrn->virtualX;
+    pScrn->displayWidth = rootPixmap->devKind / (rootPixmap->drawable.bitsPerPixel / 8);
 
     /* now create new frontbuffer */
     return ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn);

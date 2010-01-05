@@ -1090,7 +1090,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 done:
    _mesa_unmap_teximage_pbo(ctx, packing);
 
-   if (stImage->pt) {
+   if (stImage->pt && texImage->Data) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }

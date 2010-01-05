@@ -297,9 +297,9 @@ debug_memory_end(unsigned long start_no)
 
       if((start_no <= hdr->no && hdr->no < last_no) ||
 	 (last_no < start_no && (hdr->no < last_no || start_no <= hdr->no))) {
-	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
+	 debug_printf("%s:%u:%s: %lu bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
-		      hdr->size, ptr);
+		      (unsigned long) hdr->size, ptr);
 #if DEBUG_MEMORY_STACK
 	 debug_backtrace_dump(hdr->backtrace, DEBUG_MEMORY_STACK);
 #endif
@@ -315,8 +315,8 @@ debug_memory_end(unsigned long start_no)
    }
 
    if(total_size) {
-      debug_printf("Total of %u KB of system memory apparently leaked\n",
-		   (total_size + 1023)/1024);
+      debug_printf("Total of %lu KB of system memory apparently leaked\n",
+		   (unsigned long) (total_size + 1023)/1024);
    }
    else {
       debug_printf("No memory leaks detected.\n");

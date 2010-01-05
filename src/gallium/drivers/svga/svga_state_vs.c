@@ -27,6 +27,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_bitmask.h"
 #include "translate/translate.h"
 
 #include "svga_context.h"
@@ -78,8 +79,12 @@ static enum pipe_error compile_vs( struct svga_context *svga,
       goto fail;
    }
 
+   result->id = util_bitmask_add(svga->vs_bm);
+   if(result->id == UTIL_BITMASK_INVALID_INDEX)
+      goto fail;
+
    ret = SVGA3D_DefineShader(svga->swc, 
-                             svga->state.next_vs_id,
+                             result->id,
                              SVGA3D_SHADERTYPE_VS,
                              result->tokens, 
                              result->nr_tokens * sizeof result->tokens[0]);
@@ -87,14 +92,16 @@ static enum pipe_error compile_vs( struct svga_context *svga,
       goto fail;
 
    *out_result = result;
-   result->id = svga->state.next_vs_id++;
    result->next = vs->base.results;
    vs->base.results = result;
    return PIPE_OK;
 
 fail:
-   if (result)
+   if (result) {
+      if (result->id != UTIL_BITMASK_INVALID_INDEX)
+         util_bitmask_clear( svga->vs_bm, result->id );
       svga_destroy_shader_result( result );
+   }
    return ret;
 }
 
@@ -142,12 +149,14 @@ static int emit_hw_vs( struct svga_context *svga,
       id = result->id;
    }
 
-   if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_VERTEX]) {
-      ret = SVGA3D_SetShader(svga->swc, 
-                             SVGA3D_SHADERTYPE_VS, 
-                             id );
-      if (ret)
-         return ret;
+   if (result != svga->state.hw_draw.vs) {
+      if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_VERTEX]) {
+         ret = SVGA3D_SetShader(svga->swc,
+                                SVGA3D_SHADERTYPE_VS,
+                                id );
+         if (ret)
+            return ret;
+      }
 
       svga->dirty |= SVGA_NEW_VS_RESULT;
       svga->state.hw_draw.shader_id[PIPE_SHADER_VERTEX] = id;

@@ -267,9 +267,9 @@ static void transform_LIT(struct radeon_compiler* c,
 	temp = inst->U.I.DstReg.Index;
 	srctemp = srcreg(RC_FILE_TEMPORARY, temp);
 
-	// tmp.x = max(0.0, Src.x);
-	// tmp.y = max(0.0, Src.y);
-	// tmp.w = clamp(Src.z, -128+eps, 128-eps);
+	/* tmp.x = max(0.0, Src.x); */
+	/* tmp.y = max(0.0, Src.y); */
+	/* tmp.w = clamp(Src.z, -128+eps, 128-eps); */
 	emit2(c, inst->Prev, RC_OPCODE_MAX, 0,
 		dstregtmpmask(temp, RC_MASK_XYW),
 		inst->U.I.SrcReg[0],
@@ -280,7 +280,7 @@ static void transform_LIT(struct radeon_compiler* c,
 		swizzle(srctemp, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W),
 		negate(srcregswz(RC_FILE_CONSTANT, constant, constant_swizzle)));
 
-	// tmp.w = Pow(tmp.y, tmp.w)
+	/* tmp.w = Pow(tmp.y, tmp.w) */
 	emit1(c, inst->Prev, RC_OPCODE_LG2, 0,
 		dstregtmpmask(temp, RC_MASK_W),
 		swizzle(srctemp, RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y, RC_SWIZZLE_Y));
@@ -292,14 +292,14 @@ static void transform_LIT(struct radeon_compiler* c,
 		dstregtmpmask(temp, RC_MASK_W),
 		swizzle(srctemp, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W));
 
-	// tmp.z = (tmp.x > 0) ? tmp.w : 0.0
+	/* tmp.z = (tmp.x > 0) ? tmp.w : 0.0 */
 	emit3(c, inst->Prev, RC_OPCODE_CMP, inst->U.I.SaturateMode,
 		dstregtmpmask(temp, RC_MASK_Z),
 		negate(swizzle(srctemp, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X)),
 		swizzle(srctemp, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W, RC_SWIZZLE_W),
 		builtin_zero);
 
-	// tmp.x, tmp.y, tmp.w = 1.0, tmp.x, 1.0
+	/* tmp.x, tmp.y, tmp.w = 1.0, tmp.x, 1.0 */
 	emit1(c, inst->Prev, RC_OPCODE_MOV, inst->U.I.SaturateMode,
 		dstregtmpmask(temp, RC_MASK_XYW),
 		swizzle(srctemp, RC_SWIZZLE_ONE, RC_SWIZZLE_X, RC_SWIZZLE_ONE, RC_SWIZZLE_ONE));
@@ -533,16 +533,16 @@ static void sincos_constants(struct radeon_compiler* c, unsigned int *constants)
 {
 	static const float SinCosConsts[2][4] = {
 		{
-			1.273239545,		// 4/PI
-			-0.405284735,		// -4/(PI*PI)
-			3.141592654,		// PI
-			0.2225			// weight
+			1.273239545,		/* 4/PI */
+			-0.405284735,		/* -4/(PI*PI) */
+			3.141592654,		/* PI */
+			0.2225			/* weight */
 		},
 		{
 			0.75,
 			0.5,
-			0.159154943,		// 1/(2*PI)
-			6.283185307		// 2*PI
+			0.159154943,		/* 1/(2*PI) */
+			6.283185307		/* 2*PI */
 		}
 	};
 	int i;
@@ -602,9 +602,9 @@ int radeonTransformTrigSimple(struct radeon_compiler* c,
 	sincos_constants(c, constants);
 
 	if (inst->U.I.Opcode == RC_OPCODE_COS) {
-		// MAD tmp.x, src, 1/(2*PI), 0.75
-		// FRC tmp.x, tmp.x
-		// MAD tmp.z, tmp.x, 2*PI, -PI
+		/* MAD tmp.x, src, 1/(2*PI), 0.75 */
+		/* FRC tmp.x, tmp.x */
+		/* MAD tmp.z, tmp.x, 2*PI, -PI */
 		emit3(c, inst->Prev, RC_OPCODE_MAD, 0, dstregtmpmask(tempreg, RC_MASK_W),
 			swizzle(inst->U.I.SrcReg[0], RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X, RC_SWIZZLE_X),
 			swizzle(srcreg(RC_FILE_CONSTANT, constants[1]), RC_SWIZZLE_Z, RC_SWIZZLE_Z, RC_SWIZZLE_Z, RC_SWIZZLE_Z),

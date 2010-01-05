@@ -26,6 +26,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
+#include "util/u_bitmask.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -74,9 +75,12 @@ static enum pipe_error compile_fs( struct svga_context *svga,
       goto fail;
    }
 
+   result->id = util_bitmask_add(svga->fs_bm);
+   if(result->id == UTIL_BITMASK_INVALID_INDEX)
+      goto fail;
 
    ret = SVGA3D_DefineShader(svga->swc, 
-                             svga->state.next_fs_id,
+                             result->id,
                              SVGA3D_SHADERTYPE_PS,
                              result->tokens, 
                              result->nr_tokens * sizeof result->tokens[0]);
@@ -84,14 +88,16 @@ static enum pipe_error compile_fs( struct svga_context *svga,
       goto fail;
 
    *out_result = result;
-   result->id = svga->state.next_fs_id++;
    result->next = fs->base.results;
    fs->base.results = result;
    return PIPE_OK;
 
 fail:
-   if (result)
+   if (result) {
+      if (result->id != UTIL_BITMASK_INVALID_INDEX)
+         util_bitmask_clear( svga->fs_bm, result->id );
       svga_destroy_shader_result( result );
+   }
    return ret;
 }
 
@@ -116,7 +122,7 @@ fail:
  */
 static int emit_white_fs( struct svga_context *svga )
 {
-   int ret;
+   int ret = PIPE_ERROR;
 
    /* ps_3_0
     * def c0, 1.000000, 0.000000, 0.000000, 1.000000
@@ -137,16 +143,26 @@ static int emit_white_fs( struct svga_context *svga )
       0x0000ffff,
    };
 
+   assert(SVGA3D_INVALID_ID == UTIL_BITMASK_INVALID_INDEX);
+   svga->state.white_fs_id = util_bitmask_add(svga->fs_bm);
+   if(svga->state.white_fs_id == SVGA3D_INVALID_ID)
+      goto no_fs_id;
+
    ret = SVGA3D_DefineShader(svga->swc, 
-                             svga->state.next_fs_id,
+                             svga->state.white_fs_id,
                              SVGA3D_SHADERTYPE_PS,
                              white_tokens, 
                              sizeof(white_tokens));
    if (ret)
-      return ret;
+      goto no_definition;
 
-   svga->state.white_fs_id = svga->state.next_fs_id++;
    return 0;
+
+no_definition:
+   util_bitmask_clear(svga->fs_bm, svga->state.white_fs_id);
+   svga->state.white_fs_id = SVGA3D_INVALID_ID;
+no_fs_id:
+   return ret;
 }
 
 
@@ -251,12 +267,14 @@ static int emit_hw_fs( struct svga_context *svga,
 
    assert(id != SVGA3D_INVALID_ID);
 
-   if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT]) {
-      ret = SVGA3D_SetShader(svga->swc, 
-                             SVGA3D_SHADERTYPE_PS, 
-                             id );
-      if (ret)
-         return ret;
+   if (result != svga->state.hw_draw.fs) {
+      if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT]) {
+         ret = SVGA3D_SetShader(svga->swc,
+                                SVGA3D_SHADERTYPE_PS,
+                                id );
+         if (ret)
+            return ret;
+      }
 
       svga->dirty |= SVGA_NEW_FS_RESULT;
       svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT] = id;
