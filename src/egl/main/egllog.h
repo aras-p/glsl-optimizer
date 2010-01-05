@@ -12,15 +12,15 @@
 typedef void (*_EGLLogProc)(EGLint level, const char *msg);
 
 
-extern void
+PUBLIC void
 _eglSetLogProc(_EGLLogProc logger);
 
 
-extern void
+PUBLIC void
 _eglSetLogLevel(EGLint level);
 
 
-extern void
+PUBLIC void
 _eglLog(EGLint level, const char *fmtStr, ...);
 
 

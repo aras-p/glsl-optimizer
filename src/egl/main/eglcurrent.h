@@ -60,7 +60,7 @@ _eglConvertApiFromIndex(EGLint idx)
 }
 
 
-extern _EGLThreadInfo *
+PUBLIC _EGLThreadInfo *
 _eglGetCurrentThread(void);
 
 
@@ -72,19 +72,19 @@ extern EGLBoolean
 _eglIsCurrentThreadDummy(void);
 
 
-extern _EGLContext *
+PUBLIC _EGLContext *
 _eglGetCurrentContext(void);
 
 
-extern _EGLDisplay *
+PUBLIC _EGLDisplay *
 _eglGetCurrentDisplay(void);
 
 
-extern _EGLSurface *
+PUBLIC _EGLSurface *
 _eglGetCurrentSurface(EGLint readdraw);
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglError(EGLint errCode, const char *msg);
 
 
