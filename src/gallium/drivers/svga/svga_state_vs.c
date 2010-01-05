@@ -149,16 +149,13 @@ static int emit_hw_vs( struct svga_context *svga,
    }
 
    if (result != svga->state.hw_draw.vs) {
-      if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_VERTEX]) {
-         ret = SVGA3D_SetShader(svga->swc,
-                                SVGA3D_SHADERTYPE_VS,
-                                id );
-         if (ret)
-            return ret;
-      }
+      ret = SVGA3D_SetShader(svga->swc,
+                             SVGA3D_SHADERTYPE_VS,
+                             id );
+      if (ret)
+         return ret;
 
       svga->dirty |= SVGA_NEW_VS_RESULT;
-      svga->state.hw_draw.shader_id[PIPE_SHADER_VERTEX] = id;
       svga->state.hw_draw.vs = result;      
    }
 

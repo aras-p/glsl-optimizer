@@ -268,16 +268,13 @@ static int emit_hw_fs( struct svga_context *svga,
    assert(id != SVGA3D_INVALID_ID);
 
    if (result != svga->state.hw_draw.fs) {
-      if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT]) {
-         ret = SVGA3D_SetShader(svga->swc,
-                                SVGA3D_SHADERTYPE_PS,
-                                id );
-         if (ret)
-            return ret;
-      }
+      ret = SVGA3D_SetShader(svga->swc,
+                             SVGA3D_SHADERTYPE_PS,
+                             id );
+      if (ret)
+         return ret;
 
       svga->dirty |= SVGA_NEW_FS_RESULT;
-      svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT] = id;
       svga->state.hw_draw.fs = result;      
    }
 
