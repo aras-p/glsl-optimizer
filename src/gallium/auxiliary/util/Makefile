@@ -9,6 +9,7 @@ C_SOURCES = \
 	u_debug_symbol.c \
 	u_debug_stack.c \
 	u_blit.c \
+	u_bitmask.c \
 	u_cache.c \
 	u_cpu_detect.c \
 	u_draw_quad.c \
