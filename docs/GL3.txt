@@ -60,3 +60,6 @@ Frag depth clamp (GL_ARB_depth_clamp)                 DONE
 Fence objects (GL_ARB_sync)                           DONE
 
 
+
+More info about these features and the work involved can be found at
+http://dri.freedesktop.org/wiki/MissingFunctionality
