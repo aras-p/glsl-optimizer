@@ -1902,6 +1902,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_NUM_EXTENSIONS:
          params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
          break;
+      case GL_MAJOR_VERSION:
+         params[0] = INT_TO_BOOLEAN(ctx->VersionMajor);
+         break;
+      case GL_MINOR_VERSION:
+         params[0] = INT_TO_BOOLEAN(ctx->VersionMinor);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3739,6 +3745,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_NUM_EXTENSIONS:
          params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
+         break;
+      case GL_MAJOR_VERSION:
+         params[0] = (GLfloat)(ctx->VersionMajor);
+         break;
+      case GL_MINOR_VERSION:
+         params[0] = (GLfloat)(ctx->VersionMinor);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
@@ -5578,6 +5590,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_NUM_EXTENSIONS:
          params[0] = _mesa_get_extension_count(ctx);
          break;
+      case GL_MAJOR_VERSION:
+         params[0] = ctx->VersionMajor;
+         break;
+      case GL_MINOR_VERSION:
+         params[0] = ctx->VersionMinor;
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -7416,6 +7434,12 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_NUM_EXTENSIONS:
          params[0] = (GLint64)(_mesa_get_extension_count(ctx));
+         break;
+      case GL_MAJOR_VERSION:
+         params[0] = (GLint64)(ctx->VersionMajor);
+         break;
+      case GL_MINOR_VERSION:
+         params[0] = (GLint64)(ctx->VersionMinor);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);
