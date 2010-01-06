@@ -203,10 +203,10 @@ util_make_fragment_clonecolor_shader(struct pipe_context *pipe, int num_cbufs)
 {
    struct ureg_program *ureg;
    struct ureg_src src;
-   struct ureg_dst dst[8];
+   struct ureg_dst dst[PIPE_MAX_COLOR_BUFS];
    int i;
 
-   assert(num_cbufs <= 8);
+   assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)
