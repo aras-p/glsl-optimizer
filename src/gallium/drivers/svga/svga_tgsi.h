@@ -56,7 +56,7 @@ struct svga_fs_compile_key
       unsigned compare_func:3;
       unsigned unnormalized:1;
       unsigned width_height_idx:7;
-      ubyte texture_target;
+      unsigned texture_target:8;
    } tex[PIPE_MAX_SAMPLERS];
 };
 
@@ -119,8 +119,7 @@ static INLINE unsigned svga_vs_key_size( const struct svga_vs_compile_key *key )
 
 static INLINE unsigned svga_fs_key_size( const struct svga_fs_compile_key *key )
 {
-   return (const char *)&key->tex[key->num_textures].texture_target -
-      (const char *)key;
+   return (const char *)&key->tex[key->num_textures] - (const char *)key;
 }
 
 struct svga_shader_result *

@@ -40,8 +40,13 @@
 static INLINE int compare_fs_keys( const struct svga_fs_compile_key *a,
                                    const struct svga_fs_compile_key *b )
 {
-   unsigned keysize = svga_fs_key_size( a );
-   return memcmp( a, b, keysize );
+   unsigned keysize_a = svga_fs_key_size( a );
+   unsigned keysize_b = svga_fs_key_size( b );
+
+   if (keysize_a != keysize_b) {
+      return (int)(keysize_a - keysize_b);
+   }
+   return memcmp( a, b, keysize_a );
 }
 
 
