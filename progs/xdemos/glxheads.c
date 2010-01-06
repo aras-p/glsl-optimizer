@@ -170,14 +170,14 @@ AddHead(const char *displayName)
          Error(displayName, "GL_VENDOR string length overflow");
          return NULL;
       }
-      strcpy(h->Vendor, (char *) glGetString(GL_VENDOR));
+      strcpy(h->Vendor, tmp);
 
       tmp = (char *) glGetString(GL_RENDERER);
       if (strlen(tmp) + 1 > sizeof(h->Renderer)) {
          Error(displayName, "GL_RENDERER string length overflow");
          return NULL;
       }
-      strcpy(h->Renderer, (char *) glGetString(GL_RENDERER));
+      strcpy(h->Renderer, tmp);
 
       NumHeads++;
       return &Heads[NumHeads-1];
