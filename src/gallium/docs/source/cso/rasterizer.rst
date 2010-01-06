@@ -3,58 +3,123 @@
 Rasterizer
 ==========
 
-The rasterizer is the main chunk of state controlling how vertices are
-interpolated into fragments.
+The rasterizer state controls the rendering of points, lines and triangles.
+Attributes include polygon culling state, line width, line stipple,
+multisample state, scissoring and flat/smooth shading.
+
 
 Members
 -------
 
-XXX undocumented light_twoside, front_winding, cull_mode, fill_cw, fill_ccw, offset_cw, offset_ccw
-XXX moar undocumented poly_smooth, line_stipple_factor, line_last_pixel, offset_units, offset_scale
-XXX sprite_coord_mode
-
 flatshade
     If set, the provoking vertex of each polygon is used to determine the
-    color of the entire polygon. If not set, the color fragments will be
-    interpolated from each vertex's color.
-scissor
-    Whether the scissor test is enabled.
+    color of the entire polygon.  If not set, fragment colors will be
+    interpolated between the vertex colors.
+    Note that this is separate from the fragment shader input attributes
+    CONSTANT, LINEAR and PERSPECTIVE.  We need the flatshade state at
+    clipping time to determine how to set the color of new vertices.
+    Also note that the draw module can implement flat shading by copying
+    the provoking vertex color to all the other vertices in the primitive.
+
+flatshade_first
+    Whether the first vertex should be the provoking vertex, for most
+    primitives. If not set, the last vertex is the provoking vertex.
+
+light_twoside
+    If set, there are per-vertex back-facing colors.  The draw module
+    uses this state along with the front/back information to set the
+    final vertex colors prior to rasterization.
+
+front_winding
+    Indicates the window order of front-facing polygons, either
+    PIPE_WINDING_CW or PIPE_WINDING_CCW
+cull_mode
+    Indicates which polygons to cull, either PIPE_WINDING_NONE (cull no
+    polygons), PIPE_WINDING_CW (cull clockwise-winding polygons),
+    PIPE_WINDING_CCW (cull counter clockwise-winding polygons), or
+    PIPE_WINDING_BOTH (cull all polygons).
+
+fill_cw
+    Indicates how to fill clockwise polygons, either PIPE_POLYGON_MODE_FILL,
+    PIPE_POLYGON_MODE_LINE or PIPE_POLYGON_MODE_POINT.
+fill_ccw
+    Indicates how to fill counter clockwise polygons, either
+    PIPE_POLYGON_MODE_FILL, PIPE_POLYGON_MODE_LINE or PIPE_POLYGON_MODE_POINT.
+
 poly_stipple_enable
     Whether polygon stippling is enabled.
-point_smooth
-    Whether points should be smoothed. Point smoothing turns rectangular
-    points into circles or ovals.
-point_sprite
-    Whether point sprites are enabled.
-point_size_per_vertex
-    Whether vertices have a point size element.
-multisample
-    Whether :ref:`MSAA` is enabled.
+poly_smooth
+    Controls OpenGL-style polygon smoothing/antialiasing
+offset_cw
+    If set, clockwise polygons will have polygon offset factors applied
+offset_ccw
+    If set, counter clockwise polygons will have polygon offset factors applied
+offset_units
+    Specifies the polygon offset bias
+offset_scale
+    Specifies the polygon offset scale
+
+line_width
+    The width of lines.
 line_smooth
     Whether lines should be smoothed. Line smoothing is simply anti-aliasing.
 line_stipple_enable
     Whether line stippling is enabled.
 line_stipple_pattern
     16-bit bitfield of on/off flags, used to pattern the line stipple.
-bypass_vs_clip_and_viewport
-    Whether the entire TCL pipeline should be bypassed. This implies that
-    vertices are pre-transformed for the viewport, and will not be run
-    through the vertex shader. Note that implementations may still clip away
-    vertices that are not in the viewport.
-flatshade_first
-    Whether the first vertex should be the provoking vertex, for most
-    primitives. If not set, the last vertex is the provoking vertex.
-gl_rasterization_rules
-    Whether the rasterizer should use (0.5, 0.5) pixel centers. When not set,
-    the rasterizer will use (0, 0) for pixel centers.
-line_width
-    The width of lines.
+line_stipple_factor
+    When drawinga stippled line, each bit in the stipple pattern is
+    repeated N times, where N = line_stipple_factor + 1.
+line_last_pixel
+    Controls whether the last pixel in a line is drawn or not.  OpenGL
+    omits the last pixel to avoid double-drawing pixels at the ends of lines
+    when drawing connected lines.
+
+point_smooth
+    Whether points should be smoothed. Point smoothing turns rectangular
+    points into circles or ovals.
+point_size_per_vertex
+    Whether vertices have a point size element.
 point_size
     The size of points, if not specified per-vertex.
 point_size_min
     The minimum size of points.
 point_size_max
     The maximum size of points.
+point_sprite
+    Whether points are drawn as sprites (textured quads)
+sprite_coord_mode
+    Specifies how the value for each shader output should be computed when
+    drawing sprites.  If PIPE_SPRITE_COORD_NONE, don't change the vertex
+    shader output.  Otherwise, the four vertices of the resulting quad will
+    be assigned texture coordinates.  For PIPE_SPRITE_COORD_LOWER_LEFT, the
+    lower left vertex will have coordinate (0,0,0,1).
+    For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left vertex will have
+    coordinate (0,0,0,1).
+    This state is needed by the 'draw' module because that's where each
+    point vertex is converted into four quad vertices.  There's no other
+    place to emit the new vertex texture coordinates which are required for
+    sprite rendering.
+    Note that when geometry shaders are available, this state could be
+    removed.  A special geometry shader defined by the state tracker could
+    converts the incoming points into quads with the proper texture coords.
+
+scissor
+    Whether the scissor test is enabled.
+
+multisample
+    Whether :ref:`MSAA` is enabled.
+
+bypass_vs_clip_and_viewport
+    Whether the entire TCL pipeline should be bypassed. This implies that
+    vertices are pre-transformed for the viewport, and will not be run
+    through the vertex shader. Note that implementations may still clip away
+    vertices that are not in the viewport.
+
+gl_rasterization_rules
+    Whether the rasterizer should use (0.5, 0.5) pixel centers. When not set,
+    the rasterizer will use (0, 0) for pixel centers.
+
 
 Notes
 -----
