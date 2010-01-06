@@ -39,26 +39,24 @@ struct tgsi_token;
 
 struct svga_vs_compile_key
 {
-   ubyte need_prescale:1;
-   ubyte allow_psiz:1;
    unsigned zero_stride_vertex_elements;
-   ubyte num_zero_stride_vertex_elements:6;
+   unsigned need_prescale:1;
+   unsigned allow_psiz:1;
+   unsigned num_zero_stride_vertex_elements:6;
 };
 
 struct svga_fs_compile_key
 {
-   boolean light_twoside:1;
-   boolean front_cw:1;
-   ubyte num_textures;
-   ubyte num_unnormalized_coords;
+   unsigned light_twoside:1;
+   unsigned front_cw:1;
+   unsigned num_textures:8;
+   unsigned num_unnormalized_coords:8;
    struct {
-      ubyte compare_mode       : 1;
-      ubyte compare_func       : 3;
-      ubyte unnormalized       : 1;
-
-      ubyte width_height_idx   : 7;
-
-      ubyte texture_target;
+      unsigned compare_mode:1;
+      unsigned compare_func:3;
+      unsigned unnormalized:1;
+      unsigned width_height_idx:7;
+      unsigned texture_target:8;
    } tex[PIPE_MAX_SAMPLERS];
 };
 
