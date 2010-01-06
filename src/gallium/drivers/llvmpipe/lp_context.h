@@ -96,9 +96,6 @@ struct llvmpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   /** Derived from scissor and surface bounds: */
-   struct pipe_scissor_state cliprect;
-
    /** The tiling engine */
    struct setup_context *setup;
 

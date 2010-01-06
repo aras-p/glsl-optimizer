@@ -136,39 +136,6 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
 
 
-/**
- * Recompute cliprect from scissor bounds, scissor enable and surface size.
- */
-static void
-compute_cliprect(struct llvmpipe_context *lp)
-{
-   /* LP_NEW_FRAMEBUFFER
-    */
-   uint surfWidth = lp->framebuffer.width;
-   uint surfHeight = lp->framebuffer.height;
-
-   /* LP_NEW_RASTERIZER
-    */
-   if (lp->rasterizer->scissor) {
-
-      /* LP_NEW_SCISSOR
-       *
-       * clip to scissor rect:
-       */
-      lp->cliprect.minx = MAX2(lp->scissor.minx, 0);
-      lp->cliprect.miny = MAX2(lp->scissor.miny, 0);
-      lp->cliprect.maxx = MIN2(lp->scissor.maxx, surfWidth);
-      lp->cliprect.maxy = MIN2(lp->scissor.maxy, surfHeight);
-   }
-   else {
-      /* clip to surface bounds */
-      lp->cliprect.minx = 0;
-      lp->cliprect.miny = 0;
-      lp->cliprect.maxx = surfWidth;
-      lp->cliprect.maxy = surfHeight;
-   }
-}
-
 
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
@@ -188,11 +155,6 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_FS |
                           LP_NEW_VS))
       compute_vertex_info( llvmpipe );
-
-   if (llvmpipe->dirty & (LP_NEW_SCISSOR |
-                          LP_NEW_RASTERIZER |
-                          LP_NEW_FRAMEBUFFER))
-      compute_cliprect(llvmpipe);
 
    if (llvmpipe->dirty & (LP_NEW_FS |
                           LP_NEW_BLEND |
