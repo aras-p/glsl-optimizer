@@ -28,6 +28,9 @@
 #define VERSION_H
 
 
+#include "mtypes.h"
+
+
 /* Mesa version */
 #define MESA_MAJOR 7
 #define MESA_MINOR 8
@@ -48,6 +51,10 @@
 /* To make version comparison easy */
 #define OPENGL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR, OPENGL_PATCH)
+
+
+extern void
+_mesa_compute_version(GLcontext *ctx);
 
 
 #endif /* VERSION_H */
