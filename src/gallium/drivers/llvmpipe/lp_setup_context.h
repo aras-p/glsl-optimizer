@@ -141,4 +141,6 @@ void lp_setup_init_vbuf(struct setup_context *setup);
 
 void lp_setup_update_state( struct setup_context *setup );
 
+void lp_setup_destroy( struct setup_context *setup );
+
 #endif

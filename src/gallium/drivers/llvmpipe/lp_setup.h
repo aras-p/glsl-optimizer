@@ -128,7 +128,5 @@ void
 lp_setup_set_vertex_info( struct setup_context *setup, 
                           struct vertex_info *info );
 
-void 
-lp_setup_destroy( struct setup_context *setup );
 
 #endif

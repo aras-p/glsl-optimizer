@@ -53,11 +53,10 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    uint i;
 
+   /* This will also destroy llvmpipe->setup:
+    */
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
-
-   if (llvmpipe->setup)
-      lp_setup_destroy( llvmpipe->setup );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       pipe_surface_reference(&llvmpipe->framebuffer.cbufs[i], NULL);

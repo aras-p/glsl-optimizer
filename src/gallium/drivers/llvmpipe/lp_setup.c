@@ -571,7 +571,8 @@ lp_setup_update_state( struct setup_context *setup )
 
 
 
-
+/* Only caller is lp_setup_vbuf_destroy()
+ */
 void 
 lp_setup_destroy( struct setup_context *setup )
 {
