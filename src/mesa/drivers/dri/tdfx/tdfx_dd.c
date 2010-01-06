@@ -91,7 +91,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
       else {
 	 /* unexpected result: replace spaces with hyphens */
 	 int i;
-	 for (i = 0; hardware[i] && (i < sizeof(hardware)); i++) {
+	 for (i = 0; i < sizeof(hardware) && hardware[i]; i++) {
 	    if (hardware[i] == ' ' || hardware[i] == '\t') {
 	       hardware[i] = '-';
 	    }

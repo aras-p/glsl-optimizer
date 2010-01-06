@@ -578,7 +578,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
 
             /* get pointer to previous instruction */
             prevI = i - 1;
-            while (removeInst[prevI] && prevI > 0)
+            while (prevI > 0 && removeInst[prevI])
                prevI--;
             prevInst = prog->Instructions + prevI;
 
