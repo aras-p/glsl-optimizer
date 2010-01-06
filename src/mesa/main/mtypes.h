@@ -2864,6 +2864,10 @@ struct __GLcontextRec
    /** Extension information */
    struct gl_extensions Extensions;
 
+   /** Version info */
+   GLuint VersionMajor, VersionMinor;
+   char *VersionString;
+
    /** \name State attribute stack (for glPush/PopAttrib) */
    /*@{*/
    GLuint AttribStackDepth;
