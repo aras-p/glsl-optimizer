@@ -34,7 +34,6 @@
 #include "lp_scene_queue.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
-#include "lp_state.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"

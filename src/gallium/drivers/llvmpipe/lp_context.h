@@ -88,7 +88,6 @@ struct llvmpipe_context {
    
    /** Vertex format */
    struct vertex_info vertex_info;
-   struct vertex_info vertex_info_vbuf;
 
    /** Which vertex shader output slot contains point size */
    int psize_slot;

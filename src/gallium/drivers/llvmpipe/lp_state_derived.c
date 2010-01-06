@@ -43,29 +43,29 @@
  * (simple float[][4]) used by the 'draw' module into vertices for
  * rasterization.
  *
- * This function validates the vertex layout and returns a pointer to a
- * vertex_info object.
+ * This function validates the vertex layout.
  */
 static void
 compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
-   struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
+   struct vertex_info *vinfo = &llvmpipe->vertex_info;
    const uint num = draw_num_vs_outputs(llvmpipe->draw);
    uint i;
 
-   /* Tell draw_vbuf to simply emit the whole post-xform vertex as-is.
+   /* Tell setup to tell the draw module to simply emit the whole
+    * post-xform vertex as-is.
     *
     * Not really sure if this is the best approach.
     */
-   vinfo_vbuf->num_attribs = 0;
+   vinfo->num_attribs = 0;
    for (i = 0; i < num; i++) {
-      draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, i);
    }
-   draw_compute_vertex_size(vinfo_vbuf);
+   draw_compute_vertex_size(vinfo);
 
 
-   lp_setup_set_vertex_info(llvmpipe->setup, vinfo_vbuf);
+   lp_setup_set_vertex_info(llvmpipe->setup, vinfo);
 
 /*
    llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,

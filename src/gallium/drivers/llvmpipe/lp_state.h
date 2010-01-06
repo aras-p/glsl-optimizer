@@ -215,11 +215,4 @@ void
 llvmpipe_unmap_texture_surfaces(struct llvmpipe_context *lp);
 
 
-struct vertex_info *
-llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe);
-
-struct vertex_info *
-llvmpipe_get_vbuf_vertex_info(struct llvmpipe_context *llvmpipe);
-
-
 #endif
