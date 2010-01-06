@@ -93,17 +93,6 @@ struct llvmpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   /* The reduced version of the primitive supplied by the state
-    * tracker.
-    */
-   unsigned reduced_api_prim;
-
-   /* The reduced primitive after unfilled triangles, wide-line
-    * decomposition, etc, are taken into account.  This is the
-    * primitive actually rasterized.
-    */
-   unsigned reduced_prim;
-
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
 
@@ -112,10 +101,6 @@ struct llvmpipe_context {
 
    /** The primitive drawing context */
    struct draw_context *draw;
-
-   /** Draw module backend */
-   struct vbuf_render *vbuf_backend;
-   struct draw_stage *vbuf;
 
    unsigned tex_timestamp;
    boolean no_rast;

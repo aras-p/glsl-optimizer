@@ -39,19 +39,22 @@
 #include "util/u_surface.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
-#include "lp_debug.h"
-#include "lp_fence.h"
-#include "lp_state.h"
 #include "lp_buffer.h"
 #include "lp_texture.h"
+#include "lp_debug.h"
+#include "lp_fence.h"
+#include "lp_rast.h"
 #include "lp_setup_context.h"
+
+#include "draw/draw_context.h"
+#include "draw/draw_vbuf.h"
 
 
 /** XXX temporary value, temporary here */
 #define MAX_SCENES 2
 
 
-static void set_state( struct setup_context *, unsigned );
+static void set_scene_state( struct setup_context *, unsigned );
 
 
 struct lp_scene *
@@ -76,7 +79,7 @@ first_triangle( struct setup_context *setup,
                 const float (*v1)[4],
                 const float (*v2)[4])
 {
-   set_state( setup, SETUP_ACTIVE );
+   set_scene_state( setup, SETUP_ACTIVE );
    lp_setup_choose_triangle( setup );
    setup->triangle( setup, v0, v1, v2 );
 }
@@ -86,7 +89,7 @@ first_line( struct setup_context *setup,
 	    const float (*v0)[4],
 	    const float (*v1)[4])
 {
-   set_state( setup, SETUP_ACTIVE );
+   set_scene_state( setup, SETUP_ACTIVE );
    lp_setup_choose_line( setup );
    setup->line( setup, v0, v1 );
 }
@@ -95,7 +98,7 @@ static void
 first_point( struct setup_context *setup,
 	     const float (*v0)[4])
 {
-   set_state( setup, SETUP_ACTIVE );
+   set_scene_state( setup, SETUP_ACTIVE );
    lp_setup_choose_point( setup );
    setup->point( setup, v0 );
 }
@@ -194,7 +197,7 @@ execute_clears( struct setup_context *setup )
 
 
 static void
-set_state( struct setup_context *setup,
+set_scene_state( struct setup_context *setup,
            unsigned new_state )
 {
    unsigned old_state = setup->state;
@@ -234,7 +237,7 @@ lp_setup_flush( struct setup_context *setup,
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   set_state( setup, SETUP_FLUSHED );
+   set_scene_state( setup, SETUP_FLUSHED );
 }
 
 
@@ -246,7 +249,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   set_state( setup, SETUP_FLUSHED );
+   set_scene_state( setup, SETUP_FLUSHED );
 
    util_copy_framebuffer_state(&setup->fb, fb);
 
@@ -302,7 +305,7 @@ lp_setup_clear( struct setup_context *setup,
        * buffers which the app or state-tracker might issue
        * separately.
        */
-      set_state( setup, SETUP_CLEARED );
+      set_scene_state( setup, SETUP_CLEARED );
 
       setup->clear.flags |= flags;
    }
@@ -321,7 +324,7 @@ lp_setup_fence( struct setup_context *setup )
 
    LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
 
-   set_state( setup, SETUP_ACTIVE );
+   set_scene_state( setup, SETUP_ACTIVE );
 
    /* insert the fence into all command bins */
    lp_scene_bin_everywhere( scene,
@@ -358,13 +361,13 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
 }
 
 void
-lp_setup_set_fs( struct setup_context *setup,
-                 struct lp_fragment_shader *fs )
+lp_setup_set_fs_function( struct setup_context *setup,
+                          lp_jit_frag_func jit_function )
 {
-   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) fs);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) jit_function);
    /* FIXME: reference count */
 
-   setup->fs.current.jit_function = fs ? fs->current->jit_function : NULL;
+   setup->fs.current.jit_function = jit_function;
    setup->dirty |= LP_SETUP_NEW_FS;
 }
 
@@ -405,6 +408,25 @@ lp_setup_set_blend_color( struct setup_context *setup,
       setup->dirty |= LP_SETUP_NEW_BLEND_COLOR;
    }
 }
+
+
+void 
+lp_setup_set_flatshade_first( struct setup_context *setup,
+                              boolean flatshade_first )
+{
+   setup->flatshade_first = flatshade_first;
+}
+
+
+void 
+lp_setup_set_vertex_info( struct setup_context *setup,
+                          struct vertex_info *vertex_info )
+{
+   /* XXX: just silently holding onto the pointer:
+    */
+   setup->vertex_info = vertex_info;
+}
+
 
 void
 lp_setup_set_sampler_textures( struct setup_context *setup,
@@ -452,8 +474,8 @@ lp_setup_is_texture_referenced( struct setup_context *setup,
 }
 
 
-static INLINE void
-lp_setup_update_shader_state( struct setup_context *setup )
+void
+lp_setup_update_state( struct setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
@@ -548,36 +570,6 @@ lp_setup_update_shader_state( struct setup_context *setup )
 }
 
 
-/* Stubs for lines & points for now:
- */
-void
-lp_setup_point(struct setup_context *setup,
-		     const float (*v0)[4])
-{
-   lp_setup_update_shader_state(setup);
-   setup->point( setup, v0 );
-}
-
-void
-lp_setup_line(struct setup_context *setup,
-		    const float (*v0)[4],
-		    const float (*v1)[4])
-{
-   lp_setup_update_shader_state(setup);
-   setup->line( setup, v0, v1 );
-}
-
-void
-lp_setup_tri(struct setup_context *setup,
-             const float (*v0)[4],
-             const float (*v1)[4],
-             const float (*v2)[4])
-{
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-
-   lp_setup_update_shader_state(setup);
-   setup->triangle( setup, v0, v1, v2 );
-}
 
 
 void 
@@ -602,17 +594,21 @@ lp_setup_destroy( struct setup_context *setup )
 
 
 /**
- * Create a new primitive tiling engine.  Currently also creates a
- * rasterizer to use with it.
+ * Create a new primitive tiling engine.  Plug it into the backend of
+ * the draw module.  Currently also creates a rasterizer to use with
+ * it.
  */
 struct setup_context *
-lp_setup_create( struct pipe_screen *screen )
+lp_setup_create( struct pipe_screen *screen,
+                 struct draw_context *draw )
 {
    unsigned i;
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
 
    if (!setup)
       return NULL;
+
+   lp_setup_init_vbuf(setup);
 
    setup->empty_scenes = lp_scene_queue_create();
    if (!setup->empty_scenes)
@@ -621,6 +617,13 @@ lp_setup_create( struct pipe_screen *screen )
    setup->rast = lp_rast_create( screen, setup->empty_scenes );
    if (!setup->rast) 
       goto fail;
+
+   setup->vbuf = draw_vbuf_stage(draw, &setup->base);
+   if (!setup->vbuf)
+      goto fail;
+
+   draw_set_rasterize_stage(draw, setup->vbuf);
+   draw_set_render(draw, &setup->base);
 
    /* create some empty scenes */
    for (i = 0; i < MAX_SCENES; i++) {
@@ -637,6 +640,12 @@ lp_setup_create( struct pipe_screen *screen )
    return setup;
 
 fail:
+   if (setup->rast)
+      lp_rast_destroy( setup->rast );
+   
+   if (setup->vbuf)
+      ;
+
    if (setup->empty_scenes)
       lp_scene_queue_destroy(setup->empty_scenes);
 

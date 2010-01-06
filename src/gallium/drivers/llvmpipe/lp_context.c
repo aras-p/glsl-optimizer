@@ -31,14 +31,12 @@
  */
 
 #include "draw/draw_context.h"
-#include "draw/draw_vbuf.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_flush.h"
-#include "lp_prim_vbuf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -179,22 +177,10 @@ llvmpipe_create( struct pipe_screen *screen )
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   llvmpipe->setup = lp_setup_create( screen );
+   llvmpipe->setup = lp_setup_create( screen,
+                                      llvmpipe->draw );
    if (!llvmpipe->setup)
       goto fail;
-
-   llvmpipe->vbuf_backend = lp_create_vbuf_backend(llvmpipe);
-   if (!llvmpipe->vbuf_backend)
-      goto fail;
-
-   llvmpipe->vbuf = draw_vbuf_stage(llvmpipe->draw, llvmpipe->vbuf_backend);
-   if (!llvmpipe->vbuf)
-      goto fail;
-
-   draw_set_rasterize_stage(llvmpipe->draw, llvmpipe->vbuf);
-   draw_set_render(llvmpipe->draw, llvmpipe->vbuf_backend);
-
-
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(llvmpipe->draw, &llvmpipe->pipe);

@@ -70,8 +70,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    struct draw_context *draw = lp->draw;
    unsigned i;
 
-   lp->reduced_api_prim = u_reduced_prim(mode);
-
    if (lp->dirty)
       llvmpipe_update_derived( lp );
 

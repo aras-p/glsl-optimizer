@@ -35,13 +35,13 @@ C_SOURCES = \
 	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
-	lp_prim_vbuf.c \
 	lp_rast.c \
 	lp_rast_tri.c \
 	lp_setup.c \
 	lp_setup_line.c \
 	lp_setup_point.c \
 	lp_setup_tri.c \
+	lp_setup_vbuf.c \
 	lp_query.c \
 	lp_screen.c \
 	lp_state_blend.c \

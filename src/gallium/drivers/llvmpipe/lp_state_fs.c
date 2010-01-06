@@ -891,5 +891,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 
    shader->current = variant;
 
-   lp_setup_set_fs(lp->setup, shader);
+   lp_setup_set_fs_function(lp->setup, 
+                            shader->current->jit_function);
 }

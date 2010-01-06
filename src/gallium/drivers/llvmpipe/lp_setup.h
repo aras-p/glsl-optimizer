@@ -28,6 +28,10 @@
 #define LP_SETUP_H
 
 #include "pipe/p_compiler.h"
+#include "lp_jit.h"
+
+struct draw_context;
+struct vertex_info;
 
 enum lp_interp {
    LP_INTERP_CONSTANT,
@@ -58,7 +62,8 @@ struct lp_fragment_shader;
 struct lp_jit_context;
 
 struct setup_context *
-lp_setup_create( struct pipe_screen *screen );
+lp_setup_create( struct pipe_screen *screen,
+                 struct draw_context *draw );
 
 void
 lp_setup_clear(struct setup_context *setup,
@@ -69,22 +74,6 @@ lp_setup_clear(struct setup_context *setup,
 
 struct pipe_fence_handle *
 lp_setup_fence( struct setup_context *setup );
-
-
-void
-lp_setup_tri(struct setup_context *setup,
-             const float (*v0)[4],
-             const float (*v1)[4],
-             const float (*v2)[4]);
-
-void
-lp_setup_line(struct setup_context *setup,
-              const float (*v0)[4],
-              const float (*v1)[4]);
-
-void
-lp_setup_point( struct setup_context *setup,
-                const float (*v0)[4] );
 
 
 void
@@ -107,8 +96,8 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         unsigned nr );
 
 void
-lp_setup_set_fs( struct setup_context *setup,
-                 struct lp_fragment_shader *fs );
+lp_setup_set_fs_function( struct setup_context *setup,
+                          lp_jit_frag_func jit_function );
 
 void
 lp_setup_set_fs_constants(struct setup_context *setup,
@@ -131,6 +120,13 @@ boolean
 lp_setup_is_texture_referenced( struct setup_context *setup,
                                 const struct pipe_texture *texture );
 
+void
+lp_setup_set_flatshade_first( struct setup_context *setup, 
+                              boolean flatshade_first );
+
+void
+lp_setup_set_vertex_info( struct setup_context *setup, 
+                          struct vertex_info *info );
 
 void 
 lp_setup_destroy( struct setup_context *setup );
