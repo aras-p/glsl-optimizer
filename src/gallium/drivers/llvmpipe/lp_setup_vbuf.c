@@ -59,7 +59,7 @@ setup_context(struct vbuf_render *vbr)
 
 
 static const struct vertex_info *
-lp_vbuf_get_vertex_info(struct vbuf_render *vbr)
+lp_setup_get_vertex_info(struct vbuf_render *vbr)
 {
    struct setup_context *setup = setup_context(vbr);
    return setup->vertex_info;
@@ -67,7 +67,7 @@ lp_vbuf_get_vertex_info(struct vbuf_render *vbr)
 
 
 static boolean
-lp_vbuf_allocate_vertices(struct vbuf_render *vbr,
+lp_setup_allocate_vertices(struct vbuf_render *vbr,
                           ushort vertex_size, ushort nr_vertices)
 {
    struct setup_context *setup = setup_context(vbr);
@@ -86,20 +86,20 @@ lp_vbuf_allocate_vertices(struct vbuf_render *vbr,
 }
 
 static void
-lp_vbuf_release_vertices(struct vbuf_render *vbr)
+lp_setup_release_vertices(struct vbuf_render *vbr)
 {
    /* keep the old allocation for next time */
 }
 
 static void *
-lp_vbuf_map_vertices(struct vbuf_render *vbr)
+lp_setup_map_vertices(struct vbuf_render *vbr)
 {
    struct setup_context *setup = setup_context(vbr);
    return setup->vertex_buffer;
 }
 
 static void 
-lp_vbuf_unmap_vertices(struct vbuf_render *vbr, 
+lp_setup_unmap_vertices(struct vbuf_render *vbr, 
                        ushort min_index,
                        ushort max_index )
 {
@@ -110,7 +110,7 @@ lp_vbuf_unmap_vertices(struct vbuf_render *vbr,
 
 
 static boolean
-lp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
+lp_setup_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    setup_context(vbr)->prim = prim;
    return TRUE;
@@ -129,7 +129,7 @@ static INLINE const_float4_ptr get_vert( const void *vertex_buffer,
  * draw elements / indexed primitives
  */
 static void
-lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
+lp_setup_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct setup_context *setup = setup_context(vbr);
    const unsigned stride = setup->vertex_info->size * sizeof(float);
@@ -312,7 +312,7 @@ lp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
  * It's up to us to convert the vertex array into point/line/tri prims.
  */
 static void
-lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
+lp_setup_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 {
    struct setup_context *setup = setup_context(vbr);
    const unsigned stride = setup->vertex_info->size * sizeof(float);
@@ -493,7 +493,7 @@ lp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 
 
 static void
-lp_vbuf_destroy(struct vbuf_render *vbr)
+lp_setup_vbuf_destroy(struct vbuf_render *vbr)
 {
    lp_setup_destroy(setup_context(vbr));
 }
@@ -508,13 +508,13 @@ lp_setup_init_vbuf(struct setup_context *setup)
    setup->base.max_indices = LP_MAX_VBUF_INDEXES;
    setup->base.max_vertex_buffer_bytes = LP_MAX_VBUF_SIZE;
 
-   setup->base.get_vertex_info = lp_vbuf_get_vertex_info;
-   setup->base.allocate_vertices = lp_vbuf_allocate_vertices;
-   setup->base.map_vertices = lp_vbuf_map_vertices;
-   setup->base.unmap_vertices = lp_vbuf_unmap_vertices;
-   setup->base.set_primitive = lp_vbuf_set_primitive;
-   setup->base.draw = lp_vbuf_draw;
-   setup->base.draw_arrays = lp_vbuf_draw_arrays;
-   setup->base.release_vertices = lp_vbuf_release_vertices;
-   setup->base.destroy = lp_vbuf_destroy;
+   setup->base.get_vertex_info = lp_setup_get_vertex_info;
+   setup->base.allocate_vertices = lp_setup_allocate_vertices;
+   setup->base.map_vertices = lp_setup_map_vertices;
+   setup->base.unmap_vertices = lp_setup_unmap_vertices;
+   setup->base.set_primitive = lp_setup_set_primitive;
+   setup->base.draw = lp_setup_draw;
+   setup->base.draw_arrays = lp_setup_draw_arrays;
+   setup->base.release_vertices = lp_setup_release_vertices;
+   setup->base.destroy = lp_setup_vbuf_destroy;
 }
