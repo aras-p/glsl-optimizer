@@ -56,7 +56,7 @@ struct svga_fs_compile_key
       unsigned compare_func:3;
       unsigned unnormalized:1;
       unsigned width_height_idx:7;
-      unsigned texture_target:8;
+      ubyte texture_target;
    } tex[PIPE_MAX_SAMPLERS];
 };
 
