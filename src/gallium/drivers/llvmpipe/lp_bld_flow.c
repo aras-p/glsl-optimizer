@@ -310,6 +310,11 @@ lp_build_flow_insert_block(struct lp_build_flow_context *flow)
    return new_block;
 }
 
+
+/**
+ * Begin a "skip" block.  Inside this block we can test a condition and
+ * skip to the end of the block if the condition is false.
+ */
 void
 lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
 {
@@ -321,13 +326,16 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
    if(!skip)
       return;
 
+   /* create new basic block */
    skip->block = lp_build_flow_insert_block(flow);
+
    skip->num_variables = flow->num_variables;
    if(!skip->num_variables) {
       skip->phi = NULL;
       return;
    }
 
+   /* Allocate a Phi node for each variable in this skip scope */
    skip->phi = MALLOC(skip->num_variables * sizeof *skip->phi);
    if(!skip->phi) {
       skip->num_variables = 0;
@@ -337,6 +345,7 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, skip->block);
 
+   /* create a Phi node for each variable */
    for(i = 0; i < skip->num_variables; ++i)
       skip->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
@@ -344,6 +353,10 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Insert code to test a condition and branch to the end of the current
+ * skip block if the condition is true.
+ */
 void
 lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
                               LLVMValueRef cond)
@@ -361,15 +374,17 @@ lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
 
    new_block = lp_build_flow_insert_block(flow);
 
+   /* for each variable, update the Phi node with a (variable, block) pair */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
    }
 
+   /* if cond is true, goto skip->block, else goto new_block */
    LLVMBuildCondBr(flow->builder, cond, skip->block, new_block);
 
    LLVMPositionBuilderAtEnd(flow->builder, new_block);
- }
+}
 
 
 void
@@ -385,12 +400,14 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 
    current_block = LLVMGetInsertBlock(flow->builder);
 
+   /* add (variable, block) tuples to the phi nodes */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
       *flow->variables[i] = skip->phi[i];
    }
 
+   /* goto block */
    LLVMBuildBr(flow->builder, skip->block);
    LLVMPositionBuilderAtEnd(flow->builder, skip->block);
 
@@ -407,12 +424,14 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
    LLVMBuilderRef builder = mask->flow->builder;
    LLVMValueRef cond;
 
+   /* cond = (mask == 0) */
    cond = LLVMBuildICmp(builder,
                         LLVMIntEQ,
                         LLVMBuildBitCast(builder, mask->value, mask->reg_type, ""),
                         LLVMConstNull(mask->reg_type),
                         "");
 
+   /* if cond, goto end of block */
    lp_build_flow_skip_cond_break(mask->flow, cond);
 }
 
