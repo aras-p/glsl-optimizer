@@ -1015,6 +1015,9 @@ _mesa_free_context_data( GLcontext *ctx )
    if (ctx->Extensions.String)
       _mesa_free((void *) ctx->Extensions.String);
 
+   if (ctx->VersionString)
+      _mesa_free(ctx->VersionString);
+
    /* unbind the context if it's currently bound */
    if (ctx == _mesa_get_current_context()) {
       _mesa_make_current(NULL, NULL, NULL);
@@ -1374,6 +1377,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
 
       if (newCtx->FirstTimeCurrent) {
+         _mesa_compute_version(newCtx);
+
          check_context_limits(newCtx);
 
          /* We can use this to help debug user's problems.  Tell them to set
