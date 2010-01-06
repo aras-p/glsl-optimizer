@@ -124,7 +124,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    unsigned i;
 
    if (!softpipe_check_render_cond(sp))
-      return TRUE;
+      return;
 
    sp->reduced_api_prim = u_reduced_prim(mode);
 
