@@ -74,8 +74,6 @@ static unsigned translate_img_filter( unsigned filter )
       return FILTER_NEAREST;
    case PIPE_TEX_FILTER_LINEAR:
       return FILTER_LINEAR;
-   case PIPE_TEX_FILTER_ANISO:
-      return FILTER_ANISOTROPIC;
    default:
       assert(0);
       return FILTER_NEAREST;
@@ -221,6 +219,9 @@ i915_create_sampler_state(struct pipe_context *pipe,
    minFilt = translate_img_filter( sampler->min_img_filter );
    magFilt = translate_img_filter( sampler->mag_img_filter );
    
+   if (sampler->max_anisotropy > 1.0)
+      minFilt = magFilt = FILTER_ANISOTROPIC;
+
    if (sampler->max_anisotropy > 2.0) {
       cso->state[0] |= SS2_MAX_ANISO_4;
    }

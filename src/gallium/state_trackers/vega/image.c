@@ -644,7 +644,7 @@ VGint image_sampler_filter(struct vg_context *ctx)
        return PIPE_TEX_FILTER_NEAREST;
        break;
     case VG_IMAGE_QUALITY_BETTER:
-       /*return PIPE_TEX_FILTER_ANISO;*/
+       /* possibly use anisotropic filtering */
        return PIPE_TEX_FILTER_LINEAR;
        break;
     default:

@@ -48,8 +48,6 @@ static GLuint translate_img_filter( unsigned filter )
       return BRW_MAPFILTER_NEAREST;
    case PIPE_TEX_FILTER_LINEAR:
       return BRW_MAPFILTER_LINEAR;
-   case PIPE_TEX_FILTER_ANISO:
-      return BRW_MAPFILTER_ANISOTROPIC;
    default:
       assert(0);
       return BRW_MAPFILTER_NEAREST;

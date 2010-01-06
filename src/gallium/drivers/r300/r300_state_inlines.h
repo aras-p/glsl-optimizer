@@ -260,35 +260,33 @@ static INLINE uint32_t r300_translate_wrap(int wrap)
 static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip)
 {
     uint32_t retval = 0;
-    switch (min) {
+    if (is_anisotropic)
+        retval |= R300_TX_MIN_FILTER_ANISO | R300_TX_MAG_FILTER_ANISO;
+    else {
+        switch (min) {
         case PIPE_TEX_FILTER_NEAREST:
             retval |= R300_TX_MIN_FILTER_NEAREST;
             break;
         case PIPE_TEX_FILTER_LINEAR:
             retval |= R300_TX_MIN_FILTER_LINEAR;
             break;
-        case PIPE_TEX_FILTER_ANISO:
-            retval |= R300_TX_MIN_FILTER_ANISO;
-            break;
         default:
             debug_printf("r300: Unknown texture filter %d\n", min);
             assert(0);
             break;
-    }
-    switch (mag) {
+        }
+        switch (mag) {
         case PIPE_TEX_FILTER_NEAREST:
             retval |= R300_TX_MAG_FILTER_NEAREST;
             break;
         case PIPE_TEX_FILTER_LINEAR:
             retval |= R300_TX_MAG_FILTER_LINEAR;
             break;
-        case PIPE_TEX_FILTER_ANISO:
-            retval |= R300_TX_MAG_FILTER_ANISO;
-            break;
         default:
             debug_printf("r300: Unknown texture filter %d\n", mag);
             assert(0);
             break;
+        }
     }
     switch (mip) {
         case PIPE_TEX_MIPFILTER_NONE:

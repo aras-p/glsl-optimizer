@@ -171,8 +171,6 @@ enum pipe_texture_target {
  */
 #define PIPE_TEX_FILTER_NEAREST      0
 #define PIPE_TEX_FILTER_LINEAR       1
-#define PIPE_TEX_FILTER_ANISO        2 
-
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1

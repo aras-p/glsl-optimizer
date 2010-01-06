@@ -577,7 +577,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       lp_build_sample_2d_nearest_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
       if(lp_format_is_rgba8(bld.format_desc))
          lp_build_sample_2d_linear_aos(&bld, s, t, width, height, stride, data_ptr, texel);
       else

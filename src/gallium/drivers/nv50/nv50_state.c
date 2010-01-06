@@ -146,7 +146,6 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 		  (wrap_mode(cso->wrap_r) << 6));
 
 	switch (cso->mag_img_filter) {
-	case PIPE_TEX_FILTER_ANISO:
 	case PIPE_TEX_FILTER_LINEAR:
 		tsc[1] |= NV50TSC_1_1_MAGF_LINEAR;
 		break;
@@ -157,7 +156,6 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	}
 
 	switch (cso->min_img_filter) {
-	case PIPE_TEX_FILTER_ANISO:
 	case PIPE_TEX_FILTER_LINEAR:
 		tsc[1] |= NV50TSC_1_1_MINF_LINEAR;
 		break;

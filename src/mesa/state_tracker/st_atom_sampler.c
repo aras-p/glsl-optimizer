@@ -213,10 +213,6 @@ update_samplers(struct st_context *st)
                             sampler->border_color);
 
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;
-         if (sampler->max_anisotropy > 1.0) {
-            sampler->min_img_filter = PIPE_TEX_FILTER_ANISO;
-            sampler->mag_img_filter = PIPE_TEX_FILTER_ANISO;
-         }
 
          /* only care about ARB_shadow, not SGI shadow */
          if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {

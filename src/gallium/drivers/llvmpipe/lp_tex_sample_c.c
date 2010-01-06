@@ -1131,7 +1131,6 @@ lp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
       {
          int x0[4], y0[4], x1[4], y1[4];
          float xw[4], yw[4]; /* weights */
@@ -1283,7 +1282,6 @@ lp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
       {
          int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
          float xw[4], yw[4], zw[4]; /* interpolation weights */
@@ -1414,7 +1412,6 @@ lp_get_samples_rect(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
       {
          int x0[4], y0[4], x1[4], y1[4];
          float xw[4], yw[4]; /* weights */

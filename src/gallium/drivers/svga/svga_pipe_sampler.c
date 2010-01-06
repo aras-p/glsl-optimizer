@@ -76,7 +76,6 @@ static INLINE unsigned translate_img_filter( unsigned filter )
    switch (filter) {
    case PIPE_TEX_FILTER_NEAREST: return SVGA3D_TEX_FILTER_NEAREST;
    case PIPE_TEX_FILTER_LINEAR:  return SVGA3D_TEX_FILTER_LINEAR;
-   case PIPE_TEX_FILTER_ANISO:   return SVGA3D_TEX_FILTER_ANISOTROPIC;
    default:
       assert(0);
       return SVGA3D_TEX_FILTER_NEAREST;
@@ -107,6 +106,8 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->magfilter = translate_img_filter( sampler->mag_img_filter );
    cso->minfilter = translate_img_filter( sampler->min_img_filter );
    cso->aniso_level = MAX2( (unsigned) sampler->max_anisotropy, 1 );
+   if(cso->aniso_level != 1)
+      cso->magfilter = cso->minfilter = SVGA3D_TEX_FILTER_ANISOTROPIC;
    cso->lod_bias = sampler->lod_bias;
    cso->addressu = translate_wrap_mode(sampler->wrap_s);
    cso->addressv = translate_wrap_mode(sampler->wrap_t);
