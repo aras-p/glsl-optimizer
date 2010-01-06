@@ -69,8 +69,8 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->min_img_filter    = sampler->min_img_filter;
    state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
-   if(sampler->compare_mode) {
-      state->compare_mode      = sampler->compare_mode;
+   state->compare_mode      = sampler->compare_mode;
+   if(sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
       state->compare_func      = sampler->compare_func;
    }
    state->normalized_coords = sampler->normalized_coords;

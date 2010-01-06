@@ -453,8 +453,8 @@ generate_fragment(struct llvmpipe_context *lp,
                          debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
             debug_printf("  .mag_img_filter = %s\n",
                          debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
-            if(key->sampler[i].compare_mode)
-               debug_printf("  .compare_mode = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
+            if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
+               debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
             debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
             debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
          }

@@ -1520,7 +1520,7 @@ lp_get_samples(struct tgsi_sampler *tgsi_sampler,
    if (texture->target == PIPE_TEXTURE_2D &&
        sampler->min_img_filter == sampler->mag_img_filter &&
        sampler->wrap_s == sampler->wrap_t &&
-       sampler->compare_mode == FALSE &&
+       sampler->compare_mode == PIPE_TEX_COMPARE_NONE &&
        sampler->normalized_coords) 
    {
       if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
@@ -1567,7 +1567,7 @@ lp_get_samples(struct tgsi_sampler *tgsi_sampler,
                     sampler->min_mip_filter, PIPE_TEX_MIPFILTER_NONE,
                     sampler->min_img_filter, sampler->mag_img_filter,
                     sampler->wrap_s, sampler->wrap_t,
-                    sampler->compare_mode, FALSE,
+                    sampler->compare_mode, PIPE_TEX_COMPARE_NONE,
                     sampler->normalized_coords, TRUE);
    }
 

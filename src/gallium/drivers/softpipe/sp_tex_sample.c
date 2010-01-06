@@ -1862,7 +1862,7 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
       break;
    }
 
-   if (sampler->compare_mode != FALSE) {
+   if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
       samp->compare = sample_compare;
    }
    else {

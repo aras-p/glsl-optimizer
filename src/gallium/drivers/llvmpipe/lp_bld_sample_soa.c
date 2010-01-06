@@ -488,7 +488,7 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    LLVMValueRef res;
    unsigned chan;
 
-   if(!bld->static_state->compare_mode)
+   if(bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
 
    /* TODO: Compare before swizzling, to avoid redundant computations */

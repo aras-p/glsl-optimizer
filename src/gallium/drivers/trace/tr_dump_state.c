@@ -409,7 +409,7 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
    trace_dump_member(uint, state, min_img_filter);
    trace_dump_member(uint, state, min_mip_filter);
    trace_dump_member(uint, state, mag_img_filter);
-   trace_dump_member(bool, state, compare_mode);
+   trace_dump_member(uint, state, compare_mode);
    trace_dump_member(uint, state, compare_func);
    trace_dump_member(bool, state, normalized_coords);
    trace_dump_member(uint, state, prefilter);
