@@ -257,7 +257,8 @@ static INLINE uint32_t r300_translate_wrap(int wrap)
     }
 }
 
-static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip)
+static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
+                                                  int is_anisotropic)
 {
     uint32_t retval = 0;
     if (is_anisotropic)
