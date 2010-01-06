@@ -80,7 +80,7 @@ struct fenced_buffer_list
  */
 struct fenced_buffer
 {
-   /* 
+   /*
     * Immutable members.
     */
 
@@ -126,8 +126,8 @@ fenced_buffer(struct pb_buffer *buf)
 /**
  * Add the buffer to the fenced list.
  * 
- * fenced_buffer_list::mutex and fenced_buffer::mutex must be held, in this 
- * order before calling this function.
+ * fenced_buffer_list::mutex and fenced_buffer::mutex must be held, in this
+ * order, before calling this function.
  * 
  * Reference count should be incremented before calling this function.
  */
@@ -191,7 +191,7 @@ fenced_buffer_remove_locked(struct fenced_buffer_list *fenced_list,
  * Wait for the fence to expire, and remove it from the fenced list.
  * 
  * fenced_buffer::mutex must be held. fenced_buffer_list::mutex must not be 
- * held -- it will
+ * held -- it will be acquired internally.
  */
 static INLINE enum pipe_error
 fenced_buffer_finish_locked(struct fenced_buffer_list *fenced_list,
@@ -207,7 +207,10 @@ fenced_buffer_finish_locked(struct fenced_buffer_list *fenced_list,
    assert(pipe_is_referenced(&fenced_buf->base.base.reference));
    assert(fenced_buf->fence);
 
-   /* Acquire the global lock */
+   /*
+    * Acquire the global lock. Must release buffer mutex first to preserve
+    * lock order.
+    */
    pipe_mutex_unlock(fenced_buf->mutex);
    pipe_mutex_lock(fenced_list->mutex);
    pipe_mutex_lock(fenced_buf->mutex);
@@ -217,7 +220,7 @@ fenced_buffer_finish_locked(struct fenced_buffer_list *fenced_list,
          /* Remove from the fenced list */
          /* TODO: remove consequents */
          fenced_buffer_remove_locked(fenced_list, fenced_buf);
-         
+
          p_atomic_dec(&fenced_buf->base.base.reference.count);
          assert(pipe_is_referenced(&fenced_buf->base.base.reference));
 
@@ -238,7 +241,7 @@ fenced_buffer_finish_locked(struct fenced_buffer_list *fenced_list,
  */
 static void
 fenced_buffer_list_check_free_locked(struct fenced_buffer_list *fenced_list, 
-                               int wait)
+                                     int wait)
 {
    struct pb_fence_ops *ops = fenced_list->ops;
    struct list_head *curr, *next;
@@ -274,7 +277,6 @@ fenced_buffer_list_check_free_locked(struct fenced_buffer_list *fenced_list,
 
       pb_buf = &fenced_buf->base;
       pb_reference(&pb_buf, NULL);
-      
 
       curr = next; 
       next = curr->next;
@@ -329,7 +331,7 @@ fenced_buffer_map(struct pb_buffer *buf,
       if((flags & PIPE_BUFFER_USAGE_DONTBLOCK) &&
           ops->fence_signalled(ops, fenced_buf->fence, 0) == 0) {
          /* Don't wait for the GPU to finish writing */
-         goto finish;
+         goto done;
       }
 
       /* Wait for the GPU to finish writing */
@@ -350,7 +352,7 @@ fenced_buffer_map(struct pb_buffer *buf,
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    }
 
-finish:
+done:
    pipe_mutex_unlock(fenced_buf->mutex);
    
    return map;
@@ -391,7 +393,7 @@ fenced_buffer_validate(struct pb_buffer *buf,
       fenced_buf->vl = NULL;
       fenced_buf->validation_flags = 0;
       ret = PIPE_OK;
-      goto finish;
+      goto done;
    }
    
    assert(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
@@ -401,7 +403,7 @@ fenced_buffer_validate(struct pb_buffer *buf,
    /* Buffer cannot be validated in two different lists */ 
    if(fenced_buf->vl && fenced_buf->vl != vl) {
       ret = PIPE_ERROR_RETRY;
-      goto finish;
+      goto done;
    }
    
 #if 0
@@ -409,7 +411,7 @@ fenced_buffer_validate(struct pb_buffer *buf,
    if(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
       /* TODO: wait for the thread that mapped the buffer to unmap it */
       ret = PIPE_ERROR_RETRY;
-      goto finish;
+      goto done;
    }
    /* Final sanity checking */
    assert(!(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE));
@@ -420,17 +422,17 @@ fenced_buffer_validate(struct pb_buffer *buf,
       (fenced_buf->validation_flags & flags) == flags) {
       /* Nothing to do -- buffer already validated */
       ret = PIPE_OK;
-      goto finish;
+      goto done;
    }
    
    ret = pb_validate(fenced_buf->buffer, vl, flags);
    if (ret != PIPE_OK)
-      goto finish;
+      goto done;
    
    fenced_buf->vl = vl;
    fenced_buf->validation_flags |= flags;
    
-finish:
+done:
    pipe_mutex_unlock(fenced_buf->mutex);
 
    return ret;
