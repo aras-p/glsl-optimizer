@@ -81,6 +81,7 @@ MAIN_SOURCES = \
 	main/texstate.c \
 	main/texstore.c \
 	main/varray.c \
+	main/version.c \
 	main/viewport.c \
 	main/vtxfmt.c
 
