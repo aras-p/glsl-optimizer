@@ -96,7 +96,11 @@ struct nv50_reg {
 
 #define NV50_MOD_NEG 1
 #define NV50_MOD_ABS 2
+#define NV50_MOD_NEG_ABS (NV50_MOD_NEG | NV50_MOD_ABS)
 #define NV50_MOD_SAT 4
+#define NV50_MOD_I32 8
+
+/* NV50_MOD_I32 is used to indicate integer mode for neg/abs */
 
 /* STACK: Conditionals and loops have to use the (per warp) stack.
  * Stack entries consist of an entry type (divergent path, join at),
@@ -1142,36 +1146,41 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, e);
 }
 
-#define CVTOP_RN	0x01
-#define CVTOP_FLOOR	0x03
-#define CVTOP_CEIL	0x05
-#define CVTOP_TRUNC	0x07
-#define CVTOP_SAT	0x08
-#define CVTOP_ABS	0x10
+#define CVT_RN    (0x00 << 16)
+#define CVT_FLOOR (0x02 << 16)
+#define CVT_CEIL  (0x04 << 16)
+#define CVT_TRUNC (0x06 << 16)
+#define CVT_SAT   (0x08 << 16)
+#define CVT_ABS   (0x10 << 16)
 
-/* 0x04 == 32 bit dst */
-/* 0x40 == dst is float */
-/* 0x80 == src is float */
-#define CVT_F32_F32 0xc4
-#define CVT_F32_S32 0x44
-#define CVT_S32_F32 0x8c
-#define CVT_S32_S32 0x0c
-#define CVT_NEG     0x20
-#define CVT_RI      0x08
+#define CVT_X32_X32 0x04004000
+#define CVT_X32_S32 0x04014000
+#define CVT_F32_F32 ((0xc0 << 24) | CVT_X32_X32)
+#define CVT_S32_F32 ((0x88 << 24) | CVT_X32_X32)
+#define CVT_U32_F32 ((0x80 << 24) | CVT_X32_X32)
+#define CVT_F32_S32 ((0x40 << 24) | CVT_X32_S32)
+#define CVT_F32_U32 ((0x40 << 24) | CVT_X32_X32)
+#define CVT_S32_S32 ((0x08 << 24) | CVT_X32_S32)
+#define CVT_S32_U32 ((0x08 << 24) | CVT_X32_X32)
+#define CVT_U32_S32 ((0x00 << 24) | CVT_X32_S32)
+
+#define CVT_NEG 0x20000000
+#define CVT_RI  0x08000000
 
 static void
 emit_cvt(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
-	 int wp, unsigned cvn, unsigned fmt)
+	 int wp, uint32_t cvn)
 {
 	struct nv50_program_exec *e;
 
 	e = exec(pc);
-	set_long(pc, e);
 
-	e->inst[0] |= 0xa0000000;
-	e->inst[1] |= 0x00004000; /* 32 bit src */
-	e->inst[1] |= (cvn << 16);
-	e->inst[1] |= (fmt << 24);
+	if (src->mod & NV50_MOD_NEG) cvn |= CVT_NEG;
+	if (src->mod & NV50_MOD_ABS) cvn |= CVT_ABS;
+
+	e->inst[0] = 0xa0000000;
+	e->inst[1] = cvn;
+	set_long(pc, e);
 	set_src_0(pc, src, e);
 
 	if (wp >= 0)
@@ -1240,7 +1249,7 @@ emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 
 	/* cvt.f32.u32/s32 (?) if we didn't only write the predicate */
 	if (rdst)
-		emit_cvt(pc, rdst, dst, -1, CVTOP_ABS | CVTOP_RN, CVT_F32_S32);
+		emit_cvt(pc, rdst, dst, -1, CVT_ABS | CVT_F32_S32);
 	if (rdst && rdst != dst)
 		free_temp(pc, dst);
 }
@@ -1264,7 +1273,7 @@ map_tgsi_setop_cc(unsigned op)
 static INLINE void
 emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	emit_cvt(pc, dst, src, -1, CVTOP_FLOOR, CVT_F32_F32 | CVT_RI);
+	emit_cvt(pc, dst, src, -1, CVT_FLOOR | CVT_F32_F32 | CVT_RI);
 }
 
 static void
@@ -1282,15 +1291,9 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 }
 
 static INLINE void
-emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
-{
-	emit_cvt(pc, dst, src, -1, CVTOP_ABS, CVT_F32_F32);
-}
-
-static INLINE void
 emit_sat(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	emit_cvt(pc, dst, src, -1, CVTOP_SAT, CVT_F32_F32);
+	emit_cvt(pc, dst, src, -1, CVT_SAT | CVT_F32_F32);
 }
 
 static void
@@ -1347,12 +1350,6 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	FREE(one);
 }
 
-static INLINE void
-emit_neg(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
-{
-	emit_cvt(pc, dst, src, -1, CVTOP_RN, CVT_F32_F32 | CVT_NEG);
-}
-
 static void
 emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 {
@@ -1364,14 +1361,9 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	set_long(pc, e); /* sets cond code to ALWAYS */
 
 	if (src) {
-		unsigned cvn = CVT_F32_F32;
-
 		set_pred(pc, 0x1 /* cc = LT */, r_pred, e);
-
-		if (src->mod & NV50_MOD_NEG)
-			cvn |= CVT_NEG;
-		/* write predicate reg */
-		emit_cvt(pc, NULL, src, r_pred, CVTOP_RN, cvn);
+		/* write to predicate reg */
+		emit_cvt(pc, NULL, src, r_pred, CVT_F32_F32);
 	}
 
 	emit(pc, e);
@@ -1814,8 +1806,8 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 }
 
 /* Some operations support an optional negation flag. */
-static boolean
-negate_supported(const struct tgsi_full_instruction *insn, int i)
+static int
+get_supported_mods(const struct tgsi_full_instruction *insn, int i)
 {
 	switch (insn->Instruction.Opcode) {
 	case TGSI_OPCODE_ADD:
@@ -1835,9 +1827,22 @@ negate_supported(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_SCS:
 	case TGSI_OPCODE_SIN:
 	case TGSI_OPCODE_SUB:
-		return TRUE;
+		return NV50_MOD_NEG;
+	case TGSI_OPCODE_MAX:
+	case TGSI_OPCODE_MIN:
+	case TGSI_OPCODE_INEG: /* tgsi src sign toggle/set would be stupid */
+		return NV50_MOD_ABS;
+	case TGSI_OPCODE_CEIL:
+	case TGSI_OPCODE_FLR:
+	case TGSI_OPCODE_TRUNC:
+		return NV50_MOD_NEG | NV50_MOD_ABS;
+	case TGSI_OPCODE_F2I:
+	case TGSI_OPCODE_F2U:
+	case TGSI_OPCODE_I2F:
+	case TGSI_OPCODE_U2F:
+		return NV50_MOD_NEG | NV50_MOD_ABS | NV50_MOD_I32;
 	default:
-		return FALSE;
+		return 0;
 	}
 }
 
@@ -1944,11 +1949,11 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 
 static struct nv50_reg *
 tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
-	 boolean neg)
+	 int mod)
 {
 	struct nv50_reg *r = NULL;
-	struct nv50_reg *temp;
-	unsigned sgn, c, swz;
+	struct nv50_reg *temp = NULL;
+	unsigned sgn, c, swz, cvn;
 
 	if (src->Register.File != TGSI_FILE_CONSTANT)
 		assert(!src->Register.Indirect);
@@ -1988,7 +1993,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			r = &pc->immd[src->Register.Index * 4 + c];
 			break;
 		case TGSI_FILE_SAMPLER:
-			break;
+			return NULL;
 		case TGSI_FILE_ADDRESS:
 			r = pc->addr[src->Register.Index * 4 + c];
 			assert(r);
@@ -2003,35 +2008,34 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		break;
 	}
 
+	cvn = (mod & NV50_MOD_I32) ? CVT_S32_S32 : CVT_F32_F32;
+
 	switch (sgn) {
-	case TGSI_UTIL_SIGN_KEEP:
-		break;
 	case TGSI_UTIL_SIGN_CLEAR:
-		temp = temp_temp(pc);
-		emit_abs(pc, temp, r);
-		r = temp;
-		break;
-	case TGSI_UTIL_SIGN_TOGGLE:
-		if (neg)
-			r->mod = NV50_MOD_NEG;
-		else {
-			temp = temp_temp(pc);
-			emit_neg(pc, temp, r);
-			r = temp;
-		}
+		r->mod = NV50_MOD_ABS;
 		break;
 	case TGSI_UTIL_SIGN_SET:
-		temp = temp_temp(pc);
-		emit_cvt(pc, temp, r, -1, CVTOP_ABS, CVT_F32_F32 | CVT_NEG);
-		r = temp;
+		r->mod = NV50_MOD_NEG_ABS;
+		break;
+	case TGSI_UTIL_SIGN_TOGGLE:
+		r->mod = NV50_MOD_NEG;
 		break;
 	default:
-		assert(0);
+		assert(!r->mod && sgn == TGSI_UTIL_SIGN_KEEP);
 		break;
 	}
 
-	if (r && r->acc >= 0 && r != temp)
-		return reg_instance(pc, r);
+	if ((r->mod & mod) != r->mod) {
+		temp = temp_temp(pc);
+		emit_cvt(pc, temp, r, -1, cvn);
+		r->mod = 0;
+		r = temp;
+	} else
+		r->mod |= mod & NV50_MOD_I32;
+
+	assert(r);
+	if (r->acc >= 0 && r != temp)
+		return reg_instance(pc, r); /* will clear r->mod */
 	return r;
 }
 
@@ -2195,17 +2199,17 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fs = &inst->Src[i];
 		unsigned src_mask;
-		boolean neg_supp;
+		int mod_supp;
 
 		src_mask = nv50_tgsi_src_mask(inst, i);
-		neg_supp = negate_supported(inst, i);
+		mod_supp = get_supported_mods(inst, i);
 
 		if (fs->Register.File == TGSI_FILE_SAMPLER)
 			unit = fs->Register.Index;
 
 		for (c = 0; c < 4; c++)
 			if (src_mask & (1 << c))
-				src[i][c] = tgsi_src(pc, c, fs, neg_supp);
+				src[i][c] = tgsi_src(pc, c, fs, mod_supp);
 	}
 
 	brdc = temp = pc->r_brdc;
@@ -2230,7 +2234,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_abs(pc, dst[c], src[0][c]);
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVT_ABS | CVT_F32_F32);
 		}
 		break;
 	case TGSI_OPCODE_ADD:
@@ -2253,7 +2258,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_ARL:
 		assert(src[0][0]);
 		temp = temp_temp(pc);
-		emit_cvt(pc, temp, src[0][0], -1, CVTOP_FLOOR, CVT_S32_F32);
+		emit_cvt(pc, temp, src[0][0], -1, CVT_FLOOR | CVT_S32_F32);
 		emit_arl(pc, dst[0], temp, 4);
 		break;
 	case TGSI_OPCODE_BGNLOOP:
@@ -2282,7 +2287,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1,
-				 CVTOP_CEIL, CVT_F32_F32 | CVT_RI);
+				 CVT_CEIL | CVT_F32_F32 | CVT_RI);
 		}
 		break;
 	case TGSI_OPCODE_CMP:
@@ -2290,7 +2295,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_cvt(pc, NULL, src[0][c], 1, CVTOP_RN, CVT_F32_F32);
+			emit_cvt(pc, NULL, src[0][c], 1, CVT_F32_F32);
 			emit_mov(pc, dst[c], src[1][c]);
 			set_pred(pc, 0x1, 1, pc->p->exec_tail); /* @SF */
 			emit_mov(pc, dst[c], src[2][c]);
@@ -2419,6 +2424,22 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mov_immdval(pc, dst[3], 1.0f);
 	}
 		break;
+	case TGSI_OPCODE_F2I:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVT_TRUNC | CVT_S32_F32);
+		}
+		break;
+	case TGSI_OPCODE_F2U:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVT_TRUNC | CVT_U32_F32);
+		}
+		break;
 	case TGSI_OPCODE_FLR:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
@@ -2435,13 +2456,27 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_sub(pc, dst[c], src[0][c], temp);
 		}
 		break;
+	case TGSI_OPCODE_I2F:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1, CVT_F32_S32);
+		}
+		break;
 	case TGSI_OPCODE_IF:
 		assert(pc->if_lvl < NV50_MAX_COND_NESTING);
-		emit_cvt(pc, NULL, src[0][0], 0, CVTOP_ABS | CVTOP_RN,
-			 CVT_F32_F32);
+		emit_cvt(pc, NULL, src[0][0], 0, CVT_ABS | CVT_F32_F32);
 		pc->if_join[pc->if_lvl] = emit_joinat(pc);
 		pc->if_insn[pc->if_lvl++] = emit_branch(pc, 0, 2);;
 		terminate_mbb(pc);
+		break;
+	case TGSI_OPCODE_INEG:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1,
+				 CVT_S32_S32 | CVT_NEG);
+		}
 		break;
 	case TGSI_OPCODE_KIL:
 		assert(src[0][0] && src[0][1] && src[0][2] && src[0][3]);
@@ -2469,7 +2504,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		else
 			t[1] = t[0];
 
-		emit_abs(pc, t[0], src[0][0]);
+		emit_cvt(pc, t[0], src[0][0], -1, CVT_ABS | CVT_F32_F32);
 		emit_flop(pc, NV50_FLOP_LG2, t[1], t[0]);
 		if (mask & (1 << 2))
 			emit_mov(pc, dst[2], t[1]);
@@ -2612,7 +2647,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1,
-				 CVTOP_TRUNC, CVT_F32_F32 | CVT_RI);
+				 CVT_TRUNC | CVT_F32_F32 | CVT_RI);
+		}
+		break;
+	case TGSI_OPCODE_U2F:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, dst[c], src[0][c], -1, CVT_F32_U32);
 		}
 		break;
 	case TGSI_OPCODE_XPD:
@@ -2814,7 +2856,7 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 
 	for (i = 0; i < insn->Instruction.NumSrcRegs; i++) {
 		unsigned chn, mask = nv50_tgsi_src_mask(insn, i);
-		boolean neg_supp = negate_supported(insn, i);
+		int ms = get_supported_mods(insn, i);
 
 		fs = &insn->Src[i];
 		if (fs->Register.File != fd->Register.File ||
@@ -2832,10 +2874,12 @@ nv50_tgsi_scan_swizzle(const struct tgsi_full_instruction *insn,
 			if (!(fd->Register.WriteMask & (1 << c)))
 				continue;
 
-			/* no danger if src is copied to TEMP first */
-			if ((s != TGSI_UTIL_SIGN_KEEP) &&
-			    (s != TGSI_UTIL_SIGN_TOGGLE || !neg_supp))
-				continue;
+			if (s == TGSI_UTIL_SIGN_TOGGLE && !(ms & NV50_MOD_NEG))
+					continue;
+			if (s == TGSI_UTIL_SIGN_CLEAR && !(ms & NV50_MOD_ABS))
+					continue;
+			if ((s == TGSI_UTIL_SIGN_SET) && ((ms & 3) != 3))
+					continue;
 
 			rdep[c] |= nv50_tgsi_dst_revdep(
 				insn->Instruction.Opcode, i, chn);
