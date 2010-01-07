@@ -45,7 +45,7 @@ extern void
 util_copy_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, const ubyte * src,
-               int src_stride, unsigned src_x, int src_y);
+               int src_stride, unsigned src_x, unsigned src_y);
 
 extern void
 util_fill_rect(ubyte * dst, enum pipe_format format,

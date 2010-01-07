@@ -54,7 +54,7 @@ util_copy_rect(ubyte * dst,
                const ubyte * src,
                int src_stride,
                unsigned src_x, 
-               int src_y)
+               unsigned src_y)
 {
    unsigned i;
    int src_stride_pos = src_stride < 0 ? -src_stride : src_stride;
