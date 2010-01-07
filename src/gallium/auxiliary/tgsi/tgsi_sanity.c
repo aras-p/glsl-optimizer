@@ -515,6 +515,7 @@ regs_hash_destroy(struct cso_hash *hash)
    while (!cso_hash_iter_is_null(iter)) {
       scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
       iter = cso_hash_erase(hash, iter);
+      assert(reg->file < TGSI_FILE_COUNT);
       FREE(reg);
    }
    cso_hash_delete(hash);
