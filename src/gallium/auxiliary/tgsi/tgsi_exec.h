@@ -2,6 +2,7 @@
  * 
  * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009-2010 VMware, Inc.  All rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -35,10 +36,12 @@
 extern "C" {
 #endif
 
+
 #define MAX_LABELS (4 * 1024)  /**< basically, max instructions */
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
+
 
 /**
   * Registers may be treated as float, signed int or unsigned int.
@@ -80,7 +83,7 @@ struct tgsi_sampler
                        const float s[QUAD_SIZE],
                        const float t[QUAD_SIZE],
                        const float p[QUAD_SIZE],
-                       float lodbias,
+                       const float lodbias[QUAD_SIZE],
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
 };
 

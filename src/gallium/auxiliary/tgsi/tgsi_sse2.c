@@ -1433,7 +1433,7 @@ fetch_texel( struct tgsi_sampler **sampler,
                               &store[0],  /* s */
                               &store[4],  /* t */
                               &store[8],  /* r */
-                              store[12],  /* lodbias */
+                              &store[12], /* lodbias */
                               rgba);      /* results */
 
       memcpy( store, rgba, 16 * sizeof(float));

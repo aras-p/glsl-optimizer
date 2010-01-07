@@ -1509,7 +1509,7 @@ fetch_texel( struct tgsi_sampler *sampler,
              const union tgsi_exec_channel *s,
              const union tgsi_exec_channel *t,
              const union tgsi_exec_channel *p,
-             float lodbias,  /* XXX should be float[4] */
+             const union tgsi_exec_channel *lodbias,
              union tgsi_exec_channel *r,
              union tgsi_exec_channel *g,
              union tgsi_exec_channel *b,
@@ -1518,7 +1518,7 @@ fetch_texel( struct tgsi_sampler *sampler,
    uint j;
    float rgba[NUM_CHANNELS][QUAD_SIZE];
 
-   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, rgba);
+   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias->f, rgba);
 
    for (j = 0; j < 4; j++) {
       r->f[j] = rgba[0][j];
@@ -1542,21 +1542,23 @@ exec_tex(struct tgsi_exec_machine *mach,
 {
    const uint unit = inst->Src[1].Register.Index;
    union tgsi_exec_channel r[4];
+   const union tgsi_exec_channel *lodBias = &ZeroVec;
    uint chan_index;
-   float lodBias = 0.0f;
+
+   if (modifier != TEX_MODIFIER_NONE) {
+      FETCH(&r[3], 0, CHAN_W);
+      if (modifier != TEX_MODIFIER_PROJECTED) {
+         lodBias = &r[3];
+      }
+   }
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
       FETCH(&r[0], 0, CHAN_X);
 
-      if (modifier != TEX_MODIFIER_NONE) {
-         FETCH(&r[1], 0, CHAN_W);
-         if (modifier == TEX_MODIFIER_PROJECTED) {
-            micro_div(&r[0], &r[0], &r[1]);
-         } else {
-            lodBias = r[1].f[0];
-         }
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
       }
 
       fetch_texel(mach->Samplers[unit],
@@ -1572,15 +1574,10 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      if (modifier != TEX_MODIFIER_NONE) {
-         FETCH(&r[3], 0, CHAN_W);
-         if (modifier == TEX_MODIFIER_PROJECTED) {
-            micro_div(&r[0], &r[0], &r[3]);
-            micro_div(&r[1], &r[1], &r[3]);
-            micro_div(&r[2], &r[2], &r[3]);
-         } else {
-            lodBias = r[3].f[0];
-         }
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[1], &r[1], &r[3]);
+         micro_div(&r[2], &r[2], &r[3]);
       }
 
       fetch_texel(mach->Samplers[unit],
@@ -1594,15 +1591,10 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      if (modifier != TEX_MODIFIER_NONE) {
-         FETCH(&r[3], 0, CHAN_W);
-         if (modifier == TEX_MODIFIER_PROJECTED) {
-            micro_div(&r[0], &r[0], &r[3]);
-            micro_div(&r[1], &r[1], &r[3]);
-            micro_div(&r[2], &r[2], &r[3]);
-         } else {
-            lodBias = r[3].f[0];
-         }
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[1], &r[1], &r[3]);
+         micro_div(&r[2], &r[2], &r[3]);
       }
 
       fetch_texel(mach->Samplers[unit],
@@ -1638,8 +1630,8 @@ exec_txd(struct tgsi_exec_machine *mach,
       FETCH(&r[0], 0, CHAN_X);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &ZeroVec, 0.0f,  /* S, T, P, BIAS */
-                  &r[0], &r[1], &r[2], &r[3]);      /* R, G, B, A */
+                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, BIAS */
+                  &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
    case TGSI_TEXTURE_2D:
@@ -1652,8 +1644,8 @@ exec_txd(struct tgsi_exec_machine *mach,
       FETCH(&r[2], 0, CHAN_Z);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], 0.0f,    /* inputs */
-                  &r[0], &r[1], &r[2], &r[3]);  /* outputs */
+                  &r[0], &r[1], &r[2], &ZeroVec,   /* inputs */
+                  &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
    case TGSI_TEXTURE_3D:
@@ -1664,7 +1656,7 @@ exec_txd(struct tgsi_exec_machine *mach,
       FETCH(&r[2], 0, CHAN_Z);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], 0.0f,
+                  &r[0], &r[1], &r[2], &ZeroVec,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 
