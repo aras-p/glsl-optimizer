@@ -1233,10 +1233,12 @@ emit_cvt(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
  *  0x6 = GE
  *  0x7 = set condition code ? (used before bra.lt/le/gt/ge)
  *  0x8 = unordered bit (allows NaN)
+ *
+ *  mode = 0x04 (u32), 0x0c (s32), 0x80 (f32)
  */
 static void
 emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
-	 struct nv50_reg *src0, struct nv50_reg *src1)
+	 struct nv50_reg *src0, struct nv50_reg *src1, uint8_t mode)
 {
 	static const unsigned cc_swapped[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
@@ -1251,15 +1253,9 @@ emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 	if (dst && dst->type != P_TEMP)
 		dst = alloc_temp(pc, NULL);
 
-	/* set.u32 */
 	set_long(pc, e);
-	e->inst[0] |= 0xb0000000;
+	e->inst[0] |= 0x30000000 | (mode << 24);
 	e->inst[1] |= 0x60000000 | (ccode << 14);
-
-	/* XXX: decuda will disasm as .u16 and use .lo/.hi regs, but
-	 * that doesn't seem to match what the hw actually does
-	e->inst[1] |= 0x04000000; << breaks things, u32 by default ?
-	 */
 
 	if (wp >= 0)
 		set_pred_wr(pc, 1, wp, e);
@@ -1275,26 +1271,32 @@ emit_set(struct nv50_pc *pc, unsigned ccode, struct nv50_reg *dst, int wp,
 
 	emit(pc, e);
 
-	/* cvt.f32.u32/s32 (?) if we didn't only write the predicate */
-	if (rdst)
+	if (rdst && mode == 0x80) /* convert to float ? */
 		emit_cvt(pc, rdst, dst, -1, CVT_ABS | CVT_F32_S32);
 	if (rdst && rdst != dst)
 		free_temp(pc, dst);
 }
 
-static INLINE unsigned
-map_tgsi_setop_cc(unsigned op)
+static INLINE void
+map_tgsi_setop_hw(unsigned op, uint8_t *cc, uint8_t *ty)
 {
 	switch (op) {
-	case TGSI_OPCODE_SLT: return 0x1;
-	case TGSI_OPCODE_SGE: return 0x6;
-	case TGSI_OPCODE_SEQ: return 0x2;
-	case TGSI_OPCODE_SGT: return 0x4;
-	case TGSI_OPCODE_SLE: return 0x3;
-	case TGSI_OPCODE_SNE: return 0xd;
+	case TGSI_OPCODE_SLT: *cc = 0x1; *ty = 0x80; break;
+	case TGSI_OPCODE_SGE: *cc = 0x6; *ty = 0x80; break;
+	case TGSI_OPCODE_SEQ: *cc = 0x2; *ty = 0x80; break;
+	case TGSI_OPCODE_SGT: *cc = 0x4; *ty = 0x80; break;
+	case TGSI_OPCODE_SLE: *cc = 0x3; *ty = 0x80; break;
+	case TGSI_OPCODE_SNE: *cc = 0xd; *ty = 0x80; break;
+
+	case TGSI_OPCODE_ISLT: *cc = 0x1; *ty = 0x0c; break;
+	case TGSI_OPCODE_ISGE: *cc = 0x6; *ty = 0x0c; break;
+	case TGSI_OPCODE_USEQ: *cc = 0x2; *ty = 0x04; break;
+	case TGSI_OPCODE_USGE: *cc = 0x6; *ty = 0x04; break;
+	case TGSI_OPCODE_USLT: *cc = 0x1; *ty = 0x04; break;
+	case TGSI_OPCODE_USNE: *cc = 0x5; *ty = 0x04; break;
 	default:
 		assert(0);
-		return 0;
+		return;
 	}
 }
 
@@ -2654,12 +2656,23 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	case TGSI_OPCODE_SGT:
 	case TGSI_OPCODE_SLE:
 	case TGSI_OPCODE_SNE:
-		i = map_tgsi_setop_cc(inst->Instruction.Opcode);
+	case TGSI_OPCODE_ISLT:
+	case TGSI_OPCODE_ISGE:
+	case TGSI_OPCODE_USEQ:
+	case TGSI_OPCODE_USGE:
+	case TGSI_OPCODE_USLT:
+	case TGSI_OPCODE_USNE:
+	{
+		uint8_t cc, ty;
+
+		map_tgsi_setop_hw(inst->Instruction.Opcode, &cc, &ty);
+
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_set(pc, i, dst[c], -1, src[0][c], src[1][c]);
+			emit_set(pc, cc, dst[c], -1, src[0][c], src[1][c], ty);
 		}
+	}
 		break;
 	case TGSI_OPCODE_SUB:
 		for (c = 0; c < 4; c++) {
