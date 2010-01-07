@@ -797,7 +797,9 @@ case $DRI_DIRS in
 *i915*|*i965*)
     PKG_CHECK_MODULES([INTEL], [libdrm_intel])
     ;;
+esac
 
+case $DRI_DIRS in
 *radeon*|*r200*|*r300*|*r600*)
     PKG_CHECK_MODULES([LIBDRM_RADEON],
 		      [libdrm_radeon libdrm >= $LIBDRM_RADEON_REQUIRED],
