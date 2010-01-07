@@ -1529,90 +1529,81 @@ fetch_texel( struct tgsi_sampler *sampler,
 }
 
 
+#define TEX_MODIFIER_NONE           0
+#define TEX_MODIFIER_PROJECTED      1
+#define TEX_MODIFIER_LOD_BIAS       2
+#define TEX_MODIFIER_EXPLICIT_LOD   3
+
+
 static void
 exec_tex(struct tgsi_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
-         boolean biasLod,
-         boolean projected)
+         uint modifier)
 {
    const uint unit = inst->Src[1].Register.Index;
    union tgsi_exec_channel r[4];
    uint chan_index;
-   float lodBias;
-
-   /*   debug_printf("Sampler %u unit %u\n", sampler, unit); */
+   float lodBias = 0.0f;
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
-
       FETCH(&r[0], 0, CHAN_X);
 
-      if (projected) {
+      if (modifier != TEX_MODIFIER_NONE) {
          FETCH(&r[1], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[1] );
+         if (modifier == TEX_MODIFIER_PROJECTED) {
+            micro_div(&r[0], &r[0], &r[1]);
+         } else {
+            lodBias = r[1].f[0];
+         }
       }
-
-      if (biasLod) {
-         FETCH(&r[1], 0, CHAN_W);
-         lodBias = r[2].f[0];
-      }
-      else
-         lodBias = 0.0;
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &ZeroVec, lodBias,  /* S, T, P, BIAS */
-                  &r[0], &r[1], &r[2], &r[3]); /* R, G, B, A */
+                  &r[0], &ZeroVec, &ZeroVec, lodBias, /* S, T, P, BIAS */
+                  &r[0], &r[1], &r[2], &r[3]);        /* R, G, B, A */
       break;
 
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
-
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      if (projected) {
+      if (modifier != TEX_MODIFIER_NONE) {
          FETCH(&r[3], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[3] );
-         micro_div( &r[1], &r[1], &r[3] );
-         micro_div( &r[2], &r[2], &r[3] );
+         if (modifier == TEX_MODIFIER_PROJECTED) {
+            micro_div(&r[0], &r[0], &r[3]);
+            micro_div(&r[1], &r[1], &r[3]);
+            micro_div(&r[2], &r[2], &r[3]);
+         } else {
+            lodBias = r[3].f[0];
+         }
       }
-
-      if (biasLod) {
-         FETCH(&r[3], 0, CHAN_W);
-         lodBias = r[3].f[0];
-      }
-      else
-         lodBias = 0.0;
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lodBias,  /* inputs */
+                  &r[0], &r[1], &r[2], lodBias, /* inputs */
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
 
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
-
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      if (projected) {
+      if (modifier != TEX_MODIFIER_NONE) {
          FETCH(&r[3], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[3] );
-         micro_div( &r[1], &r[1], &r[3] );
-         micro_div( &r[2], &r[2], &r[3] );
+         if (modifier == TEX_MODIFIER_PROJECTED) {
+            micro_div(&r[0], &r[0], &r[3]);
+            micro_div(&r[1], &r[1], &r[3]);
+            micro_div(&r[2], &r[2], &r[3]);
+         } else {
+            lodBias = r[3].f[0];
+         }
       }
-
-      if (biasLod) {
-         FETCH(&r[3], 0, CHAN_W);
-         lodBias = r[3].f[0];
-      }
-      else
-         lodBias = 0.0;
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], lodBias,
@@ -1620,11 +1611,11 @@ exec_tex(struct tgsi_exec_machine *mach,
       break;
 
    default:
-      assert (0);
+      assert(0);
    }
 
-   FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-      STORE( &r[chan_index], 0, chan_index );
+   FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+      STORE(&r[chan_index], 0, chan_index);
    }
 }
 
@@ -2801,14 +2792,14 @@ exec_instruction(
       /* simple texture lookup */
       /* src[0] = texcoord */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, FALSE, FALSE);
+      exec_tex(mach, inst, TEX_MODIFIER_NONE);
       break;
 
    case TGSI_OPCODE_TXB:
       /* Texture lookup with lod bias */
       /* src[0] = texcoord (src[0].w = LOD bias) */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, TRUE, FALSE);
+      exec_tex(mach, inst, TEX_MODIFIER_LOD_BIAS);
       break;
 
    case TGSI_OPCODE_TXD:
@@ -2824,14 +2815,14 @@ exec_instruction(
       /* Texture lookup with explit LOD */
       /* src[0] = texcoord (src[0].w = LOD) */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, TRUE, FALSE);
+      exec_tex(mach, inst, TEX_MODIFIER_EXPLICIT_LOD);
       break;
 
    case TGSI_OPCODE_TXP:
       /* Texture lookup with projection */
       /* src[0] = texcoord (src[0].w = projection) */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, FALSE, TRUE);
+      exec_tex(mach, inst, TEX_MODIFIER_PROJECTED);
       break;
 
    case TGSI_OPCODE_UP2H:
