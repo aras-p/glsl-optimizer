@@ -1509,7 +1509,8 @@ fetch_texel( struct tgsi_sampler *sampler,
              const union tgsi_exec_channel *s,
              const union tgsi_exec_channel *t,
              const union tgsi_exec_channel *p,
-             const union tgsi_exec_channel *lodbias,
+             const union tgsi_exec_channel *c0,
+             enum tgsi_sampler_control control,
              union tgsi_exec_channel *r,
              union tgsi_exec_channel *g,
              union tgsi_exec_channel *b,
@@ -1518,7 +1519,7 @@ fetch_texel( struct tgsi_sampler *sampler,
    uint j;
    float rgba[NUM_CHANNELS][QUAD_SIZE];
 
-   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias->f, rgba);
+   sampler->get_samples(sampler, s->f, t->f, p->f, c0->f, control, rgba);
 
    for (j = 0; j < 4; j++) {
       r->f[j] = rgba[0][j];
@@ -1542,14 +1543,21 @@ exec_tex(struct tgsi_exec_machine *mach,
 {
    const uint unit = inst->Src[1].Register.Index;
    union tgsi_exec_channel r[4];
-   const union tgsi_exec_channel *lodBias = &ZeroVec;
+   const union tgsi_exec_channel *lod = &ZeroVec;
+   enum tgsi_sampler_control control;
    uint chan_index;
 
    if (modifier != TEX_MODIFIER_NONE) {
       FETCH(&r[3], 0, CHAN_W);
       if (modifier != TEX_MODIFIER_PROJECTED) {
-         lodBias = &r[3];
+         lod = &r[3];
       }
+   }
+
+   if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
+      control = tgsi_sampler_lod_explicit;
+   } else {
+      control = tgsi_sampler_lod_bias;
    }
 
    switch (inst->Texture.Texture) {
@@ -1562,8 +1570,9 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &ZeroVec, lodBias, /* S, T, P, BIAS */
-                  &r[0], &r[1], &r[2], &r[3]);        /* R, G, B, A */
+                  &r[0], &ZeroVec, &ZeroVec, lod,  /* S, T, P, LOD */
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       break;
 
    case TGSI_TEXTURE_2D:
@@ -1581,7 +1590,8 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lodBias, /* inputs */
+                  &r[0], &r[1], &r[2], lod,     /* S, T, P, LOD */
+                  control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
 
@@ -1598,7 +1608,8 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lodBias,
+                  &r[0], &r[1], &r[2], lod,
+                  control,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 
@@ -1631,6 +1642,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, BIAS */
+                  tgsi_sampler_lod_bias,
                   &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
@@ -1645,6 +1657,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &ZeroVec,   /* inputs */
+                  tgsi_sampler_lod_bias,
                   &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
@@ -1657,6 +1670,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &ZeroVec,
+                  tgsi_sampler_lod_bias,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 

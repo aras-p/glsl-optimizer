@@ -2,6 +2,7 @@
  * 
  * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009-2010 VMware, Inc.  All rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -1418,13 +1419,13 @@ fetch_texel( struct tgsi_sampler **sampler,
                 sampler, *sampler,
                 store );
 
-   debug_printf("lodbias %f\n", store[12]);
-
    for (j = 0; j < 4; j++)
-      debug_printf("sample %d texcoord %f %f\n", 
+      debug_printf("sample %d texcoord %f %f %f lodbias %f\n",
                    j, 
                    store[0+j],
-                   store[4+j]);
+                   store[4+j],
+                   store[8 + j],
+                   store[12 + j]);
 #endif
 
    {
@@ -1434,6 +1435,7 @@ fetch_texel( struct tgsi_sampler **sampler,
                               &store[4],  /* t */
                               &store[8],  /* r */
                               &store[12], /* lodbias */
+                              tgsi_sampler_lod_bias,
                               rgba);      /* results */
 
       memcpy( store, rgba, 16 * sizeof(float));
@@ -2506,7 +2508,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( func, inst, TRUE, FALSE );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXP:

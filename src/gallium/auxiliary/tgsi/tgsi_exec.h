@@ -72,6 +72,11 @@ struct tgsi_interp_coef
    float dady[NUM_CHANNELS];
 };
 
+enum tgsi_sampler_control {
+   tgsi_sampler_lod_bias,
+   tgsi_sampler_lod_explicit
+};
+
 /**
  * Information for sampling textures, which must be implemented
  * by code outside the TGSI executor.
@@ -83,7 +88,8 @@ struct tgsi_sampler
                        const float s[QUAD_SIZE],
                        const float t[QUAD_SIZE],
                        const float p[QUAD_SIZE],
-                       const float lodbias[QUAD_SIZE],
+                       const float c0[QUAD_SIZE],
+                       enum tgsi_sampler_control control,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
 };
 

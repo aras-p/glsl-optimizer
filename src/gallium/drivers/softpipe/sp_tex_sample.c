@@ -751,7 +751,8 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                 const float s[QUAD_SIZE],
                                 const float t[QUAD_SIZE],
                                 const float p[QUAD_SIZE],
-                                const float lodbias[QUAD_SIZE],
+                                const float c0[QUAD_SIZE],
+                                enum tgsi_sampler_control control,
                                 float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -809,7 +810,8 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                  const float s[QUAD_SIZE],
                                  const float t[QUAD_SIZE],
                                  const float p[QUAD_SIZE],
-                                 const float lodbias[QUAD_SIZE],
+                                 const float c0[QUAD_SIZE],
+                                 enum tgsi_sampler_control control,
                                  float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -848,7 +850,8 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
                                 const float s[QUAD_SIZE],
                                 const float t[QUAD_SIZE],
                                 const float p[QUAD_SIZE],
-                                const float lodbias[QUAD_SIZE],
+                                const float c0[QUAD_SIZE],
+                                enum tgsi_sampler_control control,
                                 float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -896,7 +899,8 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
                         const float s[QUAD_SIZE],
                         const float t[QUAD_SIZE],
                         const float p[QUAD_SIZE],
-                        const float lodbias[QUAD_SIZE],
+                        const float c0[QUAD_SIZE],
+                        enum tgsi_sampler_control control,
                         float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -931,7 +935,8 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
                       const float s[QUAD_SIZE],
                       const float t[QUAD_SIZE],
                       const float p[QUAD_SIZE],
-                      const float lodbias[QUAD_SIZE],
+                      const float c0[QUAD_SIZE],
+                      enum tgsi_sampler_control control,
                       float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -978,7 +983,8 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
                         const float s[QUAD_SIZE],
                         const float t[QUAD_SIZE],
                         const float p[QUAD_SIZE],
-                        const float lodbias[QUAD_SIZE],
+                        const float c0[QUAD_SIZE],
+                        enum tgsi_sampler_control control,
                         float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1017,7 +1023,8 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
                       const float s[QUAD_SIZE],
                       const float t[QUAD_SIZE],
                       const float p[QUAD_SIZE],
-                      const float lodbias[QUAD_SIZE],
+                      const float c0[QUAD_SIZE],
+                      enum tgsi_sampler_control control,
                       float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1058,7 +1065,8 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
                      const float s[QUAD_SIZE],
                      const float t[QUAD_SIZE],
                      const float p[QUAD_SIZE],
-                     const float lodbias[QUAD_SIZE],
+                     const float c0[QUAD_SIZE],
+                     enum tgsi_sampler_control control,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1097,7 +1105,8 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
                      const float s[QUAD_SIZE],
                      const float t[QUAD_SIZE],
                      const float p[QUAD_SIZE],
-                     const float lodbias[QUAD_SIZE],
+                     const float c0[QUAD_SIZE],
+                     enum tgsi_sampler_control control,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1143,7 +1152,8 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
                        const float s[QUAD_SIZE],
                        const float t[QUAD_SIZE],
                        const float p[QUAD_SIZE],
-                       const float lodbias[QUAD_SIZE],
+                       const float c0[QUAD_SIZE],
+                       enum tgsi_sampler_control control,
                        float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1191,7 +1201,8 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
                      const float s[QUAD_SIZE],
                      const float t[QUAD_SIZE],
                      const float p[QUAD_SIZE],
-                     const float lodbias[QUAD_SIZE],
+                     const float c0[QUAD_SIZE],
+                     enum tgsi_sampler_control control,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1266,7 +1277,8 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
-                  const float lodbias[QUAD_SIZE],
+                  const float c0[QUAD_SIZE],
+                  enum tgsi_sampler_control control,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1275,9 +1287,14 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
    float lambda;
    float lod[QUAD_SIZE];
 
-   lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+   if (control == tgsi_sampler_lod_bias) {
+      lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+      compute_lod(samp->sampler, lambda, c0, lod);
+   } else {
+      assert(control == tgsi_sampler_lod_explicit);
 
-   compute_lod(samp->sampler, lambda, lodbias, lod);
+      memcpy(lod, c0, sizeof(lod));
+   }
 
    /* XXX: Take into account all lod values.
     */
@@ -1286,11 +1303,11 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
 
    if (lambda < 0.0) { 
       samp->level = 0;
-      samp->mag_img_filter( tgsi_sampler, s, t, p, NULL, rgba );
+      samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else if (level0 >= texture->last_level) {
       samp->level = texture->last_level;
-      samp->min_img_filter( tgsi_sampler, s, t, p, NULL, rgba );
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
       float levelBlend = lambda - level0;
@@ -1299,10 +1316,10 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
       int c,j;
 
       samp->level = level0;
-      samp->min_img_filter( tgsi_sampler, s, t, p, NULL, rgba0 );
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba0);
 
       samp->level = level0+1;
-      samp->min_img_filter( tgsi_sampler, s, t, p, NULL, rgba1 );
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba1);
 
       for (j = 0; j < QUAD_SIZE; j++) {
          for (c = 0; c < 4; c++) {
@@ -1318,7 +1335,8 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
                    const float s[QUAD_SIZE],
                    const float t[QUAD_SIZE],
                    const float p[QUAD_SIZE],
-                   const float lodbias[QUAD_SIZE],
+                   const float c0[QUAD_SIZE],
+                   enum tgsi_sampler_control control,
                    float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1326,9 +1344,14 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
    float lambda;
    float lod[QUAD_SIZE];
 
-   lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+   if (control == tgsi_sampler_lod_bias) {
+      lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+      compute_lod(samp->sampler, lambda, c0, lod);
+   } else {
+      assert(control == tgsi_sampler_lod_explicit);
 
-   compute_lod(samp->sampler, lambda, lodbias, lod);
+      memcpy(lod, c0, sizeof(lod));
+   }
 
    /* XXX: Take into account all lod values.
     */
@@ -1336,12 +1359,12 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
 
    if (lambda < 0.0) { 
       samp->level = 0;
-      samp->mag_img_filter( tgsi_sampler, s, t, p, 0, rgba );
+      samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
       samp->level = (int)(lambda + 0.5) ;
       samp->level = MIN2(samp->level, (int)texture->last_level);
-      samp->min_img_filter( tgsi_sampler, s, t, p, NULL, rgba );
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
 
 #if 0
@@ -1359,26 +1382,32 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
                 const float s[QUAD_SIZE],
                 const float t[QUAD_SIZE],
                 const float p[QUAD_SIZE],
-                const float lodbias[QUAD_SIZE],
+                const float c0[QUAD_SIZE],
+                enum tgsi_sampler_control control,
                 float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    float lambda;
    float lod[QUAD_SIZE];
 
-   lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+   if (control == tgsi_sampler_lod_bias) {
+      lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+      compute_lod(samp->sampler, lambda, c0, lod);
+   } else {
+      assert(control == tgsi_sampler_lod_explicit);
 
-   compute_lod(samp->sampler, lambda, lodbias, lod);
+      memcpy(lod, c0, sizeof(lod));
+   }
 
    /* XXX: Take into account all lod values.
     */
    lambda = lod[0];
 
    if (lambda < 0.0) { 
-      samp->mag_img_filter( tgsi_sampler, s, t, p, NULL, rgba );
+      samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
-      samp->min_img_filter( tgsi_sampler, s, t, p, NULL, rgba );
+      samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
 }
 
@@ -1394,7 +1423,8 @@ mip_filter_linear_2d_linear_repeat_POT(
    const float s[QUAD_SIZE],
    const float t[QUAD_SIZE],
    const float p[QUAD_SIZE],
-   const float lodbias[QUAD_SIZE],
+   const float c0[QUAD_SIZE],
+   enum tgsi_sampler_control control,
    float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1403,9 +1433,14 @@ mip_filter_linear_2d_linear_repeat_POT(
    float lambda;
    float lod[QUAD_SIZE];
 
-   lambda = compute_lambda_2d(samp, s, t, p) + samp->sampler->lod_bias;
+   if (control == tgsi_sampler_lod_bias) {
+      lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
+      compute_lod(samp->sampler, lambda, c0, lod);
+   } else {
+      assert(control == tgsi_sampler_lod_explicit);
 
-   compute_lod(samp->sampler, lambda, lodbias, lod);
+      memcpy(lod, c0, sizeof(lod));
+   }
 
    /* XXX: Take into account all lod values.
     */
@@ -1420,7 +1455,7 @@ mip_filter_linear_2d_linear_repeat_POT(
       else
          samp->level = texture->last_level;
 
-      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, NULL, rgba );
+      img_filter_2d_linear_repeat_POT(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
       float levelBlend = lambda - level0;
@@ -1429,10 +1464,10 @@ mip_filter_linear_2d_linear_repeat_POT(
       int c,j;
 
       samp->level = level0;
-      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, NULL, rgba0 );
+      img_filter_2d_linear_repeat_POT(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba0);
 
       samp->level = level0+1;
-      img_filter_2d_linear_repeat_POT( tgsi_sampler, s, t, p, NULL, rgba1 );
+      img_filter_2d_linear_repeat_POT(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba1);
 
       for (j = 0; j < QUAD_SIZE; j++) {
          for (c = 0; c < 4; c++) {
@@ -1452,7 +1487,8 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
                const float s[QUAD_SIZE],
                const float t[QUAD_SIZE],
                const float p[QUAD_SIZE],
-               const float lodbias[QUAD_SIZE],
+               const float c0[QUAD_SIZE],
+               enum tgsi_sampler_control control,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1460,7 +1496,7 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
    int j, k0, k1, k2, k3;
    float val;
 
-   samp->mip_filter( tgsi_sampler, s, t, p, lodbias, rgba );
+   samp->mip_filter(tgsi_sampler, s, t, p, c0, control, rgba);
 
    /**
     * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
@@ -1538,7 +1574,8 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
             const float s[QUAD_SIZE],
             const float t[QUAD_SIZE],
             const float p[QUAD_SIZE],
-            const float lodbias[QUAD_SIZE],
+            const float c0[QUAD_SIZE],
+            enum tgsi_sampler_control control,
             float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
@@ -1619,7 +1656,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
     * is not active, this will point somewhere deeper into the
     * pipeline, eg. to mip_filter or even img_filter.
     */
-   samp->compare(tgsi_sampler, ssss, tttt, NULL, lodbias, rgba);
+   samp->compare(tgsi_sampler, ssss, tttt, NULL, c0, control, rgba);
 }
 
 
