@@ -2911,7 +2911,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 static void
 prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 {
-	struct nv50_reg *reg = NULL;
+	struct nv50_reg *r, *reg = NULL;
 	const struct tgsi_full_src_register *src;
 	const struct tgsi_dst_register *dst;
 	unsigned i, c, k, mask;
@@ -2957,7 +2957,15 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 				continue;
 			k = tgsi_util_get_full_src_register_swizzle(src, c);
 
-			reg[src->Register.Index * 4 + k].acc = pc->insn_nr;
+			r = &reg[src->Register.Index * 4 + k];
+
+			/* If used before written, pre-allocate the reg,
+			 * lest we overwrite results from a subroutine.
+			 */
+			if (!r->acc && r->type == P_TEMP)
+				alloc_reg(pc, r);
+
+			r->acc = pc->insn_nr;
 		}
 	}
 }
