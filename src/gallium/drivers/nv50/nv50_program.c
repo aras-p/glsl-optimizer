@@ -971,6 +971,13 @@ emit_arl(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
 	emit(pc, e);
 }
 
+#define NV50_MAX_F32 0x880
+#define NV50_MAX_S32 0x08c
+#define NV50_MAX_U32 0x084
+#define NV50_MIN_F32 0x8a0
+#define NV50_MIN_S32 0x0ac
+#define NV50_MIN_U32 0x0a4
+
 static void
 emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	    struct nv50_reg *src0, struct nv50_reg *src1)
@@ -978,8 +985,8 @@ emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	struct nv50_program_exec *e = exec(pc);
 
 	set_long(pc, e);
-	e->inst[0] |= 0xb0000000;
-	e->inst[1] |= (sub << 29);
+	e->inst[0] |= 0x30000000 | ((sub & 0x800) << 20);
+	e->inst[1] |= (sub << 24);
 
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
@@ -1341,18 +1348,18 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 
 	if (mask & (3 << 1)) {
 		tmp[0] = alloc_temp(pc, NULL);
-		emit_minmax(pc, 4, tmp[0], src[0], zero);
+		emit_minmax(pc, NV50_MAX_F32, tmp[0], src[0], zero);
 	}
 
 	if (mask & (1 << 2)) {
 		set_pred_wr(pc, 1, 0, pc->p->exec_tail);
 
 		tmp[1] = temp_temp(pc);
-		emit_minmax(pc, 4, tmp[1], src[1], zero);
+		emit_minmax(pc, NV50_MAX_F32, tmp[1], src[1], zero);
 
 		tmp[3] = temp_temp(pc);
-		emit_minmax(pc, 4, tmp[3], src[3], neg128);
-		emit_minmax(pc, 5, tmp[3], tmp[3], pos128);
+		emit_minmax(pc, NV50_MAX_F32, tmp[3], src[3], neg128);
+		emit_minmax(pc, NV50_MIN_F32, tmp[3], tmp[3], pos128);
 
 		emit_pow(pc, dst[2], tmp[1], tmp[3]);
 		emit_mov(pc, dst[2], zero);
@@ -1496,8 +1503,8 @@ load_cube_tex_coords(struct nv50_pc *pc, struct nv50_reg *t[4],
 	src[1]->mod |= NV50_MOD_ABS;
 	src[2]->mod |= NV50_MOD_ABS;
 
-	emit_minmax(pc, 4, t[2], src[0], src[1]);
-	emit_minmax(pc, 4, t[2], src[2], t[2]);
+	emit_minmax(pc, NV50_MAX_F32, t[2], src[0], src[1]);
+	emit_minmax(pc, NV50_MAX_F32, t[2], src[2], t[2]);
 
 	src[0]->mod = mod[0];
 	src[1]->mod = mod[1];
@@ -1872,7 +1879,11 @@ get_supported_mods(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_U2F:
 		return NV50_MOD_NEG | NV50_MOD_ABS | NV50_MOD_I32;
 	case TGSI_OPCODE_SHL:
+	case TGSI_OPCODE_IMAX:
+	case TGSI_OPCODE_IMIN:
 	case TGSI_OPCODE_ISHR:
+	case TGSI_OPCODE_UMAX:
+	case TGSI_OPCODE_UMIN:
 	case TGSI_OPCODE_USHR:
 		return NV50_MOD_I32;
 	default:
@@ -2504,6 +2515,20 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->if_insn[pc->if_lvl++] = emit_branch(pc, 0, 2);;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_IMAX:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_minmax(pc, 0x08c, dst[c], src[0][c], src[1][c]);
+		}
+		break;
+	case TGSI_OPCODE_IMIN:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_minmax(pc, 0x0ac, dst[c], src[0][c], src[1][c]);
+		}
+		break;
 	case TGSI_OPCODE_INEG:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
@@ -2576,14 +2601,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_minmax(pc, 4, dst[c], src[0][c], src[1][c]);
+			emit_minmax(pc, 0x880, dst[c], src[0][c], src[1][c]);
 		}
 		break;
 	case TGSI_OPCODE_MIN:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_minmax(pc, 5, dst[c], src[0][c], src[1][c]);
+			emit_minmax(pc, 0x8a0, dst[c], src[0][c], src[1][c]);
 		}
 		break;
 	case TGSI_OPCODE_MOV:
@@ -2710,6 +2735,20 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1, CVT_F32_U32);
+		}
+		break;
+	case TGSI_OPCODE_UMAX:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_minmax(pc, 0x084, dst[c], src[0][c], src[1][c]);
+		}
+		break;
+	case TGSI_OPCODE_UMIN:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_minmax(pc, 0x0a4, dst[c], src[0][c], src[1][c]);
 		}
 		break;
 	case TGSI_OPCODE_XPD:
