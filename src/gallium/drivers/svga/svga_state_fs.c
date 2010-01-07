@@ -67,7 +67,7 @@ static enum pipe_error compile_fs( struct svga_context *svga,
                                    struct svga_shader_result **out_result )
 {
    struct svga_shader_result *result;
-   enum pipe_error ret;
+   enum pipe_error ret = PIPE_ERROR;
 
    result = svga_translate_fragment_program( fs, key );
    if (result == NULL) {
