@@ -1043,6 +1043,34 @@ emit_bitop2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 }
 
 static void
+emit_shift(struct nv50_pc *pc, struct nv50_reg *dst,
+	   struct nv50_reg *src0, struct nv50_reg *src1, unsigned dir)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x30000000;
+	e->inst[1] = 0xc4000000;
+
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+
+	if (src1->type == P_IMMD) {
+		e->inst[1] |= (1 << 20);
+		e->inst[0] |= (pc->immd_buf[src1->hw] & 0x7f) << 16;
+	} else
+		set_src_1(pc, src1, e);
+
+	if (dir != TGSI_OPCODE_SHL)
+		e->inst[1] |= (1 << 29);
+
+	if (dir == TGSI_OPCODE_ISHR)
+		e->inst[1] |= (1 << 27);
+
+	emit(pc, e);
+}
+
+static void
 emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
@@ -1841,6 +1869,10 @@ get_supported_mods(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_I2F:
 	case TGSI_OPCODE_U2F:
 		return NV50_MOD_NEG | NV50_MOD_ABS | NV50_MOD_I32;
+	case TGSI_OPCODE_SHL:
+	case TGSI_OPCODE_ISHR:
+	case TGSI_OPCODE_USHR:
+		return NV50_MOD_I32;
 	default:
 		return 0;
 	}
@@ -2593,6 +2625,16 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mov_immdval(pc, dst[2], 0.0);
 		if (mask & (1 << 3))
 			emit_mov_immdval(pc, dst[3], 1.0);
+		break;
+	case TGSI_OPCODE_SHL:
+	case TGSI_OPCODE_ISHR:
+	case TGSI_OPCODE_USHR:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_shift(pc, dst[c], src[0][c], src[1][c],
+				   inst->Instruction.Opcode);
+		}
 		break;
 	case TGSI_OPCODE_SIN:
 		if (mask & 8) {
