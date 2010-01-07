@@ -51,7 +51,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    __DRIdrawable *dPriv = imesa->driDrawable;
-   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
+   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask[0]);
    drmI810Clear clear;
    unsigned int i;
 
