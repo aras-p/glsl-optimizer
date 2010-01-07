@@ -567,45 +567,30 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter_restore_CSOs(ctx);
 }
 
-void util_blitter_copy(struct blitter_context *blitter,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface *src,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height,
-                       boolean ignore_stencil)
+static boolean
+is_overlap(int sx1, int sx2, int sy1, int sy2, int dx1, int dx2, int dy1, int dy2)
+{
+    if (((sx1 >= dx1) && (sx1 <= dx2) && (sy1 >= dy1) && (sy1 <= dy2)) || /* TL x1, y1 */
+	((sx2 >= dx1) && (sx2 <= dx2) && (sy1 >= dy1) && (sy1 <= dy2)) || /* TR x2, y1 */
+	((sx1 >= dx1) && (sx1 <= dx2) && (sy2 >= dy1) && (sy2 <= dy2)) || /* BL x1, y2 */
+	((sx2 >= dx1) && (sx2 <= dx2) && (sy2 >= dy1) && (sy2 <= dy2)))   /* BR x2, y2 */
+	return TRUE;
+    else
+	return FALSE;
+}
+
+static void util_blitter_do_copy(struct blitter_context *blitter,
+				 struct pipe_surface *dst,
+				 unsigned dstx, unsigned dsty,
+				 struct pipe_surface *src,
+				 unsigned srcx, unsigned srcy,
+				 unsigned width, unsigned height,
+				 boolean is_depth)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb_state;
-   boolean is_stencil, is_depth;
-   unsigned dst_tex_usage;
 
-   /* give up if textures are not set */
-   assert(dst->texture && src->texture);
-   if (!dst->texture || !src->texture)
-      return;
-
-   is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
-   is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
-   dst_tex_usage = is_depth || is_stencil ? PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
-                                            PIPE_TEXTURE_USAGE_RENDER_TARGET;
-
-   /* check if we can sample from and render to the surfaces */
-   /* (assuming copying a stencil buffer is not possible) */
-   if ((!ignore_stencil && is_stencil) ||
-       !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    dst_tex_usage, 0) ||
-       !screen->is_format_supported(screen, src->format, src->texture->target,
-                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
-      util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
-                        width, height);
-      return;
-   }
-
-   /* check whether the states are properly saved */
-   blitter_check_saved_CSOs(ctx);
    assert(blitter->saved_fb_state.nr_cbufs != ~0);
    assert(blitter->saved_num_textures != ~0);
    assert(blitter->saved_num_sampler_states != ~0);
@@ -663,6 +648,111 @@ void util_blitter_copy(struct blitter_context *blitter,
 
    blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
    blitter_draw_quad(ctx);
+
+}
+
+static void util_blitter_overlap_copy(struct blitter_context *blitter,
+				      struct pipe_surface *dst,
+				      unsigned dstx, unsigned dsty,
+				      struct pipe_surface *src,
+				      unsigned srcx, unsigned srcy,
+				      unsigned width, unsigned height)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+
+   struct pipe_texture texTemp;
+   struct pipe_texture *texture;
+   struct pipe_surface *tex_surf;
+   uint level;
+
+   /* check whether the states are properly saved */
+   blitter_check_saved_CSOs(ctx);
+
+   memset(&texTemp, 0, sizeof(texTemp));
+   texTemp.target = PIPE_TEXTURE_2D;
+   texTemp.format = dst->texture->format; /* XXX verify supported by driver! */
+   texTemp.last_level = 0;
+   texTemp.width0 = width;
+   texTemp.height0 = height;
+   texTemp.depth0 = 1;
+
+   texture = screen->texture_create(screen, &texTemp);
+   if (!texture)
+      return;
+
+   tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
+				      PIPE_BUFFER_USAGE_GPU_READ | 
+				      PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   /* blit from the src to the temp */
+   util_blitter_do_copy(blitter, tex_surf, 0, 0,
+			src, srcx, srcy,
+			width, height,
+			FALSE);
+   util_blitter_do_copy(blitter, dst, dstx, dsty,
+			tex_surf, 0, 0,
+			width, height,
+			FALSE);
+   pipe_surface_reference(&tex_surf, NULL);
+   pipe_texture_reference(&texture, NULL);
+   blitter_restore_CSOs(ctx);
+}
+
+void util_blitter_copy(struct blitter_context *blitter,
+                       struct pipe_surface *dst,
+                       unsigned dstx, unsigned dsty,
+                       struct pipe_surface *src,
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height,
+                       boolean ignore_stencil)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   boolean is_stencil, is_depth;
+   unsigned dst_tex_usage;
+   boolean is_overlap_flag;
+
+   /* give up if textures are not set */
+   assert(dst->texture && src->texture);
+   if (!dst->texture || !src->texture)
+      return;
+
+   if (dst->texture == src->texture) {
+      if (is_overlap(srcx, srcx + (width - 1), srcy, srcy + (height - 1),
+		     dstx, dstx + (width - 1), dsty, dsty + (height - 1))) {
+	 is_overlap_flag = TRUE;
+	 util_blitter_overlap_copy(blitter, dst, dstx, dsty, src, srcx, srcy,
+				   width, height);
+	 return;
+      }
+   }
+		   
+   is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
+   is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
+   dst_tex_usage = is_depth || is_stencil ? PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
+                                            PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+   /* check if we can sample from and render to the surfaces */
+   /* (assuming copying a stencil buffer is not possible) */
+   if ((!ignore_stencil && is_stencil) ||
+       !screen->is_format_supported(screen, dst->format, dst->texture->target,
+                                    dst_tex_usage, 0) ||
+       !screen->is_format_supported(screen, src->format, src->texture->target,
+                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+      util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
+                        width, height);
+      return;
+   }
+
+   /* check whether the states are properly saved */
+   blitter_check_saved_CSOs(ctx);
+   util_blitter_do_copy(blitter,
+			dst, dstx, dsty,
+			src, srcx, srcy,
+			width, height, is_depth);
    blitter_restore_CSOs(ctx);
 }
 
