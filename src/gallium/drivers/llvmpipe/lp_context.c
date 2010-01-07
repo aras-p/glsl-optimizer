@@ -256,22 +256,6 @@ llvmpipe_create( struct pipe_screen *screen )
       llvmpipe->vertex_tex_cache[i] = lp_create_tex_tile_cache(screen);
 
 
-   /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples;
-      llvmpipe->tgsi.vert_samplers[i].processor = TGSI_PROCESSOR_VERTEX;
-      llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->vertex_tex_cache[i];
-      llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
-   }
-
-   /* fragment shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
-      llvmpipe->tgsi.frag_samplers[i].processor = TGSI_PROCESSOR_FRAGMENT;
-      llvmpipe->tgsi.frag_samplers[i].cache = llvmpipe->tex_cache[i];
-      llvmpipe->tgsi.frag_samplers_list[i] = &llvmpipe->tgsi.frag_samplers[i];
-   }
-
    /*
     * Create drawing context and plug our rendering stage into it.
     */
@@ -279,10 +263,7 @@ llvmpipe_create( struct pipe_screen *screen )
    if (!llvmpipe->draw) 
       goto fail;
 
-   draw_texture_samplers(llvmpipe->draw,
-                         PIPE_MAX_VERTEX_SAMPLERS,
-                         (struct tgsi_sampler **)
-                            llvmpipe->tgsi.vert_samplers_list);
+   /* FIXME: devise alternative to draw_texture_samplers */
 
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;

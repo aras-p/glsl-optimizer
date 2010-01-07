@@ -118,12 +118,6 @@ typedef void
                     void *color,
                     void *depth);
 
-void PIPE_CDECL
-lp_fetch_texel_soa( struct tgsi_sampler **samplers,
-                    uint32_t unit,
-                    float *store );
-
-
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen);
 

@@ -115,14 +115,6 @@ struct llvmpipe_context {
 
    unsigned line_stipple_counter;
 
-   /** TGSI exec things */
-   struct {
-      struct lp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler *vert_samplers_list[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler frag_samplers[PIPE_MAX_SAMPLERS];
-      struct lp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
-   } tgsi;
-
    /** The primitive drawing context */
    struct draw_context *draw;
 
