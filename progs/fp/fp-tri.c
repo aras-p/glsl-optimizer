@@ -73,7 +73,7 @@ static void Init( void )
    GLuint Texture;
    GLint errno;
    GLuint prognum;
-   char buf[4096];
+   char buf[50000];
    GLuint sz;
    FILE *f;
 
