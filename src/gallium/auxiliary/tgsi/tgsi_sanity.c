@@ -333,15 +333,15 @@ iter_instruction(
          fill_scan_register1d(ind_reg,
                               inst->Src[i].Indirect.File,
                               inst->Src[i].Indirect.Index);
+         if (!(reg->file == TGSI_FILE_ADDRESS || reg->file == TGSI_FILE_LOOP) ||
+             reg->indices[0] != 0) {
+            report_warning(ctx, "Indirect register neither ADDR[0] nor LOOP[0]");
+         }
          check_register_usage(
             ctx,
             reg,
             "indirect",
             FALSE );
-         if (!(reg->file == TGSI_FILE_ADDRESS || reg->file == TGSI_FILE_LOOP) ||
-             reg->indices[0] != 0) {
-            report_warning(ctx, "Indirect register neither ADDR[0] nor LOOP[0]");
-         }
       }
    }
 
