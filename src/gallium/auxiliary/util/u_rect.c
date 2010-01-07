@@ -65,10 +65,6 @@ util_copy_rect(ubyte * dst,
    assert(blocksize > 0);
    assert(blockwidth > 0);
    assert(blockheight > 0);
-   assert(src_x >= 0);
-   assert(src_y >= 0);
-   assert(dst_x >= 0);
-   assert(dst_y >= 0);
 
    dst_x /= blockwidth;
    dst_y /= blockheight;
@@ -113,8 +109,6 @@ util_fill_rect(ubyte * dst,
    assert(blocksize > 0);
    assert(blockwidth > 0);
    assert(blockheight > 0);
-   assert(dst_x >= 0);
-   assert(dst_y >= 0);
 
    dst_x /= blockwidth;
    dst_y /= blockheight;
