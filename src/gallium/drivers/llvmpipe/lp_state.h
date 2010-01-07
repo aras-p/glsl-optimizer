@@ -56,7 +56,6 @@
 #define LP_NEW_QUERY         0x4000
 
 
-struct tgsi_sampler;
 struct vertex_info;
 struct pipe_context;
 struct llvmpipe_context;
