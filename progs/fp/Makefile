@@ -17,7 +17,6 @@ SOURCES = \
 	tri-depth2.c \
 	tri-depthwrite.c \
 	tri-depthwrite2.c \
-	tri-inv.c \
         tri-param.c \
         fp-tri.c
 
