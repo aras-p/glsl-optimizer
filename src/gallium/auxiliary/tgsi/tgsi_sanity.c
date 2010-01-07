@@ -265,13 +265,15 @@ check_register_usage(
    }
    else {
       if (!is_register_declared( ctx, reg )) {
-         if (reg->dimensions == 2)
+         if (reg->dimensions == 2) {
             report_error( ctx, "%s[%d][%d]: Undeclared %s register", file_names[reg->file],
                           reg->indices[0], reg->indices[1], name );
-         else
+         }
+         else {
             report_error( ctx, "%s[%d]: Undeclared %s register", file_names[reg->file],
                           reg->indices[0], name );
          }
+      }
       if (!is_register_used( ctx, reg ))
          cso_hash_insert(ctx->regs_used, scan_register_key(reg), reg);
       else
