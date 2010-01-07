@@ -2289,6 +2289,26 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
 
    _mesa_set_enable(ctx, target, GL_TRUE);
 
+   /* setup vertex positions */
+   {
+      verts[0].x = 0.0F;
+      verts[0].y = 0.0F;
+      verts[1].x = 1.0F;
+      verts[1].y = 0.0F;
+      verts[2].x = 1.0F;
+      verts[2].y = 1.0F;
+      verts[3].x = 0.0F;
+      verts[3].y = 1.0F;
+      
+      /* upload new vertex data */
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+   }
+
+   /* setup projection matrix */
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
 
@@ -2355,21 +2375,6 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          }
       }
 
-      /* setup vertex positions */
-      {
-         verts[0].x = 0.0F;
-         verts[0].y = 0.0F;
-         verts[1].x = (GLfloat) dstWidth;
-         verts[1].y = 0.0F;
-         verts[2].x = (GLfloat) dstWidth;
-         verts[2].y = (GLfloat) dstHeight;
-         verts[3].x = 0.0F;
-         verts[3].y = (GLfloat) dstHeight;
-
-         /* upload new vertex data */
-         _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-      }
-
       /* limit sampling to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
@@ -2411,11 +2416,8 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
       assert(dstWidth == ctx->DrawBuffer->Width);
       assert(dstHeight == ctx->DrawBuffer->Height);
 
-      /* setup viewport and matching projection matrix */
+      /* setup viewport */
       _mesa_set_viewport(ctx, 0, 0, dstWidth, dstHeight);
-      _mesa_MatrixMode(GL_PROJECTION);
-      _mesa_LoadIdentity();
-      _mesa_Ortho(0.0F, dstWidth, 0.0F, dstHeight, -1.0F, 1.0F);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
