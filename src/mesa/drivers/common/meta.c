@@ -2408,6 +2408,15 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          break;
       }
 
+      assert(dstWidth == ctx->DrawBuffer->Width);
+      assert(dstHeight == ctx->DrawBuffer->Height);
+
+      /* setup viewport and matching projection matrix */
+      _mesa_set_viewport(ctx, 0, 0, dstWidth, dstHeight);
+      _mesa_MatrixMode(GL_PROJECTION);
+      _mesa_LoadIdentity();
+      _mesa_Ortho(0.0F, dstWidth, 0.0F, dstHeight, -1.0F, 1.0F);
+
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
 
