@@ -1307,6 +1307,74 @@ map_tgsi_setop_hw(unsigned op, uint8_t *cc, uint8_t *ty)
 	}
 }
 
+static void
+emit_add_b32(struct nv50_pc *pc, struct nv50_reg *dst,
+	     struct nv50_reg *src0, struct nv50_reg *rsrc1)
+{
+	struct nv50_program_exec *e = exec(pc);
+	struct nv50_reg *src1;
+
+	e->inst[0] = 0x20000000;
+
+	alloc_reg(pc, rsrc1);
+	check_swap_src_0_1(pc, &src0, &rsrc1);
+
+	src1 = rsrc1;
+	if (src0->mod & rsrc1->mod & NV50_MOD_NEG) {
+		src1 = alloc_temp(pc, NULL);
+		emit_cvt(pc, src1, rsrc1, -1, CVT_S32_S32);
+	}
+
+	if (!pc->allow32 || src1->hw > 63 ||
+	    (src1->type != P_TEMP && src1->type != P_IMMD))
+		set_long(pc, e);
+
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+
+	if (is_long(e)) {
+		e->inst[1] |= 1 << 26;
+		set_src_2(pc, src1, e);
+	} else {
+		e->inst[0] |= 0x8000;
+		if (src1->type == P_IMMD)
+			set_immd(pc, src1, e);
+		else
+			set_src_1(pc, src1, e);
+	}
+
+	if (src0->mod & NV50_MOD_NEG)
+		e->inst[0] |= 1 << 28;
+	else
+	if (src1->mod & NV50_MOD_NEG)
+		e->inst[0] |= 1 << 22;
+
+	emit(pc, e);
+
+	if (src1 != rsrc1)
+		free_temp(pc, src1);
+}
+
+static void
+emit_sad(struct nv50_pc *pc, struct nv50_reg *dst,
+	 struct nv50_reg *src0, struct nv50_reg *src1, struct nv50_reg *src2)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x50000000;
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
+	alloc_reg(pc, src2);
+	if (is_long(e) || (src2->type != dst->type) || (src2->hw != dst->hw))
+		set_src_2(pc, src2, e);
+
+	if (is_long(e))
+		e->inst[1] |= 0x0c << 24;
+	else
+		e->inst[0] |= 0x81 << 8;
+}
+
 static INLINE void
 emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
@@ -1807,6 +1875,17 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 		q = 0x0403c000;
 		m = 0xffff7fff;
 		break;
+	case 0x2:
+	case 0x3:
+		/* ADD, SUB, SUBR b32 */
+		m = ~(0x8000 | (127 << 16));
+		q = ((e->inst[0] & (~m)) >> 2) | (1 << 26);
+		break;
+	case 0x5:
+		/* SAD */
+		m = ~(0x81 << 8);
+		q = 0x0c << 24;
+		break;
 	case 0x8:
 		/* INTERP (move centroid, perspective and flat bits) */
 		m = ~0x03000100;
@@ -1878,6 +1957,9 @@ get_supported_mods(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_I2F:
 	case TGSI_OPCODE_U2F:
 		return NV50_MOD_NEG | NV50_MOD_ABS | NV50_MOD_I32;
+	case TGSI_OPCODE_UADD:
+		return NV50_MOD_NEG | NV50_MOD_I32;
+	case TGSI_OPCODE_SAD:
 	case TGSI_OPCODE_SHL:
 	case TGSI_OPCODE_IMAX:
 	case TGSI_OPCODE_IMIN:
@@ -2640,6 +2722,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		src[0][0]->mod |= NV50_MOD_ABS;
 		emit_flop(pc, NV50_FLOP_RSQ, brdc, src[0][0]);
 		break;
+	case TGSI_OPCODE_SAD:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_sad(pc, dst[c], src[0][c], src[1][c], src[2][c]);
+		}
+		break;
 	case TGSI_OPCODE_SCS:
 		temp = temp_temp(pc);
 		if (mask & 3)
@@ -2735,6 +2824,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)))
 				continue;
 			emit_cvt(pc, dst[c], src[0][c], -1, CVT_F32_U32);
+		}
+		break;
+	case TGSI_OPCODE_UADD:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_add_b32(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
 	case TGSI_OPCODE_UMAX:
