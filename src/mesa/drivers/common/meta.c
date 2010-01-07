@@ -500,9 +500,9 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       _mesa_LoadIdentity();
       _mesa_MatrixMode(GL_PROJECTION);
       _mesa_LoadIdentity();
-      _mesa_Ortho(0.0F, ctx->DrawBuffer->Width,
-                  0.0F, ctx->DrawBuffer->Height,
-                  -1.0F, 1.0F);
+      _mesa_Ortho(0.0, ctx->DrawBuffer->Width,
+                  0.0, ctx->DrawBuffer->Height,
+                  -1.0, 1.0);
       save->ClipPlanesEnabled = ctx->Transform.ClipPlanesEnabled;
       if (ctx->Transform.ClipPlanesEnabled) {
          GLuint i;
