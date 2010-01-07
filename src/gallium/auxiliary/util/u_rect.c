@@ -41,7 +41,7 @@
 /**
  * Copy 2D rect from one place to another.
  * Position and sizes are in pixels.
- * src_pitch may be negative to do vertical flip of pixels from source.
+ * src_stride may be negative to do vertical flip of pixels from source.
  */
 void
 util_copy_rect(ubyte * dst,
