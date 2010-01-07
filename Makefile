@@ -227,6 +227,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
 	$(DIRECTORY)/src/glsl/Makefile					\
+	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/*/Makefile				\
 	$(DIRECTORY)/src/glsl/*/SConscript				\
 	$(DIRECTORY)/src/glsl/*/*.[ch]					\
