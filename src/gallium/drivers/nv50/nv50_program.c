@@ -246,7 +246,8 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 		}
 	}
 
-	assert(0);
+	NOUVEAU_ERR("out of registers\n");
+	abort();
 }
 
 static INLINE struct nv50_reg *
@@ -286,7 +287,8 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 		}
 	}
 
-	assert(0);
+	NOUVEAU_ERR("out of registers\n");
+	abort();
 	return NULL;
 }
 
@@ -877,6 +879,26 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 }
 
 static void
+set_half_src(struct nv50_pc *pc, struct nv50_reg *src, int lh,
+	     struct nv50_program_exec *e, int pos)
+{
+	struct nv50_reg *r = src;
+
+	alloc_reg(pc, r);
+	if (r->type != P_TEMP) {
+		r = temp_temp(pc, e);
+		emit_mov(pc, r, src);
+	}
+
+	if (r->hw > (NV50_SU_MAX_TEMP / 2)) {
+		NOUVEAU_ERR("out of low GPRs\n");
+		abort();
+	}
+
+	e->inst[pos / 32] |= ((src->hw * 2) + lh) << (pos % 32);
+}
+
+static void
 emit_mov_from_pred(struct nv50_pc *pc, struct nv50_reg *dst, int pred)
 {
 	struct nv50_program_exec *e = exec(pc);
@@ -1059,6 +1081,20 @@ emit_bitop2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 }
 
 static void
+emit_not(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xd0000000;
+	e->inst[1] = 0x0402c000;
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_src_1(pc, src, e);
+
+	emit(pc, e);
+}
+
+static void
 emit_shift(struct nv50_pc *pc, struct nv50_reg *dst,
 	   struct nv50_reg *src0, struct nv50_reg *src1, unsigned dir)
 {
@@ -1082,6 +1118,27 @@ emit_shift(struct nv50_pc *pc, struct nv50_reg *dst,
 
 	if (dir == TGSI_OPCODE_ISHR)
 		e->inst[1] |= (1 << 27);
+
+	emit(pc, e);
+}
+
+static void
+emit_shl_imm(struct nv50_pc *pc, struct nv50_reg *dst,
+	     struct nv50_reg *src, int s)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x30000000;
+	e->inst[1] = 0xc4100000;
+	if (s < 0) {
+		e->inst[1] |= 1 << 29;
+		s = -s;
+	}
+	e->inst[1] |= ((s & 0x7f) << 16);
+
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
 
 	emit(pc, e);
 }
@@ -1362,12 +1419,52 @@ emit_add_b32(struct nv50_pc *pc, struct nv50_reg *dst,
 }
 
 static void
+emit_mad_u16(struct nv50_pc *pc, struct nv50_reg *dst,
+	     struct nv50_reg *src0, int lh_0, struct nv50_reg *src1, int lh_1,
+	     struct nv50_reg *src2)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x60000000;
+	if (!pc->allow32)
+		set_long(pc, e);
+	set_dst(pc, dst, e);
+
+	set_half_src(pc, src0, lh_0, e, 9);
+	set_half_src(pc, src1, lh_1, e, 16);
+	alloc_reg(pc, src2);
+	if (is_long(e) || (src2->type != P_TEMP) || (src2->hw != dst->hw))
+		set_src_2(pc, src2, e);
+
+	emit(pc, e);
+}
+
+static void
+emit_mul_u16(struct nv50_pc *pc, struct nv50_reg *dst,
+	     struct nv50_reg *src0, int lh_0, struct nv50_reg *src1, int lh_1)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0x40000000;
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+
+	set_half_src(pc, src0, lh_0, e, 9);
+	set_half_src(pc, src1, lh_1, e, 16);
+
+	emit(pc, e);
+}
+
+static void
 emit_sad(struct nv50_pc *pc, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1, struct nv50_reg *src2)
 {
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] = 0x50000000;
+	if (!pc->allow32)
+		set_long(pc, e);
+	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
 	set_src_1(pc, src1, e);
@@ -1379,6 +1476,8 @@ emit_sad(struct nv50_pc *pc, struct nv50_reg *dst,
 		e->inst[1] |= 0x0c << 24;
 	else
 		e->inst[0] |= 0x81 << 8;
+
+	emit(pc, e);
 }
 
 static INLINE void
@@ -1890,7 +1989,11 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 	case 0x5:
 		/* SAD */
 		m = ~(0x81 << 8);
-		q = 0x0c << 24;
+		q = (0x0c << 24) | ((e->inst[0] & (0x7f << 2)) << 12);
+		break;
+	case 0x6:
+		/* MAD u16 */
+		q = (e->inst[0] & (0x7f << 2)) << 12;
 		break;
 	case 0x8:
 		/* INTERP (move centroid, perspective and flat bits) */
@@ -1970,8 +2073,11 @@ get_supported_mods(const struct tgsi_full_instruction *insn, int i)
 	case TGSI_OPCODE_IMAX:
 	case TGSI_OPCODE_IMIN:
 	case TGSI_OPCODE_ISHR:
+	case TGSI_OPCODE_NOT:
+	case TGSI_OPCODE_UMAD:
 	case TGSI_OPCODE_UMAX:
 	case TGSI_OPCODE_UMIN:
+	case TGSI_OPCODE_UMUL:
 	case TGSI_OPCODE_USHR:
 		return NV50_MOD_I32;
 	default:
@@ -2713,6 +2819,13 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_mul(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
+	case TGSI_OPCODE_NOT:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_not(pc, dst[c], src[0][c]);
+		}
+		break;
 	case TGSI_OPCODE_POW:
 		emit_pow(pc, brdc, src[0][0], src[1][0]);
 		break;
@@ -2856,6 +2969,39 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 				continue;
 			emit_minmax(pc, 0x0a4, dst[c], src[0][c], src[1][c]);
 		}
+		break;
+	case TGSI_OPCODE_UMAD:
+	{
+		assert(!temp);
+		temp = temp_temp(pc, NULL);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_mul_u16(pc, temp, src[0][c], 0, src[1][c], 1);
+			emit_mad_u16(pc, temp, src[0][c], 1, src[1][c], 0,
+				     temp);
+			emit_shl_imm(pc, temp, temp, 16);
+			emit_mad_u16(pc, temp, src[0][c], 0, src[1][c], 0,
+				     temp);
+			emit_add_b32(pc, dst[c], temp, src[2][c]);
+		}
+	}
+		break;
+	case TGSI_OPCODE_UMUL:
+	{
+		assert(!temp);
+		temp = temp_temp(pc, NULL);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_mul_u16(pc, temp, src[0][c], 0, src[1][c], 1);
+			emit_mad_u16(pc, temp, src[0][c], 1, src[1][c], 0,
+				     temp);
+			emit_shl_imm(pc, temp, temp, 16);
+			emit_mad_u16(pc, dst[c], src[0][c], 0, src[1][c], 0,
+				     temp);
+		}
+	}
 		break;
 	case TGSI_OPCODE_XPD:
 		temp = temp_temp(pc, NULL);
