@@ -138,6 +138,7 @@ struct nv50_pc {
 	uint8_t addr_alloc; /* set bit indicates used for TGSI_FILE_ADDRESS */
 
 	struct nv50_reg *temp_temp[16];
+	struct nv50_program_exec *temp_temp_exec[16];
 	unsigned temp_temp_nr;
 
 	/* broadcast and destination replacement regs */
@@ -347,23 +348,29 @@ free_temp4(struct nv50_pc *pc, struct nv50_reg *reg[4])
 }
 
 static struct nv50_reg *
-temp_temp(struct nv50_pc *pc)
+temp_temp(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
 	if (pc->temp_temp_nr >= 16)
 		assert(0);
 
 	pc->temp_temp[pc->temp_temp_nr] = alloc_temp(pc, NULL);
+	pc->temp_temp_exec[pc->temp_temp_nr] = e;
 	return pc->temp_temp[pc->temp_temp_nr++];
 }
 
+/* This *must* be called for all nv50_program_exec that have been
+ * given as argument to temp_temp, or the temps will be leaked !
+ */
 static void
-kill_temp_temp(struct nv50_pc *pc)
+kill_temp_temp(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
 	int i;
 
 	for (i = 0; i < pc->temp_temp_nr; i++)
-		free_temp(pc, pc->temp_temp[i]);
-	pc->temp_temp_nr = 0;
+		if (pc->temp_temp_exec[i] == e)
+			free_temp(pc, pc->temp_temp[i]);
+	if (!e)
+		pc->temp_temp_nr = 0;
 }
 
 static int
@@ -425,6 +432,8 @@ emit(struct nv50_pc *pc, struct nv50_program_exec *e)
 		p->exec_head = e;
 	p->exec_tail = e;
 	p->exec_size += (e->inst[0] & 1) ? 2 : 1;
+
+	kill_temp_temp(pc, e);
 }
 
 static INLINE void set_long(struct nv50_pc *, struct nv50_program_exec *);
@@ -780,7 +789,7 @@ set_src_0_restricted(struct nv50_pc *pc, struct nv50_reg *src,
 	struct nv50_reg *temp;
 
 	if (src->type != P_TEMP) {
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, e);
 		emit_mov(pc, temp, src);
 		src = temp;
 	}
@@ -799,7 +808,7 @@ set_src_0(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 		e->inst[1] |= 0x00200000;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		struct nv50_reg *temp = temp_temp(pc);
+		struct nv50_reg *temp = temp_temp(pc, e);
 
 		emit_mov(pc, temp, src);
 		src = temp;
@@ -815,7 +824,7 @@ static void
 set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
 	if (src->type == P_ATTR) {
-		struct nv50_reg *temp = temp_temp(pc);
+		struct nv50_reg *temp = temp_temp(pc, e);
 
 		emit_mov(pc, temp, src);
 		src = temp;
@@ -823,7 +832,7 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	if (src->type == P_CONST || src->type == P_IMMD) {
 		assert(!(e->inst[0] & 0x00800000));
 		if (e->inst[0] & 0x01000000) {
-			struct nv50_reg *temp = temp_temp(pc);
+			struct nv50_reg *temp = temp_temp(pc, e);
 
 			emit_mov(pc, temp, src);
 			src = temp;
@@ -845,7 +854,7 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	set_long(pc, e);
 
 	if (src->type == P_ATTR) {
-		struct nv50_reg *temp = temp_temp(pc);
+		struct nv50_reg *temp = temp_temp(pc, e);
 
 		emit_mov(pc, temp, src);
 		src = temp;
@@ -853,7 +862,7 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	if (src->type == P_CONST || src->type == P_IMMD) {
 		assert(!(e->inst[0] & 0x01000000));
 		if (e->inst[0] & 0x00800000) {
-			struct nv50_reg *temp = temp_temp(pc);
+			struct nv50_reg *temp = temp_temp(pc, e);
 
 			emit_mov(pc, temp, src);
 			src = temp;
@@ -1321,7 +1330,7 @@ emit_add_b32(struct nv50_pc *pc, struct nv50_reg *dst,
 
 	src1 = rsrc1;
 	if (src0->mod & rsrc1->mod & NV50_MOD_NEG) {
-		src1 = alloc_temp(pc, NULL);
+		src1 = temp_temp(pc, e);
 		emit_cvt(pc, src1, rsrc1, -1, CVT_S32_S32);
 	}
 
@@ -1350,9 +1359,6 @@ emit_add_b32(struct nv50_pc *pc, struct nv50_reg *dst,
 		e->inst[0] |= 1 << 22;
 
 	emit(pc, e);
-
-	if (src1 != rsrc1)
-		free_temp(pc, src1);
 }
 
 static void
@@ -1422,10 +1428,10 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	if (mask & (1 << 2)) {
 		set_pred_wr(pc, 1, 0, pc->p->exec_tail);
 
-		tmp[1] = temp_temp(pc);
+		tmp[1] = temp_temp(pc, NULL);
 		emit_minmax(pc, NV50_MAX_F32, tmp[1], src[1], zero);
 
-		tmp[3] = temp_temp(pc);
+		tmp[3] = temp_temp(pc, NULL);
 		emit_minmax(pc, NV50_MAX_F32, tmp[3], src[3], neg128);
 		emit_minmax(pc, NV50_MIN_F32, tmp[3], tmp[3], pos128);
 
@@ -2153,7 +2159,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 	}
 
 	if ((r->mod & mod) != r->mod) {
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		emit_cvt(pc, temp, r, -1, cvn);
 		r->mod = 0;
 		r = temp;
@@ -2341,7 +2347,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 
 	brdc = temp = pc->r_brdc;
 	if (brdc && brdc->type != P_TEMP) {
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		if (sat)
 			brdc = temp;
 	} else
@@ -2350,7 +2356,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask & (1 << c)) || dst[c]->type == P_TEMP)
 				continue;
 			/* rdst[c] = dst[c]; */ /* done above */
-			dst[c] = temp_temp(pc);
+			dst[c] = temp_temp(pc, NULL);
 		}
 	}
 
@@ -2384,7 +2390,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_ARL:
 		assert(src[0][0]);
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		emit_cvt(pc, temp, src[0][0], -1, CVT_FLOOR | CVT_S32_F32);
 		emit_arl(pc, dst[0], temp, 4);
 		break;
@@ -2441,7 +2447,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
-				temp = brdc = temp_temp(pc);
+				temp = brdc = temp_temp(pc, NULL);
 		}
 		emit_precossin(pc, temp, src[0][0]);
 		emit_flop(pc, NV50_FLOP_COS, brdc, temp);
@@ -2529,8 +2535,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		struct nv50_reg *t[2];
 
 		assert(!temp);
-		t[0] = temp_temp(pc);
-		t[1] = temp_temp(pc);
+		t[0] = temp_temp(pc, NULL);
+		t[1] = temp_temp(pc, NULL);
 
 		if (mask & 0x6)
 			emit_mov(pc, t[0], src[0][0]);
@@ -2575,7 +2581,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_FRC:
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
@@ -2639,9 +2645,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	{
 		struct nv50_reg *t[2];
 
-		t[0] = temp_temp(pc);
+		t[0] = temp_temp(pc, NULL);
 		if (mask & (1 << 1))
-			t[1] = temp_temp(pc);
+			t[1] = temp_temp(pc, NULL);
 		else
 			t[1] = t[0];
 
@@ -2664,7 +2670,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 	}
 		break;
 	case TGSI_OPCODE_LRP:
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
@@ -2711,6 +2717,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_pow(pc, brdc, src[0][0], src[1][0]);
 		break;
 	case TGSI_OPCODE_RCP:
+		if (!sat && popcnt4(mask) == 1)
+			brdc = dst[ffs(mask) - 1];
 		emit_flop(pc, NV50_FLOP_RCP, brdc, src[0][0]);
 		break;
 	case TGSI_OPCODE_RET:
@@ -2719,6 +2727,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		emit_ret(pc, -1, 0);
 		break;
 	case TGSI_OPCODE_RSQ:
+		if (!sat && popcnt4(mask) == 1)
+			brdc = dst[ffs(mask) - 1];
 		src[0][0]->mod |= NV50_MOD_ABS;
 		emit_flop(pc, NV50_FLOP_RSQ, brdc, src[0][0]);
 		break;
@@ -2730,7 +2740,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_SCS:
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		if (mask & 3)
 			emit_precossin(pc, temp, src[0][0]);
 		if (mask & (1 << 0))
@@ -2759,7 +2769,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			if (!(mask &= 7))
 				break;
 			if (temp == dst[3])
-				temp = brdc = temp_temp(pc);
+				temp = brdc = temp_temp(pc, NULL);
 		}
 		emit_precossin(pc, temp, src[0][0]);
 		emit_flop(pc, NV50_FLOP_SIN, brdc, temp);
@@ -2848,7 +2858,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_XPD:
-		temp = temp_temp(pc);
+		temp = temp_temp(pc, NULL);
 		if (mask & (1 << 0)) {
 			emit_mul(pc, temp, src[0][2], src[1][1]);
 			emit_msb(pc, dst[0], src[0][1], src[1][2], temp);
@@ -2902,7 +2912,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 	}
 
-	kill_temp_temp(pc);
+	kill_temp_temp(pc, NULL);
 	pc->reg_instance_nr = 0;
 
 	return TRUE;
@@ -3101,7 +3111,7 @@ nv50_tgsi_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	if (is_scalar_op(insn.Instruction.Opcode)) {
 		pc->r_brdc = tgsi_broadcast_dst(pc, fd, deqs);
 		if (!pc->r_brdc)
-			pc->r_brdc = temp_temp(pc);
+			pc->r_brdc = temp_temp(pc, NULL);
 		return nv50_program_tx_insn(pc, &insn);
 	}
 	pc->r_brdc = NULL;
