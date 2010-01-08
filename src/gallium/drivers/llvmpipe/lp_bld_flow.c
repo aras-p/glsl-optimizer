@@ -647,9 +647,12 @@ lp_build_if(struct lp_build_if_state *ctx,
    LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
 
    /* create a phi node for each variable */
-   for (i = 0; i < flow->num_variables; i++)
+   for (i = 0; i < flow->num_variables; i++) {
       ifthen->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
+      /* add add the initial value of the var from the entry block */
+      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->entry_block, 1);
+   }
 
    /* create/insert true_block before merge_block */
    ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
@@ -706,21 +709,20 @@ lp_build_endif(struct lp_build_if_state *ctx)
       for (i = 0; i < flow->num_variables; i++) {
          assert(*flow->variables[i]);
          LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->false_block, 1);
+
+         /* replace the variable ref with the phi function */
+         *flow->variables[i] = ifthen->phi[i];
       }
    }
    else {
       /* no else clause */
       LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
       for (i = 0; i < flow->num_variables; i++) {
-         LLVMValueRef undef;
-
          assert(*flow->variables[i]);
-
          LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
 
-         /* undef value from the block preceeding the 'if' */
-         undef = LLVMGetUndef(LLVMTypeOf(*flow->variables[i]));
-         LLVMAddIncoming(ifthen->phi[i], &undef, &ifthen->entry_block, 1);
+         /* replace the variable ref with the phi function */
+         *flow->variables[i] = ifthen->phi[i];
       }
    }
 
