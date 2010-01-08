@@ -323,8 +323,8 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	OUT_RINGf (chan, -0.090168);		/* NV20TCL.FOG_EQUATION_LINEAR */
 	OUT_RINGf (chan, 0.0);		/* NV20TCL.FOG_EQUATION_QUADRATIC */
 	BEGIN_RING(chan, kelvin, NV20TCL_FOG_MODE, 2);
-	OUT_RING  (chan, NV20TCL_FOG_MODE_EXP_2);
-	OUT_RING  (chan, NV20TCL_FOG_COORD_DIST_COORD_FOG);
+	OUT_RING  (chan, NV20TCL_FOG_MODE_EXP_SIGNED);
+	OUT_RING  (chan, NV20TCL_FOG_COORD_FOG);
 	BEGIN_RING(chan, kelvin, NV20TCL_FOG_ENABLE, 2);
 	OUT_RING  (chan, 0);
 	OUT_RING  (chan, 0);			/* NV20TCL.FOG_COLOR */
