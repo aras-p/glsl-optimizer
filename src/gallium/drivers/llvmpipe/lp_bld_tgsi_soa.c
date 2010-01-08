@@ -361,6 +361,9 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       if (projected)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
+   for (i = num_coords; i < 3; i++) {
+      coords[i] = bld->base.undef;
+   }
 
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->base.builder,
