@@ -447,6 +447,7 @@ extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
+extern void intel_flush(GLcontext * ctx, GLboolean needs_mi_flush);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 

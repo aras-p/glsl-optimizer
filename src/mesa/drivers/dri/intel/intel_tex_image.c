@@ -749,7 +749,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   intel_update_renderbuffers(pDRICtx, dPriv);
+   if (!dPriv->validBuffers)
+      intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_fb->color_rb[0];
    /* If the region isn't set, then intel_update_renderbuffers was unable

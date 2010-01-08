@@ -72,8 +72,6 @@ int INTEL_DEBUG = (0);
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 
-static void intel_flush(GLcontext *ctx, GLboolean needs_mi_flush);
-
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
 {
@@ -380,6 +378,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
    }
 
+   drawable->validBuffers = GL_TRUE;
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
 
@@ -467,7 +466,7 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
       intel->vtbl.invalidate_state( intel, new_state );
 }
 
-static void
+void
 intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -950,11 +949,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
  
-      if (driContextPriv->driScreenPriv->dri2.enabled) {     
-          intel_update_renderbuffers(driContextPriv, driDrawPriv);
-          if (driDrawPriv != driReadPriv)
-              intel_update_renderbuffers(driContextPriv, driReadPriv);
-      } else {
+      if (!driContextPriv->driScreenPriv->dri2.enabled) {     
           /* XXX FBO temporary fix-ups!  These are released in 
            * intelDextroyContext(), above.  Changes here should be
            * reflected there.
@@ -1087,6 +1082,10 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
+
+       if (!intel->driDrawable->validBuffers)
+	  intel_update_renderbuffers(intel->driContext,
+				     intel->driDrawable);
 
        if (intel_fb)
 	  intel_rb =
