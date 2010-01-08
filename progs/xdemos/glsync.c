@@ -89,7 +89,7 @@ static char optstr[] = "w:h:s:v";
 enum sync_type {
 	none = 0,
 	sgi_video_sync,
-	buffer_swap,
+	buffer_swap
 };
 
 static void usage(char *name)

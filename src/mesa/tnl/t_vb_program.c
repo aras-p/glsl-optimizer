@@ -390,6 +390,13 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 #endif
          COPY_4V(store->results[attr].data[i], machine.Outputs[attr]);
       }
+
+      /* FOGC is a special case.  Fragment shader expects (f,0,0,1) */
+      if (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_FOGC)) {
+         store->results[VERT_RESULT_FOGC].data[i][1] = 0.0;
+         store->results[VERT_RESULT_FOGC].data[i][2] = 0.0;
+         store->results[VERT_RESULT_FOGC].data[i][3] = 1.0;
+      }
 #ifdef NAN_CHECK
       ASSERT(machine.Outputs[0][3] != 0.0F);
 #endif

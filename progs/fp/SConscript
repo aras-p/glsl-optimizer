@@ -6,7 +6,6 @@ progs = [
     'tri-depth2',
     'tri-depthwrite',
     'tri-depthwrite2',
-    'tri-inv',
     'tri-param',
     'tri-tex',
     'point-position',

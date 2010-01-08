@@ -642,7 +642,7 @@ Parse_SwizzleSuffix(const GLubyte *token, GLuint swizzle[4])
    else {
       /* 4-component swizzle (vector) */
       GLint k;
-      for (k = 0; token[k] && k < 4; k++) {
+      for (k = 0; k < 4 && token[k]; k++) {
          if (token[k] == 'x')
             swizzle[k] = 0;
          else if (token[k] == 'y')
