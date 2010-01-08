@@ -287,10 +287,10 @@ do_triangle_ccw(struct setup_context *setup,
    }
 
    /* Bounding rectangle (in pixels) */
-   tri->minx = (MIN3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
-   tri->maxx = (MAX3(x1, x2, x3) + 0xf) >> FIXED_ORDER;
-   tri->miny = (MIN3(y1, y2, y3) + 0xf) >> FIXED_ORDER;
-   tri->maxy = (MAX3(y1, y2, y3) + 0xf) >> FIXED_ORDER;
+   tri->minx = (MIN3(x1, x2, x3) + (FIXED_ONE-1)) >> FIXED_ORDER;
+   tri->maxx = (MAX3(x1, x2, x3) + (FIXED_ONE-1)) >> FIXED_ORDER;
+   tri->miny = (MIN3(y1, y2, y3) + (FIXED_ONE-1)) >> FIXED_ORDER;
+   tri->maxy = (MAX3(y1, y2, y3) + (FIXED_ONE-1)) >> FIXED_ORDER;
    
    if (tri->miny == tri->maxy || 
        tri->minx == tri->maxx) {
