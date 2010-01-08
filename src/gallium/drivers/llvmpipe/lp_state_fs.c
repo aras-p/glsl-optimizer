@@ -58,6 +58,7 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
+#include <limits.h>
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
@@ -212,14 +213,16 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
      m2_vec = step2_ptr[i] > c2_vec
      mask = m0_vec & m1_vec & m2_vec
     */
+   struct lp_build_flow_context *flow;
+   struct lp_build_if_state ifctx;
    struct lp_type i32_type;
-   LLVMTypeRef i32vec4_type;
+   LLVMTypeRef i32vec4_type, mask_type;
 
-   LLVMValueRef index;
    LLVMValueRef c0_vec, c1_vec, c2_vec;
-   LLVMValueRef step0_vec, step1_vec, step2_vec;
-   LLVMValueRef m0_vec, m1_vec, m2_vec;
-   LLVMValueRef m;
+
+   LLVMValueRef int_min_vec;
+   LLVMValueRef not_draw_all;
+   LLVMValueRef in_out_mask;
 
    assert(i < 4);
    
@@ -233,6 +236,12 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 
    i32vec4_type = lp_build_int32_vec4_type();
 
+   mask_type = LLVMIntType(32 * 4);
+
+   /* int_min_vec = {INT_MIN, INT_MIN, INT_MIN, INT_MIN} */
+   int_min_vec = lp_build_int_const_scalar(i32_type, INT_MIN);
+
+
    /* c0_vec = {c0, c0, c0, c0}
     * Note that we emit this code four times but LLVM optimizes away
     * three instances of it.
@@ -240,34 +249,66 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
    c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
    c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
-
    lp_build_name(c0_vec, "edgeconst0vec");
    lp_build_name(c1_vec, "edgeconst1vec");
    lp_build_name(c2_vec, "edgeconst2vec");
 
-   index = LLVMConstInt(LLVMInt32Type(), i, 0);
-   step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
-   step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
-   step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
-
-   lp_build_name(step0_vec, "step0vec");
-   lp_build_name(step1_vec, "step1vec");
-   lp_build_name(step2_vec, "step2vec");
-
-   m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
-   m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
-   m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step2_vec, c2_vec);
-
-   m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
-   m = LLVMBuildAnd(builder, m, m2_vec, "");
-
-   lp_build_name(m, "inoutmaskvec");
-
-   *mask = m;
-
    /*
-    * if mask = {0,0,0,0} skip quad
+    * Use a conditional here to do detailed pixel in/out testing.
+    * We only have to do this if c0 != {INT_MIN, INT_MIN, INT_MIN, INT_MIN}
     */
+   flow = lp_build_flow_create(builder);
+   lp_build_flow_scope_begin(flow);
+
+#define OPTIMIZE_IN_OUT_TEST 0
+#if OPTIMIZE_IN_OUT_TEST
+      in_out_mask = lp_build_compare(builder, i32_type, PIPE_FUNC_EQUAL, c0_vec, int_min_vec);
+      lp_build_name(in_out_mask, "inoutmaskvec");
+
+      not_draw_all = LLVMBuildICmp(builder,
+                                   LLVMIntEQ,
+                                   LLVMBuildBitCast(builder, in_out_mask, mask_type, ""),
+                                   LLVMConstNull(mask_type),
+                                   "");
+
+      lp_build_flow_scope_declare(flow, &in_out_mask);
+
+      lp_build_if(&ifctx, flow, builder, not_draw_all);
+#endif
+      {
+         LLVMValueRef step0_vec, step1_vec, step2_vec;
+         LLVMValueRef m0_vec, m1_vec, m2_vec;
+         LLVMValueRef index, m;
+
+         index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
+         step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
+         step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
+
+         lp_build_name(step0_vec, "step0vec");
+         lp_build_name(step1_vec, "step1vec");
+         lp_build_name(step2_vec, "step2vec");
+
+         m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
+         m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
+         m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step2_vec, c2_vec);
+
+         m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
+         in_out_mask = LLVMBuildAnd(builder, m, m2_vec, "");
+         lp_build_name(in_out_mask, "inoutmaskvec");
+
+         /* This is the initial alive/dead pixel mask.  Additional bits will get cleared
+          * when the Z test fails, etc.
+          */
+      }
+#if OPTIMIZE_IN_OUT_TEST
+      lp_build_endif(&ifctx);
+#endif
+
+   lp_build_flow_scope_end(flow);
+   lp_build_flow_destroy(flow);
+
+   *mask = in_out_mask;
 }
 
 
@@ -432,6 +473,8 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_context_init(&bld, builder, type);
 
    flow = lp_build_flow_create(builder);
+
+   /* we'll use this mask context to skip blending if all pixels are dead */
    lp_build_mask_begin(&mask_ctx, flow, type, mask);
 
    vec_type = lp_build_vec_type(type);
@@ -737,24 +780,29 @@ generate_fragment(struct llvmpipe_context *lp,
 
    LLVMDisposeBuilder(builder);
 
-   /*
-    * Translate the LLVM IR into machine code.
-    */
 
+   /* Verify the LLVM IR.  If invalid, dump and abort */
 #ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(variant->function);
-      assert(0);
+      if (1)
+         LLVMDumpValue(variant->function);
+      abort();
    }
 #endif
 
-   LLVMRunFunctionPassManager(screen->pass, variant->function);
+   /* Apply optimizations to LLVM IR */
+   if (1)
+      LLVMRunFunctionPassManager(screen->pass, variant->function);
 
    if (LP_DEBUG & DEBUG_JIT) {
+      /* Print the LLVM IR to stderr */
       LLVMDumpValue(variant->function);
       debug_printf("\n");
    }
 
+   /*
+    * Translate the LLVM IR into machine code.
+    */
    variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
 
    if (LP_DEBUG & DEBUG_ASM)
