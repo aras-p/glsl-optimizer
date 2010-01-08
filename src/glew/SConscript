@@ -26,7 +26,6 @@ lib_env = env.Clone()
 
 lib_env.Append(CPPDEFINES = [
     'GLEW_BUILD',
-    #'GLEW_STATIC',
     #'GLEW_MX', # Multiple Rendering Contexts support
 ])
 
@@ -35,17 +34,18 @@ if lib_env['platform'] == 'windows':
 else:
     target = 'GLEW'
 
-glew = lib_env.SharedLibrary(
-    target = target,
-    source = [
-        'glew.c',
-    ],
-)
-
-env.InstallSharedLibrary(glew, version=(1, 5, 2))
+source = [
+    'glew.c',
+]
 
 if lib_env['platform'] == 'windows':
+    glew = lib_env.SharedLibrary(target = target, source = source) 
+    env.InstallSharedLibrary(glew, version=(1, 5, 2))
     glew = lib_env.FindIxes(glew, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    # Use static library on Unices to avoid binary compatability issues
+    lib_env.Append(CPPDEFINES = ['GLEW_STATIC'])
+    glew = lib_env.StaticLibrary(target = target, source = source) 
 
 # Program specific environment settings
 prog_env = env.Clone()
