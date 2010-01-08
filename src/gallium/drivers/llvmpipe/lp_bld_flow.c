@@ -88,6 +88,9 @@ struct lp_build_flow_if
    unsigned num_variables;
 
    LLVMValueRef *phi;  /**< array [num_variables] */
+
+   LLVMValueRef condition;
+   LLVMBasicBlockRef entry_block, true_block, false_block, merge_block;
 };
 
 
@@ -623,14 +626,14 @@ lp_build_if(struct lp_build_if_state *ctx,
    memset(ctx, 0, sizeof(*ctx));
    ctx->builder = builder;
    ctx->flow = flow;
-   ctx->condition = condition;
-   ctx->entry_block = block;
 
    /* push/create new scope */
    ifthen = &lp_build_flow_push(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
 
    ifthen->num_variables = flow->num_variables;
+   ifthen->condition = condition;
+   ifthen->entry_block = block;
 
    /* create a Phi node for each variable in this flow scope */
    ifthen->phi = MALLOC(ifthen->num_variables * sizeof(*ifthen->phi));
@@ -640,8 +643,8 @@ lp_build_if(struct lp_build_if_state *ctx,
    }
 
    /* create endif/merge basic block for the phi functions */
-   ctx->merge_block = lp_build_insert_new_block(builder, "endif-block");
-   LLVMPositionBuilderAtEnd(builder, ctx->merge_block);
+   ifthen->merge_block = lp_build_insert_new_block(builder, "endif-block");
+   LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
 
    /* create a phi node for each variable */
    for (i = 0; i < flow->num_variables; i++)
@@ -649,10 +652,10 @@ lp_build_if(struct lp_build_if_state *ctx,
 
 
    /* create/insert true_block before merge_block */
-   ctx->true_block = LLVMInsertBasicBlock(ctx->merge_block, "if-true-block");
+   ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
 
    /* successive code goes into the true block */
-   LLVMPositionBuilderAtEnd(builder, ctx->true_block);
+   LLVMPositionBuilderAtEnd(builder, ifthen->true_block);
 }
 
 
@@ -670,17 +673,17 @@ lp_build_else(struct lp_build_if_state *ctx)
    assert(ifthen);
 
    /* for each variable, update the Phi node with a (variable, block) pair */
-   LLVMPositionBuilderAtEnd(ctx->builder, ctx->merge_block);
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
    for (i = 0; i < flow->num_variables; i++) {
       assert(*flow->variables[i]);
-      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ctx->true_block, 1);
+      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
    }
 
    /* create/insert false_block before the merge block */
-   ctx->false_block = LLVMInsertBasicBlock(ctx->merge_block, "if-false-block");
+   ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
 
    /* successive code goes into the else block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ctx->false_block);
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
 }
 
 
@@ -697,27 +700,27 @@ lp_build_endif(struct lp_build_if_state *ctx)
    ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
 
-   if (ctx->false_block) {
-      LLVMPositionBuilderAtEnd(ctx->builder, ctx->merge_block);
+   if (ifthen->false_block) {
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
       /* for each variable, update the Phi node with a (variable, block) pair */
       for (i = 0; i < flow->num_variables; i++) {
          assert(*flow->variables[i]);
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ctx->false_block, 1);
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->false_block, 1);
       }
    }
    else {
       /* no else clause */
-      LLVMPositionBuilderAtEnd(ctx->builder, ctx->merge_block);
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
       for (i = 0; i < flow->num_variables; i++) {
          LLVMValueRef undef;
 
          assert(*flow->variables[i]);
 
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ctx->true_block, 1);
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
 
          /* undef value from the block preceeding the 'if' */
          undef = LLVMGetUndef(LLVMTypeOf(*flow->variables[i]));
-         LLVMAddIncoming(ifthen->phi[i], &undef, &ctx->entry_block, 1);
+         LLVMAddIncoming(ifthen->phi[i], &undef, &ifthen->entry_block, 1);
       }
    }
 
@@ -728,28 +731,28 @@ lp_build_endif(struct lp_build_if_state *ctx)
     ***/
 
    /* Insert the conditional branch instruction at the end of entry_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ctx->entry_block);
-   if (ctx->false_block) {
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->entry_block);
+   if (ifthen->false_block) {
       /* we have an else clause */
-      LLVMBuildCondBr(ctx->builder, ctx->condition,
-                      ctx->true_block, ctx->false_block);
+      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+                      ifthen->true_block, ifthen->false_block);
    }
    else {
       /* no else clause */
-      LLVMBuildCondBr(ctx->builder, ctx->condition,
-                      ctx->true_block, ctx->merge_block);
+      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+                      ifthen->true_block, ifthen->merge_block);
    }
 
    /* Append an unconditional Br(anch) instruction on the true_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ctx->true_block);
-   LLVMBuildBr(ctx->builder, ctx->merge_block);
-   if (ctx->false_block) {
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
+   LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   if (ifthen->false_block) {
       /* Append an unconditional Br(anch) instruction on the false_block */
-      LLVMPositionBuilderAtEnd(ctx->builder, ctx->false_block);
-      LLVMBuildBr(ctx->builder, ctx->merge_block);
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+      LLVMBuildBr(ctx->builder, ifthen->merge_block);
    }
 
 
-   /* Resume building code at end of the ctx->merge_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ctx->merge_block);
+   /* Resume building code at end of the ifthen->merge_block */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
 }
