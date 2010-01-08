@@ -721,6 +721,8 @@ lp_build_endif(struct lp_build_if_state *ctx)
       }
    }
 
+   FREE(ifthen->phi);
+
    /***
     *** Now patch in the various branch instructions.
     ***/
