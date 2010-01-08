@@ -3877,12 +3877,13 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_ref(NULL, &so);
 }
 
-static void
+static uint32_t
 nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 {
 	struct nv50_program *fp = nv50->fragprog;
 	struct nv50_program *vp = nv50->vertprog;
 	unsigned i, c, m = base;
+	uint32_t origin = 0x00000010;
 
 	/* XXX: this might not work correctly in all cases yet - we'll
 	 * just assume that an FP generic input that is not written in
@@ -3916,7 +3917,9 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 			if (mode == PIPE_SPRITE_COORD_NONE) {
 				m += n;
 				continue;
-			}
+			} else
+			if (mode == PIPE_SPRITE_COORD_LOWER_LEFT)
+				origin = 0;
 		}
 
 		/* this is either PointCoord or replaced by sprite coords */
@@ -3927,6 +3930,7 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 			++m;
 		}
 	}
+	return origin;
 }
 
 static int
@@ -4025,7 +4029,7 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	}
 
 	/* now fill the stateobj */
-	so = so_new(6, 58, 0);
+	so = so_new(7, 57, 0);
 
 	n = (m + 3) / 4;
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
@@ -4043,7 +4047,9 @@ nv50_linkage_validate(struct nv50_context *nv50)
 	so_datap (so, lin, 4);
 
 	if (nv50->rasterizer->pipe.point_sprite) {
-		nv50_pntc_replace(nv50, pcrd, (reg[4] >> 8) & 0xff);
+		so_method(so, tesla, NV50TCL_POINT_SPRITE_CTRL, 1);
+		so_data  (so,
+			  nv50_pntc_replace(nv50, pcrd, (reg[4] >> 8) & 0xff));
 
 		so_method(so, tesla, NV50TCL_POINT_COORD_REPLACE_MAP(0), 8);
 		so_datap (so, pcrd, 8);
