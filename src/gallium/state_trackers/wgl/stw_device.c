@@ -72,19 +72,7 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
       return;
    }
 
-#if DEBUG
-   {
-      /* ensure that a random surface was not passed to us */
-      struct pipe_surface *surface2;
-
-      if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
-         assert(0);
-      else
-         assert(surface2 == surface);
-   }
-#endif
-
-   stw_framebuffer_present_locked(hdc, fb, ST_SURFACE_FRONT_LEFT);
+   stw_framebuffer_present_locked(hdc, fb, surface);
 }
 
 

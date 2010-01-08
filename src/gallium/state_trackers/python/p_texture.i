@@ -59,25 +59,17 @@
    }
    
    unsigned get_width(unsigned level=0) {
-      return $self->width[level];
+      return u_minify($self->width0, level);
    }
    
    unsigned get_height(unsigned level=0) {
-      return $self->height[level];
+      return u_minify($self->height0, level);
    }
    
    unsigned get_depth(unsigned level=0) {
-      return $self->depth[level];
+      return u_minify($self->depth0, level);
    }
-   
-   unsigned get_nblocksx(unsigned level=0) {
-      return $self->nblocksx[level];
-   }
-   
-   unsigned get_nblocksy(unsigned level=0) {
-      return $self->nblocksy[level];
-   }
-   
+  
    /** Get a surface which is a "view" into a texture */
    struct st_surface *
    get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0)
@@ -88,7 +80,7 @@
          SWIG_exception(SWIG_ValueError, "face out of bounds");
       if(level > $self->last_level)
          SWIG_exception(SWIG_ValueError, "level out of bounds");
-      if(zslice >= $self->depth[level])
+      if(zslice >= u_minify($self->depth0, level))
          SWIG_exception(SWIG_ValueError, "zslice out of bounds");
       
       surface = CALLOC_STRUCT(st_surface);
@@ -126,8 +118,6 @@ struct st_surface
    unsigned format;
    unsigned width;
    unsigned height;
-   unsigned nblocksx;
-   unsigned nblocksy;
    
    ~st_surface() {
       pipe_texture_reference(&$self->texture, NULL);
@@ -142,8 +132,8 @@ struct st_surface
       struct pipe_transfer *transfer;
       unsigned stride;
 
-      stride = pf_get_nblocksx(&texture->block, w) * texture->block.size;
-      *LENGTH = pf_get_nblocksy(&texture->block, h) * stride;
+      stride = util_format_get_stride(texture->format, w);
+      *LENGTH = util_format_get_nblocksy(texture->format, h) * stride;
       *STRING = (char *) malloc(*LENGTH);
       if(!*STRING)
          return;
@@ -169,9 +159,9 @@ struct st_surface
       struct pipe_transfer *transfer;
      
       if(stride == 0)
-         stride = pf_get_nblocksx(&texture->block, w) * texture->block.size;
+         stride = util_format_get_stride(texture->format, w);
       
-      if(LENGTH < pf_get_nblocksy(&texture->block, h) * stride)
+      if(LENGTH < util_format_get_nblocksy(texture->format, h) * stride)
          SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
          
       transfer = screen->get_tex_transfer(screen,
@@ -375,25 +365,13 @@ struct st_surface
    static unsigned
    st_surface_width_get(struct st_surface *surface)
    {
-      return surface->texture->width[surface->level];
+      return u_minify(surface->texture->width0, surface->level);
    }
    
    static unsigned
    st_surface_height_get(struct st_surface *surface)
    {
-      return surface->texture->height[surface->level];
-   }
-
-   static unsigned
-   st_surface_nblocksx_get(struct st_surface *surface)
-   {
-      return surface->texture->nblocksx[surface->level];
-   }
-   
-   static unsigned
-   st_surface_nblocksy_get(struct st_surface *surface)
-   {
-      return surface->texture->nblocksy[surface->level];
+      return u_minify(surface->texture->height0, surface->level);
    }
 %}
 

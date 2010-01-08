@@ -25,7 +25,8 @@ struct _egl_driver
 };
 
 
-extern _EGLDriver *_eglMain(const char *args);
+PUBLIC _EGLDriver *
+_eglMain(const char *args);
 
 
 extern const char *
@@ -48,11 +49,11 @@ extern _EGLDriver *
 _eglLookupDriver(EGLDisplay d);
 
 
-extern void
+PUBLIC void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
-extern EGLint
+PUBLIC EGLint
 _eglFindAPIs(void);
 
 

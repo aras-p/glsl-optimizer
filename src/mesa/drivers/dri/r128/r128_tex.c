@@ -44,7 +44,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "main/enums.h"
 #include "main/texstore.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/imports.h"
@@ -170,7 +169,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
       r128SetTexWrap( t, texObj->WrapS, texObj->WrapT );
       r128SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      r128SetTexBorderColor( t, texObj->BorderColor );
+      r128SetTexBorderColor( t, texObj->BorderColor.f );
    }
 
    return t;
@@ -178,7 +177,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
 
 /* Called by the _mesa_store_teximage[123]d() functions. */
-static const struct gl_texture_format *
+static gl_format
 r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type )
 {
@@ -282,13 +281,13 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
           type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
+         return MESA_FORMAT_YCBCR;
       else
-         return &_mesa_texformat_ycbcr_rev;
+         return MESA_FORMAT_YCBCR_REV;
 
    default:
       _mesa_problem( ctx, "unexpected format in %s", __FUNCTION__ );
-      return NULL;
+      return MESA_FORMAT_NONE;
    }
 }
 
@@ -536,7 +535,7 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexBorderColor( t, tObj->BorderColor );
+      r128SetTexBorderColor( t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

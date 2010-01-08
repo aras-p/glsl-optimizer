@@ -152,11 +152,3 @@ enum pipe_format {
    PIPE_FORMAT_DXT5_SRGBA,
 };
 
-
-struct pipe_format_block
-{
-   unsigned size;
-   unsigned width;
-   unsigned height;
-};
-

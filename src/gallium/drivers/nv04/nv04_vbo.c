@@ -9,7 +9,7 @@
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
 
-boolean nv04_draw_elements( struct pipe_context *pipe,
+void nv04_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count)
@@ -45,7 +45,7 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 
-	draw_set_mapped_constant_buffer(draw,
+	draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX,
 					nv04->constbuf[PIPE_SHADER_VERTEX],
 					nv04->constbuf_nr[PIPE_SHADER_VERTEX]);
 
@@ -65,15 +65,13 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 		pipe_buffer_unmap(pscreen, indexBuffer);
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
-
-	return TRUE;
 }
 
-boolean nv04_draw_arrays( struct pipe_context *pipe,
-				 unsigned prim, unsigned start, unsigned count)
+void nv04_draw_arrays( struct pipe_context *pipe,
+                       unsigned prim, unsigned start, unsigned count)
 {
 	printf("coucou in draw arrays\n");
-	return nv04_draw_elements(pipe, NULL, 0, prim, start, count);
+	nv04_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 

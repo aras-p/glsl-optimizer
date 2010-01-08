@@ -26,6 +26,7 @@
  */
 
 #include "main/glheader.h"
+#include "main/condrender.h"
 #include "main/context.h"
 #include "main/imports.h"
 #include "main/state.h"
@@ -251,22 +252,10 @@ static void bind_inputs( GLcontext *ctx,
     */
    VB->Count = count;
 
-
-   /* Legacy pointers -- remove one day.
-    */
-   VB->ObjPtr = VB->AttribPtr[_TNL_ATTRIB_POS];
-   VB->NormalPtr = VB->AttribPtr[_TNL_ATTRIB_NORMAL];
-   VB->ColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];
-   VB->ColorPtr[1] = NULL;
-   VB->IndexPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR_INDEX];
-   VB->IndexPtr[1] = NULL;
-   VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
-   VB->SecondaryColorPtr[1] = NULL;
-   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
-
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      VB->TexCoordPtr[i] = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i];
-   }
+   /* These should perhaps be part of _TNL_ATTRIB_* */
+   VB->BackfaceColorPtr = NULL;
+   VB->BackfaceIndexPtr = NULL;
+   VB->BackfaceSecondaryColorPtr = NULL;
 
    /* Clipping and drawing code still requires this to be a packed
     * array of ubytes which can be written into.  TODO: Fix and
@@ -397,6 +386,9 @@ void _tnl_draw_prims( GLcontext *ctx,
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
    GLuint max_basevertex = prim->basevertex;
    GLuint i;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't draw */
 
    for (i = 1; i < nr_prims; i++)
       max_basevertex = MAX2(max_basevertex, prim[i].basevertex);

@@ -127,7 +127,7 @@ i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
    va_start( args, msg );  
    util_vsnprintf( buffer, sizeof(buffer), msg, args );
    va_end( args );
-   debug_printf(buffer);
+   debug_printf("%s", buffer);
    debug_printf("\n");
 
    p->error = 1;
@@ -143,12 +143,12 @@ static uint
 src_vector(struct i915_fp_compile *p,
            const struct tgsi_full_src_register *source)
 {
-   uint index = source->SrcRegister.Index;
+   uint index = source->Register.Index;
    uint src = 0, sem_name, sem_ind;
 
-   switch (source->SrcRegister.File) {
+   switch (source->Register.File) {
    case TGSI_FILE_TEMPORARY:
-      if (source->SrcRegister.Index >= I915_MAX_TEMPORARY) {
+      if (source->Register.Index >= I915_MAX_TEMPORARY) {
          i915_program_error(p, "Exceeded max temporary reg");
          return 0;
       }
@@ -214,45 +214,26 @@ src_vector(struct i915_fp_compile *p,
       return 0;
    }
 
-   if (source->SrcRegister.Extended) {
-      src = swizzle(src,
-                    source->SrcRegisterExtSwz.ExtSwizzleX,
-                    source->SrcRegisterExtSwz.ExtSwizzleY,
-                    source->SrcRegisterExtSwz.ExtSwizzleZ,
-                    source->SrcRegisterExtSwz.ExtSwizzleW);
-   }
-   else {
-      src = swizzle(src,
-                    source->SrcRegister.SwizzleX,
-                    source->SrcRegister.SwizzleY,
-                    source->SrcRegister.SwizzleZ,
-                    source->SrcRegister.SwizzleW);
-   }
+   src = swizzle(src,
+		 source->Register.SwizzleX,
+		 source->Register.SwizzleY,
+		 source->Register.SwizzleZ,
+		 source->Register.SwizzleW);
 
 
    /* There's both negate-all-components and per-component negation.
     * Try to handle both here.
     */
    {
-      int nx = source->SrcRegisterExtSwz.NegateX;
-      int ny = source->SrcRegisterExtSwz.NegateY;
-      int nz = source->SrcRegisterExtSwz.NegateZ;
-      int nw = source->SrcRegisterExtSwz.NegateW;
-      if (source->SrcRegister.Negate) {
-         nx = !nx;
-         ny = !ny;
-         nz = !nz;
-         nw = !nw;
-      }
-      src = negate(src, nx, ny, nz, nw);
+      int n = source->Register.Negate;
+      src = negate(src, n, n, n, n);
    }
 
-   /* no abs() or post-abs negation */
+   /* no abs() */
 #if 0
    /* XXX assertions disabled to allow arbfplight.c to run */
    /* XXX enable these assertions, or fix things */
-   assert(!source->SrcRegisterExtMod.Absolute);
-   assert(!source->SrcRegisterExtMod.Negate);
+   assert(!source->Register.Absolute);
 #endif
    return src;
 }
@@ -265,10 +246,10 @@ static uint
 get_result_vector(struct i915_fp_compile *p,
                   const struct tgsi_full_dst_register *dest)
 {
-   switch (dest->DstRegister.File) {
+   switch (dest->Register.File) {
    case TGSI_FILE_OUTPUT:
       {
-         uint sem_name = p->shader->info.output_semantic_name[dest->DstRegister.Index];
+         uint sem_name = p->shader->info.output_semantic_name[dest->Register.Index];
          switch (sem_name) {
          case TGSI_SEMANTIC_POSITION:
             return UREG(REG_TYPE_OD, 0);
@@ -280,7 +261,7 @@ get_result_vector(struct i915_fp_compile *p,
          }
       }
    case TGSI_FILE_TEMPORARY:
-      return UREG(REG_TYPE_R, dest->DstRegister.Index);
+      return UREG(REG_TYPE_R, dest->Register.Index);
    default:
       i915_program_error(p, "Bad inst->DstReg.File");
       return 0;
@@ -295,7 +276,7 @@ static uint
 get_result_flags(const struct tgsi_full_instruction *inst)
 {
    const uint writeMask
-      = inst->FullDstRegisters[0].DstRegister.WriteMask;
+      = inst->Dst[0].Register.WriteMask;
    uint flags = 0x0;
 
    if (inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE)
@@ -357,14 +338,14 @@ emit_tex(struct i915_fp_compile *p,
          const struct tgsi_full_instruction *inst,
          uint opcode)
 {
-   uint texture = inst->InstructionExtTexture.Texture;
-   uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   uint texture = inst->Texture.Texture;
+   uint unit = inst->Src[1].Register.Index;
    uint tex = translate_tex_src_target( p, texture );
    uint sampler = i915_emit_decl(p, REG_TYPE_S, unit, tex);
-   uint coord = src_vector( p, &inst->FullSrcRegisters[0]);
+   uint coord = src_vector( p, &inst->Src[0]);
 
    i915_emit_texld( p,
-                    get_result_vector( p, &inst->FullDstRegisters[0] ),
+                    get_result_vector( p, &inst->Dst[0] ),
                     get_result_flags( inst ),
                     sampler,
                     coord,
@@ -386,13 +367,13 @@ emit_simple_arith(struct i915_fp_compile *p,
 
    assert(numArgs <= 3);
 
-   arg1 = (numArgs < 1) ? 0 : src_vector( p, &inst->FullSrcRegisters[0] );
-   arg2 = (numArgs < 2) ? 0 : src_vector( p, &inst->FullSrcRegisters[1] );
-   arg3 = (numArgs < 3) ? 0 : src_vector( p, &inst->FullSrcRegisters[2] );
+   arg1 = (numArgs < 1) ? 0 : src_vector( p, &inst->Src[0] );
+   arg2 = (numArgs < 2) ? 0 : src_vector( p, &inst->Src[1] );
+   arg3 = (numArgs < 3) ? 0 : src_vector( p, &inst->Src[2] );
 
    i915_emit_arith( p,
                     opcode,
-                    get_result_vector( p, &inst->FullDstRegisters[0]),
+                    get_result_vector( p, &inst->Dst[0]),
                     get_result_flags( inst ), 0,
                     arg1,
                     arg2,
@@ -412,8 +393,8 @@ emit_simple_arith_swap2(struct i915_fp_compile *p,
 
    /* transpose first two registers */
    inst2 = *inst;
-   inst2.FullSrcRegisters[0] = inst->FullSrcRegisters[1];
-   inst2.FullSrcRegisters[1] = inst->FullSrcRegisters[0];
+   inst2.Src[0] = inst->Src[1];
+   inst2.Src[1] = inst->Src[0];
 
    emit_simple_arith(p, &inst2, opcode, numArgs);
 }
@@ -442,10 +423,10 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ABS:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       i915_emit_arith(p,
                       A0_MAX,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       src0, negate(src0, 1, 1, 1, 1), 0);
       break;
@@ -455,17 +436,17 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_CMP:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
-      src2 = src_vector(p, &inst->FullSrcRegisters[2]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
+      src2 = src_vector(p, &inst->Src[2]);
       i915_emit_arith(p, A0_CMP, 
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 
                       0, src0, src2, src1);   /* NOTE: order of src2, src1 */
       break;
 
    case TGSI_OPCODE_COS:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -508,7 +489,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p,
                       A0_DP4,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(tmp, ONE, Z, Y, X),
                       i915_emit_const4fv(p, cos_constants), 0);
@@ -523,19 +504,19 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_DPH:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
 
       i915_emit_arith(p,
                       A0_DP4,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, X, Y, Z, ONE), src1, 0);
       break;
 
    case TGSI_OPCODE_DST:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
 
       /* result[0] = 1    * 1;
        * result[1] = a[1] * b[1];
@@ -544,7 +525,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
        */
       i915_emit_arith(p,
                       A0_MUL,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, ONE, Y, Z, ONE),
                       swizzle(src1, ONE, Y, ONE, W), 0);
@@ -555,11 +536,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_EX2:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
 
       i915_emit_arith(p,
                       A0_EXP,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
@@ -574,7 +555,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    case TGSI_OPCODE_KIL:
       /* kill if src[0].x < 0 || src[0].y < 0 ... */
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       tmp = i915_get_utemp(p);
 
       i915_emit_texld(p,
@@ -590,17 +571,17 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_LG2:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
 
       i915_emit_arith(p,
                       A0_LOG,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
 
    case TGSI_OPCODE_LIT:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       tmp = i915_get_utemp(p);
 
       /* tmp = max( a.xyzw, a.00zw )
@@ -624,7 +605,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       swizzle(tmp, Y, Y, Y, Y), 0, 0);
 
       i915_emit_arith(p, A0_CMP,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       negate(swizzle(tmp, ONE, ONE, X, ONE), 0, 0, 1, 0),
                       swizzle(tmp, ONE, X, ZERO, ONE),
@@ -633,9 +614,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_LRP:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
-      src2 = src_vector(p, &inst->FullSrcRegisters[2]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
+      src2 = src_vector(p, &inst->Src[2]);
       flags = get_result_flags(inst);
       tmp = i915_get_utemp(p);
 
@@ -650,7 +631,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       flags & A0_DEST_CHANNEL_ALL, 0, src1, src0, src2);
 
       i915_emit_arith(p, A0_MAD,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       flags, 0, negate(src2, 1, 1, 1, 1), src0, tmp);
       break;
 
@@ -663,8 +644,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_MIN:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
       tmp = i915_get_utemp(p);
       flags = get_result_flags(inst);
 
@@ -676,12 +657,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p,
                       A0_MOV,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       flags, 0, negate(tmp, 1, 1, 1, 1), 0, 0);
       break;
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       emit_simple_arith(p, inst, A0_MOV, 1);
       break;
 
@@ -690,8 +670,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_POW:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
       tmp = i915_get_utemp(p);
       flags = get_result_flags(inst);
 
@@ -706,7 +686,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p,
                       A0_EXP,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       flags, 0, swizzle(tmp, X, X, X, X), 0, 0);
       break;
       
@@ -715,27 +695,27 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
       
    case TGSI_OPCODE_RCP:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
 
       i915_emit_arith(p,
                       A0_RCP,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                          get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
 
    case TGSI_OPCODE_RSQ:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
 
       i915_emit_arith(p,
                       A0_RSQ,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, X, X, X, X), 0, 0);
       break;
 
    case TGSI_OPCODE_SCS:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       tmp = i915_get_utemp(p);
 
       /* 
@@ -758,7 +738,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       swizzle(tmp, X, Y, X, Y),
                       swizzle(tmp, X, X, ONE, ONE), 0);
 
-      writemask = inst->FullDstRegisters[0].DstRegister.WriteMask;
+      writemask = inst->Dst[0].Register.WriteMask;
 
       if (writemask & TGSI_WRITEMASK_Y) {
          uint tmp1;
@@ -776,7 +756,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
          i915_emit_arith(p,
                          A0_DP4,
-                         get_result_vector(p, &inst->FullDstRegisters[0]),
+                         get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_Y, 0,
                          swizzle(tmp1, W, Z, Y, X),
                          i915_emit_const4fv(p, sin_constants), 0);
@@ -791,7 +771,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
          i915_emit_arith(p,
                          A0_DP4,
-                         get_result_vector(p, &inst->FullDstRegisters[0]),
+                         get_result_vector(p, &inst->Dst[0]),
                          A0_DEST_CHANNEL_X, 0,
                          swizzle(tmp, ONE, Z, Y, X),
                          i915_emit_const4fv(p, cos_constants), 0);
@@ -808,7 +788,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SIN:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      src0 = src_vector(p, &inst->Src[0]);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -851,7 +831,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p,
                       A0_DP4,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(tmp, W, Z, Y, X),
                       i915_emit_const4fv(p, sin_constants), 0);
@@ -867,12 +847,12 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SUB:
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
 
       i915_emit_arith(p,
                       A0_ADD,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       src0, negate(src1, 1, 1, 1, 1), 0);
       break;
@@ -896,8 +876,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
        *      result.z = src0.x * src1.y - src0.y * src1.x;
        *      result.w = undef;
        */
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      src1 = src_vector(p, &inst->FullSrcRegisters[1]);
+      src0 = src_vector(p, &inst->Src[0]);
+      src1 = src_vector(p, &inst->Src[1]);
       tmp = i915_get_utemp(p);
 
       i915_emit_arith(p,
@@ -908,7 +888,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p,
                       A0_MAD,
-                      get_result_vector(p, &inst->FullDstRegisters[0]),
+                      get_result_vector(p, &inst->Dst[0]),
                       get_result_flags(inst), 0,
                       swizzle(src0, Y, Z, X, ONE),
                       swizzle(src1, Z, X, Y, ONE),
@@ -948,8 +928,8 @@ i915_translate_instructions(struct i915_fp_compile *p,
          if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_CONSTANT) {
             uint i;
-            for (i = parse.FullToken.FullDeclaration.DeclarationRange.First;
-                 i <= parse.FullToken.FullDeclaration.DeclarationRange.Last;
+            for (i = parse.FullToken.FullDeclaration.Range.First;
+                 i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
                assert(ifs->constant_flags[i] == 0x0);
                ifs->constant_flags[i] = I915_CONSTFLAG_USER;
@@ -959,8 +939,8 @@ i915_translate_instructions(struct i915_fp_compile *p,
          else if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_TEMPORARY) {
             uint i;
-            for (i = parse.FullToken.FullDeclaration.DeclarationRange.First;
-                 i <= parse.FullToken.FullDeclaration.DeclarationRange.Last;
+            for (i = parse.FullToken.FullDeclaration.Range.First;
+                 i <= parse.FullToken.FullDeclaration.Range.Last;
                  i++) {
                assert(i < I915_MAX_TEMPORARY);
                /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */

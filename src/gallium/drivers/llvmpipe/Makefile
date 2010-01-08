@@ -19,10 +19,13 @@ C_SOURCES = \
 	lp_bld_depth.c \
 	lp_bld_flow.c \
 	lp_bld_format_aos.c \
+	lp_bld_format_query.c \
 	lp_bld_format_soa.c \
 	lp_bld_interp.c \
 	lp_bld_intr.c \
 	lp_bld_logic.c \
+	lp_bld_pack.c \
+	lp_bld_sample.c \
 	lp_bld_sample_soa.c \
 	lp_bld_swizzle.c \
 	lp_bld_struct.c \
@@ -57,6 +60,9 @@ C_SOURCES = \
 	lp_tex_sample_llvm.c \
 	lp_texture.c \
 	lp_tile_soa.c
+
+CPP_SOURCES = \
+	lp_bld_misc.cpp
 
 include ../../Makefile.template
 

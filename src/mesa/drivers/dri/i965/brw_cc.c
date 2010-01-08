@@ -34,6 +34,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
+#include "intel_fbo.h"
 #include "main/macros.h"
 #include "main/enums.h"
 
@@ -44,17 +45,24 @@ static void prepare_cc_vp( struct brw_context *brw )
 
    memset(&ccv, 0, sizeof(ccv));
 
-   /* _NEW_VIEWPORT */
-   ccv.min_depth = ctx->Viewport.Near;
-   ccv.max_depth = ctx->Viewport.Far;
+   /* _NEW_TRANSOFORM */
+   if (ctx->Transform.DepthClamp) {
+      /* _NEW_VIEWPORT */
+      ccv.min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
+      ccv.max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+   } else {
+      ccv.min_depth = 0.0;
+      ccv.max_depth = 1.0;
+   }
 
    dri_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
+   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
+				  NULL, 0);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
    .dirty = {
-      .mesa = _NEW_VIEWPORT,
+      .mesa = _NEW_VIEWPORT | _NEW_TRANSFORM,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
@@ -81,6 +89,28 @@ struct brw_cc_unit_key {
    GLboolean depth_test, depth_write;
    GLenum depth_func;
 };
+
+/**
+ * Modify blend function to force destination alpha to 1.0
+ *
+ * If \c function specifies a blend function that uses destination alpha,
+ * replace it with a function that hard-wires destination alpha to 1.0.  This
+ * is used when rendering to xRGB targets.
+ */
+static GLenum
+fix_xRGB_alpha(GLenum function)
+{
+   switch (function) {
+   case GL_DST_ALPHA:
+      return GL_ONE;
+
+   case GL_ONE_MINUS_DST_ALPHA:
+   case GL_SRC_ALPHA_SATURATE:
+      return GL_ZERO;
+   }
+
+   return function;
+}
 
 static void
 cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
@@ -125,6 +155,17 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
       key->blend_dst_rgb = ctx->Color.BlendDstRGB;
       key->blend_src_a = ctx->Color.BlendSrcA;
       key->blend_dst_a = ctx->Color.BlendDstA;
+
+      /* If the renderbuffer is XRGB, we have to frob the blend function to
+       * force the destination alpha to 1.0.  This means replacing GL_DST_ALPHA
+       * with GL_ONE and GL_ONE_MINUS_DST_ALPHA with GL_ZERO.
+       */
+      if (ctx->DrawBuffer->Visual.alphaBits == 0) {
+	 key->blend_src_rgb = fix_xRGB_alpha(key->blend_src_rgb);
+	 key->blend_src_a   = fix_xRGB_alpha(key->blend_src_a);
+	 key->blend_dst_rgb = fix_xRGB_alpha(key->blend_dst_rgb);
+	 key->blend_dst_a   = fix_xRGB_alpha(key->blend_dst_a);
+      }
    }
 
    key->alpha_enabled = ctx->Color.AlphaEnabled;

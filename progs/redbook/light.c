@@ -47,7 +47,7 @@
 /*  Initialize material property, light source, lighting model,
  *  and depth buffer.
  */
-void init(void) 
+static void init(void) 
 {
    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
    GLfloat mat_shininess[] = { 50.0 };
@@ -65,14 +65,14 @@ void init(void)
    glEnable(GL_DEPTH_TEST);
 }
 
-void display(void)
+static void display(void)
 {
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glutSolidSphere (1.0, 20, 16);
    glFlush ();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode (GL_PROJECTION);
@@ -88,7 +88,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

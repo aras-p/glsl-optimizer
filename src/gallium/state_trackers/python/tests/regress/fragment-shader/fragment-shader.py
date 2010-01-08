@@ -96,7 +96,7 @@ def test(dev, name):
     sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.normalized_coords = 1
-    ctx.set_sampler(0, sampler)
+    ctx.set_fragment_sampler(0, sampler)
 
     # scissor
     scissor = Scissor()
@@ -131,7 +131,7 @@ def test(dev, name):
 
     # vertex shader
     vs = Shader('''
-        VERT1.1
+        VERT
         DCL IN[0], POSITION
         DCL IN[1], COLOR
         DCL OUT[0], POSITION

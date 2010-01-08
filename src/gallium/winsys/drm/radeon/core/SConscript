@@ -6,7 +6,6 @@ radeon_sources = [
     'radeon_buffer.c',
     'radeon_drm.c',
     'radeon_r300.c',
-    'radeon_winsys_softpipe.c',
 ]
 
 env.Append(CPPPATH = '#/src/gallium/drivers/r300')

@@ -86,8 +86,9 @@ class TextureTest(TestCase):
         
         surface = texture.get_surface(face, level, zslice)
         
-        stride = surface.nblocksx * texture.block.size
-        size = surface.nblocksy * stride
+        # ???
+        stride = pf_get_stride(texture->format, w)
+        size = pf_get_nblocksy(texture->format) * stride
 
         in_raw = os.urandom(size)
 

@@ -4,6 +4,7 @@
 struct nv04_surface {
 	struct pipe_surface base;
 	unsigned pitch;
+	struct nv04_surface* backing;
 };
 
 struct nv04_surface_2d {
@@ -29,5 +30,8 @@ nv04_surface_2d_init(struct nouveau_screen *screen);
 
 void
 nv04_surface_2d_takedown(struct nv04_surface_2d **);
+
+struct nv04_surface*
+nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns);
 
 #endif

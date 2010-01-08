@@ -75,6 +75,7 @@ struct nv40_fragment_program {
 
 struct nv40_miptree {
 	struct pipe_texture base;
+	struct nouveau_bo *bo;
 
 	struct pipe_buffer *buffer;
 	uint total_size;

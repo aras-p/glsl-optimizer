@@ -29,21 +29,95 @@
  *      Joakim Sindholt <opensource@zhasha.com>
  */
 
+#include "softpipe/sp_winsys.h"
+
 #include "radeon_drm.h"
+
+/* Helper function to do the ioctls needed for setup and init. */
+static void do_ioctls(int fd, struct radeon_winsys* winsys)
+{
+    struct drm_radeon_gem_info gem_info = {0};
+    struct drm_radeon_info info = {0};
+    int target = 0;
+    int retval;
+
+    info.value = (unsigned long)&target;
+
+    /* We do things in a specific order here.
+     *
+     * First, the PCI ID. This is essential and should return usable numbers
+     * for all Radeons. If this fails, we probably got handed an FD for some
+     * non-Radeon card.
+     *
+     * The GB and Z pipe requests should always succeed, but they might not
+     * return sensical values for all chipsets, but that's alright because
+     * the pipe drivers already know that.
+     *
+     * The GEM info is actually bogus on the kernel side, as well as our side
+     * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
+     * we don't actually use the info for anything yet.
+     * XXX update the above when we can safely use vram_size instead of vram_visible */
+    info.request = RADEON_INFO_DEVICE_ID;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get PCI ID, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->pci_id = target;
+
+    info.request = RADEON_INFO_NUM_GB_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get GB pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->gb_pipes = target;
+
+    info.request = RADEON_INFO_NUM_Z_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get Z pipe count, "
+                "error number %d\n", __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->z_pipes = target;
+
+    retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
+            &gem_info, sizeof(gem_info));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
+                __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->gart_size = gem_info.gart_size;
+    /* XXX */
+    winsys->vram_size = gem_info.vram_visible;
+}
+
+/* Guess at whether this chipset should use r300g.
+ *
+ * I believe that this check is valid, but I haven't been exhaustive. */
+static boolean is_r3xx(int pciid)
+{
+    return (pciid > 0x3150) && (pciid < 0x796f);
+}
 
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
                                          struct drm_create_screen_arg *arg)
 {
-    struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
+    struct radeon_winsys* rwinsys = radeon_pipe_winsys(drmFB);
+    do_ioctls(drmFB, rwinsys);
 
-    if (getenv("RADEON_SOFTPIPE")) {
-        return softpipe_create_screen((struct pipe_winsys*)winsys);
+    if (!is_r3xx(rwinsys->pci_id) ||
+        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
+        return softpipe_create_screen((struct pipe_winsys*)rwinsys);
     } else {
-        struct r300_winsys* r300 = radeon_create_r300_winsys(drmFB, winsys);
-        FREE(winsys);
-        return r300_create_screen(r300);
+        radeon_setup_winsys(drmFB, rwinsys);
+        return r300_create_screen(rwinsys);
     }
 }
 
@@ -51,11 +125,13 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
 struct pipe_context* radeon_create_context(struct drm_api* api,
                                            struct pipe_screen* screen)
 {
-    if (getenv("RADEON_SOFTPIPE")) {
-        return radeon_create_softpipe(screen->winsys);
+    struct radeon_winsys* rwinsys = (struct radeon_winsys*)screen->winsys;
+
+    if (!is_r3xx(rwinsys->pci_id) ||
+        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
+        return softpipe_create(screen);
     } else {
-        return r300_create_context(screen,
-                                   (struct r300_winsys*)screen->winsys);
+        return r300_create_context(screen, rwinsys);
     }
 }
 
@@ -130,7 +206,7 @@ static boolean radeon_shared_handle_from_texture(struct drm_api *api,
     int retval, fd;
     struct drm_gem_flink flink;
     struct radeon_pipe_buffer* radeon_buffer;
-    struct pipe_buffer *buffer;
+    struct pipe_buffer *buffer = NULL;
 
     if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
         return FALSE;
@@ -163,7 +239,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
                                                 unsigned *stride,
                                                 unsigned *handle)
 {
-    struct pipe_buffer *buffer;
+    struct pipe_buffer *buffer = NULL;
     if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
         return FALSE;
     }

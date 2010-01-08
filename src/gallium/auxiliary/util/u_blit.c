@@ -42,10 +42,12 @@
 
 #include "util/u_blit.h"
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_surface.h"
+#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -125,7 +127,8 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    }
 
    /* fragment shader */
-   ctx->fs[TGSI_WRITEMASK_XYZW] = util_make_fragment_tex_shader(pipe);
+   ctx->fs[TGSI_WRITEMASK_XYZW] =
+      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -301,7 +304,8 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (dst->format == src->format &&
+   if (pipe->surface_copy &&
+       dst->format == src->format &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
@@ -352,10 +356,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       texTemp.target = PIPE_TEXTURE_2D;
       texTemp.format = src->format;
       texTemp.last_level = 0;
-      texTemp.width[0] = srcW;
-      texTemp.height[0] = srcH;
-      texTemp.depth[0] = 1;
-      pf_get_block(src->format, &texTemp.block);
+      texTemp.width0 = srcW;
+      texTemp.height0 = srcH;
+      texTemp.depth0 = 1;
 
       tex = screen->texture_create(screen, &texTemp);
       if (!tex)
@@ -365,10 +368,17 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                         PIPE_BUFFER_USAGE_GPU_WRITE);
 
       /* load temp texture */
-      pipe->surface_copy(pipe,
-                         texSurf, 0, 0,   /* dest */
-                         src, srcLeft, srcTop, /* src */
-                         srcW, srcH);     /* size */
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                            texSurf, 0, 0,   /* dest */
+                            src, srcLeft, srcTop, /* src */
+                            srcW, srcH);     /* size */
+      } else {
+         util_surface_copy(pipe, FALSE,
+                           texSurf, 0, 0,   /* dest */
+                           src, srcLeft, srcTop, /* src */
+                           srcW, srcH);     /* size */
+      }
 
       /* free the surface, update the texture if necessary.
        */
@@ -380,10 +390,10 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    }
    else {
       pipe_texture_reference(&tex, src->texture);
-      s0 = srcX0 / (float)tex->width[0];
-      s1 = srcX1 / (float)tex->width[0];
-      t0 = srcY0 / (float)tex->height[0];
-      t1 = srcY1 / (float)tex->height[0];
+      s0 = srcX0 / (float)tex->width0;
+      s1 = srcX1 / (float)tex->width0;
+      t0 = srcY0 / (float)tex->height0;
+      t1 = srcY1 / (float)tex->height0;
    }
 
 
@@ -412,7 +422,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
    if (ctx->fs[writemask] == NULL)
-      ctx->fs[writemask] = util_make_fragment_tex_shader_writemask(pipe, writemask);
+      ctx->fs[writemask] =
+         util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
+                                                 writemask);
 
    /* shaders */
    cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
@@ -509,13 +521,13 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
-   assert(tex->width[0] != 0);
-   assert(tex->height[0] != 0);
+   assert(tex->width0 != 0);
+   assert(tex->height0 != 0);
 
-   s0 = srcX0 / (float)tex->width[0];
-   s1 = srcX1 / (float)tex->width[0];
-   t0 = srcY0 / (float)tex->height[0];
-   t1 = srcY1 / (float)tex->height[0];
+   s0 = srcX0 / (float)tex->width0;
+   s1 = srcX1 / (float)tex->width0;
+   t0 = srcY0 / (float)tex->height0;
+   t1 = srcY1 / (float)tex->height0;
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,

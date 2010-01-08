@@ -51,8 +51,8 @@ int   prevLockLine = 0;
  */
 void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
+   __DRIscreen *sPriv = mmesa->driScreen;
    drm_mach64_sarea_t *sarea = mmesa->sarea;
    int i;
 

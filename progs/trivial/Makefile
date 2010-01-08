@@ -155,6 +155,7 @@ SOURCES = \
 	tristrip-clip.c \
 	tristrip-flat.c \
 	tristrip.c \
+	vbo-tri.c \
 	vbo-drawarrays.c \
 	vbo-noninterleaved.c \
 	vbo-drawelements.c \

@@ -58,7 +58,9 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_SAMPLERS;
+      return PIPE_MAX_VERTEX_SAMPLERS;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -143,6 +145,11 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
    case PIPE_FORMAT_Z32_FLOAT:
+   case PIPE_FORMAT_R8G8_SNORM:
+   case PIPE_FORMAT_B6UG5SR5S_NORM:
+   case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
+   case PIPE_FORMAT_A8B8G8R8_SNORM:
+   case PIPE_FORMAT_NONE:
       return FALSE;
    default:
       return TRUE;

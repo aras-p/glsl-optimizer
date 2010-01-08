@@ -46,8 +46,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 void
 sisGetLock( sisContextPtr smesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = smesa->driDrawable;
-   __DRIscreenPrivate *sPriv = smesa->driScreen;
+   __DRIdrawable *dPriv = smesa->driDrawable;
+   __DRIscreen *sPriv = smesa->driScreen;
    SISSAREAPrivPtr sarea = smesa->sarea;
 
    drmGetLock( smesa->driFd, smesa->hHWContext, flags );

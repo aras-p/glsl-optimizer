@@ -35,9 +35,11 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
+#include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 
 #include "lp_bld_format.h"
+#include "lp_test.h"
 
 
 struct pixel_test_case
@@ -88,34 +90,62 @@ struct pixel_test_case test_cases[] =
 };
 
 
-typedef void (*load_ptr_t)(const void *, float *);
+void
+write_tsv_header(FILE *fp)
+{
+   fprintf(fp,
+           "result\t"
+           "format\n");
+
+   fflush(fp);
+}
+
+
+static void
+write_tsv_row(FILE *fp,
+              const struct util_format_description *desc,
+              boolean success)
+{
+   fprintf(fp, "%s\t", success ? "pass" : "fail");
+
+   fprintf(fp, "%s\n", desc->name);
+
+   fflush(fp);
+}
+
+
+typedef void (*load_ptr_t)(const uint32_t packed, float *);
 
 
 static LLVMValueRef
 add_load_rgba_test(LLVMModuleRef module,
-                   enum pipe_format format)
+                   const struct util_format_description *desc)
 {
    LLVMTypeRef args[2];
    LLVMValueRef func;
-   LLVMValueRef ptr;
+   LLVMValueRef packed;
    LLVMValueRef rgba_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
 
-   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[0] = LLVMInt32Type();
    args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
 
    func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   ptr = LLVMGetParam(func, 0);
+   packed = LLVMGetParam(func, 0);
    rgba_ptr = LLVMGetParam(func, 1);
 
    block = LLVMAppendBasicBlock(func, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   rgba = lp_build_load_rgba_aos(builder, format, ptr);
+   if(desc->block.bits < 32)
+      packed = LLVMBuildTrunc(builder, packed, LLVMIntType(desc->block.bits), "");
+
+   rgba = lp_build_unpack_rgba_aos(builder, desc, packed);
+
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
    LLVMBuildRetVoid(builder);
@@ -125,27 +155,28 @@ add_load_rgba_test(LLVMModuleRef module,
 }
 
 
-typedef void (*store_ptr_t)(void *, const float *);
+typedef void (*store_ptr_t)(uint32_t *, const float *);
 
 
 static LLVMValueRef
 add_store_rgba_test(LLVMModuleRef module,
-                    enum pipe_format format)
+                    const struct util_format_description *desc)
 {
    LLVMTypeRef args[2];
    LLVMValueRef func;
-   LLVMValueRef ptr;
+   LLVMValueRef packed_ptr;
    LLVMValueRef rgba_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
+   LLVMValueRef packed;
 
-   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[0] = LLVMPointerType(LLVMInt32Type(), 0);
    args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
 
    func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   ptr = LLVMGetParam(func, 0);
+   packed_ptr = LLVMGetParam(func, 0);
    rgba_ptr = LLVMGetParam(func, 1);
 
    block = LLVMAppendBasicBlock(func, "entry");
@@ -154,7 +185,12 @@ add_store_rgba_test(LLVMModuleRef module,
 
    rgba = LLVMBuildLoad(builder, rgba_ptr, "");
 
-   lp_build_store_rgba_aos(builder, format, ptr, rgba);
+   packed = lp_build_pack_rgba_aos(builder, desc, rgba);
+
+   if(desc->block.bits < 32)
+      packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
+
+   LLVMBuildStore(builder, packed, packed_ptr);
 
    LLVMBuildRetVoid(builder);
 
@@ -163,8 +199,9 @@ add_store_rgba_test(LLVMModuleRef module,
 }
 
 
+ALIGN_STACK
 static boolean
-test_format(const struct pixel_test_case *test)
+test_format(unsigned verbose, FILE *fp, const struct pixel_test_case *test)
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef load = NULL;
@@ -186,8 +223,8 @@ test_format(const struct pixel_test_case *test)
 
    module = LLVMModuleCreateWithName("test");
 
-   load = add_load_rgba_test(module, test->format);
-   store = add_store_rgba_test(module, test->format);
+   load = add_load_rgba_test(module, desc);
+   store = add_store_rgba_test(module, desc);
 
    if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
       LLVMDumpModule(module);
@@ -223,7 +260,7 @@ test_format(const struct pixel_test_case *test)
    memset(unpacked, 0, sizeof unpacked);
    packed = 0;
 
-   load_ptr(&test->packed, unpacked);
+   load_ptr(test->packed, unpacked);
    store_ptr(&packed, unpacked);
 
    success = TRUE;
@@ -249,23 +286,29 @@ test_format(const struct pixel_test_case *test)
    if(pass)
       LLVMDisposePassManager(pass);
 
+   if(fp)
+      write_tsv_row(fp, desc, success);
+
    return success;
 }
 
 
-int main(int argc, char **argv)
+boolean
+test_all(unsigned verbose, FILE *fp)
 {
    unsigned i;
-   int ret;
-
-#ifdef LLVM_NATIVE_ARCH
-   LLVMLinkInJIT();
-   LLVMInitializeNativeTarget();
-#endif
+   bool success = TRUE;
 
    for (i = 0; i < sizeof(test_cases)/sizeof(test_cases[0]); ++i)
-      if(!test_format(&test_cases[i]))
-        ret = 1;
+      if(!test_format(verbose, fp, &test_cases[i]))
+        success = FALSE;
 
-   return ret;
+   return success;
+}
+
+
+boolean
+test_some(unsigned verbose, FILE *fp, unsigned long n)
+{
+   return test_all(verbose, fp);
 }

@@ -745,30 +745,30 @@ get_border_color(const struct gl_texture_object *tObj,
                  const struct gl_texture_image *img,
                  GLfloat rgba[4])
 {
-   switch (img->TexFormat->BaseFormat) {
+   switch (img->_BaseFormat) {
    case GL_RGB:
-      rgba[0] = tObj->BorderColor[0];
-      rgba[1] = tObj->BorderColor[1];
-      rgba[2] = tObj->BorderColor[2];
+      rgba[0] = tObj->BorderColor.f[0];
+      rgba[1] = tObj->BorderColor.f[1];
+      rgba[2] = tObj->BorderColor.f[2];
       rgba[3] = 1.0F;
       break;
    case GL_ALPHA:
       rgba[0] = rgba[1] = rgba[2] = 0.0;
-      rgba[3] = tObj->BorderColor[3];
+      rgba[3] = tObj->BorderColor.f[3];
       break;
    case GL_LUMINANCE:
-      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor[0];
+      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor.f[0];
       rgba[3] = 1.0;
       break;
    case GL_LUMINANCE_ALPHA:
-      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor[0];
-      rgba[3] = tObj->BorderColor[3];
+      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor.f[0];
+      rgba[3] = tObj->BorderColor.f[3];
       break;
    case GL_INTENSITY:
-      rgba[0] = rgba[1] = rgba[2] = rgba[3] = tObj->BorderColor[0];
+      rgba[0] = rgba[1] = rgba[2] = rgba[3] = tObj->BorderColor.f[0];
       break;
    default:
-      COPY_4V(rgba, tObj->BorderColor);
+      COPY_4V(rgba, tObj->BorderColor.f);
    }
 }
 
@@ -1152,7 +1152,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
    linear_repeat_texel_location(width,  texcoord[0], &i0, &i1, &wi);
@@ -1343,17 +1343,17 @@ opt_sample_rgb_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGB);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGB888);
    ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
-      GLchan *texel = ((GLchan *) img->Data) + 3*pos;
-      rgba[k][RCOMP] = CHAN_TO_FLOAT(texel[0]);
-      rgba[k][GCOMP] = CHAN_TO_FLOAT(texel[1]);
-      rgba[k][BCOMP] = CHAN_TO_FLOAT(texel[2]);
+      GLubyte *texel = ((GLubyte *) img->Data) + 3*pos;
+      rgba[k][RCOMP] = UBYTE_TO_FLOAT(texel[2]);
+      rgba[k][GCOMP] = UBYTE_TO_FLOAT(texel[1]);
+      rgba[k][BCOMP] = UBYTE_TO_FLOAT(texel[0]);
    }
 }
 
@@ -1384,18 +1384,18 @@ opt_sample_rgba_2d(GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGBA);
+   ASSERT(img->TexFormat == MESA_FORMAT_RGBA8888);
    ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
-      const GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
-      rgba[i][RCOMP] = CHAN_TO_FLOAT(texel[0]);
-      rgba[i][GCOMP] = CHAN_TO_FLOAT(texel[1]);
-      rgba[i][BCOMP] = CHAN_TO_FLOAT(texel[2]);
-      rgba[i][ACOMP] = CHAN_TO_FLOAT(texel[3]);
+      const GLuint texel = *((GLuint *) img->Data + pos);
+      rgba[i][RCOMP] = UBYTE_TO_FLOAT( (texel >> 24)        );
+      rgba[i][GCOMP] = UBYTE_TO_FLOAT( (texel >> 16) & 0xff );
+      rgba[i][BCOMP] = UBYTE_TO_FLOAT( (texel >>  8) & 0xff );
+      rgba[i][ACOMP] = UBYTE_TO_FLOAT( (texel      ) & 0xff );
    }
 }
 
@@ -1414,7 +1414,7 @@ sample_lambda_2d(GLcontext *ctx,
    const GLboolean repeatNoBorderPOT = (tObj->WrapS == GL_REPEAT)
       && (tObj->WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->TexFormat->BaseFormat != GL_COLOR_INDEX)
+      && (tImg->_BaseFormat != GL_COLOR_INDEX)
       && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
@@ -1427,12 +1427,12 @@ sample_lambda_2d(GLcontext *ctx,
       switch (tObj->MinFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->TexFormat->MesaFormat) {
-            case MESA_FORMAT_RGB:
+            switch (tImg->TexFormat) {
+            case MESA_FORMAT_RGB888:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
                break;
-            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + minStart,
                                   NULL, rgba + minStart);
                break;
@@ -1484,12 +1484,12 @@ sample_lambda_2d(GLcontext *ctx,
       switch (tObj->MagFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->TexFormat->MesaFormat) {
-            case MESA_FORMAT_RGB:
+            switch (tImg->TexFormat) {
+            case MESA_FORMAT_RGB888:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
                break;
-            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + magStart,
                                   NULL, rgba + magStart);
                break;
@@ -2152,7 +2152,7 @@ sample_nearest_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint row, col;
@@ -2186,7 +2186,7 @@ sample_linear_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint i0, j0, i1, j1;
@@ -2331,7 +2331,7 @@ sample_2d_array_linear(GLcontext *ctx,
    array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
 
    if (array < 0 || array >= depth) {
-      COPY_4V(rgba, tObj->BorderColor);
+      COPY_4V(rgba, tObj->BorderColor.f);
    }
    else {
       if (img->Border) {
@@ -2973,8 +2973,8 @@ sample_depth_texture( GLcontext *ctx,
 
    (void) lambda;
 
-   ASSERT(img->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
-          img->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT);
+   ASSERT(img->_BaseFormat == GL_DEPTH_COMPONENT ||
+          img->_BaseFormat == GL_DEPTH_STENCIL_EXT);
 
    ASSERT(tObj->Target == GL_TEXTURE_1D ||
           tObj->Target == GL_TEXTURE_2D ||
@@ -3002,7 +3002,7 @@ sample_depth_texture( GLcontext *ctx,
             img->FetchTexelf(img, col, row, slice, &depthSample);
          }
          else {
-            depthSample = tObj->BorderColor[0];
+            depthSample = tObj->BorderColor.f[0];
          }
 
          result = shadow_compare(function, texcoords[i][compare_coord],
@@ -3053,21 +3053,21 @@ sample_depth_texture( GLcontext *ctx,
          }
 
          if (slice < 0 || slice >= (GLint) depth) {
-            depth00 = tObj->BorderColor[0];
-            depth01 = tObj->BorderColor[0];
-            depth10 = tObj->BorderColor[0];
-            depth11 = tObj->BorderColor[0];
+            depth00 = tObj->BorderColor.f[0];
+            depth01 = tObj->BorderColor.f[0];
+            depth10 = tObj->BorderColor.f[0];
+            depth11 = tObj->BorderColor.f[0];
          }
          else {
             /* get four depth samples from the texture */
             if (useBorderTexel & (I0BIT | J0BIT)) {
-               depth00 = tObj->BorderColor[0];
+               depth00 = tObj->BorderColor.f[0];
             }
             else {
                img->FetchTexelf(img, i0, j0, slice, &depth00);
             }
             if (useBorderTexel & (I1BIT | J0BIT)) {
-               depth10 = tObj->BorderColor[0];
+               depth10 = tObj->BorderColor.f[0];
             }
             else {
                img->FetchTexelf(img, i1, j0, slice, &depth10);
@@ -3075,13 +3075,13 @@ sample_depth_texture( GLcontext *ctx,
 
             if (tObj->Target != GL_TEXTURE_1D_ARRAY_EXT) {
                if (useBorderTexel & (I0BIT | J1BIT)) {
-                  depth01 = tObj->BorderColor[0];
+                  depth01 = tObj->BorderColor.f[0];
                }
                else {
                   img->FetchTexelf(img, i0, j1, slice, &depth01);
                }
                if (useBorderTexel & (I1BIT | J1BIT)) {
-                  depth11 = tObj->BorderColor[0];
+                  depth11 = tObj->BorderColor.f[0];
                }
                else {
                   img->FetchTexelf(img, i1, j1, slice, &depth11);
@@ -3137,7 +3137,7 @@ null_sample_func( GLcontext *ctx,
       rgba[i][RCOMP] = 0;
       rgba[i][GCOMP] = 0;
       rgba[i][BCOMP] = 0;
-      rgba[i][ACOMP] = CHAN_MAX;
+      rgba[i][ACOMP] = 1.0;
    }
 }
 
@@ -3154,7 +3154,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
    }
    else {
       const GLboolean needLambda = (GLboolean) (t->MinFilter != t->MagFilter);
-      const GLenum format = t->Image[0][t->BaseLevel]->TexFormat->BaseFormat;
+      const GLenum format = t->Image[0][t->BaseLevel]->_BaseFormat;
 
       switch (t->Target) {
       case GL_TEXTURE_1D:
@@ -3189,14 +3189,14 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
                 t->WrapT == GL_REPEAT &&
                 img->_IsPowerOfTwo &&
                 img->Border == 0 &&
-                img->TexFormat->MesaFormat == MESA_FORMAT_RGB) {
+                img->TexFormat == MESA_FORMAT_RGB888) {
                return &opt_sample_rgb_2d;
             }
             else if (t->WrapS == GL_REPEAT &&
                      t->WrapT == GL_REPEAT &&
                      img->_IsPowerOfTwo &&
                      img->Border == 0 &&
-                     img->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
+                     img->TexFormat == MESA_FORMAT_RGBA8888) {
                return &opt_sample_rgba_2d;
             }
             else {

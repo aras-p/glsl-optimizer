@@ -23,6 +23,7 @@ struct nv40_texture_format {
 
 static struct nv40_texture_format
 nv40_texture_formats[] = {
+	_(X8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0, 0, 0, 0),
 	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
 	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
 	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
@@ -107,7 +108,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 
 	txs = tf->swizzle;
 
-	so = so_new(16, 2);
+	so = so_new(2, 9, 2);
 	so_method(so, nv40->screen->curie, NV40TCL_TEX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
@@ -116,11 +117,11 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
 	so_data  (so, ps->filt | tf->sign | 0x2000 /*voodoo*/);
-	so_data  (so, (pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) |
-		       pt->height[0]);
+	so_data  (so, (pt->width0 << NV40TCL_TEX_SIZE0_W_SHIFT) |
+		       pt->height0);
 	so_data  (so, ps->bcol);
 	so_method(so, nv40->screen->curie, NV40TCL_TEX_SIZE1(unit), 1);
-	so_data  (so, (pt->depth[0] << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
+	so_data  (so, (pt->depth0 << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
 
 	return so;
 }
@@ -138,7 +139,7 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_TEX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);

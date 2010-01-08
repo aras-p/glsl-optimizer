@@ -117,12 +117,13 @@
 #include "syncobj.h"
 #endif
 #include "rastpos.h"
+#include "remap.h"
 #include "scissor.h"
 #include "shared.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
-#include "texcompress.h"
+#include "texcompress_s3tc.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
@@ -132,7 +133,6 @@
 #include "viewport.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
-#include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"
@@ -173,6 +173,8 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
 void
 _mesa_notifySwapBuffers(__GLcontext *ctx)
 {
+   if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
+      _mesa_debug(ctx, "SwapBuffers\n");
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
@@ -405,6 +407,8 @@ one_time_init( GLcontext *ctx )
 
       _mesa_get_cpu_features();
 
+      _mesa_init_remap_table();
+
       _mesa_init_sqrt_table();
 
       for (i = 0; i < 256; i++) {
@@ -560,10 +564,6 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ARB_draw_buffers */
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
-   /* GL_OES_read_format */
-   ctx->Const.ColorReadFormat = GL_RGBA;
-   ctx->Const.ColorReadType = GL_UNSIGNED_BYTE;
-
 #if FEATURE_EXT_framebuffer_object
    ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
    ctx->Const.MaxRenderbufferSize = MAX_WIDTH;
@@ -571,6 +571,7 @@ _mesa_init_constants(GLcontext *ctx)
 
 #if FEATURE_ARB_vertex_shader
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
@@ -597,9 +598,11 @@ _mesa_init_constants(GLcontext *ctx)
    ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
    ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
 
-   /* check that we don't exceed various 32-bit bitfields */
-   ASSERT(VERT_RESULT_MAX <= 32);
-   ASSERT(FRAG_ATTRIB_MAX <= 32);
+   /* check that we don't exceed the size of various bitfields */
+   ASSERT(VERT_RESULT_MAX <=
+	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
+   ASSERT(FRAG_ATTRIB_MAX <=
+	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 }
 
 
@@ -699,12 +702,7 @@ init_attrib_groups(GLcontext *ctx)
    if (!_mesa_init_texture( ctx ))
       return GL_FALSE;
 
-#if FEATURE_texture_s3tc
    _mesa_init_texture_s3tc( ctx );
-#endif
-#if FEATURE_texture_fxt1
-   _mesa_init_texture_fxt1( ctx );
-#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
@@ -1011,8 +1009,14 @@ _mesa_free_context_data( GLcontext *ctx )
       _mesa_free_shared_state( ctx, ctx->Shared );
    }
 
+   /* needs to be after freeing shared state */
+   _mesa_free_display_list_data(ctx);
+
    if (ctx->Extensions.String)
       _mesa_free((void *) ctx->Extensions.String);
+
+   if (ctx->VersionString)
+      _mesa_free(ctx->VersionString);
 
    /* unbind the context if it's currently bound */
    if (ctx == _mesa_get_current_context()) {
@@ -1373,6 +1377,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
 
       if (newCtx->FirstTimeCurrent) {
+         _mesa_compute_version(newCtx);
+
          check_context_limits(newCtx);
 
          /* We can use this to help debug user's problems.  Tell them to set
@@ -1500,6 +1506,33 @@ _mesa_record_error(GLcontext *ctx, GLenum error)
 
 
 /**
+ * Flush commands and wait for completion.
+ */
+void
+_mesa_finish(GLcontext *ctx)
+{
+   FLUSH_CURRENT( ctx, 0 );
+   if (ctx->Driver.Finish) {
+      ctx->Driver.Finish(ctx);
+   }
+}
+
+
+/**
+ * Flush commands.
+ */
+void
+_mesa_flush(GLcontext *ctx)
+{
+   FLUSH_CURRENT( ctx, 0 );
+   if (ctx->Driver.Flush) {
+      ctx->Driver.Flush(ctx);
+   }
+}
+
+
+
+/**
  * Execute glFinish().
  *
  * Calls the #ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH macro and the
@@ -1510,10 +1543,7 @@ _mesa_Finish(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   FLUSH_CURRENT( ctx, 0 );
-   if (ctx->Driver.Finish) {
-      ctx->Driver.Finish(ctx);
-   }
+   _mesa_finish(ctx);
 }
 
 
@@ -1528,10 +1558,7 @@ _mesa_Flush(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   FLUSH_CURRENT( ctx, 0 );
-   if (ctx->Driver.Flush) {
-      ctx->Driver.Flush(ctx);
-   }
+   _mesa_flush(ctx);
 }
 
 

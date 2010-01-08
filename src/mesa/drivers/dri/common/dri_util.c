@@ -97,7 +97,7 @@ driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
  * 
  * \internal
  * This function calls __DriverAPIRec::UnbindContext, and then decrements
- * __DRIdrawablePrivateRec::refcount which must be non-zero for a successful
+ * __DRIdrawableRec::refcount which must be non-zero for a successful
  * return.
  * 
  * While casting the opaque private pointers associated with the parameters
@@ -167,11 +167,12 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;
+    __DRIscreen *psp = NULL;
 
     /* Bind the drawable to the context */
 
     if (pcp) {
+	psp = pcp->driScreenPriv;
 	pcp->driDrawablePriv = pdp;
 	pcp->driReadablePriv = prp;
 	if (pdp) {
@@ -219,7 +220,7 @@ static int driBindContext(__DRIcontext *pcp,
  *
  * \param pdp pointer to the private drawable information to update.
  * 
- * This function basically updates the __DRIdrawablePrivate struct's
+ * This function basically updates the __DRIdrawable struct's
  * cliprect information by calling \c __DRIinterfaceMethods::getDrawableInfo.
  * This is usually called by the DRI_VALIDATE_DRAWABLE_INFO macro which
  * compares the __DRIdrwablePrivate pStamp and lastStamp values.  If
@@ -227,10 +228,10 @@ static int driBindContext(__DRIcontext *pcp,
  * info.
  */
 void
-__driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
+__driUtilUpdateDrawableInfo(__DRIdrawable *pdp)
 {
-    __DRIscreenPrivate *psp = pdp->driScreenPriv;
-    __DRIcontextPrivate *pcp = pdp->driContextPriv;
+    __DRIscreen *psp = pdp->driScreenPriv;
+    __DRIcontext *pcp = pdp->driContextPriv;
     
     if (!pcp 
 	|| ((pdp != pcp->driDrawablePriv) && (pdp != pcp->driReadablePriv))) {
@@ -308,7 +309,7 @@ static void driReportDamage(__DRIdrawable *pdp,
  * \param drawablePrivate opaque pointer to the per-drawable private info.
  * 
  * \internal
- * This function calls __DRIdrawablePrivate::swapBuffers.
+ * This function calls __DRIdrawable::swapBuffers.
  * 
  * Is called directly from glXSwapBuffers().
  */
@@ -496,13 +497,13 @@ static void dri_get_drawable(__DRIdrawable *pdp)
 	
 static void dri_put_drawable(__DRIdrawable *pdp)
 {
-    __DRIscreenPrivate *psp;
-
-    pdp->refcount--;
-    if (pdp->refcount)
-	return;
+    __DRIscreen *psp;
 
     if (pdp) {
+	pdp->refcount--;
+	if (pdp->refcount)
+	    return;
+
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if (pdp->pClipRects) {
@@ -559,7 +560,7 @@ driDestroyContext(__DRIcontext *pcp)
  *          success, or \c NULL on failure.
  * 
  * \internal
- * This function allocates and fills a __DRIcontextPrivateRec structure.  It
+ * This function allocates and fills a __DRIcontextRec structure.  It
  * performs some device independent initialization and passes all the
  * relevent information to __DriverAPIRec::CreateContext to create the
  * context.
@@ -840,20 +841,12 @@ const __DRIlegacyExtension driLegacyExtension = {
     driCreateNewContext,
 };
 
-/** Legacy DRI interface */
+/** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
     { __DRI_DRI2, __DRI_DRI2_VERSION },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
-};
-
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driLegacyExtension.base,
-    &driDRI2Extension.base,
-    NULL
 };
 
 static int
@@ -870,7 +863,7 @@ driQueryFrameTracking(__DRIdrawable *dpriv,
    __DRIswapInfo   sInfo;
    int             status;
    int64_t         ust;
-   __DRIscreenPrivate *psp = dpriv->driScreenPriv;
+   __DRIscreen *psp = dpriv->driScreenPriv;
 
    status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
    if ( status == 0 ) {
@@ -920,14 +913,14 @@ const __DRIframeTrackingExtension driFrameTrackingExtension = {
  *       be possible to cache the sync rate?
  */
 float
-driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
+driCalculateSwapUsage( __DRIdrawable *dPriv, int64_t last_swap_ust,
 		       int64_t current_ust )
 {
    int32_t   n;
    int32_t   d;
    int       interval;
    float     usage = 1.0;
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
+   __DRIscreen *psp = dPriv->driScreenPriv;
 
    if ( (*psp->systemTime->getMSCRate)(dPriv, &n, &d, dPriv->loaderPrivate) ) {
       interval = (dPriv->swap_interval != 0) ? dPriv->swap_interval : 1;

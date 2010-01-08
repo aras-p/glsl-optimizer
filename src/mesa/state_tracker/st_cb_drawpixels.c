@@ -35,6 +35,7 @@
 #include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "main/texstore.h"
 #include "main/state.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
@@ -59,9 +60,12 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "tgsi/tgsi_ureg.h"
 #include "util/u_tile.h"
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -234,78 +238,41 @@ make_fragment_shader_z(struct st_context *st)
  * Create a simple vertex shader that just passes through the
  * vertex position and texcoord (and optionally, color).
  */
-static struct st_vertex_program *
-st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
+static void *
+st_make_passthrough_vertex_shader(struct st_context *st, 
+                                  GLboolean passColor)
 {
-   GLcontext *ctx = st->ctx;
-   struct st_vertex_program *stvp;
-   struct gl_program *p;
-   GLuint ic = 0;
+   if (!st->drawpix.vert_shaders[passColor]) {
+      struct ureg_program *ureg = 
+         ureg_create( TGSI_PROCESSOR_VERTEX );
 
-   if (st->drawpix.vert_shaders[passColor])
-      return st->drawpix.vert_shaders[passColor];
+      if (ureg == NULL)
+         return NULL;
 
-   /*
-    * Create shader now
-    */
-   p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
-   if (!p)
-      return NULL;
+      /* MOV result.pos, vertex.pos; */
+      ureg_MOV(ureg, 
+               ureg_DECL_output( ureg, TGSI_SEMANTIC_POSITION, 0 ),
+               ureg_DECL_vs_input( ureg, 0 ));
+      
+      /* MOV result.texcoord0, vertex.texcoord0; */
+      ureg_MOV(ureg, 
+               ureg_DECL_output( ureg, TGSI_SEMANTIC_GENERIC, 0 ),
+               ureg_DECL_vs_input( ureg, 1 ));
+      
+      if (passColor) {
+         /* MOV result.color0, vertex.color0; */
+         ureg_MOV(ureg, 
+                  ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, 0 ),
+                  ureg_DECL_vs_input( ureg, 2 ));
+      }
 
-   if (passColor)
-      p->NumInstructions = 4;
-   else
-      p->NumInstructions = 3;
-
-   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
-   if (!p->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, p);
-      return NULL;
-   }
-   _mesa_init_instructions(p->Instructions, p->NumInstructions);
-   /* MOV result.pos, vertex.pos; */
-   p->Instructions[0].Opcode = OPCODE_MOV;
-   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[0].DstReg.Index = VERT_RESULT_HPOS;
-   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[0].SrcReg[0].Index = VERT_ATTRIB_POS;
-   /* MOV result.texcoord0, vertex.texcoord0; */
-   p->Instructions[1].Opcode = OPCODE_MOV;
-   p->Instructions[1].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[1].DstReg.Index = VERT_RESULT_TEX0;
-   p->Instructions[1].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[1].SrcReg[0].Index = VERT_ATTRIB_TEX0;
-   ic = 2;
-   if (passColor) {
-      /* MOV result.color0, vertex.color0; */
-      p->Instructions[ic].Opcode = OPCODE_MOV;
-      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-      p->Instructions[ic].DstReg.Index = VERT_RESULT_COL0;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = VERT_ATTRIB_COLOR0;
-      ic++;
+      ureg_END( ureg );
+      
+      st->drawpix.vert_shaders[passColor] = 
+         ureg_create_shader_and_destroy( ureg, st->pipe );
    }
 
-   /* END; */
-   p->Instructions[ic].Opcode = OPCODE_END;
-   ic++;
-
-   assert(ic == p->NumInstructions);
-
-   p->InputsRead = VERT_BIT_POS | VERT_BIT_TEX0;
-   p->OutputsWritten = ((1 << VERT_RESULT_TEX0) |
-                        (1 << VERT_RESULT_HPOS));
-   if (passColor) {
-      p->InputsRead |= VERT_BIT_COLOR0;
-      p->OutputsWritten |= (1 << VERT_RESULT_COL0);
-   }
-
-   stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL, NULL, NULL);
-
-   st->drawpix.vert_shaders[passColor] = stvp;
-
-   return stvp;
+   return st->drawpix.vert_shaders[passColor];
 }
 
 
@@ -338,7 +305,7 @@ make_texture(struct st_context *st,
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   const struct gl_texture_format *mformat;
+   gl_format mformat;
    struct pipe_texture *pt;
    enum pipe_format pipeFormat;
    GLuint cpp;
@@ -350,7 +317,7 @@ make_texture(struct st_context *st,
    mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
    assert(mformat);
 
-   pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
+   pipeFormat = st_mesa_format_to_pipe_format(mformat);
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
@@ -403,21 +370,22 @@ make_texture(struct st_context *st,
       /* map texture transfer */
       dest = screen->transfer_map(screen, transfer);
 
+
       /* Put image into texture transfer.
        * Note that the image is actually going to be upside down in
        * the texture.  We deal with that with texcoords.
        */
-      success = mformat->StoreImage(ctx, 2,           /* dims */
-                                    baseFormat,       /* baseInternalFormat */
-                                    mformat,          /* gl_texture_format */
-                                    dest,             /* dest */
-                                    0, 0, 0,          /* dstX/Y/Zoffset */
-                                    transfer->stride, /* dstRowStride, bytes */
-                                    &dstImageOffsets, /* dstImageOffsets */
-                                    width, height, 1, /* size */
-                                    format, type,     /* src format/type */
-                                    pixels,           /* data source */
-                                    unpack);
+      success = _mesa_texstore(ctx, 2,           /* dims */
+                               baseFormat,       /* baseInternalFormat */
+                               mformat,          /* gl_format */
+                               dest,             /* dest */
+                               0, 0, 0,          /* dstX/Y/Zoffset */
+                               transfer->stride, /* dstRowStride, bytes */
+                               &dstImageOffsets, /* dstImageOffsets */
+                               width, height, 1, /* size */
+                               format, type,     /* src format/type */
+                               pixels,           /* data source */
+                               unpack);
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
@@ -536,8 +504,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
                    GLfloat zoomX, GLfloat zoomY,
                    struct pipe_texture *pt,
-                   struct st_vertex_program *stvp,
-                   struct st_fragment_program *stfp,
+                   void *driver_vp,
+                   void *driver_fp,
                    const GLfloat *color,
                    GLboolean invertTex)
 {
@@ -572,10 +540,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   cso_set_fragment_shader_handle(cso, stfp->driver_shader);
+   cso_set_fragment_shader_handle(cso, driver_fp);
 
    /* vertex shader state: position + texcoord pass-through */
-   cso_set_vertex_shader_handle(cso, stvp->driver_shader);
+   cso_set_vertex_shader_handle(cso, driver_vp);
 
 
    /* texture sampling state: */
@@ -618,10 +586,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_texture *textures[2];
       textures[0] = pt;
       textures[1] = st->pixel_xfer.pixelmap_texture;
-      pipe->set_sampler_textures(pipe, 2, textures);
+      pipe->set_fragment_sampler_textures(pipe, 2, textures);
    }
    else {
-      pipe->set_sampler_textures(pipe, 1, &pt);
+      pipe->set_fragment_sampler_textures(pipe, 1, &pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -634,8 +602,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y1 = y + height * ctx->Pixel.ZoomY;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-	     (GLfloat) width / pt->width[0],
-	     (GLfloat) height / pt->height[0]);
+	     (GLfloat) width / pt->width0,
+	     (GLfloat) height / pt->height0);
 
    /* restore state */
    cso_restore_rasterizer(cso);
@@ -662,6 +630,15 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    GLint skipPixels;
    ubyte *stmap;
+   struct gl_pixelstore_attrib clippedUnpack = *unpack;
+
+   if (!zoom) {
+      if (!_mesa_clip_drawpixels(ctx, &x, &y, &width, &height,
+                                 &clippedUnpack)) {
+         /* totally clipped */
+         return;
+      }
+   }
 
    strb = st_renderbuffer(ctx->DrawBuffer->
                           Attachment[BUFFER_STENCIL].Renderbuffer);
@@ -671,7 +648,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    if(format != GL_DEPTH_STENCIL && 
-      pf_get_component_bits( strb->format, PIPE_FORMAT_COMP_Z ) != 0)
+      util_format_get_component_bits(strb->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -682,7 +659,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    stmap = screen->transfer_map(screen, pt);
 
-   pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
+   pixels = _mesa_map_pbo_source(ctx, &clippedUnpack, pixels);
    assert(pixels);
 
    /* if width > MAX_WIDTH, have to process image in chunks */
@@ -695,17 +672,18 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
          GLubyte sValues[MAX_WIDTH];
          GLuint zValues[MAX_WIDTH];
          GLenum destType = GL_UNSIGNED_BYTE;
-         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+         const GLvoid *source = _mesa_image_address2d(&clippedUnpack, pixels,
                                                       width, height,
                                                       format, type,
                                                       row, skipPixels);
          _mesa_unpack_stencil_span(ctx, spanWidth, destType, sValues,
-                                   type, source, unpack,
+                                   type, source, &clippedUnpack,
                                    ctx->_ImageTransferState);
 
          if (format == GL_DEPTH_STENCIL) {
             _mesa_unpack_depth_span(ctx, spanWidth, GL_UNSIGNED_INT, zValues,
-                                    (1 << 24) - 1, type, source, unpack);
+                                    (1 << 24) - 1, type, source,
+                                    &clippedUnpack);
          }
 
          if (zoom) {
@@ -724,7 +702,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             }
 
             /* now pack the stencil (and Z) values in the dest format */
-            switch (pt->format) {
+            switch (pt->texture->format) {
             case PIPE_FORMAT_S8_UNORM:
                {
                   ubyte *dest = stmap + spanY * pt->stride + spanX;
@@ -776,7 +754,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       skipPixels += spanWidth;
    }
 
-   _mesa_unmap_pbo_source(ctx, unpack);
+   _mesa_unmap_pbo_source(ctx, &clippedUnpack);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, pt);
@@ -793,7 +771,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
    struct st_fragment_program *stfp;
-   struct st_vertex_program *stvp;
+   void *driver_vp;
    struct st_context *st = st_context(ctx);
    struct pipe_surface *ps;
    const GLfloat *color;
@@ -813,13 +791,13 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zsbuf;
       stfp = make_fragment_shader_z(st);
-      stvp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
    }
 
@@ -830,7 +808,10 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       if (pt) {
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            pt, stvp, stfp, color, GL_FALSE);
+                            pt, 
+                            driver_vp, 
+                            stfp->driver_shader,
+                            color, GL_FALSE);
          pipe_texture_reference(&pt, NULL);
       }
    }
@@ -862,7 +843,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
-   if(pf_get_component_bits( rbDraw->format, PIPE_FORMAT_COMP_Z ) != 0)
+   if(util_format_get_component_bits(rbDraw->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -876,8 +857,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					   usage, dstx, dsty,
 					   width, height);
 
-   assert(ptDraw->block.width == 1);
-   assert(ptDraw->block.height == 1);
+   assert(util_format_get_blockwidth(ptDraw->texture->format) == 1);
+   assert(util_format_get_blockheight(ptDraw->texture->format) == 1);
 
    /* map the stencil buffer */
    drawMap = screen->transfer_map(screen, ptDraw);
@@ -898,7 +879,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       dst = drawMap + y * ptDraw->stride;
       src = buffer + i * width;
 
-      switch (ptDraw->format) {
+      switch (ptDraw->texture->format) {
       case PIPE_FORMAT_S8Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;
@@ -947,7 +928,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
-   struct st_vertex_program *stvp;
+   void *driver_vp;
    struct st_fragment_program *stfp;
    struct pipe_texture *pt;
    GLfloat *color;
@@ -996,14 +977,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
       stfp = make_fragment_shader_z(st);
-      stvp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
    srcFormat = rbRead->texture->format;
@@ -1075,11 +1056,19 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                        PIPE_BUFFER_USAGE_GPU_READ);
       struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
-      pipe->surface_copy(pipe,
-			 psTex, /* dest */
-			 0, 0, /* destx/y */
-			 psRead,
-			 srcx, srcy, width, height);
+      if (pipe->surface_copy) {
+         pipe->surface_copy(pipe,
+                            psTex, /* dest */
+                            0, 0, /* destx/y */
+                            psRead,
+                            srcx, srcy, width, height);
+      } else {
+         util_surface_copy(pipe, FALSE,
+                           psTex,
+                           0, 0,
+                           psRead,
+                           srcx, srcy, width, height);
+      }
       pipe_surface_reference(&psRead, NULL); 
       pipe_surface_reference(&psTex, NULL);
    }
@@ -1095,7 +1084,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (ST_DEBUG & DEBUG_FALLBACK)
          debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-      if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
+      if (type == GL_DEPTH && util_format_is_depth_and_stencil(pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
@@ -1127,7 +1116,10 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                      pt, stvp, stfp, color, GL_TRUE);
+                      pt, 
+                      driver_vp, 
+                      stfp->driver_shader,
+                      color, GL_TRUE);
 
    pipe_texture_reference(&pt, NULL);
 }

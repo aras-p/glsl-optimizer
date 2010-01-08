@@ -25,6 +25,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/fbobject.h"
@@ -505,22 +506,32 @@ _swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
    struct gl_renderbuffer *rb = fb->_DepthBuffer;
    const GLuint count = span->end;
    GLuint *zValues = span->array->z;
-   GLuint near, far;
+   GLuint min, max;
+   GLfloat min_f, max_f;
    int i;
 
+   if (ctx->Viewport.Near < ctx->Viewport.Far) {
+      min_f = ctx->Viewport.Near;
+      max_f = ctx->Viewport.Far;
+   } else {
+      min_f = ctx->Viewport.Far;
+      max_f = ctx->Viewport.Near;
+   }
+
    if (rb->DataType == GL_UNSIGNED_SHORT) {
-      near = FLOAT_TO_UINT(ctx->Viewport.Near);
-      far = FLOAT_TO_UINT(ctx->Viewport.Far);
+      CLAMPED_FLOAT_TO_USHORT(min, min_f);
+      CLAMPED_FLOAT_TO_USHORT(max, max_f);
    } else {
       assert(rb->DataType == GL_UNSIGNED_INT);
-      CLAMPED_FLOAT_TO_USHORT(near, ctx->Viewport.Near);
-      CLAMPED_FLOAT_TO_USHORT(far, ctx->Viewport.Far);
+      min = FLOAT_TO_UINT(min_f);
+      max = FLOAT_TO_UINT(max_f);
    }
+
    for (i = 0; i < count; i++) {
-      if (zValues[i] < near)
-	 zValues[i] = near;
-      if (zValues[i] > far)
-	 zValues[i] = far;
+      if (zValues[i] < min)
+	 zValues[i] = min;
+      if (zValues[i] > max)
+	 zValues[i] = max;
    }
 }
 
@@ -1299,11 +1310,15 @@ void
 _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
                               GLint n, GLint x, GLint y, GLuint depth[] )
 {
+   GLuint depthBits;
+
    if (!rb) {
       /* really only doing this to prevent FP exceptions later */
       _mesa_bzero(depth, n * sizeof(GLuint));
       return;
    }
+
+   depthBits = _mesa_get_format_bits(rb->Format, GL_DEPTH_BITS);
 
    ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
 
@@ -1336,8 +1351,8 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
 
    if (rb->DataType == GL_UNSIGNED_INT) {
       rb->GetRow(ctx, rb, n, x, y, depth);
-      if (rb->DepthBits < 32) {
-         GLuint shift = 32 - rb->DepthBits;
+      if (depthBits < 32) {
+         GLuint shift = 32 - depthBits;
          GLint i;
          for (i = 0; i < n; i++) {
             GLuint z = depth[i];
@@ -1349,14 +1364,14 @@ _swrast_read_depth_span_uint( GLcontext *ctx, struct gl_renderbuffer *rb,
       GLushort temp[MAX_WIDTH];
       GLint i;
       rb->GetRow(ctx, rb, n, x, y, temp);
-      if (rb->DepthBits == 16) {
+      if (depthBits == 16) {
          for (i = 0; i < n; i++) {
             GLuint z = temp[i];
             depth[i] = (z << 16) | z;
          }
       }
       else {
-         GLuint shift = 16 - rb->DepthBits;
+         GLuint shift = 16 - depthBits;
          for (i = 0; i < n; i++) {
             GLuint z = temp[i];
             depth[i] = (z << (shift + 16)) | (z << shift); /* XXX lsb bits? */

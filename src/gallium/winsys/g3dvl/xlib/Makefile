@@ -25,13 +25,7 @@ SOURCES = xsp_winsys.c
 OBJECTS = $(SOURCES:.c=.o) $(TOP)/src/gallium/state_trackers/xorg/xvmc/*.o
 
 LIBS = $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-       $(TOP)/src/gallium/auxiliary/vl/libvl.a \
-       $(TOP)/src/gallium/auxiliary/tgsi/libtgsi.a \
-       $(TOP)/src/gallium/auxiliary/draw/libdraw.a \
-       $(TOP)/src/gallium/auxiliary/translate/libtranslate.a \
-       $(TOP)/src/gallium/auxiliary/cso_cache/libcso_cache.a \
-       $(TOP)/src/gallium/auxiliary/rtasm/librtasm.a \
-       $(TOP)/src/gallium/auxiliary/util/libutil.a
+       $(TOP)/src/gallium/auxiliary/libgallium.a
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@

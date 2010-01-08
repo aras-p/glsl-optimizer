@@ -25,9 +25,11 @@ SOURCES = \
 	arbvptorus.c \
 	arbvpwarpmesh.c \
 	arraytexture.c \
+	auxbuffer.c \
 	blendminmax.c \
 	blendsquare.c \
 	blendxor.c \
+	blitfb.c \
 	bufferobj.c \
 	bumpmap.c \
 	bug_3050.c \
@@ -35,11 +37,14 @@ SOURCES = \
 	bug_3195.c \
 	bug_texstore_i8.c \
 	calibrate_rast.c \
+	condrender.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
 	drawbuffers.c \
+	drawbuffers2.c \
 	exactrast.c \
+	ext422square.c \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \
@@ -65,6 +70,8 @@ SOURCES = \
 	mipmap_limits.c \
 	mipmap_view.c \
 	multipal.c \
+	multitexarray.c \
+	multiwindow.c \
 	no_s3tc.c \
 	packedpixels.c \
 	pbo.c \
@@ -87,10 +94,13 @@ SOURCES = \
 	subtex \
 	subtexrate.c \
 	tex1d.c \
+	texcmp.c \
 	texcompress2.c \
 	texcompsub.c \
 	texdown \
 	texfilt.c \
+	texgenmix.c \
+	texleak.c \
 	texline.c \
 	texobj.c \
 	texobjshare.c \
@@ -100,6 +110,7 @@ SOURCES = \
 	vao-01.c \
 	vao-02.c \
 	vparray.c \
+	vpeval.c \
 	vptest1.c \
 	vptest2.c \
 	vptest3.c \

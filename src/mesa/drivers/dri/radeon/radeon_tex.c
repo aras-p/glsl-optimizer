@@ -38,7 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -342,24 +341,14 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      radeonSetTexBorderColor( t, texObj->BorderColor );
+      radeonSetTexBorderColor( t, texObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:
    case GL_TEXTURE_MAX_LOD:
-
-      /* This isn't the most efficient solution but there doesn't appear to
-       * be a nice alternative.  Since there's no LOD clamping,
-       * we just have to rely on loading the right subset of mipmap levels
-       * to simulate a clamped LOD.
-       */
-      if (t->mt) {
-         radeon_miptree_unreference(t->mt);
-	 t->mt = 0;
-	 t->validated = GL_FALSE;
-      }
+      t->validated = GL_FALSE;
       break;
 
    default:
@@ -389,10 +378,8 @@ static void radeonDeleteTexture( GLcontext *ctx,
      }
    }
 
-   if (t->mt) {
-      radeon_miptree_unreference(t->mt);
-      t->mt = 0;
-   }
+   radeon_miptree_unreference(&t->mt);
+
    /* Free mipmap images and the texture object itself */
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -441,7 +428,7 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    radeonSetTexWrap( t, t->base.WrapS, t->base.WrapT );
    radeonSetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
    radeonSetTexFilter( t, t->base.MinFilter, t->base.MagFilter );
-   radeonSetTexBorderColor( t, t->base.BorderColor );
+   radeonSetTexBorderColor( t, t->base.BorderColor.f );
    return &t->base;
 }
 

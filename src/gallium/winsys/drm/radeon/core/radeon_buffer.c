@@ -33,6 +33,18 @@
 #include "radeon_buffer.h"
 
 #include "radeon_bo_gem.h"
+#include "softpipe/sp_texture.h"
+#include "r300_context.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
+#include <X11/Xutil.h>
+
+struct radeon_vl_context
+{
+    Display *display;
+    int screen;
+    Drawable drawable;
+};
 
 static const char *radeon_get_name(struct pipe_winsys *ws)
 {
@@ -104,17 +116,13 @@ static struct pipe_buffer *radeon_surface_buffer_create(struct pipe_winsys *ws,
                                                         unsigned tex_usage,
                                                         unsigned *stride)
 {
-    struct pipe_format_block block;
-    unsigned nblocksx, nblocksy, size;
-
-    pf_get_block(format, &block);
-
-    nblocksx = pf_get_nblocksx(&block, width);
-    nblocksy = pf_get_nblocksy(&block, height);
-
     /* Radeons enjoy things in multiples of 32. */
     /* XXX this can be 32 when POT */
-    *stride = (nblocksx * block.size + 63) & ~63;
+    const unsigned alignment = 64;
+    unsigned nblocksy, size;
+
+    nblocksy = util_format_get_nblocksy(format, height);
+    *stride = align(util_format_get_stride(format, width), alignment);
     size = *stride * nblocksy;
 
     return radeon_buffer_create(ws, 64, usage, size);
@@ -133,9 +141,14 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
                                struct pipe_buffer *buffer,
                                unsigned flags)
 {
+    struct radeon_winsys_priv *priv = ((struct radeon_winsys *)ws)->priv;
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
+
+    if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
+        priv->flush_cb(priv->flush_data);
+    }
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -183,11 +196,53 @@ static int radeon_fence_finish(struct pipe_winsys *ws,
     return 0;
 }
 
+static void radeon_display_surface(struct pipe_winsys *pws,
+                                   struct pipe_surface *psurf,
+                                   struct radeon_vl_context *rvl_ctx)
+{
+    struct r300_texture *r300tex = (struct r300_texture *)(psurf->texture);
+    XImage *ximage;
+    void *data;
+
+    ximage = XCreateImage(rvl_ctx->display,
+                          XDefaultVisual(rvl_ctx->display, rvl_ctx->screen),
+                          XDefaultDepth(rvl_ctx->display, rvl_ctx->screen),
+                          ZPixmap, 0,   /* format, offset */
+                          NULL,         /* data */
+                          0, 0,         /* size */
+                          32,           /* bitmap_pad */
+                          0);           /* bytes_per_line */
+
+    assert(ximage->format);
+    assert(ximage->bitmap_unit);
+
+    data = pws->buffer_map(pws, r300tex->buffer, 0);
+
+    /* update XImage's fields */
+    ximage->data = data;
+    ximage->width = psurf->width;
+    ximage->height = psurf->height;
+    ximage->bytes_per_line = psurf->width * (ximage->bits_per_pixel >> 3);
+
+    XPutImage(rvl_ctx->display, rvl_ctx->drawable,
+              XDefaultGC(rvl_ctx->display, rvl_ctx->screen),
+              ximage, 0, 0, 0, 0, psurf->width, psurf->height);
+
+    XSync(rvl_ctx->display, 0);
+
+    ximage->data = NULL;
+    XDestroyImage(ximage);
+
+    pws->buffer_unmap(pws, r300tex->buffer);
+}
+
 static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
                                      struct pipe_surface *pipe_surface,
                                      void *context_private)
 {
-    /* XXX TODO: call dri2CopyRegion */
+    struct radeon_vl_context *rvl_ctx;
+    rvl_ctx = (struct radeon_vl_context *) context_private;
+    radeon_display_surface(pipe_winsys, pipe_surface, rvl_ctx);
 }
 
 struct radeon_winsys* radeon_pipe_winsys(int fd)
@@ -266,13 +321,10 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
     memset(&tmpl, 0, sizeof(tmpl));
     tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
     tmpl.target = PIPE_TEXTURE_2D;
-    tmpl.width[0] = w;
-    tmpl.height[0] = h;
-    tmpl.depth[0] = 1;
+    tmpl.width0 = w;
+    tmpl.height0 = h;
+    tmpl.depth0 = 1;
     tmpl.format = format;
-    pf_get_block(tmpl.format, &tmpl.block);
-    tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
-    tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {

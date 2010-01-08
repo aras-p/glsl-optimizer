@@ -87,6 +87,8 @@ struct setup_context {
    float oneoverarea;
    int facing;
 
+   float pixel_offset;
+
    struct quad_header quad[MAX_QUADS];
    struct quad_header *quad_ptrs[MAX_QUADS];
    unsigned count;
@@ -106,6 +108,7 @@ struct setup_context {
 #endif
 
    unsigned winding;		/* which winding to cull */
+   unsigned nr_vertex_attrs;
 };
 
 
@@ -268,8 +271,8 @@ static void print_vertex(const struct setup_context *setup,
                          const float (*v)[4])
 {
    int i;
-   debug_printf("   Vertex: (%p)\n", v);
-   for (i = 0; i < setup->quad[0].nr_attrs; i++) {
+   debug_printf("   Vertex: (%p)\n", (void *) v);
+   for (i = 0; i < setup->nr_vertex_attrs; i++) {
       debug_printf("     %d: %f %f %f %f\n",  i,
               v[i][0], v[i][1], v[i][2], v[i][3]);
       if (util_is_inf_or_nan(v[i][0])) {
@@ -378,6 +381,16 @@ static boolean setup_sort_vertices( struct setup_context *setup,
       ((det > 0.0) ^ 
        (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW));
 
+   /* Prepare pixel offset for rasterisation:
+    *  - pixel center (0.5, 0.5) for GL, or
+    *  - assume (0.0, 0.0) for other APIs.
+    */
+   if (setup->softpipe->rasterizer->gl_rasterization_rules) {
+      setup->pixel_offset = 0.5f;
+   } else {
+      setup->pixel_offset = 0.0f;
+   }
+
    return TRUE;
 }
 
@@ -426,7 +439,7 @@ static void tri_linear_coeff( struct setup_context *setup,
 
    /* calculate a0 as the value which would be sampled for the
     * fragment at (0,0), taking into account that we want to sample at
-    * pixel centers, in other words (0.5, 0.5).
+    * pixel centers, in other words (pixel_offset, pixel_offset).
     *
     * this is neat but unfortunately not a good way to do things for
     * triangles with very large values of dadx or dady as it will
@@ -437,8 +450,8 @@ static void tri_linear_coeff( struct setup_context *setup,
     * instead - i'll switch to this later.
     */
    coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+                  (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                   dady * (setup->vmin[0][1] - setup->pixel_offset)));
 
    /*
    debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
@@ -486,8 +499,8 @@ static void tri_persp_coeff( struct setup_context *setup,
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
    coef->a0[i] = (mina -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+                  (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                   dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
 
 
@@ -574,12 +587,12 @@ static void setup_tri_coefficients( struct setup_context *setup )
 
 static void setup_tri_edges( struct setup_context *setup )
 {
-   float vmin_x = setup->vmin[0][0] + 0.5f;
-   float vmid_x = setup->vmid[0][0] + 0.5f;
+   float vmin_x = setup->vmin[0][0] + setup->pixel_offset;
+   float vmid_x = setup->vmid[0][0] + setup->pixel_offset;
 
-   float vmin_y = setup->vmin[0][1] - 0.5f;
-   float vmid_y = setup->vmid[0][1] - 0.5f;
-   float vmax_y = setup->vmax[0][1] - 0.5f;
+   float vmin_y = setup->vmin[0][1] - setup->pixel_offset;
+   float vmid_y = setup->vmid[0][1] - setup->pixel_offset;
+   float vmax_y = setup->vmax[0][1] - setup->pixel_offset;
 
    setup->emaj.sy = ceilf(vmin_y);
    setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
@@ -779,8 +792,8 @@ line_linear_coeff(const struct setup_context *setup,
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
    coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+                  (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                   dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
 
 
@@ -802,8 +815,8 @@ line_persp_coeff(const struct setup_context *setup,
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
    coef->a0[i] = (setup->vmin[vertSlot][i] -
-                  (dadx * (setup->vmin[0][0] - 0.5f) +
-                   dady * (setup->vmin[0][1] - 0.5f)));
+                  (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
+                   dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
 
 
@@ -1253,6 +1266,9 @@ void sp_setup_prepare( struct setup_context *setup )
    if (sp->dirty) {
       softpipe_update_derived(sp);
    }
+
+   /* Note: nr_attrs is only used for debugging (vertex printing) */
+   setup->nr_vertex_attrs = draw_num_shader_outputs(sp->draw);
 
    sp->quad.first->begin( sp->quad.first );
 

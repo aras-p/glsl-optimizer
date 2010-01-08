@@ -2,6 +2,7 @@
  * 
  * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009-2010 VMware, Inc.  All rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -58,7 +59,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -1260,38 +1261,39 @@ emit_fetch(
    const struct tgsi_full_src_register *reg,
    const unsigned chan_index )
 {
-   unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
+   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
-      switch (reg->SrcRegister.File) {
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle,
-            reg->SrcRegister.Indirect,
-            reg->SrcRegisterInd.File,
-            reg->SrcRegisterInd.Index );
+            reg->Register.Indirect,
+            reg->Indirect.File,
+            reg->Indirect.Index );
          break;
 
       case TGSI_FILE_IMMEDIATE:
          emit_immediate(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          emit_inputf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
@@ -1299,29 +1301,13 @@ emit_fetch(
          emit_tempf(
             func,
             xmm,
-            reg->SrcRegister.Index,
+            reg->Register.Index,
             swizzle );
          break;
 
       default:
          assert( 0 );
       }
-      break;
-
-   case TGSI_EXTSWIZZLE_ZERO:
-      emit_tempf(
-         func,
-         xmm,
-         TGSI_EXEC_TEMP_00000000_I,
-         TGSI_EXEC_TEMP_00000000_C );
-      break;
-
-   case TGSI_EXTSWIZZLE_ONE:
-      emit_tempf(
-         func,
-         xmm,
-         TEMP_ONE_I,
-         TEMP_ONE_C );
       break;
 
    default:
@@ -1347,7 +1333,7 @@ emit_fetch(
 }
 
 #define FETCH( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_fetch( FUNC, XMM, &(INST).FullSrcRegisters[INDEX], CHAN )
+   emit_fetch( FUNC, XMM, &(INST).Src[INDEX], CHAN )
 
 /**
  * Register store.
@@ -1387,12 +1373,12 @@ emit_store(
    }
 
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
       emit_output(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1400,7 +1386,7 @@ emit_store(
       emit_temps(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1408,7 +1394,7 @@ emit_store(
       emit_addrs(
          func,
          xmm,
-         reg->DstRegister.Index,
+         reg->Register.Index,
          chan_index );
       break;
 
@@ -1418,7 +1404,7 @@ emit_store(
 }
 
 #define STORE( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
+   emit_store( FUNC, XMM, &(INST).Dst[INDEX], &(INST), CHAN )
 
 
 static void PIPE_CDECL
@@ -1433,13 +1419,13 @@ fetch_texel( struct tgsi_sampler **sampler,
                 sampler, *sampler,
                 store );
 
-   debug_printf("lodbias %f\n", store[12]);
-
    for (j = 0; j < 4; j++)
-      debug_printf("sample %d texcoord %f %f\n", 
+      debug_printf("sample %d texcoord %f %f %f lodbias %f\n",
                    j, 
                    store[0+j],
-                   store[4+j]);
+                   store[4+j],
+                   store[8 + j],
+                   store[12 + j]);
 #endif
 
    {
@@ -1448,7 +1434,8 @@ fetch_texel( struct tgsi_sampler **sampler,
                               &store[0],  /* s */
                               &store[4],  /* t */
                               &store[8],  /* r */
-                              store[12],  /* lodbias */
+                              &store[12], /* lodbias */
+                              tgsi_sampler_lod_bias,
                               rgba);      /* results */
 
       memcpy( store, rgba, 16 * sizeof(float));
@@ -1475,12 +1462,13 @@ emit_tex( struct x86_function *func,
           boolean lodbias,
           boolean projected)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    struct x86_reg args[2];
    unsigned count;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   assert(inst->Instruction.Texture);
+   switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       count = 1;
       break;
@@ -1582,13 +1570,13 @@ emit_kil(
    /* This mask stores component bits that were already tested. Note that
     * we test if the value is less than zero, so 1.0 and 0.0 need not to be
     * tested. */
-   uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
+   uniquemask = 0;
 
    FOR_EACH_CHANNEL( chan_index ) {
       unsigned swizzle;
 
       /* unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle(
+      swizzle = tgsi_util_get_full_src_register_swizzle(
          reg,
          chan_index );
 
@@ -1735,15 +1723,15 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 {
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      const struct tgsi_full_src_register *reg = &inst->Src[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
-      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->DstRegister.Indirect)
+      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    return FALSE;
@@ -1772,7 +1760,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 4 + chan_index, 0, chan_index );
       }
@@ -2260,7 +2247,7 @@ emit_instruction(
 
    case TGSI_OPCODE_KIL:
       /* conditional kill */
-      emit_kil( func, &inst->FullSrcRegisters[0] );
+      emit_kil( func, &inst->Src[0] );
       break;
 
    case TGSI_OPCODE_PK2H:
@@ -2521,7 +2508,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( func, inst, TRUE, FALSE );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXP:
@@ -2593,7 +2580,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       return 0;
       break;
 
@@ -2649,12 +2636,13 @@ emit_declaration(
    struct x86_function *func,
    struct tgsi_full_declaration *decl )
 {
-   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+   if( decl->Declaration.File == TGSI_FILE_INPUT ||
+       decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE ) {
       unsigned first, last, mask;
       unsigned i, j;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {
@@ -2938,8 +2926,7 @@ tgsi_emit_sse2(
              * the result in the cases where the code is too opaque to
              * fix.
              */
-            if (opcode != TGSI_OPCODE_MOV &&
-                opcode != TGSI_OPCODE_SWZ) {
+            if (opcode != TGSI_OPCODE_MOV) {
                debug_printf("Warning: src/dst aliasing in instruction"
                             " is not handled:\n");
                tgsi_dump_instruction(&parse.FullToken.FullInstruction, 1);
@@ -2968,6 +2955,9 @@ tgsi_emit_sse2(
 #endif
             num_immediates++;
          }
+         break;
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         /* we just ignore them for now */
          break;
 
       default:

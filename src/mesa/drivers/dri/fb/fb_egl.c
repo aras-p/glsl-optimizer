@@ -84,9 +84,9 @@ typedef struct fb_context
    _EGLContext Base;  /* base class/object */
    GLcontext *glCtx;
    struct {
-      __DRIcontextPrivate *context;	
-      __DRIscreenPrivate *screen;	
-      __DRIdrawablePrivate *drawable; /* drawable bound to this ctx */
+      __DRIcontext *context;	
+      __DRIscreen *screen;	
+      __DRIdrawable *drawable; /* drawable bound to this ctx */
    } dri;
 } fbContext, *fbContextPtr;
 
@@ -692,7 +692,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
 
    /* front color renderbuffer */
    {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, display->pFB,
+      driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888, display->pFB,
                                                 bytesPerPixel,
                                                 origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);
@@ -703,7 +703,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    /* back color renderbuffer */
    if (vis.doubleBufferMode) {
       GLubyte *backBuf = _mesa_malloc(stride * height);
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, backBuf,
+      driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888, backBuf,
                                                 bytesPerPixel,
                                                 origin, stride, NULL);
       fbSetSpanFunctions(drb, &vis);

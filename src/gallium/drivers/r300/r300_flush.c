@@ -20,20 +20,34 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
+
+#include "util/u_simple_list.h"
+
+#include "r300_context.h"
+#include "r300_cs.h"
+#include "r300_emit.h"
 #include "r300_flush.h"
+#include "r300_state_invariant.h"
 
 static void r300_flush(struct pipe_context* pipe,
                        unsigned flags,
                        struct pipe_fence_handle** fence)
 {
-    struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_query *query;
 
+    CS_LOCALS(r300);
     /* We probably need to flush Draw, but we may have been called from
-     * within Draw. This feels kludgy, but it might be the best thing. */
-    if (!r300->draw->flushing) {
+     * within Draw. This feels kludgy, but it might be the best thing.
+     *
+     * Of course, the best thing is to kill Draw with fire. :3 */
+    if (r300->draw && !r300->draw->flushing) {
         draw_flush(r300->draw);
     }
+
+    r300_emit_query_end(r300);
 
     if (r300->dirty_hw) {
         FLUSH_CS;
@@ -41,7 +55,12 @@ static void r300_flush(struct pipe_context* pipe,
         r300->dirty_state = R300_NEW_KITCHEN_SINK;
         r300->dirty_hw = 0;
     }
+    /* reset flushed query */
+    foreach(query, &r300->query_list) {
+        query->flushed = TRUE;
+    }
 }
+
 
 void r300_init_flush_functions(struct r300_context* r300)
 {

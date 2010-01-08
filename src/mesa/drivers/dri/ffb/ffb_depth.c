@@ -49,7 +49,7 @@ static void FFBWriteDepthSpan( GLcontext *ctx,
 #endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+		__DRIdrawable *dPriv = fmesa->driDrawable;
 		GLuint *zptr;
 		GLuint i;
 
@@ -110,7 +110,7 @@ static void FFBWriteDepthPixels( GLcontext *ctx,
 #endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+		__DRIdrawable *dPriv = fmesa->driDrawable;
 		char *zbase;
 		GLuint i;
 
@@ -153,7 +153,7 @@ static void FFBReadDepthSpan( GLcontext *ctx,
 {
         GLuint *depth = (GLuint *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
 	GLuint *zptr;
 	GLuint i;
 
@@ -194,7 +194,7 @@ static void FFBReadDepthPixels( GLcontext *ctx,
 {
         GLuint *depth = (GLuint *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+	__DRIdrawable *dPriv = fmesa->driDrawable;
 	char *zbase;
 	GLuint i;
 

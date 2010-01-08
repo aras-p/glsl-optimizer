@@ -45,6 +45,8 @@
 
 #include "radeon_drm.h"
 
+#include "radeon_winsys.h"
+
 struct radeon_pipe_buffer {
     struct pipe_buffer  base;
     struct radeon_bo    *bo;
@@ -66,14 +68,10 @@ struct radeon_winsys_priv {
 
     /* Current CS. */
     struct radeon_cs* cs;
-};
 
-struct radeon_winsys {
-    /* Parent class. */
-    struct pipe_winsys base;
-
-    /* This corresponds to void* radeon_winsys in r300_winsys. */
-    struct radeon_winsys_priv* priv;
+    /* Flush CB */
+    void (*flush_cb)(void *);
+    void *flush_data;
 };
 
 struct radeon_winsys* radeon_pipe_winsys(int fb);

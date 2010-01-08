@@ -39,6 +39,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
+#include "util/u_rect.h"
+#include "util/u_math.h"
 
 
 
@@ -63,8 +65,8 @@ update_renderbuffer_surface(struct st_context *st,
       GLuint level;
       /* find matching mipmap level size */
       for (level = 0; level <= texture->last_level; level++) {
-         if (texture->width[level] == rtt_width &&
-             texture->height[level] == rtt_height) {
+         if (u_minify(texture->width0, level) == rtt_width &&
+             u_minify(texture->height0, level) == rtt_height) {
 
             pipe_surface_reference(&strb->surface, NULL);
 
@@ -162,10 +164,17 @@ update_framebuffer_state( struct st_context *st )
          (void) st_get_framebuffer_surface(stfb, ST_SURFACE_FRONT_LEFT, &surf_front);
          (void) st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT, &surf_back);
 
-         st->pipe->surface_copy(st->pipe,
-                                surf_front, 0, 0,  /* dest */
-                                surf_back, 0, 0,   /* src */
-                                fb->Width, fb->Height);
+         if (st->pipe->surface_copy) {
+            st->pipe->surface_copy(st->pipe,
+                                   surf_front, 0, 0,  /* dest */
+                                   surf_back, 0, 0,   /* src */
+                                   fb->Width, fb->Height);
+         } else {
+            util_surface_copy(st->pipe, FALSE,
+                              surf_front, 0, 0,
+                              surf_back, 0, 0,
+                              fb->Width, fb->Height);
+         }
       }
       /* we're assuming we'll really draw to the front buffer */
       st->frontbuffer_status = FRONT_STATUS_DIRTY;

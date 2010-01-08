@@ -359,9 +359,9 @@ struct sis_context
 
   /* Mirrors of some DRI state
    */
-  __DRIcontextPrivate	*driContext;	/* DRI context */
-  __DRIscreenPrivate	*driScreen;	/* DRI screen */
-  __DRIdrawablePrivate	*driDrawable;	/* DRI drawable bound to this ctx */
+  __DRIcontext	*driContext;	/* DRI context */
+  __DRIscreen	*driScreen;	/* DRI screen */
+  __DRIdrawable	*driDrawable;	/* DRI drawable bound to this ctx */
 
   unsigned int lastStamp;	        /* mirror driDrawable->lastStamp */
 
@@ -439,18 +439,18 @@ enum _sis_verbose {
 };
 
 extern GLboolean sisCreateContext( const __GLcontextModes *glVisual,
-				   __DRIcontextPrivate *driContextPriv,
+				   __DRIcontext *driContextPriv,
                                    void *sharedContextPrivate );
-extern void sisDestroyContext( __DRIcontextPrivate * );
+extern void sisDestroyContext( __DRIcontext * );
 
 void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
                           GLuint width, GLuint height);
 
-extern GLboolean sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
-                                  __DRIdrawablePrivate *driDrawPriv,
-                                  __DRIdrawablePrivate *driReadPriv );
+extern GLboolean sisMakeCurrent( __DRIcontext *driContextPriv,
+                                  __DRIdrawable *driDrawPriv,
+                                  __DRIdrawable *driReadPriv );
 
-extern GLboolean sisUnbindContext( __DRIcontextPrivate *driContextPriv );
+extern GLboolean sisUnbindContext( __DRIcontext *driContextPriv );
 
 void WaitEngIdle (sisContextPtr smesa);
 void Wait2DEngIdle (sisContextPtr smesa);

@@ -40,11 +40,12 @@
 #define MAX_GS_VERTS (4)	     
 
 struct brw_gs_prog_key {
-   GLuint attrs:32;
+   GLbitfield64 attrs;
    GLuint primitive:4;
    GLuint hint_gs_always:1;
+   GLuint pv_first:1;
    GLuint need_gs_prog:1;
-   GLuint pad:26;
+   GLuint pad:25;
 };
 
 struct brw_gs_compile {
@@ -62,13 +63,12 @@ struct brw_gs_compile {
    GLuint nr_attrs;
    GLuint nr_regs;
    GLuint nr_bytes;
-   GLboolean need_ff_sync;
 };
 
 #define ATTR_SIZE  (4*4)
 
-void brw_gs_quads( struct brw_gs_compile *c );
-void brw_gs_quad_strip( struct brw_gs_compile *c );
+void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
+void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key );
 void brw_gs_tris( struct brw_gs_compile *c );
 void brw_gs_lines( struct brw_gs_compile *c );
 void brw_gs_points( struct brw_gs_compile *c );

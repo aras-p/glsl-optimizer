@@ -1769,6 +1769,7 @@ static const BitmapCharRec * const chars[] = {
 &ch255,
 };
 
+GLUTAPI const BitmapFontRec glutBitmapHelvetica10;
 const BitmapFontRec glutBitmapHelvetica10 = {
 "-adobe-helvetica-medium-r-normal--10-100-75-75-p-56-iso8859-1",
 224,

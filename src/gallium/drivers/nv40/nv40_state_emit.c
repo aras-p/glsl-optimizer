@@ -54,10 +54,11 @@ nv40_state_do_validate(struct nv40_context *nv40,
 void
 nv40_state_emit(struct nv40_context *nv40)
 {
-	struct nouveau_channel *chan = nv40->screen->base.channel;
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
-	unsigned i, samplers;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
+	unsigned i;
 	uint64_t states;
 
 	if (nv40->pctx_id != screen->cur_pctx) {
@@ -80,13 +81,21 @@ nv40_state_emit(struct nv40_context *nv40)
 
 	if (state->dirty & ((1ULL << NV40_STATE_FRAGPROG) |
 			    (1ULL << NV40_STATE_FRAGTEX0))) {
-		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (2);
-		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (1);
+		BEGIN_RING(chan, curie, NV40TCL_TEX_CACHE_CTL, 1);
+		OUT_RING  (chan, 2);
+		BEGIN_RING(chan, curie, NV40TCL_TEX_CACHE_CTL, 1);
+		OUT_RING  (chan, 1);
 	}
 
 	state->dirty = 0;
+}
+
+void
+nv40_state_flush_notify(struct nouveau_channel *chan)
+{
+	struct nv40_context *nv40 = chan->user_private;
+	struct nv40_state *state = &nv40->state;
+	unsigned i, samplers;
 
 	so_emit_reloc_markers(chan, state->hw[NV40_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
@@ -160,7 +169,6 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 		draw_set_viewport_state(draw, &nv40->viewport);
 
 	if (nv40->draw_dirty & NV40_NEW_ARRAYS) {
-		draw_set_edgeflags(draw, nv40->edgeflags);
 		draw_set_vertex_buffers(draw, nv40->vtxbuf_nr, nv40->vtxbuf);
 		draw_set_vertex_elements(draw, nv40->vtxelt_nr, nv40->vtxelt);	
 	}

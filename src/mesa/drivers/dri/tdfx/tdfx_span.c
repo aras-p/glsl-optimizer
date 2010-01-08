@@ -47,7 +47,7 @@
 
 #define LOCAL_VARS							\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   __DRIdrawablePrivate *const dPriv = drb->dPriv;			\
+   __DRIdrawable *const dPriv = drb->dPriv;			\
    GLuint pitch = drb->backBuffer ? info.strideInBytes			\
      : (drb->pitch * drb->cpp);						\
    const GLuint bottom = dPriv->h - 1;					\
@@ -104,7 +104,7 @@
 
 #define HW_READ_CLIPLOOP()						\
       do {								\
-         const __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;	\
+         const __DRIdrawable *dPriv = fxMesa->driDrawable;	\
          drm_clip_rect_t *rect = dPriv->pClipRects;			\
          int _nc = dPriv->numClipRects;					\
          while (_nc--) {						\

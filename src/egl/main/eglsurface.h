@@ -40,7 +40,7 @@ struct _egl_surface
 };
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
                 _EGLConfig *config, const EGLint *attrib_list);
 
@@ -86,7 +86,7 @@ _eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint
 
 
 extern EGLBoolean
-_eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, EGLint interval);
+_eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint interval);
 
 
 #ifdef EGL_VERSION_1_2

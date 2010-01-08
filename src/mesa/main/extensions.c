@@ -103,9 +103,11 @@ static const struct {
    { OFF, "GL_EXT_convolution",                F(EXT_convolution) },
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
+   { OFF, "GL_EXT_draw_buffers2",              F(EXT_draw_buffers2) },
    { ON,  "GL_EXT_draw_range_elements",        F(EXT_draw_range_elements) },
-   { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
    { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
+   { OFF, "GL_EXT_framebuffer_multisample",    F(EXT_framebuffer_multisample) },
+   { OFF, "GL_EXT_framebuffer_object",         F(EXT_framebuffer_object) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_gpu_program_parameters",     F(EXT_gpu_program_parameters) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
@@ -165,10 +167,12 @@ static const struct {
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
+   { OFF, "GL_NV_conditional_render",          F(NV_conditional_render) },
    { OFF, "GL_NV_depth_clamp",                 F(ARB_depth_clamp) },
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { OFF, "GL_NV_fragment_program_option",     F(NV_fragment_program_option) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
+   { OFF, "GL_NV_packed_depth_stencil",        F(EXT_packed_depth_stencil) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
    { OFF, "GL_NV_texture_env_combine4",        F(NV_texture_env_combine4) },
    { OFF, "GL_NV_texture_rectangle",           F(NV_texture_rectangle) },
@@ -267,12 +271,16 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_convolution = GL_TRUE;
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
+   ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
 #if FEATURE_EXT_framebuffer_object
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
 #endif
 #if FEATURE_EXT_framebuffer_blit
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
+#endif
+#if FEATURE_ARB_framebuffer_object
+   ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
 #endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
    /*ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;*/
@@ -304,6 +312,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.MESA_texture_array = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    ctx->Extensions.NV_blend_square = GL_TRUE;
+   ctx->Extensions.NV_conditional_render = GL_TRUE;
    /*ctx->Extensions.NV_light_max_exponent = GL_TRUE;*/
    ctx->Extensions.NV_point_sprite = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
@@ -518,19 +527,33 @@ _mesa_disable_extension( GLcontext *ctx, const char *name )
 
 
 /**
+ * Check if the i-th extension is enabled.
+ */
+static GLboolean
+extension_enabled(GLcontext *ctx, GLuint index)
+{
+   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
+   if (!default_extensions[index].flag_offset ||
+       *(base + default_extensions[index].flag_offset)) {
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Test if the named extension is enabled in this context.
  */
 GLboolean
 _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
 {
-   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
    GLuint i;
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
-         if (!default_extensions[i].flag_offset)
-            return GL_TRUE;
-         return *(base + default_extensions[i].flag_offset);
+         return extension_enabled(ctx, i);
       }
    }
    return GL_FALSE;
@@ -638,7 +661,6 @@ _mesa_init_extensions( GLcontext *ctx )
 GLubyte *
 _mesa_make_extension_string( GLcontext *ctx )
 {
-   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
    const char *extraExt = get_extension_override(ctx);
    GLuint extStrLen = 0;
    char *s;
@@ -646,8 +668,7 @@ _mesa_make_extension_string( GLcontext *ctx )
 
    /* first, compute length of the extension string */
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (!default_extensions[i].flag_offset ||
-          *(base + default_extensions[i].flag_offset)) {
+      if (extension_enabled(ctx, i)) {
          extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
       }
    }
@@ -663,8 +684,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    /* second, build the extension string */
    extStrLen = 0;
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (!default_extensions[i].flag_offset ||
-          *(base + default_extensions[i].flag_offset)) {
+      if (extension_enabled(ctx, i)) {
          GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
          _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
@@ -682,4 +702,49 @@ _mesa_make_extension_string( GLcontext *ctx )
    }
 
    return (GLubyte *) s;
+}
+
+
+/**
+ * Return number of enabled extensions.
+ */
+GLuint
+_mesa_get_extension_count(GLcontext *ctx)
+{
+   GLuint i;
+
+   /* only count once */
+   if (!ctx->Extensions.Count) {
+      for (i = 0; i < Elements(default_extensions); i++) {
+         if (extension_enabled(ctx, i)) {
+            ctx->Extensions.Count++;
+         }
+      }
+   }
+
+   if (0)
+      _mesa_debug(ctx, "%u of %d extensions enabled\n", ctx->Extensions.Count,
+                  Elements(default_extensions));
+
+   return ctx->Extensions.Count;
+}
+
+
+/**
+ * Return name of i-th enabled extension
+ */
+const GLubyte *
+_mesa_get_enabled_extension(GLcontext *ctx, GLuint index)
+{
+   GLuint i;
+
+   for (i = 0; i < Elements(default_extensions); i++) {
+      if (extension_enabled(ctx, i)) {
+         if (index == 0)
+            return (const GLubyte *) default_extensions[i].name;
+         index--;
+      }
+   }
+
+   return NULL;
 }

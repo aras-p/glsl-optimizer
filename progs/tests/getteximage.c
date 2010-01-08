@@ -58,6 +58,26 @@ TestGetTexImage(GLboolean npot)
             abort();
          }
       }
+
+      /* get as BGRA */
+      glGetTexImage(GL_TEXTURE_2D, level, GL_BGRA, GL_UNSIGNED_BYTE, data2);
+
+      /* compare */
+      {
+         const GLubyte *rgba = (GLubyte *) data;
+         const GLubyte *bgra = (GLubyte *) data2;
+         for (i = 0; i < w * h; i += 4) {
+            if (rgba[i+0] != bgra[i+2] ||
+                rgba[i+1] != bgra[i+1] ||
+                rgba[i+2] != bgra[i+0] ||
+                rgba[i+3] != bgra[i+3]) {
+               printf("glTexImage + glGetTexImage(GL_BGRA) failure!\n");
+               printf("Expected value %d, found %d\n", data[i], data2[i]);
+               abort();
+            }
+         }
+      }
+
    }
 
    printf("Passed\n");

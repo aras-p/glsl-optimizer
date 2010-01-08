@@ -64,7 +64,7 @@
    for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   ((INST)->FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST)->Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
@@ -157,19 +157,19 @@ emit_fetch(
    unsigned index,
    const unsigned chan_index )
 {
-   const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[index];
-   unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
+   const struct tgsi_full_src_register *reg = &inst->Src[index];
+   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    LLVMValueRef res;
 
    switch (swizzle) {
-   case TGSI_EXTSWIZZLE_X:
-   case TGSI_EXTSWIZZLE_Y:
-   case TGSI_EXTSWIZZLE_Z:
-   case TGSI_EXTSWIZZLE_W:
+   case TGSI_SWIZZLE_X:
+   case TGSI_SWIZZLE_Y:
+   case TGSI_SWIZZLE_Z:
+   case TGSI_SWIZZLE_W:
 
-      switch (reg->SrcRegister.File) {
+      switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT: {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->SrcRegister.Index*4 + swizzle, 0);
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
          LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
          LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
          res = lp_build_broadcast_scalar(&bld->base, scalar);
@@ -177,17 +177,17 @@ emit_fetch(
       }
 
       case TGSI_FILE_IMMEDIATE:
-         res = bld->immediates[reg->SrcRegister.Index][swizzle];
+         res = bld->immediates[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_INPUT:
-         res = bld->inputs[reg->SrcRegister.Index][swizzle];
+         res = bld->inputs[reg->Register.Index][swizzle];
          assert(res);
          break;
 
       case TGSI_FILE_TEMPORARY:
-         res = bld->temps[reg->SrcRegister.Index][swizzle];
+         res = bld->temps[reg->Register.Index][swizzle];
          if(!res)
             return bld->base.undef;
          break;
@@ -196,14 +196,6 @@ emit_fetch(
          assert( 0 );
          return bld->base.undef;
       }
-      break;
-
-   case TGSI_EXTSWIZZLE_ZERO:
-      res = bld->base.zero;
-      break;
-
-   case TGSI_EXTSWIZZLE_ONE:
-      res = bld->base.one;
       break;
 
    default:
@@ -275,7 +267,7 @@ emit_store(
    unsigned chan_index,
    LLVMValueRef value)
 {
-   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[index];
+   const struct tgsi_full_dst_register *reg = &inst->Dst[index];
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -295,13 +287,13 @@ emit_store(
       assert(0);
    }
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      bld->outputs[reg->DstRegister.Index][chan_index] = value;
+      bld->outputs[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_TEMPORARY:
-      bld->temps[reg->DstRegister.Index][chan_index] = value;
+      bld->temps[reg->Register.Index][chan_index] = value;
       break;
 
    case TGSI_FILE_ADDRESS:
@@ -327,14 +319,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           boolean projected,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    LLVMValueRef lodbias;
-   LLVMValueRef oow;
+   LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
    unsigned num_coords;
    unsigned i;
 
-   switch (inst->InstructionExtTexture.Texture) {
+   switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
       break;
@@ -369,6 +361,9 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       if (projected)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
+   for (i = num_coords; i < 3; i++) {
+      coords[i] = bld->base.undef;
+   }
 
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->base.builder,
@@ -383,7 +378,7 @@ emit_kil(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst )
 {
-   const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[0];
+   const struct tgsi_full_src_register *reg = &inst->Src[0];
    LLVMValueRef terms[NUM_CHANNELS];
    LLVMValueRef mask;
    unsigned chan_index;
@@ -394,12 +389,7 @@ emit_kil(
       unsigned swizzle;
 
       /* Unswizzle channel */
-      swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
-
-      /* Note that we test if the value is less than zero, so 1.0 and 0.0 need
-       * not to be tested. */
-      if(swizzle == TGSI_EXTSWIZZLE_ZERO || swizzle == TGSI_EXTSWIZZLE_ONE)
-         continue;
+      swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
 
       /* Check if the component has not been already tested. */
       assert(swizzle < NUM_CHANNELS);
@@ -436,15 +426,15 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
 {
    uint i;
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
-      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->SrcRegister.Indirect)
+      const struct tgsi_full_src_register *reg = &inst->Src[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
-      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-          reg->DstRegister.Indirect)
+      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
+      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
+          reg->Register.Indirect)
          return TRUE;
    }
    return FALSE;
@@ -459,7 +449,12 @@ emit_instruction(
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
-   LLVMValueRef tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+   LLVMValueRef tmp0, tmp1, tmp2;
+   LLVMValueRef tmp3 = NULL;
+   LLVMValueRef tmp4 = NULL;
+   LLVMValueRef tmp5 = NULL;
+   LLVMValueRef tmp6 = NULL;
+   LLVMValueRef tmp7 = NULL;
    LLVMValueRef res;
    LLVMValueRef dst0[NUM_CHANNELS];
 
@@ -488,7 +483,6 @@ emit_instruction(
 #endif
 
    case TGSI_OPCODE_MOV:
-   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          dst0[chan_index] = emit_fetch( bld, inst, 0, chan_index );
       }
@@ -574,9 +568,9 @@ emit_instruction(
       if (IS_DST0_CHANNEL_ENABLED( inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( inst, CHAN_Z )) {
-         LLVMValueRef *p_floor_log2;
-         LLVMValueRef *p_exp;
-         LLVMValueRef *p_log2;
+         LLVMValueRef *p_floor_log2 = NULL;
+         LLVMValueRef *p_exp = NULL;
+         LLVMValueRef *p_log2 = NULL;
 
          src0 = emit_fetch( bld, inst, 0, CHAN_X );
          src0 = lp_build_abs( &bld->base, src0 );
@@ -1324,7 +1318,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       /* deprecated? */
       assert(0);
       return 0;
@@ -1384,15 +1378,6 @@ emit_instruction(
 
    case TGSI_OPCODE_ENDPRIM:
       return 0;
-      break;
-
-   case TGSI_OPCODE_NOISE1:
-   case TGSI_OPCODE_NOISE2:
-   case TGSI_OPCODE_NOISE3:
-   case TGSI_OPCODE_NOISE4:
-      FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         dst0[chan_index] = bld->base.zero;
-      }
       break;
 
    case TGSI_OPCODE_NOP:

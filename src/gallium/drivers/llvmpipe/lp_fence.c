@@ -64,7 +64,7 @@ llvmpipe_fence_reference(struct pipe_screen *screen,
    struct lp_fence *old = (struct lp_fence *) *ptr;
    struct lp_fence *f = (struct lp_fence *) fence;
 
-   if (pipe_reference((struct pipe_reference**)ptr, &f->reference)) {
+   if (pipe_reference(&old->reference, &f->reference)) {
       lp_fence_destroy(old);
    }
 }

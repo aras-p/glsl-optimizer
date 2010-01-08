@@ -43,6 +43,9 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 	def printBody(self, api):
 		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
 
+		print '/* this file should not be included directly in mesa */'
+		print ''
+
 		functions = []
 		abi_functions = []
 		count = 0
@@ -60,7 +63,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			last_static = f.offset
 
 		print ''
-		print '#if !defined(IN_DRI_DRIVER)'
+		print '#if !defined(_GLAPI_USE_REMAP_TABLE)'
 		print ''
 
 		for [f, index] in functions:
@@ -76,7 +79,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			print '#define _gloffset_%s driDispatchRemapTable[%s_remap_index]' % (f.name, f.name)
 
 		print ''
-		print '#endif /* !defined(IN_DRI_DRIVER) */'
+		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
 
 		return
 

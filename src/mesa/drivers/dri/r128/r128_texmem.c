@@ -41,7 +41,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/simple_list.h"
-#include "main/texformat.h"
 #include "main/imports.h"
 
 #define TEX_0	1
@@ -95,7 +94,7 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
    if ( !image )
       return;
 
-   switch ( image->TexFormat->TexelBytes ) {
+   switch ( _mesa_get_format_bytes(image->TexFormat) ) {
    case 1: texelsPerDword = 4; break;
    case 2: texelsPerDword = 2; break;
    case 4: texelsPerDword = 1; break;
@@ -215,9 +214,11 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
 
       /* Copy the next chunck of the texture image into the blit buffer */
       {
+         const GLuint texelBytes =
+            _mesa_get_format_bytes(image->TexFormat);
          const GLubyte *src = (const GLubyte *) image->Data +
-            (y * image->Width + x) * image->TexFormat->TexelBytes;
-         const GLuint bytes = width * height * image->TexFormat->TexelBytes;
+            (y * image->Width + x) * texelBytes;            
+         const GLuint bytes = width * height * texelBytes;
          memcpy(dst, src, bytes);
       }
 

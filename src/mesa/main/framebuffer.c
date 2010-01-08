@@ -35,6 +35,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "depthstencil.h"
+#include "formats.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "fbobject.h"
@@ -281,7 +282,6 @@ _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
          struct gl_renderbuffer *rb = att->Renderbuffer;
          /* only resize if size is changing */
          if (rb->Width != width || rb->Height != height) {
-            /* could just as well pass rb->_ActualFormat here */
             if (rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height)) {
                ASSERT(rb->Width == width);
                ASSERT(rb->Height == height);
@@ -523,19 +523,22 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-         if (rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB) {
-            fb->Visual.redBits = rb->RedBits;
-            fb->Visual.greenBits = rb->GreenBits;
-            fb->Visual.blueBits = rb->BlueBits;
-            fb->Visual.alphaBits = rb->AlphaBits;
+         const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
+         const gl_format fmt = rb->Format;
+         
+         if (baseFormat == GL_RGBA || baseFormat == GL_RGB) {
+            fb->Visual.redBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
+            fb->Visual.greenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);
+            fb->Visual.blueBits = _mesa_get_format_bits(fmt, GL_BLUE_BITS);
+            fb->Visual.alphaBits = _mesa_get_format_bits(fmt, GL_ALPHA_BITS);
             fb->Visual.rgbBits = fb->Visual.redBits
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
             fb->Visual.samples = rb->NumSamples;
             break;
          }
-         else if (rb->_BaseFormat == GL_COLOR_INDEX) {
-            fb->Visual.indexBits = rb->IndexBits;
+         else if (baseFormat == GL_COLOR_INDEX) {
+            fb->Visual.indexBits = _mesa_get_format_bits(fmt, GL_INDEX_BITS);
             fb->Visual.rgbMode = GL_FALSE;
             break;
          }
@@ -543,27 +546,30 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    }
 
    if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
+      const struct gl_renderbuffer *rb =
+         fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      const gl_format fmt = rb->Format;
       fb->Visual.haveDepthBuffer = GL_TRUE;
-      fb->Visual.depthBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->DepthBits;
+      fb->Visual.depthBits = _mesa_get_format_bits(fmt, GL_DEPTH_BITS);
    }
 
    if (fb->Attachment[BUFFER_STENCIL].Renderbuffer) {
+      const struct gl_renderbuffer *rb =
+         fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+      const gl_format fmt = rb->Format;
       fb->Visual.haveStencilBuffer = GL_TRUE;
-      fb->Visual.stencilBits
-         = fb->Attachment[BUFFER_STENCIL].Renderbuffer->StencilBits;
+      fb->Visual.stencilBits = _mesa_get_format_bits(fmt, GL_STENCIL_BITS);
    }
 
    if (fb->Attachment[BUFFER_ACCUM].Renderbuffer) {
+      const struct gl_renderbuffer *rb =
+         fb->Attachment[BUFFER_ACCUM].Renderbuffer;
+      const gl_format fmt = rb->Format;
       fb->Visual.haveAccumBuffer = GL_TRUE;
-      fb->Visual.accumRedBits
-         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->RedBits;
-      fb->Visual.accumGreenBits
-         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->GreenBits;
-      fb->Visual.accumBlueBits
-         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->BlueBits;
-      fb->Visual.accumAlphaBits
-         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->AlphaBits;
+      fb->Visual.accumRedBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
+      fb->Visual.accumGreenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);
+      fb->Visual.accumBlueBits = _mesa_get_format_bits(fmt, GL_BLUE_BITS);
+      fb->Visual.accumAlphaBits = _mesa_get_format_bits(fmt, GL_ALPHA_BITS);
    }
 
    compute_depth_max(fb);
@@ -592,11 +598,11 @@ _mesa_update_depth_buffer(GLcontext *ctx,
 
    depthRb = fb->Attachment[attIndex].Renderbuffer;
 
-   if (depthRb && depthRb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+   if (depthRb && depthRb->_BaseFormat == GL_DEPTH_STENCIL) {
       /* The attached depth buffer is a GL_DEPTH_STENCIL renderbuffer */
       if (!fb->_DepthBuffer
           || fb->_DepthBuffer->Wrapped != depthRb
-          || fb->_DepthBuffer->_BaseFormat != GL_DEPTH_COMPONENT) {
+          || _mesa_get_format_base_format(fb->_DepthBuffer->Format) != GL_DEPTH_COMPONENT) {
          /* need to update wrapper */
          struct gl_renderbuffer *wrapper
             = _mesa_new_z24_renderbuffer_wrapper(ctx, depthRb);
@@ -633,11 +639,11 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 
    stencilRb = fb->Attachment[attIndex].Renderbuffer;
 
-   if (stencilRb && stencilRb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+   if (stencilRb && stencilRb->_BaseFormat == GL_DEPTH_STENCIL) {
       /* The attached stencil buffer is a GL_DEPTH_STENCIL renderbuffer */
       if (!fb->_StencilBuffer
           || fb->_StencilBuffer->Wrapped != stencilRb
-          || fb->_StencilBuffer->_BaseFormat != GL_STENCIL_INDEX) {
+          || _mesa_get_format_base_format(fb->_StencilBuffer->Format) != GL_STENCIL_INDEX) {
          /* need to update wrapper */
          struct gl_renderbuffer *wrapper
             = _mesa_new_s8_renderbuffer_wrapper(ctx, stencilRb);
@@ -854,30 +860,32 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format)
       if (ctx->ReadBuffer->_ColorReadBuffer == NULL) {
          return GL_FALSE;
       }
-      ASSERT(ctx->ReadBuffer->_ColorReadBuffer->RedBits > 0 ||
-             ctx->ReadBuffer->_ColorReadBuffer->IndexBits > 0);
+      ASSERT(_mesa_get_format_bits(ctx->ReadBuffer->_ColorReadBuffer->Format, GL_RED_BITS) > 0 ||
+             _mesa_get_format_bits(ctx->ReadBuffer->_ColorReadBuffer->Format, GL_INDEX_BITS) > 0);
       break;
    case GL_DEPTH:
    case GL_DEPTH_COMPONENT:
       if (!att[BUFFER_DEPTH].Renderbuffer) {
          return GL_FALSE;
       }
-      ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);
+      /*ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);*/
       break;
    case GL_STENCIL:
    case GL_STENCIL_INDEX:
       if (!att[BUFFER_STENCIL].Renderbuffer) {
          return GL_FALSE;
       }
-      ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);
+      /*ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);*/
       break;
    case GL_DEPTH_STENCIL_EXT:
       if (!att[BUFFER_DEPTH].Renderbuffer ||
           !att[BUFFER_STENCIL].Renderbuffer) {
          return GL_FALSE;
       }
+      /*
       ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);
       ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);
+      */
       break;
    default:
       _mesa_problem(ctx,
@@ -932,22 +940,24 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
       if (!att[BUFFER_DEPTH].Renderbuffer) {
          return GL_FALSE;
       }
-      ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);
+      /*ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);*/
       break;
    case GL_STENCIL:
    case GL_STENCIL_INDEX:
       if (!att[BUFFER_STENCIL].Renderbuffer) {
          return GL_FALSE;
       }
-      ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);
+      /*ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);*/
       break;
    case GL_DEPTH_STENCIL_EXT:
       if (!att[BUFFER_DEPTH].Renderbuffer ||
           !att[BUFFER_STENCIL].Renderbuffer) {
          return GL_FALSE;
       }
+      /*
       ASSERT(att[BUFFER_DEPTH].Renderbuffer->DepthBits > 0);
       ASSERT(att[BUFFER_STENCIL].Renderbuffer->StencilBits > 0);
+      */
       break;
    default:
       _mesa_problem(ctx,
@@ -958,4 +968,30 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
 
    /* OK */
    return GL_TRUE;
+}
+
+GLenum
+_mesa_get_color_read_format(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_BGRA;
+   case MESA_FORMAT_RGB565:
+      return GL_BGR;
+   default:
+      return GL_RGBA;
+   }
+}
+
+GLenum
+_mesa_get_color_read_type(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_UNSIGNED_BYTE;
+   case MESA_FORMAT_RGB565:
+      return GL_UNSIGNED_SHORT_5_6_5_REV;
+   default:
+      return GL_UNSIGNED_BYTE;
+   }
 }

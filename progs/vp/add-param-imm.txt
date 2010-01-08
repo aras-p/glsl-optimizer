@@ -1,0 +1,7 @@
+!!ARBvp1.0
+TEMP R0;
+PARAM Emission = state.material.emission; 
+ADD R0, vertex.color, {-0.5}.x;
+ADD result.color, R0, Emission.w;
+MOV  result.position, vertex.position;
+END

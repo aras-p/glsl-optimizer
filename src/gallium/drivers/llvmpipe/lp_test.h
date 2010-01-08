@@ -56,6 +56,9 @@
 #include "lp_bld_type.h"
 
 
+#define LP_TEST_NUM_SAMPLES 32
+
+
 void
 write_tsv_header(FILE *fp);
 
@@ -68,17 +71,28 @@ boolean
 test_all(unsigned verbose, FILE *fp);
 
 
+#if defined(PIPE_CC_MSVC)
+
+unsigned __int64 __rdtsc();
+#pragma intrinsic(__rdtsc)
+#define rdtsc() __rdtsc()
+
+#elif defined(PIPE_CC_GCC) && (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64))
+
 static INLINE uint64_t
 rdtsc(void)
 {
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    uint32_t hi, lo;
    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
    return ((uint64_t)lo) | (((uint64_t)hi) << 32);
-#else
-   return 0;
-#endif
 }
+
+#else
+
+#define rdtsc() 0
+
+#endif
+
 
 
 float

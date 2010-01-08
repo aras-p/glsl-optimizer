@@ -80,7 +80,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   if (!batch->buffer && intel->ttm == GL_TRUE)
+   if (!batch->buffer)
       batch->buffer = malloc (intel->maxBatchSize);
 
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
@@ -94,7 +94,6 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
-   batch->cliprect_mode = IGNORE_CLIPRECTS;
 }
 
 struct intel_batchbuffer *
@@ -129,13 +128,10 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 /* TODO: Push this whole function into bufmgr.
  */
 static void
-do_flush_locked(struct intel_batchbuffer *batch,
-		GLuint used, GLboolean allow_unlock)
+do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
 {
    struct intel_context *intel = batch->intel;
    int ret = 0;
-   unsigned int num_cliprects = 0;
-   struct drm_clip_rect *cliprects = NULL;
    int x_off = 0, y_off = 0;
 
    if (batch->buffer)
@@ -146,31 +142,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    batch->map = NULL;
    batch->ptr = NULL;
 
-
-   if (batch->cliprect_mode == LOOP_CLIPRECTS) {
-      intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
-   }
-   /* Dispatch the batchbuffer, if it has some effect (nonzero cliprects).
-    * Can't short-circuit like this once we have hardware contexts, but we
-    * should always be in DRI2 mode by then anyway.
-    */
-   if ((batch->cliprect_mode != LOOP_CLIPRECTS ||
-	num_cliprects != 0) && !intel->no_hw) {
-      dri_bo_exec(batch->buf, used, cliprects, num_cliprects,
-		  (x_off & 0xffff) | (y_off << 16));
-   }
-
-   if (batch->cliprect_mode == LOOP_CLIPRECTS && num_cliprects == 0) {
-      if (allow_unlock) {
-	 /* If we are not doing any actual user-visible rendering,
-	  * do a sched_yield to keep the app from pegging the cpu while
-	  * achieving nothing.
-	  */
-         UNLOCK_HARDWARE(intel);
-         sched_yield();
-         LOCK_HARDWARE(intel);
-      }
-   }
+   dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
@@ -183,7 +155,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
    }
 
    if (ret != 0) {
-      UNLOCK_HARDWARE(intel);
       exit(1);
    }
    intel->vtbl.new_batch(intel);
@@ -201,24 +172,17 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
-      intel->first_post_swapbuffers_batch = intel->batch->buf;
-      drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
-   }
-
-   if (used == 0) {
-      batch->cliprect_mode = IGNORE_CLIPRECTS;
+   if (used == 0)
       return;
-   }
 
    if (INTEL_DEBUG & DEBUG_BATCH)
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
 
+   batch->reserved_space = 0;
    /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (intel->always_flush_cache || !intel->ttm) {
-      *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
-      batch->ptr += 4;
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(batch);
       used = batch->ptr - batch->map;
    }
 
@@ -249,12 +213,15 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (intel->vtbl.finish_batch)
       intel->vtbl.finish_batch(intel);
 
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!intel->no_batch_wrap);
+
+   batch->reserved_space = BATCH_RESERVED;
+
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
-   LOCK_HARDWARE(intel);
-   do_flush_locked(batch, used, GL_FALSE);
-   UNLOCK_HARDWARE(intel);
+   do_flush_locked(batch, used);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "waiting for idle\n");
@@ -296,11 +263,38 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                       const void *data, GLuint bytes,
-		       enum cliprect_mode cliprect_mode)
+                       const void *data, GLuint bytes)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(batch, bytes, cliprect_mode);
+   intel_batchbuffer_require_space(batch, bytes);
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
+}
+
+/* Emit a pipelined flush to either flush render and texture cache for
+ * reading from a FBO-drawn texture, or flush so that frontbuffer
+ * render appears on the screen in DRI1.
+ *
+ * This is also used for the always_flush_cache driconf debug option.
+ */
+void
+intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
+{
+   struct intel_context *intel = batch->intel;
+
+   if (intel->gen >= 4) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		PIPE_CONTROL_INSTRUCTION_FLUSH |
+		PIPE_CONTROL_WRITE_FLUSH |
+		PIPE_CONTROL_NO_WRITE);
+      OUT_BATCH(0); /* write address */
+      OUT_BATCH(0); /* write data */
+      OUT_BATCH(0); /* write data */
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(1);
+      OUT_BATCH(MI_FLUSH);
+      ADVANCE_BATCH();
+   }
 }

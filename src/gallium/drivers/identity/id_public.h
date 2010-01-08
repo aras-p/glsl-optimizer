@@ -37,4 +37,4 @@ identity_screen_create(struct pipe_screen *screen);
 struct pipe_context *
 identity_context_create(struct pipe_screen *screen, struct pipe_context *pipe);
 
-#endif /* PT_PUBLIC_H */
+#endif /* ID_PUBLIC_H */

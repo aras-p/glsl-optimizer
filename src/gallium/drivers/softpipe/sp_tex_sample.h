@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2010 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -46,14 +47,14 @@ typedef void (*wrap_linear_func)(const float s[4],
 typedef float (*compute_lambda_func)(const struct sp_sampler_varient *sampler,
                                      const float s[QUAD_SIZE],
                                      const float t[QUAD_SIZE],
-                                     const float p[QUAD_SIZE],
-                                     float lodbias);
+                                     const float p[QUAD_SIZE]);
 
 typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
                             const float s[QUAD_SIZE],
                             const float t[QUAD_SIZE],
                             const float p[QUAD_SIZE],
-                            float lodbias,
+                            const float c0[QUAD_SIZE],
+                            enum tgsi_sampler_control control,
                             float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 

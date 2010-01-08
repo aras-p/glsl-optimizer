@@ -230,7 +230,7 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
    assert(w <= TILE_SIZE);
    assert(h <= TILE_SIZE);
 
-   lp_tile_read_4ub(rast->cbuf_transfer->format,
+   lp_tile_read_4ub(rast->cbuf_transfer->texture->format,
                      rast->tasks[thread_index].tile.color,
                      rast->cbuf_map, 
                      rast->cbuf_transfer->stride,
@@ -394,7 +394,7 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
    LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
           thread_index, x, y, w, h);
 
-   lp_tile_write_4ub(rast->cbuf_transfer->format,
+   lp_tile_write_4ub(rast->cbuf_transfer->texture->format,
                      rast->tasks[thread_index].tile.color,
                      rast->cbuf_map, 
                      rast->cbuf_transfer->stride,
@@ -437,7 +437,7 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast,
 
    LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
-   assert(rast->zsbuf_transfer->format == PIPE_FORMAT_Z32_UNORM);
+   assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
    lp_tile_write_z32(rast->tasks[thread_index].tile.depth,
                      rast->zsbuf_map, 
                      rast->zsbuf_transfer->stride,

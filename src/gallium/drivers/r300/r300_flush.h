@@ -23,13 +23,6 @@
 #ifndef R300_FLUSH_H
 #define R300_FLUSH_H
 
-#include "draw/draw_private.h"
-
-#include "pipe/p_context.h"
-
-#include "r300_context.h"
-#include "r300_cs.h"
-
 void r300_init_flush_functions(struct r300_context* r300);
 
 #endif /* R300_FLUSH_H */

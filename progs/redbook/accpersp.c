@@ -62,7 +62,7 @@
  * probably want to insure that your ModelView matrix has been 
  * initialized to identity before calling accFrustum().
  */
-void accFrustum(GLdouble left, GLdouble right, GLdouble bottom, 
+static void accFrustum(GLdouble left, GLdouble right, GLdouble bottom, 
    GLdouble top, GLdouble nnear, GLdouble ffar, GLdouble pixdx, 
    GLdouble pixdy, GLdouble eyedx, GLdouble eyedy, GLdouble focus)
 {
@@ -99,7 +99,7 @@ void accFrustum(GLdouble left, GLdouble right, GLdouble bottom,
  *
  * Note that accPerspective() calls accFrustum().
  */
-void accPerspective(GLdouble fovy, GLdouble aspect, 
+static void accPerspective(GLdouble fovy, GLdouble aspect, 
    GLdouble nnear, GLdouble ffar, GLdouble pixdx, GLdouble pixdy, 
    GLdouble eyedx, GLdouble eyedy, GLdouble focus)
 {
@@ -119,7 +119,7 @@ void accPerspective(GLdouble fovy, GLdouble aspect,
 
 /*  Initialize lighting and other values.
  */
-void init(void)
+static void init(void)
 {
    GLfloat mat_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -141,7 +141,7 @@ void init(void)
    glClearAccum(0.0, 0.0, 0.0, 0.0);
 }
 
-void displayObjects(void) 
+static void displayObjects(void) 
 {
    GLfloat torus_diffuse[] = { 0.7, 0.7, 0.0, 1.0 };
    GLfloat cube_diffuse[] = { 0.0, 0.7, 0.7, 1.0 };
@@ -185,7 +185,7 @@ void displayObjects(void)
 
 #define ACSIZE	8
 
-void display(void)
+static void display(void)
 {
    GLint viewport[4];
    int jitter;
@@ -205,13 +205,13 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

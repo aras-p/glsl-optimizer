@@ -273,8 +273,8 @@ do {	if ((STATE_MASK) & ~((FMESA)->state_dirty)) {	\
 	unsigned int		setupnewinputs;
 	unsigned int		new_gl_state;
 
-	__DRIdrawablePrivate	*driDrawable;
-	__DRIscreenPrivate	*driScreen;
+	__DRIdrawable	*driDrawable;
+	__DRIscreen	*driScreen;
 	ffbScreenPrivate	*ffbScreen;
 	ffb_dri_state_t		*ffb_sarea;
 } ffbContextRec, *ffbContextPtr;

@@ -42,14 +42,17 @@ llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
 }
 
 void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                    void *setup)
+                                    void *rasterizer)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   /* pass-through to draw module */
-   draw_set_rasterizer_state(llvmpipe->draw, setup);
+   if (llvmpipe->rasterizer == rasterizer)
+      return;
 
-   llvmpipe->rasterizer = (struct pipe_rasterizer_state *)setup;
+   /* pass-through to draw module */
+   draw_set_rasterizer_state(llvmpipe->draw, rasterizer);
+
+   llvmpipe->rasterizer = rasterizer;
 
    /* Note: we can immediately set the triangle state here and
     * not worry about binning because we handle culling during

@@ -188,7 +188,7 @@ void _debug_assert_fail(const char *expr,
 #ifdef DEBUG
 #define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
-#define debug_assert(expr) ((void)0)
+#define debug_assert(expr) do { } while (0 && (expr))
 #endif
 
 
@@ -349,17 +349,6 @@ debug_memory_begin(void);
 
 void 
 debug_memory_end(unsigned long beginning);
-
-
-#if defined(PROFILE) && defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-
-void
-debug_profile_start(void);
-
-void 
-debug_profile_stop(void);
-
-#endif
 
 
 #ifdef DEBUG

@@ -32,6 +32,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/formats.h"
 #include "main/matrix.h"
 #include "main/state.h"
 #include "main/simple_list.h"
@@ -65,7 +66,7 @@
 #define need_GL_ARB_point_parameters
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #define DRIVER_DATE	"20060710"
 
@@ -147,7 +148,7 @@ viaRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 static void
 viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
-		    __DRIdrawablePrivate *dPriv)
+		    __DRIdrawable *dPriv)
 {
    const GLuint name = 0;
    struct gl_renderbuffer *rb = & vrb->Base;
@@ -163,24 +164,28 @@ viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
    if (format == GL_RGBA) {
       /* Color */
       rb->_BaseFormat = GL_RGBA;
+      rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
    else if (format == GL_DEPTH_COMPONENT16) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z16;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else if (format == GL_DEPTH_COMPONENT24) {
       /* Depth */
       rb->_BaseFormat = GL_DEPTH_COMPONENT;
       /* we always Get/Put 32-bit Z values */
+      rb->Format = MESA_FORMAT_Z32;
       rb->DataType = GL_UNSIGNED_INT;
    }
    else {
       /* Stencil */
       ASSERT(format == GL_STENCIL_INDEX8_EXT);
       rb->_BaseFormat = GL_STENCIL_INDEX;
+      rb->Format = MESA_FORMAT_S8;
       rb->DataType = GL_UNSIGNED_BYTE;
    }
 
@@ -202,7 +207,7 @@ viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
 static GLboolean
 calculate_buffer_parameters(struct via_context *vmesa,
 			    struct gl_framebuffer *fb,
-			    __DRIdrawablePrivate *dPriv)
+			    __DRIdrawable *dPriv)
 {
    const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
    const unsigned extra = 32;
@@ -362,7 +367,7 @@ void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 
 /* Extension strings exported by the Unichrome driver.
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
@@ -455,12 +460,12 @@ FreeBuffer(struct via_context *vmesa)
 
 GLboolean
 viaCreateContext(const __GLcontextModes *visual,
-                 __DRIcontextPrivate *driContextPriv,
+                 __DRIcontext *driContextPriv,
                  void *sharedContextPrivate)
 {
     GLcontext *ctx, *shareCtx;
     struct via_context *vmesa;
-    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     drm_via_sarea_t *saPriv = (drm_via_sarea_t *)
         (((GLubyte *)sPriv->pSAREA) + viaScreen->sareaPrivOffset);
@@ -674,7 +679,7 @@ viaCreateContext(const __GLcontextModes *visual,
 }
 
 void
-viaDestroyContext(__DRIcontextPrivate *driContextPriv)
+viaDestroyContext(__DRIcontext *driContextPriv)
 {
     GET_CURRENT_CONTEXT(ctx);
     struct via_context *vmesa =
@@ -724,8 +729,8 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 void viaXMesaWindowMoved(struct via_context *vmesa)
 {
-   __DRIdrawablePrivate *const drawable = vmesa->driDrawable;
-   __DRIdrawablePrivate *const readable = vmesa->driReadable;
+   __DRIdrawable *const drawable = vmesa->driDrawable;
+   __DRIdrawable *const readable = vmesa->driReadable;
    struct via_renderbuffer * draw_buffer;
    struct via_renderbuffer * read_buffer;
    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
@@ -808,15 +813,15 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 }
 
 GLboolean
-viaUnbindContext(__DRIcontextPrivate *driContextPriv)
+viaUnbindContext(__DRIcontext *driContextPriv)
 {
     return GL_TRUE;
 }
 
 GLboolean
-viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-               __DRIdrawablePrivate *driDrawPriv,
-               __DRIdrawablePrivate *driReadPriv)
+viaMakeCurrent(__DRIcontext *driContextPriv,
+               __DRIdrawable *driDrawPriv,
+               __DRIdrawable *driReadPriv)
 {
     if (VIA_DEBUG & DEBUG_DRI) {
 	fprintf(stderr, "driContextPriv = %016lx\n", (unsigned long)driContextPriv);
@@ -892,8 +897,8 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 void viaGetLock(struct via_context *vmesa, GLuint flags)
 {
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-    __DRIscreenPrivate *sPriv = vmesa->driScreen;
+    __DRIdrawable *dPriv = vmesa->driDrawable;
+    __DRIscreen *sPriv = vmesa->driScreen;
 
     drmGetLock(vmesa->driFd, vmesa->hHWContext, flags);
 
@@ -923,9 +928,9 @@ void viaGetLock(struct via_context *vmesa, GLuint flags)
 
 
 void
-viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
+viaSwapBuffers(__DRIdrawable *drawablePrivate)
 {
-    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *)drawablePrivate;
+    __DRIdrawable *dPriv = (__DRIdrawable *)drawablePrivate;
 
     if (dPriv && 
 	dPriv->driContextPriv && 

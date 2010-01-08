@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,97 +22,305 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_vs.h"
+#include "r300_fs.h"
 
 #include "r300_context.h"
+#include "r300_screen.h"
 #include "r300_tgsi_to_rc.h"
+#include "r300_reg.h"
 
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "radeon_compiler.h"
 
+#include "util/u_math.h"
+
+/* Convert info about VS output semantics into r300_shader_semantics. */
+static void r300_shader_read_vs_outputs(
+    struct tgsi_shader_info* info,
+    struct r300_shader_semantics* vs_outputs)
+{
+    int i;
+    unsigned index;
+
+    r300_shader_semantics_reset(vs_outputs);
+
+    for (i = 0; i < info->num_outputs; i++) {
+        index = info->output_semantic_index[i];
+
+        switch (info->output_semantic_name[i]) {
+            case TGSI_SEMANTIC_POSITION:
+                assert(index == 0);
+                vs_outputs->pos = i;
+                break;
+
+            case TGSI_SEMANTIC_PSIZE:
+                assert(index == 0);
+                vs_outputs->psize = i;
+                break;
+
+            case TGSI_SEMANTIC_COLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                vs_outputs->color[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_BCOLOR:
+                assert(index <= ATTR_COLOR_COUNT);
+                vs_outputs->bcolor[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_GENERIC:
+                assert(index <= ATTR_GENERIC_COUNT);
+                vs_outputs->generic[index] = i;
+                break;
+
+            case TGSI_SEMANTIC_FOG:
+                assert(index == 0);
+                vs_outputs->fog = i;
+                break;
+
+            case TGSI_SEMANTIC_EDGEFLAG:
+                assert(index == 0);
+                fprintf(stderr, "r300 VP: cannot handle edgeflag output\n");
+                assert(0);
+                break;
+            default:
+                assert(0);
+        }
+    }
+}
+
+static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
+{
+    struct r300_shader_semantics* vs_outputs = &vs->outputs;
+    uint32_t* hwfmt = vs->hwfmt;
+    int i, gen_count;
+    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
+                              vs_outputs->bcolor[1] != ATTR_UNUSED;
+
+    /* Do the actual vertex_info setup.
+     *
+     * vertex_info has four uints of hardware-specific data in it.
+     * vinfo.hwfmt[0] is R300_VAP_VTX_STATE_CNTL
+     * vinfo.hwfmt[1] is R300_VAP_VSM_VTX_ASSM
+     * vinfo.hwfmt[2] is R300_VAP_OUTPUT_VTX_FMT_0
+     * vinfo.hwfmt[3] is R300_VAP_OUTPUT_VTX_FMT_1 */
+
+    hwfmt[0] = 0x5555; /* XXX this is classic Mesa bonghits */
+
+    /* Position. */
+    if (vs_outputs->pos != ATTR_UNUSED) {
+        hwfmt[1] |= R300_INPUT_CNTL_POS;
+        hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+    } else {
+        assert(0);
+    }
+
+    /* Point size. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+    }
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
+            hwfmt[1] |= R300_INPUT_CNTL_COLOR;
+            hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
+        }
+    }
+
+    /* Back-face colors. */
+    if (any_bcolor_used) {
+        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+            hwfmt[1] |= R300_INPUT_CNTL_COLOR;
+            hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
+        }
+    }
+
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
+            hwfmt[3] |= (4 << (3 * gen_count));
+            gen_count++;
+        }
+    }
+
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
+        hwfmt[3] |= (4 << (3 * gen_count));
+        gen_count++;
+    }
+
+    /* XXX magic */
+    assert(gen_count <= 8);
+
+    /* WPOS. */
+    vs->wpos_tex_output = gen_count;
+}
+
+/* Sets up stream mapping to equivalent VS outputs if TCL is bypassed
+ * or isn't present. */
+static void r300_stream_locations_notcl(
+    struct r300_shader_semantics* vs_outputs,
+    int* stream_loc)
+{
+    int i, tabi = 0, gen_count;
+    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
+                              vs_outputs->bcolor[1] != ATTR_UNUSED;
+
+    /* Position. */
+    stream_loc[tabi++] = 0;
+
+    /* Point size. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        stream_loc[tabi++] = 1;
+    }
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
+            stream_loc[tabi++] = 2 + i;
+        }
+    }
+
+    /* Back-face colors. */
+    if (any_bcolor_used) {
+        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+            stream_loc[tabi++] = 4 + i;
+        }
+    }
+
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            assert(tabi < 16);
+            stream_loc[tabi++] = 6 + gen_count;
+            gen_count++;
+        }
+    }
+
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        assert(tabi < 16);
+        stream_loc[tabi++] = 6 + gen_count;
+        gen_count++;
+    }
+
+    /* WPOS. */
+    if (vs_outputs->wpos != ATTR_UNUSED) {
+        assert(tabi < 16);
+        stream_loc[tabi++] = 6 + gen_count;
+        gen_count++;
+    }
+
+    for (; tabi < 16;) {
+        stream_loc[tabi++] = -1;
+    }
+}
 
 static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
 {
     struct r300_vertex_shader * vs = c->UserData;
+    struct r300_shader_semantics* outputs = &vs->outputs;
     struct tgsi_shader_info* info = &vs->info;
-    struct tgsi_parse_context parser;
-    struct tgsi_full_declaration * decl;
-    boolean pointsize = false;
-    int out_colors = 0;
-    int colors = 0;
-    int out_generic = 0;
-    int generic = 0;
-    int i;
+    int i, reg = 0;
+    boolean any_bcolor_used = outputs->bcolor[0] != ATTR_UNUSED ||
+                              outputs->bcolor[1] != ATTR_UNUSED;
 
     /* Fill in the input mapping */
     for (i = 0; i < info->num_inputs; i++)
         c->code->inputs[i] = i;
 
-    /* Fill in the output mapping */
-    for (i = 0; i < info->num_outputs; i++) {
-        switch (info->output_semantic_name[i]) {
-            case TGSI_SEMANTIC_PSIZE:
-                pointsize = true;
-                break;
-            case TGSI_SEMANTIC_COLOR:
-                out_colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                out_generic++;
-                break;
+    /* Position. */
+    if (outputs->pos != ATTR_UNUSED) {
+        c->code->outputs[outputs->pos] = reg++;
+    } else {
+        assert(0);
+    }
+
+    /* Point size. */
+    if (outputs->psize != ATTR_UNUSED) {
+        c->code->outputs[outputs->psize] = reg++;
+    }
+
+    /* If we're writing back facing colors we need to send
+     * four colors to make front/back face colors selection work.
+     * If the vertex program doesn't write all 4 colors, lets
+     * pretend it does by skipping output index reg so the colors
+     * get written into appropriate output vectors.
+     */
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (outputs->color[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->color[i]] = reg++;
+        } else if (any_bcolor_used) {
+            reg++;
         }
     }
 
-    tgsi_parse_init(&parser, vs->state.tokens);
-
-    while (!tgsi_parse_end_of_tokens(&parser)) {
-        tgsi_parse_token(&parser);
-
-        if (parser.FullToken.Token.Type != TGSI_TOKEN_TYPE_DECLARATION)
-            continue;
-
-        decl = &parser.FullToken.FullDeclaration;
-
-        if (decl->Declaration.File != TGSI_FILE_OUTPUT)
-            continue;
-
-        switch (decl->Semantic.SemanticName) {
-            case TGSI_SEMANTIC_POSITION:
-                c->code->outputs[decl->DeclarationRange.First] = 0;
-                break;
-            case TGSI_SEMANTIC_PSIZE:
-                c->code->outputs[decl->DeclarationRange.First] = 1;
-                break;
-            case TGSI_SEMANTIC_COLOR:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
-                    (pointsize ? 1 : 0) +
-                    colors++;
-                break;
-            case TGSI_SEMANTIC_FOG:
-            case TGSI_SEMANTIC_GENERIC:
-                c->code->outputs[decl->DeclarationRange.First] = 1 +
-                    (pointsize ? 1 : 0) +
-                    out_colors +
-                    generic++;
-                break;
-            default:
-                debug_printf("r300: vs: Bad semantic declaration %d\n",
-                    decl->Semantic.SemanticName);
-                break;
+    /* Back-face colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (outputs->bcolor[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->bcolor[i]] = reg++;
+        } else if (any_bcolor_used) {
+            reg++;
         }
     }
 
-    tgsi_parse_free(&parser);
+    /* Texture coordinates. */
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (outputs->generic[i] != ATTR_UNUSED) {
+            c->code->outputs[outputs->generic[i]] = reg++;
+        }
+    }
+
+    /* Fog coordinates. */
+    if (outputs->fog != ATTR_UNUSED) {
+        c->code->outputs[outputs->fog] = reg++;
+    }
+
+    /* WPOS. */
+    if (outputs->wpos != ATTR_UNUSED) {
+        c->code->outputs[outputs->wpos] = reg++;
+    }
 }
 
+static void r300_insert_wpos(struct r300_vertex_program_compiler* c,
+                             struct r300_shader_semantics* outputs)
+{
+    int i, lastOutput = 0;
+
+    /* Find the max output index. */
+    lastOutput = MAX2(lastOutput, outputs->psize);
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        lastOutput = MAX2(lastOutput, outputs->color[i]);
+        lastOutput = MAX2(lastOutput, outputs->bcolor[i]);
+    }
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        lastOutput = MAX2(lastOutput, outputs->generic[i]);
+    }
+    lastOutput = MAX2(lastOutput, outputs->fog);
+
+    /* Set WPOS after the last output. */
+    lastOutput++;
+    rc_copy_output(&c->Base, 0, lastOutput); /* out[lastOutput] = out[0]; */
+    outputs->wpos = lastOutput;
+}
 
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs)
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
+
+    /* Initialize. */
+    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -131,13 +340,19 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
 
-    compiler.RequiredOutputs = ~(~0 << vs->info.num_outputs);
+    compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+1));
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
+
+    /* Insert the WPOS output. */
+    r300_insert_wpos(&compiler, &vs->outputs);
+
+    r300_shader_vap_output_fmt(vs);
+    r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
 
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
-        /* Todo: Fail gracefully */
+        /* XXX We should fallback using Draw. */
         fprintf(stderr, "r300 VP: Compiler error\n");
         abort();
     }
@@ -147,88 +362,29 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     vs->translated = TRUE;
 }
 
+boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
+{
+    struct r300_vertex_shader* vs = r300->vs;
+    int tex_output = r300->vs->wpos_tex_output;
+    uint32_t tex_fmt = R300_INPUT_CNTL_TC0 << tex_output;
+    uint32_t* hwfmt = vs->hwfmt;
 
-/* XXX get these to r300_reg */
-#define R300_PVS_DST_OPCODE(x)   ((x) << 0)
-#   define R300_VE_DOT_PRODUCT            1
-#   define R300_VE_MULTIPLY               2
-#   define R300_VE_ADD                    3
-#   define R300_VE_MAXIMUM                7
-#   define R300_VE_SET_LESS_THAN          10
-#define R300_PVS_DST_MATH_INST     (1 << 6)
-#   define R300_ME_RECIP_DX               6
-#define R300_PVS_DST_MACRO_INST    (1 << 7)
-#   define R300_PVS_MACRO_OP_2CLK_MADD    0
-#define R300_PVS_DST_REG_TYPE(x) ((x) << 8)
-#   define R300_PVS_DST_REG_TEMPORARY     0
-#   define R300_PVS_DST_REG_A0            1
-#   define R300_PVS_DST_REG_OUT           2
-#   define R300_PVS_DST_REG_OUT_REPL_X    3
-#   define R300_PVS_DST_REG_ALT_TEMPORARY 4
-#   define R300_PVS_DST_REG_INPUT         5
-#define R300_PVS_DST_OFFSET(x)   ((x) << 13)
-#define R300_PVS_DST_WE(x)       ((x) << 20)
-#define R300_PVS_DST_WE_XYZW     (0xf << 20)
+    if (r300->fs->inputs.wpos != ATTR_UNUSED) {
+        /* Enable WPOS in VAP. */
+        if (!(hwfmt[1] & tex_fmt)) {
+            hwfmt[1] |= tex_fmt;
+            hwfmt[3] |= (4 << (3 * tex_output));
 
-#define R300_PVS_SRC_REG_TYPE(x) ((x) << 0)
-#   define R300_PVS_SRC_REG_TEMPORARY     0
-#   define R300_PVS_SRC_REG_INPUT         1
-#   define R300_PVS_SRC_REG_CONSTANT      2
-#   define R300_PVS_SRC_REG_ALT_TEMPORARY 3
-#define R300_PVS_SRC_OFFSET(x)   ((x) << 5)
-#define R300_PVS_SRC_SWIZZLE(x)  ((x) << 13)
-#   define R300_PVS_SRC_SELECT_X          0
-#   define R300_PVS_SRC_SELECT_Y          1
-#   define R300_PVS_SRC_SELECT_Z          2
-#   define R300_PVS_SRC_SELECT_W          3
-#   define R300_PVS_SRC_SELECT_FORCE_0    4
-#   define R300_PVS_SRC_SELECT_FORCE_1    5
-#   define R300_PVS_SRC_SWIZZLE_XYZW \
-    ((R300_PVS_SRC_SELECT_X | (R300_PVS_SRC_SELECT_Y << 3) | \
-     (R300_PVS_SRC_SELECT_Z << 6) | (R300_PVS_SRC_SELECT_W << 9)) << 13)
-#   define R300_PVS_SRC_SWIZZLE_ZERO \
-    ((R300_PVS_SRC_SELECT_FORCE_0 | (R300_PVS_SRC_SELECT_FORCE_0 << 3) | \
-     (R300_PVS_SRC_SELECT_FORCE_0 << 6) | \
-      (R300_PVS_SRC_SELECT_FORCE_0 << 9)) << 13)
-#   define R300_PVS_SRC_SWIZZLE_ONE \
-    ((R300_PVS_SRC_SELECT_FORCE_1 | (R300_PVS_SRC_SELECT_FORCE_1 << 3) | \
-     (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
-      (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
-#define R300_PVS_MODIFIER_X        (1 << 25)
-#define R300_PVS_MODIFIER_Y        (1 << 26)
-#define R300_PVS_MODIFIER_Z        (1 << 27)
-#define R300_PVS_MODIFIER_W        (1 << 28)
-#define R300_PVS_NEGATE_XYZW \
-    (R300_PVS_MODIFIER_X | R300_PVS_MODIFIER_Y | \
-     R300_PVS_MODIFIER_Z | R300_PVS_MODIFIER_W)
-
-struct r300_vertex_program_code r300_passthrough_vertex_shader = {
-    .length = 8, /* two instructions */
-
-    /* MOV out[0], in[0] */
-    .body.d[0] = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(0) | R300_PVS_DST_WE_XYZW,
-    .body.d[1] = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(0) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .body.d[2] = R300_PVS_SRC_SWIZZLE_ZERO,
-    .body.d[3] = 0x0,
-
-    /* MOV out[1], in[1] */
-    .body.d[4] = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
-    .body.d[5] = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
-        R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
-    .body.d[6] = R300_PVS_SRC_SWIZZLE_ZERO,
-    .body.d[7] = 0x0,
-
-    .inputs[0] = 0,
-    .inputs[1] = 1,
-    .outputs[0] = 0,
-    .outputs[1] = 1,
-
-    .InputsRead = 3,
-    .OutputsWritten = 3
-};
-
+            assert(tex_output < 8);
+            return TRUE;
+        }
+    } else {
+        /* Disable WPOS in VAP. */
+        if (hwfmt[1] & tex_fmt) {
+            hwfmt[1] &= ~tex_fmt;
+            hwfmt[3] &= ~(4 << (3 * tex_output));
+            return TRUE;
+        }
+    }
+    return FALSE;
+}

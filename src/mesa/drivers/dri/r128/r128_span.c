@@ -50,8 +50,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreen *sPriv = rmesa->driScreen;			\
+   __DRIdrawable *dPriv = rmesa->driDrawable;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    GLuint p;								\
@@ -60,8 +60,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_DEPTH_VARS						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
    r128ScreenPtr r128scrn = rmesa->r128Screen;				\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreen *sPriv = rmesa->driScreen;			\
+   __DRIdrawable *dPriv = rmesa->driDrawable;			\
    GLuint height = dPriv->h;						\
    (void) r128scrn; (void) sPriv; (void) height
 
@@ -433,21 +433,19 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
 void
 r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         r128InitPointers_RGB565(&drb->Base);
-      }
-      else {
-         r128InitPointers_ARGB8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      r128InitPointers_RGB565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      r128InitPointers_ARGB8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       r128InitDepthPointers_z16(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (drb->Base.Format == MESA_FORMAT_S8_Z24) {
       r128InitDepthPointers_z24_s8(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (drb->Base.Format == MESA_FORMAT_S8) {
       radeonInitStencilPointers_z24_s8(&drb->Base);
    }
 }

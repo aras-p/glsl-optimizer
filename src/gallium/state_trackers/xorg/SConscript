@@ -13,6 +13,11 @@ if 'xorg' in env['statetrackers']:
 
     env.ParseConfig('pkg-config --cflags --libs xorg-server')
 
+    conf = env.Configure()
+
+    if conf.CheckHeader('X11/extensions/dpmsconst.h'):
+        env.Append(CPPDEFINES = [('HAVE_XEXTPROTO_71', '1')])
+
     st_xorg = env.ConvenienceLibrary(
 	target = 'st_xorg',
 	source = [ 'xorg_composite.c',
@@ -22,6 +27,8 @@ if 'xorg' in env['statetrackers']:
 		'xorg_exa.c',
 		'xorg_exa_tgsi.c',
 		'xorg_output.c',
+		'xorg_renderer.c',
+		'xorg_xv.c',
 		]
     )
     Export('st_xorg')

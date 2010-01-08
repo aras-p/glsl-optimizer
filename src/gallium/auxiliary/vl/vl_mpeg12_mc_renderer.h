@@ -62,6 +62,7 @@ struct vl_mpeg12_mc_renderer
    unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
+   struct pipe_scissor_state scissor;
    struct pipe_constant_buffer vs_const_buf;
    struct pipe_constant_buffer fs_const_buf;
    struct pipe_framebuffer_state fb_state;

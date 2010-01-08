@@ -47,6 +47,7 @@
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_gs_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -54,13 +55,12 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   c.need_ff_sync = BRW_IS_IGDNG(brw);
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
@@ -85,10 +85,10 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    switch (key->primitive) {
    case GL_QUADS:
-      brw_gs_quads( &c ); 
+      brw_gs_quads( &c, key );
       break;
    case GL_QUAD_STRIP:
-      brw_gs_quad_strip( &c );
+      brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
       brw_gs_lines( &c );
@@ -149,6 +149,7 @@ static const GLenum gs_prim[GL_POLYGON+1] = {
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
@@ -158,6 +159,9 @@ static void populate_key( struct brw_context *brw,
    key->primitive = gs_prim[brw->primitive];
 
    key->hint_gs_always = 0;	/* debug code? */
+   
+   /* _NEW_LIGHT */
+   key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
 
    key->need_gs_prog = (key->hint_gs_always ||
 			brw->primitive == GL_QUADS ||
@@ -193,7 +197,7 @@ static void prepare_gs_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_LIGHT,
       .brw   = BRW_NEW_PRIMITIVE,
       .cache = CACHE_NEW_VS_PROG
    },

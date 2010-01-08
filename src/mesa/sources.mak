@@ -15,6 +15,7 @@ MAIN_SOURCES = \
 	main/clear.c \
 	main/clip.c \
 	main/colortab.c \
+	main/condrender.c \
 	main/context.c \
 	main/convolve.c \
 	main/cpuinfo.c \
@@ -33,6 +34,7 @@ MAIN_SOURCES = \
 	main/feedback.c \
 	main/ffvertex_prog.c \
 	main/fog.c \
+	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
 	main/getstring.c \
@@ -55,6 +57,7 @@ MAIN_SOURCES = \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
+	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
 	main/shaders.c \
@@ -67,6 +70,7 @@ MAIN_SOURCES = \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
 	main/texenvprogram.c \
+	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
 	main/texgetimage.c \
@@ -77,6 +81,7 @@ MAIN_SOURCES = \
 	main/texstate.c \
 	main/texstore.c \
 	main/varray.c \
+	main/version.c \
 	main/viewport.c \
 	main/vtxfmt.c
 
@@ -187,8 +192,8 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_blit.c \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
+	state_tracker/st_cb_condrender.c \
 	state_tracker/st_cb_flush.c \
-	state_tracker/st_cb_get.c \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_feedback.c \
@@ -216,7 +221,6 @@ SHADER_SOURCES = \
 	shader/arbprogparse.c \
 	shader/arbprogram.c \
 	shader/atifragshader.c \
-	shader/grammar/grammar_mesa.c \
 	shader/hash_table.c \
 	shader/lex.yy.c \
 	shader/nvfragparse.c \
@@ -253,7 +257,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_link.c	\
 	shader/slang/slang_log.c	\
 	shader/slang/slang_mem.c	\
-	shader/slang/slang_preprocess.c	\
 	shader/slang/slang_print.c	\
 	shader/slang/slang_simplify.c	\
 	shader/slang/slang_storage.c	\
@@ -362,6 +365,12 @@ GLAPI_OBJECTS = \
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
+
+### Other archives/libraries
+
+GLSL_LIBS = \
+	$(TOP)/src/glsl/pp/libglslpp.a \
+	$(TOP)/src/glsl/cl/libglslcl.a
 
 
 ### Include directories

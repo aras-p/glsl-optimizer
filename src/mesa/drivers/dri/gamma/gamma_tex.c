@@ -1,21 +1,18 @@
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "main/glheader.h"
 #include "main/mtypes.h"
+#include "main/colormac.h"
 #include "main/imports.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
+#include "main/mm.h"
 #include "main/texstore.h"
-#include "teximage.h"
-#include "main/texformat.h"
-#include "texobj.h"
+#include "main/teximage.h"
+#include "main/texobj.h"
+
 #include "swrast/swrast.h"
 
-#include "main/mm.h"
 #include "gammacontext.h"
-#include "colormac.h"
 
 
 /*
@@ -148,7 +145,7 @@ static void gammaTexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      gammaSetTexBorderColor( gmesa, t, tObj->BorderColor );
+      gammaSetTexBorderColor( gmesa, t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -352,7 +349,7 @@ static void gammaBindTexture( GLcontext *ctx, GLenum target,
 
 	 gammaSetTexWrapping( t, tObj->WrapS, tObj->WrapT );
 	 gammaSetTexFilter( gmesa, t, tObj->MinFilter, tObj->MagFilter, bias );
-	 gammaSetTexBorderColor( gmesa, t, tObj->BorderColor );
+	 gammaSetTexBorderColor( gmesa, t, tObj->BorderColor.f );
       }
 }
 

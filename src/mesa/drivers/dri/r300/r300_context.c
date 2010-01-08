@@ -55,13 +55,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 
 #include "r300_context.h"
 #include "radeon_context.h"
 #include "radeon_span.h"
+#include "r300_blit.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
-#include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_swtcl.h"
@@ -90,10 +91,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
+void r300_init_texcopy_functions(struct dd_function_table *table);
 
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
@@ -145,7 +147,7 @@ const struct dri_extension card_extensions[] = {
 };
 
 
-const struct dri_extension mm_extensions[] = {
+static const struct dri_extension mm_extensions[] = {
   { "GL_EXT_framebuffer_blit",	GL_EXT_framebuffer_blit_functions },
   { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
   { NULL, NULL }
@@ -155,7 +157,7 @@ const struct dri_extension mm_extensions[] = {
  * The GL 2.0 functions are needed to make display lists work with
  * functions added by GL_ATI_separate_stencil.
  */
-const struct dri_extension gl_20_extension[] = {
+static const struct dri_extension gl_20_extension[] = {
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 };
 
@@ -439,11 +441,11 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (r300->options.stencil_two_side_disabled)
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
-	if (r300->options.s3tc_force_enabled) {
+	if (r300->options.s3tc_force_disabled) {
+		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+	} else if (ctx->Mesa_DXTn || r300->options.s3tc_force_enabled) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 		_mesa_enable_extension(ctx, "GL_S3_s3tc");
-	} else if (r300->options.s3tc_force_disabled) {
-		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
@@ -451,13 +453,20 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	}
 }
 
+static void r300InitIoctlFuncs(struct dd_function_table *functions)
+{
+	functions->Clear = _mesa_meta_Clear;
+	functions->Finish = radeonFinish;
+	functions->Flush = radeonFlush;
+}
+
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	r300ContextPtr r300;
@@ -483,6 +492,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
+
+	if (r300->radeon.radeonScreen->kernel_mm) {
+		r300_init_texcopy_functions(&functions);
+	}
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
@@ -530,6 +543,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 		r300InitSwtcl(ctx);
 	}
 
+	r300_blit_init(r300);
 	radeon_fbo_init(&r300->radeon);
 	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);

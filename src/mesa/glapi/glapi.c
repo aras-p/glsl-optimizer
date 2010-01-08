@@ -73,7 +73,6 @@
 #include "glapioffsets.h"
 #include "glapitable.h"
 
-
 /***** BEGIN NO-OP DISPATCH *****/
 
 static GLboolean WarnFlag = GL_FALSE;
@@ -97,22 +96,19 @@ _glapi_set_warning_func( _glapi_warning_func func )
    warning_func = func;
 }
 
-static GLboolean
-warn(void)
+static int
+warn(const char *func)
 {
 #if !defined(_WIN32_WCE)
    if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
        && warning_func) {
-      return GL_TRUE;
+      warning_func(NULL, "GL User Error: called without context: %s", func);
    }
-   else {
-      return GL_FALSE;
-   }
-#else
-   return GL_FALSE;
 #endif
+   return 0;
 }
 
+#ifdef DEBUG
 
 #define KEYWORD1 static
 #define KEYWORD1_ALT static
@@ -122,27 +118,34 @@ warn(void)
 #define F NULL
 
 #define DISPATCH(func, args, msg)					      \
-   if (warn()) {							      \
-      warning_func(NULL, "GL User Error: called without context: %s", #func); \
-   }
+   warn(#func);
 
 #define RETURN_DISPATCH(func, args, msg)				      \
-   if (warn()) {							      \
-      warning_func(NULL, "GL User Error: called without context: %s", #func); \
-   }									      \
-   return 0
+   return warn(#func);
+
+#define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
+
+#else
+
+static void
+NoOpGeneric(void)
+{
+   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+       && warning_func) {
+      warning_func(NULL, "GL User Error: calling GL function");
+   }
+}
+
+#define TABLE_ENTRY(name) (_glapi_proc) NoOpGeneric
+
+#endif
 
 #define DISPATCH_TABLE_NAME __glapi_noop_table
 #define UNUSED_TABLE_NAME __unused_noop_functions
 
-#define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
-
 static GLint NoOpUnused(void)
 {
-   if (warn()) {
-      warning_func(NULL, "GL User Error: calling extension function without a current context\n");
-   }
-   return 0;
+   return warn("extension function");
 }
 
 #include "glapitemp.h"
@@ -237,7 +240,7 @@ PUBLIC void *_glapi_Context = NULL;
  * We should call this periodically from a function such as glXMakeCurrent
  * in order to test if multiple threads are being used.
  */
-void
+PUBLIC void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS) && !defined(GLX_USE_TLS)

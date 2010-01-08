@@ -100,7 +100,7 @@ extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
 i915CreateContext(const __GLcontextModes * mesaVis,
-                  __DRIcontextPrivate * driContextPriv,
+                  __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
@@ -143,6 +143,9 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
    ctx->Const.MaxVarying = I915_TEX_UNITS;
+   ctx->Const.MaxCombinedTextureImageUnits =
+      ctx->Const.MaxVertexTextureImageUnits +
+      ctx->Const.MaxTextureImageUnits;
 
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:

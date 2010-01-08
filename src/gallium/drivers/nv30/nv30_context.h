@@ -13,10 +13,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv30_screen *ctx = nv30->screen
-#include "nouveau/nouveau_push.h"
+#include "nouveau/nouveau_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
 #include "nv30_state.h"
@@ -143,7 +140,6 @@ struct nv30_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	const unsigned *edgeflags;
 };
 
 static INLINE struct nv30_context *
@@ -183,6 +179,7 @@ extern void nv30_fragtex_bind(struct nv30_context *);
 /* nv30_state.c and friends */
 extern boolean nv30_state_validate(struct nv30_context *nv30);
 extern void nv30_state_emit(struct nv30_context *nv30);
+extern void nv30_state_flush_notify(struct nouveau_channel *chan);
 extern struct nv30_state_entry nv30_state_rasterizer;
 extern struct nv30_state_entry nv30_state_scissor;
 extern struct nv30_state_entry nv30_state_stipple;
@@ -197,9 +194,9 @@ extern struct nv30_state_entry nv30_state_fragtex;
 extern struct nv30_state_entry nv30_state_vbo;
 
 /* nv30_vbo.c */
-extern boolean nv30_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv30_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv30_draw_elements(struct pipe_context *pipe,
+extern void nv30_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,

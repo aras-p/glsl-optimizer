@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <assert.h>
@@ -103,10 +103,9 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
    /* XXX: Needs to match the drawable's format? */
    template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
    template.last_level = 0;
-   template.width[0] = width;
-   template.height[0] = height;
-   template.depth[0] = 1;
-   pf_get_block(template.format, &template.block);
+   template.width0 = width;
+   template.height0 = height;
+   template.depth0 = 1;
    template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
 
    tex = vpipe->screen->texture_create(vpipe->screen, &template);

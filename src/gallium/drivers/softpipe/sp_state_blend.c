@@ -29,6 +29,7 @@
  */
 
 #include "util/u_memory.h"
+#include "draw/draw_context.h"
 #include "sp_context.h"
 #include "sp_state.h"
 
@@ -44,6 +45,8 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
                                 void *blend )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   draw_flush(softpipe->draw);
 
    softpipe->blend = (struct pipe_blend_state *)blend;
 
@@ -61,6 +64,8 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
 			     const struct pipe_blend_color *blend_color )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   draw_flush(softpipe->draw);
 
    softpipe->blend_color = *blend_color;
 

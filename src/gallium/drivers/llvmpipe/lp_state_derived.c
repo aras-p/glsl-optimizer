@@ -50,7 +50,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
    struct vertex_info *vinfo = &llvmpipe->vertex_info;
-   const uint num = draw_num_vs_outputs(llvmpipe->draw);
+   const uint num = draw_num_shader_outputs(llvmpipe->draw);
    uint i;
 
    /* Tell setup to tell the draw module to simply emit the whole
@@ -123,9 +123,9 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
          /* Search for each input in current vs output:
           */
          inputs[i].src_index = 
-            draw_find_vs_output(llvmpipe->draw,
-                                lpfs->info.input_semantic_name[i],
-                                lpfs->info.input_semantic_index[i]);
+            draw_find_shader_output(llvmpipe->draw,
+                                    lpfs->info.input_semantic_name[i],
+                                    lpfs->info.input_semantic_index[i]);
       }
 
       lp_setup_set_fs_inputs(llvmpipe->setup, 
@@ -168,26 +168,6 @@ compute_cliprect(struct llvmpipe_context *lp)
       lp->cliprect.maxy = surfHeight;
    }
 }
-
-
-#if 0
-static void 
-update_culling(struct llvmpipe_context *lp)
-{
-   struct lp_setup_context *setup = lp->setup;
-
-   if (lp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
-       lp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
-       lp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
-      /* we'll do culling */
-      setup->winding = lp->rasterizer->cull_mode;
-   }
-   else {
-      /* 'draw' will do culling */
-      setup->winding = PIPE_WINDING_NONE;
-   }
-}
-#endif
 
 
 /* Hopefully this will remain quite simple, otherwise need to pull in

@@ -150,8 +150,9 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
 
 #ifdef GLX_DIRECT_RENDERING
       if (psc->driver_configs) {
-         for (unsigned int i = 0; psc->driver_configs[i]; i++)
-            free((__DRIconfig *) psc->driver_configs[i]);
+         unsigned int j;
+         for (j = 0; psc->driver_configs[j]; j++)
+            free((__DRIconfig *) psc->driver_configs[j]);
          free(psc->driver_configs);
          psc->driver_configs = NULL;
       }

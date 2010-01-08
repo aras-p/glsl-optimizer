@@ -169,11 +169,6 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
 
-   /* No need to send this incomplete program down to hardware:
-    *
-    * st_translate_fragment_program(ctx->st, stfp, NULL);
-    */
-
    return stfp;
 }
 
@@ -526,7 +521,7 @@ reset_cache(struct st_context *st)
    struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
-   //memset(cache->buffer, 0xff, sizeof(cache->buffer));
+   /*memset(cache->buffer, 0xff, sizeof(cache->buffer));*/
    cache->empty = GL_TRUE;
 
    cache->xmin = 1000000;

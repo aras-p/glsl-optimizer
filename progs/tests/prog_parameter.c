@@ -116,7 +116,7 @@ static int set_parameter_batch( GLsizei count, GLfloat * param,
 
 
    for ( i = 0 ; i < (4 * count) ; i++ ) {
-      param[i] = (GLfloat) random() / (GLfloat) random();
+      param[i] = (GLfloat) rand() / (GLfloat) rand();
    }
 
    /* Try using the "classic" interface.
@@ -153,7 +153,7 @@ static int set_parameter_batch( GLsizei count, GLfloat * param,
 
 
    for ( i = 0 ; i < (4 * count) ; i++ ) {
-      param[i] = (GLfloat) random() / (GLfloat) random();
+      param[i] = (GLfloat) rand() / (GLfloat) rand();
    }
 
    printf("Testing glProgram%sParameters4fvEXT (count = %u)...\n", name, count);
@@ -192,6 +192,7 @@ static void Init( void )
    GLfloat * params;
    GLint max_program_env_parameters;
    GLint max_program_local_parameters;
+   int i;
 
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
@@ -203,20 +204,20 @@ static void Init( void )
    }
 
 
-   program_local_parameter4fv = glutGetProcAddress( "glProgramLocalParameter4fvARB" );
-   program_env_parameter4fv = glutGetProcAddress( "glProgramEnvParameter4fvARB" );
+   program_local_parameter4fv = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC) glutGetProcAddress( "glProgramLocalParameter4fvARB" );
+   program_env_parameter4fv = (PFNGLPROGRAMENVPARAMETER4FVARBPROC) glutGetProcAddress( "glProgramEnvParameter4fvARB" );
 
-   get_program_local_parameterfv = glutGetProcAddress( "glGetProgramLocalParameterfvARB" );
-   get_program_env_parameterfv = glutGetProcAddress( "glGetProgramEnvParameterfvARB" );
+   get_program_local_parameterfv = (PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC) glutGetProcAddress( "glGetProgramLocalParameterfvARB" );
+   get_program_env_parameterfv = (PFNGLGETPROGRAMENVPARAMETERFVARBPROC) glutGetProcAddress( "glGetProgramEnvParameterfvARB" );
 
-   bind_program = glutGetProcAddress( "glBindProgramARB" );
-   get_program = glutGetProcAddress( "glGetProgramivARB" );
+   bind_program = (PFNGLBINDPROGRAMARBPROC) glutGetProcAddress( "glBindProgramARB" );
+   get_program = (PFNGLGETPROGRAMIVARBPROC) glutGetProcAddress( "glGetProgramivARB" );
 
    if ( glutExtensionSupported("GL_EXT_gpu_program_parameters") ) {
       printf("GL_EXT_gpu_program_parameters available, testing that path.\n");
 
-      program_local_parameters4fv = glutGetProcAddress( "glProgramLocalParameters4fvEXT" );
-      program_env_parameters4fv = glutGetProcAddress( "glProgramEnvParameters4fvEXT" );
+      program_local_parameters4fv = (PFNGLPROGRAMLOCALPARAMETERS4FVEXTPROC) glutGetProcAddress( "glProgramLocalParameters4fvEXT" );
+      program_env_parameters4fv = (PFNGLPROGRAMENVPARAMETERS4FVEXTPROC) glutGetProcAddress( "glProgramEnvParameters4fvEXT" );
    }
    else {
       printf("GL_EXT_gpu_program_parameters not available.\n");
@@ -237,6 +238,10 @@ static void Init( void )
 		  & max_program_env_parameters);
 
    params = malloc(max_program_env_parameters * 4 * sizeof(GLfloat));
+
+   for (i = 0; i < max_program_env_parameters * 4; i++) {
+      params[i] = 0.0F;
+   }
 
    pass &= set_parameter_batch(max_program_env_parameters, params, "Env",
 			       program_env_parameter4fv,

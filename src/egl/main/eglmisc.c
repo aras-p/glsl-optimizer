@@ -108,11 +108,12 @@ _eglQueryString(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name)
 
 
 EGLBoolean
-_eglWaitGL(_EGLDriver *drv, _EGLDisplay *dpy)
+_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
    /* just a placeholder */
    (void) drv;
    (void) dpy;
+   (void) ctx;
    return EGL_TRUE;
 }
 

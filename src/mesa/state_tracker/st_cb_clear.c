@@ -34,6 +34,7 @@
   */
 
 #include "main/glheader.h"
+#include "main/formats.h"
 #include "main/macros.h"
 #include "shader/prog_instruction.h"
 #include "st_context.h"
@@ -51,6 +52,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
@@ -230,13 +232,13 @@ clear_with_quad(GLcontext *ctx,
       blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
       blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       if (color) {
-         if (ctx->Color.ColorMask[0])
+         if (ctx->Color.ColorMask[0][0])
             blend.colormask |= PIPE_MASK_R;
-         if (ctx->Color.ColorMask[1])
+         if (ctx->Color.ColorMask[0][1])
             blend.colormask |= PIPE_MASK_G;
-         if (ctx->Color.ColorMask[2])
+         if (ctx->Color.ColorMask[0][2])
             blend.colormask |= PIPE_MASK_B;
-         if (ctx->Color.ColorMask[3])
+         if (ctx->Color.ColorMask[0][3])
             blend.colormask |= PIPE_MASK_A;
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
@@ -298,10 +300,10 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Height < rb->Height))
       return TRUE;
 
-   if (!ctx->Color.ColorMask[0] ||
-       !ctx->Color.ColorMask[1] ||
-       !ctx->Color.ColorMask[2] ||
-       !ctx->Color.ColorMask[3])
+   if (!ctx->Color.ColorMask[0][0] ||
+       !ctx->Color.ColorMask[0][1] ||
+       !ctx->Color.ColorMask[0][2] ||
+       !ctx->Color.ColorMask[0][3])
       return TRUE;
 
    return FALSE;
@@ -311,9 +313,13 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 static INLINE GLboolean
 check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   const GLuint stencilMax = 0xff;
    GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
+
+   assert(rb->Format == MESA_FORMAT_S8 ||
+          rb->Format == MESA_FORMAT_Z24_S8 ||
+          rb->Format == MESA_FORMAT_S8_Z24);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -336,7 +342,7 @@ static INLINE GLboolean
 check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
+   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -360,10 +366,14 @@ static INLINE GLboolean
 check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
-   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
+   const GLuint stencilMax = 0xff;
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
+
+   assert(rb->Format == MESA_FORMAT_S8 ||
+          rb->Format == MESA_FORMAT_Z24_S8 ||
+          rb->Format == MESA_FORMAT_S8_Z24);
 
    if (maskStencil) 
       return TRUE;

@@ -67,12 +67,15 @@ struct nv10_vbuf_render {
 
 void nv10_vtxbuf_bind( struct nv10_context* nv10 )
 {
+	struct nv10_screen *screen = nv10->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *celsius = screen->celsius;
 	int i;
 	for(i = 0; i < 8; i++) {
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
-		OUT_RING(0/*nv10->vtxbuf*/);
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
-		OUT_RING(0/*XXX*/);
+		BEGIN_RING(chan, celsius, NV10TCL_VTXBUF_ADDRESS(i), 1);
+		OUT_RING(chan, 0/*nv10->vtxbuf*/);
+		BEGIN_RING(chan, celsius, NV10TCL_VTXFMT(i), 1);
+		OUT_RING(chan, 0/*XXX*/);
 	}
 }
 
@@ -163,19 +166,22 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
+	struct nv10_screen *screen = nv10->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *celsius = screen->celsius;
 	int push, i;
 
 	nv10_emit_hw_state(nv10);
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
-	OUT_RELOCl(nv10_render->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
+	OUT_RELOCl(chan, nouveau_bo(nv10_render->buffer), 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
-	OUT_RING(nv10_render->hwprim);
+	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	OUT_RING(chan, nv10_render->hwprim);
 
 	if (nr_indices & 1) {
-		BEGIN_RING(celsius, NV10TCL_VB_ELEMENT_U32, 1);
-		OUT_RING  (indices[0]);
+		BEGIN_RING(chan, celsius, NV10TCL_VB_ELEMENT_U32, 1);
+		OUT_RING  (chan, indices[0]);
 		indices++; nr_indices--;
 	}
 
@@ -183,16 +189,16 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 		// XXX too big/small ? check the size
 		push = MIN2(nr_indices, 1200 * 2);
 
-		BEGIN_RING_NI(celsius, NV10TCL_VB_ELEMENT_U16, push >> 1);
+		BEGIN_RING_NI(chan, celsius, NV10TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)
-			OUT_RING((indices[i+1] << 16) | indices[i]);
+			OUT_RING(chan, (indices[i+1] << 16) | indices[i]);
 
 		nr_indices -= push;
 		indices  += push;
 	}
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
-	OUT_RING  (0);
+	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	OUT_RING  (chan, 0);
 }
 
 

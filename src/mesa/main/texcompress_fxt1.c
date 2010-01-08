@@ -37,8 +37,11 @@
 #include "image.h"
 #include "mipmap.h"
 #include "texcompress.h"
-#include "texformat.h"
+#include "texcompress_fxt1.h"
 #include "texstore.h"
+
+
+#if FEATURE_texture_fxt1
 
 
 static void
@@ -52,20 +55,10 @@ fxt1_decode_1 (const void *texture, GLint stride,
 
 
 /**
- * Called during context initialization.
+ * Store user's image in rgb_fxt1 format.
  */
-void
-_mesa_init_texture_fxt1( GLcontext *ctx )
-{
-   (void) ctx;
-}
-
-
-/**
- * Called via TexFormat->StoreImage to store an RGB_FXT1 texture.
- */
-static GLboolean
-texstore_rgb_fxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -73,7 +66,7 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
    const GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgb_fxt1);
+   ASSERT(dstFormat == MESA_FORMAT_RGB_FXT1);
    ASSERT(dstXoffset % 8 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset     == 0);
@@ -87,7 +80,7 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
       /* convert image to RGB/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                             _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -105,7 +98,7 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
 
    fxt1_encode(srcWidth, srcHeight, 3, pixels, srcRowStride,
@@ -119,10 +112,10 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
 
 
 /**
- * Called via TexFormat->StoreImage to store an RGBA_FXT1 texture.
+ * Store user's image in rgba_fxt1 format.
  */
-static GLboolean
-texstore_rgba_fxt1(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 {
    const GLchan *pixels;
    GLint srcRowStride;
@@ -130,7 +123,7 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
    GLint texWidth = dstRowStride * 8 / 16; /* a bit of a hack */
    const GLchan *tempImage = NULL;
 
-   ASSERT(dstFormat == &_mesa_texformat_rgba_fxt1);
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_FXT1);
    ASSERT(dstXoffset % 8 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset     == 0);
@@ -144,7 +137,7 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
       /* convert image to RGBA/GLchan */
       tempImage = _mesa_make_temp_chan_image(ctx, dims,
                                              baseInternalFormat,
-                                             dstFormat->BaseFormat,
+                                             _mesa_get_format_base_format(dstFormat),
                                              srcWidth, srcHeight, srcDepth,
                                              srcFormat, srcType, srcAddr,
                                              srcPacking);
@@ -162,7 +155,7 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
    }
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat->MesaFormat,
+                                        dstFormat,
                                         texWidth, (GLubyte *) dstAddr);
 
    fxt1_encode(srcWidth, srcHeight, 4, pixels, srcRowStride,
@@ -175,18 +168,9 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
 }
 
 
-static void
-fetch_texel_2d_rgba_fxt1( const struct gl_texture_image *texImage,
-                          GLint i, GLint j, GLint k, GLchan *texel )
-{
-   (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
-}
-
-
-static void
-fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -199,19 +183,9 @@ fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
-fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
-                         GLint i, GLint j, GLint k, GLchan *texel )
-{
-   (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
-   texel[ACOMP] = 255;
-}
-
-
-static void
-fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
-                           GLint i, GLint j, GLint k, GLfloat *texel )
+void
+_mesa_fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
@@ -223,55 +197,6 @@ fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-const struct gl_texture_format _mesa_texformat_rgb_fxt1 = {
-   MESA_FORMAT_RGB_FXT1,		/* MesaFormat */
-   GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   4, /*approx*/			/* RedBits */
-   4, /*approx*/			/* GreenBits */
-   4, /*approx*/			/* BlueBits */
-   0,					/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   0,					/* DepthBits */
-   0,					/* StencilBits */
-   0,					/* TexelBytes */
-   texstore_rgb_fxt1,			/* StoreTexImageFunc */
-   NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgb_fxt1, 		/* FetchTexel2D */
-   NULL, /*impossible*/ 		/* FetchTexel3D */
-   NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgb_fxt1, 		/* FetchTexel2Df */
-   NULL, /*impossible*/ 		/* FetchTexel3Df */
-   NULL					/* StoreTexel */
-};
-
-const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
-   MESA_FORMAT_RGBA_FXT1,		/* MesaFormat */
-   GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   4, /*approx*/			/* RedBits */
-   4, /*approx*/			/* GreenBits */
-   4, /*approx*/			/* BlueBits */
-   1, /*approx*/			/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   0,					/* DepthBits */
-   0,					/* StencilBits */
-   0,					/* TexelBytes */
-   texstore_rgba_fxt1,			/* StoreTexImageFunc */
-   NULL, /*impossible*/ 		/* FetchTexel1D */
-   fetch_texel_2d_rgba_fxt1, 		/* FetchTexel2D */
-   NULL, /*impossible*/ 		/* FetchTexel3D */
-   NULL, /*impossible*/ 		/* FetchTexel1Df */
-   fetch_texel_2d_f_rgba_fxt1, 		/* FetchTexel2Df */
-   NULL, /*impossible*/ 		/* FetchTexel3Df */
-   NULL					/* StoreTexel */
-};
 
 
 /***************************************************************************\
@@ -1722,3 +1647,6 @@ fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
 
    decode_1[mode](code, t, rgba);
 }
+
+
+#endif /* FEATURE_texture_fxt1 */

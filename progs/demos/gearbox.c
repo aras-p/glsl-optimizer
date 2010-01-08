@@ -474,10 +474,10 @@ visible(int vis)
 int
 main(int argc, char *argv[])
 {
+   glutInitWindowSize(WinWidth, WinHeight);
    glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 
-   glutInitWindowSize(WinWidth, WinHeight);
    Win = glutCreateWindow("gearbox");
    init(argc, argv);
 

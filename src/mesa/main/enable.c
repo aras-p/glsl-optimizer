@@ -55,46 +55,47 @@
 static void
 client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 {
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint flag;
    GLboolean *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Vertex.Enabled;
+         var = &arrayObj->Vertex.Enabled;
          flag = _NEW_ARRAY_VERTEX;
          break;
       case GL_NORMAL_ARRAY:
-         var = &ctx->Array.ArrayObj->Normal.Enabled;
+         var = &arrayObj->Normal.Enabled;
          flag = _NEW_ARRAY_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &ctx->Array.ArrayObj->Color.Enabled;
+         var = &arrayObj->Color.Enabled;
          flag = _NEW_ARRAY_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Index.Enabled;
+         var = &arrayObj->Index.Enabled;
          flag = _NEW_ARRAY_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
+         var = &arrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
          flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &ctx->Array.ArrayObj->EdgeFlag.Enabled;
+         var = &arrayObj->EdgeFlag.Enabled;
          flag = _NEW_ARRAY_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->FogCoord.Enabled;
+         var = &arrayObj->FogCoord.Enabled;
          flag = _NEW_ARRAY_FOGCOORD;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->SecondaryColor.Enabled;
+         var = &arrayObj->SecondaryColor.Enabled;
          flag = _NEW_ARRAY_COLOR1;
          break;
 
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
-         var = &ctx->Array.ArrayObj->PointSize.Enabled;
+         var = &arrayObj->PointSize.Enabled;
          flag = _NEW_ARRAY_POINT_SIZE;
          break;
 #endif
@@ -120,7 +121,7 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
             ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
-            var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
+            var = &arrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
@@ -277,10 +278,13 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Eval.AutoNormal = state;
          break;
       case GL_BLEND:
-         if (ctx->Color.BlendEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_COLOR);
-         ctx->Color.BlendEnabled = state;
+         {
+            GLbitfield newEnabled = state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
+            if (newEnabled != ctx->Color.BlendEnabled) {
+               FLUSH_VERTICES(ctx, _NEW_COLOR);
+               ctx->Color.BlendEnabled = newEnabled;
+            }
+         }
          break;
 #if FEATURE_userclip
       case GL_CLIP_PLANE0:
@@ -1019,6 +1023,84 @@ _mesa_Disable( GLenum cap )
 }
 
 
+
+/**
+ * Enable/disable an indexed state var.
+ */
+void
+_mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
+{
+   ASSERT(state == 0 || state == 1);
+   switch (cap) {
+   case GL_BLEND:
+      if (!ctx->Extensions.EXT_draw_buffers2) {
+         goto bad_cap_error;
+      }
+      if (index >= ctx->Const.MaxDrawBuffers) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
+                     state ? "glEnableIndexed" : "glDisableIndexed", index);
+         return;
+      }
+      if (((ctx->Color.BlendEnabled >> index) & 1) != state) {
+         FLUSH_VERTICES(ctx, _NEW_COLOR);
+         if (state)
+            ctx->Color.BlendEnabled |= (1 << index);
+         else
+            ctx->Color.BlendEnabled &= ~(1 << index);
+      }
+      break;
+   default:
+      goto bad_cap_error;
+   }
+   return;
+
+bad_cap_error:
+    _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
+                state ? "glEnablei" : "glDisablei",
+                _mesa_lookup_enum_by_nr(cap));
+}
+
+
+void GLAPIENTRY
+_mesa_DisableIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   _mesa_set_enablei(ctx, cap, index, GL_FALSE);
+}
+
+
+void GLAPIENTRY
+_mesa_EnableIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   _mesa_set_enablei(ctx, cap, index, GL_TRUE);
+}
+
+
+GLboolean GLAPIENTRY
+_mesa_IsEnabledIndexed( GLenum cap, GLuint index )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   switch (cap) {
+   case GL_BLEND:
+      if (index >= ctx->Const.MaxDrawBuffers) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glIsEnabledIndexed(index=%u)",
+                     index);
+         return GL_FALSE;
+      }
+      return (ctx->Color.BlendEnabled >> index) & 1;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabledIndexed(cap=%s)",
+                  _mesa_lookup_enum_by_nr(cap));
+      return GL_FALSE;
+   }
+}
+
+
+
+
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME)			\
    if (!ctx->Extensions.EXTNAME) {			\
@@ -1065,7 +1147,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_AUTO_NORMAL:
 	 return ctx->Eval.AutoNormal;
       case GL_BLEND:
-         return ctx->Color.BlendEnabled;
+         return ctx->Color.BlendEnabled & 1;  /* return state for buffer[0] */
       case GL_CLIP_PLANE0:
       case GL_CLIP_PLANE1:
       case GL_CLIP_PLANE2:

@@ -51,6 +51,7 @@ static void release_tmps( struct brw_clip_compile *c )
 void brw_clip_tri_alloc_regs( struct brw_clip_compile *c, 
 			      GLuint nr_verts )
 {
+   struct intel_context *intel = &c->func.brw->intel;
    GLuint i = 0,j;
 
    /* Register usage is static, precompute here:
@@ -78,7 +79,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       for (j = 0; j < 3; j++) {
 	 GLuint delta = c->nr_attrs*16 + 32;
 
-         if (BRW_IS_IGDNG(c->func.brw))
+         if (intel->is_ironlake)
              delta = c->nr_attrs * 16 + 32 * 3;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
@@ -119,7 +120,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       i++;
    }
 
-   if (c->need_ff_sync) {
+   if (intel->needs_ff_sync) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }
@@ -188,14 +189,20 @@ void brw_clip_tri_flat_shade( struct brw_clip_compile *c )
 	   brw_imm_ud(_3DPRIM_POLYGON));
 
    is_poly = brw_IF(p, BRW_EXECUTE_1);
-   {   
+   {
       brw_clip_copy_colors(c, 1, 0);
       brw_clip_copy_colors(c, 2, 0);
    }
    is_poly = brw_ELSE(p, is_poly);
    {
-      brw_clip_copy_colors(c, 0, 2);
-      brw_clip_copy_colors(c, 1, 2);
+      if (c->key.pv_first) {
+         brw_clip_copy_colors(c, 1, 0);
+         brw_clip_copy_colors(c, 2, 0);
+      }
+      else {
+         brw_clip_copy_colors(c, 0, 2);
+         brw_clip_copy_colors(c, 1, 2);
+      }
    }
    brw_ENDIF(p, is_poly);
 }
@@ -565,6 +572,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 {
    struct brw_instruction *neg_rhw;
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    brw_clip_tri_alloc_regs(c, 3 + c->key.nr_userclip + 6);
    brw_clip_tri_init_vertices(c);
    brw_clip_init_clipmask(c);
@@ -572,7 +580,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (BRW_IS_965(p->brw)) {
+   if (brw->has_negative_rhw_bug) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));

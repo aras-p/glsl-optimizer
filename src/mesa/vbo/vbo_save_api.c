@@ -270,7 +270,7 @@ static void _save_compile_vertex_list( GLcontext *ctx )
     * being compiled.
     */
    node = (struct vbo_save_vertex_list *)
-      _mesa_alloc_instruction(ctx, save->opcode_vertex_list, sizeof(*node));
+      _mesa_dlist_alloc(ctx, save->opcode_vertex_list, sizeof(*node));
 
    if (!node)
       return;
@@ -1233,11 +1233,11 @@ void vbo_save_api_init( struct vbo_save_context *save )
    GLuint i;
 
    save->opcode_vertex_list =
-      _mesa_alloc_opcode( ctx,
-			  sizeof(struct vbo_save_vertex_list),
-			  vbo_save_playback_vertex_list,
-			  vbo_destroy_vertex_list,
-			  vbo_print_vertex_list );
+      _mesa_dlist_alloc_opcode( ctx,
+                                sizeof(struct vbo_save_vertex_list),
+                                vbo_save_playback_vertex_list,
+                                vbo_destroy_vertex_list,
+                                vbo_print_vertex_list );
 
    ctx->Driver.NotifySaveBegin = vbo_save_NotifyBegin;
 

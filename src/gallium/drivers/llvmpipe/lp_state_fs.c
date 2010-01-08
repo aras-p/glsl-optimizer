@@ -149,6 +149,20 @@ generate_depth(LLVMBuilderRef builder,
    format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
 
+   /*
+    * Depths are expected to be between 0 and 1, even if they are stored in
+    * floats. Setting these bits here will ensure that the lp_build_conv() call
+    * below won't try to unnecessarily clamp the incoming values.
+    */
+   if(src_type.floating) {
+      src_type.sign = FALSE;
+      src_type.norm = TRUE;
+   }
+   else {
+      assert(!src_type.sign);
+      assert(src_type.norm);
+   }
+
    /* Pick the depth type. */
    dst_type = lp_depth_type(format_desc, src_type.width*src_type.length);
 
@@ -156,14 +170,11 @@ generate_depth(LLVMBuilderRef builder,
    assert(dst_type.width == src_type.width);
    assert(dst_type.length == src_type.length);
 
-#if 1
-   src = lp_build_clamped_float_to_unsigned_norm(builder,
-                                                 src_type,
-                                                 dst_type.width,
-                                                 src);
-#else
    lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
-#endif
+
+   dst_ptr = LLVMBuildBitCast(builder,
+                              dst_ptr,
+                              LLVMPointerType(lp_build_vec_type(dst_type), 0), "");
 
    lp_build_depth_test(builder,
                        &key->depth,
@@ -505,6 +516,7 @@ generate_fragment(struct llvmpipe_context *lp,
    if (LP_DEBUG & DEBUG_JIT) {
       tgsi_dump(shader->base.tokens, 0);
       if(key->depth.enabled) {
+         debug_printf("depth.format = %s\n", pf_name(key->zsbuf_format));
          debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
          debug_printf("depth.writemask = %u\n", key->depth.writemask);
       }
@@ -517,13 +529,40 @@ generate_fragment(struct llvmpipe_context *lp,
       }
       else if(key->blend.blend_enable) {
          debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
-         debug_printf("blend.rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
-         debug_printf("blend.rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
-         debug_printf("blend.alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
-         debug_printf("blend.alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
-         debug_printf("blend.alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
+         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
+         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
+         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
+         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
+         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
       }
       debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
+      for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
+         if(key->sampler[i].format) {
+            debug_printf("sampler[%u] = \n", i);
+            debug_printf("  .format = %s\n",
+                         pf_name(key->sampler[i].format));
+            debug_printf("  .target = %s\n",
+                         debug_dump_tex_target(key->sampler[i].target, TRUE));
+            debug_printf("  .pot = %u %u %u\n",
+                         key->sampler[i].pot_width,
+                         key->sampler[i].pot_height,
+                         key->sampler[i].pot_depth);
+            debug_printf("  .wrap = %s %s %s\n",
+                         debug_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
+                         debug_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
+                         debug_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
+            debug_printf("  .min_img_filter = %s\n",
+                         debug_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
+            debug_printf("  .min_mip_filter = %s\n",
+                         debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
+            debug_printf("  .mag_img_filter = %s\n",
+                         debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
+            if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
+               debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
+            debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
+            debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
+         }
+      }
    }
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
@@ -702,10 +741,12 @@ generate_fragment(struct llvmpipe_context *lp,
     * Translate the LLVM IR into machine code.
     */
 
+#ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
       LLVMDumpValue(variant->function);
-      abort();
+      assert(0);
    }
+#endif
 
    LLVMRunFunctionPassManager(screen->pass, variant->function);
 
@@ -751,7 +792,12 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   llvmpipe->fs = (struct lp_fragment_shader *) fs;
+   if (llvmpipe->fs == fs)
+      return;
+
+   draw_flush(llvmpipe->draw);
+
+   llvmpipe->fs = fs;
 
    llvmpipe->dirty |= LP_NEW_FS;
 }
@@ -766,6 +812,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct lp_fragment_shader_variant *variant;
 
    assert(fs != llvmpipe->fs);
+   (void) llvmpipe;
 
    variant = shader->variants;
    while(variant) {
@@ -804,14 +851,14 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    if(llvmpipe->constants[shader].buffer == buffer)
       return;
 
-   if(shader == PIPE_SHADER_VERTEX)
-      draw_flush(llvmpipe->draw);
+   draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
    pipe_buffer_reference(&llvmpipe->constants[shader].buffer, buffer);
 
    if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(llvmpipe->draw, data, size);
+      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX,
+                                      data, size);
    }
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;

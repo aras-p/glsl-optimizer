@@ -55,6 +55,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLbitfield rasterMask = 0;
+   GLuint i;
 
    if (ctx->Color.AlphaEnabled)           rasterMask |= ALPHATEST_BIT;
    if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
@@ -63,8 +64,15 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
    if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
    if (ctx->Visual.rgbMode) {
-      const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-      if (colorMask != 0xffffffff)        rasterMask |= MASKING_BIT;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         if (!ctx->Color.ColorMask[i][0] ||
+             !ctx->Color.ColorMask[i][1] ||
+             !ctx->Color.ColorMask[i][2] ||
+             !ctx->Color.ColorMask[i][3]) {
+            rasterMask |= MASKING_BIT;
+            break;
+         }
+      }
       if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
       if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    }
@@ -92,12 +100,22 @@ _swrast_update_rasterflags( GLcontext *ctx )
       /* more than one color buffer designated for writing (or zero buffers) */
       rasterMask |= MULTI_DRAW_BIT;
    }
-   else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {
-      rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
-   }
    else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
       rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
+
+   if (ctx->Visual.rgbMode) {
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         if (ctx->Color.ColorMask[i][0] +
+             ctx->Color.ColorMask[i][1] +
+             ctx->Color.ColorMask[i][2] +
+             ctx->Color.ColorMask[i][3] == 0) {
+            rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
+            break;
+         }
+      }
+   }
+
 
    if (ctx->FragmentProgram._Current) {
       rasterMask |= FRAGPROG_BIT;

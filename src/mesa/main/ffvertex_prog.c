@@ -357,7 +357,7 @@ static struct ureg get_temp( struct tnl_program *p )
    int bit = _mesa_ffs( ~p->temp_in_use );
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)
@@ -438,7 +438,7 @@ static struct ureg register_input( struct tnl_program *p, GLuint input )
  */
 static struct ureg register_output( struct tnl_program *p, GLuint output )
 {
-   p->program->Base.OutputsWritten |= (1<<output);
+   p->program->Base.OutputsWritten |= BITFIELD64_BIT(output);
    return make_ureg(PROGRAM_OUTPUT, output);
 }
 
@@ -523,7 +523,6 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->CondMask = COND_TR;  /* always pass cond test */
    dst->CondSwizzle = SWIZZLE_NOOP;
    dst->CondSrc = 0;
-   dst->pad = 0;
    /* Check that bitfield sizes aren't exceeded */
    ASSERT(dst->Index == reg.idx);
 }

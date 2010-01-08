@@ -140,9 +140,9 @@
  */
 #define UNCLAMPED_FLOAT_TO_RGB_CHAN(dst, f)	\
 do {						\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[0], (f)[0]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[1], (f)[1]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[2], (f)[2]);	\
 } while (0)
 
 
@@ -156,10 +156,10 @@ do {						\
  */
 #define UNCLAMPED_FLOAT_TO_RGBA_CHAN(dst, f)	\
 do {						\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
-   UNCLAMPED_FLOAT_TO_CHAN(dst[3], f[3]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[0], (f)[0]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[1], (f)[1]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[2], (f)[2]);	\
+   UNCLAMPED_FLOAT_TO_CHAN((dst)[3], (f)[3]);	\
 } while (0)
 
 
@@ -209,6 +209,12 @@ do {						\
 
 #define PACK_COLOR_88_REV( L, A )					\
    (((A) << 8) | (L))
+
+#define PACK_COLOR_1616( L, A )						\
+   (((L) << 16) | (A))
+
+#define PACK_COLOR_1616_REV( L, A )					\
+   (((A) << 16) | (L))
 
 #define PACK_COLOR_332( R, G, B )					\
    (((R) & 0xe0) | (((G) & 0xe0) >> 3) | (((B) & 0xc0) >> 6))

@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include "glapi/glapi.h"
-#include "main/texformat.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -127,7 +126,7 @@ i830_render_start(struct intel_context *intel)
 
       for (i = 0; i < I830_TEX_UNITS; i++) {
          if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_TEX(i))) {
-            GLuint sz = VB->TexCoordPtr[i]->size;
+            GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
             GLuint emit;
             GLuint mcs = (i830->state.Tex[i][I830_TEXREG_MCS] &
                           ~TEXCOORDTYPE_MASK);
@@ -299,7 +298,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(29, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(29);
 
    OUT_BATCH(_3DSTATE_DFLT_DIFFUSE_CMD);
    OUT_BATCH(0);
@@ -367,7 +366,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit( intel, state, size )			\
-   intel_batchbuffer_data(intel->batch, state, size, IGNORE_CLIPRECTS )
+   intel_batchbuffer_data(intel->batch, state, size )
 
 static GLuint
 get_dirty(struct i830_hw_state *state)
@@ -430,13 +429,9 @@ i830_emit_state(struct intel_context *intel)
     * It might be better to talk about explicit places where
     * scheduling is allowed, rather than assume that it is whenever a
     * batchbuffer fills up.
-    *
-    * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
-    * will be emitted under.
     */
    intel_batchbuffer_require_space(intel->batch,
-				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
-				   LOOP_CLIPRECTS);
+				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE);
    count = 0;
  again:
    aper_count = 0;
@@ -492,17 +487,14 @@ i830_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I830_UPLOAD_BUFFERS) {
-      GLuint count = 9; 
+      GLuint count = 15;
 
       DBG("I830_UPLOAD_BUFFERS:\n");
 
       if (state->depth_region)
           count += 3;
 
-      if (intel->constant_cliprect)
-          count += 6;
-
-      BEGIN_BATCH(count, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -524,15 +516,13 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I830_DESTREG_SR2]);
 
-      if (intel->constant_cliprect) {
-	 assert(state->Buffer[I830_DESTREG_DRAWRECT0] != MI_NOOP);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT0]);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT1]);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT2]);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT3]);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT4]);
-	 OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT5]);
-      }
+      assert(state->Buffer[I830_DESTREG_DRAWRECT0] != MI_NOOP);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT0]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT1]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT2]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT3]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT4]);
+      OUT_BATCH(state->Buffer[I830_DESTREG_DRAWRECT5]);
       ADVANCE_BATCH();
    }
    
@@ -545,7 +535,7 @@ i830_emit_state(struct intel_context *intel)
       if ((dirty & I830_UPLOAD_TEX(i))) {
          DBG("I830_UPLOAD_TEX(%d):\n", i);
 
-         BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1, IGNORE_CLIPRECTS);
+         BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0LI]);
 
          if (state->tex_buffer[i]) {
@@ -646,8 +636,9 @@ i830_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
 
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
+      case MESA_FORMAT_XRGB8888:
 	 value |= DV_PF_8888;
 	 break;
       case MESA_FORMAT_RGB565:
@@ -661,7 +652,7 @@ i830_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->Base.Format);
       }
    }
 
@@ -673,23 +664,14 @@ i830_state_draw_region(struct intel_context *intel,
    }
    state->Buffer[I830_DESTREG_DV1] = value;
 
-   if (intel->constant_cliprect) {
-      state->Buffer[I830_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
-      state->Buffer[I830_DESTREG_DRAWRECT1] = 0;
-      state->Buffer[I830_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
-      state->Buffer[I830_DESTREG_DRAWRECT3] =
-	 (ctx->DrawBuffer->Width & 0xffff) |
-	 (ctx->DrawBuffer->Height << 16);
-      state->Buffer[I830_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
-      state->Buffer[I830_DESTREG_DRAWRECT5] = 0;
-   } else {
-      state->Buffer[I830_DESTREG_DRAWRECT0] = MI_NOOP;
-      state->Buffer[I830_DESTREG_DRAWRECT1] = MI_NOOP;
-      state->Buffer[I830_DESTREG_DRAWRECT2] = MI_NOOP;
-      state->Buffer[I830_DESTREG_DRAWRECT3] = MI_NOOP;
-      state->Buffer[I830_DESTREG_DRAWRECT4] = MI_NOOP;
-      state->Buffer[I830_DESTREG_DRAWRECT5] = MI_NOOP;
-   }
+   state->Buffer[I830_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
+   state->Buffer[I830_DESTREG_DRAWRECT1] = 0;
+   state->Buffer[I830_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
+   state->Buffer[I830_DESTREG_DRAWRECT3] =
+      (ctx->DrawBuffer->Width & 0xffff) |
+      (ctx->DrawBuffer->Height << 16);
+   state->Buffer[I830_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
+   state->Buffer[I830_DESTREG_DRAWRECT5] = 0;
 
    I830_STATECHANGE(i830, I830_UPLOAD_BUFFERS);
 
@@ -714,19 +696,7 @@ i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
 }
-
-
-
-static GLuint
-i830_flush_cmd(void)
-{
-   return MI_FLUSH | FLUSH_MAP_CACHE;
-}
-
 
 static void 
 i830_assert_not_dirty( struct intel_context *intel )
@@ -753,7 +723,6 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;
    i830->intel.vtbl.set_draw_region = i830_set_draw_region;
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
-   i830->intel.vtbl.flush_cmd = i830_flush_cmd;
    i830->intel.vtbl.render_start = i830_render_start;
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;

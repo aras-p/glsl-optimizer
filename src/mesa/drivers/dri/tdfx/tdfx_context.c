@@ -68,13 +68,13 @@
 #define need_GL_EXT_paletted_texture
 /* #define need_GL_EXT_secondary_color */
 /* #define need_GL_NV_vertex_program */
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 
 /**
  * Common extension strings exported by all cards
  */
-const struct dri_extension card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
@@ -107,7 +107,7 @@ const struct dri_extension card_extensions[] =
 /**
  * Extension strings exported only by Naplam (e.g., Voodoo4 & Voodoo5) cards.
  */
-const struct dri_extension napalm_extensions[] =
+static const struct dri_extension napalm_extensions[] =
 {
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
@@ -165,12 +165,12 @@ static const struct dri_debug_control debug_control[] =
 };
 
 GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
-			     __DRIcontextPrivate *driContextPriv,
+			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {
    tdfxContextPtr fxMesa;
    GLcontext *ctx, *shareCtx;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
 					      sizeof(drm_sarea_t));
@@ -441,7 +441,7 @@ static GLboolean tdfxInitVertexFormats( tdfxContextPtr fxMesa )
  * Initialize the state in an tdfxContextPtr struct.
  */
 static GLboolean
-tdfxInitContext( __DRIdrawablePrivate *driDrawPriv, tdfxContextPtr fxMesa )
+tdfxInitContext( __DRIdrawable *driDrawPriv, tdfxContextPtr fxMesa )
 {
    /* KW: Would be nice to make one of these a member of the other.
     */
@@ -563,7 +563,7 @@ tdfxInitContext( __DRIdrawablePrivate *driDrawPriv, tdfxContextPtr fxMesa )
 
 
 void
-tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
+tdfxDestroyContext( __DRIcontext *driContextPriv )
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) driContextPriv->driverPrivate;
 
@@ -607,7 +607,7 @@ tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
 
 
 GLboolean
-tdfxUnbindContext( __DRIcontextPrivate *driContextPriv )
+tdfxUnbindContext( __DRIcontext *driContextPriv )
 {
    GET_CURRENT_CONTEXT(ctx);
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
@@ -626,9 +626,9 @@ tdfxUnbindContext( __DRIcontextPrivate *driContextPriv )
 
 
 GLboolean
-tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv )
+tdfxMakeCurrent( __DRIcontext *driContextPriv,
+                 __DRIdrawable *driDrawPriv,
+                 __DRIdrawable *driReadPriv )
 {
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)driContextPriv );

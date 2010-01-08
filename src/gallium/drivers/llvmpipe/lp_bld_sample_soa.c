@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Texture sampling.
+ * Texture sampling -- SoA.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -35,52 +35,21 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
+#include "util/u_debug_dump.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_format.h"
+#include "util/u_cpu_detect.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
+#include "lp_bld_conv.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
+#include "lp_bld_pack.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
-
-
-void
-lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_texture *texture,
-                        const struct pipe_sampler_state *sampler)
-{
-   memset(state, 0, sizeof *state);
-
-   if(!texture)
-      return;
-
-   if(!sampler)
-      return;
-
-   state->format            = texture->format;
-   state->target            = texture->target;
-   state->pot_width         = util_is_pot(texture->width[0]);
-   state->pot_height        = util_is_pot(texture->height[0]);
-   state->pot_depth         = util_is_pot(texture->depth[0]);
-
-   state->wrap_s            = sampler->wrap_s;
-   state->wrap_t            = sampler->wrap_t;
-   state->wrap_r            = sampler->wrap_r;
-   state->min_img_filter    = sampler->min_img_filter;
-   state->min_mip_filter    = sampler->min_mip_filter;
-   state->mag_img_filter    = sampler->mag_img_filter;
-   if(sampler->compare_mode) {
-      state->compare_mode      = sampler->compare_mode;
-      state->compare_func      = sampler->compare_func;
-   }
-   state->normalized_coords = sampler->normalized_coords;
-   state->prefilter         = sampler->prefilter;
-}
-
 
 
 /**
@@ -111,66 +80,61 @@ struct lp_build_sample_context
 
 
 static void
-lp_build_sample_texel(struct lp_build_sample_context *bld,
-                      LLVMValueRef x,
-                      LLVMValueRef y,
-                      LLVMValueRef y_stride,
-                      LLVMValueRef data_ptr,
-                      LLVMValueRef *texel)
+lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
+                          LLVMValueRef x,
+                          LLVMValueRef y,
+                          LLVMValueRef y_stride,
+                          LLVMValueRef data_ptr,
+                          LLVMValueRef *texel)
 {
-   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   LLVMValueRef x_stride;
+   LLVMValueRef offset;
+   LLVMValueRef packed;
+
+   offset = lp_build_sample_offset(&bld->int_coord_bld,
+                                   bld->format_desc,
+                                   x, y, y_stride,
+                                   data_ptr);
+
+   assert(bld->format_desc->block.width == 1);
+   assert(bld->format_desc->block.height == 1);
+   assert(bld->format_desc->block.bits <= bld->texel_type.width);
+
+   packed = lp_build_gather(bld->builder,
+                            bld->texel_type.length,
+                            bld->format_desc->block.bits,
+                            bld->texel_type.width,
+                            data_ptr, offset);
+
+   lp_build_unpack_rgba_soa(bld->builder,
+                            bld->format_desc,
+                            bld->texel_type,
+                            packed, texel);
+}
+
+
+static LLVMValueRef
+lp_build_sample_packed(struct lp_build_sample_context *bld,
+                       LLVMValueRef x,
+                       LLVMValueRef y,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef data_ptr)
+{
    LLVMValueRef offset;
 
-   x_stride = lp_build_const_scalar(bld->int_coord_type, bld->format_desc->block.bits/8);
+   offset = lp_build_sample_offset(&bld->int_coord_bld,
+                                   bld->format_desc,
+                                   x, y, y_stride,
+                                   data_ptr);
 
-   if(bld->format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-      LLVMValueRef x_lo, x_hi;
-      LLVMValueRef y_lo, y_hi;
-      LLVMValueRef x_stride_lo, x_stride_hi;
-      LLVMValueRef y_stride_lo, y_stride_hi;
-      LLVMValueRef x_offset_lo, x_offset_hi;
-      LLVMValueRef y_offset_lo, y_offset_hi;
-      LLVMValueRef offset_lo, offset_hi;
+   assert(bld->format_desc->block.width == 1);
+   assert(bld->format_desc->block.height == 1);
+   assert(bld->format_desc->block.bits <= bld->texel_type.width);
 
-      x_lo = LLVMBuildAnd(bld->builder, x, int_coord_bld->one, "");
-      y_lo = LLVMBuildAnd(bld->builder, y, int_coord_bld->one, "");
-
-      x_hi = LLVMBuildLShr(bld->builder, x, int_coord_bld->one, "");
-      y_hi = LLVMBuildLShr(bld->builder, y, int_coord_bld->one, "");
-
-      x_stride_lo = x_stride;
-      y_stride_lo = lp_build_const_scalar(bld->int_coord_type, 2*bld->format_desc->block.bits/8);
-
-      x_stride_hi = lp_build_const_scalar(bld->int_coord_type, 4*bld->format_desc->block.bits/8);
-      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, int_coord_bld->one, "");
-
-      x_offset_lo = lp_build_mul(int_coord_bld, x_lo, x_stride_lo);
-      y_offset_lo = lp_build_mul(int_coord_bld, y_lo, y_stride_lo);
-      offset_lo = lp_build_add(int_coord_bld, x_offset_lo, y_offset_lo);
-
-      x_offset_hi = lp_build_mul(int_coord_bld, x_hi, x_stride_hi);
-      y_offset_hi = lp_build_mul(int_coord_bld, y_hi, y_stride_hi);
-      offset_hi = lp_build_add(int_coord_bld, x_offset_hi, y_offset_hi);
-
-      offset = lp_build_add(int_coord_bld, offset_hi, offset_lo);
-   }
-   else {
-      LLVMValueRef x_offset;
-      LLVMValueRef y_offset;
-
-      x_offset = lp_build_mul(int_coord_bld, x, x_stride);
-      y_offset = lp_build_mul(int_coord_bld, y, y_stride);
-
-      offset = lp_build_add(int_coord_bld, x_offset, y_offset);
-   }
-
-   lp_build_load_rgba_soa(bld->builder,
-                          bld->format_desc,
-                          bld->texel_type,
-                          data_ptr,
-                          offset,
-                          texel);
+   return lp_build_gather(bld->builder,
+                          bld->texel_type.length,
+                          bld->format_desc->block.bits,
+                          bld->texel_type.width,
+                          data_ptr, offset);
 }
 
 
@@ -208,7 +172,8 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       /* FIXME */
-      _debug_printf("warning: failed to translate texture wrap mode %u\n", wrap_mode);
+      _debug_printf("warning: failed to translate texture wrap mode %s\n",
+                    debug_dump_tex_wrap(wrap_mode, TRUE));
       coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
       coord = lp_build_min(int_coord_bld, coord, length_minus_one);
       break;
@@ -240,7 +205,7 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
    x = lp_build_sample_wrap(bld, x, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y = lp_build_sample_wrap(bld, y, height, bld->static_state->pot_height, bld->static_state->wrap_t);
 
-   lp_build_sample_texel(bld, x, y, stride, data_ptr, texel);
+   lp_build_sample_texel_soa(bld, x, y, stride, data_ptr, texel);
 }
 
 
@@ -286,10 +251,10 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
 
-   lp_build_sample_texel(bld, x0, y0, stride, data_ptr, neighbors[0][0]);
-   lp_build_sample_texel(bld, x1, y0, stride, data_ptr, neighbors[0][1]);
-   lp_build_sample_texel(bld, x0, y1, stride, data_ptr, neighbors[1][0]);
-   lp_build_sample_texel(bld, x1, y1, stride, data_ptr, neighbors[1][1]);
+   lp_build_sample_texel_soa(bld, x0, y0, stride, data_ptr, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, x1, y0, stride, data_ptr, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, x0, y1, stride, data_ptr, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, x1, y1, stride, data_ptr, neighbors[1][1]);
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
@@ -304,6 +269,217 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
 
 
 static void
+lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
+                          struct lp_type dst_type,
+                          LLVMValueRef packed,
+                          LLVMValueRef *rgba)
+{
+   LLVMValueRef mask = lp_build_int_const_scalar(dst_type, 0xff);
+   unsigned chan;
+
+   /* Decode the input vector components */
+   for (chan = 0; chan < 4; ++chan) {
+      unsigned start = chan*8;
+      unsigned stop = start + 8;
+      LLVMValueRef input;
+
+      input = packed;
+
+      if(start)
+         input = LLVMBuildLShr(builder, input, lp_build_int_const_scalar(dst_type, start), "");
+
+      if(stop < 32)
+         input = LLVMBuildAnd(builder, input, mask, "");
+
+      input = lp_build_unsigned_norm_to_float(builder, 8, dst_type, input);
+
+      rgba[chan] = input;
+   }
+}
+
+
+static void
+lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
+                              LLVMValueRef s,
+                              LLVMValueRef t,
+                              LLVMValueRef width,
+                              LLVMValueRef height,
+                              LLVMValueRef stride,
+                              LLVMValueRef data_ptr,
+                              LLVMValueRef *texel)
+{
+   LLVMBuilderRef builder = bld->builder;
+   struct lp_build_context i32, h16, u8n;
+   LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
+   LLVMValueRef i32_c8, i32_c128, i32_c255;
+   LLVMValueRef s_ipart, s_fpart, s_fpart_lo, s_fpart_hi;
+   LLVMValueRef t_ipart, t_fpart, t_fpart_lo, t_fpart_hi;
+   LLVMValueRef x0, x1;
+   LLVMValueRef y0, y1;
+   LLVMValueRef neighbors[2][2];
+   LLVMValueRef neighbors_lo[2][2];
+   LLVMValueRef neighbors_hi[2][2];
+   LLVMValueRef packed, packed_lo, packed_hi;
+   LLVMValueRef unswizzled[4];
+
+   lp_build_context_init(&i32, builder, lp_type_int(32));
+   lp_build_context_init(&h16, builder, lp_type_ufixed(16));
+   lp_build_context_init(&u8n, builder, lp_type_unorm(8));
+
+   i32_vec_type = lp_build_vec_type(i32.type);
+   h16_vec_type = lp_build_vec_type(h16.type);
+   u8n_vec_type = lp_build_vec_type(u8n.type);
+
+   s = lp_build_mul_imm(&bld->coord_bld, s, 256);
+   t = lp_build_mul_imm(&bld->coord_bld, t, 256);
+
+   s = LLVMBuildFPToSI(builder, s, i32_vec_type, "");
+   t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
+
+   i32_c128 = lp_build_int_const_scalar(i32.type, -128);
+   s = LLVMBuildAdd(builder, s, i32_c128, "");
+   t = LLVMBuildAdd(builder, t, i32_c128, "");
+
+   i32_c8 = lp_build_int_const_scalar(i32.type, 8);
+   s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
+   t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
+
+   i32_c255 = lp_build_int_const_scalar(i32.type, 255);
+   s_fpart = LLVMBuildAnd(builder, s, i32_c255, "");
+   t_fpart = LLVMBuildAnd(builder, t, i32_c255, "");
+
+   x0 = s_ipart;
+   y0 = t_ipart;
+
+   x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
+   y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
+
+   x1 = lp_build_add(&bld->int_coord_bld, x0, bld->int_coord_bld.one);
+   y1 = lp_build_add(&bld->int_coord_bld, y0, bld->int_coord_bld.one);
+
+   x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
+   y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
+
+   /*
+    * Transform 4 x i32 in
+    *
+    *   s_fpart = {s0, s1, s2, s3}
+    *
+    * into 8 x i16
+    *
+    *   s_fpart = {00, s0, 00, s1, 00, s2, 00, s3}
+    *
+    * into two 8 x i16
+    *
+    *   s_fpart_lo = {s0, s0, s0, s0, s1, s1, s1, s1}
+    *   s_fpart_hi = {s2, s2, s2, s2, s3, s3, s3, s3}
+    *
+    * and likewise for t_fpart. There is no risk of loosing precision here
+    * since the fractional parts only use the lower 8bits.
+    */
+
+   s_fpart = LLVMBuildBitCast(builder, s_fpart, h16_vec_type, "");
+   t_fpart = LLVMBuildBitCast(builder, t_fpart, h16_vec_type, "");
+
+   {
+      LLVMTypeRef elem_type = LLVMInt32Type();
+      LLVMValueRef shuffles_lo[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef shuffles_hi[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef shuffle_lo;
+      LLVMValueRef shuffle_hi;
+      unsigned i, j;
+
+      for(j = 0; j < h16.type.length; j += 4) {
+         unsigned subindex = util_cpu_caps.little_endian ? 0 : 1;
+         LLVMValueRef index;
+
+         index = LLVMConstInt(elem_type, j/2 + subindex, 0);
+         for(i = 0; i < 4; ++i)
+            shuffles_lo[j + i] = index;
+
+         index = LLVMConstInt(elem_type, h16.type.length/2 + j/2 + subindex, 0);
+         for(i = 0; i < 4; ++i)
+            shuffles_hi[j + i] = index;
+      }
+
+      shuffle_lo = LLVMConstVector(shuffles_lo, h16.type.length);
+      shuffle_hi = LLVMConstVector(shuffles_hi, h16.type.length);
+
+      s_fpart_lo = LLVMBuildShuffleVector(builder, s_fpart, h16.undef, shuffle_lo, "");
+      t_fpart_lo = LLVMBuildShuffleVector(builder, t_fpart, h16.undef, shuffle_lo, "");
+      s_fpart_hi = LLVMBuildShuffleVector(builder, s_fpart, h16.undef, shuffle_hi, "");
+      t_fpart_hi = LLVMBuildShuffleVector(builder, t_fpart, h16.undef, shuffle_hi, "");
+   }
+
+   /*
+    * Fetch the pixels as 4 x 32bit (rgba order might differ):
+    *
+    *   rgba0 rgba1 rgba2 rgba3
+    *
+    * bit cast them into 16 x u8
+    *
+    *   r0 g0 b0 a0 r1 g1 b1 a1 r2 g2 b2 a2 r3 g3 b3 a3
+    *
+    * unpack them into two 8 x i16:
+    *
+    *   r0 g0 b0 a0 r1 g1 b1 a1
+    *   r2 g2 b2 a2 r3 g3 b3 a3
+    *
+    * The higher 8 bits of the resulting elements will be zero.
+    */
+
+   neighbors[0][0] = lp_build_sample_packed(bld, x0, y0, stride, data_ptr);
+   neighbors[0][1] = lp_build_sample_packed(bld, x1, y0, stride, data_ptr);
+   neighbors[1][0] = lp_build_sample_packed(bld, x0, y1, stride, data_ptr);
+   neighbors[1][1] = lp_build_sample_packed(bld, x1, y1, stride, data_ptr);
+
+   neighbors[0][0] = LLVMBuildBitCast(builder, neighbors[0][0], u8n_vec_type, "");
+   neighbors[0][1] = LLVMBuildBitCast(builder, neighbors[0][1], u8n_vec_type, "");
+   neighbors[1][0] = LLVMBuildBitCast(builder, neighbors[1][0], u8n_vec_type, "");
+   neighbors[1][1] = LLVMBuildBitCast(builder, neighbors[1][1], u8n_vec_type, "");
+
+   lp_build_unpack2(builder, u8n.type, h16.type, neighbors[0][0], &neighbors_lo[0][0], &neighbors_hi[0][0]);
+   lp_build_unpack2(builder, u8n.type, h16.type, neighbors[0][1], &neighbors_lo[0][1], &neighbors_hi[0][1]);
+   lp_build_unpack2(builder, u8n.type, h16.type, neighbors[1][0], &neighbors_lo[1][0], &neighbors_hi[1][0]);
+   lp_build_unpack2(builder, u8n.type, h16.type, neighbors[1][1], &neighbors_lo[1][1], &neighbors_hi[1][1]);
+
+   /*
+    * Linear interpolate with 8.8 fixed point.
+    */
+
+   packed_lo = lp_build_lerp_2d(&h16,
+                                s_fpart_lo, t_fpart_lo,
+                                neighbors_lo[0][0],
+                                neighbors_lo[0][1],
+                                neighbors_lo[1][0],
+                                neighbors_lo[1][1]);
+
+   packed_hi = lp_build_lerp_2d(&h16,
+                                s_fpart_hi, t_fpart_hi,
+                                neighbors_hi[0][0],
+                                neighbors_hi[0][1],
+                                neighbors_hi[1][0],
+                                neighbors_hi[1][1]);
+
+   packed = lp_build_pack2(builder, h16.type, u8n.type, packed_lo, packed_hi);
+
+   /*
+    * Convert to SoA and swizzle.
+    */
+
+   packed = LLVMBuildBitCast(builder, packed, i32_vec_type, "");
+
+   lp_build_rgba8_to_f32_soa(bld->builder,
+                             bld->texel_type,
+                             packed, unswizzled);
+
+   lp_build_format_swizzle_soa(bld->format_desc,
+                               bld->texel_type, unswizzled,
+                               texel);
+}
+
+
+static void
 lp_build_sample_compare(struct lp_build_sample_context *bld,
                         LLVMValueRef p,
                         LLVMValueRef *texel)
@@ -312,7 +488,7 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    LLVMValueRef res;
    unsigned chan;
 
-   if(!bld->static_state->compare_mode)
+   if(bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
 
    /* TODO: Compare before swizzling, to avoid redundant computations */
@@ -401,8 +577,10 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       lp_build_sample_2d_nearest_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
-      lp_build_sample_2d_linear_soa(&bld, s, t, width, height, stride, data_ptr, texel);
+      if(lp_format_is_rgba8(bld.format_desc))
+         lp_build_sample_2d_linear_aos(&bld, s, t, width, height, stride, data_ptr, texel);
+      else
+         lp_build_sample_2d_linear_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
    default:
       assert(0);

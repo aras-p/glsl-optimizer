@@ -42,13 +42,13 @@
 #include <GL/glut.h>
 #include <stdlib.h>
 
-void init(void) 
+static void init(void) 
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_FLAT);
 }
 
-void draw_triangle(void)
+static void draw_triangle(void)
 {
    glBegin (GL_LINE_LOOP);
    glVertex2f(0.0, 25.0);
@@ -57,7 +57,7 @@ void draw_triangle(void)
    glEnd();
 }
 
-void display(void)
+static void display(void)
 {
    glClear (GL_COLOR_BUFFER_BIT);
    glColor3f (1.0, 1.0, 1.0);
@@ -86,7 +86,7 @@ void display(void)
    glFlush ();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode (GL_PROJECTION);
@@ -101,7 +101,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

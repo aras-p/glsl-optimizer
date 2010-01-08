@@ -4011,6 +4011,11 @@ KEYWORD1 void KEYWORD2 NAME(RenderbufferStorageMultisample)(GLenum target, GLsiz
    DISPATCH(RenderbufferStorageMultisample, (target, samples, internalformat, width, height), (F, "glRenderbufferStorageMultisample(0x%x, %d, 0x%x, %d, %d);\n", target, samples, internalformat, width, height));
 }
 
+KEYWORD1 void KEYWORD2 NAME(RenderbufferStorageMultisampleEXT)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+   DISPATCH(RenderbufferStorageMultisample, (target, samples, internalformat, width, height), (F, "glRenderbufferStorageMultisampleEXT(0x%x, %d, 0x%x, %d, %d);\n", target, samples, internalformat, width, height));
+}
+
 KEYWORD1 void KEYWORD2 NAME(FlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length)
 {
    DISPATCH(FlushMappedBufferRange, (target, offset, length), (F, "glFlushMappedBufferRange(0x%x, %d, %d);\n", target, offset, length));
@@ -5672,6 +5677,46 @@ KEYWORD1 void KEYWORD2 NAME(FramebufferTextureLayerEXT)(GLenum target, GLenum at
    DISPATCH(FramebufferTextureLayerEXT, (target, attachment, texture, level, layer), (F, "glFramebufferTextureLayerEXT(0x%x, 0x%x, %d, %d, %d);\n", target, attachment, texture, level, layer));
 }
 
+KEYWORD1 void KEYWORD2 NAME(ColorMaskIndexedEXT)(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a)
+{
+   DISPATCH(ColorMaskIndexedEXT, (buf, r, g, b, a), (F, "glColorMaskIndexedEXT(%d, %d, %d, %d, %d);\n", buf, r, g, b, a));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DisableIndexedEXT)(GLenum target, GLuint index)
+{
+   DISPATCH(DisableIndexedEXT, (target, index), (F, "glDisableIndexedEXT(0x%x, %d);\n", target, index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EnableIndexedEXT)(GLenum target, GLuint index)
+{
+   DISPATCH(EnableIndexedEXT, (target, index), (F, "glEnableIndexedEXT(0x%x, %d);\n", target, index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBooleanIndexedvEXT)(GLenum value, GLuint index, GLboolean * data)
+{
+   DISPATCH(GetBooleanIndexedvEXT, (value, index, data), (F, "glGetBooleanIndexedvEXT(0x%x, %d, %p);\n", value, index, (const void *) data));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetIntegerIndexedvEXT)(GLenum value, GLuint index, GLint * data)
+{
+   DISPATCH(GetIntegerIndexedvEXT, (value, index, data), (F, "glGetIntegerIndexedvEXT(0x%x, %d, %p);\n", value, index, (const void *) data));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsEnabledIndexedEXT)(GLenum target, GLuint index)
+{
+   RETURN_DISPATCH(IsEnabledIndexedEXT, (target, index), (F, "glIsEnabledIndexedEXT(0x%x, %d);\n", target, index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BeginConditionalRenderNV)(GLuint query, GLenum mode)
+{
+   DISPATCH(BeginConditionalRenderNV, (query, mode), (F, "glBeginConditionalRenderNV(%d, 0x%x);\n", query, mode));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EndConditionalRenderNV)(void)
+{
+   DISPATCH(EndConditionalRenderNV, (), (F, "glEndConditionalRenderNV();\n"));
+}
+
 KEYWORD1 void KEYWORD2 NAME(ProvokingVertexEXT)(GLenum mode)
 {
    DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertexEXT(0x%x);\n", mode));
@@ -5682,51 +5727,51 @@ KEYWORD1 void KEYWORD2 NAME(ProvokingVertex)(GLenum mode)
    DISPATCH(ProvokingVertexEXT, (mode), (F, "glProvokingVertex(0x%x);\n", mode));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_796)(GLenum target, GLenum pname, GLvoid ** params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_788)(GLenum target, GLenum pname, GLvoid ** params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_796)(GLenum target, GLenum pname, GLvoid ** params)
 {
    DISPATCH(GetTexParameterPointervAPPLE, (target, pname, params), (F, "glGetTexParameterPointervAPPLE(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_789)(GLenum target, GLsizei length, GLvoid * pointer);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_797)(GLenum target, GLsizei length, GLvoid * pointer);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_789)(GLenum target, GLsizei length, GLvoid * pointer)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_797)(GLenum target, GLsizei length, GLvoid * pointer)
 {
    DISPATCH(TextureRangeAPPLE, (target, length, pointer), (F, "glTextureRangeAPPLE(0x%x, %d, %p);\n", target, length, (const void *) pointer));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_790)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_798)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_790)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_798)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
 {
    DISPATCH(StencilFuncSeparateATI, (frontfunc, backfunc, ref, mask), (F, "glStencilFuncSeparateATI(0x%x, 0x%x, %d, %d);\n", frontfunc, backfunc, ref, mask));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_791)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_799)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_791)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_799)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_792)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_800)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_792)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_800)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_793)(GLuint id, GLenum pname, GLint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLuint id, GLenum pname, GLint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_793)(GLuint id, GLenum pname, GLint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLuint id, GLenum pname, GLint64EXT * params)
 {
    DISPATCH(GetQueryObjecti64vEXT, (id, pname, params), (F, "glGetQueryObjecti64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_794)(GLuint id, GLenum pname, GLuint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLuint id, GLenum pname, GLuint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_794)(GLuint id, GLenum pname, GLuint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLuint id, GLenum pname, GLuint64EXT * params)
 {
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
@@ -6532,14 +6577,22 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(_dispatch_stub_784),
    TABLE_ENTRY(_dispatch_stub_785),
    TABLE_ENTRY(FramebufferTextureLayerEXT),
+   TABLE_ENTRY(ColorMaskIndexedEXT),
+   TABLE_ENTRY(DisableIndexedEXT),
+   TABLE_ENTRY(EnableIndexedEXT),
+   TABLE_ENTRY(GetBooleanIndexedvEXT),
+   TABLE_ENTRY(GetIntegerIndexedvEXT),
+   TABLE_ENTRY(IsEnabledIndexedEXT),
+   TABLE_ENTRY(BeginConditionalRenderNV),
+   TABLE_ENTRY(EndConditionalRenderNV),
    TABLE_ENTRY(ProvokingVertexEXT),
-   TABLE_ENTRY(_dispatch_stub_788),
-   TABLE_ENTRY(_dispatch_stub_789),
-   TABLE_ENTRY(_dispatch_stub_790),
-   TABLE_ENTRY(_dispatch_stub_791),
-   TABLE_ENTRY(_dispatch_stub_792),
-   TABLE_ENTRY(_dispatch_stub_793),
-   TABLE_ENTRY(_dispatch_stub_794),
+   TABLE_ENTRY(_dispatch_stub_796),
+   TABLE_ENTRY(_dispatch_stub_797),
+   TABLE_ENTRY(_dispatch_stub_798),
+   TABLE_ENTRY(_dispatch_stub_799),
+   TABLE_ENTRY(_dispatch_stub_800),
+   TABLE_ENTRY(_dispatch_stub_801),
+   TABLE_ENTRY(_dispatch_stub_802),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
@@ -6837,6 +6890,7 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetAttribLocation),
    TABLE_ENTRY(DrawBuffers),
    TABLE_ENTRY(DrawBuffersATI),
+   TABLE_ENTRY(RenderbufferStorageMultisampleEXT),
    TABLE_ENTRY(PointParameterf),
    TABLE_ENTRY(PointParameterfARB),
    TABLE_ENTRY(PointParameterfv),

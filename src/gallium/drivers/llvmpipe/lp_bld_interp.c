@@ -143,32 +143,6 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
 
 
 /**
- * Small vector x scale multiplication optimization.
- *
- * TODO: Should be elsewhere.
- */
-static LLVMValueRef
-coeff_multiply(struct lp_build_interp_soa_context *bld,
-               LLVMValueRef coeff,
-               int step)
-{
-   LLVMValueRef factor;
-
-   switch(step) {
-   case 0:
-      return bld->base.zero;
-   case 1:
-      return coeff;
-   case 2:
-      return lp_build_add(&bld->base, coeff, coeff);
-   default:
-      factor = lp_build_const_scalar(bld->base.type, (double)step);
-      return lp_build_mul(&bld->base, coeff, factor);
-   }
-}
-
-
-/**
  * Emit LLVM code to compute the fragment shader input attribute values.
  * For example, for a color input, we'll compute red, green, blue and alpha
  * values for the four pixels in a quad.
@@ -378,8 +352,8 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
             unsigned first, last, mask;
             unsigned attrib;
 
-            first = decl->DeclarationRange.First;
-            last = decl->DeclarationRange.Last;
+            first = decl->Range.First;
+            last = decl->Range.Last;
             mask = decl->Declaration.UsageMask;
 
             for( attrib = first; attrib <= last; ++attrib ) {

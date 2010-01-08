@@ -59,7 +59,7 @@ GLUnurbsObj *theNurb;
  *  Initializes the control points of the surface to a small hill.
  *  The control points range from -3 to +3 in x, y, and z
  */
-void init_surface(void)
+static void init_surface(void)
 {
    int u, v;
    for (u = 0; u < 4; u++) {
@@ -75,7 +75,7 @@ void init_surface(void)
    }
 }
 
-void nurbsError(GLenum errorCode)
+static void nurbsError(GLenum errorCode)
 {
    const GLubyte *estring;
 
@@ -86,7 +86,7 @@ void nurbsError(GLenum errorCode)
 			
 /*  Initialize material property and depth buffer.
  */
-void init(void)
+static void init(void)
 {
    GLfloat mat_diffuse[] = { 0.7, 0.7, 0.7, 1.0 };
    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -112,7 +112,7 @@ void init(void)
                     (GLvoid (CALLBACK*) ()) nurbsError);
 }
 
-void display(void)
+static void display(void)
 {
    GLfloat knots[8] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0};
    GLfloat edgePt[5][2] = /* counter clockwise */
@@ -147,7 +147,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -160,7 +160,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

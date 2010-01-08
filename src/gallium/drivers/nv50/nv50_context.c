@@ -33,13 +33,6 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-
-	/* We need this in the ddx for reliable composite, not sure what we're
-	 * actually flushing. We generate all our own flushes with flags = 0. */
-	WAIT_RING(chan, 2);
-	BEGIN_RING(chan, eng2d, 0x0110, 1);
-	OUT_RING  (chan, 0);
 
 	if (flags & PIPE_FLUSH_FRAME)
 		FIRE_RING(chan);
@@ -50,38 +43,43 @@ nv50_destroy(struct pipe_context *pipe)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
+        if (nv50->state.fb)
+		so_ref(NULL, &nv50->state.fb);
+	if (nv50->state.blend)
+		so_ref(NULL, &nv50->state.blend);
+	if (nv50->state.blend_colour)
+		so_ref(NULL, &nv50->state.blend_colour);
+	if (nv50->state.zsa)
+		so_ref(NULL, &nv50->state.zsa);
+	if (nv50->state.rast)
+		so_ref(NULL, &nv50->state.rast);
+	if (nv50->state.stipple)
+		so_ref(NULL, &nv50->state.stipple);
+	if (nv50->state.scissor)
+		so_ref(NULL, &nv50->state.scissor);
+	if (nv50->state.viewport)
+		so_ref(NULL, &nv50->state.viewport);
+	if (nv50->state.tsc_upload)
+		so_ref(NULL, &nv50->state.tsc_upload);
+	if (nv50->state.tic_upload)
+		so_ref(NULL, &nv50->state.tic_upload);
+	if (nv50->state.vertprog)
+		so_ref(NULL, &nv50->state.vertprog);
+	if (nv50->state.fragprog)
+		so_ref(NULL, &nv50->state.fragprog);
+	if (nv50->state.programs)
+		so_ref(NULL, &nv50->state.programs);
+	if (nv50->state.vtxfmt)
+		so_ref(NULL, &nv50->state.vtxfmt);
+	if (nv50->state.vtxbuf)
+		so_ref(NULL, &nv50->state.vtxbuf);
+	if (nv50->state.vtxattr)
+		so_ref(NULL, &nv50->state.vtxattr);
+
 	draw_destroy(nv50->draw);
 	FREE(nv50);
 }
 
-
-static void
-nv50_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-}
-
-static unsigned int
-nv50_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-nv50_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 struct pipe_context *
 nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
@@ -101,15 +99,14 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv50->pipe.destroy = nv50_destroy;
 
-	nv50->pipe.set_edgeflags = nv50_set_edgeflags;
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
 	nv50->pipe.draw_elements = nv50_draw_elements;
 	nv50->pipe.clear = nv50_clear;
 
 	nv50->pipe.flush = nv50_flush;
 
-	nv50->pipe.is_texture_referenced = nv50_is_texture_referenced;
-	nv50->pipe.is_buffer_referenced = nv50_is_buffer_referenced;
+	nv50->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nv50->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	screen->base.channel->user_private = nv50;
 	screen->base.channel->flush_notify = nv50_state_flush_notify;

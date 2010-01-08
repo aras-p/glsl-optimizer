@@ -40,6 +40,24 @@
 #include "r700_vertprog.h"
 
 
+static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *cache)
+{
+	struct r700_vertex_program *tmp, *vp = cache->progs;
+
+	while (vp) {
+		tmp = vp->next;
+		/* Release DMA region */
+		r600DeleteShader(ctx, vp->shaderbo);
+		/* Clean up */
+		Clean_Up_Assembler(&(vp->r700AsmCode));
+		Clean_Up_Shader(&(vp->r700Shader));
+		
+		_mesa_reference_vertprog(ctx, &vp->mesa_program, NULL);
+		_mesa_free(vp);
+		vp = tmp;
+	}
+}
+
 static struct gl_program *r700NewProgram(GLcontext * ctx, 
                                          GLenum target,
 					                     GLuint id)
@@ -84,8 +102,7 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 
 static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
-    struct r700_vertex_program_cont   * vpc;
-    struct r700_vertex_program *vp, *tmp;
+    struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
     struct r700_fragment_program * fp;
 
 	radeon_print(RADEON_SHADER, RADEON_VERBOSE,
@@ -95,20 +112,7 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-        vpc = (struct r700_vertex_program_cont*)prog;
-        vp = vpc->progs;
-	while (vp) {
-		tmp = vp->next;
-		/* Release DMA region */
-	 
-	        r600DeleteShader(ctx, vp->shaderbo);
-
-	        /* Clean up */
-	        Clean_Up_Assembler(&(vp->r700AsmCode));
-	        Clean_Up_Shader(&(vp->r700Shader));
-		_mesa_free(vp);
-		vp = tmp;
-	}
+	    freeVertProgCache(ctx, vpc);
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
@@ -131,7 +135,24 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 static void
 r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
+	struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
+	struct r700_fragment_program * fp = (struct r700_fragment_program*)prog;
 
+	switch (target) {
+	case GL_VERTEX_PROGRAM_ARB:
+		freeVertProgCache(ctx, vpc);
+		vpc->progs = NULL;
+		break;
+	case GL_FRAGMENT_PROGRAM_ARB:
+		r600DeleteShader(ctx, fp->shaderbo);
+		Clean_Up_Assembler(&(fp->r700AsmCode));
+		Clean_Up_Shader(&(fp->r700Shader));
+		fp->translated = GL_FALSE;
+		fp->loaded     = GL_FALSE;
+		fp->shaderbo   = NULL;
+		break;
+	}
+		
 }
 
 static GLboolean r700IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)

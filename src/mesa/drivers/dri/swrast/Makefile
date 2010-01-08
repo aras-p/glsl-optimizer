@@ -21,4 +21,3 @@ SWRAST_COMMON_SOURCES = \
 
 include ../Makefile.template
 
-symlinks:

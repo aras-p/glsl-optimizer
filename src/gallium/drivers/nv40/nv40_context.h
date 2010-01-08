@@ -13,10 +13,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv40_screen *ctx = nv40->screen
-#include "nouveau/nouveau_push.h"
+#include "nouveau/nouveau_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
 #include "nv40_state.h"
@@ -158,7 +155,6 @@ struct nv40_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	const unsigned *edgeflags;
 };
 
 static INLINE struct nv40_context *
@@ -183,7 +179,7 @@ extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
-extern boolean nv40_draw_elements_swtnl(struct pipe_context *pipe,
+extern void nv40_draw_elements_swtnl(struct pipe_context *pipe,
 					struct pipe_buffer *idxbuf,
 					unsigned ib_size, unsigned mode,
 					unsigned start, unsigned count);
@@ -203,6 +199,7 @@ extern void nv40_fragtex_bind(struct nv40_context *);
 extern boolean nv40_state_validate(struct nv40_context *nv40);
 extern boolean nv40_state_validate_swtnl(struct nv40_context *nv40);
 extern void nv40_state_emit(struct nv40_context *nv40);
+extern void nv40_state_flush_notify(struct nouveau_channel *chan);
 extern struct nv40_state_entry nv40_state_rasterizer;
 extern struct nv40_state_entry nv40_state_scissor;
 extern struct nv40_state_entry nv40_state_stipple;
@@ -218,9 +215,9 @@ extern struct nv40_state_entry nv40_state_vbo;
 extern struct nv40_state_entry nv40_state_vtxfmt;
 
 /* nv40_vbo.c */
-extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv40_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv40_draw_elements(struct pipe_context *pipe,
+extern void nv40_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,

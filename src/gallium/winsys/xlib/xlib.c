@@ -42,7 +42,6 @@
  */
 
 enum mode {
-   MODE_TRACE,
    MODE_CELL,
    MODE_LLVMPIPE,
    MODE_SOFTPIPE
@@ -51,9 +50,6 @@ enum mode {
 
 static enum mode get_mode()
 {
-   if (getenv("XMESA_TRACE"))
-      return MODE_TRACE;
-
 #ifdef GALLIUM_CELL
    if (!getenv("GALLIUM_NOCELL")) 
       return MODE_CELL;
@@ -73,11 +69,6 @@ static void _init( void )
    enum mode xlib_mode = get_mode();
 
    switch (xlib_mode) {
-   case MODE_TRACE:
-#if defined(GALLIUM_TRACE) && defined(GALLIUM_SOFTPIPE)
-      xmesa_set_driver( &xlib_trace_driver );
-#endif
-      break;
    case MODE_CELL:
 #if defined(GALLIUM_CELL)
       xmesa_set_driver( &xlib_cell_driver );

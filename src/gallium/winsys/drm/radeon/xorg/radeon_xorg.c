@@ -53,7 +53,7 @@ static PciChipsets radeon_xorg_pci_devices[] = {
 };
 
 static XF86ModuleVersionInfo radeon_xorg_version = {
-    "modesetting",
+    "radeong",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
@@ -69,9 +69,9 @@ static XF86ModuleVersionInfo radeon_xorg_version = {
  * Xorg driver exported structures
  */
 
-_X_EXPORT DriverRec modesetting = {
+_X_EXPORT DriverRec radeong = {
     1,
-    "modesetting",
+    "radeong",
     radeon_xorg_identify,
     NULL,
     xorg_tracker_available_options,
@@ -84,7 +84,7 @@ _X_EXPORT DriverRec modesetting = {
 
 static MODULESETUPPROTO(radeon_xorg_setup);
 
-_X_EXPORT XF86ModuleData modesettingModuleData = {
+_X_EXPORT XF86ModuleData radeongModuleData = {
     &radeon_xorg_version,
     radeon_xorg_setup,
     NULL
@@ -103,7 +103,7 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
      */
     if (!setupDone) {
 	setupDone = 1;
-	xf86AddDriver(&modesetting, module, HaveDriverFuncs);
+	xf86AddDriver(&radeong, module, HaveDriverFuncs);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -120,7 +120,7 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 static void
 radeon_xorg_identify(int flags)
 {
-    xf86PrintChipsets("modesetting", "Driver for Modesetting Kernel Drivers",
+    xf86PrintChipsets("radeong", "Driver for Radeon Gallium with KMS",
 		      radeon_xorg_chipsets);
 }
 
@@ -135,8 +135,8 @@ radeon_xorg_pci_probe(DriverPtr driver,
 			       NULL, NULL, NULL, NULL, NULL);
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
-	scrn->driverName = "radeon";
-	scrn->name = "modesetting";
+	scrn->driverName = "radeong";
+	scrn->name = "radeong";
 	scrn->Probe = NULL;
 
 	entity = xf86GetEntityInfo(entity_num);

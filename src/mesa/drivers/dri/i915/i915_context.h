@@ -39,6 +39,7 @@
 #define I915_FALLBACK_LOGICOP		 0x20000
 #define I915_FALLBACK_POLYGON_SMOOTH	 0x40000
 #define I915_FALLBACK_POINT_SMOOTH	 0x80000
+#define I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN	 0x100000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -317,7 +318,7 @@ do {									\
  * i915_context.c
  */
 extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
-                                   __DRIcontextPrivate * driContextPriv,
+                                   __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 

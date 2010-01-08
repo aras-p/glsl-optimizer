@@ -42,6 +42,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
@@ -254,10 +255,10 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
    {
       if (xm_buf->tempImage == NULL) 
       {
-         assert(surf->texture->block.width == 1);
-         assert(surf->texture->block.height == 1);
+         assert(util_format_get_blockwidth(surf->texture->format) == 1);
+         assert(util_format_get_blockheight(surf->texture->format) == 1);
          alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
-                          surf->texture->block.size, surf->height);
+                          util_format_get_blocksize(surf->texture->format), surf->height);
       }
 
       ximage = xm_buf->tempImage;
@@ -360,13 +361,10 @@ xm_surface_buffer_create(struct pipe_winsys *winsys,
                          unsigned *stride)
 {
    const unsigned alignment = 64;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy, size;
+   unsigned nblocksy, size;
 
-   pf_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = align(nblocksx * block.size, alignment);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), alignment);
    size = *stride * nblocksy;
 
 #ifdef USE_XSHM

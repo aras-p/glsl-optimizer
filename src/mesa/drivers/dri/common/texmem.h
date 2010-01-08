@@ -39,6 +39,7 @@
 #define DRI_TEXMEM_H
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "main/mm.h"
 #include "xf86drm.h"
 
@@ -317,16 +318,16 @@ GLboolean driValidateTextureHeaps( driTexHeap * const * texture_heaps,
 extern void driCalculateTextureFirstLastLevel( driTextureObject * t );
 
 
-extern const struct gl_texture_format *_dri_texformat_rgba8888;
-extern const struct gl_texture_format *_dri_texformat_argb8888;
-extern const struct gl_texture_format *_dri_texformat_rgb565;
-extern const struct gl_texture_format *_dri_texformat_argb4444;
-extern const struct gl_texture_format *_dri_texformat_argb1555;
-extern const struct gl_texture_format *_dri_texformat_al88;
-extern const struct gl_texture_format *_dri_texformat_a8;
-extern const struct gl_texture_format *_dri_texformat_ci8;
-extern const struct gl_texture_format *_dri_texformat_i8;
-extern const struct gl_texture_format *_dri_texformat_l8;
+extern gl_format _dri_texformat_rgba8888;
+extern gl_format _dri_texformat_argb8888;
+extern gl_format _dri_texformat_rgb565;
+extern gl_format _dri_texformat_argb4444;
+extern gl_format _dri_texformat_argb1555;
+extern gl_format _dri_texformat_al88;
+extern gl_format _dri_texformat_a8;
+extern gl_format _dri_texformat_ci8;
+extern gl_format _dri_texformat_i8;
+extern gl_format _dri_texformat_l8;
 
 extern void driInitTextureFormats( void );
 

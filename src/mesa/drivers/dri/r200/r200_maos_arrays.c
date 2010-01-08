@@ -90,12 +90,14 @@ static void r200_emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 	aos->components = size;
 	aos->count = count;
 
+	radeon_bo_map(aos->bo, 1);
 	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
 	for (i = 0; i < count; i++) {
 	  out[0] = r200ComputeFogBlendFactor( ctx, *(GLfloat *)data );
 	  out++;
 	  data += stride;
 	}
+	radeon_bo_unmap(aos->bo);
 }
 
 /* Emit any changed arrays to new GART memory, re-emit a packet to

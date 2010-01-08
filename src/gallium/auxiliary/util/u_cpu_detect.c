@@ -67,18 +67,20 @@
 
 #if defined(PIPE_OS_WINDOWS)
 #include <windows.h>
+#if defined(MSVC)
+#include <intrin.h>
+#endif
 #endif
 
 
 struct util_cpu_caps util_cpu_caps;
 
 static int has_cpuid(void);
-static int cpuid(uint32_t ax, uint32_t *p);
 
 #if defined(PIPE_ARCH_X86)
 
 /* The sigill handlers */
-#if defined(PIPE_OS_LINUX) //&& defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
+#if defined(PIPE_OS_LINUX) /*&& defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)*/
 static void
 sigill_handler_sse(int signal, struct sigcontext sc)
 {
@@ -131,7 +133,7 @@ win32_sig_handler_sse(EXCEPTION_POINTERS* ep)
 
 
 #if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_DARWIN)
-static sigjmp_buf __lv_powerpc_jmpbuf;
+static jmp_buf  __lv_powerpc_jmpbuf;
 static volatile sig_atomic_t __lv_powerpc_canjump = 0;
 
 static void
@@ -143,9 +145,11 @@ sigill_handler(int sig)
    }
 
    __lv_powerpc_canjump = 0;
-   siglongjmp(__lv_powerpc_jmpbuf, 1);
+   longjmp(__lv_powerpc_jmpbuf, 1);
 }
+#endif
 
+#if defined(PIPE_ARCH_PPC)
 static void
 check_os_altivec_support(void)
 {
@@ -166,7 +170,7 @@ check_os_altivec_support(void)
    /* no Darwin, do it the brute-force way */
    /* this is borrowed from the libmpeg2 library */
    signal(SIGILL, sigill_handler);
-   if (sigsetjmp(__lv_powerpc_jmpbuf, 1)) {
+   if (setjmp(__lv_powerpc_jmpbuf)) {
       signal(SIGILL, SIG_DFL);
    } else {
       __lv_powerpc_canjump = 1;
@@ -180,9 +184,9 @@ check_os_altivec_support(void)
       signal(SIGILL, SIG_DFL);
       util_cpu_caps.has_altivec = 1;
    }
-#endif
+#endif /* PIPE_OS_DARWIN */
 }
-#endif
+#endif /* PIPE_ARCH_PPC */
 
 /* If we're running on a processor that can do SSE, let's see if we
  * are allowed to or not.  This will catch 2.4.0 or later kernels that
@@ -190,6 +194,7 @@ check_os_altivec_support(void)
  * and RedHat patched 2.2 kernels that have broken exception handling
  * support for user space apps that do SSE.
  */
+#if defined(PIPE_ARCH_X86) || defined (PIPE_ARCH_X86_64)
 static void
 check_os_katmai_support(void)
 {
@@ -235,7 +240,7 @@ check_os_katmai_support(void)
       __asm __volatile ("xorps %xmm0, %xmm0");
 #elif defined(PIPE_CC_MSVC)
       __asm {
-          xorps xmm0, xmm0        // executing SSE instruction
+          xorps xmm0, xmm0        /* executing SSE instruction */
       }
 #else
 #error Unsupported compiler
@@ -278,7 +283,7 @@ check_os_katmai_support(void)
     * and therefore to be safe I'm going to leave this test in here.
     */
    if (util_cpu_caps.has_sse) {
-      //      test_os_katmai_exception_support();
+      /* test_os_katmai_exception_support(); */
    }
 
    /* Restore the original signal handlers.
@@ -334,12 +339,11 @@ static int has_cpuid(void)
 
 /**
  * @sa cpuid.h included in gcc-4.3 onwards.
+ * @sa http://msdn.microsoft.com/en-us/library/hskdteyh.aspx
  */
-static INLINE int
+static INLINE void
 cpuid(uint32_t ax, uint32_t *p)
 {
-   int ret = -1;
-
 #if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
    __asm __volatile (
      "xchgl %%ebx, %1\n\t"
@@ -351,7 +355,6 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86_64)
    __asm __volatile (
      "cpuid\n\t"
@@ -361,15 +364,16 @@ cpuid(uint32_t ax, uint32_t *p)
        "=d" (p[3])
      : "0" (ax)
    );
-   ret = 0;
 #elif defined(PIPE_CC_MSVC)
-   __cpuid(ax, p);
-
-   ret = 0;
+   __cpuid(p, ax);
+#else
+   p[0] = 0;
+   p[1] = 0;
+   p[2] = 0;
+   p[3] = 0;
 #endif
-
-   return ret;
 }
+#endif /* X86 or X86_64 */
 
 void
 util_cpu_detect(void)
@@ -390,19 +394,26 @@ util_cpu_detect(void)
    util_cpu_caps.arch = UTIL_CPU_ARCH_SPARC;
 #elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    util_cpu_caps.arch = UTIL_CPU_ARCH_X86;
+   util_cpu_caps.little_endian = 1;
 #elif defined(PIPE_ARCH_PPC)
    util_cpu_caps.arch = UTIL_CPU_ARCH_POWERPC;
+   util_cpu_caps.little_endian = 0;
 #else
    util_cpu_caps.arch = UTIL_CPU_ARCH_UNKNOWN;
 #endif
 
    /* Count the number of CPUs in system */
-#if !defined(PIPE_OS_WINDOWS) && !defined(PIPE_OS_UNKNOWN) && defined(_SC_NPROCESSORS_ONLN)
+#if defined(PIPE_OS_WINDOWS)
+   {
+      SYSTEM_INFO system_info;
+      GetSystemInfo(&system_info);
+      util_cpu_caps.nr_cpus = system_info.dwNumberOfProcessors;
+   }
+#elif defined(PIPE_OS_UNIX) && defined(_SC_NPROCESSORS_ONLN)
    util_cpu_caps.nr_cpus = sysconf(_SC_NPROCESSORS_ONLN);
    if (util_cpu_caps.nr_cpus == -1)
       util_cpu_caps.nr_cpus = 1;
-
-#elif defined(PIPE_OS_NETBSD) || defined(PIPE_OS_FREEBSD) || defined(PIPE_OS_OPENBSD)
+#elif defined(PIPE_OS_BSD)
    {
       int mib[2], ncpu;
       int len;
@@ -469,7 +480,6 @@ util_cpu_detect(void)
          util_cpu_caps.cacheline = regs2[2] & 0xFF;
       }
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_FREEBSD) || defined(PIPE_OS_NETBSD) || defined(PIPE_OS_CYGWIN) || defined(PIPE_OS_OPENBSD)
       if (util_cpu_caps.has_sse)
          check_os_katmai_support();
 
@@ -477,13 +487,8 @@ util_cpu_detect(void)
          util_cpu_caps.has_sse2 = 0;
          util_cpu_caps.has_sse3 = 0;
          util_cpu_caps.has_ssse3 = 0;
+         util_cpu_caps.has_sse4_1 = 0;
       }
-#else
-      util_cpu_caps.has_sse = 0;
-      util_cpu_caps.has_sse2 = 0;
-      util_cpu_caps.has_sse3 = 0;
-      util_cpu_caps.has_ssse3 = 0;
-#endif
    }
 #endif /* PIPE_ARCH_X86 || PIPE_ARCH_X86_64 */
 

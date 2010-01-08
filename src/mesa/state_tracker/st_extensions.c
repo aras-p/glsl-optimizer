@@ -92,6 +92,10 @@ void st_init_limits(struct st_context *st)
       = _min(screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS),
              MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 
+   c->MaxCombinedTextureImageUnits
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_COMBINED_SAMPLERS),
+             MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
    c->MaxTextureCoordUnits
       = _min(c->MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
 
@@ -284,6 +288,7 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
+      ctx->Extensions.S3_s3tc = GL_TRUE;
    }
 
    /* ycbcr support */
@@ -300,5 +305,9 @@ void st_init_extensions(struct st_context *st)
    if (ctx->Extensions.EXT_packed_depth_stencil) {
       /* we support always support GL_EXT_framebuffer_blit */
       ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
+   }
+
+   if (st->pipe->render_condition) {
+      ctx->Extensions.NV_conditional_render = GL_TRUE;
    }
 }

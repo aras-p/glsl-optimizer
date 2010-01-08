@@ -54,13 +54,13 @@ install:
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
+	$(CXX) -c $(INCLUDES) $(DEFINES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(LIBRARY_DEFINES)  $< -o $@
+	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES)  $< -o $@
 
 
 sinclude depend

@@ -12,15 +12,20 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include "shaderutil.h"
+#include "readtex.h"
 
 
 static char *FragProgFile = "CH11-bumpmap.frag";
+static char *FragTexProgFile = "CH11-bumpmaptex.frag";
 static char *VertProgFile = "CH11-bumpmap.vert";
+static char *TextureFile = "../images/tile.rgb";
 
 /* program/shader objects */
 static GLuint fragShader;
+static GLuint fragTexShader;
 static GLuint vertShader;
 static GLuint program;
+static GLuint texProgram;
 
 
 static struct uniform_info Uniforms[] = {
@@ -32,13 +37,26 @@ static struct uniform_info Uniforms[] = {
    END_OF_UNIFORMS
 };
 
+static struct uniform_info TexUniforms[] = {
+   { "LightPosition",  1, GL_FLOAT_VEC3, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "Tex",            1, GL_INT,   { 0, 0, 0, 0 }, -1 },
+   { "BumpDensity",    1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
+   { "BumpSize",       1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
+   { "SpecularFactor", 1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   END_OF_UNIFORMS
+};
+
 static GLint win = 0;
 
 static GLfloat xRot = 20.0f, yRot = 0.0f, zRot = 0.0f;
 
-static GLuint tangentAttrib;
+static GLint tangentAttrib;
+static GLint tangentAttribTex;
+
+static GLuint Texture;
 
 static GLboolean Anim = GL_FALSE;
+static GLboolean Textured = GL_FALSE;
 
 
 static void
@@ -135,6 +153,11 @@ Redisplay(void)
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
    glRotatef(zRot, 0.0f, 0.0f, 1.0f);
 
+   if (Textured)
+      glUseProgram(texProgram);
+   else
+      glUseProgram(program);
+
    Cube(1.5);
 
    glPopMatrix();
@@ -163,8 +186,10 @@ static void
 CleanUp(void)
 {
    glDeleteShader(fragShader);
+   glDeleteShader(fragTexShader);
    glDeleteShader(vertShader);
    glDeleteProgram(program);
+   glDeleteProgram(texProgram);
    glutDestroyWindow(win);
 }
 
@@ -180,6 +205,9 @@ Key(unsigned char key, int x, int y)
    case 'a':
       Anim = !Anim;
       glutIdleFunc(Anim ? Idle : NULL);
+      break;
+   case 't':
+      Textured = !Textured;
       break;
    case 'z':
       zRot += step;
@@ -254,6 +282,26 @@ Init(void)
 
    CheckError(__LINE__);
 
+
+   /*
+    * As above, but fragment shader also uses a texture map.
+    */
+   fragTexShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragTexProgFile);
+   texProgram = LinkShaders(vertShader, fragTexShader);
+   glUseProgram(texProgram);
+   assert(glIsProgram(texProgram));
+   assert(glIsShader(fragTexShader));
+   SetUniformValues(texProgram, TexUniforms);
+   PrintUniforms(TexUniforms);
+
+   /*
+    * Load tex image.
+    */
+   glGenTextures(1, &Texture);
+   glBindTexture(GL_TEXTURE_2D, Texture);
+   LoadRGBMipmaps(TextureFile, GL_RGB);
+
+
    glClearColor(0.4f, 0.4f, 0.8f, 0.0f);
 
    glEnable(GL_DEPTH_TEST);
@@ -268,10 +316,13 @@ ParseOptions(int argc, char *argv[])
    int i;
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-fs") == 0) {
-         FragProgFile = argv[i+1];
+         FragProgFile = argv[++i];
       }
       else if (strcmp(argv[i], "-vs") == 0) {
-         VertProgFile = argv[i+1];
+         VertProgFile = argv[++i];
+      }
+      else if (strcmp(argv[i], "-t") == 0) {
+         TextureFile = argv[++i];
       }
    }
 }

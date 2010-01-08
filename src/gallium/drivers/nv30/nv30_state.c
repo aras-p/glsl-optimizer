@@ -14,7 +14,7 @@ nv30_blend_state_create(struct pipe_context *pipe,
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	struct nv30_blend_state *bso = CALLOC(1, sizeof(*bso));
-	struct nouveau_stateobj *so = so_new(16, 0);
+	struct nouveau_stateobj *so = so_new(5, 8, 0);
 
 	if (cso->blend_enable) {
 		so_method(so, rankine, NV34TCL_BLEND_FUNC_ENABLE, 3);
@@ -300,7 +300,7 @@ nv30_rasterizer_state_create(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
-	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_stateobj *so = so_new(9, 19, 0);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 
 	/*XXX: ignored:
@@ -435,7 +435,7 @@ nv30_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
-	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_stateobj *so = so_new(5, 21, 0);
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 
 	so_method(so, rankine, NV34TCL_DEPTH_FUNC, 3);
@@ -672,16 +672,6 @@ nv30_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
 
-static void
-nv30_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-	struct nv30_context *nv30 = nv30_context(pipe);
-
-	nv30->edgeflags = bitfield;
-	nv30->dirty |= NV30_NEW_ARRAYS;
-	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
-}
-
 void
 nv30_init_state_functions(struct nv30_context *nv30)
 {
@@ -690,9 +680,9 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.delete_blend_state = nv30_blend_state_delete;
 
 	nv30->pipe.create_sampler_state = nv30_sampler_state_create;
-	nv30->pipe.bind_sampler_states = nv30_sampler_state_bind;
+	nv30->pipe.bind_fragment_sampler_states = nv30_sampler_state_bind;
 	nv30->pipe.delete_sampler_state = nv30_sampler_state_delete;
-	nv30->pipe.set_sampler_textures = nv30_set_sampler_texture;
+	nv30->pipe.set_fragment_sampler_textures = nv30_set_sampler_texture;
 
 	nv30->pipe.create_rasterizer_state = nv30_rasterizer_state_create;
 	nv30->pipe.bind_rasterizer_state = nv30_rasterizer_state_bind;
@@ -721,7 +711,6 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.set_scissor_state = nv30_set_scissor_state;
 	nv30->pipe.set_viewport_state = nv30_set_viewport_state;
 
-	nv30->pipe.set_edgeflags = nv30_set_edgeflags;
 	nv30->pipe.set_vertex_buffers = nv30_set_vertex_buffers;
 	nv30->pipe.set_vertex_elements = nv30_set_vertex_elements;
 }

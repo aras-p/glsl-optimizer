@@ -57,9 +57,11 @@ struct st_context {
    
    void *vs;
    void *fs;
+   void *gs;
 
    struct pipe_texture *default_texture;
-   struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *fragment_sampler_textures[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_sampler_textures[PIPE_MAX_VERTEX_SAMPLERS];
    
    unsigned num_vertex_buffers;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];

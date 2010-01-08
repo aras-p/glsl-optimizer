@@ -29,7 +29,7 @@
 #define LP_TILE_SOA_H
 
 #include "pipe/p_compiler.h"
-#include "tgsi/tgsi_exec.h" // for NUM_CHANNELS
+#include "tgsi/tgsi_exec.h" /* for NUM_CHANNELS */
 
 
 #ifdef __cplusplus

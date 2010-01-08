@@ -509,25 +509,26 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 	 prog to a not enabled output however, so just don't mess with it.
 	 We only need to change compsel. */
       GLuint out_compsel = 0;
-      GLuint vp_out = rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
+      const GLbitfield64 vp_out =
+	 rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
 
       vimap_rev = &rmesa->curr_vp_hw->inputmap_rev[0];
-      assert(vp_out & (1 << VERT_RESULT_HPOS));
+      assert(vp_out & BITFIELD64_BIT(VERT_RESULT_HPOS));
       out_compsel = R200_OUTPUT_XYZW;
-      if (vp_out & (1 << VERT_RESULT_COL0)) {
+      if (vp_out & BITFIELD64_BIT(VERT_RESULT_COL0)) {
 	 out_compsel |= R200_OUTPUT_COLOR_0;
       }
-      if (vp_out & (1 << VERT_RESULT_COL1)) {
+      if (vp_out & BITFIELD64_BIT(VERT_RESULT_COL1)) {
 	 out_compsel |= R200_OUTPUT_COLOR_1;
       }
-      if (vp_out & (1 << VERT_RESULT_FOGC)) {
+      if (vp_out & BITFIELD64_BIT(VERT_RESULT_FOGC)) {
          out_compsel |= R200_OUTPUT_DISCRETE_FOG;
       }
-      if (vp_out & (1 << VERT_RESULT_PSIZ)) {
+      if (vp_out & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
 	 out_compsel |= R200_OUTPUT_PT_SIZE;
       }
       for (i = VERT_RESULT_TEX0; i < VERT_RESULT_TEX6; i++) {
-	 if (vp_out & (1 << i)) {
+	 if (vp_out & BITFIELD64_BIT(i)) {
 	    out_compsel |= R200_OUTPUT_TEX_0 << (i - VERT_RESULT_TEX0);
 	 }
       }

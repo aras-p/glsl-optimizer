@@ -142,8 +142,6 @@ struct draw_context
 
       /* user-space vertex data, buffers */
       struct {
-         const unsigned *edgeflag;
-
          /** vertex element/index buffer (ex: glDrawElements) */
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
@@ -154,8 +152,9 @@ struct draw_context
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
          
-         /** constant buffer (for vertex shader) */
-         const void *constants;
+         /** constant buffer (for vertex/geometry shader) */
+         const void *vs_constants;
+         const void *gs_constants;
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -184,6 +183,7 @@ struct draw_context
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
       uint position_output;
+      uint edgeflag_output;
 
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;
@@ -212,6 +212,18 @@ struct draw_context
       struct translate_cache *emit_cache;
    } vs;
 
+   struct {
+      struct draw_geometry_shader *geometry_shader;
+      uint num_gs_outputs;  /**< convenience, from geometry_shader */
+      uint position_output;
+
+      /** TGSI program interpreter runtime state */
+      struct tgsi_exec_machine *machine;
+
+      uint num_samplers;
+      struct tgsi_sampler **samplers;
+   } gs;
+
    /* Clip derived state:
     */
    float plane[12][4];
@@ -223,7 +235,7 @@ struct draw_context
       uint semantic_name;
       uint semantic_index;
       int slot;
-   } extra_vp_outputs;
+   } extra_shader_outputs;
 
    unsigned reduced_prim;
 
@@ -246,6 +258,19 @@ void draw_vs_set_constants( struct draw_context *,
 
 
 
+/*******************************************************************************
+ * Geometry shading code:
+ */
+boolean draw_gs_init( struct draw_context *draw );
+void draw_gs_set_constants( struct draw_context *,
+                            const float (*constants)[4],
+                            unsigned size );
+
+/*******************************************************************************
+ * Common shading code:
+ */
+int draw_current_shader_outputs(struct draw_context *draw);
+int draw_current_shader_position_output(struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex processing (was passthrough) code:

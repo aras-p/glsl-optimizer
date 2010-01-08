@@ -60,16 +60,38 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: symlinks depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+default: subdirs lib
 
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+.PHONY: lib
+lib: symlinks subdirs depend
+	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) Makefile \
+		$(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) \
+		$(DRI_LIB_DEPS)
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
+
+
+# If the Makefile defined SUBDIRS, run make in each
+.PHONY: subdirs
+subdirs:
+	@if test -n "$(SUBDIRS)" ; then \
+		for dir in $(SUBDIRS) ; do \
+			if [ -d $$dir ] ; then \
+				(cd $$dir && $(MAKE)) || exit 1; \
+			fi \
+		done \
+	fi
+
+
+.PHONY: symlinks
+symlinks:
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)

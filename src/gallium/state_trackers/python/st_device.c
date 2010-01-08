@@ -62,8 +62,9 @@ st_device_reference(struct st_device **ptr, struct st_device *st_dev)
 {
    struct st_device *old_dev = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+   if (pipe_reference(&(*ptr)->reference, &st_dev->reference))
       st_device_really_destroy(old_dev);
+   *ptr = st_dev;
 }
 
 
@@ -134,7 +135,9 @@ st_context_destroy(struct st_context *st_ctx)
          st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], NULL);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], NULL);
+      for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], NULL);
       pipe_texture_reference(&st_ctx->default_texture, NULL);
 
       FREE(st_ctx);
@@ -249,12 +252,9 @@ st_context_create(struct st_device *st_dev)
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
       templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      templat.block.size = 4;
-      templat.block.width = 1;
-      templat.block.height = 1;
-      templat.width[0] = 1;
-      templat.height[0] = 1;
-      templat.depth[0] = 1;
+      templat.width0 = 1;
+      templat.height0 = 1;
+      templat.depth0 = 1;
       templat.last_level = 0;
    
       st_ctx->default_texture = screen->texture_create( screen, &templat );
@@ -264,8 +264,8 @@ st_context_create(struct st_device *st_dev)
                                              0, 0, 0,
                                              PIPE_TRANSFER_WRITE,
                                              0, 0,
-                                             st_ctx->default_texture->width[0],
-                                             st_ctx->default_texture->height[0]);
+                                             st_ctx->default_texture->width0,
+                                             st_ctx->default_texture->height0);
          if (transfer) {
             uint32_t *map;
             map = (uint32_t *) screen->transfer_map(screen, transfer);
@@ -278,9 +278,12 @@ st_context_create(struct st_device *st_dev)
       }
    
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], st_ctx->default_texture);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], st_ctx->default_texture);
+      for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], st_ctx->default_texture);
       
-      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->sampler_textures);
+      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->fragment_sampler_textures);
+      cso_set_vertex_sampler_textures(st_ctx->cso, PIPE_MAX_VERTEX_SAMPLERS, st_ctx->vertex_sampler_textures);
    }
    
    /* vertex shader */

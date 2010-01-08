@@ -245,7 +245,6 @@ brw_upload_cache( struct brw_cache *cache,
 
    item->bo = bo;
    dri_bo_reference(bo);
-   item->data_size = data_size;
 
    if (cache->n_items > cache->size * 1.5)
       rehash(cache);
@@ -275,15 +274,22 @@ brw_upload_cache( struct brw_cache *cache,
 
 
 /**
- * This doesn't really work with aux data.  Use search/upload instead
+ * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
+ *
+ * If nr_reloc_bufs is nonzero, brw_search_cache()/brw_upload_cache() would be
+ * better to use, as the potentially changing offsets in the data-used-as-key
+ * will result in excessive cache misses.
+ *
+ * If aux data is involved, use search/upload instead.
+
  */
 dri_bo *
-brw_cache_data_sz(struct brw_cache *cache,
-		  enum brw_cache_id cache_id,
-		  const void *data,
-		  GLuint data_size,
-		  dri_bo **reloc_bufs,
-		  GLuint nr_reloc_bufs)
+brw_cache_data(struct brw_cache *cache,
+	       enum brw_cache_id cache_id,
+	       const void *data,
+	       GLuint data_size,
+	       dri_bo **reloc_bufs,
+	       GLuint nr_reloc_bufs)
 {
    dri_bo *bo;
    struct brw_cache_item *item;
@@ -306,25 +312,6 @@ brw_cache_data_sz(struct brw_cache *cache,
    return bo;
 }
 
-
-/**
- * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
- *
- * If nr_reloc_bufs is nonzero, brw_search_cache()/brw_upload_cache() would be
- * better to use, as the potentially changing offsets in the data-used-as-key
- * will result in excessive cache misses.
- */
-dri_bo *
-brw_cache_data(struct brw_cache *cache,
-	       enum brw_cache_id cache_id,
-	       const void *data,
-	       dri_bo **reloc_bufs,
-	       GLuint nr_reloc_bufs)
-{
-   return brw_cache_data_sz(cache, cache_id, data, cache->key_size[cache_id],
-			    reloc_bufs, nr_reloc_bufs);
-}
-
 enum pool_type {
    DW_SURFACE_STATE,
    DW_GENERAL_STATE
@@ -335,11 +322,9 @@ static void
 brw_init_cache_id(struct brw_cache *cache,
                   const char *name,
                   enum brw_cache_id id,
-                  GLuint key_size,
                   GLuint aux_size)
 {
    cache->name[id] = strdup(name);
-   cache->key_size[id] = key_size;
    cache->aux_size[id] = aux_size;
 }
 
@@ -359,91 +344,76 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache,
 		     "CC_VP",
 		     BRW_CC_VP,
-		     sizeof(struct brw_cc_viewport),
 		     0);
 
    brw_init_cache_id(cache,
 		     "CC_UNIT",
 		     BRW_CC_UNIT,
-		     sizeof(struct brw_cc_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "WM_PROG",
 		     BRW_WM_PROG,
-		     sizeof(struct brw_wm_prog_key),
 		     sizeof(struct brw_wm_prog_data));
 
    brw_init_cache_id(cache,
 		     "SAMPLER_DEFAULT_COLOR",
 		     BRW_SAMPLER_DEFAULT_COLOR,
-		     sizeof(struct brw_sampler_default_color),
 		     0);
 
    brw_init_cache_id(cache,
 		     "SAMPLER",
 		     BRW_SAMPLER,
-		     0,		/* variable key/data size */
 		     0);
 
    brw_init_cache_id(cache,
 		     "WM_UNIT",
 		     BRW_WM_UNIT,
-		     sizeof(struct brw_wm_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "SF_PROG",
 		     BRW_SF_PROG,
-		     sizeof(struct brw_sf_prog_key),
 		     sizeof(struct brw_sf_prog_data));
 
    brw_init_cache_id(cache,
 		     "SF_VP",
 		     BRW_SF_VP,
-		     sizeof(struct brw_sf_viewport),
 		     0);
 
    brw_init_cache_id(cache,
 		     "SF_UNIT",
 		     BRW_SF_UNIT,
-		     sizeof(struct brw_sf_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "VS_UNIT",
 		     BRW_VS_UNIT,
-		     sizeof(struct brw_vs_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "VS_PROG",
 		     BRW_VS_PROG,
-		     sizeof(struct brw_vs_prog_key),
 		     sizeof(struct brw_vs_prog_data));
 
    brw_init_cache_id(cache,
 		     "CLIP_UNIT",
 		     BRW_CLIP_UNIT,
-		     sizeof(struct brw_clip_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "CLIP_PROG",
 		     BRW_CLIP_PROG,
-		     sizeof(struct brw_clip_prog_key),
 		     sizeof(struct brw_clip_prog_data));
 
    brw_init_cache_id(cache,
 		     "GS_UNIT",
 		     BRW_GS_UNIT,
-		     sizeof(struct brw_gs_unit_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "GS_PROG",
 		     BRW_GS_PROG,
-		     sizeof(struct brw_gs_prog_key),
 		     sizeof(struct brw_gs_prog_data));
 }
 
@@ -463,13 +433,11 @@ brw_init_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache,
 		     "SS_SURFACE",
 		     BRW_SS_SURFACE,
-		     sizeof(struct brw_surface_state),
 		     0);
 
    brw_init_cache_id(cache,
 		     "SS_SURF_BIND",
 		     BRW_SS_SURF_BIND,
-		     0,
 		     0);
 }
 
@@ -534,14 +502,9 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
    for (i = 0; i < cache->size; i++) {
       for (prev = &cache->items[i]; *prev;) {
 	 struct brw_cache_item *c = *prev;
-	 int j;
 
-	 for (j = 0; j < c->nr_reloc_bufs; j++) {
-	    if (c->reloc_bufs[j] == bo)
-	       break;
-	 }
-
-	 if (j != c->nr_reloc_bufs) {
+	 if (drm_intel_bo_references(c->bo, bo)) {
+	    int j;
 
 	    *prev = c->next;
 
@@ -551,17 +514,8 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
 	    free((void *)c->key);
 	    free(c);
 	    cache->n_items--;
-
-	    /* Delete up the tree.  Notably we're trying to get from
-	     * a request to delete the surface, to deleting the surface state
-	     * object, to deleting the binding table.  We're slack and restart
-	     * the deletion process when we do this because the other delete
-	     * may kill our *prev.
-	     */
-	    brw_state_cache_bo_delete(cache, c->bo);
-	    prev = &cache->items[i];
 	 } else {
-	    prev = &(*prev)->next;
+	    prev = &c->next;
 	 }
       }
    }

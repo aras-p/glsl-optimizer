@@ -68,7 +68,7 @@
  *  probably want to insure that your ModelView matrix has been
  *  initialized to identity before calling accFrustum().
  */
-void accFrustum(GLdouble left, GLdouble right, GLdouble bottom,
+static void accFrustum(GLdouble left, GLdouble right, GLdouble bottom,
     GLdouble top, GLdouble nnear, GLdouble ffar, GLdouble pixdx,
     GLdouble pixdy, GLdouble eyedx, GLdouble eyedy, GLdouble focus)
 {
@@ -105,7 +105,7 @@ void accFrustum(GLdouble left, GLdouble right, GLdouble bottom,
  *
  *  Note that accPerspective() calls accFrustum().
  */
-void accPerspective(GLdouble fovy, GLdouble aspect,
+static void accPerspective(GLdouble fovy, GLdouble aspect,
     GLdouble nnear, GLdouble ffar, GLdouble pixdx, GLdouble pixdy,
     GLdouble eyedx, GLdouble eyedy, GLdouble focus)
 {
@@ -123,7 +123,7 @@ void accPerspective(GLdouble fovy, GLdouble aspect,
 	pixdx, pixdy, eyedx, eyedy, focus);
 }
 
-void myinit(void)
+static void myinit(void)
 {
     GLfloat ambient[] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -155,7 +155,7 @@ void myinit(void)
     glClearAccum(0.0, 0.0, 0.0, 0.0);
 }
 
-void renderTeapot (GLfloat x, GLfloat y, GLfloat z,
+static void renderTeapot (GLfloat x, GLfloat y, GLfloat z,
     GLfloat ambr, GLfloat ambg, GLfloat ambb,
     GLfloat difr, GLfloat difg, GLfloat difb,
     GLfloat specr, GLfloat specg, GLfloat specb, GLfloat shine)
@@ -182,7 +182,7 @@ void renderTeapot (GLfloat x, GLfloat y, GLfloat z,
  *  magnitude of the accPerspective() jitter; in this example, 0.33.
  *  In this example, the teapots are drawn 8 times.  See jitter.h
  */
-void display(void)
+static void display(void)
 {
     int jitter;
     GLint viewport[4];
@@ -214,7 +214,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
 }

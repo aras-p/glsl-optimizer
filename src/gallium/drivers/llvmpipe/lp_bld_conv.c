@@ -69,6 +69,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_pack.h"
 #include "lp_bld_conv.h"
 
 
@@ -199,241 +200,6 @@ lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
    res = LLVMBuildMul(builder, res, lp_build_const_scalar(dst_type, scale), "");
 
    return res;
-}
-
-
-/**
- * Build shuffle vectors that match PUNPCKLxx and PUNPCKHxx instructions.
- */
-static LLVMValueRef
-lp_build_const_unpack_shuffle(unsigned n, unsigned lo_hi)
-{
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i, j;
-
-   assert(n <= LP_MAX_VECTOR_LENGTH);
-   assert(lo_hi < 2);
-
-   /* TODO: cache results in a static table */
-
-   for(i = 0, j = lo_hi*n/2; i < n; i += 2, ++j) {
-      elems[i + 0] = LLVMConstInt(LLVMInt32Type(), 0 + j, 0);
-      elems[i + 1] = LLVMConstInt(LLVMInt32Type(), n + j, 0);
-   }
-
-   return LLVMConstVector(elems, n);
-}
-
-
-/**
- * Build shuffle vectors that match PACKxx instructions.
- */
-static LLVMValueRef
-lp_build_const_pack_shuffle(unsigned n)
-{
-   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
-
-   assert(n <= LP_MAX_VECTOR_LENGTH);
-
-   /* TODO: cache results in a static table */
-
-   for(i = 0; i < n; ++i)
-      elems[i] = LLVMConstInt(LLVMInt32Type(), 2*i, 0);
-
-   return LLVMConstVector(elems, n);
-}
-
-
-/**
- * Expand the bit width.
- *
- * This will only change the number of bits the values are represented, not the
- * values themselves.
- */
-static void
-lp_build_expand(LLVMBuilderRef builder,
-               struct lp_type src_type,
-               struct lp_type dst_type,
-               LLVMValueRef src,
-               LLVMValueRef *dst, unsigned num_dsts)
-{
-   unsigned num_tmps;
-   unsigned i;
-
-   /* Register width must remain constant */
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
-
-   /* We must not loose or gain channels. Only precision */
-   assert(src_type.length == dst_type.length * num_dsts);
-
-   num_tmps = 1;
-   dst[0] = src;
-
-   while(src_type.width < dst_type.width) {
-      struct lp_type new_type = src_type;
-      LLVMTypeRef new_vec_type;
-
-      new_type.width *= 2;
-      new_type.length /= 2;
-      new_vec_type = lp_build_vec_type(new_type);
-
-      for(i = num_tmps; i--; ) {
-         LLVMValueRef zero;
-         LLVMValueRef shuffle_lo;
-         LLVMValueRef shuffle_hi;
-         LLVMValueRef lo;
-         LLVMValueRef hi;
-
-         zero = lp_build_zero(src_type);
-         shuffle_lo = lp_build_const_unpack_shuffle(src_type.length, 0);
-         shuffle_hi = lp_build_const_unpack_shuffle(src_type.length, 1);
-
-         /*  PUNPCKLBW, PUNPCKHBW */
-         lo = LLVMBuildShuffleVector(builder, dst[i], zero, shuffle_lo, "");
-         hi = LLVMBuildShuffleVector(builder, dst[i], zero, shuffle_hi, "");
-
-         dst[2*i + 0] = LLVMBuildBitCast(builder, lo, new_vec_type, "");
-         dst[2*i + 1] = LLVMBuildBitCast(builder, hi, new_vec_type, "");
-      }
-
-      src_type = new_type;
-
-      num_tmps *= 2;
-   }
-
-   assert(num_tmps == num_dsts);
-}
-
-
-/**
- * Non-interleaved pack.
- *
- * This will move values as
- *
- *   lo =   __ l0 __ l1 __ l2 __..  __ ln
- *   hi =   __ h0 __ h1 __ h2 __..  __ hn
- *   res =  l0 l1 l2 .. ln h0 h1 h2 .. hn
- *
- * TODO: handle saturation consistently.
- */
-static LLVMValueRef
-lp_build_pack2(LLVMBuilderRef builder,
-               struct lp_type src_type,
-               struct lp_type dst_type,
-               boolean clamped,
-               LLVMValueRef lo,
-               LLVMValueRef hi)
-{
-   LLVMTypeRef src_vec_type = lp_build_vec_type(src_type);
-   LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);
-   LLVMValueRef shuffle;
-   LLVMValueRef res;
-
-   /* Register width must remain constant */
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
-
-   /* We must not loose or gain channels. Only precision */
-   assert(src_type.length * 2 == dst_type.length);
-
-   assert(!src_type.floating);
-   assert(!dst_type.floating);
-
-   if(util_cpu_caps.has_sse2 && src_type.width * src_type.length == 128) {
-      /* All X86 non-interleaved pack instructions all take signed inputs and
-       * saturate them, so saturate beforehand. */
-      if(!src_type.sign && !clamped) {
-         struct lp_build_context bld;
-         unsigned dst_bits = dst_type.sign ? dst_type.width - 1 : dst_type.width;
-         LLVMValueRef dst_max = lp_build_int_const_scalar(src_type, ((unsigned long long)1 << dst_bits) - 1);
-         lp_build_context_init(&bld, builder, src_type);
-         lo = lp_build_min(&bld, lo, dst_max);
-         hi = lp_build_min(&bld, hi, dst_max);
-      }
-
-      switch(src_type.width) {
-      case 32:
-         if(dst_type.sign || !util_cpu_caps.has_sse4_1)
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", src_vec_type, lo, hi);
-         else
-            /* PACKUSDW is the only instrinsic with a consistent signature */
-            return lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", dst_vec_type, lo, hi);
-         break;
-
-      case 16:
-         if(dst_type.sign)
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", src_vec_type, lo, hi);
-         else
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", src_vec_type, lo, hi);
-         break;
-
-      default:
-         assert(0);
-         return LLVMGetUndef(dst_vec_type);
-         break;
-      }
-
-      res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
-      return res;
-   }
-
-   lo = LLVMBuildBitCast(builder, lo, dst_vec_type, "");
-   hi = LLVMBuildBitCast(builder, hi, dst_vec_type, "");
-
-   shuffle = lp_build_const_pack_shuffle(dst_type.length);
-
-   res = LLVMBuildShuffleVector(builder, lo, hi, shuffle, "");
-
-   return res;
-}
-
-
-/**
- * Truncate the bit width.
- *
- * TODO: Handle saturation consistently.
- */
-static LLVMValueRef
-lp_build_pack(LLVMBuilderRef builder,
-              struct lp_type src_type,
-              struct lp_type dst_type,
-              boolean clamped,
-              const LLVMValueRef *src, unsigned num_srcs)
-{
-   LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
-
-   /* Register width must remain constant */
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
-
-   /* We must not loose or gain channels. Only precision */
-   assert(src_type.length * num_srcs == dst_type.length);
-
-   for(i = 0; i < num_srcs; ++i)
-      tmp[i] = src[i];
-
-   while(src_type.width > dst_type.width) {
-      struct lp_type new_type = src_type;
-
-      new_type.width /= 2;
-      new_type.length *= 2;
-
-      /* Take in consideration the sign changes only in the last step */
-      if(new_type.width == dst_type.width)
-         new_type.sign = dst_type.sign;
-
-      num_srcs /= 2;
-
-      for(i = 0; i < num_srcs; ++i)
-         tmp[i] = lp_build_pack2(builder, src_type, new_type, clamped,
-                                 tmp[2*i + 0], tmp[2*i + 1]);
-
-      src_type = new_type;
-   }
-
-   assert(num_srcs == 1);
-
-   return tmp[0];
 }
 
 
@@ -576,7 +342,7 @@ lp_build_conv(LLVMBuilderRef builder,
 
    if(tmp_type.width < dst_type.width) {
       assert(num_tmps == 1);
-      lp_build_expand(builder, tmp_type, dst_type, tmp[0], tmp, num_dsts);
+      lp_build_unpack(builder, tmp_type, dst_type, tmp[0], tmp, num_dsts);
       tmp_type.width = dst_type.width;
       tmp_type.length = dst_type.length;
       num_tmps = num_dsts;
@@ -696,7 +462,7 @@ lp_build_conv_mask(LLVMBuilderRef builder,
    }
    else if(src_type.width < dst_type.width) {
       assert(num_srcs == 1);
-      lp_build_expand(builder, src_type, dst_type, src[0], dst, num_dsts);
+      lp_build_unpack(builder, src_type, dst_type, src[0], dst, num_dsts);
    }
    else {
       assert(num_srcs == num_dsts);

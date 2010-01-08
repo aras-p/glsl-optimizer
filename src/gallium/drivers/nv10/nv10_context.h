@@ -13,10 +13,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv10_screen *ctx = nv10->screen
-#include "nouveau/nouveau_push.h"
+#include "nouveau/nouveau_context.h"
 
 #include "nv10_state.h"
 
@@ -143,9 +140,9 @@ extern void nv10_emit_hw_state(struct nv10_context *nv10);
 extern void nv10_state_tex_update(struct nv10_context *nv10);
 
 /* nv10_vbo.c */
-extern boolean nv10_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv10_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv10_draw_elements( struct pipe_context *pipe,
+extern void nv10_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count);

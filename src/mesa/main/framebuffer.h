@@ -81,5 +81,10 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format);
 extern GLboolean
 _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format);
 
+extern GLenum
+_mesa_get_color_read_type(GLcontext *ctx);
+
+extern GLenum
+_mesa_get_color_read_format(GLcontext *ctx);
 
 #endif /* FRAMEBUFFER_H */

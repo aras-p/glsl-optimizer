@@ -492,9 +492,8 @@ ReadConfigFile(const char *filename, struct config_file *conf)
    conf->num_uniforms = 0;
 
    /* ugly but functional parser */
-   while (!feof(f)) {
-      fgets(line, sizeof(line), f);
-      if (!feof(f) && line[0]) {
+   while (fgets(line, sizeof(line), f) != NULL) {
+      if (line[0]) {
          if (strncmp(line, "vs ", 3) == 0) {
             VertShaderFile = strdup(line + 3);
             VertShaderFile[strlen(VertShaderFile) - 1] = 0;
@@ -627,7 +626,7 @@ Init(void)
    NumAttribs = GetAttribs(Program, Attribs);
    PrintAttribs(Attribs);
 
-   //assert(glGetError() == 0);
+   /* assert(glGetError() == 0); */
 
    glClearColor(0.4f, 0.4f, 0.8f, 0.0f);
 

@@ -4,6 +4,7 @@
 *.ilk
 *.o
 *.obj
+*.os
 *.pc
 *.pdb
 *.pyc

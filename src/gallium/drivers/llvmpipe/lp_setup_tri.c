@@ -241,9 +241,6 @@ static inline int subpixel_snap( float a )
 }
 
 
-#define MIN3(a,b,c) MIN2(MIN2(a,b),c)
-#define MAX3(a,b,c) MAX2(MAX2(a,b),c)
-
 /**
  * Do basic setup for triangle rasterization and determine which
  * framebuffer tiles are touched.  Put the triangle in the scene's

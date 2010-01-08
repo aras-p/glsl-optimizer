@@ -43,12 +43,17 @@
 
 
 /**
+ * Native SIMD register width.
+ *
+ * 128 for all architectures we care about.
+ */
+#define LP_NATIVE_VECTOR_WIDTH 128
+
+/**
  * Several functions can only cope with vectors of length up to this value.
  * You may need to increase that value if you want to represent bigger vectors.
  */
 #define LP_MAX_VECTOR_LENGTH 16
-
-#define LP_MAX_TYPE_WIDTH 64
 
 
 /**
@@ -134,6 +139,91 @@ struct lp_build_context
 };
 
 
+static INLINE struct lp_type
+lp_type_float(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.floating = TRUE;
+   res_type.sign = TRUE;
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
+static INLINE struct lp_type
+lp_type_int(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.sign = TRUE;
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
+static INLINE struct lp_type
+lp_type_uint(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
+static INLINE struct lp_type
+lp_type_unorm(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.norm = TRUE;
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
+static INLINE struct lp_type
+lp_type_fixed(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.sign = TRUE;
+   res_type.fixed = TRUE;
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
+static INLINE struct lp_type
+lp_type_ufixed(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.fixed = TRUE;
+   res_type.width = width;
+   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+
+   return res_type;
+}
+
+
 LLVMTypeRef
 lp_build_elem_type(struct lp_type type);
 
@@ -168,6 +258,10 @@ lp_build_int32_vec4_type();
 
 struct lp_type
 lp_int_type(struct lp_type type);
+
+
+struct lp_type
+lp_wider_type(struct lp_type type);
 
 
 void

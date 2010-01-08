@@ -1,0 +1,8 @@
+# Configuration for standalone mode i965 debug
+
+include $(TOP)/configs/linux-debug
+
+CONFIG_NAME = linux-i965
+
+GALLIUM_DRIVER_DIRS = i965
+GALLIUM_WINSYS_DIRS = drm/i965/xlib

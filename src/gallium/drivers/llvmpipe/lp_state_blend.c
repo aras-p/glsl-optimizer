@@ -34,6 +34,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_debug_dump.h"
+#include "draw/draw_context.h"
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_state.h"
@@ -50,6 +51,11 @@ void llvmpipe_bind_blend_state( struct pipe_context *pipe,
                                 void *blend )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+
+   if (llvmpipe->blend == blend)
+      return;
+
+   draw_flush(llvmpipe->draw);
 
    llvmpipe->blend = blend;
 
@@ -73,6 +79,11 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
 
    if(memcmp(&llvmpipe->blend_color, blend_color, sizeof *blend_color) == 0)
       return;
+
+   if(memcmp(&llvmpipe->blend_color, blend_color, sizeof *blend_color) == 0)
+      return;
+
+   draw_flush(llvmpipe->draw);
 
    memcpy(&llvmpipe->blend_color, blend_color, sizeof *blend_color);
 
@@ -98,7 +109,12 @@ llvmpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   llvmpipe->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
+   if (llvmpipe->depth_stencil == depth_stencil)
+      return;
+
+   draw_flush(llvmpipe->draw);
+
+   llvmpipe->depth_stencil = depth_stencil;
 
    llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }

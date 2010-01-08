@@ -29,7 +29,6 @@
 #include "main/mtypes.h"
 #include "main/mm.h"
 
-#include "i810context.h"
 #include "i810_3d_reg.h"
 #include "texmem.h"
 

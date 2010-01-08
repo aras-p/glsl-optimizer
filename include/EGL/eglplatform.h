@@ -18,6 +18,11 @@
 #include <stdint.h>
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  define EGLAPI __attribute__((visibility("default")))
+#  define EGLAPIENTRY
+#endif
+
 /* Macros used in EGL function prototype declarations.
  *
  * EGLAPI return-type EGLAPIENTRY eglFunction(arguments);

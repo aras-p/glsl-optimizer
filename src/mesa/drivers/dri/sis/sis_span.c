@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
-   __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
+   __DRIdrawable *dPriv = smesa->driDrawable;			\
    struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
    GLuint pitch = srb->pitch;						\
    char *buf = srb->map;						\
@@ -52,7 +52,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_DEPTH_VARS						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
-   __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
+   __DRIdrawable *dPriv = smesa->driDrawable;			\
    struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
    char *buf = srb->map;
 
@@ -176,24 +176,22 @@ sisDDInitSpanFuncs( GLcontext *ctx )
 void
 sisSetSpanFunctions(struct sis_renderbuffer *srb, const GLvisual *vis)
 {
-   if (srb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         sisInitPointers_RGB565( &srb->Base );
-      }
-      else {
-         sisInitPointers_ARGB8888( &srb->Base );
-      }
+   if (srb->Base.Format == MESA_FORMAT_RGB565) {
+      sisInitPointers_RGB565( &srb->Base );
    }
-   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (srb->Base.Format == MESA_FORMAT_ARGB8888) {
+      sisInitPointers_ARGB8888( &srb->Base );
+   }
+   else if (srb->Base.Format == MESA_FORMAT_Z16) {
       sisInitDepthPointers_z16(&srb->Base);
    }
-   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (srb->Base.Format == MESA_FORMAT_S8_Z24) {
       sisInitDepthPointers_z24_s8(&srb->Base);
    }
-   else if (srb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+   else if (srb->Base.Format == MESA_FORMAT_Z32) {
       sisInitDepthPointers_z32(&srb->Base);
    }
-   else if (srb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (srb->Base.Format == MESA_FORMAT_S8) {
       sisInitStencilPointers_z24_s8(&srb->Base);
    }
 }

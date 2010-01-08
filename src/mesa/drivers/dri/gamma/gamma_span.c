@@ -10,8 +10,8 @@
 #define LOCAL_VARS							\
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);				\
    gammaScreenPtr gammascrn = gmesa->gammaScreen;			\
-   __DRIscreenPrivate *sPriv = gmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = gmesa->driDrawable;			\
+   __DRIscreen *sPriv = gmesa->driScreen;			\
+   __DRIdrawable *dPriv = gmesa->driDrawable;			\
    GLuint pitch = sPriv->fbWidth * gammascrn->cpp;		\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
@@ -24,8 +24,8 @@
 /* FIXME! Depth/Stencil read/writes don't work ! */
 #define LOCAL_DEPTH_VARS				\
    gammaScreenPtr gammascrn = gmesa->gammaScreen;	\
-   __DRIdrawablePrivate *dPriv = gmesa->driDrawable;	\
-   __DRIscreenPrivate *sPriv = gmesa->driScreen;	\
+   __DRIdrawable *dPriv = gmesa->driDrawable;	\
+   __DRIscreen *sPriv = gmesa->driScreen;	\
    GLuint pitch = gammascrn->depthPitch;		\
    GLuint height = dPriv->h;				\
    char *buf = (char *)(sPriv->pFB +			\

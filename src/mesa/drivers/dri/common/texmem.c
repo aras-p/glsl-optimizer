@@ -42,14 +42,10 @@
  * application.
  */
 
-#include "texmem.h"
-#include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/texformat.h"
-
-#include <assert.h>
-
+#include "main/simple_list.h"
+#include "texmem.h"
 
 
 static unsigned dummy_swap_counter;
@@ -1302,46 +1298,44 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
 
 
 /**
- * \name DRI texture formats.  Pointers initialized to either the big- or
- * little-endian Mesa formats.
+ * \name DRI texture formats.  These vars are initialized to either the
+ * big- or little-endian Mesa formats.
  */
 /*@{*/
-const struct gl_texture_format *_dri_texformat_rgba8888 = NULL;
-const struct gl_texture_format *_dri_texformat_argb8888 = NULL;
-const struct gl_texture_format *_dri_texformat_rgb565 = NULL;
-const struct gl_texture_format *_dri_texformat_argb4444 = NULL;
-const struct gl_texture_format *_dri_texformat_argb1555 = NULL;
-const struct gl_texture_format *_dri_texformat_al88 = NULL;
-const struct gl_texture_format *_dri_texformat_a8 = &_mesa_texformat_a8;
-const struct gl_texture_format *_dri_texformat_ci8 = &_mesa_texformat_ci8;
-const struct gl_texture_format *_dri_texformat_i8 = &_mesa_texformat_i8;
-const struct gl_texture_format *_dri_texformat_l8 = &_mesa_texformat_l8;
+gl_format _dri_texformat_rgba8888 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_argb8888 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_rgb565 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_argb4444 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_argb1555 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_al88 = MESA_FORMAT_NONE;
+gl_format _dri_texformat_a8 = MESA_FORMAT_A8;
+gl_format _dri_texformat_ci8 = MESA_FORMAT_CI8;
+gl_format _dri_texformat_i8 = MESA_FORMAT_I8;
+gl_format _dri_texformat_l8 = MESA_FORMAT_L8;
 /*@}*/
 
 
 /**
- * Initialize little endian target, host byte order independent texture formats
+ * Initialize _dri_texformat_* vars according to whether we're on
+ * a big or little endian system.
  */
 void
 driInitTextureFormats(void)
 {
-   const GLuint ui = 1;
-   const GLubyte littleEndian = *((const GLubyte *) &ui);
-
-   if (littleEndian) {
-      _dri_texformat_rgba8888	= &_mesa_texformat_rgba8888;
-      _dri_texformat_argb8888	= &_mesa_texformat_argb8888;
-      _dri_texformat_rgb565	= &_mesa_texformat_rgb565;
-      _dri_texformat_argb4444	= &_mesa_texformat_argb4444;
-      _dri_texformat_argb1555	= &_mesa_texformat_argb1555;
-      _dri_texformat_al88	= &_mesa_texformat_al88;
+   if (_mesa_little_endian()) {
+      _dri_texformat_rgba8888	= MESA_FORMAT_RGBA8888;
+      _dri_texformat_argb8888	= MESA_FORMAT_ARGB8888;
+      _dri_texformat_rgb565	= MESA_FORMAT_RGB565;
+      _dri_texformat_argb4444	= MESA_FORMAT_ARGB4444;
+      _dri_texformat_argb1555	= MESA_FORMAT_ARGB1555;
+      _dri_texformat_al88	= MESA_FORMAT_AL88;
    }
    else {
-      _dri_texformat_rgba8888	= &_mesa_texformat_rgba8888_rev;
-      _dri_texformat_argb8888	= &_mesa_texformat_argb8888_rev;
-      _dri_texformat_rgb565	= &_mesa_texformat_rgb565_rev;
-      _dri_texformat_argb4444	= &_mesa_texformat_argb4444_rev;
-      _dri_texformat_argb1555	= &_mesa_texformat_argb1555_rev;
-      _dri_texformat_al88	= &_mesa_texformat_al88_rev;
+      _dri_texformat_rgba8888	= MESA_FORMAT_RGBA8888_REV;
+      _dri_texformat_argb8888	= MESA_FORMAT_ARGB8888_REV;
+      _dri_texformat_rgb565	= MESA_FORMAT_RGB565_REV;
+      _dri_texformat_argb4444	= MESA_FORMAT_ARGB4444_REV;
+      _dri_texformat_argb1555	= MESA_FORMAT_ARGB1555_REV;
+      _dri_texformat_al88	= MESA_FORMAT_AL88_REV;
    }
 }

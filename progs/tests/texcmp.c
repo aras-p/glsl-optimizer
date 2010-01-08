@@ -106,6 +106,8 @@ static void Display( void )
    glRotatef(Rot, 0, 0, 1);
 
    glEnable(GL_TEXTURE_2D);
+   glEnable(GL_BLEND);
+
    glBegin(GL_POLYGON);
    glTexCoord2f(0, 1);  glVertex2f(-1, -0.5);
    glTexCoord2f(1, 1);  glVertex2f( 1, -0.5);
@@ -115,7 +117,10 @@ static void Display( void )
 
    glPopMatrix();
 
+   glDisable(GL_TEXTURE_2D);
+
    /* info */
+   glDisable(GL_BLEND);
    glColor4f(1, 1, 1, 1);
 
    glRasterPos3f(-1.2, -0.7, 0);
@@ -149,7 +154,7 @@ static void Reshape( int width, int height )
 
 static void ReInit( GLenum TC, TEXTURE *Tx )
 {
-   GLint rv;
+   GLint rv, v;
 
    if ((Tx->TC == TC) && (Tx->cData != NULL)) {
       glCompressedTexImage2DARB(GL_TEXTURE_2D, /* target */
@@ -169,6 +174,24 @@ static void ReInit( GLenum TC, TEXTURE *Tx )
                    Tx->format,       /* texture format */
                    GL_UNSIGNED_BYTE, /* texture type */
                    Tx->data);        /* the texture */
+
+
+      v = 0;
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0,
+                               GL_TEXTURE_INTERNAL_FORMAT, &v);
+      printf("Requested internal format = 0x%x, actual = 0x%x\n", TC, v);
+
+      if (0) {
+         GLint r, g, b, a, l, i;
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_LUMINANCE_SIZE, &l);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTENSITY_SIZE, &i);
+         printf("Compressed Bits per R: %d  G: %d  B: %d  A: %d  L: %d  I: %d\n",
+                r, g, b, a, l, i);
+      }
 
       /* okay, now cache the compressed texture */
       Tx->TC = TC;

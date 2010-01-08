@@ -78,11 +78,11 @@ extern _EGLDisplay *
 _eglFindDisplay(NativeDisplayType nativeDisplay);
 
 
-extern void
+PUBLIC void
 _eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *dpy);
 
 
-extern void
+PUBLIC void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 

@@ -405,8 +405,6 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    case PIPE_TEX_FILTER_LINEAR:
       spu.min_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
-   case PIPE_TEX_FILTER_ANISO:
-      /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
       spu.min_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
@@ -418,8 +416,6 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    case PIPE_TEX_FILTER_LINEAR:
       spu.mag_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
-   case PIPE_TEX_FILTER_ANISO:
-      /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
       spu.mag_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;

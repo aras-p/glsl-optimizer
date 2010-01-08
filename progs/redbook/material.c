@@ -49,7 +49,7 @@
 /*  Initialize z-buffer, projection matrix, light source,
  *  and lighting model.  Do not specify a material property here.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat ambient[] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -87,7 +87,7 @@ void myinit(void)
  *  glTranslatef() is used to move spheres to their appropriate locations.
  */
 
-void display(void)
+static void display(void)
 {
     GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
@@ -260,7 +260,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

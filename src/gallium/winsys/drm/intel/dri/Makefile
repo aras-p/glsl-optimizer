@@ -24,4 +24,3 @@ DRI_LIB_DEPS += -ldrm_intel
 
 symlinks: $(TOP)/$(LIB_DIR)/gallium
 	@rm -f $(TOP)/$(LIB_DIR)/gallium/i965_dri.so
-	ln -s i915_dri.so $(TOP)/$(LIB_DIR)/gallium/i965_dri.so

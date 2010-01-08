@@ -30,7 +30,6 @@
 #endif
 
 #include "glapi/dispatch.h"
-#include "glapi/glapioffsets.h"
 
 static void GLAPIENTRY TAG(ArrayElement)( GLint i )
 {

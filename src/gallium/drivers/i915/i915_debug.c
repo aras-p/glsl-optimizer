@@ -851,6 +851,7 @@ static boolean i915_debug_packet( struct debug_stream *stream )
       default:
 	 return debug(stream, "", 0);
       }
+      break;
    default:
       assert(0);
       return 0;
@@ -880,7 +881,7 @@ i915_dump_batchbuffer( struct intel_batchbuffer *batch )
       return;
    }
    
-   debug_printf( "\n\nBATCH: (%d)\n", bytes / 4);
+   debug_printf( "\n\nBATCH: (%d)\n", (int)bytes / 4);
 
    while (!done &&
 	  stream.offset < bytes)

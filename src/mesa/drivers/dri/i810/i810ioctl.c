@@ -50,8 +50,8 @@ static drmBufPtr i810_get_buffer_ioctl( i810ContextPtr imesa )
 static void i810Clear( GLcontext *ctx, GLbitfield mask )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
+   __DRIdrawable *dPriv = imesa->driDrawable;
+   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask[0]);
    drmI810Clear clear;
    unsigned int i;
 
@@ -149,7 +149,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask )
 /*
  * Copy the back buffer to the front buffer. 
  */
-void i810CopyBuffer( const __DRIdrawablePrivate *dPriv ) 
+void i810CopyBuffer( const __DRIdrawable *dPriv ) 
 {
    i810ContextPtr imesa;
    drm_clip_rect_t *pbox;
@@ -197,7 +197,7 @@ void i810CopyBuffer( const __DRIdrawablePrivate *dPriv )
 /*
  * XXX implement when full-screen extension is done.
  */
-void i810PageFlip( const __DRIdrawablePrivate *dPriv ) 
+void i810PageFlip( const __DRIdrawable *dPriv ) 
 {
   i810ContextPtr imesa;
   int tmp, ret;

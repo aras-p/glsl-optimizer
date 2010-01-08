@@ -280,8 +280,6 @@ static const __DRIextension *loader_extensions[] = {
    NULL
 };
 
-#ifndef GLX_USE_APPLEGL
-
 /**
  * Perform the required libGL-side initialization and call the client-side
  * driver's \c __driCreateNewScreen function.
@@ -292,7 +290,7 @@ static const __DRIextension *loader_extensions[] = {
  * \param driDpy DRI display information.
  * \param createNewScreen  Pointer to the client-side driver's
  *               \c __driCreateNewScreen function.
- * \returns A pointer to the \c __DRIscreenPrivate structure returned by
+ * \returns A pointer to the \c __DRIscreen structure returned by
  *          the client-side driver on success, or \c NULL on failure.
  */
 static void *
@@ -475,17 +473,6 @@ CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
    return NULL;
 }
 
-#else /* !GLX_USE_APPLEGL */
-
-static void *
-CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
-                    __GLXDRIdisplayPrivate * driDpy)
-{
-   return NULL;
-}
-
-#endif /* !GLX_USE_APPLEGL */
-
 static void
 driDestroyContext(__GLXDRIcontext * context,
                   __GLXscreenConfigs * psc, Display * dpy)
@@ -596,8 +583,10 @@ driCreateDrawable(__GLXscreenConfigs * psc,
    pdraw->drawable = drawable;
    pdraw->psc = psc;
 
-   if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable))
+   if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable)) {
+      Xfree(pdraw);
       return NULL;
+   }
 
    /* Create a new drawable */
    pdraw->driDrawable =

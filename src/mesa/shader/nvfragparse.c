@@ -217,6 +217,12 @@ MatchInstruction(const GLubyte *token)
    const struct instruction_pattern *inst;
    struct instruction_pattern result;
 
+   result.name = NULL;
+   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+   result.inputs = 0;
+   result.outputs = 0;
+   result.suffixes = 0;
+
    for (inst = Instructions; inst->name; inst++) {
       if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
          /* matched! */
@@ -247,7 +253,7 @@ MatchInstruction(const GLubyte *token)
          return result;
       }
    }
-   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+
    return result;
 }
 

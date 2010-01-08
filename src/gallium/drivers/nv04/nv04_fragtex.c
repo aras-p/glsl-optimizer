@@ -4,7 +4,7 @@
 #define _(m,tf)                                                                \
 {                                                                              \
   PIPE_FORMAT_##m,                                                             \
-  NV04_DX5_TEXTURED_TRIANGLE_FORMAT_COLOR_##tf,                                               \
+  NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_##tf,                                               \
 }
 
 struct nv04_texture_format {
@@ -53,14 +53,14 @@ nv04_fragtex_build(struct nv04_context *nv04, int unit)
 		return;
 	}
 
-	nv04->fragtex.format = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ORIGIN_ZOH_CORNER 
-		| NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ORIGIN_FOH_CORNER
+	nv04->fragtex.format = NV04_TEXTURED_TRIANGLE_FORMAT_ORIGIN_ZOH_CORNER
+		| NV04_TEXTURED_TRIANGLE_FORMAT_ORIGIN_FOH_CORNER
 		| nv04_fragtex_format(pt->format)
-		| ( (pt->last_level + 1) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_MIPMAP_LEVELS_SHIFT )
-		| ( log2i(pt->width[0]) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_BASE_SIZE_U_SHIFT )
-		| ( log2i(pt->height[0]) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_BASE_SIZE_V_SHIFT )
-		| NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_EDGE
-		| NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSV_CLAMP_TO_EDGE
+		| ( (pt->last_level + 1) << NV04_TEXTURED_TRIANGLE_FORMAT_MIPMAP_LEVELS_SHIFT )
+		| ( log2i(pt->width0) << NV04_TEXTURED_TRIANGLE_FORMAT_BASE_SIZE_U_SHIFT )
+		| ( log2i(pt->height0) << NV04_TEXTURED_TRIANGLE_FORMAT_BASE_SIZE_V_SHIFT )
+		| NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_EDGE
+		| NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSV_CLAMP_TO_EDGE
 		;
 }
 

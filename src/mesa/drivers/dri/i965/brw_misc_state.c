@@ -66,7 +66,7 @@ static void upload_blend_constant_color(struct brw_context *brw)
 const struct brw_tracked_state brw_blend_constant_color = {
    .dirty = {
       .mesa = _NEW_COLOR,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_blend_constant_color
@@ -78,10 +78,7 @@ static void upload_drawing_rect(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
 
-   if (!intel->constant_cliprect)
-      return;
-
-   BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
    OUT_BATCH(0); /* xmin, ymin */
    OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
@@ -93,7 +90,7 @@ static void upload_drawing_rect(struct brw_context *brw)
 const struct brw_tracked_state brw_drawing_rect = {
    .dirty = {
       .mesa = _NEW_BUFFERS,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_drawing_rect
@@ -116,7 +113,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(6, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(6);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    if (brw->vs.bind_bo != NULL)
       OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
@@ -150,7 +147,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(7, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(7);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    if (brw->gs.prog_active)
@@ -212,10 +209,10 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? 6 : 5;
+   unsigned int len = (intel->is_g4x || intel->is_ironlake) ? 6 : 5;
 
    if (region == NULL) {
-      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
 		(BRW_SURFACE_NULL << 29));
@@ -223,7 +220,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (intel->is_g4x || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -247,7 +244,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       assert(region->tiling != I915_TILING_X);
 
-      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
@@ -262,7 +259,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (intel->is_g4x || intel->is_ironlake)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -317,7 +314,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
 const struct brw_tracked_state brw_polygon_stipple = {
    .dirty = {
       .mesa = _NEW_POLYGONSTIPPLE,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_polygon_stipple
@@ -330,7 +327,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   __DRIdrawablePrivate *dPriv = brw->intel.driDrawable;
+   __DRIdrawable *dPriv = brw->intel.driDrawable;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));
@@ -362,7 +359,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
       .mesa = _NEW_WINDOW_POS,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_polygon_stipple_offset
@@ -374,8 +371,8 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
 static void upload_aa_line_parameters(struct brw_context *brw)
 {
    struct brw_aa_line_parameters balp;
-   
-   if (BRW_IS_965(brw))
+
+   if (!brw->has_aa_line_parameters)
       return;
 
    /* use legacy aa line coverage computation */
@@ -425,7 +422,7 @@ static void upload_line_stipple(struct brw_context *brw)
 const struct brw_tracked_state brw_line_stipple = {
    .dirty = {
       .mesa = _NEW_LINE,
-      .brw = 0,
+      .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .emit = upload_line_stipple
@@ -444,7 +441,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_pipeline_select ps;
 
       memset(&ps, 0, sizeof(ps));
-      ps.header.opcode = CMD_PIPELINE_SELECT(brw);
+      ps.header.opcode = brw->CMD_PIPELINE_SELECT;
       ps.header.pipeline_select = 0;
       BRW_BATCH_STRUCT(brw, &ps);
    }
@@ -480,7 +477,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
 
-      vfs.opcode = CMD_VF_STATISTICS(brw);
+      vfs.opcode = brw->CMD_VF_STATISTICS;
       if (INTEL_DEBUG & DEBUG_STATS)
 	 vfs.statistics_enable = 1; 
 
@@ -512,8 +509,8 @@ static void upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (BRW_IS_IGDNG(brw)) {
-       BEGIN_BATCH(8, IGNORE_CLIPRECTS);
+   if (intel->is_ironlake) {
+       BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
        OUT_BATCH(1); /* Surface state base address */
@@ -524,7 +521,7 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_BATCH(1); /* Instruction access upper bound */
        ADVANCE_BATCH();
    } else {
-       BEGIN_BATCH(6, IGNORE_CLIPRECTS);
+       BEGIN_BATCH(6);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
        OUT_BATCH(1); /* General state base address */
        OUT_BATCH(1); /* Surface state base address */

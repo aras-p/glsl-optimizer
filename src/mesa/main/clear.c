@@ -34,6 +34,7 @@
 #include "clear.h"
 #include "context.h"
 #include "colormac.h"
+#include "enums.h"
 #include "state.h"
 
 
@@ -180,5 +181,348 @@ _mesa_Clear( GLbitfield mask )
 
       ASSERT(ctx->Driver.Clear);
       ctx->Driver.Clear(ctx, bufferMask);
+   }
+}
+
+
+/** Returned by make_color_buffer_mask() for errors */
+#define INVALID_MASK ~0x0
+
+
+/**
+ * Convert the glClearBuffer 'drawbuffer' parameter into a bitmask of
+ * BUFFER_BIT_x values.
+ * Return INVALID_MASK if the drawbuffer value is invalid.
+ */
+static GLbitfield
+make_color_buffer_mask(GLcontext *ctx, GLint drawbuffer)
+{
+   const struct gl_renderbuffer_attachment *att = ctx->DrawBuffer->Attachment;
+   GLbitfield mask = 0x0;
+
+   switch (drawbuffer) {
+   case GL_FRONT:
+      if (att[BUFFER_FRONT_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_LEFT;
+      if (att[BUFFER_FRONT_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_RIGHT;
+      break;
+   case GL_BACK:
+      if (att[BUFFER_BACK_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_LEFT;
+      if (att[BUFFER_BACK_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_RIGHT;
+      break;
+   case GL_LEFT:
+      if (att[BUFFER_FRONT_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_LEFT;
+      if (att[BUFFER_BACK_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_LEFT;
+      break;
+   case GL_RIGHT:
+      if (att[BUFFER_FRONT_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_RIGHT;
+      if (att[BUFFER_BACK_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_RIGHT;
+      break;
+   case GL_FRONT_AND_BACK:
+      if (att[BUFFER_FRONT_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_LEFT;
+      if (att[BUFFER_BACK_LEFT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_LEFT;
+      if (att[BUFFER_FRONT_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_FRONT_RIGHT;
+      if (att[BUFFER_BACK_RIGHT].Renderbuffer)
+         mask |= BUFFER_BIT_BACK_RIGHT;
+      break;
+   default:
+      if (drawbuffer < 0 || drawbuffer >= ctx->Const.MaxDrawBuffers) {
+         mask = INVALID_MASK;
+      }
+      else if (att[BUFFER_COLOR0 + drawbuffer].Renderbuffer) {
+         mask |= (BUFFER_BIT_COLOR0 << drawbuffer);
+      }
+   }
+
+   return mask;
+}
+
+
+
+/**
+ * New in GL 3.0
+ * Clear signed integer color buffer or stencil buffer (not depth).
+ */
+void GLAPIENTRY
+_mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!ctx->DrawBuffer->Visual.rgbMode) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferiv()");
+      return;
+   }
+
+   if (ctx->NewState) {
+      _mesa_update_state( ctx );
+   }
+
+   switch (buffer) {
+   case GL_STENCIL:
+      if (drawbuffer != 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+                     drawbuffer);
+         return;
+      }
+      else {
+         /* Save current stencil clear value, set to 'value', do the
+          * stencil clear and restore the clear value.
+          * XXX in the future we may have a new ctx->Driver.ClearBuffer()
+          * hook instead.
+          */
+         const GLuint clearSave = ctx->Stencil.Clear;
+         ctx->Stencil.Clear = *value;
+         if (ctx->Driver.ClearStencil)
+            ctx->Driver.ClearStencil(ctx, *value);
+         ctx->Driver.Clear(ctx, BUFFER_BIT_STENCIL);
+         ctx->Stencil.Clear = clearSave;
+         if (ctx->Driver.ClearStencil)
+            ctx->Driver.ClearStencil(ctx, clearSave);
+      }
+      break;
+   case GL_COLOR:
+      {
+         const GLbitfield mask = make_color_buffer_mask(ctx, drawbuffer);
+         if (mask == INVALID_MASK) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+                        drawbuffer);
+            return;
+         }
+         else if (mask) {
+            /* XXX note: we're putting the integer clear values into the
+             * floating point state var.  This will not always work.  We'll
+             * need a new ctx->Driver.ClearBuffer() hook....
+             */
+            GLfloat clearSave[4];
+            /* save color */
+            COPY_4V(clearSave, ctx->Color.ClearColor);
+            /* set color */
+            COPY_4V(ctx->Color.ClearColor, value);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+            /* clear buffer(s) */
+            ctx->Driver.Clear(ctx, mask);
+            /* restore color */
+            COPY_4V(ctx->Color.ClearColor, clearSave);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, clearSave);
+         }
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferiv(buffer=%s)",
+                  _mesa_lookup_enum_by_nr(buffer));
+      return;
+   }
+}
+
+
+/**
+ * New in GL 3.0
+ * Clear unsigned integer color buffer (not depth, not stencil).
+ */
+void GLAPIENTRY
+_mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!ctx->DrawBuffer->Visual.rgbMode) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferuiv()");
+      return;
+   }
+
+   if (ctx->NewState) {
+      _mesa_update_state( ctx );
+   }
+
+   switch (buffer) {
+   case GL_COLOR:
+      {
+         const GLbitfield mask = make_color_buffer_mask(ctx, drawbuffer);
+         if (mask == INVALID_MASK) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
+                        drawbuffer);
+            return;
+         }
+         else if (mask) {
+            /* XXX note: we're putting the uint clear values into the
+             * floating point state var.  This will not always work.  We'll
+             * need a new ctx->Driver.ClearBuffer() hook....
+             */
+            GLfloat clearSave[4];
+            /* save color */
+            COPY_4V(clearSave, ctx->Color.ClearColor);
+            /* set color */
+            COPY_4V(ctx->Color.ClearColor, value);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+            /* clear buffer(s) */
+            ctx->Driver.Clear(ctx, mask);
+            /* restore color */
+            COPY_4V(ctx->Color.ClearColor, clearSave);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, clearSave);
+         }
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferuiv(buffer=%s)",
+                  _mesa_lookup_enum_by_nr(buffer));
+      return;
+   }
+}
+
+
+/**
+ * New in GL 3.0
+ * Clear fixed-pt or float color buffer or depth buffer (not stencil).
+ */
+void GLAPIENTRY
+_mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!ctx->DrawBuffer->Visual.rgbMode) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferfv()");
+      return;
+   }
+
+   if (ctx->NewState) {
+      _mesa_update_state( ctx );
+   }
+
+   switch (buffer) {
+   case GL_DEPTH:
+      if (drawbuffer != 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
+                     drawbuffer);
+         return;
+      }
+      else {
+         /* Save current depth clear value, set to 'value', do the
+          * depth clear and restore the clear value.
+          * XXX in the future we may have a new ctx->Driver.ClearBuffer()
+          * hook instead.
+          */
+         const GLfloat clearSave = ctx->Depth.Clear;
+         ctx->Depth.Clear = *value;
+         if (ctx->Driver.ClearDepth)
+            ctx->Driver.ClearDepth(ctx, *value);
+         ctx->Driver.Clear(ctx, BUFFER_BIT_DEPTH);
+         ctx->Depth.Clear = clearSave;
+         if (ctx->Driver.ClearDepth)
+            ctx->Driver.ClearDepth(ctx, clearSave);
+      }
+      /* clear depth buffer to value */
+      break;
+   case GL_COLOR:
+      {
+         const GLbitfield mask = make_color_buffer_mask(ctx, drawbuffer);
+         if (mask == INVALID_MASK) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
+                        drawbuffer);
+            return;
+         }
+         else if (mask) {
+            GLfloat clearSave[4];
+            /* save color */
+            COPY_4V(clearSave, ctx->Color.ClearColor);
+            /* set color */
+            COPY_4V(ctx->Color.ClearColor, value);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
+            /* clear buffer(s) */
+            ctx->Driver.Clear(ctx, mask);
+            /* restore color */
+            COPY_4V(ctx->Color.ClearColor, clearSave);
+            if (ctx->Driver.ClearColor)
+               ctx->Driver.ClearColor(ctx, clearSave);
+         }
+      }
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferfv(buffer=%s)",
+                  _mesa_lookup_enum_by_nr(buffer));
+      return;
+   }
+}
+
+
+/**
+ * New in GL 3.0
+ * Clear depth/stencil buffer only.
+ */
+void GLAPIENTRY
+_mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
+                    GLfloat depth, GLint stencil)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_CURRENT(ctx, 0);
+
+   if (!ctx->DrawBuffer->Visual.rgbMode) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferfi()");
+      return;
+   }
+
+   if (buffer != GL_DEPTH_STENCIL) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferfi(buffer=%s)",
+                  _mesa_lookup_enum_by_nr(buffer));
+      return;
+   }
+
+   if (drawbuffer != 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfi(drawbuffer=%d)",
+                  drawbuffer);
+      return;
+   }
+
+   if (ctx->NewState) {
+      _mesa_update_state( ctx );
+   }
+
+   {
+      /* save current clear values */
+      const GLfloat clearDepthSave = ctx->Depth.Clear;
+      const GLuint clearStencilSave = ctx->Stencil.Clear;
+
+      /* set new clear values */
+      ctx->Depth.Clear = depth;
+      ctx->Stencil.Clear = stencil;
+      if (ctx->Driver.ClearDepth)
+         ctx->Driver.ClearDepth(ctx, depth);
+      if (ctx->Driver.ClearStencil)
+         ctx->Driver.ClearStencil(ctx, stencil);
+
+      /* clear buffers */
+      ctx->Driver.Clear(ctx, BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
+
+      /* restore */
+      ctx->Depth.Clear = clearDepthSave;
+      ctx->Stencil.Clear = clearStencilSave;
+      if (ctx->Driver.ClearDepth)
+         ctx->Driver.ClearDepth(ctx, clearDepthSave);
+      if (ctx->Driver.ClearStencil)
+         ctx->Driver.ClearStencil(ctx, clearStencilSave);
    }
 }

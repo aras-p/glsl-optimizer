@@ -50,6 +50,7 @@
 #define SP_NEW_VERTEX        0x1000
 #define SP_NEW_VS            0x2000
 #define SP_NEW_QUERY         0x4000
+#define SP_NEW_GS            0x8000
 
 
 struct tgsi_sampler;
@@ -90,6 +91,11 @@ struct sp_vertex_shader {
    int max_sampler;             /* -1 if no samplers */
 };
 
+/** Subclass of pipe_shader_state */
+struct sp_geometry_shader {
+   struct pipe_shader_state shader;
+   struct draw_geometry_shader *draw_data;
+};
 
 
 void *
@@ -104,6 +110,10 @@ void *
 softpipe_create_sampler_state(struct pipe_context *,
                               const struct pipe_sampler_state *);
 void softpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
+void
+softpipe_bind_vertex_sampler_states(struct pipe_context *,
+                                    unsigned num_samplers,
+                                    void **samplers);
 void softpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
@@ -139,6 +149,10 @@ void *softpipe_create_vs_state(struct pipe_context *,
                                const struct pipe_shader_state *);
 void softpipe_bind_vs_state(struct pipe_context *, void *);
 void softpipe_delete_vs_state(struct pipe_context *, void *);
+void *softpipe_create_gs_state(struct pipe_context *,
+                               const struct pipe_shader_state *);
+void softpipe_bind_gs_state(struct pipe_context *, void *);
+void softpipe_delete_gs_state(struct pipe_context *, void *);
 
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );
@@ -149,6 +163,11 @@ void softpipe_set_scissor_state( struct pipe_context *,
 void softpipe_set_sampler_textures( struct pipe_context *,
                                     unsigned num,
                                     struct pipe_texture ** );
+
+void
+softpipe_set_vertex_sampler_textures(struct pipe_context *,
+                                     unsigned num_textures,
+                                     struct pipe_texture **);
 
 void softpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
@@ -165,24 +184,20 @@ void softpipe_set_vertex_buffers(struct pipe_context *,
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
 
-boolean softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-			     unsigned start, unsigned count);
+void softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                          unsigned start, unsigned count);
 
-boolean softpipe_draw_elements(struct pipe_context *pipe,
-			       struct pipe_buffer *indexBuffer,
-			       unsigned indexSize,
-			       unsigned mode, unsigned start, unsigned count);
-boolean
+void softpipe_draw_elements(struct pipe_context *pipe,
+                            struct pipe_buffer *indexBuffer,
+                            unsigned indexSize,
+                            unsigned mode, unsigned start, unsigned count);
+void
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
                              unsigned indexSize,
                              unsigned min_index,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count);
-
-void
-softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
-
 
 void
 softpipe_map_transfers(struct softpipe_context *sp);

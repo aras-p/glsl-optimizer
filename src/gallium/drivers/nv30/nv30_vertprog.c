@@ -253,32 +253,32 @@ static INLINE struct nv30_sreg
 tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	struct nv30_sreg src;
 
-	switch (fsrc->SrcRegister.File) {
+	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nv30_sr(NV30SR_INPUT, fsrc->SrcRegister.Index);
+		src = nv30_sr(NV30SR_INPUT, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src = constant(vpc, fsrc->SrcRegister.Index, 0, 0, 0, 0);
+		src = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
 		break;
 	case TGSI_FILE_IMMEDIATE:
-		src = vpc->imm[fsrc->SrcRegister.Index];
+		src = vpc->imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		if (vpc->high_temp < fsrc->SrcRegister.Index)
-			vpc->high_temp = fsrc->SrcRegister.Index;
-		src = nv30_sr(NV30SR_TEMP, fsrc->SrcRegister.Index);
+		if (vpc->high_temp < fsrc->Register.Index)
+			vpc->high_temp = fsrc->Register.Index;
+		src = nv30_sr(NV30SR_TEMP, fsrc->Register.Index);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
 		break;
 	}
 
-	src.abs = fsrc->SrcRegisterExtMod.Absolute;
-	src.negate = fsrc->SrcRegister.Negate;
-	src.swz[0] = fsrc->SrcRegister.SwizzleX;
-	src.swz[1] = fsrc->SrcRegister.SwizzleY;
-	src.swz[2] = fsrc->SrcRegister.SwizzleZ;
-	src.swz[3] = fsrc->SrcRegister.SwizzleW;
+	src.abs = fsrc->Register.Absolute;
+	src.negate = fsrc->Register.Negate;
+	src.swz[0] = fsrc->Register.SwizzleX;
+	src.swz[1] = fsrc->Register.SwizzleY;
+	src.swz[2] = fsrc->Register.SwizzleZ;
+	src.swz[3] = fsrc->Register.SwizzleW;
 	return src;
 }
 
@@ -286,14 +286,14 @@ static INLINE struct nv30_sreg
 tgsi_dst(struct nv30_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 	struct nv30_sreg dst;
 
-	switch (fdst->DstRegister.File) {
+	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
 		dst = nv30_sr(NV30SR_OUTPUT,
-			      vpc->output_map[fdst->DstRegister.Index]);
+			      vpc->output_map[fdst->Register.Index]);
 
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = nv30_sr(NV30SR_TEMP, fdst->DstRegister.Index);
+		dst = nv30_sr(NV30SR_TEMP, fdst->Register.Index);
 		if (vpc->high_temp < dst.index)
 			vpc->high_temp = dst.index;
 		break;
@@ -334,8 +334,8 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
-		if (fsrc->SrcRegister.File == TGSI_FILE_TEMPORARY) {
+		fsrc = &finst->Src[i];
+		if (fsrc->Register.File == TGSI_FILE_TEMPORARY) {
 			src[i] = tgsi_src(vpc, fsrc);
 		}
 	}
@@ -343,11 +343,11 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
-		fsrc = &finst->FullSrcRegisters[i];
-		switch (fsrc->SrcRegister.File) {
+		fsrc = &finst->Src[i];
+		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
-			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
-				ai = fsrc->SrcRegister.Index;
+			if (ai == -1 || ai == fsrc->Register.Index) {
+				ai = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
@@ -360,8 +360,8 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 		 */
 		case TGSI_FILE_CONSTANT:
 		case TGSI_FILE_IMMEDIATE:
-			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
-				ci = fsrc->SrcRegister.Index;
+			if (ci == -1 || ci == fsrc->Register.Index) {
+				ci = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
@@ -378,8 +378,8 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 		}
 	}
 
-	dst  = tgsi_dst(vpc, &finst->FullDstRegisters[0]);
-	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+	dst  = tgsi_dst(vpc, &finst->Dst[0]);
+	mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -490,15 +490,15 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 {
 	int hw;
 
-	switch (fdec->Semantic.SemanticName) {
+	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = NV30_VP_INST_DEST_POS;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV30_VP_INST_DEST_COL0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV30_VP_INST_DEST_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
@@ -506,10 +506,10 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 		}
 		break;
 	case TGSI_SEMANTIC_BCOLOR:
-		if (fdec->Semantic.SemanticIndex == 0) {
+		if (fdec->Semantic.Index == 0) {
 			hw = NV30_VP_INST_DEST_BFC0;
 		} else
-		if (fdec->Semantic.SemanticIndex == 1) {
+		if (fdec->Semantic.Index == 1) {
 			hw = NV30_VP_INST_DEST_BFC1;
 		} else {
 			NOUVEAU_ERR("bad bcolour semantic index\n");
@@ -523,19 +523,22 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 		hw = NV30_VP_INST_DEST_PSZ;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		if (fdec->Semantic.SemanticIndex <= 7) {
-			hw = NV30_VP_INST_DEST_TC(fdec->Semantic.SemanticIndex);
+		if (fdec->Semantic.Index <= 7) {
+			hw = NV30_VP_INST_DEST_TC(fdec->Semantic.Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
 			return FALSE;
 		}
 		break;
+	case TGSI_SEMANTIC_EDGEFLAG:
+		NOUVEAU_ERR("cannot handle edgeflag output\n");
+		return FALSE;
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;
 	}
 
-	vpc->output_map[fdec->DeclarationRange.First] = hw;
+	vpc->output_map[fdec->Range.First] = hw;
 	return TRUE;
 }
 
@@ -647,7 +650,9 @@ static boolean
 nv30_vertprog_validate(struct nv30_context *nv30)
 { 
 	struct pipe_screen *pscreen = nv30->pipe.screen;
-	struct nouveau_grobj *rankine = nv30->screen->rankine;
+	struct nv30_screen *screen = nv30->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *rankine = screen->rankine;
 	struct nv30_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -681,7 +686,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				assert(0);
 		}
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_ref(so, &vp->so);
@@ -767,9 +772,9 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (i + vp->data->start);
-			OUT_RINGp ((uint32_t *)vpd->value, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (chan, i + vp->data->start);
+			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
 
 		if (constbuf)
@@ -785,11 +790,11 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				vp->insns[i].data[2], vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->exec->start);
+		BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
+		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
-			OUT_RINGp (vp->insns[i].data, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
+			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}
 

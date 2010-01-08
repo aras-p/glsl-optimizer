@@ -62,8 +62,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 3;
 
-extern const struct dri_extension card_extensions[];
-
 static drmBufMapPtr via_create_empty_buffers(void)
 {
     drmBufMapPtr retval;
@@ -92,7 +90,7 @@ static void via_free_empty_buffers( drmBufMapPtr bufs )
 
 
 static GLboolean
-viaInitDriver(__DRIscreenPrivate *sPriv)
+viaInitDriver(__DRIscreen *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
@@ -186,7 +184,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 }
 
 static void
-viaDestroyScreen(__DRIscreenPrivate *sPriv)
+viaDestroyScreen(__DRIscreen *sPriv)
 {
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
@@ -205,12 +203,14 @@ viaDestroyScreen(__DRIscreenPrivate *sPriv)
 
 
 static GLboolean
-viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
-                __DRIdrawablePrivate *driDrawPriv,
+viaCreateBuffer(__DRIscreen *driScrnPriv,
+                __DRIdrawable *driDrawPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
+#if 0
     viaScreenPrivate *screen = (viaScreenPrivate *) driScrnPriv->private;
+#endif
 
     GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			   mesaVis->depthBits != 24);
@@ -248,7 +248,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
       /* XXX check/fix the offset/pitch parameters! */
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(frontRb, mesaVis);
@@ -257,7 +257,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(backRb, mesaVis);
@@ -266,7 +266,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_Z16, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
@@ -274,7 +274,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_Z24_S8, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
@@ -282,7 +282,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 32) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_Z32, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(depthRb, mesaVis);
@@ -291,7 +291,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, NULL,
+            = driNewRenderbuffer(MESA_FORMAT_S8, NULL,
                                  screen->bytesPerPixel,
                                  0, screen->width, driDrawPriv);
          viaSetSpanFunctions(stencilRb, mesaVis);
@@ -314,13 +314,13 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
 
 static void
-viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+viaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static const __DRIconfig **
-viaFillInModes( __DRIscreenPrivate *psp,
+viaFillInModes( __DRIscreen *psp,
 		unsigned pixel_bits, GLboolean have_back_buffer )
 {
     __DRIconfig **configs;
@@ -377,7 +377,7 @@ viaFillInModes( __DRIscreenPrivate *psp,
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-viaInitScreen(__DRIscreenPrivate *psp)
+viaInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { VIA_DRIDDX_VERSION_MAJOR,
                                               VIA_DRIDDX_VERSION_MINOR,
@@ -393,18 +393,6 @@ viaInitScreen(__DRIscreenPrivate *psp)
 				      &psp->drm_version, & drm_expected) )
       return NULL;
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-
    if (!viaInitDriver(psp))
        return NULL;
 
@@ -417,7 +405,7 @@ viaInitScreen(__DRIscreenPrivate *psp)
  * Get information about previous buffer swaps.
  */
 static int
-getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
 {
    struct via_context *vmesa;
 
@@ -454,4 +442,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

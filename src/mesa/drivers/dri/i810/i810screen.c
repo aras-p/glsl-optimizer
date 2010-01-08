@@ -53,10 +53,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
-i810FillInModes( __DRIscreenPrivate *psp,
+i810FillInModes( __DRIscreen *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -166,8 +164,6 @@ i810InitScreen(__DRIscreen *sPriv)
       return NULL;
    }
 
-   driInitExtensions( NULL, card_extensions, GL_TRUE );
-
    if (sPriv->devPrivSize != sizeof(I810DRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(I810DRIRec) does not match passed size from device driver\n");
       return GL_FALSE;
@@ -259,7 +255,7 @@ i810InitScreen(__DRIscreen *sPriv)
 }
 
 static void
-i810DestroyScreen(__DRIscreenPrivate *sPriv)
+i810DestroyScreen(__DRIscreen *sPriv)
 {
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
 
@@ -278,8 +274,8 @@ i810DestroyScreen(__DRIscreenPrivate *sPriv)
  * Create a buffer which corresponds to the window.
  */
 static GLboolean
-i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                  __DRIdrawablePrivate *driDrawPriv,
+i810CreateBuffer( __DRIscreen *driScrnPriv,
+                  __DRIdrawable *driDrawPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
@@ -293,7 +289,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  driScrnPriv->pFB,
                                  screen->cpp,
                                  /*screen->frontOffset*/0, screen->backPitch,
@@ -304,7 +300,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  screen->back.map,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -315,7 +311,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  screen->depth.map,
                                  screen->cpp,
                                  screen->depthOffset, screen->backPitch,
@@ -339,7 +335,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-i810DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+i810DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
@@ -359,4 +355,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

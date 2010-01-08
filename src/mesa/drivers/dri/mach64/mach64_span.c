@@ -40,8 +40,8 @@
 
 #define LOCAL_VARS							\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
+   __DRIscreen *sPriv = mmesa->driScreen;			\
+   __DRIdrawable *dPriv = mmesa->driDrawable;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    GLushort p;								\
@@ -49,8 +49,8 @@
 
 #define LOCAL_DEPTH_VARS						\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
-   __DRIscreenPrivate *driScreen = mmesa->driScreen;			\
+   __DRIdrawable *dPriv = mmesa->driDrawable;			\
+   __DRIscreen *driScreen = mmesa->driScreen;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(driScreen->pFB + drb->offset +			\
@@ -157,15 +157,13 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
 void
 mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         mach64InitPointers_RGB565(&drb->Base);
-      }
-      else {
-         mach64InitPointers_ARGB8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      mach64InitPointers_RGB565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      mach64InitPointers_ARGB8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       mach64InitDepthPointers_z16(&drb->Base);
    }
 }

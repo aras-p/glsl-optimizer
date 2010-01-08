@@ -103,7 +103,7 @@ struct vbo_exec_context
       GLubyte active_sz[VBO_ATTRIB_MAX];
 
       GLfloat *attrptr[VBO_ATTRIB_MAX]; 
-      struct gl_client_array arrays[VBO_ATTRIB_MAX];
+      struct gl_client_array arrays[VERT_ATTRIB_MAX];
 
       /* According to program mode, the values above plus current
        * values are squashed down to the 32 attributes passed to the
@@ -138,6 +138,10 @@ struct vbo_exec_context
        */
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
    } array;
+
+#ifdef DEBUG
+   GLint flush_call_depth;
+#endif
 };
 
 

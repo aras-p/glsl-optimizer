@@ -367,7 +367,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
    else {
       /* calculate from vp->outputs */
       struct gl_vertex_program *vprog;
-      GLbitfield vp_outputs;
+      GLbitfield64 vp_outputs;
 
       /* Choose GLSL vertex shader over ARB vertex program.  Need this
        * since vertex shader state validation comes after fragment state
@@ -606,7 +606,7 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)
@@ -634,7 +634,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)
@@ -1039,8 +1039,6 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
    GLuint i;
 
    assert(nr <= MAX_COMBINER_TERMS);
-
-   tmp = undef; /* silence warning (bug 5318) */
 
    for (i = 0; i < nr; i++)
       src[i] = emit_combine_source( p, mask, unit, opt[i].Source, opt[i].Operand );

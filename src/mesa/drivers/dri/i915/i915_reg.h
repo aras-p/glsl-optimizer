@@ -626,9 +626,9 @@
 #define    MT_32BIT_AWVU2101010	           (0xA<<3)
 #define    MT_32BIT_GR1616	           (0xB<<3)
 #define    MT_32BIT_VU1616	           (0xC<<3)
-#define    MT_32BIT_xI824	           (0xD<<3)
-#define    MT_32BIT_xA824	           (0xE<<3)
-#define    MT_32BIT_xL824	           (0xF<<3)
+#define    MT_32BIT_x8I24	           (0xD<<3)
+#define    MT_32BIT_x8L24	           (0xE<<3)
+#define    MT_32BIT_x8A24	           (0xF<<3)
 #define    MT_422_YCRCB_SWAPY	           (0<<3)       /* SURFACE_422 */
 #define    MT_422_YCRCB_NORMAL	           (1<<3)
 #define    MT_422_YCRCB_SWAPUV	           (2<<3)

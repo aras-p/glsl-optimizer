@@ -11,6 +11,7 @@
 #define DRIRENDERBUFFER_H
 
 #include "main/mtypes.h"
+#include "main/formats.h"
 #include "dri_util.h"
 
 
@@ -42,10 +43,10 @@ typedef struct {
    GLint flippedPitch;
    GLvoid *flippedData;  /* mmap'd address of buffer memory, if used */
 
-   /* Pointer to corresponding __DRIdrawablePrivate.  This is used to compute
+   /* Pointer to corresponding __DRIdrawable.  This is used to compute
     * the window's position within the framebuffer.
     */
-   __DRIdrawablePrivate *dPriv;
+   __DRIdrawable *dPriv;
 
    /* XXX this is for radeon/r200 only.  We should really create a new
     * r200Renderbuffer class, derived from this class...  not a huge deal.
@@ -56,23 +57,23 @@ typedef struct {
     * A handy flag to know if this is the back color buffer.
     * 
     * \note
-    * This is currently only used by s3v and tdfx.
+    * This is currently only used by tdfx.
     */
    GLboolean backBuffer;
 } driRenderbuffer;
 
 
 extern driRenderbuffer *
-driNewRenderbuffer(GLenum format, GLvoid *addr,
+driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
-                   __DRIdrawablePrivate *dPriv);
+                   __DRIdrawable *dPriv);
 
 extern void
 driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped);
 
 
 extern void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv);
 
 
 #endif /* DRIRENDERBUFFER_H */

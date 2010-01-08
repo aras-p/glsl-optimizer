@@ -69,7 +69,6 @@ intel_stencil_drawpixels(GLcontext * ctx,
    GLfloat vertices[4][2];
    struct intel_renderbuffer *irb;
    struct intel_renderbuffer *depth_irb;
-   struct gl_renderbuffer *rb;
    struct gl_pixelstore_attrib old_unpack;
    GLstencil *stencil_pixels;
    int row, y1, y2;
@@ -169,8 +168,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
     * buffer.
     */
    depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   irb = intel_create_renderbuffer(GL_RGBA8);
-   rb = &irb->Base;
+   irb = intel_create_renderbuffer(MESA_FORMAT_ARGB8888);
    irb->Base.Width = depth_irb->Base.Width;
    irb->Base.Height = depth_irb->Base.Height;
    intel_renderbuffer_set_region(irb, depth_irb->region);

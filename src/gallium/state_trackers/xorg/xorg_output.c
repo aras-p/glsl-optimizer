@@ -53,73 +53,36 @@
 
 #include "xorg_tracker.h"
 
-static char *connector_enum_list[] = {
+static char *output_enum_list[] = {
     "Unknown",
     "VGA",
-    "DVI-I",
-    "DVI-D",
-    "DVI-A",
+    "DVI",
+    "DVI",
+    "DVI",
     "Composite",
     "SVIDEO",
     "LVDS",
-    "Component",
-    "9-pin DIN",
-    "DisplayPort",
-    "HDMI Type A",
-    "HDMI Type B",
+    "CTV",
+    "DIN",
+    "DP",
+    "HDMI",
+    "HDMI",
 };
 
 static void
-dpms(xf86OutputPtr output, int mode)
+output_create_resources(xf86OutputPtr output)
 {
+#ifdef RANDR_12_INTERFACE
+#endif /* RANDR_12_INTERFACE */
 }
 
 static void
-save(xf86OutputPtr output)
+output_dpms(xf86OutputPtr output, int mode)
 {
-}
-
-static void
-restore(xf86OutputPtr output)
-{
-}
-
-static int
-mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
-{
-    return MODE_OK;
-}
-
-static Bool
-mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
-	   DisplayModePtr adjusted_mode)
-{
-    return TRUE;
-}
-
-static void
-prepare(xf86OutputPtr output)
-{
-    dpms(output, DPMSModeOff);
-}
-
-static void
-mode_set(xf86OutputPtr output, DisplayModePtr mode,
-	 DisplayModePtr adjusted_mode)
-{
-}
-
-static void
-commit(xf86OutputPtr output)
-{
-    dpms(output, DPMSModeOn);
-
-    if (output->scrn->pScreen != NULL)
-	xf86_reload_cursors(output->scrn->pScreen);
 }
 
 static xf86OutputStatus
-detect(xf86OutputPtr output)
+output_detect(xf86OutputPtr output)
 {
     drmModeConnectorPtr drm_connector = output->driver_private;
 
@@ -134,7 +97,7 @@ detect(xf86OutputPtr output)
 }
 
 static DisplayModePtr
-get_modes(xf86OutputPtr output)
+output_get_modes(xf86OutputPtr output)
 {
     drmModeConnectorPtr drm_connector = output->driver_private;
     drmModeModeInfoPtr drm_mode = NULL;
@@ -147,7 +110,6 @@ get_modes(xf86OutputPtr output)
 	    mode = xcalloc(1, sizeof(DisplayModeRec));
 	    if (!mode)
 		continue;
-	    mode->type = 0;
 	    mode->Clock = drm_mode->clock;
 	    mode->HDisplay = drm_mode->hdisplay;
 	    mode->HSyncStart = drm_mode->hsync_start;
@@ -162,6 +124,11 @@ get_modes(xf86OutputPtr output)
 	    mode->VScan = drm_mode->vscan;
 	    mode->VRefresh = xf86ModeVRefresh(mode);
 	    mode->Private = (void *)drm_mode;
+	    mode->type = 0;
+	    if (drm_mode->type & DRM_MODE_TYPE_PREFERRED)
+		mode->type |= M_T_PREFERRED;
+	    if (drm_mode->type & DRM_MODE_TYPE_DRIVER)
+		mode->type |= M_T_DRIVER;
 	    xf86SetModeDefaultName(mode);
 	    modes = xf86ModesAdd(modes, mode);
 	    xf86PrintModeline(0, mode);
@@ -171,22 +138,15 @@ get_modes(xf86OutputPtr output)
     return modes;
 }
 
-static void
-destroy(xf86OutputPtr output)
+static int
+output_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
-    drmModeFreeConnector(output->driver_private);
-}
-
-static void
-create_resources(xf86OutputPtr output)
-{
-#ifdef RANDR_12_INTERFACE
-#endif /* RANDR_12_INTERFACE */
+    return MODE_OK;
 }
 
 #ifdef RANDR_12_INTERFACE
 static Bool
-set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
+output_set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
 {
     return TRUE;
 }
@@ -194,53 +154,43 @@ set_property(xf86OutputPtr output, Atom property, RRPropertyValuePtr value)
 
 #ifdef RANDR_13_INTERFACE
 static Bool
-get_property(xf86OutputPtr output, Atom property)
+output_get_property(xf86OutputPtr output, Atom property)
 {
     return TRUE;
 }
 #endif /* RANDR_13_INTERFACE */
 
-#ifdef RANDR_GET_CRTC_INTERFACE
-static xf86CrtcPtr
-get_crtc(xf86OutputPtr output)
+static void
+output_destroy(xf86OutputPtr output)
 {
-    return NULL;
+    drmModeFreeConnector(output->driver_private);
 }
-#endif
 
 static const xf86OutputFuncsRec output_funcs = {
-    .create_resources = create_resources,
-    .dpms = dpms,
-    .save = save,
-    .restore = restore,
-    .mode_valid = mode_valid,
-    .mode_fixup = mode_fixup,
-    .prepare = prepare,
-    .mode_set = mode_set,
-    .commit = commit,
-    .detect = detect,
-    .get_modes = get_modes,
+    .create_resources = output_create_resources,
 #ifdef RANDR_12_INTERFACE
-    .set_property = set_property,
+    .set_property = output_set_property,
 #endif
 #ifdef RANDR_13_INTERFACE
-    .get_property = get_property,
+    .get_property = output_get_property,
 #endif
-    .destroy = destroy,
-#ifdef RANDR_GET_CRTC_INTERFACE
-    .get_crtc = get_crtc,
-#endif
+    .dpms = output_dpms,
+    .detect = output_detect,
+
+    .get_modes = output_get_modes,
+    .mode_valid = output_mode_valid,
+    .destroy = output_destroy,
 };
 
 void
-output_init(ScrnInfoPtr pScrn)
+xorg_output_init(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
     xf86OutputPtr output;
     drmModeResPtr res;
     drmModeConnectorPtr drm_connector = NULL;
     drmModeEncoderPtr drm_encoder = NULL;
-    char *name;
+    char name[32];
     int c, v, p;
 
     res = drmModeGetResources(ms->fd);
@@ -273,7 +223,10 @@ output_init(ScrnInfoPtr pScrn)
 	(void)v;
 #endif
 
-	name = connector_enum_list[drm_connector->connector_type];
+	snprintf(name, 32, "%s%d",
+		 output_enum_list[drm_connector->connector_type],
+		 drm_connector->connector_type_id);
+
 
 	output = xf86OutputCreate(pScrn, &output_funcs, name);
 	if (!output)

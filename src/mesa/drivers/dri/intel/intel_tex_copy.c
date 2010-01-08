@@ -29,6 +29,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/teximage.h"
+#include "main/texstate.h"
 #include "main/mipmap.h"
 
 #include "drivers/common/meta.h"
@@ -92,8 +93,7 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
-   const struct intel_region *src =
-      get_teximage_source(intel, internalFormat);
+   const struct intel_region *src = get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
@@ -109,33 +109,34 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   intelFlush(ctx);
-   LOCK_HARDWARE(intel);
+   /* intelFlush(ctx); */
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
 						 INTEL_WRITE_PART);
-      GLuint image_offset = intel_miptree_image_offset(intelImage->mt,
-                                                       intelImage->face,
-                                                       intelImage->level);
       const GLint orig_x = x;
       const GLint orig_y = y;
+      GLuint image_x, image_y;
       GLshort src_pitch;
 
+      /* get dest x/y in destination texture */
+      intel_miptree_get_image_offset(intelImage->mt,
+				     intelImage->level,
+				     intelImage->face,
+				     0,
+				     &image_x, &image_y);
       /* Update dst for clipped src.  Need to also clip the source rect. */
       dstx += x - orig_x;
       dsty += y - orig_y;
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
-      if (intelImage->mt->region->tiling != I915_TILING_NONE &&
-	  (image_offset & 4095) != 0) {
-	 UNLOCK_HARDWARE(intel);
+      if (intelImage->mt->region->tiling == I915_TILING_Y) {
 	 return GL_FALSE;
       }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
-	 const __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+	 const __DRIdrawable *dPriv = intel->driReadDrawable;
 	 y = dPriv->y + (dPriv->h - (y + height));
 	 x += dPriv->x;
 
@@ -152,6 +153,7 @@ do_copy_texsubimage(struct intel_context *intel,
 	 src_pitch = src->pitch;
       }
 
+      /* blit from src buffer to texture */
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
@@ -160,16 +162,15 @@ do_copy_texsubimage(struct intel_context *intel,
 			     src->tiling,
 			     intelImage->mt->pitch,
 			     dst_bo,
-			     image_offset,
+			     0,
 			     intelImage->mt->region->tiling,
-			     x, y, dstx, dsty, width, height,
+			     src->draw_x + x, src->draw_y + y,
+			     image_x + dstx, image_y + dsty,
+			     width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }
@@ -180,8 +181,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLint border)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -217,6 +217,8 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage1D(ctx, target, level, internalFormat, x, y,
                              width, border);
 }
@@ -228,8 +230,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                     GLint x, GLint y, GLsizei width, GLsizei height,
                     GLint border)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -244,7 +245,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
     */
    ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
                           width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
+                          GL_RGBA, GL_UNSIGNED_BYTE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
 
    srcx = x;
@@ -265,6 +266,8 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
                              width, height, border);
 }
@@ -274,8 +277,7 @@ static void
 intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint x, GLint y, GLsizei width)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -290,6 +292,8 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage1D(ctx, target, level, xoffset, x, y, width);
    }
 }
@@ -300,8 +304,7 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint yoffset,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
@@ -316,8 +319,8 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
 
-      DBG("%s - fallback to _mesa_meta_CopyTexSubImage2D\n", __FUNCTION__);
-
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage2D(ctx, target, level,
                                    xoffset, yoffset, x, y, width, height);
    }

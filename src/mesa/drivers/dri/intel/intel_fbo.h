@@ -28,30 +28,10 @@
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
 
+#include "main/formats.h"
 #include "intel_screen.h"
 
 struct intel_context;
-
-/**
- * Intel framebuffer, derived from gl_framebuffer.
- */
-struct intel_framebuffer
-{
-   struct gl_framebuffer Base;
-
-   struct intel_renderbuffer *color_rb[2];
-
-   /* VBI
-    */
-   GLuint vbl_waited;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-};
-
 
 /**
  * Intel renderbuffer, derived from gl_renderbuffer.
@@ -60,10 +40,6 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-
-   const struct gl_texture_format *texformat;
-
-   GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
    uint8_t *span_cache;
    unsigned long span_cache_offset;
@@ -114,7 +90,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat);
+intel_create_renderbuffer(gl_format format);
 
 
 extern void
@@ -122,7 +98,7 @@ intel_fbo_init(struct intel_context *intel);
 
 
 extern void
-intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
+intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
 
 static INLINE struct intel_region *

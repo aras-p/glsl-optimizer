@@ -32,10 +32,10 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,i915,trace,identity,llvmpipe'
+	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_drivers = 'softpipe,i915,trace,identity'
+	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
 	default_winsys = 'all'
 else:
 	default_drivers = 'all'
@@ -46,9 +46,9 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'i915', 'cell', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'intel', 'gdi', 'radeon']))
+                     ['xlib', 'vmware', 'intel', 'i965', 'gdi', 'radeon']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 
@@ -160,8 +160,36 @@ Export('env')
 # TODO: Build several variants at the same time?
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
+if env['platform'] != common.default_platform:
+    # GLSL code has to be built twice -- one for the host OS, another for the target OS...
+
+    host_env = Environment(
+        # options are ignored
+        # default tool is used
+        tools = ['default', 'custom'],
+        toolpath = ['#scons'],	
+        ENV = os.environ,
+    )
+
+    host_env['platform'] = common.default_platform
+    host_env['machine'] = common.default_machine
+    host_env['debug'] = env['debug']
+
+    SConscript(
+        'src/glsl/SConscript',
+        variant_dir = os.path.join(env['build'], 'host'),
+        duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+        exports={'env':host_env},
+    )
+
 SConscript(
 	'src/SConscript',
 	variant_dir = env['build'],
+	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)
+
+SConscript(
+	'progs/SConscript',
+	variant_dir = os.path.join('progs', env['build']),
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

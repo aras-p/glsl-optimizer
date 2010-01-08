@@ -36,9 +36,9 @@
 
 #define LOCAL_VARS					\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
+   __DRIscreen *sPriv = mmesa->driScreen;	\
    driRenderbuffer *drb = (driRenderbuffer *) rb;	\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;	\
+   const __DRIdrawable *dPriv = drb->dPriv;	\
    GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
    char *buf = (char *)(sPriv->pFB +			\
@@ -52,9 +52,9 @@
 
 #define LOCAL_DEPTH_VARS						\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
+   __DRIscreen *sPriv = mmesa->driScreen;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;			\
+   const __DRIdrawable *dPriv = drb->dPriv;			\
    GLuint pitch = drb->pitch;						\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
@@ -206,24 +206,22 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
 void
 mgaSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         mgaInitPointers_565(&drb->Base);
-      }
-      else {
-         mgaInitPointers_8888(&drb->Base);
-      }
+   if (drb->Base.Format == MESA_FORMAT_RGB565) {
+      mgaInitPointers_565(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+   else if (drb->Base.Format == MESA_FORMAT_ARGB8888) {
+      mgaInitPointers_8888(&drb->Base);
+   }
+   else if (drb->Base.Format == MESA_FORMAT_Z16) {
       mgaInitDepthPointers_z16(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+   else if (drb->Base.Format == MESA_FORMAT_Z24_S8) {
       mgaInitDepthPointers_z24_s8(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+   else if (drb->Base.Format == MESA_FORMAT_Z32) {
       mgaInitDepthPointers_z32(&drb->Base);
    }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+   else if (drb->Base.Format == MESA_FORMAT_S8) {
       mgaInitStencilPointers_z24_s8(&drb->Base);
    }
 }

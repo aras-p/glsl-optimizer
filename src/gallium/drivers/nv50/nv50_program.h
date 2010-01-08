@@ -17,8 +17,7 @@ struct nv50_program_exec {
 
 struct nv50_sreg4 {
 	uint8_t hw;
-	uint8_t id_vp;
-	uint8_t id_fp;
+	uint8_t id; /* tgsi index, nv50 needs them sorted: flat ones last */
 
 	uint8_t mask;
 	boolean linear;
@@ -38,7 +37,7 @@ struct nv50_program {
 
 	struct nouveau_bo *bo;
 
-	float *immd;
+	uint32_t *immd;
 	unsigned immd_nr;
 	unsigned param_nr;
 
@@ -59,6 +58,7 @@ struct nv50_program {
 		/* VP only */
 		uint8_t clpd, clpd_nr;
 		uint8_t psiz;
+		uint8_t edgeflag_in;
 	} cfg;
 };
 

@@ -46,7 +46,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "pipe/p_error.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
 
@@ -237,8 +237,9 @@ pb_reference(struct pb_buffer **dst,
 {
    struct pb_buffer *old = *dst;
 
-   if (pipe_reference((struct pipe_reference**)dst, &src->base.reference))
+   if (pipe_reference(&(*dst)->base.reference, &src->base.reference))
       pb_destroy( old );
+   *dst = src;
 }
 
 

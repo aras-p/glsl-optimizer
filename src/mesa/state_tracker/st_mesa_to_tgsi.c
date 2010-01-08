@@ -160,13 +160,14 @@ dst_register( struct st_translate *t,
 static struct ureg_src
 src_register( struct st_translate *t,
               gl_register_file file,
-              GLuint index )
+              GLint index )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
       return ureg_src_undef();
 
    case PROGRAM_TEMPORARY:
+      ASSERT(index >= 0);
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
       return ureg_src(t->temps[index]);
@@ -174,9 +175,15 @@ src_register( struct st_translate *t,
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_ENV_PARAM:
+   case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
-   case PROGRAM_CONSTANT:       /* ie, immediate */
+      ASSERT(index >= 0);
       return t->constants[index];
+   case PROGRAM_CONSTANT:       /* ie, immediate */
+      if (index < 0)
+         return ureg_DECL_constant( t->ureg, 0 );
+      else
+         return t->constants[index];
 
    case PROGRAM_INPUT:
       return t->inputs[t->inputMapping[index]];
@@ -263,9 +270,14 @@ translate_src( struct st_translate *t,
    if (SrcReg->Abs) 
       src = ureg_abs(src);
 
-   if (SrcReg->RelAddr) 
+   if (SrcReg->RelAddr) {
       src = ureg_src_indirect( src, ureg_src(t->address[0]));
-   
+      /* If SrcReg->Index was negative, it was set to zero in
+       * src_register().  Reassign it now.
+       */
+      src.Index = SrcReg->Index;
+   }
+
    return src;
 }
 
@@ -278,7 +290,7 @@ static struct ureg_src swizzle_4v( struct ureg_src src,
 
 
 /**
- * Translate SWZ instructions into a single MAD.  EG:
+ * Translate a SWZ instruction into a MOV, MUL or MAD instruction.  EG:
  *
  *   SWZ dst, src.x-y10 
  * 
@@ -396,6 +408,23 @@ static void emit_swz( struct st_translate *t,
 }
 
 
+/**
+ * Negate the value of DDY to match GL semantics where (0,0) is the
+ * lower-left corner of the window.
+ * Note that the GL_ARB_fragment_coord_conventions extension will
+ * effect this someday.
+ */
+static void emit_ddy( struct st_translate *t,
+                      struct ureg_dst dst,
+                      const struct prog_src_register *SrcReg )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_src src = translate_src( t, SrcReg );
+   src = ureg_negate( src );
+   ureg_DDY( ureg, dst, src );
+}
+
+
 
 static unsigned
 translate_opcode( unsigned op )
@@ -481,14 +510,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_MOV;
    case OPCODE_MUL:
       return TGSI_OPCODE_MUL;
-   case OPCODE_NOISE1:
-      return TGSI_OPCODE_NOISE1;
-   case OPCODE_NOISE2:
-      return TGSI_OPCODE_NOISE2;
-   case OPCODE_NOISE3:
-      return TGSI_OPCODE_NOISE3;
-   case OPCODE_NOISE4:
-      return TGSI_OPCODE_NOISE4;
    case OPCODE_NOP:
       return TGSI_OPCODE_NOP;
    case OPCODE_NRM3:
@@ -523,8 +544,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_SSG;
    case OPCODE_SUB:
       return TGSI_OPCODE_SUB;
-   case OPCODE_SWZ:
-      return TGSI_OPCODE_SWZ;
    case OPCODE_TEX:
       return TGSI_OPCODE_TEX;
    case OPCODE_TXB:
@@ -616,6 +635,23 @@ compile_instruction(
                  src, num_src );
       break;
 
+   case OPCODE_NOISE1:
+   case OPCODE_NOISE2:
+   case OPCODE_NOISE3:
+   case OPCODE_NOISE4:
+      /* At some point, a motivated person could add a better
+       * implementation of noise.  Currently not even the nvidia
+       * binary drivers do anything more than this.  In any case, the
+       * place to do this is in the GL state tracker, not the poor
+       * driver.
+       */
+      ureg_MOV( ureg, dst[0], ureg_imm1f(ureg, 0.5) );
+      break;
+		 
+   case OPCODE_DDY:
+      emit_ddy( t, dst[0], &inst->SrcReg[0] );
+      break;
+
    default:
       ureg_insn( ureg, 
                  translate_opcode( inst->Opcode ), 
@@ -671,6 +707,41 @@ emit_inverted_wpos( struct st_translate *t,
 
 
 /**
+ * OpenGL's fragment gl_FrontFace input is 1 for front-facing, 0 for back.
+ * TGSI uses +1 for front, -1 for back.
+ * This function converts the TGSI value to the GL value.  Simply clamping/
+ * saturating the value to [0,1] does the job.
+ */
+static void
+emit_face_var( struct st_translate *t,
+               const struct gl_program *program )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst face_temp = ureg_DECL_temporary( ureg );
+   struct ureg_src face_input = t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]];
+
+   /* MOV_SAT face_temp, input[face]
+    */
+   face_temp = ureg_saturate( face_temp );
+   ureg_MOV( ureg, face_temp, face_input );
+
+   /* Use face_temp as face input from here on:
+    */
+   t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
+}
+
+static void
+emit_edgeflags( struct st_translate *t,
+                 const struct gl_program *program )
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VERT_RESULT_EDGE]];
+   struct ureg_src edge_src = t->inputs[t->inputMapping[VERT_ATTRIB_EDGEFLAG]];
+
+   ureg_MOV( ureg, edge_dst, edge_src );
+}
+
+/**
  * Translate Mesa program to TGSI format.
  * \param program  the program to translate
  * \param numInputs  number of input registers used
@@ -689,26 +760,24 @@ emit_inverted_wpos( struct st_translate *t,
  *
  * \return  array of translated tokens, caller's responsibility to free
  */
-const struct tgsi_token *
+enum pipe_error
 st_translate_mesa_program(
    GLcontext *ctx,
    uint procType,
+   struct ureg_program *ureg,
    const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   const GLbitfield inputFlags[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
    const ubyte outputSemanticIndex[],
-   const GLbitfield outputFlags[] )
+   boolean passthrough_edgeflags )
 {
    struct st_translate translate, *t;
-   struct ureg_program *ureg;
-   const struct tgsi_token *tokens = NULL;
    unsigned i;
 
    t = &translate;
@@ -717,11 +786,7 @@ st_translate_mesa_program(
    t->procType = procType;
    t->inputMapping = inputMapping;
    t->outputMapping = outputMapping;
-   t->ureg = ureg_create( procType );
-   if (t->ureg == NULL)
-      return NULL;
-
-   ureg = t->ureg;
+   t->ureg = ureg;
 
    /*_mesa_print_program(program);*/
 
@@ -741,6 +806,10 @@ st_translate_mesa_program(
           * emitting constant references, below:
           */
          emit_inverted_wpos( t, program );
+      }
+
+      if (program->InputsRead & FRAG_BIT_FACE) {
+         emit_face_var( t, program );
       }
 
       /*
@@ -777,6 +846,8 @@ st_translate_mesa_program(
                                            outputSemanticName[i],
                                            outputSemanticIndex[i] );
       }
+      if (passthrough_edgeflags)
+         emit_edgeflags( t, program );
    }
 
    /* Declare address register.
@@ -800,6 +871,7 @@ st_translate_mesa_program(
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
+         case PROGRAM_LOCAL_PARAM:
          case PROGRAM_STATE_VAR:
          case PROGRAM_NAMED_PARAM:
          case PROGRAM_UNIFORM:
@@ -848,8 +920,7 @@ st_translate_mesa_program(
                         t->insn[t->labels[i].branch_target] );
    }
 
-   tokens = ureg_get_tokens( ureg, NULL );
-   ureg_destroy( ureg );
+   return PIPE_OK;
 
 out:
    FREE(t->insn);
@@ -858,17 +929,9 @@ out:
 
    if (t->error) {
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
-      FREE((void *)tokens);
-      tokens = NULL;
    }
 
-   if (!tokens) {
-      debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
-      _mesa_print_program(program);
-      debug_assert(0);
-   }
-
-   return tokens;
+   return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 

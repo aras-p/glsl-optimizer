@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -13,10 +14,13 @@ nv04_surface_format(enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8_UNORM:
+	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_I8_UNORM:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
 	case PIPE_FORMAT_R16_SNORM:
 	case PIPE_FORMAT_R5G6B5_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -36,8 +40,10 @@ nv04_rect_format(enum pipe_format format)
 	case PIPE_FORMAT_A8_UNORM:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 	case PIPE_FORMAT_R5G6B5_UNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
+	case PIPE_FORMAT_X8R8G8B8_UNORM:
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case PIPE_FORMAT_Z24S8_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -51,6 +57,10 @@ static INLINE int
 nv04_scaled_image_format(enum pipe_format format)
 {
 	switch (format) {
+	case PIPE_FORMAT_A8_UNORM:
+	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_I8_UNORM:
+		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_Y8;
 	case PIPE_FORMAT_A1R5G5B5_UNORM:
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A1R5G5B5;
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -59,6 +69,7 @@ nv04_scaled_image_format(enum pipe_format format)
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_X8R8G8B8;
 	case PIPE_FORMAT_R5G6B5_UNORM:
 	case PIPE_FORMAT_R16_SNORM:
+	case PIPE_FORMAT_A8L8_UNORM:
 		return NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_R5G6B5;
 	default:
 		return -1;
@@ -66,7 +77,7 @@ nv04_scaled_image_format(enum pipe_format format)
 }
 
 static INLINE unsigned
-nv04_swizzle_bits(unsigned x, unsigned y)
+nv04_swizzle_bits_square(unsigned x, unsigned y)
 {
 	unsigned u = (x & 0x001) << 0 |
 	             (x & 0x002) << 1 |
@@ -96,6 +107,15 @@ nv04_swizzle_bits(unsigned x, unsigned y)
 	return v | u;
 }
 
+/* rectangular swizzled textures are linear concatenations of swizzled square tiles */
+static INLINE unsigned
+nv04_swizzle_bits(unsigned x, unsigned y, unsigned w, unsigned h)
+{
+	unsigned s = MIN2(w, h);
+	unsigned m = s - 1;
+	return (((x | y) & ~m) * s) | nv04_swizzle_bits_square(x & m, y & m);
+}
+
 static int
 nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 			  struct pipe_surface *dst, int dx, int dy,
@@ -123,6 +143,9 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	assert(sub_w == w || util_is_pot(sub_w));
 	assert(sub_h == h || util_is_pot(sub_h));
 
+	MARK_RING (chan, 8 + ((w+sub_w)/sub_w)*((h+sub_h)/sub_h)*17, 2 +
+			 ((w+sub_w)/sub_w)*((h+sub_h)/sub_h)*2);
+
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -131,7 +154,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	OUT_RING  (chan, nv04_surface_format(dst->format) |
 	                 log2i(dst->width) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
 	                 log2i(dst->height) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
- 
+
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, src_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -144,20 +167,19 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	  for (x = 0; x < w; x += sub_w) {
 	    sub_w = MIN2(sub_w, w - x);
 
-	    /* Must be 64-byte aligned */
-	    assert(!((dst->offset + nv04_swizzle_bits(dx+x, dy+y) * dst->texture->block.size) & 63));
+	    assert(!(dst->offset & 63));
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(dx+x, dy+y) * dst->texture->block.size,
+	    OUT_RELOCl(chan, dst_bo, dst->offset,
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	    OUT_RING  (chan, nv04_scaled_image_format(src->format));
 	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_CLIP_SIZE_H_SHIFT | sub_w);
-	    OUT_RING  (chan, 0);
+	    OUT_RING  (chan, (x + dx) | ((y + dy) << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_POINT_Y_SHIFT));
 	    OUT_RING  (chan, sub_h << NV04_SCALED_IMAGE_FROM_MEMORY_OUT_SIZE_H_SHIFT | sub_w);
 	    OUT_RING  (chan, 1 << 20);
 	    OUT_RING  (chan, 1 << 20);
@@ -167,7 +189,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    OUT_RING  (chan, src_pitch |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + (sy+y) * src_pitch + (sx+x) * src->texture->block.size,
+	    OUT_RELOCl(chan, src_bo, src->offset + (sy+y) * src_pitch + (sx+x) * util_format_get_blocksize(src->texture->format),
                              NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	    OUT_RING  (chan, 0);
 	  }
@@ -188,11 +210,11 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
 	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	unsigned dst_offset = dst->offset + dy * dst_pitch +
-	                      dx * dst->texture->block.size;
+	                      dx * util_format_get_blocksize(dst->texture->format);
 	unsigned src_offset = src->offset + sy * src_pitch +
-	                      sx * src->texture->block.size;
+	                      sx * util_format_get_blocksize(src->texture->format);
 
-	WAIT_RING (chan, 3 + ((h / 2047) + 1) * 9);
+	MARK_RING (chan, 3 + ((h / 2047) + 1) * 9, 2 + ((h / 2047) + 1) * 2);
 	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
 	OUT_RELOCo(chan, src_bo,
 		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -209,7 +231,7 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_WR);
 		OUT_RING  (chan, src_pitch);
 		OUT_RING  (chan, dst_pitch);
-		OUT_RING  (chan, w * src->texture->block.size);
+		OUT_RING  (chan, w * util_format_get_blocksize(src->texture->format));
 		OUT_RING  (chan, count);
 		OUT_RING  (chan, 0x0101);
 		OUT_RING  (chan, 0);
@@ -240,7 +262,7 @@ nv04_surface_copy_blit(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	if (format < 0)
 		return 1;
 
-	WAIT_RING (chan, 12);
+	MARK_RING (chan, 12, 4);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(chan, src_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -305,7 +327,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	gdirect_format = nv04_rect_format(dst->format);
 	assert(gdirect_format >= 0);
 
-	WAIT_RING (chan, 16);
+	MARK_RING (chan, 16, 4);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
@@ -477,3 +499,49 @@ nv04_surface_2d_init(struct nouveau_screen *screen)
 	ctx->fill = nv04_surface_fill;
 	return ctx;
 }
+
+struct nv04_surface*
+nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns)
+{
+	int temp_flags;
+
+	// printf("creating temp, flags is %i!\n", flags);
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_DISCARD)
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_DISCARD;
+	}
+	else
+	{
+		temp_flags = ns->base.usage | PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_GPU_READ;
+	}
+
+	struct nv40_screen* screen = (struct nv40_screen*)pscreen;
+	ns->base.usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+
+	struct pipe_texture templ;
+	memset(&templ, 0, sizeof(templ));
+	templ.format = ns->base.texture->format;
+	templ.target = PIPE_TEXTURE_2D;
+	templ.width0 = ns->base.width;
+	templ.height0 = ns->base.height;
+	templ.depth0 = 1;
+	templ.last_level = 0;
+
+	// TODO: this is probably wrong and we should specifically handle multisampling somehow once it is implemented
+	templ.nr_samples = ns->base.texture->nr_samples;
+
+	templ.tex_usage = ns->base.texture->tex_usage | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+	struct pipe_texture* temp_tex = pscreen->texture_create(pscreen, &templ);
+	struct nv04_surface* temp_ns = (struct nv04_surface*)pscreen->get_tex_surface(pscreen, temp_tex, 0, 0, 0, temp_flags);
+	temp_ns->backing = ns;
+
+	if(ns->base.usage & PIPE_BUFFER_USAGE_GPU_READ)
+		eng2d->copy(eng2d, &temp_ns->backing->base, 0, 0, &ns->base, 0, 0, ns->base.width, ns->base.height);
+
+	return temp_ns;
+}
+

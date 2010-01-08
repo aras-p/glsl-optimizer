@@ -50,28 +50,28 @@ wrap_mode(unsigned wrap) {
 
 	switch (wrap) {
 	case PIPE_TEX_WRAP_REPEAT:
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_REPEAT;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_MIRRORED_REPEAT;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_MIRRORED_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_EDGE;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_EDGE;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_BORDER;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP_TO_BORDER;
 		break;
 	case PIPE_TEX_WRAP_CLAMP:
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
 	case PIPE_TEX_WRAP_MIRROR_CLAMP:
 	default:
 		NOUVEAU_ERR("unknown wrap mode: %d\n", wrap);
-		ret = NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP;
+		ret = NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_CLAMP;
 	}
-	return ret >> NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_SHIFT;
+	return ret >> NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_SHIFT;
 }
 
 static void *
@@ -84,20 +84,20 @@ nv04_sampler_state_create(struct pipe_context *pipe,
 
 	ss = MALLOC(sizeof(struct nv04_sampler_state));
 
-	ss->format = ((wrap_mode(cso->wrap_s) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_SHIFT) |
-		    (wrap_mode(cso->wrap_t) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSV_SHIFT));
+	ss->format = ((wrap_mode(cso->wrap_s) << NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_SHIFT) |
+		    (wrap_mode(cso->wrap_t) << NV04_TEXTURED_TRIANGLE_FORMAT_ADDRESSV_SHIFT));
 
 	if (cso->max_anisotropy > 1.0) {
-		filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_ANISOTROPIC_MINIFY_ENABLE | NV04_DX5_TEXTURED_TRIANGLE_FILTER_ANISOTROPIC_MAGNIFY_ENABLE;
+		filter |= NV04_TEXTURED_TRIANGLE_FILTER_ANISOTROPIC_MINIFY_ENABLE | NV04_TEXTURED_TRIANGLE_FILTER_ANISOTROPIC_MAGNIFY_ENABLE;
 	}
 
 	switch (cso->mag_img_filter) {
 	case PIPE_TEX_FILTER_LINEAR:
-		filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MAGNIFY_LINEAR;
+		filter |= NV04_TEXTURED_TRIANGLE_FILTER_MAGNIFY_LINEAR;
 		break;
 	case PIPE_TEX_FILTER_NEAREST:
 	default:
-		filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MAGNIFY_NEAREST;
+		filter |= NV04_TEXTURED_TRIANGLE_FILTER_MAGNIFY_NEAREST;
 		break;
 	}
 
@@ -105,14 +105,14 @@ nv04_sampler_state_create(struct pipe_context *pipe,
 	case PIPE_TEX_FILTER_LINEAR:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
 			break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_LINEAR;
 			break;
 		}
 		break;
@@ -120,14 +120,14 @@ nv04_sampler_state_create(struct pipe_context *pipe,
 	default:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
 		break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV04_DX5_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST;
+			filter |= NV04_TEXTURED_TRIANGLE_FILTER_MINIFY_NEAREST;
 			break;
 		}
 		break;
@@ -181,7 +181,7 @@ nv04_rasterizer_state_create(struct pipe_context *pipe,
 	 */
 	rs = MALLOC(sizeof(struct nv04_rasterizer_state));
 
-	rs->blend = cso->flatshade ? NV04_DX5_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_FLAT : NV04_DX5_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_GOURAUD;
+	rs->blend = cso->flatshade ? NV04_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_FLAT : NV04_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_GOURAUD;
 
 	return (void *)rs;
 }
@@ -229,16 +229,16 @@ nv04_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	hw = MALLOC(sizeof(struct nv04_depth_stencil_alpha_state));
 
 	hw->control = float_to_ubyte(cso->alpha.ref_value);
-	hw->control |= ( nv04_compare_func(cso->alpha.func) << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ALPHA_FUNC_SHIFT );
-	hw->control |= cso->alpha.enabled ? NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ALPHA_TEST_ENABLE : 0;
-	hw->control |= NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ORIGIN;
-	hw->control |= cso->depth.enabled ? (1 << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_Z_ENABLE_SHIFT) : 0;
-	hw->control |= ( nv04_compare_func(cso->depth.func)<< NV04_DX5_TEXTURED_TRIANGLE_CONTROL_Z_FUNC_SHIFT );
-	hw->control |= 1 << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_CULL_MODE_SHIFT; // no culling, handled by the draw module
-	hw->control |= NV04_DX5_TEXTURED_TRIANGLE_CONTROL_DITHER_ENABLE;
-	hw->control |= NV04_DX5_TEXTURED_TRIANGLE_CONTROL_Z_PERSPECTIVE_ENABLE;
-	hw->control |= cso->depth.writemask ? (1 << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_Z_WRITE_ENABLE_SHIFT) : 0;
-	hw->control |= 1 << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_Z_FORMAT_SHIFT; // integer zbuffer format
+	hw->control |= ( nv04_compare_func(cso->alpha.func) << NV04_TEXTURED_TRIANGLE_CONTROL_ALPHA_FUNC_SHIFT );
+	hw->control |= cso->alpha.enabled ? NV04_TEXTURED_TRIANGLE_CONTROL_ALPHA_ENABLE : 0;
+	hw->control |= NV04_TEXTURED_TRIANGLE_CONTROL_ORIGIN;
+	hw->control |= cso->depth.enabled ? NV04_TEXTURED_TRIANGLE_CONTROL_Z_ENABLE : 0;
+	hw->control |= ( nv04_compare_func(cso->depth.func)<< NV04_TEXTURED_TRIANGLE_CONTROL_Z_FUNC_SHIFT );
+	hw->control |= 1 << NV04_TEXTURED_TRIANGLE_CONTROL_CULL_MODE_SHIFT; // no culling, handled by the draw module
+	hw->control |= NV04_TEXTURED_TRIANGLE_CONTROL_DITHER_ENABLE;
+	hw->control |= NV04_TEXTURED_TRIANGLE_CONTROL_Z_PERSPECTIVE_ENABLE;
+	hw->control |= cso->depth.writemask ? NV04_TEXTURED_TRIANGLE_CONTROL_Z_WRITE : 0;
+	hw->control |= 1 << NV04_TEXTURED_TRIANGLE_CONTROL_Z_FORMAT_SHIFT; // integer zbuffer format
 
 	return (void *)hw;
 }
@@ -377,7 +377,7 @@ nv04_set_scissor_state(struct pipe_context *pipe,
 /*	struct nv04_context *nv04 = nv04_context(pipe);
 
 	// XXX
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_SCISSOR_HORIZ, 2);
+	BEGIN_RING(fahrenheit, NV04_TEXTURED_TRIANGLE_SCISSOR_HORIZ, 2);
 	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
 	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);*/
 }
@@ -425,9 +425,9 @@ nv04_init_state_functions(struct nv04_context *nv04)
 	nv04->pipe.delete_blend_state = nv04_blend_state_delete;
 
 	nv04->pipe.create_sampler_state = nv04_sampler_state_create;
-	nv04->pipe.bind_sampler_states = nv04_sampler_state_bind;
+	nv04->pipe.bind_fragment_sampler_states = nv04_sampler_state_bind;
 	nv04->pipe.delete_sampler_state = nv04_sampler_state_delete;
-	nv04->pipe.set_sampler_textures = nv04_set_sampler_texture;
+	nv04->pipe.set_fragment_sampler_textures = nv04_set_sampler_texture;
 
 	nv04->pipe.create_rasterizer_state = nv04_rasterizer_state_create;
 	nv04->pipe.bind_rasterizer_state = nv04_rasterizer_state_bind;

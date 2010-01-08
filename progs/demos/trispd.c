@@ -227,15 +227,12 @@ static void Help( const char *program )
 
 int main( int argc, char *argv[] )
 {
-   printf("For options:  %s -help\n", argv[0]);
-   glutInit( &argc, argv );
    glutInitWindowSize( (int) Width, (int) Height );
-   glutInitWindowPosition( 0, 0 );
-
+   glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-
    glutCreateWindow( argv[0] );
 
+   printf("For options:  %s -help\n", argv[0]);
    if (argc==2 && strcmp(argv[1],"-help")==0) {
       Help(argv[0]);
       return 0;

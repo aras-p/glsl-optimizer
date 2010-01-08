@@ -38,10 +38,12 @@ if 'python' in env['statetrackers']:
         ],
     )
 
+    env['no_import_lib'] = 1
+
     env.SharedLibrary(
         target = '_gallium',
         source = [
             'st_hardpipe_winsys.c',
         ],
-        LIBS = [pyst, softpipe, trace] + auxiliaries + env['LIBS'],
+        LIBS = [pyst, softpipe, trace] + gallium + env['LIBS'],
     )

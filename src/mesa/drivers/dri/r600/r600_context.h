@@ -58,29 +58,6 @@ typedef struct r600_context context_t;
 
 #include "main/mm.h"
 
-/************ DMA BUFFERS **************/
-
-/* The blit width for texture uploads
- */
-#define R600_BLIT_WIDTH_BYTES 1024
-#define R600_MAX_TEXTURE_UNITS 8
-
-struct r600_texture_state {
-	int tc_count;		/* number of incoming texture coordinates from VAP */
-};
-
-/* Perhaps more if we store programs in vmem? */
-/* drm_r600_cmd_header_t->vpu->count is unsigned char */
-#define VSF_MAX_FRAGMENT_LENGTH (255*4)
-
-/* Can be tested with colormat currently. */
-#define VSF_MAX_FRAGMENT_TEMPS (14)
-
-#define STATE_R600_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
-#define STATE_R600_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
-
-extern int hw_tcl_on;
-
 #define COLOR_IS_RGBA
 #define TAG(x) r600##x
 #include "tnl_dd/t_dd_vertex.h"
@@ -131,6 +108,7 @@ typedef struct StreamDesc
 	GLint   size;   //number of data element
 	GLenum  type;  //data element type
 	GLsizei stride;
+	GLenum  format; // GL_RGBA,GLBGRA 
 
 	struct radeon_bo *bo;
 	GLint  bo_offset;
@@ -167,9 +145,6 @@ struct r600_context {
 
 	/* Vertex buffers
 	 */
-	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
-	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
-
 	GLint      nNumActiveAos;
 	StreamDesc stream_desc[VERT_ATTRIB_MAX];
     struct r700_index_buffer ind_buf;
@@ -179,7 +154,7 @@ struct r600_context {
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
 extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
-				   __DRIcontextPrivate * driContextPriv,
+				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))
@@ -203,7 +178,6 @@ extern GLboolean r700SyncSurf(context_t *context,
 			      uint32_t write_domain,
 			      uint32_t sync_type);
 
-extern void r700SetupStreams(GLcontext * ctx);
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
 extern void r700InitDraw(GLcontext *ctx);
@@ -212,8 +186,5 @@ extern void r700InitDraw(GLcontext *ctx);
 #define RADEON_D_PLAYBACK 1
 #define RADEON_D_PLAYBACK_RAW 2
 #define RADEON_D_T 3
-
-#define r600PackFloat32 radeonPackFloat32
-#define r600PackFloat24 radeonPackFloat24
 
 #endif				/* __R600_CONTEXT_H__ */

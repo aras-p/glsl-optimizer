@@ -109,7 +109,7 @@ _mesa_insert_mvp_dp4_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    vprog->Base.Instructions = newInst;
    vprog->Base.NumInstructions = newLen;
    vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VERT_RESULT_HPOS);
 }
 
 
@@ -211,7 +211,7 @@ _mesa_insert_mvp_mad_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    vprog->Base.Instructions = newInst;
    vprog->Base.NumInstructions = newLen;
    vprog->Base.InputsRead |= VERT_BIT_POS;
-   vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+   vprog->Base.OutputsWritten |= BITFIELD64_BIT(VERT_RESULT_HPOS);
 }
 
 
@@ -528,15 +528,11 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    /* look for instructions which write to the varying vars identified above */
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      GLuint j;
-      for (j = 0; j < numSrc; j++) {
-         if (inst->DstReg.File == type &&
-             outputMap[inst->DstReg.Index] >= 0) {
-            /* change inst to write to the temp reg, instead of the varying */
-            inst->DstReg.File = PROGRAM_TEMPORARY;
-            inst->DstReg.Index = outputMap[inst->DstReg.Index];
-         }
+      if (inst->DstReg.File == type &&
+          outputMap[inst->DstReg.Index] >= 0) {
+         /* change inst to write to the temp reg, instead of the varying */
+         inst->DstReg.File = PROGRAM_TEMPORARY;
+         inst->DstReg.Index = outputMap[inst->DstReg.Index];
       }
    }
 
@@ -613,7 +609,7 @@ _mesa_nop_fragment_program(GLcontext *ctx, struct gl_fragment_program *prog)
    prog->Base.Instructions = inst;
    prog->Base.NumInstructions = 2;
    prog->Base.InputsRead = 1 << inputAttr;
-   prog->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
+   prog->Base.OutputsWritten = BITFIELD64_BIT(FRAG_RESULT_COLOR);
 }
 
 
@@ -657,7 +653,7 @@ _mesa_nop_vertex_program(GLcontext *ctx, struct gl_vertex_program *prog)
    prog->Base.Instructions = inst;
    prog->Base.NumInstructions = 2;
    prog->Base.InputsRead = 1 << inputAttr;
-   prog->Base.OutputsWritten = 1 << VERT_RESULT_COL0;
+   prog->Base.OutputsWritten = BITFIELD64_BIT(VERT_RESULT_COL0);
 
    /*
     * Now insert code to do standard modelview/projection transformation.

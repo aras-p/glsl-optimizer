@@ -68,12 +68,16 @@ static void
 intelClear(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
    GLbitfield tri_mask = 0;
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
+
+   if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+      intel->front_buffer_dirty = GL_TRUE;
+   }
 
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);

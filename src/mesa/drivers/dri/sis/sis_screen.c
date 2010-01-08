@@ -65,7 +65,7 @@ static const GLuint __driNConfigOptions = 3;
 extern const struct dri_extension card_extensions[];
 
 static const __DRIconfig **
-sisFillInModes(__DRIscreenPrivate *psp, int bpp)
+sisFillInModes(__DRIscreen *psp, int bpp)
 {
    __DRIconfig **configs;
    unsigned depth_buffer_factor;
@@ -117,7 +117,7 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
 /* Create the device specific screen private data struct.
  */
 static sisScreenPtr
-sisCreateScreen( __DRIscreenPrivate *sPriv )
+sisCreateScreen( __DRIscreen *sPriv )
 {
    sisScreenPtr sisScreen;
    SISDRIPtr sisDRIPriv = (SISDRIPtr)sPriv->pDevPriv;
@@ -172,7 +172,7 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
 /* Destroy the device specific screen private data struct.
  */
 static void
-sisDestroyScreen( __DRIscreenPrivate *sPriv )
+sisDestroyScreen( __DRIscreen *sPriv )
 {
    sisScreenPtr sisScreen = (sisScreenPtr)sPriv->private;
 
@@ -192,8 +192,8 @@ sisDestroyScreen( __DRIscreenPrivate *sPriv )
  * data.
  */
 static GLboolean
-sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
+sisCreateBuffer( __DRIscreen *driScrnPriv,
+                 __DRIdrawable *driDrawPriv,
                  const __GLcontextModes *mesaVis,
                  GLboolean isPixmap )
 {
@@ -219,12 +219,12 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-sisDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+sisDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
-static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
+static void sisCopyBuffer( __DRIdrawable *dPriv )
 {
    sisContextPtr smesa = (sisContextPtr)dPriv->driContextPriv->driverPrivate;
    int i;
@@ -259,7 +259,7 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
 
 /* Copy the back color buffer to the front color buffer */
 static void
-sisSwapBuffers(__DRIdrawablePrivate *dPriv)
+sisSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
          sisContextPtr smesa = (sisContextPtr) dPriv->driContextPriv->driverPrivate;
@@ -284,7 +284,7 @@ sisSwapBuffers(__DRIdrawablePrivate *dPriv)
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-sisInitScreen(__DRIscreenPrivate *psp)
+sisInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = {0, 8, 0};
    static const __DRIversion dri_expected = {4, 0, 0};
@@ -297,18 +297,6 @@ sisInitScreen(__DRIscreenPrivate *psp)
 				   &psp->ddx_version, &ddx_expected,
 				   &psp->drm_version, &drm_expected))
       return NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
    psp->private = sisCreateScreen(psp);
 
@@ -336,4 +324,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
 
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

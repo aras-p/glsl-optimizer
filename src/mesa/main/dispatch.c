@@ -37,12 +37,11 @@
  * \author Brian Paul <brian@precisioninsight.com>
  */
 
-#ifndef GLX_USE_APPLEGL
-
 #include "main/glheader.h"
 #include "main/compiler.h"
 #include "glapi/glapi.h"
 #include "glapi/glapitable.h"
+#include "glapi/glapidispatch.h"
 #include "glapi/glthread.h"
 
 
@@ -88,9 +87,6 @@
 #define GLAPIENTRY
 #endif
 
-#include "glapi/dispatch.h"
 #include "glapi/glapitemp.h"
 
 #endif /* USE_X86_ASM */
-
-#endif /* !GLX_USE_APPLEGL */

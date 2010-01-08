@@ -93,33 +93,45 @@ nv04_vbuf_render_set_primitive( struct vbuf_render *render,
 
 static INLINE void nv04_2triangles(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2, ushort v3, ushort v4, ushort v5)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xA),49);
-	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v3,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v4,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v5,8);
-	OUT_RING(0xFEDCBA);
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
+
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xA), 49);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v0,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v1,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v2,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v3,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v4,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v5,8);
+	OUT_RING(chan, 0xFEDCBA);
 }
 
 static INLINE void nv04_1triangle(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xD),25);
-	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
-	OUT_RING(0xFED);
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
+
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xD), 25);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v0,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v1,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v2,8);
+	OUT_RING(chan, 0xFED);
 }
 
 static INLINE void nv04_1quad(struct nv04_context* nv04, unsigned char* buffer, ushort v0, ushort v1, ushort v2, ushort v3)
 {
-	BEGIN_RING(fahrenheit,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xC),33);
-	OUT_RINGp(buffer + VERTEX_SIZE * v0,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v1,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v2,8);
-	OUT_RINGp(buffer + VERTEX_SIZE * v3,8);
-	OUT_RING(0xFECEDC);
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
+
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0xC), 33);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v0,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v1,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v2,8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * v3,8);
+	OUT_RING(chan, 0xFECEDC);
 }
 
 static void nv04_vbuf_render_triangles_elts(struct nv04_vbuf_render * render, const ushort * indices, uint nr_indices)
@@ -156,7 +168,10 @@ static void nv04_vbuf_render_tri_strip_elts(struct nv04_vbuf_render* render, con
 {
 	const uint32_t striptbl[]={0x321210,0x543432,0x765654,0x987876,0xBA9A98,0xDCBCBA,0xFEDEDC};
 	unsigned char* buffer = render->buffer;
-	struct nv04_context* nv04 = render->nv04;
+	struct nv04_context *nv04 = render->nv04;
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
 	int i,j;
 
 	for(i = 0; i<nr_indices; i+=14) 
@@ -166,15 +181,15 @@ static void nv04_vbuf_render_tri_strip_elts(struct nv04_vbuf_render* render, con
 		if (numvert<3)
 			break;
 
-		BEGIN_RING( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), numvert*8 );
+		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), numvert*8);
 		for(j = 0; j<numvert; j++)
-			OUT_RINGp( buffer + VERTEX_SIZE * indices [i+j], 8 );
+			OUT_RINGp(chan, buffer + VERTEX_SIZE * indices [i+j], 8 );
 
-		BEGIN_RING_NI( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2 );
+		BEGIN_RING_NI(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_DRAWPRIMITIVE(0), (numtri+1)/2 );
 		for(j = 0; j<numtri/2; j++ )
-			OUT_RING(striptbl[j]);
+			OUT_RING(chan, striptbl[j]);
 		if (numtri%2)
-			OUT_RING(striptbl[numtri/2]&0xFFF);
+			OUT_RING(chan, striptbl[numtri/2]&0xFFF);
 	}
 }
 
@@ -182,11 +197,14 @@ static void nv04_vbuf_render_tri_fan_elts(struct nv04_vbuf_render* render, const
 {
 	const uint32_t fantbl[]={0x320210,0x540430,0x760650,0x980870,0xBA0A90,0xDC0CB0,0xFE0ED0};
 	unsigned char* buffer = render->buffer;
-	struct nv04_context* nv04 = render->nv04;
+	struct nv04_context *nv04 = render->nv04;
+	struct nv04_screen *screen = nv04->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *fahrenheit = screen->fahrenheit;
 	int i,j;
 
-	BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), 8);
-	OUT_RINGp(buffer + VERTEX_SIZE * indices[0], 8);
+	BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x0), 8);
+	OUT_RINGp(chan, buffer + VERTEX_SIZE * indices[0], 8);
 
 	for(i = 1; i<nr_indices; i+=14)
 	{
@@ -195,16 +213,16 @@ static void nv04_vbuf_render_tri_fan_elts(struct nv04_vbuf_render* render, const
 		if (numvert < 3)
 			break;
 
-		BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0x1), numvert*8);
+		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0x1), numvert*8);
 
 		for(j=0;j<numvert;j++)
-			OUT_RINGp( buffer + VERTEX_SIZE * indices[ i+j ], 8 );
+			OUT_RINGp(chan, buffer + VERTEX_SIZE * indices[ i+j ], 8 );
 
-		BEGIN_RING_NI(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2);
+		BEGIN_RING_NI(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_DRAWPRIMITIVE(0), (numtri+1)/2);
 		for(j = 0; j<numtri/2; j++)
-			OUT_RING(fantbl[j]);
+			OUT_RING(chan, fantbl[j]);
 		if (numtri%2)
-			OUT_RING(fantbl[numtri/2]&0xFFF);
+			OUT_RING(chan, fantbl[numtri/2]&0xFFF);
 	}
 }
 

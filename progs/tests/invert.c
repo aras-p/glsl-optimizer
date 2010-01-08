@@ -128,7 +128,7 @@ static void Init( void )
 {
    const char * const ver_string = (const char * const)
        glGetString( GL_VERSION );
-   const float ver = strtof( ver_string, NULL );
+   const float ver = strtod( ver_string, NULL );
 
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
@@ -165,7 +165,7 @@ static void Init( void )
 	  "square should look upside-down.\n");
    
 
-   image = LoadRGBImage( IMAGE_FILE, & img_width, & img_height,
+   image = LoadRGBImage( IMAGE_FILE, (GLint *) & img_width, (GLint *) & img_height,
 			 & img_format );
    if ( image == NULL ) {
       printf( "Could not open image file \"%s\".\n", IMAGE_FILE );

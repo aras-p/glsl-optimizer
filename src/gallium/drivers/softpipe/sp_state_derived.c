@@ -66,10 +66,8 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct sp_fragment_shader *spfs = softpipe->fs;
-      const enum interp_mode colorInterp
-         = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
       struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
-      const uint num = draw_num_vs_outputs(softpipe->draw);
+      const uint num = draw_current_shader_outputs(softpipe->draw);
       uint i;
 
       /* Tell draw_vbuf to simply emit the whole post-xform vertex
@@ -108,36 +106,24 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
          switch (spfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
-            src = draw_find_vs_output(softpipe->draw,
-                                      TGSI_SEMANTIC_POSITION, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
+            interp = INTERP_POS;
             break;
 
          case TGSI_SEMANTIC_COLOR:
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_COLOR, 
-                                 spfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+            if (softpipe->rasterizer->flatshade) {
+               interp = INTERP_CONSTANT;
+            }
             break;
-
-         case TGSI_SEMANTIC_FOG:
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_FOG, 0);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         case TGSI_SEMANTIC_GENERIC:
-         case TGSI_SEMANTIC_FACE:
-            /* this includes texcoords and varying vars */
-            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
-                                      spfs->info.input_semantic_index[i]);
-            draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
-            break;
-
-         default:
-            assert(0);
          }
+
+         /* this includes texcoords and varying vars */
+         src = draw_find_shader_output(softpipe->draw,
+                                       spfs->info.input_semantic_name[i],
+                                       spfs->info.input_semantic_index[i]);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
-      softpipe->psize_slot = draw_find_vs_output(softpipe->draw,
+      softpipe->psize_slot = draw_find_shader_output(softpipe->draw,
                                                  TGSI_SEMANTIC_PSIZE, 0);
       if (softpipe->psize_slot > 0) {
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
@@ -223,6 +209,19 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
             /*
             _debug_printf("INV %d %d\n", tc->timestamp, spt->timestamp);
             */
+            tc->timestamp = spt->timestamp;
+         }
+      }
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      struct softpipe_tex_tile_cache *tc = softpipe->vertex_tex_cache[i];
+
+      if (tc->texture) {
+         struct softpipe_texture *spt = softpipe_texture(tc->texture);
+
+         if (spt->timestamp != tc->timestamp) {
+	    sp_tex_tile_cache_validate_texture(tc);
             tc->timestamp = spt->timestamp;
          }
       }

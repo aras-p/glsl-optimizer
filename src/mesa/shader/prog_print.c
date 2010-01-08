@@ -788,7 +788,7 @@ _mesa_fprint_program_opt(FILE *f,
       else if (mode == PROG_PRINT_NV)
          _mesa_fprintf(f, "!!VP1.0\n");
       else
-         _mesa_fprintf(f, "# Vertex Program/Shader\n");
+         _mesa_fprintf(f, "# Vertex Program/Shader %u\n", prog->Id);
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
    case GL_FRAGMENT_PROGRAM_NV:
@@ -797,7 +797,7 @@ _mesa_fprint_program_opt(FILE *f,
       else if (mode == PROG_PRINT_NV)
          _mesa_fprintf(f, "!!FP1.0\n");
       else
-         _mesa_fprintf(f, "# Fragment Program/Shader\n");
+         _mesa_fprintf(f, "# Fragment Program/Shader %u\n", prog->Id);
       break;
    }
 
@@ -821,17 +821,19 @@ _mesa_print_program(const struct gl_program *prog)
 
 
 /**
- * Return binary representation of value (as a string).
+ * Return binary representation of 64-bit value (as a string).
  * Insert a comma to separate each group of 8 bits.
+ * Note we return a pointer to local static storage so this is not
+ * re-entrant, etc.
  * XXX move to imports.[ch] if useful elsewhere.
  */
 static const char *
-binary(GLbitfield val)
+binary(GLbitfield64 val)
 {
-   static char buf[50];
+   static char buf[80];
    GLint i, len = 0;
-   for (i = 31; i >= 0; --i) {
-      if (val & (1 << i))
+   for (i = 63; i >= 0; --i) {
+      if (val & (1ULL << i))
          buf[len++] = '1';
       else if (len > 0 || i == 0)
          buf[len++] = '0';
@@ -855,7 +857,7 @@ _mesa_fprint_program_parameters(FILE *f,
 
    _mesa_fprintf(f, "InputsRead: 0x%x (0b%s)\n",
                  prog->InputsRead, binary(prog->InputsRead));
-   _mesa_fprintf(f, "OutputsWritten: 0x%x (0b%s)\n",
+   _mesa_fprintf(f, "OutputsWritten: 0x%llx (0b%s)\n",
                  prog->OutputsWritten, binary(prog->OutputsWritten));
    _mesa_fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
    _mesa_fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
@@ -906,7 +908,8 @@ _mesa_fprint_parameter_list(FILE *f,
    if (!list)
       return;
 
-   _mesa_fprintf(f, "param list %p\n", (void *) list);
+   if (0)
+      _mesa_fprintf(f, "param list %p\n", (void *) list);
    _mesa_fprintf(f, "dirty state flags: 0x%x\n", list->StateFlags);
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;

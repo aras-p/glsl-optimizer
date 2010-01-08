@@ -120,7 +120,7 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_NOT: return RC_OPCODE_NOT; */
      /* case TGSI_OPCODE_TRUNC: return RC_OPCODE_TRUNC; */
      /* case TGSI_OPCODE_SHL: return RC_OPCODE_SHL; */
-     /* case TGSI_OPCODE_SHR: return RC_OPCODE_SHR; */
+     /* case TGSI_OPCODE_ISHR: return RC_OPCODE_SHR; */
      /* case TGSI_OPCODE_AND: return RC_OPCODE_AND; */
      /* case TGSI_OPCODE_OR: return RC_OPCODE_OR; */
      /* case TGSI_OPCODE_MOD: return RC_OPCODE_MOD; */
@@ -135,10 +135,6 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_BGNSUB: return RC_OPCODE_BGNSUB; */
      /* case TGSI_OPCODE_ENDLOOP2: return RC_OPCODE_ENDLOOP2; */
      /* case TGSI_OPCODE_ENDSUB: return RC_OPCODE_ENDSUB; */
-     /* case TGSI_OPCODE_NOISE1: return RC_OPCODE_NOISE1; */
-     /* case TGSI_OPCODE_NOISE2: return RC_OPCODE_NOISE2; */
-     /* case TGSI_OPCODE_NOISE3: return RC_OPCODE_NOISE3; */
-     /* case TGSI_OPCODE_NOISE4: return RC_OPCODE_NOISE4; */
         case TGSI_OPCODE_NOP: return RC_OPCODE_NOP;
                                         /* gap */
      /* case TGSI_OPCODE_NRM4: return RC_OPCODE_NRM4; */
@@ -146,7 +142,6 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_IFC: return RC_OPCODE_IFC; */
      /* case TGSI_OPCODE_BREAKC: return RC_OPCODE_BREAKC; */
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
-        case TGSI_OPCODE_SWZ: return RC_OPCODE_SWZ;
     }
 
     fprintf(stderr, "Unknown opcode: %i\n", opcode);
@@ -195,10 +190,10 @@ static void transform_dstreg(
     struct rc_dst_register * dst,
     struct tgsi_full_dst_register * src)
 {
-    dst->File = translate_register_file(src->DstRegister.File);
-    dst->Index = translate_register_index(ttr, src->DstRegister.File, src->DstRegister.Index);
-    dst->WriteMask = src->DstRegister.WriteMask;
-    dst->RelAddr = src->DstRegister.Indirect;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->WriteMask = src->Register.WriteMask;
+    dst->RelAddr = src->Register.Indirect;
 }
 
 static void transform_srcreg(
@@ -206,23 +201,19 @@ static void transform_srcreg(
     struct rc_src_register * dst,
     struct tgsi_full_src_register * src)
 {
-    dst->File = translate_register_file(src->SrcRegister.File);
-    dst->Index = translate_register_index(ttr, src->SrcRegister.File, src->SrcRegister.Index);
-    dst->RelAddr = src->SrcRegister.Indirect;
-    dst->Swizzle = tgsi_util_get_full_src_register_extswizzle(src, 0);
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 1) << 3;
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 2) << 6;
-    dst->Swizzle |= tgsi_util_get_full_src_register_extswizzle(src, 3) << 9;
-    dst->Abs = src->SrcRegisterExtMod.Absolute;
-    dst->Negate =
-        src->SrcRegisterExtSwz.NegateX |
-        (src->SrcRegisterExtSwz.NegateY << 1) |
-        (src->SrcRegisterExtSwz.NegateZ << 2) |
-        (src->SrcRegisterExtSwz.NegateW << 3);
-    dst->Negate ^= src->SrcRegister.Negate ? RC_MASK_XYZW : 0;
+    dst->File = translate_register_file(src->Register.File);
+    dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
+    dst->RelAddr = src->Register.Indirect;
+    dst->Swizzle = tgsi_util_get_full_src_register_swizzle(src, 0);
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 1) << 3;
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 2) << 6;
+    dst->Swizzle |= tgsi_util_get_full_src_register_swizzle(src, 3) << 9;
+    dst->Abs = src->Register.Absolute;
+    dst->Negate = src->Register.Negate ? RC_MASK_XYZW : 0;
 }
 
-static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_ext_texture src)
+static void transform_texture(struct rc_instruction * dst, struct tgsi_instruction_texture src,
+                              uint32_t *shadowSamplers)
 {
     switch(src.Texture) {
         case TGSI_TEXTURE_1D:
@@ -243,14 +234,17 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
         case TGSI_TEXTURE_SHADOW1D:
             dst->U.I.TexSrcTarget = RC_TEXTURE_1D;
             dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
             break;
         case TGSI_TEXTURE_SHADOW2D:
             dst->U.I.TexSrcTarget = RC_TEXTURE_2D;
             dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
             break;
         case TGSI_TEXTURE_SHADOWRECT:
             dst->U.I.TexSrcTarget = RC_TEXTURE_RECT;
             dst->U.I.TexShadow = 1;
+            *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
             break;
     }
 }
@@ -268,17 +262,19 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
 
     if (src->Instruction.NumDstRegs)
-        transform_dstreg(ttr, &dst->U.I.DstReg, &src->FullDstRegisters[0]);
+        transform_dstreg(ttr, &dst->U.I.DstReg, &src->Dst[0]);
 
     for(i = 0; i < src->Instruction.NumSrcRegs; ++i) {
-        if (src->FullSrcRegisters[i].SrcRegister.File == TGSI_FILE_SAMPLER)
-            dst->U.I.TexSrcUnit = src->FullSrcRegisters[i].SrcRegister.Index;
+        if (src->Src[i].Register.File == TGSI_FILE_SAMPLER)
+            dst->U.I.TexSrcUnit = src->Src[i].Register.Index;
         else
-            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->FullSrcRegisters[i]);
+            transform_srcreg(ttr, &dst->U.I.SrcReg[i], &src->Src[i]);
     }
 
     /* Texturing. */
-    transform_texture(dst, src->InstructionExtTexture);
+    if (src->Instruction.Texture)
+        transform_texture(dst, src->Texture,
+                          &ttr->compiler->Program.ShadowSamplers);
 }
 
 static void handle_immediate(struct tgsi_to_rc * ttr, struct tgsi_full_immediate * imm)

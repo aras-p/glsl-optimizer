@@ -59,7 +59,7 @@ cell_map_constant_buffers(struct cell_context *sp)
       }
    }
 
-   draw_set_mapped_constant_buffer(sp->draw,
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX,
                                    sp->mapped_constants[PIPE_SHADER_VERTEX],
                                    sp->constants[PIPE_SHADER_VERTEX].buffer->size);
 }
@@ -85,7 +85,7 @@ cell_unmap_constant_buffers(struct cell_context *sp)
  *
  * XXX should the element buffer be specified/bound with a separate function?
  */
-static boolean
+static void
 cell_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_buffer *indexBuffer,
                          unsigned indexSize,
@@ -145,39 +145,28 @@ cell_draw_range_elements(struct pipe_context *pipe,
 
    /* Note: leave drawing surfaces mapped */
    cell_unmap_constant_buffers(sp);
-
-   return TRUE;
 }
 
 
-static boolean
+static void
 cell_draw_elements(struct pipe_context *pipe,
                    struct pipe_buffer *indexBuffer,
                    unsigned indexSize,
                    unsigned mode, unsigned start, unsigned count)
 {
-   return cell_draw_range_elements( pipe, indexBuffer,
-                                    indexSize,
-                                    0, 0xffffffff,
-                                    mode, start, count );
-}
-
-
-static boolean
-cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   return cell_draw_elements(pipe, NULL, 0, mode, start, count);
+   cell_draw_range_elements( pipe, indexBuffer,
+                             indexSize,
+                             0, 0xffffffff,
+                             mode, start, count );
 }
 
 
 static void
-cell_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
+cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                     unsigned start, unsigned count)
 {
-   struct cell_context *cell = cell_context(pipe);
-   draw_set_edgeflags(cell->draw, edgeflags);
+   cell_draw_elements(pipe, NULL, 0, mode, start, count);
 }
-
 
 
 void
@@ -186,6 +175,5 @@ cell_init_draw_functions(struct cell_context *cell)
    cell->pipe.draw_arrays = cell_draw_arrays;
    cell->pipe.draw_elements = cell_draw_elements;
    cell->pipe.draw_range_elements = cell_draw_range_elements;
-   cell->pipe.set_edgeflags = cell_set_edgeflags;
 }
 

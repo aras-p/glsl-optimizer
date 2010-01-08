@@ -325,14 +325,14 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
             elif swizzle == SWIZZLE_0:
                 value = '0'
             elif swizzle == SWIZZLE_1:
-                value = '1'
+                value = get_one(dst_type)
             else:
                 assert False
         elif format.colorspace == 'zs':
             if i < 3:
                 value = 'z'
             else:
-                value = '1'
+                value = get_one(dst_type)
         else:
             assert False
         print '         *dst_pixel++ = %s; /* %s */' % (value, 'rgba'[i])

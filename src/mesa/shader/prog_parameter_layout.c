@@ -72,13 +72,10 @@ copy_indirect_accessed_array(struct gl_program_parameter_list *src,
 			     unsigned first, unsigned count)
 {
    const int base = dst->NumParameters;
-   unsigned i;
-   unsigned j;
-
+   unsigned i, j;
 
    for (i = first; i < (first + count); i++) {
       struct gl_program_parameter *curr = & src->Parameters[i];
-
 
       if (curr->Type == PROGRAM_CONSTANT) {
 	 j = dst->NumParameters;
@@ -93,10 +90,15 @@ copy_indirect_accessed_array(struct gl_program_parameter_list *src,
 
       assert(j == dst->NumParameters);
 
+      /* copy src parameter [i] to dest parameter [j] */
       memcpy(& dst->Parameters[j], curr,
 	     sizeof(dst->Parameters[j]));
       memcpy(dst->ParameterValues[j], src->ParameterValues[i],
 	     sizeof(GLfloat) * 4);
+
+      /* Pointer to the string name was copied.  Null-out src param name
+       * to prevent double free later.
+       */
       curr->Name = NULL;
 
       dst->NumParameters++;
@@ -117,10 +119,8 @@ _mesa_layout_parameters(struct asm_parser_state *state)
    struct asm_instruction *inst;
    unsigned i;
 
-
    layout =
       _mesa_new_parameter_list_sized(state->prog->Parameters->NumParameters);
-
 
    /* PASS 1:  Move any parameters that are accessed indirectly from the
     * original parameter list to the new parameter list.
@@ -155,7 +155,6 @@ _mesa_layout_parameters(struct asm_parser_state *state)
       }
    }
 
-
    /* PASS 2:  Move any parameters that are not accessed indirectly from the
     * original parameter list to the new parameter list.
     */
@@ -165,14 +164,12 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	 const int idx = inst->SrcReg[i].Base.Index;
 	 unsigned swizzle = SWIZZLE_NOOP;
 
-
 	 /* All relative addressed operands were processed on the first
 	  * pass.  Just skip them here.
 	  */
 	 if (inst->SrcReg[i].Base.RelAddr) {
 	    continue;
 	 }
-
 
 	 if ((inst->SrcReg[i].Base.File <= PROGRAM_VARYING )
 	     || (inst->SrcReg[i].Base.File >= PROGRAM_WRITE_ONLY)) {
@@ -208,7 +205,6 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	 inst->Base.SrcReg[i].File = p->Type;
       }
    }
-
 
    _mesa_free_parameter_list(state->prog->Parameters);
    state->prog->Parameters = layout;

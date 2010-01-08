@@ -880,13 +880,13 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       stipple_polygon_span(ctx, span);
    }
 
-   if (ctx->Transform.DepthClamp)
-      _swrast_depth_clamp_span(ctx, span);
-
    /* Stencil and Z testing */
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
 
       if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
@@ -1278,7 +1278,7 @@ void
 _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
+   const GLuint *colorMask = (GLuint *) ctx->Color.ColorMask;
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield origArrayAttribs = span->arrayAttribs;
@@ -1356,6 +1356,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
+
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
+
       if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
@@ -1385,7 +1389,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.
     */
-   if (colorMask == 0x0) {
+   if (fb->_NumColorDrawBuffers == 1 && colorMask[0] == 0x0) {
       /* no colors to write */
       goto end;
    }
@@ -1475,12 +1479,12 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
             if (ctx->Color._LogicOpEnabled) {
                _swrast_logicop_rgba_span(ctx, rb, span);
             }
-            else if (ctx->Color.BlendEnabled) {
+            else if ((ctx->Color.BlendEnabled >> buf) & 1) {
                _swrast_blend_span(ctx, rb, span);
             }
 
-            if (colorMask != 0xffffffff) {
-               _swrast_mask_rgba_span(ctx, rb, span);
+            if (colorMask[buf] != 0xffffffff) {
+               _swrast_mask_rgba_span(ctx, rb, span, buf);
             }
 
             if (span->arrayMask & SPAN_XY) {
@@ -1762,9 +1766,7 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Get RGBA pixels from the given renderbuffer.  Put the pixel colors into
- * the span's specular color arrays.  The specular color arrays should no
- * longer be needed by time this function is called.
+ * Get RGBA pixels from the given renderbuffer.
  * Used by blending, logicop and masking functions.
  * \return pointer to the colors we read.
  */
@@ -1775,10 +1777,8 @@ _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
    const GLuint pixelSize = RGBA_PIXEL_SIZE(span->array->ChanType);
    void *rbPixels;
 
-   /*
-    * Point rbPixels to a temporary space (use specular color arrays).
-    */
-   rbPixels = span->array->attribs[FRAG_ATTRIB_COL1];
+   /* Point rbPixels to a temporary space */
+   rbPixels = span->array->attribs[FRAG_ATTRIB_MAX - 1];
 
    /* Get destination values from renderbuffer */
    if (span->arrayMask & SPAN_XY) {

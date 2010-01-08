@@ -64,11 +64,13 @@
 #include "pipe/p_format.h" 
 #include "pipe/p_state.h" 
 #include "pipe/p_inlines.h" 
+#include "util/u_format.h"
 #include "util/u_memory.h" 
 #include "util/u_string.h" 
 #include "util/u_stream.h" 
 #include "util/u_math.h" 
 #include "util/u_tile.h" 
+#include "util/u_prim.h" 
 
 
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
@@ -452,7 +454,8 @@ debug_dump_flags(const struct debug_named_value *names,
 	    util_strncat(output, "|", sizeof(output));
 	 else
 	    first = 0;
-	 util_strncat(output, names->name, sizeof(output));
+	 util_strncat(output, names->name, sizeof(output) - 1);
+	 output[sizeof(output) - 1] = '\0';
 	 value &= ~names->value;
       }
       ++names;
@@ -465,7 +468,8 @@ debug_dump_flags(const struct debug_named_value *names,
 	 first = 0;
       
       util_snprintf(rest, sizeof(rest), "0x%08lx", value);
-      util_strncat(output, rest, sizeof(output));
+      util_strncat(output, rest, sizeof(output) - 1);
+      output[sizeof(output) - 1] = '\0';
    }
    
    if(first)
@@ -600,6 +604,32 @@ const char *pf_name( enum pipe_format format )
 }
 
 
+
+static const struct debug_named_value pipe_prim_names[] = {
+#ifdef DEBUG
+   DEBUG_NAMED_VALUE(PIPE_PRIM_POINTS),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINES),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINE_LOOP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_LINE_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLES),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLE_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_TRIANGLE_FAN),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_QUADS),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_QUAD_STRIP),
+   DEBUG_NAMED_VALUE(PIPE_PRIM_POLYGON),
+#endif
+   DEBUG_NAMED_VALUE_END
+};
+
+
+const char *u_prim_name( unsigned prim )
+{
+   return debug_dump_enum(pipe_prim_names, prim);
+}
+
+
+
+
 #ifdef DEBUG
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
@@ -669,10 +699,10 @@ void debug_dump_surface(const char *prefix,
       goto error;
    
    debug_dump_image(prefix, 
-                    transfer->format,
-                    transfer->block.size, 
-                    transfer->nblocksx,
-                    transfer->nblocksy,
+                    texture->format,
+                    util_format_get_blocksize(texture->format), 
+                    util_format_get_nblocksx(texture->format, transfer->width),
+                    util_format_get_nblocksy(texture->format, transfer->height),
                     transfer->stride,
                     data);
    

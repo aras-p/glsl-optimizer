@@ -63,7 +63,7 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
-   const unsigned pos = stage->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(stage->draw);
    struct offset_stage *offset = offset_stage(stage);   
    float inv_det = 1.0f / header->det;
 

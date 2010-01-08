@@ -40,7 +40,6 @@
 
 #include "main/mtypes.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
 
@@ -622,7 +621,7 @@ static int intersect_rect( drm_clip_rect_t *out,
 void tdfxUpdateClipping( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;
+   __DRIdrawable *dPriv = fxMesa->driDrawable;
 
    if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s()\n", __FUNCTION__ );

@@ -114,7 +114,7 @@ static void intel_check_sync(GLcontext *ctx, struct gl_sync_object *s)
 {
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
-   if (sync->bo && drm_intel_bo_busy(sync->bo)) {
+   if (sync->bo && !drm_intel_bo_busy(sync->bo)) {
       drm_intel_bo_unreference(sync->bo);
       sync->bo = NULL;
       s->StatusFlag = 1;

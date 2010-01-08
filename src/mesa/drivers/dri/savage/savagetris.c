@@ -435,7 +435,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset =						\
       ((imesa->skip & SAVAGE_SKIP_W) ? 3 : 4);			\
    GLboolean specoffset =					\
@@ -879,13 +880,13 @@ static GLboolean savageCheckPTexHack( GLcontext *ctx )
 
    RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->TexCoordPtr[0]->size == 4) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 4) {
       if (!RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_ATTRIB_TEX1, _TNL_LAST_TEX ))
 	 return GL_TRUE; /* apply ptex hack */
       else
 	 FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
    }
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->TexCoordPtr[1]->size == 4)
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->AttribPtr[_TNL_ATTRIB_TEX1]->size == 4)
       FALLBACK(ctx, SAVAGE_FALLBACK_PROJ_TEXTURE, GL_TRUE);
 
    return GL_FALSE; /* don't apply ptex hack */
@@ -976,13 +977,13 @@ static INLINE GLuint savageChooseVertexFormat_s3d( GLcontext *ctx )
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (imesa->ptexHack)
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
-      else if (VB->TexCoordPtr[0]->size == 4)
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 4)
 	 assert (0); /* should be caught by savageCheckPTexHack */
-      else if (VB->TexCoordPtr[0]->size >= 2)
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size >= 2)
 	 /* The chromium menu emits some 3D tex coords even though no
 	  * 3D texture is enabled. Ignore the 3rd coordinate. */
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_SKIP_ST0 );
-      else if (VB->TexCoordPtr[0]->size == 1) {
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 1) {
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_EMIT_S0, SAVAGE_SKIP_S0 );
 	 EMIT_PAD( 4 );
       } else
@@ -1025,9 +1026,9 @@ static INLINE GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 )) {
       if (imesa->ptexHack)
 	 NEED_ATTR( SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
-      else if (VB->TexCoordPtr[0]->size == 4)
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 4)
 	 assert (0); /* should be caught by savageCheckPTexHack */
-      else if (VB->TexCoordPtr[0]->size >= 2)
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX0]->size >= 2)
 	 /* The chromium menu emits some 3D tex coords even though no
 	  * 3D texture is enabled. Ignore the 3rd coordinate. */
 	 NEED_ATTR( SAVAGE_EMIT_ST0, SAVAGE_SKIP_ST0 );
@@ -1035,10 +1036,10 @@ static INLINE GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
 	 NEED_ATTR( SAVAGE_EMIT_S0, SAVAGE_SKIP_S0 );
    }
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 )) {
-      if (VB->TexCoordPtr[1]->size == 4)
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX1]->size == 4)
 	 /* projective textures are not supported by the hardware */
 	 assert (0); /* should be caught by savageCheckPTexHack */
-      else if (VB->TexCoordPtr[1]->size >= 2)
+      else if (VB->AttribPtr[_TNL_ATTRIB_TEX1]->size >= 2)
 	 NEED_ATTR( SAVAGE_EMIT_ST1, SAVAGE_SKIP_ST1 );
       else
 	 NEED_ATTR( SAVAGE_EMIT_S1, SAVAGE_SKIP_S1 );

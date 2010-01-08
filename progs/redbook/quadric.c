@@ -54,7 +54,7 @@
 
 GLuint startList;
 
-void CALLBACK errorCallback(GLenum errorCode)
+static void CALLBACK errorCallback(GLenum errorCode)
 {
    const GLubyte *estring;
 
@@ -63,7 +63,7 @@ void CALLBACK errorCallback(GLenum errorCode)
    exit(0);
 }
 
-void init(void) 
+static void init(void) 
 {
    GLUquadricObj *qobj;
    GLfloat mat_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
@@ -116,9 +116,11 @@ void init(void)
    glNewList(startList+3, GL_COMPILE);
       gluPartialDisk(qobj, 0.0, 1.0, 20, 4, 0.0, 225.0);
    glEndList();
+
+   gluDeleteQuadric(qobj);
 }
 
-void display(void)
+static void display(void)
 {
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glPushMatrix();
@@ -148,7 +150,7 @@ void display(void)
    glFlush();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -164,7 +166,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

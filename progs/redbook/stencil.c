@@ -64,7 +64,7 @@
 #define YELLOWMAT   1
 #define BLUEMAT 2
 
-void myinit (void)
+static void myinit (void)
 {
     GLfloat yellow_diffuse[] = { 0.7, 0.7, 0.0, 1.0 };
     GLfloat yellow_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -101,7 +101,7 @@ void myinit (void)
 /*  Draw a sphere in a diamond-shaped section in the
  *  middle of a window with 2 tori.
  */
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -132,7 +132,7 @@ void display(void)
 /*  Whenever the window is reshaped, redefine the
  *  coordinate system and redraw the stencil area.
  */
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
 

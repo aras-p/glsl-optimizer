@@ -29,6 +29,7 @@ Tool-specific initialization for LLVM
 
 import os
 import os.path
+import sys
 
 import SCons.Errors
 import SCons.Util
@@ -39,7 +40,7 @@ def generate(env):
         llvm_dir = os.environ['LLVM']
     except KeyError:
         # Do nothing -- use the system headers/libs
-        pass
+        llvm_dir = None
     else:
         if not os.path.isdir(llvm_dir):
             raise SCons.Errors.InternalError, "Specified LLVM directory not found"
@@ -57,7 +58,49 @@ def generate(env):
 
         env.PrependENVPath('PATH', llvm_bin_dir)
 
-    if env.Detect('llvm-config'):
+    if env['platform'] == 'windows':
+        # XXX: There is no llvm-config on Windows, so assume a standard layout
+        if llvm_dir is not None:
+            env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
+            env.AppendUnique(CPPDEFINES = [
+                '__STDC_LIMIT_MACROS', 
+                '__STDC_CONSTANT_MACROS',
+            ])
+            env.Prepend(LIBPATH = [os.path.join(llvm_dir, 'lib')])
+            env.Prepend(LIBS = [
+                'LLVMX86AsmParser',
+                'LLVMX86AsmPrinter',
+                'LLVMX86CodeGen',
+                'LLVMX86Info',
+                'LLVMLinker',
+                'LLVMipo',
+                'LLVMInterpreter',
+                'LLVMInstrumentation',
+                'LLVMJIT',
+                'LLVMExecutionEngine',
+                'LLVMDebugger',
+                'LLVMBitWriter',
+                'LLVMAsmParser',
+                'LLVMArchive',
+                'LLVMBitReader',
+                'LLVMSelectionDAG',
+                'LLVMAsmPrinter',
+                'LLVMCodeGen',
+                'LLVMScalarOpts',
+                'LLVMTransformUtils',
+                'LLVMipa',
+                'LLVMAnalysis',
+                'LLVMTarget',
+                'LLVMMC',
+                'LLVMCore',
+                'LLVMSupport',
+                'LLVMSystem',
+                'imagehlp',
+                'psapi',
+            ])
+            env['LLVM_VERSION'] = '2.6'
+        return
+    elif env.Detect('llvm-config'):
         version = env.backtick('llvm-config --version').rstrip()
 
         try:

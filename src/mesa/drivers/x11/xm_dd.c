@@ -381,7 +381,7 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
-      const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+      const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask[0];
       XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
       const GLint x = ctx->DrawBuffer->_Xmin;
       const GLint y = ctx->DrawBuffer->_Ymin;
@@ -448,7 +448,7 @@ can_do_DrawPixels_8R8G8B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -582,7 +582,7 @@ can_do_DrawPixels_5R6G5B(GLcontext *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                xrb->Base.AlphaBits == 0) {
+                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -1019,15 +1019,15 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 /**
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
-static const struct gl_texture_format *
+static gl_format
 choose_tex_format( GLcontext *ctx, GLint internalFormat,
                    GLenum format, GLenum type )
 {
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_ARB:
-         return &_mesa_texformat_rgb;
+         return MESA_FORMAT_RGB888;
       case GL_COMPRESSED_RGBA_ARB:
-         return &_mesa_texformat_rgba;
+         return MESA_FORMAT_RGBA8888;
       default:
          return _mesa_choose_tex_format(ctx, internalFormat, format, type);
    }

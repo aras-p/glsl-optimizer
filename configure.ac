@@ -18,7 +18,8 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Versions for external dependencies
-LIBDRM_REQUIRED=2.4.3
+LIBDRM_REQUIRED=2.4.15
+LIBDRM_RADEON_REQUIRED=2.4.17
 DRI2PROTO_REQUIRED=1.99.3
 
 dnl Check for progs
@@ -94,7 +95,7 @@ esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math"
+    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math -fvisibility=hidden"
 
     # Work around aliasing bugs - developers should comment this out
     CFLAGS="$CFLAGS -fno-strict-aliasing"
@@ -230,6 +231,8 @@ else
         LIB_EXTENSION='dylib' ;;
     cygwin* )
         LIB_EXTENSION='dll' ;;
+    aix* )
+        LIB_EXTENSION='a' ;;
     * )
         LIB_EXTENSION='so' ;;
     esac
@@ -411,13 +414,12 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa glew"
+SRC_DIRS="glsl mesa glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
-GALLIUM_AUXILIARY_DIRS="rbug draw translate cso_cache pipebuffer tgsi sct rtasm util indices vl"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
@@ -444,10 +446,7 @@ AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
-AC_SUBST([GALLIUM_AUXILIARY_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
-AC_SUBST([RADEON_CFLAGS])
-AC_SUBST([RADEON_LDFLAGS])
 
 dnl
 dnl User supplied program configuration
@@ -575,13 +574,6 @@ dri)
     GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
     DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 
-    PKG_CHECK_MODULES([LIBDRM_RADEON], [libdrm_radeon], HAVE_LIBDRM_RADEON=yes, HAVE_LIBDRM_RADEON=no)
-
-    if test "$HAVE_LIBDRM_RADEON" = yes; then
-	RADEON_CFLAGS="-DHAVE_LIBDRM_RADEON=1 $LIBDRM_RADEON_CFLAGS"
-	RADEON_LDFLAGS=$LIBDRM_RADEON_LIBS
-    fi
-
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
         # add xcb modules if necessary
@@ -647,6 +639,13 @@ AC_ARG_WITH([dri-driverdir],
     [DRI_DRIVER_INSTALL_DIR="$withval"],
     [DRI_DRIVER_INSTALL_DIR='${libdir}/dri'])
 AC_SUBST([DRI_DRIVER_INSTALL_DIR])
+dnl Extra search path for DRI drivers
+AC_ARG_WITH([dri-searchpath],
+    [AS_HELP_STRING([--with-dri-searchpath=DIRS...],
+        [semicolon delimited DRI driver search directories @<:@${libdir}/dri@:>@])],
+    [DRI_DRIVER_SEARCH_DIR="$withval"],
+    [DRI_DRIVER_SEARCH_DIR='${DRI_DRIVER_INSTALL_DIR}'])
+AC_SUBST([DRI_DRIVER_SEARCH_DIR])
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
@@ -766,8 +765,8 @@ if test "$mesa_driver" = dri; then
 
     # default drivers
     if test "x$DRI_DIRS" = "xyes"; then
-        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon s3v \
-            savage sis tdfx trident unichrome ffb swrast"
+        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
+            savage sis tdfx unichrome ffb swrast"
     fi
 
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
@@ -793,6 +792,29 @@ fi
 AC_SUBST([DRI_DIRS])
 AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
+
+case $DRI_DIRS in
+*i915*|*i965*)
+    PKG_CHECK_MODULES([INTEL], [libdrm_intel])
+    ;;
+esac
+
+case $DRI_DIRS in
+*radeon*|*r200*|*r300*|*r600*)
+    PKG_CHECK_MODULES([LIBDRM_RADEON],
+		      [libdrm_radeon libdrm >= $LIBDRM_RADEON_REQUIRED],
+		      HAVE_LIBDRM_RADEON=yes,
+		      HAVE_LIBDRM_RADEON=no)
+
+    if test "$HAVE_LIBDRM_RADEON" = yes; then
+	RADEON_CFLAGS="-DHAVE_LIBDRM_RADEON=1 $LIBDRM_RADEON_CFLAGS"
+	RADEON_LDFLAGS=$LIBDRM_RADEON_LIBS
+    fi
+    ;;
+esac
+AC_SUBST([RADEON_CFLAGS])
+AC_SUBST([RADEON_LDFLAGS])
+
 
 dnl
 dnl OSMesa configuration
@@ -1134,7 +1156,14 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        test "x$enable_egl" = xyes && GALLIUM_STATE_TRACKERS_DIRS=egl
+        GALLIUM_STATE_TRACKERS_DIRS="dri"
+        if test "x$enable_egl" = xyes; then
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+        fi
+        # Have only tested st/xorg on 1.6.0 servers
+        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
+            HAVE_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
+            HAVE_XORG="no")
         ;;
     esac
     ;;
@@ -1150,9 +1179,9 @@ yes)
         fi
         if test "$tracker" = xorg; then
 	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
-                  HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71"
+                  HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
                   HAVE_XEXTPROTO_71="no")
-	fi
+        fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
@@ -1181,16 +1210,33 @@ AC_ARG_WITH([max-height],
 )
 
 dnl
+dnl Gallium SVGA configuration
+dnl
+AC_ARG_ENABLE([gallium-svga],
+    [AS_HELP_STRING([--enable-gallium-svga],
+        [build gallium SVGA @<:@default=disabled@:>@])],
+    [enable_gallium_svga="$enableval"],
+    [enable_gallium_svga=auto])
+if test "x$enable_gallium_svga" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS vmware"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+elif test "x$enable_gallium_svga" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+fi
+
+dnl
 dnl Gallium Intel configuration
 dnl
 AC_ARG_ENABLE([gallium-intel],
-    [AS_HELP_STRING([--disable-gallium-intel],
-        [build gallium intel @<:@default=enabled@:>@])],
+    [AS_HELP_STRING([--enable-gallium-intel],
+        [build gallium intel @<:@default=disabled@:>@])],
     [enable_gallium_intel="$enableval"],
-    [enable_gallium_intel=yes])
+    [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel i965"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
+elif test "x$enable_gallium_intel" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
 fi
 
 dnl
@@ -1272,7 +1318,6 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium dirs:    $GALLIUM_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
-    echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
 else

@@ -32,7 +32,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/colormac.h"
-#include "main/texformat.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
@@ -175,7 +174,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(17, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(17);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -221,7 +220,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit(intel, state, size )		     \
-   intel_batchbuffer_data(intel->batch, state, size, IGNORE_CLIPRECTS )
+   intel_batchbuffer_data(intel->batch, state, size)
 
 static GLuint
 get_dirty(struct i915_hw_state *state)
@@ -302,13 +301,9 @@ i915_emit_state(struct intel_context *intel)
     * It might be better to talk about explicit places where
     * scheduling is allowed, rather than assume that it is whenever a
     * batchbuffer fills up.
-    *
-    * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
-    * will be emitted under.
     */
    intel_batchbuffer_require_space(intel->batch,
-				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
-				   LOOP_CLIPRECTS);
+				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE);
    count = 0;
  again:
    aper_count = 0;
@@ -374,7 +369,7 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {
-      GLuint count = 9;
+      GLuint count = 15;
 
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
@@ -382,10 +377,7 @@ i915_emit_state(struct intel_context *intel)
       if (state->depth_region)
           count += 3;
 
-      if (intel->constant_cliprect)
-          count += 6;
-
-      BEGIN_BATCH(count, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(count);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -407,15 +399,13 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR2]);
 
-      if (intel->constant_cliprect) {
-	 assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT4]);
-	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT5]);
-      }
+      assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT4]);
+      OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT5]);
 
       ADVANCE_BATCH();
    }
@@ -442,7 +432,7 @@ i915_emit_state(struct intel_context *intel)
          if (dirty & I915_UPLOAD_TEX(i))
             nr++;
 
-      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_MAP_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)
@@ -466,7 +456,7 @@ i915_emit_state(struct intel_context *intel)
          }
       ADVANCE_BATCH();
 
-      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_SAMPLER_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)
@@ -588,8 +578,9 @@ i915_state_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
    if (irb != NULL) {
-      switch (irb->texformat->MesaFormat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_ARGB8888:
+      case MESA_FORMAT_XRGB8888:
 	 value |= DV_PF_8888;
 	 break;
       case MESA_FORMAT_RGB565:
@@ -603,7 +594,7 @@ i915_state_draw_region(struct intel_context *intel,
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->texformat->MesaFormat);
+		       irb->Base.Format);
       }
    }
 
@@ -611,7 +602,7 @@ i915_state_draw_region(struct intel_context *intel,
     * the value of this bit, the pipeline needs to be MI_FLUSHed.  And it
     * can only be set when a depth buffer is already defined.
     */
-   if (IS_945(intel->intelScreen->deviceID) && intel->use_early_z &&
+   if (intel->is_945 && intel->use_early_z &&
        depth_region->tiling != I915_TILING_NONE)
       value |= CLASSIC_EARLY_DEPTH;
 
@@ -623,23 +614,14 @@ i915_state_draw_region(struct intel_context *intel,
    }
    state->Buffer[I915_DESTREG_DV1] = value;
 
-   if (intel->constant_cliprect) {
-      state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
-      state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
-      state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
-      state->Buffer[I915_DESTREG_DRAWRECT3] =
-	 (ctx->DrawBuffer->Width & 0xffff) |
-	 (ctx->DrawBuffer->Height << 16);
-      state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
-      state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
-   } else {
-      state->Buffer[I915_DESTREG_DRAWRECT0] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT1] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT2] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT3] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT4] = MI_NOOP;
-      state->Buffer[I915_DESTREG_DRAWRECT5] = MI_NOOP;
-   }
+   state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
+   state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
+   state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
+   state->Buffer[I915_DESTREG_DRAWRECT3] =
+      (ctx->DrawBuffer->Width & 0xffff) |
+      (ctx->DrawBuffer->Height << 16);
+   state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
+   state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
 }
@@ -667,15 +649,6 @@ i915_new_batch(struct intel_context *intel)
     * difficulties associated with them (physical address requirements).
     */
    i915->state.emitted = 0;
-
-   /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!intel->no_batch_wrap);
-}
-
-static GLuint
-i915_flush_cmd(void)
-{
-   return MI_FLUSH | FLUSH_MAP_CACHE;
 }
 
 static void 
@@ -699,7 +672,6 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;
    i915->intel.vtbl.set_draw_region = i915_set_draw_region;
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
-   i915->intel.vtbl.flush_cmd = i915_flush_cmd;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
    i915->intel.vtbl.finish_batch = intel_finish_vb;
 }

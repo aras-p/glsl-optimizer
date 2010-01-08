@@ -72,8 +72,6 @@ intelTexSubimage(GLcontext * ctx,
    if (!pixels)
       return;
 
-   LOCK_HARDWARE(intel);
-
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */
@@ -85,13 +83,13 @@ intelTexSubimage(GLcontext * ctx,
                                                &dstRowStride,
                                                texImage->ImageOffsets);
    else {
-      if (texImage->IsCompressed) {
+      if (_mesa_is_format_compressed(texImage->TexFormat)) {
          dstRowStride =
-            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+            _mesa_format_row_stride(texImage->TexFormat, width);
          assert(dims != 3);
       }
       else {
-         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+         dstRowStride = texImage->RowStride * _mesa_get_format_bytes(texImage->TexFormat);
       }
    }
 
@@ -105,18 +103,20 @@ intelTexSubimage(GLcontext * ctx,
                          xoffset, yoffset / 4,
                          (width + 3)  & ~3, (height + 3) / 4,
                          pixels, (width + 3) & ~3, 0, 0);
-      } else
+      }
+      else {
         memcpy(texImage->Data, pixels, imageSize);
+      }
    }
    else {
-      if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
-                                           texImage->TexFormat,
-                                           texImage->Data,
-                                           xoffset, yoffset, zoffset,
-                                           dstRowStride,
-                                           texImage->ImageOffsets,
-                                           width, height, depth,
-                                           format, type, pixels, packing)) {
+      if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
+                          texImage->TexFormat,
+                          texImage->Data,
+                          xoffset, yoffset, zoffset,
+                          dstRowStride,
+                          texImage->ImageOffsets,
+                          width, height, depth,
+                          format, type, pixels, packing)) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
       }
    }
@@ -127,8 +127,6 @@ intelTexSubimage(GLcontext * ctx,
       intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 

@@ -30,7 +30,6 @@
 #include "main/mtypes.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/mm.h"
 

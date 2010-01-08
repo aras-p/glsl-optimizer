@@ -37,7 +37,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_gen_mipmap.h"
+#include "util/u_math.h"
 
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
@@ -133,29 +135,33 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						srcLevel, zslice,
 						PIPE_TRANSFER_READ, 0, 0,
-						pt->width[srcLevel],
-						pt->height[srcLevel]);
+						u_minify(pt->width0, srcLevel),
+						u_minify(pt->height0, srcLevel));
 
       dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						dstLevel, zslice,
 						PIPE_TRANSFER_WRITE, 0, 0,
-						pt->width[dstLevel],
-						pt->height[dstLevel]);
+						u_minify(pt->width0, dstLevel),
+						u_minify(pt->height0, dstLevel));
 
       srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
 
-      srcStride = srcTrans->stride / srcTrans->block.size;
-      dstStride = dstTrans->stride / dstTrans->block.size;
+      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->texture->format);
+      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->texture->format);
 
       _mesa_generate_mipmap_level(target, datatype, comps,
-                   0 /*border*/,
-                   pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
-                   srcData,
-                   srcStride, /* stride in texels */
-                   pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
-                   dstData,
-                   dstStride); /* stride in texels */
+                                  0 /*border*/,
+                                  u_minify(pt->width0, srcLevel),
+                                  u_minify(pt->height0, srcLevel),
+                                  u_minify(pt->depth0, srcLevel),
+                                  srcData,
+                                  srcStride, /* stride in texels */
+                                  u_minify(pt->width0, dstLevel),
+                                  u_minify(pt->height0, dstLevel),
+                                  u_minify(pt->depth0, dstLevel),
+                                  dstData,
+                                  dstStride); /* stride in texels */
 
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
@@ -219,6 +225,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    /* find expected last mipmap level */
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
+   if (lastLevel == 0)
+      return;
+
    if (pt->last_level < lastLevel) {
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
@@ -232,9 +241,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
                                     oldTex->target,
                                     oldTex->format,
                                     lastLevel,
-                                    oldTex->width[0],
-                                    oldTex->height[0],
-                                    oldTex->depth[0],
+                                    oldTex->width0,
+                                    oldTex->height0,
+                                    oldTex->depth0,
                                     oldTex->tex_usage);
 
       /* The texture isn't in a "complete" state yet so set the expected
@@ -269,9 +278,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
          = _mesa_get_tex_image(ctx, texObj, target, srcLevel);
       struct gl_texture_image *dstImage;
       struct st_texture_image *stImage;
-      uint dstWidth = pt->width[dstLevel];
-      uint dstHeight = pt->height[dstLevel];
-      uint dstDepth = pt->depth[dstLevel];
+      uint dstWidth = u_minify(pt->width0, dstLevel);
+      uint dstHeight = u_minify(pt->height0, dstLevel);
+      uint dstDepth = u_minify(pt->depth0, dstLevel); 
       uint border = srcImage->Border;
 
       dstImage = _mesa_get_tex_image(ctx, texObj, target, dstLevel);

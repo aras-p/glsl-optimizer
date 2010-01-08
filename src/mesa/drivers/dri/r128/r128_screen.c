@@ -74,8 +74,6 @@ static const GLuint __driNConfigOptions = 4;
 static const GLuint __driNConfigOptions = 3;
 #endif
 
-extern const struct dri_extension card_extensions[];
-
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
  */
@@ -93,7 +91,7 @@ extern const struct dri_extension card_extensions[];
 /* Create the device specific screen private data struct.
  */
 static r128ScreenPtr
-r128CreateScreen( __DRIscreenPrivate *sPriv )
+r128CreateScreen( __DRIscreen *sPriv )
 {
    r128ScreenPtr r128Screen;
    R128DRIPtr r128DRIPriv = (R128DRIPtr)sPriv->pDevPriv;
@@ -238,7 +236,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 /* Destroy the device specific screen private data struct.
  */
 static void
-r128DestroyScreen( __DRIscreenPrivate *sPriv )
+r128DestroyScreen( __DRIscreen *sPriv )
 {
    r128ScreenPtr r128Screen = (r128ScreenPtr)sPriv->private;
 
@@ -264,8 +262,8 @@ r128DestroyScreen( __DRIscreenPrivate *sPriv )
  * data.
  */
 static GLboolean
-r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                  __DRIdrawablePrivate *driDrawPriv,
+r128CreateBuffer( __DRIscreen *driScrnPriv,
+                  __DRIdrawable *driDrawPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
@@ -284,7 +282,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->frontOffset, screen->frontPitch,
@@ -295,7 +293,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -306,7 +304,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -316,7 +314,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_S8_Z24,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -327,7 +325,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+            = driNewRenderbuffer(MESA_FORMAT_S8,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -351,7 +349,7 @@ r128CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-r128DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+r128DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
@@ -359,7 +357,7 @@ r128DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 
 /* Copy the back color buffer to the front color buffer */
 static void
-r128SwapBuffers(__DRIdrawablePrivate *dPriv)
+r128SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       r128ContextPtr rmesa;
@@ -386,7 +384,7 @@ r128SwapBuffers(__DRIdrawablePrivate *dPriv)
 /* Initialize the driver specific screen private data.
  */
 static GLboolean
-r128InitDriver( __DRIscreenPrivate *sPriv )
+r128InitDriver( __DRIscreen *sPriv )
 {
    sPriv->private = (void *) r128CreateScreen( sPriv );
 
@@ -399,7 +397,7 @@ r128InitDriver( __DRIscreenPrivate *sPriv )
 }
 
 static const __DRIconfig **
-r128FillInModes( __DRIscreenPrivate *psp,
+r128FillInModes( __DRIscreen *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -480,7 +478,7 @@ r128FillInModes( __DRIscreenPrivate *psp,
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-r128InitScreen(__DRIscreenPrivate *psp)
+r128InitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -492,18 +490,6 @@ r128InitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
    if (!r128InitDriver(psp))
        return NULL;
@@ -530,4 +516,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

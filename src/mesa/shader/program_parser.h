@@ -35,7 +35,7 @@ enum asm_type {
    at_attrib,
    at_param,
    at_temp,
-   at_output,
+   at_output
 };
 
 struct asm_symbol {
@@ -55,6 +55,12 @@ struct asm_symbol {
     * bound state (or constants) start.
     */
    unsigned param_binding_begin;
+
+   /**
+    * Constants put into the parameter list may be swizzled.  This
+    * field contain's the symbol's swizzle. (SWIZZLE_X/Y/Z/W)
+    */
+   unsigned param_binding_swizzle;
 
    /* This is how many entries in the the program_parameter_list we take up
     * with our state tokens or constants. Note that this is _not_ the same as

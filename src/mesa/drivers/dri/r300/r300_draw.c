@@ -100,7 +100,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		GLubyte *in = (GLubyte *)src_ptr;
 
 		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offset, size, 4);
-
+		radeon_bo_map(r300->ind_buf.bo, 1);
 		assert(r300->ind_buf.bo->ptr != NULL);
 		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
 
@@ -111,7 +111,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		if (i < mesa_ind_buf->count) {
 			*out++ = in[i];
 		}
-
+		radeon_bo_unmap(r300->ind_buf.bo);
 #if MESA_BIG_ENDIAN
 	} else { /* if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) */
 		GLushort *in = (GLushort *)src_ptr;
@@ -120,6 +120,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo,
 				     &r300->ind_buf.bo_offset, size, 4);
 
+		radeon_bo_map(r300->ind_buf.bo, 1);
 		assert(r300->ind_buf.bo->ptr != NULL);
 		out = (GLuint *)ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
 
@@ -130,6 +131,7 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		if (i < mesa_ind_buf->count) {
 			*out++ = in[i];
 		}
+		radeon_bo_unmap(r300->ind_buf.bo);
 #endif
 	}
 
@@ -173,10 +175,12 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 		radeonAllocDmaRegion(&r300->radeon, &r300->ind_buf.bo, &r300->ind_buf.bo_offset, size, 4);
 
+		radeon_bo_map(r300->ind_buf.bo, 1);
 		assert(r300->ind_buf.bo->ptr != NULL);
 		dst_ptr = ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
 		_mesa_memcpy(dst_ptr, src_ptr, size);
 
+		radeon_bo_unmap(r300->ind_buf.bo);
 		r300->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
 		r300->ind_buf.count = mesa_ind_buf->count;
 
@@ -242,6 +246,7 @@ static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_
 	}
 
 	radeonAllocDmaRegion(&r300->radeon, &attr->bo, &attr->bo_offset, sizeof(GLfloat) * input->Size * count, 32);
+	radeon_bo_map(attr->bo, 1);
 	dst_ptr = (GLfloat *)ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
 
 	radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
@@ -280,6 +285,7 @@ static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_
 			break;
 	}
 
+	radeon_bo_unmap(attr->bo);
 	if (mapped_named_bo) {
 		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
 	}
@@ -293,6 +299,8 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 	GLboolean mapped_named_bo = GL_FALSE;
 
 	radeonAllocDmaRegion(&r300->radeon, &attr->bo, &attr->bo_offset, size, 32);
+
+	radeon_bo_map(attr->bo, 1);
 
 	if (!input->BufferObj->Pointer) {
 		ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
@@ -317,6 +325,7 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
 	}
 
+	radeon_bo_unmap(attr->bo);
 	attr->stride = dst_stride;
 }
 
@@ -527,6 +536,7 @@ static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *in
 				}
 
 				radeonAllocDmaRegion(&r300->radeon, &vbuf->attribs[index].bo, &vbuf->attribs[index].bo_offset, size, 32);
+				radeon_bo_map(vbuf->attribs[index].bo, 1);
 				assert(vbuf->attribs[index].bo->ptr != NULL);
 				dst = (uint32_t *)ADD_POINTERS(vbuf->attribs[index].bo->ptr, vbuf->attribs[index].bo_offset);
 				switch (vbuf->attribs[index].dwords) {
@@ -536,6 +546,7 @@ static void r300AllocDmaRegions(GLcontext *ctx, const struct gl_client_array *in
 					case 4: radeonEmitVec16(dst, input[i]->Ptr, input[i]->StrideB, local_count); break;
 					default: assert(0); break;
 				}
+				radeon_bo_unmap(vbuf->attribs[index].bo);
 
 			}
 		}

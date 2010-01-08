@@ -82,18 +82,17 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
-   _EGLConfig *conf = NULL;
+   EGLint num_configs = (dpy) ? dpy->NumConfigs : 0;
    EGLint i;
 
-   for (i = 0; dpy && i < dpy->NumConfigs; i++) {
-      conf = dpy->Configs[i];
+   for (i = 0; i < num_configs; i++) {
+      _EGLConfig *conf = dpy->Configs[i];
       if (conf == (_EGLConfig *) config) {
          assert(conf->Display == dpy);
          break;
       }
    }
-
-   return (conf != NULL);
+   return (i < num_configs);
 }
 
 

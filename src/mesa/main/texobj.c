@@ -33,6 +33,7 @@
 #include "context.h"
 #include "enums.h"
 #include "fbobject.h"
+#include "formats.h"
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
@@ -227,10 +228,10 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->Target = src->Target;
    dest->Name = src->Name;
    dest->Priority = src->Priority;
-   dest->BorderColor[0] = src->BorderColor[0];
-   dest->BorderColor[1] = src->BorderColor[1];
-   dest->BorderColor[2] = src->BorderColor[2];
-   dest->BorderColor[3] = src->BorderColor[3];
+   dest->BorderColor.f[0] = src->BorderColor.f[0];
+   dest->BorderColor.f[1] = src->BorderColor.f[1];
+   dest->BorderColor.f[2] = src->BorderColor.f[2];
+   dest->BorderColor.f[3] = src->BorderColor.f[3];
    dest->WrapS = src->WrapS;
    dest->WrapT = src->WrapT;
    dest->WrapR = src->WrapR;
@@ -414,7 +415,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Detect cases where the application set the base level to an invalid
     * value.
     */
-   if ((baseLevel < 0) || (baseLevel > MAX_TEXTURE_LEVELS)) {
+   if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       char s[100];
       _mesa_sprintf(s, "base level = %d is invalid", baseLevel);
       incomplete(t, s);
@@ -740,6 +741,10 @@ _mesa_get_fallback_texture(GLcontext *ctx)
       _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
                                     8, 8, 1, 0, GL_RGBA); 
 
+      texImage->TexFormat =
+         ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+      ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+
       /* set image data */
       ctx->Driver.TexImage2D(ctx, GL_TEXTURE_2D, 0, GL_RGBA,
                              8, 8, 0,
@@ -935,7 +940,8 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
 /**
  * Convert a GL texture target enum such as GL_TEXTURE_2D or GL_TEXTURE_3D
  * into the corresponding Mesa texture target index.
- * Return -1 if target is invalid.
+ * Note that proxy targets are not valid here.
+ * \return TEXTURE_x_INDEX or -1 if target is invalid
  */
 static GLint
 target_enum_to_index(GLenum target)
@@ -1098,8 +1104,6 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
          struct gl_texture_object *t = _mesa_lookup_texture(ctx, texName[i]);
          if (t) {
             t->Priority = CLAMP( priorities[i], 0.0F, 1.0F );
-	    if (ctx->Driver.PrioritizeTexture)
-	       ctx->Driver.PrioritizeTexture( ctx, t, t->Priority );
          }
       }
    }

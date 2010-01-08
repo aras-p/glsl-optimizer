@@ -45,7 +45,7 @@
 
 /*  Initialize lighting and other values.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat mat_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
     GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -68,7 +68,7 @@ void myinit(void)
     glClearAccum(0.0, 0.0, 0.0, 0.0);
 }
 
-void displayObjects(void)
+static void displayObjects(void)
 {
     GLfloat torus_diffuse[] = { 0.7, 0.7, 0.0, 1.0 };
     GLfloat cube_diffuse[] = { 0.0, 0.7, 0.7, 1.0 };
@@ -111,7 +111,7 @@ void displayObjects(void)
 
 #define ACSIZE	8
 
-void display(void)
+static void display(void)
 {
     GLint viewport[4];
     int jitter;
@@ -137,7 +137,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

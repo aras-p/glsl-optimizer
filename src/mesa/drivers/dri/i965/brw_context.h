@@ -115,7 +115,7 @@
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_FALLBACK_TEXTURE		 0x1
+
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
@@ -172,8 +172,8 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
 
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
@@ -231,7 +231,7 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint outputs_written;
+   GLbitfield64 outputs_written;
    GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
@@ -252,20 +252,23 @@ struct brw_vs_ouput_sizes {
 /** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
 
+/** Max number of render targets in a shader */
+#define BRW_MAX_DRAW_BUFFERS 4
+
 /**
  * Size of our surface binding table for the WM.
  * This contains pointers to the drawing surfaces and current texture
  * objects and shader constant buffers (+2).
  */
-#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
+#define BRW_WM_MAX_SURF (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
 
 /**
  * Helpers to convert drawing buffers, textures and constant buffers
  * to surface binding table indexes, for WM.
  */
 #define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (MAX_DRAW_BUFFERS) 
-#define SURF_INDEX_TEXTURE(t)        (MAX_DRAW_BUFFERS + 1 + (t))
+#define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS) 
+#define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 1 + (t))
 
 /**
  * Size of surface binding table for the VS.
@@ -317,7 +320,6 @@ struct brw_cache_item {
    GLuint nr_reloc_bufs;
 
    dri_bo *bo;
-   GLuint data_size;
 
    struct brw_cache_item *next;
 };   
@@ -330,7 +332,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
@@ -410,23 +411,6 @@ struct brw_vertex_info {
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 
-
-
-
-/* Cache for TNL programs.
- */
-struct brw_tnl_cache_item {
-   GLuint hash;
-   void *key;
-   void *data;
-   struct brw_tnl_cache_item *next;
-};
-
-struct brw_tnl_cache {
-   struct brw_tnl_cache_item **items;
-   GLuint size, n_items;
-};
-
 struct brw_query_object {
    struct gl_query_object Base;
 
@@ -454,9 +438,11 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean tmp_fallback;
-   GLboolean no_batch_wrap;
-
+   GLboolean has_surface_tile_offset;
+   GLboolean has_compr4;
+   GLboolean has_negative_rhw_bug;
+   GLboolean has_aa_line_parameters;
+;
    struct {
       struct brw_state_flags dirty;
 
@@ -532,6 +518,12 @@ struct brw_context
     */
    GLuint next_free_page;
 
+   /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
+   uint32_t CMD_VF_STATISTICS;
+   /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
+   uint32_t CMD_PIPELINE_SELECT;
+   int vs_max_threads;
+   int wm_max_threads;
 
    /* BRW_NEW_URB_ALLOCATIONS:
     */
@@ -559,6 +551,7 @@ struct brw_context
       GLuint clip_start;
       GLuint sf_start;
       GLuint cs_start;
+      GLuint size; /* Hardware URB size, in KB. */
    } urb;
 
    
@@ -686,7 +679,7 @@ void brwInitVtbl( struct brw_context *brw );
  * brw_context.c
  */
 GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
+			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate);
 
 /*======================================================================
@@ -758,10 +751,6 @@ brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
 }
-
-
-
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 #endif
 

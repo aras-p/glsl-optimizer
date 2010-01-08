@@ -31,6 +31,7 @@
  */
 
 #include "draw/draw_context.h"
+#include "draw/draw_vbuf.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -66,6 +67,10 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&llvmpipe->texture[i], NULL);
+   }
+
+   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+      pipe_texture_reference(&llvmpipe->vertex_textures[i], NULL);
    }
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
@@ -117,7 +122,8 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
 
    llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
-   llvmpipe->pipe.bind_sampler_states  = llvmpipe_bind_sampler_states;
+   llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
+   llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
    llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
 
    llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
@@ -142,7 +148,8 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_sampler_textures = llvmpipe_set_sampler_textures;
+   llvmpipe->pipe.set_fragment_sampler_textures = llvmpipe_set_sampler_textures;
+   llvmpipe->pipe.set_vertex_sampler_textures = llvmpipe_set_vertex_sampler_textures;
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
@@ -151,8 +158,6 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
    llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
    llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
-   llvmpipe->pipe.set_edgeflags = llvmpipe_set_edgeflags;
-
 
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
@@ -170,8 +175,7 @@ llvmpipe_create( struct pipe_screen *screen )
    if (!llvmpipe->draw) 
       goto fail;
 
-   /* FIXME: vertex sampler state
-    */
+   /* FIXME: devise alternative to draw_texture_samplers */
 
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
