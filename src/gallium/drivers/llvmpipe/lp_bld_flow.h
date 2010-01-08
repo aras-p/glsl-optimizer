@@ -132,7 +132,7 @@ struct lp_build_if_state
    LLVMBuilderRef builder;
    struct lp_build_flow_context *flow;
    LLVMValueRef condition;
-   LLVMBasicBlockRef entry_block, true_block, false_block;
+   LLVMBasicBlockRef entry_block, true_block, false_block, merge_block;
 };
 
 
@@ -141,9 +141,6 @@ lp_build_if(struct lp_build_if_state *ctx,
             struct lp_build_flow_context *flow,
             LLVMBuilderRef builder,
             LLVMValueRef condition);
-
-void
-lp_build_if_phi_var(struct lp_build_if_state *ctx, LLVMValueRef var);
 
 void
 lp_build_else(struct lp_build_if_state *ctx);
