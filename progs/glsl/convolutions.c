@@ -182,7 +182,7 @@ static void fillConvolution(GLint *k,
 static void setupConvolution()
 {
    GLint *kernel = (GLint*)malloc(sizeof(GLint) * 9);
-   GLfloat scale;
+   GLfloat scale = 0.0;
    GLfloat *vecKer = (GLfloat*)malloc(sizeof(GLfloat) * 9 * 4);
    GLuint loc;
    GLuint i;
