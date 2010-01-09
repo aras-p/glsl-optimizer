@@ -1209,11 +1209,19 @@ fetch_src_file_channel(
 
       default:
          assert( 0 );
+         chan->u[0] = 0;
+         chan->u[1] = 0;
+         chan->u[2] = 0;
+         chan->u[3] = 0;
       }
       break;
 
    default:
       assert( 0 );
+      chan->u[0] = 0;
+      chan->u[1] = 0;
+      chan->u[2] = 0;
+      chan->u[3] = 0;
    }
 }
 
