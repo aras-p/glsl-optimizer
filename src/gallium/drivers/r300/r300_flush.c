@@ -39,6 +39,7 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_query *query;
 
     CS_LOCALS(r300);
+    (void) cs_count;
     /* We probably need to flush Draw, but we may have been called from
      * within Draw. This feels kludgy, but it might be the best thing.
      *

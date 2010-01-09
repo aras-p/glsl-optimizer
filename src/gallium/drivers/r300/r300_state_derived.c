@@ -464,7 +464,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 /* Update the vertex format. */
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    /* struct r300_screen* r300screen = r300_screen(r300->context.screen); */
     struct r300_vertex_info* vformat;
     struct r300_rs_block* rs_block;
     int i;
