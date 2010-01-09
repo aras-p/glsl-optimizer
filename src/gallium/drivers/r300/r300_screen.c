@@ -319,6 +319,7 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 {
     struct r300_texture *tex = (struct r300_texture *)texture;
     struct r300_transfer *trans;
+    struct r300_screen *rscreen = r300_screen(screen);
     unsigned offset;
 
     offset = r300_texture_get_offset(tex, level, zslice, face);  /* in bytes */
@@ -330,11 +331,8 @@ r300_get_tex_transfer(struct pipe_screen *screen,
         trans->transfer.y = y;
         trans->transfer.width = w;
         trans->transfer.height = h;
-        trans->transfer.stride = r300_texture_get_stride(tex, level);
+        trans->transfer.stride = r300_texture_get_stride(rscreen, tex, level);
         trans->transfer.usage = usage;
-
-        /* XXX not sure whether it's required to set these two,
-               the driver doesn't use them */
         trans->transfer.zslice = zslice;
         trans->transfer.face = face;
 

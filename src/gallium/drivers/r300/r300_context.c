@@ -87,7 +87,7 @@ r300_is_texture_referenced(struct pipe_context *pipe,
 {
     struct pipe_buffer* buf = 0;
 
-    r300_get_texture_buffer(texture, &buf, NULL);
+    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
 
     return pipe->is_buffer_referenced(pipe, buf);
 }

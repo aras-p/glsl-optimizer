@@ -136,12 +136,13 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
 }
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
+                                   struct pipe_screen* screen,
                                    struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride)
 {
     /* XXX fix this */
-    return r300_get_texture_buffer(texture, buffer, stride);
+    return r300_get_texture_buffer(screen, texture, buffer, stride);
 }
 
 /* Create a buffer from a handle. */
@@ -208,7 +209,7 @@ static boolean radeon_shared_handle_from_texture(struct drm_api *api,
     struct radeon_pipe_buffer* radeon_buffer;
     struct pipe_buffer *buffer = NULL;
 
-    if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
+    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
         return FALSE;
     }
 
@@ -240,7 +241,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
                                                 unsigned *handle)
 {
     struct pipe_buffer *buffer = NULL;
-    if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
+    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
         return FALSE;
     }
 
