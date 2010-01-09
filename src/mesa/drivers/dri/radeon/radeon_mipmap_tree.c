@@ -81,6 +81,32 @@ static unsigned get_compressed_image_size(
 	return rowStride * ((height + blockHeight - 1) / blockHeight);
 }
 
+static unsigned is_pot(unsigned value)
+{
+	unsigned m;
+
+	for (m = 1; m < value; m *= 2) {}
+
+	return value == m;
+}
+
+unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width)
+{
+	if (_mesa_is_format_compressed(format)) {
+		return get_aligned_compressed_row_stride(format, width, rmesa->texture_compressed_row_align);
+	} else {
+		unsigned row_align;
+
+		if (is_pot(width)) {
+			row_align = rmesa->texture_row_align - 1;
+		} else {
+			row_align = rmesa->texture_rect_row_align - 1;
+		}
+
+		return (_mesa_format_row_stride(format, width) + row_align) & ~row_align;
+	}
+}
+
 /**
  * Compute sizes and fill in offset and blit information for the given
  * image (determined by \p face and \p level).
