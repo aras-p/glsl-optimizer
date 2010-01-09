@@ -396,6 +396,7 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     caps->num_frag_pipes = radeon_winsys->gb_pipes;
     caps->num_z_pipes = radeon_winsys->z_pipes;
 
+    r300_init_debug(r300screen);
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;

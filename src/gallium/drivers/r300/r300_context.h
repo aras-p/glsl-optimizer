@@ -30,6 +30,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
+#include "r300_screen.h"
+
 struct r300_context;
 
 struct r300_fragment_shader;
@@ -324,9 +326,6 @@ struct r300_context {
     uint32_t dirty_hw;
     /* Whether the TCL engine should be in bypass mode. */
     boolean tcl_bypass;
-
-    /** Combination of DBG_xxx flags */
-    unsigned debug;
 };
 
 /* Convenience cast wrapper. */
@@ -340,35 +339,15 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
 
-/* Debug functionality. */
-
-/**
- * Debug flags to disable/enable certain groups of debugging outputs.
- *
- * \note These may be rather coarse, and the grouping may be impractical.
- * If you find, while debugging the driver, that a different grouping
- * of these flags would be beneficial, just feel free to change them
- * but make sure to update the documentation in r300_debug.c to reflect
- * those changes.
- */
-/*@{*/
-#define DBG_HELP    0x0000001
-#define DBG_FP      0x0000002
-#define DBG_VP      0x0000004
-#define DBG_CS      0x0000008
-#define DBG_DRAW    0x0000010
-#define DBG_TEX     0x0000020
-#define DBG_FALL    0x0000040
-/*@}*/
-
-static INLINE boolean DBG_ON(struct r300_context * ctx, unsigned flags)
+static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
-    return (ctx->debug & flags) ? TRUE : FALSE;
+    return SCREEN_DBG_ON(r300_screen(ctx->context.screen), flags);
 }
 
-static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * fmt, ...)
+static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
+                       const char * fmt, ...)
 {
-    if (DBG_ON(ctx, flags)) {
+    if (CTX_DBG_ON(ctx, flags)) {
         va_list va;
         va_start(va, fmt);
         debug_vprintf(fmt, va);
@@ -376,6 +355,8 @@ static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * f
     }
 }
 
-void r300_init_debug(struct r300_context * ctx);
+#define DBG_ON  CTX_DBG_ON
+#define DBG     CTX_DBG
 
 #endif /* R300_CONTEXT_H */
+
