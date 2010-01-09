@@ -771,7 +771,13 @@ get_constant(struct brw_vs_compile *c,
    if (c->current_const[argIndex].index != src->Index || relAddr) {
       struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
-      c->current_const[argIndex].index = src->Index;
+      /* If using a non-relative-addressed constant, then keep track of it for
+       * later use without reloading.
+       */
+      if (relAddr)
+	 c->current_const[argIndex].index = -1;
+      else
+	 c->current_const[argIndex].index = src->Index;
 
 #if 0
       printf("  fetch const[%d] for arg %d into reg %d\n",
