@@ -105,7 +105,7 @@ static const unsigned indicies[12] = {
    1, 4, 2
 };
 
-#define NONE  { NULL, 0, 0, 0 }
+#define NONE  { NULL, 0, 0, 0, sizeof( NULL ) }
 #define V2F   { v,    2, 2 * sizeof( GLfloat ), GL_FLOAT, sizeof( v[0] ) }
 #define V3F   { v,    3, 3 * sizeof( GLfloat ), GL_FLOAT, sizeof( v[0] ) }
 #define V4F   { v,    4, 4 * sizeof( GLfloat ), GL_FLOAT, sizeof( v[0] ) }
