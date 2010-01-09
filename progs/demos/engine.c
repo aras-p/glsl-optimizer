@@ -120,7 +120,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    },
    {
       "Inline-4",
@@ -136,7 +140,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    },
    {
       "Boxer-6",
@@ -152,7 +160,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    }
 };
 
