@@ -1619,18 +1619,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_TX_OFFSET_5                    0x4554
 #define R300_TX_OFFSET_6                    0x4558
 #define R300_TX_OFFSET_7                    0x455C
-	/* BEGIN: Guess from R200 */
+
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
 #       define R300_TXO_ENDIAN_HALFDW_SWAP       (3 << 0)
-#       define R300_TXO_MACRO_TILE               (1 << 2)
+#       define R300_TXO_MACRO_TILE_LINEAR        (0 << 2)
+#       define R300_TXO_MACRO_TILE_TILED         (1 << 2)
+#       define R300_TXO_MACRO_TILE(x)            ((x) << 2)
 #       define R300_TXO_MICRO_TILE_LINEAR        (0 << 3)
-#       define R300_TXO_MICRO_TILE               (1 << 3)
-#       define R300_TXO_MICRO_TILE_SQUARE        (2 << 3)
+#       define R300_TXO_MICRO_TILE_TILED         (1 << 3)
+#       define R300_TXO_MICRO_TILE_TILED_SQUARE  (2 << 3)
+#       define R300_TXO_MICRO_TILE(x)            ((x) << 3)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
-	/* END: Guess from R200 */
 
 /* 32 bit chroma key */
 #define R300_TX_CHROMA_KEY_0                      0x4580
@@ -2283,9 +2285,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLORPITCH_MASK              0x00003FFE
 #       define R300_COLOR_TILE_DISABLE            (0 << 16)
 #       define R300_COLOR_TILE_ENABLE             (1 << 16)
+#       define R300_COLOR_TILE(x)                 ((x) << 16)
 #       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)
 #       define R300_COLOR_MICROTILE_ENABLE        (1 << 17)
 #       define R300_COLOR_MICROTILE_ENABLE_SQUARE (2 << 17) /* Only available in 16-bit */
+#       define R300_COLOR_MICROTILE(x)            ((x) << 17)
 #       define R300_COLOR_ENDIAN_NO_SWAP          (0 << 19)
 #       define R300_COLOR_ENDIAN_WORD_SWAP        (1 << 19)
 #       define R300_COLOR_ENDIAN_DWORD_SWAP       (2 << 19)
@@ -2544,9 +2548,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DEPTHPITCH_MASK              0x00003FFC
 #       define R300_DEPTHMACROTILE_DISABLE      (0 << 16)
 #       define R300_DEPTHMACROTILE_ENABLE       (1 << 16)
+#       define R300_DEPTHMACROTILE(x)           ((x) << 16)
 #       define R300_DEPTHMICROTILE_LINEAR       (0 << 17)
 #       define R300_DEPTHMICROTILE_TILED        (1 << 17)
 #       define R300_DEPTHMICROTILE_TILED_SQUARE (2 << 17)
+#       define R300_DEPTHMICROTILE(x)           ((x) << 17)
 #       define R300_DEPTHENDIAN_NO_SWAP         (0 << 18)
 #       define R300_DEPTHENDIAN_WORD_SWAP       (1 << 18)
 #       define R300_DEPTHENDIAN_DWORD_SWAP      (2 << 18)

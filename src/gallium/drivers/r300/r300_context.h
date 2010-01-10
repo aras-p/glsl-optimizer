@@ -179,6 +179,12 @@ struct r300_query {
     struct r300_query* next;
 };
 
+enum r300_buffer_tiling {
+    R300_BUFFER_LINEAR = 0,
+    R300_BUFFER_TILED,
+    R300_BUFFER_SQUARETILED
+};
+
 struct r300_texture {
     /* Parent class */
     struct pipe_texture tex;
@@ -215,6 +221,9 @@ struct r300_texture {
 
     /* Registers carrying texture format data. */
     struct r300_texture_state state;
+
+    /* Buffer tiling */
+    enum r300_buffer_tiling microtile, macrotile;
 };
 
 struct r300_vertex_info {
