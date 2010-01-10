@@ -1191,6 +1191,35 @@ yes)
     ;;
 esac
 
+AC_ARG_WITH([egl-displays],
+    [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
+        [comma delimited native displays libEGL supports, e.g.
+        "x11" @<:@default=auto@:>@])],
+    [with_egl_displays="$withval"],
+    [with_egl_displays=yes])
+
+EGL_DISPLAYS=""
+case "$with_egl_displays" in
+yes)
+    if test "x$enable_egl" = xyes && test "x$mesa_driver" != xosmesa; then
+        EGL_DISPLAYS="x11"
+    fi
+    ;;
+*)
+    if test "x$enable_egl" != xyes; then
+        AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+    fi
+    # verify the requested driver directories exist
+    egl_displays=`IFS=', '; echo $with_egl_displays`
+    for dpy in $egl_displays; do
+        test -d "$srcdir/src/gallium/state_trackers/egl_g3d/$dpy" || \
+            AC_MSG_ERROR([EGL display '$dpy' does't exist])
+    done
+    EGL_DISPLAYS="$egl_displays"
+    ;;
+esac
+AC_SUBST([EGL_DISPLAYS])
+
 AC_ARG_WITH([xorg-driver-dir],
     [AS_HELP_STRING([--with-xorg-driver-dir=DIR],
                     [Default xorg driver directory[[default=${libdir}/xorg/modules/drivers]]])],
