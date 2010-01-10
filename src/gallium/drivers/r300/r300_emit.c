@@ -113,7 +113,7 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
-    BEGIN_CS(r300screen->caps->is_r500 ? 10 : 8);
+    BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
 
     /* not needed since we use the 8bit alpha ref */
@@ -132,7 +132,6 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
     }
 
     OUT_CS(dsa->stencil_ref_mask);
-    OUT_CS_REG(R300_ZB_ZTOP, r300->ztop_state.z_buffer_top);
 
     /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
     if (r300screen->caps->is_r500) {
@@ -954,6 +953,16 @@ void r300_emit_texture_count(struct r300_context* r300)
     OUT_CS_REG(R300_TX_ENABLE, tx_enable);
     END_CS;
 
+}
+
+void r300_emit_ztop_state(struct r300_context* r300, void* state)
+{
+    struct r300_ztop_state* ztop = (struct r300_ztop_state*)state;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_ZB_ZTOP, ztop->z_buffer_top);
+    END_CS;
 }
 
 void r300_flush_textures(struct r300_context* r300)

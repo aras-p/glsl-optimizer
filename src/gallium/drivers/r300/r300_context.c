@@ -76,6 +76,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->scissor_state);
     FREE(r300->vertex_info);
     FREE(r300->viewport_state);
+    FREE(r300->ztop_state.state);
     FREE(r300);
 }
 
@@ -118,6 +119,7 @@ static void r300_flush_cb(void *data)
 static void r300_setup_atoms(struct r300_context* r300)
 {
     make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(ztop);
     R300_INIT_ATOM(blend);
     R300_INIT_ATOM(blend_color);
     R300_INIT_ATOM(clip);
@@ -172,19 +174,20 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
         r300_shader_key_compare);
 
+    r300_setup_atoms(r300);
+
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
     r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
     r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
     make_empty_list(&r300->query_list);
-
-    r300_setup_atoms(r300);
 
     r300_init_flush_functions(r300);
 

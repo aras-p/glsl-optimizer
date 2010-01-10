@@ -90,6 +90,8 @@ void r300_emit_viewport_state(struct r300_context* r300,
 
 void r300_emit_texture_count(struct r300_context* r300);
 
+void r300_emit_ztop_state(struct r300_context* r300, void* state);
+
 void r300_flush_textures(struct r300_context* r300);
 
 /* Emit all dirty state. */

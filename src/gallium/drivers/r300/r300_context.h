@@ -311,7 +311,7 @@ struct r300_context {
     /* Viewport state. */
     struct r300_viewport_state* viewport_state;
     /* ZTOP state. */
-    struct r300_ztop_state ztop_state;
+    struct r300_atom ztop_state;
 
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];

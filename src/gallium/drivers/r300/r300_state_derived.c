@@ -508,7 +508,9 @@ static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
 
 static void r300_update_ztop(struct r300_context* r300)
 {
-    uint32_t ztop = r300->ztop_state.z_buffer_top;
+    struct r300_ztop_state* ztop_state =
+        (struct r300_ztop_state*)r300->ztop_state.state;
+    uint32_t ztop = ztop_state->z_buffer_top;
 
     /* This is important enough that I felt it warranted a comment.
      *
@@ -546,8 +548,9 @@ static void r300_update_ztop(struct r300_context* r300)
         ztop = R300_ZTOP_ENABLE;
     }
 
-    if (r300->ztop_state.z_buffer_top != ztop) {
-        r300->ztop_state.z_buffer_top = ztop;
+    if (ztop_state->z_buffer_top != ztop) {
+        ztop_state->z_buffer_top = ztop;
+        r300->ztop_state.dirty = TRUE;
     }
 }
 
