@@ -65,6 +65,7 @@ def generate(env):
             env.AppendUnique(CPPDEFINES = [
                 '__STDC_LIMIT_MACROS', 
                 '__STDC_CONSTANT_MACROS',
+                'HAVE_STDINT_H',
             ])
             env.Prepend(LIBPATH = [os.path.join(llvm_dir, 'lib')])
             env.Prepend(LIBS = [
