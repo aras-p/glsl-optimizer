@@ -99,6 +99,16 @@ def generate(env):
                 'imagehlp',
                 'psapi',
             ])
+            if env['msvc']:
+                # Some of the LLVM C headers use the inline keyword without
+                # defining it.
+                env.Append(CPPDEFINES = [('inline', '__inline')])
+                if env['debug']:
+                    # LLVM libraries are static, build with /MT, and they
+                    # automatically link agains LIBCMT. When we're doing a
+                    # debug build we'll be linking against LIBCMTD, so disable
+                    # that.
+                    env.Append(LINKFLAGS = ['/nodefaultlib:LIBCMT'])
             env['LLVM_VERSION'] = '2.6'
         return
     elif env.Detect('llvm-config'):
