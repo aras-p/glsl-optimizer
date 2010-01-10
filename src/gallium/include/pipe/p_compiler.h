@@ -101,6 +101,17 @@ typedef unsigned char boolean;
 #  endif
 #endif
 
+
+/* Function visibility */
+#ifndef PUBLIC
+#  if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#    define PUBLIC __attribute__((visibility("default")))
+#  else
+#    define PUBLIC
+#  endif
+#endif
+
+
 /* The __FUNCTION__ gcc variable is generally only used for debugging.
  * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
  */
