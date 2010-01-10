@@ -519,29 +519,31 @@ static void emit_cb_setup(struct r300_context *r300,
  * @param[in] height region height
  * @param[in] flip_y set if y coords of the source image need to be flipped
  */
-GLboolean r300_blit(struct r300_context *r300,
-                    struct radeon_bo *src_bo,
-                    intptr_t src_offset,
-                    gl_format src_mesaformat,
-                    unsigned src_pitch,
-                    unsigned src_width,
-                    unsigned src_height,
-                    unsigned src_x_offset,
-                    unsigned src_y_offset,
-                    struct radeon_bo *dst_bo,
-                    intptr_t dst_offset,
-                    gl_format dst_mesaformat,
-                    unsigned dst_pitch,
-                    unsigned dst_width,
-                    unsigned dst_height,
-                    unsigned dst_x_offset,
-                    unsigned dst_y_offset,
-                    unsigned reg_width,
-                    unsigned reg_height,
-                    unsigned flip_y)
+unsigned r300_blit(GLcontext *ctx,
+                   struct radeon_bo *src_bo,
+                   intptr_t src_offset,
+                   gl_format src_mesaformat,
+                   unsigned src_pitch,
+                   unsigned src_width,
+                   unsigned src_height,
+                   unsigned src_x_offset,
+                   unsigned src_y_offset,
+                   struct radeon_bo *dst_bo,
+                   intptr_t dst_offset,
+                   gl_format dst_mesaformat,
+                   unsigned dst_pitch,
+                   unsigned dst_width,
+                   unsigned dst_height,
+                   unsigned dst_x_offset,
+                   unsigned dst_y_offset,
+                   unsigned reg_width,
+                   unsigned reg_height,
+                   unsigned flip_y)
 {
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+
     if (_mesa_get_format_bits(src_mesaformat, GL_DEPTH_BITS) > 0)
-        return GL_FALSE;
+        return 0;
 
     /* Make sure that colorbuffer has even width - hw limitation */
     if (dst_pitch % 2 > 0)
@@ -551,7 +553,7 @@ GLboolean r300_blit(struct r300_context *r300,
      * Looks like a hw limitation.
      */
     if (dst_pitch < 32)
-        return GL_FALSE;
+        return 0;
 
     /* Need to clamp the region size to make sure
      * we don't read outside of the source buffer
@@ -567,7 +569,7 @@ GLboolean r300_blit(struct r300_context *r300,
         reg_height = dst_height - dst_y_offset;
 
     if (src_bo == dst_bo) {
-        return GL_FALSE;
+        return 0;
     }
 
     if (0) {
@@ -587,7 +589,7 @@ GLboolean r300_blit(struct r300_context *r300,
     radeonFlush(r300->radeon.glCtx);
 
     if (!validate_buffers(r300, src_bo, dst_bo))
-        return GL_FALSE;
+        return 0;
 
     rcommonEnsureCmdBufSpace(&r300->radeon, 200, __FUNCTION__);
 
@@ -618,5 +620,5 @@ GLboolean r300_blit(struct r300_context *r300,
 
     radeonFlush(r300->radeon.glCtx);
 
-    return GL_TRUE;
+    return 1;
 }

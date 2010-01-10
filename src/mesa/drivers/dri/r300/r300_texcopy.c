@@ -34,7 +34,6 @@
 #include "drivers/common/meta.h"
 
 #include "radeon_mipmap_tree.h"
-#include "r300_blit.h"
 #include <main/debug.h>
 
 // TODO:
@@ -84,7 +83,7 @@ do_copy_texsubimage(GLcontext *ctx,
     }
 
     /* blit from src buffer to texture */
-    return r300_blit(r300, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
+    return r300->radeon.vtbl.blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
                      rrb->base.Width, rrb->base.Height, x, y,
                      timg->mt->bo, dst_offset, timg->base.TexFormat,
                      timg->base.Width, timg->base.Width, timg->base.Height,

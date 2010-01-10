@@ -326,6 +326,8 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 			radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
 	} else
 		radeon->vtbl.emit_query_finish = r300_emit_query_finish;
+
+    radeon->vtbl.blit = r300_blit;
 }
 
 static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
