@@ -37,8 +37,7 @@ void r300_emit_blend_color_state(struct r300_context* r300, void* state);
 
 void r300_emit_clip_state(struct r300_context* r300, void* state);
 
-void r300_emit_dsa_state(struct r300_context* r300,
-                         struct r300_dsa_state* dsa);
+void r300_emit_dsa_state(struct r300_context* r300, void* state);
 
 void r300_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code);

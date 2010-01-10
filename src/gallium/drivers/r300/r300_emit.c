@@ -107,9 +107,9 @@ void r300_emit_clip_state(struct r300_context* r300, void* state)
 
 }
 
-void r300_emit_dsa_state(struct r300_context* r300,
-                           struct r300_dsa_state* dsa)
+void r300_emit_dsa_state(struct r300_context* r300, void* state)
 {
+    struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
@@ -983,10 +983,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     int i, dirty_tex = 0;
     boolean invalid = FALSE;
 
-    if (!(r300->dirty_state)) {
-        return;
-    }
-
     /* Check size of CS. */
     /* Make sure we have at least 8*1024 spare dwords. */
     /* XXX It would be nice to know the number of dwords we really need to
@@ -1067,11 +1063,6 @@ validate:
             atom->emit(r300, atom->state);
             atom->dirty = FALSE;
         }
-    }
-
-    if (r300->dirty_state & R300_NEW_DSA) {
-        r300_emit_dsa_state(r300, r300->dsa_state);
-        r300->dirty_state &= ~R300_NEW_DSA;
     }
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {

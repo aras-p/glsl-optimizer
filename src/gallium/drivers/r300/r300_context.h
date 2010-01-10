@@ -144,7 +144,6 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_DSA             0x00000008
 #define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
@@ -290,7 +289,7 @@ struct r300_context {
     /* Shader constants. */
     struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
-    struct r300_dsa_state* dsa_state;
+    struct r300_atom dsa_state;
     /* Fragment shader. */
     struct r300_fragment_shader* fs;
     /* Framebuffer state. We currently don't need our own version of this. */

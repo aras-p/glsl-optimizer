@@ -508,7 +508,7 @@ static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
 
 static void r300_update_ztop(struct r300_context* r300)
 {
-    r300->ztop_state.z_buffer_top = R300_ZTOP_ENABLE;
+    uint32_t ztop = r300->ztop_state.z_buffer_top;
 
     /* This is important enough that I felt it warranted a comment.
      *
@@ -534,14 +534,20 @@ static void r300_update_ztop(struct r300_context* r300)
      */
 
     /* ZS writes */
-    if (r300_dsa_writes_depth_stencil(r300->dsa_state) &&
-           (r300_dsa_alpha_test_enabled(r300->dsa_state) ||   /* (1) */
-            r300->fs->info.uses_kill)) {                      /* (2) */
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300_fragment_shader_writes_depth(r300->fs)) { /* (5) */
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->query_current) {                         /* (6) */
-        r300->ztop_state.z_buffer_top = R300_ZTOP_DISABLE;
+    if (r300_dsa_writes_depth_stencil(r300->dsa_state.state) &&
+           (r300_dsa_alpha_test_enabled(r300->dsa_state.state) ||/* (1) */
+            r300->fs->info.uses_kill)) {                         /* (2) */
+        ztop = R300_ZTOP_DISABLE;
+    } else if (r300_fragment_shader_writes_depth(r300->fs)) {    /* (5) */
+        ztop = R300_ZTOP_DISABLE;
+    } else if (r300->query_current) {                            /* (6) */
+        ztop = R300_ZTOP_DISABLE;
+    } else {
+        ztop = R300_ZTOP_ENABLE;
+    }
+
+    if (r300->ztop_state.z_buffer_top != ztop) {
+        r300->ztop_state.z_buffer_top = ztop;
     }
 }
 
@@ -553,8 +559,5 @@ void r300_update_derived_state(struct r300_context* r300)
         r300_update_derived_shader_state(r300);
     }
 
-    if (r300->dirty_state &
-            (R300_NEW_DSA | R300_NEW_FRAGMENT_SHADER | R300_NEW_QUERY)) {
-        r300_update_ztop(r300);
-    }
+    r300_update_ztop(r300);
 }

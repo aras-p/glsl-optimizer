@@ -463,8 +463,8 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    r300->dsa_state = (struct r300_dsa_state*)state;
-    r300->dirty_state |= R300_NEW_DSA;
+    r300->dsa_state.state = state;
+    r300->dsa_state.dirty = TRUE;
 }
 
 /* Free DSA state. */
@@ -523,9 +523,9 @@ static void
         r300->dirty_state |= R300_NEW_SCISSOR;
     }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
-    r300->dirty_state |= R300_NEW_DSA;
 
     r300->blend_state.dirty = TRUE;
+    r300->dsa_state.dirty = TRUE;
 }
 
 /* Create fragment shader state. */
