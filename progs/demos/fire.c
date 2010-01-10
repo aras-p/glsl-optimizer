@@ -726,8 +726,13 @@ main(int ac, char **av)
 
    maxage = 1.0 / dt;
 
-   if (ac == 2)
+   if (ac == 2) {
       np = atoi(av[1]);
+      if (np <= 0 || np > 1000000) {
+         fprintf(stderr, "Invalid input.\n");
+         exit(-1);
+      }
+   }
 
    if (ac == 4) {
       WIDTH = atoi(av[2]);
@@ -762,6 +767,7 @@ main(int ac, char **av)
 
    assert(np > 0);
    p = (part *) malloc(sizeof(part) * np);
+   assert(p);
 
    for (i = 0; i < np; i++)
       setnewpart(&p[i]);
