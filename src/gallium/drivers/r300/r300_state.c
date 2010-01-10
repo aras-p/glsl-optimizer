@@ -340,20 +340,22 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_blend_color_state* state =
+        (struct r300_blend_color_state*)r300->blend_color_state.state;
     union util_color uc;
 
     util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
-    r300->blend_color_state->blend_color = uc.ui;
+    state->blend_color = uc.ui;
 
     /* XXX if FP16 blending is enabled, we should use the FP16 format */
-    r300->blend_color_state->blend_color_red_alpha =
+    state->blend_color_red_alpha =
         float_to_fixed10(color->color[0]) |
         (float_to_fixed10(color->color[3]) << 16);
-    r300->blend_color_state->blend_color_green_blue =
+    state->blend_color_green_blue =
         float_to_fixed10(color->color[2]) |
         (float_to_fixed10(color->color[1]) << 16);
 
-    r300->dirty_state |= R300_NEW_BLEND_COLOR;
+    r300->blend_color_state.dirty = TRUE;
 }
 
 static void r300_set_clip_state(struct pipe_context* pipe,

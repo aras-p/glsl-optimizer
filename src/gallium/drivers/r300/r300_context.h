@@ -144,7 +144,6 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_BLEND_COLOR     0x00000002
 #define R300_NEW_CLIP            0x00000004
 #define R300_NEW_DSA             0x00000008
 #define R300_NEW_FRAMEBUFFERS    0x00000010
@@ -286,7 +285,7 @@ struct r300_context {
     /* Blend state. */
     struct r300_atom blend_state;
     /* Blend color state. */
-    struct r300_blend_color_state* blend_color_state;
+    struct r300_atom blend_color_state;
     /* User clip planes. */
     struct pipe_clip_state clip_state;
     /* Shader constants. */

@@ -70,7 +70,7 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(query);
     }
 
-    FREE(r300->blend_color_state);
+    FREE(r300->blend_color_state.state);
     FREE(r300->rs_block);
     FREE(r300->scissor_state);
     FREE(r300->vertex_info);
@@ -118,6 +118,7 @@ static void r300_setup_atoms(struct r300_context* r300)
 {
     make_empty_list(&r300->atom_list);
     R300_INIT_ATOM(blend);
+    R300_INIT_ATOM(blend_color);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -168,7 +169,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
         r300_shader_key_compare);
 
-    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
     r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
