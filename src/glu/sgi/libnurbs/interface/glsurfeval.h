@@ -83,7 +83,7 @@ typedef struct surfEvalMachine{
 
 class StoredVertex {
 public:
-    		StoredVertex() { type = 0; }
+    		StoredVertex() { type = 0; coord[0] = 0; coord[1] = 0; point[0] = 0; point[1] = 0; }
 		~StoredVertex(void) {}
     void	saveEvalCoord(REAL x, REAL y) 
 		    {coord[0] = x; coord[1] = y; type = TYPECOORD; }
