@@ -69,11 +69,7 @@ typedef unsigned short     ushort;
 #endif
 typedef unsigned char      ubyte;
 
-#if 0
-#define boolean bool
-#else
 typedef unsigned char boolean;
-#endif
 #ifndef TRUE
 #define TRUE  true
 #endif
