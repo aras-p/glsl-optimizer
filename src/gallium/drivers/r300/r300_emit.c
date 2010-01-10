@@ -77,9 +77,9 @@ void r300_emit_blend_color_state(struct r300_context* r300, void* state)
     }
 }
 
-void r300_emit_clip_state(struct r300_context* r300,
-                          struct pipe_clip_state* clip)
+void r300_emit_clip_state(struct r300_context* r300, void* state)
 {
+    struct pipe_clip_state* clip = (struct pipe_clip_state*)state;
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
@@ -1067,11 +1067,6 @@ validate:
             atom->emit(r300, atom->state);
             atom->dirty = FALSE;
         }
-    }
-
-    if (r300->dirty_state & R300_NEW_CLIP) {
-        r300_emit_clip_state(r300, &r300->clip_state);
-        r300->dirty_state &= ~R300_NEW_CLIP;
     }
 
     if (r300->dirty_state & R300_NEW_DSA) {

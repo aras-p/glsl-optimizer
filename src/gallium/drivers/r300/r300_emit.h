@@ -35,8 +35,7 @@ void r300_emit_blend_state(struct r300_context* r300, void* state);
 
 void r300_emit_blend_color_state(struct r300_context* r300, void* state);
 
-void r300_emit_clip_state(struct r300_context* r300,
-                          struct pipe_clip_state* clip);
+void r300_emit_clip_state(struct r300_context* r300, void* state);
 
 void r300_emit_dsa_state(struct r300_context* r300,
                          struct r300_dsa_state* dsa);

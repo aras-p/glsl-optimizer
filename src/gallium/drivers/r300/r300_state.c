@@ -364,8 +364,8 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
-        r300->clip_state = *state;
-        r300->dirty_state |= R300_NEW_CLIP;
+        memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
+        r300->clip_state.dirty = TRUE;
     } else {
         draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
