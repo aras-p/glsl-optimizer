@@ -327,7 +327,7 @@ generate_fs(struct llvmpipe_context *lp,
             const struct lp_build_interp_soa_context *interp,
             struct lp_build_sampler_soa *sampler,
             LLVMValueRef *pmask,
-            LLVMValueRef *color,
+            LLVMValueRef (*color)[4],
             LLVMValueRef depth_ptr,
             LLVMValueRef c0,
             LLVMValueRef c1,
@@ -348,6 +348,7 @@ generate_fs(struct llvmpipe_context *lp,
    boolean early_depth_test;
    unsigned attrib;
    unsigned chan;
+   unsigned cbuf;
 
    assert(i < 4);
 
@@ -364,9 +365,11 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_flow_scope_begin(flow);
 
    /* Declare the color and z variables */
-   for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-      color[chan] = LLVMGetUndef(vec_type);
-      lp_build_flow_scope_declare(flow, &color[chan]);
+   for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+	 color[cbuf][chan] = LLVMGetUndef(vec_type);
+	 lp_build_flow_scope_declare(flow, &color[cbuf][chan]);
+      }
    }
    lp_build_flow_scope_declare(flow, &z);
 
@@ -407,6 +410,7 @@ generate_fs(struct llvmpipe_context *lp,
 
                   /* Alpha test */
                   /* XXX: should the alpha reference value be passed separately? */
+		  /* XXX: should only test the final assignment to alpha */
                   if(cbuf == 0 && chan == 3) {
                      LLVMValueRef alpha = outputs[attrib][chan];
                      LLVMValueRef alpha_ref_value;
@@ -416,9 +420,7 @@ generate_fs(struct llvmpipe_context *lp,
                                          &mask, alpha, alpha_ref_value);
                   }
 
-                  if(cbuf == 0)
-                     color[chan] = outputs[attrib][chan];
-
+		  color[cbuf][chan] = outputs[attrib][chan];
                   break;
                }
 
@@ -539,7 +541,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef a0_ptr;
    LLVMValueRef dadx_ptr;
    LLVMValueRef dady_ptr;
-   LLVMValueRef color_ptr;
+   LLVMValueRef color_ptr_ptr;
    LLVMValueRef depth_ptr;
    LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr;
    LLVMBasicBlockRef block;
@@ -549,12 +551,13 @@ generate_fragment(struct llvmpipe_context *lp,
    struct lp_build_sampler_soa *sampler;
    struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
-   LLVMValueRef fs_out_color[NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
+   LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
    LLVMValueRef blend_in_color[NUM_CHANNELS];
    unsigned num_fs;
    unsigned i;
    unsigned chan;
+   unsigned cbuf;
 
    if (LP_DEBUG & DEBUG_JIT) {
       tgsi_dump(shader->base.tokens, 0);
@@ -651,7 +654,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
    arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
    arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dady */
-   arg_types[6] = LLVMPointerType(blend_vec_type, 0);  /* color */
+   arg_types[6] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
    arg_types[7] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
    arg_types[8] = LLVMInt32Type();                     /* c0 */
    arg_types[9] = LLVMInt32Type();                    /* c1 */
@@ -667,6 +670,10 @@ generate_fragment(struct llvmpipe_context *lp,
 
    variant->function = LLVMAddFunction(screen->module, "shader", func_type);
    LLVMSetFunctionCallConv(variant->function, LLVMCCallConv);
+
+   /* XXX: need to propagate noalias down into color param now we are
+    * passing a pointer-to-pointer?
+    */
    for(i = 0; i < Elements(arg_types); ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
          LLVMAddAttribute(LLVMGetParam(variant->function, i), LLVMNoAliasAttribute);
@@ -677,7 +684,7 @@ generate_fragment(struct llvmpipe_context *lp,
    a0_ptr       = LLVMGetParam(variant->function, 3);
    dadx_ptr     = LLVMGetParam(variant->function, 4);
    dady_ptr     = LLVMGetParam(variant->function, 5);
-   color_ptr    = LLVMGetParam(variant->function, 6);
+   color_ptr_ptr = LLVMGetParam(variant->function, 6);
    depth_ptr    = LLVMGetParam(variant->function, 7);
    c0           = LLVMGetParam(variant->function, 8);
    c1           = LLVMGetParam(variant->function, 9);
@@ -692,7 +699,7 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
-   lp_build_name(color_ptr, "color");
+   lp_build_name(color_ptr_ptr, "color_ptr");
    lp_build_name(depth_ptr, "depth");
    lp_build_name(c0, "c0");
    lp_build_name(c1, "c1");
@@ -721,8 +728,9 @@ generate_fragment(struct llvmpipe_context *lp,
    /* loop over quads in the block */
    for(i = 0; i < num_fs; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef out_color[NUM_CHANNELS];
+      LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
+      int cbuf;
 
       if(i != 0)
          lp_build_interp_soa_update(&interp, i);
@@ -742,39 +750,49 @@ generate_fragment(struct llvmpipe_context *lp,
                   c0, c1, c2,
                   step0_ptr, step1_ptr, step2_ptr);
 
-      for(chan = 0; chan < NUM_CHANNELS; ++chan)
-         fs_out_color[chan][i] = out_color[chan];
+      for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
+	 for(chan = 0; chan < NUM_CHANNELS; ++chan)
+	    fs_out_color[cbuf][chan][i] = out_color[cbuf][chan];
    }
 
    sampler->destroy(sampler);
 
-   /* 
-    * Convert the fs's output color and mask to fit to the blending type. 
+   /* Loop over color outputs / color buffers to do blending.
     */
+   for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
+      LLVMValueRef color_ptr;
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), cbuf, 0);
 
-   for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-      lp_build_conv(builder, fs_type, blend_type,
-                    fs_out_color[chan], num_fs,
-                    &blend_in_color[chan], 1);
-      lp_build_name(blend_in_color[chan], "color.%c", "rgba"[chan]);
+      /* 
+       * Convert the fs's output color and mask to fit to the blending type. 
+       */
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+	 lp_build_conv(builder, fs_type, blend_type,
+		       fs_out_color[cbuf][chan], num_fs,
+		       &blend_in_color[chan], 1);
+	 lp_build_name(blend_in_color[chan], "color%d.%c", cbuf, "rgba"[chan]);
+      }
 
+      lp_build_conv_mask(builder, fs_type, blend_type,
+			 fs_mask, num_fs,
+			 &blend_mask, 1);
+
+      color_ptr = LLVMBuildLoad(builder, 
+				LLVMBuildGEP(builder, color_ptr_ptr, &index, 1, ""),
+				"");
+      lp_build_name(color_ptr, "color_ptr%d", cbuf);
+
+      /*
+       * Blending.
+       */
+      generate_blend(&key->blend,
+		     builder,
+		     blend_type,
+		     context_ptr,
+		     blend_mask,
+		     blend_in_color,
+		     color_ptr);
    }
-
-   lp_build_conv_mask(builder, fs_type, blend_type,
-                      fs_mask, num_fs,
-                      &blend_mask, 1);
-
-   /*
-    * Blending.
-    */
-
-   generate_blend(&key->blend,
-                  builder,
-                  blend_type,
-                  context_ptr,
-                  blend_mask,
-                  blend_in_color,
-                  color_ptr);
 
    LLVMBuildRetVoid(builder);
 
@@ -940,21 +958,27 @@ make_variant_key(struct llvmpipe_context *lp,
       key->alpha.func = lp->depth_stencil->alpha.func;
    /* alpha.ref_value is passed in jit_context */
 
-   if(lp->framebuffer.cbufs[0]) {
+   if (lp->framebuffer.nr_cbufs) {
+      memcpy(&key->blend, lp->blend, sizeof key->blend);
+   }
+
+   key->nr_cbufs = lp->framebuffer.nr_cbufs;
+   for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       const struct util_format_description *format_desc;
       unsigned chan;
 
-      memcpy(&key->blend, lp->blend, sizeof key->blend);
-
-      format_desc = util_format_description(lp->framebuffer.cbufs[0]->format);
+      format_desc = util_format_description(lp->framebuffer.cbufs[i]->format);
       assert(format_desc->layout == UTIL_FORMAT_COLORSPACE_RGB ||
              format_desc->layout == UTIL_FORMAT_COLORSPACE_SRGB);
 
-      /* mask out color channels not present in the color buffer */
+      /* mask out color channels not present in the color buffer.
+       * Should be simple to incorporate per-cbuf writemasks:
+       */
       for(chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-         if(swizzle > 4)
-            key->blend.colormask &= ~(1 << chan);
+
+         if(swizzle <= UTIL_FORMAT_SWIZZLE_W)
+            key->cbuf_blend[i].colormask |= (1 << chan);
       }
    }
 

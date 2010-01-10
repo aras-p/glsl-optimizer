@@ -77,8 +77,11 @@ llvmpipe_flush( struct pipe_context *pipe,
    if(flags & PIPE_FLUSH_FRAME) {
       static unsigned frame_no = 1;
       static char filename[256];
-      util_snprintf(filename, sizeof(filename), "cbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, llvmpipe->framebuffer.cbufs[0]);
+      unsigned i;
+      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs) {
+	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u.bmp", i, frame_no);
+	 debug_dump_surface_bmp(filename, llvmpipe->framebuffer.cbufs[i]);
+      }
       util_snprintf(filename, sizeof(filename), "zsbuf_%u.bmp", frame_no);
       debug_dump_surface_bmp(filename, llvmpipe->framebuffer.zsbuf);
       ++frame_no;

@@ -46,7 +46,7 @@ struct lp_rasterizer;
  */
 struct lp_rast_tile
 {
-   uint8_t *color;
+   uint8_t *color[PIPE_MAX_COLOR_BUFS];
 
    uint32_t *depth;
 };
@@ -87,9 +87,9 @@ struct lp_rasterizer
    /* Framebuffer stuff
     */
    struct pipe_screen *screen;
-   struct pipe_transfer *cbuf_transfer;
+   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
    struct pipe_transfer *zsbuf_transfer;
-   void *cbuf_map;
+   void *cbuf_map[PIPE_MAX_COLOR_BUFS];
    void *zsbuf_map;
 
    struct {

@@ -108,7 +108,7 @@ typedef void
                     const void *a0,
                     const void *dadx,
                     const void *dady,
-                    void *color,
+                    uint8_t **color,
                     void *depth,
                     const int32_t c1,
                     const int32_t c2,

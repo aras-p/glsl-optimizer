@@ -155,26 +155,26 @@ begin_binning( struct setup_context *setup )
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   if (setup->fb.cbufs[0]) {
+   if (setup->fb.nr_cbufs) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
          lp_scene_bin_everywhere( scene, 
-                            lp_rast_clear_color, 
-                            setup->clear.color );
+				  lp_rast_clear_color, 
+				  setup->clear.color );
       else
          lp_scene_bin_everywhere( scene,
-                            lp_rast_load_color,
-                            lp_rast_arg_null() );
+				  lp_rast_load_color,
+				  lp_rast_arg_null() );
    }
 
    if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          lp_scene_bin_everywhere( scene, 
-                            lp_rast_clear_zstencil, 
-                            setup->clear.zstencil );
+				  lp_rast_clear_zstencil, 
+				  setup->clear.zstencil );
       else
          lp_scene_bin_everywhere( scene,
-                            lp_rast_load_zstencil,
-                            lp_rast_arg_null() );
+				  lp_rast_load_zstencil,
+				  lp_rast_arg_null() );
    }
 
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);

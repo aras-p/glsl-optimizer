@@ -53,6 +53,7 @@ lp_rast_begin( struct lp_rasterizer *rast,
 {
    struct pipe_screen *screen = rast->screen;
    struct pipe_surface *cbuf, *zsbuf;
+   int i;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
@@ -64,24 +65,27 @@ lp_rast_begin( struct lp_rasterizer *rast,
    rast->check_for_clipped_tiles = (fb->width % TILE_SIZE != 0 ||
                                     fb->height % TILE_SIZE != 0);
 
-   /* XXX support multiple color buffers here */
-   cbuf = rast->state.fb.cbufs[0];
-   if (cbuf) {
-      rast->cbuf_transfer = screen->get_tex_transfer(rast->screen,
-                                                     cbuf->texture,
-                                                     cbuf->face,
-                                                     cbuf->level,
-                                                     cbuf->zslice,
-                                                     PIPE_TRANSFER_READ_WRITE,
-                                                     0, 0,
-                                                     fb->width, fb->height);
-      if (!rast->cbuf_transfer)
-         return FALSE;
+   
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      cbuf = rast->state.fb.cbufs[i];
+      if (cbuf) {
+	 rast->cbuf_transfer[i] = screen->get_tex_transfer(rast->screen,
+							   cbuf->texture,
+							   cbuf->face,
+							   cbuf->level,
+							   cbuf->zslice,
+							   PIPE_TRANSFER_READ_WRITE,
+							   0, 0,
+							   cbuf->width, 
+							   cbuf->height);
+	 if (!rast->cbuf_transfer[i])
+	    goto fail;
 
-      rast->cbuf_map = screen->transfer_map(rast->screen, 
-                                            rast->cbuf_transfer);
-      if (!rast->cbuf_map)
-         return FALSE;
+	 rast->cbuf_map[i] = screen->transfer_map(rast->screen, 
+						  rast->cbuf_transfer[i]);
+	 if (!rast->cbuf_map[i])
+	    goto fail;
+      }
    }
 
    zsbuf = rast->state.fb.zsbuf;
@@ -93,17 +97,23 @@ lp_rast_begin( struct lp_rasterizer *rast,
                                                       zsbuf->zslice,
                                                       PIPE_TRANSFER_READ_WRITE,
                                                       0, 0,
-                                                      fb->width, fb->height);
+                                                      zsbuf->width,
+						      zsbuf->height);
       if (!rast->zsbuf_transfer)
-         return FALSE;
+         goto fail;
 
       rast->zsbuf_map = screen->transfer_map(rast->screen, 
                                             rast->zsbuf_transfer);
       if (!rast->zsbuf_map)
-         return FALSE;
+	 goto fail;
    }
 
    return TRUE;
+
+fail:
+   /* Unmap and release transfers?
+    */
+   return FALSE;
 }
 
 
@@ -115,22 +125,26 @@ static void
 lp_rast_end( struct lp_rasterizer *rast )
 {
    struct pipe_screen *screen = rast->screen;
+   unsigned i;
 
-   if (rast->cbuf_map) 
-      screen->transfer_unmap(screen, rast->cbuf_transfer);
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      if (rast->cbuf_map[i]) 
+	 screen->transfer_unmap(screen, rast->cbuf_transfer[i]);
+
+      if (rast->cbuf_transfer[i])
+	 screen->tex_transfer_destroy(rast->cbuf_transfer[i]);
+
+      rast->cbuf_transfer[i] = NULL;
+      rast->cbuf_map[i] = NULL;
+   }
 
    if (rast->zsbuf_map) 
       screen->transfer_unmap(screen, rast->zsbuf_transfer);
 
-   if (rast->cbuf_transfer)
-      screen->tex_transfer_destroy(rast->cbuf_transfer);
-
    if (rast->zsbuf_transfer)
       screen->tex_transfer_destroy(rast->zsbuf_transfer);
 
-   rast->cbuf_transfer = NULL;
    rast->zsbuf_transfer = NULL;
-   rast->cbuf_map = NULL;
    rast->zsbuf_map = NULL;
 }
 
@@ -161,8 +175,9 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
                           const union lp_rast_cmd_arg arg )
 {
    const uint8_t *clear_color = arg.clear_color;
-   uint8_t *color_tile = rast->tasks[thread_index].tile.color;
-   
+   uint8_t **color_tile = rast->tasks[thread_index].tile.color;
+   unsigned i;
+
    LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
               clear_color[0],
               clear_color[1],
@@ -172,14 +187,17 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
    if (clear_color[0] == clear_color[1] &&
        clear_color[1] == clear_color[2] &&
        clear_color[2] == clear_color[3]) {
-      memset(color_tile, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
+      for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+	 memset(color_tile[i], clear_color[0], TILE_SIZE * TILE_SIZE * 4);
+      }
    }
    else {
       unsigned x, y, chan;
-      for (y = 0; y < TILE_SIZE; y++)
-         for (x = 0; x < TILE_SIZE; x++)
-            for (chan = 0; chan < 4; ++chan)
-               TILE_PIXEL(color_tile, x, y, chan) = clear_color[chan];
+      for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+	 for (y = 0; y < TILE_SIZE; y++)
+	    for (x = 0; x < TILE_SIZE; x++)
+	       for (chan = 0; chan < 4; ++chan)
+		  TILE_PIXEL(color_tile[i], x, y, chan) = clear_color[chan];
    }
 }
 
@@ -214,28 +232,40 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
    struct lp_rasterizer_task *task = &rast->tasks[thread_index];
    const unsigned x = task->x;
    const unsigned y = task->y;
-   int w = TILE_SIZE;
-   int h = TILE_SIZE;
+   unsigned i;
 
    LP_DBG(DEBUG_RAST, "%s at %u, %u\n", __FUNCTION__, x, y);
 
-   if (x + w > rast->state.fb.width)
-      w -= x + w - rast->state.fb.width;
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      struct pipe_transfer *transfer = rast->cbuf_transfer[i];
+      int w = TILE_SIZE;
+      int h = TILE_SIZE;
 
-   if (y + h > rast->state.fb.height)
-      h -= y + h - rast->state.fb.height;
+      if (x >= transfer->width)
+	 continue;
 
-   assert(w >= 0);
-   assert(h >= 0);
-   assert(w <= TILE_SIZE);
-   assert(h <= TILE_SIZE);
+      if (y >= transfer->height)
+	 continue;
+      /* XXX: require tile-size aligned render target dimensions:
+       */
+      if (x + w > transfer->width)
+	 w -= x + w - transfer->width;
 
-   lp_tile_read_4ub(rast->cbuf_transfer->texture->format,
-                     rast->tasks[thread_index].tile.color,
-                     rast->cbuf_map, 
-                     rast->cbuf_transfer->stride,
-                     x, y,
-                     w, h);
+      if (y + h > transfer->height)
+	 h -= y + h - transfer->height;
+
+      assert(w >= 0);
+      assert(h >= 0);
+      assert(w <= TILE_SIZE);
+      assert(h <= TILE_SIZE);
+
+      lp_tile_read_4ub(transfer->texture->format,
+		       rast->tasks[thread_index].tile.color[i],
+		       rast->cbuf_map[i], 
+		       transfer->stride,
+		       x, y,
+		       w, h);
+   }
 }
 
 
@@ -313,8 +343,9 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 {
    const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
    struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
-   void *color;
+   uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
+   unsigned i;
    unsigned ix, iy;
    int block_offset;
 
@@ -336,14 +367,17 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    block_offset = ((iy/4)*(16*16) + (ix/4)*16);
 
    /* color buffer */
-   color = tile->color + 4 * block_offset;
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+      color[i] = tile->color[i] + 4 * block_offset;
 
    /* depth buffer */
    depth = tile->depth + block_offset;
 
+
+
 #ifdef DEBUG
-   assert(lp_check_alignment(depth, 16));
-   assert(lp_check_alignment(color, 16));
+   assert(lp_check_alignment(tile->depth, 16));
+   assert(lp_check_alignment(tile->color[0], 16));
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
    assert(lp_check_alignment(inputs->step[0], 16));
@@ -360,8 +394,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                         color,
                         depth,
                         c1, c2, c3,
-                        inputs->step[0], inputs->step[1], inputs->step[2]
-                        );
+                        inputs->step[0], inputs->step[1], inputs->step[2]);
 }
 
 
@@ -377,29 +410,42 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 {
    const unsigned x = rast->tasks[thread_index].x;
    const unsigned y = rast->tasks[thread_index].y;
-   int w = TILE_SIZE;
-   int h = TILE_SIZE;
+   unsigned i;
 
-   if (x + w > rast->state.fb.width)
-      w -= x + w - rast->state.fb.width;
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      struct pipe_transfer *transfer = rast->cbuf_transfer[i];
+      int w = TILE_SIZE;
+      int h = TILE_SIZE;
 
-   if (y + h > rast->state.fb.height)
-      h -= y + h - rast->state.fb.height;
+      if (x >= transfer->width)
+	 continue;
 
-   assert(w >= 0);
-   assert(h >= 0);
-   assert(w <= TILE_SIZE);
-   assert(h <= TILE_SIZE);
+      if (y >= transfer->height)
+	 continue;
 
-   LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
-          thread_index, x, y, w, h);
+      /* XXX: require tile-size aligned render target dimensions:
+       */
+      if (x + w > transfer->width)
+	 w -= x + w - transfer->width;
 
-   lp_tile_write_4ub(rast->cbuf_transfer->texture->format,
-                     rast->tasks[thread_index].tile.color,
-                     rast->cbuf_map, 
-                     rast->cbuf_transfer->stride,
-                     x, y,
-                     w, h);
+      if (y + h > transfer->height)
+	 h -= y + h - transfer->height;
+
+      assert(w >= 0);
+      assert(h >= 0);
+      assert(w <= TILE_SIZE);
+      assert(h <= TILE_SIZE);
+
+      LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
+	     thread_index, x, y, w, h);
+
+      lp_tile_write_4ub(transfer->texture->format,
+			rast->tasks[thread_index].tile.color[i],
+			rast->cbuf_map[i], 
+			transfer->stride,
+			x, y,
+			w, h);
+   }
 }
 
 
@@ -600,7 +646,7 @@ lp_rasterize_scene( struct lp_rasterizer *rast,
       /* no threading */
 
       lp_rast_begin( rast, fb,
-                     fb->cbufs[0]!= NULL,
+                     fb->nr_cbufs != 0, /* always write color if cbufs present */
                      fb->zsbuf != NULL && write_depth );
 
       lp_scene_bin_iter_begin( scene );
@@ -667,7 +713,7 @@ thread_func( void *init_data )
          write_depth = rast->curr_scene->write_depth;
 
          lp_rast_begin( rast, fb,
-                        fb->cbufs[0] != NULL,
+                        fb->nr_cbufs != 0,
                         fb->zsbuf != NULL && write_depth );
       }
 
@@ -738,7 +784,7 @@ struct lp_rasterizer *
 lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
 {
    struct lp_rasterizer *rast;
-   unsigned i;
+   unsigned i, cbuf;
 
    rast = CALLOC_STRUCT(lp_rasterizer);
    if(!rast)
@@ -750,7 +796,9 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
    rast->full_scenes = lp_scene_queue_create();
 
    for (i = 0; i < Elements(rast->tasks); i++) {
-      rast->tasks[i].tile.color = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+      for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
+	 rast->tasks[i].tile.color[cbuf] = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+
       rast->tasks[i].tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
       rast->tasks[i].rast = rast;
       rast->tasks[i].thread_index = i;
@@ -769,13 +817,14 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
  */
 void lp_rast_destroy( struct lp_rasterizer *rast )
 {
-   unsigned i;
+   unsigned i, cbuf;
 
    util_unreference_framebuffer_state(&rast->state.fb);
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       align_free(rast->tasks[i].tile.depth);
-      align_free(rast->tasks[i].tile.color);
+      for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
+	 align_free(rast->tasks[i].tile.color[cbuf]);
    }
 
    /* for synchronizing rasterization threads */
