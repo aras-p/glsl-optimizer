@@ -400,6 +400,8 @@ main(int argc, char *argv[])
       }
       if (n < 1)
          n = 1;
+      if (n > MAX_HEADS)
+         n = MAX_HEADS;
 
       printf("%d windows\n", n);
       for (i = 0; i < n; i++) {
