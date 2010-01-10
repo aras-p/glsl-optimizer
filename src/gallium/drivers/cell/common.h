@@ -358,6 +358,7 @@ struct cell_spu_function_info
 
 
 /** This is the object passed to spe_create_thread() */
+PIPE_ALIGN_TYPE(16,
 struct cell_init_info
 {
    unsigned id;
@@ -370,7 +371,7 @@ struct cell_init_info
    uint *buffer_status;  /**< points at cell_context->buffer_status */
 
    struct cell_spu_function_info *spu_functions;
-} ALIGN16_ATTRIB;
+});
 
 
 #endif /* CELL_COMMON_H */

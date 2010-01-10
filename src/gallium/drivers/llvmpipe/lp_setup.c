@@ -130,7 +130,7 @@ shade_quads(struct llvmpipe_context *llvmpipe,
    uint8_t *tile;
    uint8_t *color;
    void *depth;
-   uint32_t ALIGN16_ATTRIB mask[4][NUM_CHANNELS];
+   PIPE_ALIGN_VAR(16, uint32_t mask[4][NUM_CHANNELS]);
    unsigned chan_index;
    unsigned q;
 

@@ -31,6 +31,7 @@
 #ifndef LP_QUAD_H
 #define LP_QUAD_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_exec.h"
 
@@ -83,7 +84,7 @@ struct quad_header_inout
 struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
-   float ALIGN16_ATTRIB color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
+   PIPE_ALIGN_VAR(16, float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE]);
 };
 
 
@@ -92,9 +93,9 @@ struct quad_header_output
  */
 struct quad_interp_coef
 {
-   float ALIGN16_ATTRIB a0[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   float ALIGN16_ATTRIB dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   PIPE_ALIGN_VAR(16, float a0[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
+   PIPE_ALIGN_VAR(16, float dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
+   PIPE_ALIGN_VAR(16, float dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
 };
 
 

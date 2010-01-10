@@ -139,22 +139,33 @@ typedef unsigned char boolean;
 
 
 
+/* Macros for data alignment. */
 #if defined(__GNUC__)
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
-#define ALIGN16_ASSIGN(NAME) NAME##___aligned
-#define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
-#define ALIGN8_ATTRIB  __attribute__(( aligned( 8 ) ))
+
+/* See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Type-Attributes.html */
+#define PIPE_ALIGN_TYPE(_alignment, _type) _type __attribute__((aligned(_alignment)))
+
+/* See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Variable-Attributes.html */
+#define PIPE_ALIGN_VAR(_alignment, _decl) _decl __attribute__((aligned(_alignment)))
+
 #if (__GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)) && !defined(PIPE_ARCH_X86_64)
 #define ALIGN_STACK __attribute__((force_align_arg_pointer))
 #else
 #define ALIGN_STACK
 #endif
-#else
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___unaligned[SIZE + 1]
-#define ALIGN16_ASSIGN(NAME) align16(NAME##___unaligned)
-#define ALIGN16_ATTRIB
-#define ALIGN8_ATTRIB
+
+#elif defined(_MSC_VER)
+
+/* See http://msdn.microsoft.com/en-us/library/83ythb65.aspx */
+#define PIPE_ALIGN_TYPE(_alignment, _type) __declspec(align(_alignment)) _type
+#define PIPE_ALIGN_VAR(_alignment, _decl) __declspec(align(_alignment)) _decl
+
 #define ALIGN_STACK
+
+#else
+
+#error "Unsupported compiler"
+
 #endif
 
 

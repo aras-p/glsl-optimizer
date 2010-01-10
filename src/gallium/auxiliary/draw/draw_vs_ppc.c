@@ -98,9 +98,9 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
    /* loop over verts */
    for (i = 0; i < count; i += MAX_VERTICES) {
       const uint max_vertices = MIN2(MAX_VERTICES, count - i);
-      float inputs_soa[PIPE_MAX_SHADER_INPUTS][4][4] ALIGN16_ATTRIB;
-      float outputs_soa[PIPE_MAX_SHADER_OUTPUTS][4][4] ALIGN16_ATTRIB;
-      float temps_soa[TGSI_EXEC_NUM_TEMPS][4][4] ALIGN16_ATTRIB;
+      PIPE_ALIGN_VAR(16, float inputs_soa[PIPE_MAX_SHADER_INPUTS][4][4]);
+      PIPE_ALIGN_VAR(16, float outputs_soa[PIPE_MAX_SHADER_OUTPUTS][4][4]);
+      PIPE_ALIGN_VAR(16, float temps_soa[TGSI_EXEC_NUM_TEMPS][4][4]);
       uint attr;
 
       /* convert (up to) four input verts to SoA format */

@@ -51,7 +51,7 @@
  * Since it's pretty much impossible to form PPC vector immediates, load
  * them from memory here:
  */
-const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
+PIPE_ALIGN_VAR(16, const float ppc_builtin_constants[]) = {
    1.0f, -128.0f, 128.0, 0.0
 };
 
