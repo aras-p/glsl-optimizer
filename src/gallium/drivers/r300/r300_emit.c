@@ -25,6 +25,7 @@
 
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_simple_list.h"
 
 #include "r300_context.h"
 #include "r300_cs.h"
@@ -36,9 +37,9 @@
 #include "r300_texture.h"
 #include "r300_vs.h"
 
-void r300_emit_blend_state(struct r300_context* r300,
-                           struct r300_blend_state* blend)
+void r300_emit_blend_state(struct r300_context* r300, void* state)
 {
+    struct r300_blend_state* blend = (struct r300_blend_state*)state;
     CS_LOCALS(r300);
     BEGIN_CS(8);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
@@ -978,6 +979,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_texture* tex;
+    struct r300_atom* atom;
     int i, dirty_tex = 0;
     boolean invalid = FALSE;
 
@@ -1060,9 +1062,11 @@ validate:
         r300->dirty_state &= ~R300_NEW_QUERY;
     }
 
-    if (r300->dirty_state & R300_NEW_BLEND) {
-        r300_emit_blend_state(r300, r300->blend_state);
-        r300->dirty_state &= ~R300_NEW_BLEND;
+    foreach(atom, &r300->atom_list) {
+        if (atom->dirty) {
+            atom->emit(r300, atom->state);
+            atom->dirty = FALSE;
+        }
     }
 
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {

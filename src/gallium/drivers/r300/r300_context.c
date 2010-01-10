@@ -30,6 +30,7 @@
 
 #include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_flush.h"
 #include "r300_query.h"
 #include "r300_render.h"
@@ -107,6 +108,18 @@ static void r300_flush_cb(void *data)
     cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
 }
 
+#define R300_INIT_ATOM(name) \
+    r300->name##_state.state = NULL; \
+    r300->name##_state.emit = r300_emit_##name##_state; \
+    r300->name##_state.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->name##_state);
+
+static void r300_setup_atoms(struct r300_context* r300)
+{
+    make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(blend);
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct radeon_winsys* radeon_winsys)
 {
@@ -165,6 +178,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
     make_empty_list(&r300->query_list);
+
+    r300_setup_atoms(r300);
 
     r300_init_flush_functions(r300);
 

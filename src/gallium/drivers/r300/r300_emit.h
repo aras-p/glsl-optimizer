@@ -32,7 +32,7 @@ struct r300_vertex_program_code;
 void r300_emit_aos(struct r300_context* r300, unsigned offset);
 
 void r300_emit_blend_state(struct r300_context* r300,
-                           struct r300_blend_state* blend);
+                           void* blend);
 
 void r300_emit_blend_color_state(struct r300_context* r300,
                                  struct r300_blend_color_state* bc);

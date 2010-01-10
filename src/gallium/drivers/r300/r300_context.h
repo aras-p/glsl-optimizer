@@ -30,8 +30,17 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
+struct r300_context;
+
 struct r300_fragment_shader;
 struct r300_vertex_shader;
+
+struct r300_atom {
+    struct r300_atom *prev, *next;
+    void* state;
+    void (*emit)(struct r300_context*, void*);
+    boolean dirty;
+};
 
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
@@ -135,7 +144,6 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_BLEND           0x00000001
 #define R300_NEW_BLEND_COLOR     0x00000002
 #define R300_NEW_CLIP            0x00000004
 #define R300_NEW_DSA             0x00000008
@@ -273,8 +281,10 @@ struct r300_context {
     struct r300_vertex_info* vertex_info;
 
     /* Various CSO state objects. */
+    /* Beginning of atom list. */
+    struct r300_atom atom_list;
     /* Blend state. */
-    struct r300_blend_state* blend_state;
+    struct r300_atom blend_state;
     /* Blend color state. */
     struct r300_blend_color_state* blend_color_state;
     /* User clip planes. */
