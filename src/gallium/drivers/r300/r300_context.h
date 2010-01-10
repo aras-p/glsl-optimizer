@@ -147,7 +147,6 @@ struct r300_ztop_state {
 #define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_RASTERIZER      0x00000080
 #define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
@@ -295,7 +294,7 @@ struct r300_context {
     /* Framebuffer state. We currently don't need our own version of this. */
     struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */
-    struct r300_rs_state* rs_state;
+    struct r300_atom rs_state;
     /* RS block state. */
     struct r300_rs_block* rs_block;
     /* Sampler states. */

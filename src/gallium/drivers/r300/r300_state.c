@@ -519,7 +519,8 @@ static void
                           r300_screen(r300->context.screen)->caps->is_r500);
 
     /* Don't rely on the order of states being set for the first time. */
-    if (!r300->rs_state || !r300->rs_state->rs.scissor) {
+    /* XXX ( >&) */
+    if (!r300->rs_state.state) {
         r300->dirty_state |= R300_NEW_SCISSOR;
     }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
@@ -721,9 +722,10 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         draw_set_rasterizer_state(r300->draw, &rs->rs);
     }
 
-    r300->rs_state = rs;
+    r300->rs_state.state = rs;
+    r300->rs_state.dirty = TRUE;
+
     /* XXX Clean these up when we move to atom emits */
-    r300->dirty_state |= R300_NEW_RASTERIZER;
     r300->dirty_state |= R300_NEW_RS_BLOCK;
     r300->dirty_state |= R300_NEW_SCISSOR;
     r300->dirty_state |= R300_NEW_VIEWPORT;
@@ -868,10 +870,7 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     r300_set_scissor_regs(state, &r300->scissor_state->scissor,
                           r300_screen(r300->context.screen)->caps->is_r500);
 
-    /* Don't rely on the order of states being set for the first time. */
-    if (!r300->rs_state || r300->rs_state->rs.scissor) {
-        r300->dirty_state |= R300_NEW_SCISSOR;
-    }
+    r300->dirty_state |= R300_NEW_SCISSOR;
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,

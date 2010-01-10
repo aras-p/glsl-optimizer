@@ -145,6 +145,9 @@ static const float * get_shader_constant(
     struct rc_constant * constant,
     struct r300_constant_buffer * externals)
 {
+    struct r300_viewport_state* viewport =
+        (struct r300_viewport_state*)r300->viewport_state;
+    boolean vte_enabled = viewport->vte_control & ~R300_VTX_W0_FMT;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
 
@@ -167,16 +170,17 @@ static const float * get_shader_constant(
 
                 /* Texture compare-fail value. */
                 /* XXX Since Gallium doesn't support GL_ARB_shadow_ambient,
-                 * this is always (0,0,0,0). */
+                 * this is always (0,0,0,0), right? */
                 case RC_STATE_SHADOW_AMBIENT:
                     vec[3] = 0;
                     break;
 
                 case RC_STATE_R300_VIEWPORT_SCALE:
-                    if (r300->rs_state->enable_vte) {
-                        vec[0] = r300->viewport_state->xscale;
-                        vec[1] = r300->viewport_state->yscale;
-                        vec[2] = r300->viewport_state->zscale;
+                /* XXX argfl stop crossing state */
+                    if (vte_enabled) {
+                        vec[0] = viewport->xscale;
+                        vec[1] = viewport->yscale;
+                        vec[2] = viewport->zscale;
                     } else {
                         vec[0] = 1;
                         vec[1] = 1;
@@ -185,10 +189,10 @@ static const float * get_shader_constant(
                     break;
 
                 case RC_STATE_R300_VIEWPORT_OFFSET:
-                    if (r300->rs_state->enable_vte) {
-                        vec[0] = r300->viewport_state->xoffset;
-                        vec[1] = r300->viewport_state->yoffset;
-                        vec[2] = r300->viewport_state->zoffset;
+                    if (vte_enabled) {
+                        vec[0] = viewport->xoffset;
+                        vec[1] = viewport->yoffset;
+                        vec[2] = viewport->zoffset;
                     } else {
                         /* Zeros. */
                     }
@@ -576,8 +580,9 @@ void r300_emit_query_end(struct r300_context* r300)
         r300_emit_query_finish(r300, query);
 }
 
-void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
+void r300_emit_rs_state(struct r300_context* r300, void* state)
 {
+    struct r300_rs_state* rs = (struct r300_rs_state*)state;
     CS_LOCALS(r300);
 
     BEGIN_CS(22);
@@ -655,7 +660,8 @@ static void r300_emit_scissor_regs(struct r300_context* r300,
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {
-    if (r300->rs_state->rs.scissor) {
+    /* XXX argfl! */
+    if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
         r300_emit_scissor_regs(r300, &scissor->scissor);
     } else {
         r300_emit_scissor_regs(r300, &scissor->framebuffer);
@@ -926,7 +932,8 @@ void r300_emit_viewport_state(struct r300_context* r300,
     OUT_CS_32F(viewport->zscale);
     OUT_CS_32F(viewport->zoffset);
 
-    if (r300->rs_state->enable_vte) {
+    /* XXX words fail me. */
+    if (((struct r300_rs_state*)r300->rs_state.state)->enable_vte) {
         OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
     } else {
         OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
@@ -1098,11 +1105,6 @@ validate:
     if (r300->dirty_state & R300_NEW_FRAMEBUFFERS) {
         r300_emit_fb_state(r300, &r300->framebuffer_state);
         r300->dirty_state &= ~R300_NEW_FRAMEBUFFERS;
-    }
-
-    if (r300->dirty_state & R300_NEW_RASTERIZER) {
-        r300_emit_rs_state(r300, r300->rs_state);
-        r300->dirty_state &= ~R300_NEW_RASTERIZER;
     }
 
     if (r300->dirty_state & R300_NEW_RS_BLOCK) {

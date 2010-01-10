@@ -124,6 +124,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(blend_color);
     R300_INIT_ATOM(clip);
     R300_INIT_ATOM(dsa);
+    R300_INIT_ATOM(rs);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

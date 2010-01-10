@@ -139,7 +139,7 @@ static void r300_vertex_psc(struct r300_context* r300)
 
     /* If TCL is bypassed, map vertex streams to equivalent VS output
      * locations. */
-    if (r300->rs_state->enable_vte) {
+    if (((struct r300_rs_state*)r300->rs_state.state)->enable_vte) {
         stream_tab = identity;
     } else {
         stream_tab = r300->vs->stream_loc_notcl;

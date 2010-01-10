@@ -59,7 +59,7 @@ void r300_emit_query_begin(struct r300_context* r300,
 
 void r300_emit_query_end(struct r300_context* r300);
 
-void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs);
+void r300_emit_rs_state(struct r300_context* r300, void* state);
 
 void r300_emit_rs_block_state(struct r300_context* r300,
                               struct r300_rs_block* rs);

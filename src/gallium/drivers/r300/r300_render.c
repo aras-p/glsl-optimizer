@@ -71,14 +71,15 @@ uint32_t r300_translate_primitive(unsigned prim)
 
 static boolean r300_nothing_to_draw(struct r300_context *r300)
 {
-    return r300->rs_state->rs.scissor &&
+    return ((struct r300_rs_state*)r300->rs_state.state)->rs.scissor &&
            r300->scissor_state->scissor.empty_area;
 }
 
 static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
                                             unsigned mode)
 {
-    uint32_t color_control = r300->rs_state->color_control;
+    struct r300_rs_state* rs = (struct r300_rs_state*)r300->rs_state.state;
+    uint32_t color_control = rs->color_control;
 
     /* By default (see r300_state.c:r300_create_rs_state) color_control is
      * initialized to provoking the first vertex.
@@ -98,7 +99,7 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
      * ~ C.
      */
 
-    if (r300->rs_state->rs.flatshade_first) {
+    if (rs->rs.flatshade_first) {
         switch (mode) {
             case PIPE_PRIM_TRIANGLE_FAN:
                 color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND;
