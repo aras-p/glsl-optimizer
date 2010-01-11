@@ -62,9 +62,9 @@ update_viewport( struct st_context *st )
       GLfloat x = (GLfloat)ctx->Viewport.X;
       GLfloat y = (GLfloat)ctx->Viewport.Y;
       GLfloat z = ctx->Viewport.Near;
-      GLfloat half_width = (GLfloat)ctx->Viewport.Width / 2.0f;
-      GLfloat half_height = (GLfloat)ctx->Viewport.Height / 2.0f;
-      GLfloat half_depth = (GLfloat)(ctx->Viewport.Far - ctx->Viewport.Near) / 2.0f;
+      GLfloat half_width = (GLfloat)ctx->Viewport.Width * 0.5f;
+      GLfloat half_height = (GLfloat)ctx->Viewport.Height * 0.5f;
+      GLfloat half_depth = (GLfloat)(ctx->Viewport.Far - ctx->Viewport.Near) * 0.5f;
       
       st->state.viewport.scale[0] = half_width;
       st->state.viewport.scale[1] = half_height * yScale;
