@@ -664,7 +664,6 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
    struct pipe_texture texTemp;
    struct pipe_texture *texture;
    struct pipe_surface *tex_surf;
-   uint level;
 
    /* check whether the states are properly saved */
    blitter_check_saved_CSOs(ctx);
