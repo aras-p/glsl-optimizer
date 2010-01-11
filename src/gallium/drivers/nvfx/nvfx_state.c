@@ -193,7 +193,6 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	struct nouveau_statebuf_builder sb = sb_init(rsso->sb);
 
 	/*XXX: ignored:
-	 * 	light_twoside
 	 * 	point_smooth -nohw
 	 * 	multisample
 	 */
@@ -201,6 +200,9 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	sb_method(sb, NV34TCL_SHADE_MODEL, 1);
 	sb_data(sb, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
 				       NV34TCL_SHADE_MODEL_SMOOTH);
+
+	sb_method(sb, NV34TCL_VERTEX_TWO_SIDE_ENABLE, 1);
+	sb_data(sb, cso->light_twoside);
 
 	sb_method(sb, NV34TCL_LINE_WIDTH, 2);
 	sb_data(sb, (unsigned char)(cso->line_width * 8.0) & 0xff);
