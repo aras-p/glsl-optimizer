@@ -412,6 +412,7 @@ static GLuint radeonEnsureEmitSize( GLcontext * ctx , GLuint inputs )
 	space_required += vbuf;
       else
 	space_required += index + elts;
+      space_required += VB->Primitive[i].count * 3;
       space_required += AOS_BUFSZ(nr_aos);
     }
     space_required += SCISSOR_BUFSZ;
