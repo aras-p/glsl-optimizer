@@ -42,6 +42,7 @@ void r300_emit_blend_state(struct r300_context* r300, void* state)
     struct r300_blend_state* blend = (struct r300_blend_state*)state;
     CS_LOCALS(r300);
     BEGIN_CS(8);
+    OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
     if (r300->framebuffer_state.nr_cbufs) {
         OUT_CS(blend->blend_control);
@@ -53,7 +54,6 @@ void r300_emit_blend_state(struct r300_context* r300, void* state)
         OUT_CS(0);
         /* XXX also disable fastfill here once it's supported */
     }
-    OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
     END_CS;
 }
