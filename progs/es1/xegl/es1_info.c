@@ -106,15 +106,20 @@ info(EGLDisplay egl_dpy)
 static void
 make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
               const char *name,
-              int x, int y, int width, int height,
+              int x, int y, int width, int height, int es_ver,
               Window *winRet,
               EGLContext *ctxRet,
               EGLSurface *surfRet)
 {
-   static const EGLint attribs[] = {
+   EGLint attribs[] = {
+      EGL_RENDERABLE_TYPE, 0x0,
       EGL_RED_SIZE, 1,
       EGL_GREEN_SIZE, 1,
       EGL_BLUE_SIZE, 1,
+      EGL_NONE
+   };
+   EGLint ctx_attribs[] = {
+      EGL_CONTEXT_CLIENT_VERSION, 0,
       EGL_NONE
    };
 
@@ -132,6 +137,12 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
 
    scrnum = DefaultScreen( x_dpy );
    root = RootWindow( x_dpy, scrnum );
+
+   if (es_ver == 1)
+      attribs[1] = EGL_OPENGL_ES_BIT;
+   else
+      attribs[1] = EGL_OPENGL_ES2_BIT;
+   ctx_attribs[1] = es_ver;
 
    if (!eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs)) {
       printf("Error: couldn't get an EGL visual config\n");
@@ -180,7 +191,7 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
 
    eglBindAPI(EGL_OPENGL_ES_API);
 
-   ctx = eglCreateContext(egl_dpy, config, EGL_NO_CONTEXT, NULL );
+   ctx = eglCreateContext(egl_dpy, config, EGL_NO_CONTEXT, ctx_attribs );
    if (!ctx) {
       printf("Error: eglCreateContext failed\n");
       exit(1);
@@ -218,7 +229,7 @@ main(int argc, char *argv[])
    EGLContext egl_ctx;
    EGLDisplay egl_dpy;
    char *dpyName = NULL;
-   EGLint egl_major, egl_minor;
+   EGLint egl_major, egl_minor, es_ver;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -250,8 +261,12 @@ main(int argc, char *argv[])
       return -1;
    }
 
+   es_ver = 1;
+   /* decide the version from the executable's name */
+   if (argc > 0 && argv[0] && strstr(argv[0], "es2"))
+      es_ver = 2;
    make_x_window(x_dpy, egl_dpy,
-                 "ES info", 0, 0, winWidth, winHeight,
+                 "ES info", 0, 0, winWidth, winHeight, es_ver,
                  &win, &egl_ctx, &egl_surf);
 
    /*XMapWindow(x_dpy, win);*/

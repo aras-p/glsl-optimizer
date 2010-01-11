@@ -33,8 +33,8 @@ default: $(PROGRAMS)
 
 
 
-es2_info.c:
-	cp ../../es1/xegl/es1_info.c es2_info.c
+es2_info.c: ../../es1/xegl/es1_info.c
+	cp -f $^ $@
 
 es2_info: es2_info.o $(ES2_LIB_DEPS)
 	$(CC) $(CFLAGS) es2_info.o $(ES2_LIBS) -o $@
