@@ -204,15 +204,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
                        LLVMValueRef step1_ptr,  /* ivec4 */
                        LLVMValueRef step2_ptr)  /* ivec4 */
 {
-   /*
-     c0_vec = splat(c0)
-     c1_vec = splat(c1)
-     c2_vec = splat(c2)
-     m0_vec = step0_ptr[i] > c0_vec
-     m1_vec = step1_ptr[i] > c1_vec
-     m2_vec = step2_ptr[i] > c2_vec
-     mask = m0_vec & m1_vec & m2_vec
-    */
    struct lp_build_flow_context *flow;
    struct lp_build_if_state ifctx;
    struct lp_type i32_type;
@@ -237,7 +228,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 
    /*
     * Use a conditional here to do detailed pixel in/out testing.
-    * We only have to do this if c0 != {INT_MIN, INT_MIN, INT_MIN, INT_MIN}
+    * We only have to do this if c0 != INT_MIN.
     */
    flow = lp_build_flow_create(builder);
    lp_build_flow_scope_begin(flow);
@@ -245,7 +236,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    {
 #define OPTIMIZE_IN_OUT_TEST 1
 #if OPTIMIZE_IN_OUT_TEST
-
+      /* not_draw_all = (c0 != INT_MIN) */
       not_draw_all = LLVMBuildICmp(builder,
                                    LLVMIntNE,
                                    c0,
@@ -257,6 +248,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 
       lp_build_flow_scope_declare(flow, &in_out_mask);
 
+      /* if (not_draw_all) {... */
       lp_build_if(&ifctx, flow, builder, not_draw_all);
 #endif
       {
@@ -275,27 +267,24 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
          lp_build_name(c1_vec, "edgeconst1vec");
          lp_build_name(c2_vec, "edgeconst2vec");
 
-
+         /* load step0vec, step1, step2 vec from memory */
          index = LLVMConstInt(LLVMInt32Type(), i, 0);
          step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
          step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
          step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
-
          lp_build_name(step0_vec, "step0vec");
          lp_build_name(step1_vec, "step1vec");
          lp_build_name(step2_vec, "step2vec");
 
+         /* m0_vec = step0_ptr[i] > c0_vec */
          m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
          m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
          m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step2_vec, c2_vec);
 
+         /* in_out_mask = m0_vec & m1_vec & m2_vec */
          m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
          in_out_mask = LLVMBuildAnd(builder, m, m2_vec, "");
          lp_build_name(in_out_mask, "inoutmaskvec");
-
-         /* This is the initial alive/dead pixel mask.  Additional bits will get cleared
-          * when the Z test fails, etc.
-          */
       }
 #if OPTIMIZE_IN_OUT_TEST
       lp_build_endif(&ifctx);
@@ -305,6 +294,10 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    lp_build_flow_scope_end(flow);
    lp_build_flow_destroy(flow);
 
+   /* This is the initial alive/dead pixel mask for a quad of four pixels.
+    * It's an int[4] vector with each word set to 0 or ~0.
+    * Words will get cleared when pixels faile the Z test, etc.
+    */
    *mask = in_out_mask;
 }
 
