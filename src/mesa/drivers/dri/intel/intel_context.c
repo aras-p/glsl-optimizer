@@ -70,8 +70,6 @@ int INTEL_DEBUG = (0);
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 
-static void intel_flush(GLcontext *ctx, GLboolean needs_mi_flush);
-
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
 {
@@ -378,6 +376,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
    }
 
+   drawable->validBuffers = GL_TRUE;
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
 
@@ -461,7 +460,7 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
       intel->vtbl.invalidate_state( intel, new_state );
 }
 
-static void
+void
 intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 {
    struct intel_context *intel = intel_context(ctx);
