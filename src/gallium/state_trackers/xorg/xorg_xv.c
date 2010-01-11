@@ -486,7 +486,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    Bool hdtv;
    int x, y, w, h;
    struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
-   struct pipe_surface *dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
+   struct pipe_surface *dst_surf = NULL;
 
    if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
@@ -496,6 +496,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    if (!dst || !dst->tex)
       XORG_FALLBACK("Xv destination %s", !dst ? "!dst" : "!dst->tex");
 
+   dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
    hdtv = ((src_w >= RES_720P_X) && (src_h >= RES_720P_Y));
 
    REGION_TRANSLATE(pScrn->pScreen, dstRegion, -pPixmap->screen_x,
