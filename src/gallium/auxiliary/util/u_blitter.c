@@ -568,15 +568,14 @@ void util_blitter_clear(struct blitter_context *blitter,
 }
 
 static boolean
-is_overlap(int sx1, int sx2, int sy1, int sy2, int dx1, int dx2, int dy1, int dy2)
+is_overlap(unsigned sx1, unsigned sx2, unsigned sy1, unsigned sy2,
+           unsigned dx1, unsigned dx2, unsigned dy1, unsigned dy2)
 {
-    if (((sx1 >= dx1) && (sx1 <= dx2) && (sy1 >= dy1) && (sy1 <= dy2)) || /* TL x1, y1 */
-	((sx2 >= dx1) && (sx2 <= dx2) && (sy1 >= dy1) && (sy1 <= dy2)) || /* TR x2, y1 */
-	((sx1 >= dx1) && (sx1 <= dx2) && (sy2 >= dy1) && (sy2 <= dy2)) || /* BL x1, y2 */
-	((sx2 >= dx1) && (sx2 <= dx2) && (sy2 >= dy1) && (sy2 <= dy2)))   /* BR x2, y2 */
-	return TRUE;
-    else
-	return FALSE;
+    if (sx1 >= dx2 || sx2 <= dx1 || sy1 >= dy2 || sy2 <= dy1) {
+        return FALSE;
+    } else {
+        return TRUE;
+    }
 }
 
 static void util_blitter_do_copy(struct blitter_context *blitter,
@@ -713,7 +712,6 @@ void util_blitter_copy(struct blitter_context *blitter,
    struct pipe_screen *screen = pipe->screen;
    boolean is_stencil, is_depth;
    unsigned dst_tex_usage;
-   boolean is_overlap_flag;
 
    /* give up if textures are not set */
    assert(dst->texture && src->texture);
@@ -721,12 +719,11 @@ void util_blitter_copy(struct blitter_context *blitter,
       return;
 
    if (dst->texture == src->texture) {
-      if (is_overlap(srcx, srcx + (width - 1), srcy, srcy + (height - 1),
-		     dstx, dstx + (width - 1), dsty, dsty + (height - 1))) {
-	 is_overlap_flag = TRUE;
-	 util_blitter_overlap_copy(blitter, dst, dstx, dsty, src, srcx, srcy,
-				   width, height);
-	 return;
+      if (is_overlap(srcx, srcx + width, srcy, srcy + height,
+		             dstx, dstx + width, dsty, dsty + height)) {
+         util_blitter_overlap_copy(blitter, dst, dstx, dsty, src, srcx, srcy,
+                                   width, height);
+         return;
       }
    }
 		   
