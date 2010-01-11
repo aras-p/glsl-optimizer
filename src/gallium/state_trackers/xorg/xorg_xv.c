@@ -485,8 +485,11 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    int dxo, dyo;
    Bool hdtv;
    int x, y, w, h;
-   struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
+   struct exa_pixmap_priv *dst;
    struct pipe_surface *dst_surf = NULL;
+
+   exaMoveInPixmap(pPixmap);
+   dst = exaGetPixmapDriverPrivate(pPixmap);
 
    if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
@@ -516,7 +519,6 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    bind_samplers(pPriv);
    setup_fs_video_constants(pPriv->r, hdtv);
 
-   exaMoveInPixmap(pPixmap);
    DamageDamageRegion(&pPixmap->drawable, dstRegion);
 
    while (nbox--) {
