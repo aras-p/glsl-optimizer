@@ -42,8 +42,8 @@ static void st_viewport(GLcontext * ctx, GLint x, GLint y,
 {
    struct st_context *st = ctx->st;
 
-   if (st->pipe->winsys && st->pipe->winsys->update_buffer)
-      st->pipe->winsys->update_buffer( st->pipe->winsys,
+   if (st->pipe->screen && st->pipe->screen->update_buffer)
+      st->pipe->screen->update_buffer( st->pipe->screen,
                                        st->pipe->priv );
 }
 

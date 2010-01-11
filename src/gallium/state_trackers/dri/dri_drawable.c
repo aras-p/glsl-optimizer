@@ -268,6 +268,14 @@ void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
 }
 
 void
+dri_update_buffer(struct pipe_screen *screen, void *context_private)
+{
+   struct dri_context *ctx = (struct dri_context *)context_private;
+
+   dri_get_buffers(ctx->dPriv);
+}
+
+void
 dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private)
 {
