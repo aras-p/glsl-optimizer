@@ -510,7 +510,6 @@ static void r300_update_ztop(struct r300_context* r300)
 {
     struct r300_ztop_state* ztop_state =
         (struct r300_ztop_state*)r300->ztop_state.state;
-    uint32_t ztop = ztop_state->z_buffer_top;
 
     /* This is important enough that I felt it warranted a comment.
      *
@@ -532,6 +531,10 @@ static void r300_update_ztop(struct r300_context* r300)
      * 5) Depth writes in fragment shader
      * 6) Outstanding occlusion queries
      *
+     * This register causes stalls all the way from SC to CB when changed,
+     * but it is buffered on-chip so it does not hurt to write it if it has
+     * not changed.
+     *
      * ~C.
      */
 
@@ -539,19 +542,16 @@ static void r300_update_ztop(struct r300_context* r300)
     if (r300_dsa_writes_depth_stencil(r300->dsa_state.state) &&
            (r300_dsa_alpha_test_enabled(r300->dsa_state.state) ||/* (1) */
             r300->fs->info.uses_kill)) {                         /* (2) */
-        ztop = R300_ZTOP_DISABLE;
+        ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
     } else if (r300_fragment_shader_writes_depth(r300->fs)) {    /* (5) */
-        ztop = R300_ZTOP_DISABLE;
+        ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
     } else if (r300->query_current) {                            /* (6) */
-        ztop = R300_ZTOP_DISABLE;
+        ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
     } else {
-        ztop = R300_ZTOP_ENABLE;
+        ztop_state->z_buffer_top = R300_ZTOP_ENABLE;
     }
 
-    if (ztop_state->z_buffer_top != ztop) {
-        ztop_state->z_buffer_top = ztop;
-        r300->ztop_state.dirty = TRUE;
-    }
+    r300->ztop_state.dirty = TRUE;
 }
 
 void r300_update_derived_state(struct r300_context* r300)
