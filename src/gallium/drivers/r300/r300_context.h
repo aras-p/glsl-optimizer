@@ -156,7 +156,6 @@ struct r300_ztop_state {
 #define R300_NEW_VERTEX_FORMAT   0x04000000
 #define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
-#define R300_NEW_VIEWPORT        0x20000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
 
@@ -308,7 +307,7 @@ struct r300_context {
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */
-    struct r300_viewport_state* viewport_state;
+    struct r300_atom viewport_state;
     /* ZTOP state. */
     struct r300_atom ztop_state;
 

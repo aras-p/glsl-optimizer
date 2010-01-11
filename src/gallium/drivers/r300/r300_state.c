@@ -724,11 +724,11 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
+    r300->viewport_state.dirty = TRUE; /* XXX */
 
     /* XXX Clean these up when we move to atom emits */
     r300->dirty_state |= R300_NEW_RS_BLOCK;
     r300->dirty_state |= R300_NEW_SCISSOR;
-    r300->dirty_state |= R300_NEW_VIEWPORT;
     if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
@@ -877,36 +877,38 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
                                     const struct pipe_viewport_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_viewport_state* viewport =
+        (struct r300_viewport_state*)r300->viewport_state.state;
 
     /* Do the transform in HW. */
-    r300->viewport_state->vte_control = R300_VTX_W0_FMT;
+    viewport->vte_control = R300_VTX_W0_FMT;
 
     if (state->scale[0] != 1.0f) {
-        r300->viewport_state->xscale = state->scale[0];
-        r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
+        viewport->xscale = state->scale[0];
+        viewport->vte_control |= R300_VPORT_X_SCALE_ENA;
     }
     if (state->scale[1] != 1.0f) {
-        r300->viewport_state->yscale = state->scale[1];
-        r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
+        viewport->yscale = state->scale[1];
+        viewport->vte_control |= R300_VPORT_Y_SCALE_ENA;
     }
     if (state->scale[2] != 1.0f) {
-        r300->viewport_state->zscale = state->scale[2];
-        r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
+        viewport->zscale = state->scale[2];
+        viewport->vte_control |= R300_VPORT_Z_SCALE_ENA;
     }
     if (state->translate[0] != 0.0f) {
-        r300->viewport_state->xoffset = state->translate[0];
-        r300->viewport_state->vte_control |= R300_VPORT_X_OFFSET_ENA;
+        viewport->xoffset = state->translate[0];
+        viewport->vte_control |= R300_VPORT_X_OFFSET_ENA;
     }
     if (state->translate[1] != 0.0f) {
-        r300->viewport_state->yoffset = state->translate[1];
-        r300->viewport_state->vte_control |= R300_VPORT_Y_OFFSET_ENA;
+        viewport->yoffset = state->translate[1];
+        viewport->vte_control |= R300_VPORT_Y_OFFSET_ENA;
     }
     if (state->translate[2] != 0.0f) {
-        r300->viewport_state->zoffset = state->translate[2];
-        r300->viewport_state->vte_control |= R300_VPORT_Z_OFFSET_ENA;
+        viewport->zoffset = state->translate[2];
+        viewport->vte_control |= R300_VPORT_Z_OFFSET_ENA;
     }
 
-    r300->dirty_state |= R300_NEW_VIEWPORT;
+    r300->viewport_state.dirty = TRUE;
     if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }

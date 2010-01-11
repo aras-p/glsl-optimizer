@@ -146,7 +146,7 @@ static const float * get_shader_constant(
     struct r300_constant_buffer * externals)
 {
     struct r300_viewport_state* viewport =
-        (struct r300_viewport_state*)r300->viewport_state;
+        (struct r300_viewport_state*)r300->viewport_state.state;
     boolean vte_enabled = viewport->vte_control & ~R300_VTX_W0_FMT;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
@@ -918,9 +918,9 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_viewport_state(struct r300_context* r300,
-                              struct r300_viewport_state* viewport)
+void r300_emit_viewport_state(struct r300_context* r300, void* state)
 {
+    struct r300_viewport_state* viewport = (struct r300_viewport_state*)state;
     CS_LOCALS(r300);
 
     BEGIN_CS(9);
@@ -932,7 +932,7 @@ void r300_emit_viewport_state(struct r300_context* r300,
     OUT_CS_32F(viewport->zscale);
     OUT_CS_32F(viewport->zoffset);
 
-    /* XXX words fail me. */
+    /* XXX words still fail me. */
     if (((struct r300_rs_state*)r300->rs_state.state)->enable_vte) {
         OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
     } else {
@@ -1136,11 +1136,6 @@ validate:
             }
         }
         r300->dirty_state &= ~(R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES);
-    }
-
-    if (r300->dirty_state & R300_NEW_VIEWPORT) {
-        r300_emit_viewport_state(r300, r300->viewport_state);
-        r300->dirty_state &= ~R300_NEW_VIEWPORT;
     }
 
     if (dirty_tex) {

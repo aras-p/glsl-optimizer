@@ -85,8 +85,7 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
 void r300_emit_vertex_shader(struct r300_context* r300,
                              struct r300_vertex_shader* vs);
 
-void r300_emit_viewport_state(struct r300_context* r300,
-                              struct r300_viewport_state* viewport);
+void r300_emit_viewport_state(struct r300_context* r300, void* state);
 
 void r300_emit_texture_count(struct r300_context* r300);
 

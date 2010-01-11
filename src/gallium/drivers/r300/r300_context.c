@@ -75,7 +75,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->rs_block);
     FREE(r300->scissor_state);
     FREE(r300->vertex_info);
-    FREE(r300->viewport_state);
+    FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
     FREE(r300);
 }
@@ -125,6 +125,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(clip);
     R300_INIT_ATOM(dsa);
     R300_INIT_ATOM(rs);
+    R300_INIT_ATOM(viewport);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -182,7 +183,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
     r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
-    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
     /* Open up the OQ BO. */
