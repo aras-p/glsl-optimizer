@@ -21,6 +21,7 @@ dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.15
 LIBDRM_RADEON_REQUIRED=2.4.17
 DRI2PROTO_REQUIRED=2.2
+GLPROTO_REQUIRED=1.4.11
 
 dnl Check for progs
 AC_PROG_CPP
@@ -577,6 +578,7 @@ dri)
     PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
     GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
     DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+    PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
