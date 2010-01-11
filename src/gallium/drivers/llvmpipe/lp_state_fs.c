@@ -234,7 +234,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    lp_build_flow_scope_begin(flow);
 
    {
-#define OPTIMIZE_IN_OUT_TEST 1
+#define OPTIMIZE_IN_OUT_TEST 0
 #if OPTIMIZE_IN_OUT_TEST
       /* not_draw_all = (c0 != INT_MIN) */
       not_draw_all = LLVMBuildICmp(builder,
