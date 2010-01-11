@@ -99,9 +99,9 @@ PUBLIC
 void st_unreference_framebuffer(struct st_framebuffer *stfb);
 
 PUBLIC
-void st_make_current(struct vg_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read);
+boolean st_make_current(struct vg_context *st,
+                        struct st_framebuffer *draw,
+                        struct st_framebuffer *read);
 
 PUBLIC
 struct vg_context *st_get_current(void);
