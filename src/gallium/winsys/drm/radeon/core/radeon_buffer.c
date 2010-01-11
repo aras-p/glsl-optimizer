@@ -146,16 +146,17 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
-    if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
-        priv->flush_cb(priv->flush_data);
-    }
-
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
 
         if (radeon_bo_is_busy(radeon_buffer->bo, &domain))
             return NULL;
     }
+
+    if (radeon_bo_is_referenced_by_cs(radeon_buffer->bo, priv->cs)) {
+        priv->flush_cb(priv->flush_data);
+    }
+
     if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
         write = 1;
     }
@@ -280,58 +281,3 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
 
     return radeon_ws;
 }
-#if 0
-static struct pipe_buffer *radeon_buffer_from_handle(struct radeon_screen *radeon_screen,
-                                                  uint32_t handle)
-{
-    struct radeon_pipe_buffer *radeon_buffer;
-    struct radeon_bo *bo = NULL;
-
-    bo = radeon_bo_open(radeon_screen->bom, handle, 0, 0, 0, 0);
-    if (bo == NULL) {
-        return NULL;
-    }
-    radeon_buffer = calloc(1, sizeof(struct radeon_pipe_buffer));
-    if (radeon_buffer == NULL) {
-        radeon_bo_unref(bo);
-        return NULL;
-    }
-    pipe_reference_init(&radeon_buffer->base.reference, 1);
-    radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
-    radeon_buffer->bo = bo;
-    return &radeon_buffer->base;
-}
-
-struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
-                                             uint32_t handle,
-                                             enum pipe_format format,
-                                             int w, int h, int pitch)
-{
-    struct pipe_screen *pipe_screen = radeon_context->pipe_screen;
-    struct pipe_winsys *pipe_winsys = radeon_context->pipe_winsys;
-    struct pipe_texture tmpl;
-    struct pipe_surface *ps;
-    struct pipe_texture *pt;
-    struct pipe_buffer *pb;
-
-    pb = radeon_buffer_from_handle(radeon_context->radeon_screen, handle);
-    if (pb == NULL) {
-        return NULL;
-    }
-    memset(&tmpl, 0, sizeof(tmpl));
-    tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
-    tmpl.target = PIPE_TEXTURE_2D;
-    tmpl.width0 = w;
-    tmpl.height0 = h;
-    tmpl.depth0 = 1;
-    tmpl.format = format;
-
-    pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
-    if (pt == NULL) {
-        pipe_buffer_reference(&pb, NULL);
-    }
-    ps = pipe_screen->get_tex_surface(pipe_screen, pt, 0, 0, 0,
-                                      PIPE_BUFFER_USAGE_GPU_WRITE);
-    return ps;
-}
-#endif
