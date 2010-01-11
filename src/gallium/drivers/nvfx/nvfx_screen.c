@@ -293,6 +293,36 @@ static void nv40_screen_init(struct nvfx_screen *screen, struct nouveau_stateobj
 	so_data  (so, 0x00000001);
 }
 
+static void
+nvfx_screen_init_buffer_functions(struct nvfx_screen* screen)
+{
+	int vram_hack_default = 0;
+	int vram_hack;
+	// TODO: this is a bit of a guess; also add other cards that may need this hack.
+	// It may also depend on the specific card or the AGP/PCIe chipset.
+	if(screen->base.device->chipset == 0x47 /* G70 */
+		|| screen->base.device->chipset == 0x49 /* G71 */
+		|| screen->base.device->chipset == 0x46 /* G72 */
+		)
+		vram_hack_default = 1;
+	vram_hack = debug_get_bool_option("NOUVEAU_VTXIDX_IN_VRAM", vram_hack_default);
+
+#ifdef DEBUG
+	if(!vram_hack)
+	{
+		fprintf(stderr, "Some systems may experience graphics corruption due to randomly misplaced vertices.\n"
+			"If this is happening, export NOUVEAU_VTXIDX_IN_VRAM=1 may reduce or eliminate the problem\n");
+	}
+	else
+	{
+		fprintf(stderr, "A performance reducing hack is being used to help avoid graphics corruption.\n"
+			"You can try export NOUVEAU_VTXIDX_IN_VRAM=0 to disable it.\n");
+	}
+#endif
+
+	screen->vertex_buffer_flags = vram_hack ? NOUVEAU_BO_VRAM : NOUVEAU_BO_GART;
+}
+
 struct pipe_screen *
 nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
@@ -350,6 +380,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	nvfx_screen_init_buffer_functions(screen);
 	nvfx_screen_init_miptree_functions(pscreen);
 
 	ret = nouveau_grobj_alloc(chan, 0xbeef3097, eng3d_class, &screen->eng3d);
