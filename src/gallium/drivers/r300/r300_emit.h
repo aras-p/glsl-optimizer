@@ -64,8 +64,7 @@ void r300_emit_rs_state(struct r300_context* r300, void* state);
 void r300_emit_rs_block_state(struct r300_context* r300,
                               struct r300_rs_block* rs);
 
-void r300_emit_scissor_state(struct r300_context* r300,
-                             struct r300_scissor_state* scissor);
+void r300_emit_scissor_state(struct r300_context* r300, void* state);
 
 void r300_emit_texture(struct r300_context* r300,
                        struct r300_sampler_state* sampler,

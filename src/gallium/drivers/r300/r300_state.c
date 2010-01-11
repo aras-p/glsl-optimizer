@@ -504,7 +504,9 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_scissor_state scissor;
+    struct r300_scissor_state* scissor =
+        (struct r300_scissor_state*)r300->scissor_state.state;
+    struct pipe_scissor_state pscissor;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -512,21 +514,19 @@ static void
 
     r300->framebuffer_state = *state;
 
-    scissor.minx = scissor.miny = 0;
-    scissor.maxx = state->width;
-    scissor.maxy = state->height;
-    r300_set_scissor_regs(&scissor, &r300->scissor_state->framebuffer,
+    /* XXX Arg. This is silly. */
+    pscissor.minx = pscissor.miny = 0;
+    pscissor.maxx = state->width;
+    pscissor.maxy = state->height;
+    r300_set_scissor_regs(&pscissor, &scissor->framebuffer,
                           r300_screen(r300->context.screen)->caps->is_r500);
 
     /* Don't rely on the order of states being set for the first time. */
-    /* XXX ( >&) */
-    if (!r300->rs_state.state) {
-        r300->dirty_state |= R300_NEW_SCISSOR;
-    }
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
 
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
+    r300->scissor_state.dirty = TRUE;
 }
 
 /* Create fragment shader state. */
@@ -725,11 +725,11 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
     /* XXX Why is this still needed, dammit!? */
+    r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
     r300->dirty_state |= R300_NEW_RS_BLOCK;
-    r300->dirty_state |= R300_NEW_SCISSOR;
     if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
@@ -867,11 +867,13 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
                                    const struct pipe_scissor_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_scissor_state* scissor =
+        (struct r300_scissor_state*)r300->scissor_state.state;
 
-    r300_set_scissor_regs(state, &r300->scissor_state->scissor,
+    r300_set_scissor_regs(state, &scissor->scissor,
                           r300_screen(r300->context.screen)->caps->is_r500);
 
-    r300->dirty_state |= R300_NEW_SCISSOR;
+    r300->scissor_state.dirty = TRUE;
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,

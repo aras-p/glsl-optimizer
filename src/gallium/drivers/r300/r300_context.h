@@ -145,7 +145,6 @@ struct r300_ztop_state {
 #define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
-#define R300_NEW_SCISSOR         0x00020000
 #define R300_NEW_TEXTURE         0x00040000
 #define R300_ANY_NEW_TEXTURES    0x03fc0000
 #define R300_NEW_VERTEX_FORMAT   0x04000000
@@ -295,7 +294,7 @@ struct r300_context {
     struct r300_sampler_state* sampler_states[8];
     int sampler_count;
     /* Scissor state. */
-    struct r300_scissor_state* scissor_state;
+    struct r300_atom scissor_state;
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;

@@ -72,7 +72,7 @@ uint32_t r300_translate_primitive(unsigned prim)
 static boolean r300_nothing_to_draw(struct r300_context *r300)
 {
     return ((struct r300_rs_state*)r300->rs_state.state)->rs.scissor &&
-           r300->scissor_state->scissor.empty_area;
+           ((struct r300_scissor_state*)r300->scissor_state.state)->scissor.empty_area;
 }
 
 static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,

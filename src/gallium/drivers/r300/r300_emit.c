@@ -653,9 +653,9 @@ static void r300_emit_scissor_regs(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_scissor_state(struct r300_context* r300,
-                             struct r300_scissor_state* scissor)
+void r300_emit_scissor_state(struct r300_context* r300, void* state)
 {
+    struct r300_scissor_state* scissor = (struct r300_scissor_state*)state;
     /* XXX argfl! */
     if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
         r300_emit_scissor_regs(r300, &scissor->scissor);
@@ -1106,11 +1106,6 @@ validate:
     if (r300->dirty_state & R300_NEW_RS_BLOCK) {
         r300_emit_rs_block_state(r300, r300->rs_block);
         r300->dirty_state &= ~R300_NEW_RS_BLOCK;
-    }
-
-    if (r300->dirty_state & R300_NEW_SCISSOR) {
-        r300_emit_scissor_state(r300, r300->scissor_state);
-        r300->dirty_state &= ~R300_NEW_SCISSOR;
     }
 
     /* Samplers and textures are tracked separately but emitted together. */
