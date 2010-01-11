@@ -109,9 +109,6 @@ struct r300_sampler_state {
 struct r300_scissor_regs {
     uint32_t top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
     uint32_t bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
-
-    /* Whether everything is culled by scissoring. */
-    boolean empty_area;
 };
 
 struct r300_scissor_state {
