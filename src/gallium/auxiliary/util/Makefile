@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = util
 
 C_SOURCES = \
+	u_bitmask.c \
 	u_debug.c \
 	u_debug_dump.c \
 	u_debug_symbol.c \
