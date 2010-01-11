@@ -229,17 +229,19 @@ draw(EGLDisplay egl_dpy, EGLSurface egl_surf, EGLSurface egl_pbuf,
       printf("Error: eglMakeCurrent(pbuf) failed\n");
       return;
    }
-   glBindTexture(GL_TEXTURE_2D, RenderTexture);
-   eglBindTexImage(egl_dpy, egl_pbuf, EGL_BACK_BUFFER);
    draw_torus_to_texture();
-   eglReleaseTexImage(egl_dpy, egl_pbuf, EGL_BACK_BUFFER);
 
    /* draw textured quad to window */
    if (!eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx)) {
       printf("Error: eglMakeCurrent(pbuffer) failed\n");
       return;
    }
+
+   glBindTexture(GL_TEXTURE_2D, RenderTexture);
+   eglBindTexImage(egl_dpy, egl_pbuf, EGL_BACK_BUFFER);
    draw_textured_quad();
+   eglReleaseTexImage(egl_dpy, egl_pbuf, EGL_BACK_BUFFER);
+
    eglSwapBuffers(egl_dpy, egl_surf);
 
    /*printf("End draw\n");*/
