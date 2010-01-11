@@ -458,7 +458,7 @@ nv10_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 const struct pipe_buffer *buf )
+			 struct pipe_buffer *buf )
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 	struct pipe_screen *pscreen = pipe->screen;

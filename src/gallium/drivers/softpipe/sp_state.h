@@ -133,7 +133,7 @@ void softpipe_set_clip_state( struct pipe_context *,
 
 void softpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
-                                  const struct pipe_buffer *buf);
+                                  struct pipe_buffer *buf);
 
 void *softpipe_create_fs_state(struct pipe_context *,
                                const struct pipe_shader_state *);

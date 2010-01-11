@@ -588,7 +588,7 @@ nv50_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 const struct pipe_buffer *buf )
+			 struct pipe_buffer *buf )
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 

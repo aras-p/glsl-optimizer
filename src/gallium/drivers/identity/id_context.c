@@ -404,7 +404,7 @@ static void
 identity_set_constant_buffer(struct pipe_context *_pipe,
                              uint shader,
                              uint index,
-                             const struct pipe_buffer *_buffer)
+                             struct pipe_buffer *_buffer)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;

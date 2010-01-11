@@ -332,7 +332,7 @@ nv04_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv04_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 const struct pipe_buffer *buf )
+			 struct pipe_buffer *buf )
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
 	struct pipe_screen *pscreen = pipe->screen;

@@ -183,7 +183,7 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
-                         const struct pipe_buffer *buf)
+                         struct pipe_buffer *buf)
 {
    struct cell_context *cell = cell_context(pipe);
 

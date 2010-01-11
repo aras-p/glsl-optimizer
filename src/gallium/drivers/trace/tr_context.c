@@ -825,7 +825,7 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
 static INLINE void
 trace_context_set_constant_buffer(struct pipe_context *_pipe,
                                   uint shader, uint index,
-                                  const struct pipe_buffer *buffer)
+                                  struct pipe_buffer *buffer)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;

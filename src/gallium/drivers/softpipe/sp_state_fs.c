@@ -152,7 +152,7 @@ softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 void
 softpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_buffer *buf)
+                             struct pipe_buffer *buf)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 

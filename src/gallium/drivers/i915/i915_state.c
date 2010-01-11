@@ -517,7 +517,7 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct i915_context *i915 = i915_context(pipe);
    struct pipe_screen *screen = pipe->screen;

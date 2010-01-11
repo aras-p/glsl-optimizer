@@ -255,7 +255,7 @@ static void brw_delete_vs_state( struct pipe_context *pipe, void *prog )
 
 static void brw_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct brw_context *brw = brw_context(pipe);
 

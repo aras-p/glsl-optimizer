@@ -49,7 +49,7 @@ struct svga_constbuf
 
 static void svga_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct svga_context *svga = svga_context(pipe);
 

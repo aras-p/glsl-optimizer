@@ -804,7 +804,7 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
     void *mapped;
