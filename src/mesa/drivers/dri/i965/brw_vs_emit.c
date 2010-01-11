@@ -214,8 +214,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       }
    }
 
-   c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
-   reg += 2;
+   if (c->needs_stack) {
+      c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
+      reg += 2;
+   }
 
    /* Some opcodes need an internal temporary:
     */
@@ -1386,12 +1388,14 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
-   
-   /* Message registers can't be read, so copy the output into GRF register
-      if they are used in source registers */
+
    for (insn = 0; insn < nr_insns; insn++) {
        GLuint i;
        struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
+
+       /* Message registers can't be read, so copy the output into GRF
+	* register if they are used in source registers
+	*/
        for (i = 0; i < 3; i++) {
 	   struct prog_src_register *src = &inst->SrcReg[i];
 	   GLuint index = src->Index;
@@ -1399,12 +1403,23 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
 	       c->output_regs[index].used_in_src = GL_TRUE;
        }
+
+       switch (inst->Opcode) {
+       case OPCODE_CAL:
+       case OPCODE_RET:
+	  c->needs_stack = GL_TRUE;
+	  break;
+       default:
+	  break;
+       }
    }
 
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
-   brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+
+   if (c->needs_stack)
+      brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
    for (insn = 0; insn < nr_insns; insn++) {
 

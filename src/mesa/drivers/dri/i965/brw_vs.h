@@ -81,6 +81,8 @@ struct brw_vs_compile {
       GLint index;
       struct brw_reg reg;
    } current_const[3];
+
+   GLboolean needs_stack;
 };
 
 void brw_vs_emit( struct brw_vs_compile *c );
