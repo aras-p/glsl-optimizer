@@ -139,10 +139,10 @@ static void r300_vertex_psc(struct r300_context* r300)
 
     /* If TCL is bypassed, map vertex streams to equivalent VS output
      * locations. */
-    if (((struct r300_rs_state*)r300->rs_state.state)->enable_vte) {
-        stream_tab = identity;
-    } else {
+    if (r300->tcl_bypass) {
         stream_tab = r300->vs->stream_loc_notcl;
+    } else {
+        stream_tab = identity;
     }
 
     /* Vertex shaders have no semantics on their inputs,
@@ -556,9 +556,10 @@ static void r300_update_ztop(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
+    /* XXX */
     if (r300->dirty_state &
         (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER |
-         R300_NEW_VERTEX_FORMAT)) {
+         R300_NEW_VERTEX_FORMAT) || r300->rs_state.dirty) {
         r300_update_derived_shader_state(r300);
     }
 

@@ -605,8 +605,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     /* Copy rasterizer state for Draw. */
     rs->rs = *state;
 
-    rs->enable_vte = !state->bypass_vs_clip_and_viewport;
-
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
     rs->vap_control_status = R300_VC_NO_SWAP;
 #else
@@ -722,9 +720,12 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         draw_set_rasterizer_state(r300->draw, &rs->rs);
     }
 
+    r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
+
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
-    r300->viewport_state.dirty = TRUE; /* XXX */
+    /* XXX Why is this still needed, dammit!? */
+    r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
     r300->dirty_state |= R300_NEW_RS_BLOCK;

@@ -147,7 +147,6 @@ static const float * get_shader_constant(
 {
     struct r300_viewport_state* viewport =
         (struct r300_viewport_state*)r300->viewport_state.state;
-    boolean vte_enabled = viewport->vte_control & ~R300_VTX_W0_FMT;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
 
@@ -176,25 +175,22 @@ static const float * get_shader_constant(
                     break;
 
                 case RC_STATE_R300_VIEWPORT_SCALE:
-                /* XXX argfl stop crossing state */
-                    if (vte_enabled) {
-                        vec[0] = viewport->xscale;
-                        vec[1] = viewport->yscale;
-                        vec[2] = viewport->zscale;
-                    } else {
+                    if (r300->tcl_bypass) {
                         vec[0] = 1;
                         vec[1] = 1;
                         vec[2] = 1;
+                    } else {
+                        vec[0] = viewport->xscale;
+                        vec[1] = viewport->yscale;
+                        vec[2] = viewport->zscale;
                     }
                     break;
 
                 case RC_STATE_R300_VIEWPORT_OFFSET:
-                    if (vte_enabled) {
+                    if (!r300->tcl_bypass) {
                         vec[0] = viewport->xoffset;
                         vec[1] = viewport->yoffset;
                         vec[2] = viewport->zoffset;
-                    } else {
-                        /* Zeros. */
                     }
                     break;
 
@@ -923,22 +919,22 @@ void r300_emit_viewport_state(struct r300_context* r300, void* state)
     struct r300_viewport_state* viewport = (struct r300_viewport_state*)state;
     CS_LOCALS(r300);
 
-    BEGIN_CS(9);
-    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
-    OUT_CS_32F(viewport->xscale);
-    OUT_CS_32F(viewport->xoffset);
-    OUT_CS_32F(viewport->yscale);
-    OUT_CS_32F(viewport->yoffset);
-    OUT_CS_32F(viewport->zscale);
-    OUT_CS_32F(viewport->zoffset);
-
-    /* XXX words still fail me. */
-    if (((struct r300_rs_state*)r300->rs_state.state)->enable_vte) {
-        OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
-    } else {
+    if (r300->tcl_bypass) {
+        BEGIN_CS(2);
         OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
+        END_CS;
+    } else {
+        BEGIN_CS(9);
+        OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
+        OUT_CS_32F(viewport->xscale);
+        OUT_CS_32F(viewport->xoffset);
+        OUT_CS_32F(viewport->yscale);
+        OUT_CS_32F(viewport->yoffset);
+        OUT_CS_32F(viewport->zscale);
+        OUT_CS_32F(viewport->zoffset);
+        OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+        END_CS;
     }
-    END_CS;
 }
 
 void r300_emit_texture_count(struct r300_context* r300)

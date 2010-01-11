@@ -71,11 +71,6 @@ struct r300_rs_state {
     /* Draw-specific rasterizer state */
     struct pipe_rasterizer_state rs;
 
-    /* Whether or not to enable the VTE. This is referenced at the very
-     * last moment during emission of VTE state, to decide whether or not
-     * the VTE should be used for transformation. */
-    boolean enable_vte;
-
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
@@ -322,6 +317,8 @@ struct r300_context {
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
+    /* Whether the TCL engine should be in bypass mode. */
+    boolean tcl_bypass;
 
     /** Combination of DBG_xxx flags */
     unsigned debug;
