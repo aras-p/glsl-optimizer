@@ -316,6 +316,7 @@ pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct tgsi_token *tokens,
+                         boolean flatshade,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
@@ -358,7 +359,15 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
             for( attrib = first; attrib <= last; ++attrib ) {
                bld->mask[1 + attrib] = mask;
-               bld->mode[1 + attrib] = decl->Declaration.Interpolate;
+
+               /* XXX: have mesa set INTERP_CONSTANT in the fragment
+                * shader.
+                */
+               if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
+                   flatshade)
+                  bld->mode[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
+               else
+                  bld->mode[1 + attrib] = decl->Declaration.Interpolate;
             }
 
             bld->num_attribs = MAX2(bld->num_attribs, 1 + last + 1);

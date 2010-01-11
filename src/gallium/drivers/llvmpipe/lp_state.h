@@ -66,12 +66,12 @@ struct lp_fragment_shader;
 
 struct lp_fragment_shader_variant_key
 {
-   enum pipe_format zsbuf_format;
-   unsigned nr_cbufs;
-
    struct pipe_depth_state depth;
    struct pipe_alpha_state alpha;
    struct pipe_blend_state blend;
+   enum pipe_format zsbuf_format;
+   unsigned nr_cbufs:8;
+   unsigned flatshade:1;
 
    struct {
       ubyte colormask;

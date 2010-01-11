@@ -718,7 +718,10 @@ generate_fragment(struct llvmpipe_context *lp,
 
    generate_pos0(builder, x, y, &x0, &y0);
 
-   lp_build_interp_soa_init(&interp, shader->base.tokens, builder, fs_type,
+   lp_build_interp_soa_init(&interp, 
+                            shader->base.tokens,
+                            key->flatshade,
+                            builder, fs_type,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x0, y0);
 
@@ -957,6 +960,8 @@ make_variant_key(struct llvmpipe_context *lp,
    if(key->alpha.enabled)
       key->alpha.func = lp->depth_stencil->alpha.func;
    /* alpha.ref_value is passed in jit_context */
+
+   key->flatshade = lp->rasterizer->flatshade;
 
    if (lp->framebuffer.nr_cbufs) {
       memcpy(&key->blend, lp->blend, sizeof key->blend);

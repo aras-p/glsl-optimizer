@@ -79,6 +79,7 @@ struct lp_build_interp_soa_context
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct tgsi_token *tokens,
+                         boolean flatshade,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
