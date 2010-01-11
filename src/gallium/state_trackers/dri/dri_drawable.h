@@ -81,6 +81,9 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
 		  const __GLcontextModes * visual, boolean isPixmap);
 
 void
+dri_update_buffer(struct pipe_screen *screen, void *context_private);
+
+void
 dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private);
 
