@@ -515,13 +515,13 @@ generate_blend(const struct pipe_blend_state *blend,
  * pixels at at time.  The block contains 2x2 quads.  Each quad contains
  * 2x2 pixels.
  */
-static struct lp_fragment_shader_variant *
+static void
 generate_fragment(struct llvmpipe_context *lp,
                   struct lp_fragment_shader *shader,
-                  const struct lp_fragment_shader_variant_key *key)
+                  struct lp_fragment_shader_variant *variant)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
-   struct lp_fragment_shader_variant *variant;
+   const struct lp_fragment_shader_variant_key *key = &variant->key;
    struct lp_type fs_type;
    struct lp_type blend_type;
    LLVMTypeRef fs_elem_type;
@@ -556,64 +556,6 @@ generate_fragment(struct llvmpipe_context *lp,
    unsigned chan;
    unsigned cbuf;
 
-   if (LP_DEBUG & DEBUG_JIT) {
-      tgsi_dump(shader->base.tokens, 0);
-      if(key->depth.enabled) {
-         debug_printf("depth.format = %s\n", pf_name(key->zsbuf_format));
-         debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
-         debug_printf("depth.writemask = %u\n", key->depth.writemask);
-      }
-      if(key->alpha.enabled) {
-         debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
-         debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
-      }
-      if(key->blend.logicop_enable) {
-         debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
-      }
-      else if(key->blend.blend_enable) {
-         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
-         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
-         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
-         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
-         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
-         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
-      }
-      debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
-      for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
-         if(key->sampler[i].format) {
-            debug_printf("sampler[%u] = \n", i);
-            debug_printf("  .format = %s\n",
-                         pf_name(key->sampler[i].format));
-            debug_printf("  .target = %s\n",
-                         debug_dump_tex_target(key->sampler[i].target, TRUE));
-            debug_printf("  .pot = %u %u %u\n",
-                         key->sampler[i].pot_width,
-                         key->sampler[i].pot_height,
-                         key->sampler[i].pot_depth);
-            debug_printf("  .wrap = %s %s %s\n",
-                         debug_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
-                         debug_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
-                         debug_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
-            debug_printf("  .min_img_filter = %s\n",
-                         debug_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
-            debug_printf("  .min_mip_filter = %s\n",
-                         debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
-            debug_printf("  .mag_img_filter = %s\n",
-                         debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
-            if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
-               debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
-            debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
-            debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
-         }
-      }
-   }
-
-   variant = CALLOC_STRUCT(lp_fragment_shader_variant);
-   if(!variant)
-      return NULL;
-
-   variant->shader = shader;
-   memcpy(&variant->key, key, sizeof *key);
 
    /* TODO: actually pick these based on the fs and color buffer
     * characteristics. */
@@ -828,6 +770,78 @@ generate_fragment(struct llvmpipe_context *lp,
 
    variant->next = shader->variants;
    shader->variants = variant;
+}
+
+
+static struct lp_fragment_shader_variant *
+generate_variant(struct llvmpipe_context *lp,
+                 struct lp_fragment_shader *shader,
+                 const struct lp_fragment_shader_variant_key *key)
+{
+   struct lp_fragment_shader_variant *variant;
+
+   if (LP_DEBUG & DEBUG_JIT) {
+      unsigned i;
+
+      tgsi_dump(shader->base.tokens, 0);
+      if(key->depth.enabled) {
+         debug_printf("depth.format = %s\n", pf_name(key->zsbuf_format));
+         debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
+         debug_printf("depth.writemask = %u\n", key->depth.writemask);
+      }
+      if(key->alpha.enabled) {
+         debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
+         debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
+      }
+      if(key->blend.logicop_enable) {
+         debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
+      }
+      else if(key->blend.blend_enable) {
+         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
+         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
+         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
+         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
+         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
+         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
+      }
+      debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
+      for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
+         if(key->sampler[i].format) {
+            debug_printf("sampler[%u] = \n", i);
+            debug_printf("  .format = %s\n",
+                         pf_name(key->sampler[i].format));
+            debug_printf("  .target = %s\n",
+                         debug_dump_tex_target(key->sampler[i].target, TRUE));
+            debug_printf("  .pot = %u %u %u\n",
+                         key->sampler[i].pot_width,
+                         key->sampler[i].pot_height,
+                         key->sampler[i].pot_depth);
+            debug_printf("  .wrap = %s %s %s\n",
+                         debug_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
+                         debug_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
+                         debug_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
+            debug_printf("  .min_img_filter = %s\n",
+                         debug_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
+            debug_printf("  .min_mip_filter = %s\n",
+                         debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
+            debug_printf("  .mag_img_filter = %s\n",
+                         debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
+            if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
+               debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
+            debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
+            debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
+         }
+      }
+   }
+
+   variant = CALLOC_STRUCT(lp_fragment_shader_variant);
+   if(!variant)
+      return NULL;
+
+   variant->shader = shader;
+   memcpy(&variant->key, key, sizeof *key);
+
+   generate_fragment(lp, shader, variant);
 
    return variant;
 }
@@ -1008,7 +1022,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    }
 
    if(!variant)
-      variant = generate_fragment(lp, shader, &key);
+      variant = generate_variant(lp, shader, &key);
 
    shader->current = variant;
 
