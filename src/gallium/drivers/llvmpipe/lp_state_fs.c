@@ -217,10 +217,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    struct lp_build_if_state ifctx;
    struct lp_type i32_type;
    LLVMTypeRef i32vec4_type, mask_type;
-
    LLVMValueRef c0_vec, c1_vec, c2_vec;
-
-   LLVMValueRef int_min_vec;
    LLVMValueRef not_draw_all;
    LLVMValueRef in_out_mask;
 
@@ -238,21 +235,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 
    mask_type = LLVMIntType(32 * 4);
 
-   /* int_min_vec = {INT_MIN, INT_MIN, INT_MIN, INT_MIN} */
-   int_min_vec = lp_build_int_const_scalar(i32_type, INT_MIN);
-
-
-   /* c0_vec = {c0, c0, c0, c0}
-    * Note that we emit this code four times but LLVM optimizes away
-    * three instances of it.
-    */
-   c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
-   c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
-   c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
-   lp_build_name(c0_vec, "edgeconst0vec");
-   lp_build_name(c1_vec, "edgeconst1vec");
-   lp_build_name(c2_vec, "edgeconst2vec");
-
    /*
     * Use a conditional here to do detailed pixel in/out testing.
     * We only have to do this if c0 != {INT_MIN, INT_MIN, INT_MIN, INT_MIN}
@@ -260,16 +242,18 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    flow = lp_build_flow_create(builder);
    lp_build_flow_scope_begin(flow);
 
-#define OPTIMIZE_IN_OUT_TEST 0
+   {
+#define OPTIMIZE_IN_OUT_TEST 1
 #if OPTIMIZE_IN_OUT_TEST
-      in_out_mask = lp_build_compare(builder, i32_type, PIPE_FUNC_EQUAL, c0_vec, int_min_vec);
-      lp_build_name(in_out_mask, "inoutmaskvec");
 
       not_draw_all = LLVMBuildICmp(builder,
-                                   LLVMIntEQ,
-                                   LLVMBuildBitCast(builder, in_out_mask, mask_type, ""),
-                                   LLVMConstNull(mask_type),
+                                   LLVMIntNE,
+                                   c0,
+                                   LLVMConstInt(LLVMInt32Type(), INT_MIN, 0),
                                    "");
+
+      in_out_mask = lp_build_int_const_scalar(i32_type, ~0);
+
 
       lp_build_flow_scope_declare(flow, &in_out_mask);
 
@@ -279,6 +263,18 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
          LLVMValueRef step0_vec, step1_vec, step2_vec;
          LLVMValueRef m0_vec, m1_vec, m2_vec;
          LLVMValueRef index, m;
+
+         /* c0_vec = {c0, c0, c0, c0}
+          * Note that we emit this code four times but LLVM optimizes away
+          * three instances of it.
+          */
+         c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
+         c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
+         c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
+         lp_build_name(c0_vec, "edgeconst0vec");
+         lp_build_name(c1_vec, "edgeconst1vec");
+         lp_build_name(c2_vec, "edgeconst2vec");
+
 
          index = LLVMConstInt(LLVMInt32Type(), i, 0);
          step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
@@ -305,6 +301,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
       lp_build_endif(&ifctx);
 #endif
 
+   }
    lp_build_flow_scope_end(flow);
    lp_build_flow_destroy(flow);
 
