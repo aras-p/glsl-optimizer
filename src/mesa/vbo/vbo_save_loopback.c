@@ -29,7 +29,6 @@
 #include "main/glheader.h"
 #include "main/enums.h"
 #include "main/imports.h"
-#include "main/macros.h"
 #include "main/mtypes.h"
 #include "glapi/dispatch.h"
 #include "glapi/glapi.h"
