@@ -107,8 +107,8 @@ run_vertex_program(struct spu_vs_context *draw,
    struct spu_exec_machine *machine = &draw->machine;
    unsigned int j;
 
-   PIPE_ALIGN_VAR(16, struct spu_exec_vector inputs[PIPE_MAX_ATTRIBS]);
-   PIPE_ALIGN_VAR(16, struct spu_exec_vector outputs[PIPE_MAX_ATTRIBS]);
+   PIPE_ALIGN_VAR(16) struct spu_exec_vector inputs[PIPE_MAX_ATTRIBS];
+   PIPE_ALIGN_VAR(16) struct spu_exec_vector outputs[PIPE_MAX_ATTRIBS];
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
@@ -132,9 +132,9 @@ run_vertex_program(struct spu_vs_context *draw,
    for (j = 0; j < count; j++) {
       unsigned slot;
       float x, y, z, w;
-      PIPE_ALIGN_VAR(16,
+      PIPE_ALIGN_VAR(16)
       unsigned char buffer[sizeof(struct vertex_header)
-          + MAX_VERTEX_SIZE]);
+          + MAX_VERTEX_SIZE];
       struct vertex_header *const tmpOut =
           (struct vertex_header *) buffer;
       const unsigned vert_size = ROUNDUP16(sizeof(struct vertex_header)
@@ -187,8 +187,8 @@ run_vertex_program(struct spu_vs_context *draw,
 }
 
 
-PIPE_ALIGN_VAR(16,
-unsigned char immediates[(sizeof(float) * 4 * TGSI_EXEC_NUM_IMMEDIATES) + 32]);
+PIPE_ALIGN_VAR(16) unsigned char
+immediates[(sizeof(float) * 4 * TGSI_EXEC_NUM_IMMEDIATES) + 32]);
 
 
 void

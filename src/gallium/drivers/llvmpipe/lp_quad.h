@@ -84,7 +84,7 @@ struct quad_header_inout
 struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
-   PIPE_ALIGN_VAR(16, float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE]);
+   PIPE_ALIGN_VAR(16) float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
 };
 
 
@@ -93,9 +93,9 @@ struct quad_header_output
  */
 struct quad_interp_coef
 {
-   PIPE_ALIGN_VAR(16, float a0[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
-   PIPE_ALIGN_VAR(16, float dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
-   PIPE_ALIGN_VAR(16, float dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS]);
+   PIPE_ALIGN_VAR(16) float a0[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   PIPE_ALIGN_VAR(16) float dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   PIPE_ALIGN_VAR(16) float dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
 };
 
 

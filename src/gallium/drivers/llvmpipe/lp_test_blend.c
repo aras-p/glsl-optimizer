@@ -531,11 +531,11 @@ test_one(unsigned verbose,
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
       if(mode == AoS) {
-         PIPE_ALIGN_VAR(16, uint8_t src[LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t dst[LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t con[LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t res[LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t ref[LP_NATIVE_VECTOR_WIDTH/8]);
+         PIPE_ALIGN_VAR(16) uint8_t src[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t dst[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t con[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t res[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t ref[LP_NATIVE_VECTOR_WIDTH/8];
          int64_t start_counter = 0;
          int64_t end_counter = 0;
 
@@ -596,11 +596,11 @@ test_one(unsigned verbose,
 
       if(mode == SoA) {
          const unsigned stride = type.length*type.width/8;
-         PIPE_ALIGN_VAR(16, uint8_t src[4*LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t dst[4*LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t con[4*LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t res[4*LP_NATIVE_VECTOR_WIDTH/8]);
-         PIPE_ALIGN_VAR(16, uint8_t ref[4*LP_NATIVE_VECTOR_WIDTH/8]);
+         PIPE_ALIGN_VAR(16) uint8_t src[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t dst[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t con[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t res[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t ref[4*LP_NATIVE_VECTOR_WIDTH/8];
          int64_t start_counter = 0;
          int64_t end_counter = 0;
          boolean mismatch;

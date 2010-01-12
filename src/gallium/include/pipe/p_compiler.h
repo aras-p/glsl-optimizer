@@ -146,7 +146,7 @@ typedef unsigned char boolean;
 #define PIPE_ALIGN_TYPE(_alignment, _type) _type __attribute__((aligned(_alignment)))
 
 /* See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Variable-Attributes.html */
-#define PIPE_ALIGN_VAR(_alignment, _decl) _decl __attribute__((aligned(_alignment)))
+#define PIPE_ALIGN_VAR(_alignment) __attribute__((aligned(_alignment)))
 
 #if (__GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)) && !defined(PIPE_ARCH_X86_64)
 #define ALIGN_STACK __attribute__((force_align_arg_pointer))
@@ -158,7 +158,7 @@ typedef unsigned char boolean;
 
 /* See http://msdn.microsoft.com/en-us/library/83ythb65.aspx */
 #define PIPE_ALIGN_TYPE(_alignment, _type) __declspec(align(_alignment)) _type
-#define PIPE_ALIGN_VAR(_alignment, _decl) __declspec(align(_alignment)) _decl
+#define PIPE_ALIGN_VAR(_alignment) __declspec(align(_alignment))
 
 #define ALIGN_STACK
 

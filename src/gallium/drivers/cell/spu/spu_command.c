@@ -53,7 +53,7 @@ struct spu_vs_context draw;
 /**
  * Buffers containing dynamically generated SPU code:
  */
-PIPE_ALIGN_VAR(16, static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]);
+PIPE_ALIGN_VAR(16) static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS];
 
 
 
@@ -542,7 +542,7 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   PIPE_ALIGN_VAR(16, qword buffer[CELL_BUFFER_SIZE / 16]);
+   PIPE_ALIGN_VAR(16) qword buffer[CELL_BUFFER_SIZE / 16];
    const unsigned usize = ROUNDUP16(size) / sizeof(buffer[0]);
    uint pos;
 

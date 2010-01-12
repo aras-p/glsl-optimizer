@@ -159,8 +159,8 @@ struct spu_global
    struct vertex_info vertex_info;
 
    /** Current color and Z tiles */
-   PIPE_ALIGN_VAR(16, tile_t ctile);
-   PIPE_ALIGN_VAR(16, tile_t ztile);
+   PIPE_ALIGN_VAR(16) tile_t ctile;
+   PIPE_ALIGN_VAR(16) tile_t ztile;
 
    /** Read depth/stencil tiles? */
    boolean read_depth_stencil;
@@ -169,8 +169,8 @@ struct spu_global
    ubyte cur_ctile_status, cur_ztile_status;
 
    /** Status of all tiles in framebuffer */
-   PIPE_ALIGN_VAR(16, ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE]);
-   PIPE_ALIGN_VAR(16, ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE]);
+   PIPE_ALIGN_VAR(16) ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE];
+   PIPE_ALIGN_VAR(16) ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE];
 
    /** Current fragment ops machine code, at 8-byte boundary */
    uint *fragment_ops_code;
@@ -179,7 +179,7 @@ struct spu_global
    spu_fragment_ops_func fragment_ops[2];
 
    /** Current fragment program machine code, at 8-byte boundary */
-   PIPE_ALIGN_VAR(8, uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS]);
+   PIPE_ALIGN_VAR(8) uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
    /** Current fragment ops function */
    spu_fragment_program_func fragment_program;
 
