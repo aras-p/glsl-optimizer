@@ -122,8 +122,15 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
     }*/
 
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
-    OUT_CS(dsa->z_buffer_control);
-    OUT_CS(dsa->z_stencil_control);
+
+    if (r300->framebuffer_state.zsbuf) {
+        OUT_CS(dsa->z_buffer_control);
+        OUT_CS(dsa->z_stencil_control);
+    } else {
+        OUT_CS(0);
+        OUT_CS(0);
+    }
+
     OUT_CS(dsa->stencil_ref_mask);
 
     /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
@@ -388,7 +395,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     assert(fb->nr_cbufs <= 4);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
-             (fb->zsbuf ? 10 : 3) + 6);
+             (fb->zsbuf ? 10 : 0) + 6);
 
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -424,7 +431,7 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
     }
 
-    /* Set up the Z/stencil buffer, or disable it. */
+    /* Set up a zbuffer. */
     if (fb->zsbuf) {
         surf = fb->zsbuf;
         tex = (struct r300_texture*)surf->texture;
@@ -438,10 +445,6 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level], 0,
                      RADEON_GEM_DOMAIN_VRAM, 0);
-    } else {
-        OUT_CS_REG_SEQ(R300_ZB_CNTL, 2);
-        OUT_CS(0x0);
-        OUT_CS(0x0);
     }
 
     END_CS;
