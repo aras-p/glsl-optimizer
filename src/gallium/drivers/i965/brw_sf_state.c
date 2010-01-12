@@ -126,9 +126,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->point_sprite = rast->point_sprite;
    key->point_attenuated = rast->point_size_per_vertex;
 
-   key->point_size = CLAMP(rast->point_size, 
-			   rast->point_size_min, 
-			   rast->point_size_max);
+   key->point_size = rast->point_size;
 }
 
 static enum pipe_error

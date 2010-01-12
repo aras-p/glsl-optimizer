@@ -82,10 +82,6 @@ point_size_per_vertex
     Whether vertices have a point size element.
 point_size
     The size of points, if not specified per-vertex.
-point_size_min
-    The minimum size of points.
-point_size_max
-    The maximum size of points.
 point_sprite
     Whether points are drawn as sprites (textured quads)
 sprite_coord_mode

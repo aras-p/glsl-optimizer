@@ -126,8 +126,6 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
    trace_dump_member(float, state, line_width);
    trace_dump_member(float, state, point_size);
-   trace_dump_member(float, state, point_size_min);
-   trace_dump_member(float, state, point_size_max);
    trace_dump_member(float, state, offset_units);
    trace_dump_member(float, state, offset_scale);
 

@@ -88,8 +88,6 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    rast->antialiasedlineenable = templ->line_smooth;
    rast->lastpixel = templ->line_last_pixel;
    rast->pointsize = templ->point_size;
-   rast->pointsize_min = templ->point_size_min;
-   rast->pointsize_max = templ->point_size_max;
    rast->hw_unfilled = PIPE_POLYGON_MODE_FILL;
 
    /* Use swtnl + decomposition implement these:
