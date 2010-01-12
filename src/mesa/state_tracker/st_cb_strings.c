@@ -38,7 +38,7 @@
 #include "st_context.h"
 #include "st_cb_strings.h"
 
-#define ST_VERSION_STRING "0.3"
+#define ST_VERSION_STRING "0.4"
 
 static const GLubyte *
 st_get_string(GLcontext * ctx, GLenum name)
