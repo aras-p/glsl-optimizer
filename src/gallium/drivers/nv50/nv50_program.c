@@ -3622,6 +3622,8 @@ free_nv50_pc(struct nv50_pc *pc)
 		FREE(pc->attr);
 	if (pc->temp)
 		FREE(pc->temp);
+	if (pc->insn_pos)
+		FREE(pc->insn_pos);
 
 	FREE(pc);
 }
