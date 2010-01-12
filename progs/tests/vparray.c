@@ -183,7 +183,7 @@ static void init_program(void)
    static const GLfloat bias[4] = {1.0, 1.0, 1.0, 0.0};
 
    if (!glutExtensionSupported("GL_NV_vertex_program")) {
-      printf("Sorry, this program requires GL_NV_vertex_program");
+      printf("Sorry, this program requires GL_NV_vertex_program\n");
       exit(1);
    }
 
