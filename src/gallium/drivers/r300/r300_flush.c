@@ -37,6 +37,7 @@ static void r300_flush(struct pipe_context* pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_query *query;
+    struct r300_atom *atom;
 
     CS_LOCALS(r300);
     /* We probably need to flush Draw, but we may have been called from
@@ -54,7 +55,15 @@ static void r300_flush(struct pipe_context* pipe,
         r300_emit_invariant_state(r300);
         r300->dirty_state = R300_NEW_KITCHEN_SINK;
         r300->dirty_hw = 0;
+
+        /* New kitchen sink, baby. */
+        foreach(atom, &r300->atom_list) {
+            if (atom->state) {
+                atom->dirty = TRUE;
+            }
+        }
     }
+
     /* reset flushed query */
     foreach(query, &r300->query_list) {
         query->flushed = TRUE;
