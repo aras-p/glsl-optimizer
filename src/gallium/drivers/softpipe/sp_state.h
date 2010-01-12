@@ -199,7 +199,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count);
 
-boolean
+void
 softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                unsigned mode,
                                unsigned start,
@@ -207,7 +207,7 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                unsigned startInstance,
                                unsigned instanceCount);
 
-boolean
+void
 softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  struct pipe_buffer *indexBuffer,
                                  unsigned indexSize,

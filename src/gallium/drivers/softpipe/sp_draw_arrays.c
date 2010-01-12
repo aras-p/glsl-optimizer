@@ -172,7 +172,7 @@ softpipe_draw_elements(struct pipe_context *pipe,
                                                  1);
 }
 
-boolean
+void
 softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                unsigned mode,
                                unsigned start,
@@ -180,19 +180,19 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                unsigned startInstance,
                                unsigned instanceCount)
 {
-   return softpipe_draw_range_elements_instanced(pipe,
-                                                 NULL,
-                                                 0,
-                                                 0,
-                                                 0xffffffff,
-                                                 mode,
-                                                 start,
-                                                 count,
-                                                 startInstance,
-                                                 instanceCount);
+   softpipe_draw_range_elements_instanced(pipe,
+                                          NULL,
+                                          0,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          startInstance,
+                                          instanceCount);
 }
 
-boolean
+void
 softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  struct pipe_buffer *indexBuffer,
                                  unsigned indexSize,
@@ -202,16 +202,16 @@ softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  unsigned startInstance,
                                  unsigned instanceCount)
 {
-   return softpipe_draw_range_elements_instanced(pipe,
-                                                 indexBuffer,
-                                                 indexSize,
-                                                 0,
-                                                 0xffffffff,
-                                                 mode,
-                                                 start,
-                                                 count,
-                                                 startInstance,
-                                                 instanceCount);
+   softpipe_draw_range_elements_instanced(pipe,
+                                          indexBuffer,
+                                          indexSize,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          startInstance,
+                                          instanceCount);
 }
 
 static boolean
