@@ -638,27 +638,47 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_emit_scissor_regs(struct r300_context* r300,
-                                   struct r300_scissor_regs* scissor)
+void r300_emit_scissor_state(struct r300_context* r300, void* state)
 {
+    unsigned minx, miny, maxx, maxy;
+    uint32_t top_left, bottom_right;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct pipe_scissor_state* scissor = (struct pipe_scissor_state*)state;
     CS_LOCALS(r300);
+
+    minx = miny = 0;
+    maxx = r300->framebuffer_state.width;
+    maxy = r300->framebuffer_state.height;
+
+    if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
+        minx = MAX2(minx, scissor->minx);
+        miny = MAX2(miny, scissor->miny);
+        maxx = MIN2(maxx, scissor->maxx);
+        maxy = MIN2(maxy, scissor->maxy);
+    }
+
+    if (r300screen->caps->is_r500) {
+        top_left =
+            (minx << R300_SCISSORS_X_SHIFT) |
+            (miny << R300_SCISSORS_Y_SHIFT);
+        bottom_right =
+            ((maxx - 1) << R300_SCISSORS_X_SHIFT) |
+            ((maxy - 1) << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        top_left =
+            ((minx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((miny + 1440) << R300_SCISSORS_Y_SHIFT);
+        bottom_right =
+            (((maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
+            (((maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
 
     BEGIN_CS(3);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS(scissor->top_left);
-    OUT_CS(scissor->bottom_right);
+    OUT_CS(top_left);
+    OUT_CS(bottom_right);
     END_CS;
-}
-
-void r300_emit_scissor_state(struct r300_context* r300, void* state)
-{
-    struct r300_scissor_state* scissor = (struct r300_scissor_state*)state;
-    /* XXX argfl! */
-    if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
-        r300_emit_scissor_regs(r300, &scissor->scissor);
-    } else {
-        r300_emit_scissor_regs(r300, &scissor->framebuffer);
-    }
 }
 
 void r300_emit_texture(struct r300_context* r300,
@@ -1072,7 +1092,7 @@ validate:
     }
 
     foreach(atom, &r300->atom_list) {
-        if (atom->dirty) {
+        if (atom->dirty || atom->always_dirty) {
             atom->emit(r300, atom->state);
             atom->dirty = FALSE;
         }

@@ -40,6 +40,7 @@ struct r300_atom {
     void* state;
     void (*emit)(struct r300_context*, void*);
     boolean dirty;
+    boolean always_dirty;
 };
 
 struct r300_blend_state {
@@ -104,16 +105,6 @@ struct r300_sampler_state {
     /* Min/max LOD must be clamped to [0, last_level], thus
      * it's dependent on a currently bound texture */
     unsigned min_lod, max_lod;
-};
-
-struct r300_scissor_regs {
-    uint32_t top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
-    uint32_t bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
-};
-
-struct r300_scissor_state {
-    struct r300_scissor_regs framebuffer;
-    struct r300_scissor_regs scissor;
 };
 
 struct r300_texture_state {

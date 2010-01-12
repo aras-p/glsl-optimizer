@@ -474,36 +474,11 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
     FREE(state);
 }
 
-static void r300_set_scissor_regs(const struct pipe_scissor_state* state,
-                                  struct r300_scissor_regs *scissor,
-                                  boolean is_r500)
-{
-    if (is_r500) {
-        scissor->top_left =
-            (state->minx << R300_SCISSORS_X_SHIFT) |
-            (state->miny << R300_SCISSORS_Y_SHIFT);
-        scissor->bottom_right =
-            ((state->maxx - 1) << R300_SCISSORS_X_SHIFT) |
-            ((state->maxy - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        scissor->top_left =
-            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
-        scissor->bottom_right =
-            (((state->maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((state->maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
-    }
-}
-
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_scissor_state* scissor =
-        (struct r300_scissor_state*)r300->scissor_state.state;
-    struct pipe_scissor_state pscissor;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -511,19 +486,11 @@ static void
 
     r300->framebuffer_state = *state;
 
-    /* XXX Arg. This is silly. */
-    pscissor.minx = pscissor.miny = 0;
-    pscissor.maxx = state->width;
-    pscissor.maxy = state->height;
-    r300_set_scissor_regs(&pscissor, &scissor->framebuffer,
-                          r300_screen(r300->context.screen)->caps->is_r500);
-
     /* Don't rely on the order of states being set for the first time. */
     r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
 
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
-    r300->scissor_state.dirty = TRUE;
 }
 
 /* Create fragment shader state. */
@@ -725,8 +692,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
-    /* XXX Why is this still needed, dammit!? */
-    r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
@@ -868,13 +833,9 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
                                    const struct pipe_scissor_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_scissor_state* scissor =
-        (struct r300_scissor_state*)r300->scissor_state.state;
 
-    r300_set_scissor_regs(state, &scissor->scissor,
-                          r300_screen(r300->context.screen)->caps->is_r500);
-
-    r300->scissor_state.dirty = TRUE;
+    memcpy(r300->scissor_state.state, state,
+        sizeof(struct pipe_scissor_state));
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,

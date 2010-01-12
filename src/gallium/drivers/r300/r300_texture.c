@@ -115,6 +115,8 @@ static void r300_setup_miptree(struct r300_texture* tex)
     int stride, size, layer_size;
     int i;
 
+    debug_printf("r300: Making miptree for texture, format %s\n", pf_name(base->format));
+
     for (i = 0; i <= base->last_level; i++) {
         unsigned nblocksy = util_format_get_nblocksy(base->format, u_minify(base->height0, i));
 
@@ -132,9 +134,9 @@ static void r300_setup_miptree(struct r300_texture* tex)
         tex->pitch[i] = stride / util_format_get_blocksize(base->format);
 
         debug_printf("r300: Texture miptree: Level %d "
-                "(%dx%dx%d px, pitch %d bytes)\n",
+                "(%dx%dx%d px, pitch %d bytes) %d bytes total\n",
                 i, u_minify(base->width0, i), u_minify(base->height0, i),
-                u_minify(base->depth0, i), stride);
+                u_minify(base->depth0, i), stride, tex->size);
     }
 }
 
