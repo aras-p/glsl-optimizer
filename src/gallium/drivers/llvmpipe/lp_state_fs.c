@@ -204,12 +204,15 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
                        LLVMValueRef step1_ptr,  /* ivec4 */
                        LLVMValueRef step2_ptr)  /* ivec4 */
 {
-   struct lp_build_flow_context *flow;
+#define OPTIMIZE_IN_OUT_TEST 0
+#if OPTIMIZE_IN_OUT_TEST
    struct lp_build_if_state ifctx;
+   LLVMValueRef not_draw_all;
+#endif
+   struct lp_build_flow_context *flow;
    struct lp_type i32_type;
    LLVMTypeRef i32vec4_type, mask_type;
    LLVMValueRef c0_vec, c1_vec, c2_vec;
-   LLVMValueRef not_draw_all;
    LLVMValueRef in_out_mask;
 
    assert(i < 4);
@@ -234,7 +237,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    lp_build_flow_scope_begin(flow);
 
    {
-#define OPTIMIZE_IN_OUT_TEST 0
 #if OPTIMIZE_IN_OUT_TEST
       /* not_draw_all = (c0 != INT_MIN) */
       not_draw_all = LLVMBuildICmp(builder,
