@@ -849,7 +849,7 @@ egl_g3d_wait_native(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 }
 
 static _EGLProc
-egl_g3d_get_proc_address(const char *procname)
+egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
 {
    /* FIXME how come _EGLDriver is not passed? */
    const struct egl_g3d_st *stapi;

@@ -274,7 +274,7 @@ xlib_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
 
 static _EGLProc
-xlib_eglGetProcAddress(const char *procname)
+xlib_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
    return (_EGLProc) st_get_proc_address(procname);
 }

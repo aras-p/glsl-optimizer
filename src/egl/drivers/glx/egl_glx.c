@@ -899,7 +899,7 @@ GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
  * Called from eglGetProcAddress() via drv->API.GetProcAddress().
  */
 static _EGLProc
-GLX_eglGetProcAddress(const char *procname)
+GLX_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
    return (_EGLProc) glXGetProcAddress((const GLubyte *) procname);
 }

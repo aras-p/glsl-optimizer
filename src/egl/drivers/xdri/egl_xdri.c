@@ -355,7 +355,7 @@ xdri_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
  * Called from eglGetProcAddress() via drv->API.GetProcAddress().
  */
 static _EGLProc
-xdri_eglGetProcAddress(const char *procname)
+xdri_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
    /* the symbol is defined in libGL.so */
    return (_EGLProc) _glapi_get_proc_address(procname);
