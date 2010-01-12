@@ -1000,6 +1000,10 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300->context.flush(&r300->context, 0, NULL);
     }
 
+    if (!(r300->dirty_state)) {
+        return;
+    }
+
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
