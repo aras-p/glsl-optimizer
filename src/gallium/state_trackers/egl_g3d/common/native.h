@@ -64,8 +64,13 @@ struct native_surface {
    boolean (*flush_frontbuffer)(struct native_surface *nsurf);
 
    /**
-    * Validate the buffers of the surface.  Those not listed in the attachments
-    * will be destroyed.  The returned textures are owned by the caller.
+    * Validate the buffers of the surface.  The returned textures are owned by
+    * the caller.  It is possible that this function is called with textures,
+    * width, or height being NULL.
+    *
+    * If this function is called multiple times with different attachments,
+    * those not listed in the latest call might be destroyed.  This behavior
+    * might change in the future.
     */
    boolean (*validate)(struct native_surface *nsurf,
                        const enum native_attachment *natts,
@@ -80,6 +85,7 @@ struct native_surface {
 };
 
 struct native_config {
+   /* __GLcontextModes should go away some day */
    __GLcontextModes mode;
    enum pipe_format color_format;
    enum pipe_format depth_format;
@@ -197,6 +203,10 @@ struct native_display_modeset {
                       const struct native_mode *nmode);
 };
 
+/**
+ * This function is called when the native display wants to display the front
+ * buffer of the draw surface of the given context.
+ */
 typedef void (*native_flush_frontbuffer)(void *dummy,
                                          struct pipe_surface *surf,
                                          void *context_private);
