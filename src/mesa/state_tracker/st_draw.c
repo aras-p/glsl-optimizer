@@ -522,7 +522,6 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    const struct st_vertex_program *vp;
    const struct st_vp_varient *vpv;
-   const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
@@ -550,7 +549,6 @@ st_draw_vbo(GLcontext *ctx,
    /* must get these after state validation! */
    vp = ctx->st->vp;
    vpv = ctx->st->vp_varient;
-   vs = &vpv->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {
