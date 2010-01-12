@@ -59,7 +59,7 @@ static void wideline_line( struct draw_stage *stage,
                            struct prim_header *header )
 {
    /*const struct wideline_stage *wide = wideline_stage(stage);*/
-   const unsigned pos = stage->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(stage->draw);
    const float half_width = 0.5f * stage->draw->rasterizer->line_width;
 
    struct prim_header tri;

@@ -86,7 +86,7 @@ typedef struct radeon_screen {
 
    __volatile__ uint32_t *scratch;
 
-   __DRIscreenPrivate *driScreen;
+   __DRIscreen *driScreen;
    unsigned int sarea_priv_offset;
    unsigned int gart_buffer_offset;	/* offset in card memory space */
    unsigned int gart_texture_offset;	/* offset in card memory space */
@@ -123,5 +123,5 @@ typedef struct radeon_screen {
 #define IS_R600_CLASS(screen) \
 	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R600)
 
-extern void radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv);
+extern void radeonDestroyBuffer(__DRIdrawable *driDrawPriv);
 #endif /* __RADEON_SCREEN_H__ */

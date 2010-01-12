@@ -199,6 +199,7 @@ add_store_rgba_test(LLVMModuleRef module,
 }
 
 
+ALIGN_STACK
 static boolean
 test_format(unsigned verbose, FILE *fp, const struct pixel_test_case *test)
 {

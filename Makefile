@@ -105,6 +105,7 @@ irix6-n32-static \
 irix6-o32 \
 irix6-o32-static \
 linux \
+linux-i965 \
 linux-alpha \
 linux-alpha-static \
 linux-cell \
@@ -183,7 +184,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.7-devel
+VERSION=7.7
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -226,6 +227,11 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/src/glsl/Makefile					\
+	$(DIRECTORY)/src/glsl/Makefile.template				\
+	$(DIRECTORY)/src/glsl/*/Makefile				\
+	$(DIRECTORY)/src/glsl/*/SConscript				\
+	$(DIRECTORY)/src/glsl/*/*.[ch]					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources.mak				\
@@ -241,7 +247,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
 	$(DIRECTORY)/src/mesa/shader/Makefile				\
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/grammar/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
@@ -455,8 +460,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c			\
-	$(DIRECTORY)/windows/VC7/progs/progs.sln
+	$(DIRECTORY)/progs/ggi/*.c
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
@@ -479,9 +483,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
 	$(DIRECTORY)/src/glut/directfb/Makefile		\
 	$(DIRECTORY)/src/glut/directfb/NOTES		\
-	$(DIRECTORY)/src/glut/directfb/*[ch]		\
-	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
-	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
+	$(DIRECTORY)/src/glut/directfb/*[ch]
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\

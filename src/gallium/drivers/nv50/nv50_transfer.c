@@ -1,6 +1,8 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
 
 #include "nv50_context.h"
 
@@ -15,16 +17,19 @@ struct nv50_transfer {
 	int level_depth;
 	int level_x;
 	int level_y;
+	int level_z;
+	unsigned nblocksx;
+	unsigned nblocksy;
 };
 
 static void
 nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			struct nouveau_bo *src_bo, unsigned src_offset,
 			int src_pitch, unsigned src_tile_mode,
-			int sx, int sy, int sw, int sh, int sd,
+			int sx, int sy, int sz, int sw, int sh, int sd,
 			struct nouveau_bo *dst_bo, unsigned dst_offset,
 			int dst_pitch, unsigned dst_tile_mode,
-			int dx, int dy, int dw, int dh, int dd,
+			int dx, int dy, int dz, int dw, int dh, int dd,
 			int cpp, int width, int height,
 			unsigned src_reloc, unsigned dst_reloc)
 {
@@ -42,7 +47,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_IN, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_IN, 1);
+			NV04_MEMORY_TO_MEMORY_FORMAT_PITCH_IN, 1);
 		OUT_RING  (chan, src_pitch);
 		src_offset += (sy * src_pitch) + (sx * cpp);
 	} else {
@@ -53,7 +58,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RING  (chan, sw * cpp);
 		OUT_RING  (chan, sh);
 		OUT_RING  (chan, sd);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, sz); /* copying only 1 zslice per call */
 	}
 
 	if (!dst_bo->tile_flags) {
@@ -61,7 +66,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			NV50_MEMORY_TO_MEMORY_FORMAT_LINEAR_OUT, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_PITCH_OUT, 1);
+			NV04_MEMORY_TO_MEMORY_FORMAT_PITCH_OUT, 1);
 		OUT_RING  (chan, dst_pitch);
 		dst_offset += (dy * dst_pitch) + (dx * cpp);
 	} else {
@@ -72,19 +77,19 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		OUT_RING  (chan, dw * cpp);
 		OUT_RING  (chan, dh);
 		OUT_RING  (chan, dd);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, dz); /* copying only 1 zslice per call */
 	}
 
 	while (height) {
 		int line_count = height > 2047 ? 2047 : height;
 
-		WAIT_RING (chan, 15);
+		MARK_RING (chan, 15, 4); /* flush on lack of space or relocs */
 		BEGIN_RING(chan, m2mf,
 			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN_HIGH, 2);
 		OUT_RELOCh(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCh(chan, dst_bo, dst_offset, dst_reloc);
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
+			NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 2);
 		OUT_RELOCl(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
 		if (src_bo->tile_flags) {
@@ -102,7 +107,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 			dst_offset += (line_count * dst_pitch);
 		}
 		BEGIN_RING(chan, m2mf,
-			NV50_MEMORY_TO_MEMORY_FORMAT_LINE_LENGTH_IN, 4);
+			NV04_MEMORY_TO_MEMORY_FORMAT_LINE_LENGTH_IN, 4);
 		OUT_RING  (chan, width * cpp);
 		OUT_RING  (chan, line_count);
 		OUT_RING  (chan, 0x00000101);
@@ -113,20 +118,6 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 		sy += line_count;
 		dy += line_count;
 	}
-}
-
-static INLINE unsigned
-get_zslice_offset(unsigned tile_mode, unsigned z, unsigned pitch, unsigned ny)
-{
-	unsigned tile_h = get_tile_height(tile_mode);
-	unsigned tile_d = get_tile_depth(tile_mode);
-
-	/* pitch_2d == to next slice within this volume-tile */
-	/* pitch_3d == to next slice in next 2D array of blocks */
-	unsigned pitch_2d = tile_h * 64;
-	unsigned pitch_3d = tile_d * align(ny, tile_h) * pitch;
-
-	return (z % tile_d) * pitch_2d + (z / tile_d) * pitch_3d;
 }
 
 static struct pipe_transfer *
@@ -150,56 +141,43 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 
 	pipe_texture_reference(&tx->base.texture, pt);
-	tx->base.format = pt->format;
+	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, level));
+	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, level));
 	tx->base.width = w;
 	tx->base.height = h;
-	tx->base.block = pt->block;
-	if (!pt->nblocksx[level]) {
-		tx->base.nblocksx = pf_get_nblocksx(&pt->block,
-						    pt->width[level]);
-		tx->base.nblocksy = pf_get_nblocksy(&pt->block,
-						    pt->height[level]);
-	} else {
-		tx->base.nblocksx = pt->nblocksx[level];
-		tx->base.nblocksy = pt->nblocksy[level];
-	}
-	tx->base.stride = tx->base.nblocksx * pt->block.size;
+	tx->base.stride = tx->nblocksx * util_format_get_blocksize(pt->format);
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
-	tx->level_width = mt->base.base.width[level];
-	tx->level_height = mt->base.base.height[level];
-	tx->level_depth = mt->base.base.depth[level];
+	tx->level_width = u_minify(mt->base.base.width0, level);
+	tx->level_height = u_minify(mt->base.base.height0, level);
+	tx->level_depth = u_minify(mt->base.base.depth0, level);
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
-	tx->level_x = pf_get_nblocksx(&tx->base.block, x);
-	tx->level_y = pf_get_nblocksy(&tx->base.block, y);
+	tx->level_z = zslice;
+	tx->level_x = util_format_get_nblocksx(pt->format, x);
+	tx->level_y = util_format_get_nblocksy(pt->format, y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-			     tx->base.nblocksy * tx->base.stride, &tx->bo);
+			     tx->nblocksy * tx->base.stride, &tx->bo);
 	if (ret) {
 		FREE(tx);
 		return NULL;
 	}
 
-	if (pt->target == PIPE_TEXTURE_3D)
-		tx->level_offset += get_zslice_offset(lvl->tile_mode, zslice,
-						      lvl->pitch,
-						      tx->base.nblocksy);
-
 	if (usage & PIPE_TRANSFER_READ) {
-		nx = pf_get_nblocksx(&tx->base.block, tx->base.width);
-		ny = pf_get_nblocksy(&tx->base.block, tx->base.height);
+		nx = util_format_get_nblocksx(pt->format, tx->base.width);
+		ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					x, y,
-					tx->base.nblocksx, tx->base.nblocksy,
+					x, y, zslice,
+					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
 					tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
-					0, 0,
-					tx->base.nblocksx, tx->base.nblocksy, 1,
-					tx->base.block.size, nx, ny,
+					0, 0, 0,
+					tx->nblocksx, tx->nblocksy, 1,
+					util_format_get_blocksize(pt->format), nx, ny,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
 					NOUVEAU_BO_GART);
 	}
@@ -212,23 +190,24 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
+	struct pipe_texture *pt = ptx->texture;
 
-	unsigned nx = pf_get_nblocksx(&tx->base.block, tx->base.width);
-	unsigned ny = pf_get_nblocksy(&tx->base.block, tx->base.height);
+	unsigned nx = util_format_get_nblocksx(pt->format, tx->base.width);
+	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
-		struct pipe_screen *pscreen = ptx->texture->screen;
+		struct pipe_screen *pscreen = pt->screen;
 
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
-					0, 0,
-					tx->base.nblocksx, tx->base.nblocksy, 1,
+					0, 0, 0,
+					tx->nblocksx, tx->nblocksy, 1,
 					mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					tx->level_x, tx->level_y,
-					tx->base.nblocksx, tx->base.nblocksy,
+					tx->level_x, tx->level_y, tx->level_z,
+					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
-					tx->base.block.size, nx, ny,
+					util_format_get_blocksize(pt->format), nx, ny,
 					NOUVEAU_BO_GART, NOUVEAU_BO_VRAM |
 					NOUVEAU_BO_GART);
 	}
@@ -287,7 +266,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 	reloc |= NOUVEAU_BO_WR;
 
-	WAIT_RING (chan, 32);
+	MARK_RING (chan, 32, 2); /* flush on lack of space or relocs */
 
 	if (bo->tile_flags) {
 		BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 5);
@@ -312,7 +291,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 	/* NV50_2D_OPERATION_SRCCOPY assumed already set */
 
-	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_UNK0800, 2);
+	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_BITMAP_ENABLE, 2);
 	OUT_RING  (chan, 0);
 	OUT_RING  (chan, src_format);
 	BEGIN_RING(chan, eng2d, NV50_2D_SIFC_WIDTH, 10);
@@ -355,6 +334,6 @@ nv50_upload_sifc(struct nv50_context *nv50,
 		src += src_pitch;
 	}
 
-	BEGIN_RING(chan, tesla, 0x1440, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);
 	OUT_RING  (chan, 0);
 }

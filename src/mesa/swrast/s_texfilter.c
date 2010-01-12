@@ -747,28 +747,28 @@ get_border_color(const struct gl_texture_object *tObj,
 {
    switch (img->_BaseFormat) {
    case GL_RGB:
-      rgba[0] = tObj->BorderColor[0];
-      rgba[1] = tObj->BorderColor[1];
-      rgba[2] = tObj->BorderColor[2];
+      rgba[0] = tObj->BorderColor.f[0];
+      rgba[1] = tObj->BorderColor.f[1];
+      rgba[2] = tObj->BorderColor.f[2];
       rgba[3] = 1.0F;
       break;
    case GL_ALPHA:
       rgba[0] = rgba[1] = rgba[2] = 0.0;
-      rgba[3] = tObj->BorderColor[3];
+      rgba[3] = tObj->BorderColor.f[3];
       break;
    case GL_LUMINANCE:
-      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor[0];
+      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor.f[0];
       rgba[3] = 1.0;
       break;
    case GL_LUMINANCE_ALPHA:
-      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor[0];
-      rgba[3] = tObj->BorderColor[3];
+      rgba[0] = rgba[1] = rgba[2] = tObj->BorderColor.f[0];
+      rgba[3] = tObj->BorderColor.f[3];
       break;
    case GL_INTENSITY:
-      rgba[0] = rgba[1] = rgba[2] = rgba[3] = tObj->BorderColor[0];
+      rgba[0] = rgba[1] = rgba[2] = rgba[3] = tObj->BorderColor.f[0];
       break;
    default:
-      COPY_4V(rgba, tObj->BorderColor);
+      COPY_4V(rgba, tObj->BorderColor.f);
    }
 }
 
@@ -2331,7 +2331,7 @@ sample_2d_array_linear(GLcontext *ctx,
    array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
 
    if (array < 0 || array >= depth) {
-      COPY_4V(rgba, tObj->BorderColor);
+      COPY_4V(rgba, tObj->BorderColor.f);
    }
    else {
       if (img->Border) {
@@ -3002,7 +3002,7 @@ sample_depth_texture( GLcontext *ctx,
             img->FetchTexelf(img, col, row, slice, &depthSample);
          }
          else {
-            depthSample = tObj->BorderColor[0];
+            depthSample = tObj->BorderColor.f[0];
          }
 
          result = shadow_compare(function, texcoords[i][compare_coord],
@@ -3053,21 +3053,21 @@ sample_depth_texture( GLcontext *ctx,
          }
 
          if (slice < 0 || slice >= (GLint) depth) {
-            depth00 = tObj->BorderColor[0];
-            depth01 = tObj->BorderColor[0];
-            depth10 = tObj->BorderColor[0];
-            depth11 = tObj->BorderColor[0];
+            depth00 = tObj->BorderColor.f[0];
+            depth01 = tObj->BorderColor.f[0];
+            depth10 = tObj->BorderColor.f[0];
+            depth11 = tObj->BorderColor.f[0];
          }
          else {
             /* get four depth samples from the texture */
             if (useBorderTexel & (I0BIT | J0BIT)) {
-               depth00 = tObj->BorderColor[0];
+               depth00 = tObj->BorderColor.f[0];
             }
             else {
                img->FetchTexelf(img, i0, j0, slice, &depth00);
             }
             if (useBorderTexel & (I1BIT | J0BIT)) {
-               depth10 = tObj->BorderColor[0];
+               depth10 = tObj->BorderColor.f[0];
             }
             else {
                img->FetchTexelf(img, i1, j0, slice, &depth10);
@@ -3075,13 +3075,13 @@ sample_depth_texture( GLcontext *ctx,
 
             if (tObj->Target != GL_TEXTURE_1D_ARRAY_EXT) {
                if (useBorderTexel & (I0BIT | J1BIT)) {
-                  depth01 = tObj->BorderColor[0];
+                  depth01 = tObj->BorderColor.f[0];
                }
                else {
                   img->FetchTexelf(img, i0, j1, slice, &depth01);
                }
                if (useBorderTexel & (I1BIT | J1BIT)) {
-                  depth11 = tObj->BorderColor[0];
+                  depth11 = tObj->BorderColor.f[0];
                }
                else {
                   img->FetchTexelf(img, i1, j1, slice, &depth11);

@@ -101,6 +101,10 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
                            __GLX_NUMBER_ERRORS, error_list)
+static Bool
+__glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire);
+static Status
+__glXEventToWire(Display *dpy, XEvent *event, xEvent *wire);
 
 static /* const */ XExtensionHooks __glXExtensionHooks = {
   NULL,                   /* create_gc */
@@ -110,8 +114,8 @@ static /* const */ XExtensionHooks __glXExtensionHooks = {
   NULL,                   /* create_font */
   NULL,                   /* free_font */
   __glXCloseDisplay,      /* close_display */
-  NULL,                   /* wire_to_event */
-  NULL,                   /* event_to_wire */
+  __glXWireToEvent,       /* wire_to_event */
+  __glXEventToWire,       /* event_to_wire */
   NULL,                   /* error */
   __glXErrorString,       /* error_string */
 };
@@ -120,6 +124,89 @@ static
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
                            __glXExtensionName, &__glXExtensionHooks,
                            __GLX_NUMBER_EVENTS, NULL)
+
+/*
+ * GLX events are a bit funky.  We don't stuff the X event code into
+ * our user exposed (via XNextEvent) structure.  Instead we use the GLX
+ * private event code namespace (and hope it doesn't conflict).  Clients
+ * have to know that bit 15 in the event type field means they're getting
+ * a GLX event, and then handle the various sub-event types there, rather
+ * than simply checking the event code and handling it directly.
+ */
+
+static Bool
+__glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
+{
+   XExtDisplayInfo *info = __glXFindDisplay(dpy);
+
+   XextCheckExtension(dpy, info, __glXExtensionName, False);
+
+   switch ((wire->u.u.type & 0x7f) - info->codes->first_event) {
+   case GLX_PbufferClobber:
+   {
+      GLXPbufferClobberEvent *aevent = (GLXPbufferClobberEvent *)event;
+      xGLXPbufferClobberEvent *awire = (xGLXPbufferClobberEvent *)wire;
+      aevent->event_type = awire->type;
+      aevent->serial = awire->sequenceNumber;
+      aevent->event_type = awire->event_type;
+      aevent->draw_type = awire->draw_type;
+      aevent->drawable = awire->drawable;
+      aevent->buffer_mask = awire->buffer_mask;
+      aevent->aux_buffer = awire->aux_buffer;
+      aevent->x = awire->x;
+      aevent->y = awire->y;
+      aevent->width = awire->width;
+      aevent->height = awire->height;
+      aevent->count = awire->count;
+      return True;
+   }
+   case GLX_BufferSwapComplete:
+   {
+      GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
+      xGLXBufferSwapComplete *awire = (xGLXBufferSwapComplete *)wire;
+      aevent->event_type = awire->event_type;
+      aevent->drawable = awire->drawable;
+      aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
+      aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
+      aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
+      return True;
+   }
+   default:
+      /* client doesn't support server event */
+      break;
+   }
+
+   return False;
+}
+
+/* We don't actually support this.  It doesn't make sense for clients to
+ * send each other GLX events.
+ */
+static Status
+__glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
+{
+   XExtDisplayInfo *info = __glXFindDisplay(dpy);
+
+   XextCheckExtension(dpy, info, __glXExtensionName, False);
+
+   switch (event->type) {
+   case GLX_DAMAGED:
+      break;
+   case GLX_SAVED:
+      break;
+   case GLX_EXCHANGE_COMPLETE:
+      break;
+   case GLX_BLIT_COMPLETE:
+      break;
+   case GLX_FLIP_COMPLETE:
+      break;
+   default:
+      /* client doesn't support server event */
+      break;
+   }
+
+   return Success;
+}
 
 /************************************************************************/
 /*
@@ -150,8 +237,9 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
 
 #ifdef GLX_DIRECT_RENDERING
       if (psc->driver_configs) {
-         for (unsigned int i = 0; psc->driver_configs[i]; i++)
-            free((__DRIconfig *) psc->driver_configs[i]);
+         unsigned int j;
+         for (j = 0; psc->driver_configs[j]; j++)
+            free((__DRIconfig *) psc->driver_configs[j]);
          free(psc->driver_configs);
          psc->driver_configs = NULL;
       }

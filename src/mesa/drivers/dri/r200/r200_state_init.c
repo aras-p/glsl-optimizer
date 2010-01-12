@@ -640,7 +640,7 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    OUT_BATCH_TABLE(atom->cmd, 10);
 
    if (t && t->mt && !t->image_override) {
-     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, get_base_teximage_offset(t),
 		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {
      /* workaround for old CS mechanism */
@@ -887,10 +887,8 @@ void r200InitState( r200ContextPtr rmesa )
          }
       }
    }
-   /* polygon stipple is done with irq for non-kms */
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-       ALLOC_STATE( stp, always, STP_STATE_SIZE, "STP/stp", 0 );
-   }
+
+   ALLOC_STATE( stp, always, STP_STATE_SIZE, "STP/stp", 0 );
 
    for (i = 0; i < 6; i++)
       if (rmesa->radeon.radeonScreen->kernel_mm)
@@ -1122,12 +1120,11 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.sci.cmd[SCI_CMD_1] = CP_PACKET0(R200_RE_TOP_LEFT, 0);
    rmesa->hw.sci.cmd[SCI_CMD_2] = CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0);
 
+   rmesa->hw.stp.cmd[STP_CMD_0] = CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0);
+   rmesa->hw.stp.cmd[STP_DATA_0] = 0;
+   rmesa->hw.stp.cmd[STP_CMD_1] = CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31);
+
    if (rmesa->radeon.radeonScreen->kernel_mm) {
-
-	rmesa->hw.stp.cmd[STP_CMD_0] = CP_PACKET0(RADEON_RE_STIPPLE_ADDR, 0);
-	rmesa->hw.stp.cmd[STP_DATA_0] = 0;
-	rmesa->hw.stp.cmd[STP_CMD_1] = CP_PACKET0_ONE(RADEON_RE_STIPPLE_DATA, 31);
-
         rmesa->hw.mtl[0].emit = mtl_emit;
         rmesa->hw.mtl[1].emit = mtl_emit;
 

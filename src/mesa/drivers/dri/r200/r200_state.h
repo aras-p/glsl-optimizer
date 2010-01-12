@@ -38,7 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 
 extern void r200InitState( r200ContextPtr rmesa );
-extern void r200InitStateFuncs( struct dd_function_table *functions, GLboolean dri2 );
+extern void r200InitStateFuncs( struct dd_function_table *functions );
 extern void r200InitTnlFuncs( GLcontext *ctx );
 
 extern void r200UpdateMaterial( GLcontext *ctx );

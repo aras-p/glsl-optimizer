@@ -186,8 +186,10 @@ _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 static void GLAPIENTRY
 _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 {
-   GLfloat p = (GLfloat) param;
-   _mesa_TexGenfv( coord, pname, &p );
+   GLfloat p[4];
+   p[0] = (GLfloat) param;
+   p[1] = p[2] = p[3] = 0.0F;
+   _mesa_TexGenfv( coord, pname, p );
 }
 
 
@@ -211,14 +213,20 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
-   _mesa_TexGenfv(coord, pname, &param);
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0F;
+   _mesa_TexGenfv(coord, pname, p);
 }
 
 
 void GLAPIENTRY
 _mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
 {
-   _mesa_TexGeniv( coord, pname, &param );
+   GLint p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0;
+   _mesa_TexGeniv( coord, pname, p );
 }
 
 

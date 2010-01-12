@@ -39,6 +39,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
@@ -49,7 +50,6 @@
 struct gdi_llvmpipe_displaytarget
 {
    enum pipe_format format;
-   struct pipe_format_block block;
    unsigned width;
    unsigned height;
    unsigned stride;
@@ -118,16 +118,6 @@ gdi_llvmpipe_displaytarget_destroy(struct llvmpipe_winsys *winsys,
 }
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 static struct llvmpipe_displaytarget *
 gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
                                   enum pipe_format format,
@@ -147,10 +137,10 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    gdt->width = width;
    gdt->height = height;
 
-   bpp = pf_get_bits(format);
-   cpp = pf_get_size(format);
+   bpp = util_format_get_blocksizebits(format);
+   cpp = util_format_get_blocksize(format);
    
-   gdt->stride = round_up(width * cpp, alignment);
+   gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;
    
    gdt->data = align_malloc(gdt->size, alignment);

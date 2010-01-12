@@ -39,7 +39,6 @@ tgsi_iterate_shader(
       return FALSE;
 
    ctx->processor = parse.FullHeader.Processor;
-   ctx->version = parse.FullVersion.Version;
 
    if (ctx->prolog)
       if (!ctx->prolog( ctx ))
@@ -64,6 +63,12 @@ tgsi_iterate_shader(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          if (ctx->iterate_immediate)
             if (!ctx->iterate_immediate( ctx, &parse.FullToken.FullImmediate ))
+               goto fail;
+         break;
+
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         if (ctx->iterate_property)
+            if (!ctx->iterate_property( ctx,  &parse.FullToken.FullProperty ))
                goto fail;
          break;
 

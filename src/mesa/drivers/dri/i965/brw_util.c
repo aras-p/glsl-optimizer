@@ -35,7 +35,7 @@
 #include "brw_util.h"
 #include "brw_defines.h"
 
-GLuint brw_count_bits( GLuint val )
+GLuint brw_count_bits(uint64_t val)
 {
    GLuint i;
    for (i = 0; val ; val >>= 1)

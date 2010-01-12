@@ -140,6 +140,12 @@ static void
 nv40_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv40_screen *screen = nv40_screen(pscreen);
+	unsigned i;
+
+	for (i = 0; i < NV40_STATE_MAX; i++) {
+		if (screen->state[i])
+			so_ref(NULL, &screen->state[i]);
+	}
 
 	nouveau_resource_free(&screen->vp_exec_heap);
 	nouveau_resource_free(&screen->vp_data_heap);
@@ -147,6 +153,7 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->curie);
+	nv04_surface_2d_takedown(&screen->eng2d);
 
 	nouveau_screen_fini(&screen->base);
 
@@ -208,7 +215,6 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
-	BIND_RING(chan, screen->curie, 7);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(&screen->base);
@@ -245,7 +251,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Static curie initialisation */
-	so = so_new(128, 0);
+	so = so_new(16, 25, 0);
 	so_method(so, screen->curie, NV40TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_TEXTURE0, 2);

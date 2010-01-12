@@ -63,56 +63,42 @@ static const GLubyte kernel[16] = {
 
 /* 32-bit BGRA */
 #define STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE) \
-   DST[3] = VALUE[ACOMP]; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   *DST = VALUE[ACOMP] << 24 | VALUE[RCOMP] << 16 | VALUE[GCOMP] << 8 | VALUE[BCOMP]
 #define STORE_PIXEL_RGB_A8R8G8B8(DST, X, Y, VALUE) \
-   DST[3] = 0xff; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   *DST = 0xff << 24 | VALUE[RCOMP] << 16 | VALUE[GCOMP] << 8 | VALUE[BCOMP]
 #define FETCH_PIXEL_A8R8G8B8(DST, SRC) \
-   DST[ACOMP] = SRC[3]; \
-   DST[RCOMP] = SRC[2]; \
-   DST[GCOMP] = SRC[1]; \
-   DST[BCOMP] = SRC[0]
+   DST[ACOMP] = *SRC >> 24;            \
+   DST[RCOMP] = (*SRC >> 16) & 0xff;   \
+   DST[GCOMP] = (*SRC >> 8) & 0xff;    \
+   DST[BCOMP] = *SRC & 0xff
 
 
 /* 32-bit BGRX */
 #define STORE_PIXEL_X8R8G8B8(DST, X, Y, VALUE) \
-   DST[3] = 0xff; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   *DST = 0xff << 24 | VALUE[RCOMP] << 16 | VALUE[GCOMP] << 8 | VALUE[BCOMP]
 #define STORE_PIXEL_RGB_X8R8G8B8(DST, X, Y, VALUE) \
-   DST[3] = 0xff; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   *DST = 0xff << 24 | VALUE[RCOMP] << 16 | VALUE[GCOMP] << 8 | VALUE[BCOMP]
 #define FETCH_PIXEL_X8R8G8B8(DST, SRC) \
-   DST[ACOMP] = 0xff; \
-   DST[RCOMP] = SRC[2]; \
-   DST[GCOMP] = SRC[1]; \
-   DST[BCOMP] = SRC[0]
+   DST[ACOMP] = 0xff;                  \
+   DST[RCOMP] = (*SRC >> 16) & 0xff;   \
+   DST[GCOMP] = (*SRC >> 8) & 0xff;    \
+   DST[BCOMP] = *SRC & 0xff
 
 
 /* 16-bit BGR */
 #define STORE_PIXEL_R5G6B5(DST, X, Y, VALUE) \
    do { \
    int d = DITHER_COMP(X, Y) >> 6; \
-   GLushort *p = (GLushort *)DST; \
-   *p = ( ((DITHER_CLAMP((VALUE[RCOMP]) + d) & 0xf8) << 8) | \
-	  ((DITHER_CLAMP((VALUE[GCOMP]) + d) & 0xfc) << 3) | \
-	  ((DITHER_CLAMP((VALUE[BCOMP]) + d) & 0xf8) >> 3) ); \
+   *DST = ( ((DITHER_CLAMP((VALUE[RCOMP]) + d) & 0xf8) << 8) | \
+            ((DITHER_CLAMP((VALUE[GCOMP]) + d) & 0xfc) << 3) | \
+            ((DITHER_CLAMP((VALUE[BCOMP]) + d) & 0xf8) >> 3) ); \
    } while(0)
 #define FETCH_PIXEL_R5G6B5(DST, SRC) \
    do { \
-   GLushort p = *(GLushort *)SRC; \
    DST[ACOMP] = 0xff; \
-   DST[RCOMP] = ((p >> 8) & 0xf8) * 255 / 0xf8; \
-   DST[GCOMP] = ((p >> 3) & 0xfc) * 255 / 0xfc; \
-   DST[BCOMP] = ((p << 3) & 0xf8) * 255 / 0xf8; \
+   DST[RCOMP] = ((*SRC >> 8) & 0xf8) * 255 / 0xf8; \
+   DST[GCOMP] = ((*SRC >> 3) & 0xfc) * 255 / 0xfc; \
+   DST[BCOMP] = ((*SRC << 3) & 0xf8) * 255 / 0xf8; \
    } while(0)
 
 
@@ -145,8 +131,8 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 4;
-#define INC_PIXEL_PTR(P) P += 4
+   GLuint *P = (GLuint *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch / 4 + (X)
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
@@ -163,8 +149,8 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 4;
-#define INC_PIXEL_PTR(P) P += 4
+   GLuint *P = (GLuint *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch / 4 + (X);
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_X8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
@@ -181,8 +167,8 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 2;
-#define INC_PIXEL_PTR(P) P += 2
+   GLushort *P = (GLushort *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch / 2 + (X);
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
@@ -234,8 +220,8 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)row;
-#define INC_PIXEL_PTR(P) P += 4
+   GLuint *P = (GLuint *)row;
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
@@ -252,8 +238,8 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)row;
-#define INC_PIXEL_PTR(P) P += 4
+   GLuint *P = (GLuint *)row;
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_X8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
@@ -270,7 +256,7 @@ static const GLubyte kernel[16] = {
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)row;
+   GLushort *P = (GLushort *)row;
 #define INC_PIXEL_PTR(P) P += 2
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)

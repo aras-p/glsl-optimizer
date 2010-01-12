@@ -81,12 +81,15 @@ nv20_vbuf_render(struct vbuf_render *render)
 void nv20_vtxbuf_bind( struct nv20_context* nv20 )
 {
 #if 0
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	int i;
 	for(i = 0; i < NV20TCL_VTXBUF_ADDRESS__SIZE; i++) {
-		BEGIN_RING(kelvin, NV20TCL_VTXBUF_ADDRESS(i), 1);
-		OUT_RING(0/*nv20->vtxbuf*/);
-		BEGIN_RING(kelvin, NV20TCL_VTXFMT(i) ,1);
-		OUT_RING(0/*XXX*/);
+		BEGIN_RING(chan, kelvin, NV20TCL_VTXBUF_ADDRESS(i), 1);
+		OUT_RING(chan, 0/*nv20->vtxbuf*/);
+		BEGIN_RING(chan, kelvin, NV20TCL_VTXFMT(i) ,1);
+		OUT_RING(chan, 0/*XXX*/);
 	}
 #endif
 }
@@ -202,6 +205,9 @@ nv20__vtxhwformat(unsigned stride, unsigned fields, unsigned type)
 static unsigned
 nv20__emit_format(struct nv20_context *nv20, enum attrib_emit type, int hwattr)
 {
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	uint32_t hwfmt = 0;
 	unsigned fields;
 
@@ -231,8 +237,8 @@ nv20__emit_format(struct nv20_context *nv20, enum attrib_emit type, int hwattr)
 		return 0;
 	}
 
-	BEGIN_RING(kelvin, NV20TCL_VTXFMT(hwattr), 1);
-	OUT_RING(hwfmt);
+	BEGIN_RING(chan, kelvin, NV20TCL_VTXFMT(hwattr), 1);
+	OUT_RING(chan, hwfmt);
 	return fields;
 }
 
@@ -262,6 +268,9 @@ nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 		uint nr_indices)
 {
 	struct nv20_context *nv20 = nv20_render->nv20;
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	struct vertex_info *vinfo = &nv20->vertex_info;
 	unsigned nr_fields;
 	int max_push;
@@ -270,29 +279,29 @@ nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 
 	nr_fields = nv20__emit_vertex_array_format(nv20);
 
-	BEGIN_RING(kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
-	OUT_RING(nv20_render->hwprim);
+	BEGIN_RING(chan, kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
+	OUT_RING(chan, nv20_render->hwprim);
 
 	max_push = 1200 / nr_fields;
 	while (nr_indices) {
 		int i;
 		int push = MIN2(nr_indices, max_push);
 
-		BEGIN_RING_NI(kelvin, NV20TCL_VERTEX_DATA, push * nr_fields);
+		BEGIN_RING_NI(chan, kelvin, NV20TCL_VERTEX_DATA, push * nr_fields);
 		for (i = 0; i < push; i++) {
 			/* XXX: fixme to handle other than floats? */
 			int f = nr_fields;
 			float *attrv = (float*)&data[indices[i] * vsz];
 			while (f-- > 0)
-				OUT_RINGf(*attrv++);
+				OUT_RINGf(chan, *attrv++);
 		}
 
 		nr_indices -= push;
 		indices += push;
 	}
 
-	BEGIN_RING(kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
-	OUT_RING(NV20TCL_VERTEX_BEGIN_END_STOP);
+	BEGIN_RING(chan, kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
+	OUT_RING(chan, NV20TCL_VERTEX_BEGIN_END_STOP);
 }
 
 static void
@@ -301,20 +310,23 @@ nv20__draw_pbuffer(struct nv20_vbuf_render *nv20_render,
 		uint nr_indices)
 {
 	struct nv20_context *nv20 = nv20_render->nv20;
+	struct nv20_screen *screen = nv20->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *kelvin = screen->kelvin;
 	int push, i;
 
 	NOUVEAU_ERR("nv20__draw_pbuffer: this path is broken.\n");
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
-	OUT_RELOCl(nv20_render->pbuffer, 0,
+	BEGIN_RING(chan, kelvin, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
+	OUT_RELOCl(chan, nouveau_bo(nv20_render->pbuffer), 0,
 			NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
-	OUT_RING(nv20_render->hwprim);
+	BEGIN_RING(chan, kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	OUT_RING(chan, nv20_render->hwprim);
 
 	if (nr_indices & 1) {
-		BEGIN_RING(kelvin, NV10TCL_VB_ELEMENT_U32, 1);
-		OUT_RING  (indices[0]);
+		BEGIN_RING(chan, kelvin, NV10TCL_VB_ELEMENT_U32, 1);
+		OUT_RING  (chan, indices[0]);
 		indices++; nr_indices--;
 	}
 
@@ -322,16 +334,16 @@ nv20__draw_pbuffer(struct nv20_vbuf_render *nv20_render,
 		// XXX too big/small ? check the size
 		push = MIN2(nr_indices, 1200 * 2);
 
-		BEGIN_RING_NI(kelvin, NV10TCL_VB_ELEMENT_U16, push >> 1);
+		BEGIN_RING_NI(chan, kelvin, NV10TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)
-			OUT_RING((indices[i+1] << 16) | indices[i]);
+			OUT_RING(chan, (indices[i+1] << 16) | indices[i]);
 
 		nr_indices -= push;
 		indices  += push;
 	}
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
-	OUT_RING  (0);
+	BEGIN_RING(chan, kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	OUT_RING  (chan, 0);
 }
 
 static void

@@ -352,19 +352,10 @@ by -debug for debug builds.
 </p>
 
 <p>
-The sample programs are built seperately. To build them do
-<pre>
-    scons -C progs
-</pre>
-And the build output will be placed in progs/build/...
-</p>
-
-<p>
 To build Mesa with SCons for Windows on Linux using the MinGW crosscompiler toolchain do
 </p>
 <pre>
     scons platform=windows toolchain=crossmingw machine=x86 statetrackers=mesa drivers=softpipe,trace winsys=gdi
-    scons -C progs platform=windows toolchain=crossmingw machine=x86 -k
 </pre>
 <p>
 This will create:

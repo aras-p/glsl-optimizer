@@ -57,41 +57,41 @@ struct pipe_context {
 
    void (*destroy)( struct pipe_context * );
 
-   
-   /* Possible interface for setting edgeflags.  These aren't really
-    * vertex elements, so don't fit there.
-    */
-   void (*set_edgeflags)( struct pipe_context *,
-                          const unsigned *bitfield );
-
-
    /**
     * VBO drawing (return false on fallbacks (temporary??))
     */
    /*@{*/
-   boolean (*draw_arrays)( struct pipe_context *pipe,
-			   unsigned mode, unsigned start, unsigned count);
+   void (*draw_arrays)( struct pipe_context *pipe,
+                        unsigned mode, unsigned start, unsigned count);
 
-   boolean (*draw_elements)( struct pipe_context *pipe,
-			     struct pipe_buffer *indexBuffer,
-			     unsigned indexSize,
-			     unsigned mode, unsigned start, unsigned count);
+   void (*draw_elements)( struct pipe_context *pipe,
+                          struct pipe_buffer *indexBuffer,
+                          unsigned indexSize,
+                          unsigned mode, unsigned start, unsigned count);
 
    /* XXX: this is (probably) a temporary entrypoint, as the range
     * information should be available from the vertex_buffer state.
     * Using this to quickly evaluate a specialized path in the draw
     * module.
     */
-   boolean (*draw_range_elements)( struct pipe_context *pipe,
-                                   struct pipe_buffer *indexBuffer,
-                                   unsigned indexSize,
-                                   unsigned minIndex,
-                                   unsigned maxIndex,
-                                   unsigned mode, 
-                                   unsigned start, 
-                                   unsigned count);
+   void (*draw_range_elements)( struct pipe_context *pipe,
+                                struct pipe_buffer *indexBuffer,
+                                unsigned indexSize,
+                                unsigned minIndex,
+                                unsigned maxIndex,
+                                unsigned mode, 
+                                unsigned start, 
+                                unsigned count);
    /*@}*/
 
+   /**
+    * Predicate subsequent rendering on occlusion query result
+    * \param query  the query predicate, or NULL if no predicate
+    * \param mode  one of PIPE_COND_RENDER_x
+    */
+   void (*render_condition)( struct pipe_context *pipe,
+                             struct pipe_query *query,
+                             uint mode );
 
    /**
     * Query objects
@@ -123,7 +123,12 @@ struct pipe_context {
 
    void * (*create_sampler_state)(struct pipe_context *,
                                   const struct pipe_sampler_state *);
-   void   (*bind_sampler_states)(struct pipe_context *, unsigned num, void **);
+   void   (*bind_fragment_sampler_states)(struct pipe_context *,
+                                          unsigned num_samplers,
+                                          void **samplers);
+   void   (*bind_vertex_sampler_states)(struct pipe_context *,
+                                        unsigned num_samplers,
+                                        void **samplers);
    void   (*delete_sampler_state)(struct pipe_context *, void *);
 
    void * (*create_rasterizer_state)(struct pipe_context *,
@@ -145,6 +150,12 @@ struct pipe_context {
                              const struct pipe_shader_state *);
    void   (*bind_vs_state)(struct pipe_context *, void *);
    void   (*delete_vs_state)(struct pipe_context *, void *);
+
+   void * (*create_gs_state)(struct pipe_context *,
+                             const struct pipe_shader_state *);
+   void   (*bind_gs_state)(struct pipe_context *, void *);
+   void   (*delete_gs_state)(struct pipe_context *, void *);
+
    /*@}*/
 
    /**
@@ -173,9 +184,13 @@ struct pipe_context {
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
-   void (*set_sampler_textures)( struct pipe_context *,
-                                 unsigned num_textures,
-                                 struct pipe_texture ** );
+   void (*set_fragment_sampler_textures)(struct pipe_context *,
+                                         unsigned num_textures,
+                                         struct pipe_texture **);
+
+   void (*set_vertex_sampler_textures)(struct pipe_context *,
+                                       unsigned num_textures,
+                                       struct pipe_texture **);
 
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,

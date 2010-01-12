@@ -15,8 +15,6 @@
 
 #define DEPTH 5.0f
 
-static PFNGLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
-
 static GLfloat camz;
 
 static GLint fogMode;
@@ -406,8 +404,8 @@ Init(void)
 int
 main( int argc, char *argv[] )
 {
-   glutInit( &argc, argv );
    glutInitWindowSize( 600, 600 );
+   glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    glutCreateWindow(argv[0]);
    glewInit();

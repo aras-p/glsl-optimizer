@@ -35,6 +35,8 @@
 
 #include "draw/draw_context.h"
 
+#include "util/u_format.h"
+
 
 /**
  * XXX this might get moved someday
@@ -48,6 +50,8 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
    uint i;
+
+   draw_flush(lp->draw);
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       /* check if changing cbuf */
@@ -88,8 +92,9 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
       if (lp->framebuffer.zsbuf) {
          int depth_bits;
          double mrd;
-         depth_bits = pf_get_component_bits(lp->framebuffer.zsbuf->format,
-                                            PIPE_FORMAT_COMP_Z);
+         depth_bits = util_format_get_component_bits(lp->framebuffer.zsbuf->format,
+                                                     UTIL_FORMAT_COLORSPACE_ZS,
+                                                     0);
          if (depth_bits > 16) {
             mrd = 0.0000001;
          }

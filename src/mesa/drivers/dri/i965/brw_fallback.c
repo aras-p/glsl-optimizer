@@ -47,7 +47,6 @@
 
 static GLboolean do_check_fallback(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
@@ -86,8 +85,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    }
 
    /* _NEW_BUFFERS */
-   if (IS_965(intel->intelScreen->deviceID) &&
-       !IS_G4X(intel->intelScreen->deviceID)) {
+   if (!brw->has_surface_tile_offset) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
 	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);

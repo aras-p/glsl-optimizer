@@ -38,6 +38,7 @@
 #include "util/u_prim.h"
 
 #include "sp_context.h"
+#include "sp_query.h"
 #include "sp_state.h"
 
 #include "draw/draw_context.h"
@@ -48,7 +49,7 @@ static void
 softpipe_map_constant_buffers(struct softpipe_context *sp)
 {
    struct pipe_winsys *ws = sp->pipe.winsys;
-   uint i, size;
+   uint i, vssize, gssize;
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
@@ -57,13 +58,21 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    }
 
    if (sp->constants[PIPE_SHADER_VERTEX].buffer)
-      size = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
+      vssize = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
    else
-      size = 0;
+      vssize = 0;
 
-   draw_set_mapped_constant_buffer(sp->draw,
+   if (sp->constants[PIPE_SHADER_GEOMETRY].buffer)
+      gssize = sp->constants[PIPE_SHADER_GEOMETRY].buffer->size;
+   else
+      gssize = 0;
+
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX,
                                    sp->mapped_constants[PIPE_SHADER_VERTEX],
-                                   size);
+                                   vssize);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_GEOMETRY,
+                                   sp->mapped_constants[PIPE_SHADER_GEOMETRY],
+                                   gssize);
 }
 
 
@@ -78,9 +87,10 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
     */
    draw_flush(sp->draw);
 
-   draw_set_mapped_constant_buffer(sp->draw, NULL, 0);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX, NULL, 0);
+   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_GEOMETRY, NULL, 0);
 
-   for (i = 0; i < 2; i++) {
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
          ws->buffer_unmap(ws, sp->constants[i].buffer);
       sp->mapped_constants[i] = NULL;
@@ -88,11 +98,11 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 }
 
 
-boolean
+void
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   return softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
+   softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -101,7 +111,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
-boolean
+void
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
                              unsigned indexSize,
@@ -112,6 +122,9 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    unsigned i;
+
+   if (!softpipe_check_render_cond(sp))
+      return;
 
    sp->reduced_api_prim = u_reduced_prim(mode);
 
@@ -168,27 +181,17 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    softpipe_unmap_constant_buffers(sp);
 
    sp->dirty_render_cache = TRUE;
-   
-   return TRUE;
 }
 
 
-boolean
+void
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
-   return softpipe_draw_range_elements( pipe, indexBuffer,
-                                        indexSize,
-                                        0, 0xffffffff,
-                                        mode, start, count );
-}
-
-
-void
-softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
-{
-   struct softpipe_context *sp = softpipe_context(pipe);
-   draw_set_edgeflags(sp->draw, edgeflags);
+   softpipe_draw_range_elements( pipe, indexBuffer,
+                                 indexSize,
+                                 0, 0xffffffff,
+                                 mode, start, count );
 }

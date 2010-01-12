@@ -18,7 +18,7 @@ struct nv40_state_entry nv40_state_blend = {
 static boolean
 nv40_state_blend_colour_validate(struct nv40_context *nv40)
 {
-	struct nouveau_stateobj *so = so_new(2, 0);
+	struct nouveau_stateobj *so = so_new(1, 1, 0);
 	struct pipe_blend_color *bcol = &nv40->blend_colour;
 
 	so_method(so, nv40->screen->curie, NV40TCL_BLEND_COLOR, 1);

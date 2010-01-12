@@ -56,7 +56,7 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
 driRenderbuffer *
 driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
-                   __DRIdrawablePrivate *dPriv)
+                   __DRIdrawable *dPriv)
 {
    driRenderbuffer *drb;
 
@@ -196,7 +196,7 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
  * gl_framebuffer object.
  */
 void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {

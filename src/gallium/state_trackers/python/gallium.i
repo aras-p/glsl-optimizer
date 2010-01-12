@@ -46,6 +46,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_tile.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_dump.h"
@@ -80,7 +81,6 @@
 %rename(Stencil) pipe_stencil_state;
 %rename(Alpha) pipe_alpha_state;
 %rename(DepthStencilAlpha) pipe_depth_stencil_alpha_state;
-%rename(FormatBlock) pipe_format_block;
 %rename(Framebuffer) pipe_framebuffer_state;
 %rename(PolyStipple) pipe_poly_stipple;
 %rename(Rasterizer) pipe_rasterizer_state;

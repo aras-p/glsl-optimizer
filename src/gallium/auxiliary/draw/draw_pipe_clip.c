@@ -114,8 +114,8 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->vs.num_vs_outputs;
-   const unsigned pos_attr = clip->stage.draw->vs.position_output;
+   const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
+   const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    unsigned j;
 
    /* Vertex header.

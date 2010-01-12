@@ -2278,14 +2278,14 @@ __glXCreateContextWithConfig(__DRInativeDisplay *dpy, int screen,
         int fbconfigID, void *contextID, drm_context_t *hHWContext)
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __glXFindDRIScreen(dpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
 
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
 
     if (psp->fd) {
         if (drmCreateContext(psp->fd, hHWContext)) {
@@ -2310,9 +2310,9 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
     GLXDrawable drawable = (GLXDrawable) draw;
     drm_clip_rect_t * cliprect;
     Display* display = (Display*)dpy;
-    __DRIscreenPrivate *psp = display->driScreen.private;
-    __DRIcontextPrivate *pcp = (__DRIcontextPrivate *)CurrentContext->driContext.private;
-    __DRIdrawablePrivate *pdp = pcp->driDrawablePriv;
+    __DRIscreen *psp = display->driScreen.private;
+    __DRIcontext *pcp = (__DRIcontext *)CurrentContext->driContext.private;
+    __DRIdrawable *pdp = pcp->driDrawablePriv;
     if (drawable == 0) {
         return GL_FALSE;
     }
@@ -2357,7 +2357,7 @@ xf86DRI_CreateDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable,
 {
 
   Display *display = (Display *)dpy;
-  __DRIscreenPrivate *psp = display->driScreen.private;
+  __DRIscreen *psp = display->driScreen.private;
   int ret;
   ret = drmCreateDrawable(psp->fd, hHWDrawable);
   

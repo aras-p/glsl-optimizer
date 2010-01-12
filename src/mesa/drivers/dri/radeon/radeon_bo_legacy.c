@@ -50,6 +50,12 @@
 #include "radeon_bocs_wrapper.h"
 #include "radeon_macros.h"
 
+#ifdef HAVE_LIBDRM_RADEON
+#include "radeon_bo_int.h"
+#else
+#include "radeon_bo_int_drm.h"
+#endif
+
 /* no seriously texmem.c is this screwed up */
 struct bo_legacy_texture_object {
     driTextureObject    base;
@@ -57,7 +63,7 @@ struct bo_legacy_texture_object {
 };
 
 struct bo_legacy {
-    struct radeon_bo    base;
+    struct radeon_bo_int    base;
     int                 map_count;
     uint32_t            pending;
     int                 is_pending;
@@ -187,10 +193,10 @@ static void legacy_get_current_age(struct bo_manager_legacy *boml)
     }
 }
 
-static int legacy_is_pending(struct radeon_bo *bo)
+static int legacy_is_pending(struct radeon_bo_int *boi)
 {
-    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
-    struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)boi->bom;
+    struct bo_legacy *bo_legacy = (struct bo_legacy*)boi;
 
     if (bo_legacy->is_pending <= 0) {
         bo_legacy->is_pending = 0;
@@ -204,13 +210,13 @@ static int legacy_is_pending(struct radeon_bo *bo)
         if (bo_legacy->pnext) {
             bo_legacy->pnext->pprev = bo_legacy->pprev;
         }
-	assert(bo_legacy->is_pending <= bo->cref);
+	assert(bo_legacy->is_pending <= boi->cref);
         while (bo_legacy->is_pending--) {
-	    bo = radeon_bo_unref(bo);
-	    if (!bo)
+	    boi = (struct radeon_bo_int *)radeon_bo_unref((struct radeon_bo *)boi);
+	    if (!boi)
 	      break;
         }
-	if (bo)
+	if (boi)
 	  bo_legacy->is_pending = 0;
         boml->cpendings--;
         return 0;
@@ -218,7 +224,7 @@ static int legacy_is_pending(struct radeon_bo *bo)
     return 1;
 }
 
-static int legacy_wait_pending(struct radeon_bo *bo)
+static int legacy_wait_pending(struct radeon_bo_int *bo)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
@@ -323,7 +329,7 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
     return bo_legacy;
 }
 
-static int bo_dma_alloc(struct radeon_bo *bo)
+static int bo_dma_alloc(struct radeon_bo_int *bo)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
@@ -333,7 +339,7 @@ static int bo_dma_alloc(struct radeon_bo *bo)
     int r;
 
     /* align size on 4Kb */
-    size = (((4 * 1024) - 1) + bo->size) & ~((4 * 1024) - 1);
+    size = (((4 * 1024) - 1) + bo_legacy->base.size) & ~((4 * 1024) - 1);
     alloc.region = RADEON_MEM_REGION_GART;
     alloc.alignment = bo_legacy->base.alignment;
     alloc.size = size;
@@ -355,7 +361,7 @@ static int bo_dma_alloc(struct radeon_bo *bo)
     return 0;
 }
 
-static int bo_dma_free(struct radeon_bo *bo)
+static int bo_dma_free(struct radeon_bo_int *bo)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
@@ -428,7 +434,7 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         bo_legacy = boml->bos.next;
         while (bo_legacy) {
             if (bo_legacy->base.handle == handle) {
-                radeon_bo_ref(&(bo_legacy->base));
+                radeon_bo_ref((struct radeon_bo *)&(bo_legacy->base));
                 return (struct radeon_bo*)bo_legacy;
             }
             bo_legacy = bo_legacy->next;
@@ -468,20 +474,20 @@ retry:
             return NULL;
         }
     }
-    radeon_bo_ref(&(bo_legacy->base));
+    radeon_bo_ref((struct radeon_bo *)&(bo_legacy->base));
 
     return (struct radeon_bo*)bo_legacy;
 }
 
-static void bo_ref(struct radeon_bo *bo)
+static void bo_ref(struct radeon_bo_int *bo)
 {
 }
 
-static struct radeon_bo *bo_unref(struct radeon_bo *bo)
+static struct radeon_bo *bo_unref(struct radeon_bo_int *boi)
 {
-    struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
+    struct bo_legacy *bo_legacy = (struct bo_legacy*)boi;
 
-    if (bo->cref <= 0) {
+    if (boi->cref <= 0) {
         bo_legacy->prev->next = bo_legacy->next;
         if (bo_legacy->next) {
             bo_legacy->next->prev = bo_legacy->prev;
@@ -491,10 +497,10 @@ static struct radeon_bo *bo_unref(struct radeon_bo *bo)
         }
         return NULL;
     }
-    return bo;
+    return (struct radeon_bo *)boi;
 }
 
-static int bo_map(struct radeon_bo *bo, int write)
+static int bo_map(struct radeon_bo_int *bo, int write)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
@@ -528,7 +534,7 @@ static int bo_map(struct radeon_bo *bo, int write)
     return 0;
 }
 
-static int bo_unmap(struct radeon_bo *bo)
+static int bo_unmap(struct radeon_bo_int *bo)
 {
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
@@ -542,7 +548,7 @@ static int bo_unmap(struct radeon_bo *bo)
     return 0;
 }
 
-static int bo_is_busy(struct radeon_bo *bo, uint32_t *domain)
+static int bo_is_busy(struct radeon_bo_int *bo, uint32_t *domain)
 {
     *domain = 0;
     if (bo->domains & RADEON_GEM_DOMAIN_GTT)
@@ -555,7 +561,7 @@ static int bo_is_busy(struct radeon_bo *bo, uint32_t *domain)
         return 0;
 }
 
-static int bo_is_static(struct radeon_bo *bo)
+static int bo_is_static(struct radeon_bo_int *bo)
 {
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
     return bo_legacy->static_bo;
@@ -574,7 +580,7 @@ static struct radeon_bo_funcs bo_legacy_funcs = {
     bo_is_busy
 };
 
-static int bo_vram_validate(struct radeon_bo *bo,
+static int bo_vram_validate(struct radeon_bo_int *bo,
                             uint32_t *soffset,
                             uint32_t *eoffset)
 {
@@ -700,29 +706,30 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
                               uint32_t *soffset,
                               uint32_t *eoffset)
 {
-    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
+    struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)boi->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
     int r;
     int retries = 0;
 
     if (bo_legacy->map_count) {
         fprintf(stderr, "bo(%p, %d) is mapped (%d) can't valide it.\n",
-                bo, bo->size, bo_legacy->map_count);
+                bo, boi->size, bo_legacy->map_count);
         return -EINVAL;
     }
-    if(bo->size == 0) {
+    if(boi->size == 0) {
         fprintf(stderr, "bo(%p) has size 0.\n", bo);
         return -EINVAL;
     }
     if (bo_legacy->static_bo || bo_legacy->validated) {
         *soffset = bo_legacy->offset;
-        *eoffset = bo_legacy->offset + bo->size;
+        *eoffset = bo_legacy->offset + boi->size;
 
         return 0;
     }
-    if (!(bo->domains & RADEON_GEM_DOMAIN_GTT)) {
+    if (!(boi->domains & RADEON_GEM_DOMAIN_GTT)) {
 
-        r = bo_vram_validate(bo, soffset, eoffset);
+        r = bo_vram_validate(boi, soffset, eoffset);
         if (r) {
 	    legacy_track_pending(&boml->base, 0);
 	    legacy_kick_all_buffers(boml);
@@ -736,7 +743,7 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
         }
     }
     *soffset = bo_legacy->offset;
-    *eoffset = bo_legacy->offset + bo->size;
+    *eoffset = bo_legacy->offset + boi->size;
     bo_legacy->validated = 1;
 
     return 0;
@@ -744,7 +751,8 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
 
 void radeon_bo_legacy_pending(struct radeon_bo *bo, uint32_t pending)
 {
-    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
+    struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)boi->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
     bo_legacy->pending = pending;
@@ -799,7 +807,7 @@ static struct bo_legacy *radeon_legacy_bo_alloc_static(struct bo_manager_legacy 
     if (bo->base.handle > bom->nhandle) {
         bom->nhandle = bo->base.handle + 1;
     }
-    radeon_bo_ref(&(bo->base));
+    radeon_bo_ref((struct radeon_bo *)&(bo->base));
     return bo;
 }
 
@@ -894,12 +902,13 @@ void radeon_bo_legacy_texture_age(struct radeon_bo_manager *bom)
 
 unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
 {
+    struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
-    if (bo_legacy->static_bo || (bo->domains & RADEON_GEM_DOMAIN_GTT)) {
+    if (bo_legacy->static_bo || (boi->domains & RADEON_GEM_DOMAIN_GTT)) {
         return 0;
     }
-    return bo->size;
+    return boi->size;
 }
 
 /*
@@ -924,7 +933,7 @@ struct radeon_bo *radeon_legacy_bo_alloc_fake(struct radeon_bo_manager *bom,
     if (bo->base.handle > boml->nhandle) {
         boml->nhandle = bo->base.handle + 1;
     }
-    radeon_bo_ref(&(bo->base));
-    return &(bo->base);
+    radeon_bo_ref((struct radeon_bo *)&(bo->base));
+    return (struct radeon_bo *)&(bo->base);
 }
 

@@ -56,18 +56,18 @@ static void TAG(emit)( GLcontext *ctx,
 
    radeon_print(RADEON_SWRENDER, RADEON_VERBOSE, "%s\n", __FUNCTION__);
 
-   coord = (GLuint (*)[4])VB->ObjPtr->data;
-   coord_stride = VB->ObjPtr->stride;
+   coord = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_POS]->data;
+   coord_stride = VB->AttribPtr[_TNL_ATTRIB_POS]->stride;
 
    if (DO_TEX2) {
-      if (VB->TexCoordPtr[2]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX2]) {
 	 const GLuint t2 = GET_TEXSOURCE(2);
-	 tc2 = (GLuint (*)[4])VB->TexCoordPtr[t2]->data;
-	 tc2_stride = VB->TexCoordPtr[t2]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t2]->size < 3) {
+	 tc2 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->data;
+	 tc2_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->stride;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->size < 3) {
 	    fill_tex |= (1<<2);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t2]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t2]->size < 4) {
 	    rqcoordsnoswap |= (1<<2);
 	 }
       } else {
@@ -77,14 +77,14 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_TEX1) {
-      if (VB->TexCoordPtr[1]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX1]) {
 	 const GLuint t1 = GET_TEXSOURCE(1);
-	 tc1 = (GLuint (*)[4])VB->TexCoordPtr[t1]->data;
-	 tc1_stride = VB->TexCoordPtr[t1]->stride;
-	 if (DO_PTEX && VB->TexCoordPtr[t1]->size < 3) {
+	 tc1 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->data;
+	 tc1_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->stride;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size < 3) {
 	    fill_tex |= (1<<1);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t1]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t1]->size < 4) {
 	    rqcoordsnoswap |= (1<<1);
 	 }
       } else {
@@ -94,14 +94,14 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_TEX0) {
-      if (VB->TexCoordPtr[0]) {
+      if (VB->AttribPtr[_TNL_ATTRIB_TEX0]) {
 	 const GLuint t0 = GET_TEXSOURCE(0);
-	 tc0_stride = VB->TexCoordPtr[t0]->stride;
-	 tc0 = (GLuint (*)[4])VB->TexCoordPtr[t0]->data;
-	 if (DO_PTEX && VB->TexCoordPtr[t0]->size < 3) {
+	 tc0_stride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->stride;
+	 tc0 = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->data;
+	 if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size < 3) {
 	    fill_tex |= (1<<0);
 	 }
-	 else if (DO_PTEX && VB->TexCoordPtr[t0]->size < 4) {
+	 else if (DO_PTEX && VB->AttribPtr[_TNL_ATTRIB_TEX0 + t0]->size < 4) {
 	    rqcoordsnoswap |= (1<<0);
 	 }
       } else {
@@ -112,9 +112,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_NORM) {
-      if (VB->NormalPtr) {
-	 norm_stride = VB->NormalPtr->stride;
-	 norm = (GLuint (*)[4])VB->NormalPtr->data;
+      if (VB->AttribPtr[_TNL_ATTRIB_NORMAL]) {
+	 norm_stride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+	 norm = (GLuint (*)[4])VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
       } else {
 	 norm_stride = 0;
 	 norm = (GLuint (*)[4])&ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
@@ -122,9 +122,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_RGBA) {
-      if (VB->ColorPtr[0]) {
-	 col = VB->ColorPtr[0]->data;
-	 col_stride = VB->ColorPtr[0]->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR0]) {
+	 col = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->data;
+	 col_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->stride;
       } else {
 	 col = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 	 col_stride = 0;
@@ -132,9 +132,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_SPEC_OR_FOG) {
-      if (VB->SecondaryColorPtr[0]) {
-	 spec = VB->SecondaryColorPtr[0]->data;
-	 spec_stride = VB->SecondaryColorPtr[0]->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
+	 spec = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->data;
+	 spec_stride = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->stride;
       } else {
 	 spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
 	 spec_stride = 0;
@@ -142,9 +142,9 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_SPEC_OR_FOG) {
-      if (VB->FogCoordPtr) {
-	 fog = VB->FogCoordPtr->data;
-	 fog_stride = VB->FogCoordPtr->stride;
+      if (VB->AttribPtr[_TNL_ATTRIB_FOG]) {
+	 fog = VB->AttribPtr[_TNL_ATTRIB_FOG]->data;
+	 fog_stride = VB->AttribPtr[_TNL_ATTRIB_FOG]->stride;
       } else {
 	 fog = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_FOG];
 	 fog_stride = 0;

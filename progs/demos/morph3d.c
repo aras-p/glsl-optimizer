@@ -841,9 +841,8 @@ int main(int argc, char **argv)
 
   object=1;
 
-  glutInit(&argc, argv);
-  glutInitWindowPosition(0,0);
   glutInitWindowSize(640,480);
+  glutInit(&argc, argv);
 
   glutInitDisplayMode( GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB );
 
@@ -887,5 +886,6 @@ int main(int argc, char **argv)
   glutIdleFunc( idle_ );
   glutDisplayFunc( draw );
   glutMainLoop();
-  
+
+  return 0;
 }

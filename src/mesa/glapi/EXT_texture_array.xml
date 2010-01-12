@@ -35,6 +35,7 @@
         <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
         <param name="layer" type="GLint"/>
+	<glx rop="237"/>
     </function>
 </category>
 

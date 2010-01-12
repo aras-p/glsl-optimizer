@@ -237,6 +237,9 @@ int main( int argc, char *argv[] )
    const char *filename = IMAGE_FILE;
    int i = 1;
 
+   glutInitWindowSize( WinWidth, WinHeight );
+   glutInit( &argc, argv );
+
    if (argc > i && strcmp(argv[i], "-ci")==0) {
       ciMode = GL_TRUE;
       i++;
@@ -244,10 +247,6 @@ int main( int argc, char *argv[] )
    if (argc > i) {
       filename = argv[i];
    }
-
-   glutInit( &argc, argv );
-   glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize( WinWidth, WinHeight );
 
    if (ciMode)
       glutInitDisplayMode( GLUT_INDEX | GLUT_DOUBLE );

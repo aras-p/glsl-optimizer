@@ -1,7 +1,9 @@
 
 /* GENERATED FILE -- DO NOT MODIFY */
 
+#define glutStrokeRoman XXX
 #include "glutstroke.h"
+#undef glutStrokeRoman
 
 /* char: 33 '!' */
 
@@ -2447,5 +2449,6 @@ static const StrokeCharRec chars[] = {
     { 2, char127, 33.3333, 66.6667 },
 };
 
-StrokeFontRec glutStrokeRoman = { "Roman", 128, chars, 119.048, -33.3333 };
+GLUTAPI const StrokeFontRec glutStrokeRoman;
+const StrokeFontRec glutStrokeRoman = { "Roman", 128, chars, 119.048, -33.3333 };
 

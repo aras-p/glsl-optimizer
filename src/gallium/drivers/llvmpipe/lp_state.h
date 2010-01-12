@@ -56,7 +56,6 @@
 #define LP_NEW_QUERY         0x4000
 
 
-struct tgsi_sampler;
 struct vertex_info;
 struct pipe_context;
 struct llvmpipe_context;
@@ -126,6 +125,10 @@ void *
 llvmpipe_create_sampler_state(struct pipe_context *,
                               const struct pipe_sampler_state *);
 void llvmpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
+void
+llvmpipe_bind_vertex_sampler_states(struct pipe_context *,
+                                    unsigned num_samplers,
+                                    void **samplers);
 void llvmpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
@@ -172,6 +175,11 @@ void llvmpipe_set_sampler_textures( struct pipe_context *,
                                     unsigned num,
                                     struct pipe_texture ** );
 
+void
+llvmpipe_set_vertex_sampler_textures(struct pipe_context *,
+                                     unsigned num_textures,
+                                     struct pipe_texture **);
+
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
 
@@ -188,24 +196,20 @@ void llvmpipe_update_fs(struct llvmpipe_context *lp);
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
 
 
-boolean llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+void llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 			     unsigned start, unsigned count);
 
-boolean llvmpipe_draw_elements(struct pipe_context *pipe,
+void llvmpipe_draw_elements(struct pipe_context *pipe,
 			       struct pipe_buffer *indexBuffer,
 			       unsigned indexSize,
 			       unsigned mode, unsigned start, unsigned count);
-boolean
+void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
                              unsigned indexSize,
                              unsigned min_index,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count);
-
-void
-llvmpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
-
 
 void
 llvmpipe_map_transfers(struct llvmpipe_context *lp);

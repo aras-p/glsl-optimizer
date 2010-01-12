@@ -94,8 +94,8 @@ translate_declaration(struct gallivm_ir *prog,
       unsigned first, last, mask;
       uint interp_method;
 
-      first = decl->DeclarationRange.First;
-      last = decl->DeclarationRange.Last;
+      first = decl->Range.First;
+      last = decl->Range.Last;
       mask = decl->Declaration.UsageMask;
 
       /* Do not touch WPOS.xy */
@@ -149,7 +149,7 @@ translate_declarationir(struct gallivm_ir *,
                       struct tgsi_full_declaration *)
 {
    if (decl->Declaration.File == TGSI_FILE_ADDRESS) {
-      int idx = decl->DeclarationRange.First;
+      int idx = decl->Range.First;
       storage->addAddress(idx);
    }
 }
@@ -234,26 +234,26 @@ translate_instruction(llvm::Module *module,
    inputs[3] = 0;
 
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
       llvm::Value *val = 0;
       llvm::Value *indIdx = 0;
 
-      if (src->SrcRegister.Indirect) {
-         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
+      if (src->Register.Indirect) {
+         indIdx = storage->addrElement(src->Indirect.Index);
          indIdx = storage->extractIndex(indIdx);
       }
-      if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->constElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->inputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         val = storage->tempElement(src->SrcRegister.Index);
-      } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
-         val = storage->outputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
-         val = storage->immediateElement(src->SrcRegister.Index);
+      if (src->Register.File == TGSI_FILE_CONSTANT) {
+         val = storage->constElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_INPUT) {
+         val = storage->inputElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_TEMPORARY) {
+         val = storage->tempElement(src->Register.Index);
+      } else if (src->Register.File == TGSI_FILE_OUTPUT) {
+         val = storage->outputElement(src->Register.Index, indIdx);
+      } else if (src->Register.File == TGSI_FILE_IMMEDIATE) {
+         val = storage->immediateElement(src->Register.Index);
       } else {
-         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
+         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->Register.File);
          return;
       }
 
@@ -552,7 +552,7 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_SHL:
       break;
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       break;
    case TGSI_OPCODE_AND:
       break;
@@ -656,14 +656,14 @@ translate_instruction(llvm::Module *module,
 
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
 
-      if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
-         storage->setAddrElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+      if (dst->Register.File == TGSI_FILE_OUTPUT) {
+         storage->setOutputElement(dst->Register.Index, out, dst->Register.WriteMask);
+      } else if (dst->Register.File == TGSI_FILE_TEMPORARY) {
+         storage->setTempElement(dst->Register.Index, out, dst->Register.WriteMask);
+      } else if (dst->Register.File == TGSI_FILE_ADDRESS) {
+         storage->setAddrElement(dst->Register.Index, out, dst->Register.WriteMask);
       } else {
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
          assert(!"wrong destination");
@@ -683,16 +683,16 @@ translate_instructionir(llvm::Module *module,
    std::vector< std::vector<llvm::Value*> > inputs(inst->Instruction.NumSrcRegs);
 
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      struct tgsi_full_src_register *src = &inst->Src[i];
       std::vector<llvm::Value*> val;
       llvm::Value *indIdx = 0;
       int swizzle = swizzleInt(src);
 
-      if (src->SrcRegister.Indirect) {
-         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
+      if (src->Register.Indirect) {
+         indIdx = storage->addrElement(src->Indirect.Index);
       }
-      val = storage->load((enum tgsi_file_type)src->SrcRegister.File,
-                          src->SrcRegister.Index, swizzle, instr->getIRBuilder(), indIdx);
+      val = storage->load((enum tgsi_file_type)src->Register.File,
+                          src->Register.Index, swizzle, instr->getIRBuilder(), indIdx);
 
       inputs[i] = val;
    }
@@ -919,7 +919,7 @@ translate_instructionir(llvm::Module *module,
       break;
    case TGSI_OPCODE_SHL:
       break;
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       break;
    case TGSI_OPCODE_AND:
       break;
@@ -993,9 +993,9 @@ translate_instructionir(llvm::Module *module,
 
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-      storage->store((enum tgsi_file_type)dst->DstRegister.File,
-                     dst->DstRegister.Index, out, dst->DstRegister.WriteMask,
+      struct tgsi_full_dst_register *dst = &inst->Dst[i];
+      storage->store((enum tgsi_file_type)dst->Register.File,
+                     dst->Register.Index, out, dst->Register.WriteMask,
 		     instr->getIRBuilder() );
    }
 }

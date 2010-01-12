@@ -35,28 +35,33 @@
 #include "intel_buffers.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
+#include "intel_fbo.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static struct intel_region *
 copypix_src_region(struct intel_context *intel, GLenum type)
 {
+   struct intel_renderbuffer *depth;
+
+   depth = (struct intel_renderbuffer *)
+      &intel->ctx.DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+
    switch (type) {
    case GL_COLOR:
       return intel_readbuf_region(intel);
    case GL_DEPTH:
-      /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
-       */
-      if (intel->depth_region && intel->depth_region->cpp == 2)
-         return intel->depth_region;
+      /* Don't think this is really possible execpt at 16bpp, when we
+       * have no stencil. */
+      if (depth && depth->region->cpp == 2)
+         return depth->region;
    case GL_STENCIL:
-      /* Don't think this is really possible. 
-       */
+      /* Don't think this is really possible. */
       break;
    case GL_DEPTH_STENCIL_EXT:
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
-      return intel->depth_region;
+      return depth->region;
    default:
       break;
    }
@@ -83,10 +88,10 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
             ctx->Depth.Test ||
             ctx->Fog.Enabled ||
             ctx->Stencil._Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
+            !ctx->Color.ColorMask[0][0] ||
+            !ctx->Color.ColorMask[0][1] ||
+            !ctx->Color.ColorMask[0][2] ||
+            !ctx->Color.ColorMask[0][3] ||
             ctx->Texture._EnabledUnits ||
 	    ctx->FragmentProgram._Enabled ||
 	    ctx->Color.BlendEnabled);
@@ -133,8 +138,6 @@ do_blit_copypixels(GLcontext * ctx,
 
 
    intelFlush(&intel->ctx);
-
-   LOCK_HARDWARE(intel);
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects != 0) {
@@ -214,13 +217,13 @@ do_blit_copypixels(GLcontext * ctx,
 				ctx->Color.ColorLogicOpEnabled ?
 				ctx->Color.LogicOp : GL_COPY)) {
 	    DBG("%s: blit failure\n", __FUNCTION__);
-	    UNLOCK_HARDWARE(intel);
 	    return GL_FALSE;
 	 }
       }
    }
 out:
-   UNLOCK_HARDWARE(intel);
+
+   intel_check_front_buffer_rendering(intel);
 
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;

@@ -72,6 +72,7 @@ struct failover_context {
     */
    const struct fo_state     *blend;
    const struct fo_state     *sampler[PIPE_MAX_SAMPLERS];
+   const struct fo_state     *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
    const struct fo_state     *depth_stencil;
    const struct fo_state     *rasterizer;
    const struct fo_state     *fragment_shader;
@@ -83,6 +84,7 @@ struct failover_context {
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
@@ -92,11 +94,15 @@ struct failover_context {
 
    void *sw_sampler_state[PIPE_MAX_SAMPLERS];
    void *hw_sampler_state[PIPE_MAX_SAMPLERS];
+   void *sw_vertex_sampler_state[PIPE_MAX_VERTEX_SAMPLERS];
+   void *hw_vertex_sampler_state[PIPE_MAX_VERTEX_SAMPLERS];
 
    unsigned dirty;
 
    unsigned num_samplers;
+   unsigned num_vertex_samplers;
    unsigned num_textures;
+   unsigned num_vertex_textures;
 
    unsigned mode;
    struct pipe_context *hw;

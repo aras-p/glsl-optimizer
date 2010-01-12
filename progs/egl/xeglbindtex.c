@@ -53,6 +53,7 @@ make_pbuffer(int width, int height)
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
       EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
    EGLint pbuf_attribs[] = {
@@ -65,7 +66,8 @@ make_pbuffer(int width, int height)
    EGLConfig config;
    EGLint num_configs;
 
-   if (!eglChooseConfig(dpy, config_attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig(dpy, config_attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       printf("Error: couldn't get an EGL visual config for pbuffer\n");
       exit(1);
    }
@@ -77,8 +79,6 @@ make_pbuffer(int width, int height)
       printf("failed to allocate pbuffer\n");
       exit(1);
    }
-
-   glGenTextures(1, &tex_pbuf);
 }
 
 static void
@@ -112,6 +112,8 @@ use_pbuffer(void)
       glTranslatef(0.0, 0.0, -5.0);
 
       glClearColor(0.2, 0.2, 0.2, 0.0);
+
+      glGenTextures(1, &tex_pbuf);
    }
 }
 
@@ -126,6 +128,7 @@ make_window(Display *x_dpy, const char *name,
       EGL_BLUE_SIZE, 8,
       EGL_ALPHA_SIZE, 8,
       EGL_DEPTH_SIZE, 8,
+      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
 
@@ -142,7 +145,8 @@ make_window(Display *x_dpy, const char *name,
    scrnum = DefaultScreen( x_dpy );
    root = RootWindow( x_dpy, scrnum );
 
-   if (!eglChooseConfig(dpy, attribs, &config, 1, &num_configs)) {
+   if (!eglChooseConfig(dpy, attribs, &config, 1, &num_configs) ||
+       !num_configs) {
       printf("Error: couldn't get an EGL visual config\n");
       exit(1);
    }

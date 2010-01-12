@@ -130,7 +130,7 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
 
    shifted = LLVMBuildLShr(builder, packed, LLVMConstVector(shifts, 4), "");
    masked = LLVMBuildAnd(builder, shifted, LLVMConstVector(masks, 4), "");
-   // UIToFP can't be expressed in SSE2
+   /* UIToFP can't be expressed in SSE2 */
    casted = LLVMBuildSIToFP(builder, masked, LLVMVectorType(LLVMFloatType(), 4), "");
 
    if (normalized)

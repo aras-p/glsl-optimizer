@@ -30,6 +30,7 @@
 #include <pipe/internal/p_winsys_screen.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
+#include <util/u_format.h>
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <softpipe/sp_winsys.h>
@@ -138,13 +139,10 @@ static struct pipe_buffer* xsp_surface_buffer_create
 )
 {
    const unsigned int ALIGNMENT = 1;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy;
+   unsigned nblocksy;
 
-   pf_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = align(nblocksx * block.size, ALIGNMENT);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), ALIGNMENT);
 
    return pws->buffer_create(pws, ALIGNMENT, usage,
                              *stride * nblocksy);

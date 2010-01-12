@@ -28,14 +28,16 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
-#include "r300_clear.h"
+#include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_flush.h"
 #include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
 #include "r300_state_derived.h"
 #include "r300_state_invariant.h"
+#include "r300_texture.h"
 #include "r300_winsys.h"
 
 static enum pipe_error r300_clear_hash_table(void* key, void* value,
@@ -50,6 +52,8 @@ static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
     struct r300_query* query, * temp;
+
+    util_blitter_destroy(r300->blitter);
 
     util_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
         NULL);
@@ -66,10 +70,13 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(query);
     }
 
-    FREE(r300->blend_color_state);
+    FREE(r300->blend_color_state.state);
+    FREE(r300->clip_state.state);
     FREE(r300->rs_block);
-    FREE(r300->scissor_state);
-    FREE(r300->viewport_state);
+    FREE(r300->scissor_state.state);
+    FREE(r300->vertex_info);
+    FREE(r300->viewport_state.state);
+    FREE(r300->ztop_state.state);
     FREE(r300);
 }
 
@@ -89,8 +96,11 @@ static unsigned int
 r300_is_buffer_referenced(struct pipe_context *pipe,
                           struct pipe_buffer *buf)
 {
-    /* XXX */
-    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+    /* This only checks to see whether actual hardware buffers are
+     * referenced. Since we use managed BOs and transfers, it's actually not
+     * possible for pipe_buffers to ever reference the actual hardware, so
+     * buffers are never referenced. */
+    return 0;
 }
 
 static void r300_flush_cb(void *data)
@@ -100,17 +110,37 @@ static void r300_flush_cb(void *data)
     cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
 }
 
+#define R300_INIT_ATOM(name) \
+    r300->name##_state.state = NULL; \
+    r300->name##_state.emit = r300_emit_##name##_state; \
+    r300->name##_state.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->name##_state);
+
+static void r300_setup_atoms(struct r300_context* r300)
+{
+    make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(ztop);
+    R300_INIT_ATOM(blend);
+    R300_INIT_ATOM(blend_color);
+    R300_INIT_ATOM(clip);
+    R300_INIT_ATOM(dsa);
+    R300_INIT_ATOM(rs);
+    R300_INIT_ATOM(scissor);
+    R300_INIT_ATOM(viewport);
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct r300_winsys* r300_winsys)
+                                         struct radeon_winsys* radeon_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
+    struct r300_screen* r300screen = r300_screen(screen);
 
     if (!r300)
         return NULL;
 
-    r300->winsys = r300_winsys;
+    r300->winsys = radeon_winsys;
 
-    r300->context.winsys = (struct pipe_winsys*)r300_winsys;
+    r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
 
     r300_init_debug(r300);
@@ -118,10 +148,28 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.destroy = r300_destroy_context;
 
     r300->context.clear = r300_clear;
+    r300->context.surface_copy = r300_surface_copy;
+    r300->context.surface_fill = r300_surface_fill;
 
-    r300->context.draw_arrays = r300_draw_arrays;
-    r300->context.draw_elements = r300_draw_elements;
-    r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+    if (r300screen->caps->has_tcl) {
+        r300->context.draw_arrays = r300_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_draw_range_elements;
+    } else {
+        r300->context.draw_arrays = r300_swtcl_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+
+        /* Create a Draw. This is used for SW TCL. */
+        r300->draw = draw_create();
+        /* Enable our renderer. */
+        draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
+        /* Enable Draw's clipping. */
+        draw_set_driver_clipping(r300->draw, FALSE);
+        /* Force Draw to never do viewport transform, since we can do
+         * transform in hardware, always. */
+        draw_set_viewport_state(r300->draw, &r300_viewport_identity);
+    }
 
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
@@ -129,24 +177,20 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
         r300_shader_key_compare);
 
-    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
-    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    r300_setup_atoms(r300);
 
-    /* Create a Draw. This is used for vert collation and SW TCL. */
-    r300->draw = draw_create();
-    /* Enable our renderer. */
-    draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
-    /* Disable Draw's clipping if TCL is present. */
-    draw_set_driver_clipping(r300->draw, r300_screen(screen)->caps->has_tcl);
-    /* Force Draw to never do viewport transform, since (again) we can do
-     * transform in hardware, always. */
-    draw_set_viewport_state(r300->draw, &r300_viewport_identity);
+    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
+    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
+    r300->scissor_state.state = CALLOC_STRUCT(r300_scissor_state);
+    r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
+    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
+    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
             PIPE_BUFFER_USAGE_VERTEX, 4096);
+    make_empty_list(&r300->query_list);
 
     r300_init_flush_functions(r300);
 
@@ -161,6 +205,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
-    make_empty_list(&r300->query_list);
+
+    r300->blitter = util_blitter_create(&r300->context);
+
     return &r300->context;
 }

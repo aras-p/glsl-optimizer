@@ -10,21 +10,32 @@ nv40_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		BEGIN_RING(curie, 0x1fd8, 1);
-		OUT_RING  (2);
-		BEGIN_RING(curie, 0x1fd8, 1);
-		OUT_RING  (1);
+		BEGIN_RING(chan, curie, 0x1fd8, 1);
+		OUT_RING  (chan, 2);
+		BEGIN_RING(chan, curie, 0x1fd8, 1);
+		OUT_RING  (chan, 1);
 	}
 
-	FIRE_RING(fence);
+	FIRE_RING(chan);
+	if (fence)
+		*fence = NULL;
 }
 
 static void
 nv40_destroy(struct pipe_context *pipe)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	unsigned i;
+
+	for (i = 0; i < NV40_STATE_MAX; i++) {
+		if (nv40->state.hw[i])
+			so_ref(NULL, &nv40->state.hw[i]);
+	}
 
 	if (nv40->draw)
 		draw_destroy(nv40->draw);
@@ -57,6 +68,9 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv40->pipe.is_texture_referenced = nouveau_is_texture_referenced;
 	nv40->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
+
+	screen->base.channel->user_private = nv40;
+	screen->base.channel->flush_notify = nv40_state_flush_notify;
 
 	nv40_init_query_functions(nv40);
 	nv40_init_surface_functions(nv40);

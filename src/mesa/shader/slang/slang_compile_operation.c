@@ -46,12 +46,14 @@ slang_operation_construct(slang_operation * oper)
    oper->literal_size = 1;
    oper->array_constructor = GL_FALSE;
    oper->a_id = SLANG_ATOM_NULL;
+   oper->a_obj = SLANG_ATOM_NULL;
    oper->locals = _slang_variable_scope_new(NULL);
    if (oper->locals == NULL)
       return GL_FALSE;
    _slang_variable_scope_ctr(oper->locals);
    oper->fun = NULL;
    oper->var = NULL;
+   oper->label = NULL;
    return GL_TRUE;
 }
 

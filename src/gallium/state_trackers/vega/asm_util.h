@@ -29,7 +29,7 @@
 
 
 static const char pass_through_depth_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], POSITION, LINEAR\n"
    "DCL OUT[0].z, POSITION, CONSTANT\n"
    "0: MOV OUT[0].z, IN[0].zzzz\n"
@@ -39,7 +39,7 @@ static const char pass_through_depth_asm[] =
 
 /* μnew = μmask */
 static const char set_mask_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL SAMP[0], CONSTANT\n"
    "DCL OUT[0], COLOR, CONSTANT\n"
@@ -48,7 +48,7 @@ static const char set_mask_asm[] =
 
 /* μnew = 1 – (1 – μmask)*(1 – μprev) */
 static const char union_mask_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL IN[1], POSITION, LINEAR\n"
    "DCL CONST[0], CONSTANT\n"
@@ -65,7 +65,7 @@ static const char union_mask_asm[] =
 
 /* μnew = μmask *μprev */
 static const char intersect_mask_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL IN[1], POSITION, LINEAR\n"
    "DCL CONST[0], CONSTANT\n"
@@ -79,7 +79,7 @@ static const char intersect_mask_asm[] =
 
 /* μnew = μprev*(1 – μmask) */
 static const char subtract_mask_asm[] =
-   "FRAG1.1\n"
+   "FRAG\n"
    "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
    "DCL IN[1], POSITION, LINEAR\n"
    "DCL CONST[0], CONSTANT\n"
@@ -94,7 +94,7 @@ static const char subtract_mask_asm[] =
 
 
 static const char vs_plain_asm[] =
-   "VERT1.1\n"
+   "VERT\n"
    "DCL IN[0]\n"
    "DCL OUT[0], POSITION\n"
    "DCL TEMP[0]\n"
@@ -105,7 +105,7 @@ static const char vs_plain_asm[] =
    "3: END\n";
 
 static const char vs_clear_asm[] =
-   "VERT1.1\n"
+   "VERT\n"
    "DCL IN[0]\n"
    "DCL IN[1]\n"
    "DCL OUT[0], POSITION\n"
@@ -120,7 +120,7 @@ static const char vs_clear_asm[] =
 
 
 static const char vs_texture_asm[] =
-   "VERT1.1\n"
+   "VERT\n"
    "DCL IN[0]\n"
    "DCL IN[1]\n"
    "DCL OUT[0], POSITION\n"

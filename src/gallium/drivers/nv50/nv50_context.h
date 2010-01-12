@@ -65,7 +65,7 @@ struct nv50_rasterizer_stateobj {
 };
 
 struct nv50_sampler_stateobj {
-	bool normalized;
+	boolean normalized;
 	unsigned tsc[8];
 };
 
@@ -126,7 +126,7 @@ struct nv50_state {
 	unsigned viewport_bypass;
 	struct nouveau_stateobj *tsc_upload;
 	struct nouveau_stateobj *tic_upload;
-	unsigned miptree_nr;
+	unsigned miptree_nr[PIPE_SHADER_TYPES];
 	struct nouveau_stateobj *vertprog;
 	struct nouveau_stateobj *fragprog;
 	struct nouveau_stateobj *programs;
@@ -162,10 +162,10 @@ struct nv50_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	struct nv50_sampler_stateobj *sampler[PIPE_MAX_SAMPLERS];
-	unsigned sampler_nr;
-	struct nv50_miptree *miptree[PIPE_MAX_SAMPLERS];
-	unsigned miptree_nr;
+	struct nv50_sampler_stateobj *sampler[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+	unsigned sampler_nr[PIPE_SHADER_TYPES];
+	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+	unsigned miptree_nr[PIPE_SHADER_TYPES];
 
 	uint16_t vbo_fifo;
 };
@@ -191,9 +191,9 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 
 /* nv50_vbo.c */
-extern boolean nv50_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv50_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv50_draw_elements(struct pipe_context *pipe,
+extern void nv50_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
@@ -218,7 +218,7 @@ extern void nv50_state_flush_notify(struct nouveau_channel *chan);
 extern void nv50_so_init_sifc(struct nv50_context *nv50,
 			      struct nouveau_stateobj *so,
 			      struct nouveau_bo *bo, unsigned reloc,
-			      unsigned size);
+			      unsigned offset, unsigned size);
 
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);

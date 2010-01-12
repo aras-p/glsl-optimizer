@@ -42,137 +42,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
-/**
- * Copy the back color buffer to the front color buffer. 
- * Used for SwapBuffers().
- */
-void
-intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
-                const drm_clip_rect_t * rect)
-{
-
-   struct intel_context *intel;
-   const intelScreenPrivate *intelScreen;
-
-   DBG("%s\n", __FUNCTION__);
-
-   assert(dPriv);
-
-   intel = intelScreenContext(dPriv->driScreenPriv->private);
-   if (!intel)
-      return;
-
-   intelScreen = intel->intelScreen;
-
-   /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
-    * should work regardless.
-    */
-   LOCK_HARDWARE(intel);
-
-   if (dPriv && dPriv->numClipRects) {
-      struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-      struct intel_region *src, *dst;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *pbox = dPriv->pClipRects;
-      int cpp;
-      int src_pitch, dst_pitch;
-      unsigned short src_x, src_y;
-      int BR13, CMD;
-      int i;
-      dri_bo *aper_array[3];
-
-      src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
-      dst = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
-
-      src_pitch = src->pitch * src->cpp;
-      dst_pitch = dst->pitch * dst->cpp;
-
-      cpp = src->cpp;
-
-      ASSERT(intel_fb);
-      ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
-      ASSERT(src);
-      ASSERT(dst);
-      ASSERT(src->cpp == dst->cpp);
-
-      if (cpp == 2) {
-	 BR13 = (0xCC << 16) | BR13_565;
-	 CMD = XY_SRC_COPY_BLT_CMD;
-      }
-      else {
-	 BR13 = (0xCC << 16) | BR13_8888;
-	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-      }
-
-      assert(src->tiling != I915_TILING_Y);
-      assert(dst->tiling != I915_TILING_Y);
-#ifndef I915
-      if (src->tiling != I915_TILING_NONE) {
-	 CMD |= XY_SRC_TILED;
-	 src_pitch /= 4;
-      }
-      if (dst->tiling != I915_TILING_NONE) {
-	 CMD |= XY_DST_TILED;
-	 dst_pitch /= 4;
-      }
-#endif
-      /* do space/cliprects check before going any further */
-      intel_batchbuffer_require_space(intel->batch, 8 * 4,
-				      REFERENCES_CLIPRECTS);
-   again:
-      aper_array[0] = intel->batch->buf;
-      aper_array[1] = dst->buffer;
-      aper_array[2] = src->buffer;
-
-      if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
-	intel_batchbuffer_flush(intel->batch);
-	goto again;
-      }
-
-      for (i = 0; i < nbox; i++, pbox++) {
-	 drm_clip_rect_t box = *pbox;
-
-	 if (rect) {
-	    if (!intel_intersect_cliprects(&box, &box, rect))
-	       continue;
-	 }
-
-	 if (box.x1 >= box.x2 ||
-	     box.y1 >= box.y2)
-	    continue;
-
-	 assert(box.x1 < box.x2);
-	 assert(box.y1 < box.y2);
-	 src_x = box.x1 - dPriv->x + dPriv->backX;
-	 src_y = box.y1 - dPriv->y + dPriv->backY;
-
-	 BEGIN_BATCH(8, REFERENCES_CLIPRECTS);
-	 OUT_BATCH(CMD);
-	 OUT_BATCH(BR13 | dst_pitch);
-	 OUT_BATCH((box.y1 << 16) | box.x1);
-	 OUT_BATCH((box.y2 << 16) | box.x2);
-
-	 OUT_RELOC(dst->buffer,
-		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
-	 OUT_BATCH((src_y << 16) | src_x);
-	 OUT_BATCH(src_pitch);
-	 OUT_RELOC(src->buffer,
-		   I915_GEM_DOMAIN_RENDER, 0,
-		   0);
-	 ADVANCE_BATCH();
-      }
-
-      /* Flush the rendering and the batch so that the results all land on the
-       * screen in a timely fashion.
-       */
-      intel_batchbuffer_emit_mi_flush(intel->batch);
-      intel_batchbuffer_flush(intel->batch);
-   }
-
-   UNLOCK_HARDWARE(intel);
-}
-
 static GLuint translate_raster_op(GLenum logicop)
 {
    switch(logicop) {
@@ -248,7 +117,6 @@ intelEmitCopyBlit(struct intel_context *intel,
    } while (pass < 2);
 
    if (pass >= 2) {
-       LOCK_HARDWARE(intel);
        dri_bo_map(dst_buffer, GL_TRUE);
        dri_bo_map(src_buffer, GL_FALSE);
        _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
@@ -262,12 +130,11 @@ intelEmitCopyBlit(struct intel_context *intel,
        
        dri_bo_unmap(src_buffer);
        dri_bo_unmap(dst_buffer);
-       UNLOCK_HARDWARE(intel);
 
        return GL_TRUE;
    }
 
-   intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
+   intel_batchbuffer_require_space(intel->batch, 8 * 4);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
@@ -312,7 +179,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    assert(dst_x < dst_x2);
    assert(dst_y < dst_y2);
 
-   BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
+   BEGIN_BATCH(8);
    OUT_BATCH(CMD);
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
    OUT_BATCH((dst_y << 16) | dst_x);
@@ -369,8 +236,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    if ((mask & BUFFER_BIT_DEPTH) && (mask & BUFFER_BIT_STENCIL)) {
       skipBuffers = BUFFER_BIT_STENCIL;
    }
-
-   LOCK_HARDWARE(intel);
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects) {
@@ -496,13 +361,14 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		  CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
 		  CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
 
-		  switch (irb->texformat) {
+		  switch (irb->Base.Format) {
 		  case MESA_FORMAT_ARGB8888:
 		  case MESA_FORMAT_XRGB8888:
-		     clearVal = intel->ClearColor8888;
+		     clearVal = PACK_COLOR_8888(clear[3], clear[0],
+						clear[1], clear[2]);
 		     break;
 		  case MESA_FORMAT_RGB565:
-		     clearVal = intel->ClearColor565;
+		     clearVal = PACK_COLOR_565(clear[0], clear[1], clear[2]);
 		     break;
 		  case MESA_FORMAT_ARGB4444:
 		     clearVal = PACK_COLOR_4444(clear[3], clear[0],
@@ -514,7 +380,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 		     break;
 		  default:
 		     _mesa_problem(ctx, "Unexpected renderbuffer format: %d\n",
-				   irb->texformat);
+				   irb->Base.Format);
 		     clearVal = 0;
 		  }
 	       }
@@ -527,7 +393,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                assert(x1 < x2);
                assert(y1 < y2);
 
-               BEGIN_BATCH(6, REFERENCES_CLIPRECTS);
+               BEGIN_BATCH(6);
                OUT_BATCH(CMD);
                OUT_BATCH(BR13);
                OUT_BATCH((y1 << 16) | x1);
@@ -542,8 +408,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
          }
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 GLboolean
@@ -585,8 +449,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_require_space( intel->batch,
 				    (8 * 4) +
 				    (3 * 4) +
-				    dwords * 4,
-				    REFERENCES_CLIPRECTS );
+				    dwords * 4 );
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -608,7 +471,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (dst_tiling != I915_TILING_NONE)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH(8 + 3, REFERENCES_CLIPRECTS);
+   BEGIN_BATCH(8 + 3);
    OUT_BATCH(opcode);
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
@@ -627,8 +490,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    intel_batchbuffer_data( intel->batch,
 			   src_bits,
-			   dwords * 4,
-			   REFERENCES_CLIPRECTS );
+			   dwords * 4 );
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
 

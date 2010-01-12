@@ -82,7 +82,7 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, const void *src_ptr,
 
 void
 pipe_linear_fill_info(struct pipe_tile_info *t,
-		      const struct pipe_format_block *block,
+		      const struct u_linear_format_block *block,
 		      unsigned tile_width, unsigned tile_height,
 		      unsigned tiles_x, unsigned tiles_y)
 {

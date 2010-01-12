@@ -61,21 +61,11 @@ do {									\
    printf( "\n" );							\
 } while (0)
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define OFFSET( s, t, m )						\
-   printf( "#define %s\t%ld\n", s, offsetof( t, m ) );
-#else
-#define OFFSET( s, t, m )						\
-   printf( "#define %s\t%d\n", s, offsetof( t, m ) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) offsetof( t, m ) );
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define SIZEOF( s, t )							\
-   printf( "#define %s\t%ld\n", s, sizeof(t) );
-#else
-#define SIZEOF( s, t )							\
-   printf( "#define %s\t%d\n", s, sizeof(t) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
 
 #define DEFINE( s, d )							\
    printf( "#define %s\t0x%x\n", s, d );
@@ -120,22 +110,22 @@ int main( int argc, char **argv )
    OFFSET( "VB_COUNT               ", struct vertex_buffer, Count );
    printf( "\n" );
    OFFSET( "VB_ELTS                ", struct vertex_buffer, Elts );
-   OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, ObjPtr );
+   OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_POS] );
    OFFSET( "VB_EYE_PTR             ", struct vertex_buffer, EyePtr );
    OFFSET( "VB_CLIP_PTR            ", struct vertex_buffer, ClipPtr );
    OFFSET( "VB_PROJ_CLIP_PTR       ", struct vertex_buffer, NdcPtr );
    OFFSET( "VB_CLIP_OR_MASK        ", struct vertex_buffer, ClipOrMask );
    OFFSET( "VB_CLIP_MASK           ", struct vertex_buffer, ClipMask );
-   OFFSET( "VB_NORMAL_PTR          ", struct vertex_buffer, NormalPtr );
+   OFFSET( "VB_NORMAL_PTR          ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_NORMAL] );
    OFFSET( "VB_EDGE_FLAG           ", struct vertex_buffer, EdgeFlag );
-   OFFSET( "VB_TEX0_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[0] );
-   OFFSET( "VB_TEX1_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[1] );
-   OFFSET( "VB_TEX2_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[2] );
-   OFFSET( "VB_TEX3_COORD_PTR      ", struct vertex_buffer, TexCoordPtr[3] );
-   OFFSET( "VB_INDEX_PTR           ", struct vertex_buffer, IndexPtr );
-   OFFSET( "VB_COLOR_PTR           ", struct vertex_buffer, ColorPtr );
-   OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, SecondaryColorPtr );
-   OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, FogCoordPtr );
+   OFFSET( "VB_TEX0_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX0] );
+   OFFSET( "VB_TEX1_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX1] );
+   OFFSET( "VB_TEX2_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX2] );
+   OFFSET( "VB_TEX3_COORD_PTR      ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_TEX3] );
+   OFFSET( "VB_INDEX_PTR           ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR_INDEX] );
+   OFFSET( "VB_COLOR_PTR           ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR0] );
+   OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_COLOR1] );
+   OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, AttribPtr[_TNL_ATTRIB_FOG] );
    OFFSET( "VB_PRIMITIVE           ", struct vertex_buffer, Primitive );
    printf( "\n" );
 

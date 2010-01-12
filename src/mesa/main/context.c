@@ -564,10 +564,6 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ARB_draw_buffers */
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
-   /* GL_OES_read_format */
-   ctx->Const.ColorReadFormat = GL_RGBA;
-   ctx->Const.ColorReadType = GL_UNSIGNED_BYTE;
-
 #if FEATURE_EXT_framebuffer_object
    ctx->Const.MaxColorAttachments = MAX_COLOR_ATTACHMENTS;
    ctx->Const.MaxRenderbufferSize = MAX_WIDTH;
@@ -575,6 +571,7 @@ _mesa_init_constants(GLcontext *ctx)
 
 #if FEATURE_ARB_vertex_shader
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
@@ -601,9 +598,11 @@ _mesa_init_constants(GLcontext *ctx)
    ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
    ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
 
-   /* check that we don't exceed various 32-bit bitfields */
-   ASSERT(VERT_RESULT_MAX <= 32);
-   ASSERT(FRAG_ATTRIB_MAX <= 32);
+   /* check that we don't exceed the size of various bitfields */
+   ASSERT(VERT_RESULT_MAX <=
+	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
+   ASSERT(FRAG_ATTRIB_MAX <=
+	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 }
 
 
@@ -1016,6 +1015,9 @@ _mesa_free_context_data( GLcontext *ctx )
    if (ctx->Extensions.String)
       _mesa_free((void *) ctx->Extensions.String);
 
+   if (ctx->VersionString)
+      _mesa_free(ctx->VersionString);
+
    /* unbind the context if it's currently bound */
    if (ctx == _mesa_get_current_context()) {
       _mesa_make_current(NULL, NULL, NULL);
@@ -1375,6 +1377,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
 
       if (newCtx->FirstTimeCurrent) {
+         _mesa_compute_version(newCtx);
+
          check_context_limits(newCtx);
 
          /* We can use this to help debug user's problems.  Tell them to set

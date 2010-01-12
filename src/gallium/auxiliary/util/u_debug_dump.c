@@ -255,15 +255,13 @@ DEFINE_DEBUG_DUMP_CONTINUOUS(tex_mipfilter)
 static const char *
 debug_dump_tex_filter_names[] = {
    "PIPE_TEX_FILTER_NEAREST",
-   "PIPE_TEX_FILTER_LINEAR",
-   "PIPE_TEX_FILTER_ANISO"
+   "PIPE_TEX_FILTER_LINEAR"
 };
 
 static const char *
 debug_dump_tex_filter_short_names[] = {
    "nearest",
-   "linear",
-   "aniso"
+   "linear"
 };
 
 DEFINE_DEBUG_DUMP_CONTINUOUS(tex_filter)

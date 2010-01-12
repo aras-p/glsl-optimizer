@@ -30,6 +30,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_tile.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -423,7 +424,6 @@ dxt5_rgba_data[] = {
 
 static INLINE void 
 st_sample_dxt_pixel_block(enum pipe_format format, 
-                          const struct pipe_format_block *block,
                           uint8_t *raw,
                           float *rgba, unsigned rgba_stride, 
                           unsigned w, unsigned h)
@@ -462,21 +462,21 @@ st_sample_dxt_pixel_block(enum pipe_format format,
          for(ch = 0; ch < 4; ++ch)
             rgba[y*rgba_stride + x*4 + ch] = (float)(data[i].rgba[y*4*4 + x*4 + ch])/255.0f;
    
-   memcpy(raw, data[i].raw, block->size);
+   memcpy(raw, data[i].raw, util_format_get_blocksize(format));
 }
 
 
 static INLINE void 
 st_sample_generic_pixel_block(enum pipe_format format, 
-                              const struct pipe_format_block *block,
                               uint8_t *raw,
                               float *rgba, unsigned rgba_stride,
                               unsigned w, unsigned h)
 {
    unsigned i;
    unsigned x, y, ch;
+   int blocksize = util_format_get_blocksize(format);
    
-   for(i = 0; i < block->size; ++i)
+   for(i = 0; i < blocksize; ++i)
       raw[i] = (uint8_t)st_random();
    
    
@@ -503,7 +503,6 @@ st_sample_generic_pixel_block(enum pipe_format format,
  */
 void 
 st_sample_pixel_block(enum pipe_format format,
-                      const struct pipe_format_block *block,
                       void *raw,
                       float *rgba, unsigned rgba_stride,
                       unsigned w, unsigned h)
@@ -513,11 +512,11 @@ st_sample_pixel_block(enum pipe_format format,
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
-      st_sample_dxt_pixel_block(format, block, raw, rgba, rgba_stride, w, h);
+      st_sample_dxt_pixel_block(format, raw, rgba, rgba_stride, w, h);
       break;
 
    default:
-      st_sample_generic_pixel_block(format, block, raw, rgba, rgba_stride, w, h);
+      st_sample_generic_pixel_block(format, raw, rgba, rgba_stride, w, h);
       break;
    }
 }
@@ -528,8 +527,8 @@ st_sample_surface(struct st_surface *surface, float *rgba)
 {
    struct pipe_texture *texture = surface->texture;
    struct pipe_screen *screen = texture->screen;
-   unsigned width = texture->width[surface->level];
-   unsigned height = texture->height[surface->level];
+   unsigned width = u_minify(texture->width0, surface->level);
+   unsigned height = u_minify(texture->height0, surface->level);
    uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;
@@ -548,18 +547,23 @@ st_sample_surface(struct st_surface *surface, float *rgba)
 
    raw = screen->transfer_map(screen, transfer);
    if (raw) {
-      const struct pipe_format_block *block = &texture->block;
+      enum pipe_format format = texture->format;
       uint x, y;
+      int nblocksx = util_format_get_nblocksx(format, width);
+      int nblocksy = util_format_get_nblocksy(format, height);
+      int blockwidth = util_format_get_blockwidth(format);
+      int blockheight = util_format_get_blockheight(format);
+      int blocksize = util_format_get_blocksize(format);
 
-      for (y = 0; y < transfer->nblocksy; ++y) {
-         for (x = 0; x < transfer->nblocksx; ++x) {
-            st_sample_pixel_block(texture->format,
-                                  block,
-                                  (uint8_t *) raw + y * transfer->stride + x * block->size,
-                                  rgba + y * block->height * rgba_stride + x * block->width * 4,
+
+      for (y = 0; y < nblocksy; ++y) {
+         for (x = 0; x < nblocksx; ++x) {
+            st_sample_pixel_block(format,
+                                  (uint8_t *) raw + y * transfer->stride + x * blocksize,
+                                  rgba + y * blockheight * rgba_stride + x * blockwidth * 4,
                                   rgba_stride,
-                                  MIN2(block->width, width - x*block->width),
-                                  MIN2(block->height, height - y*block->height));
+                                  MIN2(blockwidth, width - x*blockwidth),
+                                  MIN2(blockheight, height - y*blockheight));
          }
       }
 

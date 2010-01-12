@@ -892,18 +892,18 @@ struct tdfx_context {
    char rendererString[100];
 
    /* stuff added for DRI */
-   __DRIscreenPrivate *driScreen;
-   __DRIcontextPrivate *driContext;
+   __DRIscreen *driScreen;
+   __DRIcontext *driContext;
 
    /**
     * DRI drawable bound to this context for drawing.
     */
-   __DRIdrawablePrivate	*driDrawable;
+   __DRIdrawable	*driDrawable;
 
    /**
     * DRI drawable bound to this context for reading.
     */
-   __DRIdrawablePrivate	*driReadable;
+   __DRIdrawable	*driReadable;
 
    drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
@@ -938,19 +938,19 @@ struct tdfx_context {
 
 extern GLboolean
 tdfxCreateContext( const __GLcontextModes *mesaVis,
-                   __DRIcontextPrivate *driContextPriv,
+                   __DRIcontext *driContextPriv,
                    void *sharedContextPrivate );
 
 extern void
-tdfxDestroyContext( __DRIcontextPrivate *driContextPriv );
+tdfxDestroyContext( __DRIcontext *driContextPriv );
 
 extern GLboolean
-tdfxUnbindContext( __DRIcontextPrivate *driContextPriv );
+tdfxUnbindContext( __DRIcontext *driContextPriv );
 
 extern GLboolean
-tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv );
+tdfxMakeCurrent( __DRIcontext *driContextPriv,
+                 __DRIdrawable *driDrawPriv,
+                 __DRIdrawable *driReadPriv );
 
 extern GLboolean
 tdfxInitGlide( tdfxContextPtr tmesa );

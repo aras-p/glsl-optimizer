@@ -26,8 +26,6 @@
  **************************************************************************/
 
 
-#include "llvm/Config/config.h"
-
 #include "pipe/p_config.h"
 
 #include "lp_bld_misc.h"
@@ -50,13 +48,28 @@ LLVMLinkInJIT(void)
 extern "C" int X86TargetMachineModule;
 
 
-void
+int
 LLVMInitializeNativeTarget(void)
 {
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   X86TargetMachineModule = 1;			
+   X86TargetMachineModule = 1;
 #endif
+   return 0;
 }
 
 
+#endif
+
+
+/* 
+ * Hack to allow the linking of release LLVM static libraries on a debug build.
+ *
+ * See also:
+ * - http://social.msdn.microsoft.com/Forums/en-US/vclanguage/thread/7234ea2b-0042-42ed-b4e2-5d8644dfb57d
+ */
+#if defined(_MSC_VER) && defined(_DEBUG)
+#include <crtdefs.h>
+extern "C" {
+   _CRTIMP void __cdecl _invalid_parameter_noinfo(void) {}
+}
 #endif

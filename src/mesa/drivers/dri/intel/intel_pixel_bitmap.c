@@ -32,6 +32,7 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/bufferobj.h"
+#include "main/polygon.h"
 #include "main/pixelstore.h"
 #include "main/polygon.h"
 #include "main/state.h"
@@ -165,7 +166,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
  * Returns the low Y value of the vertical range given, flipped according to
  * whether the framebuffer is or not.
  */
-static inline int
+static INLINE int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
    if (fb->Name != 0)
@@ -228,15 +229,12 @@ do_blit_bitmap( GLcontext *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
    if (dst->cpp == 2)
-      color = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+      color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
    else
-      color = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1],
-				  ubcolor[2], ubcolor[3]);
+      color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
-
-   LOCK_HARDWARE(intel);
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects != 0) {
@@ -325,7 +323,6 @@ do_blit_bitmap( GLcontext *ctx,
       }
    }
 out:
-   UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_SYNC)
       intel_batchbuffer_flush(intel->batch);
@@ -335,6 +332,8 @@ out:
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                               unpack->BufferObj);
    }
+
+   intel_check_front_buffer_rendering(intel);
 
    return GL_TRUE;
 }
@@ -502,6 +501,7 @@ intel_texture_bitmap(GLcontext * ctx,
    meta_restore_fragment_program(&intel->meta);
    meta_restore_vertex_program(&intel->meta);
 
+   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
 

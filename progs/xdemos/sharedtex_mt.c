@@ -174,6 +174,10 @@ AddWindow(Display *dpy, const char *displayName, int xpos, int ypos,
    {
       static int id = 0;
       struct window *h = &Windows[NumWindows];
+      if (strlen(displayName) + 1 > sizeof(h->DisplayName)) {
+         Error(displayName, "string overflow");
+         return NULL;
+      }
       strcpy(h->DisplayName, displayName);
       h->Dpy = dpy;
       h->Win = win;
@@ -447,7 +451,7 @@ main(int argc, char *argv[])
    const char *dpyName = XDisplayName(NULL);
    pthread_t t0, t1, t2, t3;
    struct thread_init_arg tia0, tia1, tia2, tia3;
-   struct window *h0, *h1, *h2, *h3;
+   struct window *h0;
 
    XInitThreads();
 
@@ -462,9 +466,9 @@ main(int argc, char *argv[])
 
    /* four windows and contexts sharing display lists and texture objects */
    h0 = AddWindow(gDpy, dpyName,  10,  10, gCtx);
-   h1 = AddWindow(gDpy, dpyName, 330,  10, gCtx);
-   h2 = AddWindow(gDpy, dpyName,  10, 350, gCtx);
-   h3 = AddWindow(gDpy, dpyName, 330, 350, gCtx);
+   (void) AddWindow(gDpy, dpyName, 330,  10, gCtx);
+   (void) AddWindow(gDpy, dpyName,  10, 350, gCtx);
+   (void) AddWindow(gDpy, dpyName, 330, 350, gCtx);
 
    if (!glXMakeCurrent(gDpy, h0->Win, gCtx)) {
       Error(dpyName, "glXMakeCurrent failed for init thread.");

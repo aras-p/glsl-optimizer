@@ -47,7 +47,7 @@ for name, value in globals().items():
         formats[value] = name
 
 def is_depth_stencil_format(format):
-    # FIXME: make and use binding to pf_is_depth_stencil
+    # FIXME: make and use binding to util_format_is_depth_or_stencil
     return format in (
         PIPE_FORMAT_Z32_UNORM,
         PIPE_FORMAT_Z24S8_UNORM,

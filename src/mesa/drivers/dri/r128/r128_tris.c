@@ -216,7 +216,8 @@ do {							\
 
 #define LOCAL_VARS(n)						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset = rmesa->coloroffset;			\
    GLuint specoffset = rmesa->specoffset;			\
    GLboolean havespec = (rmesa->specoffset != 0);		\
@@ -650,12 +651,12 @@ static void r128RenderStart( GLcontext *ctx )
    }
 
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(rmesa->tmu_source[0]) )) {
-      if ( VB->TexCoordPtr[rmesa->tmu_source[0]]->size > 2 )
+      if ( VB->AttribPtr[_TNL_ATTRIB_TEX0 + rmesa->tmu_source[0]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
       EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
    }
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(rmesa->tmu_source[1]) )) {
-      if ( VB->TexCoordPtr[rmesa->tmu_source[1]]->size > 2 )
+      if ( VB->AttribPtr[_TNL_ATTRIB_TEX0 + rmesa->tmu_source[1]]->size > 2 )
 	 fallback_projtex = GL_TRUE;
       EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S2_T2, 8 );
    }

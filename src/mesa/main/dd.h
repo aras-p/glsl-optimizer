@@ -182,7 +182,7 @@ struct dd_function_table {
     * 
     * This is called by the \c _mesa_store_tex[sub]image[123]d() fallback
     * functions.  The driver should examine \p internalFormat and return a
-    * pointer to an appropriate gl_texture_format.
+    * gl_format value.
     */
    GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
@@ -538,11 +538,6 @@ struct dd_function_table {
                                    struct gl_texture_object *t );
 
    /**
-    * Called by glActiveTextureARB() to set current texture unit.
-    */
-   void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );
-
-   /**
     * Called when the texture's color lookup table is changed.
     * 
     * If \p tObj is NULL then the shared texture palette
@@ -630,6 +625,8 @@ struct dd_function_table {
    /** Enable and disable writing of frame buffer color components */
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );
+   void (*ColorMaskIndexed)(GLcontext *ctx, GLuint buf, GLboolean rmask,
+                            GLboolean gmask, GLboolean bmask, GLboolean amask);
    /** Cause a material color to track the current color */
    void (*ColorMaterial)(GLcontext *ctx, GLenum face, GLenum mode);
    /** Specify whether front- or back-facing facets can be culled */
@@ -709,34 +706,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /**
-    * \name Vertex array functions
-    *
-    * Called by the corresponding OpenGL functions.
-    */
-   /*@{*/
-   void (*VertexPointer)(GLcontext *ctx, GLint size, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*NormalPointer)(GLcontext *ctx, GLenum type,
-			 GLsizei stride, const GLvoid *ptr);
-   void (*ColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*FogCoordPointer)(GLcontext *ctx, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*IndexPointer)(GLcontext *ctx, GLenum type,
-			GLsizei stride, const GLvoid *ptr);
-   void (*SecondaryColorPointer)(GLcontext *ctx, GLint size, GLenum type,
-				 GLsizei stride, const GLvoid *ptr);
-   void (*TexCoordPointer)(GLcontext *ctx, GLint size, GLenum type,
-			   GLsizei stride, const GLvoid *ptr);
-   void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
-   void (*VertexAttribPointer)(GLcontext *ctx, GLuint index, GLint size,
-                               GLenum type, GLsizei stride, const GLvoid *ptr);
-   void (*LockArraysEXT)( GLcontext *ctx, GLint first, GLsizei count );
-   void (*UnlockArraysEXT)( GLcontext *ctx );
-   /*@}*/
-
-
    /** 
     * \name State-query functions
     *
@@ -794,13 +763,13 @@ struct dd_function_table {
 
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
-   void * (*MapBufferRange)( GLcontext *ctx, GLenum target,
-                             GLintptr offset, GLsizeiptr length, GLbitfield access,
+   void * (*MapBufferRange)( GLcontext *ctx, GLenum target, GLintptr offset,
+                             GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 
-   void (*FlushMappedBufferRange) (GLcontext *ctx, GLenum target, 
-                                   GLintptr offset, GLsizeiptr length,
-                                   struct gl_buffer_object *obj);
+   void (*FlushMappedBufferRange)(GLcontext *ctx, GLenum target, 
+                                  GLintptr offset, GLsizeiptr length,
+                                  struct gl_buffer_object *obj);
 
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
@@ -815,7 +784,8 @@ struct dd_function_table {
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
    void (*BindFramebuffer)(GLcontext *ctx, GLenum target,
-                           struct gl_framebuffer *fb, struct gl_framebuffer *fbread);
+                           struct gl_framebuffer *drawFb,
+                           struct gl_framebuffer *readFb);
    void (*FramebufferRenderbuffer)(GLcontext *ctx, 
                                    struct gl_framebuffer *fb,
                                    GLenum attachment,
@@ -1046,6 +1016,11 @@ struct dd_function_table {
 			  GLbitfield, GLuint64);
    /*@}*/
 #endif
+
+   /** GL_NV_conditional_render */
+   void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
+                                  GLenum mode);
+   void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
 
 #if FEATURE_OES_draw_texture
    /**

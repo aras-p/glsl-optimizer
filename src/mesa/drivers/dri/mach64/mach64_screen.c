@@ -68,7 +68,7 @@ static const GLuint __driNConfigOptions = 2;
 #endif
 
 static const __DRIconfig **
-mach64FillInModes( __DRIscreenPrivate *psp,
+mach64FillInModes( __DRIscreen *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -144,7 +144,7 @@ mach64FillInModes( __DRIscreenPrivate *psp,
 /* Create the device specific screen private data struct.
  */
 static mach64ScreenRec *
-mach64CreateScreen( __DRIscreenPrivate *sPriv )
+mach64CreateScreen( __DRIscreen *sPriv )
 {
    mach64ScreenPtr mach64Screen;
    ATIDRIPtr serverInfo = (ATIDRIPtr)sPriv->pDevPriv;
@@ -272,7 +272,7 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 /* Destroy the device specific screen private data struct.
  */
 static void
-mach64DestroyScreen( __DRIscreenPrivate *driScreen )
+mach64DestroyScreen( __DRIscreen *driScreen )
 {
    mach64ScreenRec *mach64Screen = (mach64ScreenRec *) driScreen->private;
 
@@ -299,8 +299,8 @@ mach64DestroyScreen( __DRIscreenPrivate *driScreen )
  * data.
  */
 static GLboolean
-mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
-		    __DRIdrawablePrivate *driDrawPriv,
+mach64CreateBuffer( __DRIscreen *driScrnPriv,
+		    __DRIdrawable *driDrawPriv,
 		    const __GLcontextModes *mesaVis,
 		    GLboolean isPixmap )
 {
@@ -370,7 +370,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-mach64DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+mach64DestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
@@ -378,7 +378,7 @@ mach64DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 
 /* Copy the back color buffer to the front color buffer */
 static void
-mach64SwapBuffers(__DRIdrawablePrivate *dPriv)
+mach64SwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mach64ContextPtr mmesa;
@@ -400,7 +400,7 @@ mach64SwapBuffers(__DRIdrawablePrivate *dPriv)
 /* Initialize the driver specific screen private data.
  */
 static GLboolean
-mach64InitDriver( __DRIscreenPrivate *driScreen )
+mach64InitDriver( __DRIscreen *driScreen )
 {
    driScreen->private = (void *) mach64CreateScreen( driScreen );
 
@@ -420,7 +420,7 @@ mach64InitDriver( __DRIscreenPrivate *driScreen )
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-mach64InitScreen(__DRIscreenPrivate *psp)
+mach64InitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 6, 4, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -457,3 +457,9 @@ const struct __DriverAPIRec driDriverAPI = {
    .SwapBuffersMSC  = NULL
 };
 
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
+};

@@ -33,6 +33,7 @@
 #include "main/context.h"
 #include "main/imports.h"
 #include <GL/glx.h>
+#include "pipe/p_compiler.h"
 
 
 /* Some debugging info.  */
@@ -210,7 +211,7 @@ isvalid(XFontStruct * fs, unsigned int which)
 }
 
 
-void
+PUBLIC void
 glXUseXFont(Font font, int first, int count, int listbase)
 {
    Display *dpy;

@@ -233,9 +233,13 @@ _mesa_set_texture_attachment(GLcontext *ctx,
    if (att->Texture == texObj) {
       /* re-attaching same texture */
       ASSERT(att->Type == GL_TEXTURE);
+      if (ctx->Driver.FinishRenderTexture)
+	 ctx->Driver.FinishRenderTexture(ctx, att);
    }
    else {
       /* new attachment */
+      if (ctx->Driver.FinishRenderTexture && att->Texture)
+	 ctx->Driver.FinishRenderTexture(ctx, att);
       _mesa_remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
       assert(!att->Texture);
@@ -1145,11 +1149,20 @@ _mesa_IsFramebufferEXT(GLuint framebuffer)
 }
 
 
+/**
+ * Check if any of the attachments of the given framebuffer are textures
+ * (render to texture).  Call ctx->Driver.RenderTexture() for such
+ * attachments.
+ */
 static void
 check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
+
+   if (fb->Name == 0)
+      return; /* can't render to texture with winsys framebuffers */
+
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
       struct gl_texture_object *texObj = att->Texture;
@@ -1169,6 +1182,9 @@ check_begin_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 {
+   if (fb->Name == 0)
+      return; /* can't render to texture with winsys framebuffers */
+
    if (ctx->Driver.FinishRenderTexture) {
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
@@ -1184,7 +1200,8 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-   struct gl_framebuffer *newFb, *newFbread;
+   struct gl_framebuffer *newDrawFb, *newReadFb;
+   struct gl_framebuffer *oldDrawFb, *oldReadFb;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1233,74 +1250,88 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
-      newFb = _mesa_lookup_framebuffer(ctx, framebuffer);
-      if (newFb == &DummyFramebuffer) {
+      newDrawFb = _mesa_lookup_framebuffer(ctx, framebuffer);
+      if (newDrawFb == &DummyFramebuffer) {
          /* ID was reserved, but no real framebuffer object made yet */
-         newFb = NULL;
+         newDrawFb = NULL;
       }
-      else if (!newFb && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newDrawFb && ctx->Extensions.ARB_framebuffer_object) {
          /* All FBO IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
          return;
       }
 
-      if (!newFb) {
+      if (!newDrawFb) {
 	 /* create new framebuffer object */
-	 newFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
-	 if (!newFb) {
+	 newDrawFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
+	 if (!newDrawFb) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindFramebufferEXT");
 	    return;
 	 }
-         _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newFb);
+         _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newDrawFb);
       }
-      newFbread = newFb;
+      newReadFb = newDrawFb;
    }
    else {
       /* Binding the window system framebuffer (which was originally set
        * with MakeCurrent).
        */
-      newFb = ctx->WinSysDrawBuffer;
-      newFbread = ctx->WinSysReadBuffer;
+      newDrawFb = ctx->WinSysDrawBuffer;
+      newReadFb = ctx->WinSysReadBuffer;
    }
 
-   ASSERT(newFb);
-   ASSERT(newFb != &DummyFramebuffer);
+   ASSERT(newDrawFb);
+   ASSERT(newDrawFb != &DummyFramebuffer);
+
+   /* save pointers to current/old framebuffers */
+   oldDrawFb = ctx->DrawBuffer;
+   oldReadFb = ctx->ReadBuffer;
+
+   /* check if really changing bindings */
+   if (oldDrawFb == newDrawFb)
+      bindDrawBuf = GL_FALSE;
+   if (oldReadFb == newReadFb)
+      bindReadBuf = GL_FALSE;
 
    /*
     * OK, now bind the new Draw/Read framebuffers, if they're changing.
+    *
+    * We also check if we're beginning and/or ending render-to-texture.
+    * When a framebuffer with texture attachments is unbound, call
+    * ctx->Driver.FinishRenderTexture().
+    * When a framebuffer with texture attachments is bound, call
+    * ctx->Driver.RenderTexture().
+    *
+    * Note that if the ReadBuffer has texture attachments we don't consider
+    * that a render-to-texture case.
     */
    if (bindReadBuf) {
-      if (ctx->ReadBuffer == newFbread) {
-         bindReadBuf = GL_FALSE; /* no change */
-      }
-      else {
-         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
-      }
+      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
+      /* check if old readbuffer was render-to-texture */
+      check_end_texture_render(ctx, oldReadFb);
+
+      _mesa_reference_framebuffer(&ctx->ReadBuffer, newReadFb);
    }
 
    if (bindDrawBuf) {
-      /* check if old FB had any texture attachments */
-      if (ctx->DrawBuffer->Name != 0) {
-         check_end_texture_render(ctx, ctx->DrawBuffer);
-      }
+      FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-      if (ctx->DrawBuffer == newFb) {
-         bindDrawBuf = GL_FALSE; /* no change */
-      }
-      else {
-         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
-      }
+      /* check if old read/draw buffers were render-to-texture */
+      if (!bindReadBuf)
+         check_end_texture_render(ctx, oldReadFb);
 
-      if (newFb->Name != 0) {
-         /* check if newly bound framebuffer has any texture attachments */
-         check_begin_texture_render(ctx, newFb);
-      }
+      if (oldDrawFb != oldReadFb)
+         check_end_texture_render(ctx, oldDrawFb);
+
+      /* check if newly bound framebuffer has any texture attachments */
+      check_begin_texture_render(ctx, newDrawFb);
+
+      _mesa_reference_framebuffer(&ctx->DrawBuffer, newDrawFb);
    }
 
    if ((bindDrawBuf || bindReadBuf) && ctx->Driver.BindFramebuffer) {
-      ctx->Driver.BindFramebuffer(ctx, target, newFb, newFbread);
+      ctx->Driver.BindFramebuffer(ctx, target, newDrawFb, newReadFb);
    }
 }
 
@@ -1911,7 +1942,6 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 void GLAPIENTRY
 _mesa_GenerateMipmapEXT(GLenum target)
 {
-   struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1930,8 +1960,12 @@ _mesa_GenerateMipmapEXT(GLenum target)
       return;
    }
 
-   texUnit = _mesa_get_current_tex_unit(ctx);
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
+
+   if (texObj->BaseLevel >= texObj->MaxLevel) {
+      /* nothing to do */
+      return;
+   }
 
    _mesa_lock_texture(ctx, texObj);
    if (target == GL_TEXTURE_CUBE_MAP) {

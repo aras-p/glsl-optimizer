@@ -124,7 +124,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UnmapTexture = NULL;
    driver->TextureMemCpy = _mesa_memcpy; 
    driver->IsTextureResident = NULL;
-   driver->ActiveTexture = NULL;
    driver->UpdateTexturePalette = NULL;
 
    /* imaging */
@@ -182,19 +181,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexEnv = NULL;
    driver->TexParameter = NULL;
    driver->Viewport = NULL;
-
-   /* vertex arrays */
-   driver->VertexPointer = NULL;
-   driver->NormalPointer = NULL;
-   driver->ColorPointer = NULL;
-   driver->FogCoordPointer = NULL;
-   driver->IndexPointer = NULL;
-   driver->SecondaryColorPointer = NULL;
-   driver->TexCoordPointer = NULL;
-   driver->EdgeFlagPointer = NULL;
-   driver->VertexAttribPointer = NULL;
-   driver->LockArraysEXT = NULL;
-   driver->UnlockArraysEXT = NULL;
 
    /* state queries */
    driver->GetBooleanv = NULL;
@@ -278,11 +264,23 @@ _mesa_init_driver_state(GLcontext *ctx)
                                  ctx->Color.BlendDstRGB,
                                  ctx->Color.BlendSrcA, ctx->Color.BlendDstA);
 
-   ctx->Driver.ColorMask(ctx,
-                         ctx->Color.ColorMask[RCOMP],
-                         ctx->Color.ColorMask[GCOMP],
-                         ctx->Color.ColorMask[BCOMP],
-                         ctx->Color.ColorMask[ACOMP]);
+   if (ctx->Driver.ColorMaskIndexed) {
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         ctx->Driver.ColorMaskIndexed(ctx, i,
+                                      ctx->Color.ColorMask[0][RCOMP],
+                                      ctx->Color.ColorMask[0][GCOMP],
+                                      ctx->Color.ColorMask[0][BCOMP],
+                                      ctx->Color.ColorMask[0][ACOMP]);
+      }
+   }
+   else {
+      ctx->Driver.ColorMask(ctx,
+                            ctx->Color.ColorMask[0][RCOMP],
+                            ctx->Color.ColorMask[0][GCOMP],
+                            ctx->Color.ColorMask[0][BCOMP],
+                            ctx->Color.ColorMask[0][ACOMP]);
+   }
 
    ctx->Driver.CullFace(ctx, ctx->Polygon.CullFaceMode);
    ctx->Driver.DepthFunc(ctx, ctx->Depth.Func);

@@ -130,7 +130,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
       .mesa = _NEW_TRANSFORM,
-      .brw  = BRW_NEW_VERTEX_PROGRAM,
+      .brw  = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_WM_PROG
    },
    .prepare = calculate_curbe_offsets
@@ -340,7 +340,7 @@ static void emit_constant_buffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
-   BEGIN_BATCH(2, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(2);
    if (sz == 0) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);

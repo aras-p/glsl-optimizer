@@ -217,6 +217,12 @@ MatchInstruction(const GLubyte *token)
    const struct instruction_pattern *inst;
    struct instruction_pattern result;
 
+   result.name = NULL;
+   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+   result.inputs = 0;
+   result.outputs = 0;
+   result.suffixes = 0;
+
    for (inst = Instructions; inst->name; inst++) {
       if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
          /* matched! */
@@ -247,7 +253,7 @@ MatchInstruction(const GLubyte *token)
          return result;
       }
    }
-   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+
    return result;
 }
 
@@ -636,7 +642,7 @@ Parse_SwizzleSuffix(const GLubyte *token, GLuint swizzle[4])
    else {
       /* 4-component swizzle (vector) */
       GLint k;
-      for (k = 0; token[k] && k < 4; k++) {
+      for (k = 0; k < 4 && token[k]; k++) {
          if (token[k] == 'x')
             swizzle[k] = 0;
          else if (token[k] == 'y')

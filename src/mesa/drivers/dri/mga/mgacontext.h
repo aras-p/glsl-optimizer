@@ -294,10 +294,10 @@ struct mga_context_t {
    drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
-   __DRIdrawablePrivate *driDrawable;
-   __DRIdrawablePrivate *driReadable;
+   __DRIdrawable *driDrawable;
+   __DRIdrawable *driReadable;
 
-   __DRIscreenPrivate *driScreen;
+   __DRIscreen *driScreen;
    struct mga_screen_private_s *mgaScreen;
    drm_mga_sarea_t *sarea;
 

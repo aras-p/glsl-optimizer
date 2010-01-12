@@ -192,6 +192,7 @@ static void Init( void )
    GLfloat * params;
    GLint max_program_env_parameters;
    GLint max_program_local_parameters;
+   int i;
 
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
@@ -237,6 +238,10 @@ static void Init( void )
 		  & max_program_env_parameters);
 
    params = malloc(max_program_env_parameters * 4 * sizeof(GLfloat));
+
+   for (i = 0; i < max_program_env_parameters * 4; i++) {
+      params[i] = 0.0F;
+   }
 
    pass &= set_parameter_batch(max_program_env_parameters, params, "Env",
 			       program_env_parameter4fv,

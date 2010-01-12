@@ -45,15 +45,19 @@ struct pipe_fence_handle;
 struct pipe_surface;
 
 
+PUBLIC
 struct vg_context *st_create_context(struct pipe_context *pipe,
                                      const void *visual,
                                      struct vg_context *share);
 
+PUBLIC
 void st_destroy_context( struct vg_context *st );
 
+PUBLIC
 void st_copy_context_state(struct vg_context *dst, struct vg_context *src,
                            uint mask);
 
+PUBLIC
 struct st_framebuffer *st_create_framebuffer(const void *visual,
                                              enum pipe_format colorFormat,
                                              enum pipe_format depthFormat,
@@ -61,47 +65,63 @@ struct st_framebuffer *st_create_framebuffer(const void *visual,
                                              uint width, uint height,
                                              void *privateData);
 
+PUBLIC
 void st_resize_framebuffer(struct st_framebuffer *stfb,
                            uint width, uint height);
 
+PUBLIC
 void st_set_framebuffer_surface(struct st_framebuffer *stfb,
                                 uint surfIndex, struct pipe_surface *surf);
 
+PUBLIC
 void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
 				    uint *width, uint *height);
 
+PUBLIC
 int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
                             enum pipe_format format);
 
+PUBLIC
 int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level);
 
+PUBLIC
 int st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                uint surfIndex, struct pipe_surface **surf);
 
+PUBLIC
 int st_get_framebuffer_texture(struct st_framebuffer *stfb,
                                uint surfIndex, struct pipe_texture **tex);
 
+PUBLIC
 void *st_framebuffer_private(struct st_framebuffer *stfb);
 
+PUBLIC
 void st_unreference_framebuffer(struct st_framebuffer *stfb);
 
-void st_make_current(struct vg_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read);
+PUBLIC
+boolean st_make_current(struct vg_context *st,
+                        struct st_framebuffer *draw,
+                        struct st_framebuffer *read);
 
+PUBLIC
 struct vg_context *st_get_current(void);
 
+PUBLIC
 void st_flush(struct vg_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence);
+PUBLIC
 void st_finish(struct vg_context *st);
 
+PUBLIC
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
+PUBLIC
 void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);
 
 
 /** Generic function type */
 typedef void (*st_proc)();
 
+PUBLIC
 st_proc st_get_proc_address(const char *procname);
 
 #endif

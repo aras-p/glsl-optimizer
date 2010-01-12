@@ -673,18 +673,10 @@
 #define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
 #define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
 
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_IGDNG            0
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_IGDNG          0
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG           0
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_IGDNG       1
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_BIAS_IGDNG     1
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS_IGDNG      1
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_IGDNG        2
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_IGDNG      2
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD_IGDNG       2
-#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_COMPARE_IGDNG    3
-#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_COMPARE_IGDNG  3
-#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG   3
+#define BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG            0
+#define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG       1
+#define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_IGDNG        2
+#define BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG    3
 
 /* for IGDNG only */
 #define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
@@ -839,13 +831,5 @@
 #define R02_PRIM_START  0x2
 
 #include "intel_chipset.h"
-
-#define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->intel.intelScreen->deviceID))
-#define BRW_IS_965(brw)         (!(BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)))
-#define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
-#define CMD_VF_STATISTICS(brw)          ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
-#define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
-                                         (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
 
 #endif

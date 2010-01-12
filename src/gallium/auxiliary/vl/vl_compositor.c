@@ -95,12 +95,11 @@ create_vert_shader(struct vl_compositor *c)
    assert(c);
 
    tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
+   header = (struct tgsi_header*)&tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
+   *(struct tgsi_processor*)&tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_VERTEX, header);
 
-   ti = 3;
+   ti = 2;
 
    /*
     * decl i0             ; Vertex pos
@@ -172,12 +171,11 @@ create_frag_shader(struct vl_compositor *c)
    assert(c);
 
    tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
-   *(struct tgsi_version*)&tokens[0] = tgsi_build_version();
-   header = (struct tgsi_header*)&tokens[1];
+   header = (struct tgsi_header*)&tokens[0];
    *header = tgsi_build_header();
-   *(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+   *(struct tgsi_processor*)&tokens[1] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
 
-   ti = 3;
+   ti = 2;
 
    /* decl i0             ; Texcoords for s0 */
    decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
@@ -213,7 +211,7 @@ create_frag_shader(struct vl_compositor *c)
     */
    for (i = 0; i < 4; ++i) {
       inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i);
-      inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+      inst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_X << i;
       ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
    }
 
@@ -455,8 +453,8 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    assert(dst_area);
    assert(picture_type == PIPE_MPEG12_PICTURE_TYPE_FRAME);
 
-   compositor->fb_state.width = dst_surface->width[0];
-   compositor->fb_state.height = dst_surface->height[0];
+   compositor->fb_state.width = dst_surface->width0;
+   compositor->fb_state.height = dst_surface->height0;
    compositor->fb_state.cbufs[0] = compositor->pipe->screen->get_tex_surface
    (
       compositor->pipe->screen,
@@ -479,8 +477,8 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
    compositor->pipe->set_scissor_state(compositor->pipe, &compositor->scissor);
-   compositor->pipe->bind_sampler_states(compositor->pipe, 1, &compositor->sampler);
-   compositor->pipe->set_sampler_textures(compositor->pipe, 1, &src_surface);
+   compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 1, &compositor->sampler);
+   compositor->pipe->set_fragment_sampler_textures(compositor->pipe, 1, &src_surface);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 2, compositor->vertex_bufs);
@@ -504,12 +502,12 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    vs_consts->dst_trans.z = 0;
    vs_consts->dst_trans.w = 0;
 
-   vs_consts->src_scale.x = src_area->w / (float)src_surface->width[0];
-   vs_consts->src_scale.y = src_area->h / (float)src_surface->height[0];
+   vs_consts->src_scale.x = src_area->w / (float)src_surface->width0;
+   vs_consts->src_scale.y = src_area->h / (float)src_surface->height0;
    vs_consts->src_scale.z = 1;
    vs_consts->src_scale.w = 1;
-   vs_consts->src_trans.x = src_area->x / (float)src_surface->width[0];
-   vs_consts->src_trans.y = src_area->y / (float)src_surface->height[0];
+   vs_consts->src_trans.x = src_area->x / (float)src_surface->width0;
+   vs_consts->src_trans.y = src_area->y / (float)src_surface->height0;
    vs_consts->src_trans.z = 0;
    vs_consts->src_trans.w = 0;
 

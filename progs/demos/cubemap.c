@@ -613,9 +613,8 @@ static void parse_args(int argc, char *argv[])
 
 int main( int argc, char *argv[] )
 {
-   glutInit(&argc, argv);
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(600, 500);
+   glutInit(&argc, argv);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
    glutCreateWindow("Texture Cube Mapping");
    glewInit();

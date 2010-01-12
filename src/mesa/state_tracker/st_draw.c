@@ -25,10 +25,20 @@
  * 
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  */
+/*
+ * This file implements the st_draw_vbo() function which is called from
+ * Mesa's VBO module.  All point/line/triangle rendering is done through
+ * this function whether the user called glBegin/End, glDrawArrays,
+ * glDrawElements, glEvalMesh, or glCalList, etc.
+ *
+ * We basically convert the VBO's vertex attribute/array information into
+ * Gallium vertex state, bind the vertex buffer objects and call
+ * pipe->draw_elements(), pipe->draw_range_elements() or pipe->draw_arrays().
+ *
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ */
+
 
 #include "main/imports.h"
 #include "main/image.h"
@@ -207,59 +217,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
 }
 
 
-/*
- * If edge flags are needed, setup an bitvector of flags and call
- * pipe->set_edgeflags().
- * XXX memleak: need to free the returned pointer at some point
- */
-static void *
-setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
-                const struct gl_client_array *array)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
 
-   if ((primMode == GL_TRIANGLES ||
-        primMode == GL_QUADS ||
-        primMode == GL_POLYGON) &&
-       (ctx->Polygon.FrontMode != GL_FILL ||
-        ctx->Polygon.BackMode != GL_FILL)) {
-      /* need edge flags */
-      GLint i;
-      unsigned *vec;
-      struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
-      ubyte *map;
-
-      if (!stobj || stobj->Base.Name == 0) {
-         /* edge flags are not in a VBO */
-         return NULL;
-      }
-
-      vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
-      if (!vec)
-         return NULL;
-
-      map = pipe_buffer_map(pipe->screen, stobj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-      map = ADD_POINTERS(map, array->Ptr);
-
-      for (i = 0; i < count; i++) {
-         if (*((float *) map))
-            vec[i/32] |= 1 << (i % 32);
-
-         map += array->StrideB;
-      }
-
-      pipe_buffer_unmap(pipe->screen, stobj->buffer);
-
-      pipe->set_edgeflags(pipe, vec);
-
-      return vec;
-   }
-   else {
-      /* edge flags not needed */
-      pipe->set_edgeflags(pipe, NULL);
-      return NULL;
-   }
-}
 
 
 /**
@@ -269,6 +227,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
  */
 static GLboolean
 is_interleaved_arrays(const struct st_vertex_program *vp,
+                      const struct st_vp_varient *vpv,
                       const struct gl_client_array **arrays,
                       GLboolean *userSpace)
 {
@@ -278,7 +237,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    GLuint num_client_arrays = 0;
    const GLubyte *client_addr = NULL;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const struct gl_buffer_object *bufObj = arrays[mesaAttr]->BufferObj;
       const GLsizei stride = arrays[mesaAttr]->StrideB; /* in bytes */
@@ -311,7 +270,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
       }
    }
 
-   *userSpace = (num_client_arrays == vp->num_inputs);
+   *userSpace = (num_client_arrays == vpv->num_inputs);
    /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
 
    return GL_TRUE;
@@ -323,15 +282,16 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
  */
 static void
 get_arrays_bounds(const struct st_vertex_program *vp,
-                       const struct gl_client_array **arrays,
-                       GLuint max_index,
-                       const GLubyte **low, const GLubyte **high)
+                  const struct st_vp_varient *vpv,
+                  const struct gl_client_array **arrays,
+                  GLuint max_index,
+                  const GLubyte **low, const GLubyte **high)
 {
    const GLubyte *low_addr = NULL;
    const GLubyte *high_addr = NULL;
    GLuint attr;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const GLint stride = arrays[mesaAttr]->StrideB;
       const GLubyte *start = arrays[mesaAttr]->Ptr;
@@ -363,6 +323,7 @@ get_arrays_bounds(const struct st_vertex_program *vp,
 static void
 setup_interleaved_attribs(GLcontext *ctx,
                           const struct st_vertex_program *vp,
+                          const struct st_vp_varient *vpv,
                           const struct gl_client_array **arrays,
                           GLuint max_index,
                           GLboolean userSpace,
@@ -371,9 +332,9 @@ setup_interleaved_attribs(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr;
-   const GLubyte *offset0;
+   const GLubyte *offset0 = NULL;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
@@ -384,7 +345,7 @@ setup_interleaved_attribs(GLcontext *ctx,
       if (attr == 0) {
          const GLubyte *low, *high;
 
-         get_arrays_bounds(vp, arrays, max_index, &low, &high);
+         get_arrays_bounds(vp, vpv, arrays, max_index, &low, &high);
          /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
 
          offset0 = low;
@@ -425,6 +386,7 @@ setup_interleaved_attribs(GLcontext *ctx,
 static void
 setup_non_interleaved_attribs(GLcontext *ctx,
                               const struct st_vertex_program *vp,
+                              const struct st_vp_varient *vpv,
                               const struct gl_client_array **arrays,
                               GLuint max_index,
                               GLboolean *userSpace,
@@ -434,7 +396,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr;
 
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       GLsizei stride = arrays[mesaAttr]->StrideB;
@@ -528,6 +490,20 @@ check_uniforms(GLcontext *ctx)
 }
 
 
+static unsigned translate_prim( GLcontext *ctx,
+                                unsigned prim )
+{
+   /* Avoid quadstrips if it's easy to do so:
+    */
+   if (prim == GL_QUAD_STRIP &&
+       ctx->Light.ShadeModel != GL_FLAT &&
+       ctx->Polygon.FrontMode == GL_FILL &&
+       ctx->Polygon.BackMode == GL_FILL)
+      prim = GL_TRIANGLE_STRIP;
+
+   return prim;
+}
+
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
@@ -545,25 +521,36 @@ st_draw_vbo(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    const struct st_vertex_program *vp;
+   const struct st_vp_varient *vpv;
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
-   GLboolean userSpace;
+   GLboolean userSpace = GL_FALSE;
+   GLboolean vertDataEdgeFlags;
 
    /* Gallium probably doesn't want this in some cases. */
    if (!index_bounds_valid)
-      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
+
+   vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
+                       arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
+   if (vertDataEdgeFlags != ctx->st->vertdata_edgeflags) {
+      ctx->st->vertdata_edgeflags = vertDataEdgeFlags;
+      ctx->st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
+   }
 
    st_validate_state(ctx->st);
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->vp->state;
+   vpv = ctx->st->vp_varient;
+   vs = &vpv->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {
@@ -576,21 +563,21 @@ st_draw_vbo(GLcontext *ctx,
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
-   if (is_interleaved_arrays(vp, arrays, &userSpace)) {
+   if (is_interleaved_arrays(vp, vpv, arrays, &userSpace)) {
       /*printf("Draw interleaved\n");*/
-      setup_interleaved_attribs(ctx, vp, arrays, max_index, userSpace,
+      setup_interleaved_attribs(ctx, vp, vpv, arrays, max_index, userSpace,
                                 vbuffer, velements);
       num_vbuffers = 1;
-      num_velements = vp->num_inputs;
+      num_velements = vpv->num_inputs;
       if (num_velements == 0)
          num_vbuffers = 0;
    }
    else {
       /*printf("Draw non-interleaved\n");*/
-      setup_non_interleaved_attribs(ctx, vp, arrays, max_index,
+      setup_non_interleaved_attribs(ctx, vp, vpv, arrays, max_index,
                                     &userSpace, vbuffer, velements);
-      num_vbuffers = vp->num_inputs;
-      num_velements = vp->num_inputs;
+      num_vbuffers = vpv->num_inputs;
+      num_velements = vpv->num_inputs;
    }
 
 #if 0
@@ -623,6 +610,7 @@ st_draw_vbo(GLcontext *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       struct pipe_buffer *indexBuf = NULL;
       unsigned indexSize, indexOffset, i;
+      unsigned prim;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -661,24 +649,20 @@ st_draw_vbo(GLcontext *ctx,
           * through to driver & draw module.  These interfaces still
           * need a bit of work...
           */
-         setup_edgeflags(ctx, prims[i].mode,
-                         prims[i].start + indexOffset, prims[i].count,
-                         arrays[VERT_ATTRIB_EDGEFLAG]);
+         prim = translate_prim( ctx, prims[i].mode );
 
          pipe->draw_range_elements(pipe, indexBuf, indexSize,
                                    min_index,
                                    max_index,
-                                   prims[i].mode,
+                                   prim,
                                    prims[i].start + indexOffset, prims[i].count);
       }
       else {
          for (i = 0; i < nr_prims; i++) {
-            setup_edgeflags(ctx, prims[i].mode,
-                            prims[i].start + indexOffset, prims[i].count,
-                            arrays[VERT_ATTRIB_EDGEFLAG]);
+            prim = translate_prim( ctx, prims[i].mode );
             
             pipe->draw_elements(pipe, indexBuf, indexSize,
-                                prims[i].mode,
+                                prim,
                                 prims[i].start + indexOffset, prims[i].count);
          }
       }
@@ -688,12 +672,12 @@ st_draw_vbo(GLcontext *ctx,
    else {
       /* non-indexed */
       GLuint i;
-      for (i = 0; i < nr_prims; i++) {
-         setup_edgeflags(ctx, prims[i].mode,
-                         prims[i].start, prims[i].count,
-                         arrays[VERT_ATTRIB_EDGEFLAG]);
+      GLuint prim;
 
-         pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
+      for (i = 0; i < nr_prims; i++) {
+         prim = translate_prim( ctx, prims[i].mode );
+
+         pipe->draw_arrays(pipe, prim, prims[i].start, prims[i].count);
       }
    }
 

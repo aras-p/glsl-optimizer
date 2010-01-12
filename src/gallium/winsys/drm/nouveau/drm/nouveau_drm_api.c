@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 #include "nouveau_drm_api.h"
@@ -24,11 +25,10 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	tmpl.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY;
 	tmpl.target = PIPE_TEXTURE_2D;
 	tmpl.last_level = 0;
-	tmpl.depth[0] = 1;
+	tmpl.depth0 = 1;
 	tmpl.format = format;
-	tmpl.width[0] = width;
-	tmpl.height[0] = height;
-	pf_get_block(tmpl.format, &tmpl.block);
+	tmpl.width0 = width;
+	tmpl.height0 = height;
 
 	pt = api->texture_from_shared_handle(api, pscreen, &tmpl,
 					     "front buffer", pitch, handle);
@@ -87,6 +87,7 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	case 0x60:
 		init = nv40_screen_create;
 		break;
+	case 0x50:
 	case 0x80:
 	case 0x90:
 	case 0xa0:
@@ -164,6 +165,7 @@ nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 	case 0x60:
 		init = nv40_create;
 		break;
+	case 0x50:
 	case 0x80:
 	case 0x90:
 	case 0xa0:
@@ -247,11 +249,12 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 		return false;
 
 	*handle = mt->bo->handle;
-	*stride = mt->base.nblocksx[0] * mt->base.block.size;
+	*stride = util_format_get_stride(mt->base.format, mt->base.width0);
 	return true;
 }
 
 struct drm_api drm_api_hooks = {
+	.name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,

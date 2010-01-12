@@ -159,13 +159,18 @@ void Init_R700_Shader(R700_Shader * pShader)
 	pShader->lstVTXInstructions.uNumOfNode=0;
 }
 
+void SetActiveCFlist(R700_Shader *pShader, TypedShaderList * plstCF)
+{
+    pShader->plstCFInstructions_active = plstCF;
+}
+
 void AddCFInstruction(R700_Shader *pShader, R700ControlFlowInstruction *pCFInst)
 {
     R700ControlFlowSXClause*  pSXClause; 
     R700ControlFlowSMXClause* pSMXClause;
 
-    pCFInst->m_uIndex = pShader->lstCFInstructions.uNumOfNode;
-    AddInstToList(&(pShader->lstCFInstructions), 
+    pCFInst->m_uIndex = pShader->plstCFInstructions_active->uNumOfNode;
+    AddInstToList(pShader->plstCFInstructions_active, 
                   (R700ShaderInstruction*)pCFInst);
     pShader->uShaderBinaryDWORDSize += GetInstructionSize(pCFInst->m_ShaderInstType);
 

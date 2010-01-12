@@ -77,7 +77,7 @@ do_texture_readpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    intelScreenPrivate *screen = intel->intelScreen;
    GLint pitch = pack->RowLength ? pack->RowLength : width;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   __DRIdrawable *dPriv = intel->driDrawable;
    int textureFormat;
    GLenum glTextureFormat;
    int destFormat, depthFormat, destPitch;
@@ -105,15 +105,12 @@ do_texture_readpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   LOCK_HARDWARE(intel);
-
    if (intel->driDrawable->numClipRects) {
       intel->vtbl.install_meta_state(intel);
       intel->vtbl.meta_no_depth_write(intel);
       intel->vtbl.meta_no_stencil_write(intel);
 
       if (!driClipRectToFramebuffer(ctx->ReadBuffer, &x, &y, &width, &height)) {
-         UNLOCK_HARDWARE(intel);
          SET_STATE(i830, state);
          if (INTEL_DEBUG & DEBUG_PIXEL)
             fprintf(stderr, "%s: cliprect failed\n", __FUNCTION__);
@@ -150,7 +147,6 @@ do_texture_readpixels(GLcontext * ctx,
 
       intel->vtbl.leave_meta_state(intel);
    }
-   UNLOCK_HARDWARE(intel);
 
    intel_region_wait_fence(ctx, dest_region);   /* required by GL */
    return GL_TRUE;
@@ -224,7 +220,6 @@ do_blit_readpixels(GLcontext * ctx,
     * fire with lock held to guarentee cliprects are correct.
     */
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
    if (intel->driReadDrawable->numClipRects) {
       GLboolean all = (width * height * src->cpp == dst->Base.Size &&
@@ -233,7 +228,7 @@ do_blit_readpixels(GLcontext * ctx,
       dri_bo *dst_buffer = intel_bufferobj_buffer(intel, dst,
 						  all ? INTEL_WRITE_FULL :
 						  INTEL_WRITE_PART);
-      __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+      __DRIdrawable *dPriv = intel->driReadDrawable;
       int nbox = dPriv->numClipRects;
       drm_clip_rect_t *box = dPriv->pClipRects;
       drm_clip_rect_t rect;
@@ -261,12 +256,10 @@ do_blit_readpixels(GLcontext * ctx,
 				rect.y2 - src_rect.y2,
 				rect.x2 - rect.x1, rect.y2 - rect.y1,
 				GL_COPY)) {
-	    UNLOCK_HARDWARE(intel);
 	    return GL_FALSE;
 	 }
       }
    }
-   UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);
@@ -285,11 +278,11 @@ intelReadPixels(GLcontext * ctx,
 
    intelFlush(ctx);
 
-#ifdef I915
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
 
+#ifdef I915
    if (do_texture_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;

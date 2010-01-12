@@ -41,8 +41,8 @@ struct dri_context;
 struct dri_drawable
 {
    /* dri */
-   __DRIdrawablePrivate *dPriv;
-   __DRIscreenPrivate *sPriv;
+   __DRIdrawable *dPriv;
+   __DRIscreen *sPriv;
 
    unsigned attachments[8];
    unsigned num_attachments;
@@ -67,7 +67,7 @@ struct dri_drawable
 };
 
 static INLINE struct dri_drawable *
-dri_drawable(__DRIdrawablePrivate * driDrawPriv)
+dri_drawable(__DRIdrawable * driDrawPriv)
 {
    return (struct dri_drawable *)driDrawPriv->driverPrivate;
 }
@@ -76,22 +76,25 @@ dri_drawable(__DRIdrawablePrivate * driDrawPriv)
  * dri_drawable.c
  */
 boolean
-dri_create_buffer(__DRIscreenPrivate * sPriv,
-		  __DRIdrawablePrivate * dPriv,
+dri_create_buffer(__DRIscreen * sPriv,
+		  __DRIdrawable * dPriv,
 		  const __GLcontextModes * visual, boolean isPixmap);
+
+void
+dri_update_buffer(struct pipe_screen *screen, void *context_private);
 
 void
 dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private);
 
-void dri_swap_buffers(__DRIdrawablePrivate * dPriv);
+void dri_swap_buffers(__DRIdrawable * dPriv);
 
 void
-dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
+dri_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
 
-void dri_get_buffers(__DRIdrawablePrivate * dPriv);
+void dri_get_buffers(__DRIdrawable * dPriv);
 
-void dri_destroy_buffer(__DRIdrawablePrivate * dPriv);
+void dri_destroy_buffer(__DRIdrawable * dPriv);
 
 void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
                           GLint glx_texture_format, __DRIdrawable *dPriv);

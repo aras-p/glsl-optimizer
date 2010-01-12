@@ -165,8 +165,7 @@ void intel_miptree_release(struct intel_context *intel,
 /* Check if an image fits an existing mipmap tree layout
  */
 GLboolean intel_miptree_match_image(struct intel_mipmap_tree *mt,
-                                    struct gl_texture_image *image,
-                                    GLuint face, GLuint level);
+                                    struct gl_texture_image *image);
 
 /* Return a pointer to an image within a tree.  Return image stride as
  * well.

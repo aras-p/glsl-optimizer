@@ -208,15 +208,11 @@ update_samplers(struct st_context *st)
             assert(sampler->min_lod <= sampler->max_lod);
          }
 
-         xlate_border_color(texobj->BorderColor,
+         xlate_border_color(texobj->BorderColor.f,
                             teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;
-         if (sampler->max_anisotropy > 1.0) {
-            sampler->min_img_filter = PIPE_TEX_FILTER_ANISO;
-            sampler->mag_img_filter = PIPE_TEX_FILTER_ANISO;
-         }
 
          /* only care about ARB_shadow, not SGI shadow */
          if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
@@ -229,14 +225,23 @@ update_samplers(struct st_context *st)
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, sampler);
+         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
+            cso_single_vertex_sampler(st->cso_context, su, sampler);
+         }
       }
       else {
          /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, NULL);
+         if (su < st->ctx->Const.MaxVertexTextureImageUnits) {
+            cso_single_vertex_sampler(st->cso_context, su, NULL);
+         }
       }
    }
 
    cso_single_sampler_done(st->cso_context);
+   if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
+      cso_single_vertex_sampler_done(st->cso_context);
+   }
 }
 
 

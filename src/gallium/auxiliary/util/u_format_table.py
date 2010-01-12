@@ -44,11 +44,10 @@ def colorspace_map(colorspace):
 
 
 colorspace_channels_map = {
-    'rgb': 'rgba',
-    'rgba': 'rgba',
-    'zs': 'zs',
-    'yuv': ['y1', 'y2', 'u', 'v'],
-    'dxt': []
+    'rgb': ['r', 'g', 'b', 'a'],
+    'srgb': ['sr', 'sg', 'sb', 'a'],
+    'zs': ['z', 's'],
+    'yuv': ['y', 'u', 'v'],
 }
 
 
@@ -90,36 +89,6 @@ def write_format_table(formats):
     print 'const struct util_format_description'
     print 'util_format_description_table[] = '
     print "{"
-    for format in formats:
-        print "   {"
-        print "      %s," % (format.name,)
-        print "      \"%s\"," % (format.name,)
-        print "      {%u, %u, %u}, /* block */" % (format.block_width, format.block_height, format.block_size())
-        print "      %s," % (layout_map(format.layout),)
-        print "      {"
-        for i in range(4):
-            type = format.in_types[i]
-            if i < 3:
-                sep = ","
-            else:
-                sep = ""
-            print "         {%s, %s, %u}%s /* %s */" % (kind_map[type.kind], bool_map(type.norm), type.size, sep, "xyzw"[i])
-        print "      },"
-        print "      {"
-        for i in range(4):
-            swizzle = format.out_swizzle[i]
-            if i < 3:
-                sep = ","
-            else:
-                sep = ""
-            try:
-                comment = layout_channels_map[format.layout][i]
-            except:
-                comment = 'ignored'
-            print "         %s%s /* %s */" % (swizzle_map[swizzle], sep, comment)
-        print "      },"
-        print "      %s," % (colorspace_map(format.colorspace),)
-        print "   },"
     print "   {"
     print "      PIPE_FORMAT_NONE,"
     print "      \"PIPE_FORMAT_NONE\","
@@ -129,6 +98,36 @@ def write_format_table(formats):
     print "      {0, 0, 0, 0},"
     print "      0"
     print "   },"
+    for format in formats:
+        print "   {"
+        print "      %s," % (format.name,)
+        print "      \"%s\"," % (format.name,)
+        print "      {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
+        print "      %s," % (layout_map(format.layout),)
+        print "      {"
+        for i in range(4):
+            type = format.in_types[i]
+            if i < 3:
+                sep = ","
+            else:
+                sep = ""
+            print "         {%s, %s, %u}%s\t/* %s */" % (kind_map[type.kind], bool_map(type.norm), type.size, sep, "xyzw"[i])
+        print "      },"
+        print "      {"
+        for i in range(4):
+            swizzle = format.out_swizzle[i]
+            if i < 3:
+                sep = ","
+            else:
+                sep = ""
+            try:
+                comment = colorspace_channels_map[format.colorspace][i]
+            except (KeyError, IndexError):
+                comment = 'ignored'
+            print "         %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
+        print "      },"
+        print "      %s," % (colorspace_map(format.colorspace),)
+        print "   },"
     print "};"
 
 

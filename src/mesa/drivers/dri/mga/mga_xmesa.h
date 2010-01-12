@@ -67,7 +67,7 @@ typedef struct mga_screen_private_s {
    char *texVirtual[MGA_NR_TEX_HEAPS];
 
 
-   __DRIscreenPrivate *sPriv;
+   __DRIscreen *sPriv;
    drmBufMapPtr  bufs;
 
    drmRegion mmio;

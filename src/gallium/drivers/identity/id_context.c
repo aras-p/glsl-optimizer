@@ -46,17 +46,6 @@ identity_destroy(struct pipe_context *_pipe)
 }
 
 static void
-identity_set_edgeflags(struct pipe_context *_pipe,
-                       const unsigned *bitfield)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct pipe_context *pipe = id_pipe->pipe;
-
-   pipe->set_edgeflags(pipe,
-                       bitfield);
-}
-
-static boolean
 identity_draw_arrays(struct pipe_context *_pipe,
                      unsigned prim,
                      unsigned start,
@@ -65,13 +54,13 @@ identity_draw_arrays(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   return pipe->draw_arrays(pipe,
-                            prim,
-                            start,
-                            count);
+   pipe->draw_arrays(pipe,
+                     prim,
+                     start,
+                     count);
 }
 
-static boolean
+static void
 identity_draw_elements(struct pipe_context *_pipe,
                        struct pipe_buffer *_indexBuffer,
                        unsigned indexSize,
@@ -84,15 +73,15 @@ identity_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_elements(pipe,
-                              indexBuffer,
-                              indexSize,
-                              prim,
-                              start,
-                              count);
+   pipe->draw_elements(pipe,
+                       indexBuffer,
+                       indexSize,
+                       prim,
+                       start,
+                       count);
 }
 
-static boolean
+static void
 identity_draw_range_elements(struct pipe_context *_pipe,
                              struct pipe_buffer *_indexBuffer,
                              unsigned indexSize,
@@ -107,14 +96,14 @@ identity_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_range_elements(pipe,
-                                    indexBuffer,
-                                    indexSize,
-                                    minIndex,
-                                    maxIndex,
-                                    mode,
-                                    start,
-                                    count);
+   pipe->draw_range_elements(pipe,
+                             indexBuffer,
+                             indexSize,
+                             minIndex,
+                             maxIndex,
+                             mode,
+                             start,
+                             count);
 }
 
 static struct pipe_query *
@@ -221,16 +210,29 @@ identity_create_sampler_state(struct pipe_context *_pipe,
 }
 
 static void
-identity_bind_sampler_states(struct pipe_context *_pipe,
-                             unsigned num,
-                             void **samplers)
+identity_bind_fragment_sampler_states(struct pipe_context *_pipe,
+                                      unsigned num_samplers,
+                                      void **samplers)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   pipe->bind_sampler_states(pipe,
-                             num,
-                             samplers);
+   pipe->bind_fragment_sampler_states(pipe,
+                                      num_samplers,
+                                      samplers);
+}
+
+static void
+identity_bind_vertex_sampler_states(struct pipe_context *_pipe,
+                                    unsigned num_samplers,
+                                    void **samplers)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->bind_vertex_sampler_states(pipe,
+                                    num_samplers,
+                                    samplers);
 }
 
 static void
@@ -480,9 +482,9 @@ identity_set_viewport_state(struct pipe_context *_pipe,
 }
 
 static void
-identity_set_sampler_textures(struct pipe_context *_pipe,
-                              unsigned num_textures,
-                              struct pipe_texture **_textures)
+identity_set_fragment_sampler_textures(struct pipe_context *_pipe,
+                                       unsigned num_textures,
+                                       struct pipe_texture **_textures)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
@@ -499,9 +501,34 @@ identity_set_sampler_textures(struct pipe_context *_pipe,
       textures = unwrapped_textures;
    }
 
-   pipe->set_sampler_textures(pipe,
-                              num_textures,
-                              textures);
+   pipe->set_fragment_sampler_textures(pipe,
+                                       num_textures,
+                                       textures);
+}
+
+static void
+identity_set_vertex_sampler_textures(struct pipe_context *_pipe,
+                                     unsigned num_textures,
+                                     struct pipe_texture **_textures)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+   struct pipe_texture *unwrapped_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_texture **textures = NULL;
+   unsigned i;
+
+   if (_textures) {
+      for (i = 0; i < num_textures; i++)
+         unwrapped_textures[i] = identity_texture_unwrap(_textures[i]);
+      for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+         unwrapped_textures[i] = NULL;
+
+      textures = unwrapped_textures;
+   }
+
+   pipe->set_vertex_sampler_textures(pipe,
+                                     num_textures,
+                                     textures);
 }
 
 static void
@@ -669,7 +696,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;
-   id_pipe->base.set_edgeflags = identity_set_edgeflags;
    id_pipe->base.draw_arrays = identity_draw_arrays;
    id_pipe->base.draw_elements = identity_draw_elements;
    id_pipe->base.draw_range_elements = identity_draw_range_elements;
@@ -682,7 +708,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.bind_blend_state = identity_bind_blend_state;
    id_pipe->base.delete_blend_state = identity_delete_blend_state;
    id_pipe->base.create_sampler_state = identity_create_sampler_state;
-   id_pipe->base.bind_sampler_states = identity_bind_sampler_states;
+   id_pipe->base.bind_fragment_sampler_states = identity_bind_fragment_sampler_states;
+   id_pipe->base.bind_vertex_sampler_states = identity_bind_vertex_sampler_states;
    id_pipe->base.delete_sampler_state = identity_delete_sampler_state;
    id_pipe->base.create_rasterizer_state = identity_create_rasterizer_state;
    id_pipe->base.bind_rasterizer_state = identity_bind_rasterizer_state;
@@ -703,7 +730,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_state = identity_set_scissor_state;
    id_pipe->base.set_viewport_state = identity_set_viewport_state;
-   id_pipe->base.set_sampler_textures = identity_set_sampler_textures;
+   id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
+   id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.set_vertex_elements = identity_set_vertex_elements;
    id_pipe->base.surface_copy = identity_surface_copy;

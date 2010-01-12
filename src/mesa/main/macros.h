@@ -202,17 +202,12 @@ do {                                \
 #endif
 
 /**
- * Copy a 4-element float vector (avoid using FPU registers)
- * XXX Could use two 64-bit moves on 64-bit systems
+ * Copy a 4-element float vector
+ * memcpy seems to be most efficient
  */
 #define COPY_4FV( DST, SRC )                  \
 do {                                          \
-   const GLuint *_s = (const GLuint *) (SRC); \
-   GLuint *_d = (GLuint *) (DST);             \
-   _d[0] = _s[0];                             \
-   _d[1] = _s[1];                             \
-   _d[2] = _s[2];                             \
-   _d[3] = _s[3];                             \
+   _mesa_memcpy(DST, SRC, sizeof(GLfloat) * 4);       \
 } while (0)
 
 /** Copy \p SZ elements into a 4-element vector */
@@ -630,12 +625,6 @@ do {                                    \
 
 /** Clamp X to [MIN,MAX] */
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
-
-/** Assign X to CLAMP(X, MIN, MAX) */
-#define CLAMP_SELF(x, mn, mx)  \
-   ( (x)<(mn) ? ((x) = (mn)) : ((x)>(mx) ? ((x)=(mx)) : (x)) )
-
-
 
 /** Minimum of two values: */
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )

@@ -53,10 +53,12 @@ struct softpipe_context {
    /** Constant state objects */
    struct pipe_blend_state *blend;
    struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_depth_stencil_alpha_state *depth_stencil;
    struct pipe_rasterizer_state *rasterizer;
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
+   struct sp_geometry_shader *gs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -66,12 +68,15 @@ struct softpipe_context {
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_samplers;
+   unsigned num_vertex_textures;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
@@ -111,6 +116,10 @@ struct softpipe_context {
 
    unsigned line_stipple_counter;
 
+   /** Conditional query object and mode */
+   struct pipe_query *render_cond_query;
+   uint render_cond_mode;
+
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;
@@ -121,7 +130,7 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
-      struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_VERTEX_SAMPLERS];
       struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
@@ -139,9 +148,11 @@ struct softpipe_context {
 
    unsigned tex_timestamp;
    struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;
+   unsigned dump_gs : 1;
    unsigned no_rast : 1;
 };
 

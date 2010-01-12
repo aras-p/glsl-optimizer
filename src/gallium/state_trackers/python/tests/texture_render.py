@@ -144,8 +144,8 @@ class TextureTest(TestCase):
         sampler.normalized_coords = 1
         sampler.min_lod = 0
         sampler.max_lod = PIPE_MAX_TEXTURE_LEVELS - 1
-        ctx.set_sampler(0, sampler)
-        ctx.set_sampler_texture(0, src_texture)
+        ctx.set_fragment_sampler(0, sampler)
+        ctx.set_fragment_sampler_texture(0, src_texture)
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
@@ -171,7 +171,7 @@ class TextureTest(TestCase):
     
         # vertex shader
         vs = Shader('''
-            VERT1.1
+            VERT
             DCL IN[0], POSITION, CONSTANT
             DCL IN[1], GENERIC, CONSTANT
             DCL OUT[0], POSITION, CONSTANT
@@ -185,7 +185,7 @@ class TextureTest(TestCase):
     
         # fragment shader
         fs = Shader('''
-            FRAG1.1
+            FRAG
             DCL IN[0], GENERIC[0], LINEAR
             DCL OUT[0], COLOR, CONSTANT
             DCL SAMP[0], CONSTANT

@@ -87,7 +87,7 @@ CP Sdata[] = {
 /*  drawLetter() interprets the instructions from the array
  *  for that letter and renders the letter with line segments.
  */
-void drawLetter(CP *l)
+static void drawLetter(CP *l)
 {
     glBegin(GL_LINE_STRIP);
     for (;;) {
@@ -111,7 +111,7 @@ void drawLetter(CP *l)
 }
 
 /*  Create a display list for each of 6 characters	*/
-void myinit (void)
+static void myinit (void)
 {
     GLuint base;
 
@@ -130,13 +130,13 @@ void myinit (void)
 char *test1 = "A SPARE SERAPE APPEARS AS";
 char *test2 = "APES PREPARE RARE PEPPERS";
 
-void printStrokedString(char *s)
+static void printStrokedString(char *s)
 {
     GLsizei len = (GLsizei) strlen(s);
     glCallLists(len, GL_BYTE, (GLbyte *)s);
 }
 
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glColor3f(1.0, 1.0, 1.0);

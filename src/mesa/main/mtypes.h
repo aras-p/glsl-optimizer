@@ -79,6 +79,31 @@
 
 
 /**
+ * \name 64-bit extension of GLbitfield.
+ */
+/*@{*/
+typedef GLuint64 GLbitfield64;
+
+#define BITFIELD64_ONE         1ULL
+#define BITFIELD64_ALLONES     ~0ULL
+
+/** Set a single bit */
+#define BITFIELD64_BIT(b)      (BITFIELD64_ONE << (b))
+
+/** Set a mask of the least significant \c b bits */
+#define BITFIELD64_MASK(b)     (((b) >= 64) ? BITFIELD64_ALLONES : \
+				(BITFIELD64_BIT(b) - 1))
+
+/**
+ * Set all bits from l (low bit) to h (high bit), inclusive.
+ *
+ * \note \C BITFIELD_64_RANGE(0, 63) return 64 set bits.
+ */
+#define BITFIELD64_RANGE(l, h) (BITFIELD64_MASK((h) + 1) & ~BITFIELD64_MASK(l))
+/*@}*/
+
+
+/**
  * \name Some forward type declarations
  */
 /*@{*/
@@ -539,7 +564,7 @@ struct gl_colorbuffer_attrib
    GLclampf ClearColor[4];		/**< Color to use for glClear */
 
    GLuint IndexMask;			/**< Color index write mask */
-   GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
+   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];/**< Each flag is 0xff or 0x0 */
 
    GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
 
@@ -556,7 +581,7 @@ struct gl_colorbuffer_attrib
     * \name Blending
     */
    /*@{*/
-   GLboolean BlendEnabled;		/**< Blending enabled flag */
+   GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
    GLenum BlendSrcRGB;			/**< Blending source operator */
    GLenum BlendDstRGB;			/**< Blending destination operator */
    GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
@@ -1192,7 +1217,11 @@ struct gl_texture_object
    GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
    GLfloat Priority;		/**< in [0,1] */
-   GLfloat BorderColor[4];	/**< unclamped */
+   union {
+      GLfloat f[4];
+      GLuint ui[4];
+      GLint i[4];
+   } BorderColor;               /**< Interpreted according to texture format */
    GLenum WrapS;		/**< S-axis texture image wrap mode */
    GLenum WrapT;		/**< T-axis texture image wrap mode */
    GLenum WrapR;		/**< R-axis texture image wrap mode */
@@ -1670,7 +1699,7 @@ struct gl_program
    struct prog_instruction *Instructions;
 
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
+   GLbitfield64 OutputsWritten; /**< Bitmask of which output regs are written */
    GLbitfield InputFlags[MAX_PROGRAM_INPUTS];   /**< PROG_PARAM_BIT_x flags */
    GLbitfield OutputFlags[MAX_PROGRAM_OUTPUTS]; /**< PROG_PARAM_BIT_x flags */
    GLbitfield TexturesUsed[MAX_TEXTURE_UNITS];  /**< TEXTURE_x_BIT bitmask */
@@ -1874,6 +1903,10 @@ struct gl_query_state
    struct _mesa_HashTable *QueryObjects;
    struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
    struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
+
+   /** GL_NV_conditional_render */
+   struct gl_query_object *CondRenderQuery;
+   GLenum CondRenderMode;
 };
 
 
@@ -2294,6 +2327,7 @@ struct gl_constants
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
+   GLuint MaxCombinedTextureImageUnits;
    GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
@@ -2329,9 +2363,6 @@ struct gl_constants
    GLboolean CheckArrayBounds;
 
    GLuint MaxDrawBuffers;    /**< GL_ARB_draw_buffers */
-
-   GLenum ColorReadFormat;   /**< GL_OES_read_format */
-   GLenum ColorReadType;     /**< GL_OES_read_format */
 
    GLuint MaxColorAttachments;   /**< GL_EXT_framebuffer_object */
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
@@ -2411,10 +2442,12 @@ struct gl_extensions
    GLboolean EXT_compiled_vertex_array;
    GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
+   GLboolean EXT_draw_buffers2;
    GLboolean EXT_draw_range_elements;
-   GLboolean EXT_framebuffer_object;
    GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
+   GLboolean EXT_framebuffer_multisample;
+   GLboolean EXT_framebuffer_object;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
@@ -2467,6 +2500,7 @@ struct gl_extensions
    GLboolean MESA_texture_array;
    GLboolean MESA_texture_signed_rgba;
    GLboolean NV_blend_square;
+   GLboolean NV_conditional_render;
    GLboolean NV_fragment_program;
    GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
@@ -2490,6 +2524,8 @@ struct gl_extensions
 #endif /* FEATURE_OES_draw_texture */
    /** The extension string */
    const GLubyte *String;
+   /** Number of supported extensions */
+   GLuint Count;
 };
 
 
@@ -2830,6 +2866,10 @@ struct __GLcontextRec
 
    /** Extension information */
    struct gl_extensions Extensions;
+
+   /** Version info */
+   GLuint VersionMajor, VersionMinor;
+   char *VersionString;
 
    /** \name State attribute stack (for glPush/PopAttrib) */
    /*@{*/

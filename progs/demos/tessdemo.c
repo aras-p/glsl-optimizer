@@ -503,10 +503,9 @@ int main( int argc, char **argv )
 
    usage();
 
+   glutInitWindowSize( 400, 400 );
    glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_SINGLE | GLUT_RGB );
-   glutInitWindowPosition(0, 0);
-   glutInitWindowSize( 400, 400 );
    glutCreateWindow( argv[0] );
 
    /* GH: Bit of a hack...

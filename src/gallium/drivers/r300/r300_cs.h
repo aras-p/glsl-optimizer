@@ -26,7 +26,8 @@
 #include "util/u_math.h"
 
 #include "r300_reg.h"
-#include "r300_winsys.h"
+
+#include "radeon_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -34,8 +35,8 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
-#define VERY_VERBOSE_CS 0
-#define VERY_VERBOSE_REGISTERS 0
+#define VERY_VERBOSE_CS 1
+#define VERY_VERBOSE_REGISTERS 1
 
 /* XXX stolen from radeon_drm.h */
 #define RADEON_GEM_DOMAIN_CPU  0x1
@@ -50,11 +51,11 @@
 
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
-    struct r300_winsys* cs_winsys = cs_context_copy->winsys; \
+    struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
     int cs_count = 0;
 
 #define CHECK_CS(size) \
-    cs_winsys->check_cs(cs_winsys, (size))
+    assert(cs_winsys->check_cs(cs_winsys, (size)))
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
@@ -112,6 +113,15 @@
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 3; \
+} while (0)
+
+#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
+            "domains (%d, %d, %d)\n", \
+        bo, rd, wd, flags); \
+    assert(bo); \
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    cs_count -= 2; \
 } while (0)
 
 #define END_CS do { \

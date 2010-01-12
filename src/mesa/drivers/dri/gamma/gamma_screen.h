@@ -11,7 +11,7 @@ typedef struct {
 
     drmBufMapPtr  bufs;              /* Map of DMA buffers */
 
-    __DRIscreenPrivate *driScreen; /* Back pointer to DRI screen */
+    __DRIscreen *driScreen; /* Back pointer to DRI screen */
 
     int		cpp;
     int		frontPitch;

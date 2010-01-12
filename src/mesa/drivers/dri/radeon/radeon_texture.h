@@ -33,7 +33,8 @@
 
 #include "main/formats.h"
 
-
+void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
+	GLuint numrows, GLuint rowsize);
 struct gl_texture_image *radeonNewTextureImage(GLcontext *ctx);
 void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage);
 

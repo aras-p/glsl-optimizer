@@ -301,10 +301,10 @@ static void clear(GLcontext *ctx, GLbitfield mask)
 
     /* Let swrast do all the work if the masks are not set to
      * clear all channels. */
-    if (ctx->Color.ColorMask[0] != 0xff ||
-	ctx->Color.ColorMask[1] != 0xff ||
-	ctx->Color.ColorMask[2] != 0xff ||
-	ctx->Color.ColorMask[3] != 0xff) {
+    if (!ctx->Color.ColorMask[0][0] ||
+	!ctx->Color.ColorMask[0][1] ||
+	!ctx->Color.ColorMask[0][2] ||
+	!ctx->Color.ColorMask[0][3]) {
 	_swrast_Clear(ctx, mask);
 	return;
     }

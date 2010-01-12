@@ -303,8 +303,8 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
             unsigned first, last, mask;
             unsigned attrib;
 
-            first = decl->DeclarationRange.First;
-            last = decl->DeclarationRange.Last;
+            first = decl->Range.First;
+            last = decl->Range.Last;
             mask = decl->Declaration.UsageMask;
 
             for( attrib = first; attrib <= last; ++attrib ) {

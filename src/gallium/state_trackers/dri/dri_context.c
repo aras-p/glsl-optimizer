@@ -44,9 +44,9 @@
 
 GLboolean
 dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontextPrivate * cPriv, void *sharedContextPrivate)
+		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
-   __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
+   __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
    struct dri_context *ctx = NULL;
    struct st_context *st_share = NULL;
@@ -97,7 +97,7 @@ dri_create_context(const __GLcontextModes * visual,
 }
 
 void
-dri_destroy_context(__DRIcontextPrivate * cPriv)
+dri_destroy_context(__DRIcontext * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
 
@@ -116,7 +116,7 @@ dri_destroy_context(__DRIcontextPrivate * cPriv)
 }
 
 GLboolean
-dri_unbind_context(__DRIcontextPrivate * cPriv)
+dri_unbind_context(__DRIcontext * cPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -133,9 +133,9 @@ dri_unbind_context(__DRIcontextPrivate * cPriv)
 }
 
 GLboolean
-dri_make_current(__DRIcontextPrivate * cPriv,
-		 __DRIdrawablePrivate * driDrawPriv,
-		 __DRIdrawablePrivate * driReadPriv)
+dri_make_current(__DRIcontext * cPriv,
+		 __DRIdrawable * driDrawPriv,
+		 __DRIdrawable * driReadPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);

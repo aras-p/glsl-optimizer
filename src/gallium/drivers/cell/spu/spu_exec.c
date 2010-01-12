@@ -108,10 +108,10 @@
    for (CHAN = 0; CHAN < 4; CHAN++)
 
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
-   ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[0].Register.WriteMask & (1 << (CHAN)))
 
 #define IS_CHANNEL_ENABLED2(INST, CHAN)\
-   ((INST).FullDstRegisters[1].DstRegister.WriteMask & (1 << (CHAN)))
+   ((INST).Dst[1].Register.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
    FOR_EACH_CHANNEL( CHAN )\
@@ -431,22 +431,22 @@ fetch_source(
    index.i[0] =
    index.i[1] =
    index.i[2] =
-   index.i[3] = reg->SrcRegister.Index;
+   index.i[3] = reg->Register.Index;
 
-   if (reg->SrcRegister.Indirect) {
+   if (reg->Register.Indirect) {
       union spu_exec_channel index2;
       union spu_exec_channel indir_index;
 
       index2.i[0] =
       index2.i[1] =
       index2.i[2] =
-      index2.i[3] = reg->SrcRegisterInd.Index;
+      index2.i[3] = reg->Indirect.Index;
 
-      swizzle = tgsi_util_get_src_register_swizzle(&reg->SrcRegisterInd,
+      swizzle = tgsi_util_get_src_register_swizzle(&reg->Indirect,
                                                    CHAN_X);
       fetch_src_file_channel(
          mach,
-         reg->SrcRegisterInd.File,
+         reg->Indirect.File,
          swizzle,
          &index2,
          &indir_index );
@@ -454,8 +454,8 @@ fetch_source(
       index.q = si_a(index.q, indir_index.q);
    }
 
-   if( reg->SrcRegister.Dimension ) {
-      switch( reg->SrcRegister.File ) {
+   if( reg->Register.Dimension ) {
+      switch( reg->Register.File ) {
       case TGSI_FILE_INPUT:
          index.q = si_mpyi(index.q, 17);
          break;
@@ -466,24 +466,24 @@ fetch_source(
          ASSERT( 0 );
       }
 
-      index.i[0] += reg->SrcRegisterDim.Index;
-      index.i[1] += reg->SrcRegisterDim.Index;
-      index.i[2] += reg->SrcRegisterDim.Index;
-      index.i[3] += reg->SrcRegisterDim.Index;
+      index.i[0] += reg->Dimension.Index;
+      index.i[1] += reg->Dimension.Index;
+      index.i[2] += reg->Dimension.Index;
+      index.i[3] += reg->Dimension.Index;
 
-      if (reg->SrcRegisterDim.Indirect) {
+      if (reg->Dimension.Indirect) {
          union spu_exec_channel index2;
          union spu_exec_channel indir_index;
 
          index2.i[0] =
          index2.i[1] =
          index2.i[2] =
-         index2.i[3] = reg->SrcRegisterDimInd.Index;
+         index2.i[3] = reg->DimIndirect.Index;
 
-         swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterDimInd, CHAN_X );
+         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
          fetch_src_file_channel(
             mach,
-            reg->SrcRegisterDimInd.File,
+            reg->DimIndirect.File,
             swizzle,
             &index2,
             &indir_index );
@@ -495,7 +495,7 @@ fetch_source(
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(
       mach,
-      reg->SrcRegister.File,
+      reg->Register.File,
       swizzle,
       &index,
       chan );
@@ -517,7 +517,7 @@ fetch_source(
       break;
    }
 
-   if (reg->SrcRegisterExtMod.Complement) {
+   if (reg->RegisterExtMod.Complement) {
       chan->q = si_fs(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, chan->q);
    }
 }
@@ -532,21 +532,21 @@ store_dest(
 {
    union spu_exec_channel *dst;
 
-   switch( reg->DstRegister.File ) {
+   switch( reg->Register.File ) {
    case TGSI_FILE_NULL:
       return;
 
    case TGSI_FILE_OUTPUT:
       dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
-                           + reg->DstRegister.Index].xyzw[chan_index];
+                           + reg->Register.Index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_TEMPORARY:
-      dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
+      dst = &mach->Temps[reg->Register.Index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:
-      dst = &mach->Addrs[reg->DstRegister.Index].xyzw[chan_index];
+      dst = &mach->Addrs[reg->Register.Index].xyzw[chan_index];
       break;
 
    default:
@@ -583,10 +583,10 @@ store_dest(
 }
 
 #define FETCH(VAL,INDEX,CHAN)\
-    fetch_source (mach, VAL, &inst->FullSrcRegisters[INDEX], CHAN)
+    fetch_source (mach, VAL, &inst->Src[INDEX], CHAN)
 
 #define STORE(VAL,INDEX,CHAN)\
-    store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN )
+    store_dest (mach, VAL, &inst->Dst[INDEX], inst, CHAN )
 
 
 /**
@@ -612,7 +612,7 @@ exec_kil(struct spu_exec_machine *mach,
 
       /* unswizzle channel */
       swizzle = tgsi_util_get_full_src_register_swizzle (
-                        &inst->FullSrcRegisters[0],
+                        &inst->Src[0],
                         chan_index);
 
       /* check if the component has not been already tested */
@@ -677,7 +677,7 @@ exec_tex(struct spu_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
          boolean biasLod, boolean projected)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = inst->Src[1].Register.Index;
    union spu_exec_channel r[8];
    uint chan_index;
    float lodBias;
@@ -833,8 +833,8 @@ exec_declaration(struct spu_exec_machine *mach,
          unsigned first, last, mask;
          interpolation_func interp;
 
-         first = decl->DeclarationRange.First;
-         last = decl->DeclarationRange.Last;
+         first = decl->Range.First;
+         last = decl->Range.Last;
          mask = decl->Declaration.UsageMask;
 
          switch( decl->Declaration.Interpolate ) {
@@ -1681,7 +1681,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );

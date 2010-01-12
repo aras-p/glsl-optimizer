@@ -457,10 +457,10 @@ sis_set_texobj_parm( GLcontext *ctx, struct gl_texture_object *texObj,
 
    {
       GLubyte c[4];
-      CLAMPED_FLOAT_TO_UBYTE(c[0], texObj->BorderColor[0]);
-      CLAMPED_FLOAT_TO_UBYTE(c[1], texObj->BorderColor[1]);
-      CLAMPED_FLOAT_TO_UBYTE(c[2], texObj->BorderColor[2]);
-      CLAMPED_FLOAT_TO_UBYTE(c[3], texObj->BorderColor[3]);
+      CLAMPED_FLOAT_TO_UBYTE(c[0], texObj->BorderColor.f[0]);
+      CLAMPED_FLOAT_TO_UBYTE(c[1], texObj->BorderColor.f[1]);
+      CLAMPED_FLOAT_TO_UBYTE(c[2], texObj->BorderColor.f[2]);
+      CLAMPED_FLOAT_TO_UBYTE(c[3], texObj->BorderColor.f[3]);
 
       current->texture[hw_unit].hwTextureBorderColor = 
          PACK_COLOR_8888(c[3], c[0], c[1], c[2]);

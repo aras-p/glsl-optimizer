@@ -571,7 +571,7 @@ i915LineWidth(GLcontext * ctx, GLfloat widthf)
    DBG("%s\n", __FUNCTION__);
    
    width = (int) (widthf * 2);
-   CLAMP_SELF(width, 1, 0xf);
+   width = CLAMP(width, 1, 0xf);
    lis4 |= width << S4_LINE_WIDTH_SHIFT;
 
    if (lis4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
@@ -585,16 +585,34 @@ i915PointSize(GLcontext * ctx, GLfloat size)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int lis4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_POINT_WIDTH_MASK;
-   GLint point_size = (int) size;
+   GLint point_size = (int) round(size);
 
    DBG("%s\n", __FUNCTION__);
    
-   CLAMP_SELF(point_size, 1, 255);
+   point_size = CLAMP(point_size, 1, 255);
    lis4 |= point_size << S4_POINT_WIDTH_SHIFT;
 
    if (lis4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
       i915->state.Ctx[I915_CTXREG_LIS4] = lis4;
+   }
+}
+
+
+static void
+i915PointParameterfv(GLcontext * ctx, GLenum pname, const GLfloat *params)
+{
+   struct i915_context *i915 = I915_CONTEXT(ctx);
+
+   switch (pname) {
+   case GL_POINT_SPRITE_COORD_ORIGIN:
+      /* This could be supported, but it would require modifying the fragment
+       * program to invert the y component of the texture coordinate by
+       * inserting a 'SUB tc.y, {1.0}.xxxx, tc' instruction.
+       */
+      FALLBACK(&i915->intel, I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN,
+	       (params[0] != GL_UPPER_LEFT));
+      break;
    }
 }
 
@@ -939,6 +957,17 @@ i915Enable(GLcontext * ctx, GLenum cap, GLboolean state)
    case GL_POLYGON_SMOOTH:
       break;
 
+   case GL_POINT_SPRITE:
+      /* This state change is handled in i915_reduced_primitive_state because
+       * the hardware bit should only be set when rendering points.
+       */
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      if (state)
+	 i915->state.Ctx[I915_CTXREG_LIS4] |= S4_SPRITE_POINT_ENABLE;
+      else
+	 i915->state.Ctx[I915_CTXREG_LIS4] &= ~S4_SPRITE_POINT_ENABLE;
+      break;
+
    case GL_POINT_SMOOTH:
       break;
 
@@ -1108,6 +1137,7 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->LineWidth = i915LineWidth;
    functions->LogicOpcode = i915LogicOp;
    functions->PointSize = i915PointSize;
+   functions->PointParameterfv = i915PointParameterfv;
    functions->PolygonStipple = i915PolygonStipple;
    functions->Scissor = i915Scissor;
    functions->ShadeModel = i915ShadeModel;

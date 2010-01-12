@@ -311,10 +311,10 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
 {
    struct table *t = vt->Top;
    GLuint i;
-   GLuint r = store->Index;
+   GLint r = store->Index;
    assert(store->Size > 0);
    assert(r >= 0);
-   assert(r + store->Size <= vt->MaxRegisters * 4);
+   assert((GLuint)r + store->Size <= vt->MaxRegisters * 4);
    if (dbg) printf("Free temp sz %d at %d.%s (level %d) store %p\n",
                    store->Size, r,
                    _mesa_swizzle_string(store->Swizzle, 0, 0),

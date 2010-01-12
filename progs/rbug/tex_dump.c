@@ -27,6 +27,7 @@
 #include "pipe/p_state.h"
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_format.h"
 #include "util/u_network.h"
 #include "util/u_tile.h"
 #include "rbug/rbug.h"
@@ -49,7 +50,7 @@ static void dump(rbug_texture_t tex,
    util_snprintf(filename, 512, "%llu_%s_%u.bmp",
                  (unsigned long long)tex, pf_name(info->format), mip);
 
-   if (pf_is_compressed(info->format)) {
+   if (util_format_is_compressed(info->format)) {
       debug_printf("skipping: %s\n", filename);
       return;
    }

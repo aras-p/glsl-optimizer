@@ -187,9 +187,8 @@ int main( int argc, char *argv[] )
 
    Init( argc, argv );
 
-   glutInit( &argc, argv );
    glutInitWindowSize( (int) Width, (int) Height );
-   glutInitWindowPosition( 0, 0 );
+   glutInit( &argc, argv );
 
    mode = ColorMode | GLUT_DOUBLE;
    if (BufferMask & GL_STENCIL_BUFFER_BIT)

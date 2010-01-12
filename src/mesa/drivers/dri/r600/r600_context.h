@@ -108,6 +108,7 @@ typedef struct StreamDesc
 	GLint   size;   //number of data element
 	GLenum  type;  //data element type
 	GLsizei stride;
+	GLenum  format; // GL_RGBA,GLBGRA 
 
 	struct radeon_bo *bo;
 	GLint  bo_offset;
@@ -153,7 +154,7 @@ struct r600_context {
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
 extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
-				   __DRIcontextPrivate * driContextPriv,
+				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))

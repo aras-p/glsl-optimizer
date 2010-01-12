@@ -338,9 +338,8 @@ int main( int argc, char *argv[] )
 {
    GLint i;
 
-   glutInit( &argc, argv );
    glutInitWindowSize( 300, 300 );
-   glutInitWindowPosition( 0, 0 );
+   glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0] );
    glewInit();

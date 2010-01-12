@@ -56,7 +56,7 @@ static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
 static GLboolean have_attr(struct brw_sf_compile *c,
 			   GLuint attr)
 {
-   return (c->key.attrs & (1<<attr)) ? 1 : 0;
+   return (c->key.attrs & BITFIELD64_BIT(attr)) ? 1 : 0;
 }
 
 /*********************************************************************** 
@@ -122,8 +122,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
  * Flat shading
  */
 
-#define VERT_RESULT_COLOR_BITS ((1<<VERT_RESULT_COL0) | \
-                                 (1<<VERT_RESULT_COL1))
+#define VERT_RESULT_COLOR_BITS (BITFIELD64_BIT(VERT_RESULT_COL0) | \
+				BITFIELD64_BIT(VERT_RESULT_COL1))
 
 static void copy_colors( struct brw_sf_compile *c,
 		     struct brw_reg dst,
@@ -149,6 +149,7 @@ static void copy_colors( struct brw_sf_compile *c,
 static void do_flatshade_triangle( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -161,7 +162,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -187,6 +188,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 static void do_flatshade_line( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
    GLuint jmpi = 1;
@@ -199,7 +201,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -312,8 +314,8 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLushort *pc_linear)
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLuint persp_mask;
-   GLuint linear_mask;
+   GLbitfield64 persp_mask;
+   GLbitfield64 linear_mask;
 
    if (c->key.do_flat_shading || c->key.linear_color)
       persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
@@ -331,10 +333,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_persp = 0xf;
 
-   if (linear_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -342,10 +344,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_persp |= 0xf0;
 
-      if (linear_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_linear |= 0xf0;
    }
 

@@ -22,6 +22,8 @@ void* driDriverAPI;
  * Exported functions
  */
 
+/** Called by libEGL just prior to unloading/closing the driver.
+ */
 static void
 drm_unload(_EGLDriver *drv)
 {
@@ -31,6 +33,8 @@ drm_unload(_EGLDriver *drv)
 /**
  * The bootstrap function.  Return a new drm_driver object and
  * plug in API functions.
+ * libEGL finds this function with dlopen()/dlsym() and calls it from
+ * "load driver" function.
  */
 _EGLDriver *
 _eglMain(const char *args)
@@ -84,11 +88,11 @@ drm_get_device_id(struct drm_device *device)
 	}
 
 	ret = fgets(path, sizeof( path ), file);
+	fclose(file);
 	if (!ret)
 		return;
 
 	sscanf(path, "%x", &device->deviceID);
-	fclose(file);
 }
 
 static void
@@ -148,6 +152,7 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	int num_screens = 0;
 	EGLint i;
 	int fd;
+	_EGLConfig *config;
 
 	dev = (struct drm_device *) calloc(1, sizeof(struct drm_device));
 	if (!dev)
@@ -200,7 +205,7 @@ drm_initialize(_EGLDriver *drv, _EGLDisplay *disp, EGLint *major, EGLint *minor)
 	disp->DriverData = dev;
 
 	/* for now we only have one config */
-	_EGLConfig *config = calloc(1, sizeof(*config));
+	config = calloc(1, sizeof(*config));
 	memset(config, 1, sizeof(*config));
 	_eglInitConfig(config, 1);
 	_eglSetConfigAttrib(config, EGL_RED_SIZE, 8);

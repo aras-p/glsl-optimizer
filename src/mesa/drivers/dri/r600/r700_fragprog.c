@@ -34,6 +34,7 @@
 #include "main/imports.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
+#include "shader/program.h"
 
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
@@ -42,14 +43,68 @@
 
 #include "r700_debug.h"
 
+void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+{
+    static const gl_state_index winstate[STATE_LENGTH]
+         = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
+    struct prog_instruction *newInst, *inst;
+    GLint  win_size;  /* state reference */
+    GLuint wpos_temp; /* temp register */
+    int i, j;
+
+    /* PARAM win_size = STATE_FB_SIZE */
+    win_size = _mesa_add_state_reference(fprog->Base.Parameters, winstate);
+
+    wpos_temp = fprog->Base.NumTemporaries++;
+
+    /* scan program where WPOS is used and replace with wpos_temp */
+    inst = fprog->Base.Instructions;
+    for (i = 0; i < fprog->Base.NumInstructions; i++) {
+        for (j=0; j < 3; j++) {
+            if(inst->SrcReg[j].File == PROGRAM_INPUT && 
+               inst->SrcReg[j].Index == FRAG_ATTRIB_WPOS) {
+                inst->SrcReg[j].File = PROGRAM_TEMPORARY;
+                inst->SrcReg[j].Index = wpos_temp;
+            }
+        }
+        inst++;
+    }
+
+    _mesa_insert_instructions(&(fprog->Base), 0, 1);
+
+    newInst = fprog->Base.Instructions;
+    /* invert wpos.y
+     * wpos_temp.xyzw = wpos.x-yzw + winsize.0y00 */
+    newInst[0].Opcode = OPCODE_ADD;
+    newInst[0].DstReg.File = PROGRAM_TEMPORARY;
+    newInst[0].DstReg.Index = wpos_temp;
+    newInst[0].DstReg.WriteMask = WRITEMASK_XYZW;
+
+    newInst[0].SrcReg[0].File = PROGRAM_INPUT;
+    newInst[0].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+    newInst[0].SrcReg[0].Swizzle = SWIZZLE_XYZW;
+    newInst[0].SrcReg[0].Negate = NEGATE_Y;
+
+    newInst[0].SrcReg[1].File = PROGRAM_STATE_VAR;
+    newInst[0].SrcReg[1].Index = win_size;
+    newInst[0].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
+
+}
+
 //TODO : Validate FP input with VP output.
 void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-						  struct gl_fragment_program *mesa_fp)
+						  struct gl_fragment_program *mesa_fp,
+                          GLcontext *ctx) 
 {
 	unsigned int unBit;
     unsigned int i;
     GLuint       ui;
 
+    /* match fp inputs with vp exports. */
+    struct r700_vertex_program_cont *vpc =
+		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+    GLbitfield OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
+    
 	pAsm->number_used_registers = 0;
 
 //Input mapping : mesa_fp->Base.InputsRead set the flag, set in 
@@ -61,32 +116,99 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS] = pAsm->number_used_registers++;
 	}
 
-	unBit = 1 << FRAG_ATTRIB_COL0;
-	if(mesa_fp->Base.InputsRead & unBit)
+    unBit = 1 << VERT_RESULT_COL0;
+	if(OutputsWritten & unBit)
 	{
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL0] = pAsm->number_used_registers++;
 	}
 
-	unBit = 1 << FRAG_ATTRIB_COL1;
-	if(mesa_fp->Base.InputsRead & unBit)
+	unBit = 1 << VERT_RESULT_COL1;
+	if(OutputsWritten & unBit)
 	{
 		pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1] = pAsm->number_used_registers++;
 	}
 
-        unBit = 1 << FRAG_ATTRIB_FOGC;
-        if(mesa_fp->Base.InputsRead & unBit)
-        {
-                pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
-        }
+    unBit = 1 << VERT_RESULT_FOGC;
+    if(OutputsWritten & unBit)
+    {
+        pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC] = pAsm->number_used_registers++;
+    }
 
 	for(i=0; i<8; i++)
 	{
-		unBit = 1 << (FRAG_ATTRIB_TEX0 + i);
-		if(mesa_fp->Base.InputsRead & unBit)
+		unBit = 1 << (VERT_RESULT_TEX0 + i);
+		if(OutputsWritten & unBit)
 		{
 			pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i] = pAsm->number_used_registers++;
 		}
 	}
+ 
+/* order has been taken care of */ 
+#if 1
+    for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
+	{
+        unBit = 1 << i;
+        if(OutputsWritten & unBit)
+		{
+            pAsm->uiFP_AttributeMap[i-VERT_RESULT_VAR0+FRAG_ATTRIB_VAR0] = pAsm->number_used_registers++;
+        }
+    }
+#else
+    if( (mesa_fp->Base.InputsRead >> FRAG_ATTRIB_VAR0) > 0 )
+    {
+	    struct r700_vertex_program_cont *vpc =
+		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+        struct gl_program_parameter_list * VsVarying = vpc->mesa_program.Base.Varying;
+        struct gl_program_parameter_list * PsVarying = mesa_fp->Base.Varying;
+        struct gl_program_parameter      * pVsParam;
+        struct gl_program_parameter      * pPsParam;
+        GLuint j, k;
+        GLuint unMaxVarying = 0;
+
+        for(i=0; i<VsVarying->NumParameters; i++)
+        {
+            pAsm->uiFP_AttributeMap[i + FRAG_ATTRIB_VAR0] = 0;
+        }
+
+        for(i=FRAG_ATTRIB_VAR0; i<FRAG_ATTRIB_MAX; i++)
+	    {
+            unBit = 1 << i;
+            if(mesa_fp->Base.InputsRead & unBit)
+		    {
+                j = i - FRAG_ATTRIB_VAR0;
+                pPsParam = PsVarying->Parameters + j;
+
+                for(k=0; k<VsVarying->NumParameters; k++)
+                {					
+                    pVsParam = VsVarying->Parameters + k;
+
+			        if( strcmp(pPsParam->Name, pVsParam->Name) == 0)
+                    {
+                        pAsm->uiFP_AttributeMap[i] = pAsm->number_used_registers + k;                  
+                        if(k > unMaxVarying)
+                        {
+                            unMaxVarying = k;
+                        }
+                        break;
+                    }
+                }
+		    }
+        }
+
+        pAsm->number_used_registers += unMaxVarying + 1;
+    }
+#endif
+    unBit = 1 << FRAG_ATTRIB_FACE;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+        pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE] = pAsm->number_used_registers++;
+    }
+
+    unBit = 1 << FRAG_ATTRIB_PNTC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+        pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC] = pAsm->number_used_registers++;
+    }
 
 /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
@@ -126,6 +248,8 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
     {
         pAsm->pucOutMask[ui] = 0x0;
     }
+
+    pAsm->flag_reg_index = pAsm->number_used_registers++;
 
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
@@ -233,22 +357,61 @@ GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
 }
 
 GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-							     struct gl_fragment_program   *mesa_fp)
+							     struct gl_fragment_program   *mesa_fp,
+                                 GLcontext *ctx) 
 {
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
-	GLuint    unBit;
+	GLuint    unBit, shadow_unit;
+	int i;
+	struct prog_instruction *inst;
+	gl_state_index shadow_ambient[STATE_LENGTH]
+	    = { STATE_INTERNAL, STATE_SHADOW_AMBIENT, 0, 0, 0};
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
-	Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp);
+
+    if(mesa_fp->Base.InputsRead & FRAG_BIT_WPOS)
+    {
+        insert_wpos_code(ctx, mesa_fp);
+    }
+
+    /* add/map  consts for ARB_shadow_ambient */
+    if(mesa_fp->Base.ShadowSamplers)
+    {
+        inst = mesa_fp->Base.Instructions;
+        for (i = 0; i < mesa_fp->Base.NumInstructions; i++)
+        {
+            if(inst->TexShadow == 1)
+            {
+                shadow_unit = inst->TexSrcUnit;
+                shadow_ambient[2] = shadow_unit;
+                fp->r700AsmCode.shadow_regs[shadow_unit] = 
+                    _mesa_add_state_reference(mesa_fp->Base.Parameters, shadow_ambient);
+            }
+            inst++;
+        }
+    }
+
+    Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 
 
     if( GL_FALSE == Find_Instruction_Dependencies_fp(fp, mesa_fp) )
 	{
 		return GL_FALSE;
     }
+
+    InitShaderProgram(&(fp->r700AsmCode));
 	
-	if( GL_FALSE == AssembleInstr(mesa_fp->Base.NumInstructions,
+    for(i=0; i < MAX_SAMPLERS; i++)
+    {
+         fp->r700AsmCode.SamplerUnits[i] = fp->mesa_program.Base.SamplerUnits[i];
+    }
+
+    fp->r700AsmCode.unCurNumILInsts = mesa_fp->Base.NumInstructions;
+
+	if( GL_FALSE == AssembleInstr(0,
+                                  0,
+                                  mesa_fp->Base.NumInstructions,
                                   &(mesa_fp->Base.Instructions[0]), 
                                   &(fp->r700AsmCode)) )
 	{
@@ -256,6 +419,11 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	}
 
     if(GL_FALSE == Process_Fragment_Exports(&(fp->r700AsmCode), mesa_fp->Base.OutputsWritten) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == RelocProgram(&(fp->r700AsmCode), &(mesa_fp->Base)) )
     {
         return GL_FALSE;
     }
@@ -300,7 +468,7 @@ void r700SelectFragmentShader(GLcontext *ctx)
     }
 
     if (GL_FALSE == fp->translated)
-	    r700TranslateFragmentShader(fp, &(fp->mesa_program));
+	    r700TranslateFragmentShader(fp, &(fp->mesa_program), ctx); 
 }
 
 void * r700GetActiveFpShaderBo(GLcontext * ctx)
@@ -325,6 +493,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     unsigned int unNumOfReg;
     unsigned int unBit;
     GLuint exportCount;
+    GLboolean point_sprite = GL_FALSE;
 
     if(GL_FALSE == fp->loaded)
     {
@@ -378,6 +547,50 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
     }
 
+    if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_FACE))
+    {
+        ui += 1;
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ALL_BITS_bit);
+        SETfield(r700->SPI_PS_IN_CONTROL_1.u32All, pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE], FRONT_FACE_ADDR_shift, FRONT_FACE_ADDR_mask);
+    }
+    else
+    {
+        CLEARbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+    }
+
+    /* see if we need any point_sprite replacements */
+    for (i = VERT_RESULT_TEX0; i<= VERT_RESULT_TEX7; i++)
+    {
+        if(ctx->Point.CoordReplace[i - VERT_RESULT_TEX0] == GL_TRUE)
+            point_sprite = GL_TRUE;
+    }
+
+    if ((mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC)) || point_sprite)
+    {
+        /* for FRAG_ATTRIB_PNTC we need to increase num_interp */
+        if(mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+        {
+            ui++;
+            SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        }
+        SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_0, PNT_SPRITE_OVRD_Z_shift, PNT_SPRITE_OVRD_Z_mask);
+        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_1, PNT_SPRITE_OVRD_W_shift, PNT_SPRITE_OVRD_W_mask);
+        if(ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
+            SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+        else
+            CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+    }
+    else
+    {
+        CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+    }
+
+
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
@@ -393,27 +606,14 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     SETfield(r700->ps.SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
              EXPORT_MODE_shift, EXPORT_MODE_mask);
 
-    R600_STATECHANGE(context, db);
-
-    if(fp->r700Shader.killIsUsed)
-    {
-	    SETbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
-    }
-    else
-    {
-        CLEARbit(r700->DB_SHADER_CONTROL.u32All, KILL_ENABLE_bit);
-    }
-
-    if(fp->r700Shader.depthIsExported)
-    {
-	    SETbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-    else
-    {
-        CLEARbit(r700->DB_SHADER_CONTROL.u32All, Z_EXPORT_ENABLE_bit);
-    }
-
     // emit ps input map
+    struct r700_vertex_program_cont *vpc =
+		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+    GLbitfield OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
+    
+    for(ui = 0; ui < R700_MAX_SHADER_EXPORTS; ui++)
+        r700->SPI_PS_INPUT_CNTL[ui].u32All = 0;
+
     unBit = 1 << FRAG_ATTRIB_WPOS;
     if(mesa_fp->Base.InputsRead & unBit)
     {
@@ -427,8 +627,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
                     CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
-    unBit = 1 << FRAG_ATTRIB_COL0;
-    if(mesa_fp->Base.InputsRead & unBit)
+    unBit = 1 << VERT_RESULT_COL0;
+    if(OutputsWritten & unBit)
     {
 	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL0];
 	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
@@ -440,8 +640,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
-    unBit = 1 << FRAG_ATTRIB_COL1;
-    if(mesa_fp->Base.InputsRead & unBit)
+    unBit = 1 << VERT_RESULT_COL1;
+    if(OutputsWritten & unBit)
     {
 	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1];
 	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
@@ -453,8 +653,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
-    unBit = 1 << FRAG_ATTRIB_FOGC;
-    if(mesa_fp->Base.InputsRead & unBit)
+    unBit = 1 << VERT_RESULT_FOGC;
+    if(OutputsWritten & unBit)
     {
             ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC];
             SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
@@ -468,25 +668,79 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     for(i=0; i<8; i++)
     {
-	    unBit = 1 << (FRAG_ATTRIB_TEX0 + i);
-	    if(mesa_fp->Base.InputsRead & unBit)
+	    unBit = 1 << (VERT_RESULT_TEX0 + i);
+	    if(OutputsWritten & unBit)
 	    {
 		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
 		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
 		    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 			     SEMANTIC_shift, SEMANTIC_mask);
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		    /* ARB_point_sprite */
+		    if(ctx->Point.CoordReplace[i] == GL_TRUE)
+		    {
+			     SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+		    }
 	    }
     }
 
-    R600_STATECHANGE(context, cb);
+    unBit = 1 << FRAG_ATTRIB_FACE;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+    }
+    unBit = 1 << FRAG_ATTRIB_PNTC;
+    if(mesa_fp->Base.InputsRead & unBit)
+    {
+            ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+                     SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+    }
+
+
+
+
+    for(i=VERT_RESULT_VAR0; i<VERT_RESULT_MAX; i++)
+	{
+        unBit = 1 << i;
+        if(OutputsWritten & unBit)
+		{
+            ui = pAsm->uiFP_AttributeMap[i-VERT_RESULT_VAR0+FRAG_ATTRIB_VAR0];
+            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		             SEMANTIC_shift, SEMANTIC_mask);
+            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		        SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            else
+		        CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+        }
+    }
+
     exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
-    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
+    if (r700->CB_SHADER_CONTROL.u32All != ((1 << exportCount) - 1))
+    {
+	    R600_STATECHANGE(context, cb);
+	    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
+    }
 
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;
 
-    if(NULL != paramList) {
+    if(NULL != paramList) 
+    {
 	    _mesa_load_state_parameters(ctx, paramList);
 
 	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
@@ -499,13 +753,32 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		    r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		    r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		    r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		    r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
 	    }
     } else
 	    r700->ps.num_consts = 0;
+
+    COMPILED_SUB * pCompiledSub;
+    GLuint uj;
+    GLuint unConstOffset = r700->ps.num_consts;
+    for(ui=0; ui<pAsm->unNumPresub; ui++)
+    {
+        pCompiledSub = pAsm->presubs[ui].pCompiledSub;
+
+        r700->ps.num_consts += pCompiledSub->NumParameters;
+
+        for(uj=0; uj<pCompiledSub->NumParameters; uj++)
+        {
+            r700->ps.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
+		    r700->ps.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
+		    r700->ps.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
+		    r700->ps.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
+        }
+        unConstOffset += pCompiledSub->NumParameters;
+    }
 
     return GL_TRUE;
 }

@@ -114,6 +114,7 @@ main(int argc, char *argv[])
 
    PrintConfigs(d, configs, numConfigs);
 
+   eglBindAPI(EGL_OPENGL_API);
    ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
    if (ctx == EGL_NO_CONTEXT) {
       printf("failed to create context\n");

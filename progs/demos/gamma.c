@@ -146,12 +146,9 @@ display(void)
 int
 main(int argc, char **argv)
 {
+  glutInitWindowSize(500, 400);
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
-
-  glutInitWindowPosition(50, 50);
-  glutInitWindowSize(500, 400);
-
   glutCreateWindow("gamma test patterns");
   glutReshapeFunc(Reshape);
   glutDisplayFunc(display);

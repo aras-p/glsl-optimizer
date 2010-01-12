@@ -53,6 +53,8 @@ struct tgsi_transform_context
 
    void (*transform_immediate)(struct tgsi_transform_context *ctx,
                                struct tgsi_full_immediate *imm);
+   void (*transform_property)(struct tgsi_transform_context *ctx,
+                              struct tgsi_full_property *prop);
 
    /**
     * Called at end of input program to allow caller to append extra
@@ -73,6 +75,8 @@ struct tgsi_transform_context
                             const struct tgsi_full_declaration *decl);
    void (*emit_immediate)(struct tgsi_transform_context *ctx,
                           const struct tgsi_full_immediate *imm);
+   void (*emit_property)(struct tgsi_transform_context *ctx,
+                         const struct tgsi_full_property *prop);
 
    struct tgsi_header *header;
    uint max_tokens_out;

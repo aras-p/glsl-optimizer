@@ -460,7 +460,7 @@ _mesa_inv_sqrtf(float n)
 #if 0 /* not used, see below -BP */
         float r3, x3, y3;
 #endif
-        union { float f; unsigned int i; } u;
+        fi_type u;
         unsigned int magic;
 
         /*
@@ -629,11 +629,15 @@ _mesa_ffsll(int64_t val)
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
+#if defined(__GNUC__)
+   return __builtin_popcount(n);
+#else
    unsigned int bits;
    for (bits = 0; n > 0; n = n >> 1) {
       bits += (n & 1);
    }
    return bits;
+#endif
 }
 
 
@@ -645,10 +649,10 @@ _mesa_bitcount(unsigned int n)
 GLhalfARB
 _mesa_float_to_half(float val)
 {
-   const int flt = *((int *) (void *) &val);
-   const int flt_m = flt & 0x7fffff;
-   const int flt_e = (flt >> 23) & 0xff;
-   const int flt_s = (flt >> 31) & 0x1;
+   const fi_type fi = {val};
+   const int flt_m = fi.i & 0x7fffff;
+   const int flt_e = (fi.i >> 23) & 0xff;
+   const int flt_s = (fi.i >> 31) & 0x1;
    int s, e, m = 0;
    GLhalfARB result;
    
@@ -735,7 +739,8 @@ _mesa_half_to_float(GLhalfARB val)
    const int m = val & 0x3ff;
    const int e = (val >> 10) & 0x1f;
    const int s = (val >> 15) & 0x1;
-   int flt_m, flt_e, flt_s, flt;
+   int flt_m, flt_e, flt_s;
+   fi_type fi;
    float result;
 
    /* sign bit */
@@ -770,8 +775,8 @@ _mesa_half_to_float(GLhalfARB val)
       flt_m = m << 13;
    }
 
-   flt = (flt_s << 31) | (flt_e << 23) | flt_m;
-   result = *((float *) (void *) &flt);
+   fi.i = (flt_s << 31) | (flt_e << 23) | flt_m;
+   result = fi.f;
    return result;
 }
 
@@ -1234,13 +1239,3 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 }
 
 /*@}*/
-
-
-/**
- * Wrapper for exit().
- */
-void
-_mesa_exit( int status )
-{
-   exit(status);
-}

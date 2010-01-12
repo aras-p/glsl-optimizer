@@ -48,7 +48,7 @@
 
 /*  Initialize linear fog for depth cueing.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat fogColor[4] = {0.0, 0.0, 0.0, 1.0};
 
@@ -67,7 +67,7 @@ void myinit(void)
 
 /*  display() draws an icosahedron.
  */
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor3f (1.0, 1.0, 1.0);
@@ -75,7 +75,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

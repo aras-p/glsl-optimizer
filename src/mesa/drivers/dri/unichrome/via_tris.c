@@ -330,7 +330,8 @@ do {							\
 
 #define LOCAL_VARS(n)                                                   \
     struct via_context *vmesa = VIA_CONTEXT(ctx);                             \
-    GLuint color[n], spec[n];                                           \
+    GLuint color[n] = { 0 };                                          \
+    GLuint spec[n] = { 0 };                                           \
     GLuint coloroffset = vmesa->coloroffset;              \
     GLuint specoffset = vmesa->specoffset;                       \
     (void)color; (void)spec; (void)coloroffset; (void)specoffset;
@@ -832,13 +833,13 @@ static GLboolean viaCheckPTexHack( GLcontext *ctx )
 
    RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->TexCoordPtr[0]->size == 4) {
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX0 ) && VB->AttribPtr[_TNL_ATTRIB_TEX0]->size == 4) {
       if (!RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_ATTRIB_TEX1, _TNL_LAST_TEX ))
 	 ptexHack = GL_TRUE; 
       else
 	 fallback = GL_TRUE;
    }
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->TexCoordPtr[1]->size == 4)
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX1 ) && VB->AttribPtr[_TNL_ATTRIB_TEX1]->size == 4)
       fallback = GL_TRUE;
 
    FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_PROJ_TEXTURE, fallback);

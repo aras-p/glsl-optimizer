@@ -120,7 +120,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler,
 		return;
 	}
 
-	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, fp->wpos_attr);
+	rc_transform_fragment_wpos(&compiler->Base, FRAG_ATTRIB_WPOS, fp->wpos_attr, GL_FALSE);
 }
 
 /**

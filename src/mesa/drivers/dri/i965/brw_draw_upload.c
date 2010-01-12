@@ -243,14 +243,6 @@ static void wrap_buffers( struct brw_context *brw,
       dri_bo_unreference(brw->vb.upload.bo);
    brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
 				    size, 1);
-
-   /* Set the internal VBO\ to no-backing-store.  We only use them as a
-    * temporary within a brw_try_draw_prims while the lock is held.
-    */
-   /* DON'T DO THIS AS IF WE HAVE TO RE-ORG MEMORY WE NEED SOMEWHERE WITH
-      FAKE TO PUSH THIS STUFF */
-//   if (!brw->intel.ttm)
-//      dri_bo_fake_disable_backing_store(brw->vb.upload.bo, NULL, NULL);
 }
 
 static void get_space( struct brw_context *brw,
@@ -502,7 +494,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     * a VE loads from them.
     */
    if (brw->vb.nr_enabled == 0) {
-      BEGIN_BATCH(3, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(3);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
       OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
 		BRW_VE0_VALID |
@@ -522,7 +514,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     * are interleaved or from the same VBO.  TBD if this makes a
     * performance difference.
     */
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4);
    OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
 	     ((1 + brw->vb.nr_enabled * 4) - 2));
 
@@ -535,24 +527,17 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_RELOC(input->bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
-      if (BRW_IS_IGDNG(brw)) {
-          if (input->stride) {
-              OUT_RELOC(input->bo,
-                        I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->stride * input->count - 1);
-          } else {
-              assert(input->count == 1);
-              OUT_RELOC(input->bo,
-                        I915_GEM_DOMAIN_VERTEX, 0,
-                        input->offset + input->element_size - 1);
-          }
+      if (intel->is_ironlake) {
+	 OUT_RELOC(input->bo,
+		   I915_GEM_DOMAIN_VERTEX, 0,
+		   input->bo->size - 1);
       } else
           OUT_BATCH(input->stride ? input->count : 0);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
 
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
@@ -578,7 +563,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 		(format << BRW_VE0_FORMAT_SHIFT) |
 		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
 
-      if (BRW_IS_IGDNG(brw))
+      if (intel->is_ironlake)
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
                     (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
                     (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
@@ -719,7 +704,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
       ib.header.bits.index_format = get_index_type(index_buffer->type);
       ib.header.bits.cut_index_enable = 0;
 
-      BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+      BEGIN_BATCH(4);
       OUT_BATCH( ib.header.dword );
       OUT_RELOC(brw->ib.bo,
 		I915_GEM_DOMAIN_VERTEX, 0,

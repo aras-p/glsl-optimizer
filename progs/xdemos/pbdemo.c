@@ -131,6 +131,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       fbConfigs = ChooseFBConfig(dpy, screen, fbAttribs[attempt], &nConfigs);
       if (nConfigs==0 || !fbConfigs) {
          printf("Note: glXChooseFBConfig(%s) failed\n", fbString[attempt]);
+         XFree(fbConfigs);
          continue;
       }
 

@@ -133,6 +133,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_XRGB8888_REV,    /* Name */
+      "MESA_FORMAT_XRGB8888_REV",  /* StrName */
+      GL_RGB,                      /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_RGB888,          /* Name */
       "MESA_FORMAT_RGB888",        /* StrName */
       GL_RGB,                      /* BaseFormat */
@@ -230,6 +239,24 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 8,                  /* Red/Green/Blue/AlphaBits */
       8, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
       1, 1, 2                      /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_AL1616,          /* Name */
+      "MESA_FORMAT_AL1616",        /* StrName */
+      GL_LUMINANCE_ALPHA,          /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 16,                 /* Red/Green/Blue/AlphaBits */
+      16, 0, 0, 0, 0,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_AL1616_REV,      /* Name */
+      "MESA_FORMAT_AL1616_REV",    /* StrName */
+      GL_LUMINANCE_ALPHA,          /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 16,                 /* Red/Green/Blue/AlphaBits */
+      16, 0, 0, 0, 0,              /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
    },
    {
       MESA_FORMAT_RGB332,          /* Name */
@@ -883,6 +910,7 @@ _mesa_test_formats(void)
             GLuint t = info->RedBits + info->GreenBits
                + info->BlueBits + info->AlphaBits;
             assert(t / 8 == info->BytesPerBlock);
+            (void) t;
          }
       }
 
@@ -974,6 +1002,13 @@ _mesa_format_to_type_and_comps(gl_format format,
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
+
+   case MESA_FORMAT_AL1616:
+   case MESA_FORMAT_AL1616_REV:
+      *datatype = GL_UNSIGNED_SHORT;
+      *comps = 2;
+      return;
+
    case MESA_FORMAT_RGB332:
       *datatype = GL_UNSIGNED_BYTE_3_3_2;
       *comps = 3;

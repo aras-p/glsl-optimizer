@@ -1,15 +1,18 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
+#include "../nv04/nv04_surface_2d.h"
 
 static void
 nv20_miptree_layout(struct nv20_miptree *nv20mt)
 {
 	struct pipe_texture *pt = &nv20mt->base;
-	uint width = pt->width[0], height = pt->height[0];
+	uint width = pt->width0;
 	uint offset = 0;
 	int nr_faces, l, f;
 	uint wide_pitch = pt->tex_usage & (PIPE_TEXTURE_USAGE_SAMPLER |
@@ -25,21 +28,15 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 	}
 	
 	for (l = 0; l <= pt->last_level; l++) {
-		pt->width[l] = width;
-		pt->height[l] = height;
-		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
-
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			nv20mt->level[l].pitch = align(pt->width[0] * pt->block.size, 64);
+			nv20mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
 		else
-			nv20mt->level[l].pitch = pt->width[l] * pt->block.size;
+			nv20mt->level[l].pitch = util_format_get_stride(pt->format, width);
 
 		nv20mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
-		width  = MAX2(1, width  >> 1);
-		height = MAX2(1, height >> 1);
+		width  = u_minify(width, 1);
 	}
 
 	for (f = 0; f < nr_faces; f++) {
@@ -47,14 +44,14 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 			nv20mt->level[l].image_offset[f] = offset;
 
 			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR) &&
-			    pt->width[l + 1] > 1 && pt->height[l + 1] > 1)
-				offset += align(nv20mt->level[l].pitch * pt->height[l], 64);
+			    u_minify(pt->width0, l + 1) > 1 && u_minify(pt->height0, l + 1) > 1)
+				offset += align(nv20mt->level[l].pitch * u_minify(pt->height0, l), 64);
 			else
-				offset += nv20mt->level[l].pitch * pt->height[l];
+				offset += nv20mt->level[l].pitch * u_minify(pt->height0, l);
 		}
 
 		nv20mt->level[l].image_offset[f] = offset;
-		offset += nv20mt->level[l].pitch * pt->height[l];
+		offset += nv20mt->level[l].pitch * u_minify(pt->height0, l);
 	}
 
 	nv20mt->total_size = offset;
@@ -68,7 +65,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
-	    pt->depth[0] != 1)
+	    pt->depth0 != 1)
 		return NULL;
 
 	mt = CALLOC_STRUCT(nv20_miptree);
@@ -82,6 +79,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
 	pipe_buffer_reference(&mt->buffer, pb);
+	mt->bo = nouveau_bo(mt->buffer);
 	return &mt->base;
 }
 
@@ -100,8 +98,8 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 	mt->base.screen = screen;
 
 	/* Swizzled textures must be POT */
-	if (pt->width[0] & (pt->width[0] - 1) ||
-	    pt->height[0] & (pt->height[0] - 1))
+	if (pt->width0 & (pt->width0 - 1) ||
+	    pt->height0 & (pt->height0 - 1))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
@@ -130,6 +128,12 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
 		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 
+	/* apparently we can't render to swizzled surfaces smaller than 64 bytes, so make them linear.
+	 * If the user did not ask for a render target, they can still render to it, but it will cost them an extra copy.
+	 * This also happens for small mipmaps of large textures. */
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET && util_format_get_stride(pt->format, pt->width0) < 64)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+
 	nv20_miptree_layout(mt);
 
 	mt->buffer = screen->buffer_create(screen, 256, buf_usage, mt->total_size);
@@ -137,6 +141,7 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 		FREE(mt);
 		return NULL;
 	}
+	mt->bo = nouveau_bo(mt->buffer);
 	
 	return &mt->base;
 }
@@ -167,8 +172,8 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		return NULL;
 	pipe_texture_reference(&ns->base.texture, pt);
 	ns->base.format = pt->format;
-	ns->base.width = pt->width[level];
-	ns->base.height = pt->height[level];
+	ns->base.width = u_minify(pt->width0, level);
+	ns->base.height = u_minify(pt->height0, level);
 	ns->base.usage = flags;
 	pipe_reference_init(&ns->base.reference, 1);
 	ns->base.face = face;
@@ -185,12 +190,27 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		ns->base.offset = nv20mt->level[level].image_offset[0];
 	}
 
+	/* create a linear temporary that we can render into if necessary.
+	 * Note that ns->pitch is always a multiple of 64 for linear surfaces and swizzled surfaces are POT, so
+	 * ns->pitch & 63 is equivalent to (ns->pitch < 64 && swizzled)*/
+	if((ns->pitch & 63) && (ns->base.usage & (PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER)) == PIPE_BUFFER_USAGE_GPU_WRITE)
+		return &nv04_surface_wrap_for_render(screen, ((struct nv20_screen*)screen)->eng2d, ns)->base;
+
 	return &ns->base;
 }
 
 static void
 nv20_miptree_surface_destroy(struct pipe_surface *ps)
 {
+	struct nv04_surface* ns = (struct nv04_surface*)ps;
+	if(ns->backing)
+	{
+		struct nv20_screen* screen = (struct nv20_screen*)ps->texture->screen;
+		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
+		nv20_miptree_surface_destroy(&ns->backing->base);
+	}
+	
 	pipe_texture_reference(&ps->texture, NULL);
 	FREE(ps);
 }

@@ -11,7 +11,7 @@
 #include "ffb_fifo.h"
 
 typedef struct {
-	__DRIscreenPrivate		*sPriv;
+	__DRIscreen		*sPriv;
 	ffb_fbcPtr			regs;
 	ffb_dacPtr			dac;
 	volatile char			*sfb8r;

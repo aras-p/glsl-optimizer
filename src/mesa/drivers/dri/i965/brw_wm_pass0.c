@@ -42,12 +42,14 @@
 static struct brw_wm_ref *get_ref( struct brw_wm_compile *c )
 {
    assert(c->nr_refs < BRW_WM_MAX_REF);
+   memset(&c->refs[c->nr_refs], 0, sizeof(*c->refs));
    return &c->refs[c->nr_refs++];
 }
 
 static struct brw_wm_value *get_value( struct brw_wm_compile *c)
 {
    assert(c->nr_refs < BRW_WM_MAX_VREG);
+   memset(&c->vreg[c->nr_vreg], 0, sizeof(*c->vreg));
    return &c->vreg[c->nr_vreg++];
 }
 
@@ -55,6 +57,7 @@ static struct brw_wm_value *get_value( struct brw_wm_compile *c)
 static struct brw_wm_instruction *get_instruction( struct brw_wm_compile *c )
 {
    assert(c->nr_insns < BRW_WM_MAX_INSN);
+   memset(&c->instruction[c->nr_insns], 0, sizeof(*c->instruction));
    return &c->instruction[c->nr_insns++];
 }
 

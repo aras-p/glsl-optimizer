@@ -40,6 +40,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
@@ -157,16 +158,6 @@ st_softpipe_user_buffer_create(struct pipe_winsys *winsys,
 }
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 static struct pipe_buffer *
 st_softpipe_surface_buffer_create(struct pipe_winsys *winsys,
                                   unsigned width, unsigned height,
@@ -176,13 +167,10 @@ st_softpipe_surface_buffer_create(struct pipe_winsys *winsys,
                                   unsigned *stride)
 {
    const unsigned alignment = 64;
-   struct pipe_format_block block;
-   unsigned nblocksx, nblocksy;
+   unsigned nblocksy;
 
-   pf_get_block(format, &block);
-   nblocksx = pf_get_nblocksx(&block, width);
-   nblocksy = pf_get_nblocksy(&block, height);
-   *stride = round_up(nblocksx * block.size, alignment);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), alignment);
 
    return winsys->buffer_create(winsys, alignment,
                                 usage,

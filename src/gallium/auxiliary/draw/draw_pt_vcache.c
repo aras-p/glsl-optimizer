@@ -346,7 +346,8 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                        vcache->fetch_max,
                        draw_count);
       
-   if (max_index == 0xffffffff ||
+   if (max_index >= DRAW_PIPE_MAX_VERTICES ||
+       fetch_count >= UNDEFINED_VERTEX_ID ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
       goto fail;

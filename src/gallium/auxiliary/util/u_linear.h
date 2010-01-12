@@ -35,6 +35,19 @@
 
 #include "pipe/p_format.h"
 
+struct u_linear_format_block
+{
+   /** Block size in bytes */
+   unsigned size;
+   
+   /** Block width in pixels */
+   unsigned width;
+   
+   /** Block height in pixels */
+   unsigned height;
+};
+
+
 struct pipe_tile_info
 {
    unsigned size;
@@ -49,10 +62,10 @@ struct pipe_tile_info
    unsigned rows;
 
    /* Describe the tile in pixels */
-   struct pipe_format_block tile;
+   struct u_linear_format_block tile;
 
    /* Describe each block within the tile */
-   struct pipe_format_block block;
+   struct u_linear_format_block block;
 };
 
 void pipe_linear_to_tile(size_t src_stride, const void *src_ptr,
@@ -71,7 +84,7 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, const void *src_ptr,
  * @tiles_y number of tiles in y axis
  */
 void pipe_linear_fill_info(struct pipe_tile_info *t,
-			   const struct pipe_format_block *block,
+			   const struct u_linear_format_block *block,
 			   unsigned tile_width, unsigned tile_height,
 			   unsigned tiles_x, unsigned tiles_y);
 

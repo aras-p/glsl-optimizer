@@ -30,7 +30,7 @@ struct _egl_context
 };
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
                 _EGLConfig *config, const EGLint *attrib_list);
 
@@ -47,7 +47,7 @@ extern EGLBoolean
 _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint attribute, EGLint *value);
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
 
 

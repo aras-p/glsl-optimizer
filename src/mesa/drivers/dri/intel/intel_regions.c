@@ -362,14 +362,12 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
-   LOCK_HARDWARE(intel);
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
                    dst->pitch,
                    dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    intel_region_unmap(intel, dst);
-   UNLOCK_HARDWARE(intel);
 }
 
 /* Copy rectangular sub-regions. Need better logic about when to
@@ -485,7 +483,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    /* Now blit from the texture buffer to the new buffer: 
     */
 
-   LOCK_HARDWARE(intel);
    ok = intelEmitCopyBlit(intel,
                           region->cpp,
                           region->pitch, pbo->buffer, 0, region->tiling,
@@ -494,7 +491,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
                           region->pitch, region->height,
                           GL_COPY);
    assert(ok);
-   UNLOCK_HARDWARE(intel);
 }
 
 dri_bo *
@@ -509,127 +505,4 @@ intel_region_buffer(struct intel_context *intel,
    }
 
    return region->buffer;
-}
-
-static struct intel_region *
-intel_recreate_static(struct intel_context *intel,
-		      const char *name,
-		      struct intel_region *region,
-		      intelRegion *region_desc)
-{
-   intelScreenPrivate *intelScreen = intel->intelScreen;
-   int ret;
-
-   if (region == NULL) {
-      region = calloc(sizeof(*region), 1);
-      region->refcount = 1;
-      _DBG("%s creating new region %p\n", __FUNCTION__, region);
-   }
-   else {
-      _DBG("%s %p\n", __FUNCTION__, region);
-   }
-
-   if (intel->ctx.Visual.rgbBits == 24)
-      region->cpp = 4;
-   else
-      region->cpp = intel->ctx.Visual.rgbBits / 8;
-   region->pitch = intelScreen->pitch;
-   region->width = intelScreen->width;
-   region->height = intelScreen->height;
-
-   if (region->buffer != NULL) {
-      dri_bo_unreference(region->buffer);
-      region->buffer = NULL;
-   }
-
-   if (intel->ttm) {
-      assert(region_desc->bo_handle != -1);
-      region->buffer = intel_bo_gem_create_from_name(intel->bufmgr,
-						     name,
-						     region_desc->bo_handle);
-
-      ret = dri_bo_get_tiling(region->buffer, &region->tiling,
-			      &region->bit_6_swizzle);
-      if (ret != 0) {
-	 fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
-		 region_desc->bo_handle, name, strerror(-ret));
-	 intel_region_release(&region);
-	 return NULL;
-      }
-   } else {
-      if (region->classic_map != NULL) {
-	 drmUnmap(region->classic_map,
-		  region->pitch * region->cpp * region->height);
-	 region->classic_map = NULL;
-      }
-      ret = drmMap(intel->driFd, region_desc->handle,
-		   region->pitch * region->cpp * region->height,
-		   &region->classic_map);
-      if (ret != 0) {
-	 fprintf(stderr, "Failed to drmMap %s buffer\n", name);
-	 free(region);
-	 return NULL;
-      }
-
-      region->buffer = intel_bo_fake_alloc_static(intel->bufmgr,
-						  name,
-						  region_desc->offset,
-						  region->pitch * region->cpp *
-						  region->height,
-						  region->classic_map);
-
-      /* The sarea just gives us a boolean for whether it's tiled or not,
-       * instead of which tiling mode it is.  Guess.
-       */
-      if (region_desc->tiled) {
-	 if (IS_965(intel->intelScreen->deviceID) &&
-	     region_desc == &intelScreen->depth)
-	    region->tiling = I915_TILING_Y;
-	 else
-	    region->tiling = I915_TILING_X;
-      } else {
-	 region->tiling = I915_TILING_NONE;
-      }
-
-      region->bit_6_swizzle = I915_BIT_6_SWIZZLE_NONE;
-   }
-
-   assert(region->buffer != NULL);
-
-   return region;
-}
-
-/**
- * Create intel_region structs to describe the static front, back, and depth
- * buffers created by the xserver.
- *
- * Although FBO's mean we now no longer use these as render targets in
- * all circumstances, they won't go away until the back and depth
- * buffers become private, and the front buffer will remain even then.
- *
- * Note that these don't allocate video memory, just describe
- * allocations alread made by the X server.
- */
-void
-intel_recreate_static_regions(struct intel_context *intel)
-{
-   intelScreenPrivate *intelScreen = intel->intelScreen;
-
-   intel->front_region =
-      intel_recreate_static(intel, "front",
-			    intel->front_region,
-			    &intelScreen->front);
-
-   intel->back_region =
-      intel_recreate_static(intel, "back",
-			    intel->back_region,
-			    &intelScreen->back);
-
-   /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
-    * private buffers.
-    */
-   intel->depth_region =
-      intel_recreate_static(intel, "depth",
-			    intel->depth_region,
-			    &intelScreen->depth);
 }

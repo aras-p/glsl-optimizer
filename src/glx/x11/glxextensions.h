@@ -65,7 +65,8 @@ enum
    SGIX_swap_barrier_bit,
    SGIX_swap_group_bit,
    SGIX_visual_select_group_bit,
-   EXT_texture_from_pixmap_bit
+   EXT_texture_from_pixmap_bit,
+   INTEL_swap_event_bit,
 };
 
 enum
@@ -74,6 +75,7 @@ enum
    GL_ARB_draw_buffers_bit,
    GL_ARB_fragment_program_bit,
    GL_ARB_fragment_program_shadow_bit,
+   GL_ARB_framebuffer_object_bit,
    GL_ARB_imaging_bit,
    GL_ARB_multisample_bit,
    GL_ARB_multitexture_bit,
@@ -112,8 +114,11 @@ enum
    GL_EXT_depth_bounds_test_bit,
    GL_EXT_draw_range_elements_bit,
    GL_EXT_fog_coord_bit,
+   GL_EXT_framebuffer_blit_bit,
+   GL_EXT_framebuffer_multisample_bit,
    GL_EXT_framebuffer_object_bit,
    GL_EXT_multi_draw_arrays_bit,
+   GL_EXT_packed_depth_stencil_bit,
    GL_EXT_packed_pixels_bit,
    GL_EXT_paletted_texture_bit,
    GL_EXT_pixel_buffer_object_bit,
@@ -164,6 +169,7 @@ enum
    GL_NV_fragment_program2_bit,
    GL_NV_light_max_exponent_bit,
    GL_NV_multisample_filter_hint_bit,
+   GL_NV_packed_depth_stencil_bit,
    GL_NV_point_sprite_bit,
    GL_NV_texgen_reflection_bit,
    GL_NV_texture_compression_vtc_bit,

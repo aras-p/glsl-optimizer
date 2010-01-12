@@ -116,7 +116,10 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_Z24X8_UNORM:
 			return TRUE;
 		case PIPE_FORMAT_Z16_UNORM:
-			return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			if (front) {
+				return (front->format == PIPE_FORMAT_R5G6B5_UNORM);
+			}
+			return TRUE;
 		default:
 			break;
 		}
@@ -153,6 +156,12 @@ static void
 nv30_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv30_screen *screen = nv30_screen(pscreen);
+	unsigned i;
+
+	for (i = 0; i < NV30_STATE_MAX; i++) {
+		if (screen->state[i])
+			so_ref(NULL, &screen->state[i]);
+	}
 
 	nouveau_resource_free(&screen->vp_exec_heap);
 	nouveau_resource_free(&screen->vp_data_heap);
@@ -160,6 +169,9 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->rankine);
+	nv04_surface_2d_takedown(&screen->eng2d);
+
+	nouveau_screen_fini(&screen->base);
 
 	FREE(pscreen);
 }
@@ -221,7 +233,6 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
-	BIND_RING(chan, screen->rankine, 7);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(&screen->base);
@@ -258,7 +269,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Static rankine initialisation */
-	so = so_new(128, 0);
+	so = so_new(36, 60, 0);
 	so_method(so, screen->rankine, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_TEXTURE0, 2);

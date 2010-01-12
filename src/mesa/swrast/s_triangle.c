@@ -553,6 +553,9 @@ affine_span(GLcontext *ctx, SWspan *span,
    info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   info.er = 0;					\
+   info.eg = 0;					\
+   info.eb = 0;					\
    span.arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
@@ -815,6 +818,9 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    info.format = texImg->TexFormat;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
+   info.er = 0;					\
+   info.eg = 0;					\
+   info.eb = 0;					\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -1024,10 +1030,10 @@ _swrast_choose_triangle( GLcontext *ctx )
           ctx->Depth.Func == GL_LESS &&
           !ctx->Stencil._Enabled) {
          if ((rgbmode &&
-              ctx->Color.ColorMask[0] == 0 &&
-              ctx->Color.ColorMask[1] == 0 &&
-              ctx->Color.ColorMask[2] == 0 &&
-              ctx->Color.ColorMask[3] == 0)
+              ctx->Color.ColorMask[0][0] == 0 &&
+              ctx->Color.ColorMask[0][1] == 0 &&
+              ctx->Color.ColorMask[0][2] == 0 &&
+              ctx->Color.ColorMask[0][3] == 0)
              ||
              (!rgbmode && ctx->Color.IndexMask == 0)) {
             USE(occlusion_zless_triangle);

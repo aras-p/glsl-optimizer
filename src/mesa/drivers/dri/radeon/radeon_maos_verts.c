@@ -326,7 +326,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (1) {
       req |= RADEON_CP_VC_FRMT_Z;
-      if (VB->ObjPtr->size == 4) {
+      if (VB->AttribPtr[_TNL_ATTRIB_POS]->size == 4) {
 	 req |= RADEON_CP_VC_FRMT_W0;
       }
    }
@@ -348,15 +348,15 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 req |= RADEON_ST_BIT(unit);
 	 /* assume we need the 3rd coord if texgen is active for r/q OR at least
 	    3 coords are submitted. This may not be 100% correct */
-	 if (VB->TexCoordPtr[unit]->size >= 3) {
+	 if (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) {
 	    req |= RADEON_Q_BIT(unit);
 	    vtx |= RADEON_Q_BIT(unit);
 	 }
 	 if ( (ctx->Texture.Unit[unit].TexGenEnabled & (R_BIT | Q_BIT)) )
 	    vtx |= RADEON_Q_BIT(unit);
-	 else if ((VB->TexCoordPtr[unit]->size >= 3) &&
+	 else if ((VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size >= 3) &&
 	          ((ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_CUBE_BIT)) == 0)) {
-	    GLuint swaptexmatcol = (VB->TexCoordPtr[unit]->size - 3);
+	    GLuint swaptexmatcol = (VB->AttribPtr[_TNL_ATTRIB_TEX0 + unit]->size - 3);
 	    if (((rmesa->NeedTexMatrix >> unit) & 1) &&
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))
 	       radeonUploadTexMatrix( rmesa, unit, swaptexmatcol ) ;
@@ -390,19 +390,19 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
     * this, add more vertex code (for obj-2, obj-3) or preferably move
     * to maos.  
     */
-   if (VB->ObjPtr->size < 3 || 
-       (VB->ObjPtr->size == 3 && 
+   if (VB->AttribPtr[_TNL_ATTRIB_POS]->size < 3 ||
+       (VB->AttribPtr[_TNL_ATTRIB_POS]->size == 3 &&
 	(setup_tab[i].vertex_format & RADEON_CP_VC_FRMT_W0))) {
 
       _math_trans_4f( rmesa->tcl.ObjClean.data,
-		      VB->ObjPtr->data,
-		      VB->ObjPtr->stride,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->data,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->stride,
 		      GL_FLOAT,
-		      VB->ObjPtr->size,
+		      VB->AttribPtr[_TNL_ATTRIB_POS]->size,
 		      0,
 		      VB->Count );
 
-      switch (VB->ObjPtr->size) {
+      switch (VB->AttribPtr[_TNL_ATTRIB_POS]->size) {
       case 1:
 	    _mesa_vector4f_clean_elem(&rmesa->tcl.ObjClean, VB->Count, 1);
       case 2:
@@ -416,14 +416,14 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 break;
       }
 
-      VB->ObjPtr = &rmesa->tcl.ObjClean;
+      VB->AttribPtr[_TNL_ATTRIB_POS] = &rmesa->tcl.ObjClean;
    }
 
 
-
+   radeon_bo_map(rmesa->radeon.tcl.aos[0].bo, 1);
    setup_tab[i].emit( ctx, 0, VB->Count, 
 		      rmesa->radeon.tcl.aos[0].bo->ptr + rmesa->radeon.tcl.aos[0].offset);
-
+   radeon_bo_unmap(rmesa->radeon.tcl.aos[0].bo);
    //   rmesa->radeon.tcl.aos[0].size = setup_tab[i].vertex_size;
    rmesa->radeon.tcl.aos[0].stride = setup_tab[i].vertex_size;
    rmesa->tcl.vertex_format = setup_tab[i].vertex_format;

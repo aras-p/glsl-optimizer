@@ -120,10 +120,10 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &st->vp->state;
+   vs = &st->vp_varient->state;
 
-   if (!st->vp->draw_shader) {
-      st->vp->draw_shader = draw_create_vertex_shader(draw, vs);
+   if (!st->vp_varient->draw_shader) {
+      st->vp_varient->draw_shader = draw_create_vertex_shader(draw, vs);
    }
 
    /*
@@ -136,7 +136,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer);
-   draw_bind_vertex_shader(draw, st->vp->draw_shader);
+   draw_bind_vertex_shader(draw, st->vp_varient->draw_shader);
    set_feedback_vertex_format(ctx);
 
    /* loop over TGSI shader inputs to determine vertex buffer
@@ -241,7 +241,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
    mapped_constants = pipe_buffer_map(pipe->screen,
                                       st->state.constants[PIPE_SHADER_VERTEX].buffer,
                                       PIPE_BUFFER_USAGE_CPU_READ);
-   draw_set_mapped_constant_buffer(st->draw, mapped_constants,
+   draw_set_mapped_constant_buffer(st->draw, PIPE_SHADER_VERTEX,
+                                   mapped_constants,
                                    st->state.constants[PIPE_SHADER_VERTEX].buffer->size);
 
 

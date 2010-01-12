@@ -41,7 +41,6 @@
 #include "pipe/p_state.h"
 
 
-struct tgsi_sampler;
 struct llvmpipe_screen;
 
 
@@ -78,8 +77,6 @@ struct lp_jit_context
 {
    const float *constants;
 
-   struct tgsi_sampler **samplers;
-
    float alpha_ref_value;
 
    /* FIXME: store (also?) in floats */
@@ -92,16 +89,13 @@ struct lp_jit_context
 #define lp_jit_context_constants(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 0, "constants")
 
-#define lp_jit_context_samplers(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "samplers")
-
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "alpha_ref_value")
+   lp_build_struct_get(_builder, _ptr, 1, "alpha_ref_value")
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 3, "blend_color")
+   lp_build_struct_get(_builder, _ptr, 2, "blend_color")
 
-#define LP_JIT_CONTEXT_TEXTURES_INDEX 4
+#define LP_JIT_CONTEXT_TEXTURES_INDEX 3
 
 #define lp_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES_INDEX, "textures")
@@ -117,12 +111,6 @@ typedef void
                     uint32_t *mask,
                     void *color,
                     void *depth);
-
-void PIPE_CDECL
-lp_fetch_texel_soa( struct tgsi_sampler **samplers,
-                    uint32_t unit,
-                    float *store );
-
 
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen);

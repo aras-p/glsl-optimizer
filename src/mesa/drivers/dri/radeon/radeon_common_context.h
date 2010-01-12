@@ -92,7 +92,7 @@ struct radeon_renderbuffer
 
 	GLuint pf_pending;  /**< sequence number of pending flip */
 	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
-	__DRIdrawablePrivate *dPriv;
+	__DRIdrawable *dPriv;
 };
 
 struct radeon_framebuffer
@@ -208,6 +208,10 @@ struct radeon_tex_obj {
 	 * and so on.
 	 */
 	GLboolean validated;
+	/* Minimum LOD to be used during rendering */
+	unsigned minLod;
+	/* Miximum LOD to be used during rendering */
+	unsigned maxLod;
 
 	GLuint override_offset;
 	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
@@ -324,6 +328,7 @@ struct radeon_swtcl_info {
 	GLuint vertex_attr_count;
 
 	GLuint emit_prediction;
+        struct radeon_bo *bo;
 };
 
 #define RADEON_MAX_AOS_ARRAYS		16
@@ -376,8 +381,8 @@ struct radeon_store {
 };
 
 struct radeon_dri_mirror {
-	__DRIcontextPrivate *context;	/* DRI context */
-	__DRIscreenPrivate *screen;	/* DRI screen */
+	__DRIcontext *context;	/* DRI context */
+	__DRIscreen *screen;	/* DRI screen */
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
@@ -401,9 +406,6 @@ struct radeon_state {
 	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
 	struct radeon_stencilbuffer_state stencil;
-
-	struct radeon_cs_space_check bos[RADEON_MAX_BOS];
-	int validated_bo_count;
 };
 
 /**
@@ -502,7 +504,6 @@ struct radeon_context {
 
    struct {
 	struct radeon_query_object *current;
-	struct radeon_query_object not_flushed_head;
 	struct radeon_state_atom queryobj;
    } query;
 
@@ -522,12 +523,12 @@ struct radeon_context {
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
 
-static inline __DRIdrawablePrivate* radeon_get_drawable(radeonContextPtr radeon)
+static inline __DRIdrawable* radeon_get_drawable(radeonContextPtr radeon)
 {
 	return radeon->dri.context->driDrawablePriv;
 }
 
-static inline __DRIdrawablePrivate* radeon_get_readable(radeonContextPtr radeon)
+static inline __DRIdrawable* radeon_get_readable(radeonContextPtr radeon)
 {
 	return radeon->dri.context->driReadablePriv;
 }
@@ -580,15 +581,16 @@ static INLINE uint32_t radeonPackFloat24(float f)
 GLboolean radeonInitContext(radeonContextPtr radeon,
 			    struct dd_function_table* functions,
 			    const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate);
 
 void radeonCleanupContext(radeonContextPtr radeon);
-GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
-void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
-GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
-			    __DRIdrawablePrivate * driDrawPriv,
-			    __DRIdrawablePrivate * driReadPriv);
-extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
+GLboolean radeonUnbindContext(__DRIcontext * driContextPriv);
+void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
+				 GLboolean front_only);
+GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
+			    __DRIdrawable * driDrawPriv,
+			    __DRIdrawable * driReadPriv);
+extern void radeonDestroyContext(__DRIcontext * driContextPriv);
 
 #endif

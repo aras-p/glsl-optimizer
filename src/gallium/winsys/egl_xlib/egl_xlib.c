@@ -41,6 +41,7 @@
 #include "pipe/p_state.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "softpipe/sp_winsys.h"
 #include "softpipe/sp_texture.h"
 
@@ -138,17 +139,6 @@ lookup_context(_EGLContext *ctx)
 }
 
 
-static unsigned int
-bitcount(unsigned int n)
-{
-   unsigned int bits;
-   for (bits = 0; n > 0; n = n >> 1) {
-      bits += (n & 1);
-   }
-   return bits;
-}
-
-
 /**
  * Create the EGLConfigs.  (one per X visual)
  */
@@ -174,9 +164,9 @@ create_configs(struct xlib_egl_display *xdpy, _EGLDisplay *disp)
    for (i = 0; i < num_visuals; i++) {
       _EGLConfig *config = calloc(1, sizeof(_EGLConfig));
       int id = i + 1;
-      int rbits = bitcount(visInfo[i].red_mask);
-      int gbits = bitcount(visInfo[i].green_mask);
-      int bbits = bitcount(visInfo[i].blue_mask);
+      int rbits = util_bitcount(visInfo[i].red_mask);
+      int gbits = util_bitcount(visInfo[i].green_mask);
+      int bbits = util_bitcount(visInfo[i].blue_mask);
       int abits = bbits == 8 ? 8 : 0;
       int zbits = 24;
       int sbits = 8;
@@ -761,24 +751,18 @@ xlib_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 static EGLBoolean
 xlib_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
-   /* error checking step: */
-   if (!_eglSwapBuffers(drv, dpy, draw))
-      return EGL_FALSE;
+   struct xlib_egl_surface *xsurf = lookup_surface(draw);
+   struct pipe_winsys *pws = xsurf->winsys;
+   struct pipe_surface *psurf;
 
-   {
-      struct xlib_egl_surface *xsurf = lookup_surface(draw);
-      struct pipe_winsys *pws = xsurf->winsys;
-      struct pipe_surface *psurf;
+   st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
+         &psurf);
 
-      st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
-                                 &psurf);
+   st_notify_swapbuffers(xsurf->Framebuffer);
 
-      st_notify_swapbuffers(xsurf->Framebuffer);
+   display_surface(pws, psurf, xsurf);
 
-      display_surface(pws, psurf, xsurf);
-
-      check_and_update_buffer_size(xsurf);
-   }
+   check_and_update_buffer_size(xsurf);
 
    return EGL_TRUE;
 }

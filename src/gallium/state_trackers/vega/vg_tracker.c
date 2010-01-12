@@ -31,8 +31,13 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
+
+/* advertise OpenVG support */
+PUBLIC const int st_api_OpenVG = 1;
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -50,13 +55,12 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    }
 
    templ.target = PIPE_TEXTURE_2D;
-   pf_get_block(templ.format, &templ.block);
-   templ.width[0] = width;
-   templ.height[0] = height;
-   templ.depth[0] = 1;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
    templ.last_level = 0;
 
-   if (pf_get_component_bits(format, PIPE_FORMAT_COMP_S)) {
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
       templ.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    } else {
       templ.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
@@ -367,14 +371,15 @@ void st_unreference_framebuffer(struct st_framebuffer *stfb)
    /* FIXME */
 }
 
-void st_make_current(struct vg_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read)
+boolean st_make_current(struct vg_context *st,
+                        struct st_framebuffer *draw,
+                        struct st_framebuffer *read)
 {
    vg_set_current_context(st);
    if (st) {
       st->draw_buffer = draw;
    }
+   return VG_TRUE;
 }
 
 struct vg_context *st_get_current(void)
@@ -423,4 +428,9 @@ int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
 int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
 {
    return 0;
+}
+
+st_proc st_get_proc_address(const char *procname)
+{
+   return NULL;
 }

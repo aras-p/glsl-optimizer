@@ -42,22 +42,21 @@
  * up polygon offset and flatshading at this point:
  */
 struct brw_clip_prog_key {
-   GLuint attrs:32;		
+   GLbitfield64 attrs;
    GLuint primitive:4;
    GLuint nr_userclip:3;
    GLuint do_flat_shading:1;
+   GLuint pv_first:1;
    GLuint do_unfilled:1;
    GLuint fill_cw:2;		/* includes cull information */
    GLuint fill_ccw:2;		/* includes cull information */
    GLuint offset_cw:1;
    GLuint offset_ccw:1;
-   GLuint pad0:17;
-
    GLuint copy_bfc_cw:1;
    GLuint copy_bfc_ccw:1;
    GLuint clip_mode:3;
-   GLuint pad1:27;
-   
+   GLuint pad0:11;
+
    GLfloat offset_factor;
    GLfloat offset_units;
 };
@@ -119,7 +118,6 @@ struct brw_clip_compile {
 
    GLuint header_position_offset;
    GLuint offset[VERT_ATTRIB_MAX];
-   GLboolean need_ff_sync;
 };
 
 #define ATTR_SIZE  (4*4)

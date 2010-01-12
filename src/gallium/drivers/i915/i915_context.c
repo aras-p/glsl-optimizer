@@ -45,7 +45,7 @@
  */
 
 
-static boolean
+static void
 i915_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_buffer *indexBuffer,
                          unsigned indexSize,
@@ -84,7 +84,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    }
 
 
-   draw_set_mapped_constant_buffer(draw,
+   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
                                    (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
                                       4 * sizeof(float)));
@@ -106,27 +106,25 @@ i915_draw_range_elements(struct pipe_context *pipe,
       pipe_buffer_unmap(pipe->screen, indexBuffer);
       draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
-
-   return TRUE;
 }
 
-static boolean
+static void
 i915_draw_elements(struct pipe_context *pipe,
                    struct pipe_buffer *indexBuffer,
                    unsigned indexSize,
                    unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_range_elements(pipe, indexBuffer,
-                                   indexSize,
-                                   0, 0xffffffff,
-                                   prim, start, count);
+   i915_draw_range_elements(pipe, indexBuffer,
+                            indexSize,
+                            0, 0xffffffff,
+                            prim, start, count);
 }
 
-static boolean
+static void
 i915_draw_arrays(struct pipe_context *pipe,
                  unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_elements(pipe, NULL, 0, prim, start, count);
+   i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 
@@ -155,15 +153,11 @@ static unsigned int
 i915_is_buffer_referenced(struct pipe_context *pipe,
                           struct pipe_buffer *buf)
 {
-   /**
-    * FIXME: Return the corrent result. We can't alays return referenced
-    *        since it causes a double flush within the vbo module.
+   /*
+    * Since we never expose hardware buffers to the state tracker
+    * they can never be referenced, so this isn't a lie
     */
-#if 0
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-#else
    return 0;
-#endif
 }
 
 

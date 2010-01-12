@@ -55,6 +55,7 @@ setup_ipc(void)
 
       printf("Waiting for connection from another 'corender'\n");
       Sock = AcceptConnection(k);
+      assert(Sock != -1);
 
       printf("Got connection, sending windowID\n");
 
@@ -186,7 +187,7 @@ redraw(Display *dpy)
        * Without this glClear(), depth buffer for the second process
        * is pretty much broken.
        */
-      //glClear(GL_DEPTH_BUFFER_BIT);
+      /* glClear(GL_DEPTH_BUFFER_BIT); */
 
       glPushMatrix();
       glTranslatef(1, 0, 0);

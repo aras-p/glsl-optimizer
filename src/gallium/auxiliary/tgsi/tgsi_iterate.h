@@ -57,11 +57,15 @@ struct tgsi_iterate_context
       struct tgsi_full_immediate *imm );
 
    boolean
+   (* iterate_property)(
+      struct tgsi_iterate_context *ctx,
+      struct tgsi_full_property *prop );
+
+   boolean
    (* epilog)(
       struct tgsi_iterate_context *ctx );
 
    struct tgsi_processor processor;
-   struct tgsi_version version;
 };
 
 boolean

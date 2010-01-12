@@ -369,12 +369,9 @@ InitPrograms(void)
 static void
 InitGL(void)
 {
-   const char *version = (const char *) glGetString(GL_VERSION);
+   if (!ShadersSupported())
+      exit(1);
 
-   if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
-   }
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
    printf("Usage:\n");
    printf("  a     - toggle arrays vs. immediate mode rendering\n");

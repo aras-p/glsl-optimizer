@@ -79,25 +79,22 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
    /* struct lp_jit_context */
    {
-      LLVMTypeRef elem_types[5];
+      LLVMTypeRef elem_types[4];
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* constants */
-      elem_types[1] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
-      elem_types[2] = LLVMFloatType();                     /* alpha_ref_value */
-      elem_types[3] = LLVMPointerType(LLVMInt8Type(), 0);  /* blend_color */
-      elem_types[4] = LLVMArrayType(texture_type, PIPE_MAX_SAMPLERS); /* textures */
+      elem_types[1] = LLVMFloatType();                     /* alpha_ref_value */
+      elem_types[2] = LLVMPointerType(LLVMInt8Type(), 0);  /* blend_color */
+      elem_types[3] = LLVMArrayType(texture_type, PIPE_MAX_SAMPLERS); /* textures */
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, constants,
                              screen->target, context_type, 0);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, samplers,
-                             screen->target, context_type, 1);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, alpha_ref_value,
-                             screen->target, context_type, 2);
+                             screen->target, context_type, 1);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, blend_color,
-                             screen->target, context_type, 3);
+                             screen->target, context_type, 2);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, textures,
                              screen->target, context_type,
                              LP_JIT_CONTEXT_TEXTURES_INDEX);
@@ -107,24 +104,6 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LLVMAddTypeName(screen->module, "context", context_type);
 
       screen->context_ptr_type = LLVMPointerType(context_type, 0);
-   }
-
-   /* fetch_texel
-    */
-   {
-      LLVMTypeRef ret_type;
-      LLVMTypeRef arg_types[3];
-      LLVMValueRef fetch_texel;
-
-      ret_type = LLVMVoidType();
-      arg_types[0] = LLVMPointerType(LLVMInt8Type(), 0);  /* samplers */
-      arg_types[1] = LLVMInt32Type();                     /* unit */
-      arg_types[2] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0); /* store */
-
-      fetch_texel = lp_declare_intrinsic(screen->module, "fetch_texel",
-                                         ret_type, arg_types, Elements(arg_types));
-
-      LLVMAddGlobalMapping(screen->engine, fetch_texel, lp_fetch_texel_soa);
    }
 
 #ifdef DEBUG
@@ -154,6 +133,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 #if 0
    /* For simulating less capable machines */
    util_cpu_caps.has_sse3 = 0;
+   util_cpu_caps.has_ssse3 = 0;
    util_cpu_caps.has_sse4_1 = 0;
 #endif
 
@@ -167,7 +147,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
       _debug_printf("%s\n", error);
       LLVMDisposeMessage(error);
-      abort();
+      assert(0);
    }
 
    screen->target = LLVMGetExecutionEngineTargetData(screen->engine);

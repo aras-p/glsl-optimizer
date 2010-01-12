@@ -43,6 +43,7 @@
 #include "st_cb_blit.h"
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
+#include "st_cb_condrender.h"
 #if FEATURE_drawpix
 #include "st_cb_drawpixels.h"
 #include "st_cb_rasterpos.h"
@@ -51,7 +52,6 @@
 #include "st_cb_drawtex.h"
 #endif
 #include "st_cb_fbo.h"
-#include "st_cb_get.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
 #endif
@@ -336,7 +336,6 @@ void st_init_driver_functions(struct dd_function_table *functions)
 #endif
 
    st_init_fbo_functions(functions);
-   st_init_get_functions(functions);
 #if FEATURE_feedback
    st_init_feedback_functions(functions);
 #endif
@@ -344,6 +343,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
 #if FEATURE_queryobj
    st_init_query_functions(functions);
 #endif
+   st_init_cond_render_functions(functions);
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);

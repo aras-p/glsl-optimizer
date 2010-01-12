@@ -572,6 +572,7 @@ extern HIDDEN void __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GL
 extern HIDDEN void __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsQueryARB(GLuint id);
 extern HIDDEN void __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+extern HIDDEN void __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 extern HIDDEN void __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert);
 extern HIDDEN void __indirect_glSamplePatternSGIS(GLenum pattern);
 extern HIDDEN void __indirect_glColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer);
@@ -710,6 +711,8 @@ extern HIDDEN void __indirect_glGetRenderbufferParameterivEXT(GLenum target, GLe
 extern HIDDEN GLboolean __indirect_glIsFramebufferEXT(GLuint framebuffer);
 extern HIDDEN GLboolean __indirect_glIsRenderbufferEXT(GLuint renderbuffer);
 extern HIDDEN void __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+extern HIDDEN void __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+extern HIDDEN void __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 
 #  undef HIDDEN
 #  undef FASTCALL

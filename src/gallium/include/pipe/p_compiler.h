@@ -52,45 +52,15 @@
 #endif /* _MSC_VER */
 
 
-#if defined(_MSC_VER)
-
-typedef __int8             int8_t;
-typedef unsigned __int8    uint8_t;
-typedef __int16            int16_t;
-typedef unsigned __int16   uint16_t;
-#ifndef __eglplatform_h_
-typedef __int32            int32_t;
-#endif
-typedef unsigned __int32   uint32_t;
-typedef __int64            int64_t;
-typedef unsigned __int64   uint64_t;
-
-#if defined(_WIN64)
-typedef __int64            intptr_t;
-typedef unsigned __int64   uintptr_t;
-#else
-typedef __int32            intptr_t;
-typedef unsigned __int32   uintptr_t;
-#endif
-
-#define INT64_C(__val) __val##i64
-#define UINT64_C(__val) __val##ui64
-
-#ifndef __cplusplus
-#define false   0
-#define true    1
-#define bool    _Bool
-typedef int     _Bool;
-#define __bool_true_false_are_defined   1
-#endif /* !__cplusplus */
-
-#else
+/*
+ * Alternative stdint.h and stdbool.h headers are supplied in include/c99 for
+ * systems that lack it.
+ */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
 #endif
 #include <stdint.h>
 #include <stdbool.h>
-#endif
 
 
 #ifndef __HAIKU__
@@ -99,11 +69,7 @@ typedef unsigned short     ushort;
 #endif
 typedef unsigned char      ubyte;
 
-#if 0
-#define boolean bool
-#else
 typedef unsigned char boolean;
-#endif
 #ifndef TRUE
 #define TRUE  true
 #endif
@@ -134,6 +100,17 @@ typedef unsigned char boolean;
 #    define INLINE
 #  endif
 #endif
+
+
+/* Function visibility */
+#ifndef PUBLIC
+#  if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#    define PUBLIC __attribute__((visibility("default")))
+#  else
+#    define PUBLIC
+#  endif
+#endif
+
 
 /* The __FUNCTION__ gcc variable is generally only used for debugging.
  * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
@@ -167,7 +144,7 @@ typedef unsigned char boolean;
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
 #define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
 #define ALIGN8_ATTRIB  __attribute__(( aligned( 8 ) ))
-#if __GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)) && !defined(PIPE_ARCH_X86_64)
 #define ALIGN_STACK __attribute__((force_align_arg_pointer))
 #else
 #define ALIGN_STACK

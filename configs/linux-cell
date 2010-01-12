@@ -33,7 +33,7 @@ CFLAGS = $(OPT_FLAGS) -Wall -Winline -Wmissing-prototypes \
 CXXFLAGS = $(CFLAGS)
 
 # Omitting glw here:
-SRC_DIRS = gallium mesa gallium/winsys glu glut/glx glew
+SRC_DIRS = glsl mesa gallium gallium/winsys glu glut/glx glew
 
 # Build no traditional Mesa drivers:
 DRIVER_DIRS =

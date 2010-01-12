@@ -82,8 +82,8 @@ static void init_registers( struct brw_wm_compile *c )
    for (j = 0; j < c->nr_creg; j++) 
       prealloc_reg(c, &c->creg[j], i++);
 
-   for (j = 0; j < FRAG_ATTRIB_MAX; j++) {
-      if (c->key.vp_outputs_written & (1<<j)) {
+   for (j = 0; j < VERT_RESULT_MAX; j++) {
+      if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
 	 int fp_index;
 
 	 if (j >= VERT_RESULT_VAR0)

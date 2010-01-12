@@ -14,7 +14,7 @@ EGL_SOURCES = server/radeon_egl.c
 endif
 
 ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c
+CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 COMMON_SOURCES = \
@@ -43,13 +43,14 @@ RADEON_COMMON_SOURCES = \
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
+		 r300_blit.c \
 		 r300_context.c \
 		 r300_draw.c \
-		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
 		 r300_render.c \
 		 r300_tex.c \
+		 r300_texcopy.c \
 		 r300_texstate.c \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \

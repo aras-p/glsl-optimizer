@@ -96,7 +96,7 @@ def test(dev, name):
     sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST
     sampler.normalized_coords = 1
-    ctx.set_sampler(0, sampler)
+    ctx.set_fragment_sampler(0, sampler)
 
     # scissor
     scissor = Scissor()
@@ -114,7 +114,7 @@ def test(dev, name):
     cbuf = dev.texture_create(
         PIPE_FORMAT_X8R8G8B8_UNORM,
         width, height,
-        tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
+        tex_usage=PIPE_TEXTURE_USAGE_RENDER_TARGET,
     ).get_surface()
     fb = Framebuffer()
     fb.width = width
@@ -135,7 +135,7 @@ def test(dev, name):
 
     # fragment shader
     fs = Shader('''
-        FRAG1.1
+        FRAG
         DCL IN[0], COLOR, LINEAR
         DCL OUT[0], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]

@@ -6,6 +6,7 @@
  *            Humanware s.r.l.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -733,7 +734,6 @@ main(int ac, char **av)
       HEIGHT = atoi(av[3]);
    }
 
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WIDTH, HEIGHT);
    glutInit(&ac, av);
 
@@ -759,6 +759,7 @@ main(int ac, char **av)
    glFogfv(GL_FOG_COLOR, fogcolor);
    glFogf(GL_FOG_DENSITY, 0.1);
 
+   assert(np > 0);
    p = (part *) malloc(sizeof(part) * np);
 
    for (i = 0; i < np; i++)

@@ -493,6 +493,8 @@ int
 main(int argc, char **argv)
 {
   int i;
+
+  glutInitWindowSize(600,300);
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
 
@@ -506,8 +508,6 @@ main(int argc, char **argv)
       linearFiltering = 0;
     }
   }
-  glutInitWindowPosition(0, 0);
-  glutInitWindowSize(600,300);
   glutCreateWindow("sprite blast");
   glewInit();
   glutReshapeFunc(reshape);

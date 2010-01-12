@@ -20,6 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+/* r300_render: Vertex and index buffer primitive emission. Contains both
+ * HW TCL fastpath rendering, and SW TCL Draw-assisted rendering. */
+
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 
@@ -38,7 +41,7 @@
 /* r300_render: Vertex and index buffer primitive emission. */
 #define R300_MAX_VBO_SIZE  (1024 * 1024)
 
-static uint32_t r300_translate_primitive(unsigned prim)
+uint32_t r300_translate_primitive(unsigned prim)
 {
     switch (prim) {
         case PIPE_PRIM_POINTS:
@@ -66,8 +69,146 @@ static uint32_t r300_translate_primitive(unsigned prim)
     }
 }
 
+static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
+                                            unsigned mode)
+{
+    struct r300_rs_state* rs = (struct r300_rs_state*)r300->rs_state.state;
+    uint32_t color_control = rs->color_control;
+
+    /* By default (see r300_state.c:r300_create_rs_state) color_control is
+     * initialized to provoking the first vertex.
+     *
+     * Triangle fans must be reduced to the second vertex, not the first, in
+     * Gallium flatshade-first mode, as per the GL spec.
+     * (http://www.opengl.org/registry/specs/ARB/provoking_vertex.txt)
+     *
+     * Quads never provoke correctly in flatshade-first mode. The first
+     * vertex is never considered as provoking, so only the second, third,
+     * and fourth vertices can be selected, and both "third" and "last" modes
+     * select the fourth vertex. This is probably due to D3D lacking quads.
+     *
+     * Similarly, polygons reduce to the first, not the last, vertex, when in
+     * "last" mode, and all other modes start from the second vertex.
+     *
+     * ~ C.
+     */
+
+    if (rs->rs.flatshade_first) {
+        switch (mode) {
+            case PIPE_PRIM_TRIANGLE_FAN:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND;
+                break;
+            case PIPE_PRIM_QUADS:
+            case PIPE_PRIM_QUAD_STRIP:
+            case PIPE_PRIM_POLYGON:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+                break;
+            default:
+                color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_FIRST;
+                break;
+        }
+    } else {
+        color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+    }
+
+    return color_control;
+}
+
+static void r300_emit_draw_arrays(struct r300_context *r300,
+                                  unsigned mode,
+                                  unsigned count)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(8);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
+           r300_translate_primitive(mode));
+    END_CS;
+}
+
+static void r300_emit_draw_elements(struct r300_context *r300,
+                                    struct pipe_buffer* indexBuffer,
+                                    unsigned indexSize,
+                                    unsigned minIndex,
+                                    unsigned maxIndex,
+                                    unsigned mode,
+                                    unsigned start,
+                                    unsigned count)
+{
+    uint32_t count_dwords;
+    uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
+    CS_LOCALS(r300);
+
+    /* XXX most of these are stupid */
+    assert(indexSize == 4 || indexSize == 2);
+    assert((start * indexSize)  % 4 == 0);
+    assert(offset_dwords == 0);
+
+    BEGIN_CS(14);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
+    if (indexSize == 4) {
+        count_dwords = count + start;
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
+               r300_translate_primitive(mode));
+    } else {
+        count_dwords = (count + start + 1) / 2;
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               r300_translate_primitive(mode));
+    }
+
+    /* INDX_BUFFER is a truly special packet3.
+     * Unlike most other packet3, where the offset is after the count,
+     * the order is reversed, so the relocation ends up carrying the
+     * size of the indexbuf instead of the offset.
+     *
+     * XXX Fix offset
+     */
+    OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
+    OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
+           (0 << R300_INDX_BUFFER_SKIP_SHIFT));
+    OUT_CS(offset_dwords);
+    OUT_CS_RELOC(indexBuffer, count_dwords,
+        RADEON_GEM_DOMAIN_GTT, 0, 0);
+
+    END_CS;
+}
+
+
+static boolean r300_setup_vertex_buffers(struct r300_context *r300)
+{
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+
+validate:
+    for (int i = 0; i < r300->vertex_element_count; i++) {
+        if (!r300->winsys->add_buffer(r300->winsys,
+                vbuf[velem[i].vertex_buffer_index].buffer,
+            RADEON_GEM_DOMAIN_GTT, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
+    }
+
+    if (!r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        return r300->winsys->validate(r300->winsys);
+    }
+
+    return TRUE;
+}
+
 /* This is the fast-path drawing & emission for HW TCL. */
-boolean r300_draw_range_elements(struct pipe_context* pipe,
+void r300_draw_range_elements(struct pipe_context* pipe,
                                  struct pipe_buffer* indexBuffer,
                                  unsigned indexSize,
                                  unsigned minIndex,
@@ -77,105 +218,78 @@ boolean r300_draw_range_elements(struct pipe_context* pipe,
                                  unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
-    uint32_t prim = r300_translate_primitive(mode);
-    struct pipe_vertex_buffer* aos = r300->vertex_buffers;
-    unsigned aos_count = r300->vertex_buffer_count;
-    short* indices;
-    unsigned packet_size;
-    unsigned i;
-    bool invalid = FALSE;
-    
-    CS_LOCALS(r300);
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
-validate:
-    for (i = 0; i < aos_count; i++) {
-        if (!r300->winsys->add_buffer(r300->winsys, aos[i].buffer,
-                    RADEON_GEM_DOMAIN_GTT, 0)) {
-            pipe->flush(pipe, 0, NULL);
-            goto validate;
-        }
+    if (count > 65535) {
+       /* XXX: use aux/indices functions to split this into smaller
+        * primitives.
+        */
+        return;
     }
+
+    r300_update_derived_state(r300);
+
+    if (!r300_setup_vertex_buffers(r300)) {
+        return;
+    }
+
+    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
+                                  RADEON_GEM_DOMAIN_GTT, 0)) {
+        return;
+    }
+
     if (!r300->winsys->validate(r300->winsys)) {
-        pipe->flush(pipe, 0, NULL);
-        if (invalid) {
-            /* Well, hell. */
-            debug_printf("r300: Stuck in validation loop, gonna quit now.");
-            exit(1);
-        }
-        invalid = TRUE;
-        goto validate;
+        return;
     }
 
     r300_emit_dirty_state(r300);
 
-    packet_size = (aos_count >> 1) * 3 + (aos_count & 1) * 2;
+    r300_emit_aos(r300, 0);
 
-    BEGIN_CS(3 + packet_size + (aos_count * 2));
-    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(aos_count);
-    for (i = 0; i < aos_count - 1; i += 2) {
-        OUT_CS(aos[i].stride |
-            (aos[i].stride << 8) |
-            (aos[i + 1].stride << 16) |
-            (aos[i + 1].stride << 24));
-        OUT_CS(aos[i].buffer_offset + start * 4 * aos[i].stride);
-        OUT_CS(aos[i + 1].buffer_offset + start * 4 * aos[i + 1].stride);
-    }
-    if (aos_count & 1) {
-        OUT_CS(aos[i].stride | (aos[i].stride << 8));
-        OUT_CS(aos[i].buffer_offset + start * 4 * aos[i].stride);
-    }
-    for (i = 0; i < aos_count; i++) {
-        OUT_CS_RELOC(aos[i].buffer, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
-    }
-    END_CS;
-
-    if (indexBuffer) {
-        indices = (short*)pipe_buffer_map(pipe->screen, indexBuffer,
-                                          PIPE_BUFFER_USAGE_CPU_READ);
-
-        /* Set the starting point. */
-        indices += start;
-
-        BEGIN_CS(2 + (count+1)/2);
-        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count + 1)/2);
-        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) | prim);
-        for (i = 0; i < count - 1; i += 2) {
-            OUT_CS(indices[i + 1] << 16 | indices[i]);
-        }
-        if (count % 2) {
-            OUT_CS(indices[count - 1]);
-        }
-        END_CS;
-    } else {
-        BEGIN_CS(2);
-        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
-        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
-               prim);
-        END_CS;
-    }
-
-    return TRUE;
+    r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
+                            mode, start, count);
 }
 
 /* Simple helpers for context setup. Should probably be moved to util. */
-boolean r300_draw_elements(struct pipe_context* pipe,
-                           struct pipe_buffer* indexBuffer,
-                           unsigned indexSize, unsigned mode,
-                           unsigned start, unsigned count)
+void r300_draw_elements(struct pipe_context* pipe,
+                        struct pipe_buffer* indexBuffer,
+                        unsigned indexSize, unsigned mode,
+                        unsigned start, unsigned count)
 {
-    return pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0, ~0,
-                                     mode, start, count);
+   pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0, ~0,
+                             mode, start, count);
 }
 
-boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
+void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                          unsigned start, unsigned count)
 {
-    return pipe->draw_elements(pipe, NULL, 0, mode, start, count);
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (!u_trim_pipe_prim(mode, &count)) {
+        return;
+    }
+
+    if (count > 65535) {
+        /* XXX: driver needs to handle this -- use the functions in
+         * aux/indices to split this into several smaller primitives.
+         */
+        return;
+    }
+
+    r300_update_derived_state(r300);
+
+    if (!r300_setup_vertex_buffers(r300)) {
+        return;
+    }
+
+    r300_emit_dirty_state(r300);
+
+    r300_emit_aos(r300, start);
+
+    r300_emit_draw_arrays(r300, mode, count);
 }
 
 /****************************************************************************
@@ -183,8 +297,44 @@ boolean r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* Draw-based drawing for SW TCL chipsets. */
-boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
+/* SW TCL arrays, using Draw. */
+void r300_swtcl_draw_arrays(struct pipe_context* pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    int i;
+
+    if (!u_trim_pipe_prim(mode, &count)) {
+        return;
+    }
+
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        void* buf = pipe_buffer_map(pipe->screen,
+                                    r300->vertex_buffer[i].buffer,
+                                    PIPE_BUFFER_USAGE_CPU_READ);
+        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+    }
+
+    draw_set_mapped_element_buffer(r300->draw, 0, NULL);
+
+    draw_set_mapped_constant_buffer(r300->draw,
+				    PIPE_SHADER_VERTEX,
+				    r300->shader_constants[PIPE_SHADER_VERTEX].constants,
+				    r300->shader_constants[PIPE_SHADER_VERTEX].count *
+                (sizeof(float) * 4));
+
+    draw_arrays(r300->draw, mode, start, count);
+
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        pipe_buffer_unmap(pipe->screen, r300->vertex_buffer[i].buffer);
+        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+    }
+}
+
+/* SW TCL elements, using Draw. */
+void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        struct pipe_buffer* indexBuffer,
                                        unsigned indexSize,
                                        unsigned minIndex,
@@ -195,28 +345,26 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     int i;
+    void* indices;
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return FALSE;
+        return;
     }
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe->screen,
-                                    r300->vertex_buffers[i].buffer,
+                                    r300->vertex_buffer[i].buffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
         draw_set_mapped_vertex_buffer(r300->draw, i, buf);
     }
 
-    if (indexBuffer) {
-        void* indices = pipe_buffer_map(pipe->screen, indexBuffer,
-                                        PIPE_BUFFER_USAGE_CPU_READ);
-        draw_set_mapped_element_buffer_range(r300->draw, indexSize,
-                                             minIndex, maxIndex, indices);
-    } else {
-        draw_set_mapped_element_buffer(r300->draw, 0, NULL);
-    }
+    indices = pipe_buffer_map(pipe->screen, indexBuffer,
+                              PIPE_BUFFER_USAGE_CPU_READ);
+    draw_set_mapped_element_buffer_range(r300->draw, indexSize,
+                                         minIndex, maxIndex, indices);
 
     draw_set_mapped_constant_buffer(r300->draw,
+				    PIPE_SHADER_VERTEX,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
             r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
@@ -224,17 +372,13 @@ boolean r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     draw_arrays(r300->draw, mode, start, count);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe->screen, r300->vertex_buffers[i].buffer);
+        pipe_buffer_unmap(pipe->screen, r300->vertex_buffer[i].buffer);
         draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
     }
 
-    if (indexBuffer) {
-        pipe_buffer_unmap(pipe->screen, indexBuffer);
-        draw_set_mapped_element_buffer_range(r300->draw, 0, start,
-                                             start + count - 1, NULL);
-    }
-
-    return TRUE;
+    pipe_buffer_unmap(pipe->screen, indexBuffer);
+    draw_set_mapped_element_buffer_range(r300->draw, 0, start,
+                                         start + count - 1, NULL);
 }
 
 /* Object for rendering using Draw. */
@@ -310,7 +454,7 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
     r300render->vbo_ptr = pipe_buffer_map(screen, r300render->vbo,
                                           PIPE_BUFFER_USAGE_CPU_WRITE);
 
-    return (r300render->vbo_ptr + r300render->vbo_offset);
+    return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
 }
 
 static void r300_render_unmap_vertices(struct vbuf_render* render,

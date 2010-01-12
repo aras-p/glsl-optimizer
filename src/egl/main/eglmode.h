@@ -29,7 +29,7 @@ extern _EGLMode *
 _eglLookupMode(EGLModeMESA mode, _EGLDisplay *dpy);
 
 
-extern _EGLMode *
+PUBLIC _EGLMode *
 _eglAddNewMode(_EGLScreen *screen, EGLint width, EGLint height,
                EGLint refreshRate, const char *name);
 

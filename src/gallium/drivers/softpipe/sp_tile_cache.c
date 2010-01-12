@@ -33,6 +33,7 @@
  */
 
 #include "pipe/p_inlines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "sp_tile_cache.h"
@@ -238,7 +239,7 @@ clear_tile(struct softpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (pf_get_size(format)) {
+   switch (util_format_get_blocksize(format)) {
    case 1:
       memset(tile->data.any, clear_value, TILE_SIZE * TILE_SIZE);
       break;
@@ -284,8 +285,9 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
    uint x, y;
    uint numCleared = 0;
 
+   assert(pt->texture);
    /* clear the scratch tile to the clear value */
-   clear_tile(&tc->tile, pt->format, tc->clear_val);
+   clear_tile(&tc->tile, pt->texture->format, tc->clear_val);
 
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
@@ -372,6 +374,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
 
    if (addr.value != tile->addr.value) {
 
+      assert(pt->texture);
       if (tile->addr.bits.invalid == 0) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
@@ -395,10 +398,10 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
       if (is_clear_flag_set(tc->clear_flags, addr)) {
          /* don't get tile from framebuffer, just clear it */
          if (tc->depth_stencil) {
-            clear_tile(tile, pt->format, tc->clear_val);
+            clear_tile(tile, pt->texture->format, tc->clear_val);
          }
          else {
-            clear_tile_rgba(tile, pt->format, tc->clear_color);
+            clear_tile_rgba(tile, pt->texture->format, tc->clear_color);
          }
          clear_clear_flag(tc->clear_flags, addr);
       }

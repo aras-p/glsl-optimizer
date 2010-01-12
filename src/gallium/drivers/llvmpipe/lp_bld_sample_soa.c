@@ -488,7 +488,7 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    LLVMValueRef res;
    unsigned chan;
 
-   if(!bld->static_state->compare_mode)
+   if(bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
 
    /* TODO: Compare before swizzling, to avoid redundant computations */
@@ -577,7 +577,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       lp_build_sample_2d_nearest_soa(&bld, s, t, width, height, stride, data_ptr, texel);
       break;
    case PIPE_TEX_FILTER_LINEAR:
-   case PIPE_TEX_FILTER_ANISO:
       if(lp_format_is_rgba8(bld.format_desc))
          lp_build_sample_2d_linear_aos(&bld, s, t, width, height, stride, data_ptr, texel);
       else

@@ -170,8 +170,8 @@ struct i810_context_t {
    drm_hw_lock_t *driHwLock;
    int driFd;
 
-   __DRIdrawablePrivate *driDrawable;
-   __DRIscreenPrivate *driScreen;
+   __DRIdrawable *driDrawable;
+   __DRIscreen *driScreen;
    i810ScreenPrivate *i810Screen; 
    I810SAREAPtr sarea;
 };

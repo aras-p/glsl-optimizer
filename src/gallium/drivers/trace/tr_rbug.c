@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "util/u_format.h"
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
@@ -44,7 +45,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define sleep Sleep
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_APPLE)
 void usleep(int);
 #  define sleep usleep
 #else
@@ -179,7 +180,7 @@ static int
 trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct rbug_proto_texture_info *gpti = (struct rbug_proto_texture_info *)header;
    struct tr_list *ptr;
    struct pipe_texture *t;
@@ -200,10 +201,12 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    t = tr_tex->texture;
    rbug_send_texture_info_reply(tr_rbug->con, serial,
                                t->target, t->format,
-                               t->width, t->last_level + 1,
-                               t->height, t->last_level + 1,
-                               t->depth, t->last_level + 1,
-                               t->block.width, t->block.height, t->block.size,
+                               &t->width0, 1,
+                               &t->height0, 1,
+                               &t->depth0, 1,
+                               util_format_get_blockwidth(t->format),
+                               util_format_get_blockheight(t->format),
+                               util_format_get_blocksize(t->format),
                                t->last_level,
                                t->nr_samples,
                                t->tex_usage,
@@ -220,7 +223,7 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct rbug_proto_texture_read *gptr = (struct rbug_proto_texture_read *)header;
 
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct tr_list *ptr;
 
    struct pipe_screen *screen = tr_scr->screen;
@@ -251,9 +254,12 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    map = screen->transfer_map(screen, t);
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
-                                t->format,
-                                t->block.width, t->block.height, t->block.size,
-                                (uint8_t*)map, t->stride * t->nblocksy,
+                                t->texture->format,
+                                util_format_get_blockwidth(t->texture->format),
+                                util_format_get_blockheight(t->texture->format),
+                                util_format_get_blocksize(t->texture->format),
+                                (uint8_t*)map,
+                                t->stride * util_format_get_nblocksy(t->texture->format, t->height),
                                 t->stride,
                                 NULL);
 

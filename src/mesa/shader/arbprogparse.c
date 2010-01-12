@@ -56,7 +56,6 @@ having three separate program parameter arrays.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
-#include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
 #include "program.h"
 #include "programopt.h"
@@ -86,6 +85,9 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
       /* Error in the program. Just return. */
       return;
    }
+
+   if (program->Base.String != NULL)
+      _mesa_free(program->Base.String);
 
    /* Copy the relevant contents of the arb_program struct into the
     * fragment_program struct.
@@ -177,6 +179,9 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
       _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramString(bad program)");
       return;
    }
+
+   if (program->Base.String != NULL)
+      _mesa_free(program->Base.String);
 
    /* Copy the relevant contents of the arb_program struct into the 
     * vertex_program struct.

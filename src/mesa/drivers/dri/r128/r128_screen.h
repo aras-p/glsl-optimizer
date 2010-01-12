@@ -71,7 +71,7 @@ typedef struct {
 
    drmBufMapPtr buffers;
 
-   __DRIscreenPrivate *driScreen;
+   __DRIscreen *driScreen;
    unsigned int sarea_priv_offset;
 
    /* Configuration cache with default values for all contexts */

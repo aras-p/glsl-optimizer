@@ -42,7 +42,7 @@ static void Init(void)
    static const char *prog1 =
       "!!ARBfp1.0\n"
       "MOV  result.color, fragment.texcoord[1];\n"
-//      "MOV  result.color, fragment.color;\n"
+      /* "MOV  result.color, fragment.color;\n" */
       "END\n";
 
 
@@ -90,7 +90,7 @@ static void Key(unsigned char key, int x, int y)
       case 27:
 	exit(1);
       default:
-	return;
+	break;
     }
 
     glutPostRedisplay();

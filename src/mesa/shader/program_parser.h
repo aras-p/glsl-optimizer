@@ -35,16 +35,9 @@ enum asm_type {
    at_attrib,
    at_param,
    at_temp,
-   at_output,
+   at_output
 };
 
-/**
- * \note
- * Objects of this type are allocated as the object plus the name of the
- * symbol.  That is, malloc(sizeof(struct asm_symbol) + strlen(name) + 1).
- * Alternately, asm_symbol::name could be moved to the bottom of the structure
- * and declared as 'char name[0];'.
- */
 struct asm_symbol {
    struct asm_symbol *next;    /**< List linkage for freeing. */
    const char *name;
@@ -62,6 +55,12 @@ struct asm_symbol {
     * bound state (or constants) start.
     */
    unsigned param_binding_begin;
+
+   /**
+    * Constants put into the parameter list may be swizzled.  This
+    * field contain's the symbol's swizzle. (SWIZZLE_X/Y/Z/W)
+    */
+   unsigned param_binding_swizzle;
 
    /* This is how many entries in the the program_parameter_list we take up
     * with our state tokens or constants. Note that this is _not_ the same as
@@ -161,15 +160,6 @@ struct asm_parser_state {
    /*@{*/
    struct asm_instruction *inst_head;
    struct asm_instruction *inst_tail;
-   /*@}*/
-
-
-   /**
-    * Buffer to hold strings transfered from the lexer to the parser
-    */
-   /*@{*/
-   char *string_dumpster;      /**< String data transfered. */
-   size_t dumpster_size;       /**< Total size, in bytes, of the buffer. */
    /*@}*/
 
 

@@ -16,6 +16,10 @@ for information about applications look in:
 
 progs/rbug/README
 
+for a GUI see:
+
+  http://cgit.freedesktop.org/mesa/rbug-gui
+
 
 --
 Jakob Bornecrantz <jakob@vmware.com>

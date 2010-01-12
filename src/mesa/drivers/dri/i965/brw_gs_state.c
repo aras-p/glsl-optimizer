@@ -72,6 +72,7 @@ gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 static dri_bo *
 gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_gs_unit_state gs;
    dri_bo *bo;
 
@@ -98,7 +99,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    else
       gs.thread4.max_threads = 0;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       gs.thread4.rendering_enable = 1;
 
    if (INTEL_DEBUG & DEBUG_STATS)

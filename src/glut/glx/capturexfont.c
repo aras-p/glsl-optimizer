@@ -321,6 +321,7 @@ captureXFont(Display * dpy, Font font, char *xfont, char *name)
     }
   }
   printf("};\n\n");
+  printf("GLUTAPI const BitmapFontRec %s;\n", name);
   printf("const BitmapFontRec %s = {\n", name);
   printf("\"%s\",\n", xfont);
   printf("%d,\n", last - first + 1);

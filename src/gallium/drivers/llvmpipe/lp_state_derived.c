@@ -66,7 +66,7 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
       /* compute vertex layout now */
       const struct lp_fragment_shader *lpfs = llvmpipe->fs;
       struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
-      const uint num = draw_num_vs_outputs(llvmpipe->draw);
+      const uint num = draw_current_shader_outputs(llvmpipe->draw);
       uint i;
 
       /* Tell draw_vbuf to simply emit the whole post-xform vertex
@@ -116,13 +116,13 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
          }
 
          /* this includes texcoords and varying vars */
-         src = draw_find_vs_output(llvmpipe->draw,
+         src = draw_find_shader_output(llvmpipe->draw,
                                    lpfs->info.input_semantic_name[i],
                                    lpfs->info.input_semantic_index[i]);
          draw_emit_vertex_attr(vinfo, EMIT_4F, interp, src);
       }
 
-      llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,
+      llvmpipe->psize_slot = draw_find_shader_output(llvmpipe->draw,
                                                  TGSI_SEMANTIC_PSIZE, 0);
       if (llvmpipe->psize_slot > 0) {
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
@@ -192,32 +192,6 @@ compute_cliprect(struct llvmpipe_context *lp)
 }
 
 
-static void
-update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
-{
-   unsigned i;
-
-   /* vertex shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->sampler[i];
-      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->texture[i];
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
-   }
-
-   /* fragment shader samplers */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      llvmpipe->tgsi.frag_samplers[i].sampler = llvmpipe->sampler[i];
-      llvmpipe->tgsi.frag_samplers[i].texture = llvmpipe->texture[i];
-      llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples;
-   }
-
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      lp_tex_tile_cache_validate_texture( llvmpipe->tex_cache[i] );
-   }
-
-   llvmpipe->jit_context.samplers = (struct tgsi_sampler **)llvmpipe->tgsi.frag_samplers_list;
-}
-
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
@@ -233,8 +207,9 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
    }
       
    if (llvmpipe->dirty & (LP_NEW_SAMPLER |
-                          LP_NEW_TEXTURE))
-      update_tgsi_samplers( llvmpipe );
+                          LP_NEW_TEXTURE)) {
+      /* TODO */
+   }
 
    if (llvmpipe->dirty & (LP_NEW_RASTERIZER |
                           LP_NEW_FS |

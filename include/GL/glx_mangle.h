@@ -76,6 +76,7 @@
 
 /* GLX 1.4 */
 #define glXGetProcAddress mglXGetProcAddress
+#define glXGetProcAddressARB mglXGetProcAddressARB
 
 
 #endif

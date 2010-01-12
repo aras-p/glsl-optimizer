@@ -15,10 +15,6 @@
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_context.h"
 
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv20_screen *ctx = nv20->screen
-#include "nouveau/nouveau_push.h"
-
 #include "nv20_state.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
@@ -143,9 +139,9 @@ extern void nv20_emit_hw_state(struct nv20_context *nv20);
 extern void nv20_state_tex_update(struct nv20_context *nv20);
 
 /* nv20_vbo.c */
-extern boolean nv20_draw_arrays(struct pipe_context *, unsigned mode,
+extern void nv20_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
-extern boolean nv20_draw_elements( struct pipe_context *pipe,
+extern void nv20_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *indexBuffer,
                     unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count);

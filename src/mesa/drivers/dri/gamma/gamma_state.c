@@ -813,10 +813,10 @@ static void gammaUpdateMasks( GLcontext *ctx )
 
 
    GLuint mask = gammaPackColor( gmesa->gammaScreen->cpp,
-				ctx->Color.ColorMask[RCOMP],
-				ctx->Color.ColorMask[GCOMP],
-				ctx->Color.ColorMask[BCOMP],
-				ctx->Color.ColorMask[ACOMP] );
+				ctx->Color.ColorMask[0][RCOMP],
+				ctx->Color.ColorMask[0][GCOMP],
+				ctx->Color.ColorMask[0][BCOMP],
+				ctx->Color.ColorMask[0][ACOMP] );
 
    if (gmesa->gammaScreen->cpp == 2) mask |= mask << 16;
 
@@ -1070,7 +1070,7 @@ static void gammaDDReadBuffer( GLcontext *ctx, GLenum mode )
 void gammaUpdateWindow( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = gmesa->driDrawable;
+   __DRIdrawable *dPriv = gmesa->driDrawable;
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = gmesa->driScreen->fbHeight - (GLfloat)dPriv->y - dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1109,7 +1109,7 @@ static void gammaDDDepthRange( GLcontext *ctx, GLclampd nearval,
 void gammaUpdateViewportOffset( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = gmesa->driDrawable;
+   __DRIdrawable *dPriv = gmesa->driDrawable;
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = gmesa->driScreen->fbHeight - (GLfloat)dPriv->y - dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;

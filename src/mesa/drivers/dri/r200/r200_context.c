@@ -274,10 +274,10 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific rendering context.
  */
 GLboolean r200CreateContext( const __GLcontextModes *glVisual,
-			     __DRIcontextPrivate *driContextPriv,
+			     __DRIcontext *driContextPriv,
 			     void *sharedContextPrivate)
 {
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
@@ -325,9 +325,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _mesa_init_driver_functions(&functions);
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
-   r200InitStateFuncs(&functions, screen->kernel_mm);
+   r200InitStateFuncs(&functions);
    r200InitTextureFuncs(&functions);
-   r200InitShaderFuncs(&functions); 
+   r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
 
    if (!radeonInitContext(&rmesa->radeon, &functions,
@@ -496,7 +496,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 }
 
 
-void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
+void r200DestroyContext( __DRIcontext *driContextPriv )
 {
 	int i;
 	r200ContextPtr rmesa = (r200ContextPtr)driContextPriv->driverPrivate;

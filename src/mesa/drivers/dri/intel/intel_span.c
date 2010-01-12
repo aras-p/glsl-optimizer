@@ -292,7 +292,6 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
-/* XXX with GEM, these need to tell the kernel */
 #define HW_LOCK()
 
 #define HW_UNLOCK()
@@ -335,7 +334,7 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #include "intel_spantmp.h"
 
 /* x8r8g8b8 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_FMT GL_BGR
 #define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 #define INTEL_READ_VALUE(offset) pread_xrgb8888(irb, offset)
 #define INTEL_WRITE_VALUE(offset, v) pwrite_xrgb8888(irb, offset, v)
@@ -518,7 +517,6 @@ intelSpanRenderStart(GLcontext * ctx)
    GLuint i;
 
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
@@ -554,8 +552,6 @@ intelSpanRenderFinish(GLcontext * ctx)
    intel_map_unmap_framebuffer(intel, ctx->DrawBuffer, GL_FALSE);
    if (ctx->ReadBuffer != ctx->DrawBuffer)
       intel_map_unmap_framebuffer(intel, ctx->ReadBuffer, GL_FALSE);
-
-   UNLOCK_HARDWARE(intel);
 }
 
 
@@ -614,18 +610,10 @@ intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   uint32_t tiling;
-
-   /* If in GEM mode, we need to do the tile address swizzling ourselves,
-    * instead of the fence registers handling it.
-    */
-   if (intel->ttm)
-      tiling = irb->region->tiling;
-   else
-      tiling = I915_TILING_NONE;
+   uint32_t tiling = irb->region->tiling;
 
    if (intel->intelScreen->kernel_exec_fencing) {
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
       case MESA_FORMAT_RGB565:
 	 intel_gttmap_InitPointers_RGB565(rb);
 	 break;
@@ -639,13 +627,7 @@ intel_set_span_functions(struct intel_context *intel,
          intel_gttmap_InitPointers_xRGB8888(rb);
 	 break;
       case MESA_FORMAT_ARGB8888:
-	 if (rb->_BaseFormat == GL_RGB) {
-	    /* XXX remove this code someday when we enable XRGB surfaces */
-	    /* 8888 RGBx */
-	    intel_gttmap_InitPointers_xRGB8888(rb);
-	 } else {
-	    intel_gttmap_InitPointers_ARGB8888(rb);
-	 }
+	 intel_gttmap_InitPointers_ARGB8888(rb);
 	 break;
       case MESA_FORMAT_Z16:
 	 intel_gttmap_InitDepthPointers_z16(rb);
@@ -668,13 +650,16 @@ intel_set_span_functions(struct intel_context *intel,
       default:
 	 _mesa_problem(NULL,
 		       "Unexpected MesaFormat %d in intelSetSpanFunctions",
-		       irb->texformat);
+		       irb->Base.Format);
 	 break;
       }
       return;
    }
 
-   switch (irb->texformat) {
+   /* If in GEM mode, we need to do the tile address swizzling ourselves,
+    * instead of the fence registers handling it.
+    */
+   switch (irb->Base.Format) {
    case MESA_FORMAT_RGB565:
       switch (tiling) {
       case I915_TILING_NONE:
@@ -732,35 +717,18 @@ intel_set_span_functions(struct intel_context *intel,
       }
       break;
    case MESA_FORMAT_ARGB8888:
-      if (rb->_BaseFormat == GL_RGB) {
-         /* XXX remove this code someday when we enable XRGB surfaces */
-	 /* 8888 RGBx */
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitPointers_xRGB8888(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitPointers_xRGB8888(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitPointers_xRGB8888(rb);
-	    break;
-	 }
-      } else {
-	 /* 8888 RGBA */
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitPointers_ARGB8888(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitPointers_ARGB8888(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitPointers_ARGB8888(rb);
-	    break;
-	 }
+      /* 8888 RGBA */
+      switch (tiling) {
+      case I915_TILING_NONE:
+      default:
+	 intelInitPointers_ARGB8888(rb);
+	 break;
+      case I915_TILING_X:
+	 intel_XTile_InitPointers_ARGB8888(rb);
+	 break;
+      case I915_TILING_Y:
+	 intel_YTile_InitPointers_ARGB8888(rb);
+	 break;
       }
       break;
    case MESA_FORMAT_Z16:

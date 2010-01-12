@@ -28,6 +28,8 @@ struct drm_create_screen_arg {
 
 struct drm_api
 {
+        const char *name;
+
 	/**
 	 * Special buffer functions
 	 */

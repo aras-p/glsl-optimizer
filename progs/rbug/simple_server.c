@@ -29,7 +29,7 @@
 
 #include "rbug/rbug.h"
 
-static void wait()
+static void rbug_wait()
 {
    int s = u_socket_listen_on_port(13370);
    int c = u_socket_accept(s);
@@ -57,6 +57,6 @@ static void wait()
 
 int main(int argc, char** argv)
 {
-   wait();
+   rbug_wait();
    return 0;
 }

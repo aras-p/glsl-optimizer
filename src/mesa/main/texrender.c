@@ -467,7 +467,6 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
-   gl_format texFormat;
 
    (void) ctx;
    ASSERT(trb);
@@ -489,8 +488,6 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Yoffset = 0;
       trb->Zoffset = att->Zoffset;
    }
-
-   texFormat = trb->TexImage->TexFormat;
 
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;

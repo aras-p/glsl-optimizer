@@ -25,11 +25,22 @@
 
 #include "draw/draw_vertex.h"
 
+#include "util/u_blitter.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
+struct r300_context;
+
 struct r300_fragment_shader;
 struct r300_vertex_shader;
+
+struct r300_atom {
+    struct r300_atom *prev, *next;
+    void* state;
+    void (*emit)(struct r300_context*, void*);
+    boolean dirty;
+};
 
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
@@ -60,11 +71,6 @@ struct r300_rs_state {
     /* Draw-specific rasterizer state */
     struct pipe_rasterizer_state rs;
 
-    /* Whether or not to enable the VTE. This is referenced at the very
-     * last moment during emission of VTE state, to decide whether or not
-     * the VTE should be used for transformation. */
-    boolean enable_vte;
-
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
@@ -89,14 +95,25 @@ struct r300_rs_block {
 };
 
 struct r300_sampler_state {
+    struct pipe_sampler_state state;
+
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
     uint32_t border_color; /* R300_TX_BORDER_COLOR: 0x45c0 */
+
+    /* Min/max LOD must be clamped to [0, last_level], thus
+     * it's dependent on a currently bound texture */
+    unsigned min_lod, max_lod;
+};
+
+struct r300_scissor_regs {
+    uint32_t top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
+    uint32_t bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
 struct r300_scissor_state {
-    uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
-    uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+    struct r300_scissor_regs framebuffer;
+    struct r300_scissor_regs scissor;
 };
 
 struct r300_texture_state {
@@ -119,24 +136,17 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_BLEND           0x00000001
-#define R300_NEW_BLEND_COLOR     0x00000002
-#define R300_NEW_CLIP            0x00000004
-#define R300_NEW_DSA             0x00000008
 #define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_RASTERIZER      0x00000080
 #define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
-#define R300_NEW_SCISSOR         0x00020000
 #define R300_NEW_TEXTURE         0x00040000
 #define R300_ANY_NEW_TEXTURES    0x03fc0000
 #define R300_NEW_VERTEX_FORMAT   0x04000000
 #define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
-#define R300_NEW_VIEWPORT        0x20000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
 
@@ -216,18 +226,14 @@ struct r300_texture {
     struct r300_texture_state state;
 };
 
-struct r300_vertex_format {
+struct r300_vertex_info {
     /* Parent class */
     struct vertex_info vinfo;
+
     /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
     uint32_t vap_prog_stream_cntl[8];
     /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
     uint32_t vap_prog_stream_cntl_ext[8];
-    /* Map of vertex attributes into PVS memory for HW TCL,
-     * or GA memory for SW TCL. */
-    int vs_tab[16];
-    /* Map of rasterizer attributes from GB through RS to US. */
-    int fs_tab[16];
 };
 
 extern struct pipe_viewport_state r300_viewport_identity;
@@ -237,9 +243,11 @@ struct r300_context {
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct r300_winsys* winsys;
+    struct radeon_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    /* Accelerated blit support. */
+    struct blitter_context* blitter;
 
     /* Vertex buffer for rendering. */
     struct pipe_buffer* vbo;
@@ -256,52 +264,57 @@ struct r300_context {
      * depends on the combination of both currently loaded shaders. */
     struct util_hash_table* shader_hash_table;
     /* Vertex formatting information. */
-    struct r300_vertex_format* vertex_info;
+    struct r300_vertex_info* vertex_info;
 
     /* Various CSO state objects. */
+    /* Beginning of atom list. */
+    struct r300_atom atom_list;
     /* Blend state. */
-    struct r300_blend_state* blend_state;
+    struct r300_atom blend_state;
     /* Blend color state. */
-    struct r300_blend_color_state* blend_color_state;
+    struct r300_atom blend_color_state;
     /* User clip planes. */
-    struct pipe_clip_state clip_state;
+    struct r300_atom clip_state;
     /* Shader constants. */
     struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
-    struct r300_dsa_state* dsa_state;
+    struct r300_atom dsa_state;
     /* Fragment shader. */
     struct r300_fragment_shader* fs;
     /* Framebuffer state. We currently don't need our own version of this. */
     struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */
-    struct r300_rs_state* rs_state;
+    struct r300_atom rs_state;
     /* RS block state. */
     struct r300_rs_block* rs_block;
     /* Sampler states. */
     struct r300_sampler_state* sampler_states[8];
     int sampler_count;
     /* Scissor state. */
-    struct r300_scissor_state* scissor_state;
+    struct r300_atom scissor_state;
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;
-    /* Vertex buffers for Gallium. */
-    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
-    int vertex_buffer_count;
-    /* Vertex elements for Gallium. */
-    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
-    int vertex_element_count;
     /* Vertex shader. */
     struct r300_vertex_shader* vs;
     /* Viewport state. */
-    struct r300_viewport_state* viewport_state;
+    struct r300_atom viewport_state;
     /* ZTOP state. */
-    struct r300_ztop_state ztop_state;
+    struct r300_atom ztop_state;
+
+    /* Vertex buffers for Gallium. */
+    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+    int vertex_buffer_count;
+    /* Vertex elements for Gallium. */
+    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+    int vertex_element_count;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
+    /* Whether the TCL engine should be in bypass mode. */
+    boolean tcl_bypass;
 
     /** Combination of DBG_xxx flags */
     unsigned debug;

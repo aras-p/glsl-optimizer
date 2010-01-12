@@ -28,6 +28,7 @@
 
 
 #include "main/mtypes.h"
+#include "main/hash.h"
 
 
 #if FEATURE_queryobj
@@ -41,6 +42,15 @@
       (driver)->WaitQuery      = impl ## WaitQuery;      \
       (driver)->CheckQuery     = impl ## CheckQuery;     \
    } while (0)
+
+
+static INLINE struct gl_query_object *
+_mesa_lookup_query_object(GLcontext *ctx, GLuint id)
+{
+   return (struct gl_query_object *)
+      _mesa_HashLookup(ctx->Query.QueryObjects, id);
+}
+
 
 extern void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids);

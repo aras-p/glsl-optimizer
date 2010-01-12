@@ -192,7 +192,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
                 prim, start, count);
 
    for (i = 0; i < count; i++) {
-      uint ii, j;
+      uint ii = 0;
+      uint j;
 
       if (draw->pt.user.elts) {
          /* indexed arrays */
@@ -312,13 +313,4 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 
    /* drawing done here: */
    draw_pt_arrays(draw, prim, start, count);
-}
-
-boolean draw_pt_get_edgeflag( struct draw_context *draw,
-                              unsigned idx )
-{
-   if (draw->pt.user.edgeflag)
-      return (draw->pt.user.edgeflag[idx/32] & (1 << (idx%32))) != 0;
-   else
-      return 1;
 }

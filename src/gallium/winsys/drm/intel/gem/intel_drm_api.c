@@ -32,6 +32,7 @@ intel_drm_get_device_id(unsigned int *device_id)
    }
 
    shutup_gcc = fgets(path, sizeof(path), file);
+   (void) shutup_gcc;
    sscanf(path, "%x", device_id);
    fclose(file);
 }
@@ -194,6 +195,7 @@ destroy(struct drm_api *api)
 
 struct drm_api intel_drm_api =
 {
+   .name = "i915",
    .create_context = intel_drm_create_context,
    .create_screen = intel_drm_create_screen,
    .texture_from_shared_handle = intel_drm_texture_from_shared_handle,

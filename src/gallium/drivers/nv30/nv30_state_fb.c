@@ -10,7 +10,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	struct nv04_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable = 0, rt_format = 0;
 	int i, colour_format = 0, zeta_format = 0, depth_only = 0;
-	struct nouveau_stateobj *so = so_new(64, 10);
+	struct nouveau_stateobj *so = so_new(12, 18, 10);
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;

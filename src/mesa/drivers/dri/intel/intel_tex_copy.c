@@ -109,8 +109,7 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   intelFlush(ctx);
-   LOCK_HARDWARE(intel);
+   /* intelFlush(ctx); */
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
@@ -132,13 +131,12 @@ do_copy_texsubimage(struct intel_context *intel,
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
-	 const __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+	 const __DRIdrawable *dPriv = intel->driReadDrawable;
 	 y = dPriv->y + (dPriv->h - (y + height));
 	 x += dPriv->x;
 
@@ -160,21 +158,19 @@ do_copy_texsubimage(struct intel_context *intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
 			     src->buffer,
-			     src->draw_offset,
+			     0,
 			     src->tiling,
 			     intelImage->mt->pitch,
 			     dst_bo,
 			     0,
 			     intelImage->mt->region->tiling,
-			     x, y, image_x + dstx, image_y + dsty,
+			     src->draw_x + x, src->draw_y + y,
+			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }
@@ -221,6 +217,8 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage1D(ctx, target, level, internalFormat, x, y,
                              width, border);
 }
@@ -268,6 +266,8 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+   if (INTEL_DEBUG & DEBUG_FALLBACKS)
+      fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
                              width, height, border);
 }
@@ -292,6 +292,8 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage1D(ctx, target, level, xoffset, x, y, width);
    }
 }
@@ -317,8 +319,8 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
 
-      DBG("%s - fallback to _mesa_meta_CopyTexSubImage2D\n", __FUNCTION__);
-
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         fprintf(stderr, "%s - fallback to swrast\n", __FUNCTION__);
       _mesa_meta_CopyTexSubImage2D(ctx, target, level,
                                    xoffset, yoffset, x, y, width, height);
    }

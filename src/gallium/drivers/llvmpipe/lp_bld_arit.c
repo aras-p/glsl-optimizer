@@ -629,7 +629,8 @@ lp_build_abs(struct lp_build_context *bld,
    if(type.floating) {
       /* Mask out the sign bit */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long)1 << type.width) - 1);
+      unsigned long absMask = ~(1 << (type.width - 1));
+      LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
       a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       a = LLVMBuildAnd(bld->builder, a, mask, "");
       a = LLVMBuildBitCast(bld->builder, a, vec_type, "");
@@ -1083,7 +1084,7 @@ lp_build_log(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log(2) */
-   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 1.4426950408889634);
+   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 0.69314718055994529);
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
@@ -1095,7 +1096,7 @@ lp_build_log(struct lp_build_context *bld,
 
 /**
  * Generate polynomial.
- * Ex:  x^2 * coeffs[0] + x * coeffs[1] + coeffs[2].
+ * Ex:  coeffs[0] + x * coeffs[1] + x^2 * coeffs[2].
  */
 static LLVMValueRef
 lp_build_polynomial(struct lp_build_context *bld,
@@ -1285,13 +1286,13 @@ lp_build_log2_approx(struct lp_build_context *bld,
       /* mant = (float) mantissa(x) */
       mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
       mant = LLVMBuildOr(bld->builder, mant, one, "");
-      mant = LLVMBuildSIToFP(bld->builder, mant, vec_type, "");
+      mant = LLVMBuildBitCast(bld->builder, mant, vec_type, "");
 
       logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
                                     Elements(lp_build_log2_polynomial));
 
       /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
-      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildMul(bld->builder, mant, bld->one, ""), "");
+      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildSub(bld->builder, mant, bld->one, ""), "");
 
       res = LLVMBuildAdd(bld->builder, logmant, logexp, "");
    }

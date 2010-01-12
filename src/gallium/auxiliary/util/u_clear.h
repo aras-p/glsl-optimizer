@@ -46,13 +46,13 @@ util_clear(struct pipe_context *pipe,
 {
    if (buffers & PIPE_CLEAR_COLOR) {
       struct pipe_surface *ps = framebuffer->cbufs[0];
-      unsigned color;
+      union util_color uc;
 
-      util_pack_color(rgba, ps->format, &color);
+      util_pack_color(rgba, ps->format, &uc);
       if (pipe->surface_fill) {
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
       } else {
-         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
       }
    }
 

@@ -68,11 +68,11 @@ static const struct tnl_pipeline_stage *gamma_pipeline[] = {
 };
 
 GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
-			     __DRIcontextPrivate *driContextPriv,
+			     __DRIcontext *driContextPriv,
                      	     void *sharedContextPrivate)
 {
    GLcontext *ctx, *shareCtx;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    gammaContextPtr gmesa;
    gammaScreenPtr gammascrn;
    GLINTSAREADRIPtr saPriv=(GLINTSAREADRIPtr)(((char*)sPriv->pSAREA)+

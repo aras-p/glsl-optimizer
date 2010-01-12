@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
@@ -52,7 +53,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
+      dst_stride = util_format_get_stride(pt->texture->format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -62,7 +63,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
    if(!src)
       return;
 
-   util_copy_rect(dst, &pt->block, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
+   util_copy_rect(dst, pt->texture->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
    screen->transfer_unmap(screen, pt);
 }
@@ -78,9 +79,10 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
 {
    struct pipe_screen *screen = pt->texture->screen;
    void *dst;
+   enum pipe_format format = pt->texture->format;
 
    if (src_stride == 0)
-      src_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
+      src_stride = util_format_get_stride(format, w);
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -90,7 +92,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
    if(!dst)
       return;
 
-   util_copy_rect(dst, &pt->block, pt->stride, x, y, w, h, src, src_stride, 0, 0);
+   util_copy_rect(dst, format, pt->stride, x, y, w, h, src, src_stride, 0, 0);
 
    screen->transfer_unmap(screen, pt);
 }
@@ -240,6 +242,53 @@ b8g8r8a8_put_tile_rgba(unsigned *dst,
          b = float_to_ubyte(pRow[2]);
          a = float_to_ubyte(pRow[3]);
          *dst++ = (b << 24) | (g << 16) | (r << 8) | a;
+      }
+      p += src_stride;
+   }
+}
+
+
+/*** PIPE_FORMAT_R8G8B8A8_UNORM ***/
+
+static void
+r8g8b8a8_get_tile_rgba(const unsigned *src,
+                       unsigned w, unsigned h,
+                       float *p,
+                       unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         const unsigned pixel = *src++;
+         pRow[0] = ubyte_to_float((pixel >> 24) & 0xff);
+         pRow[1] = ubyte_to_float((pixel >> 16) & 0xff);
+         pRow[2] = ubyte_to_float((pixel >>  8) & 0xff);
+         pRow[3] = ubyte_to_float((pixel >>  0) & 0xff);
+      }
+      p += dst_stride;
+   }
+}
+
+
+static void
+r8g8b8a8_put_tile_rgba(unsigned *dst,
+                       unsigned w, unsigned h,
+                       const float *p,
+                       unsigned src_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         unsigned r, g, b, a;
+         r = float_to_ubyte(pRow[0]);
+         g = float_to_ubyte(pRow[1]);
+         b = float_to_ubyte(pRow[2]);
+         a = float_to_ubyte(pRow[3]);
+         *dst++ = (r << 24) | (g << 16) | (b << 8) | a;
       }
       p += src_stride;
    }
@@ -1106,27 +1155,6 @@ ycbcr_get_tile_rgba(const ushort *src,
 }
 
 
-static void
-fake_get_tile_rgba(const ushort *src,
-                   unsigned w, unsigned h,
-                   float *p,
-                   unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         pRow[0] =
-         pRow[1] =
-         pRow[2] =
-         pRow[3] = (i ^ j) & 1 ? 1.0f : 0.0f;
-      }
-      p += dst_stride;
-   }
-}
-
-
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
                       void *src,
@@ -1142,6 +1170,9 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      r8g8b8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       a1r5g5b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
@@ -1206,8 +1237,10 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, TRUE);
       break;
    default:
-      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(format));
-      fake_get_tile_rgba(src, w, h, dst, dst_stride);
+      util_format_read_4f(format,
+                          dst, dst_stride * sizeof(float),
+                          src, util_format_get_stride(format, w),
+                          0, 0, w, h);
    }
 }
 
@@ -1219,21 +1252,22 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
 {
    unsigned dst_stride = w * 4;
    void *packed;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
 
    if (!packed)
       return;
 
-   if(pt->format == PIPE_FORMAT_YCBCR || pt->format == PIPE_FORMAT_YCBCR_REV)
+   if(format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV)
       assert((x & 1) == 0);
 
    pipe_get_tile_raw(pt, x, y, w, h, packed, 0);
 
-   pipe_tile_raw_to_rgba(pt->format, packed, w, h, p, dst_stride);
+   pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
    FREE(packed);
 }
@@ -1246,16 +1280,17 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
 {
    unsigned src_stride = w * 4;
    void *packed;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
 
    if (!packed)
       return;
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
@@ -1265,6 +1300,9 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      r8g8b8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
+      break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       a1r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
       break;
@@ -1273,9 +1311,6 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       break;
    case PIPE_FORMAT_R8G8B8_UNORM:
       r8g8b8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      assert(0);
       break;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
       a4r4g4b4_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
@@ -1322,7 +1357,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    default:
-      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(pt->format));
+      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(format));
    }
 
    pipe_put_tile_raw(pt, x, y, w, h, packed, 0);
@@ -1344,6 +1379,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
    ubyte *map;
    uint *pDest = z;
    uint i, j;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -1354,7 +1390,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
       return;
    }
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
          const uint *ptrc
@@ -1428,6 +1464,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
    const uint *ptrc = zSrc;
    ubyte *map;
    uint i, j;
+   enum pipe_format format = pt->texture->format;
 
    if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
@@ -1438,7 +1475,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
       return;
    }
 
-   switch (pt->format) {
+   switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
