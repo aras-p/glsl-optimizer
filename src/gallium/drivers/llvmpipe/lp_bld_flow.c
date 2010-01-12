@@ -41,9 +41,6 @@
 #define LP_BUILD_FLOW_MAX_VARIABLES 32
 #define LP_BUILD_FLOW_MAX_DEPTH 32
 
-#define LP_BUILD_IF_MAX_VARIABLES 8
-
-
 /**
  * Enumeration of all possible flow constructs.
  */
