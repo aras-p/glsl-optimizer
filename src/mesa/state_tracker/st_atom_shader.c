@@ -35,8 +35,6 @@
  *   Brian Paul
  */
 
-
-
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
@@ -57,9 +55,7 @@
 
 
 
-
-
-/*
+/**
  * Translate fragment program if needed.
  */
 static void
@@ -155,8 +151,10 @@ find_translated_vp(struct st_context *st,
 }
 
 
-
-
+/**
+ * Return pointer to a pass-through fragment shader.
+ * This shader is used when a texture is missing/incomplete.
+ */
 static void *
 get_passthrough_fs(struct st_context *st)
 {
@@ -168,6 +166,11 @@ get_passthrough_fs(struct st_context *st)
    return st->passthrough_fs;
 }
 
+
+/**
+ * Update fragment program state/atom.  This involves translating the
+ * Mesa fragment program into a gallium fragment program and binding it.
+ */
 static void
 update_fp( struct st_context *st )
 {
@@ -191,6 +194,7 @@ update_fp( struct st_context *st )
    }
 }
 
+
 const struct st_tracked_state st_update_fp = {
    "st_update_fp",					/* name */
    {							/* dirty */
@@ -202,7 +206,10 @@ const struct st_tracked_state st_update_fp = {
 
 
 
-
+/**
+ * Update vertex program state/atom.  This involves translating the
+ * Mesa vertex program into a gallium fragment program and binding it.
+ */
 static void
 update_vp( struct st_context *st )
 {
