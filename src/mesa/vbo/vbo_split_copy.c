@@ -34,7 +34,6 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "main/enums.h"
 #include "main/mtypes.h"
 
 #include "vbo_split.h"
@@ -221,8 +220,6 @@ begin( struct copy_context *copy, GLenum mode, GLboolean begin_flag )
 {
    struct _mesa_prim *prim = &copy->dstprim[copy->dstprim_nr];
 
-/*    _mesa_printf("begin %s (%d)\n", _mesa_lookup_prim_by_nr(mode), begin_flag); */
-		
    prim->mode = mode;
    prim->begin = begin_flag;
 }
