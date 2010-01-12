@@ -462,7 +462,7 @@ compute_blend_ref(const struct pipe_blend_state *blend,
 }
 
 
-ALIGN_STACK
+PIPE_ALIGN_STACK
 static boolean
 test_one(unsigned verbose,
          FILE *fp,

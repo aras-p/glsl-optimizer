@@ -142,7 +142,7 @@ add_conv_test(LLVMModuleRef module,
 }
 
 
-ALIGN_STACK
+PIPE_ALIGN_STACK
 static boolean
 test_one(unsigned verbose,
          FILE *fp,

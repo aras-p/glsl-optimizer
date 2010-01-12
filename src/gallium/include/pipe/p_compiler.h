@@ -149,9 +149,9 @@ typedef unsigned char boolean;
 #define PIPE_ALIGN_VAR(_alignment) __attribute__((aligned(_alignment)))
 
 #if (__GNUC__ > 4 || (__GNUC__ == 4 &&__GNUC_MINOR__>1)) && !defined(PIPE_ARCH_X86_64)
-#define ALIGN_STACK __attribute__((force_align_arg_pointer))
+#define PIPE_ALIGN_STACK __attribute__((force_align_arg_pointer))
 #else
-#define ALIGN_STACK
+#define PIPE_ALIGN_STACK
 #endif
 
 #elif defined(_MSC_VER)
@@ -160,7 +160,7 @@ typedef unsigned char boolean;
 #define PIPE_ALIGN_TYPE(_alignment, _type) __declspec(align(_alignment)) _type
 #define PIPE_ALIGN_VAR(_alignment) __declspec(align(_alignment))
 
-#define ALIGN_STACK
+#define PIPE_ALIGN_STACK
 
 #else
 

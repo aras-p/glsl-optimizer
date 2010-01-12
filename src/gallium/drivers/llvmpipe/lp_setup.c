@@ -117,7 +117,7 @@ struct setup_context {
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
-ALIGN_STACK
+PIPE_ALIGN_STACK
 static void
 shade_quads(struct llvmpipe_context *llvmpipe,
             struct quad_header *quads[],
