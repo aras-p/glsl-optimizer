@@ -717,7 +717,11 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         draw_set_rasterizer_state(r300->draw, &rs->rs);
     }
 
-    r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
+    if (rs) {
+        r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
+    } else {
+        r300->tcl_bypass = FALSE;
+    }
 
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
