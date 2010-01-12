@@ -127,8 +127,6 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(rs);
     R300_INIT_ATOM(scissor);
     R300_INIT_ATOM(viewport);
-
-    r300->scissor_state.always_dirty = TRUE;
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

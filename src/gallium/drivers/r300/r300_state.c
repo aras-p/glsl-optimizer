@@ -491,6 +491,7 @@ static void
 
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
+    r300->scissor_state.dirty = TRUE;
 }
 
 /* Create fragment shader state. */
@@ -692,6 +693,8 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     r300->rs_state.state = rs;
     r300->rs_state.dirty = TRUE;
+    /* XXX Why is this still needed, dammit!? */
+    r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
@@ -836,6 +839,7 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 
     memcpy(r300->scissor_state.state, state,
         sizeof(struct pipe_scissor_state));
+    r300->scissor_state.dirty = TRUE;
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
