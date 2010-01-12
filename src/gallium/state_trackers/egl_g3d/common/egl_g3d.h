@@ -73,6 +73,7 @@ struct egl_g3d_surface {
    struct native_surface *native;
    enum native_attachment render_att;
    struct pipe_surface *render_surface;
+   unsigned int sequence_number;
 };
 
 struct egl_g3d_config {

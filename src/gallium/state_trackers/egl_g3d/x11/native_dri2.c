@@ -64,6 +64,7 @@ struct dri2_surface {
    struct pipe_texture *pbuffer_textures[NUM_NATIVE_ATTACHMENTS];
    boolean have_back, have_fake;
    int width, height;
+   unsigned int sequence_number;
 };
 
 struct dri2_config {
@@ -136,6 +137,7 @@ static boolean
 dri2_surface_validate(struct native_surface *nsurf,
                              const enum native_attachment *natts,
                              unsigned num_natts,
+                             unsigned int *seq_num,
                              struct pipe_texture **textures,
                              int *width, int *height)
 {
@@ -178,6 +180,8 @@ dri2_surface_validate(struct native_surface *nsurf,
             pipe_texture_reference(&textures[i], ptex);
       }
 
+      if (seq_num)
+         *seq_num = dri2surf->sequence_number;
       if (width)
          *width = dri2surf->width;
       if (height)
@@ -219,15 +223,23 @@ dri2_surface_validate(struct native_surface *nsurf,
    dri2surf->have_back = FALSE;
    dri2surf->have_fake = FALSE;
 
+   /* remember old geometry */
+   templ.width0 = dri2surf->width;
+   templ.height0 = dri2surf->height;
+
    xbufs = x11_drawable_get_buffers(dri2dpy->xscr, dri2surf->drawable,
                                     &dri2surf->width, &dri2surf->height,
                                     dri2atts, FALSE, num_ins, &num_outs);
    if (!xbufs)
       return FALSE;
 
-   /* update width and height */
-   templ.width0 = dri2surf->width;
-   templ.height0 = dri2surf->height;
+   if (templ.width0 != dri2surf->width || templ.height0 != dri2surf->height) {
+      /* are there cases where the buffers change and the geometry doesn't? */
+      dri2surf->sequence_number++;
+
+      templ.width0 = dri2surf->width;
+      templ.height0 = dri2surf->height;
+   }
 
    for (i = 0; i < num_outs; i++) {
       struct x11_drawable_buffer *xbuf = &xbufs[i];
@@ -279,6 +291,8 @@ dri2_surface_validate(struct native_surface *nsurf,
 
    free(xbufs);
 
+   if (seq_num)
+      *seq_num = dri2surf->sequence_number;
    if (width)
       *width = dri2surf->width;
    if (height)

@@ -63,22 +63,19 @@ egl_g3d_validate_context(_EGLDisplay *dpy, _EGLContext *ctx)
       }
 
       if (!gctx->force_validate) {
-         EGLint cur_w, cur_h;
+         unsigned int seq_num;
 
-         cur_w = gsurf->base.Width;
-         cur_h = gsurf->base.Height;
          gsurf->native->validate(gsurf->native,
                gbuf->native_atts, gbuf->num_atts,
-               NULL,
-               &gsurf->base.Width, &gsurf->base.Height);
-         /* validate only when the geometry changed */
-         if (gsurf->base.Width == cur_w && gsurf->base.Height == cur_h)
+               &seq_num, NULL, NULL, NULL);
+         /* skip validation */
+         if (gsurf->sequence_number == seq_num)
             continue;
       }
 
       gsurf->native->validate(gsurf->native,
             gbuf->native_atts, gbuf->num_atts,
-            (struct pipe_texture **) textures,
+            &gsurf->sequence_number, textures,
             &gsurf->base.Width, &gsurf->base.Height);
       for (i = 0; i < gbuf->num_atts; i++) {
          struct pipe_texture *pt = textures[i];
@@ -599,6 +596,16 @@ egl_g3d_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
    return EGL_TRUE;
 }
 
+static EGLBoolean
+init_surface_geometry(_EGLSurface *surf)
+{
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+
+   return gsurf->native->validate(gsurf->native, NULL, 0,
+         &gsurf->sequence_number, NULL,
+         &gsurf->base.Width, &gsurf->base.Height);
+}
+
 static _EGLSurface *
 egl_g3d_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLConfig *conf, EGLNativeWindowType win,
@@ -626,8 +633,7 @@ egl_g3d_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!gsurf->native->validate(gsurf->native, NULL, 0, NULL,
-            &gsurf->base.Width, &gsurf->base.Height)) {
+   if (!init_surface_geometry(&gsurf->base)) {
       gsurf->native->destroy(gsurf->native);
       free(gsurf);
       return NULL;
@@ -667,8 +673,7 @@ egl_g3d_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!gsurf->native->validate(gsurf->native, NULL, 0, NULL,
-            &gsurf->base.Width, &gsurf->base.Height)) {
+   if (!init_surface_geometry(&gsurf->base)) {
       gsurf->native->destroy(gsurf->native);
       free(gsurf);
       return NULL;
@@ -702,6 +707,12 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       gdpy->native->create_pbuffer_surface(gdpy->native, gconf->native,
             gsurf->base.Width, gsurf->base.Height);
    if (!gsurf->native) {
+      free(gsurf);
+      return NULL;
+   }
+
+   if (!init_surface_geometry(&gsurf->base)) {
+      gsurf->native->destroy(gsurf->native);
       free(gsurf);
       return NULL;
    }

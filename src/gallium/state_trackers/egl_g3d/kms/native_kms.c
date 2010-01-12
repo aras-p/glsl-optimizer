@@ -36,7 +36,7 @@ static boolean
 kms_surface_validate(struct native_surface *nsurf,
                      const enum native_attachment *natts,
                      unsigned num_natts,
-                     struct pipe_texture **textures,
+                     unsigned int *seq_num, struct pipe_texture **textures,
                      int *width, int *height)
 {
    struct kms_surface *ksurf = kms_surface(nsurf);
@@ -75,6 +75,8 @@ kms_surface_validate(struct native_surface *nsurf,
          pipe_texture_reference(&textures[i], ptex);
    }
 
+   if (seq_num)
+      *seq_num = ksurf->sequence_number;
    if (width)
       *width = ksurf->width;
    if (height)
@@ -111,7 +113,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
 
       if (!fb->texture) {
          /* make sure the texture has been allocated */
-         kms_surface_validate(&ksurf->base, &natt, 1, NULL, NULL, NULL);
+         kms_surface_validate(&ksurf->base, &natt, 1, NULL, NULL, NULL, NULL);
          if (!ksurf->textures[natt])
             return FALSE;
 
@@ -195,6 +197,9 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    ksurf->textures[NATIVE_ATTACHMENT_FRONT_LEFT] =
       ksurf->textures[NATIVE_ATTACHMENT_BACK_LEFT];
    ksurf->textures[NATIVE_ATTACHMENT_BACK_LEFT] = tmp_texture;
+
+   /* the front/back textures are swapped */
+   ksurf->sequence_number++;
 
    return TRUE;
 }

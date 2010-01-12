@@ -83,6 +83,7 @@ struct ximage_surface {
    GC gc;
 
    struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
+   unsigned int sequence_number;
 };
 
 struct ximage_config {
@@ -260,6 +261,9 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
    *xfront = *xback;
    *xback = xtmp;
 
+   /* the front/back textures are swapped */
+   xsurf->sequence_number++;
+
    return ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
 }
 
@@ -288,11 +292,12 @@ static boolean
 ximage_surface_validate(struct native_surface *nsurf,
                                const enum native_attachment *natts,
                                unsigned num_natts,
+                               unsigned int *seq_num,
                                struct pipe_texture **textures,
                                int *width, int *height)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
-   boolean error = FALSE;
+   boolean new_buffers = FALSE, error = FALSE;
    unsigned i;
 
    ximage_surface_update_geometry(&xsurf->base);
@@ -311,6 +316,7 @@ ximage_surface_validate(struct native_surface *nsurf,
       if (!xbuf->texture ||
           xsurf->width != xbuf->texture->width0 ||
           xsurf->height != xbuf->texture->height0) {
+         new_buffers = TRUE;
          if (ximage_surface_alloc_buffer(&xsurf->base, natt)) {
             /* update ximage */
             if (xbuf->ximage) {
@@ -336,6 +342,12 @@ ximage_surface_validate(struct native_surface *nsurf,
          pipe_texture_reference(&textures[i], xbuf->texture);
    }
 
+   /* increase the sequence number so that caller knows */
+   if (new_buffers)
+      xsurf->sequence_number++;
+
+   if (seq_num)
+      *seq_num = xsurf->sequence_number;
    if (width)
       *width = xsurf->width;
    if (height)

@@ -65,8 +65,9 @@ struct native_surface {
 
    /**
     * Validate the buffers of the surface.  The returned textures are owned by
-    * the caller.  It is possible that this function is called with textures,
-    * width, or height being NULL.
+    * the caller.  A sequence number is also returned.  The caller can use it
+    * to check if anything has changed since the last call. Any of the pointers
+    * may be NULL and it indicates the caller has no interest in those values.
     *
     * If this function is called multiple times with different attachments,
     * those not listed in the latest call might be destroyed.  This behavior
@@ -75,7 +76,7 @@ struct native_surface {
    boolean (*validate)(struct native_surface *nsurf,
                        const enum native_attachment *natts,
                        unsigned num_natts,
-                       struct pipe_texture **textures,
+                       unsigned int *seq_num, struct pipe_texture **textures,
                        int *width, int *height);
 
    /**

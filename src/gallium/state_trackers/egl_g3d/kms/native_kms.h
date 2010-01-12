@@ -81,6 +81,7 @@ struct kms_surface {
    int width, height;
 
    struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   unsigned int sequence_number;
    struct kms_framebuffer front_fb, back_fb;
 
    boolean is_shown;
