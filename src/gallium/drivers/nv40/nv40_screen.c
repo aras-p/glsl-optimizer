@@ -157,9 +157,9 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 			so_ref(NULL, &screen->state[i]);
 	}
 
-	nouveau_resource_free(&screen->vp_exec_heap);
-	nouveau_resource_free(&screen->vp_data_heap);
-	nouveau_resource_free(&screen->query_heap);
+	nouveau_resource_destroy(&screen->vp_exec_heap);
+	nouveau_resource_destroy(&screen->vp_data_heap);
+	nouveau_resource_destroy(&screen->query_heap);
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->curie);

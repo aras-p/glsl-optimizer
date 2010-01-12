@@ -195,6 +195,9 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_grobj_free(&screen->tesla);
 	nouveau_grobj_free(&screen->eng2d);
 	nouveau_grobj_free(&screen->m2mf);
+	nouveau_resource_destroy(&screen->immd_heap[0]);
+	nouveau_resource_destroy(&screen->parm_heap[0]);
+	nouveau_resource_destroy(&screen->parm_heap[1]);
 	nouveau_screen_fini(&screen->base);
 	FREE(screen);
 }
