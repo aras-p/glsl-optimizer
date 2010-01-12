@@ -145,7 +145,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 				  mt->level[0].tile_mode, tile_flags,
 				  &mt->base.bo);
 	if (ret) {
-		for (l = 0; l < pt->last_level; ++l)
+		for (l = 0; l <= pt->last_level; ++l)
 			FREE(mt->level[l].image_offset);
 		FREE(mt);
 		return NULL;
@@ -188,7 +188,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	unsigned l;
 
-	for (l = 0; l < pt->last_level; ++l)
+	for (l = 0; l <= pt->last_level; ++l)
 		FREE(mt->level[l].image_offset);
 
 	nouveau_bo_ref(NULL, &mt->base.bo);
