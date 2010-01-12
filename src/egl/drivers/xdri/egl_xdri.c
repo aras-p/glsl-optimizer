@@ -562,7 +562,7 @@ xdri_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
 
-   xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable);
+   xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable, 0, 0, 0);
 
    return EGL_TRUE;
 }
