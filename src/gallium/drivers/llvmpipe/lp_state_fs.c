@@ -1005,6 +1005,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    struct lp_fragment_shader *shader = lp->fs;
    struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant;
+   boolean opaque;
 
    make_variant_key(lp, shader, &key);
 
@@ -1021,6 +1022,15 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 
    shader->current = variant;
 
+   /* TODO: put this in the variant */
+   opaque = !key.blend.logicop_enable &&
+            !key.blend.blend_enable &&
+            !key.alpha.enabled &&
+            !key.depth.enabled &&
+            !shader->info.uses_kill
+            ? TRUE : FALSE;
+
    lp_setup_set_fs_function(lp->setup, 
-                            shader->current->jit_function);
+                            shader->current->jit_function,
+                            opaque);
 }

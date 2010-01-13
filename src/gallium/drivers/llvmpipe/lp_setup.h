@@ -97,7 +97,8 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
 
 void
 lp_setup_set_fs_function( struct setup_context *setup,
-                          lp_jit_frag_func jit_function );
+                          lp_jit_frag_func jit_function,
+                          boolean opaque );
 
 void
 lp_setup_set_fs_constants(struct setup_context *setup,

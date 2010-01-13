@@ -68,6 +68,8 @@ struct lp_rast_state {
     * the tile color/z/stencil data somehow:
     */
    lp_jit_frag_func jit_function;
+
+   boolean opaque;
 };
 
 

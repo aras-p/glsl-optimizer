@@ -459,6 +459,12 @@ do_triangle_ccw(struct setup_context *setup,
 	    {
 	       in = 1;
                /* triangle covers the whole tile- shade whole tile */
+	       if(setup->fs.current.opaque) {
+	          lp_scene_bin_reset( scene, x, y );
+	          lp_scene_bin_command( scene, x, y,
+	                                lp_rast_set_state,
+	                                lp_rast_arg_state(setup->fs.stored) );
+	       }
                lp_scene_bin_command( scene, x, y,
 				     lp_rast_shade_tile,
 				     lp_rast_arg_inputs(&tri->inputs) );

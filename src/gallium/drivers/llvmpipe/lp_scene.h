@@ -215,6 +215,10 @@ lp_scene_get_bin(struct lp_scene *scene, unsigned x, unsigned y)
 }
 
 
+/** Remove all commands from a bin */
+void
+lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y);
+
 
 /* Add a command to bin[x][y].
  */

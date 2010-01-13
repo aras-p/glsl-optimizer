@@ -88,6 +88,25 @@ lp_scene_is_empty(struct lp_scene *scene )
 }
 
 
+void
+lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
+{
+   struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
+   struct cmd_block_list *list = &bin->commands;
+   struct cmd_block *block;
+   struct cmd_block *tmp;
+
+   for (block = list->head; block != list->tail; block = tmp) {
+      tmp = block->next;
+      FREE(block);
+   }
+
+   assert(list->tail->next == NULL);
+   list->head = list->tail;
+   list->head->count = 0;
+}
+
+
 /**
  * Set scene to empty state.
  */
@@ -100,19 +119,7 @@ lp_scene_reset(struct lp_scene *scene )
     */
    for (i = 0; i < scene->tiles_x; i++) {
       for (j = 0; j < scene->tiles_y; j++) {
-         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         struct cmd_block_list *list = &bin->commands;
-         struct cmd_block *block;
-         struct cmd_block *tmp;
-         
-         for (block = list->head; block != list->tail; block = tmp) {
-            tmp = block->next;
-            FREE(block);
-         }
-         
-         assert(list->tail->next == NULL);
-         list->head = list->tail;
-         list->head->count = 0;
+         lp_scene_bin_reset(scene, i, j);
       }
    }
 
