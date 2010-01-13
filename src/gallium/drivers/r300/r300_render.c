@@ -138,9 +138,14 @@ static void r300_emit_draw_immediate(struct r300_context *r300,
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
+    //debug_printf("r300: Immd %d verts, %d attrs\n", count, vertex_size);
     for (i = 0; i < count * vertex_size; i++) {
-            OUT_CS(*map);
-            map++;
+        if (i % vertex_size == 0) {
+            //debug_printf("r300: -- vert --\n");
+        }
+        //debug_printf("r300: 0x%08x\n", *map);
+        OUT_CS(*map);
+        map++;
     }
     END_CS;
 
@@ -320,7 +325,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_emit_dirty_state(r300);
 
-    if (count < 10 && r300->vertex_buffer_count == 1) {
+    if (count <= 4 && r300->vertex_buffer_count == 1) {
         r300_emit_draw_immediate(r300, mode, start, count);
     } else {
         r300_emit_aos(r300, start);
