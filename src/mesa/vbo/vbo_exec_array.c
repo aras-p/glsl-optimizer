@@ -35,7 +35,6 @@
 #include "main/bufferobj.h"
 #include "main/enums.h"
 #include "main/macros.h"
-#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 
