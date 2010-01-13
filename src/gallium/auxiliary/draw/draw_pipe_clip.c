@@ -291,9 +291,7 @@ do_clip_tri( struct draw_stage *stage,
    /* If flat-shading, copy color to new provoking vertex.
     */
    if (clipper->flat && inlist[0] != header->v[2]) {
-      if (1) {
-	 inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
-      }
+      inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
 
       copy_colors(stage, inlist[0], header->v[2]);
    }
