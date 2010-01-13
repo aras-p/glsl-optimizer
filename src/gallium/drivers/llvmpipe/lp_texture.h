@@ -73,6 +73,13 @@ llvmpipe_texture(struct pipe_texture *pt)
    return (struct llvmpipe_texture *) pt;
 }
 
+static INLINE const struct llvmpipe_texture *
+llvmpipe_texture_const(const struct pipe_texture *pt)
+{
+   return (const struct llvmpipe_texture *) pt;
+}
+
+
 static INLINE struct llvmpipe_transfer *
 llvmpipe_transfer(struct pipe_transfer *pt)
 {
