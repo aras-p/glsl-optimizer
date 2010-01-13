@@ -874,6 +874,9 @@ lp_build_iround(struct lp_build_context *bld,
 }
 
 
+/**
+ * Convert float[] to int[] with floor().
+ */
 LLVMValueRef
 lp_build_ifloor(struct lp_build_context *bld,
                 LLVMValueRef a)
@@ -900,6 +903,7 @@ lp_build_ifloor(struct lp_build_context *bld,
       sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
       sign = LLVMBuildAShr(bld->builder, sign, lp_build_int_const_scalar(type, type.width - 1), "");
+      lp_build_name(sign, "floor.sign");
 
       /* offset = -0.99999(9)f */
       offset = lp_build_const_scalar(type, -(double)(((unsigned long long)1 << mantissa) - 1)/((unsigned long long)1 << mantissa));
@@ -908,11 +912,14 @@ lp_build_ifloor(struct lp_build_context *bld,
       /* offset = a < 0 ? -0.99999(9)f : 0.0f */
       offset = LLVMBuildAnd(bld->builder, offset, sign, "");
       offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "");
+      lp_build_name(offset, "floor.offset");
 
       res = LLVMBuildAdd(bld->builder, a, offset, "");
+      lp_build_name(res, "floor.res");
    }
 
    res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "");
+   lp_build_name(res, "floor");
 
    return res;
 }
