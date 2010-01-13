@@ -790,32 +790,6 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     END_CS;
 }
 
-#if 0
-void r300_emit_draw_packet(struct r300_context* r300)
-{
-    CS_LOCALS(r300);
-
-    DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
-            "vertex size %d\n", r300->vbo,
-            r300->vertex_info->vinfo.size);
-    /* Set the pointer to our vertex buffer. The emitted values are this:
-     * PACKET3 [3D_LOAD_VBPNTR]
-     * COUNT   [1]
-     * FORMAT  [size | stride << 8]
-     * OFFSET  [offset into BO]
-     * VBPNTR  [relocated BO]
-     */
-    BEGIN_CS(7);
-    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
-    OUT_CS(1);
-    OUT_CS(r300->vertex_info->vinfo.size |
-            (r300->vertex_info->vinfo.size << 8));
-    OUT_CS(r300->vbo_offset);
-    OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
-    END_CS;
-}
-#endif
-
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
     int i;
