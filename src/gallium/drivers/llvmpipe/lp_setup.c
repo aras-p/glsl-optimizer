@@ -482,19 +482,22 @@ lp_setup_is_texture_referenced( const struct setup_context *setup,
                                 const struct pipe_texture *texture )
 {
    unsigned i;
-   for (i = 0; i < Elements(setup->scenes); i++) {
-      if (lp_scene_is_textured_referenced(setup->scenes[i], texture)) {
-         return PIPE_REFERENCED_FOR_READ;
-      }
-   }
 
    /* check the render targets */
    for (i = 0; i < setup->fb.nr_cbufs; i++) {
       if (setup->fb.cbufs[i]->texture == texture)
          return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
    }
-   if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture)
+   if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture) {
       return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+   }
+
+   /* check textures referenced by the scene */
+   for (i = 0; i < Elements(setup->scenes); i++) {
+      if (lp_scene_is_textured_referenced(setup->scenes[i], texture)) {
+         return PIPE_REFERENCED_FOR_READ;
+      }
+   }
 
    return PIPE_UNREFERENCED;
 }
