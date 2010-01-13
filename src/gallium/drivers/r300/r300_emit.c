@@ -1003,10 +1003,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300->context.flush(&r300->context, 0, NULL);
     }
 
-    if (!(r300->dirty_state)) {
-        return;
-    }
-
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
@@ -1043,10 +1039,12 @@ validate:
         }
     }
     /* ...occlusion query buffer... */
-    if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
-                0, RADEON_GEM_DOMAIN_GTT)) {
-        r300->context.flush(&r300->context, 0, NULL);
-        goto validate;
+    if (r300->dirty_state & R300_NEW_QUERY) {
+        if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
+                    0, RADEON_GEM_DOMAIN_GTT)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {
