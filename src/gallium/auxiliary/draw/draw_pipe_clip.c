@@ -55,7 +55,7 @@
 
 
 
-struct clipper {
+struct clip_stage {
    struct draw_stage stage;      /**< base class */
 
    /* Basically duplicate some of the flatshading logic here:
@@ -70,9 +70,9 @@ struct clipper {
 
 /* This is a bit confusing:
  */
-static INLINE struct clipper *clipper_stage( struct draw_stage *stage )
+static INLINE struct clip_stage *clip_stage( struct draw_stage *stage )
 {
-   return (struct clipper *)stage;
+   return (struct clip_stage *)stage;
 }
 
 
@@ -97,7 +97,7 @@ static void copy_colors( struct draw_stage *stage,
 			 struct vertex_header *dst,
 			 const struct vertex_header *src )
 {
-   const struct clipper *clipper = clipper_stage(stage);
+   const struct clip_stage *clipper = clip_stage(stage);
    uint i;
    for (i = 0; i < clipper->num_color_attribs; i++) {
       const uint attr = clipper->color_attribs[i];
@@ -109,7 +109,7 @@ static void copy_colors( struct draw_stage *stage,
 
 /* Interpolate between two vertices to produce a third.  
  */
-static void interp( const struct clipper *clip,
+static void interp( const struct clip_stage *clip,
 		    struct vertex_header *dst,
 		    float t,
 		    const struct vertex_header *out, 
@@ -219,7 +219,7 @@ do_clip_tri( struct draw_stage *stage,
 	     struct prim_header *header,
 	     unsigned clipmask )
 {
-   struct clipper *clipper = clipper_stage( stage );
+   struct clip_stage *clipper = clip_stage( stage );
    struct vertex_header *a[MAX_CLIPPED_VERTICES];
    struct vertex_header *b[MAX_CLIPPED_VERTICES];
    struct vertex_header **inlist = a;
@@ -313,7 +313,7 @@ do_clip_line( struct draw_stage *stage,
 	      struct prim_header *header,
 	      unsigned clipmask )
 {
-   const struct clipper *clipper = clipper_stage( stage );
+   const struct clip_stage *clipper = clip_stage( stage );
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
    const float *pos0 = v0->clip;
@@ -422,7 +422,7 @@ clip_tri( struct draw_stage *stage,
 static void 
 clip_init_state( struct draw_stage *stage )
 {
-   struct clipper *clipper = clipper_stage( stage );
+   struct clip_stage *clipper = clip_stage( stage );
 
    clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
 
@@ -488,7 +488,7 @@ static void clip_destroy( struct draw_stage *stage )
  */
 struct draw_stage *draw_clip_stage( struct draw_context *draw )
 {
-   struct clipper *clipper = CALLOC_STRUCT(clipper);
+   struct clip_stage *clipper = CALLOC_STRUCT(clip_stage);
    if (clipper == NULL)
       goto fail;
 
