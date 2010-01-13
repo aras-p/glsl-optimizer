@@ -205,14 +205,14 @@ static int
 dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
-   return DRI2GetMSC(psc->dpy, pdraw->drawable, ust, msc, sbc);
+   return DRI2GetMSC(psc->dpy, pdraw->xDrawable, ust, msc, sbc);
 }
 
 static int
 dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 	       int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
 {
-   return DRI2WaitMSC(pdraw->psc->dpy, pdraw->drawable, target_msc, divisor,
+   return DRI2WaitMSC(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
 		      remainder, ust, msc, sbc);
 }
 
@@ -220,7 +220,7 @@ static int
 dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 	       int64_t *msc, int64_t *sbc)
 {
-   return DRI2WaitSBC(pdraw->psc->dpy, pdraw->drawable, target_sbc, ust, msc,
+   return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
 		      sbc);
 }
 
@@ -381,7 +381,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        return 0;
     }
 
-    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable, target_msc, divisor,
+    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
 		    remainder, &ret);
 
 #if __DRI2_FLUSH_VERSION >= 2
