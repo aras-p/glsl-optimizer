@@ -177,6 +177,7 @@ llvmpipe_texture_blanket(struct pipe_screen * screen,
 
    return &lpt->base;
 #else
+   debug_printf("llvmpipe_texture_blanket() not implemented!");
    return NULL;
 #endif
 }
