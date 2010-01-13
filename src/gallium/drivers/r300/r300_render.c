@@ -114,6 +114,39 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
+static void r300_emit_draw_immediate(struct r300_context *r300,
+                                     unsigned mode,
+                                     unsigned start,
+                                     unsigned count)
+{
+    struct pipe_buffer* vbo = r300->vertex_buffer[0].buffer;
+    unsigned vertex_size = r300->vertex_buffer[0].stride / sizeof(float);
+    unsigned i;
+    uint32_t* map;
+    CS_LOCALS(r300);
+
+    map = (uint32_t*)pipe_buffer_map_range(r300->context.screen, vbo,
+            start * vertex_size, count * vertex_size,
+            PIPE_BUFFER_USAGE_CPU_READ);
+
+    BEGIN_CS(10 + count * vertex_size);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
+            r300_translate_primitive(mode));
+    for (i = 0; i < count * vertex_size; i++) {
+            OUT_CS(*map);
+            map++;
+    }
+    END_CS;
+
+    pipe_buffer_unmap(r300->context.screen, vbo);
+}
+
 static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned mode,
                                   unsigned count)
@@ -264,7 +297,7 @@ void r300_draw_elements(struct pipe_context* pipe,
 }
 
 void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
-                         unsigned start, unsigned count)
+                      unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
 
@@ -287,9 +320,12 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_emit_dirty_state(r300);
 
-    r300_emit_aos(r300, start);
-
-    r300_emit_draw_arrays(r300, mode, count);
+    if (count < 10 && r300->vertex_buffer_count == 1) {
+        r300_emit_draw_immediate(r300, mode, start, count);
+    } else {
+        r300_emit_aos(r300, start);
+        r300_emit_draw_arrays(r300, mode, count);
+    }
 }
 
 /****************************************************************************
