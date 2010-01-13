@@ -135,9 +135,11 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 }
 
 
-
-
-/* Hopefully this will remain quite simple, otherwise need to pull in
+/**
+ * Handle state changes.
+ * Called just prior to drawing anything (pipe::draw_arrays(), etc).
+ *
+ * Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
