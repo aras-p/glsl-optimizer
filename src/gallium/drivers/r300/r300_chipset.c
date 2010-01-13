@@ -195,28 +195,24 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5955:
             caps->family = CHIP_FAMILY_RS480;
             caps->has_tcl = FALSE;
-            caps->is_r400 = TRUE;
             break;
 
         case 0x5974:
         case 0x5975:
             caps->family = CHIP_FAMILY_RS482;
             caps->has_tcl = FALSE;
-            caps->is_r400 = TRUE;
             break;
 
         case 0x5A41:
         case 0x5A42:
             caps->family = CHIP_FAMILY_RS400;
             caps->has_tcl = FALSE;
-            caps->is_r400 = TRUE;
             break;
 
         case 0x5A61:
         case 0x5A62:
             caps->family = CHIP_FAMILY_RC410;
             caps->has_tcl = FALSE;
-            caps->is_r400 = TRUE;
             break;
 
         case 0x791E:
