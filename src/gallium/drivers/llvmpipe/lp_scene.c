@@ -163,7 +163,7 @@ lp_scene_free_bin_data(struct lp_scene *scene)
 
 void
 lp_scene_set_framebuffer_size( struct lp_scene *scene,
-                             unsigned width, unsigned height )
+                               unsigned width, unsigned height )
 {
    assert(lp_scene_is_empty(scene));
 
@@ -259,8 +259,8 @@ lp_replace_last_command_arg( struct cmd_bin *bin,
  */
 void
 lp_scene_bin_state_command( struct lp_scene *scene,
-                      lp_rast_cmd cmd,
-                      const union lp_rast_cmd_arg arg )
+                            lp_rast_cmd cmd,
+                            const union lp_rast_cmd_arg arg )
 {
    unsigned i, j;
    for (i = 0; i < scene->tiles_x; i++) {
@@ -303,7 +303,7 @@ lp_scene_bin_iter_begin( struct lp_scene *scene )
 
 
 /**
- * Return point to next bin to be rendered.
+ * Return pointer to next bin to be rendered.
  * The lp_scene::curr_x and ::curr_y fields will be advanced.
  * Multiple rendering threads will call this function to get a chunk
  * of work (a bin) to work on.
