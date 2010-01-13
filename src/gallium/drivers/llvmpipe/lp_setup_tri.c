@@ -389,6 +389,11 @@ do_triangle_ccw(struct setup_context *setup,
    maxx = tri->maxx / TILE_SIZE;
    maxy = tri->maxy / TILE_SIZE;
 
+   /* Clamp maxx, maxy to framebuffer size
+    */
+   maxx = MIN2(maxx, scene->tiles_x - 1);
+   maxy = MIN2(maxy, scene->tiles_y - 1);
+
    /* Determine which tile(s) intersect the triangle's bounding box
     */
    if (miny == maxy && minx == maxx)
