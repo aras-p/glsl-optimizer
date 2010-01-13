@@ -269,6 +269,23 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 }
 
 
+static void
+lp_tile_read_z32(uint32_t *tile,
+                 const uint8_t *map,
+                 unsigned map_stride,
+                 unsigned x0, unsigned y0, unsigned w, unsigned h)
+{
+   unsigned x, y;
+   const uint8_t *map_row = map + y0*map_stride;
+   for (y = 0; y < h; ++y) {
+      const uint32_t *map_pixel = (uint32_t *)(map_row + x0*4);
+      for (x = 0; x < w; ++x) {
+         *tile++ = *map_pixel++;
+      }
+      map_row += map_stride;
+   }
+}
+
 /**
  * Load tile z/stencil from the framebuffer surface.
  * This is a bin command called during bin processing.
@@ -277,9 +294,24 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
                             unsigned thread_index,
                             const union lp_rast_cmd_arg arg )
 {
-   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+   const unsigned x = rast->tasks[thread_index].x;
+   const unsigned y = rast->tasks[thread_index].y;
+   unsigned w = TILE_SIZE;
+   unsigned h = TILE_SIZE;
 
-   /* call u_tile func to load depth (and stencil?) from surface */
+   if (x + w > rast->state.fb.width)
+      w -= x + w - rast->state.fb.width;
+
+   if (y + h > rast->state.fb.height)
+      h -= y + h - rast->state.fb.height;
+
+   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
+
+   assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
+   lp_tile_read_z32(rast->tasks[thread_index].tile.depth,
+                    rast->zsbuf_map, 
+                    rast->zsbuf_transfer->stride,
+                    x, y, w, h);
 }
 
 
