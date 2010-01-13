@@ -292,13 +292,13 @@ lp_setup_clear( struct setup_context *setup,
        */
       if (flags & PIPE_CLEAR_COLOR)
          lp_scene_bin_everywhere( scene, 
-                            lp_rast_clear_color, 
-                            setup->clear.color );
+                                  lp_rast_clear_color,
+                                  setup->clear.color );
 
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL)
          lp_scene_bin_everywhere( scene, 
-                            lp_rast_clear_zstencil, 
-                            setup->clear.zstencil );
+                                  lp_rast_clear_zstencil,
+                                  setup->clear.zstencil );
    }
    else {
       /* Put ourselves into the 'pre-clear' state, specifically to try
