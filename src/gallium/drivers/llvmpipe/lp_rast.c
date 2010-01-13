@@ -576,6 +576,26 @@ rasterize_bin( struct lp_rasterizer *rast,
    lp_rast_end_tile( rast, thread_index );
 }
 
+static boolean
+is_empty_bin( struct lp_rasterizer *rast,
+              const struct cmd_bin *bin )
+{
+   const struct cmd_block *head = bin->commands.head;
+   int i;
+
+   if (head->next != NULL ||
+       head->count > PIPE_MAX_COLOR_BUFS + 1)
+      return FALSE;
+
+   for (i = 0; i < head->count; i++)
+      if (head->cmd[i] != lp_rast_load_color &&
+          head->cmd[i] != lp_rast_load_zstencil)
+         return FALSE;
+
+   return TRUE;
+}
+
+
 
 /**
  * Rasterize/execute all bins within a scene.
@@ -606,7 +626,8 @@ rasterize_scene( struct lp_rasterizer *rast,
 
       assert(scene);
       while ((bin = lp_scene_bin_iter_next(scene, &x, &y))) {
-         rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
+         if (!is_empty_bin( rast, bin ))
+            rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
       }
    }
 #endif

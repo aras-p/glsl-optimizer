@@ -153,7 +153,9 @@ begin_binning( struct setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s color: %s depth: %s\n", __FUNCTION__,
+          (setup->clear.flags & PIPE_CLEAR_COLOR) ? "clear": "load",
+          (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) ? "clear": "load");
 
    if (setup->fb.nr_cbufs) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR)
