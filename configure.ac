@@ -576,9 +576,9 @@ dri)
     # Check for libdrm
     PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
     PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
-    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
-    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
+    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED glproto >= $GLPROTO_REQUIRED"
+    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
