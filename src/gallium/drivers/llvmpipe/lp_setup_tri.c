@@ -237,7 +237,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
 
 static inline int subpixel_snap( float a )
 {
-   return util_iround(FIXED_ONE * a);
+   return util_iround(FIXED_ONE * a - (FIXED_ONE / 2));
 }
 
 
