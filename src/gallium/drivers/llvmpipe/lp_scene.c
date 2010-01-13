@@ -27,6 +27,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 #include "lp_scene.h"
 
 
@@ -61,6 +62,8 @@ lp_scene_init(struct lp_scene *scene)
 
    scene->data.head =
       scene->data.tail = CALLOC_STRUCT(data_block);
+
+   make_empty_list(&scene->textures);
 
    pipe_mutex_init(scene->mutex);
 }
@@ -139,6 +142,18 @@ lp_scene_reset(struct lp_scene *scene )
       assert(list->tail->next == NULL);
       list->head = list->tail;
       list->head->used = 0;
+   }
+
+   /* Release texture refs
+    */
+   {
+      struct texture_ref *ref, *next, *ref_list = &scene->textures;
+      for (ref = ref_list->next; ref != ref_list; ref = next) {
+         next = next_elem(ref);
+         pipe_texture_reference(&ref->texture, NULL);
+         FREE(ref);
+      }
+      make_empty_list(ref_list);
    }
 }
 
@@ -226,6 +241,39 @@ lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
                (sizeof(lp_rast_cmd) + sizeof(union lp_rast_cmd_arg)));
    }
    return size;
+}
+
+
+/**
+ * Add a reference to a texture by the scene.
+ */
+void
+lp_scene_texture_reference( struct lp_scene *scene,
+                            struct pipe_texture *texture )
+{
+   struct texture_ref *ref = CALLOC_STRUCT(texture_ref);
+   if (ref) {
+      struct texture_ref *ref_list = &scene->textures;
+      pipe_texture_reference(&ref->texture, texture);
+      insert_at_tail(ref_list, ref);
+   }
+}
+
+
+/**
+ * Does this scene have a reference to the given texture?
+ */
+boolean
+lp_scene_is_textured_referenced( const struct lp_scene *scene,
+                                 const struct pipe_texture *texture )
+{
+   const struct texture_ref *ref_list = &scene->textures;
+   const struct texture_ref *ref;
+   foreach (ref, ref_list) {
+      if (ref->texture == texture)
+         return TRUE;
+   }
+   return FALSE;
 }
 
 

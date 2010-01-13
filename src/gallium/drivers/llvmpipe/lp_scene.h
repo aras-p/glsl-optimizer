@@ -97,6 +97,13 @@ struct data_block_list {
 };
 
 
+/** List of texture references */
+struct texture_ref {
+   struct pipe_texture *texture;
+   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
+};
+
+
 /**
  * All bins and bin data are contained here.
  * Per-bin data goes into the 'tile' bins.
@@ -111,6 +118,9 @@ struct lp_scene {
 
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
+
+   /** list of textures referenced by the scene commands */
+   struct texture_ref textures;
 
    boolean write_depth;
 
@@ -149,6 +159,12 @@ void lp_bin_new_cmd_block( struct cmd_block_list *list );
 unsigned lp_scene_data_size( const struct lp_scene *scene );
 
 unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y );
+
+void lp_scene_texture_reference( struct lp_scene *scene,
+                                 struct pipe_texture *texture );
+
+boolean lp_scene_is_textured_referenced( const struct lp_scene *scene,
+                                         const struct pipe_texture *texture );
 
 
 /**
