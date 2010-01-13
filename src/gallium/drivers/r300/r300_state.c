@@ -340,6 +340,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_color_state* state =
         (struct r300_blend_color_state*)r300->blend_color_state.state;
     union util_color uc;
@@ -355,6 +356,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         float_to_fixed10(color->color[2]) |
         (float_to_fixed10(color->color[1]) << 16);
 
+    r300->blend_color_state.size = r300screen->caps->is_r500 ? 3 : 2;
     r300->blend_color_state.dirty = TRUE;
 }
 
@@ -365,11 +367,14 @@ static void r300_set_clip_state(struct pipe_context* pipe,
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
         memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
-        r300->clip_state.dirty = TRUE;
+        r300->clip_state.size = 29;
     } else {
         draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
+        r300->clip_state.size = 2;
     }
+
+    r300->clip_state.dirty = TRUE;
 }
 
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
@@ -462,8 +467,10 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
                                 void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
 
     r300->dsa_state.state = state;
+    r300->dsa_state.size = r300screen->caps->is_r500 ? 8 : 6;
     r300->dsa_state.dirty = TRUE;
 }
 
@@ -839,6 +846,7 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 
     memcpy(r300->scissor_state.state, state,
         sizeof(struct pipe_scissor_state));
+
     r300->scissor_state.dirty = TRUE;
 }
 

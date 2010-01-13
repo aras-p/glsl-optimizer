@@ -41,6 +41,7 @@ void r300_emit_blend_state(struct r300_context* r300, void* state)
 {
     struct r300_blend_state* blend = (struct r300_blend_state*)state;
     CS_LOCALS(r300);
+
     BEGIN_CS(8);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
@@ -992,14 +993,23 @@ void r300_emit_dirty_state(struct r300_context* r300)
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_texture* tex;
     struct r300_atom* atom;
-    int i, dirty_tex = 0;
+    unsigned i, dwords = 1024;
+    int dirty_tex = 0;
     boolean invalid = FALSE;
 
-    /* Check size of CS. */
-    /* Make sure we have at least 8*1024 spare dwords. */
+    /* Check the required number of dwords against the space remaining in the
+     * current CS object. If we need more, then flush. */
+
+    foreach(atom, &r300->atom_list) {
+        if (atom->dirty || atom->always_dirty) {
+            dwords += atom->size;
+        }
+    }
+
+    /* Make sure we have at least 2*1024 spare dwords. */
     /* XXX It would be nice to know the number of dwords we really need to
      * XXX emit. */
-    if (!r300->winsys->check_cs(r300->winsys, 8*1024)) {
+    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
     }
 

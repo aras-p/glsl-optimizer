@@ -110,23 +110,33 @@ static void r300_flush_cb(void *data)
     cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
 }
 
-#define R300_INIT_ATOM(name) \
-    r300->name##_state.state = NULL; \
-    r300->name##_state.emit = r300_emit_##name##_state; \
-    r300->name##_state.dirty = FALSE; \
-    insert_at_tail(&r300->atom_list, &r300->name##_state);
+#define R300_INIT_ATOM(atomname, atomsize) \
+    r300->atomname##_state.name = #atomname; \
+    r300->atomname##_state.state = NULL; \
+    r300->atomname##_state.size = atomsize; \
+    r300->atomname##_state.emit = r300_emit_##atomname##_state; \
+    r300->atomname##_state.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->atomname##_state);
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
+    /* Create the actual atom list.
+     *
+     * Each atom is examined and emitted in the order it appears here, which
+     * can affect performance and conformance if not handled with care.
+     *
+     * Some atoms never change size, others change every emit. This is just
+     * an upper bound on each atom, to keep the emission machinery from
+     * underallocating space. */
     make_empty_list(&r300->atom_list);
-    R300_INIT_ATOM(ztop);
-    R300_INIT_ATOM(blend);
-    R300_INIT_ATOM(blend_color);
-    R300_INIT_ATOM(clip);
-    R300_INIT_ATOM(dsa);
-    R300_INIT_ATOM(rs);
-    R300_INIT_ATOM(scissor);
-    R300_INIT_ATOM(viewport);
+    R300_INIT_ATOM(ztop, 2);
+    R300_INIT_ATOM(blend, 8);
+    R300_INIT_ATOM(blend_color, 3);
+    R300_INIT_ATOM(clip, 29);
+    R300_INIT_ATOM(dsa, 8);
+    R300_INIT_ATOM(rs, 22);
+    R300_INIT_ATOM(scissor, 3);
+    R300_INIT_ATOM(viewport, 9);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

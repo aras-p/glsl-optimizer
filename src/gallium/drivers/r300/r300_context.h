@@ -36,10 +36,19 @@ struct r300_fragment_shader;
 struct r300_vertex_shader;
 
 struct r300_atom {
+    /* List pointers. */
     struct r300_atom *prev, *next;
+    /* Name, for debugging. */
+    const char* name;
+    /* Opaque state. */
     void* state;
+    /* Emit the state to the context. */
     void (*emit)(struct r300_context*, void*);
+    /* Upper bound on number of dwords to emit. */
+    unsigned size;
+    /* Whether this atom should be emitted. */
     boolean dirty;
+    /* Another dirty flag that is never automatically cleared. */
     boolean always_dirty;
 };
 
