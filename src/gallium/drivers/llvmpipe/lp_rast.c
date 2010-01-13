@@ -584,7 +584,7 @@ is_empty_bin( struct lp_rasterizer *rast,
    int i;
 
    if (head->next != NULL ||
-       head->count > PIPE_MAX_COLOR_BUFS + 1)
+       head->count > 2)
       return FALSE;
 
    for (i = 0; i < head->count; i++)
