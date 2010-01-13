@@ -116,6 +116,8 @@ lp_scene_reset(struct lp_scene *scene )
       }
    }
 
+   assert(lp_scene_is_empty(scene));
+
    /* Free all but last binned data block:
     */
    {
@@ -163,6 +165,8 @@ void
 lp_scene_set_framebuffer_size( struct lp_scene *scene,
                              unsigned width, unsigned height )
 {
+   assert(lp_scene_is_empty(scene));
+
    scene->tiles_x = align(width, TILE_SIZE) / TILE_SIZE;
    scene->tiles_y = align(height, TILE_SIZE) / TILE_SIZE;
 }
