@@ -92,6 +92,7 @@ static void interp_attr( float *fdst,
    fdst[3] = LINTERP( t, fout[3], fin[3] );
 }
 
+
 static void copy_colors( struct draw_stage *stage,
 			 struct vertex_header *dst,
 			 const struct vertex_header *src )
@@ -179,7 +180,7 @@ static void emit_poly( struct draw_stage *stage,
       header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
 
       if (i == n-1)
-        header.flags |= edge_last;
+         header.flags |= edge_last;
 
       if (0) {
          const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
@@ -200,13 +201,14 @@ static void emit_poly( struct draw_stage *stage,
    }
 }
 
+
 static INLINE float
 dot4(const float *a, const float *b)
 {
-   return (a[0]*b[0] +
-           a[1]*b[1] +
-           a[2]*b[2] +
-           a[3]*b[3]);
+   return (a[0] * b[0] +
+           a[1] * b[1] +
+           a[2] * b[2] +
+           a[3] * b[3]);
 }
 
 
@@ -280,6 +282,7 @@ do_clip_tri( struct draw_stage *stage,
 	 dp_prev = dp;
       }
 
+      /* swap in/out lists */
       {
 	 struct vertex_header **tmp = inlist;
 	 inlist = outlist;
@@ -295,8 +298,6 @@ do_clip_tri( struct draw_stage *stage,
 
       copy_colors(stage, inlist[0], header->v[2]);
    }
-
-
 
    /* Emit the polygon as triangles to the setup stage:
     */
@@ -413,6 +414,7 @@ clip_tri( struct draw_stage *stage,
       do_clip_tri(stage, header, clipmask);
    }
 }
+
 
 /* Update state.  Could further delay this until we hit the first
  * primitive that really requires clipping.
