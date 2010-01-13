@@ -1023,8 +1023,10 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    shader->current = variant;
 
    /* TODO: put this in the variant */
+   /* TODO: most of these can be relaxed, in particular the colormask */
    opaque = !key.blend.logicop_enable &&
             !key.blend.blend_enable &&
+            key.blend.colormask == 0xf &&
             !key.alpha.enabled &&
             !key.depth.enabled &&
             !shader->info.uses_kill
