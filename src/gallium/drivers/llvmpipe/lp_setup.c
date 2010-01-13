@@ -432,24 +432,21 @@ lp_setup_set_vertex_info( struct setup_context *setup,
 }
 
 
+/**
+ * Called during state validation when LP_NEW_TEXTURE is set.
+ */
 void
 lp_setup_set_sampler_textures( struct setup_context *setup,
                                unsigned num, struct pipe_texture **texture)
 {
-   struct pipe_texture *dummy;
    unsigned i;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-
 
    assert(num <= PIPE_MAX_SAMPLERS);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_texture *tex = i < num ? texture[i] : NULL;
-
-      /* FIXME: hold on to the reference */
-      dummy = NULL;
-      pipe_texture_reference(&dummy, tex);
 
       if(tex) {
          struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
@@ -463,21 +460,37 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          else
             /* FIXME: map the rendertarget */
             assert(0);
+
+         /* the scene references this texture */
+         {
+            struct lp_scene *scene = lp_setup_get_current_scene(setup);
+            lp_scene_texture_reference(scene, tex);
+         }
       }
    }
 
    setup->dirty |= LP_SETUP_NEW_FS;
 }
 
+
+/**
+ * Is the given texture referenced in the setup module's current scene?
+ */
 boolean
-lp_setup_is_texture_referenced( struct setup_context *setup,
+lp_setup_is_texture_referenced( const struct setup_context *setup,
                                 const struct pipe_texture *texture )
 {
-   /* FIXME */
+   const struct lp_scene *scene = setup->scene;
+   if (scene && lp_scene_is_textured_referenced(scene, texture)) {
+      return PIPE_REFERENCED_FOR_READ;
+   }
    return PIPE_UNREFERENCED;
 }
 
 
+/**
+ * Called by vbuf code when we're about to draw something.
+ */
 void
 lp_setup_update_state( struct setup_context *setup )
 {
