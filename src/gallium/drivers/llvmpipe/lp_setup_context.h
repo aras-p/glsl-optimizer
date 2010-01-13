@@ -75,7 +75,7 @@ struct setup_context
     */
    struct draw_stage *vbuf;
    struct lp_rasterizer *rast;
-   struct lp_scene *scene;               /**< current scene */
+   struct lp_scene *scene;               /**< current scene being built */
    struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
 
    boolean flatshade_first;
@@ -116,7 +116,7 @@ struct setup_context
       uint8_t *stored;
    } blend_color;
 
-   unsigned dirty;   /**< bitmask of LP_SETUP_x bits */
+   unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 
    void (*point)( struct setup_context *,
                   const float (*v0)[4]);
