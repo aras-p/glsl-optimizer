@@ -365,11 +365,10 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
 
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-   else
-      drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
    if (visual->depthBits && visual->stencilBits)
       drawable->attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
    else if (visual->depthBits)
