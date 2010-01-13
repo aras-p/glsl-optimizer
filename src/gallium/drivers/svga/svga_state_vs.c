@@ -70,7 +70,7 @@ static enum pipe_error compile_vs( struct svga_context *svga,
                                    struct svga_shader_result **out_result )
 {
    struct svga_shader_result *result;
-   enum pipe_error ret = PIPE_OK;
+   enum pipe_error ret = PIPE_ERROR;
 
    result = svga_translate_vertex_program( vs, key );
    if (result == NULL) {
@@ -79,8 +79,10 @@ static enum pipe_error compile_vs( struct svga_context *svga,
    }
 
    result->id = util_bitmask_add(svga->vs_bm);
-   if(result->id == UTIL_BITMASK_INVALID_INDEX)
+   if(result->id == UTIL_BITMASK_INVALID_INDEX) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto fail;
+   }
 
    ret = SVGA3D_DefineShader(svga->swc, 
                              result->id,

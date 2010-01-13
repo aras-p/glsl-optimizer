@@ -76,8 +76,10 @@ static enum pipe_error compile_fs( struct svga_context *svga,
    }
 
    result->id = util_bitmask_add(svga->fs_bm);
-   if(result->id == UTIL_BITMASK_INVALID_INDEX)
+   if(result->id == UTIL_BITMASK_INVALID_INDEX) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto fail;
+   }
 
    ret = SVGA3D_DefineShader(svga->swc, 
                              result->id,
