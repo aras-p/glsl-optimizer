@@ -487,6 +487,15 @@ lp_setup_is_texture_referenced( const struct setup_context *setup,
          return PIPE_REFERENCED_FOR_READ;
       }
    }
+
+   /* check the render targets */
+   for (i = 0; i < setup->fb.nr_cbufs; i++) {
+      if (setup->fb.cbufs[i]->texture == texture)
+         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+   }
+   if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture)
+      return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+
    return PIPE_UNREFERENCED;
 }
 
