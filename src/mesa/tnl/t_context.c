@@ -38,7 +38,6 @@
 #include "tnl.h"
 #include "t_context.h"
 #include "t_pipeline.h"
-#include "t_vp_build.h"
 
 #include "vbo/vbo.h"
 
