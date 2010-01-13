@@ -249,6 +249,9 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
    set_scene_state( setup, SETUP_FLUSHED );
 
+   /* re-get scene pointer, may have a new scene after flushing */
+   scene = lp_setup_get_current_scene(setup);
+
    util_copy_framebuffer_state(&setup->fb, fb);
 
    lp_scene_set_framebuffer_size(scene, setup->fb.width, setup->fb.height);
