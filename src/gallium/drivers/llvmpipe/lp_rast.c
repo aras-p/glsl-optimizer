@@ -576,13 +576,23 @@ rasterize_bin( struct lp_rasterizer *rast,
    lp_rast_end_tile( rast, thread_index );
 }
 
+/* An empty bin is one that just loads the contents of the tile and
+ * stores them again unchanged.  This typically happens when bins have
+ * been flushed for some reason in the middle of a frame, or when
+ * incremental updates are being made to a render target.
+ * 
+ * Try to avoid doing pointless work in this case.
+ */
 static boolean
-is_empty_bin( struct lp_rasterizer *rast,
-              const struct cmd_bin *bin )
+is_empty_bin( const struct cmd_bin *bin )
 {
    const struct cmd_block *head = bin->commands.head;
    int i;
 
+   /* We emit at most two load-tile commands at the start of the first
+    * command block.  If there are more than two commands in the
+    * block, we know that the bin is non-empty.
+    */
    if (head->next != NULL ||
        head->count > 2)
       return FALSE;
@@ -626,7 +636,7 @@ rasterize_scene( struct lp_rasterizer *rast,
 
       assert(scene);
       while ((bin = lp_scene_bin_iter_next(scene, &x, &y))) {
-         if (!is_empty_bin( rast, bin ))
+         if (!is_empty_bin( bin ))
             rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
       }
    }
