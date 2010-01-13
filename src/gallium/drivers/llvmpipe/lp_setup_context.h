@@ -50,6 +50,11 @@
 struct lp_scene_queue;
 
 
+/** Max number of scenes */
+#define MAX_SCENES 2
+
+
+
 /**
  * Point/line/triangle setup context.
  * Note: "stored" below indicates data which is stored in the bins,
@@ -75,6 +80,7 @@ struct setup_context
     */
    struct draw_stage *vbuf;
    struct lp_rasterizer *rast;
+   struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
    struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
 

@@ -50,10 +50,6 @@
 #include "draw/draw_vbuf.h"
 
 
-/** XXX temporary value, temporary here */
-#define MAX_SCENES 2
-
-
 static void set_scene_state( struct setup_context *, unsigned );
 
 
@@ -474,15 +470,19 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
 
 
 /**
- * Is the given texture referenced in the setup module's current scene?
+ * Is the given texture referenced by any scene?
+ * Note: we have to check all scenes including any scenes currently
+ * being rendered and the current scene being built.
  */
 boolean
 lp_setup_is_texture_referenced( const struct setup_context *setup,
                                 const struct pipe_texture *texture )
 {
-   const struct lp_scene *scene = setup->scene;
-   if (scene && lp_scene_is_textured_referenced(scene, texture)) {
-      return PIPE_REFERENCED_FOR_READ;
+   unsigned i;
+   for (i = 0; i < Elements(setup->scenes); i++) {
+      if (lp_scene_is_textured_referenced(setup->scenes[i], texture)) {
+         return PIPE_REFERENCED_FOR_READ;
+      }
    }
    return PIPE_UNREFERENCED;
 }
@@ -645,8 +645,8 @@ lp_setup_create( struct pipe_screen *screen,
 
    /* create some empty scenes */
    for (i = 0; i < MAX_SCENES; i++) {
-      struct lp_scene *scene = lp_scene_create();
-      lp_scene_enqueue(setup->empty_scenes, scene);
+      setup->scenes[i] = lp_scene_create();
+      lp_scene_enqueue(setup->empty_scenes, setup->scenes[i]);
    }
 
    setup->triangle = first_triangle;
