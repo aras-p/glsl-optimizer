@@ -66,10 +66,6 @@ extern "C" {
 #define PIPE_MAX_TEXTURE_LEVELS   16
 
 
-/* fwd decls */
-struct pipe_surface;
-
-
 /**
  * The driver will certainly subclass this to include actual memory
  * management information.
