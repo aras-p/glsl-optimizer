@@ -999,6 +999,10 @@ make_variant_key(struct llvmpipe_context *lp,
 }
 
 
+/**
+ * Update fragment state.  This is called just prior to drawing
+ * something when some fragment-related state has changed.
+ */
 void 
 llvmpipe_update_fs(struct llvmpipe_context *lp)
 {
