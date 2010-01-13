@@ -608,6 +608,44 @@ rasterize_bin( struct lp_rasterizer *rast,
    lp_rast_end_tile( rast, thread_index );
 }
 
+
+#define RAST(x) { lp_rast_##x, #x }
+
+static struct {
+   lp_rast_cmd cmd;
+   const char *name;
+} cmd_names[] = 
+{
+   RAST(load_color),
+   RAST(load_zstencil),
+   RAST(clear_color),
+   RAST(clear_zstencil),
+   RAST(triangle),
+   RAST(shade_tile),
+   RAST(set_state),
+   RAST(fence),
+};
+
+static void
+debug_bin( const struct cmd_bin *bin )
+{
+   const struct cmd_block *head = bin->commands.head;
+   int i, j;
+
+   for (i = 0; i < head->count; i++) {
+      debug_printf("%d: ", i);
+      for (j = 0; j < Elements(cmd_names); j++) {
+         if (head->cmd[i] == cmd_names[j].cmd) {
+            debug_printf("%s\n", cmd_names[j].name);
+            break;
+         }
+      }
+      if (j == Elements(cmd_names))
+         debug_printf("...other\n");
+   }
+
+}
+
 /* An empty bin is one that just loads the contents of the tile and
  * stores them again unchanged.  This typically happens when bins have
  * been flushed for some reason in the middle of a frame, or when
@@ -620,19 +658,28 @@ is_empty_bin( const struct cmd_bin *bin )
 {
    const struct cmd_block *head = bin->commands.head;
    int i;
-
+   
+   if (0)
+      debug_bin(bin);
+   
    /* We emit at most two load-tile commands at the start of the first
-    * command block.  If there are more than two commands in the
-    * block, we know that the bin is non-empty.
+    * command block.  In addition we seem to emit a couple of
+    * set-state commands even in empty bins.
+    *
+    * As a heuristic, if a bin has more than 4 commands, consider it
+    * non-empty.
     */
    if (head->next != NULL ||
-       head->count > 2)
+       head->count > 4) {
       return FALSE;
+   }
 
    for (i = 0; i < head->count; i++)
       if (head->cmd[i] != lp_rast_load_color &&
-          head->cmd[i] != lp_rast_load_zstencil)
+          head->cmd[i] != lp_rast_load_zstencil &&
+          head->cmd[i] != lp_rast_set_state) {
          return FALSE;
+      }
 
    return TRUE;
 }
