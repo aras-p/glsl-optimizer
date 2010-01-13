@@ -133,6 +133,8 @@ void lp_scene_destroy(struct lp_scene *scene);
 
 void lp_scene_init(struct lp_scene *scene);
 
+boolean lp_scene_is_empty(struct lp_scene *scene );
+
 void lp_scene_reset(struct lp_scene *scene );
 
 void lp_scene_free_bin_data(struct lp_scene *scene);

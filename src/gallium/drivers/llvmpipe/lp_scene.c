@@ -67,6 +67,28 @@ lp_scene_init(struct lp_scene *scene)
 
 
 /**
+ * Check if the scene's bins are all empty.
+ * For debugging purposes.
+ */
+boolean
+lp_scene_is_empty(struct lp_scene *scene )
+{
+   unsigned x, y;
+
+   for (y = 0; y < TILES_Y; y++) {
+      for (x = 0; x < TILES_X; x++) {
+         const struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
+         const struct cmd_block_list *list = &bin->commands;
+         if (list->head != list->tail || list->head->count > 0) {
+            return FALSE;
+         }
+      }
+   }
+   return TRUE;
+}
+
+
+/**
  * Set scene to empty state.
  */
 void
