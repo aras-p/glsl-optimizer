@@ -325,7 +325,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_emit_dirty_state(r300);
 
-    if (count <= 4 && r300->vertex_buffer_count == 1) {
+    if (FALSE && count <= 4 && r300->vertex_buffer_count == 1) {
         r300_emit_draw_immediate(r300, mode, start, count);
     } else {
         r300_emit_aos(r300, start);
