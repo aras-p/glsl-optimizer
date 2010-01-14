@@ -80,9 +80,6 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
    if(memcmp(&llvmpipe->blend_color, blend_color, sizeof *blend_color) == 0)
       return;
 
-   if(memcmp(&llvmpipe->blend_color, blend_color, sizeof *blend_color) == 0)
-      return;
-
    draw_flush(llvmpipe->draw);
 
    memcpy(&llvmpipe->blend_color, blend_color, sizeof *blend_color);
