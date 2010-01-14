@@ -98,7 +98,7 @@ EGL_DRIVERS_DIRS = demo
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
-GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 trace identity
+GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = xlib egl_xlib
 GALLIUM_WINSYS_DRM_DIRS =

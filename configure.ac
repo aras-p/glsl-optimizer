@@ -1279,9 +1279,11 @@ AC_ARG_ENABLE([gallium-radeon],
     [AS_HELP_STRING([--enable-gallium-radeon],
         [build gallium radeon @<:@default=disabled@:>@])],
     [enable_gallium_radeon="$enableval"],
-    [enable_gallium_radeon=no])
+    [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
 
