@@ -1,5 +1,10 @@
 /**
- * Test frustum clipping w/ glPolygonMode LINE/POINT.
+ * Test frustum/user clipping w/ glPolygonMode LINE/POINT.
+ *
+ * The bottom/left and bottom/right verts are outside the frustum and clipped.
+ * The top vertex is clipped by a user clipping plane.
+ *
+ * A filled gray reference triangle is shown underneath the points/lines.
  */
 
 #include <stdio.h>
@@ -11,7 +16,7 @@ static int win;
 
 
 static void
-Tri(void)
+ColorTri(void)
 {
    glBegin(GL_TRIANGLES);
    glColor3f(1, 0, 0);   glVertex3f(-1.5, -0.8, 0.0);
@@ -22,18 +27,38 @@ Tri(void)
 
 
 static void
+GrayTri(void)
+{
+   glColor3f(0.3, 0.3, 0.3);
+   glBegin(GL_TRIANGLES);
+   glVertex3f(-1.5, -0.8, 0.0);
+   glVertex3f( 1.5, -0.8, 0.0);
+   glVertex3f( 0.0,  0.9, 0.0);
+   glEnd();
+}
+
+
+static void
 Draw(void)
 {
-   glPointSize(13.0);
-   glLineWidth(5.0);
+   static const GLdouble plane[4] = { 0, -1.0, 0, 0.5 };
 
    glClear(GL_COLOR_BUFFER_BIT); 
 
+   glPointSize(13.0);
+   glLineWidth(5.0);
+
+   glClipPlane(GL_CLIP_PLANE0, plane);
+   glEnable(GL_CLIP_PLANE0);
+
+   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+   GrayTri();
+
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-   Tri();
+   ColorTri();
 
    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-   Tri();
+   ColorTri();
 
    glutSwapBuffers();
 }
