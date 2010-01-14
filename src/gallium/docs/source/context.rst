@@ -72,11 +72,66 @@ stencil-only clears of packed depth-stencil buffers.
 Drawing
 ^^^^^^^
 
-``draw_arrays``
+``draw_arrays`` draws a specified primitive.
 
-``draw_elements``
+This command is equivalent to calling ``draw_arrays_instanced``
+with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
+
+``draw_elements`` draws a specified primitive using an optional
+index buffer.
+
+This command is equivalent to calling ``draw_elements_instanced``
+with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
 
 ``draw_range_elements``
+
+XXX: this is (probably) a temporary entrypoint, as the range
+information should be available from the vertex_buffer state.
+Using this to quickly evaluate a specialized path in the draw
+module.
+
+``draw_arrays_instanced`` draws multiple instances of the same primitive.
+
+This command is equivalent to calling ``draw_elements_instanced``
+with ``indexBuffer`` set to NULL and ``indexSize`` set to 0.
+
+``draw_elements_instanced`` draws multiple instances of the same primitive
+using an optional index buffer.
+
+For instanceID in the range between ``startInstance``
+and ``startInstance``+``instanceCount``-1, inclusive, draw a primitive
+specified by ``mode`` and sequential numbers in the range between ``start``
+and ``start``+``count``-1, inclusive.
+
+If ``indexBuffer`` is not NULL, it specifies an index buffer with index
+byte size of ``indexSize``. The sequential numbers are used to lookup
+the index buffer and the resulting indices in turn are used to fetch
+vertex attributes.
+
+If ``indexBuffer`` is NULL, the sequential numbers are used directly
+as indices to fetch vertex attributes.
+
+If a given vertex element has ``instance_divisor`` set to 0, it is said
+it contains per-vertex data and effective vertex attribute address needs
+to be recalculated for every index.
+
+  attribAddr = ``stride`` * index + ``src_offset``
+
+If a given vertex element has ``instance_divisor`` set to non-zero,
+it is said it contains per-instance data and effective vertex attribute
+address needs to recalculated for every ``instance_divisor``-th instance.
+
+  attribAddr = ``stride`` * instanceID / ``instance_divisor`` + ``src_offset``
+
+In the above formulas, ``src_offset`` is taken from the given vertex element
+and ``stride`` is taken from a vertex buffer associated with the given
+vertex element.
+
+The calculated attribAddr is used as an offset into the vertex buffer to
+fetch the attribute data.
+
+The value of ``instanceID`` can be read in a vertex shader through a system
+value register declared with INSTANCEID semantic name.
 
 
 Queries
