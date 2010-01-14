@@ -379,9 +379,16 @@ static void blitter_set_texcoords_cube(struct blitter_context_priv *ctx,
    float t1 = y1 / (float)surf->height;
    float s2 = x2 / (float)surf->width;
    float t2 = y2 / (float)surf->height;
-   const float st[4][2] = {
-      {s1, t1}, {s2, t1}, {s2, t2}, {s1, t2}
-   };
+   float st[4][2];
+
+   st[0][0] = s1;
+   st[0][1] = t1;
+   st[1][0] = s2;
+   st[1][1] = t1;
+   st[2][0] = s2;
+   st[2][1] = t2;
+   st[3][0] = s1;
+   st[3][1] = t2;
 
    util_map_texcoords2d_onto_cubemap(surf->face,
                                      /* pointer, stride in floats */
