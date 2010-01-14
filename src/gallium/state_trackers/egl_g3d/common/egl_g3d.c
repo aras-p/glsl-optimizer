@@ -547,7 +547,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                        _EGLContext *share, const EGLint *attribs)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_context *xshare = egl_g3d_context(share);
+   struct egl_g3d_context *gshare = egl_g3d_context(share);
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    struct egl_g3d_context *gctx;
    const __GLcontextModes *mode;
@@ -572,8 +572,18 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    mode = &gconf->native->mode;
    gctx->pipe =
       gdpy->native->create_context(gdpy->native, (void *) &gctx->base);
+   if (!gctx->pipe) {
+      free(gctx);
+      return NULL;
+   }
+
    gctx->st_ctx = gctx->stapi->st_create_context(gctx->pipe, mode,
-                        (xshare) ? xshare->st_ctx : NULL);
+                        (gshare) ? gshare->st_ctx : NULL);
+   if (!gctx->st_ctx) {
+      gctx->pipe->destroy(gctx->pipe);
+      free(gctx);
+      return NULL;
+   }
 
    return &gctx->base;
 }
