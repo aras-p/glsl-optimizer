@@ -87,13 +87,13 @@ svga_vbuf_render_allocate_vertices( struct vbuf_render *render,
    if (!svga_render->vbuf) {
       svga_render->vbuf_size = MAX2(size, svga_render->vbuf_alloc_size);
       svga_render->vbuf = pipe_buffer_create(screen,
-                                             0,
+                                             16,
                                              PIPE_BUFFER_USAGE_VERTEX,
                                              svga_render->vbuf_size);
       if(!svga_render->vbuf) {
          svga_context_flush(svga, NULL);
          svga_render->vbuf = pipe_buffer_create(screen,
-                                                0,
+                                                16,
                                                 PIPE_BUFFER_USAGE_VERTEX,
                                                 svga_render->vbuf_size);
          assert(svga_render->vbuf);
@@ -259,7 +259,7 @@ svga_vbuf_render_draw( struct vbuf_render *render,
    if (!svga_render->ibuf) {
       svga_render->ibuf_size = MAX2(size, svga_render->ibuf_alloc_size);
       svga_render->ibuf = pipe_buffer_create(screen,
-                                             0,
+                                             2,
                                              PIPE_BUFFER_USAGE_VERTEX,
                                              svga_render->ibuf_size);
       svga_render->ibuf_offset = 0;

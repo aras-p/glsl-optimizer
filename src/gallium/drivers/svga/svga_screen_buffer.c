@@ -594,6 +594,9 @@ svga_buffer_create(struct pipe_screen *screen,
    struct svga_screen *ss = svga_screen(screen);
    struct svga_buffer *sbuf;
    
+   assert(size);
+   assert(alignment);
+
    sbuf = CALLOC_STRUCT(svga_buffer);
    if(!sbuf)
       goto error1;
