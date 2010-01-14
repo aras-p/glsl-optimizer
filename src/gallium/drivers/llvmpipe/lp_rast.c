@@ -226,14 +226,13 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              unsigned thread_index,
                              const union lp_rast_cmd_arg arg)
 {
-   unsigned i, j;
+   unsigned i;
    uint32_t *depth_tile = rast->tasks[thread_index].tile.depth;
    
    LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
-   for (i = 0; i < TILE_SIZE; i++)
-      for (j = 0; j < TILE_SIZE; j++)
-	 depth_tile[i*TILE_SIZE + j] = arg.clear_zstencil;
+   for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
+      depth_tile[i] = arg.clear_zstencil;
 }
 
 
