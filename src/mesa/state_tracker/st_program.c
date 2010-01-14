@@ -44,7 +44,6 @@
 
 #include "st_debug.h"
 #include "st_context.h"
-#include "st_atom.h"
 #include "st_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "cso_cache/cso_context.h"

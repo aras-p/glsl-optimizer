@@ -40,7 +40,6 @@
 #include "shader/prog_statevars.h"
 #include "shader/prog_execute.h"
 #include "swrast/s_context.h"
-#include "swrast/s_texfilter.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"

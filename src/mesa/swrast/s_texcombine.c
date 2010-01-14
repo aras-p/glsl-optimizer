@@ -29,7 +29,6 @@
 #include "main/colormac.h"
 #include "main/image.h"
 #include "main/imports.h"
-#include "main/pixel.h"
 #include "shader/prog_instruction.h"
 
 #include "s_context.h"

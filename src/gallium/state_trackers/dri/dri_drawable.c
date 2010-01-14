@@ -180,6 +180,7 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
+	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -372,6 +373,7 @@ dri_create_buffer(__DRIscreen * sPriv,
    /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
 
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;

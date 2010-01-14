@@ -29,7 +29,6 @@
 #include "main/feedback.h"
 #include "main/light.h"
 #include "main/macros.h"
-#include "main/rastpos.h"
 #include "main/simple_list.h"
 #include "main/mtypes.h"
 

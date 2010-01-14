@@ -1181,6 +1181,10 @@ void Slicer::slice(Arc_ptr loop)
 Slicer::Slicer( Backend &b ) 
 	: CoveAndTiler( b ), Mesher( b ), backend( b )
 {
+    oneOverDu = 0;
+    du = 0;
+    dv = 0;
+    isolines = 0;
     ulinear = 0;
     vlinear = 0;
 }
