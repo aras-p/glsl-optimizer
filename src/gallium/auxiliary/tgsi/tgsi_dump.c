@@ -123,7 +123,8 @@ static const char *semantic_names[] =
    "NORMAL",
    "FACE",
    "EDGEFLAG",
-   "PRIM_ID"
+   "PRIM_ID",
+   "INSTANCEID"
 };
 
 static const char *immediate_type_names[] =

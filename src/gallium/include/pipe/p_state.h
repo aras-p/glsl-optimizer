@@ -372,6 +372,11 @@ struct pipe_vertex_element
    /** Offset of this attribute, in bytes, from the start of the vertex */
    unsigned src_offset;
 
+   /** Instance data rate divisor. 0 means this is per-vertex data,
+    *  n means per-instance data used for n consecutive instances (n > 0).
+    */
+   unsigned instance_divisor;
+
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */

@@ -43,6 +43,7 @@ struct draw_varient_input
    enum pipe_format format;
    unsigned buffer;
    unsigned offset; 
+   unsigned instance_divisor;
 };
 
 struct draw_varient_output

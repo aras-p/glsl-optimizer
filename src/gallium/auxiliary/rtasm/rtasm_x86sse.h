@@ -244,6 +244,7 @@ void x86_sub( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_sahf( struct x86_function *p );
+void x86_div( struct x86_function *p, struct x86_reg src );
 
 
 void x86_cdecl_caller_push_regs( struct x86_function *p );

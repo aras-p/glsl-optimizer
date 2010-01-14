@@ -200,6 +200,24 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
                              unsigned mode, unsigned start, unsigned count);
 
 void
+softpipe_draw_arrays_instanced(struct pipe_context *pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count,
+                               unsigned startInstance,
+                               unsigned instanceCount);
+
+void
+softpipe_draw_elements_instanced(struct pipe_context *pipe,
+                                 struct pipe_buffer *indexBuffer,
+                                 unsigned indexSize,
+                                 unsigned mode,
+                                 unsigned start,
+                                 unsigned count,
+                                 unsigned startInstance,
+                                 unsigned instanceCount);
+
+void
 softpipe_map_transfers(struct softpipe_context *sp);
 
 void

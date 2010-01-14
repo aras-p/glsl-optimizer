@@ -673,6 +673,13 @@ void x86_and( struct x86_function *p,
    emit_op_modrm( p, 0x23, 0x21, dst, src );
 }
 
+void x86_div( struct x86_function *p,
+              struct x86_reg src )
+{
+   assert(src.file == file_REG32 && src.mod == mod_REG);
+   emit_op_modrm(p, 0xf7, 0, x86_make_reg(file_REG32, 6), src);
+}
+
 
 
 /***********************************************************************
