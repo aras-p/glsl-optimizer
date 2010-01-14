@@ -35,7 +35,6 @@
 #include "main/texfetch.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
-#include "main/texstore.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
