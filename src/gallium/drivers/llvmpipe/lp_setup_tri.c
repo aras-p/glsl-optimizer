@@ -36,6 +36,7 @@
 
 #define NUM_CHANNELS 4
 
+
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  */
@@ -45,9 +46,10 @@ static void constant_coef( struct lp_rast_triangle *tri,
                            unsigned i )
 {
    tri->inputs.a0[slot][i] = value;
-   tri->inputs.dadx[slot][i] = 0;
-   tri->inputs.dady[slot][i] = 0;
+   tri->inputs.dadx[slot][i] = 0.0f;
+   tri->inputs.dady[slot][i] = 0.0f;
 }
+
 
 /**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
@@ -184,8 +186,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
    /* Allocate space for the a0, dadx and dady arrays
     */
    {
-      unsigned bytes;
-      bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
+      unsigned bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
       tri->inputs.a0   = lp_scene_alloc_aligned( scene, bytes, 16 );
       tri->inputs.dadx = lp_scene_alloc_aligned( scene, bytes, 16 );
       tri->inputs.dady = lp_scene_alloc_aligned( scene, bytes, 16 );
@@ -281,7 +282,7 @@ do_triangle_ccw(struct setup_context *setup,
     *
     * XXX: subject to overflow??
     */
-   if (area <= 0) {
+   if (area <= 0.0f) {
       lp_scene_putback_data( scene, sizeof *tri );
       return;
    }
@@ -306,8 +307,7 @@ do_triangle_ccw(struct setup_context *setup,
     */
    setup_tri_coefficients( setup, tri, oneoverarea, v1, v2, v3, frontfacing );
 
-   /* half-edge constants, will be interated over the whole
-    * rendertarget.
+   /* half-edge constants, will be interated over the whole render target.
     */
    tri->c1 = tri->dy12 * x1 - tri->dx12 * y1;
    tri->c2 = tri->dy23 * x2 - tri->dx23 * y2;
@@ -494,6 +494,7 @@ do_triangle_ccw(struct setup_context *setup,
    }
 }
 
+
 static void triangle_cw( struct setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
@@ -502,6 +503,7 @@ static void triangle_cw( struct setup_context *setup,
    do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface );
 }
 
+
 static void triangle_ccw( struct setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
@@ -509,6 +511,7 @@ static void triangle_ccw( struct setup_context *setup,
 {
    do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
 }
+
 
 static void triangle_both( struct setup_context *setup,
 			   const float (*v0)[4],
@@ -522,11 +525,12 @@ static void triangle_both( struct setup_context *setup,
    const float fy = v1[0][1] - v2[0][1];
 
    /* det = cross(e,f).z */
-   if (ex * fy - ey * fx < 0) 
+   if (ex * fy - ey * fx < 0.0f) 
       triangle_ccw( setup, v0, v1, v2 );
    else
       triangle_cw( setup, v0, v1, v2 );
 }
+
 
 static void triangle_nop( struct setup_context *setup,
 			  const float (*v0)[4],
@@ -554,5 +558,3 @@ lp_setup_choose_triangle( struct setup_context *setup )
       break;
    }
 }
-
-
