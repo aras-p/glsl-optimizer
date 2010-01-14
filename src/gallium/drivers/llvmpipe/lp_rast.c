@@ -187,17 +187,33 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
    if (clear_color[0] == clear_color[1] &&
        clear_color[1] == clear_color[2] &&
        clear_color[2] == clear_color[3]) {
+      /* clear to grayscale value {x, x, x, x} */
       for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
 	 memset(color_tile[i], clear_color[0], TILE_SIZE * TILE_SIZE * 4);
       }
    }
    else {
-      unsigned x, y, chan;
-      for (i = 0; i < rast->state.fb.nr_cbufs; i++)
-	 for (y = 0; y < TILE_SIZE; y++)
-	    for (x = 0; x < TILE_SIZE; x++)
-	       for (chan = 0; chan < 4; ++chan)
-		  TILE_PIXEL(color_tile[i], x, y, chan) = clear_color[chan];
+      /* Non-gray color.
+       * Note: if the swizzled tile layout changes (see TILE_PIXEL) this code
+       * will need to change.  It'll be pretty obvious when clearing no longer
+       * works.
+       */
+      const unsigned chunk = TILE_SIZE / 4;
+      for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+         uint8_t *c = color_tile[i];
+         unsigned j;
+         for (j = 0; j < 4 * TILE_SIZE; j++) {
+            memset(c, clear_color[0], chunk);
+            c += chunk;
+            memset(c, clear_color[1], chunk);
+            c += chunk;
+            memset(c, clear_color[2], chunk);
+            c += chunk;
+            memset(c, clear_color[3], chunk);
+            c += chunk;
+         }
+         assert(c - color_tile[i] == TILE_SIZE * TILE_SIZE * 4);
+      }
    }
 }
 
