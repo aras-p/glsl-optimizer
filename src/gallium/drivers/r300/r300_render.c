@@ -316,6 +316,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         return;
     }
 
+	struct pipe_buffer* orgIndexBuffer = indexBuffer;
     if (indexSize == 1) {
         indexBuffer = r300_translate_elts(r300, indexBuffer,
             &indexSize, &mode, &count);
@@ -323,11 +324,11 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
-        return;
+        goto cleanup;
     }
 
     if (!r300->winsys->validate(r300->winsys)) {
-        return;
+        goto cleanup;
     }
 
     r300_emit_dirty_state(r300);
@@ -337,7 +338,8 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
                             mode, start, count);
 
-    if (indexSize == 1) {
+cleanup:
+    if (indexBuffer != orgIndexBuffer) {
         pipe->screen->buffer_destroy(indexBuffer);
     }
 }
