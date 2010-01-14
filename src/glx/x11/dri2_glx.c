@@ -575,11 +575,19 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->swapBuffers = dri2SwapBuffers;
    psp->waitGL = dri2WaitGL;
    psp->waitX = dri2WaitX;
-   psp->getDrawableMSC = dri2DrawableGetMSC;
-   psp->waitForMSC = dri2WaitForMSC;
-   psp->waitForSBC = dri2WaitForSBC;
-   psp->setSwapInterval = dri2SetSwapInterval;
-   psp->getSwapInterval = dri2GetSwapInterval;
+   if (pdp->driMinor >= 2) {
+      psp->getDrawableMSC = dri2DrawableGetMSC;
+      psp->waitForMSC = dri2WaitForMSC;
+      psp->waitForSBC = dri2WaitForSBC;
+      psp->setSwapInterval = dri2SetSwapInterval;
+      psp->getSwapInterval = dri2GetSwapInterval;
+   } else {
+      psp->getDrawableMSC = NULL;
+      psp->waitForMSC = NULL;
+      psp->waitForSBC = NULL;
+      psp->setSwapInterval = NULL;
+      psp->getSwapInterval = NULL;
+   }
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
     * available.*/
