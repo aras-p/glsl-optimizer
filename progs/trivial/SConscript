@@ -96,6 +96,7 @@ progs = [
 	'tri-logicop-xor',
 	'tri-mask-tri',
 	'tri-orig',
+	'tri-point-line-clipped',
 	'tri-query',
 	'tri-repeat',
 	'tri-scissor-tri',

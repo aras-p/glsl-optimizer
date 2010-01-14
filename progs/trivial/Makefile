@@ -119,6 +119,7 @@ SOURCES = \
 	tri-lit-material.c \
 	tri-mask-tri.c \
 	tri-orig.c \
+	tri-point-line-clipped.c \
 	tri-query.c \
 	tri-repeat.c \
 	tri-scissor-tri.c \
