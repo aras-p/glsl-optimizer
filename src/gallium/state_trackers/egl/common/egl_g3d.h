@@ -39,11 +39,11 @@
 #include "eglmode.h"
 
 #include "native.h"
-#include "egl_st.h"
+#include "egl_g3d_st.h"
 
 struct egl_g3d_driver {
    _EGLDriver base;
-   const struct egl_g3d_st *stapis[NUM_EGL_G3D_STS];
+   struct st_api *stapis[ST_API_COUNT];
    EGLint api_mask;
 
    EGLint probe_key;
@@ -51,35 +51,33 @@ struct egl_g3d_driver {
 
 struct egl_g3d_display {
    struct native_display *native;
-};
 
-struct egl_g3d_buffer {
-   struct st_framebuffer *st_fb;
-   uint attachment_mask;
+   struct st_manager *smapi;
 };
 
 struct egl_g3d_context {
    _EGLContext base;
 
-   const struct egl_g3d_st *stapi;
-   struct pipe_context *pipe;
+   struct st_api *stapi;
 
-   struct st_context *st_ctx;
-   EGLBoolean force_validate;
-   struct egl_g3d_buffer draw, read;
+   struct st_context_iface *stctxi;
 };
 
 struct egl_g3d_surface {
    _EGLSurface base;
+
+   struct st_visual stvis;
+   struct st_framebuffer_iface *stfbi;
+
    struct native_surface *native;
-   enum native_attachment render_att;
-   struct pipe_surface *render_surface;
+   struct pipe_texture *render_texture;
    unsigned int sequence_number;
 };
 
 struct egl_g3d_config {
    _EGLConfig base;
    const struct native_config *native;
+   struct st_visual stvis;
 };
 
 struct egl_g3d_image {

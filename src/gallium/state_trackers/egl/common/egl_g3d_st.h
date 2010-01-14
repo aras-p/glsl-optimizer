@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.8
+ * Version:  7.9
  *
- * Copyright (C) 2009-2010 Chia-I Wu <olv@0xlab.org>
+ * Copyright (C) 2010 LunarG Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,54 +20,60 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef _EGL_ST_H_
-#define _EGL_ST_H_
-
-#include "GL/gl.h" /* for GL types */
-#include "GL/internal/glcore.h"  /* for __GLcontextModes */
+#ifndef _EGL_G3D_ST_H_
+#define _EGL_G3D_ST_H_
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_format.h"
-#include "pipe/p_context.h"
+#include "state_tracker/st_api.h"
+#include "egltypedefs.h"
 
-/* avoid calling st functions directly */
-#if 1
+struct st_api *
+egl_g3d_create_st_api(enum st_api_type api);
 
-#define ST_SURFACE_FRONT_LEFT   0
-#define ST_SURFACE_BACK_LEFT    1
-#define ST_SURFACE_FRONT_RIGHT  2
-#define ST_SURFACE_BACK_RIGHT   3
+struct st_manager *
+egl_g3d_create_st_manager(_EGLDisplay *dpy);
 
-#define ST_TEXTURE_2D    0x2
+void
+egl_g3d_destroy_st_manager(struct st_manager *smapi);
 
-struct st_context;
-struct st_framebuffer;
-typedef void (*st_proc)();
+struct st_framebuffer_iface *
+egl_g3d_create_st_framebuffer(_EGLSurface *surf);
 
-#else
-#include "state_tracker/st_public.h"
-#endif
+void
+egl_g3d_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi);
 
-/* remember to update egl_g3d_get_st() when update the enums */
-enum egl_g3d_st_api {
-   EGL_G3D_ST_OPENGL_ES = 0,
-   EGL_G3D_ST_OPENVG,
-   EGL_G3D_ST_OPENGL_ES2,
-   EGL_G3D_ST_OPENGL,
+/**
+ * Return the EGL_<api>_BIT of the st api.
+ */
+static INLINE int
+egl_g3d_st_api_bit(enum st_api_type api)
+{
+   int bit;
 
-   NUM_EGL_G3D_STS
-};
+   switch (api) {
+   case ST_API_OPENGL:
+      bit = EGL_OPENGL_BIT;
+      break;
+   case ST_API_OPENGL_ES1:
+      bit = EGL_OPENGL_ES_BIT;
+      break;
+   case ST_API_OPENGL_ES2:
+      bit = EGL_OPENGL_ES2_BIT;
+      break;
+   case ST_API_OPENVG:
+      bit = EGL_OPENVG_BIT;
+      break;
+   default:
+      bit = 0;
+      break;
+   }
 
-struct egl_g3d_st {
-#define ST_PUBLIC(name, ret, ...) ret (*name)(__VA_ARGS__);
-#include "st_public_tmp.h"
-   /* fields must be added here */
-   EGLint api_bit;
-};
+   return bit;
+}
 
-const struct egl_g3d_st *
-egl_g3d_get_st(enum egl_g3d_st_api api);
-
-#endif /* _EGL_ST_H_ */
+#endif /* _EGL_G3D_ST_H_ */
