@@ -117,7 +117,8 @@ struct native_display {
    /**
     * The pipe screen of the native display.
     *
-    * Note that the "flush_frontbuffer" callback will be overridden.
+    * Note that the "flush_frontbuffer" and "update_buffer" callbacks will be
+    * overridden.
     */
    struct pipe_screen *screen;
 

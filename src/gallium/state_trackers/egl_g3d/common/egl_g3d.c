@@ -469,6 +469,22 @@ egl_g3d_flush_frontbuffer(struct pipe_screen *screen,
    }
 }
 
+/**
+ * Re-validate the context.
+ */
+static void
+egl_g3d_update_buffer(struct pipe_screen *screen, void *context_private)
+{
+   struct egl_g3d_context *gctx = egl_g3d_context(context_private);
+
+   /**
+    * It is likely that the surface has changed when this function is called.
+    * Set force_validate to skip an unnecessary check.
+    */
+   gctx->force_validate = EGL_TRUE;
+   egl_g3d_validate_context(gctx->base.Display, &gctx->base);
+}
+
 static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
@@ -517,6 +533,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 
    gdpy->native->screen->flush_frontbuffer = egl_g3d_flush_frontbuffer;
+   gdpy->native->screen->update_buffer = egl_g3d_update_buffer;
 
    dpy->ClientAPIsMask = gdrv->api_mask;
 
