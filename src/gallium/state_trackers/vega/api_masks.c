@@ -32,7 +32,6 @@
 #include "vg_context.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h" /* for winsys->update_buffer */
 
 #include "util/u_pack_color.h"
 #include "util/u_draw_quad.h"
@@ -116,8 +115,8 @@ clear_with_quad(struct vg_context *st, float x0, float y0,
      x1, y1);
    */
 
-   if (st->pipe->winsys && st->pipe->winsys->update_buffer)
-      st->pipe->winsys->update_buffer( st->pipe->winsys,
+   if (st->pipe->screen && st->pipe->screen->update_buffer)
+      st->pipe->screen->update_buffer( st->pipe->screen,
                                        st->pipe->priv );
 
    cso_save_blend(st->cso_context);
