@@ -149,10 +149,6 @@ do_block_16( struct lp_rasterizer_task *rast_task,
              int c2,
              int c3 )
 {
-   const int ei1 = tri->ei1 * 4;
-   const int ei2 = tri->ei2 * 4;
-   const int ei3 = tri->ei3 * 4;
-
    const int eo1 = tri->eo1 * 4;
    const int eo2 = tri->eo2 * 4;
    const int eo3 = tri->eo3 * 4;
@@ -175,16 +171,10 @@ do_block_16( struct lp_rasterizer_task *rast_task,
       else {
          int px = x + pos_table4[i][0];
          int py = y + pos_table4[i][1];
-         if (cx1 + ei1 > 0 &&
-             cx2 + ei2 > 0 &&
-             cx3 + ei3 > 0) {
-            /* the block is completely inside the triangle */
-            block_full_4(rast_task, tri, px, py);
-         }
-         else {
-            /* the block is partially in/out of the triangle */
-            do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
-         }
+         /* Don't bother testing if the 4x4 block is entirely in/out of
+          * the triangle.  It's a little faster to do it in the jit code.
+          */
+         do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
       }
    }
 }
