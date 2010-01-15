@@ -33,7 +33,11 @@ This state describes how resources in various flavours (textures,
 buffers, surfaces) are bound to the driver.
 
 
-* ``set_constant_buffer``
+* ``set_constant_buffer`` sets a constant buffer to be used for a given shader
+  type. index is used to indicate which buffer to set (some apis may allow
+  multiple ones to be set, and binding a specific one later, though drivers
+  are mostly restricted to the first one right now).
+
 * ``set_framebuffer_state``
 * ``set_fragment_sampler_textures``
 * ``set_vertex_sampler_textures``
