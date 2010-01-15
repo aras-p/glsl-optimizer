@@ -441,7 +441,7 @@ do_triangle_ccw(struct setup_context *setup,
 	 int cx1 = c1;
 	 int cx2 = c2;
 	 int cx3 = c3;
-	 int in = 0;
+	 boolean in = FALSE;  /* are we inside the triangle? */
 
 	 for (x = minx; x <= maxx; x++)
 	 {
@@ -451,13 +451,13 @@ do_triangle_ccw(struct setup_context *setup,
 	    {
 	       /* do nothing */
 	       if (in)
-		  break;
+		  break;  /* exiting triangle, all done with this row */
 	    }
 	    else if (cx1 + ei1 > 0 &&
 		     cx2 + ei2 > 0 &&
 		     cx3 + ei3 > 0) 
 	    {
-	       in = 1;
+	       in = TRUE;
                /* triangle covers the whole tile- shade whole tile */
 	       if(setup->fs.current.opaque) {
 	          lp_scene_bin_reset( scene, x, y );
@@ -471,7 +471,7 @@ do_triangle_ccw(struct setup_context *setup,
 	    }
 	    else 
 	    { 
-	       in = 1;
+	       in = TRUE;
                /* shade partial tile */
                lp_scene_bin_command( scene, x, y,
 				     lp_rast_triangle, 
