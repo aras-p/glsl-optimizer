@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = llvmpipe
 
-CFLAGS += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
+DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
 	lp_scene.c \
