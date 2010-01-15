@@ -413,6 +413,21 @@ lp_setup_set_blend_color( struct setup_context *setup,
 }
 
 
+void
+lp_setup_set_scissor( struct setup_context *setup,
+                      const struct pipe_scissor_state *scissor )
+{
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   assert(scissor);
+
+   if (memcmp(&setup->scissor.current, scissor, sizeof(*scissor)) != 0) {
+      setup->scissor.current = *scissor; /* struct copy */
+      setup->dirty |= LP_SETUP_NEW_SCISSOR;
+   }
+}
+
+
 void 
 lp_setup_set_flatshade_first( struct setup_context *setup,
                               boolean flatshade_first )
@@ -534,6 +549,25 @@ lp_setup_update_state( struct setup_context *setup )
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 
+   if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
+      float *stored;
+
+      stored = lp_scene_alloc_aligned(scene, 4 * sizeof(int32_t), 16);
+
+      stored[0] = (float) setup->scissor.current.minx;
+      stored[1] = (float) setup->scissor.current.miny;
+      stored[2] = (float) setup->scissor.current.maxx;
+      stored[3] = (float) setup->scissor.current.maxy;
+
+      setup->scissor.stored = stored;
+
+      setup->fs.current.jit_context.scissor_xmin = stored[0];
+      setup->fs.current.jit_context.scissor_ymin = stored[1];
+      setup->fs.current.jit_context.scissor_xmax = stored[2];
+      setup->fs.current.jit_context.scissor_ymax = stored[3];
+
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
 
    if(setup->dirty & LP_SETUP_NEW_CONSTANTS) {
       struct pipe_buffer *buffer = setup->constants.current;

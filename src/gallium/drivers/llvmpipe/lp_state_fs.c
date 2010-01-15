@@ -304,6 +304,51 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 }
 
 
+static LLVMValueRef
+generate_scissor_test(LLVMBuilderRef builder,
+                      LLVMValueRef context_ptr,
+                      const struct lp_build_interp_soa_context *interp,
+                      struct lp_type type)
+{
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMValueRef xpos = interp->pos[0], ypos = interp->pos[1];
+   LLVMValueRef xmin, ymin, xmax, ymax;
+   LLVMValueRef m0, m1, m2, m3, m;
+
+   /* xpos, ypos contain the window coords for the four pixels in the quad */
+   assert(xpos);
+   assert(ypos);
+
+   /* get the current scissor bounds, convert to vectors */
+   xmin = lp_jit_context_scissor_xmin_value(builder, context_ptr);
+   xmin = lp_build_broadcast(builder, vec_type, xmin);
+
+   ymin = lp_jit_context_scissor_ymin_value(builder, context_ptr);
+   ymin = lp_build_broadcast(builder, vec_type, ymin);
+
+   xmax = lp_jit_context_scissor_xmax_value(builder, context_ptr);
+   xmax = lp_build_broadcast(builder, vec_type, xmax);
+
+   ymax = lp_jit_context_scissor_ymax_value(builder, context_ptr);
+   ymax = lp_build_broadcast(builder, vec_type, ymax);
+
+   /* compare the fragment's position coordinates against the scissor bounds */
+   m0 = lp_build_compare(builder, type, PIPE_FUNC_GEQUAL, xpos, xmin);
+   m1 = lp_build_compare(builder, type, PIPE_FUNC_GEQUAL, ypos, ymin);
+   m2 = lp_build_compare(builder, type, PIPE_FUNC_LESS, xpos, xmax);
+   m3 = lp_build_compare(builder, type, PIPE_FUNC_LESS, ypos, ymax);
+
+   /* AND all the masks together */
+   m = LLVMBuildAnd(builder, m0, m1, "");
+   m = LLVMBuildAnd(builder, m, m2, "");
+   m = LLVMBuildAnd(builder, m, m3, "");
+
+   lp_build_name(m, "scissormask");
+
+   return m;
+}
+
+
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  * \param i  which quad in the tile, in range [0,3]
@@ -372,6 +417,11 @@ generate_fs(struct llvmpipe_context *lp,
    /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
 
+   if (key->scissor) {
+      LLVMValueRef smask =
+         generate_scissor_test(builder, context_ptr, interp, type);
+      lp_build_mask_update(&mask, smask);
+   }
 
    early_depth_test =
       key->depth.enabled &&
@@ -968,6 +1018,7 @@ make_variant_key(struct llvmpipe_context *lp,
    /* alpha.ref_value is passed in jit_context */
 
    key->flatshade = lp->rasterizer->flatshade;
+   key->scissor = lp->rasterizer->scissor;
 
    if (lp->framebuffer.nr_cbufs) {
       memcpy(&key->blend, lp->blend, sizeof key->blend);
@@ -1033,6 +1084,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             key.blend.colormask == 0xf &&
             !key.alpha.enabled &&
             !key.depth.enabled &&
+            !key.scissor &&
             !shader->info.uses_kill
             ? TRUE : FALSE;
 

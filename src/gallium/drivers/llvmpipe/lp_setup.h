@@ -114,6 +114,10 @@ lp_setup_set_blend_color( struct setup_context *setup,
                           const struct pipe_blend_color *blend_color );
 
 void
+lp_setup_set_scissor( struct setup_context *setup,
+                      const struct pipe_scissor_state *scissor );
+
+void
 lp_setup_set_sampler_textures( struct setup_context *setup,
                                unsigned num, struct pipe_texture **texture);
 

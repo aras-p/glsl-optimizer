@@ -45,6 +45,7 @@
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
 #define LP_SETUP_NEW_BLEND_COLOR 0x04
+#define LP_SETUP_NEW_SCISSOR     0x08
 
 
 struct lp_scene_queue;
@@ -121,6 +122,11 @@ struct setup_context
       struct pipe_blend_color current;
       uint8_t *stored;
    } blend_color;
+
+   struct {
+      struct pipe_scissor_state current;
+      const void *stored;
+   } scissor;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 

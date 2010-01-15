@@ -160,6 +160,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
    if (llvmpipe->dirty & (LP_NEW_FS |
                           LP_NEW_BLEND |
+                          LP_NEW_SCISSOR |
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_RASTERIZER |
                           LP_NEW_SAMPLER |
@@ -169,6 +170,9 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)
       lp_setup_set_blend_color(llvmpipe->setup,
                                &llvmpipe->blend_color);
+
+   if (llvmpipe->dirty & LP_NEW_SCISSOR)
+      lp_setup_set_scissor(llvmpipe->setup, &llvmpipe->scissor);
 
    if (llvmpipe->dirty & LP_NEW_DEPTH_STENCIL_ALPHA)
       lp_setup_set_alpha_ref_value(llvmpipe->setup, 
