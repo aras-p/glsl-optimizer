@@ -45,10 +45,8 @@
 
 #include "st_debug.h"
 #include "st_context.h"
-#include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_format.h"
 #include "st_public.h"
 #include "st_texture.h"
 #include "st_inlines.h"
