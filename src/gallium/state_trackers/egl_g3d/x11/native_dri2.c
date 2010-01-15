@@ -641,18 +641,8 @@ dri2_display_init_screen(struct native_display *ndpy)
    return TRUE;
 }
 
-static void
-dri2_display_flush_frontbuffer(void *dummy, struct pipe_surface *surf,
-                               void *context_private)
-{
-   /* TODO get native surface from context private, and remove the callback */
-   _eglLog(_EGL_WARNING, "flush_frontbuffer is not supplied");
-}
-
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy,
-                        struct drm_api *api,
-                        native_flush_frontbuffer flush_frontbuffer)
+x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
 {
    struct dri2_display *dri2dpy;
 
@@ -688,13 +678,6 @@ x11_create_dri2_display(EGLNativeDisplayType dpy,
       dri2_display_destroy(&dri2dpy->base);
       return NULL;
    }
-
-   if (!flush_frontbuffer)
-      flush_frontbuffer = dri2_display_flush_frontbuffer;
-
-   dri2dpy->base.screen->flush_frontbuffer =
-      (void (*)(struct pipe_screen *, struct pipe_surface *, void *))
-      flush_frontbuffer;
 
    dri2dpy->base.destroy = dri2_display_destroy;
    dri2dpy->base.get_configs = dri2_display_get_configs;

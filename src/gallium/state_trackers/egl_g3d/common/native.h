@@ -114,7 +114,13 @@ struct native_display_modeset;
  * the native display server.
  */
 struct native_display {
+   /**
+    * The pipe screen of the native display.
+    *
+    * Note that the "flush_frontbuffer" callback will be overridden.
+    */
    struct pipe_screen *screen;
+
    void (*destroy)(struct native_display *ndpy);
 
    /**
@@ -204,19 +210,10 @@ struct native_display_modeset {
                       const struct native_mode *nmode);
 };
 
-/**
- * This function is called when the native display wants to display the front
- * buffer of the draw surface of the given context.
- */
-typedef void (*native_flush_frontbuffer)(void *dummy,
-                                         struct pipe_surface *surf,
-                                         void *context_private);
-
 const char *
 native_get_name(void);
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      native_flush_frontbuffer flush_frontbuffer);
+native_create_display(EGLNativeDisplayType dpy);
 
 #endif /* _NATIVE_H_ */

@@ -632,18 +632,8 @@ ximage_display_destroy(struct native_display *ndpy)
    free(xdpy);
 }
 
-static void
-ximage_display_flush_frontbuffer(void *dummy, struct pipe_surface *surf,
-                                 void *context_private)
-{
-   /* TODO get native surface from context private, and remove the callback */
-   _eglLog(_EGL_WARNING, "flush_frontbuffer is not supplied");
-}
-
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy,
-                          boolean use_xshm,
-                          native_flush_frontbuffer flush_frontbuffer)
+x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
 {
    struct ximage_display *xdpy;
 
@@ -672,12 +662,6 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
       (use_xshm && x11_screen_support(xdpy->xscr, X11_SCREEN_EXTENSION_XSHM));
 
    xdpy->winsys = create_sw_winsys();
-   if (!flush_frontbuffer)
-      flush_frontbuffer = ximage_display_flush_frontbuffer;
-   xdpy->winsys->flush_frontbuffer =
-      (void (*)(struct pipe_winsys *, struct pipe_surface *, void *))
-      flush_frontbuffer;
-
    xdpy->base.screen = softpipe_create_screen(xdpy->winsys);
 
    xdpy->base.destroy = ximage_display_destroy;

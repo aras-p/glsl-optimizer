@@ -769,8 +769,7 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api,
-                   native_flush_frontbuffer flush_frontbuffer)
+kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
 {
    struct kms_display *kdpy;
 
@@ -812,10 +811,6 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api,
       return NULL;
    }
 
-   kdpy->base.screen->flush_frontbuffer =
-      (void (*)(struct pipe_screen *, struct pipe_surface *, void *))
-      flush_frontbuffer;
-
    kdpy->base.destroy = kms_display_destroy;
    kdpy->base.get_configs = kms_display_get_configs;
    kdpy->base.create_context = kms_display_create_context;
@@ -824,13 +819,6 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api,
    kdpy->base.modeset = &kms_display_modeset;
 
    return &kdpy->base;
-}
-
-static void
-dummy_flush_frontbuffer(void *dummy, struct pipe_surface *surf,
-                        void *context_private)
-{
-   _eglLog(_EGL_WARNING, "flush_frontbuffer is not supplied");
 }
 
 /* the api is destroyed with the native display */
@@ -853,19 +841,15 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      native_flush_frontbuffer flush_frontbuffer)
+native_create_display(EGLNativeDisplayType dpy)
 {
    struct native_display *ndpy = NULL;
 
    if (!drm_api)
       drm_api = drm_api_create();
 
-   if (!flush_frontbuffer)
-      flush_frontbuffer = dummy_flush_frontbuffer;
-
    if (drm_api)
-      ndpy = kms_create_display(dpy, drm_api, flush_frontbuffer);
+      ndpy = kms_create_display(dpy, drm_api);
 
    return ndpy;
 }

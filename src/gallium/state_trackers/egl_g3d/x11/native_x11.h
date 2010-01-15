@@ -29,13 +29,9 @@
 #include "common/native.h"
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy,
-                          boolean use_xshm,
-                          native_flush_frontbuffer flush_frontbuffer);
+x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm);
 
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy,
-                        struct drm_api *api,
-                        native_flush_frontbuffer flush_frontbuffer);
+x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api);
 
 #endif /* _NATIVE_X11_H_ */

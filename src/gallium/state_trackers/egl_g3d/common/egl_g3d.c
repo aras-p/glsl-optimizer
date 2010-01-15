@@ -24,6 +24,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "egldriver.h"
 #include "eglcurrent.h"
@@ -456,8 +457,8 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
  * Flush the front buffer of the context's draw surface.
  */
 static void
-egl_g3d_flush_frontbuffer(void *dummy, struct pipe_surface *surf,
-                          void *context_private)
+egl_g3d_flush_frontbuffer(struct pipe_screen *screen,
+                          struct pipe_surface *surf, void *context_private)
 {
    struct egl_g3d_context *gctx = egl_g3d_context(context_private);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(gctx->base.DrawSurface);
@@ -509,12 +510,13 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    dpy->DriverData = gdpy;
 
-   gdpy->native =
-      native_create_display(dpy->NativeDisplay, egl_g3d_flush_frontbuffer);
+   gdpy->native = native_create_display(dpy->NativeDisplay);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;
    }
+
+   gdpy->native->screen->flush_frontbuffer = egl_g3d_flush_frontbuffer;
 
    dpy->ClientAPIsMask = gdrv->api_mask;
 
