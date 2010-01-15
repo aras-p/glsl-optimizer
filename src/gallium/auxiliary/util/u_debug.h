@@ -354,6 +354,8 @@ debug_memory_end(unsigned long beginning);
 #ifdef DEBUG
 struct pipe_surface;
 struct pipe_transfer;
+struct pipe_texture;
+
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
@@ -361,6 +363,8 @@ void debug_dump_image(const char *prefix,
                       const void *data);
 void debug_dump_surface(const char *prefix,
                         struct pipe_surface *surface);   
+void debug_dump_texture(const char *prefix,
+                        struct pipe_texture *texture);
 void debug_dump_surface_bmp(const char *filename,
                             struct pipe_surface *surface);
 void debug_dump_transfer_bmp(const char *filename,
