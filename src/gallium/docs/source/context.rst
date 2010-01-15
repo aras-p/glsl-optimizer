@@ -47,7 +47,6 @@ These pieces of state are too small, variable, and/or trivial to have CSO
 objects. They all follow simple, one-method binding calls, e.g.
 ``set_edgeflags``.
 
-* ``set_edgeflags``
 * ``set_blend_color``
 * ``set_clip_state``
 * ``set_polygon_stipple``
