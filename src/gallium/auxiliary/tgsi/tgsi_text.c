@@ -933,7 +933,8 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "NORMAL",
    "FACE",
    "EDGEFLAG",
-   "PRIM_ID"
+   "PRIM_ID",
+   "INSTANCEID"
 };
 
 static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
