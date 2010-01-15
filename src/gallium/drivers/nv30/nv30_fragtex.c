@@ -43,7 +43,6 @@ static struct nv30_texture_format *
 nv30_fragtex_format(uint pipe_format)
 {
 	struct nv30_texture_format *tf = nv30_texture_formats;
-	char fs[128];
 
 	while (tf->defined) {
 		if (tf->pipe == pipe_format)
@@ -65,7 +64,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	struct nouveau_bo *bo = nouveau_bo(nv30mt->buffer);
 	struct nv30_texture_format *tf;
 	struct nouveau_stateobj *so;
-	uint32_t txf, txs , txp;
+	uint32_t txf, txs;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv30_fragtex_format(pt->format);
@@ -95,13 +94,6 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
 		return NULL;
-	}
-
-	if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
-		txp = 0;
-	} else {
-		txp  = nv30mt->level[0].pitch;
-		txf |= (1<<13) /*FIXME: NV34TCL_TX_FORMAT_LINEAR ? */;
 	}
 
 	txs = tf->swizzle;
