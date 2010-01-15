@@ -79,7 +79,8 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) +
+             (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
 
     if (caps->has_tcl) {
         /*Flushing PVS is required before the VAP_GB registers can be changed*/
