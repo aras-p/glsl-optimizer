@@ -154,7 +154,7 @@ void llvmpipe_set_clip_state( struct pipe_context *,
 
 void llvmpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
-                                  const struct pipe_constant_buffer *buf);
+                                  struct pipe_buffer *buf);
 
 void *llvmpipe_create_fs_state(struct pipe_context *,
                                const struct pipe_shader_state *);

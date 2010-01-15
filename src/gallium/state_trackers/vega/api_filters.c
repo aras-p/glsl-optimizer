@@ -147,22 +147,22 @@ static void setup_constant_buffer(struct vg_context *ctx, const void *buffer,
                                   VGint param_bytes)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_constant_buffer *cbuf = &ctx->filter.buffer;
+   struct pipe_buffer **cbuf = &ctx->filter.buffer;
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization. */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(pipe->screen, 16,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
+   *cbuf = pipe_buffer_create(pipe->screen, 16,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
 
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer,
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf,
                                     0, param_bytes, buffer);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
 }
 
 static void setup_samplers(struct vg_context *ctx, struct filter_info *info)

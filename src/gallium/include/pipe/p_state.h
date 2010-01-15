@@ -174,15 +174,6 @@ struct pipe_clip_state
 };
 
 
-/**
- * Constants for vertex/fragment shaders
- */
-struct pipe_constant_buffer
-{
-   struct pipe_buffer *buffer;
-};
-
-
 struct pipe_shader_state
 {
    const struct tgsi_token *tokens;

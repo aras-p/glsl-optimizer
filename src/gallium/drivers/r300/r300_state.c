@@ -992,22 +992,22 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_constant_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
     void *mapped;
 
-    if (buf == NULL || buf->buffer->size == 0 ||
-        (mapped = pipe_buffer_map(pipe->screen, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
+    if (buf == NULL || buf->size == 0 ||
+        (mapped = pipe_buffer_map(pipe->screen, buf, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
     {
         r300->shader_constants[shader].count = 0;
         return;
     }
 
-    assert((buf->buffer->size % 4 * sizeof(float)) == 0);
-    memcpy(r300->shader_constants[shader].constants, mapped, buf->buffer->size);
-    r300->shader_constants[shader].count = buf->buffer->size / (4 * sizeof(float));
-    pipe_buffer_unmap(pipe->screen, buf->buffer);
+    assert((buf->size % 4 * sizeof(float)) == 0);
+    memcpy(r300->shader_constants[shader].constants, mapped, buf->size);
+    r300->shader_constants[shader].count = buf->size / (4 * sizeof(float));
+    pipe_buffer_unmap(pipe->screen, buf);
 
     if (shader == PIPE_SHADER_VERTEX)
         r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;

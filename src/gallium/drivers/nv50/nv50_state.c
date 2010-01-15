@@ -585,16 +585,16 @@ nv50_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 const struct pipe_constant_buffer *buf )
+			 struct pipe_buffer *buf )
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
 	if (shader == PIPE_SHADER_VERTEX) {
-		nv50->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
+		nv50->constbuf[PIPE_SHADER_VERTEX] = buf;
 		nv50->dirty |= NV50_NEW_VERTPROG_CB;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv50->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
+		nv50->constbuf[PIPE_SHADER_FRAGMENT] = buf;
 		nv50->dirty |= NV50_NEW_FRAGPROG_CB;
 	}
 }

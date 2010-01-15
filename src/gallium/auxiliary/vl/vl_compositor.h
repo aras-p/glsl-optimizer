@@ -47,7 +47,7 @@ struct vl_compositor
    struct pipe_scissor_state scissor;
    struct pipe_vertex_buffer vertex_bufs[2];
    struct pipe_vertex_element vertex_elems[2];
-   struct pipe_constant_buffer vs_const_buf, fs_const_buf;
+   struct pipe_buffer *vs_const_buf, *fs_const_buf;
 };
 
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);

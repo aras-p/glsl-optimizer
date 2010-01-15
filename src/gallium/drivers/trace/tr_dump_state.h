@@ -47,7 +47,7 @@ void trace_dump_scissor_state(const struct pipe_scissor_state *state);
 
 void trace_dump_clip_state(const struct pipe_clip_state *state);
 
-void trace_dump_constant_buffer(const struct pipe_constant_buffer *state);
+void trace_dump_constant_buffer(const struct pipe_buffer *state);
 
 void trace_dump_token(const struct tgsi_token *token);
 

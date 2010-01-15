@@ -125,7 +125,7 @@ failover_context( struct pipe_context *pipe )
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf);
+                             struct pipe_buffer *buf);
 
 
 #endif /* FO_CONTEXT_H */

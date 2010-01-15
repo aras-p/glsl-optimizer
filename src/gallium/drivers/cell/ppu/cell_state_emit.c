@@ -240,12 +240,12 @@ cell_emit_state(struct cell_context *cell)
 
    if (cell->dirty & (CELL_NEW_FS_CONSTANTS)) {
       const uint shader = PIPE_SHADER_FRAGMENT;
-      const uint num_const = cell->constants[shader].buffer->size / sizeof(float);
+      const uint num_const = cell->constants[shader]->size / sizeof(float);
       uint i, j;
       float *buf = cell_batch_alloc16(cell, ROUNDUP16(32 + num_const * sizeof(float)));
       uint32_t *ibuf = (uint32_t *) buf;
       const float *constants = pipe_buffer_map(cell->pipe.screen,
-                                               cell->constants[shader].buffer,
+                                               cell->constants[shader],
                                                PIPE_BUFFER_USAGE_CPU_READ);
       ibuf[0] = CELL_CMD_STATE_FS_CONSTANTS;
       ibuf[4] = num_const;
@@ -253,7 +253,7 @@ cell_emit_state(struct cell_context *cell)
       for (i = 0; i < num_const; i++) {
          buf[j++] = constants[i];
       }
-      pipe_buffer_unmap(cell->pipe.screen, cell->constants[shader].buffer);
+      pipe_buffer_unmap(cell->pipe.screen, cell->constants[shader]);
    }
 
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |

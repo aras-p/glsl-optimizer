@@ -92,7 +92,7 @@ struct st_context
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
-      struct pipe_constant_buffer constants[2];
+      struct pipe_buffer *constants[2];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_texture *sampler_texture[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
