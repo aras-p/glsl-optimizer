@@ -88,9 +88,9 @@ struct lp_fragment_shader_variant
 
    struct lp_fragment_shader_variant_key key;
 
-   LLVMValueRef function;
+   LLVMValueRef function[2];
 
-   lp_jit_frag_func jit_function;
+   lp_jit_frag_func jit_function[2];
 
    struct lp_fragment_shader_variant *next;
 };

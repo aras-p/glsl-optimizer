@@ -349,9 +349,26 @@ generate_scissor_test(LLVMBuilderRef builder,
 }
 
 
+static LLVMValueRef
+build_int32_vec_const(int value)
+{
+   struct lp_type i32_type;
+
+   memset(&i32_type, 0, sizeof i32_type);
+   i32_type.floating = FALSE; /* values are integers */
+   i32_type.sign = TRUE;      /* values are signed */
+   i32_type.norm = FALSE;     /* values are not normalized */
+   i32_type.width = 32;       /* 32-bit int values */
+   i32_type.length = 4;       /* 4 elements per vector */
+   return lp_build_int_const_scalar(i32_type, value);
+}
+
+
+
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  * \param i  which quad in the tile, in range [0,3]
+ * \param do_tri_test  if 1, do triangle edge in/out testing
  */
 static void
 generate_fs(struct llvmpipe_context *lp,
@@ -366,6 +383,7 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef *pmask,
             LLVMValueRef (*color)[4],
             LLVMValueRef depth_ptr,
+            unsigned do_tri_test,
             LLVMValueRef c0,
             LLVMValueRef c1,
             LLVMValueRef c2,
@@ -411,8 +429,13 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_flow_scope_declare(flow, &z);
 
    /* do triangle edge testing */
-   generate_tri_edge_mask(builder, i, pmask,
-                          c0, c1, c2, step0_ptr, step1_ptr, step2_ptr);
+   if (do_tri_test) {
+      generate_tri_edge_mask(builder, i, pmask,
+                             c0, c1, c2, step0_ptr, step1_ptr, step2_ptr);
+   }
+   else {
+      *pmask = build_int32_vec_const(~0);
+   }
 
    /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
@@ -563,7 +586,8 @@ generate_blend(const struct pipe_blend_state *blend,
 static void
 generate_fragment(struct llvmpipe_context *lp,
                   struct lp_fragment_shader *shader,
-                  struct lp_fragment_shader_variant *variant)
+                  struct lp_fragment_shader_variant *variant,
+                  unsigned do_tri_test)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    const struct lp_fragment_shader_variant_key *key = &variant->key;
@@ -656,7 +680,7 @@ generate_fragment(struct llvmpipe_context *lp,
    function = LLVMAddFunction(screen->module, "shader", func_type);
    LLVMSetFunctionCallConv(function, LLVMCCallConv);
 
-   variant->function = function;
+   variant->function[do_tri_test] = function;
 
 
    /* XXX: need to propagate noalias down into color param now we are
@@ -738,6 +762,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   &fs_mask[i], /* output */
                   out_color,
                   depth_ptr_i,
+                  do_tri_test,
                   c0, c1, c2,
                   step0_ptr, step1_ptr, step2_ptr);
 
@@ -812,10 +837,10 @@ generate_fragment(struct llvmpipe_context *lp,
    /*
     * Translate the LLVM IR into machine code.
     */
-   variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, function);
+   variant->jit_function[do_tri_test] = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, function);
 
    if (LP_DEBUG & DEBUG_ASM)
-      lp_disassemble(variant->jit_function);
+      lp_disassemble(variant->jit_function[do_tri_test]);
 }
 
 
@@ -887,7 +912,8 @@ generate_variant(struct llvmpipe_context *lp,
    variant->shader = shader;
    memcpy(&variant->key, key, sizeof *key);
 
-   generate_fragment(lp, shader, variant);
+   generate_fragment(lp, shader, variant, 0);
+   generate_fragment(lp, shader, variant, 1);
 
    /* insert new variant into linked list */
    variant->next = shader->variants;
@@ -947,11 +973,15 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    variant = shader->variants;
    while(variant) {
       struct lp_fragment_shader_variant *next = variant->next;
+      unsigned i;
 
-      if(variant->function) {
-         if(variant->jit_function)
-            LLVMFreeMachineCodeForFunction(screen->engine, variant->function);
-         LLVMDeleteFunction(variant->function);
+      for (i = 0; i < Elements(variant->function); i++) {
+         if (variant->function[i]) {
+            if (variant->jit_function[i])
+               LLVMFreeMachineCodeForFunction(screen->engine,
+                                              variant->function[i]);
+            LLVMDeleteFunction(variant->function[i]);
+         }
       }
 
       FREE(variant);
@@ -1093,7 +1123,8 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             !shader->info.uses_kill
             ? TRUE : FALSE;
 
-   lp_setup_set_fs_function(lp->setup, 
-                            shader->current->jit_function,
-                            opaque);
+   lp_setup_set_fs_functions(lp->setup, 
+                             shader->current->jit_function[0],
+                             shader->current->jit_function[1],
+                             opaque);
 }

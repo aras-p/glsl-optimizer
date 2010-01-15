@@ -66,8 +66,10 @@ struct lp_rast_state {
    
    /* The shader itself.  Probably we also need to pass a pointer to
     * the tile color/z/stencil data somehow:
-    */
-   lp_jit_frag_func jit_function;
+    * jit_function[0] skips the triangle in/out test code
+    * jit_function[1] does triangle in/out testing
+     */
+   lp_jit_frag_func jit_function[2];
 
    boolean opaque;
 };

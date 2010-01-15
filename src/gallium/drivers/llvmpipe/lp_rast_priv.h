@@ -30,6 +30,7 @@
 
 #include "pipe/p_thread.h"
 #include "lp_rast.h"
+#include "lp_tile_soa.h"
 
 
 #define MAX_THREADS 8  /* XXX probably temporary here */
@@ -125,5 +126,47 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
                           int32_t c1, int32_t c2, int32_t c3);
+
+
+/**
+ * Shade all pixels in a 4x4 block.  The fragment code omits the
+ * triangle in/out tests.
+ * \param x, y location of 4x4 block in window coords
+ */
+static INLINE void
+lp_rast_shade_quads_all( struct lp_rasterizer *rast,
+                         unsigned thread_index,
+                         const struct lp_rast_shader_inputs *inputs,
+                         unsigned x, unsigned y )
+{
+   const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
+   struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
+   const unsigned ix = x % TILE_SIZE, iy = y % TILE_SIZE;
+   uint8_t *color[PIPE_MAX_COLOR_BUFS];
+   void *depth;
+   unsigned block_offset, i;
+
+   /* offset of the containing 16x16 pixel block within the tile */
+   block_offset = (iy / 4) * (16 * 16) + (ix / 4) * 16;
+
+   /* color buffer */
+   for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+      color[i] = tile->color[i] + 4 * block_offset;
+
+   /* depth buffer */
+   depth = tile->depth + block_offset;
+
+   /* run shader */
+   state->jit_function[0]( &state->jit_context,
+                           x, y,
+                           inputs->a0,
+                           inputs->dadx,
+                           inputs->dady,
+                           color,
+                           depth,
+                           INT_MIN, INT_MIN, INT_MIN,
+                           NULL, NULL, NULL );
+}
+
 
 #endif

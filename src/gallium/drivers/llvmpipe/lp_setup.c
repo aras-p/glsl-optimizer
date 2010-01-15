@@ -362,14 +362,16 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
 }
 
 void
-lp_setup_set_fs_function( struct setup_context *setup,
-                          lp_jit_frag_func jit_function,
-                          boolean opaque )
+lp_setup_set_fs_functions( struct setup_context *setup,
+                           lp_jit_frag_func jit_function0,
+                           lp_jit_frag_func jit_function1,
+                           boolean opaque )
 {
-   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) jit_function);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) jit_function0);
    /* FIXME: reference count */
 
-   setup->fs.current.jit_function = jit_function;
+   setup->fs.current.jit_function[0] = jit_function0;
+   setup->fs.current.jit_function[1] = jit_function1;
    setup->fs.current.opaque = opaque;
    setup->dirty |= LP_SETUP_NEW_FS;
 }

@@ -344,9 +344,6 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
 
 
 
-/* Within a tile:
- */
-
 /**
  * Run the shader on all blocks in a tile.  This is used when a tile is
  * completely contained inside a triangle.
@@ -356,8 +353,8 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          unsigned thread_index,
                          const union lp_rast_cmd_arg arg )
 {
-   /* Set c1,c2,c3 to large values so the in/out test always passes */
-   const int32_t c1 = INT_MIN, c2 = INT_MIN, c3 = INT_MIN;
+   const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
+   struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
    const unsigned tile_x = rast->tasks[thread_index].x;
    const unsigned tile_y = rast->tasks[thread_index].y;
@@ -365,16 +362,35 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
-   /* Use the existing preference for 4x4 (four quads) shading:
-    */
-   for (y = 0; y < TILE_SIZE; y += 4)
-      for (x = 0; x < TILE_SIZE; x += 4)
-         lp_rast_shade_quads( rast,
-                              thread_index,
-                              inputs,
-                              tile_x + x,
-                              tile_y + y,
-                              c1, c2, c3);
+   /* render the whole 64x64 tile in 4x4 chunks */
+   for (y = 0; y < TILE_SIZE; y += 4){
+      for (x = 0; x < TILE_SIZE; x += 4) {
+         uint8_t *color[PIPE_MAX_COLOR_BUFS];
+         uint32_t *depth;
+         unsigned block_offset, i;
+
+         /* offset of the 16x16 pixel block within the tile */
+         block_offset = ((y / 4) * (16 * 16) + (x / 4) * 16);
+
+         /* color buffer */
+         for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+            color[i] = tile->color[i] + 4 * block_offset;
+
+         /* depth buffer */
+         depth = tile->depth + block_offset;
+
+         /* run shader */
+         state->jit_function[0]( &state->jit_context,
+                                 tile_x + x, tile_y + y,
+                                 inputs->a0,
+                                 inputs->dadx,
+                                 inputs->dady,
+                                 color,
+                                 depth,
+                                 INT_MIN, INT_MIN, INT_MIN,
+                                 NULL, NULL, NULL );
+      }
+   }
 }
 
 
@@ -411,7 +427,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
    iy = y % TILE_SIZE;
 
    /* offset of the 16x16 pixel block within the tile */
-   block_offset = ((iy/4)*(16*16) + (ix/4)*16);
+   block_offset = ((iy / 4) * (16 * 16) + (ix / 4) * 16);
 
    /* color buffer */
    for (i = 0; i < rast->state.fb.nr_cbufs; i++)
@@ -433,7 +449,7 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 #endif
 
    /* run shader */
-   state->jit_function( &state->jit_context,
+   state->jit_function[1]( &state->jit_context,
                         x, y,
                         inputs->a0,
                         inputs->dadx,
@@ -445,8 +461,6 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 }
 
 
-/* End of tile:
- */
 
 
 /**

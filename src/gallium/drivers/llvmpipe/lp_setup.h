@@ -96,9 +96,10 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
                         unsigned nr );
 
 void
-lp_setup_set_fs_function( struct setup_context *setup,
-                          lp_jit_frag_func jit_function,
-                          boolean opaque );
+lp_setup_set_fs_functions( struct setup_context *setup,
+                           lp_jit_frag_func jit_function0,
+                           lp_jit_frag_func jit_function1,
+                           boolean opaque );
 
 void
 lp_setup_set_fs_constants(struct setup_context *setup,
