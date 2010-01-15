@@ -705,12 +705,18 @@ void r300_emit_texture(struct r300_context* r300,
         filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
     }
 
-    /* determine min/max levels */
-    /* the MAX_MIP level is the largest (finest) one */
-    max_level = MIN2(sampler->max_lod, tex->tex.last_level);
-    min_level = MIN2(sampler->min_lod, max_level);
-    format0 |= R300_TX_NUM_LEVELS(max_level);
-    filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+    if (tex->is_npot) {
+        /* NPOT textures don't support mip filter, unfortunately.
+         * This prevents incorrect rendering. */
+        filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
+    } else {
+        /* determine min/max levels */
+        /* the MAX_MIP level is the largest (finest) one */
+        max_level = MIN2(sampler->max_lod, tex->tex.last_level);
+        min_level = MIN2(sampler->min_lod, max_level);
+        format0 |= R300_TX_NUM_LEVELS(max_level);
+        filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+    }
 
     BEGIN_CS(16);
     OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
