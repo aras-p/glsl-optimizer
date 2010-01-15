@@ -44,9 +44,7 @@
 
 #include "st_debug.h"
 #include "st_context.h"
-#include "st_draw.h"
 #include "st_gen_mipmap.h"
-#include "st_program.h"
 #include "st_texture.h"
 #include "st_cb_texture.h"
 #include "st_inlines.h"
