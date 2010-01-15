@@ -88,7 +88,8 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 void 
 lp_setup_set_triangle_state( struct setup_context *setup,
                              unsigned cullmode,
-                             boolean front_is_ccw );
+                             boolean front_is_ccw,
+                             boolean scissor );
 
 void
 lp_setup_set_fs_inputs( struct setup_context *setup,

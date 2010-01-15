@@ -87,6 +87,7 @@ struct setup_context
 
    boolean flatshade_first;
    boolean ccw_is_frontface;
+   boolean scissor_test;
    unsigned cullmode;
 
    struct pipe_framebuffer_state fb;

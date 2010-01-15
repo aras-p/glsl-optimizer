@@ -293,6 +293,13 @@ do_triangle_ccw(struct setup_context *setup,
    miny = (MIN3(y1, y2, y3) + (FIXED_ONE-1)) >> FIXED_ORDER;
    maxy = (MAX3(y1, y2, y3) + (FIXED_ONE-1)) >> FIXED_ORDER;
    
+   if (setup->scissor_test) {
+      minx = MAX2(minx, setup->scissor.current.minx);
+      maxx = MIN2(maxx, setup->scissor.current.maxx);
+      miny = MAX2(miny, setup->scissor.current.miny);
+      maxy = MIN2(maxy, setup->scissor.current.maxy);
+   }
+
    if (miny == maxy || 
        minx == maxx) {
       lp_scene_putback_data( scene, sizeof *tri );

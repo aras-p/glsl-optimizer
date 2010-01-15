@@ -339,13 +339,15 @@ lp_setup_fence( struct setup_context *setup )
 void 
 lp_setup_set_triangle_state( struct setup_context *setup,
                              unsigned cull_mode,
-                             boolean ccw_is_frontface)
+                             boolean ccw_is_frontface,
+                             boolean scissor )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
+   setup->scissor_test = scissor;
 }
 
 
