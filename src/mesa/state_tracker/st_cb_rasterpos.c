@@ -47,7 +47,6 @@
 #include "st_draw.h"
 #include "draw/draw_context.h"
 #include "draw/draw_pipe.h"
-#include "shader/prog_instruction.h"
 #include "vbo/vbo.h"
 
 
