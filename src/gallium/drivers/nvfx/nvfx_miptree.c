@@ -2,69 +2,111 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_memory.h"
 #include "util/u_math.h"
-
+#include "state_tracker/drm_driver.h"
+#include "nouveau/nouveau_winsys.h"
+#include "nouveau/nouveau_screen.h"
+#include "nv04_surface_2d.h"
 #include "nvfx_context.h"
 #include "nvfx_resource.h"
 #include "nvfx_transfer.h"
-#include "nv04_surface_2d.h"
-
-/* Currently using separate implementations for buffers and textures,
- * even though gallium has a unified abstraction of these objects.
- * Eventually these should be combined, and mechanisms like transfers
- * be adapted to work for both buffer and texture uploads.
- */
 
 static void
-nvfx_miptree_layout(struct nvfx_miptree *mt)
+nvfx_miptree_choose_format(struct nvfx_miptree *mt)
 {
 	struct pipe_resource *pt = &mt->base.base;
-	uint width = pt->width0;
-	uint offset = 0;
-	int nr_faces, l, f;
-	uint wide_pitch = pt->bind & (PIPE_BIND_SAMPLER_VIEW |
-				      PIPE_BIND_DEPTH_STENCIL |
-				      PIPE_BIND_RENDER_TARGET |
-				      PIPE_BIND_DISPLAY_TARGET |
-				      PIPE_BIND_SCANOUT);
+	unsigned uniform_pitch = 0;
+	static int no_swizzle = -1;
+	if(no_swizzle < 0)
+		no_swizzle = debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE);
 
-	if (pt->target == PIPE_TEXTURE_CUBE) {
-		nr_faces = 6;
-	} else
-	if (pt->target == PIPE_TEXTURE_3D) {
-		nr_faces = pt->depth0;
-	} else {
-		nr_faces = 1;
+	/* Non-uniform pitch textures must be POT */
+	if (pt->width0 & (pt->width0 - 1) ||
+	    pt->height0 & (pt->height0 - 1) ||
+	    pt->depth0 & (pt->depth0 - 1)
+	    )
+		uniform_pitch = 1;
+
+	/* All texture formats except compressed ones can be swizzled
+	 * Unsure about depth, let's prevent swizzling for now
+	 */
+	if (
+		(pt->bind & (PIPE_BIND_SCANOUT | PIPE_BIND_DISPLAY_TARGET))
+		|| (pt->usage & PIPE_USAGE_DYNAMIC) || (pt->usage & PIPE_USAGE_STAGING)
+		|| util_format_is_depth_or_stencil(pt->format)
+		|| util_format_is_compressed(pt->format)
+		// disable swizzled textures on NV04-NV20 as our current drivers don't fully support that
+		// TODO: hardware should support them, fix the drivers and reenable
+		|| nouveau_screen(pt->screen)->device->chipset < 0x30
+		|| no_swizzle
+
+		// disable swizzling for non-RGBA 2D because our current 2D code can't handle anything
+		// else correctly, and even that is semi-broken
+		|| pt->target != PIPE_TEXTURE_2D
+		|| (pt->format != PIPE_FORMAT_B8G8R8A8_UNORM && pt->format != PIPE_FORMAT_B8G8R8X8_UNORM)
+	)
+		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+
+	/* non compressed formats with uniform pitch must be linear, and vice versa */
+	if(!util_format_is_s3tc(pt->format)
+		&& (uniform_pitch || mt->base.base.flags & NVFX_RESOURCE_FLAG_LINEAR))
+	{
+		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+		uniform_pitch = 1;
 	}
 
-	for (l = 0; l <= pt->last_level; l++) {
-		if (wide_pitch && (pt->flags & NVFX_RESOURCE_FLAG_LINEAR))
-			mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
+	if(uniform_pitch)
+	{
+		mt->linear_pitch = util_format_get_stride(pt->format, pt->width0);
+
+		// TODO: this is only a constraint for rendering and not sampling, apparently
+		// we may also want this unconditionally
+		if(pt->bind & (PIPE_BIND_SAMPLER_VIEW |
+			PIPE_BIND_DEPTH_STENCIL |
+			PIPE_BIND_RENDER_TARGET |
+			PIPE_BIND_DISPLAY_TARGET |
+			PIPE_BIND_SCANOUT))
+			mt->linear_pitch = align(mt->linear_pitch, 64);
+	}
+	else
+		mt->linear_pitch = 0;
+}
+
+static unsigned
+nvfx_miptree_layout(struct nvfx_miptree *mt)
+{
+	struct pipe_resource* pt = &mt->base.base;
+        uint offset = 0;
+
+	if(!nvfx_screen(pt->screen)->is_nv4x)
+	{
+		assert(pt->target == PIPE_TEXTURE_RECT
+			|| (util_is_pot(pt->width0) && util_is_pot(pt->height0)));
+	}
+
+	for (unsigned l = 0; l <= pt->last_level; l++)
+	{
+		unsigned size;
+		mt->level_offset[l] = offset;
+
+		if(mt->linear_pitch)
+			size = mt->linear_pitch;
 		else
-			mt->level[l].pitch = util_format_get_stride(pt->format, width);
+			size = util_format_get_stride(pt->format, u_minify(pt->width0, l));
+		size = util_format_get_2d_size(pt->format, size, u_minify(pt->height0, l));
 
-		mt->level[l].image_offset =
-			CALLOC(nr_faces, sizeof(unsigned));
+		if(pt->target == PIPE_TEXTURE_3D)
+			size *= u_minify(pt->depth0, l);
 
-		width  = u_minify(width, 1);
+		offset += size;
 	}
 
-	for (f = 0; f < nr_faces; f++) {
-		for (l = 0; l < pt->last_level; l++) {
-			mt->level[l].image_offset[f] = offset;
-
-			if (!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR) &&
-			    u_minify(pt->width0, l + 1) > 1 && u_minify(pt->height0, l + 1) > 1)
-				offset += align(mt->level[l].pitch * u_minify(pt->height0, l), 64);
-			else
-				offset += mt->level[l].pitch * u_minify(pt->height0, l);
-		}
-
-		mt->level[l].image_offset[f] = offset;
-		offset += mt->level[l].pitch * u_minify(pt->height0, l);
-	}
-
-	mt->total_size = offset;
+	offset = align(offset, 128);
+	mt->face_size = offset;
+	if(mt->base.base.target == PIPE_TEXTURE_CUBE)
+		offset += 5 * mt->face_size;
+	return offset;
 }
 
 static boolean
@@ -79,7 +121,7 @@ nvfx_miptree_get_handle(struct pipe_screen *pscreen,
 
 	return nouveau_screen_bo_get_handle(pscreen,
 					    mt->base.bo,
-					    mt->level[0].pitch,
+					    mt->linear_pitch,
 					    whandle);
 }
 
@@ -88,15 +130,7 @@ static void
 nvfx_miptree_destroy(struct pipe_screen *screen, struct pipe_resource *pt)
 {
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
-	int l;
-
 	nouveau_screen_bo_release(screen, mt->base.bo);
-
-	for (l = 0; l <= pt->last_level; l++) {
-		if (mt->level[l].image_offset)
-			FREE(mt->level[l].image_offset);
-	}
-
 	FREE(mt);
 }
 
@@ -116,76 +150,50 @@ struct u_resource_vtbl nvfx_miptree_vtbl =
    u_default_transfer_inline_write    /* transfer_inline_write */
 };
 
+static struct nvfx_miptree*
+nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_resource *pt)
+{
+        struct nvfx_miptree *mt;
+
+        if(pt->width0 > 4096 || pt->height0 > 4096)
+                return NULL;
+
+        mt = CALLOC_STRUCT(nvfx_miptree);
+        if (!mt)
+                return NULL;
+
+        mt->base.base = *pt;
+        mt->base.vtbl = &nvfx_miptree_vtbl;
+        pipe_reference_init(&mt->base.base.reference, 1);
+        mt->base.base.screen = pscreen;
+
+        // set this to the actual capabilities, we use it to decide whether to use the 3D engine for copies
+        // TODO: is this the correct way to use Gallium?
+        mt->base.base.bind = pt->bind | PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_DEPTH_STENCIL;
+
+        // on our current driver (and the driver too), format support does not depend on geometry, so don't bother computing it
+        // TODO: may want to revisit this
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_RENDER_TARGET, 0))
+                mt->base.base.bind &=~ PIPE_BIND_RENDER_TARGET;
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+                mt->base.base.bind &=~ PIPE_BIND_SAMPLER_VIEW;
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+                mt->base.base.bind &=~ PIPE_BIND_DEPTH_STENCIL;
+
+        return mt;
+}
 
 
 struct pipe_resource *
 nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt)
 {
-	struct nvfx_miptree *mt;
-	static int no_swizzle = -1;
-	if(no_swizzle < 0)
-		no_swizzle = debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE);
+	struct nvfx_miptree* mt = nvfx_miptree_create_skeleton(pscreen, pt);
+	nvfx_miptree_choose_format(mt);
 
-	mt = CALLOC_STRUCT(nvfx_miptree);
-	if (!mt)
-		return NULL;
+        unsigned size = nvfx_miptree_layout(mt);
 
-	mt->base.base = *pt;
-	mt->base.vtbl = &nvfx_miptree_vtbl;
-	pipe_reference_init(&mt->base.base.reference, 1);
-	mt->base.base.screen = pscreen;
+	mt->base.bo = nouveau_screen_bo_new(pscreen, 256, pt->usage, pt->bind, size);
 
-	/* Swizzled textures must be POT */
-	if (pt->width0 & (pt->width0 - 1) ||
-	    pt->height0 & (pt->height0 - 1))
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-	else
-	if (pt->bind & (PIPE_BIND_SCANOUT |
-			PIPE_BIND_DISPLAY_TARGET |
-			PIPE_BIND_DEPTH_STENCIL))
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-	else
-	if (pt->usage == PIPE_USAGE_DYNAMIC)
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-	else {
-		switch (pt->format) {
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_L8A8_UNORM:
-		case PIPE_FORMAT_A8_UNORM:
-		case PIPE_FORMAT_L8_UNORM:
-		case PIPE_FORMAT_I8_UNORM:
-			/* TODO: we can actually swizzle these formats on nv40, we
-				are just preserving the pre-unification behavior.
-				The whole 2D code is going to be rewritten anyway. */
-			if(nvfx_screen(pscreen)->is_nv4x) {
-				mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-				break;
-			}
-		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_R16_SNORM:
-		{
-			if (no_swizzle)
-				mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-			break;
-		}
-		default:
-			mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-		}
-	}
-
-	/* apparently we can't render to swizzled surfaces smaller than 64 bytes, so make them linear.
-	 * If the user did not ask for a render target, they can still render to it, but it will cost them an extra copy.
-	 * This also happens for small mipmaps of large textures. */
-	if (pt->bind & PIPE_BIND_RENDER_TARGET &&
-	    util_format_get_stride(pt->format, pt->width0) < 64)
-		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-
-	nvfx_miptree_layout(mt);
-
-	mt->base.bo = nouveau_screen_bo_new(pscreen, 256,
-            pt->usage, pt->bind, mt->total_size);
 	if (!mt->base.bo) {
 		FREE(mt);
 		return NULL;
@@ -193,53 +201,27 @@ nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt)
 	return &mt->base.base;
 }
 
-
-
-
+// TODO: redo this, just calling miptree_layout
 struct pipe_resource *
-nvfx_miptree_from_handle(struct pipe_screen *pscreen,
-			 const struct pipe_resource *template,
-			 struct winsys_handle *whandle)
+nvfx_miptree_from_handle(struct pipe_screen *pscreen, const struct pipe_resource *template, struct winsys_handle *whandle)
 {
-	struct nvfx_miptree *mt;
-	unsigned stride;
+        struct nvfx_miptree* mt = nvfx_miptree_create_skeleton(pscreen, template);
+        if(whandle->stride) {
+		mt->linear_pitch = whandle->stride;
+		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+        } else
+		nvfx_miptree_choose_format(mt);
 
-	/* Only supports 2D, non-mipmapped textures for the moment */
-	if ((template->target != PIPE_TEXTURE_2D &&
-	      template->target != PIPE_TEXTURE_RECT) ||
-	    template->last_level != 0 ||
-	    template->depth0 != 1)
-		return NULL;
+        nvfx_miptree_layout(mt);
 
-	mt = CALLOC_STRUCT(nvfx_miptree);
-	if (!mt)
-		return NULL;
-
-	mt->base.bo = nouveau_screen_bo_from_handle(pscreen, whandle, &stride);
-	if (mt->base.bo == NULL) {
-		FREE(mt);
-		return NULL;
-	}
-
-	mt->base.base = *template;
-	mt->base.vtbl = &nvfx_miptree_vtbl;
-	pipe_reference_init(&mt->base.base.reference, 1);
-	mt->base.base.screen = pscreen;
-	mt->level[0].pitch = stride;
-	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
-
-	/* Assume whoever created this buffer expects it to be linear for now */
-	mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-
-	/* XXX: Need to adjust bo refcount??
-	 */
-	/* nouveau_bo_ref(bo, &mt->base.bo); */
-	return &mt->base.base;
+        unsigned stride;
+        mt->base.bo = nouveau_screen_bo_from_handle(pscreen, whandle, &stride);
+        if (mt->base.bo == NULL) {
+                FREE(mt);
+                return NULL;
+        }
+        return &mt->base.base;
 }
-
-
-
-
 
 /* Surface helpers, not strictly required to implement the resource vtbl:
  */
@@ -248,7 +230,6 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	struct nv04_surface *ns;
 
 	ns = CALLOC_STRUCT(nv04_surface);
@@ -263,33 +244,8 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 	ns->base.face = face;
 	ns->base.level = level;
 	ns->base.zslice = zslice;
-	ns->pitch = mt->level[level].pitch;
-
-	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ns->base.offset = mt->level[level].image_offset[face];
-	} else
-	if (pt->target == PIPE_TEXTURE_3D) {
-		ns->base.offset = mt->level[level].image_offset[zslice];
-	} else {
-		ns->base.offset = mt->level[level].image_offset[0];
-	}
-
-	/* create a linear temporary that we can render into if
-	 * necessary.
-	 *
-	 * Note that ns->pitch is always a multiple of 64 for linear
-	 * surfaces and swizzled surfaces are POT, so ns->pitch & 63
-	 * is equivalent to (ns->pitch < 64 && swizzled)
-	 */
-
-	if ((ns->pitch & 63) && 
-	    (ns->base.usage & PIPE_BIND_RENDER_TARGET))
-	{
-		struct nv04_surface_2d* eng2d  =
-			((struct nvfx_screen*)pscreen)->eng2d;
-
-		ns = nv04_surface_wrap_for_render(pscreen, eng2d, ns);
-	}
+	ns->pitch = nvfx_subresource_pitch(pt, level);
+	ns->base.offset = nvfx_subresource_offset(pt, face, level, zslice);
 
 	return &ns->base;
 }

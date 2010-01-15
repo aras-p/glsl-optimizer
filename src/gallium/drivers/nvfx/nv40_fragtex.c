@@ -111,9 +111,9 @@ nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
-	struct nvfx_miptree *nv40mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
-	struct nouveau_bo *bo = nv40mt->base.bo;
-	struct pipe_resource *pt = &nv40mt->base.base;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
+	struct nouveau_bo *bo = mt->base.bo;
+	struct pipe_resource *pt = &mt->base.base;
 	struct nv40_texture_format *tf;
 
 	uint32_t txf, txs, txp;
@@ -149,10 +149,10 @@ nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 		return;
 	}
 
-	if (!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
+	if (!mt->linear_pitch)
 		txp = 0;
-	} else {
-		txp  = nv40mt->level[0].pitch;
+	else {
+		txp  = mt->linear_pitch;
 		txf |= NV40TCL_TEX_FORMAT_LINEAR;
 	}
 

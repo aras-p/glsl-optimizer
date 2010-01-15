@@ -39,15 +39,11 @@ nvfx_resource_on_gpu(struct pipe_resource* pr)
 #define NVFX_MAX_TEXTURE_LEVELS  16
 
 struct nvfx_miptree {
-	struct nvfx_resource base;
-	uint total_size;
+        struct nvfx_resource base;
 
-	struct {
-		uint pitch;
-		uint *image_offset;
-	} level[NVFX_MAX_TEXTURE_LEVELS];
-
-	unsigned image_nr;
+        unsigned linear_pitch; /* for linear textures, 0 for swizzled and compressed textures with level-dependent minimal pitch */
+        unsigned face_size; /* 128-byte aligned face/total size */
+        unsigned level_offset[NVFX_MAX_TEXTURE_LEVELS];
 };
 
 static INLINE 
@@ -103,5 +99,41 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags);
 
+/* only for miptrees, don't use for buffers */
+
+/* NOTE: for swizzled 3D textures, this just returns the offset of the mipmap level */
+static inline unsigned
+nvfx_subresource_offset(struct pipe_resource* pt, unsigned face, unsigned level, unsigned zslice)
+{
+	if(pt->target == PIPE_BUFFER)
+		return 0;
+	else
+	{
+		struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
+
+		unsigned offset = mt->level_offset[level];
+		if (pt->target == PIPE_TEXTURE_CUBE)
+			offset += mt->face_size * face;
+		else if (pt->target == PIPE_TEXTURE_3D && mt->linear_pitch)
+			offset += zslice * util_format_get_2d_size(pt->format, (mt->linear_pitch ? mt->linear_pitch : util_format_get_stride(pt->format, u_minify(pt->width0, level))),  u_minify(pt->height0, level));
+		return offset;
+	}
+}
+
+static inline unsigned
+nvfx_subresource_pitch(struct pipe_resource* pt, unsigned level)
+{
+	if(pt->target == PIPE_BUFFER)
+		return ((struct nvfx_resource*)pt)->bo->size;
+	else
+	{
+		struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
+
+		if(mt->linear_pitch)
+			return mt->linear_pitch;
+		else
+			return util_format_get_stride(pt->format, u_minify(pt->width0, level));
+	}
+}
 
 #endif

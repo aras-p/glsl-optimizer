@@ -92,9 +92,9 @@ void
 nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 {
 	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
-	struct nvfx_miptree *nv30mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
-	struct pipe_resource *pt = &nv30mt->base.base;
-	struct nouveau_bo *bo = nv30mt->base.bo;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
+	struct pipe_resource *pt = &mt->base.base;
+	struct nouveau_bo *bo = mt->base.bo;
 	struct nv30_texture_format *tf;
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	uint32_t txf, txs;
