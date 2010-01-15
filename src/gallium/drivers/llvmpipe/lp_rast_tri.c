@@ -40,6 +40,9 @@
  * Map an index in [0,15] to an x,y position, multiplied by 4.
  * This is used to get the position of each subtile in a 4x4
  * grid of edge step values.
+ * Note: we can use some bit twiddling to compute these values instead
+ * of using a look-up table, but there's no measurable performance
+ * difference.
  */
 static const int pos_table4[16][2] = {
    { 0, 0 },
