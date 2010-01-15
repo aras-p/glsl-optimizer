@@ -47,6 +47,10 @@
 #define DRI2INFOREC_VERSION 1
 #endif
 
+#if DRI2INFOREC_VERSION == 2
+static Bool set_format_in_do_create_buffer;
+#endif
+
 typedef struct {
     PixmapPtr pPixmap;
     struct pipe_texture *tex;
@@ -146,7 +150,9 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
 #if DRI2INFOREC_VERSION == 2
-    ((DRI2Buffer2Ptr)buffer)->format = 0;
+    /* ABI forwards/backwards compatibility */
+    if (set_format_in_do_create_buffer)
+	((DRI2Buffer2Ptr)buffer)->format = 0;
 #elif DRI2INFOREC_VERSION >= 3
     buffer->format = 0;
 #endif
@@ -210,7 +216,9 @@ dri2_destroy_buffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
     xfree(buffer);
 }
 
-#else /* DRI2INFOREC_VERSION < 2 */
+#endif /* DRI2INFOREC_VERSION >= 2 */
+
+#if DRI2INFOREC_VERSION <= 2
 
 static DRI2BufferPtr
 dri2_create_buffers(DrawablePtr pDraw, unsigned int *attachments, int count)
@@ -260,7 +268,7 @@ dri2_destroy_buffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 }
 
-#endif /* DRI2INFOREC_VERSION >= 2 */
+#endif /* DRI2INFOREC_VERSION <= 2 */
 
 static void
 dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
@@ -368,6 +376,15 @@ xorg_dri2_init(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
+    int major, minor;
+
+    if (xf86LoaderCheckSymbol("DRI2Version")) {
+	DRI2Version(&major, &minor);
+    } else {
+	/* Assume version 1.0 */
+	major = 1;
+	minor = 0;
+    }
 
     dri2info.version = DRI2INFOREC_VERSION;
     dri2info.fd = ms->fd;
@@ -378,7 +395,22 @@ xorg_dri2_init(ScreenPtr pScreen)
 #if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = dri2_create_buffer;
     dri2info.DestroyBuffer = dri2_destroy_buffer;
-#else
+#endif
+
+    /* For X servers in the 1.6.x series there where two DRI2 version.
+     * This allows us to build one binary that works on both servers.
+     */
+#if DRI2INFOREC_VERSION == 2
+    if (minor == 0) {
+	set_format_in_do_create_buffer = FALSE;
+	dri2info.CreateBuffers = dri2_create_buffers;
+	dri2info.DestroyBuffers = dri2_destroy_buffers;
+    } else
+	set_format_in_do_create_buffer = FALSE;
+#endif
+
+    /* For version 1 set these unconditionaly. */
+#if DRI2INFOREC_VERSION == 1
     dri2info.CreateBuffers = dri2_create_buffers;
     dri2info.DestroyBuffers = dri2_destroy_buffers;
 #endif
