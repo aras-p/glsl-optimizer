@@ -31,9 +31,13 @@
 #define CI_OFFSET_1 16
 #define CI_OFFSET_2 32
 
-GLint Width = 250, Height = 250;
+GLint Width = 300, Height = 300;
 
 GLenum doubleBuffer;
+
+/* scissor bounds */
+static GLint Left, Right, Bottom, Top;
+
 
 static void Init(void)
 {
@@ -47,26 +51,57 @@ static void Init(void)
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
     glMatrixMode(GL_MODELVIEW);
+
+    Width = width;
+    Height = height;
+
+    Left = Width / 4;
+    Right = Width * 3 / 4;
+    Bottom = Height / 4;
+    Top = Height * 3 / 4;
 }
 
 static void Key(unsigned char key, int x, int y)
 {
+   int step = 2;
+   switch (key) {
+   case 'l':
+      Left -= step;
+      break;
+   case 'L':
+      Left += step;
+      break;
+   case 'r':
+      Right -= step;
+      break;
+   case 'R':
+      Right += step;
+      break;
+   case 'b':
+      Bottom -= step;
+      break;
+   case 'B':
+      Bottom += step;
+      break;
+   case 't':
+      Top -= step;
+      break;
+   case 'T':
+      Top += step;
+      break;
+   case 27:
+      exit(1);
+   default:
+      ;
+   }
 
-    switch (key) {
-      case 27:
-	exit(1);
-      default:
-	break;
-    }
-
-    glutPostRedisplay();
+   glutPostRedisplay();
 }
 
 static void Draw(void)
@@ -82,7 +117,8 @@ static void Draw(void)
    glVertex3f(-0.9,  0.0, -30.0);
    glEnd();
 
-   glScissor(Width / 4, Height / 4, Width / 2, Height / 2);
+   printf("Scissor %d, %d .. %d, %d\n", Left, Bottom, Right, Top);
+   glScissor(Left, Bottom, Right-Left, Top-Bottom);
    glEnable(GL_SCISSOR_TEST);
 
    glBegin(GL_TRIANGLES);
