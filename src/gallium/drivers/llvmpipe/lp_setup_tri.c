@@ -131,7 +131,7 @@ static void perspective_coef( struct lp_rast_triangle *tri,
 
 /**
  * Special coefficient setup for gl_FragCoord.
- * X and Y are trivial, though Y has to be inverted for OpenGL.
+ * X and Y are trivial
  * Z and W are copied from position_coef which should have already been computed.
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
