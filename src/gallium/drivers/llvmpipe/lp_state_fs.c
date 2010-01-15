@@ -596,6 +596,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
    LLVMValueRef blend_in_color[NUM_CHANNELS];
+   LLVMValueRef function;
    unsigned num_fs;
    unsigned i;
    unsigned chan;
@@ -652,30 +653,33 @@ generate_fragment(struct llvmpipe_context *lp,
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
-   variant->function = LLVMAddFunction(screen->module, "shader", func_type);
-   LLVMSetFunctionCallConv(variant->function, LLVMCCallConv);
+   function = LLVMAddFunction(screen->module, "shader", func_type);
+   LLVMSetFunctionCallConv(function, LLVMCCallConv);
+
+   variant->function = function;
+
 
    /* XXX: need to propagate noalias down into color param now we are
     * passing a pointer-to-pointer?
     */
    for(i = 0; i < Elements(arg_types); ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
-         LLVMAddAttribute(LLVMGetParam(variant->function, i), LLVMNoAliasAttribute);
+         LLVMAddAttribute(LLVMGetParam(function, i), LLVMNoAliasAttribute);
 
-   context_ptr  = LLVMGetParam(variant->function, 0);
-   x            = LLVMGetParam(variant->function, 1);
-   y            = LLVMGetParam(variant->function, 2);
-   a0_ptr       = LLVMGetParam(variant->function, 3);
-   dadx_ptr     = LLVMGetParam(variant->function, 4);
-   dady_ptr     = LLVMGetParam(variant->function, 5);
-   color_ptr_ptr = LLVMGetParam(variant->function, 6);
-   depth_ptr    = LLVMGetParam(variant->function, 7);
-   c0           = LLVMGetParam(variant->function, 8);
-   c1           = LLVMGetParam(variant->function, 9);
-   c2           = LLVMGetParam(variant->function, 10);
-   step0_ptr    = LLVMGetParam(variant->function, 11);
-   step1_ptr    = LLVMGetParam(variant->function, 12);
-   step2_ptr    = LLVMGetParam(variant->function, 13);
+   context_ptr  = LLVMGetParam(function, 0);
+   x            = LLVMGetParam(function, 1);
+   y            = LLVMGetParam(function, 2);
+   a0_ptr       = LLVMGetParam(function, 3);
+   dadx_ptr     = LLVMGetParam(function, 4);
+   dady_ptr     = LLVMGetParam(function, 5);
+   color_ptr_ptr = LLVMGetParam(function, 6);
+   depth_ptr    = LLVMGetParam(function, 7);
+   c0           = LLVMGetParam(function, 8);
+   c1           = LLVMGetParam(function, 9);
+   c2           = LLVMGetParam(function, 10);
+   step0_ptr    = LLVMGetParam(function, 11);
+   step1_ptr    = LLVMGetParam(function, 12);
+   step2_ptr    = LLVMGetParam(function, 13);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
@@ -696,7 +700,7 @@ generate_fragment(struct llvmpipe_context *lp,
     * Function body
     */
 
-   block = LLVMAppendBasicBlock(variant->function, "entry");
+   block = LLVMAppendBasicBlock(function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
@@ -788,33 +792,30 @@ generate_fragment(struct llvmpipe_context *lp,
 
    /* Verify the LLVM IR.  If invalid, dump and abort */
 #ifdef DEBUG
-   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
+   if(LLVMVerifyFunction(function, LLVMPrintMessageAction)) {
       if (1)
-         LLVMDumpValue(variant->function);
+         LLVMDumpValue(function);
       abort();
    }
 #endif
 
    /* Apply optimizations to LLVM IR */
    if (1)
-      LLVMRunFunctionPassManager(screen->pass, variant->function);
+      LLVMRunFunctionPassManager(screen->pass, function);
 
    if (LP_DEBUG & DEBUG_JIT) {
       /* Print the LLVM IR to stderr */
-      LLVMDumpValue(variant->function);
+      LLVMDumpValue(function);
       debug_printf("\n");
    }
 
    /*
     * Translate the LLVM IR into machine code.
     */
-   variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, variant->function);
+   variant->jit_function = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, function);
 
    if (LP_DEBUG & DEBUG_ASM)
       lp_disassemble(variant->jit_function);
-
-   variant->next = shader->variants;
-   shader->variants = variant;
 }
 
 
@@ -887,6 +888,10 @@ generate_variant(struct llvmpipe_context *lp,
    memcpy(&variant->key, key, sizeof *key);
 
    generate_fragment(lp, shader, variant);
+
+   /* insert new variant into linked list */
+   variant->next = shader->variants;
+   shader->variants = variant;
 
    return variant;
 }
