@@ -425,6 +425,8 @@ util_pack_z(enum pipe_format format, double z)
       if (z == 1.0)
          return 0xffffffff;
       return (uint) (z * 0xffffffff);
+   case PIPE_FORMAT_Z32_FLOAT:
+      return (uint)z;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       if (z == 1.0)
