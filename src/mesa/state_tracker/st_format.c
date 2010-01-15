@@ -35,7 +35,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/texstore.h"
-#include "main/texformat.h"
 #include "main/enums.h"
 #include "main/macros.h"
 
