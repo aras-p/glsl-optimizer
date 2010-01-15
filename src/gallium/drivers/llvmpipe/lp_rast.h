@@ -97,12 +97,6 @@ struct lp_rast_shader_inputs {
  * Objects of this type are put into the setup_context::data buffer.
  */
 struct lp_rast_triangle {
-   /* bounding box of tri (in pixels) */
-   int minx;
-   int maxx;
-   int miny;
-   int maxy;
-
    /* one-pixel sized trivial accept offsets for each plane */
    int ei1;                   
    int ei2;
