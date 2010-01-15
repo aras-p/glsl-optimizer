@@ -43,8 +43,8 @@
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_exec.h"
-
 
 
 
