@@ -47,13 +47,14 @@ struct ureg_src
    unsigned SwizzleY    : 2;  /* TGSI_SWIZZLE_ */
    unsigned SwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
    unsigned SwizzleW    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned Pad         : 1;  /* BOOL */
    unsigned Indirect    : 1;  /* BOOL */
+   unsigned Dimension   : 1;  /* BOOL */
    unsigned Absolute    : 1;  /* BOOL */
-   int      Index       : 16; /* SINT */
    unsigned Negate      : 1;  /* BOOL */
+   int      Index       : 16; /* SINT */
    int      IndirectIndex   : 16; /* SINT */
    int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
+   int      DimensionIndex : 16;  /* SINT */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
@@ -766,6 +767,15 @@ ureg_src_indirect( struct ureg_src reg, struct ureg_src addr )
    return reg;
 }
 
+static INLINE struct ureg_src 
+ureg_src_dimension( struct ureg_src reg, int index )
+{
+   assert(reg.File != TGSI_FILE_NULL);
+   reg.Dimension = 1;
+   reg.DimensionIndex = index;
+   return reg;
+}
+
 static INLINE struct ureg_dst
 ureg_dst( struct ureg_src src )
 {
@@ -798,13 +808,14 @@ ureg_src( struct ureg_dst dst )
    src.SwizzleY  = TGSI_SWIZZLE_Y;
    src.SwizzleZ  = TGSI_SWIZZLE_Z;
    src.SwizzleW  = TGSI_SWIZZLE_W;
-   src.Pad       = 0;
    src.Indirect  = dst.Indirect;
    src.IndirectIndex = dst.IndirectIndex;
    src.IndirectSwizzle = dst.IndirectSwizzle;
    src.Absolute  = 0;
    src.Index     = dst.Index;
    src.Negate    = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
 
    return src;
 }
@@ -843,13 +854,14 @@ ureg_src_undef( void )
    src.SwizzleY  = 0;
    src.SwizzleZ  = 0;
    src.SwizzleW  = 0;
-   src.Pad       = 0;
    src.Indirect  = 0;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute  = 0;
    src.Index     = 0;
    src.Negate    = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
    
    return src;
 }

@@ -242,13 +242,14 @@ ureg_src_register( unsigned file,
    src.SwizzleY = TGSI_SWIZZLE_Y;
    src.SwizzleZ = TGSI_SWIZZLE_Z;
    src.SwizzleW = TGSI_SWIZZLE_W;
-   src.Pad      = 0;
    src.Indirect = 0;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute = 0;
    src.Index    = index;
    src.Negate   = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
 
    return src;
 }
@@ -655,7 +656,7 @@ void
 ureg_emit_src( struct ureg_program *ureg,
                struct ureg_src src )
 {
-   unsigned size = 1 + (src.Indirect ? 1 : 0);
+   unsigned size = 1 + (src.Indirect ? 1 : 0) + (src.Dimension ? 1 : 0);
 
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_INSN, size );
    unsigned n = 0;
@@ -684,6 +685,15 @@ ureg_emit_src( struct ureg_program *ureg,
       out[n].src.SwizzleZ = src.IndirectSwizzle;
       out[n].src.SwizzleW = src.IndirectSwizzle;
       out[n].src.Index = src.IndirectIndex;
+      n++;
+   }
+
+   if (src.Dimension) {
+      out[0].src.Dimension = 1;
+      out[n].dim.Indirect = 0;
+      out[n].dim.Dimension = 0;
+      out[n].dim.Padding = 0;
+      out[n].dim.Index = src.DimensionIndex;
       n++;
    }
 
