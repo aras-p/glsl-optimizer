@@ -33,7 +33,6 @@
 
 #include "main/glheader.h"
 #include "main/macros.h"
-#include "main/version.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "st_context.h"
