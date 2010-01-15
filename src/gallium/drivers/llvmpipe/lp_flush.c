@@ -74,16 +74,21 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
 #if 0
-   if(flags & PIPE_FLUSH_FRAME) {
+   if (flags & PIPE_FLUSH_FRAME) {
       static unsigned frame_no = 1;
-      static char filename[256];
+      char filename[256];
       unsigned i;
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs) {
-	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u.bmp", i, frame_no);
-	 debug_dump_surface_bmp(filename, llvmpipe->framebuffer.cbufs[i]);
+
+      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
+	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
+         debug_dump_surface(filename, llvmpipe->framebuffer.cbufs[i]);
       }
-      util_snprintf(filename, sizeof(filename), "zsbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, llvmpipe->framebuffer.zsbuf);
+
+      if (0) {
+         util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
+         debug_dump_surface(filename, llvmpipe->framebuffer.zsbuf);
+      }
+
       ++frame_no;
    }
 #endif
