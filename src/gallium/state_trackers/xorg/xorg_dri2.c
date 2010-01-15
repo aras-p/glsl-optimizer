@@ -43,9 +43,8 @@
 #include "util/u_rect.h"
 
 /* Make all the #if cases in the code esier to read */
-/* XXX can it be set to 1? */
 #ifndef DRI2INFOREC_VERSION
-#define DRI2INFOREC_VERSION 0
+#define DRI2INFOREC_VERSION 1
 #endif
 
 typedef struct {
@@ -370,11 +369,7 @@ xorg_dri2_init(ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
 
-#if DRI2INFOREC_VERSION >= 2
     dri2info.version = DRI2INFOREC_VERSION;
-#else
-    dri2info.version = 1;
-#endif
     dri2info.fd = ms->fd;
 
     dri2info.driverName = pScrn->driverName;
