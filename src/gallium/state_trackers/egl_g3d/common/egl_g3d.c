@@ -463,10 +463,8 @@ egl_g3d_flush_frontbuffer(struct pipe_screen *screen,
    struct egl_g3d_context *gctx = egl_g3d_context(context_private);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(gctx->base.DrawSurface);
 
-   if (gsurf) {
+   if (gsurf)
       gsurf->native->flush_frontbuffer(gsurf->native);
-      egl_g3d_validate_context(gctx->base.Display, &gctx->base);
-   }
 }
 
 /**
@@ -857,9 +855,10 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
       struct egl_g3d_config *gconf = egl_g3d_config(gsurf->base.Config);
 
       /* force validation if the swap method is not copy */
-      if (gconf->native->mode.swapMethod != GLX_SWAP_COPY_OML)
+      if (gconf->native->mode.swapMethod != GLX_SWAP_COPY_OML) {
          gctx->force_validate = EGL_TRUE;
-      egl_g3d_validate_context(dpy, &gctx->base);
+         egl_g3d_validate_context(dpy, &gctx->base);
+      }
    }
 
    return EGL_TRUE;
