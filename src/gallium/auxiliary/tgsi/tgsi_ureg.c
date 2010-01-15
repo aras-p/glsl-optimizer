@@ -40,6 +40,8 @@ union tgsi_any_token {
    struct tgsi_header header;
    struct tgsi_processor processor;
    struct tgsi_token token;
+   struct tgsi_property prop;
+   struct tgsi_property_data prop_data;
    struct tgsi_declaration decl;
    struct tgsi_declaration_range decl_range;
    struct tgsi_declaration_semantic decl_semantic;
@@ -130,6 +132,8 @@ struct ureg_program
       unsigned last;
    } constant_range[UREG_MAX_CONSTANT_RANGE];
    unsigned nr_constant_ranges;
+
+   unsigned property_gs_input_prim;
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -254,6 +258,14 @@ ureg_src_register( unsigned file,
    return src;
 }
 
+
+
+void
+ureg_property_gs_input_prim(struct ureg_program *ureg,
+                            unsigned gs_input_prim)
+{
+   ureg->property_gs_input_prim = gs_input_prim;
+}
 
 
 
@@ -1064,12 +1076,33 @@ emit_immediate( struct ureg_program *ureg,
    out[4].imm_data.Uint = v[3];
 }
 
+static void
+emit_property(struct ureg_program *ureg,
+              unsigned name,
+              unsigned data)
+{
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 2);
 
+   out[0].value = 0;
+   out[0].prop.Type = TGSI_TOKEN_TYPE_PROPERTY;
+   out[0].prop.NrTokens = 2;
+   out[0].prop.PropertyName = name;
+
+   out[1].prop_data.Data = data;
+}
 
 
 static void emit_decls( struct ureg_program *ureg )
 {
    unsigned i;
+
+   if (ureg->property_gs_input_prim != ~0) {
+      assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_GS_INPUT_PRIM,
+                    ureg->property_gs_input_prim);
+   }
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {
       for (i = 0; i < UREG_MAX_INPUT; i++) {
@@ -1280,6 +1313,7 @@ struct ureg_program *ureg_create( unsigned processor )
       return NULL;
 
    ureg->processor = processor;
+   ureg->property_gs_input_prim = ~0;
    return ureg;
 }
 

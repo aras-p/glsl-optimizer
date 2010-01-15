@@ -119,6 +119,14 @@ ureg_create_shader_and_destroy( struct ureg_program *p,
 }
 
 
+/***********************************************************************
+ * Build shader properties:
+ */
+
+void
+ureg_property_gs_input_prim(struct ureg_program *ureg,
+                            unsigned gs_input_prim);
+
 
 /***********************************************************************
  * Build shader declarations:
