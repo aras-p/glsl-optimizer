@@ -47,7 +47,6 @@
 #include "st_cb_drawpixels.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_draw.h"
 #include "st_format.h"
 #include "st_texture.h"
 #include "st_inlines.h"
