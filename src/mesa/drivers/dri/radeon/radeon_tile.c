@@ -244,3 +244,41 @@ void tile_image(const void * src, unsigned src_pitch,
             break;
     }
 }
+
+void get_tile_size(gl_format format, unsigned *block_width, unsigned *block_height)
+{
+    switch (_mesa_get_format_bytes(format))
+    {
+        case 16:
+            *block_width = 1;
+            *block_height = 1;
+            break;
+        case 8:
+            *block_width = 2;
+            *block_height = 2;
+            break;
+        case 4:
+            *block_width = 4;
+            *block_height = 2;
+            break;
+        case 2:
+            if (_mesa_get_format_bits(format, GL_DEPTH_BITS))
+            {
+                *block_width = 4;
+                *block_height = 4;
+            }
+            else
+            {
+                *block_width = 8;
+                *block_height = 2;
+            }
+            break;
+        case 1:
+            *block_width = 8;
+            *block_height = 4;
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}

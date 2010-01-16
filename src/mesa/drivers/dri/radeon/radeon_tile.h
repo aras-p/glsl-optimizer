@@ -30,3 +30,5 @@
 void tile_image(const void * src, unsigned src_pitch,
                 void *dst, unsigned dst_pitch,
                 gl_format format, unsigned width, unsigned height);
+
+void get_tile_size(gl_format format, unsigned *block_width, unsigned *block_height);
