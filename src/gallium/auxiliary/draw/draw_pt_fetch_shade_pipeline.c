@@ -60,7 +60,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    unsigned i;
-   boolean instance_id_index = ~0;
+   unsigned instance_id_index = ~0;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
