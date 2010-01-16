@@ -180,6 +180,8 @@ extern GLboolean r700SyncSurf(context_t *context,
 			      uint32_t write_domain,
 			      uint32_t sync_type);
 
+extern void r700WaitForIdleClean(context_t *context);
+
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
 extern void r700InitDraw(GLcontext *ctx);
