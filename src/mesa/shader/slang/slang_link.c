@@ -31,7 +31,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/hash.h"
 #include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
