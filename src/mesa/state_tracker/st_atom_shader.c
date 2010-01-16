@@ -53,7 +53,6 @@
 #include "st_atom.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
-#include "st_mesa_to_tgsi.h"
 
 
 /**
