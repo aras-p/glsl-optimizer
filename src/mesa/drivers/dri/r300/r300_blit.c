@@ -494,6 +494,27 @@ static void emit_cb_setup(struct r300_context *r300,
     END_BATCH();
 }
 
+static unsigned is_blit_supported(gl_format dst_format)
+{
+    switch (dst_format) {
+        case MESA_FORMAT_RGB565:
+        case MESA_FORMAT_ARGB1555:
+        case MESA_FORMAT_RGBA8888:
+        case MESA_FORMAT_RGBA8888_REV:
+        case MESA_FORMAT_ARGB8888:
+        case MESA_FORMAT_ARGB8888_REV:
+        case MESA_FORMAT_XRGB8888:
+            break;
+        default:
+            return 0;
+    }
+
+    if (_mesa_get_format_bits(dst_format, GL_DEPTH_BITS) > 0)
+        return 0;
+
+    return 1;
+}
+
 /**
  * Copy a region of [@a width x @a height] pixels from source buffer
  * to destination buffer.
@@ -541,7 +562,7 @@ unsigned r300_blit(GLcontext *ctx,
 {
     r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-    if (_mesa_get_format_bits(src_mesaformat, GL_DEPTH_BITS) > 0)
+    if (!is_blit_supported(dst_mesaformat))
         return 0;
 
     /* Make sure that colorbuffer has even width - hw limitation */
