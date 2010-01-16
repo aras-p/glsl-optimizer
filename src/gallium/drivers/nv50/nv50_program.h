@@ -66,6 +66,9 @@ struct nv50_program {
 		uint8_t clpd, clpd_nr;
 		uint8_t psiz;
 		uint8_t edgeflag_in;
+
+		/* FP & GP only */
+		uint8_t prim_id;
 	} cfg;
 };
 

@@ -138,6 +138,8 @@ struct nv50_pc {
 	int immd_nr;
 	struct nv50_reg **addr;
 	int addr_nr;
+	struct nv50_reg *sysval;
+	int sysval_nr;
 
 	struct nv50_reg *temp_temp[16];
 	struct nv50_program_exec *temp_temp_exec[16];
@@ -2281,6 +2283,10 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 	}
 	case TGSI_FILE_NULL:
 		return NULL;
+	case TGSI_FILE_SYSTEM_VALUE:
+		assert(pc->sysval[dst->Register.Index].type == P_RESULT);
+		assert(c == 0);
+		return &pc->sysval[dst->Register.Index];
 	default:
 		break;
 	}
@@ -2350,6 +2356,10 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		case TGSI_FILE_ADDRESS:
 			r = pc->addr[src->Register.Index * 4 + c];
 			assert(r);
+			break;
+		case TGSI_FILE_SYSTEM_VALUE:
+			assert(c == 0);
+			r = &pc->sysval[src->Register.Index];
 			break;
 		default:
 			assert(0);
@@ -3454,17 +3464,22 @@ load_interpolant(struct nv50_pc *pc, struct nv50_reg *reg)
  * value of 0 for back-facing, and 0xffffffff for front-facing.
  */
 static void
-load_frontfacing(struct nv50_pc *pc, struct nv50_reg *a)
+load_frontfacing(struct nv50_pc *pc, struct nv50_reg *sv)
 {
-	struct nv50_reg *one = alloc_immd(pc, 1.0f);
+	struct nv50_reg *temp = alloc_temp(pc, NULL);
+	int r_pred = 0;
 
-	assert(a->rhw == -1);
-	alloc_reg(pc, a); /* do this before rhw is set */
-	a->rhw = 255;
-	load_interpolant(pc, a);
-	emit_bitop2(pc, a, a, one, TGSI_OPCODE_AND);
+	temp->rhw = 255;
+	emit_interp(pc, temp, NULL, INTERP_FLAT);
 
-	FREE(one);
+	emit_cvt(pc, sv, temp, r_pred, CVT_ABS | CVT_F32_S32);
+
+	emit_not(pc, temp, temp);
+	set_pred(pc, 0x2, r_pred, pc->p->exec_tail);
+	emit_cvt(pc, sv, temp, -1, CVT_F32_S32);
+	set_pred(pc, 0x2, r_pred, pc->p->exec_tail);
+
+	free_temp(pc, temp);
 }
 
 static void
@@ -3491,7 +3506,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	struct tgsi_parse_context tp;
 	struct nv50_program *p = pc->p;
 	boolean ret = FALSE;
-	unsigned i, c, flat_nr = 0;
+	unsigned i, c, instance_id, vertex_id, flat_nr = 0;
 
 	tgsi_parse_init(&tp, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&tp)) {
@@ -3577,6 +3592,37 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					pc->interp_mode[i] = mode;
 			}
 				break;
+			case TGSI_FILE_SYSTEM_VALUE:
+				assert(d->Declaration.Semantic);
+				switch (d->Semantic.Name) {
+				case TGSI_SEMANTIC_FACE:
+					assert(p->type == PIPE_SHADER_FRAGMENT);
+					load_frontfacing(pc,
+							 &pc->sysval[first]);
+					break;
+				case TGSI_SEMANTIC_INSTANCEID:
+					assert(p->type == PIPE_SHADER_VERTEX);
+					instance_id = first;
+					p->cfg.regs[0] |= (1 << 4);
+					break;
+				case TGSI_SEMANTIC_PRIMID:
+					assert(p->type != PIPE_SHADER_VERTEX);
+					p->cfg.prim_id = first;
+					break;
+					/*
+				case TGSI_SEMANTIC_PRIMIDIN:
+					assert(p->type == PIPE_SHADER_GEOMETRY);
+					pc->sysval[first].hw = 6;
+					p->cfg.regs[0] |= (1 << 8);
+					break;
+				case TGSI_SEMANTIC_VERTEXID:
+					assert(p->type == PIPE_SHADER_VERTEX);
+					vertex_id = first;
+					p->cfg.regs[0] |= (1 << 12) | (1 << 0);
+					break;
+					*/
+				}
+				break;
 			case TGSI_FILE_ADDRESS:
 			case TGSI_FILE_CONSTANT:
 			case TGSI_FILE_SAMPLER:
@@ -3620,6 +3666,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 					p->cfg.attr[i / 32] |= 1 << (i % 32);
 				}
 			}
+			if (p->cfg.regs[0] & (1 << 0))
+				pc->sysval[vertex_id].hw = rid++;
+			if (p->cfg.regs[0] & (1 << 4))
+				pc->sysval[instance_id].hw = rid++;
 		}
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
@@ -3633,6 +3683,12 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				pc->result[n].hw = rid++;
 				p->cfg.out[i].mask |= 1 << c;
 			}
+		}
+		if (p->cfg.prim_id < 0x40) {
+			/* GP has to write to PrimitiveID */
+			ctor_reg(&pc->sysval[p->cfg.prim_id],
+				 P_RESULT, p->cfg.prim_id, rid);
+			p->cfg.prim_id = rid++;
 		}
 
 		for (c = 0; c < 2; ++c)
@@ -3725,6 +3781,14 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		if (n < 0x80)
 			p->cfg.regs[0] += n;
 
+		if (p->cfg.prim_id < 0x40) {
+			pc->sysval[p->cfg.prim_id].rhw = rid++;
+			emit_interp(pc, &pc->sysval[p->cfg.prim_id], NULL,
+				    INTERP_FLAT);
+			/* increase FP_INTERPOLANT_CTRL_COUNT */
+			p->cfg.regs[1] += 1;
+		}
+
 		/* Initialize FP results:
 		 * FragDepth is always first TGSI and last hw output
 		 */
@@ -3778,6 +3842,8 @@ free_nv50_pc(struct nv50_pc *pc)
 		FREE(pc->attr);
 	if (pc->temp)
 		FREE(pc->temp);
+	if (pc->sysval)
+		FREE(pc->sysval);
 	if (pc->insn_pos)
 		FREE(pc->insn_pos);
 
@@ -3814,11 +3880,13 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 	pc->param_nr = p->info.file_max[TGSI_FILE_CONSTANT] + 1;
 	pc->addr_nr = p->info.file_max[TGSI_FILE_ADDRESS] + 1;
 	assert(pc->addr_nr <= 2);
+	pc->sysval_nr = p->info.file_max[TGSI_FILE_SYSTEM_VALUE] + 1;
 
 	p->cfg.high_temp = 4;
 
 	p->cfg.two_side[0].hw = 0x40;
 	p->cfg.two_side[1].hw = 0x40;
+	p->cfg.prim_id = 0x40;
 
 	p->cfg.edgeflag_in = pc->edgeflag_out = 0xff;
 
@@ -3849,6 +3917,7 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 
 		p->cfg.psiz = 0x80;
 		p->cfg.clpd = 0x80;
+		p->cfg.prim_id = 0x80;
 		p->cfg.out_nr = pc->result_nr;
 		p->cfg.in_nr = pc->attr_nr;
 
@@ -3918,6 +3987,15 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 	}
 	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
 		ctor_reg(&pc->r_addr[i], P_ADDR, -1, i + 1);
+
+	if (pc->sysval_nr) {
+		pc->sysval = CALLOC(pc->sysval_nr, sizeof(struct nv50_reg *));
+		if (!pc->sysval)
+			return FALSE;
+		/* will only ever use SYSTEM_VALUE[i].x (hopefully) */
+		for (i = 0; i < pc->sysval_nr; ++i)
+			ctor_reg(&pc->sysval[i], rtype[0], i, -1);
+	}
 
 	return TRUE;
 }
@@ -4362,7 +4440,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	struct nouveau_stateobj *so;
 	struct nv50_sreg4 dummy;
 	int i, n, c, m = 0;
-	uint32_t map[16], lin[4], reg[5], pcrd[8];
+	uint32_t map[16], lin[4], reg[6], pcrd[8];
 	uint8_t zval = 0x40;
 
 	if (nv50->geomprog) {
@@ -4375,6 +4453,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	reg[1] = 0x00000004; /* low and high clip distance map ids */
 	reg[2] = 0x00000000; /* layer index map id (disabled, GP only) */
 	reg[3] = 0x00000000; /* point size map id & enable */
+	reg[5] = 0x00000000; /* primitive ID map slot */
 	reg[0] = fp->cfg.regs[0]; /* colour semantic reg */
 	reg[4] = fp->cfg.regs[1]; /* interpolant info */
 
@@ -4421,6 +4500,13 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 				  (n < vp->cfg.out_nr) ?
 				  &vp->cfg.out[n] : &dummy);
 	}
+	/* PrimitiveID either is replaced by the system value, or
+	 * written by the geometry shader into an output register
+	 */
+	if (fp->cfg.prim_id < 0x40) {
+		map[m / 4] |= vp->cfg.prim_id << ((m % 4) * 8);
+		reg[5] = m++;
+	}
 
 	if (nv50->rasterizer->pipe.point_size_per_vertex) {
 		map[m / 4] |= vp->cfg.psiz << ((m % 4) * 8);
@@ -4428,7 +4514,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	}
 
 	/* now fill the stateobj (at most 28 so_data)  */
-	so = so_new(8, 56, 0);
+	so = so_new(10, 54, 0);
 
 	n = (m + 3) / 4;
 	assert(m <= 32);
@@ -4438,6 +4524,12 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 		so_method(so, tesla, NV50TCL_GP_RESULT_MAP(0), n);
 		so_datap (so, map, n);
 	} else {
+		so_method(so, tesla, NV50TCL_VP_GP_BUILTIN_ATTR_EN, 1);
+		so_data  (so, vp->cfg.regs[0]);
+
+		so_method(so, tesla, NV50TCL_MAP_SEMANTIC_4, 1);
+		so_data  (so, reg[5]);
+
 		so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
 		so_data  (so, m);
 		so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), n);
@@ -4518,7 +4610,10 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 
 	m = construct_vp_gp_mapping(map, m, vp, gp);
 
-	so = so_new(2, 14, 0);
+	so = so_new(3, 24 - 3, 0);
+
+	so_method(so, tesla, NV50TCL_VP_GP_BUILTIN_ATTR_EN, 1);
+	so_data  (so, vp->cfg.regs[0] | gp->cfg.regs[0]);
 
 	assert(m <= 32);
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
