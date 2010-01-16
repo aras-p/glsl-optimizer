@@ -139,11 +139,15 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
         return 0;
     }
 
-    tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH);
-    width = align(u_minify(tex->tex.width0, level), tile_width);
+    width = u_minify(tex->tex.width0, level);
 
-    /* Should already be aligned except for S3TC. */
-    return align(util_format_get_stride(tex->tex.format, width), 32);
+    if (!util_format_is_compressed(tex->tex.format)) {
+        tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH);
+        width = align(width, tile_width);
+        return util_format_get_stride(tex->tex.format, width);
+    } else {
+        return align(util_format_get_stride(tex->tex.format, width), 32);
+    }
 }
 
 static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
@@ -151,8 +155,12 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
 {
     unsigned height, tile_height;
 
-    tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT);
-    height = align(u_minify(tex->tex.height0, level), tile_height);
+    height = u_minify(tex->tex.height0, level);
+
+    if (!util_format_is_compressed(tex->tex.format)) {
+        tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT);
+        height = align(height, tile_height);
+    }
 
     return util_format_get_nblocksy(tex->tex.format, height);
 }
