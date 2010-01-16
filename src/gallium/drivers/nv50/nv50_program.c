@@ -92,6 +92,9 @@ struct nv50_reg {
 
 	int rhw; /* result hw for FP outputs, or interpolant index */
 	int acc; /* instruction where this reg is last read (first insn == 1) */
+
+	int vtx; /* vertex index, for GP inputs (TGSI Dimension.Index) */
+	int indirect[2]; /* index into pc->addr, or -1 */
 };
 
 #define NV50_MOD_NEG 1
@@ -135,7 +138,6 @@ struct nv50_pc {
 	int immd_nr;
 	struct nv50_reg **addr;
 	int addr_nr;
-	uint8_t addr_alloc; /* set bit indicates used for TGSI_FILE_ADDRESS */
 
 	struct nv50_reg *temp_temp[16];
 	struct nv50_program_exec *temp_temp_exec[16];
@@ -171,6 +173,8 @@ struct nv50_pc {
 	uint8_t edgeflag_out;
 };
 
+static struct nv50_reg *get_address_reg(struct nv50_pc *, struct nv50_reg *);
+
 static INLINE void
 ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 {
@@ -179,7 +183,9 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->hw = hw;
 	reg->mod = 0;
 	reg->rhw = -1;
+	reg->vtx = -1;
 	reg->acc = 0;
+	reg->indirect[0] = reg->indirect[1] = -1;
 }
 
 static INLINE unsigned
@@ -197,7 +203,8 @@ terminate_mbb(struct nv50_pc *pc)
 
 	/* remove records of temporary address register values */
 	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
-		pc->r_addr[i].rhw = -1;
+		if (pc->r_addr[i].index < 0)
+			pc->r_addr[i].acc = 0;
 }
 
 static void
@@ -260,6 +267,7 @@ reg_instance(struct nv50_pc *pc, struct nv50_reg *reg)
 	if (reg) {
 		alloc_reg(pc, reg);
 		*ri = *reg;
+		reg->indirect[0] = reg->indirect[1] = -1;
 		reg->mod = 0;
 	}
 	return ri;
@@ -525,11 +533,33 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 static INLINE void
 set_addr(struct nv50_program_exec *e, struct nv50_reg *a)
 {
+	assert(a->type == P_ADDR);
+
 	assert(!(e->inst[0] & 0x0c000000));
 	assert(!(e->inst[1] & 0x00000004));
 
 	e->inst[0] |= (a->hw & 3) << 26;
-	e->inst[1] |= (a->hw >> 2) << 2;
+	e->inst[1] |= a->hw & 4;
+}
+
+static void
+emit_arl(struct nv50_pc *, struct nv50_reg *, struct nv50_reg *, uint8_t);
+
+static void
+emit_shl_imm(struct nv50_pc *, struct nv50_reg *, struct nv50_reg *, int);
+
+static void
+emit_mov_from_addr(struct nv50_pc *pc, struct nv50_reg *dst,
+		   struct nv50_reg *src)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[1] = 0x40000000;
+	set_long(pc, e);
+	set_dst(pc, dst, e);
+	set_addr(e, src);
+
+	emit(pc, e);
 }
 
 static void
@@ -546,72 +576,6 @@ emit_add_addr_imm(struct nv50_pc *pc, struct nv50_reg *dst,
 		set_addr(e, src0);
 
 	emit(pc, e);
-}
-
-static struct nv50_reg *
-alloc_addr(struct nv50_pc *pc, struct nv50_reg *ref)
-{
-	struct nv50_reg *a_tgsi = NULL, *a = NULL;
-	int i;
-	uint8_t avail = ~pc->addr_alloc;
-
-	if (!ref) {
-		/* allocate for TGSI_FILE_ADDRESS */
-		while (avail) {
-			i = ffs(avail) - 1;
-
-			if (pc->r_addr[i].rhw < 0 ||
-			    pc->r_addr[i].acc != pc->insn_cur) {
-				pc->addr_alloc |= (1 << i);
-
-				pc->r_addr[i].rhw = -1;
-				pc->r_addr[i].index = i;
-				return &pc->r_addr[i];
-			}
-			avail &= ~(1 << i);
-		}
-		assert(0);
-		return NULL;
-	}
-
-	/* Allocate and set an address reg so we can access 'ref'.
-	 *
-	 * If and r_addr->index will be -1 or the hw index the value
-	 * value in rhw is relative to. If rhw < 0, the reg has not
-	 * been initialized or is in use for TGSI_FILE_ADDRESS.
-	 */
-	while (avail) { /* only consider regs that are not TGSI */
-		i = ffs(avail) - 1;
-		avail &= ~(1 << i);
-
-		if ((!a || a->rhw >= 0) && pc->r_addr[i].rhw < 0) {
-			/* prefer an usused reg with low hw index */
-			a = &pc->r_addr[i];
-			continue;
-		}
-		if (!a && pc->r_addr[i].acc != pc->insn_cur)
-			a = &pc->r_addr[i];
-
-		if (ref->hw - pc->r_addr[i].rhw >= 128)
-			continue;
-
-		if ((ref->acc >= 0 && pc->r_addr[i].index < 0) ||
-		    (ref->acc < 0 && pc->r_addr[i].index == ref->index)) {
-			pc->r_addr[i].acc = pc->insn_cur;
-			return &pc->r_addr[i];
-		}
-	}
-	assert(a);
-
-	if (ref->acc < 0)
-		a_tgsi = pc->addr[ref->index];
-
-	emit_add_addr_imm(pc, a, a_tgsi, (ref->hw & ~0x7f) * 4);
-
-	a->rhw = ref->hw & ~0x7f;
-	a->acc = pc->insn_cur;
-	a->index = a_tgsi ? ref->index : -1;
-	return a;
 }
 
 #define INTERP_LINEAR		0
@@ -657,12 +621,12 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	e->param.shift = s;
 	e->param.mask = m << (s % 32);
 
-	if (src->hw > 127)
-		set_addr(e, alloc_addr(pc, src));
+	if (src->hw < 0 || src->hw > 127) /* need (additional) address reg */
+		set_addr(e, get_address_reg(pc, src));
 	else
 	if (src->acc < 0) {
 		assert(src->type == P_CONST);
-		set_addr(e, pc->addr[src->index]);
+		set_addr(e, pc->addr[src->indirect[0]]);
 	}
 
 	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
@@ -694,6 +658,12 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 		if (src->type == P_ATTR) {
 			set_long(pc, e);
 			e->inst[1] |= 0x00200000;
+
+			if (src->vtx >= 0) {
+				/* indirect (vertex base + c) load from p[] */
+				e->inst[0] |= 0x01800000;
+				set_addr(e, get_address_reg(pc, src));
+			}
 		}
 
 		alloc_reg(pc, src);
@@ -808,6 +778,11 @@ set_src_0(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 	if (src->type == P_ATTR) {
 		set_long(pc, e);
 		e->inst[1] |= 0x00200000;
+
+		if (src->vtx >= 0) {
+			e->inst[0] |= 0x01800000; /* src from p[] */
+			set_addr(e, get_address_reg(pc, src));
+		}
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
 		struct nv50_reg *temp = temp_temp(pc, e);
@@ -832,13 +807,13 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		assert(!(e->inst[0] & 0x00800000));
-		if (e->inst[0] & 0x01000000) {
+		if (e->inst[0] & 0x01800000) {
 			struct nv50_reg *temp = temp_temp(pc, e);
 
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
+			assert(!(e->inst[0] & 0x00800000));
 			set_data(pc, src, 0x7f, 16, e);
 			e->inst[0] |= 0x00800000;
 		}
@@ -862,13 +837,13 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		assert(!(e->inst[0] & 0x01000000));
-		if (e->inst[0] & 0x00800000) {
+		if (e->inst[0] & 0x01800000) {
 			struct nv50_reg *temp = temp_temp(pc, e);
 
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
+			assert(!(e->inst[0] & 0x01000000));
 			set_data(pc, src, 0x7f, 32+14, e);
 			e->inst[0] |= 0x01000000;
 		}
@@ -997,9 +972,123 @@ emit_arl(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
 
 	e->inst[0] |= dst->hw << 2;
 	e->inst[0] |= s << 16; /* shift left */
-	set_src_0_restricted(pc, src, e);
+	set_src_0(pc, src, e);
 
 	emit(pc, e);
+}
+
+static boolean
+address_reg_suitable(struct nv50_reg *a, struct nv50_reg *r)
+{
+	if (!r)
+		return FALSE;
+
+	if (r->vtx != a->vtx)
+		return FALSE;
+	if (r->vtx >= 0)
+		return (r->indirect[1] == a->indirect[1]);
+
+	if (r->hw < a->rhw || (r->hw - a->rhw) >= 128)
+		return FALSE;
+
+	if (a->index >= 0)
+		return (a->index == r->indirect[0]);
+	return (a->indirect[0] == r->indirect[0]);
+}
+
+static void
+load_vertex_base(struct nv50_pc *pc, struct nv50_reg *dst,
+		 struct nv50_reg *a, int shift)
+{
+	struct nv50_reg mem, *temp;
+
+	ctor_reg(&mem, P_ATTR, -1, dst->vtx);
+
+	assert(dst->type == P_ADDR);
+	if (!a) {
+		emit_arl(pc, dst, &mem, 0);
+		return;
+	}
+	temp = alloc_temp(pc, NULL);
+
+	if (shift) {
+		emit_mov_from_addr(pc, temp, a);
+		if (shift < 0)
+			emit_shl_imm(pc, temp, temp, shift);
+		emit_arl(pc, dst, temp, MAX2(shift, 0));
+	}
+	emit_mov(pc, temp, &mem);
+	set_addr(pc->p->exec_tail, dst);
+
+	emit_arl(pc, dst, temp, 0);
+	free_temp(pc, temp);
+}
+
+/* case (ref == NULL): allocate address register for TGSI_FILE_ADDRESS
+ * case (vtx >= 0, acc >= 0): load vertex base from a[vtx * 4] to $aX
+ * case (vtx >= 0, acc < 0): load vertex base from s[$aY + vtx * 4] to $aX
+ * case (vtx < 0, acc >= 0): memory address too high to encode
+ * case (vtx < 0, acc < 0): get source register for TGSI_FILE_ADDRESS
+ */
+static struct nv50_reg *
+get_address_reg(struct nv50_pc *pc, struct nv50_reg *ref)
+{
+	int i;
+	struct nv50_reg *a_ref, *a = NULL;
+
+	for (i = 0; i < NV50_SU_MAX_ADDR; ++i) {
+		if (pc->r_addr[i].acc == 0)
+			a = &pc->r_addr[i]; /* an unused address reg */
+		else
+		if (address_reg_suitable(&pc->r_addr[i], ref)) {
+			pc->r_addr[i].acc = pc->insn_cur;
+			return &pc->r_addr[i];
+		} else
+		if (!a && pc->r_addr[i].index < 0 &&
+		    pc->r_addr[i].acc < pc->insn_cur)
+			a = &pc->r_addr[i];
+	}
+	if (!a) {
+		/* We'll be able to spill address regs when this
+		 * mess is replaced with a proper compiler ...
+		 */
+		NOUVEAU_ERR("out of address regs\n");
+		abort();
+		return NULL;
+	}
+
+	/* initialize and reserve for this TGSI instruction */
+	a->rhw = 0;
+	a->index = a->indirect[0] = a->indirect[1] = -1;
+	a->acc = pc->insn_cur;
+
+	if (!ref) {
+		a->vtx = -1;
+		return a;
+	}
+	a->vtx = ref->vtx;
+
+	/* now put in the correct value ... */
+
+	if (ref->vtx >= 0) {
+		a->indirect[1] = ref->indirect[1];
+
+		/* For an indirect vertex index, we need to shift address right
+		 * by 2, the address register will contain vtx * 16, we need to
+		 * load from a[vtx * 4].
+		 */
+		load_vertex_base(pc, a, (ref->acc < 0) ?
+				 pc->addr[ref->indirect[1]] : NULL, -2);
+	} else {
+		assert(ref->acc < 0 || ref->indirect[0] < 0);
+
+		a->rhw = ref->hw & ~0x7f;
+		a->indirect[0] = ref->indirect[0];
+		a_ref = (ref->acc < 0) ? pc->addr[ref->indirect[0]] : NULL;
+
+		emit_add_addr_imm(pc, a, a_ref, a->rhw * 4);
+	}
+	return a;
 }
 
 #define NV50_MAX_F32 0x880
@@ -2171,8 +2260,9 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 	{
 		struct nv50_reg *r = pc->addr[dst->Register.Index * 4 + c];
 		if (!r) {
-			r = alloc_addr(pc, NULL);
-			pc->addr[dst->Register.Index * 4 + c] = r;
+			r = get_address_reg(pc, NULL);
+			r->index = dst->Register.Index * 4 + c;
+			pc->addr[r->index] = r;
 		}
 		assert(r);
 		return r;
@@ -2208,6 +2298,18 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		switch (src->Register.File) {
 		case TGSI_FILE_INPUT:
 			r = &pc->attr[src->Register.Index * 4 + c];
+
+			if (!src->Dimension.Dimension)
+				break;
+			r = reg_instance(pc, r);
+			r->vtx = src->Dimension.Index;
+
+			if (!src->Dimension.Indirect)
+				break;
+			swz = tgsi_util_get_src_register_swizzle(
+				&src->DimIndirect, 0);
+			r->acc = -1;
+			r->indirect[1] = src->DimIndirect.Index * 4 + swz;
 			break;
 		case TGSI_FILE_TEMPORARY:
 			r = &pc->temp[src->Register.Index * 4 + c];
@@ -2221,12 +2323,12 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 			 * use the index field to select the address reg.
 			 */
 			r = reg_instance(pc, NULL);
+			ctor_reg(r, P_CONST, -1, src->Register.Index * 4 + c);
+
 			swz = tgsi_util_get_src_register_swizzle(
-						 &src->Indirect, 0);
-			ctor_reg(r, P_CONST,
-				 src->Indirect.Index * 4 + swz,
-				 src->Register.Index * 4 + c);
+				&src->Indirect, 0);
 			r->acc = -1;
+			r->indirect[0] = src->Indirect.Index * 4 + swz;
 			break;
 		case TGSI_FILE_IMMEDIATE:
 			r = &pc->immd[src->Register.Index * 4 + c];
@@ -2273,7 +2375,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
 		r->mod |= mod & NV50_MOD_I32;
 
 	assert(r);
-	if (r->acc >= 0 && r != temp)
+	if (r->acc >= 0 && r->vtx < 0 && r != temp)
 		return reg_instance(pc, r); /* will clear r->mod */
 	return r;
 }
@@ -2495,10 +2597,14 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		}
 		break;
 	case TGSI_OPCODE_ARL:
-		assert(src[0][0]);
 		temp = temp_temp(pc, NULL);
-		emit_cvt(pc, temp, src[0][0], -1, CVT_FLOOR | CVT_S32_F32);
-		emit_arl(pc, dst[0], temp, 4);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_cvt(pc, temp, src[0][c], -1,
+				 CVT_FLOOR | CVT_S32_F32);
+			emit_arl(pc, dst[c], temp, 4);
+		}
 		break;
 	case TGSI_OPCODE_BGNLOOP:
 		pc->loop_brka[pc->loop_lvl] = emit_breakaddr(pc);
@@ -2630,6 +2736,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		break;
 	case TGSI_OPCODE_ENDSUB:
 		assert(pc->in_subroutine);
+		terminate_mbb(pc);
 		pc->in_subroutine = FALSE;
 		break;
 	case TGSI_OPCODE_EX2:
@@ -3032,6 +3139,8 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			emit_nop(pc);
 
 		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
+
+		terminate_mbb(pc);
 		break;
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", inst->Instruction.Opcode);
@@ -3717,7 +3826,7 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 			return FALSE;
 	}
 	for (i = 0; i < NV50_SU_MAX_ADDR; ++i)
-		ctor_reg(&pc->r_addr[i], P_ADDR, -256, i + 1);
+		ctor_reg(&pc->r_addr[i], P_ADDR, -1, i + 1);
 
 	return TRUE;
 }
