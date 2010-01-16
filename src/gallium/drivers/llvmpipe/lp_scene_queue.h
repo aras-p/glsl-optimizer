@@ -40,16 +40,12 @@ void
 lp_scene_queue_destroy(struct lp_scene_queue *queue);
 
 struct lp_scene *
-lp_scene_dequeue(struct lp_scene_queue *queue);
+lp_scene_dequeue(struct lp_scene_queue *queue, boolean wait);
 
 void
-lp_scene_enqueue(struct lp_scene_queue *queue, struct lp_scene *bins);
+lp_scene_enqueue(struct lp_scene_queue *queue, struct lp_scene *scene);
 
-unsigned
-lp_scene_queue_count(struct lp_scene_queue *queue);
 
-void
-lp_scene_queue_wait_count(struct lp_scene_queue *queue, unsigned size);
 
 
 #endif /* LP_BIN_QUEUE */

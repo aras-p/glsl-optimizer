@@ -844,7 +844,7 @@ thread_func( void *init_data )
          const struct pipe_framebuffer_state *fb;
          boolean write_depth;
 
-         rast->curr_scene = lp_scene_dequeue( rast->full_scenes );
+         rast->curr_scene = lp_scene_dequeue( rast->full_scenes, TRUE );
 
          lp_scene_bin_iter_begin( rast->curr_scene );
 

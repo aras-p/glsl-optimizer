@@ -57,8 +57,11 @@ struct lp_scene *
 lp_setup_get_current_scene(struct setup_context *setup)
 {
    if (!setup->scene) {
-      /* wait for a free/empty bin */
-      setup->scene = lp_scene_dequeue(setup->empty_scenes);
+
+      /* wait for a free/empty scene
+       */
+      setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
+
       if(0)lp_scene_reset( setup->scene ); /* XXX temporary? */
 
       lp_scene_set_framebuffer_size(setup->scene,
@@ -651,8 +654,8 @@ lp_setup_destroy( struct setup_context *setup )
    pipe_buffer_reference(&setup->constants.current, NULL);
 
    /* free the scenes in the 'empty' queue */
-   while (lp_scene_queue_count(setup->empty_scenes) > 0) {
-      struct lp_scene *scene = lp_scene_dequeue(setup->empty_scenes);
+   while (1) {
+      struct lp_scene *scene = lp_scene_dequeue(setup->empty_scenes, FALSE);
       if (!scene)
          break;
       lp_scene_destroy(scene);
