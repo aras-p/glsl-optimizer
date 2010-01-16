@@ -148,6 +148,8 @@ struct r600_context {
 	GLint      nNumActiveAos;
 	StreamDesc stream_desc[VERT_ATTRIB_MAX];
     struct r700_index_buffer ind_buf;
+	struct radeon_bo *blit_bo;
+	GLboolean blit_bo_loaded;
 };
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
@@ -181,6 +183,7 @@ extern GLboolean r700SyncSurf(context_t *context,
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
 extern void r700InitDraw(GLcontext *ctx);
+extern void r600_init_texcopy_functions(struct dd_function_table *table);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1
