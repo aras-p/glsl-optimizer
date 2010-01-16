@@ -36,7 +36,6 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/slang/slang_ir.h"
-#include "shader/slang/slang_emit.h"
 #include "shader/slang/slang_builtin.h"
 
 
