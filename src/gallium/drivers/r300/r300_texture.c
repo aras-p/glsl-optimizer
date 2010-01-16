@@ -30,6 +30,8 @@
 #include "r300_texture.h"
 #include "r300_screen.h"
 
+#include "radeon_winsys.h"
+
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
 
@@ -209,6 +211,7 @@ static struct pipe_texture*
 {
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);
+    struct radeon_winsys* winsys = (struct radeon_winsys*)screen->winsys;
 
     if (!tex) {
         return NULL;
@@ -225,6 +228,10 @@ static struct pipe_texture*
     tex->buffer = screen->buffer_create(screen, 2048,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
+    winsys->buffer_set_tiling(winsys, tex->buffer,
+                              tex->pitch[0],
+                              tex->microtile != R300_BUFFER_LINEAR,
+                              tex->macrotile != R300_BUFFER_LINEAR);
 
     if (!tex->buffer) {
         FREE(tex);

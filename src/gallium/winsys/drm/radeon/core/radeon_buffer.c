@@ -202,6 +202,26 @@ static void radeon_buffer_unmap(struct pipe_winsys *ws,
     }
 }
 
+static void radeon_buffer_set_tiling(struct radeon_winsys *ws,
+                                     struct pipe_buffer *buffer,
+                                     uint32_t pitch,
+                                     boolean microtiled,
+                                     boolean macrotiled)
+{
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    uint32_t flags = 0;
+
+    if (microtiled) {
+        flags |= RADEON_BO_FLAGS_MICRO_TILE;
+    }
+    if (macrotiled) {
+        flags |= RADEON_BO_FLAGS_MACRO_TILE;
+    }
+
+    radeon_bo_set_tiling(radeon_buffer->bo, flags, pitch);
+}
+
 static void radeon_fence_reference(struct pipe_winsys *ws,
                                    struct pipe_fence_handle **ptr,
                                    struct pipe_fence_handle *pfence)
@@ -303,6 +323,8 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
     radeon_ws->base.fence_finish = radeon_fence_finish;
 
     radeon_ws->base.get_name = radeon_get_name;
+
+    radeon_ws->buffer_set_tiling = radeon_buffer_set_tiling;
 
     return radeon_ws;
 }
