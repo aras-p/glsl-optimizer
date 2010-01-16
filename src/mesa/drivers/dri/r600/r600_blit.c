@@ -1090,7 +1090,6 @@ set_scissors(context_t *context, int x1, int y1, int x2, int y2)
     R600_OUT_BATCH_REGSEQ(PA_SC_GENERIC_SCISSOR_TL, 2);
     R600_OUT_BATCH((x1 << 0) | (y1 << 16) | (WINDOW_OFFSET_DISABLE_bit));
     R600_OUT_BATCH((x2 << 0) | (y2 << 16));
-    END_BATCH();
 
     /* XXX 16 of these PA_SC_VPORT_SCISSOR_0_TL_num ... */
     R600_OUT_BATCH_REGSEQ(PA_SC_VPORT_SCISSOR_0_TL, 2 );
