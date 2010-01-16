@@ -42,17 +42,14 @@
 #include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
-#include "st_draw.h"
 #include "st_program.h"
 #include "st_public.h"
-#include "st_mesa_to_tgsi.h"
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
 
