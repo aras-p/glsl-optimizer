@@ -36,6 +36,7 @@
 #include "main/texobj.h"
 #include "main/enums.h"
 #include "radeon_texture.h"
+#include "radeon_tile.h"
 
 static unsigned get_aligned_compressed_row_stride(
 		gl_format format,
@@ -69,16 +70,30 @@ static unsigned get_aligned_compressed_row_stride(
 	return stride;
 }
 
-static unsigned get_compressed_image_size(
+unsigned get_texture_image_size(
 		gl_format format,
 		unsigned rowStride,
-		unsigned height)
+		unsigned height,
+		unsigned depth,
+		unsigned tiling)
 {
-	unsigned blockWidth, blockHeight;
+	if (_mesa_is_format_compressed(format)) {
+		unsigned blockWidth, blockHeight;
 
-	_mesa_get_format_block_size(format, &blockWidth, &blockHeight);
+		_mesa_get_format_block_size(format, &blockWidth, &blockHeight);
 
-	return rowStride * ((height + blockHeight - 1) / blockHeight);
+		return rowStride * ((height + blockHeight - 1) / blockHeight) * depth;
+	} else if (tiling) {
+		/* Need to align height to tile height */
+		unsigned tileWidth, tileHeight;
+
+		get_tile_size(format, &tileWidth, &tileHeight);
+		tileHeight--;
+
+		height = (height + tileHeight) & ~tileHeight;
+	}
+
+	return rowStride * height * depth;
 }
 
 static unsigned is_pot(unsigned value)
@@ -118,34 +133,15 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	GLuint face, GLuint level, GLuint* curOffset)
 {
 	radeon_mipmap_level *lvl = &mt->levels[level];
-	uint32_t row_align;
 	GLuint height;
 
 	height = _mesa_next_pow_two_32(lvl->height);
 
-	/* Find image size in bytes */
-	if (_mesa_is_format_compressed(mt->mesaFormat)) {
-		lvl->rowstride = get_aligned_compressed_row_stride(mt->mesaFormat, lvl->width, rmesa->texture_compressed_row_align);
-		lvl->size = get_compressed_image_size(mt->mesaFormat, lvl->rowstride, height);
-	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
-		row_align = rmesa->texture_rect_row_align - 1;
-		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
-		lvl->size = lvl->rowstride * height;
-	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
-		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
-		 * though the actual offset may be different (if texture is less than
-		 * 32 bytes width) to the untiled case */
-		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) * 2 + 31) & ~31;
-		lvl->size = lvl->rowstride * ((height + 1) / 2) * lvl->depth;
-	} else {
-		row_align = rmesa->texture_row_align - 1;
-		lvl->rowstride = (_mesa_format_row_stride(mt->mesaFormat, lvl->width) + row_align) & ~row_align;
-		lvl->size = lvl->rowstride * height * lvl->depth;
-	}
+	lvl->rowstride = get_texture_image_row_stride(rmesa, mt->mesaFormat, lvl->width);
+	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, lvl->height, lvl->depth, mt->tilebits);
+
 	assert(lvl->size > 0);
 
-	/* All images are aligned to a 32-byte offset */
-	*curOffset = (*curOffset + 0x1f) & ~0x1f;
 	lvl->faces[face].offset = *curOffset;
 	*curOffset += lvl->size;
 
