@@ -150,8 +150,8 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                      (R300_TX_CLAMP_TO_EDGE  << R300_TX_WRAP_T_SHIFT) |
                      (R300_TX_CLAMP_TO_EDGE  << R300_TX_WRAP_R_SHIFT) |
                      R300_TX_MIN_FILTER_MIP_NONE |
-                     R300_TX_MIN_FILTER_LINEAR |
-                     R300_TX_MAG_FILTER_LINEAR |
+                     R300_TX_MIN_FILTER_NEAREST |
+                     R300_TX_MAG_FILTER_NEAREST |
                      (0 << 28));
     OUT_BATCH_REGVAL(R300_TX_FILTER1_0, 0);
     OUT_BATCH_REGVAL(R300_TX_SIZE_0,
