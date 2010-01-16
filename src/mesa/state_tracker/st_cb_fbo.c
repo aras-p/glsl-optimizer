@@ -44,7 +44,6 @@
 #include "pipe/p_screen.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
-#include "st_cb_texture.h"
 #include "st_format.h"
 #include "st_public.h"
 #include "st_texture.h"
