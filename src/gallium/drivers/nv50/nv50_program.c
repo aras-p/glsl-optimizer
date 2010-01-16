@@ -1718,6 +1718,18 @@ emit_ret(struct nv50_pc *pc, int pred, unsigned cc)
 	emit_control_flow(pc, 0x3, pred, cc);
 }
 
+static void
+emit_prim_cmd(struct nv50_pc *pc, unsigned cmd)
+{
+	struct nv50_program_exec *e = exec(pc);
+
+	e->inst[0] = 0xf0000000 | (cmd << 9);
+	e->inst[1] = 0xc0000000;
+	set_long(pc, e);
+
+	emit(pc, e);
+}
+
 #define QOP_ADD 0
 #define QOP_SUBR 1
 #define QOP_SUB 2
@@ -2711,6 +2723,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		pc->if_insn[pc->if_lvl++] = pc->p->exec_tail;
 		terminate_mbb(pc);
 		break;
+	case TGSI_OPCODE_EMIT:
+		emit_prim_cmd(pc, 1);
+		break;
 	case TGSI_OPCODE_ENDIF:
 		pc->if_insn[--pc->if_lvl]->param.index = pc->p->exec_size;
 
@@ -2733,6 +2748,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 			pc->loop_pos[--pc->loop_lvl];
 		pc->loop_brka[pc->loop_lvl]->param.index = pc->p->exec_size;
 		terminate_mbb(pc);
+		break;
+	case TGSI_OPCODE_ENDPRIM:
+		emit_prim_cmd(pc, 2);
 		break;
 	case TGSI_OPCODE_ENDSUB:
 		assert(pc->in_subroutine);
@@ -3449,6 +3467,24 @@ load_frontfacing(struct nv50_pc *pc, struct nv50_reg *a)
 	FREE(one);
 }
 
+static void
+copy_semantic_info(struct nv50_program *p)
+{
+	unsigned i, id;
+
+	for (i = 0; i < p->cfg.in_nr; ++i) {
+		id = p->cfg.in[i].id;
+		p->cfg.in[i].sn = p->info.input_semantic_name[id];
+		p->cfg.in[i].si = p->info.input_semantic_index[id];
+	}
+
+	for (i = 0; i < p->cfg.out_nr; ++i) {
+		id = p->cfg.out[i].id;
+		p->cfg.out[i].sn = p->info.output_semantic_name[id];
+		p->cfg.out[i].si = p->info.output_semantic_index[id];
+	}
+}
+
 static boolean
 nv50_program_tx_prep(struct nv50_pc *pc)
 {
@@ -3495,13 +3531,13 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				switch (d->Semantic.Name) {
 				case TGSI_SEMANTIC_BCOLOR:
 					p->cfg.two_side[si].hw = first;
-					if (p->cfg.io_nr > first)
-						p->cfg.io_nr = first;
+					if (p->cfg.out_nr > first)
+						p->cfg.out_nr = first;
 					break;
 				case TGSI_SEMANTIC_PSIZE:
 					p->cfg.psiz = first;
-					if (p->cfg.io_nr > first)
-						p->cfg.io_nr = first;
+					if (p->cfg.out_nr > first)
+						p->cfg.out_nr = first;
 					break;
 				case TGSI_SEMANTIC_EDGEFLAG:
 					pc->edgeflag_out = first;
@@ -3561,68 +3597,86 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		}
 	}
 
-	if (p->type == PIPE_SHADER_VERTEX) {
+	if (p->type == PIPE_SHADER_VERTEX || p->type == PIPE_SHADER_GEOMETRY) {
 		int rid = 0;
 
-		for (i = 0; i < pc->attr_nr * 4; ++i) {
-			if (pc->attr[i].acc) {
-				pc->attr[i].hw = rid++;
-				p->cfg.attr[i / 32] |= 1 << (i % 32);
+		if (p->type == PIPE_SHADER_GEOMETRY) {
+			for (i = 0; i < pc->attr_nr; ++i) {
+				p->cfg.in[i].hw = rid;
+				p->cfg.in[i].id = i;
+
+				for (c = 0; c < 4; ++c) {
+					int n = i * 4 + c;
+					if (!pc->attr[n].acc)
+						continue;
+					pc->attr[n].hw = rid++;
+					p->cfg.in[i].mask |= 1 << c;
+				}
+			}
+		} else {
+			for (i = 0; i < pc->attr_nr * 4; ++i) {
+				if (pc->attr[i].acc) {
+					pc->attr[i].hw = rid++;
+					p->cfg.attr[i / 32] |= 1 << (i % 32);
+				}
 			}
 		}
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
-			p->cfg.io[i].hw = rid;
-			p->cfg.io[i].id = i;
+			p->cfg.out[i].hw = rid;
+			p->cfg.out[i].id = i;
 
 			for (c = 0; c < 4; ++c) {
 				int n = i * 4 + c;
 				if (!pc->result[n].acc)
 					continue;
 				pc->result[n].hw = rid++;
-				p->cfg.io[i].mask |= 1 << c;
+				p->cfg.out[i].mask |= 1 << c;
 			}
 		}
 
 		for (c = 0; c < 2; ++c)
 			if (p->cfg.two_side[c].hw < 0x40)
-				p->cfg.two_side[c] = p->cfg.io[
+				p->cfg.two_side[c] = p->cfg.out[
 					p->cfg.two_side[c].hw];
 
 		if (p->cfg.psiz < 0x40)
-			p->cfg.psiz = p->cfg.io[p->cfg.psiz].hw;
+			p->cfg.psiz = p->cfg.out[p->cfg.psiz].hw;
+
+		copy_semantic_info(p);
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
-		int rid, aid;
+		int rid, aid, base;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
 		pc->allow32 = TRUE;
 
-		int base = (TGSI_SEMANTIC_POSITION ==
-			    p->info.input_semantic_name[0]) ? 0 : 1;
+		base = (TGSI_SEMANTIC_POSITION ==
+			p->info.input_semantic_name[0]) ? 0 : 1;
 
 		/* non-flat interpolants have to be mapped to
 		 * the lower hardware IDs, so sort them:
 		 */
 		for (i = 0; i < pc->attr_nr; i++) {
 			if (pc->interp_mode[i] == INTERP_FLAT)
-				p->cfg.io[m++].id = i;
+				p->cfg.in[m++].id = i;
 			else {
 				if (!(pc->interp_mode[i] & INTERP_PERSPECTIVE))
-					p->cfg.io[n].linear = TRUE;
-				p->cfg.io[n++].id = i;
+					p->cfg.in[n].linear = TRUE;
+				p->cfg.in[n++].id = i;
 			}
 		}
+		copy_semantic_info(p);
 
 		if (!base) /* set w-coordinate mask from perspective interp */
-			p->cfg.io[0].mask |= p->cfg.regs[1] >> 24;
+			p->cfg.in[0].mask |= p->cfg.regs[1] >> 24;
 
 		aid = popcnt4( /* if fcrd isn't contained in cfg.io */
-			base ? (p->cfg.regs[1] >> 24) : p->cfg.io[0].mask);
+			base ? (p->cfg.regs[1] >> 24) : p->cfg.in[0].mask);
 
 		for (n = 0; n < pc->attr_nr; ++n) {
-			p->cfg.io[n].hw = rid = aid;
-			i = p->cfg.io[n].id;
+			p->cfg.in[n].hw = rid = aid;
+			i = p->cfg.in[n].id;
 
 			if (p->info.input_semantic_name[n] ==
 			    TGSI_SEMANTIC_FACE) {
@@ -3634,15 +3688,15 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				if (!pc->attr[i * 4 + c].acc)
 					continue;
 				pc->attr[i * 4 + c].rhw = rid++;
-				p->cfg.io[n].mask |= 1 << c;
+				p->cfg.in[n].mask |= 1 << c;
 
 				load_interpolant(pc, &pc->attr[i * 4 + c]);
 			}
-			aid += popcnt4(p->cfg.io[n].mask);
+			aid += popcnt4(p->cfg.in[n].mask);
 		}
 
 		if (!base)
-			p->cfg.regs[1] |= p->cfg.io[0].mask << 24;
+			p->cfg.regs[1] |= p->cfg.in[0].mask << 24;
 
 		m = popcnt4(p->cfg.regs[1] >> 24);
 
@@ -3652,30 +3706,23 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		p->cfg.regs[1] |= aid - m;
 
 		if (flat_nr) {
-			i = p->cfg.io[pc->attr_nr - flat_nr].hw;
+			i = p->cfg.in[pc->attr_nr - flat_nr].hw;
 			p->cfg.regs[1] |= (i - m) << 16;
 		} else
 			p->cfg.regs[1] |= p->cfg.regs[1] << 16;
 
 		/* mark color semantic for light-twoside */
-		n = 0x40;
-		for (i = 0; i < pc->attr_nr; i++) {
-			ubyte si, sn;
+		n = 0x80;
+		for (i = 0; i < p->cfg.in_nr; i++) {
+			if (p->cfg.in[i].sn == TGSI_SEMANTIC_COLOR) {
+				n = MIN2(n, p->cfg.in[i].hw - m);
+				p->cfg.two_side[p->cfg.in[i].si] = p->cfg.in[i];
 
-			sn = p->info.input_semantic_name[p->cfg.io[i].id];
-			si = p->info.input_semantic_index[p->cfg.io[i].id];
-
-			if (sn == TGSI_SEMANTIC_COLOR) {
-				p->cfg.two_side[si] = p->cfg.io[i];
-
-				/* increase colour count */
-				p->cfg.regs[0] += popcnt4(
-					p->cfg.two_side[si].mask) << 16;
-
-				n = MIN2(n, p->cfg.io[i].hw - m);
+				p->cfg.regs[0] += /* increase colour count */
+					popcnt4(p->cfg.in[i].mask) << 16;
 			}
 		}
-		if (n < 0x40)
+		if (n < 0x80)
 			p->cfg.regs[0] += n;
 
 		/* Initialize FP results:
@@ -3737,6 +3784,23 @@ free_nv50_pc(struct nv50_pc *pc)
 	FREE(pc);
 }
 
+static INLINE uint32_t
+nv50_map_gs_output_prim(unsigned pprim)
+{
+	switch (pprim) {
+	case PIPE_PRIM_POINTS:
+		return NV50TCL_GP_OUTPUT_PRIMITIVE_TYPE_POINTS;
+	case PIPE_PRIM_LINE_STRIP:
+		return NV50TCL_GP_OUTPUT_PRIMITIVE_TYPE_LINE_STRIP;
+	case PIPE_PRIM_TRIANGLE_STRIP:
+		return NV50TCL_GP_OUTPUT_PRIMITIVE_TYPE_TRIANGLE_STRIP;
+	default:
+		NOUVEAU_ERR("invalid GS_OUTPUT_PRIMITIVE: %u\n", pprim);
+		abort();
+		return 0;
+	}
+}
+
 static boolean
 ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 {
@@ -3758,17 +3822,44 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 
 	p->cfg.edgeflag_in = pc->edgeflag_out = 0xff;
 
+	for (i = 0; i < p->info.num_properties; ++i) {
+		unsigned *data = &p->info.properties[i].data[0];
+
+		switch (p->info.properties[i].name) {
+		case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+			p->cfg.prim_type = nv50_map_gs_output_prim(data[0]);
+			break;
+		case TGSI_PROPERTY_GS_MAX_VERTICES:
+			p->cfg.vert_count = data[0];
+			break;
+		default:
+			break;
+		}
+	}
+
 	switch (p->type) {
 	case PIPE_SHADER_VERTEX:
 		p->cfg.psiz = 0x40;
 		p->cfg.clpd = 0x40;
-		p->cfg.io_nr = pc->result_nr;
+		p->cfg.out_nr = pc->result_nr;
+		break;
+	case PIPE_SHADER_GEOMETRY:
+		assert(p->cfg.prim_type);
+		assert(p->cfg.vert_count);
+
+		p->cfg.psiz = 0x80;
+		p->cfg.clpd = 0x80;
+		p->cfg.out_nr = pc->result_nr;
+		p->cfg.in_nr = pc->attr_nr;
+
+		p->cfg.two_side[0].hw = 0x80;
+		p->cfg.two_side[1].hw = 0x80;
 		break;
 	case PIPE_SHADER_FRAGMENT:
 		rtype[0] = rtype[1] = P_TEMP;
 
 		p->cfg.regs[0] = 0x01000004;
-		p->cfg.io_nr = pc->attr_nr;
+		p->cfg.in_nr = pc->attr_nr;
 
 		if (p->info.writes_z) {
 			p->cfg.regs[2] |= 0x00000100;
@@ -3988,13 +4079,17 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cb;
-		uint32_t *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
+		uint32_t *map = pipe_buffer_map(pscreen,
+						nv50->constbuf[p->type],
 						PIPE_BUFFER_USAGE_CPU_READ);
-
-		if (p->type == PIPE_SHADER_VERTEX)
+		switch (p->type) {
+		case PIPE_SHADER_GEOMETRY: cb = NV50_CB_PGP; break;
+		case PIPE_SHADER_FRAGMENT: cb = NV50_CB_PFP; break;
+		default:
 			cb = NV50_CB_PVP;
-		else
-			cb = NV50_CB_PFP;
+			assert(p->type == PIPE_SHADER_VERTEX);
+			break;
+		}
 
 		nv50_program_upload_data(nv50, map, 0, p->param_nr, cb);
 		pipe_buffer_unmap(pscreen, nv50->constbuf[p->type]);
@@ -4088,19 +4183,18 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(5, 8, 2);
+	so = so_new(5, 7, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		      NOUVEAU_BO_HIGH, 0, 0);
+		  NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		      NOUVEAU_BO_LOW, 0, 0);
+		  NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, NV50TCL_VP_ATTR_EN_0, 2);
 	so_data  (so, p->cfg.attr[0]);
 	so_data  (so, p->cfg.attr[1]);
 	so_method(so, tesla, NV50TCL_VP_REG_ALLOC_RESULT, 1);
 	so_data  (so, p->cfg.high_result);
-	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 2);
-	so_data  (so, p->cfg.high_result); //8);
+	so_method(so, tesla, NV50TCL_VP_REG_ALLOC_TEMP, 1);
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_VP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
@@ -4144,13 +4238,51 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_ref(NULL, &so);
 }
 
+void
+nv50_geomprog_validate(struct nv50_context *nv50)
+{
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nv50_program *p = nv50->geomprog;
+	struct nouveau_stateobj *so;
+
+	if (!p->translated) {
+		nv50_program_validate(nv50, p);
+		if (!p->translated)
+			assert(0);
+	}
+
+	nv50_program_validate_data(nv50, p);
+	nv50_program_validate_code(nv50, p);
+
+	so = so_new(6, 7, 2);
+	so_method(so, tesla, NV50TCL_GP_ADDRESS_HIGH, 2);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		  NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		  NOUVEAU_BO_LOW, 0, 0);
+	so_method(so, tesla, NV50TCL_GP_REG_ALLOC_TEMP, 1);
+	so_data  (so, p->cfg.high_temp);
+	so_method(so, tesla, NV50TCL_GP_REG_ALLOC_RESULT, 1);
+	so_data  (so, p->cfg.high_result);
+	so_method(so, tesla, NV50TCL_GP_OUTPUT_PRIMITIVE_TYPE, 1);
+	so_data  (so, p->cfg.prim_type);
+	so_method(so, tesla, NV50TCL_GP_VERTEX_OUTPUT_COUNT, 1);
+	so_data  (so, p->cfg.vert_count);
+	so_method(so, tesla, NV50TCL_GP_START_ID, 1);
+	so_data  (so, 0);
+	so_ref(so, &nv50->state.geomprog);
+	so_ref(NULL, &so);
+}
+
 static uint32_t
 nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 {
+	struct nv50_program *vp;
 	struct nv50_program *fp = nv50->fragprog;
-	struct nv50_program *vp = nv50->vertprog;
 	unsigned i, c, m = base;
 	uint32_t origin = 0x00000010;
+
+	vp = nv50->geomprog ? nv50->geomprog : nv50->vertprog;
 
 	/* XXX: this might not work correctly in all cases yet - we'll
 	 * just assume that an FP generic input that is not written in
@@ -4158,28 +4290,22 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 	 */
 	memset(pntc, 0, 8 * sizeof(uint32_t));
 
-	for (i = 0; i < fp->cfg.io_nr; i++) {
-		uint8_t sn, si;
-		uint8_t j, k = fp->cfg.io[i].id;
-		unsigned n = popcnt4(fp->cfg.io[i].mask);
+	for (i = 0; i < fp->cfg.in_nr; i++) {
+		unsigned j, n = popcnt4(fp->cfg.in[i].mask);
 
-		if (fp->info.input_semantic_name[k] != TGSI_SEMANTIC_GENERIC) {
+		if (fp->cfg.in[i].sn != TGSI_SEMANTIC_GENERIC) {
 			m += n;
 			continue;
 		}
 
-		for (j = 0; j < vp->info.num_outputs; ++j) {
-			sn = vp->info.output_semantic_name[j];
-			si = vp->info.output_semantic_index[j];
-
-			if (sn == fp->info.input_semantic_name[k] &&
-			    si == fp->info.input_semantic_index[k])
+		for (j = 0; j < vp->cfg.out_nr; ++j)
+			if (vp->cfg.out[j].sn ==  fp->cfg.in[i].sn &&
+			    vp->cfg.out[j].si == fp->cfg.in[i].si)
 				break;
-		}
 
-		if (j < vp->info.num_outputs) {
-			ubyte mode =
-				nv50->rasterizer->pipe.sprite_coord_mode[si];
+		if (j < vp->cfg.out_nr) {
+			ubyte mode = nv50->rasterizer->pipe.sprite_coord_mode[
+				vp->cfg.out[j].si];
 
 			if (mode == PIPE_SPRITE_COORD_NONE) {
 				m += n;
@@ -4191,7 +4317,7 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 
 		/* this is either PointCoord or replaced by sprite coords */
 		for (c = 0; c < 4; c++) {
-			if (!(fp->cfg.io[i].mask & (1 << c)))
+			if (!(fp->cfg.in[i].mask & (1 << c)))
 				continue;
 			pntc[m / 8] |= (c + 1) << ((m % 8) * 4);
 			++m;
@@ -4201,18 +4327,22 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned base)
 }
 
 static int
-nv50_sreg4_map(uint32_t *p_map, int mid, uint32_t lin[4],
-	       struct nv50_sreg4 *fpi, struct nv50_sreg4 *vpo)
+nv50_vec4_map(uint32_t *map32, int mid, uint8_t zval, uint32_t lin[4],
+	      struct nv50_sreg4 *fpi, struct nv50_sreg4 *vpo)
 {
 	int c;
 	uint8_t mv = vpo->mask, mf = fpi->mask, oid = vpo->hw;
-	uint8_t *map = (uint8_t *)p_map;
+	uint8_t *map = (uint8_t *)map32;
 
 	for (c = 0; c < 4; ++c) {
 		if (mf & 1) {
 			if (fpi->linear == TRUE)
 				lin[mid / 32] |= 1 << (mid % 32);
-			map[mid++] = (mv & 1) ? oid : ((c == 3) ? 0x41 : 0x40);
+			if (mv & 1)
+				map[mid] = oid;
+			else
+				map[mid] = (c == 3) ? (zval + 1) : zval;
+			++mid;
 		}
 
 		oid += mv & 1;
@@ -4224,16 +4354,21 @@ nv50_sreg4_map(uint32_t *p_map, int mid, uint32_t lin[4],
 }
 
 void
-nv50_linkage_validate(struct nv50_context *nv50)
+nv50_fp_linkage_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program *vp = nv50->vertprog;
 	struct nv50_program *fp = nv50->fragprog;
 	struct nouveau_stateobj *so;
-	struct nv50_sreg4 dummy, *vpo;
+	struct nv50_sreg4 dummy;
 	int i, n, c, m = 0;
 	uint32_t map[16], lin[4], reg[5], pcrd[8];
+	uint8_t zval = 0x40;
 
+	if (nv50->geomprog) {
+		vp = nv50->geomprog;
+		zval = 0x80;
+	}
 	memset(map, 0, sizeof(map));
 	memset(lin, 0, sizeof(lin));
 
@@ -4245,13 +4380,15 @@ nv50_linkage_validate(struct nv50_context *nv50)
 
 	dummy.linear = FALSE;
 	dummy.mask = 0xf; /* map all components of HPOS */
-	m = nv50_sreg4_map(map, m, lin, &dummy, &vp->cfg.io[0]);
+	m = nv50_vec4_map(map, m, zval, lin, &dummy, &vp->cfg.out[0]);
 
 	dummy.mask = 0x0;
 
 	if (vp->cfg.clpd < 0x40) {
-		for (c = 0; c < vp->cfg.clpd_nr; ++c)
-			map[m++] = vp->cfg.clpd + c;
+		for (c = 0; c < vp->cfg.clpd_nr; ++c) {
+			map[m / 4] |= (vp->cfg.clpd + c) << ((m % 4) * 8);
+			++m;
+		}
 		reg[1] = (m << 8);
 	}
 
@@ -4259,35 +4396,30 @@ nv50_linkage_validate(struct nv50_context *nv50)
 
 	/* if light_twoside is active, it seems FFC0_ID == BFC0_ID is bad */
 	if (nv50->rasterizer->pipe.light_twoside) {
-		vpo = &vp->cfg.two_side[0];
+		struct nv50_sreg4 *vpo = &vp->cfg.two_side[0];
+		struct nv50_sreg4 *fpi = &fp->cfg.two_side[0];
 
-		m = nv50_sreg4_map(map, m, lin, &fp->cfg.two_side[0], &vpo[0]);
-		m = nv50_sreg4_map(map, m, lin, &fp->cfg.two_side[1], &vpo[1]);
+		m = nv50_vec4_map(map, m, zval, lin, &fpi[0], &vpo[0]);
+		m = nv50_vec4_map(map, m, zval, lin, &fpi[1], &vpo[1]);
 	}
 
 	reg[0] += m - 4; /* adjust FFC0 id */
 	reg[4] |= m << 8; /* set mid where 'normal' FP inputs start */
 
-	for (i = 0; i < fp->cfg.io_nr; i++) {
-		ubyte sn = fp->info.input_semantic_name[fp->cfg.io[i].id];
-		ubyte si = fp->info.input_semantic_index[fp->cfg.io[i].id];
-
-		/* position must be mapped first */
-		assert(i == 0 || sn != TGSI_SEMANTIC_POSITION);
-
+	for (i = 0; i < fp->cfg.in_nr; i++) {
 		/* maybe even remove these from cfg.io */
-		if (sn == TGSI_SEMANTIC_POSITION || sn == TGSI_SEMANTIC_FACE)
+		if (fp->cfg.in[i].sn == TGSI_SEMANTIC_POSITION ||
+		    fp->cfg.in[i].sn == TGSI_SEMANTIC_FACE)
 			continue;
 
-		/* VP outputs and vp->cfg.io are in the same order */
-		for (n = 0; n < vp->info.num_outputs; ++n) {
-			if (vp->info.output_semantic_name[n] == sn &&
-			    vp->info.output_semantic_index[n] == si)
+		for (n = 0; n < vp->cfg.out_nr; ++n)
+			if (vp->cfg.out[n].sn == fp->cfg.in[i].sn &&
+			    vp->cfg.out[n].si == fp->cfg.in[i].si)
 				break;
-		}
-		vpo = (n < vp->info.num_outputs) ? &vp->cfg.io[n] : &dummy;
 
-		m = nv50_sreg4_map(map, m, lin, &fp->cfg.io[i], vpo);
+		m = nv50_vec4_map(map, m, zval, lin, &fp->cfg.in[i],
+				  (n < vp->cfg.out_nr) ?
+				  &vp->cfg.out[n] : &dummy);
 	}
 
 	if (nv50->rasterizer->pipe.point_size_per_vertex) {
@@ -4295,14 +4427,22 @@ nv50_linkage_validate(struct nv50_context *nv50)
 		reg[3] = (m++ << 4) | 1;
 	}
 
-	/* now fill the stateobj */
-	so = so_new(7, 57, 0);
+	/* now fill the stateobj (at most 28 so_data)  */
+	so = so_new(8, 56, 0);
 
 	n = (m + 3) / 4;
-	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
-	so_data  (so, m);
-	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), n);
-	so_datap (so, map, n);
+	assert(m <= 32);
+	if (vp->type == PIPE_SHADER_GEOMETRY) {
+		so_method(so, tesla, NV50TCL_GP_RESULT_MAP_SIZE, 1);
+		so_data  (so, m);
+		so_method(so, tesla, NV50TCL_GP_RESULT_MAP(0), n);
+		so_datap (so, map, n);
+	} else {
+		so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
+		so_data  (so, m);
+		so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), n);
+		so_datap (so, map, n);
+	}
 
 	so_method(so, tesla, NV50TCL_MAP_SEMANTIC_0, 4);
 	so_datap (so, reg, 4);
@@ -4322,8 +4462,74 @@ nv50_linkage_validate(struct nv50_context *nv50)
 		so_datap (so, pcrd, 8);
 	}
 
-        so_ref(so, &nv50->state.programs);
-        so_ref(NULL, &so);
+	so_method(so, tesla, NV50TCL_GP_ENABLE, 1);
+	so_data  (so, (vp->type == PIPE_SHADER_GEOMETRY) ? 1 : 0);
+
+	so_ref(so, &nv50->state.fp_linkage);
+	so_ref(NULL, &so);
+}
+
+static int
+construct_vp_gp_mapping(uint32_t *map32, int m,
+			struct nv50_program *vp, struct nv50_program *gp)
+{
+	uint8_t *map = (uint8_t *)map32;
+	int i, j, c;
+
+        for (i = 0; i < gp->cfg.in_nr; ++i) {
+                uint8_t oid, mv = 0, mg = gp->cfg.in[i].mask;
+
+                for (j = 0; j < vp->cfg.out_nr; ++j) {
+                        if (vp->cfg.out[j].sn == gp->cfg.in[i].sn &&
+                            vp->cfg.out[j].si == gp->cfg.in[i].si) {
+				mv = vp->cfg.out[j].mask;
+				oid = vp->cfg.out[j].hw;
+                                break;
+			}
+		}
+
+                for (c = 0; c < 4; ++c, mv >>= 1, mg >>= 1) {
+			if (mg & mv & 1)
+				map[m++] = oid;
+			else
+			if (mg & 1)
+				map[m++] = (c == 3) ? 0x41 : 0x40;
+                        oid += mv & 1;
+                }
+        }
+	return m;
+}
+
+void
+nv50_gp_linkage_validate(struct nv50_context *nv50)
+{
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nouveau_stateobj *so;
+	struct nv50_program *vp = nv50->vertprog;
+	struct nv50_program *gp = nv50->geomprog;
+	uint32_t map[16];
+	int m = 0;
+
+	if (!gp) {
+		so_ref(NULL, &nv50->state.gp_linkage);
+		return;
+	}
+	memset(map, 0, sizeof(map));
+
+	m = construct_vp_gp_mapping(map, m, vp, gp);
+
+	so = so_new(2, 14, 0);
+
+	assert(m <= 32);
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP_SIZE, 1);
+	so_data  (so, m);
+
+	m = (m + 3) / 4;
+	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), m);
+	so_datap (so, map, m);
+
+	so_ref(so, &nv50->state.gp_linkage);
+	so_ref(NULL, &so);
 }
 
 void
