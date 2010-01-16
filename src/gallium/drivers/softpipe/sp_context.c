@@ -113,8 +113,8 @@ softpipe_destroy( struct pipe_context *pipe )
    }
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
-      if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(&softpipe->constants[i].buffer, NULL);
+      if (softpipe->constants[i]) {
+         pipe_buffer_reference(&softpipe->constants[i], NULL);
       }
    }
 
@@ -256,6 +256,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
    softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
+   softpipe->pipe.draw_arrays_instanced = softpipe_draw_arrays_instanced;
+   softpipe->pipe.draw_elements_instanced = softpipe_draw_elements_instanced;
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;

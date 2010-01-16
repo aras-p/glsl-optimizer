@@ -65,7 +65,8 @@ enum
    SGIX_swap_barrier_bit,
    SGIX_swap_group_bit,
    SGIX_visual_select_group_bit,
-   EXT_texture_from_pixmap_bit
+   EXT_texture_from_pixmap_bit,
+   INTEL_swap_event_bit,
 };
 
 enum

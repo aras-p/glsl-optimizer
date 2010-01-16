@@ -4,7 +4,10 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi $(X11_INCLUDES)
+EGL_MAJOR = 1
+EGL_MINOR = 0
+
+INCLUDE_DIRS = -I$(TOP)/include
 
 HEADERS = \
 	eglcompiler.h \
@@ -43,7 +46,7 @@ SOURCES = \
 OBJECTS = $(SOURCES:.c=.o)
 
 
-# Undefined for now
+# use dl*() to load drivers
 LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
 
 
@@ -56,21 +59,21 @@ default: depend library
 
 
 # EGL Library
-library: $(TOP)/$(LIB_DIR)/libEGL.so
+library: $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME)
 
-$(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
-	$(MKLIB) -o EGL -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major 1 -minor 0 \
-		-install $(TOP)/$(LIB_DIR) \
+$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS)
+	$(MKLIB) -o $(EGL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(EGL_MAJOR) -minor $(EGL_MINOR) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(EGL_LIB_DEPS) $(OBJECTS)
 
 install: default
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/libEGL.so* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(EGL_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:
-	-rm -f *.o *.so*
-	-rm -f core.*
+	-rm -f *.o
 	-rm -f depend depend.bak
 
 
@@ -82,5 +85,5 @@ depend: $(SOURCES) $(HEADERS)
 		$(SOURCES) $(HEADERS) > /dev/null 2>/dev/null
 
 
-include depend
+-include depend
 # DO NOT DELETE

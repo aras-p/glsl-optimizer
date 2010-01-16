@@ -891,53 +891,61 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    /* Position element */
    r->vertex_elems[0].src_offset = 0;
+   r->vertex_elems[0].instance_divisor = 0;
    r->vertex_elems[0].vertex_buffer_index = 0;
    r->vertex_elems[0].nr_components = 2;
    r->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Luma, texcoord element */
    r->vertex_elems[1].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[1].instance_divisor = 0;
    r->vertex_elems[1].vertex_buffer_index = 0;
    r->vertex_elems[1].nr_components = 2;
    r->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cr texcoord element */
    r->vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
+   r->vertex_elems[2].instance_divisor = 0;
    r->vertex_elems[2].vertex_buffer_index = 0;
    r->vertex_elems[2].nr_components = 2;
    r->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cb texcoord element */
    r->vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
+   r->vertex_elems[3].instance_divisor = 0;
    r->vertex_elems[3].vertex_buffer_index = 0;
    r->vertex_elems[3].nr_components = 2;
    r->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface top field texcoord element */
    r->vertex_elems[4].src_offset = 0;
+   r->vertex_elems[4].instance_divisor = 0;
    r->vertex_elems[4].vertex_buffer_index = 1;
    r->vertex_elems[4].nr_components = 2;
    r->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
    r->vertex_elems[5].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[5].instance_divisor = 0;
    r->vertex_elems[5].vertex_buffer_index = 1;
    r->vertex_elems[5].nr_components = 2;
    r->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
    r->vertex_elems[6].src_offset = 0;
+   r->vertex_elems[6].instance_divisor = 0;
    r->vertex_elems[6].vertex_buffer_index = 2;
    r->vertex_elems[6].nr_components = 2;
    r->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
    r->vertex_elems[7].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[7].instance_divisor = 0;
    r->vertex_elems[7].vertex_buffer_index = 2;
    r->vertex_elems[7].nr_components = 2;
    r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vs_const_buf.buffer = pipe_buffer_create
+   r->vs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
       DEFAULT_BUF_ALIGNMENT,
@@ -945,7 +953,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       sizeof(struct vertex_shader_consts)
    );
 
-   r->fs_const_buf.buffer = pipe_buffer_create
+   r->fs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
       DEFAULT_BUF_ALIGNMENT,
@@ -954,11 +962,11 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    memcpy
    (
-      pipe_buffer_map(r->pipe->screen, r->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+      pipe_buffer_map(r->pipe->screen, r->fs_const_buf, PIPE_BUFFER_USAGE_CPU_WRITE),
       &fs_consts, sizeof(struct fragment_shader_consts)
    );
 
-   pipe_buffer_unmap(r->pipe->screen, r->fs_const_buf.buffer);
+   pipe_buffer_unmap(r->pipe->screen, r->fs_const_buf);
 
    return true;
 }
@@ -970,8 +978,8 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   pipe_buffer_reference(&r->vs_const_buf.buffer, NULL);
-   pipe_buffer_reference(&r->fs_const_buf.buffer, NULL);
+   pipe_buffer_reference(&r->vs_const_buf, NULL);
+   pipe_buffer_reference(&r->fs_const_buf, NULL);
 
    for (i = 0; i < 3; ++i)
       pipe_buffer_reference(&r->vertex_bufs.all[i].buffer, NULL);
@@ -1284,19 +1292,19 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    vs_consts = pipe_buffer_map
    (
-      r->pipe->screen, r->vs_const_buf.buffer,
+      r->pipe->screen, r->vs_const_buf,
       PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
    );
 
    vs_consts->denorm.x = r->surface->width0;
    vs_consts->denorm.y = r->surface->height0;
 
-   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf.buffer);
+   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf);
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
-                                &r->vs_const_buf);
+                                r->vs_const_buf);
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_FRAGMENT, 0,
-                                &r->fs_const_buf);
+                                r->fs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);

@@ -2,7 +2,7 @@
 TOP = ../../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = radeon_dri.so
+LIBNAME = radeong_dri.so
 
 MINIGLX_SOURCES =
 

@@ -29,7 +29,6 @@
 
 
 #include <assert.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -549,6 +548,10 @@ ReadConfigFile(const char *filename, struct config_file *conf)
 
             type = TypeFromName(typeName);
 
+            if (strlen(name) + 1 > sizeof(conf->uniforms[conf->num_uniforms].name)) {
+               fprintf(stderr, "string overflow\n");
+               exit(1);
+            }
             strcpy(conf->uniforms[conf->num_uniforms].name, name);
             conf->uniforms[conf->num_uniforms].value[0] = v1;
             conf->uniforms[conf->num_uniforms].value[1] = v2;

@@ -262,7 +262,7 @@ static void brw_delete_vs_state( struct pipe_context *pipe, void *prog )
 
 static void brw_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_constant_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct brw_context *brw = brw_context(pipe);
 
@@ -270,13 +270,13 @@ static void brw_set_constant_buffer(struct pipe_context *pipe,
 
    if (shader == PIPE_SHADER_FRAGMENT) {
       pipe_buffer_reference( &brw->curr.fragment_constants,
-                             buf->buffer );
+                             buf );
 
       brw->state.dirty.mesa |= PIPE_NEW_FRAGMENT_CONSTANTS;
    }
    else {
       pipe_buffer_reference( &brw->curr.vertex_constants,
-                             buf->buffer );
+                             buf );
 
       brw->state.dirty.mesa |= PIPE_NEW_VERTEX_CONSTANTS;
    }

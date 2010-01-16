@@ -384,6 +384,10 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r700InitIoctlFuncs(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 
+	if (r600->radeon.radeonScreen->kernel_mm) {
+                r600_init_texcopy_functions(&functions);
+        }
+	
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {

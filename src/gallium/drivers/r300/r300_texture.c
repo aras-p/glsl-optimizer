@@ -30,6 +30,18 @@
 #include "r300_texture.h"
 #include "r300_screen.h"
 
+#define TILE_WIDTH 0
+#define TILE_HEIGHT 1
+
+static const unsigned microblock_table[5][3][2] = {
+    /*linear  tiled   square-tiled */
+    {{32, 1}, {8, 4}, {0, 0}}, /*   8 bits per pixel */
+    {{16, 1}, {8, 2}, {4, 4}}, /*  16 bits per pixel */
+    {{ 8, 1}, {4, 2}, {0, 0}}, /*  32 bits per pixel */
+    {{ 4, 1}, {0, 0}, {2, 2}}, /*  64 bits per pixel */
+    {{ 2, 1}, {0, 0}, {0, 0}}  /* 128 bits per pixel */
+};
+
 static void r300_setup_texture_state(struct r300_texture* tex, boolean is_r500)
 {
     struct r300_texture_state* state = &tex->state;
@@ -92,33 +104,67 @@ unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
 }
 
 /**
+ * Return the width (dim==TILE_WIDTH) or height (dim==TILE_HEIGHT) of one tile
+ * of the given texture.
+ */
+static unsigned r300_texture_get_tile_size(struct r300_texture* tex, int dim)
+{
+    unsigned pixsize, tile_size;
+
+    pixsize = util_format_get_blocksize(tex->tex.format);
+    tile_size = microblock_table[util_logbase2(pixsize)][tex->microtile][dim] *
+                (tex->macrotile == R300_BUFFER_TILED ? 8 : 1);
+
+    assert(tile_size);
+    return tile_size;
+}
+
+/**
  * Return the stride, in bytes, of the texture images of the given texture
  * at the given level.
  */
 unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level)
 {
+    unsigned tile_width, width;
+
     if (tex->stride_override)
         return tex->stride_override;
 
+    /* Check the level. */
     if (level > tex->tex.last_level) {
         debug_printf("%s: level (%u) > last_level (%u)\n", __FUNCTION__,
             level, tex->tex.last_level);
         return 0;
     }
 
-    return align(util_format_get_stride(tex->tex.format, u_minify(tex->tex.width0, level)), 32);
+    tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH);
+    width = align(u_minify(tex->tex.width0, level), tile_width);
+
+    /* Should already be aligned except for S3TC. */
+    return align(util_format_get_stride(tex->tex.format, width), 32);
+}
+
+static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
+                                          unsigned level)
+{
+    unsigned height, tile_height;
+
+    tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT);
+    height = align(u_minify(tex->tex.height0, level), tile_height);
+
+    return util_format_get_nblocksy(tex->tex.format, height);
 }
 
 static void r300_setup_miptree(struct r300_texture* tex)
 {
     struct pipe_texture* base = &tex->tex;
-    int stride, size, layer_size;
-    int i;
+    unsigned stride, size, layer_size, nblocksy, i;
+
+    debug_printf("r300: Making miptree for texture, format %s\n", pf_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
-        unsigned nblocksy = util_format_get_nblocksy(base->format, u_minify(base->height0, i));
-
         stride = r300_texture_get_stride(tex, i);
+        nblocksy = r300_texture_get_nblocksy(tex, i);
         layer_size = stride * nblocksy;
 
         if (base->target == PIPE_TEXTURE_CUBE)
@@ -132,9 +178,9 @@ static void r300_setup_miptree(struct r300_texture* tex)
         tex->pitch[i] = stride / util_format_get_blocksize(base->format);
 
         debug_printf("r300: Texture miptree: Level %d "
-                "(%dx%dx%d px, pitch %d bytes)\n",
+                "(%dx%dx%d px, pitch %d bytes) %d bytes total\n",
                 i, u_minify(base->width0, i), u_minify(base->height0, i),
-                u_minify(base->depth0, i), stride);
+                u_minify(base->depth0, i), stride, tex->size);
     }
 }
 
@@ -163,7 +209,7 @@ static struct pipe_texture*
     r300_setup_miptree(tex);
     r300_setup_texture_state(tex, r300_screen(screen)->caps->is_r500);
 
-    tex->buffer = screen->buffer_create(screen, 1024,
+    tex->buffer = screen->buffer_create(screen, 2048,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
 

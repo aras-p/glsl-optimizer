@@ -59,6 +59,15 @@ draw_gs_init( struct draw_context *draw )
    return TRUE;
 }
 
+void draw_gs_destroy( struct draw_context *draw )
+{
+   if (!draw->gs.machine)
+      return;
+
+   align_free(draw->gs.machine->Primitives);
+
+   tgsi_exec_machine_destroy(draw->gs.machine);
+}
 
 void draw_gs_set_constants( struct draw_context *draw,
                             const float (*constants)[4],

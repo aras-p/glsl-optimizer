@@ -1173,6 +1173,9 @@ _glxapi_get_extensions(void)
 #ifdef GLX_EXT_texture_from_pixmap
       "GLX_EXT_texture_from_pixmap",
 #endif
+#ifdef GLX_INTEL_swap_event
+      "GLX_INTEL_swap_event",
+#endif
       NULL
    };
    return extensions;

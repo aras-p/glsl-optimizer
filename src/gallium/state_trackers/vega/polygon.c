@@ -293,6 +293,7 @@ static void draw_polygon(struct vg_context *ctx,
 
    /* tell pipe about the vertex attributes */
    velement.src_offset = 0;
+   velement.instance_divisor = 0;
    velement.vertex_buffer_index = 0;
    velement.src_format = PIPE_FORMAT_R32G32_FLOAT;
    velement.nr_components = COMPONENTS;

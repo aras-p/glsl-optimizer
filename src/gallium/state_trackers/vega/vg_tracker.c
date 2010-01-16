@@ -36,6 +36,9 @@
 #include "util/u_math.h"
 #include "util/u_rect.h"
 
+/* advertise OpenVG support */
+PUBLIC const int st_api_OpenVG = 1;
+
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
                VGint width, VGint height)
@@ -368,14 +371,15 @@ void st_unreference_framebuffer(struct st_framebuffer *stfb)
    /* FIXME */
 }
 
-void st_make_current(struct vg_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read)
+boolean st_make_current(struct vg_context *st,
+                        struct st_framebuffer *draw,
+                        struct st_framebuffer *read)
 {
    vg_set_current_context(st);
    if (st) {
       st->draw_buffer = draw;
    }
+   return VG_TRUE;
 }
 
 struct vg_context *st_get_current(void)
@@ -424,4 +428,9 @@ int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
 int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
 {
    return 0;
+}
+
+st_proc st_get_proc_address(const char *procname)
+{
+   return NULL;
 }

@@ -20,7 +20,8 @@ AC_CANONICAL_HOST
 dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.15
 LIBDRM_RADEON_REQUIRED=2.4.17
-DRI2PROTO_REQUIRED=1.99.3
+DRI2PROTO_REQUIRED=2.2
+GLPROTO_REQUIRED=1.4.11
 
 dnl Check for progs
 AC_PROG_CPP
@@ -243,24 +244,28 @@ GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
 GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
 GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
 OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
+EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
 GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
 GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
 OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
+EGL_LIB_GLOB='lib$(EGL_LIB).*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
+AC_SUBST([EGL_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
 AC_SUBST([GLUT_LIB_GLOB])
 AC_SUBST([GLW_LIB_GLOB])
 AC_SUBST([OSMESA_LIB_GLOB])
+AC_SUBST([EGL_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -571,7 +576,8 @@ dri)
     # Check for libdrm
     PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
     PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
-    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
+    PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
+    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED glproto >= $GLPROTO_REQUIRED"
     DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 
     # find the DRI deps for libGL
@@ -900,17 +906,15 @@ AC_ARG_ENABLE([egl],
     [enable_egl=yes])
 if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
-
-    if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([EGL], [x11])
-        EGL_LIB_DEPS="$EGL_LIBS"
-    else
-        # should check these...
-        EGL_LIB_DEPS="$X_LIBS -lX11"
+    EGL_LIB_DEPS="$DLOPEN_LIBS -lpthread"
+    EGL_DRIVERS_DIRS=""
+    if test "$enable_static" != yes && test "$mesa_driver" != osmesa; then
+        # build egl_glx when libGL is built
+        EGL_DRIVERS_DIRS="glx"
     fi
-    EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 fi
 AC_SUBST([EGL_LIB_DEPS])
+AC_SUBST([EGL_DRIVERS_DIRS])
 
 dnl
 dnl GLU configuration
@@ -1158,7 +1162,7 @@ yes)
     dri)
         GALLIUM_STATE_TRACKERS_DIRS="dri"
         if test "x$enable_egl" = xyes; then
-            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl egl_g3d"
         fi
         # Have only tested st/xorg on 1.6.0 servers
         PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
@@ -1186,6 +1190,35 @@ yes)
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
 esac
+
+AC_ARG_WITH([egl-displays],
+    [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
+        [comma delimited native displays libEGL supports, e.g.
+        "x11,kms" @<:@default=auto@:>@])],
+    [with_egl_displays="$withval"],
+    [with_egl_displays=yes])
+
+EGL_DISPLAYS=""
+case "$with_egl_displays" in
+yes)
+    if test "x$enable_egl" = xyes && test "x$mesa_driver" != xosmesa; then
+        EGL_DISPLAYS="x11"
+    fi
+    ;;
+*)
+    if test "x$enable_egl" != xyes; then
+        AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+    fi
+    # verify the requested driver directories exist
+    egl_displays=`IFS=', '; echo $with_egl_displays`
+    for dpy in $egl_displays; do
+        test -d "$srcdir/src/gallium/state_trackers/egl_g3d/$dpy" || \
+            AC_MSG_ERROR([EGL display '$dpy' does't exist])
+    done
+    EGL_DISPLAYS="$egl_displays"
+    ;;
+esac
+AC_SUBST([EGL_DISPLAYS])
 
 AC_ARG_WITH([xorg-driver-dir],
     [AS_HELP_STRING([--with-xorg-driver-dir=DIR],
@@ -1246,9 +1279,11 @@ AC_ARG_ENABLE([gallium-radeon],
     [AS_HELP_STRING([--enable-gallium-radeon],
         [build gallium radeon @<:@default=disabled@:>@])],
     [enable_gallium_radeon="$enableval"],
-    [enable_gallium_radeon=no])
+    [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
 

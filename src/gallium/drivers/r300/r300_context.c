@@ -30,6 +30,7 @@
 
 #include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_flush.h"
 #include "r300_query.h"
 #include "r300_render.h"
@@ -69,11 +70,13 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(query);
     }
 
-    FREE(r300->blend_color_state);
+    FREE(r300->blend_color_state.state);
+    FREE(r300->clip_state.state);
     FREE(r300->rs_block);
-    FREE(r300->scissor_state);
+    FREE(r300->scissor_state.state);
     FREE(r300->vertex_info);
-    FREE(r300->viewport_state);
+    FREE(r300->viewport_state.state);
+    FREE(r300->ztop_state.state);
     FREE(r300);
 }
 
@@ -105,6 +108,35 @@ static void r300_flush_cb(void *data)
     struct r300_context* const cs_context_copy = data;
 
     cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
+}
+
+#define R300_INIT_ATOM(atomname, atomsize) \
+    r300->atomname##_state.name = #atomname; \
+    r300->atomname##_state.state = NULL; \
+    r300->atomname##_state.size = atomsize; \
+    r300->atomname##_state.emit = r300_emit_##atomname##_state; \
+    r300->atomname##_state.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->atomname##_state);
+
+static void r300_setup_atoms(struct r300_context* r300)
+{
+    /* Create the actual atom list.
+     *
+     * Each atom is examined and emitted in the order it appears here, which
+     * can affect performance and conformance if not handled with care.
+     *
+     * Some atoms never change size, others change every emit. This is just
+     * an upper bound on each atom, to keep the emission machinery from
+     * underallocating space. */
+    make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(ztop, 2);
+    R300_INIT_ATOM(blend, 8);
+    R300_INIT_ATOM(blend_color, 3);
+    R300_INIT_ATOM(clip, 29);
+    R300_INIT_ATOM(dsa, 8);
+    R300_INIT_ATOM(rs, 22);
+    R300_INIT_ATOM(scissor, 3);
+    R300_INIT_ATOM(viewport, 9);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -155,11 +187,15 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
         r300_shader_key_compare);
 
-    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
+    r300_setup_atoms(r300);
+
+    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
+    r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
-    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
+    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,

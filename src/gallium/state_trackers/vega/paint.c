@@ -77,7 +77,8 @@ struct vg_paint {
       struct pipe_sampler_state sampler;
    } pattern;
 
-   struct pipe_constant_buffer cbuf;
+   /* XXX next 3 all unneded? */
+   struct pipe_buffer *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };

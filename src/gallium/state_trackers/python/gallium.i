@@ -76,7 +76,6 @@
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
 %rename(Clip) pipe_clip_state;
-%rename(ConstantBuffer) pipe_constant_buffer;
 %rename(Depth) pipe_depth_state;
 %rename(Stencil) pipe_stencil_state;
 %rename(Alpha) pipe_alpha_state;

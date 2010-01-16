@@ -30,7 +30,6 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/state.h"
-#include "main/macros.h"
 
 #include "vbo_context.h"
 

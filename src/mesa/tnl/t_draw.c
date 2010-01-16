@@ -29,15 +29,11 @@
 #include "main/condrender.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/state.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/enums.h"
 
 #include "t_context.h"
-#include "t_pipeline.h"
-#include "t_vp_build.h"
-#include "t_vertex.h"
 #include "tnl.h"
 
 

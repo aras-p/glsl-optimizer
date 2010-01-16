@@ -40,6 +40,8 @@ union tgsi_any_token {
    struct tgsi_header header;
    struct tgsi_processor processor;
    struct tgsi_token token;
+   struct tgsi_property prop;
+   struct tgsi_property_data prop_data;
    struct tgsi_declaration decl;
    struct tgsi_declaration_range decl_range;
    struct tgsi_declaration_semantic decl_semantic;
@@ -64,6 +66,7 @@ struct ureg_tokens {
 };
 
 #define UREG_MAX_INPUT PIPE_MAX_ATTRIBS
+#define UREG_MAX_SYSTEM_VALUE PIPE_MAX_ATTRIBS
 #define UREG_MAX_OUTPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_CONSTANT_RANGE 32
 #define UREG_MAX_IMMEDIATE 32
@@ -95,6 +98,13 @@ struct ureg_program
    unsigned nr_gs_inputs;
 
    struct {
+      unsigned index;
+      unsigned semantic_name;
+      unsigned semantic_index;
+   } system_value[UREG_MAX_SYSTEM_VALUE];
+   unsigned nr_system_values;
+
+   struct {
       unsigned semantic_name;
       unsigned semantic_index;
    } output[UREG_MAX_OUTPUT];
@@ -122,6 +132,8 @@ struct ureg_program
       unsigned last;
    } constant_range[UREG_MAX_CONSTANT_RANGE];
    unsigned nr_constant_ranges;
+
+   unsigned property_gs_input_prim;
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -234,17 +246,26 @@ ureg_src_register( unsigned file,
    src.SwizzleY = TGSI_SWIZZLE_Y;
    src.SwizzleZ = TGSI_SWIZZLE_Z;
    src.SwizzleW = TGSI_SWIZZLE_W;
-   src.Pad      = 0;
    src.Indirect = 0;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute = 0;
    src.Index    = index;
    src.Negate   = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
 
    return src;
 }
 
+
+
+void
+ureg_property_gs_input_prim(struct ureg_program *ureg,
+                            unsigned gs_input_prim)
+{
+   ureg->property_gs_input_prim = gs_input_prim;
+}
 
 
 
@@ -301,6 +322,25 @@ ureg_DECL_gs_input(struct ureg_program *ureg,
 
    /* XXX: Add suport for true 2D input registers. */
    return ureg_src_register(TGSI_FILE_INPUT, index);
+}
+
+
+struct ureg_src
+ureg_DECL_system_value(struct ureg_program *ureg,
+                       unsigned index,
+                       unsigned semantic_name,
+                       unsigned semantic_index)
+{
+   if (ureg->nr_system_values < UREG_MAX_SYSTEM_VALUE) {
+      ureg->system_value[ureg->nr_system_values].index = index;
+      ureg->system_value[ureg->nr_system_values].semantic_name = semantic_name;
+      ureg->system_value[ureg->nr_system_values].semantic_index = semantic_index;
+      ureg->nr_system_values++;
+   } else {
+      set_bad(ureg);
+   }
+
+   return ureg_src_register(TGSI_FILE_SYSTEM_VALUE, index);
 }
 
 
@@ -628,7 +668,7 @@ void
 ureg_emit_src( struct ureg_program *ureg,
                struct ureg_src src )
 {
-   unsigned size = 1 + (src.Indirect ? 1 : 0);
+   unsigned size = 1 + (src.Indirect ? 1 : 0) + (src.Dimension ? 1 : 0);
 
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_INSN, size );
    unsigned n = 0;
@@ -657,6 +697,15 @@ ureg_emit_src( struct ureg_program *ureg,
       out[n].src.SwizzleZ = src.IndirectSwizzle;
       out[n].src.SwizzleW = src.IndirectSwizzle;
       out[n].src.Index = src.IndirectIndex;
+      n++;
+   }
+
+   if (src.Dimension) {
+      out[0].src.Dimension = 1;
+      out[n].dim.Indirect = 0;
+      out[n].dim.Dimension = 0;
+      out[n].dim.Padding = 0;
+      out[n].dim.Index = src.DimensionIndex;
       n++;
    }
 
@@ -1027,12 +1076,33 @@ emit_immediate( struct ureg_program *ureg,
    out[4].imm_data.Uint = v[3];
 }
 
+static void
+emit_property(struct ureg_program *ureg,
+              unsigned name,
+              unsigned data)
+{
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 2);
 
+   out[0].value = 0;
+   out[0].prop.Type = TGSI_TOKEN_TYPE_PROPERTY;
+   out[0].prop.NrTokens = 2;
+   out[0].prop.PropertyName = name;
+
+   out[1].prop_data.Data = data;
+}
 
 
 static void emit_decls( struct ureg_program *ureg )
 {
    unsigned i;
+
+   if (ureg->property_gs_input_prim != ~0) {
+      assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_GS_INPUT_PRIM,
+                    ureg->property_gs_input_prim);
+   }
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {
       for (i = 0; i < UREG_MAX_INPUT; i++) {
@@ -1056,6 +1126,15 @@ static void emit_decls( struct ureg_program *ureg )
                          ureg->gs_input[i].index,
                          1);
       }
+   }
+
+   for (i = 0; i < ureg->nr_system_values; i++) {
+      emit_decl(ureg,
+                TGSI_FILE_SYSTEM_VALUE,
+                ureg->system_value[i].index,
+                ureg->system_value[i].semantic_name,
+                ureg->system_value[i].semantic_index,
+                TGSI_INTERPOLATE_CONSTANT);
    }
 
    for (i = 0; i < ureg->nr_outputs; i++) {
@@ -1234,6 +1313,7 @@ struct ureg_program *ureg_create( unsigned processor )
       return NULL;
 
    ureg->processor = processor;
+   ureg->property_gs_input_prim = ~0;
    return ureg;
 }
 

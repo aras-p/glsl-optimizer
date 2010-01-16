@@ -47,6 +47,8 @@ enum mode {
    MODE_SOFTPIPE
 };
 
+/* advertise OpenGL support */
+PUBLIC const int st_api_OpenGL = 1;
 
 static enum mode get_mode()
 {

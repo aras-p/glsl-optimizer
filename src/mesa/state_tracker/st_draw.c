@@ -365,6 +365,7 @@ setup_interleaved_attribs(GLcontext *ctx,
 
       velements[attr].src_offset =
          (unsigned) (arrays[mesaAttr]->Ptr - offset0);
+      velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = 0;
       velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format =
@@ -454,6 +455,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       /* common-case setup */
       vbuffer[attr].stride = stride; /* in bytes */
       vbuffer[attr].max_index = max_index;
+      velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format
@@ -522,7 +524,6 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    const struct st_vertex_program *vp;
    const struct st_vp_varient *vpv;
-   const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
@@ -550,7 +551,6 @@ st_draw_vbo(GLcontext *ctx,
    /* must get these after state validation! */
    vp = ctx->st->vp;
    vpv = ctx->st->vp_varient;
-   vs = &vpv->state;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {

@@ -174,6 +174,10 @@ AddWindow(Display *dpy, const char *displayName, int xpos, int ypos,
    {
       static int id = 0;
       struct window *h = &Windows[NumWindows];
+      if (strlen(displayName) + 1 > sizeof(h->DisplayName)) {
+         Error(displayName, "string overflow");
+         return NULL;
+      }
       strcpy(h->DisplayName, displayName);
       h->Dpy = dpy;
       h->Win = win;

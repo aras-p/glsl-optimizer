@@ -59,12 +59,23 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   unsigned i;
+   unsigned instance_id_index = ~0;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
     */
    unsigned nr = MAX2( vs->info.num_inputs,
 		       vs->info.num_outputs + 1 );
+
+   /* Scan for instanceID system value.
+    */
+   for (i = 0; i < vs->info.num_inputs; i++) {
+      if (vs->info.input_semantic_name[i] == TGSI_SEMANTIC_INSTANCEID) {
+         instance_id_index = i;
+         break;
+      }
+   }
 
    fpme->prim = prim;
    fpme->opt = opt;
@@ -79,7 +90,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    draw_pt_fetch_prepare( fpme->fetch, 
                           vs->info.num_inputs,
-			  fpme->vertex_size );
+                          fpme->vertex_size,
+                          instance_id_index );
    /* XXX: it's not really gl rasterization rules we care about here,
     * but gl vs dx9 clip spaces.
     */

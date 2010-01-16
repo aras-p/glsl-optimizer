@@ -67,8 +67,12 @@ nv50_destroy(struct pipe_context *pipe)
 		so_ref(NULL, &nv50->state.vertprog);
 	if (nv50->state.fragprog)
 		so_ref(NULL, &nv50->state.fragprog);
-	if (nv50->state.programs)
-		so_ref(NULL, &nv50->state.programs);
+	if (nv50->state.geomprog)
+		so_ref(NULL, &nv50->state.geomprog);
+	if (nv50->state.fp_linkage)
+		so_ref(NULL, &nv50->state.fp_linkage);
+	if (nv50->state.gp_linkage)
+		so_ref(NULL, &nv50->state.gp_linkage);
 	if (nv50->state.vtxfmt)
 		so_ref(NULL, &nv50->state.vtxfmt);
 	if (nv50->state.vtxbuf)

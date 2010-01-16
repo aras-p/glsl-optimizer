@@ -812,13 +812,13 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
 static INLINE void
 trace_context_set_constant_buffer(struct pipe_context *_pipe,
                                   uint shader, uint index,
-                                  const struct pipe_constant_buffer *buffer)
+                                  struct pipe_buffer *buffer)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    if (buffer)
-      trace_screen_user_buffer_update(_pipe->screen, buffer->buffer);
+      trace_screen_user_buffer_update(_pipe->screen, buffer);
 
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
 
@@ -827,10 +827,11 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(uint, index);
    trace_dump_arg(constant_buffer, buffer);
 
+   /* XXX hmm? */
    if (buffer) {
-      struct pipe_constant_buffer _buffer;
-      _buffer.buffer = trace_buffer_unwrap(tr_ctx, buffer->buffer);
-      pipe->set_constant_buffer(pipe, shader, index, &_buffer);
+      struct pipe_buffer *_buffer;
+      _buffer = trace_buffer_unwrap(tr_ctx, buffer);
+      pipe->set_constant_buffer(pipe, shader, index, _buffer);
    } else {
       pipe->set_constant_buffer(pipe, shader, index, buffer);
    }

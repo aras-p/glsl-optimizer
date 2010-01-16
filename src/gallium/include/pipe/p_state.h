@@ -66,10 +66,6 @@ extern "C" {
 #define PIPE_MAX_TEXTURE_LEVELS   16
 
 
-/* fwd decls */
-struct pipe_surface;
-
-
 /**
  * The driver will certainly subclass this to include actual memory
  * management information.
@@ -175,15 +171,6 @@ struct pipe_clip_state
 {
    float ucp[PIPE_MAX_CLIP_PLANES][4];
    unsigned nr;
-};
-
-
-/**
- * Constants for vertex/fragment shaders
- */
-struct pipe_constant_buffer
-{
-   struct pipe_buffer *buffer;
 };
 
 
@@ -375,6 +362,11 @@ struct pipe_vertex_element
 {
    /** Offset of this attribute, in bytes, from the start of the vertex */
    unsigned src_offset;
+
+   /** Instance data rate divisor. 0 means this is per-vertex data,
+    *  n means per-instance data used for n consecutive instances (n > 0).
+    */
+   unsigned instance_divisor;
 
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?

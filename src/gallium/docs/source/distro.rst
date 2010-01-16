@@ -118,6 +118,9 @@ Gallivm
 Indices
 ^^^^^^^
 
+Tool for translating or generating element indices for element-based
+rendering.
+
 Pipe Buffer Manager
 ^^^^^^^^^^^^^^^^^^^
 
@@ -127,11 +130,10 @@ Remote Debugger
 Runtime Assembly Emission
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Surface Context Tracker
-^^^^^^^^^^^^^^^^^^^^^^^
-
 TGSI
 ^^^^
+
+Basic utilities for manipulating TGSI streams.
 
 Translate
 ^^^^^^^^^

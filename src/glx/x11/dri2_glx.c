@@ -35,6 +35,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
+#include "glapi.h"
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "xf86dri.h"
@@ -46,6 +47,7 @@
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
+#include "../../mesa/drivers/dri/common/dri_util.h"
 
 #undef DRI2_MINOR
 #define DRI2_MINOR 1
@@ -64,6 +66,7 @@ struct __GLXDRIdisplayPrivateRec
    int driMajor;
    int driMinor;
    int driPatch;
+   int swapAvailable;
 };
 
 struct __GLXDRIcontextPrivateRec
@@ -81,6 +84,7 @@ struct __GLXDRIdrawablePrivateRec
    int width, height;
    int have_back;
    int have_fake_front;
+   int swap_interval;
 };
 
 static void dri2WaitX(__GLXDRIdrawable * pdraw);
@@ -197,9 +201,31 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    return &pdraw->base;
 }
 
+static int
+dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
+		   int64_t *ust, int64_t *msc, int64_t *sbc)
+{
+   return DRI2GetMSC(psc->dpy, pdraw->xDrawable, ust, msc, sbc);
+}
+
+static int
+dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
+	       int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
+{
+   return DRI2WaitMSC(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
+		      remainder, ust, msc, sbc);
+}
+
+static int
+dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
+	       int64_t *msc, int64_t *sbc)
+{
+   return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
+		      sbc);
+}
+
 static void
-dri2CopySubBuffer(__GLXDRIdrawable * pdraw,
-                  int x, int y, int width, int height)
+dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 {
    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
    XRectangle xrect;
@@ -232,15 +258,7 @@ dri2CopySubBuffer(__GLXDRIdrawable * pdraw,
 }
 
 static void
-dri2SwapBuffers(__GLXDRIdrawable * pdraw)
-{
-   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
-
-   dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
-}
-
-static void
-dri2WaitX(__GLXDRIdrawable * pdraw)
+dri2WaitX(__GLXDRIdrawable *pdraw)
 {
    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
    XRectangle xrect;
@@ -342,6 +360,38 @@ process_buffers(__GLXDRIdrawablePrivate * pdraw, DRI2Buffer * buffers,
 
 }
 
+static int64_t
+dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
+		int64_t remainder)
+{
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+    __GLXdisplayPrivate *dpyPriv = __glXInitialize(priv->base.psc->dpy);
+    __GLXDRIdisplayPrivate *pdp =
+	(__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
+    int64_t ret;
+
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
+    /* Old servers can't handle swapbuffers */
+    if (!pdp->swapAvailable) {
+       dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
+       return 0;
+    }
+
+    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
+		    remainder, &ret);
+
+#if __DRI2_FLUSH_VERSION >= 2
+    if (pdraw->psc->f)
+       (*pdraw->psc->f->flushInvalidate)(pdraw->driDrawable);
+#endif
+
+    return ret;
+}
+
 static __DRIbuffer *
 dri2GetBuffers(__DRIdrawable * driDrawable,
                int *width, int *height,
@@ -388,6 +438,23 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    Xfree(buffers);
 
    return pdraw->buffers;
+}
+
+static void
+dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
+{
+   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+
+   DRI2SwapInterval(priv->base.psc->dpy, pdraw->xDrawable, interval);
+   priv->swap_interval = interval;
+}
+
+static unsigned int
+dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
+{
+   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+
+  return priv->swap_interval;
 }
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
@@ -437,7 +504,7 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psc->ext_list_first_time = GL_TRUE;
 
    if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
-                    &driverName, &deviceName))
+		    &driverName, &deviceName))
       return NULL;
 
    psc->driver = driOpenDriver(driverName);
@@ -454,9 +521,9 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
 
    for (i = 0; extensions[i]; i++) {
       if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
-         psc->core = (__DRIcoreExtension *) extensions[i];
+	 psc->core = (__DRIcoreExtension *) extensions[i];
       if (strcmp(extensions[i]->name, __DRI_DRI2) == 0)
-         psc->dri2 = (__DRIdri2Extension *) extensions[i];
+	 psc->dri2 = (__DRIdri2Extension *) extensions[i];
    }
 
    if (psc->core == NULL || psc->dri2 == NULL) {
@@ -485,16 +552,17 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
     */
    psc->__driScreen =
       psc->dri2->createNewScreen(screen, psc->fd, ((pdp->driMinor < 1)
-                                                   ? loader_extensions_old
-                                                   : loader_extensions),
-                                 &driver_configs, psc);
+						   ? loader_extensions_old
+						   : loader_extensions),
+				 &driver_configs, psc);
 
    if (psc->__driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       return NULL;
    }
 
-   driBindExtensions(psc, 1);
+   driBindCommonExtensions(psc);
+   dri2BindExtensions(psc);
 
    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
@@ -507,6 +575,19 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->swapBuffers = dri2SwapBuffers;
    psp->waitGL = dri2WaitGL;
    psp->waitX = dri2WaitX;
+   if (pdp->driMinor >= 2) {
+      psp->getDrawableMSC = dri2DrawableGetMSC;
+      psp->waitForMSC = dri2WaitForMSC;
+      psp->waitForSBC = dri2WaitForSBC;
+      psp->setSwapInterval = dri2SetSwapInterval;
+      psp->getSwapInterval = dri2GetSwapInterval;
+   } else {
+      psp->getDrawableMSC = NULL;
+      psp->waitForMSC = NULL;
+      psp->waitForSBC = NULL;
+      psp->setSwapInterval = NULL;
+      psp->getSwapInterval = NULL;
+   }
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
     * available.*/
@@ -518,7 +599,7 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
 
    return psp;
 
- handle_error:
+handle_error:
    Xfree(driverName);
    Xfree(deviceName);
 
@@ -559,6 +640,9 @@ dri2CreateDisplay(Display * dpy)
    }
 
    pdp->driPatch = 0;
+   pdp->swapAvailable = 0;
+   if (pdp->driMinor >= 2)
+      pdp->swapAvailable = 1;
 
    pdp->base.destroyDisplay = dri2DestroyDisplay;
    pdp->base.createScreen = dri2CreateScreen;

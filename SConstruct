@@ -97,6 +97,9 @@ env.Append(CPPPATH = [
 	'#/src/gallium/drivers',
 ])
 
+if env['msvc']:
+    env.Append(CPPPATH = ['#include/c99'])
+
 
 # Posix
 if platform in ('posix', 'linux', 'freebsd', 'darwin'):

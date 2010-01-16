@@ -180,7 +180,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
    if (llvmpipe->dirty & LP_NEW_CONSTANTS)
       lp_setup_set_fs_constants(llvmpipe->setup, 
-                                llvmpipe->constants[PIPE_SHADER_FRAGMENT].buffer);
+                                llvmpipe->constants[PIPE_SHADER_FRAGMENT]);
 
    if (llvmpipe->dirty & LP_NEW_TEXTURE)
       lp_setup_set_sampler_textures(llvmpipe->setup, 

@@ -28,7 +28,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/state.h"
 #include "main/mtypes.h"
 
 #include "t_context.h"

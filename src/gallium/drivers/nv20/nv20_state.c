@@ -451,7 +451,7 @@ nv20_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 const struct pipe_constant_buffer *buf )
+			 struct pipe_buffer *buf )
 {
 	struct nv20_context *nv20 = nv20_context(pipe);
 	struct pipe_screen *pscreen = pipe->screen;
@@ -461,13 +461,13 @@ nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 
 	if (buf) {
 		void *mapped;
-		if (buf->buffer && buf->buffer->size &&
-                    (mapped = pipe_buffer_map(pscreen, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
+		if (buf->size &&
+                    (mapped = pipe_buffer_map(pscreen, buf, PIPE_BUFFER_USAGE_CPU_READ)))
 		{
-			memcpy(nv20->constbuf[shader], mapped, buf->buffer->size);
+			memcpy(nv20->constbuf[shader], mapped, buf->size);
 			nv20->constbuf_nr[shader] =
-				buf->buffer->size / (4 * sizeof(float));
-			pipe_buffer_unmap(pscreen, buf->buffer);
+				buf->size / (4 * sizeof(float));
+			pipe_buffer_unmap(pscreen, buf);
 		}
 	}
 }

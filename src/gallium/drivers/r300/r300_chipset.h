@@ -40,11 +40,18 @@ struct r300_capabilities {
     unsigned num_z_pipes;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
+    /* Whether or not this is R400. The differences compared to their R3xx
+     * cousins are:
+     * - Extended fragment shader registers
+     * - Blend LTE/GTE thresholds */
+    boolean is_r400;
     /* Whether or not this is an RV515 or newer; R500s have many differences
      * that require extra consideration, compared to their R3xx cousins:
      * - Extra bit of width and height on texture sizes
      * - Blend color is split across two registers
-     * - Universal Shader (US) block used for fragment shaders */
+     * - Blend LTE/GTE thresholds
+     * - Universal Shader (US) block used for fragment shaders
+     * - FP16 blending and multisampling */
     boolean is_r500;
     /* Whether or not the second pixel pipe is accessed with the high bit */
     boolean high_second_pipe;

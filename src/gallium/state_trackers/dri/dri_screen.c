@@ -308,6 +308,7 @@ dri_init_screen2(__DRIscreen * sPriv)
    }
 
    /* We need to hook in here */
+   screen->pipe_screen->update_buffer = dri_update_buffer;
    screen->pipe_screen->flush_frontbuffer = dri_flush_frontbuffer;
 
    driParseOptionInfo(&screen->optionCache,

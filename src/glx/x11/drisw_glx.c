@@ -398,7 +398,8 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
       goto handle_error;
    }
 
-   driBindExtensions(psc, 0);
+   driBindExtensions(psc);
+   driBindCommonExtensions(psc);
 
    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);

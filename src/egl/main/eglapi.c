@@ -716,7 +716,8 @@ void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
 
    /* now loop over drivers to query their procs */
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
-      _EGLProc p = _eglGlobal.Drivers[i]->API.GetProcAddress(procname);
+      _EGLDriver *drv = _eglGlobal.Drivers[i];
+      _EGLProc p = drv->API.GetProcAddress(drv, procname);
       if (p)
          return p;
    }

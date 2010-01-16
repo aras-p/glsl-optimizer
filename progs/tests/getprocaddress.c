@@ -660,8 +660,8 @@ exercise_CompressedTextures(GLenum dimension)
    glGetTexLevelParameteriv(dimension, 0, GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB, 
       &queryCompressedSize);
    if (queryCompressedSize != sizeof(compressedTexture)) {
-      fprintf(stderr, "%s: compressed 3D texture changed size: expected %d, actual %d\n",
-         __FUNCTION__, sizeof(compressedTexture), queryCompressedSize);
+      fprintf(stderr, "%s: compressed 3D texture changed size: expected %lu, actual %d\n",
+         __FUNCTION__, (unsigned long) sizeof(compressedTexture), queryCompressedSize);
       return GL_FALSE;
    }
    (*GetCompressedTexImageARB)(dimension, 0, queryCompressedData);

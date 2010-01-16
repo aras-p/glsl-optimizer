@@ -52,18 +52,18 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    uint i, vssize, gssize;
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      if (sp->constants[i].buffer && sp->constants[i].buffer->size)
-         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
+      if (sp->constants[i] && sp->constants[i]->size)
+         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i],
                                                   PIPE_BUFFER_USAGE_CPU_READ);
    }
 
-   if (sp->constants[PIPE_SHADER_VERTEX].buffer)
-      vssize = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
+   if (sp->constants[PIPE_SHADER_VERTEX])
+      vssize = sp->constants[PIPE_SHADER_VERTEX]->size;
    else
       vssize = 0;
 
-   if (sp->constants[PIPE_SHADER_GEOMETRY].buffer)
-      gssize = sp->constants[PIPE_SHADER_GEOMETRY].buffer->size;
+   if (sp->constants[PIPE_SHADER_GEOMETRY])
+      gssize = sp->constants[PIPE_SHADER_GEOMETRY]->size;
    else
       gssize = 0;
 
@@ -91,18 +91,10 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
    draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_GEOMETRY, NULL, 0);
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      if (sp->constants[i].buffer && sp->constants[i].buffer->size)
-         ws->buffer_unmap(ws, sp->constants[i].buffer);
+      if (sp->constants[i] && sp->constants[i]->size)
+         ws->buffer_unmap(ws, sp->constants[i]);
       sp->mapped_constants[i] = NULL;
    }
-}
-
-
-void
-softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -111,6 +103,36 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
+static void
+softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
+                                       struct pipe_buffer *indexBuffer,
+                                       unsigned indexSize,
+                                       unsigned minIndex,
+                                       unsigned maxIndex,
+                                       unsigned mode,
+                                       unsigned start,
+                                       unsigned count,
+                                       unsigned startInstance,
+                                       unsigned instanceCount);
+
+
+void
+softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                     unsigned start, unsigned count)
+{
+   softpipe_draw_range_elements_instanced(pipe,
+                                          NULL,
+                                          0,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          0,
+                                          1);
+}
+
+
 void
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
@@ -118,6 +140,91 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
                              unsigned min_index,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count)
+{
+   softpipe_draw_range_elements_instanced(pipe,
+                                          indexBuffer,
+                                          indexSize,
+                                          min_index,
+                                          max_index,
+                                          mode,
+                                          start,
+                                          count,
+                                          0,
+                                          1);
+}
+
+
+void
+softpipe_draw_elements(struct pipe_context *pipe,
+                       struct pipe_buffer *indexBuffer,
+                       unsigned indexSize,
+                       unsigned mode, unsigned start, unsigned count)
+{
+   softpipe_draw_range_elements_instanced(pipe,
+                                          indexBuffer,
+                                          indexSize,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          0,
+                                          1);
+}
+
+void
+softpipe_draw_arrays_instanced(struct pipe_context *pipe,
+                               unsigned mode,
+                               unsigned start,
+                               unsigned count,
+                               unsigned startInstance,
+                               unsigned instanceCount)
+{
+   softpipe_draw_range_elements_instanced(pipe,
+                                          NULL,
+                                          0,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          startInstance,
+                                          instanceCount);
+}
+
+void
+softpipe_draw_elements_instanced(struct pipe_context *pipe,
+                                 struct pipe_buffer *indexBuffer,
+                                 unsigned indexSize,
+                                 unsigned mode,
+                                 unsigned start,
+                                 unsigned count,
+                                 unsigned startInstance,
+                                 unsigned instanceCount)
+{
+   softpipe_draw_range_elements_instanced(pipe,
+                                          indexBuffer,
+                                          indexSize,
+                                          0,
+                                          0xffffffff,
+                                          mode,
+                                          start,
+                                          count,
+                                          startInstance,
+                                          instanceCount);
+}
+
+static void
+softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
+                                       struct pipe_buffer *indexBuffer,
+                                       unsigned indexSize,
+                                       unsigned minIndex,
+                                       unsigned maxIndex,
+                                       unsigned mode,
+                                       unsigned start,
+                                       unsigned count,
+                                       unsigned startInstance,
+                                       unsigned instanceCount)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
@@ -128,45 +235,48 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
 
    sp->reduced_api_prim = u_reduced_prim(mode);
 
-   if (sp->dirty)
-      softpipe_update_derived( sp );
+   if (sp->dirty) {
+      softpipe_update_derived(sp);
+   }
 
    softpipe_map_transfers(sp);
    softpipe_map_constant_buffers(sp);
 
-   /*
-    * Map vertex buffers
-    */
+   /* Map vertex buffers */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      void *buf
-         = pipe_buffer_map(pipe->screen,
-                                    sp->vertex_buffer[i].buffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+      void *buf;
+
+      buf = pipe_buffer_map(pipe->screen,
+                            sp->vertex_buffer[i].buffer,
+                            PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes
-         = pipe_buffer_map(pipe->screen, indexBuffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
-      draw_set_mapped_element_buffer_range(draw, indexSize,
-                                           min_index,
-                                           max_index,
+      void *mapped_indexes;
+
+      mapped_indexes = pipe_buffer_map(pipe->screen,
+                                       indexBuffer,
+                                       PIPE_BUFFER_USAGE_CPU_READ);
+      draw_set_mapped_element_buffer_range(draw,
+                                           indexSize,
+                                           minIndex,
+                                           maxIndex,
                                            mapped_indexes);
-   }
-   else {
+   } else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer_range(draw, 0, start,
-                                           start + count - 1, NULL);
+      draw_set_mapped_element_buffer_range(draw,
+                                           0,
+                                           start,
+                                           start + count - 1,
+                                           NULL);
    }
 
    /* draw! */
-   draw_arrays(draw, mode, start, count);
+   draw_arrays_instanced(draw, mode, start, count, startInstance, instanceCount);
 
-   /*
-    * unmap vertex/index buffers - will cause draw module to flush
-    */
+   /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
       pipe_buffer_unmap(pipe->screen, sp->vertex_buffer[i].buffer);
@@ -176,22 +286,8 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
       pipe_buffer_unmap(pipe->screen, indexBuffer);
    }
 
-
    /* Note: leave drawing surfaces mapped */
    softpipe_unmap_constant_buffers(sp);
 
    sp->dirty_render_cache = TRUE;
-}
-
-
-void
-softpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer *indexBuffer,
-                       unsigned indexSize,
-                       unsigned mode, unsigned start, unsigned count)
-{
-   softpipe_draw_range_elements( pipe, indexBuffer,
-                                 indexSize,
-                                 0, 0xffffffff,
-                                 mode, start, count );
 }

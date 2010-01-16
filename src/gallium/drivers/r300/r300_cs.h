@@ -52,7 +52,7 @@
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
     struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
-    int cs_count = 0;
+    int cs_count = 0; (void) cs_count;
 
 #define CHECK_CS(size) \
     assert(cs_winsys->check_cs(cs_winsys, (size)))

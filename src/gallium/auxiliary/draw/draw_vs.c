@@ -43,8 +43,8 @@
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_exec.h"
-
 
 
 
@@ -82,6 +82,10 @@ draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
    struct draw_vertex_shader *vs;
+
+   if (draw->dump_vs) {
+      tgsi_dump(shader->tokens, 0);
+   }
 
    vs = draw_create_vs_llvm( draw, shader );
    if (!vs) {
@@ -152,6 +156,8 @@ draw_delete_vertex_shader(struct draw_context *draw,
 boolean 
 draw_vs_init( struct draw_context *draw )
 {
+   draw->dump_vs = debug_get_bool_option("GALLIUM_DUMP_VS", FALSE);
+
    draw->vs.machine = tgsi_exec_machine_create();
    if (!draw->vs.machine)
       return FALSE;

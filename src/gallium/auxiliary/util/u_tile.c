@@ -1357,7 +1357,10 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    default:
-      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(format));
+      util_format_write_4f(format,
+                           p, src_stride * sizeof(float),
+                           packed, util_format_get_stride(format, w),
+                           0, 0, w, h);
    }
 
    pipe_put_tile_raw(pt, x, y, w, h, packed, 0);

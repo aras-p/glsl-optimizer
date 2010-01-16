@@ -228,6 +228,7 @@ destroy(struct drm_api *api)
 
 struct drm_api i965_libdrm_api =
 {
+   .name = "i965",
    .create_context = i965_libdrm_create_context,
    .create_screen = i965_libdrm_create_screen,
    .texture_from_shared_handle = i965_libdrm_texture_from_shared_handle,

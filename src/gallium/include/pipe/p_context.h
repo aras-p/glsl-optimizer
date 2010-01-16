@@ -69,6 +69,22 @@ struct pipe_context {
                           unsigned indexSize,
                           unsigned mode, unsigned start, unsigned count);
 
+   void (*draw_arrays_instanced)(struct pipe_context *pipe,
+                                 unsigned mode,
+                                 unsigned start,
+                                 unsigned count,
+                                 unsigned startInstance,
+                                 unsigned instanceCount);
+
+   void (*draw_elements_instanced)(struct pipe_context *pipe,
+                                   struct pipe_buffer *indexBuffer,
+                                   unsigned indexSize,
+                                   unsigned mode,
+                                   unsigned start,
+                                   unsigned count,
+                                   unsigned startInstance,
+                                   unsigned instanceCount);
+
    /* XXX: this is (probably) a temporary entrypoint, as the range
     * information should be available from the vertex_buffer state.
     * Using this to quickly evaluate a specialized path in the draw
@@ -170,7 +186,7 @@ struct pipe_context {
 
    void (*set_constant_buffer)( struct pipe_context *,
                                 uint shader, uint index,
-                                const struct pipe_constant_buffer *buf );
+                                struct pipe_buffer *buf );
 
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );

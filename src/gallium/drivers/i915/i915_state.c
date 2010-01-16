@@ -518,7 +518,7 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_constant_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct i915_context *i915 = i915_context(pipe);
    struct pipe_screen *screen = pipe->screen;
@@ -538,13 +538,13 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     */
    if (buf) {
       void *mapped;
-      if (buf->buffer && buf->buffer->size &&
-          (mapped = pipe_buffer_map(screen, buf->buffer,
+      if (buf->size &&
+          (mapped = pipe_buffer_map(screen, buf,
                                     PIPE_BUFFER_USAGE_CPU_READ))) {
-         memcpy(i915->current.constants[shader], mapped, buf->buffer->size);
-         pipe_buffer_unmap(screen, buf->buffer);
+         memcpy(i915->current.constants[shader], mapped, buf->size);
+         pipe_buffer_unmap(screen, buf);
          i915->current.num_user_constants[shader]
-            = buf->buffer->size / (4 * sizeof(float));
+            = buf->size / (4 * sizeof(float));
       }
       else {
          i915->current.num_user_constants[shader] = 0;

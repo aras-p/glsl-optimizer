@@ -29,7 +29,6 @@
 #include "main/macros.h"
 #include "s_aaline.h"
 #include "s_context.h"
-#include "s_depth.h"
 #include "s_feedback.h"
 #include "s_lines.h"
 #include "s_span.h"

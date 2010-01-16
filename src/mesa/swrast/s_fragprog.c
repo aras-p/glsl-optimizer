@@ -25,7 +25,6 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
-#include "main/texstate.h"
 #include "shader/prog_instruction.h"
 
 #include "s_fragprog.h"

@@ -172,6 +172,8 @@ struct draw_context
 
    boolean force_passthrough; /**< never clip or shade */
 
+   boolean dump_vs;
+
    double mrd;  /**< minimum resolvable depth value, for polygon offset */
 
    /* pipe state that we need: */
@@ -239,6 +241,8 @@ struct draw_context
 
    unsigned reduced_prim;
 
+   unsigned instance_id;
+
    void *driver_private;
 };
 
@@ -265,6 +269,7 @@ boolean draw_gs_init( struct draw_context *draw );
 void draw_gs_set_constants( struct draw_context *,
                             const float (*constants)[4],
                             unsigned size );
+void draw_gs_destroy( struct draw_context *draw );
 
 /*******************************************************************************
  * Common shading code:

@@ -71,7 +71,7 @@ static struct wrap_mode modes[] = {
    WRAP_EXT ( GL_MIRROR_CLAMP_TO_EDGE_EXT, "GL_ATI_texture_mirror_once",
 	                                   "GL_EXT_texture_mirror_clamp",
 	      999.0 ),
-   { 0 }
+   { 0, NULL, GL_FALSE, 0.0, { NULL, NULL } }
 };
 
 static void

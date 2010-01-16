@@ -28,8 +28,6 @@
 
 #include "main/mtypes.h"
 #include "main/bufferobj.h"
-#include "main/dlist.h"
-#include "main/vtxfmt.h"
 #include "main/imports.h"
 
 #include "vbo_context.h"

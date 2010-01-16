@@ -274,7 +274,7 @@ xlib_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
 
 static _EGLProc
-xlib_eglGetProcAddress(const char *procname)
+xlib_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
    return (_EGLProc) st_get_proc_address(procname);
 }
@@ -751,24 +751,18 @@ xlib_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 static EGLBoolean
 xlib_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
-   /* error checking step: */
-   if (!_eglSwapBuffers(drv, dpy, draw))
-      return EGL_FALSE;
+   struct xlib_egl_surface *xsurf = lookup_surface(draw);
+   struct pipe_winsys *pws = xsurf->winsys;
+   struct pipe_surface *psurf;
 
-   {
-      struct xlib_egl_surface *xsurf = lookup_surface(draw);
-      struct pipe_winsys *pws = xsurf->winsys;
-      struct pipe_surface *psurf;
+   st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
+         &psurf);
 
-      st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
-                                 &psurf);
+   st_notify_swapbuffers(xsurf->Framebuffer);
 
-      st_notify_swapbuffers(xsurf->Framebuffer);
+   display_surface(pws, psurf, xsurf);
 
-      display_surface(pws, psurf, xsurf);
-
-      check_and_update_buffer_size(xsurf);
-   }
+   check_and_update_buffer_size(xsurf);
 
    return EGL_TRUE;
 }

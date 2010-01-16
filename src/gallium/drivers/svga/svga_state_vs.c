@@ -71,7 +71,7 @@ static enum pipe_error compile_vs( struct svga_context *svga,
                                    struct svga_shader_result **out_result )
 {
    struct svga_shader_result *result;
-   enum pipe_error ret = PIPE_OK;
+   enum pipe_error ret = PIPE_ERROR;
 
    result = svga_translate_vertex_program( vs, key );
    if (result == NULL) {
@@ -80,8 +80,10 @@ static enum pipe_error compile_vs( struct svga_context *svga,
    }
 
    result->id = util_bitmask_add(svga->vs_bm);
-   if(result->id == UTIL_BITMASK_INVALID_INDEX)
+   if(result->id == UTIL_BITMASK_INVALID_INDEX) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto fail;
+   }
 
    ret = SVGA3D_DefineShader(svga->swc, 
                              result->id,
@@ -200,10 +202,12 @@ static int update_zero_stride( struct svga_context *svga,
 
          key.output_stride = 4 * sizeof(float);
          key.nr_elements = 1;
+         key.element[0].type = TRANSLATE_ELEMENT_NORMAL;
          key.element[0].input_format = vel->src_format;
          key.element[0].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          key.element[0].input_buffer = vel->vertex_buffer_index;
          key.element[0].input_offset = vel->src_offset;
+         key.element[0].instance_divisor = vel->instance_divisor;
          key.element[0].output_offset = const_idx * 4 * sizeof(float);
 
          translate_key_sanitize(&key);
@@ -222,7 +226,7 @@ static int update_zero_stride( struct svga_context *svga,
          translate->set_buffer(translate, vel->vertex_buffer_index,
                                mapped_buffer,
                                vbuffer->stride);
-         translate->run(translate, 0, 1,
+         translate->run(translate, 0, 1, 0,
                         svga->curr.zero_stride_constants);
 
          pipe_buffer_unmap(svga->pipe.screen,

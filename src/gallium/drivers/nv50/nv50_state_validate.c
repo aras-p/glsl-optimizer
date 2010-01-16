@@ -199,6 +199,8 @@ nv50_state_emit(struct nv50_context *nv50)
 			nv50->state.dirty |= NV50_NEW_VERTPROG;
 		if (nv50->state.fragprog)
 			nv50->state.dirty |= NV50_NEW_FRAGPROG;
+		if (nv50->state.geomprog)
+			nv50->state.dirty |= NV50_NEW_GEOMPROG;
 		if (nv50->state.rast)
 			nv50->state.dirty |= NV50_NEW_RASTERIZER;
 		if (nv50->state.blend_colour)
@@ -228,9 +230,14 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
 		so_emit(chan, nv50->state.fragprog);
+	if (nv50->state.dirty & NV50_NEW_GEOMPROG && nv50->state.geomprog)
+		so_emit(chan, nv50->state.geomprog);
 	if (nv50->state.dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
-				 NV50_NEW_RASTERIZER))
-		so_emit(chan, nv50->state.programs);
+				 NV50_NEW_GEOMPROG | NV50_NEW_RASTERIZER))
+		so_emit(chan, nv50->state.fp_linkage);
+	if ((nv50->state.dirty & (NV50_NEW_VERTPROG | NV50_NEW_GEOMPROG))
+	    && nv50->state.gp_linkage)
+		so_emit(chan, nv50->state.gp_linkage);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
 		so_emit(chan, nv50->state.rast);
 	if (nv50->state.dirty & NV50_NEW_BLEND_COLOUR)
@@ -291,9 +298,15 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_FRAGPROG_CB))
 		nv50_fragprog_validate(nv50);
 
+	if (nv50->dirty & (NV50_NEW_GEOMPROG | NV50_NEW_GEOMPROG_CB))
+		nv50_geomprog_validate(nv50);
+
 	if (nv50->dirty & (NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
-			   NV50_NEW_RASTERIZER))
-		nv50_linkage_validate(nv50);
+			   NV50_NEW_GEOMPROG | NV50_NEW_RASTERIZER))
+		nv50_fp_linkage_validate(nv50);
+
+	if (nv50->dirty & (NV50_NEW_GEOMPROG | NV50_NEW_VERTPROG))
+		nv50_gp_linkage_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
 		so_ref(nv50->rasterizer->so, &nv50->state.rast);
@@ -400,8 +413,9 @@ viewport_uptodate:
 		for (i = 0; i < PIPE_SHADER_TYPES; ++i)
 			nr += nv50->sampler_nr[i];
 
-		so = so_new(1+ 5 * PIPE_SHADER_TYPES, 1+ 19 * PIPE_SHADER_TYPES
-					+ nr * 8, PIPE_SHADER_TYPES * 2);
+		so = so_new(1 + 5 * PIPE_SHADER_TYPES,
+			    1 + 19 * PIPE_SHADER_TYPES + nr * 8,
+			    PIPE_SHADER_TYPES * 2);
 
 		nv50_validate_samplers(nv50, so, PIPE_SHADER_VERTEX);
 		nv50_validate_samplers(nv50, so, PIPE_SHADER_FRAGMENT);

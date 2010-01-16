@@ -28,11 +28,9 @@
 #include "main/colormac.h"
 #include "main/condrender.h"
 #include "main/convolve.h"
-#include "main/histogram.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "main/pixel.h"
 
 #include "s_context.h"
 #include "s_depth.h"

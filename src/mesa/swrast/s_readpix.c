@@ -33,7 +33,6 @@
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "main/pixel.h"
 #include "main/state.h"
 
 #include "s_context.h"

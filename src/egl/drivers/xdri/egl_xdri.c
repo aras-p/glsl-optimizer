@@ -355,7 +355,7 @@ xdri_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
  * Called from eglGetProcAddress() via drv->API.GetProcAddress().
  */
 static _EGLProc
-xdri_eglGetProcAddress(const char *procname)
+xdri_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
    /* the symbol is defined in libGL.so */
    return (_EGLProc) _glapi_get_proc_address(procname);
@@ -562,7 +562,7 @@ xdri_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
 
-   xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable);
+   xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable, 0, 0, 0);
 
    return EGL_TRUE;
 }

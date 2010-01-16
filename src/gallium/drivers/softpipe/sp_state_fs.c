@@ -159,7 +159,7 @@ softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 void
 softpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf)
+                             struct pipe_buffer *buf)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -169,8 +169,7 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(softpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&softpipe->constants[shader].buffer,
-			 buf ? buf->buffer : NULL);
+   pipe_buffer_reference(&softpipe->constants[shader], buf);
 
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }

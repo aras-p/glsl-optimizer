@@ -111,7 +111,7 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 
 	if (!q->ready) {
 		ret = nouveau_bo_map(q->bo, NOUVEAU_BO_RD |
-				     wait ? 0 : NOUVEAU_BO_NOWAIT);
+				     (wait ? 0 : NOUVEAU_BO_NOWAIT));
 		if (ret)
 			return false;
 		q->result = ((uint32_t *)q->bo->map)[1];

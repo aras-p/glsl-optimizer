@@ -180,6 +180,7 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
+	 continue;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -265,6 +266,14 @@ void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
                          __DRIdrawable *dPriv)
 {
    dri2_set_tex_buffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+}
+
+void
+dri_update_buffer(struct pipe_screen *screen, void *context_private)
+{
+   struct dri_context *ctx = (struct dri_context *)context_private;
+
+   dri_get_buffers(ctx->dPriv);
 }
 
 void
@@ -364,6 +373,7 @@ dri_create_buffer(__DRIscreen * sPriv,
    /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
 
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;

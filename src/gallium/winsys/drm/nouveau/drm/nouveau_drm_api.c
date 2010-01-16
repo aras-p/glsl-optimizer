@@ -87,6 +87,7 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	case 0x60:
 		init = nv40_screen_create;
 		break;
+	case 0x50:
 	case 0x80:
 	case 0x90:
 	case 0xa0:
@@ -164,6 +165,7 @@ nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 	case 0x60:
 		init = nv40_create;
 		break;
+	case 0x50:
 	case 0x80:
 	case 0x90:
 	case 0xa0:
@@ -252,6 +254,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 }
 
 struct drm_api drm_api_hooks = {
+	.name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,

@@ -94,7 +94,7 @@ struct_factories = {
     "pipe_blend_color": gallium.BlendColor,
     "pipe_blend_state": gallium.Blend,
     #"pipe_clip_state": gallium.Clip,
-    #"pipe_constant_buffer": gallium.ConstantBuffer,
+    #"pipe_buffer": gallium.Buffer,
     "pipe_depth_state": gallium.Depth,
     "pipe_stencil_state": gallium.Stencil,
     "pipe_alpha_state": gallium.Alpha,
@@ -462,10 +462,10 @@ class Context(Object):
         sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, buffer):
-        if buffer is not None and buffer.buffer is not None:
-            self.real.set_constant_buffer(shader, index, buffer.buffer)
+        if buffer is not None:
+            self.real.set_constant_buffer(shader, index, buffer)
 
-            self.dump_constant_buffer(buffer.buffer)
+            self.dump_constant_buffer(buffer)
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()

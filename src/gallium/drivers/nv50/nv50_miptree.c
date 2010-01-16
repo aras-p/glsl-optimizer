@@ -92,12 +92,23 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	case PIPE_FORMAT_Z24S8_UNORM:
 		tile_flags = 0x1800;
 		break;
+	case PIPE_FORMAT_Z16_UNORM:
+		tile_flags = 0x6c00;
+		break;
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_S8Z24_UNORM:
 		tile_flags = 0x2800;
 		break;
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+		tile_flags = 0x7400;
+		break;
 	default:
-		tile_flags = 0x7000;
+		if ((pt->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) &&
+		    util_format_get_blocksizebits(pt->format) == 32)
+			tile_flags = 0x7a00;
+		else
+			tile_flags = 0x7000;
 		break;
 	}
 
@@ -145,7 +156,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 				  mt->level[0].tile_mode, tile_flags,
 				  &mt->base.bo);
 	if (ret) {
-		for (l = 0; l < pt->last_level; ++l)
+		for (l = 0; l <= pt->last_level; ++l)
 			FREE(mt->level[l].image_offset);
 		FREE(mt);
 		return NULL;
@@ -188,7 +199,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	unsigned l;
 
-	for (l = 0; l < pt->last_level; ++l)
+	for (l = 0; l <= pt->last_level; ++l)
 		FREE(mt->level[l].image_offset);
 
 	nouveau_bo_ref(NULL, &mt->base.bo);

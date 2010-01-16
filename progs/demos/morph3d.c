@@ -137,7 +137,6 @@ So the angle is:
 #endif
 #include <GL/glut.h>
 #include <math.h>
-#include <string.h>
 
 #define Scale                      0.3
 

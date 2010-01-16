@@ -998,23 +998,22 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *constants)
+                             struct pipe_buffer *constants)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct pipe_buffer *buffer = constants ? constants->buffer : NULL;
-   unsigned size = buffer ? buffer->size : 0;
-   const void *data = buffer ? llvmpipe_buffer(buffer)->data : NULL;
+   unsigned size = constants ? constants->size : 0;
+   const void *data = constants ? llvmpipe_buffer(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   if(llvmpipe->constants[shader].buffer == buffer)
+   if(llvmpipe->constants[shader] == constants)
       return;
 
    draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&llvmpipe->constants[shader].buffer, buffer);
+   pipe_buffer_reference(&llvmpipe->constants[shader], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX,

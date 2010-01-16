@@ -229,7 +229,7 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
 }
 
 
-void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
+void trace_dump_constant_buffer(const struct pipe_buffer *state)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -241,7 +241,7 @@ void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
 
    trace_dump_struct_begin("pipe_constant_buffer");
 
-   trace_dump_member(buffer_ptr, state, buffer);
+   trace_dump_reference(&state->reference);
 
    trace_dump_struct_end();
 }

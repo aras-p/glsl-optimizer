@@ -136,10 +136,10 @@ def test(dev):
     cbuf = dev.texture_create(
         PIPE_FORMAT_X8R8G8B8_UNORM,
         width, height,
-        tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
+        tex_usage=PIPE_TEXTURE_USAGE_RENDER_TARGET,
     ).get_surface()
     zbuf = dev.texture_create(
-        PIPE_FORMAT_Z16_UNORM,
+        PIPE_FORMAT_Z32_UNORM,
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
     ).get_surface()

@@ -26,8 +26,15 @@
  **************************************************************************/
 
 
-/**
- * Just a global symbol for EGL to look for to identify the supported
- * graphics API.
- */
-int st_api_OpenGL = 1;
+#ifndef SW_WINSYS_H
+#define SW_WINSYS_H
+
+
+struct pipe_winsys;
+
+
+extern struct pipe_winsys *
+create_sw_winsys(void);
+
+
+#endif /* SW_WINSYS_H */

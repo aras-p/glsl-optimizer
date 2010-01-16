@@ -33,6 +33,7 @@
 #ifndef _BEZIERPATCHMESH_H
 #define _BEZIERPATCHMESH_H
 
+#include <GL/gl.h>
 #include "bezierPatch.h"
 
 typedef struct bezierPatchMesh{

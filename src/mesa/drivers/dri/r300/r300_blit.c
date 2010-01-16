@@ -181,8 +181,6 @@ static uint32_t mesa_format_to_us_format(gl_format mesa_format)
 {
     switch(mesa_format)
     {
-        case MESA_FORMAT_S8_Z24:
-        case MESA_FORMAT_X8_Z24:
         case MESA_FORMAT_RGBA8888: // x
             return EASY_US_FORMAT(R500_OUT_FMT_C4_8, A, B, G, R, 0);
         case MESA_FORMAT_RGB565: // x
@@ -216,7 +214,8 @@ static uint32_t mesa_format_to_us_format(gl_format mesa_format)
             return EASY_US_FORMAT(R500_OUT_FMT_C4_16, R, G, B, A, 0xf);
 
         default:
-            assert(!"Invalid format for US output\n");
+            fprintf(stderr, "Unsupported format %s for US output\n", _mesa_get_format_name(mesa_format));
+            assert(0);
             return 0;
     }
 }
@@ -541,6 +540,19 @@ GLboolean r300_blit(struct r300_context *r300,
                     unsigned reg_height,
                     unsigned flip_y)
 {
+    if (_mesa_get_format_bits(src_mesaformat, GL_DEPTH_BITS) > 0)
+        return GL_FALSE;
+
+    /* Make sure that colorbuffer has even width - hw limitation */
+    if (dst_pitch % 2 > 0)
+        ++dst_pitch;
+
+    /* Rendering to small buffer doesn't work.
+     * Looks like a hw limitation.
+     */
+    if (dst_pitch < 32)
+        return GL_FALSE;
+
     /* Need to clamp the region size to make sure
      * we don't read outside of the source buffer
      * or write outside of the destination buffer.
@@ -562,7 +574,7 @@ GLboolean r300_blit(struct r300_context *r300,
         fprintf(stderr, "src: size [%d x %d], pitch %d, "
                 "offset [%d x %d], format %s, bo %p\n",
                 src_width, src_height, src_pitch,
-                src_offset, src_y_offset,
+                src_x_offset, src_y_offset,
                 _mesa_get_format_name(src_mesaformat),
                 src_bo);
         fprintf(stderr, "dst: pitch %d, offset[%d x %d], format %s, bo %p\n",
@@ -570,6 +582,9 @@ GLboolean r300_blit(struct r300_context *r300,
                 _mesa_get_format_name(dst_mesaformat), dst_bo);
         fprintf(stderr, "region: %d x %d\n", reg_width, reg_height);
     }
+
+    /* Flush is needed to make sure that source buffer has correct data */
+    radeonFlush(r300->radeon.glCtx);
 
     if (!validate_buffers(r300, src_bo, dst_bo))
         return GL_FALSE;
