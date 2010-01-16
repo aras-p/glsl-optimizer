@@ -95,6 +95,7 @@ void draw_destroy( struct draw_context *draw )
    draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
    draw_vs_destroy( draw );
+   draw_gs_destroy( draw );
 
    FREE( draw );
 }

@@ -269,6 +269,7 @@ boolean draw_gs_init( struct draw_context *draw );
 void draw_gs_set_constants( struct draw_context *,
                             const float (*constants)[4],
                             unsigned size );
+void draw_gs_destroy( struct draw_context *draw );
 
 /*******************************************************************************
  * Common shading code:
