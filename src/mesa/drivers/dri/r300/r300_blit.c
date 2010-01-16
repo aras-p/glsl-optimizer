@@ -403,9 +403,8 @@ static void calc_tex_coords(float img_width, float img_height,
     buf[3] = buf[2] + reg_height / img_height;
     if (flip_y)
     {
-        float tmp = buf[2];
-        buf[2] = 1.0 - buf[3];
-        buf[3] = 1.0 - tmp;
+        buf[2] = 1.0 - buf[2];
+        buf[3] = 1.0 - buf[3];
     }
 }
 
@@ -424,13 +423,13 @@ static void emit_draw_packet(struct r300_context *r300,
                     flip_y, texcoords);
 
     float verts[] = { dst_x_offset, dst_y_offset,
-                      texcoords[0], texcoords[3],
-                      dst_x_offset, dst_y_offset + reg_height,
                       texcoords[0], texcoords[2],
+                      dst_x_offset, dst_y_offset + reg_height,
+                      texcoords[0], texcoords[3],
                       dst_x_offset + reg_width, dst_y_offset + reg_height,
-                      texcoords[1], texcoords[2],
+                      texcoords[1], texcoords[3],
                       dst_x_offset + reg_width, dst_y_offset,
-                      texcoords[1], texcoords[3] };
+                      texcoords[1], texcoords[2] };
 
     BATCH_LOCALS(&r300->radeon);
 
