@@ -531,7 +531,7 @@ nv50_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv50_program *p = hwcso;
 
 	nv50_program_destroy(nv50, p);
-	FREE((void*)p->pipe.tokens);
+	FREE((void *)p->pipe.tokens);
 	FREE(p);
 }
 
@@ -563,7 +563,39 @@ nv50_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv50_program *p = hwcso;
 
 	nv50_program_destroy(nv50, p);
-	FREE((void*)p->pipe.tokens);
+	FREE((void *)p->pipe.tokens);
+	FREE(p);
+}
+
+static void *
+nv50_gp_state_create(struct pipe_context *pipe,
+		     const struct pipe_shader_state *cso)
+{
+	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
+
+	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+	p->type = PIPE_SHADER_GEOMETRY;
+	tgsi_scan_shader(p->pipe.tokens, &p->info);
+	return (void *)p;
+}
+
+static void
+nv50_gp_state_bind(struct pipe_context *pipe, void *hwcso)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->fragprog = hwcso;
+	nv50->dirty |= NV50_NEW_GEOMPROG;
+}
+
+static void
+nv50_gp_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_program *p = hwcso;
+
+	nv50_program_destroy(nv50, p);
+	FREE((void *)p->pipe.tokens);
 	FREE(p);
 }
 
@@ -596,6 +628,10 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	if (shader == PIPE_SHADER_FRAGMENT) {
 		nv50->constbuf[PIPE_SHADER_FRAGMENT] = buf;
 		nv50->dirty |= NV50_NEW_FRAGPROG_CB;
+	} else
+	if (shader == PIPE_SHADER_GEOMETRY) {
+		nv50->constbuf[PIPE_SHADER_GEOMETRY] = buf;
+		nv50->dirty |= NV50_NEW_GEOMPROG_CB;
 	}
 }
 
@@ -695,6 +731,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.create_fs_state = nv50_fp_state_create;
 	nv50->pipe.bind_fs_state = nv50_fp_state_bind;
 	nv50->pipe.delete_fs_state = nv50_fp_state_delete;
+
+	nv50->pipe.create_gs_state = nv50_gp_state_create;
+	nv50->pipe.bind_gs_state = nv50_gp_state_bind;
+	nv50->pipe.delete_gs_state = nv50_gp_state_delete;
 
 	nv50->pipe.set_blend_color = nv50_set_blend_color;
 	nv50->pipe.set_clip_state = nv50_set_clip_state;

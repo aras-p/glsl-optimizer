@@ -155,7 +155,7 @@ static boolean
 nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
 		       unsigned p)
 {
-	static const unsigned p_remap[PIPE_SHADER_TYPES] = { 0, 2 };
+	static const unsigned p_remap[PIPE_SHADER_TYPES] = { 0, 2, 1 };
 
 	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;

@@ -45,9 +45,11 @@
 #define NV50_NEW_VERTPROG_CB	(1 << 9)
 #define NV50_NEW_FRAGPROG	(1 << 10)
 #define NV50_NEW_FRAGPROG_CB	(1 << 11)
-#define NV50_NEW_ARRAYS		(1 << 12)
-#define NV50_NEW_SAMPLER	(1 << 13)
-#define NV50_NEW_TEXTURE	(1 << 14)
+#define NV50_NEW_GEOMPROG	(1 << 12)
+#define NV50_NEW_GEOMPROG_CB	(1 << 13)
+#define NV50_NEW_ARRAYS		(1 << 14)
+#define NV50_NEW_SAMPLER	(1 << 15)
+#define NV50_NEW_TEXTURE	(1 << 16)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;

@@ -167,7 +167,7 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	struct nv50_screen *screen = nv50_screen(pscreen);
 	unsigned i;
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 3; i++) {
 		if (screen->constbuf_parm[i])
 			nouveau_bo_ref(NULL, &screen->constbuf_parm[i]);
 	}
@@ -329,7 +329,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_ref(NULL, &so);
 
 	/* Static tesla init */
-	so = so_new(40, 84, 20);
+	so = so_new(44, 90, 22);
 
 	so_method(so, screen->tesla, NV50TCL_COND_MODE, 1);
 	so_data  (so, NV50TCL_COND_MODE_ALWAYS);
@@ -352,10 +352,11 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_data  (so, 0xf);
 
 	/* max TIC (bits 4:8) & TSC (ignored) bindings, per program type */
-	so_method(so, screen->tesla, NV50TCL_TEX_LIMITS(0), 1);
-	so_data  (so, 0x54);
-	so_method(so, screen->tesla, NV50TCL_TEX_LIMITS(2), 1);
-	so_data  (so, 0x54);
+	for (i = 0; i < 3; ++i) {
+		so_method(so, screen->tesla, NV50TCL_TEX_LIMITS(i), 1);
+		so_data  (so, 0x54);
+	}
+
 	/* origin is top left (set to 1 for bottom left) */
 	so_method(so, screen->tesla, NV50TCL_Y_ORIGIN_BOTTOM, 1);
 	so_data  (so, 0);
@@ -370,7 +371,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 3; i++) {
 		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (128 * 4) * 4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
@@ -406,22 +407,33 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000001 | (NV50_CB_PMISC << 12));
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
+	so_data  (so, 0x00000021 | (NV50_CB_PMISC << 12));
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000031 | (NV50_CB_PMISC << 12));
 
 	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
-	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_VERTEX], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_VERTEX], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PVP << 16) | 0x00000800);
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000101 | (NV50_CB_PVP << 12));
 
 	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
-	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_GEOMETRY], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_GEOMETRY], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, (NV50_CB_PGP << 16) | 0x00000800);
+	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
+	so_data  (so, 0x00000121 | (NV50_CB_PGP << 12));
+
+	so_method(so, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_FRAGMENT], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf_parm[PIPE_SHADER_FRAGMENT], 0,
+		  NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PFP << 16) | 0x00000800);
 	so_method(so, screen->tesla, NV50TCL_SET_PROGRAM_CB, 1);
 	so_data  (so, 0x00000131 | (NV50_CB_PFP << 12));
