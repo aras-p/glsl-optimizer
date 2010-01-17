@@ -160,6 +160,188 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 	return (hw_type | hw_size);
 }
 
+/* For instanced drawing from user buffers, hitting the FIFO repeatedly
+ * with the same vertex data is probably worse than uploading all data.
+ */
+static boolean
+nv50_upload_vtxbuf(struct nv50_context *nv50, unsigned i)
+{
+	struct nv50_screen *nscreen = nv50->screen;
+	struct pipe_screen *pscreen = &nscreen->base.base;
+	struct pipe_buffer *buf = nscreen->strm_vbuf[i];
+	struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
+	uint8_t *src;
+	unsigned size = MAX2(vb->buffer->size, 4096);
+
+	if (buf && buf->size < size)
+		pipe_buffer_reference(&nscreen->strm_vbuf[i], NULL);
+
+	if (!nscreen->strm_vbuf[i]) {
+		nscreen->strm_vbuf[i] = pipe_buffer_create(
+			pscreen, 0, PIPE_BUFFER_USAGE_VERTEX, size);
+		buf = nscreen->strm_vbuf[i];
+	}
+
+	src = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	if (!src)
+		return FALSE;
+	src += vb->buffer_offset;
+
+	size = (vb->max_index + 1) * vb->stride + 16; /* + 16 is for stride 0 */
+	if (vb->buffer_offset + size > vb->buffer->size)
+		size = vb->buffer->size - vb->buffer_offset;
+
+	pipe_buffer_write(pscreen, buf, vb->buffer_offset, size, src);
+	pipe_buffer_unmap(pscreen, vb->buffer);
+
+	vb->buffer = buf; /* don't pipe_reference, this is a private copy */
+	return TRUE;
+}
+
+static void
+nv50_upload_user_vbufs(struct nv50_context *nv50)
+{
+	unsigned i;
+
+	if (nv50->vbo_fifo)
+		nv50->dirty |= NV50_NEW_ARRAYS;
+	if (!(nv50->dirty & NV50_NEW_ARRAYS))
+		return;
+
+	for (i = 0; i < nv50->vtxbuf_nr; ++i) {
+		if (nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX)
+			continue;
+		nv50_upload_vtxbuf(nv50, i);
+	}
+}
+
+static unsigned
+init_per_instance_arrays(struct nv50_context *nv50,
+			 unsigned startInstance,
+			 unsigned pos[16], unsigned step[16])
+{
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
+	struct nouveau_bo *bo;
+	struct nouveau_stateobj *so;
+	unsigned i, b, count = 0;
+	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+
+	so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 2, nv50->vtxelt_nr * 2);
+
+	for (i = 0; i < nv50->vtxelt_nr; ++i) {
+		if (!nv50->vtxelt[i].instance_divisor)
+			continue;
+		++count;
+		b = nv50->vtxelt[i].vertex_buffer_index;
+
+		pos[i] = nv50->vtxelt[i].src_offset +
+			nv50->vtxbuf[b].buffer_offset +
+			startInstance * nv50->vtxbuf[b].stride;
+
+		if (!startInstance) {
+			step[i] = 0;
+			continue;
+		}
+		step[i] = startInstance % nv50->vtxelt[i].instance_divisor;
+
+		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
+
+		so_method(so, tesla, NV50TCL_VERTEX_ARRAY_START_HIGH(i), 2);
+		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_HIGH, 0, 0);
+	}
+
+	if (count) {
+		so_ref (so, &nv50->state.instbuf); /* for flush notify */
+		so_emit(chan, nv50->state.instbuf);
+	}
+	so_ref (NULL, &so);
+
+	return count;
+}
+
+static void
+step_per_instance_arrays(struct nv50_context *nv50,
+			 unsigned pos[16], unsigned step[16])
+{
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
+	struct nouveau_bo *bo;
+	struct nouveau_stateobj *so;
+	unsigned i, b;
+	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+
+	so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 2, nv50->vtxelt_nr * 2);
+
+	for (i = 0; i < nv50->vtxelt_nr; ++i) {
+		if (!nv50->vtxelt[i].instance_divisor)
+			continue;
+		b = nv50->vtxelt[i].vertex_buffer_index;
+
+		if (++step[i] == nv50->vtxelt[i].instance_divisor) {
+			step[i] = 0;
+			pos[i] += nv50->vtxbuf[b].stride;
+		}
+
+		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
+
+		so_method(so, tesla, NV50TCL_VERTEX_ARRAY_START_HIGH(i), 2);
+		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_HIGH, 0, 0);
+	}
+
+	so_ref (so, &nv50->state.instbuf); /* for flush notify */
+	so_ref (NULL, &so);
+
+	so_emit(chan, nv50->state.instbuf);
+}
+
+void
+nv50_draw_arrays_instanced(struct pipe_context *pipe,
+			   unsigned mode, unsigned start, unsigned count,
+			   unsigned startInstance, unsigned instanceCount)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned i, nz_divisors;
+	unsigned step[16], pos[16];
+
+	nv50_upload_user_vbufs(nv50);
+
+	nv50_state_validate(nv50);
+
+	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
+	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
+	OUT_RING  (chan, startInstance);
+
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+	OUT_RING  (chan, nv50_prim(mode));
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
+	OUT_RING  (chan, start);
+	OUT_RING  (chan, count);
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+	OUT_RING  (chan, 0);
+
+	for (i = 1; i < instanceCount; i++) {
+		if (nz_divisors) /* any non-zero array divisors ? */
+			step_per_instance_arrays(nv50, pos, step);
+
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+		OUT_RING  (chan, nv50_prim(mode) | (1 << 28));
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
+		OUT_RING  (chan, start);
+		OUT_RING  (chan, count);
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+		OUT_RING  (chan, 0);
+	}
+
+	so_ref(NULL, &nv50->state.instbuf);
+}
+
 void
 nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
@@ -285,6 +467,75 @@ nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 	return TRUE;
 }
 
+static INLINE void
+nv50_draw_elements_inline(struct nv50_context *nv50,
+			  void *map, unsigned indexSize,
+			  unsigned start, unsigned count)
+{
+	switch (indexSize) {
+	case 1:
+		nv50_draw_elements_inline_u08(nv50, map, start, count);
+		break;
+	case 2:
+		nv50_draw_elements_inline_u16(nv50, map, start, count);
+		break;
+	case 4:
+		nv50_draw_elements_inline_u32(nv50, map, start, count);
+		break;
+	}
+}
+
+void
+nv50_draw_elements_instanced(struct pipe_context *pipe,
+			     struct pipe_buffer *indexBuffer,
+			     unsigned indexSize,
+			     unsigned mode, unsigned start, unsigned count,
+			     unsigned startInstance, unsigned instanceCount)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
+	struct pipe_screen *pscreen = pipe->screen;
+	void *map;
+	unsigned i, nz_divisors;
+	unsigned step[16], pos[16];
+
+	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+
+	nv50_upload_user_vbufs(nv50);
+
+	nv50_state_validate(nv50);
+
+	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
+
+	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
+	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
+	OUT_RING  (chan, startInstance);
+
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+	OUT_RING  (chan, nv50_prim(mode) | (1 << 28));
+
+	nv50_draw_elements_inline(nv50, map, indexSize, start, count);
+
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+	OUT_RING  (chan, 0);
+
+	for (i = 1; i < instanceCount; ++i) {
+		if (nz_divisors) /* any non-zero array divisors ? */
+			step_per_instance_arrays(nv50, pos, step);
+
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+		OUT_RING  (chan, nv50_prim(mode) | (1 << 28));
+
+		nv50_draw_elements_inline(nv50, map, indexSize, start, count);
+
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+		OUT_RING  (chan, 0);
+	}
+
+	so_ref(NULL, &nv50->state.instbuf);
+}
+
 void
 nv50_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
@@ -295,7 +546,6 @@ nv50_draw_elements(struct pipe_context *pipe,
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
-	boolean ret;
 	
 	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
 
@@ -308,29 +558,13 @@ nv50_draw_elements(struct pipe_context *pipe,
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
-	switch (indexSize) {
-	case 1:
-		ret = nv50_draw_elements_inline_u08(nv50, map, start, count);
-		break;
-	case 2:
-		ret = nv50_draw_elements_inline_u16(nv50, map, start, count);
-		break;
-	case 4:
-		ret = nv50_draw_elements_inline_u32(nv50, map, start, count);
-		break;
-	default:
-		assert(0);
-		ret = FALSE;
-		break;
-	}
+
+	nv50_draw_elements_inline(nv50, map, indexSize, start, count);
+
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
 	pipe_buffer_unmap(pscreen, indexBuffer);
-        
-        /* XXX: what to do if ret != TRUE?  Flush and retry?
-         */
-	assert(ret);
 }
 
 static INLINE boolean
@@ -343,23 +577,16 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 	struct nouveau_stateobj *so;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_bo *bo = nouveau_bo(vb->buffer);
-	float *v;
+	float v[4];
 	int ret;
-	enum pipe_format pf = ve->src_format;
-	const struct util_format_description *desc;
-
-	desc = util_format_description(pf);
-	assert(desc);
-
-	if ((desc->channel[0].type != UTIL_FORMAT_TYPE_FLOAT) ||
-	    util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0) != 32)
-		return FALSE;
 
 	ret = nouveau_bo_map(bo, NOUVEAU_BO_RD);
 	if (ret)
 		return FALSE;
-	v = (float *)(bo->map + (vb->buffer_offset + ve->src_offset));
 
+	util_format_read_4f(ve->src_format, v, 0, (uint8_t *)bo->map +
+			    (vb->buffer_offset + ve->src_offset), 0,
+			    0, 0, 1, 1);
 	so = *pso;
 	if (!so)
 		*pso = so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 4, 0);
@@ -455,7 +682,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		}
 
 		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_FORMAT(i), 3);
-		so_data  (vtxbuf, 0x20000000 | vb->stride);
+		so_data  (vtxbuf, 0x20000000 |
+			  (ve->instance_divisor ? 0 : vb->stride));
 		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);

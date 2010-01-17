@@ -104,7 +104,9 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv50->pipe.destroy = nv50_destroy;
 
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
+	nv50->pipe.draw_arrays_instanced = nv50_draw_arrays_instanced;
 	nv50->pipe.draw_elements = nv50_draw_elements;
+	nv50->pipe.draw_elements_instanced = nv50_draw_elements_instanced;
 	nv50->pipe.clear = nv50_clear;
 
 	nv50->pipe.flush = nv50_flush;

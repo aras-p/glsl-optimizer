@@ -274,6 +274,9 @@ nv50_state_flush_notify(struct nouveau_channel *chan)
 	so_emit_reloc_markers(chan, nv50->state.fragprog);
 	so_emit_reloc_markers(chan, nv50->state.vtxbuf);
 	so_emit_reloc_markers(chan, nv50->screen->static_init);
+
+	if (nv50->state.instbuf)
+		so_emit_reloc_markers(chan, nv50->state.instbuf);
 }
 
 boolean

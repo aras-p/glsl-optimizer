@@ -95,6 +95,8 @@ struct nv50_reg {
 
 	int vtx; /* vertex index, for GP inputs (TGSI Dimension.Index) */
 	int indirect[2]; /* index into pc->addr, or -1 */
+
+	ubyte buf_index; /* c{0 .. 15}[] or g{0 .. 15}[] */
 };
 
 #define NV50_MOD_NEG 1
@@ -188,6 +190,7 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->vtx = -1;
 	reg->acc = 0;
 	reg->indirect[0] = reg->indirect[1] = -1;
+	reg->buf_index = (type == P_CONST) ? 1 : 0;
 }
 
 static INLINE unsigned
@@ -631,7 +634,7 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 		set_addr(e, pc->addr[src->indirect[0]]);
 	}
 
-	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
+	e->inst[1] |= (src->buf_index << 22);
 }
 
 /* Never apply nv50_reg::mod in emit_mov, or carefully check the code !!! */
@@ -3483,6 +3486,19 @@ load_frontfacing(struct nv50_pc *pc, struct nv50_reg *sv)
 }
 
 static void
+load_instance_id(struct nv50_pc *pc, unsigned index)
+{
+	struct nv50_reg reg, mem;
+
+	ctor_reg(&reg, P_TEMP, -1, -1);
+	ctor_reg(&mem, P_CONST, -1, 24); /* startInstance */
+	mem.buf_index = 2;
+
+	emit_add_b32(pc, &reg, &pc->sysval[index], &mem);
+	pc->sysval[index] = reg;
+}
+
+static void
 copy_semantic_info(struct nv50_program *p)
 {
 	unsigned i, id;
@@ -3668,8 +3684,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 			if (p->cfg.regs[0] & (1 << 0))
 				pc->sysval[vertex_id].hw = rid++;
-			if (p->cfg.regs[0] & (1 << 4))
+			if (p->cfg.regs[0] & (1 << 4)) {
 				pc->sysval[instance_id].hw = rid++;
+				load_instance_id(pc, instance_id);
+			}
 		}
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
