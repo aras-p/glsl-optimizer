@@ -686,6 +686,22 @@ void r300_emit_scissor_state(struct r300_context* r300, void* state)
         maxy = MIN2(maxy, scissor->maxy);
     }
 
+    /* Special case for zero-area scissor.
+     *
+     * We can't allow the variables maxx and maxy to be zero because they are
+     * subtracted from later in the code, which would cause emitting ~0 and
+     * making the kernel checker angry.
+     *
+     * Let's consider we change maxx and maxy to 1, which is effectively
+     * a one-pixel area. We must then change minx and miny to a number which is
+     * greater than 1 to get the zero area back. */
+    if (!maxx || !maxy) {
+        minx = 2;
+        miny = 2;
+        maxx = 1;
+        maxy = 1;
+    }
+
     if (r300screen->caps->is_r500) {
         top_left =
             (minx << R300_SCISSORS_X_SHIFT) |
