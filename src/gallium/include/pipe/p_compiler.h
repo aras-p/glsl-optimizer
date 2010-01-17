@@ -162,6 +162,13 @@ typedef unsigned char boolean;
 
 #define PIPE_ALIGN_STACK
 
+#elif defined(SWIG)
+
+#define PIPE_ALIGN_TYPE(_alignment, _type) _type
+#define PIPE_ALIGN_VAR(_alignment)
+
+#define PIPE_ALIGN_STACK
+
 #else
 
 #error "Unsupported compiler"
