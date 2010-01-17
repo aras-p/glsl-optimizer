@@ -26,8 +26,6 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 
-#include "indices/u_indices.h"
-
 #include "pipe/p_inlines.h"
 
 #include "util/u_memory.h"
@@ -247,53 +245,35 @@ validate:
     return TRUE;
 }
 
-static struct pipe_buffer* r300_translate_elts(struct r300_context* r300,
-                                               struct pipe_buffer* elts,
-                                               unsigned* size,
-                                               unsigned* mode,
-                                               unsigned* count)
+static void r300_shorten_ubyte_elts(struct r300_context* r300,
+                                    struct pipe_buffer** elts,
+                                    unsigned count)
 {
     struct pipe_screen* screen = r300->context.screen;
     struct pipe_buffer* new_elts;
-    void *in_map, *out_map;
-    unsigned out_prim, out_index_size, out_nr;
-    struct pipe_rasterizer_state* rs;
-    u_translate_func out_translate;
-
-    rs = &((struct r300_rs_state*)r300->rs_state.state)->rs;
-
-    if (rs->fill_cw == rs->fill_ccw &&
-        rs->fill_cw != PIPE_POLYGON_MODE_FILL) {
-        (void)u_unfilled_translator(*mode, *size, *count, rs->fill_cw,
-            &out_prim, &out_index_size, &out_nr, &out_translate);
-    } else {
-        (void)u_index_translator(~0, *mode, *size, *count, PV_LAST, PV_LAST,
-            &out_prim, &out_index_size, &out_nr, &out_translate);
-    }
-
-    debug_printf("r300: old mode %d, new mode %d\n", *mode, out_prim);
-    debug_printf("r300: old count %d, new count %d\n", *count, out_nr);
-    debug_printf("r300: old size %d, new size %d\n", *size, out_index_size);
+    unsigned char *in_map;
+    unsigned short *out_map;
+    unsigned i;
 
     new_elts = screen->buffer_create(screen, 32,
                                      PIPE_BUFFER_USAGE_INDEX |
                                      PIPE_BUFFER_USAGE_CPU_WRITE |
                                      PIPE_BUFFER_USAGE_GPU_READ,
-                                     out_index_size * out_nr);
+                                     2 * count);
 
-    in_map = pipe_buffer_map(screen, elts, PIPE_BUFFER_USAGE_CPU_READ);
+    in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
     out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
 
-    out_translate(in_map, *count, out_map);
+    for (i = 0; i < count; i++) {
+        *out_map = (unsigned short)*in_map;
+        in_map++;
+        out_map++;
+    }
 
-    pipe_buffer_unmap(screen, elts);
+    pipe_buffer_unmap(screen, *elts);
     pipe_buffer_unmap(screen, new_elts);
 
-    *size = out_index_size;
-    *mode = out_prim;
-    *count = out_nr;
-
-    return new_elts;
+    *elts = new_elts;
 }
 
 /* This is the fast-path drawing & emission for HW TCL. */
@@ -327,8 +307,8 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     }
 
     if (indexSize == 1) {
-        indexBuffer = r300_translate_elts(r300, indexBuffer,
-            &indexSize, &mode, &count);
+        r300_shorten_ubyte_elts(r300, &indexBuffer, count);
+        indexSize = 2;
     }
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
