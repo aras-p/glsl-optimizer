@@ -28,11 +28,9 @@
 
 #include "glheader.h"
 #include "api_arrayelt.h"
-#include "api_loopback.h"
 #include "context.h"
 #include "imports.h"
 #include "mtypes.h"
-#include "state.h"
 #include "vtxfmt.h"
 #include "eval.h"
 #include "dlist.h"
