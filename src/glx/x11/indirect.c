@@ -47,7 +47,7 @@
 #  else
 #    define FASTCALL
 #  endif
-#  if defined(__GNUC__)
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define NOINLINE __attribute__((noinline))
 #  else
 #    define NOINLINE
