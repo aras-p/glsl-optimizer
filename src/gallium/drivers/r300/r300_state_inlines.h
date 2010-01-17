@@ -551,7 +551,11 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
     /* Swizzles for 8bits formats are in the reversed order, not sure why. */
     if (desc->channel[0].size == 8) {
         for (i = 0; i < 4; i++) {
-            swizzle[i] = 3 - desc->swizzle[i];
+            if (desc->swizzle[i] <= 3) {
+                swizzle[i] = 3 - desc->swizzle[i];
+            } else {
+                swizzle[i] = desc->swizzle[i];
+            }
         }
     } else {
         for (i = 0; i < 4; i++) {
