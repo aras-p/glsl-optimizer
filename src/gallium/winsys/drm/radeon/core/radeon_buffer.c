@@ -51,6 +51,23 @@ static const char *radeon_get_name(struct pipe_winsys *ws)
     return "Radeon/GEM+KMS";
 }
 
+uint32_t radeon_domain_from_usage(unsigned usage)
+{
+    uint32_t domain = 0;
+
+    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
+        domain |= RADEON_GEM_DOMAIN_VRAM;
+    }
+    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+    if (usage & PIPE_BUFFER_USAGE_INDEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+
+    return domain;
+}
+
 static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
                                                 unsigned alignment,
                                                 unsigned usage,
@@ -71,25 +88,17 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
 
-    if (usage == PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) {
+    if ((usage == PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) ||
+        (usage == PIPE_BUFFER_USAGE_VERTEX && size < 512)) {
         /* Don't bother allocating a BO, as it'll never get to the card. */
+        /* Also, create small vertex buffers in RAM. */
         desc.alignment = alignment;
         desc.usage = usage;
         radeon_buffer->pb = pb_malloc_buffer_create(size, &desc);
         return &radeon_buffer->base;
     }
 
-    domain = 0;
-
-    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
-    if (usage & PIPE_BUFFER_USAGE_INDEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
+    domain = radeon_domain_from_usage(usage);
 
     radeon_buffer->bo = radeon_bo_open(radeon_ws->priv->bom, 0, size,
             alignment, domain, 0);
@@ -222,6 +231,54 @@ static void radeon_buffer_set_tiling(struct radeon_winsys *ws,
     radeon_bo_set_tiling(radeon_buffer->bo, flags, pitch);
 }
 
+static boolean radeon_buffer_is_local(struct radeon_winsys *ws,
+                                      struct pipe_buffer *buffer)
+{
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+
+    return radeon_buffer->pb != NULL;
+}
+
+static void radeon_buffer_make_managed(struct radeon_winsys *ws,
+                                       struct pipe_buffer *buffer)
+{
+    struct radeon_pipe_buffer* radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    uint32_t domain;
+    void *map;
+
+    if (radeon_buffer->pb) {
+        domain = radeon_domain_from_usage(buffer->usage);
+
+        /* Create a managed buffer. */
+        radeon_buffer->bo = radeon_bo_open(ws->priv->bom, 0,
+                                           buffer->size, buffer->alignment,
+                                           domain, 0);
+        if (radeon_buffer->bo == NULL) {
+            /* XXX What now? */
+            fprintf(stderr, "radeon: cannot create a buffer in function %s\n",
+                    __FUNCTION__);
+            assert(0);
+            abort();
+        }
+
+        /* Move data. */
+        radeon_bo_map(radeon_buffer->bo, 1);
+        map = pb_map(radeon_buffer->pb, PIPE_BUFFER_USAGE_CPU_READ);
+
+        memcpy(radeon_buffer->bo->ptr, map, buffer->size);
+
+        pb_unmap(radeon_buffer->pb);
+        radeon_bo_unmap(radeon_buffer->bo);
+
+        /* Release the locally-created buffer. */
+        pipe_reference_init(&radeon_buffer->pb->base.reference, 0);
+        pb_destroy(radeon_buffer->pb);
+        radeon_buffer->pb = 0;
+    }
+}
+
 static void radeon_fence_reference(struct pipe_winsys *ws,
                                    struct pipe_fence_handle **ptr,
                                    struct pipe_fence_handle *pfence)
@@ -325,6 +382,8 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
     radeon_ws->base.get_name = radeon_get_name;
 
     radeon_ws->buffer_set_tiling = radeon_buffer_set_tiling;
+    radeon_ws->buffer_is_local = radeon_buffer_is_local;
+    radeon_ws->buffer_make_managed = radeon_buffer_make_managed;
 
     return radeon_ws;
 }

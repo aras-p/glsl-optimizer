@@ -77,6 +77,8 @@ struct radeon_winsys_priv {
     void *flush_data;
 };
 
+uint32_t radeon_domain_from_usage(unsigned usage);
+
 struct radeon_winsys* radeon_pipe_winsys(int fb);
 #if 0
 struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
