@@ -602,9 +602,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
-    /* XXX I think there is something wrong with the polygon mode,
-     * XXX re-test when r300g is in a better shape */
-
     /* Enable polygon mode */
     if (state->fill_cw != PIPE_POLYGON_MODE_FILL ||
         state->fill_ccw != PIPE_POLYGON_MODE_FILL) {

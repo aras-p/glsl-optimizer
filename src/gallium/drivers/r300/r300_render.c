@@ -257,10 +257,23 @@ static struct pipe_buffer* r300_translate_elts(struct r300_context* r300,
     struct pipe_buffer* new_elts;
     void *in_map, *out_map;
     unsigned out_prim, out_index_size, out_nr;
+    struct pipe_rasterizer_state* rs;
     u_translate_func out_translate;
 
-    (void)u_index_translator(~0, *mode, *size, *count, PV_LAST, PV_LAST,
-        &out_prim, &out_index_size, &out_nr, &out_translate);
+    rs = &((struct r300_rs_state*)r300->rs_state.state)->rs;
+
+    if (rs->fill_cw == rs->fill_ccw &&
+        rs->fill_cw != PIPE_POLYGON_MODE_FILL) {
+        (void)u_unfilled_translator(*mode, *size, *count, rs->fill_cw,
+            &out_prim, &out_index_size, &out_nr, &out_translate);
+    } else {
+        (void)u_index_translator(~0, *mode, *size, *count, PV_LAST, PV_LAST,
+            &out_prim, &out_index_size, &out_nr, &out_translate);
+    }
+
+    debug_printf("r300: old mode %d, new mode %d\n", *mode, out_prim);
+    debug_printf("r300: old count %d, new count %d\n", *count, out_nr);
+    debug_printf("r300: old size %d, new size %d\n", *size, out_index_size);
 
     new_elts = screen->buffer_create(screen, 32,
                                      PIPE_BUFFER_USAGE_INDEX |
