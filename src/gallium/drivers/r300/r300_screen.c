@@ -192,6 +192,12 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
 
+    if (target >= PIPE_MAX_TEXTURE_TYPES) {
+        debug_printf("r300: Implementation error: Received bogus texture "
+            "target %d in %s\n", target, __FUNCTION__);
+        return FALSE;
+    }
+
     switch (format) {
         /* Supported formats. */
         /* Colorbuffer */
