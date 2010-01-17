@@ -779,6 +779,7 @@ st_translate_mesa_program(
 {
    struct st_translate translate, *t;
    unsigned i;
+   enum pipe_error ret = PIPE_OK;
 
    t = &translate;
    memset(t, 0, sizeof *t);
@@ -865,8 +866,10 @@ st_translate_mesa_program(
       
       t->constants = CALLOC( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
-      if (t->constants == NULL)
+      if (t->constants == NULL) {
+         ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
+      }
       
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
@@ -920,8 +923,6 @@ st_translate_mesa_program(
                         t->insn[t->labels[i].branch_target] );
    }
 
-   return PIPE_OK;
-
 out:
    FREE(t->insn);
    FREE(t->labels);
@@ -931,7 +932,7 @@ out:
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
    }
 
-   return PIPE_ERROR_OUT_OF_MEMORY;
+   return ret;
 }
 
 
