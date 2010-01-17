@@ -26,6 +26,7 @@ RADEON_COMMON_SOURCES = \
 	radeon_span.c \
 	radeon_texture.c \
 	radeon_tex_copy.c \
+	radeon_tex_getimage.c \
 	radeon_tile.c
 
 DRIVER_SOURCES = \
