@@ -40,7 +40,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/macros.h"
 #include "nvprogram.h"
 #include "nvvertparse.h"
 #include "prog_instruction.h"
