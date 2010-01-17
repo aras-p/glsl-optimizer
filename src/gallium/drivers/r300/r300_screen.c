@@ -183,10 +183,14 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
-static boolean check_tex_format(enum pipe_format format, uint32_t usage,
-                                boolean is_r500)
+static boolean r300_is_format_supported(struct pipe_screen* screen,
+                                        enum pipe_format format,
+                                        enum pipe_texture_target target,
+                                        unsigned usage,
+                                        unsigned geom_flags)
 {
     uint32_t retval = 0;
+    boolean is_r500 = r300_screen(screen)->caps->is_r500;
 
     switch (format) {
         /* Supported formats. */
@@ -247,28 +251,13 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
         case PIPE_FORMAT_Z32_UNORM:
         case PIPE_FORMAT_S8Z24_UNORM:
         case PIPE_FORMAT_X8Z24_UNORM:
-            debug_printf("r300: Note: Got unsupported format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
+            SCREEN_DBG(r300_screen(screen), DBG_TEX,
+                       "r300: Note: Got unsupported format: %s in %s\n",
+                       pf_name(format), __FUNCTION__);
             return FALSE;
 
-        /* XXX These don't even exist
-        case PIPE_FORMAT_A32R32G32B32:
-        case PIPE_FORMAT_A16R16G16B16: */
-        /* XXX What the deuce is UV88? (r3xx accel page 14)
-            debug_printf("r300: Warning: Got unimplemented format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
-            return FALSE; */
-
-        /* XXX Supported yet unimplemented r5xx formats: */
-        /* XXX Again, what is UV1010 this time? (r5xx accel page 148) */
-        /* XXX Even more that don't exist
-        case PIPE_FORMAT_A10R10G10B10_UNORM:
-        case PIPE_FORMAT_A2R10G10B10_UNORM:
-        case PIPE_FORMAT_I10_UNORM:
-            debug_printf(
-                "r300: Warning: Got unimplemented r500 format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
-            return FALSE; */
+        /* XXX Add all remaining gallium-supported formats,
+         * see util/u_format.csv. */
 
         default:
             /* Unknown format... */
@@ -284,30 +273,6 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
      * This also returns FALSE for any unknown formats.
      */
     return (retval >= usage);
-}
-
-static boolean r300_is_format_supported(struct pipe_screen* pscreen,
-                                        enum pipe_format format,
-                                        enum pipe_texture_target target,
-                                        unsigned tex_usage,
-                                        unsigned geom_flags)
-{
-    switch (target) {
-        case PIPE_TEXTURE_1D:   /* handle 1D textures as 2D ones */
-        case PIPE_TEXTURE_2D:
-        case PIPE_TEXTURE_3D:
-        case PIPE_TEXTURE_CUBE:
-            return check_tex_format(format, tex_usage,
-                r300_screen(pscreen)->caps->is_r500);
-
-        default:
-            debug_printf("r300: Fatal: This is not a format target: %d\n",
-                target);
-            assert(0);
-            break;
-    }
-
-    return FALSE;
 }
 
 static struct pipe_transfer*
