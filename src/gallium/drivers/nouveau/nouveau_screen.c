@@ -260,6 +260,8 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 void
 nouveau_screen_fini(struct nouveau_screen *screen)
 {
+	struct pipe_winsys *ws = screen->base.winsys;
 	nouveau_channel_free(&screen->channel);
+	ws->destroy(ws);
 }
 

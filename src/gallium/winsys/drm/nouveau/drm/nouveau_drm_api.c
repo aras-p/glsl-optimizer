@@ -54,6 +54,14 @@ static struct dri1_api nouveau_dri1_api = {
 	nouveau_dri1_front_surface,
 };
 
+static void
+nouveau_drm_destroy_winsys(struct pipe_winsys *s)
+{
+	struct nouveau_winsys *nv_winsys = nouveau_winsys(s);
+	FREE(nv_winsys->pctx);
+	FREE(nv_winsys);
+}
+
 static struct pipe_screen *
 nouveau_drm_create_screen(struct drm_api *api, int fd,
 			  struct drm_create_screen_arg *arg)
@@ -105,6 +113,7 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 		return NULL;
 	}
 	ws = &nvws->base;
+	ws->destroy = nouveau_drm_destroy_winsys;
 
 	nvws->pscreen = init(ws, dev);
 	if (!nvws->pscreen) {
