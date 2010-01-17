@@ -537,6 +537,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
     const struct util_format_description *desc = util_format_description(format);
+    unsigned swizzle[4], i;
 
     assert(format);
 
@@ -547,11 +548,22 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
         return 0;
     }
 
-    return ((desc->swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
-        (desc->swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
-        (desc->swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
-        (desc->swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
-        (0xf << R300_WRITE_ENA_SHIFT));
+    /* Swizzles for 8bits formats are in the reversed order, not sure why. */
+    if (desc->channel[0].size == 8) {
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = 3 - desc->swizzle[i];
+        }
+    } else {
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = desc->swizzle[i];
+        }
+    }
+
+    return ((swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
+            (swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
+            (swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
+            (swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
+            (0xf << R300_WRITE_ENA_SHIFT));
 }
 
 #endif /* R300_STATE_INLINES_H */
