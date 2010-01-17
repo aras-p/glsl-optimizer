@@ -55,8 +55,8 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
      *
      * The GEM info is actually bogus on the kernel side, as well as our side
      * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
-     * we don't actually use the info for anything yet.
-     * XXX update the above when we can safely use vram_size instead of vram_visible */
+     * we don't actually use the info for anything yet. */
+
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
@@ -92,8 +92,7 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
         exit(1);
     }
     winsys->gart_size = gem_info.gart_size;
-    /* XXX */
-    winsys->vram_size = gem_info.vram_visible;
+    winsys->vram_size = gem_info.vram_size;
 }
 
 /* Guess at whether this chipset should use r300g.
