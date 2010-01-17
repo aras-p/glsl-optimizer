@@ -350,7 +350,8 @@ static void r300_update_rs_block(struct r300_context* r300,
 
     /* Rasterize colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
+            vs_outputs->color[1] != ATTR_UNUSED) {
             /* Always rasterize if it's written by the VS,
              * otherwise it locks up. */
             rX00_rs_col(rs, col_count, i, FALSE);
