@@ -486,6 +486,7 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    uint32_t zbuffer_bpp = 0;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -499,6 +500,23 @@ static void
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
     r300->scissor_state.dirty = TRUE;
+
+    /* Polyfon offset depends on the zbuffer bit depth. */
+    if (state->zsbuf && r300->polygon_offset_enabled) {
+        switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
+            case 2:
+                zbuffer_bpp = 16;
+                break;
+            case 4:
+                zbuffer_bpp = 24;
+                break;
+        }
+
+        if (r300->zbuffer_bpp != zbuffer_bpp) {
+            r300->zbuffer_bpp = zbuffer_bpp;
+            r300->rs_state.dirty = TRUE;
+        }
+    }
 }
 
 /* Create fragment shader state. */
@@ -654,10 +672,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     }
 
     if (rs->polygon_offset_enable) {
-        rs->depth_offset_front = rs->depth_offset_back =
-            fui(state->offset_units);
-        rs->depth_scale_front = rs->depth_scale_back =
-            fui(state->offset_scale);
+        rs->depth_offset = state->offset_units;
+        rs->depth_scale = state->offset_scale;
     }
 
     if (state->line_stipple_enable) {
@@ -691,8 +707,10 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (rs) {
         r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
+        r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
     } else {
         r300->tcl_bypass = FALSE;
+        r300->polygon_offset_enabled = FALSE;
     }
 
     r300->rs_state.state = rs;
