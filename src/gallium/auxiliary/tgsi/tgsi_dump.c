@@ -219,8 +219,13 @@ _dump_register_src(
    struct dump_ctx *ctx,
    const struct tgsi_full_src_register *src )
 {
+   ENM(src->Register.File, file_names);
+   if (src->Register.Dimension) {
+      CHR('[');
+      SID(src->Dimension.Index);
+      CHR(']');
+   }
    if (src->Register.Indirect) {
-      ENM( src->Register.File, file_names );
       CHR( '[' );
       ENM( src->Indirect.File, file_names );
       CHR( '[' );
@@ -234,14 +239,8 @@ _dump_register_src(
       }
       CHR( ']' );
    } else {
-      ENM( src->Register.File, file_names );
       CHR( '[' );
       SID( src->Register.Index );
-      CHR( ']' );
-   }
-   if (src->Register.Dimension) {
-      CHR( '[' );
-      SID( src->Dimension.Index );
       CHR( ']' );
    }
 }

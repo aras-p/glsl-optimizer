@@ -408,7 +408,7 @@ iter_declaration(
          uint vert;
          for (vert = 0; vert < ctx->implied_array_size; ++vert) {
             scan_register *reg = MALLOC(sizeof(scan_register));
-            fill_scan_register2d(reg, file, vert, i);
+            fill_scan_register2d(reg, file, i, vert);
             check_and_declare(ctx, reg);
          }
       } else {

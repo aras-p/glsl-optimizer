@@ -1129,11 +1129,14 @@ fetch_source(const struct tgsi_exec_machine *mach,
     * subscript to a register file. Effectively it means that
     * the register file is actually a 2D array of registers.
     *
-    *    file[1][3] == file[1*sizeof(file[1])+3],
+    *    file[3][1] == file[3*sizeof(file[1])+1],
     *    where:
     *       [3] = Dimension.Index
     */
    if (reg->Register.Dimension) {
+      int array_size;
+      union tgsi_exec_channel dim_index;
+
       /* The size of the first-order array depends on the register file type.
        * We need to multiply the index to the first array to get an effective,
        * "flat" index that points to the beginning of the second-order array.
@@ -1141,32 +1144,27 @@ fetch_source(const struct tgsi_exec_machine *mach,
       switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
       case TGSI_FILE_SYSTEM_VALUE:
-         index.i[0] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
-         index.i[1] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
-         index.i[2] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
-         index.i[3] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
+         array_size = TGSI_EXEC_MAX_INPUT_ATTRIBS;
          break;
       case TGSI_FILE_CONSTANT:
-         index.i[0] *= TGSI_EXEC_MAX_CONST_BUFFER;
-         index.i[1] *= TGSI_EXEC_MAX_CONST_BUFFER;
-         index.i[2] *= TGSI_EXEC_MAX_CONST_BUFFER;
-         index.i[3] *= TGSI_EXEC_MAX_CONST_BUFFER;
+         array_size = TGSI_EXEC_MAX_CONST_BUFFER;
          break;
       default:
          assert( 0 );
+         array_size = 0;
       }
 
-      index.i[0] += reg->Dimension.Index;
-      index.i[1] += reg->Dimension.Index;
-      index.i[2] += reg->Dimension.Index;
-      index.i[3] += reg->Dimension.Index;
+      dim_index.i[0] =
+      dim_index.i[1] =
+      dim_index.i[2] =
+      dim_index.i[3] = reg->Dimension.Index;
 
       /* Again, the second subscript index can be addressed indirectly
        * identically to the first one.
        * Nothing stops us from indirectly addressing the indirect register,
        * but there is no need for that, so we won't exercise it.
        *
-       *    file[1][ind[4].y+3],
+       *    file[ind[4].y+3][1],
        *    where:
        *       ind = DimIndirect.File
        *       [4] = DimIndirect.Index
@@ -1191,19 +1189,24 @@ fetch_source(const struct tgsi_exec_machine *mach,
             &index2,
             &indir_index );
 
-         index.i[0] += indir_index.i[0];
-         index.i[1] += indir_index.i[1];
-         index.i[2] += indir_index.i[2];
-         index.i[3] += indir_index.i[3];
+         dim_index.i[0] += indir_index.i[0];
+         dim_index.i[1] += indir_index.i[1];
+         dim_index.i[2] += indir_index.i[2];
+         dim_index.i[3] += indir_index.i[3];
 
          /* for disabled execution channels, zero-out the index to
           * avoid using a potential garbage value.
           */
          for (i = 0; i < QUAD_SIZE; i++) {
             if ((execmask & (1 << i)) == 0)
-               index.i[i] = 0;
+               dim_index.i[i] = 0;
          }
       }
+
+      index.i[0] += dim_index.i[0] * array_size;
+      index.i[1] += dim_index.i[1] * array_size;
+      index.i[2] += dim_index.i[2] * array_size;
+      index.i[3] += dim_index.i[3] * array_size;
 
       /* If by any chance there was a need for a 3D array of register
        * files, we would have to check whether Dimension is followed
