@@ -4469,7 +4469,7 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 	}
 	pAsm->D2.dst2.SaturateMode = 1;
 
-	pAsm->S[0].src.rtype = pAsm->D.dst.rtype;
+	pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
 	pAsm->S[0].src.reg = pAsm->D.dst.reg;
 	noswizzle_PVSSRC(&(pAsm->S[0].src));
 	noneg_PVSSRC(&(pAsm->S[0].src));
