@@ -83,7 +83,7 @@ dri_fill_in_modes(struct dri_screen *screen,
    unsigned num_modes;
    uint8_t depth_bits_array[5];
    uint8_t stencil_bits_array[5];
-   uint8_t msaa_samples_array[1];
+   uint8_t msaa_samples_array[2];
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    unsigned msaa_samples_factor;
@@ -147,8 +147,9 @@ dri_fill_in_modes(struct dri_screen *screen,
    }
 
    msaa_samples_array[0] = 0;
+   msaa_samples_array[1] = 4;
    back_buffer_factor = 3;
-   msaa_samples_factor = 1;
+   msaa_samples_factor = 2;
 
    num_modes =
       depth_buffer_factor * back_buffer_factor * msaa_samples_factor * 4;
