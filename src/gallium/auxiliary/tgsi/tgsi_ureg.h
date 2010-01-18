@@ -168,6 +168,11 @@ ureg_DECL_immediate_uint( struct ureg_program *,
                           unsigned nr );
 
 struct ureg_src
+ureg_DECL_immediate_block_uint( struct ureg_program *,
+                                const unsigned *v,
+                                unsigned nr );
+
+struct ureg_src
 ureg_DECL_immediate_int( struct ureg_program *,
                          const int *v,
                          unsigned nr );

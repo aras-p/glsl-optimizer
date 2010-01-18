@@ -656,6 +656,35 @@ ureg_DECL_immediate_uint( struct ureg_program *ureg,
 
 
 struct ureg_src
+ureg_DECL_immediate_block_uint( struct ureg_program *ureg,
+                                const unsigned *v,
+                                unsigned nr )
+{
+   uint index;
+   uint i;
+
+   if (ureg->nr_immediates + (nr + 3) / 4 > UREG_MAX_IMMEDIATE) {
+      set_bad(ureg);
+      return ureg_src_register(TGSI_FILE_IMMEDIATE, 0);
+   }
+
+   index = ureg->nr_immediates;
+   ureg->nr_immediates += (nr + 3) / 4;
+
+   for (i = index; i < ureg->nr_immediates; i++) {
+      ureg->immediate[i].type = TGSI_IMM_UINT32;
+      ureg->immediate[i].nr = nr > 4 ? 4 : nr;
+      memcpy(ureg->immediate[i].value.u,
+             &v[(i - index) * 4],
+             ureg->immediate[i].nr * sizeof(uint));
+      nr -= 4;
+   }
+
+   return ureg_src_register(TGSI_FILE_IMMEDIATE, index);
+}
+
+
+struct ureg_src
 ureg_DECL_immediate_int( struct ureg_program *ureg,
                          const int *v,
                          unsigned nr )
