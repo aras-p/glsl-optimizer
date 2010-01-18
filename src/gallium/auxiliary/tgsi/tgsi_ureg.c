@@ -247,6 +247,7 @@ ureg_src_register( unsigned file,
    src.SwizzleZ = TGSI_SWIZZLE_Z;
    src.SwizzleW = TGSI_SWIZZLE_W;
    src.Indirect = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute = 0;
@@ -720,7 +721,7 @@ ureg_emit_src( struct ureg_program *ureg,
    if (src.Indirect) {
       out[0].src.Indirect = 1;
       out[n].value = 0;
-      out[n].src.File = TGSI_FILE_ADDRESS;
+      out[n].src.File = src.IndirectFile;
       out[n].src.SwizzleX = src.IndirectSwizzle;
       out[n].src.SwizzleY = src.IndirectSwizzle;
       out[n].src.SwizzleZ = src.IndirectSwizzle;
