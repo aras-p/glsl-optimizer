@@ -29,6 +29,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/dri2tokens.h>
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 #include "common/native.h"
 
 enum x11_screen_extension {
@@ -95,5 +96,8 @@ struct x11_drawable_buffer *
 x11_drawable_get_buffers(struct x11_screen *xscr, Drawable drawable,
                          int *width, int *height, unsigned int *attachments,
                          boolean with_format, int num_ins, int *num_outs);
+
+uint
+x11_drawable_get_depth(struct x11_screen *xscr, Drawable drawable);
 
 #endif /* _X11_SCREEN_H_ */

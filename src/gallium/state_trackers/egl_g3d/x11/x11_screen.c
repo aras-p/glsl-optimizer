@@ -30,6 +30,7 @@
 #include <X11/extensions/XShm.h>
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "xf86drm.h"
 #include "egllog.h"
 
@@ -50,6 +51,10 @@ struct x11_screen {
 
    XVisualInfo *visuals;
    int num_visuals;
+
+   /* cached values for x11_drawable_get_format */
+   Drawable last_drawable;
+   unsigned int last_depth;
 };
 
 
@@ -348,6 +353,37 @@ x11_drawable_get_buffers(struct x11_screen *xscr, Drawable drawable,
             attachments, num_ins, num_outs);
 
    return (struct x11_drawable_buffer *) dri2bufs;
+}
+
+/**
+ * Return the depth of a drawable.
+ *
+ * Unlike other drawable functions, the drawable needs not be a DRI2 drawable.
+ */
+uint
+x11_drawable_get_depth(struct x11_screen *xscr, Drawable drawable)
+{
+   unsigned int depth;
+
+   if (drawable != xscr->last_drawable) {
+      Window root;
+      int x, y;
+      unsigned int w, h, border;
+      Status ok;
+
+      ok = XGetGeometry(xscr->dpy, drawable, &root,
+            &x, &y, &w, &h, &border, &depth);
+      if (!ok)
+         depth = 0;
+
+      xscr->last_drawable = drawable;
+      xscr->last_depth = depth;
+   }
+   else {
+      depth = xscr->last_depth;
+   }
+
+   return depth;
 }
 
 /**

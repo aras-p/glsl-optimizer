@@ -600,6 +600,34 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
    return configs;
 }
 
+static boolean
+ximage_display_is_pixmap_supported(struct native_display *ndpy,
+                                   EGLNativePixmapType pix,
+                                   const struct native_config *nconf)
+{
+   struct ximage_display *xdpy = ximage_display(ndpy);
+   enum pipe_format fmt;
+   uint depth;
+
+   depth = x11_drawable_get_depth(xdpy->xscr, (Drawable) pix);
+   switch (depth) {
+   case 32:
+      fmt = PIPE_FORMAT_A8R8G8B8_UNORM;
+      break;
+   case 24:
+      fmt = PIPE_FORMAT_X8R8G8B8_UNORM;
+      break;
+   case 16:
+      fmt = PIPE_FORMAT_R5G6B5_UNORM;
+      break;
+   default:
+      fmt = PIPE_FORMAT_NONE;
+      break;
+   }
+
+   return (fmt == nconf->color_format);
+}
+
 static void
 ximage_display_destroy(struct native_display *ndpy)
 {
@@ -652,6 +680,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
    xdpy->base.destroy = ximage_display_destroy;
 
    xdpy->base.get_configs = ximage_display_get_configs;
+   xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
    xdpy->base.create_context = ximage_display_create_context;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;

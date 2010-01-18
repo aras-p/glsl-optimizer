@@ -588,6 +588,21 @@ dri2_display_get_configs(struct native_display *ndpy, int *num_configs)
    return configs;
 }
 
+static boolean
+dri2_display_is_pixmap_supported(struct native_display *ndpy,
+                                 EGLNativePixmapType pix,
+                                 const struct native_config *nconf)
+{
+   struct dri2_display *dri2dpy = dri2_display(ndpy);
+   uint depth, nconf_depth;
+
+   depth = x11_drawable_get_depth(dri2dpy->xscr, (Drawable) pix);
+   nconf_depth = util_format_get_blocksizebits(nconf->color_format);
+
+   /* simple depth match for now */
+   return (depth == nconf_depth || (depth == 24 && depth + 8 == nconf_depth));
+}
+
 static void
 dri2_display_destroy(struct native_display *ndpy)
 {
@@ -680,6 +695,7 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
 
    dri2dpy->base.destroy = dri2_display_destroy;
    dri2dpy->base.get_configs = dri2_display_get_configs;
+   dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
    dri2dpy->base.create_context = dri2_display_create_context;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
    dri2dpy->base.create_pixmap_surface = dri2_display_create_pixmap_surface;

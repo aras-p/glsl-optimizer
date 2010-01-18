@@ -136,6 +136,17 @@ struct native_display {
                                                int *num_configs);
 
    /**
+    * Test if a pixmap is supported by the given config.  Required unless no
+    * config has GLX_PIXMAP_BIT set.
+    *
+    * This function is usually called to find a config that supports a given
+    * pixmap.  Thus, it is usually called with the same pixmap in a row.
+    */
+   boolean (*is_pixmap_supported)(struct native_display *ndpy,
+                                  EGLNativePixmapType pix,
+                                  const struct native_config *nconf);
+
+   /**
     * Create a pipe context.
     */
    struct pipe_context *(*create_context)(struct native_display *ndpy,
