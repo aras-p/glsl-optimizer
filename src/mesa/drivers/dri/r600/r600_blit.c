@@ -1590,6 +1590,10 @@ GLboolean r600_blit(GLcontext *ctx,
         return GL_FALSE;
     }
 
+    if (src_offset % 256 || dst_offset % 256) {
+        return GL_FALSE;
+    }
+
     if (0) {
         fprintf(stderr, "src: width %d, height %d, pitch %d vs %d, format %s\n",
                 src_width, src_height, src_pitch,

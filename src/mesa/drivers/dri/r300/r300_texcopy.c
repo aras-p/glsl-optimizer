@@ -68,10 +68,6 @@ do_copy_texsubimage(GLcontext *ctx,
     intptr_t src_offset = rrb->draw_offset;
     intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
 
-    if (src_offset % 32 || dst_offset % 32) {
-        return GL_FALSE;
-    }
-
     if (0) {
         fprintf(stderr, "%s: copying to face %d, level %d\n",
                 __FUNCTION__, _mesa_tex_target_to_face(target), level);

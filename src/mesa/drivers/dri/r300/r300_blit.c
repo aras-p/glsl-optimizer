@@ -592,6 +592,10 @@ unsigned r300_blit(GLcontext *ctx,
         return 0;
     }
 
+    if (src_offset % 32 || dst_offset % 32) {
+        return GL_FALSE;
+    }
+
     if (0) {
         fprintf(stderr, "src: size [%d x %d], pitch %d, "
                 "offset [%d x %d], format %s, bo %p\n",
