@@ -539,6 +539,38 @@ void cso_restore_samplers(struct cso_context *ctx)
    cso_single_sampler_done( ctx );
 }
 
+/*
+ * If the function encouters any errors it will return the
+ * last one. Done to always try to set as many samplers
+ * as possible.
+ */
+enum pipe_error cso_set_vertex_samplers(struct cso_context *ctx,
+                                        unsigned nr,
+                                        const struct pipe_sampler_state **templates)
+{
+   unsigned i;
+   enum pipe_error temp, error = PIPE_OK;
+
+   /* TODO: fastpath
+    */
+
+   for (i = 0; i < nr; i++) {
+      temp = cso_single_vertex_sampler( ctx, i, templates[i] );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
+
+   for ( ; i < ctx->nr_samplers; i++) {
+      temp = cso_single_vertex_sampler( ctx, i, NULL );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
+
+   cso_single_vertex_sampler_done( ctx );
+
+   return error;
+}
+
 void
 cso_save_vertex_samplers(struct cso_context *ctx)
 {
