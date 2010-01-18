@@ -48,6 +48,10 @@ struct label {
    unsigned token;
 };
 
+
+/**
+ * Intermediate state used during shader translation.
+ */
 struct st_translate {
    struct ureg_program *ureg;
 
@@ -730,6 +734,7 @@ emit_face_var( struct st_translate *t,
    t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
 }
 
+
 static void
 emit_edgeflags( struct st_translate *t,
                  const struct gl_program *program )
@@ -740,6 +745,7 @@ emit_edgeflags( struct st_translate *t,
 
    ureg_MOV( ureg, edge_dst, edge_src );
 }
+
 
 /**
  * Translate Mesa program to TGSI format.
@@ -758,7 +764,7 @@ emit_edgeflags( struct st_translate *t,
  * \param outputSemanticIndex  the semantic index (ex: which texcoord) for
  *                             each output
  *
- * \return  array of translated tokens, caller's responsibility to free
+ * \return  PIPE_OK or PIPE_ERROR_OUT_OF_MEMORY
  */
 enum pipe_error
 st_translate_mesa_program(
