@@ -19,32 +19,19 @@ nvfx_miptree_choose_format(struct nvfx_miptree *mt)
 	unsigned uniform_pitch = 0;
 	static int no_swizzle = -1;
 	if(no_swizzle < 0)
-		no_swizzle = debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE);
+		no_swizzle = debug_get_bool_option("NV40_NO_SWIZZLE", FALSE); /* this will break things on nv30 */
 
-	/* Non-uniform pitch textures must be POT */
-	if (pt->width0 & (pt->width0 - 1) ||
-	    pt->height0 & (pt->height0 - 1) ||
-	    pt->depth0 & (pt->depth0 - 1)
+	if (!util_is_pot(pt->width0) ||
+	    !util_is_pot(pt->height0) ||
+	    !util_is_pot(pt->depth0)
 	    )
 		uniform_pitch = 1;
 
-	/* All texture formats except compressed ones can be swizzled
-	 * Unsure about depth, let's prevent swizzling for now
-	 */
 	if (
 		(pt->bind & (PIPE_BIND_SCANOUT | PIPE_BIND_DISPLAY_TARGET))
 		|| (pt->usage & PIPE_USAGE_DYNAMIC) || (pt->usage & PIPE_USAGE_STAGING)
-		|| util_format_is_depth_or_stencil(pt->format)
 		|| util_format_is_compressed(pt->format)
-		// disable swizzled textures on NV04-NV20 as our current drivers don't fully support that
-		// TODO: hardware should support them, fix the drivers and reenable
-		|| nouveau_screen(pt->screen)->device->chipset < 0x30
 		|| no_swizzle
-
-		// disable swizzling for non-RGBA 2D because our current 2D code can't handle anything
-		// else correctly, and even that is semi-broken
-		|| pt->target != PIPE_TEXTURE_2D
-		|| (pt->format != PIPE_FORMAT_B8G8R8A8_UNORM && pt->format != PIPE_FORMAT_B8G8R8X8_UNORM)
 	)
 		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
 
