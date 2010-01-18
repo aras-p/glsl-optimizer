@@ -53,9 +53,20 @@ void util_ringbuffer_destroy( struct util_ringbuffer *ring )
    FREE(ring);
 }
 
+/**
+ * Return number of free entries in the ring
+ */
 static INLINE unsigned util_ringbuffer_space( const struct util_ringbuffer *ring )
 {
    return (ring->tail - (ring->head + 1)) & ring->mask;
+}
+
+/**
+ * Is the ring buffer empty?
+ */
+static INLINE boolean util_ringbuffer_empty( const struct util_ringbuffer *ring )
+{
+   return util_ringbuffer_space(ring) == ring->mask;
 }
 
 void util_ringbuffer_enqueue( struct util_ringbuffer *ring,
@@ -66,6 +77,10 @@ void util_ringbuffer_enqueue( struct util_ringbuffer *ring,
    /* XXX: over-reliance on mutexes, etc:
     */
    pipe_mutex_lock(ring->mutex);
+
+   /* make sure we don't request an impossible amount of space
+    */
+   assert(packet->dwords <= ring->mask);
 
    /* Wait for free space:
     */
@@ -104,14 +119,14 @@ enum pipe_error util_ringbuffer_dequeue( struct util_ringbuffer *ring,
     */
    pipe_mutex_lock(ring->mutex);
 
-   /* Wait for free space:
+   /* Get next ring entry:
     */
    if (wait) {
-      while (util_ringbuffer_space(ring) == 0)
+      while (util_ringbuffer_empty(ring))
          pipe_condvar_wait(ring->change, ring->mutex);
    }
    else {
-      if (util_ringbuffer_space(ring) == 0) {
+      if (util_ringbuffer_empty(ring)) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
