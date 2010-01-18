@@ -81,10 +81,11 @@ do_copy_texsubimage(GLcontext *ctx,
 
 
     /* blit from src buffer to texture */
-    return r600_blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch,
+    return r600_blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
                      rrb->base.Width, rrb->base.Height, x, y,
                      timg->mt->bo, dst_offset, timg->base.TexFormat,
-                     timg->mt->levels[level].rowstride, timg->base.Width, timg->base.Height,
+                     timg->mt->levels[level].rowstride / _mesa_get_format_bytes(timg->base.TexFormat),
+                     timg->base.Width, timg->base.Height,
                      dstx, dsty, width, height, 1);
 }
 

@@ -90,16 +90,15 @@ static unsigned is_blit_supported(gl_format mesa_format)
 
 static inline void
 set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_format,
-                  int pitch, int w, int h, intptr_t dst_offset)
+                  int nPitchInPixel, int w, int h, intptr_t dst_offset)
 {
     uint32_t cb_color0_base, cb_color0_size = 0, cb_color0_info = 0, cb_color0_view = 0;
-    int nPitchInPixel, id = 0;
-    uint32_t comp_swap, format, bpp = _mesa_get_format_bytes(mesa_format);
+    int id = 0;
+    uint32_t comp_swap, format;
     BATCH_LOCALS(&context->radeon);
 
     cb_color0_base = dst_offset / 256;
 
-    nPitchInPixel = pitch/bpp;
     SETfield(cb_color0_size, (nPitchInPixel / 8) - 1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(cb_color0_size, ((nPitchInPixel * h) / 64) - 1,
@@ -556,11 +555,9 @@ set_vtx_resource(context_t *context)
 static inline void
 set_tex_resource(context_t * context,
 		 gl_format mesa_format, struct radeon_bo *bo, int w, int h,
-		 int pitch, intptr_t src_offset)
+		 int TexelPitch, intptr_t src_offset)
 {
     uint32_t sq_tex_resource0, sq_tex_resource1, sq_tex_resource2, sq_tex_resource4, sq_tex_resource6;
-    int bpp = _mesa_get_format_bytes(mesa_format);
-    int TexelPitch = pitch/bpp;
 
     sq_tex_resource0 = sq_tex_resource1 = sq_tex_resource2 = sq_tex_resource4 = sq_tex_resource6 = 0;
     BATCH_LOCALS(&context->radeon);
