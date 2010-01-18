@@ -1559,7 +1559,7 @@ static GLboolean validate_buffers(context_t *rmesa,
     return GL_TRUE;
 }
 
-GLboolean r600_blit(context_t *context,
+GLboolean r600_blit(GLcontext *ctx,
                     struct radeon_bo *src_bo,
                     intptr_t src_offset,
                     gl_format src_mesaformat,
@@ -1580,6 +1580,7 @@ GLboolean r600_blit(context_t *context,
                     unsigned h,
                     unsigned flip_y)
 {
+    context_t *context = R700_CONTEXT(ctx);
     int id = 0;
 
     if (!is_blit_supported(dst_mesaformat))
