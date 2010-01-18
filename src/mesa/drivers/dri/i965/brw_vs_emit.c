@@ -104,9 +104,47 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* Vertex program parameters from curbe:
     */
    if (c->vp->use_const_buffer) {
-      /* get constants from a real constant buffer */
-      c->prog_data.curb_read_length = 0;
-      c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
+      int max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
+      int constant = 0;
+
+      /* We've got more constants than we can load with the push
+       * mechanism.  This is often correlated with reladdr loads where
+       * we should probably be using a pull mechanism anyway to avoid
+       * excessive reading.  However, the pull mechanism is slow in
+       * general.  So, we try to allocate as many non-reladdr-loaded
+       * constants through the push buffer as we can before giving up.
+       */
+      memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
+      for (i = 0;
+	   i < c->vp->program.Base.NumInstructions && constant < max_constant;
+	   i++) {
+	 struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
+	 int arg;
+
+	 for (arg = 0; arg < 3 && constant < max_constant; arg++) {
+	    if ((inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
+		 inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
+		 inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
+		 inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
+		 inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) ||
+		inst->SrcReg[arg].RelAddr)
+	       continue;
+
+	    if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
+	       c->constant_map[inst->SrcReg[arg].Index] = constant++;
+	    }
+	 }
+      }
+
+      for (i = 0; i < constant; i++) {
+         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2,
+							      (i%2) * 4),
+						 0, 4, 1);
+      }
+      reg += (constant + 1) / 2;
+      c->prog_data.curb_read_length = reg - 1;
+      /* XXX 0 causes a bug elsewhere... */
+      c->prog_data.nr_params = MAX2(constant * 4, 4);
    }
    else {
       /* use a section of the GRF for constants */
@@ -955,7 +993,10 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
       if (c->vp->use_const_buffer) {
-	 if (relAddr)
+	 if (!relAddr && c->constant_map[index] != -1) {
+	    assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
+	    return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
+	 } else if (relAddr)
 	    return get_reladdr_constant(c, inst, argIndex);
 	 else
 	    return get_constant(c, inst, argIndex);

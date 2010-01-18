@@ -256,13 +256,24 @@ static void prepare_constant_buffer(struct brw_context *brw)
        */
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
-      /* XXX just use a memcpy here */
-      for (i = 0; i < nr; i++) {
-         const GLfloat *value = vp->program.Base.Parameters->ParameterValues[i];
-	 buf[offset + i * 4 + 0] = value[0];
-	 buf[offset + i * 4 + 1] = value[1];
-	 buf[offset + i * 4 + 2] = value[2];
-	 buf[offset + i * 4 + 3] = value[3];
+      if (vp->use_const_buffer) {
+	 /* Load the subset of push constants that will get used when
+	  * we also have a pull constant buffer.
+	  */
+	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	    if (brw->vs.constant_map[i] != -1) {
+	       assert(brw->vs.constant_map[i] <= nr);
+	       memcpy(buf + offset + brw->vs.constant_map[i] * 4,
+		      vp->program.Base.Parameters->ParameterValues[i],
+		      4 * sizeof(float));
+	    }
+	 }
+      } else {
+	 for (i = 0; i < nr; i++) {
+	    memcpy(buf + offset + i * 4,
+		   vp->program.Base.Parameters->ParameterValues[i],
+		   4 * sizeof(float));
+	 }
       }
    }
 
