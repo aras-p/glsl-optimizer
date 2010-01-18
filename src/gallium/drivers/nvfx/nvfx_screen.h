@@ -1,7 +1,7 @@
 #ifndef __NVFX_SCREEN_H__
 #define __NVFX_SCREEN_H__
 
-#include <util/u_double_list.h>
+#include "util/u_double_list.h"
 #include "nouveau/nouveau_screen.h"
 #include "nv04_surface_2d.h"
 #include "nvfx_context.h"

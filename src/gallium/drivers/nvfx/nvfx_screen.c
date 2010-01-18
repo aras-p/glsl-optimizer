@@ -324,7 +324,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	unsigned eng3d_class = 0;
-	int ret;
+	int ret, i;
 
 	if (!screen)
 		return NULL;
@@ -397,14 +397,21 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Query objects */
-	ret = nouveau_notifier_alloc(chan, 0xbeef0302, 32, &screen->query);
+	unsigned query_sizes[] = {(4096 - 4 * 32) / 32, 3 * 1024 / 32, 2 * 1024 / 32, 1024 / 32};
+	for(i = 0; i < sizeof(query_sizes) / sizeof(query_sizes[0]); ++i)
+	{
+		ret = nouveau_notifier_alloc(chan, 0xbeef0302, query_sizes[i], &screen->query);
+		if(!ret)
+			break;
+	}
+
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
 		nvfx_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	ret = nouveau_resource_init(&screen->query_heap, 0, 32);
+	ret = nouveau_resource_init(&screen->query_heap, 0, query_sizes[i]);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
 		nvfx_screen_destroy(pscreen);
