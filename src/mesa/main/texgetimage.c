@@ -35,10 +35,8 @@
 #include "context.h"
 #include "formats.h"
 #include "image.h"
-#include "texcompress.h"
 #include "texgetimage.h"
 #include "teximage.h"
-#include "texstate.h"
 
 
 
