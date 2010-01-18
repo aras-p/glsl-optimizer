@@ -193,8 +193,8 @@ struct st_framebuffer * st_create_framebuffer(const void *visual,
       */
       stfb->alpha_mask = 0;
 
-      stfb->init_width = width;
-      stfb->init_height = height;
+      stfb->width = width;
+      stfb->height = height;
       stfb->privateData = privateData;
    }
 
@@ -282,10 +282,13 @@ void st_resize_framebuffer(struct st_framebuffer *stfb,
 
    /* If this is a noop, exit early and don't do the clear, etc below.
     */
-   if (strb->width == width &&
-       strb->height == height &&
+   if (stfb->width == width &&
+       stfb->height == height &&
        state->zsbuf)
       return;
+
+   stfb->width = width;
+   stfb->height = height;
 
    if (strb->width != width || strb->height != height)
       st_renderbuffer_alloc_storage(ctx, strb,

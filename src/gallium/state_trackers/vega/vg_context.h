@@ -50,7 +50,7 @@ struct st_renderbuffer {
 };
 
 struct st_framebuffer {
-   VGint init_width, init_height;
+   VGint width, height;
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
