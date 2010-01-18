@@ -44,8 +44,13 @@ egl_g3d_validate_context(_EGLDisplay *dpy, _EGLContext *ctx)
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct pipe_screen *screen = gdpy->native->screen;
    struct egl_g3d_context *gctx = egl_g3d_context(ctx);
-   EGLint num_surfaces;
-   EGLint s, i;
+   const uint st_att_map[NUM_NATIVE_ATTACHMENTS] = {
+      ST_SURFACE_FRONT_LEFT,
+      ST_SURFACE_BACK_LEFT,
+      ST_SURFACE_FRONT_RIGHT,
+      ST_SURFACE_BACK_RIGHT,
+   };
+   EGLint num_surfaces, s;
 
    /* validate draw and/or read buffers */
    num_surfaces = (gctx->base.ReadSurface == gctx->base.DrawSurface) ? 1 : 2;
@@ -53,6 +58,7 @@ egl_g3d_validate_context(_EGLDisplay *dpy, _EGLContext *ctx)
       struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
       struct egl_g3d_surface *gsurf;
       struct egl_g3d_buffer *gbuf;
+      EGLint att;
 
       if (s == 0) {
          gsurf = egl_g3d_surface(gctx->base.DrawSurface);
@@ -66,30 +72,31 @@ egl_g3d_validate_context(_EGLDisplay *dpy, _EGLContext *ctx)
       if (!gctx->force_validate) {
          unsigned int seq_num;
 
-         gsurf->native->validate(gsurf->native,
-               gbuf->native_atts, gbuf->num_atts,
+         gsurf->native->validate(gsurf->native, gbuf->attachment_mask,
                &seq_num, NULL, NULL, NULL);
          /* skip validation */
          if (gsurf->sequence_number == seq_num)
             continue;
       }
 
-      gsurf->native->validate(gsurf->native,
-            gbuf->native_atts, gbuf->num_atts,
+      pipe_surface_reference(&gsurf->render_surface, NULL);
+      memset(textures, 0, sizeof(textures));
+
+      gsurf->native->validate(gsurf->native, gbuf->attachment_mask,
             &gsurf->sequence_number, textures,
             &gsurf->base.Width, &gsurf->base.Height);
-      for (i = 0; i < gbuf->num_atts; i++) {
-         struct pipe_texture *pt = textures[i];
+      for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+         struct pipe_texture *pt = textures[att];
          struct pipe_surface *ps;
 
-         if (pt) {
+         if (native_attachment_mask_test(gbuf->attachment_mask, att) && pt) {
             ps = screen->get_tex_surface(screen, pt, 0, 0, 0,
                   PIPE_BUFFER_USAGE_GPU_READ |
                   PIPE_BUFFER_USAGE_GPU_WRITE);
             gctx->stapi->st_set_framebuffer_surface(gbuf->st_fb,
-                  gbuf->st_atts[i], ps);
+                  st_att_map[att], ps);
 
-            if (gbuf->native_atts[i] == gsurf->render_att)
+            if (gsurf->render_att == att)
                pipe_surface_reference(&gsurf->render_surface, ps);
 
             pipe_surface_reference(&ps, NULL);
@@ -128,13 +135,7 @@ static void
 egl_g3d_route_context(_EGLDisplay *dpy, _EGLContext *ctx)
 {
    struct egl_g3d_context *gctx = egl_g3d_context(ctx);
-   const uint st_att_map[NUM_NATIVE_ATTACHMENTS] = {
-      ST_SURFACE_FRONT_LEFT,
-      ST_SURFACE_BACK_LEFT,
-      ST_SURFACE_FRONT_RIGHT,
-      ST_SURFACE_BACK_RIGHT,
-   };
-   EGLint s, i;
+   EGLint s;
 
    /* route draw and read buffers' attachments */
    for (s = 0; s < 2; s++) {
@@ -150,11 +151,7 @@ egl_g3d_route_context(_EGLDisplay *dpy, _EGLContext *ctx)
          gbuf = &gctx->read;
       }
 
-      gbuf->native_atts[0] = gsurf->render_att;
-      gbuf->num_atts = 1;
-
-      for (i = 0; i < gbuf->num_atts; i++)
-         gbuf->st_atts[i] = st_att_map[gbuf->native_atts[i]];
+      gbuf->attachment_mask = (1 << gsurf->render_att);
 
       /* FIXME OpenGL defaults to draw the front or back buffer when the
        * context is single-buffered or double-buffered respectively.  In EGL,
@@ -196,19 +193,19 @@ egl_g3d_realloc_context(_EGLDisplay *dpy, _EGLContext *ctx)
       if (!gdraw || priv != (void *) &gdraw->base) {
          gctx->stapi->st_unreference_framebuffer(gctx->draw.st_fb);
          gctx->draw.st_fb = NULL;
-         gctx->draw.num_atts = 0;
+         gctx->draw.attachment_mask = 0x0;
       }
 
       if (is_equal) {
          gctx->read.st_fb = NULL;
-         gctx->draw.num_atts = 0;
+         gctx->draw.attachment_mask = 0x0;
       }
       else {
          priv = gctx->stapi->st_framebuffer_private(gctx->read.st_fb);
          if (!gread || priv != (void *) &gread->base) {
             gctx->stapi->st_unreference_framebuffer(gctx->read.st_fb);
             gctx->read.st_fb = NULL;
-            gctx->draw.num_atts = 0;
+            gctx->draw.attachment_mask = 0x0;
          }
       }
    }
@@ -628,7 +625,7 @@ init_surface_geometry(_EGLSurface *surf)
 {
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
 
-   return gsurf->native->validate(gsurf->native, NULL, 0,
+   return gsurf->native->validate(gsurf->native, 0x0,
          &gsurf->sequence_number, NULL,
          &gsurf->base.Width, &gsurf->base.Height);
 }

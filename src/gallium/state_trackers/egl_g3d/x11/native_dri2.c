@@ -134,22 +134,18 @@ dri2_surface_swap_buffers(struct native_surface *nsurf)
 }
 
 static boolean
-dri2_surface_validate(struct native_surface *nsurf,
-                             const enum native_attachment *natts,
-                             unsigned num_natts,
-                             unsigned int *seq_num,
-                             struct pipe_texture **textures,
-                             int *width, int *height)
+dri2_surface_validate(struct native_surface *nsurf, uint attachment_mask,
+                      unsigned int *seq_num, struct pipe_texture **textures,
+                      int *width, int *height)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
    unsigned int dri2atts[NUM_NATIVE_ATTACHMENTS];
-   EGLint texture_indices[NUM_NATIVE_ATTACHMENTS];
    struct pipe_texture templ;
    struct x11_drawable_buffer *xbufs;
-   int num_ins, num_outs, i;
+   int num_ins, num_outs, att, i;
 
-   if (num_natts) {
+   if (attachment_mask) {
       memset(&templ, 0, sizeof(templ));
       templ.target = PIPE_TEXTURE_2D;
       templ.last_level = 0;
@@ -160,24 +156,27 @@ dri2_surface_validate(struct native_surface *nsurf,
       templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
       if (textures)
-         memset(textures, 0, sizeof(*textures) * num_natts);
+         memset(textures, 0, sizeof(*textures) * NUM_NATIVE_ATTACHMENTS);
    }
 
    /* create textures for pbuffer */
    if (dri2surf->type == DRI2_SURFACE_TYPE_PBUFFER) {
       struct pipe_screen *screen = dri2dpy->base.screen;
 
-      for (i = 0; i < num_natts; i++) {
-         enum native_attachment natt = natts[i];
-         struct pipe_texture *ptex = dri2surf->pbuffer_textures[natt];
+      for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+         struct pipe_texture *ptex = dri2surf->pbuffer_textures[att];
+
+         /* delay the allocation */
+         if (!native_attachment_mask_test(attachment_mask, att))
+            continue;
 
          if (!ptex) {
             ptex = screen->texture_create(screen, &templ);
-            dri2surf->pbuffer_textures[natt] = ptex;
+            dri2surf->pbuffer_textures[att] = ptex;
          }
 
          if (textures)
-            pipe_texture_reference(&textures[i], ptex);
+            pipe_texture_reference(&textures[att], ptex);
       }
 
       if (seq_num)
@@ -190,34 +189,34 @@ dri2_surface_validate(struct native_surface *nsurf,
       return TRUE;
    }
 
-   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
-      texture_indices[i] = -1;
-
    /* prepare the attachments */
-   num_ins = num_natts;
-   for (i = 0; i < num_natts; i++) {
-      unsigned int dri2att;
+   num_ins = 0;
+   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+      if (native_attachment_mask_test(attachment_mask, att)) {
+         unsigned int dri2att;
 
-      switch (natts[i]) {
-      case NATIVE_ATTACHMENT_FRONT_LEFT:
-         dri2att = DRI2BufferFrontLeft;
-         break;
-      case NATIVE_ATTACHMENT_BACK_LEFT:
-         dri2att = DRI2BufferBackLeft;
-         break;
-      case NATIVE_ATTACHMENT_FRONT_RIGHT:
-         dri2att = DRI2BufferFrontRight;
-         break;
-      case NATIVE_ATTACHMENT_BACK_RIGHT:
-         dri2att = DRI2BufferBackRight;
-         break;
-      default:
-         assert(0);
-         dri2att = 0;
-         break;
+         switch (att) {
+         case NATIVE_ATTACHMENT_FRONT_LEFT:
+            dri2att = DRI2BufferFrontLeft;
+            break;
+         case NATIVE_ATTACHMENT_BACK_LEFT:
+            dri2att = DRI2BufferBackLeft;
+            break;
+         case NATIVE_ATTACHMENT_FRONT_RIGHT:
+            dri2att = DRI2BufferFrontRight;
+            break;
+         case NATIVE_ATTACHMENT_BACK_RIGHT:
+            dri2att = DRI2BufferBackRight;
+            break;
+         default:
+            assert(0);
+            dri2att = 0;
+            break;
+         }
+
+         dri2atts[num_ins] = dri2att;
+         num_ins++;
       }
-      dri2atts[i] = dri2att;
-      texture_indices[natts[i]] = i;
    }
 
    dri2surf->have_back = FALSE;
@@ -266,13 +265,13 @@ dri2_surface_validate(struct native_surface *nsurf,
          break;
       }
 
-      if (!desc || texture_indices[natt] < 0 ||
-          (textures && textures[texture_indices[natt]])) {
+      if (!desc || !native_attachment_mask_test(attachment_mask, natt) ||
+          (textures && textures[natt])) {
          if (!desc)
             _eglLog(_EGL_WARNING, "unknown buffer %d", xbuf->attachment);
-         else if (texture_indices[natt] < 0)
+         else if (!native_attachment_mask_test(attachment_mask, natt))
             _eglLog(_EGL_WARNING, "unexpected buffer %d", xbuf->attachment);
-         else if (textures && textures[texture_indices[natt]])
+         else
             _eglLog(_EGL_WARNING, "both real and fake front buffers are listed");
          continue;
       }
@@ -284,7 +283,7 @@ dri2_surface_validate(struct native_surface *nsurf,
                   desc, xbuf->pitch, xbuf->name);
          if (ptex) {
             /* the caller owns the textures */
-            textures[texture_indices[natt]] = ptex;
+            textures[natt] = ptex;
          }
       }
    }

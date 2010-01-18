@@ -64,18 +64,18 @@ struct native_surface {
    boolean (*flush_frontbuffer)(struct native_surface *nsurf);
 
    /**
-    * Validate the buffers of the surface.  The returned textures are owned by
-    * the caller.  A sequence number is also returned.  The caller can use it
-    * to check if anything has changed since the last call. Any of the pointers
-    * may be NULL and it indicates the caller has no interest in those values.
+    * Validate the buffers of the surface.  textures, if not NULL, points to an
+    * array of size NUM_NATIVE_ATTACHMENTS and the returned textures are owned
+    * by the caller.  A sequence number is also returned.  The caller can use
+    * it to check if anything has changed since the last call. Any of the
+    * pointers may be NULL and it indicates the caller has no interest in those
+    * values.
     *
-    * If this function is called multiple times with different attachments,
-    * those not listed in the latest call might be destroyed.  This behavior
-    * might change in the future.
+    * If this function is called multiple times with different attachment
+    * masks, those not listed in the latest call might be destroyed.  This
+    * behavior might change in the future.
     */
-   boolean (*validate)(struct native_surface *nsurf,
-                       const enum native_attachment *natts,
-                       unsigned num_natts,
+   boolean (*validate)(struct native_surface *nsurf, uint attachment_mask,
                        unsigned int *seq_num, struct pipe_texture **textures,
                        int *width, int *height);
 
@@ -210,6 +210,15 @@ struct native_display_modeset {
                       const struct native_connector **nconns, int num_nconns,
                       const struct native_mode *nmode);
 };
+
+/**
+ * Test whether an attachment is set in the mask.
+ */
+static INLINE boolean
+native_attachment_mask_test(uint mask, enum native_attachment att)
+{
+   return !!(mask & (1 << att));
+}
 
 const char *
 native_get_name(void);

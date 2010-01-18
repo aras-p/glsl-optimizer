@@ -52,9 +52,7 @@ struct egl_g3d_display {
 
 struct egl_g3d_buffer {
    struct st_framebuffer *st_fb;
-   EGLint num_atts;
-   enum native_attachment native_atts[NUM_NATIVE_ATTACHMENTS];
-   uint st_atts[NUM_NATIVE_ATTACHMENTS];
+   uint attachment_mask;
 };
 
 struct egl_g3d_context {

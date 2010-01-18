@@ -289,27 +289,21 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
 }
 
 static boolean
-ximage_surface_validate(struct native_surface *nsurf,
-                               const enum native_attachment *natts,
-                               unsigned num_natts,
-                               unsigned int *seq_num,
-                               struct pipe_texture **textures,
-                               int *width, int *height)
+ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
+                        unsigned int *seq_num, struct pipe_texture **textures,
+                        int *width, int *height)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
-   boolean new_buffers = FALSE, error = FALSE;
-   unsigned i;
+   boolean new_buffers = FALSE;
+   int att;
 
    ximage_surface_update_geometry(&xsurf->base);
 
-   if (textures)
-      memset(textures, 0, sizeof(*textures) * num_natts);
+   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+      struct ximage_buffer *xbuf = &xsurf->buffers[att];
 
-   for (i = 0; i < num_natts; i++) {
-      enum native_attachment natt = natts[i];
-      struct ximage_buffer *xbuf = &xsurf->buffers[natt];
-
-      if (!xbuf)
+      /* delay the allocation */
+      if (!native_attachment_mask_test(attachment_mask, att))
          continue;
 
       /* reallocate the texture */
@@ -317,7 +311,7 @@ ximage_surface_validate(struct native_surface *nsurf,
           xsurf->width != xbuf->texture->width0 ||
           xsurf->height != xbuf->texture->height0) {
          new_buffers = TRUE;
-         if (ximage_surface_alloc_buffer(&xsurf->base, natt)) {
+         if (ximage_surface_alloc_buffer(&xsurf->base, att)) {
             /* update ximage */
             if (xbuf->ximage) {
                xbuf->ximage->width = xbuf->transfer->width;
@@ -327,19 +321,10 @@ ximage_surface_validate(struct native_surface *nsurf,
          }
       }
 
-      /* allocation failed */
-      if (!xbuf->texture) {
-         unsigned j;
-         for (j = 0; j < i; j++)
-            pipe_texture_reference(&textures[j], NULL);
-         for (j = i; j < num_natts; j++)
-            textures[j] = NULL;
-         error = TRUE;
-         break;
+      if (textures) {
+         textures[att] = NULL;
+         pipe_texture_reference(&textures[att], xbuf->texture);
       }
-
-      if (textures)
-         pipe_texture_reference(&textures[i], xbuf->texture);
    }
 
    /* increase the sequence number so that caller knows */
@@ -353,7 +338,7 @@ ximage_surface_validate(struct native_surface *nsurf,
    if (height)
       *height = xsurf->height;
 
-   return !error;
+   return TRUE;
 }
 
 static void

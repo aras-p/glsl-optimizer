@@ -33,9 +33,7 @@
 #include "native_kms.h"
 
 static boolean
-kms_surface_validate(struct native_surface *nsurf,
-                     const enum native_attachment *natts,
-                     unsigned num_natts,
+kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                      unsigned int *seq_num, struct pipe_texture **textures,
                      int *width, int *height)
 {
@@ -43,12 +41,9 @@ kms_surface_validate(struct native_surface *nsurf,
    struct kms_display *kdpy = ksurf->kdpy;
    struct pipe_screen *screen = kdpy->base.screen;
    struct pipe_texture templ, *ptex;
-   int i;
+   int att;
 
-   if (num_natts) {
-      if (textures)
-         memset(textures, 0, sizeof(*textures) * num_natts);
-
+   if (attachment_mask) {
       memset(&templ, 0, sizeof(templ));
       templ.target = PIPE_TEXTURE_2D;
       templ.last_level = 0;
@@ -62,17 +57,21 @@ kms_surface_validate(struct native_surface *nsurf,
    }
 
    /* create textures */
-   for (i = 0; i < num_natts; i++) {
-      enum native_attachment natt = natts[i];
+   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+      /* delay the allocation */
+      if (!native_attachment_mask_test(attachment_mask, att))
+         continue;
 
-      ptex = ksurf->textures[natt];
+      ptex = ksurf->textures[att];
       if (!ptex) {
          ptex = screen->texture_create(screen, &templ);
-         ksurf->textures[natt] = ptex;
+         ksurf->textures[att] = ptex;
       }
 
-      if (textures)
-         pipe_texture_reference(&textures[i], ptex);
+      if (textures) {
+         textures[att] = NULL;
+         pipe_texture_reference(&textures[att], ptex);
+      }
    }
 
    if (seq_num)
@@ -113,7 +112,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
 
       if (!fb->texture) {
          /* make sure the texture has been allocated */
-         kms_surface_validate(&ksurf->base, &natt, 1, NULL, NULL, NULL, NULL);
+         kms_surface_validate(&ksurf->base, 1 << natt, NULL, NULL, NULL, NULL);
          if (!ksurf->textures[natt])
             return FALSE;
 
