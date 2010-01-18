@@ -52,7 +52,7 @@ struct x11_screen {
    XVisualInfo *visuals;
    int num_visuals;
 
-   /* cached values for x11_drawable_get_format */
+   /* cached values for x11_drawable_get_depth */
    Drawable last_drawable;
    unsigned int last_depth;
 };

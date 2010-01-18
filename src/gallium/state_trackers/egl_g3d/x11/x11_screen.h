@@ -29,7 +29,6 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/dri2tokens.h>
 #include "pipe/p_compiler.h"
-#include "pipe/p_format.h"
 #include "common/native.h"
 
 enum x11_screen_extension {
