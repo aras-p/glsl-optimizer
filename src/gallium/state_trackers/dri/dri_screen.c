@@ -289,6 +289,8 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
 {
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;
+   const __DRIdri2LoaderExtension *dri2_ext =
+     sPriv->dri2.loader;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -312,6 +314,9 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
 
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
+
+   screen->auto_fake_front = dri2_ext->base.version >= 3 &&
+      dri2_ext->getBuffersWithFormat != NULL;
 
    return dri_fill_in_modes(screen, 32);
  fail:
