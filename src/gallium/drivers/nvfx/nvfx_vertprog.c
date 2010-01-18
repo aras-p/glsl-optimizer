@@ -544,14 +544,32 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_RSQ:
 		arith(vpc, SCA, RSQ, dst, mask, none, none, abs(src[0]));
 		break;
+	case TGSI_OPCODE_SEQ:
+		arith(vpc, VEC, SEQ, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SFL:
+		arith(vpc, VEC, SFL, dst, mask, src[0], src[1], none);
+		break;
 	case TGSI_OPCODE_SGE:
 		arith(vpc, VEC, SGE, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SGT:
 		arith(vpc, VEC, SGT, dst, mask, src[0], src[1], none);
 		break;
+	case TGSI_OPCODE_SLE:
+		arith(vpc, VEC, SLE, dst, mask, src[0], src[1], none);
+		break;
 	case TGSI_OPCODE_SLT:
 		arith(vpc, VEC, SLT, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SNE:
+		arith(vpc, VEC, SNE, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SSG:
+		arith(vpc, VEC, SSG, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_STR:
+		arith(vpc, VEC, STR, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SUB:
 		arith(vpc, VEC, ADD, dst, mask, src[0], none, neg(src[1]));
