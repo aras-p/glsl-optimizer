@@ -230,25 +230,25 @@ nv50_set_static_vtxattr(struct nv50_context *nv50, unsigned i, void *data)
 	switch (nv50->vtxelt[i].nr_components) {
 	case 4:
 		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_4F_X(i), 4);
-		OUT_RING  (chan, v[0]);
-		OUT_RING  (chan, v[1]);
-		OUT_RING  (chan, v[2]);
-		OUT_RING  (chan, v[3]);
+		OUT_RINGf (chan, v[0]);
+		OUT_RINGf (chan, v[1]);
+		OUT_RINGf (chan, v[2]);
+		OUT_RINGf (chan, v[3]);
 		break;
 	case 3:
-		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_3F_X(i), 4);
-		OUT_RING  (chan, v[0]);
-		OUT_RING  (chan, v[1]);
-		OUT_RING  (chan, v[2]);
+		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_3F_X(i), 3);
+		OUT_RINGf (chan, v[0]);
+		OUT_RINGf (chan, v[1]);
+		OUT_RINGf (chan, v[2]);
 		break;
 	case 2:
-		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_2F_X(i), 4);
-		OUT_RING  (chan, v[0]);
-		OUT_RING  (chan, v[1]);
+		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_2F_X(i), 2);
+		OUT_RINGf (chan, v[0]);
+		OUT_RINGf (chan, v[1]);
 		break;
 	case 1:
-		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_1F(i), 4);
-		OUT_RING  (chan, v[0]);
+		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_1F(i), 1);
+		OUT_RINGf (chan, v[0]);
 		break;
 	default:
 		assert(0);
