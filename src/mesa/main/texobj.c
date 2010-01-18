@@ -38,7 +38,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "teximage.h"
-#include "texstate.h"
 #include "texobj.h"
 #include "mtypes.h"
 #include "shader/prog_instruction.h"
