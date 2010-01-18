@@ -40,12 +40,16 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
     struct drm_radeon_info info = {0};
     int target = 0;
     int retval;
+    drmVersionPtr version;
 
     info.value = (unsigned long)&target;
 
     /* We do things in a specific order here.
      *
-     * First, the PCI ID. This is essential and should return usable numbers
+     * DRM version first. We need to be sure we're running on a KMS chipset.
+     * This is also for some features.
+     *
+     * Then, the PCI ID. This is essential and should return usable numbers
      * for all Radeons. If this fails, we probably got handed an FD for some
      * non-Radeon card.
      *
@@ -56,6 +60,16 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
      * The GEM info is actually bogus on the kernel side, as well as our side
      * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
      * we don't actually use the info for anything yet. */
+
+    version = drmGetVersion(fd);
+    if (version->version_major != 2) {
+        fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
+                "only compatible with 2.x.x\n", __FUNCTION__,
+                version->version_major, version->version_minor,
+                version->version_patchlevel);
+        drmFreeVersion(version);
+        exit(1);
+    }
 
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
@@ -93,6 +107,17 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
     }
     winsys->gart_size = gem_info.gart_size;
     winsys->vram_size = gem_info.vram_size;
+
+    debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
+                 "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
+                 "radeon: GART size: %d MB VRAM size: %d MB\n",
+                 version->version_major, version->version_minor,
+                 version->version_patchlevel, winsys->pci_id,
+                 winsys->gb_pipes, winsys->z_pipes,
+                 winsys->gart_size / 1024 / 1024,
+                 winsys->vram_size / 1024 / 1024);
+
+    drmFreeVersion(version);
 }
 
 /* Guess at whether this chipset should use r300g.
