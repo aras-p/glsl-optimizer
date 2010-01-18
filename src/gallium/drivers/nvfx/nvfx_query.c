@@ -3,6 +3,7 @@
 #include "nvfx_context.h"
 
 struct nvfx_query {
+	struct list_head list;
 	struct nouveau_resource *object;
 	unsigned type;
 	boolean ready;
@@ -23,6 +24,8 @@ nvfx_query_create(struct pipe_context *pipe, unsigned query_type)
 	q = CALLOC(1, sizeof(struct nvfx_query));
 	q->type = query_type;
 
+	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+
 	return (struct pipe_query *)q;
 }
 
@@ -32,7 +35,10 @@ nvfx_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nvfx_query *q = nvfx_query(pq);
 
 	if (q->object)
+	{
 		nouveau_resource_free(&q->object);
+		LIST_DEL(&q->list);
+	}
 	FREE(q);
 }
 
@@ -44,20 +50,25 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
-
-	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+	uint64_t tmp;
 
 	/* Happens when end_query() is called, then another begin_query()
 	 * without querying the result in-between.  For now we'll wait for
 	 * the existing query to notify completion, but it could be better.
 	 */
-	if (q->object) {
-		uint64_t tmp;
+	if (q->object)
 		pipe->get_query_result(pipe, pq, 1, &tmp);
+
+	while (nouveau_resource_alloc(nvfx->screen->query_heap, 1, NULL, &q->object))
+	{
+		struct nvfx_query* oldestq;
+		assert(!LIST_IS_EMPTY(&nvfx->screen->query_list));
+		oldestq = LIST_ENTRY(struct nvfx_query, nvfx->screen->query_list.next, list);
+		pipe->get_query_result(pipe, (struct pipe_query*)oldestq, 1, &tmp);
 	}
 
-	if (nouveau_resource_alloc(nvfx->screen->query_heap, 1, NULL, &q->object))
-		assert(0);
+	LIST_ADDTAIL(&q->list, &nvfx->screen->query_list);
+
 	nouveau_notifier_reset(nvfx->screen->query, q->object->start);
 
 	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_RESET, 1);
@@ -90,8 +101,6 @@ nvfx_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_query *q = nvfx_query(pq);
 
-	assert(q->object && q->type == PIPE_QUERY_OCCLUSION_COUNTER);
-
 	if (!q->ready) {
 		unsigned status;
 
@@ -110,6 +119,7 @@ nvfx_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 							q->object->start);
 		q->ready = TRUE;
 		nouveau_resource_free(&q->object);
+		LIST_DEL(&q->list);
 	}
 
 	*result = q->result;

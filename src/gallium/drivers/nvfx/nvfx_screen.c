@@ -411,6 +411,8 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	LIST_INITHEAD(&screen->query_list);
+
 	/* Vtxprog resources */
 	if (nouveau_resource_init(&screen->vp_exec_heap, 0, screen->is_nv4x ? 512 : 256) ||
 	    nouveau_resource_init(&screen->vp_data_heap, 0, 256)) {
