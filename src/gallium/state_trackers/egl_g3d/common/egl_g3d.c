@@ -26,6 +26,7 @@
 #include <string.h>
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 #include "egldriver.h"
 #include "eglcurrent.h"
 #include "eglconfigutil.h"
@@ -861,6 +862,101 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    return EGL_TRUE;
 }
 
+/**
+ * Find a config that supports the pixmap.
+ */
+static _EGLConfig *
+find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct egl_g3d_config *gconf;
+   EGLint i;
+
+   for (i = 0; i < dpy->NumConfigs; i++) {
+      gconf = egl_g3d_config(dpy->Configs[i]);
+      if (gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
+         break;
+   }
+
+   return (i < dpy->NumConfigs) ? &gconf->base : NULL;
+}
+
+/**
+ * Get the pipe surface of the given attachment of the native surface.
+ */
+static struct pipe_surface *
+get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
+                 enum native_attachment natt)
+{
+   struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   struct pipe_surface *psurf;
+
+   textures[natt] = NULL;
+   nsurf->validate(nsurf, 1 << natt, NULL, textures, NULL, NULL);
+   if (!textures[natt])
+      return NULL;
+
+   psurf = ndpy->screen->get_tex_surface(ndpy->screen, textures[natt],
+         0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE);
+   pipe_texture_reference(&textures[natt], NULL);
+
+   return psurf;
+}
+
+static EGLBoolean
+egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
+                     NativePixmapType target)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+   _EGLContext *ctx = _eglGetCurrentContext();
+   struct egl_g3d_config *gconf;
+   struct native_surface *nsurf;
+   struct pipe_screen *screen = gdpy->native->screen;
+   struct pipe_surface *psurf;
+
+   if (!gsurf->render_surface)
+      return EGL_TRUE;
+
+   gconf = egl_g3d_config(find_pixmap_config(dpy, target));
+   if (!gconf)
+      return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
+
+   nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
+         target, gconf->native);
+   if (!nsurf)
+      return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
+
+   /* flush if the surface is current */
+   if (ctx && ctx->DrawSurface == &gsurf->base) {
+      struct egl_g3d_context *gctx = egl_g3d_context(ctx);
+      gctx->stapi->st_flush(gctx->st_ctx,
+            PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
+   }
+
+   psurf = get_pipe_surface(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
+   if (psurf) {
+      struct pipe_context pipe;
+
+      /**
+       * XXX This is hacky.  If we might allow the EGLDisplay to create a pipe
+       * context of its own and use the blitter context for this.
+       */
+      memset(&pipe, 0, sizeof(pipe));
+      pipe.screen = screen;
+
+      util_surface_copy(&pipe, FALSE, psurf, 0, 0,
+            gsurf->render_surface, 0, 0, psurf->width, psurf->height);
+
+      pipe_surface_reference(&psurf, NULL);
+      nsurf->flush_frontbuffer(nsurf);
+   }
+
+   nsurf->destroy(nsurf);
+
+   return EGL_TRUE;
+}
+
 static EGLBoolean
 egl_g3d_wait_client(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
@@ -1114,6 +1210,7 @@ _eglMain(const char *args)
    gdrv->base.API.DestroySurface = egl_g3d_destroy_surface;
    gdrv->base.API.MakeCurrent = egl_g3d_make_current;
    gdrv->base.API.SwapBuffers = egl_g3d_swap_buffers;
+   gdrv->base.API.CopyBuffers = egl_g3d_copy_buffers;
    gdrv->base.API.WaitClient = egl_g3d_wait_client;
    gdrv->base.API.WaitNative = egl_g3d_wait_native;
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
