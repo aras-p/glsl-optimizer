@@ -108,6 +108,22 @@ convert_bgra_to_float(const struct gl_client_array *input,
    }
 }
 
+static void
+convert_half_to_float(const struct gl_client_array *input,
+		      const GLubyte *ptr, GLfloat *fptr,
+		      GLuint count, GLuint sz)
+{
+   GLuint i, j;
+
+   for (i = 0; i < count; i++) {
+      GLhalfARB *in = (GLhalfARB *)ptr;
+
+      for (j = 0; j < sz; j++) {
+	 *fptr++ = _mesa_half_to_float(in[j]);
+      }
+      ptr += input->StrideB;
+   }
+}
 
 /* Adjust pointer to point at first requested element, convert to
  * floating point, populate VB->AttribPtr[].
@@ -154,6 +170,9 @@ static void _tnl_import_array( GLcontext *ctx,
 	 break;
       case GL_DOUBLE: 
 	 CONVERT(GLdouble, (GLfloat)); 
+	 break;
+      case GL_HALF_FLOAT:
+	 convert_half_to_float(input, ptr, fptr, count, sz);
 	 break;
       default:
 	 assert(0);
