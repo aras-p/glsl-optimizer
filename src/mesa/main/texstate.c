@@ -35,11 +35,9 @@
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
-#include "texcompress.h"
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "texenvprogram.h"
 #include "mtypes.h"
 
 
