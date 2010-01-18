@@ -309,8 +309,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 2,
-			 &sf, sizeof(sf),
-			 NULL, NULL);
+			 &sf, sizeof(sf));
 
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.

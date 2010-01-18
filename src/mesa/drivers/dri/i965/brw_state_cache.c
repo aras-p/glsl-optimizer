@@ -200,22 +200,22 @@ brw_search_cache(struct brw_cache *cache,
 }
 
 
-dri_bo *
-brw_upload_cache( struct brw_cache *cache,
-		  enum brw_cache_id cache_id,
-		  const void *key,
-		  GLuint key_size,
-		  dri_bo **reloc_bufs,
-		  GLuint nr_reloc_bufs,
-		  const void *data,
-		  GLuint data_size,
-		  const void *aux,
-		  void *aux_return )
+drm_intel_bo *
+brw_upload_cache_with_auxdata(struct brw_cache *cache,
+			      enum brw_cache_id cache_id,
+			      const void *key,
+			      GLuint key_size,
+			      dri_bo **reloc_bufs,
+			      GLuint nr_reloc_bufs,
+			      const void *data,
+			      GLuint data_size,
+			      const void *aux,
+			      GLuint aux_size,
+			      void *aux_return)
 {
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
    GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
    GLuint relocs_size = nr_reloc_bufs * sizeof(dri_bo *);
-   GLuint aux_size = cache->aux_size[cache_id];
    void *tmp;
    dri_bo *bo;
    int i;
@@ -229,7 +229,7 @@ brw_upload_cache( struct brw_cache *cache,
    tmp = _mesa_malloc(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
-   memcpy(tmp + key_size, aux, cache->aux_size[cache_id]);
+   memcpy(tmp + key_size, aux, aux_size);
    memcpy(tmp + key_size + aux_size, reloc_bufs, relocs_size);
    for (i = 0; i < nr_reloc_bufs; i++) {
       if (reloc_bufs[i] != NULL)
@@ -255,7 +255,6 @@ brw_upload_cache( struct brw_cache *cache,
    cache->n_items++;
 
    if (aux_return) {
-      assert(cache->aux_size[cache_id]);
       *(void **)aux_return = (void *)((char *)item->key + item->key_size);
    }
 
@@ -272,6 +271,23 @@ brw_upload_cache( struct brw_cache *cache,
    return bo;
 }
 
+drm_intel_bo *
+brw_upload_cache(struct brw_cache *cache,
+		 enum brw_cache_id cache_id,
+		 const void *key,
+		 GLuint key_size,
+		 dri_bo **reloc_bufs,
+		 GLuint nr_reloc_bufs,
+		 const void *data,
+		 GLuint data_size)
+{
+   return brw_upload_cache_with_auxdata(cache, cache_id,
+					key, key_size,
+					reloc_bufs, nr_reloc_bufs,
+					data, data_size,
+					NULL, 0,
+					NULL);
+}
 
 /**
  * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
@@ -306,8 +322,7 @@ brw_cache_data(struct brw_cache *cache,
    bo = brw_upload_cache(cache, cache_id,
 			 data, data_size,
 			 reloc_bufs, nr_reloc_bufs,
-			 data, data_size,
-			 NULL, NULL);
+			 data, data_size);
 
    return bo;
 }
@@ -321,11 +336,9 @@ enum pool_type {
 static void
 brw_init_cache_id(struct brw_cache *cache,
                   const char *name,
-                  enum brw_cache_id id,
-                  GLuint aux_size)
+                  enum brw_cache_id id)
 {
    cache->name[id] = strdup(name);
-   cache->aux_size[id] = aux_size;
 }
 
 
@@ -341,80 +354,28 @@ brw_init_non_surface_cache(struct brw_context *brw)
    cache->items = (struct brw_cache_item **)
       _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
 
-   brw_init_cache_id(cache,
-		     "CC_VP",
-		     BRW_CC_VP,
-		     0);
+   brw_init_cache_id(cache, "CC_VP", BRW_CC_VP);
+   brw_init_cache_id(cache, "CC_UNIT", BRW_CC_UNIT);
+   brw_init_cache_id(cache, "WM_PROG", BRW_WM_PROG);
+   brw_init_cache_id(cache, "SAMPLER_DEFAULT_COLOR", BRW_SAMPLER_DEFAULT_COLOR);
+   brw_init_cache_id(cache, "SAMPLER", BRW_SAMPLER);
+   brw_init_cache_id(cache, "WM_UNIT", BRW_WM_UNIT);
+   brw_init_cache_id(cache, "SF_PROG", BRW_SF_PROG);
+   brw_init_cache_id(cache, "SF_VP", BRW_SF_VP);
 
-   brw_init_cache_id(cache,
-		     "CC_UNIT",
-		     BRW_CC_UNIT,
-		     0);
+   brw_init_cache_id(cache, "SF_UNIT", BRW_SF_UNIT);
 
-   brw_init_cache_id(cache,
-		     "WM_PROG",
-		     BRW_WM_PROG,
-		     sizeof(struct brw_wm_prog_data));
+   brw_init_cache_id(cache, "VS_UNIT", BRW_VS_UNIT);
 
-   brw_init_cache_id(cache,
-		     "SAMPLER_DEFAULT_COLOR",
-		     BRW_SAMPLER_DEFAULT_COLOR,
-		     0);
+   brw_init_cache_id(cache, "VS_PROG", BRW_VS_PROG);
 
-   brw_init_cache_id(cache,
-		     "SAMPLER",
-		     BRW_SAMPLER,
-		     0);
+   brw_init_cache_id(cache, "CLIP_UNIT", BRW_CLIP_UNIT);
 
-   brw_init_cache_id(cache,
-		     "WM_UNIT",
-		     BRW_WM_UNIT,
-		     0);
+   brw_init_cache_id(cache, "CLIP_PROG", BRW_CLIP_PROG);
 
-   brw_init_cache_id(cache,
-		     "SF_PROG",
-		     BRW_SF_PROG,
-		     sizeof(struct brw_sf_prog_data));
+   brw_init_cache_id(cache, "GS_UNIT", BRW_GS_UNIT);
 
-   brw_init_cache_id(cache,
-		     "SF_VP",
-		     BRW_SF_VP,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "SF_UNIT",
-		     BRW_SF_UNIT,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "VS_UNIT",
-		     BRW_VS_UNIT,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "VS_PROG",
-		     BRW_VS_PROG,
-		     sizeof(struct brw_vs_prog_data));
-
-   brw_init_cache_id(cache,
-		     "CLIP_UNIT",
-		     BRW_CLIP_UNIT,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "CLIP_PROG",
-		     BRW_CLIP_PROG,
-		     sizeof(struct brw_clip_prog_data));
-
-   brw_init_cache_id(cache,
-		     "GS_UNIT",
-		     BRW_GS_UNIT,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "GS_PROG",
-		     BRW_GS_PROG,
-		     sizeof(struct brw_gs_prog_data));
+   brw_init_cache_id(cache, "GS_PROG", BRW_GS_PROG);
 }
 
 
@@ -430,15 +391,8 @@ brw_init_surface_cache(struct brw_context *brw)
    cache->items = (struct brw_cache_item **)
       _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
 
-   brw_init_cache_id(cache,
-		     "SS_SURFACE",
-		     BRW_SS_SURFACE,
-		     0);
-
-   brw_init_cache_id(cache,
-		     "SS_SURF_BIND",
-		     BRW_SS_SURF_BIND,
-		     0);
+   brw_init_cache_id(cache, "SS_SURFACE", BRW_SS_SURFACE);
+   brw_init_cache_id(cache, "SS_SURF_BIND", BRW_SS_SURF_BIND);
 }
 
 

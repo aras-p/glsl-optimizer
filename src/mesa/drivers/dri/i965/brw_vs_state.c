@@ -164,8 +164,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    bo = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
 			 key, sizeof(*key),
 			 &brw->vs.prog_bo, 1,
-			 &vs, sizeof(vs),
-			 NULL, NULL);
+			 &vs, sizeof(vs));
 
    /* Emit VS program relocation */
    dri_bo_emit_reloc(bo,

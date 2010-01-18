@@ -143,8 +143,7 @@ clip_unit_create_from_key(struct brw_context *brw,
    bo = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
 			 key, sizeof(*key),
 			 &brw->clip.prog_bo, 1,
-			 &clip, sizeof(clip),
-			 NULL, NULL);
+			 &clip, sizeof(clip));
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);

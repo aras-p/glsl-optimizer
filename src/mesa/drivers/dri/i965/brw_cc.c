@@ -295,8 +295,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    bo = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
 			 key, sizeof(*key),
 			 &brw->cc.vp_bo, 1,
-			 &cc, sizeof(cc),
-			 NULL, NULL);
+			 &cc, sizeof(cc));
 
    /* Emit CC viewport relocation */
    dri_bo_emit_reloc(bo,

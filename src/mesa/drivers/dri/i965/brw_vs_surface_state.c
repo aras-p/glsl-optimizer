@@ -168,8 +168,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
       bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->vs.surf_bo, BRW_VS_MAX_SURF,
-				  data, data_size,
-				  NULL, NULL);
+				  data, data_size);
 
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_VS_MAX_SURF; i++) {

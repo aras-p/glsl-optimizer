@@ -108,8 +108,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
 			 key, sizeof(*key),
 			 &brw->gs.prog_bo, 1,
-			 &gs, sizeof(gs),
-			 NULL, NULL);
+			 &gs, sizeof(gs));
 
    if (key->prog_active) {
       /* Emit GS program relocation */

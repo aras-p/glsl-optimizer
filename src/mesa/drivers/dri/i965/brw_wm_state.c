@@ -210,8 +210,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 3,
-			 &wm, sizeof(wm),
-			 NULL, NULL);
+			 &wm, sizeof(wm));
 
    /* Emit WM program relocation */
    dri_bo_emit_reloc(bo,

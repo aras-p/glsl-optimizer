@@ -326,8 +326,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->wm.sampler_bo = brw_upload_cache(&brw->cache, BRW_SAMPLER,
 					    &key, sizeof(key),
 					    brw->wm.sdc_bo, key.sampler_count,
-					    &sampler, sizeof(sampler),
-					    NULL, NULL);
+					    &sampler, sizeof(sampler));
 
       /* Emit SDC relocations */
       for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {

@@ -332,7 +332,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
    /* Record of the last BOs chosen for each cache_id.  Used to set
