@@ -35,8 +35,6 @@
 
 #include "context.h"
 #include "texcompress.h"
-#include "texcompress_fxt1.h"
-#include "texcompress_s3tc.h"
 #include "texformat.h"
 
 
