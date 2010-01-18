@@ -327,8 +327,18 @@ static void
 dri_destroy_screen(__DRIscreenPrivate * sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
+   int i;
 
    screen->pipe_screen->destroy(screen->pipe_screen);
+   
+   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
+      FREE(screen->optionCache.info[i].name);
+      FREE(screen->optionCache.info[i].ranges);
+   }
+
+   FREE(screen->optionCache.info);
+   FREE(screen->optionCache.values);
+
    FREE(screen);
    sPriv->private = NULL;
 }
