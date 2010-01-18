@@ -46,7 +46,6 @@
 #include "texfetch.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "texstore.h"
 #include "mtypes.h"
 
 
