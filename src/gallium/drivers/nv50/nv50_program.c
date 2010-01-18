@@ -4659,6 +4659,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 
 	nouveau_bo_ref(NULL, &p->bo);
 
+	FREE(p->immd);
 	nouveau_resource_free(&p->data[0]);
 
 	p->translated = 0;
