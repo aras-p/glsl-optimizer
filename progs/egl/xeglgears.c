@@ -604,7 +604,7 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
             break;
          case EGL_PBUFFER_BIT:
             eglWaitClient();
-            if (!eglCopyBuffers(eman->xdpy, eman->pbuf, eman->xpix))
+            if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
                break;
             /* fall through */
          case EGL_PIXMAP_BIT:
