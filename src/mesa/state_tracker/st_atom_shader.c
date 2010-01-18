@@ -146,7 +146,7 @@ find_translated_vp(struct st_context *st,
 
       stfp->num_input_slots = numIn;
 
-      assert(stfp->Base.Base.NumInstructions > 1);
+      assert(stfp->Base.Base.NumInstructions > 0);
 
       st_translate_fragment_program(st, stfp, stfp->input_to_slot);
    }
