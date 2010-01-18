@@ -52,6 +52,8 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "query",  DEBUG_QUERY },
    { "screen", DEBUG_SCREEN },
    { "jit",    DEBUG_JIT },
+   { "show_tiles",    DEBUG_SHOW_TILES },
+   { "show_subtiles", DEBUG_SHOW_SUBTILES },
    {NULL, 0}
 };
 #endif

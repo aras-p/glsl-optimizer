@@ -461,6 +461,61 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 }
 
 
+#ifdef DEBUG
+/**
+ * Set top row and left column of the tile's pixels to white.  For debugging.
+ */
+static void
+outline_tile(uint8_t *tile)
+{
+   const uint8_t val = 0xff;
+   unsigned i;
+
+   for (i = 0; i < TILE_SIZE; i++) {
+      TILE_PIXEL(tile, i, 0, 0) = val;
+      TILE_PIXEL(tile, i, 0, 1) = val;
+      TILE_PIXEL(tile, i, 0, 2) = val;
+      TILE_PIXEL(tile, i, 0, 3) = val;
+
+      TILE_PIXEL(tile, 0, i, 0) = val;
+      TILE_PIXEL(tile, 0, i, 1) = val;
+      TILE_PIXEL(tile, 0, i, 2) = val;
+      TILE_PIXEL(tile, 0, i, 3) = val;
+   }
+}
+#endif /* DEBUG */
+
+
+#ifdef DEBUG
+/**
+ * Draw grid of gray lines at 16-pixel intervals across the tile to
+ * show the sub-tile boundaries.  For debugging.
+ */
+static void
+outline_subtiles(uint8_t *tile)
+{
+   const uint8_t val = 0x80;
+   const unsigned step = 16;
+   unsigned i, j;
+
+   for (i = 0; i < TILE_SIZE; i += 16) {
+      for (j = 0; j < TILE_SIZE; j++) {
+         TILE_PIXEL(tile, i, j, 0) = val;
+         TILE_PIXEL(tile, i, j, 1) = val;
+         TILE_PIXEL(tile, i, j, 2) = val;
+         TILE_PIXEL(tile, i, j, 3) = val;
+
+         TILE_PIXEL(tile, j, i, 0) = val;
+         TILE_PIXEL(tile, j, i, 1) = val;
+         TILE_PIXEL(tile, j, i, 2) = val;
+         TILE_PIXEL(tile, j, i, 3) = val;
+      }
+   }
+
+   outline_tile(tile);
+}
+#endif /* DEBUG */
+
 
 
 /**
@@ -499,6 +554,11 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 
       LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
 	     thread_index, x, y, w, h);
+
+      if (LP_DEBUG & DEBUG_SHOW_SUBTILES)
+         outline_subtiles(rast->tasks[thread_index].tile.color[i]);
+      else if (LP_DEBUG & DEBUG_SHOW_TILES)
+         outline_tile(rast->tasks[thread_index].tile.color[i]);
 
       lp_tile_write_4ub(transfer->texture->format,
 			rast->tasks[thread_index].tile.color[i],
