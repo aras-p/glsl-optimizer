@@ -21,6 +21,12 @@ nvfx_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 		*fmt = NV34TCL_VTXFMT_TYPE_FLOAT;
 		break;
+	case PIPE_FORMAT_R16_FLOAT:
+	case PIPE_FORMAT_R16G16_FLOAT:
+	case PIPE_FORMAT_R16G16B16_FLOAT:
+	case PIPE_FORMAT_R16G16B16A16_FLOAT:
+		*fmt = NV34TCL_VTXFMT_TYPE_HALF;
+		break;
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R8G8_UNORM:
 	case PIPE_FORMAT_R8G8B8_UNORM:
@@ -41,21 +47,25 @@ nvfx_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 	switch (pipe) {
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_R16_FLOAT:
 	case PIPE_FORMAT_R16_SSCALED:
 		*ncomp = 1;
 		break;
 	case PIPE_FORMAT_R8G8_UNORM:
 	case PIPE_FORMAT_R32G32_FLOAT:
+	case PIPE_FORMAT_R16G16_FLOAT:
 	case PIPE_FORMAT_R16G16_SSCALED:
 		*ncomp = 2;
 		break;
 	case PIPE_FORMAT_R8G8B8_UNORM:
 	case PIPE_FORMAT_R32G32B32_FLOAT:
+	case PIPE_FORMAT_R16G16B16_FLOAT:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
 		*ncomp = 3;
 		break;
 	case PIPE_FORMAT_R8G8B8A8_UNORM:
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 		*ncomp = 4;
 		break;
