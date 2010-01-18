@@ -85,6 +85,23 @@ vmw_drm_create_screen(struct drm_api *drm_api,
    struct pipe_screen *screen;
    struct dri1_create_screen_arg *dri1;
 
+   if (!arg || arg->mode == DRM_CREATE_NORMAL) {
+      struct dri1_api_version drm_ver;
+      drmVersionPtr ver;
+
+      ver = drmGetVersion(fd);
+      if (ver == NULL)
+	 return NULL;
+
+      drm_ver.major = ver->version_major;
+      drm_ver.minor = ver->version_minor;
+
+      drmFreeVersion(ver);
+      if (!vmw_dri1_check_version(&drm_ver, &drm_required,
+				  &drm_compat, "vmwgfx drm driver"))
+	 return NULL;
+   }
+
    if (arg != NULL) {
       switch (arg->mode) {
       case DRM_CREATE_NORMAL:
