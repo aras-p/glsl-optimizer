@@ -58,6 +58,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
 {
     struct radeon_winsys *radeon_ws = (struct radeon_winsys *)ws;
     struct radeon_pipe_buffer *radeon_buffer;
+    struct pb_desc desc;
     uint32_t domain;
 
     radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
@@ -69,6 +70,14 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
     radeon_buffer->base.alignment = alignment;
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
+
+    if (usage == PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) {
+        /* Don't bother allocating a BO, as it'll never get to the card. */
+        desc.alignment = alignment;
+        desc.usage = usage;
+        radeon_buffer->pb = pb_malloc_buffer_create(size, &desc);
+        return &radeon_buffer->base;
+    }
 
     domain = 0;
 
@@ -133,8 +142,16 @@ static void radeon_buffer_del(struct pipe_buffer *buffer)
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unref(radeon_buffer->bo);
-    free(radeon_buffer);
+    if (radeon_buffer->pb) {
+        pipe_reference_init(&radeon_buffer->pb->base.reference, 0);
+        pb_destroy(radeon_buffer->pb);
+    }
+
+    if (radeon_buffer->bo) {
+        radeon_bo_unref(radeon_buffer->bo);
+    }
+
+    FREE(radeon_buffer);
 }
 
 static void *radeon_buffer_map(struct pipe_winsys *ws,
@@ -145,6 +162,10 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
+
+    if (radeon_buffer->pb) {
+        return pb_map(radeon_buffer->pb, flags);
+    }
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -174,7 +195,11 @@ static void radeon_buffer_unmap(struct pipe_winsys *ws,
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unmap(radeon_buffer->bo);
+    if (radeon_buffer->pb) {
+        pb_unmap(radeon_buffer->pb);
+    } else {
+        radeon_bo_unmap(radeon_buffer->bo);
+    }
 }
 
 static void radeon_fence_reference(struct pipe_winsys *ws,
