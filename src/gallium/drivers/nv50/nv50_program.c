@@ -477,6 +477,12 @@ is_join(struct nv50_program_exec *e)
 	return FALSE;
 }
 
+static INLINE boolean
+is_control_flow(struct nv50_program_exec *e)
+{
+	return (e->inst[0] & 2);
+}
+
 static INLINE void
 set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx,
 	 struct nv50_program_exec *e)
@@ -3166,7 +3172,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		if (!is_long(pc->p->exec_tail))
 			convert_to_long(pc, pc->p->exec_tail);
 		else
-		if (is_immd(pc->p->exec_tail) || is_join(pc->p->exec_tail))
+		if (is_immd(pc->p->exec_tail) ||
+		    is_join(pc->p->exec_tail) ||
+		    is_control_flow(pc->p->exec_tail))
 			emit_nop(pc);
 
 		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
