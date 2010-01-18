@@ -5090,15 +5090,15 @@ void add_return_inst(r700_AssemblerBase *pAsm)
 {
     if(GL_FALSE == add_cf_instruction(pAsm) )
     {
-        return GL_FALSE;
+        return;
     }
     //pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 1;
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.pop_count        = 0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0; 
+    pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_const         = 0x0;
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.cond             = SQ_CF_COND_ACTIVE;
 
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.end_of_program   = 0x0;
-    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0; 
+    pAsm->cf_current_cf_clause_ptr->m_Word1.f.valid_pixel_mode = 0x0;
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.cf_inst          = SQ_CF_INST_RETURN;
     pAsm->cf_current_cf_clause_ptr->m_Word1.f.whole_quad_mode  = 0x0;
 
@@ -5302,7 +5302,7 @@ GLboolean assemble_CAL(r700_AssemblerBase *pAsm,
 
 GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
 {
-    GLfloat fLiteral[2] = {0.1, 0.0};
+    /*GLfloat fLiteral[2] = {0.1, 0.0};*/
 
     pAsm->D.dst.opcode   = SQ_OP2_INST_MOV;
     pAsm->D.dst.op3      = 0;
@@ -5353,7 +5353,7 @@ GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue)
 
 GLboolean testFlag(r700_AssemblerBase *pAsm)
 {
-    GLfloat fLiteral[2] = {0.1, 0.0};
+    /*GLfloat fLiteral[2] = {0.1, 0.0};*/
 
     //Test flag
     GLuint tmp = gethelpr(pAsm);
@@ -6123,7 +6123,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
 
     R700ControlFlowGenericClause* prelude_cf_ptr = NULL;
 
-    /* copy srcs to presub inputs */  
+    /* copy srcs to presub inputs */
     pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     for(i=0; i<uNumValidSrc; i++)
     {

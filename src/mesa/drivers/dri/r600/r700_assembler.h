@@ -619,6 +619,7 @@ GLboolean assemble_RCP(r700_AssemblerBase *pAsm);
 GLboolean assemble_RSQ(r700_AssemblerBase *pAsm);
 GLboolean assemble_SCS(r700_AssemblerBase *pAsm);
 GLboolean assemble_SGE(r700_AssemblerBase *pAsm);
+GLboolean assemble_CONT(r700_AssemblerBase *pAsm);
 
 GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode);
 GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode); 
