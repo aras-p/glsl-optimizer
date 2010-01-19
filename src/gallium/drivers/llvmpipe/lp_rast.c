@@ -275,7 +275,7 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
       assert(h <= TILE_SIZE);
 
       lp_tile_read_4ub(transfer->texture->format,
-		       rast->tasks[thread_index].tile.color[i],
+		       task->tile.color[i],
 		       rast->cbuf_map[i], 
 		       transfer->stride,
 		       x, y,
@@ -309,8 +309,9 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
                             unsigned thread_index,
                             const union lp_rast_cmd_arg arg )
 {
-   const unsigned x = rast->tasks[thread_index].x;
-   const unsigned y = rast->tasks[thread_index].y;
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const unsigned x = task->x;
+   const unsigned y = task->y;
    unsigned w = TILE_SIZE;
    unsigned h = TILE_SIZE;
 
@@ -323,7 +324,7 @@ void lp_rast_load_zstencil( struct lp_rasterizer *rast,
    LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
-   lp_tile_read_z32(rast->tasks[thread_index].tile.depth,
+   lp_tile_read_z32(task->tile.depth,
                     rast->zsbuf_map, 
                     rast->zsbuf_transfer->stride,
                     x, y, w, h);
@@ -353,11 +354,12 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
                          unsigned thread_index,
                          const union lp_rast_cmd_arg arg )
 {
-   const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
-   struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const struct lp_rast_state *state = task->current_state;
+   struct lp_rast_tile *tile = &task->tile;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   const unsigned tile_x = rast->tasks[thread_index].x;
-   const unsigned tile_y = rast->tasks[thread_index].y;
+   const unsigned tile_x = task->x;
+   const unsigned tile_y = task->y;
    unsigned x, y;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
@@ -404,8 +406,9 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
                           unsigned x, unsigned y,
                           int32_t c1, int32_t c2, int32_t c3)
 {
-   const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
-   struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const struct lp_rast_state *state = task->current_state;
+   struct lp_rast_tile *tile = &task->tile;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
    unsigned i;
@@ -520,8 +523,9 @@ outline_subtiles(uint8_t *tile)
 static void lp_rast_store_color( struct lp_rasterizer *rast,
                                  unsigned thread_index)
 {
-   const unsigned x = rast->tasks[thread_index].x;
-   const unsigned y = rast->tasks[thread_index].y;
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const unsigned x = task->x;
+   const unsigned y = task->y;
    unsigned i;
 
    for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
@@ -552,12 +556,12 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 	     thread_index, x, y, w, h);
 
       if (LP_DEBUG & DEBUG_SHOW_SUBTILES)
-         outline_subtiles(rast->tasks[thread_index].tile.color[i]);
+         outline_subtiles(task->tile.color[i]);
       else if (LP_DEBUG & DEBUG_SHOW_TILES)
-         outline_tile(rast->tasks[thread_index].tile.color[i]);
+         outline_tile(task->tile.color[i]);
 
       lp_tile_write_4ub(transfer->texture->format,
-			rast->tasks[thread_index].tile.color[i],
+			task->tile.color[i],
 			rast->cbuf_map[i], 
 			transfer->stride,
 			x, y,
@@ -587,8 +591,9 @@ lp_tile_write_z32(const uint32_t *src, uint8_t *dst, unsigned dst_stride,
 static void lp_rast_store_zstencil( struct lp_rasterizer *rast,
                                     unsigned thread_index )
 {
-   const unsigned x = rast->tasks[thread_index].x;
-   const unsigned y = rast->tasks[thread_index].y;
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const unsigned x = task->x;
+   const unsigned y = task->y;
    unsigned w = TILE_SIZE;
    unsigned h = TILE_SIZE;
 
@@ -601,7 +606,7 @@ static void lp_rast_store_zstencil( struct lp_rasterizer *rast,
    LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
    assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
-   lp_tile_write_z32(rast->tasks[thread_index].tile.depth,
+   lp_tile_write_z32(task->tile.depth,
                      rast->zsbuf_map, 
                      rast->zsbuf_transfer->stride,
                      x, y, w, h);
@@ -991,12 +996,14 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
    rast->full_scenes = lp_scene_queue_create();
 
    for (i = 0; i < Elements(rast->tasks); i++) {
-      for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
-	 rast->tasks[i].tile.color[cbuf] = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
+      struct lp_rasterizer_task *task = &rast->tasks[i];
 
-      rast->tasks[i].tile.depth = align_malloc( TILE_SIZE*TILE_SIZE*4, 16 );
-      rast->tasks[i].rast = rast;
-      rast->tasks[i].thread_index = i;
+      for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
+	 task->tile.color[cbuf] = align_malloc(TILE_SIZE * TILE_SIZE * 4, 16);
+
+      task->tile.depth = align_malloc(TILE_SIZE * TILE_SIZE * 4, 16);
+      task->rast = rast;
+      task->thread_index = i;
    }
 
    create_rast_threads(rast);
