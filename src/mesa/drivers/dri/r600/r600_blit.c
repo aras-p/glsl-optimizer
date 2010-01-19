@@ -310,12 +310,31 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    END_BATCH();
     }
 
-    BEGIN_BATCH_NO_AUTOSTATE(18);
+    /* Set CMASK & TILE buffer to the offset of color buffer as
+     * we don't use those this shouldn't cause any issue and we
+     * then have a valid cmd stream
+     */
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
+    R600_OUT_BATCH(cb_color0_base);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
+    END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
+    R600_OUT_BATCH(cb_color0_base);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
+    END_BATCH();
+
+    BEGIN_BATCH_NO_AUTOSTATE(12);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), cb_color0_size);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), cb_color0_view);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_TILE + (4 * id), 0);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_FRAG + (4 * id), 0);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), 0);
     END_BATCH();
 
@@ -1529,7 +1548,7 @@ GLboolean r600_blit(context_t *context,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(context->radeon.glCtx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 302, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 304, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1554,7 +1573,7 @@ GLboolean r600_blit(context_t *context,
     set_tex_sampler(context);
 
     /* dst */
-    /* 25 */
+    /* 27 */
     set_render_target(context, dst_bo, dst_mesaformat,
 		      dst_pitch, dst_width, dst_height, dst_offset);
     /* scissors */
