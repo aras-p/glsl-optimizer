@@ -35,10 +35,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "formats.h"
-#include "image.h"
-#include "mipmap.h"
 #include "texcompress.h"
-#include "texstore.h"
 
 
 /**
