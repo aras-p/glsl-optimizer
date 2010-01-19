@@ -167,7 +167,8 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
+   if (!intel->using_dri2_swapbuffers &&
+       intel->first_post_swapbuffers_batch == NULL) {
       intel->first_post_swapbuffers_batch = intel->batch->buf;
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }

@@ -155,7 +155,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 
    if (bind_bo == NULL) {
       GLuint data_size = BRW_VS_MAX_SURF * sizeof(GLuint);
-      uint32_t *data = malloc(data_size);
+      uint32_t data[BRW_VS_MAX_SURF];
       int i;
 
       for (i = 0; i < BRW_VS_MAX_SURF; i++)
@@ -180,8 +180,6 @@ brw_vs_get_binding_table(struct brw_context *brw)
 				    I915_GEM_DOMAIN_INSTRUCTION, 0);
 	 }
       }
-
-      free(data);
    }
 
    return bind_bo;
