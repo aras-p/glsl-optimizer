@@ -178,6 +178,12 @@ ureg_DECL_immediate_int( struct ureg_program *,
                          const int *v,
                          unsigned nr );
 
+void
+ureg_DECL_constant2D(struct ureg_program *ureg,
+                     unsigned first,
+                     unsigned last,
+                     unsigned index2D);
+
 struct ureg_src
 ureg_DECL_constant( struct ureg_program *,
                     unsigned index );
@@ -813,6 +819,30 @@ ureg_dst( struct ureg_src src )
    dst.Index     = src.Index;
 
    return dst;
+}
+
+static INLINE struct ureg_src
+ureg_src_register(unsigned file,
+                  unsigned index)
+{
+   struct ureg_src src;
+
+   src.File = file;
+   src.SwizzleX = TGSI_SWIZZLE_X;
+   src.SwizzleY = TGSI_SWIZZLE_Y;
+   src.SwizzleZ = TGSI_SWIZZLE_Z;
+   src.SwizzleW = TGSI_SWIZZLE_W;
+   src.Indirect = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
+   src.IndirectIndex = 0;
+   src.IndirectSwizzle = 0;
+   src.Absolute = 0;
+   src.Index = index;
+   src.Negate = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
+
+   return src;
 }
 
 static INLINE struct ureg_src

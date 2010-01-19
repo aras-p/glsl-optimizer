@@ -178,29 +178,6 @@ static const char *primitive_names[] =
 
 
 static void
-_dump_register_decl(
-   struct dump_ctx *ctx,
-   uint file,
-   int first,
-   int last )
-{
-   ENM( file, file_names );
-
-   /* all geometry shader inputs are two dimensional */
-   if (file == TGSI_FILE_INPUT &&
-       ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY)
-      TXT("[]");
-
-   CHR( '[' );
-   SID( first );
-   if (first != last) {
-      TXT( ".." );
-      SID( last );
-   }
-   CHR( ']' );
-}
-
-static void
 _dump_register_dst(
    struct dump_ctx *ctx,
    uint file,
@@ -299,11 +276,28 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   _dump_register_decl(
-      ctx,
-      decl->Declaration.File,
-      decl->Range.First,
-      decl->Range.Last );
+   ENM(decl->Declaration.File, file_names);
+
+   /* all geometry shader inputs are two dimensional */
+   if (decl->Declaration.File == TGSI_FILE_INPUT &&
+       iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+      TXT("[]");
+   }
+
+   if (decl->Declaration.Dimension) {
+      CHR('[');
+      SID(decl->Dim.Index2D);
+      CHR(']');
+   }
+
+   CHR('[');
+   SID(decl->Range.First);
+   if (decl->Range.First != decl->Range.Last) {
+      TXT("..");
+      SID(decl->Range.Last);
+   }
+   CHR(']');
+
    _dump_writemask(
       ctx,
       decl->Declaration.UsageMask );

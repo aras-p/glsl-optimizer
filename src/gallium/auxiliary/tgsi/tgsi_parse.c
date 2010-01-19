@@ -109,6 +109,10 @@ tgsi_parse_token(
 
       next_token( ctx, &decl->Range );
 
+      if (decl->Declaration.Dimension) {
+         next_token(ctx, &decl->Dim);
+      }
+
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );
       }

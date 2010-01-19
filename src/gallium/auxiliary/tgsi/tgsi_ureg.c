@@ -44,6 +44,7 @@ union tgsi_any_token {
    struct tgsi_property_data prop_data;
    struct tgsi_declaration decl;
    struct tgsi_declaration_range decl_range;
+   struct tgsi_declaration_dimension decl_dim;
    struct tgsi_declaration_semantic decl_semantic;
    struct tgsi_immediate imm;
    union  tgsi_immediate_data imm_data;
@@ -74,6 +75,14 @@ struct ureg_tokens {
 #define UREG_MAX_ADDR 2
 #define UREG_MAX_LOOP 1
 #define UREG_MAX_PRED 1
+
+struct const_decl {
+   struct {
+      unsigned first;
+      unsigned last;
+   } constant_range[UREG_MAX_CONSTANT_RANGE];
+   unsigned nr_constant_ranges;
+};
 
 #define DOMAIN_DECL 0
 #define DOMAIN_INSN 1
@@ -127,11 +136,7 @@ struct ureg_program
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
 
-   struct {
-      unsigned first;
-      unsigned last;
-   } constant_range[UREG_MAX_CONSTANT_RANGE];
-   unsigned nr_constant_ranges;
+   struct const_decl const_decls[PIPE_MAX_CONSTANT];
 
    unsigned property_gs_input_prim;
 
@@ -234,31 +239,6 @@ ureg_dst_register( unsigned file,
 
    return dst;
 }
-
-static INLINE struct ureg_src 
-ureg_src_register( unsigned file,
-                   unsigned index )
-{
-   struct ureg_src src;
-
-   src.File     = file;
-   src.SwizzleX = TGSI_SWIZZLE_X;
-   src.SwizzleY = TGSI_SWIZZLE_Y;
-   src.SwizzleZ = TGSI_SWIZZLE_Z;
-   src.SwizzleW = TGSI_SWIZZLE_W;
-   src.Indirect = 0;
-   src.IndirectFile = TGSI_FILE_NULL;
-   src.IndirectIndex = 0;
-   src.IndirectSwizzle = 0;
-   src.Absolute = 0;
-   src.Index    = index;
-   src.Negate   = 0;
-   src.Dimension = 0;
-   src.DimensionIndex = 0;
-
-   return src;
-}
-
 
 
 void
@@ -379,58 +359,80 @@ out:
  * value or manage any constant_buffer contents -- that's the
  * resposibility of the calling code.
  */
-struct ureg_src ureg_DECL_constant(struct ureg_program *ureg, 
-                                   unsigned index )
+void
+ureg_DECL_constant2D(struct ureg_program *ureg,
+                     unsigned first,
+                     unsigned last,
+                     unsigned index2D)
 {
+   struct const_decl *decl = &ureg->const_decls[index2D];
+
+   assert(index2D < PIPE_MAX_CONSTANT);
+
+   if (decl->nr_constant_ranges < UREG_MAX_CONSTANT_RANGE) {
+      uint i = decl->nr_constant_ranges++;
+
+      decl->constant_range[i].first = first;
+      decl->constant_range[i].last = last;
+   }
+}
+
+
+struct ureg_src
+ureg_DECL_constant(struct ureg_program *ureg,
+                   unsigned index)
+{
+   struct const_decl *decl = &ureg->const_decls[0];
    unsigned minconst = index, maxconst = index;
    unsigned i;
 
    /* Inside existing range?
     */
-   for (i = 0; i < ureg->nr_constant_ranges; i++) {
-      if (ureg->constant_range[i].first <= index &&
-          ureg->constant_range[i].last >= index)
+   for (i = 0; i < decl->nr_constant_ranges; i++) {
+      if (decl->constant_range[i].first <= index &&
+          decl->constant_range[i].last >= index) {
          goto out;
+      }
    }
 
    /* Extend existing range?
     */
-   for (i = 0; i < ureg->nr_constant_ranges; i++) {
-      if (ureg->constant_range[i].last == index - 1) {
-         ureg->constant_range[i].last = index;
+   for (i = 0; i < decl->nr_constant_ranges; i++) {
+      if (decl->constant_range[i].last == index - 1) {
+         decl->constant_range[i].last = index;
          goto out;
       }
 
-      if (ureg->constant_range[i].first == index + 1) {
-         ureg->constant_range[i].first = index;
+      if (decl->constant_range[i].first == index + 1) {
+         decl->constant_range[i].first = index;
          goto out;
       }
 
-      minconst = MIN2(minconst, ureg->constant_range[i].first);
-      maxconst = MAX2(maxconst, ureg->constant_range[i].last);
+      minconst = MIN2(minconst, decl->constant_range[i].first);
+      maxconst = MAX2(maxconst, decl->constant_range[i].last);
    }
 
    /* Create new range?
     */
-   if (ureg->nr_constant_ranges < UREG_MAX_CONSTANT_RANGE) {
-      i = ureg->nr_constant_ranges++;
-      ureg->constant_range[i].first = index;
-      ureg->constant_range[i].last = index;
+   if (decl->nr_constant_ranges < UREG_MAX_CONSTANT_RANGE) {
+      i = decl->nr_constant_ranges++;
+      decl->constant_range[i].first = index;
+      decl->constant_range[i].last = index;
       goto out;
    }
 
    /* Collapse all ranges down to one:
     */
    i = 0;
-   ureg->constant_range[0].first = minconst;
-   ureg->constant_range[0].last = maxconst;
-   ureg->nr_constant_ranges = 1;
+   decl->constant_range[0].first = minconst;
+   decl->constant_range[0].last = maxconst;
+   decl->nr_constant_ranges = 1;
 
 out:
-   assert(i < ureg->nr_constant_ranges);
-   assert(ureg->constant_range[i].first <= index);
-   assert(ureg->constant_range[i].last >= index);
-   return ureg_src_register( TGSI_FILE_CONSTANT, index );
+   assert(i < decl->nr_constant_ranges);
+   assert(decl->constant_range[i].first <= index);
+   assert(decl->constant_range[i].last >= index);
+   return ureg_src_register(TGSI_FILE_CONSTANT, index);
 }
 
 
@@ -1088,6 +1090,31 @@ static void emit_decl_range( struct ureg_program *ureg,
 }
 
 static void
+emit_decl_range2D(struct ureg_program *ureg,
+                  unsigned file,
+                  unsigned first,
+                  unsigned last,
+                  unsigned index2D)
+{
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
+
+   out[0].value = 0;
+   out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
+   out[0].decl.NrTokens = 3;
+   out[0].decl.File = file;
+   out[0].decl.UsageMask = 0xf;
+   out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+   out[0].decl.Dimension = 1;
+
+   out[1].value = 0;
+   out[1].decl_range.First = first;
+   out[1].decl_range.Last = last;
+
+   out[2].value = 0;
+   out[2].decl_dim.Index2D = index2D;
+}
+
+static void
 emit_immediate( struct ureg_program *ureg,
                 const unsigned *v,
                 unsigned type )
@@ -1182,13 +1209,20 @@ static void emit_decls( struct ureg_program *ureg )
                        ureg->sampler[i].Index, 1 );
    }
 
-   if (ureg->nr_constant_ranges) {
-      for (i = 0; i < ureg->nr_constant_ranges; i++)
-         emit_decl_range( ureg,
-                          TGSI_FILE_CONSTANT,
-                          ureg->constant_range[i].first, 
-                          (ureg->constant_range[i].last + 1 -
-                           ureg->constant_range[i].first) );
+   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+      struct const_decl *decl = &ureg->const_decls[i];
+
+      if (decl->nr_constant_ranges) {
+         uint j;
+
+         for (j = 0; j < decl->nr_constant_ranges; j++) {
+            emit_decl_range2D(ureg,
+                              TGSI_FILE_CONSTANT,
+                              decl->constant_range[j].first,
+                              decl->constant_range[j].last,
+                              i);
+         }
+      }
    }
 
    if (ureg->nr_temps) {

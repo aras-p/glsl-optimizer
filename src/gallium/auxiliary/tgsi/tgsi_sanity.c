@@ -413,7 +413,11 @@ iter_declaration(
          }
       } else {
          scan_register *reg = MALLOC(sizeof(scan_register));
-         fill_scan_register1d(reg, file, i);
+         if (decl->Declaration.Dimension) {
+            fill_scan_register2d(reg, file, i, decl->Dim.Index2D);
+         } else {
+            fill_scan_register1d(reg, file, i);
+         }
          check_and_declare(ctx, reg);
       }
    }
