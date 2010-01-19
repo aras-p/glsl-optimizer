@@ -23,7 +23,7 @@ texture that can be used as multiple things.
   validated here is implicitly also a depthbuffer.
 * ``SAMPLER``: A texture that may be sampled from in a fragment or vertex
   shader.
-* ``DYNAMIC``: XXX undefined
+* ``DYNAMIC``: A texture that will be mapped frequently.
 
 Methods
 -------
@@ -58,6 +58,10 @@ See if a format can be used in a specific manner.
 **usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
 
 Returns TRUE if all usages can be satisfied.
+
+.. note::
+
+   ``PIPE_TEXTURE_USAGE_DYNAMIC`` is not a valid usage.
 
 texture_create
 ^^^^^^^^^^^^^^
