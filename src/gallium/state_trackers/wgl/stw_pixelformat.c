@@ -94,8 +94,6 @@ stw_pf_depth_stencil[] = {
    { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
    { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
-   /* pure stencil */
-   { PIPE_FORMAT_S8_UNORM,    { 0, 8} },
    /* combined depth-stencil */
    { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
    { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
