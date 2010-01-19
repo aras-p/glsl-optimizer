@@ -375,6 +375,7 @@ static struct dri1_api dri1_api_hooks = {
 };
 
 static struct drm_api vmw_drm_api_hooks = {
+   .driver_name = "vmwgfx",
    .create_screen = vmw_drm_create_screen,
    .create_context = vmw_drm_create_context,
    .texture_from_shared_handle = vmw_drm_texture_from_handle,

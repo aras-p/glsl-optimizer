@@ -29,6 +29,11 @@ struct drm_create_screen_arg {
 struct drm_api
 {
 	/**
+	 * Kernel driver name, as accepted by drmOpenByName.
+	 */
+	const char *driver_name;
+
+	/**
 	 * Special buffer functions
 	 */
 	/*@{*/
