@@ -296,4 +296,10 @@ svga_screen_buffer_from_texture(struct pipe_texture *texture,
 				struct pipe_buffer **buffer,
 				unsigned *stride);
 
+struct pipe_texture *
+svga_screen_texture_wrap_surface(struct pipe_screen *screen,
+				 struct pipe_texture *base,
+				 enum SVGA3dSurfaceFormat format,
+				 struct svga_winsys_surface *srf);
+
 #endif /* SVGA_WINSYS_H_ */
