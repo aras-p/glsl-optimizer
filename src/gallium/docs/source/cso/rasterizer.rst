@@ -108,7 +108,7 @@ scissor
     Whether the scissor test is enabled.
 
 multisample
-    Whether :ref:`MSAA` is enabled.
+    Whether :term:`MSAA` is enabled.
 
 bypass_vs_clip_and_viewport
     Whether the entire TCL pipeline should be bypassed. This implies that

@@ -112,7 +112,7 @@ driver-specific state structures for later use.
 Draw
 ^^^^
 
-Draw is a software :ref:`TCL` pipeline for hardware that lacks vertex shaders
+Draw is a software :term:`TCL` pipeline for hardware that lacks vertex shaders
 or other essential parts of pre-rasterization vertex preparation.
 
 Gallivm

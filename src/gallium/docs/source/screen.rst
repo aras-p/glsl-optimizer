@@ -6,6 +6,8 @@ A screen is an object representing the context-independent part of a device.
 Useful Flags
 ------------
 
+.. _pipe_texture_usage:
+
 PIPE_TEXTURE_USAGE
 ^^^^^^^^^^^^^^^^^^
 
@@ -53,7 +55,7 @@ is_format_supported
 
 See if a format can be used in a specific manner.
 
-**usage** is a bitmask of ``PIPE_TEXTURE_USAGE`` flags.
+**usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
 
 Returns TRUE if all usages can be satisfied.
 
