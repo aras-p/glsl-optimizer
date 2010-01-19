@@ -22,6 +22,8 @@
 
 #if defined(_EGL_PLATFORM_X)
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <dirent.h>
 #endif
 
 
@@ -49,6 +51,13 @@ close_library(HMODULE lib)
 }
 
 
+static const char *
+library_suffix(void)
+{
+   return "dll";
+}
+
+
 #elif defined(_EGL_PLATFORM_X)
 
 
@@ -68,6 +77,14 @@ close_library(void *lib)
    dlclose(lib);
 }
 
+
+static const char *
+library_suffix(void)
+{
+   return "so";
+}
+
+
 #else /* _EGL_PLATFORM_NO_OS */
 
 static const char DefaultDriverName[] = "builtin";
@@ -83,6 +100,13 @@ open_library(const char *filename)
 static INLINE void
 close_library(void *lib)
 {
+}
+
+
+static const char *
+library_suffix(void)
+{
+   return NULL;
 }
 
 
@@ -208,11 +232,10 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
 
 
 /**
- * Load the named driver.  The path and args passed will be
- * owned by the driver and freed.
+ * Load the named driver.
  */
 static _EGLDriver *
-_eglLoadDriver(char *path, char *args)
+_eglLoadDriver(const char *path, const char *args)
 {
    _EGLMain_t mainFunc;
    lib_handle lib;
@@ -234,8 +257,19 @@ _eglLoadDriver(char *path, char *args)
       drv->Name = "UNNAMED";
    }
 
-   drv->Path = path;
-   drv->Args = args;
+   drv->Path = _eglstrdup(path);
+   drv->Args = (args) ? _eglstrdup(args) : NULL;
+   if (!drv->Path || (args && !drv->Args)) {
+      if (drv->Path)
+         free((char *) drv->Path);
+      if (drv->Args)
+         free((char *) drv->Args);
+      drv->Unload(drv);
+      if (lib)
+         close_library(lib);
+      return NULL;
+   }
+
    drv->LibHandle = lib;
 
    return drv;
@@ -300,8 +334,12 @@ _eglPreloadDriver(_EGLDisplay *dpy)
    }
 
    drv = _eglLoadDriver(path, args);
-   if (!drv)
+   if (!drv) {
+      free(path);
+      if (args)
+         free(args);
       return NULL;
+   }
 
    _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
 
@@ -327,6 +365,167 @@ EGLBoolean
 _eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    return EGL_TRUE;
+}
+
+
+/**
+ * Preload a user driver.
+ *
+ * A user driver can be specified by EGL_DRIVER.
+ */
+static EGLBoolean
+_eglPreloadUserDriver(void)
+{
+#if defined(_EGL_PLATFORM_X) || defined(_EGL_PLATFORM_WINDOWS)
+   _EGLDriver *drv;
+   char *env, *path;
+   const char *suffix, *p;
+
+   env = getenv("EGL_DRIVER");
+   if (!env)
+      return EGL_FALSE;
+
+   path = env;
+   suffix = library_suffix();
+
+   /* append suffix if there isn't */
+   p = strrchr(path, '.');
+   if (!p && suffix) {
+      size_t len = strlen(path);
+      char *tmp = malloc(len + strlen(suffix) + 2);
+      if (tmp) {
+         memcpy(tmp, path, len);
+         tmp[len++] = '.';
+         tmp[len] = '\0';
+         strcat(tmp + len, suffix);
+
+         path = tmp;
+      }
+   }
+
+   drv = _eglLoadDriver(path, NULL);
+   if (path != env)
+      free(path);
+   if (!drv)
+      return EGL_FALSE;
+
+   _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
+
+   return EGL_TRUE;
+#else /* _EGL_PLATFORM_X || _EGL_PLATFORM_WINDOWS */
+   return EGL_FALSE;
+#endif
+}
+
+
+/**
+ * Preload display drivers.
+ *
+ * Display drivers are a set of drivers that support a certain display system.
+ * The display system may be specified by EGL_DISPLAY.
+ *
+ * FIXME This makes libEGL a memory hog if an user driver is not specified and
+ * there are many display drivers.
+ */
+static EGLBoolean
+_eglPreloadDisplayDrivers(void)
+{
+#if defined(_EGL_PLATFORM_X)
+   const char *dpy, *suffix;
+   char path[1024], prefix[32];
+   DIR *dirp;
+   struct dirent *dirent;
+
+   dpy = getenv("EGL_DISPLAY");
+   if (!dpy || !dpy[0])
+      dpy = _EGL_DEFAULT_DISPLAY;
+   if (!dpy || !dpy[0])
+      return EGL_FALSE;
+
+   snprintf(prefix, sizeof(prefix), "egl_%s_", dpy);
+   suffix = library_suffix();
+
+   dirp = opendir(_EGL_DRIVER_SEARCH_DIR);
+   if (!dirp)
+      return EGL_FALSE;
+
+   while ((dirent = readdir(dirp))) {
+      _EGLDriver *drv;
+      const char *p;
+
+      /* match the prefix */
+      if (strncmp(dirent->d_name, prefix, strlen(prefix)) != 0)
+         continue;
+
+      /* match the suffix */
+      p = strrchr(dirent->d_name, '.');
+      if ((p && !suffix) || (!p && suffix))
+         continue;
+      else if (p && suffix && strcmp(p + 1, suffix) != 0)
+         continue;
+
+      snprintf(path, sizeof(path),
+            _EGL_DRIVER_SEARCH_DIR"/%s", dirent->d_name);
+
+      drv = _eglLoadDriver(path, NULL);
+      if (drv)
+         _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
+   }
+
+   closedir(dirp);
+
+   return (_eglGlobal.NumDrivers > 0);
+#else /* _EGL_PLATFORM_X */
+   return EGL_FALSE;
+#endif
+}
+
+
+/**
+ * Preload the default driver.
+ */
+static EGLBoolean
+_eglPreloadDefaultDriver(void)
+{
+   _EGLDriver *drv;
+   char path[1024];
+   const char *suffix = library_suffix();
+
+   if (suffix)
+      snprintf(path, sizeof(path), "%s.%s", DefaultDriverName, suffix);
+   else
+      snprintf(path, sizeof(path), DefaultDriverName);
+
+   drv = _eglLoadDriver(path, NULL);
+   if (!drv)
+      return EGL_FALSE;
+
+   _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
+
+   return EGL_TRUE;
+}
+
+
+/**
+ * Preload drivers.
+ *
+ * This function loads the driver modules and creates the corresponding
+ * _EGLDriver objects.
+ */
+EGLBoolean
+_eglPreloadDrivers(void)
+{
+   EGLBoolean loaded;
+
+   /* already preloaded */
+   if (_eglGlobal.NumDrivers)
+      return EGL_TRUE;
+
+   loaded = (_eglPreloadUserDriver() ||
+             _eglPreloadDisplayDrivers() ||
+             _eglPreloadDefaultDriver());
+
+   return loaded;
 }
 
 

@@ -41,7 +41,11 @@ extern EGLBoolean
 _eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy);
 
 
-void
+extern EGLBoolean
+_eglPreloadDrivers(void);
+
+
+extern void
 _eglUnloadDrivers(void);
 
 
