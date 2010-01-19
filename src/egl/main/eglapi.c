@@ -101,6 +101,8 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
    drv = disp->Driver;
    if (!drv) {
+      _eglPreloadDrivers();
+
       drv = _eglOpenDriver(disp);
       if (!drv)
          return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
@@ -710,9 +712,7 @@ void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
       }
    }
 
-   /* preload a driver if there isn't one */
-   if (!_eglGlobal.NumDrivers)
-      _eglPreloadDriver(NULL);
+   _eglPreloadDrivers();
 
    /* now loop over drivers to query their procs */
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {

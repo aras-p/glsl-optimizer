@@ -81,12 +81,6 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
       dpy->NativeDisplay = nativeDisplay;
-
-      dpy->DriverName = _eglPreloadDriver(dpy);
-      if (!dpy->DriverName) {
-         free(dpy);
-         return NULL;
-      }
    }
    return dpy;
 }
