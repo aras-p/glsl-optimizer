@@ -667,6 +667,7 @@ depth_test_quads_fallback(struct quad_stage *qs,
    }
 
    if (qs->softpipe->framebuffer.zsbuf && 
+       pf_get_component_bits(qs->softpipe->framebuffer.zsbuf->format, PIPE_FORMAT_COMP_Z) &&
        (qs->softpipe->depth_stencil->depth.enabled ||
         qs->softpipe->depth_stencil->stencil[0].enabled)) {
 
@@ -885,6 +886,7 @@ choose_depth_test(struct quad_stage *qs,
    boolean alpha = qs->softpipe->depth_stencil->alpha.enabled;
 
    boolean depth = (qs->softpipe->framebuffer.zsbuf && 
+                    pf_get_component_bits(qs->softpipe->framebuffer.zsbuf->format, PIPE_FORMAT_COMP_Z) &&
                     qs->softpipe->depth_stencil->depth.enabled);
 
    unsigned depthfunc = qs->softpipe->depth_stencil->depth.func;
@@ -894,7 +896,6 @@ choose_depth_test(struct quad_stage *qs,
    boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
 
    boolean occlusion = qs->softpipe->active_query_count;
-
 
    if (!alpha &&
        !depth &&
