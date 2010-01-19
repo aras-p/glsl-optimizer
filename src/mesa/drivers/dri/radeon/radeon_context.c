@@ -228,6 +228,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
    if ( !rmesa )
       return GL_FALSE;
 
+   rmesa->radeon.radeonScreen = screen;
    r100_init_vtbl(&rmesa->radeon);
 
    /* init exp fog table data */
@@ -259,6 +260,10 @@ r100CreateContext( const __GLcontextModes *glVisual,
    _mesa_init_driver_functions( &functions );
    radeonInitTextureFuncs( &functions );
    radeonInitQueryObjFunctions(&functions);
+
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+	   r100_init_texcopy_functions(&functions);
+   }
 
    if (!radeonInitContext(&rmesa->radeon, &functions,
 			  glVisual, driContextPriv,

@@ -453,7 +453,7 @@ struct r100_context {
 extern GLboolean r100CreateContext( const __GLcontextModes *glVisual,
 				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
-  
+extern void r100_init_texcopy_functions(struct dd_function_table *table);
 
 
 #endif				/* __RADEON_CONTEXT_H__ */
