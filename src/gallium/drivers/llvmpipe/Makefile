@@ -6,8 +6,6 @@ LIBNAME = llvmpipe
 DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
-	lp_scene.c \
-	lp_scene_queue.c \
 	lp_bld_alpha.c \
 	lp_bld_arit.c \
 	lp_bld_blend_aos.c \
@@ -38,15 +36,17 @@ C_SOURCES = \
 	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
+	lp_query.c \
 	lp_rast.c \
 	lp_rast_tri.c \
+	lp_scene.c \
+	lp_scene_queue.c \
+	lp_screen.c \
 	lp_setup.c \
 	lp_setup_line.c \
 	lp_setup_point.c \
 	lp_setup_tri.c \
 	lp_setup_vbuf.c \
-	lp_query.c \
-	lp_screen.c \
 	lp_state_blend.c \
 	lp_state_clip.c \
 	lp_state_derived.c \
