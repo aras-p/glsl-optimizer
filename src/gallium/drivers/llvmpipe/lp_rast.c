@@ -461,7 +461,6 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 }
 
 
-#ifdef DEBUG
 /**
  * Set top row and left column of the tile's pixels to white.  For debugging.
  */
@@ -483,10 +482,8 @@ outline_tile(uint8_t *tile)
       TILE_PIXEL(tile, 0, i, 3) = val;
    }
 }
-#endif /* DEBUG */
 
 
-#ifdef DEBUG
 /**
  * Draw grid of gray lines at 16-pixel intervals across the tile to
  * show the sub-tile boundaries.  For debugging.
@@ -498,7 +495,7 @@ outline_subtiles(uint8_t *tile)
    const unsigned step = 16;
    unsigned i, j;
 
-   for (i = 0; i < TILE_SIZE; i += 16) {
+   for (i = 0; i < TILE_SIZE; i += step) {
       for (j = 0; j < TILE_SIZE; j++) {
          TILE_PIXEL(tile, i, j, 0) = val;
          TILE_PIXEL(tile, i, j, 1) = val;
@@ -514,7 +511,6 @@ outline_subtiles(uint8_t *tile)
 
    outline_tile(tile);
 }
-#endif /* DEBUG */
 
 
 
