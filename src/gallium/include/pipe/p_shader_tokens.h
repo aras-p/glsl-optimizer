@@ -109,16 +109,23 @@ struct tgsi_declaration
    unsigned File        : 4;  /**< one of TGSI_FILE_x */
    unsigned UsageMask   : 4;  /**< bitmask of TGSI_WRITEMASK_x flags */
    unsigned Interpolate : 4;  /**< one of TGSI_INTERPOLATE_x */
+   unsigned Dimension   : 1;  /**< any extra dimension info? */
    unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
    unsigned Centroid    : 1;  /**< centroid sampling? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
-   unsigned Padding     : 5;
+   unsigned Padding     : 4;
 };
 
 struct tgsi_declaration_range
 {
    unsigned First   : 16; /**< UINT */
    unsigned Last    : 16; /**< UINT */
+};
+
+struct tgsi_declaration_dimension
+{
+   unsigned Index2D:16; /**< UINT */
+   unsigned Padding:16;
 };
 
 #define TGSI_SEMANTIC_POSITION   0
