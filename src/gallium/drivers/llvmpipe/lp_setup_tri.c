@@ -440,8 +440,10 @@ do_triangle_ccw(struct setup_context *setup,
       int x, y;
 
 
-      /* Trivially accept or reject blocks, else jump to per-pixel
-       * examination above.
+      /* Test tile-sized blocks against the triangle.
+       * Discard blocks fully outside the tri.  If the block is fully
+       * contained inside the tri, bin an lp_rast_shade_tile command.
+       * Else, bin a lp_rast_triangle command.
        */
       for (y = miny; y <= maxy; y++)
       {
