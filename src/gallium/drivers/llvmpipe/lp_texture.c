@@ -65,7 +65,8 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       unsigned nblocksx, nblocksy;
 
       /* Allocate storage for whole quads. This is particularly important
-       * for depth surfaces, which are currently stored in a swizzled format. */
+       * for depth surfaces, which are currently stored in a swizzled format.
+       */
       nblocksx = util_format_get_nblocksx(pt->format, align(width, 2));
       nblocksy = util_format_get_nblocksy(pt->format, align(height, 2));
 
