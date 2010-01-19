@@ -332,7 +332,7 @@ GLboolean r200_blit(struct r200_context *r200,
                     unsigned reg_height,
                     unsigned flip_y)
 {
-    if (is_blit_supported(dst_mesaformat))
+    if (!is_blit_supported(dst_mesaformat))
         return GL_FALSE;
 
     /* Make sure that colorbuffer has even width - hw limitation */

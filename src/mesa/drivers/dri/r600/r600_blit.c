@@ -1582,7 +1582,7 @@ GLboolean r600_blit(context_t *context,
 {
     int id = 0;
 
-    if (is_blit_supported(dst_mesaformat))
+    if (!is_blit_supported(dst_mesaformat))
 	    return GL_FALSE;
 
     if (src_bo == dst_bo) {
