@@ -146,7 +146,7 @@ static void inline emit_tx_setup(struct r200_context *r200,
     OUT_BATCH_REGVAL(R200_PP_TXFORMAT_X_0, 0);
     OUT_BATCH_REGVAL(R200_PP_TXSIZE_0, ((width - 1) |
 					((height - 1) << RADEON_TEX_VSIZE_SHIFT)));
-    OUT_BATCH_REGVAL(R200_PP_TXPITCH_0, pitch - 32);
+    OUT_BATCH_REGVAL(R200_PP_TXPITCH_0, pitch * _mesa_get_format_bytes(mesa_format) - 32);
 
     OUT_BATCH_REGSEQ(R200_PP_TXOFFSET_0, 1);
     OUT_BATCH_RELOC(0, bo, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
@@ -162,7 +162,7 @@ static inline void emit_cb_setup(struct r200_context *r200,
 				 unsigned width,
 				 unsigned height)
 {
-    uint32_t dst_pitch = pitch;
+    uint32_t dst_pitch = pitch * _mesa_get_format_bytes(mesa_format);
     uint32_t dst_format = 0;
     BATCH_LOCALS(&r200->radeon);
 
