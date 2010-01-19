@@ -666,7 +666,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[6] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
    arg_types[7] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
    arg_types[8] = LLVMInt32Type();                     /* c0 */
-   arg_types[9] = LLVMInt32Type();                    /* c1 */
+   arg_types[9] = LLVMInt32Type();                     /* c1 */
    arg_types[10] = LLVMInt32Type();                    /* c2 */
    /* Note: the step arrays are built as int32[16] but we interpret
     * them here as int32_vec4[4].
