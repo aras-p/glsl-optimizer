@@ -307,27 +307,29 @@ static inline void emit_draw_packet(struct r100_context *r100,
  * @param[in] height region height
  * @param[in] flip_y set if y coords of the source image need to be flipped
  */
-GLboolean r100_blit(struct r100_context *r100,
-                    struct radeon_bo *src_bo,
-                    intptr_t src_offset,
-                    gl_format src_mesaformat,
-                    unsigned src_pitch,
-                    unsigned src_width,
-                    unsigned src_height,
-                    unsigned src_x_offset,
-                    unsigned src_y_offset,
-                    struct radeon_bo *dst_bo,
-                    intptr_t dst_offset,
-                    gl_format dst_mesaformat,
-                    unsigned dst_pitch,
-                    unsigned dst_width,
-                    unsigned dst_height,
-                    unsigned dst_x_offset,
-                    unsigned dst_y_offset,
-                    unsigned reg_width,
-                    unsigned reg_height,
-                    unsigned flip_y)
+unsigned r100_blit(GLcontext *ctx,
+                   struct radeon_bo *src_bo,
+                   intptr_t src_offset,
+                   gl_format src_mesaformat,
+                   unsigned src_pitch,
+                   unsigned src_width,
+                   unsigned src_height,
+                   unsigned src_x_offset,
+                   unsigned src_y_offset,
+                   struct radeon_bo *dst_bo,
+                   intptr_t dst_offset,
+                   gl_format dst_mesaformat,
+                   unsigned dst_pitch,
+                   unsigned dst_width,
+                   unsigned dst_height,
+                   unsigned dst_x_offset,
+                   unsigned dst_y_offset,
+                   unsigned reg_width,
+                   unsigned reg_height,
+                   unsigned flip_y)
 {
+    struct r100_context *r100 = R100_CONTEXT(ctx);
+
     if (!is_blit_supported(dst_mesaformat))
         return GL_FALSE;
 
@@ -358,6 +360,10 @@ GLboolean r100_blit(struct r100_context *r100,
         return GL_FALSE;
     }
 
+    if (src_offset % 32 || dst_offset % 32) {
+        return GL_FALSE;
+    }
+
     if (0) {
         fprintf(stderr, "src: size [%d x %d], pitch %d, "
                 "offset [%d x %d], format %s, bo %p\n",
@@ -372,7 +378,7 @@ GLboolean r100_blit(struct r100_context *r100,
     }
 
     /* Flush is needed to make sure that source buffer has correct data */
-    radeonFlush(r100->radeon.glCtx);
+    radeonFlush(ctx);
 
     rcommonEnsureCmdBufSpace(&r100->radeon, 59, __FUNCTION__);
 
@@ -392,7 +398,7 @@ GLboolean r100_blit(struct r100_context *r100,
                      reg_width, reg_height,
                      flip_y);
 
-    radeonFlush(r100->radeon.glCtx);
+    radeonFlush(ctx);
 
     return GL_TRUE;
 }

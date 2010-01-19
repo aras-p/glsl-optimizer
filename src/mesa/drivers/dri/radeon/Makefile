@@ -26,7 +26,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_queryobj.c \
 	radeon_span.c \
-	radeon_texture.c
+	radeon_texture.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = \
 	radeon_context.c \
@@ -41,7 +42,6 @@ DRIVER_SOURCES = \
 	radeon_maos.c \
 	radeon_sanity.c \
 	radeon_blit.c \
-	radeon_texcopy.c \
 	$(RADEON_COMMON_SOURCES)
 
 C_SOURCES = \
