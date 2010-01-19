@@ -35,7 +35,6 @@
 #include "enums.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "glapi/glapitable.h"
 
 
 /**
