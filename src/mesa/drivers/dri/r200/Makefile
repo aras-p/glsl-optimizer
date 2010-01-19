@@ -46,6 +46,8 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_sanity.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
+		 r200_blit.c \
+		 r200_texcopy.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES) \
 		 $(RADEON_COMMON_SOURCES) \
