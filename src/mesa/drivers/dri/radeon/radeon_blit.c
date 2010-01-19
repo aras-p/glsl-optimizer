@@ -37,6 +37,29 @@ static inline uint32_t cmdpacket0(struct radeon_screen *rscrn,
     return CP_PACKET2;
 }
 
+/* common formats supported as both textures and render targets */
+static unsigned is_blit_supported(gl_format mesa_format)
+{
+    /* XXX others?  BE/LE? */
+    switch (mesa_format) {
+    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_RGB565:
+    case MESA_FORMAT_ARGB4444:
+    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_A8:
+	    break;
+    default:
+	    return 0;
+    }
+
+    /* ??? */
+    if (_mesa_get_format_bits(mesa_format, GL_DEPTH_BITS) > 0)
+	    return 0;
+
+    return 1;
+}
+
 static inline void emit_vtx_state(struct r100_context *r100)
 {
     BATCH_LOCALS(&r100->radeon);
@@ -305,7 +328,7 @@ GLboolean r100_blit(struct r100_context *r100,
                     unsigned reg_height,
                     unsigned flip_y)
 {
-    if (_mesa_get_format_bits(src_mesaformat, GL_DEPTH_BITS) > 0)
+    if (is_blit_supported(dst_mesaformat))
         return GL_FALSE;
 
     /* Make sure that colorbuffer has even width - hw limitation */
