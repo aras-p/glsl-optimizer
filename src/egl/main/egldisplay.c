@@ -40,36 +40,6 @@ _eglFiniDisplay(void)
 
 
 /**
- * If the first character is '!' we interpret it as specific driver name
- * (i.e. "!r200" or "!i830").  Whatever follows ':' is interpreted as
- * arguments.
- *
- * The caller may free() the returned driver name.
- */
-char *
-_eglSplitDisplayString(const char *dpyString, const char **args)
-{
-   char *drv, *p;
-
-   if (!dpyString || dpyString[0] != '!')
-      return NULL;
-   drv = _eglstrdup(dpyString + 1);
-   if (!drv)
-      return NULL;
-
-   p = strchr(dpyString, ':');
-   if (p) {
-      drv[p - dpyString] = '\0';
-      p++;
-   }
-   if (args)
-      *args = p;
-
-   return drv;
-}
-
-
-/**
  * Allocate a new _EGLDisplay object for the given nativeDisplay handle.
  * We'll also try to determine the device driver name at this time.
  *

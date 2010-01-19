@@ -114,66 +114,6 @@ library_suffix(void)
 
 
 /**
- * Choose a driver for a given display.
- * The caller may free() the returned strings.
- */
-static char *
-_eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
-{
-   char *path = NULL;
-   const char *args = NULL;
-   const char *suffix = NULL;
-   const char *p;
-
-   path = getenv("EGL_DRIVER");
-   if (path)
-      path = _eglstrdup(path);
-
-#if defined(_EGL_PLATFORM_X)
-   if (!path && dpy && dpy->NativeDisplay) {
-      /* assume (wrongly!) that the native display is a display string */
-      path = _eglSplitDisplayString((const char *) dpy->NativeDisplay, &args);
-   }
-   suffix = "so";
-#elif defined(_EGL_PLATFORM_WINDOWS)
-   suffix = "dll";
-#else /* _EGL_PLATFORM_NO_OS */
-   if (path) {
-      /* force the use of the default driver */
-      _eglLog(_EGL_DEBUG, "ignore EGL_DRIVER");
-      free(path);
-      path = NULL;
-   }
-   suffix = NULL;
-#endif
-
-   if (!path)
-      path = _eglstrdup(DefaultDriverName);
-
-   /* append suffix if there isn't */
-   p = strrchr(path, '.');
-   if (!p && suffix) {
-      size_t len = strlen(path);
-      char *tmp = malloc(len + strlen(suffix) + 2);
-      if (tmp) {
-         memcpy(tmp, path, len);
-         tmp[len++] = '.';
-         tmp[len] = '\0';
-         strcat(tmp + len, suffix);
-
-         free(path);
-         path = tmp;
-      }
-   }
-
-   if (argsRet)
-      *argsRet = (args) ? _eglstrdup(args) : NULL;
-
-   return path;
-}
-
-
-/**
  * Open the named driver and find its bootstrap function: _eglMain().
  */
 static _EGLMain_t
@@ -304,46 +244,6 @@ _eglMatchDriver(_EGLDisplay *dpy)
    }
 
    return defaultDriver;
-}
-
-
-/**
- * Load a driver and save it.
- */
-const char *
-_eglPreloadDriver(_EGLDisplay *dpy)
-{
-   char *path, *args;
-   _EGLDriver *drv;
-   EGLint i;
-
-   path = _eglChooseDriver(dpy, &args);
-   if (!path)
-      return NULL;
-
-   for (i = 0; i < _eglGlobal.NumDrivers; i++) {
-      drv = _eglGlobal.Drivers[i];
-      if (strcmp(drv->Path, path) == 0) {
-         _eglLog(_EGL_DEBUG, "Driver %s is already preloaded",
-                 drv->Name);
-         free(path);
-         if (args)
-            free(args);
-         return drv->Name;
-      }
-   }
-
-   drv = _eglLoadDriver(path, args);
-   if (!drv) {
-      free(path);
-      if (args)
-         free(args);
-      return NULL;
-   }
-
-   _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
-
-   return drv->Name;
 }
 
 
@@ -555,20 +455,6 @@ _eglUnloadDrivers(void)
    }
 
    _eglGlobal.NumDrivers = 0;
-}
-
-
-/**
- * Given a display handle, return the _EGLDriver for that display.
- */
-_EGLDriver *
-_eglLookupDriver(EGLDisplay dpy)
-{
-   _EGLDisplay *d = _eglLookupDisplay(dpy);
-   if (d)
-      return d->Driver;
-   else
-      return NULL;
 }
 
 

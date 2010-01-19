@@ -58,10 +58,6 @@ extern void
 _eglFiniDisplay(void);
 
 
-extern char *
-_eglSplitDisplayString(const char *dpyString, const char **args);
-
-
 extern _EGLDisplay *
 _eglNewDisplay(NativeDisplayType displayName);
 

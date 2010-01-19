@@ -29,10 +29,6 @@ PUBLIC _EGLDriver *
 _eglMain(const char *args);
 
 
-extern const char *
-_eglPreloadDriver(_EGLDisplay *dpy);
-
-
 extern _EGLDriver *
 _eglOpenDriver(_EGLDisplay *dpy);
 
@@ -47,10 +43,6 @@ _eglPreloadDrivers(void);
 
 extern void
 _eglUnloadDrivers(void);
-
-
-extern _EGLDriver *
-_eglLookupDriver(EGLDisplay d);
 
 
 PUBLIC void
