@@ -33,10 +33,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/formats.h"
-#include "main/matrix.h"
-#include "main/state.h"
 #include "main/simple_list.h"
-#include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 

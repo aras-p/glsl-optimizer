@@ -35,7 +35,6 @@
 #include "via_context.h"
 #include "via_state.h"
 #include "via_tex.h"
-#include "via_tris.h"
 #include "via_ioctl.h"
 #include "via_3d_reg.h"
 
@@ -43,8 +42,6 @@
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
-
-#include "tnl/t_pipeline.h"
 
 
 static GLuint ROP[16] = {
