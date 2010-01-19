@@ -109,6 +109,8 @@ CSO Cache
 The CSO cache is used to accelerate preparation of state by saving
 driver-specific state structures for later use.
 
+.. _draw:
+
 Draw
 ^^^^
 
