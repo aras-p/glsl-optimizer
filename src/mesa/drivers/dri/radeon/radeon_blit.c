@@ -157,7 +157,7 @@ static inline void emit_cb_setup(struct r100_context *r100,
 				 unsigned width,
 				 unsigned height)
 {
-    uint32_t dst_pitch = pitch * _mesa_get_format_bytes(mesa_format);
+    uint32_t dst_pitch = pitch;
     uint32_t dst_format = 0;
     BATCH_LOCALS(&r100->radeon);
 
