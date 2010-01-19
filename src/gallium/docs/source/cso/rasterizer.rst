@@ -7,7 +7,6 @@ The rasterizer state controls the rendering of points, lines and triangles.
 Attributes include polygon culling state, line width, line stipple,
 multisample state, scissoring and flat/smooth shading.
 
-
 Members
 -------
 
@@ -63,7 +62,7 @@ Other Members
 ^^^^^^^^^^^^^
 
 light_twoside
-    If set, there are per-vertex back-facing colors.  The draw module
+    If set, there are per-vertex back-facing colors. :ref:`Draw`
     uses this state along with the front/back information to set the
     final vertex colors prior to rasterization.
 
@@ -106,7 +105,7 @@ line_stipple_enable
 line_stipple_pattern
     16-bit bitfield of on/off flags, used to pattern the line stipple.
 line_stipple_factor
-    When drawinga stippled line, each bit in the stipple pattern is
+    When drawing a stippled line, each bit in the stipple pattern is
     repeated N times, where N = line_stipple_factor + 1.
 line_last_pixel
     Controls whether the last pixel in a line is drawn or not.  OpenGL
@@ -134,7 +133,7 @@ sprite_coord_mode
     lower left vertex will have coordinate (0,0,0,1).
     For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left vertex will have
     coordinate (0,0,0,1).
-    This state is needed by the 'draw' module because that's where each
+    This state is needed by :ref:`Draw` because that's where each
     point vertex is converted into four quad vertices.  There's no other
     place to emit the new vertex texture coordinates which are required for
     sprite rendering.
