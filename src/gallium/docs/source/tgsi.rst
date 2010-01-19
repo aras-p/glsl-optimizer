@@ -516,8 +516,11 @@ SEQ - Set On Equal
 .. math::
 
   dst.x = (src0.x == src1.x) ? 1 : 0
+
   dst.y = (src0.y == src1.y) ? 1 : 0
+
   dst.z = (src0.z == src1.z) ? 1 : 0
+
   dst.w = (src0.w == src1.w) ? 1 : 0
 
 
@@ -526,8 +529,11 @@ SFL - Set On False
 .. math::
 
   dst.x = 0
+
   dst.y = 0
+
   dst.z = 0
+
   dst.w = 0
 
 Considered for removal.
@@ -537,8 +543,11 @@ SGT - Set On Greater Than
 .. math::
 
   dst.x = (src0.x > src1.x) ? 1 : 0
+
   dst.y = (src0.y > src1.y) ? 1 : 0
+
   dst.z = (src0.z > src1.z) ? 1 : 0
+
   dst.w = (src0.w > src1.w) ? 1 : 0
 
 
@@ -560,8 +569,11 @@ SLE - Set On Less Equal Than
 .. math::
 
   dst.x = (src0.x <= src1.x) ? 1 : 0
+
   dst.y = (src0.y <= src1.y) ? 1 : 0
+
   dst.z = (src0.z <= src1.z) ? 1 : 0
+
   dst.w = (src0.w <= src1.w) ? 1 : 0
 
 
@@ -570,8 +582,11 @@ SNE - Set On Not Equal
 .. math::
 
   dst.x = (src0.x != src1.x) ? 1 : 0
+
   dst.y = (src0.y != src1.y) ? 1 : 0
+
   dst.z = (src0.z != src1.z) ? 1 : 0
+
   dst.w = (src0.w != src1.w) ? 1 : 0
 
 
@@ -580,8 +595,11 @@ STR - Set On True
 .. math::
 
   dst.x = 1
+
   dst.y = 1
+
   dst.z = 1
+
   dst.w = 1
 
 
@@ -629,8 +647,11 @@ X2D - 2D Coordinate Transformation
 .. math::
 
   dst.x = src0.x + src1.x \times src2.x + src1.y \times src2.y
+
   dst.y = src0.y + src1.x \times src2.z + src1.y \times src2.w
+
   dst.z = src0.x + src1.x \times src2.x + src1.y \times src2.y
+
   dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w
 
 Considered for removal.
