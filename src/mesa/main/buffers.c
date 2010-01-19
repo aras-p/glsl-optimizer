@@ -35,8 +35,6 @@
 #include "colormac.h"
 #include "context.h"
 #include "enums.h"
-#include "fbobject.h"
-#include "state.h"
 
 
 #define BAD_MASK ~0u
