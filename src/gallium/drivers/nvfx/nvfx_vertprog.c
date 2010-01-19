@@ -479,6 +479,9 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_ARL:
 		arith(vpc, VEC, ARL, dst, mask, src[0], none, none);
 		break;
+	case TGSI_OPCODE_COS:
+		arith(vpc, SCA, COS, dst, mask, none, none, src[0]);
+		break;
 	case TGSI_OPCODE_DP3:
 		arith(vpc, VEC, DP3, dst, mask, src[0], src[1], none);
 		break;
@@ -555,6 +558,9 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		break;
 	case TGSI_OPCODE_SGT:
 		arith(vpc, VEC, SGT, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SIN:
+		arith(vpc, SCA, SIN, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_SLE:
 		arith(vpc, VEC, SLE, dst, mask, src[0], src[1], none);
