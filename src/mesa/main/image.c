@@ -36,7 +36,6 @@
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
-#include "pixel.h"
 
 
 /**
