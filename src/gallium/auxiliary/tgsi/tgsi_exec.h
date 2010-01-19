@@ -260,7 +260,7 @@ struct tgsi_exec_machine
    struct tgsi_sampler           **Samplers;
 
    unsigned                      ImmLimit;
-   const float                   (*Consts)[4];
+   const void *Consts[PIPE_MAX_CONSTANT];
    const struct tgsi_token       *Tokens;   /**< Declarations, instructions */
    unsigned                      Processor; /**< TGSI_PROCESSOR_x */
 

@@ -111,9 +111,13 @@ softpipe_destroy( struct pipe_context *pipe )
       pipe_texture_reference(&softpipe->vertex_textures[i], NULL);
    }
 
-   for (i = 0; i < Elements(softpipe->constants); i++) {
-      if (softpipe->constants[i]) {
-         pipe_buffer_reference(&softpipe->constants[i], NULL);
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+      uint j;
+
+      for (j = 0; j < PIPE_MAX_CONSTANT; j++) {
+         if (softpipe->constants[i][j]) {
+            pipe_buffer_reference(&softpipe->constants[i][j], NULL);
+         }
       }
    }
 

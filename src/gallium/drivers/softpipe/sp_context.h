@@ -63,7 +63,7 @@ struct softpipe_context {
    /** Other rendering state */
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
-   struct pipe_buffer *constants[PIPE_SHADER_TYPES];
+   struct pipe_buffer *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
@@ -92,7 +92,7 @@ struct softpipe_context {
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES];
+   void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT];
 
    /** Vertex format */
    struct vertex_info vertex_info;

@@ -953,107 +953,90 @@ micro_sub(
 }
 
 static void
-fetch_src_file_channel(
-   const struct tgsi_exec_machine *mach,
-   const uint file,
-   const uint swizzle,
-   const union tgsi_exec_channel *index,
-   union tgsi_exec_channel *chan )
+fetch_src_file_channel(const struct tgsi_exec_machine *mach,
+                       const uint file,
+                       const uint swizzle,
+                       const union tgsi_exec_channel *index,
+                       const union tgsi_exec_channel *index2D,
+                       union tgsi_exec_channel *chan)
 {
-   switch( swizzle ) {
-   case TGSI_SWIZZLE_X:
-   case TGSI_SWIZZLE_Y:
-   case TGSI_SWIZZLE_Z:
-   case TGSI_SWIZZLE_W:
-      switch( file ) {
-      case TGSI_FILE_CONSTANT:
-         assert(mach->Consts);
-         if (index->i[0] < 0)
-            chan->f[0] = 0.0f;
-         else
-            chan->f[0] = mach->Consts[index->i[0]][swizzle];
-         if (index->i[1] < 0)
-            chan->f[1] = 0.0f;
-         else
-            chan->f[1] = mach->Consts[index->i[1]][swizzle];
-         if (index->i[2] < 0)
-            chan->f[2] = 0.0f;
-         else
-            chan->f[2] = mach->Consts[index->i[2]][swizzle];
-         if (index->i[3] < 0)
-            chan->f[3] = 0.0f;
-         else
-            chan->f[3] = mach->Consts[index->i[3]][swizzle];
-         break;
+   uint i;
 
-      case TGSI_FILE_INPUT:
-      case TGSI_FILE_SYSTEM_VALUE:
-         chan->u[0] = mach->Inputs[index->i[0]].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Inputs[index->i[1]].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Inputs[index->i[2]].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Inputs[index->i[3]].xyzw[swizzle].u[3];
-         break;
+   switch (file) {
+   case TGSI_FILE_CONSTANT:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index2D->i[i] >= 0 && index2D->i[i] < PIPE_MAX_CONSTANT);
+         assert(mach->Consts[index2D->i[i]]);
 
-      case TGSI_FILE_TEMPORARY:
-         assert(index->i[0] < TGSI_EXEC_NUM_TEMPS);
-         chan->u[0] = mach->Temps[index->i[0]].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Temps[index->i[1]].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Temps[index->i[2]].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Temps[index->i[3]].xyzw[swizzle].u[3];
-         break;
+         if (index->i[i] < 0) {
+            chan->u[i] = 0;
+         } else {
+            const uint *p = (const uint *)mach->Consts[index2D->i[i]];
 
-      case TGSI_FILE_IMMEDIATE:
-         assert( index->i[0] < (int) mach->ImmLimit );
-         chan->f[0] = mach->Imms[index->i[0]][swizzle];
-         assert( index->i[1] < (int) mach->ImmLimit );
-         chan->f[1] = mach->Imms[index->i[1]][swizzle];
-         assert( index->i[2] < (int) mach->ImmLimit );
-         chan->f[2] = mach->Imms[index->i[2]][swizzle];
-         assert( index->i[3] < (int) mach->ImmLimit );
-         chan->f[3] = mach->Imms[index->i[3]][swizzle];
-         break;
+            chan->u[i] = p[index->i[i] * 4 + swizzle];
+         }
+      }
+      break;
 
-      case TGSI_FILE_ADDRESS:
-         chan->u[0] = mach->Addrs[index->i[0]].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Addrs[index->i[1]].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Addrs[index->i[2]].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Addrs[index->i[3]].xyzw[swizzle].u[3];
-         break;
+   case TGSI_FILE_INPUT:
+   case TGSI_FILE_SYSTEM_VALUE:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         /* XXX: 2D indexing */
+         chan->u[i] = mach->Inputs[index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i]].xyzw[swizzle].u[i];
+      }
+      break;
 
-      case TGSI_FILE_PREDICATE:
-         assert(index->i[0] < TGSI_EXEC_NUM_PREDS);
-         assert(index->i[1] < TGSI_EXEC_NUM_PREDS);
-         assert(index->i[2] < TGSI_EXEC_NUM_PREDS);
-         assert(index->i[3] < TGSI_EXEC_NUM_PREDS);
-         chan->u[0] = mach->Predicates[0].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Predicates[0].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Predicates[0].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Predicates[0].xyzw[swizzle].u[3];
-         break;
+   case TGSI_FILE_TEMPORARY:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] < TGSI_EXEC_NUM_TEMPS);
+         assert(index2D->i[i] == 0);
 
-      case TGSI_FILE_OUTPUT:
-         /* vertex/fragment output vars can be read too */
-         chan->u[0] = mach->Outputs[index->i[0]].xyzw[swizzle].u[0];
-         chan->u[1] = mach->Outputs[index->i[1]].xyzw[swizzle].u[1];
-         chan->u[2] = mach->Outputs[index->i[2]].xyzw[swizzle].u[2];
-         chan->u[3] = mach->Outputs[index->i[3]].xyzw[swizzle].u[3];
-         break;
+         chan->u[i] = mach->Temps[index->i[i]].xyzw[swizzle].u[i];
+      }
+      break;
 
-      default:
-         assert( 0 );
-         chan->u[0] = 0;
-         chan->u[1] = 0;
-         chan->u[2] = 0;
-         chan->u[3] = 0;
+   case TGSI_FILE_IMMEDIATE:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] >= 0 && index->i[i] < (int)mach->ImmLimit);
+         assert(index2D->i[i] == 0);
+
+         chan->f[i] = mach->Imms[index->i[i]][swizzle];
+      }
+      break;
+
+   case TGSI_FILE_ADDRESS:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] >= 0);
+         assert(index2D->i[i] == 0);
+
+         chan->u[i] = mach->Addrs[index->i[i]].xyzw[swizzle].u[i];
+      }
+      break;
+
+   case TGSI_FILE_PREDICATE:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] >= 0 && index->i[i] < TGSI_EXEC_NUM_PREDS);
+         assert(index2D->i[i] == 0);
+
+         chan->u[i] = mach->Predicates[0].xyzw[swizzle].u[i];
+      }
+      break;
+
+   case TGSI_FILE_OUTPUT:
+      /* vertex/fragment output vars can be read too */
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] >= 0);
+         assert(index2D->i[i] == 0);
+
+         chan->u[i] = mach->Outputs[index->i[i]].xyzw[swizzle].u[i];
       }
       break;
 
    default:
-      assert( 0 );
-      chan->u[0] = 0;
-      chan->u[1] = 0;
-      chan->u[2] = 0;
-      chan->u[3] = 0;
+      assert(0);
+      for (i = 0; i < QUAD_SIZE; i++) {
+         chan->u[i] = 0;
+      }
    }
 }
 
@@ -1065,6 +1048,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
              enum tgsi_exec_datatype src_datatype)
 {
    union tgsi_exec_channel index;
+   union tgsi_exec_channel index2D;
    uint swizzle;
 
    /* We start with a direct index into a register file.
@@ -1103,12 +1087,12 @@ fetch_source(const struct tgsi_exec_machine *mach,
 
       /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
-      fetch_src_file_channel(
-         mach,
-         reg->Indirect.File,
-         swizzle,
-         &index2,
-         &indir_index );
+      fetch_src_file_channel(mach,
+                             reg->Indirect.File,
+                             swizzle,
+                             &index2,
+                             &ZeroVec,
+                             &indir_index);
 
       /* add value of address register to the offset */
       index.i[0] += indir_index.i[0];
@@ -1129,35 +1113,15 @@ fetch_source(const struct tgsi_exec_machine *mach,
     * subscript to a register file. Effectively it means that
     * the register file is actually a 2D array of registers.
     *
-    *    file[3][1] == file[3*sizeof(file[1])+1],
+    *    file[3][1],
     *    where:
     *       [3] = Dimension.Index
     */
    if (reg->Register.Dimension) {
-      int array_size;
-      union tgsi_exec_channel dim_index;
-
-      /* The size of the first-order array depends on the register file type.
-       * We need to multiply the index to the first array to get an effective,
-       * "flat" index that points to the beginning of the second-order array.
-       */
-      switch (reg->Register.File) {
-      case TGSI_FILE_INPUT:
-      case TGSI_FILE_SYSTEM_VALUE:
-         array_size = TGSI_EXEC_MAX_INPUT_ATTRIBS;
-         break;
-      case TGSI_FILE_CONSTANT:
-         array_size = TGSI_EXEC_MAX_CONST_BUFFER;
-         break;
-      default:
-         assert( 0 );
-         array_size = 0;
-      }
-
-      dim_index.i[0] =
-      dim_index.i[1] =
-      dim_index.i[2] =
-      dim_index.i[3] = reg->Dimension.Index;
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = reg->Dimension.Index;
 
       /* Again, the second subscript index can be addressed indirectly
        * identically to the first one.
@@ -1182,45 +1146,46 @@ fetch_source(const struct tgsi_exec_machine *mach,
          index2.i[3] = reg->DimIndirect.Index;
 
          swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
-         fetch_src_file_channel(
-            mach,
-            reg->DimIndirect.File,
-            swizzle,
-            &index2,
-            &indir_index );
+         fetch_src_file_channel(mach,
+                                reg->DimIndirect.File,
+                                swizzle,
+                                &index2,
+                                &ZeroVec,
+                                &indir_index);
 
-         dim_index.i[0] += indir_index.i[0];
-         dim_index.i[1] += indir_index.i[1];
-         dim_index.i[2] += indir_index.i[2];
-         dim_index.i[3] += indir_index.i[3];
+         index2D.i[0] += indir_index.i[0];
+         index2D.i[1] += indir_index.i[1];
+         index2D.i[2] += indir_index.i[2];
+         index2D.i[3] += indir_index.i[3];
 
          /* for disabled execution channels, zero-out the index to
           * avoid using a potential garbage value.
           */
          for (i = 0; i < QUAD_SIZE; i++) {
-            if ((execmask & (1 << i)) == 0)
-               dim_index.i[i] = 0;
+            if ((execmask & (1 << i)) == 0) {
+               index2D.i[i] = 0;
+            }
          }
       }
-
-      index.i[0] += dim_index.i[0] * array_size;
-      index.i[1] += dim_index.i[1] * array_size;
-      index.i[2] += dim_index.i[2] * array_size;
-      index.i[3] += dim_index.i[3] * array_size;
 
       /* If by any chance there was a need for a 3D array of register
        * files, we would have to check whether Dimension is followed
        * by a dimension register and continue the saga.
        */
+   } else {
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = 0;
    }
 
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
-   fetch_src_file_channel(
-      mach,
-      reg->Register.File,
-      swizzle,
-      &index,
-      chan );
+   fetch_src_file_channel(mach,
+                          reg->Register.File,
+                          swizzle,
+                          &index,
+                          &index2D,
+                          chan);
 
    if (reg->Register.Absolute) {
       if (src_datatype == TGSI_EXEC_DATA_FLOAT) {
@@ -1283,12 +1248,12 @@ store_dest(struct tgsi_exec_machine *mach,
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
 
       /* fetch values from the address/indirection register */
-      fetch_src_file_channel(
-         mach,
-         reg->Indirect.File,
-         swizzle,
-         &index,
-         &indir_index );
+      fetch_src_file_channel(mach,
+                             reg->Indirect.File,
+                             swizzle,
+                             &index,
+                             &ZeroVec,
+                             &indir_index);
 
       /* save indirection offset */
       offset = indir_index.i[0];

@@ -164,12 +164,12 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
+   assert(index < PIPE_MAX_CONSTANT);
 
    draw_flush(softpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&softpipe->constants[shader], buf);
+   pipe_buffer_reference(&softpipe->constants[shader][index], buf);
 
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }

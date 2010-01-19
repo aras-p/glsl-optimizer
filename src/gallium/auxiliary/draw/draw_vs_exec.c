@@ -95,7 +95,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    unsigned int i, j;
    unsigned slot;
 
-   machine->Consts = constants;
+   machine->Consts[0] = constants;
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);

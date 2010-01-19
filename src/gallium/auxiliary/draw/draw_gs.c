@@ -302,7 +302,7 @@ void draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned num_primitives = count/num_vertices;
    unsigned inputs_from_vs = 0;
 
-   machine->Consts = constants;
+   machine->Consts[0] = constants;
 
    for (i = 0; i < shader->info.num_inputs; ++i) {
       if (shader->info.input_semantic_name[i] != TGSI_SEMANTIC_PRIMID)
