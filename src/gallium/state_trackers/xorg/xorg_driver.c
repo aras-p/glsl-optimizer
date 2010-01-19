@@ -206,10 +206,19 @@ drv_init_drm(ScrnInfoPtr pScrn)
 		ms->PciInfo->dev, ms->PciInfo->func
 	    );
 
-	ms->fd = drmOpen(NULL, BusID);
 
-	if (ms->fd < 0)
-	    return FALSE;
+	ms->api = drm_api_create();
+	ms->fd = drmOpen(ms->api ? ms->api->driver_name : NULL, BusID);
+
+	if (ms->fd >= 0)
+	    return TRUE;
+
+	if (ms->api->destroy)
+	    ms->api->destroy(ms->api);
+
+	ms->api = NULL;
+
+	return FALSE;
     }
 
     return TRUE;
@@ -229,7 +238,6 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     if (ms->screen || ms->kms)
 	return TRUE;
 
-    ms->api = drm_api_create();
     if (ms->api) {
 	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
 
