@@ -57,12 +57,7 @@ softpipe_texture_layout(struct pipe_screen *screen,
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
-
    unsigned buffer_size = 0;
-
-   pt->width0 = width;
-   pt->height0 = height;
-   pt->depth0 = depth;
 
    for (level = 0; level <= pt->last_level; level++) {
       spt->stride[level] = util_format_get_stride(pt->format, width);
