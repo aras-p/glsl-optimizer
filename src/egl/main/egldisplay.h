@@ -26,7 +26,6 @@ struct _egl_display
 
    EGLNativeDisplayType NativeDisplay;
 
-   const char *DriverName;
    _EGLDriver *Driver;
    void *DriverData; /* private to driver */
 

@@ -218,32 +218,35 @@ _eglLoadDriver(const char *path, const char *args)
 
 /**
  * Match a display to a preloaded driver.
+ *
+ * The matching is done by finding the driver with the highest score.
  */
 static _EGLDriver *
 _eglMatchDriver(_EGLDisplay *dpy)
 {
-   _EGLDriver *defaultDriver = NULL;
-   EGLint i;
+   _EGLDriver *best_drv = NULL;
+   EGLint best_score = -1, i;
 
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
       _EGLDriver *drv = _eglGlobal.Drivers[i];
+      EGLint score;
 
-      /* display specifies a driver */
-      if (dpy->DriverName) {
-         if (strcmp(dpy->DriverName, drv->Name) == 0)
-            return drv;
-      }
-      else if (drv->Probe) {
-         if (drv->Probe(drv, dpy))
-            return drv;
-      }
-      else {
-         if (!defaultDriver)
-            defaultDriver = drv;
+      score = (drv->Probe) ? drv->Probe(drv, dpy) : 0;
+      if (score > best_score) {
+         if (best_drv) {
+            _eglLog(_EGL_DEBUG, "driver %s has higher score than %s",
+                  drv->Name, best_drv->Name);
+         }
+
+         best_drv = drv;
+         best_score = score;
+         /* perfect match */
+         if (score >= 100)
+            break;
       }
    }
 
-   return defaultDriver;
+   return best_drv;
 }
 
 

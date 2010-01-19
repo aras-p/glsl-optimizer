@@ -16,9 +16,22 @@ struct _egl_driver
    const char *Args;  /**< args to load this driver */
 
    const char *Name;  /**< name of this driver */
-   /**< probe a display to see if it is supported */
-   EGLBoolean (*Probe)(_EGLDriver *drv, _EGLDisplay *dpy);
-   /**< called before dlclose to release this driver */
+
+   /**
+    * Probe a display and return a score.
+    *
+    * Roughly,
+    *  50 means the driver supports the display;
+    *  90 means the driver can accelerate the display;
+    * 100 means a perfect match.
+    */
+   EGLint (*Probe)(_EGLDriver *drv, _EGLDisplay *dpy);
+
+   /**
+    * Release the driver resource.
+    *
+    * It is called before dlclose().
+    */
    void (*Unload)(_EGLDriver *drv);
 
    _EGLAPI API;  /**< EGL API dispatch table */
