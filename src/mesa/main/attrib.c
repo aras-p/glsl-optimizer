@@ -33,7 +33,6 @@
 #include "bufferobj.h"
 #include "clear.h"
 #include "colormac.h"
-#include "colortab.h"
 #include "context.h"
 #include "depth.h"
 #include "enable.h"
