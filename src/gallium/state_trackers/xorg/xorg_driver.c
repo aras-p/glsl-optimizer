@@ -209,6 +209,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
 
 	ms->api = drm_api_create();
 	ms->fd = drmOpen(ms->api ? ms->api->driver_name : NULL, BusID);
+	xfree(BusID);
 
 	if (ms->fd >= 0)
 	    return TRUE;
