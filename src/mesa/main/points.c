@@ -32,7 +32,6 @@
 #include "context.h"
 #include "macros.h"
 #include "points.h"
-#include "texstate.h"
 #include "mtypes.h"
 
 
