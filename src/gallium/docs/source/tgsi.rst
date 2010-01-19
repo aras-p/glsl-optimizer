@@ -1000,13 +1000,13 @@ XOR - Bitwise Xor
 
 .. math::
 
-  dst.x = src0.x ^ src1.x
+  dst.x = src0.x \oplus src1.x
 
-  dst.y = src0.y ^ src1.y
+  dst.y = src0.y \oplus src1.y
 
-  dst.z = src0.z ^ src1.z
+  dst.z = src0.z \oplus src1.z
 
-  dst.w = src0.w ^ src1.w
+  dst.w = src0.w \oplus src1.w
 
 
 SAD - Sum Of Absolute Differences
