@@ -52,7 +52,7 @@ const char *_mesa_prim_name[GL_POLYGON+4] = {
    "GL_QUAD_STRIP",
    "GL_POLYGON",
    "outside begin/end",
-   "inside unkown primitive",
+   "inside unknown primitive",
    "unknown state"
 };
 
