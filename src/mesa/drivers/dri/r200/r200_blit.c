@@ -311,27 +311,29 @@ static inline void emit_draw_packet(struct r200_context *r200,
  * @param[in] height region height
  * @param[in] flip_y set if y coords of the source image need to be flipped
  */
-GLboolean r200_blit(struct r200_context *r200,
-                    struct radeon_bo *src_bo,
-                    intptr_t src_offset,
-                    gl_format src_mesaformat,
-                    unsigned src_pitch,
-                    unsigned src_width,
-                    unsigned src_height,
-                    unsigned src_x_offset,
-                    unsigned src_y_offset,
-                    struct radeon_bo *dst_bo,
-                    intptr_t dst_offset,
-                    gl_format dst_mesaformat,
-                    unsigned dst_pitch,
-                    unsigned dst_width,
-                    unsigned dst_height,
-                    unsigned dst_x_offset,
-                    unsigned dst_y_offset,
-                    unsigned reg_width,
-                    unsigned reg_height,
-                    unsigned flip_y)
+unsigned r200_blit(GLcontext *ctx,
+                   struct radeon_bo *src_bo,
+                   intptr_t src_offset,
+                   gl_format src_mesaformat,
+                   unsigned src_pitch,
+                   unsigned src_width,
+                   unsigned src_height,
+                   unsigned src_x_offset,
+                   unsigned src_y_offset,
+                   struct radeon_bo *dst_bo,
+                   intptr_t dst_offset,
+                   gl_format dst_mesaformat,
+                   unsigned dst_pitch,
+                   unsigned dst_width,
+                   unsigned dst_height,
+                   unsigned dst_x_offset,
+                   unsigned dst_y_offset,
+                   unsigned reg_width,
+                   unsigned reg_height,
+                   unsigned flip_y)
 {
+    struct r200_context *r200 = R200_CONTEXT(ctx);
+
     if (!is_blit_supported(dst_mesaformat))
         return GL_FALSE;
 
@@ -396,7 +398,7 @@ GLboolean r200_blit(struct r200_context *r200,
                      reg_width, reg_height,
                      flip_y);
 
-    radeonFlush(r200->radeon.glCtx);
+    radeonFlush(ctx);
 
     return GL_TRUE;
 }

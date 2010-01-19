@@ -29,8 +29,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_queryobj.c \
 	radeon_span.c \
-	radeon_texture.c
-
+	radeon_texture.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
@@ -47,7 +47,6 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
 		 r200_blit.c \
-		 r200_texcopy.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES) \
 		 $(RADEON_COMMON_SOURCES) \
