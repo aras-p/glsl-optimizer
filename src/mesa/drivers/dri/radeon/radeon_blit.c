@@ -86,6 +86,9 @@ static void inline emit_tx_setup(struct r100_context *r100,
     case MESA_FORMAT_RGB565:
 	    txformat |= RADEON_TXFORMAT_RGB565;
 	    break;
+    case MESA_FORMAT_ARGB4444:
+	    txformat |= RADEON_TXFORMAT_ARGB4444 | RADEON_TXFORMAT_ALPHA_IN_MAP;
+	    break;
     case MESA_FORMAT_ARGB1555:
 	    txformat |= RADEON_TXFORMAT_ARGB1555 | RADEON_TXFORMAT_ALPHA_IN_MAP;
 	    break;
@@ -143,6 +146,9 @@ static inline void emit_cb_setup(struct r100_context *r100,
 	    break;
     case MESA_FORMAT_RGB565:
 	    dst_format = RADEON_COLOR_FORMAT_RGB565;
+	    break;
+    case MESA_FORMAT_ARGB4444:
+	    dst_format = RADEON_COLOR_FORMAT_ARGB4444;
 	    break;
     case MESA_FORMAT_ARGB1555:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB1555;
