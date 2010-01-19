@@ -26,7 +26,7 @@
  */
 
 #include "radeon_common.h"
-#include "r600_context.h"
+#include "radeon_texture.h"
 
 #include "main/image.h"
 #include "main/teximage.h"
@@ -34,11 +34,8 @@
 #include "drivers/common/meta.h"
 
 #include "radeon_mipmap_tree.h"
-#include "r600_blit.h"
 #include <main/debug.h>
 
-// TODO:
-// need to pass correct pitch for small dst textures!
 static GLboolean
 do_copy_texsubimage(GLcontext *ctx,
                     GLenum target, GLint level,
@@ -48,13 +45,13 @@ do_copy_texsubimage(GLcontext *ctx,
                     GLint x, GLint y,
                     GLsizei width, GLsizei height)
 {
-    context_t *context = R700_CONTEXT(ctx);
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     struct radeon_renderbuffer *rrb;
 
     if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
-        rrb = radeon_get_depthbuffer(&context->radeon);
+        rrb = radeon_get_depthbuffer(radeon);
     } else {
-        rrb = radeon_get_colorbuffer(&context->radeon);
+        rrb = radeon_get_colorbuffer(radeon);
     }
 
     if (!timg->mt) {
@@ -79,21 +76,20 @@ do_copy_texsubimage(GLcontext *ctx,
 
     }
 
-
     /* blit from src buffer to texture */
-    return r600_blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
-                     rrb->base.Width, rrb->base.Height, x, y,
-                     timg->mt->bo, dst_offset, timg->base.TexFormat,
-                     timg->mt->levels[level].rowstride / _mesa_get_format_bytes(timg->base.TexFormat),
-                     timg->base.Width, timg->base.Height,
-                     dstx, dsty, width, height, 1);
+    return radeon->vtbl.blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
+                             rrb->base.Width, rrb->base.Height, x, y,
+                             timg->mt->bo, dst_offset, timg->base.TexFormat,
+                             timg->mt->levels[level].rowstride / _mesa_get_format_bytes(timg->base.TexFormat),
+                             timg->base.Width, timg->base.Height,
+                             dstx, dsty, width, height, 1);
 }
 
-static void
-r600CopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
-                   GLenum internalFormat,
-                   GLint x, GLint y, GLsizei width, GLsizei height,
-                   GLint border)
+void
+radeonCopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+                     GLenum internalFormat,
+                     GLint x, GLint y, GLsizei width, GLsizei height,
+                     GLint border)
 {
     struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
     struct gl_texture_object *texObj =
@@ -137,11 +133,11 @@ fail:
                               width, height, border);
 }
 
-static void
-r600CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
-                      GLint xoffset, GLint yoffset,
-                      GLint x, GLint y,
-                      GLsizei width, GLsizei height)
+void
+radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                        GLint xoffset, GLint yoffset,
+                        GLint x, GLint y,
+                        GLsizei width, GLsizei height)
 {
     struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
     struct gl_texture_object *texObj = _mesa_select_tex_object(ctx, texUnit, target);
@@ -156,11 +152,4 @@ r600CopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
         _mesa_meta_CopyTexSubImage2D(ctx, target, level,
                                      xoffset, yoffset, x, y, width, height);
     }
-}
-
-
-void r600_init_texcopy_functions(struct dd_function_table *table)
-{
-    table->CopyTexImage2D = r600CopyTexImage2D;
-    table->CopyTexSubImage2D = r600CopyTexSubImage2D;
 }

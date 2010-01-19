@@ -1556,32 +1556,32 @@ static GLboolean validate_buffers(context_t *rmesa,
     return GL_TRUE;
 }
 
-GLboolean r600_blit(GLcontext *ctx,
-                    struct radeon_bo *src_bo,
-                    intptr_t src_offset,
-                    gl_format src_mesaformat,
-                    unsigned src_pitch,
-                    unsigned src_width,
-                    unsigned src_height,
-                    unsigned src_x,
-                    unsigned src_y,
-                    struct radeon_bo *dst_bo,
-                    intptr_t dst_offset,
-                    gl_format dst_mesaformat,
-                    unsigned dst_pitch,
-                    unsigned dst_width,
-                    unsigned dst_height,
-                    unsigned dst_x,
-                    unsigned dst_y,
-                    unsigned w,
-                    unsigned h,
-                    unsigned flip_y)
+unsigned r600_blit(GLcontext *ctx,
+                   struct radeon_bo *src_bo,
+                   intptr_t src_offset,
+                   gl_format src_mesaformat,
+                   unsigned src_pitch,
+                   unsigned src_width,
+                   unsigned src_height,
+                   unsigned src_x,
+                   unsigned src_y,
+                   struct radeon_bo *dst_bo,
+                   intptr_t dst_offset,
+                   gl_format dst_mesaformat,
+                   unsigned dst_pitch,
+                   unsigned dst_width,
+                   unsigned dst_height,
+                   unsigned dst_x,
+                   unsigned dst_y,
+                   unsigned w,
+                   unsigned h,
+                   unsigned flip_y)
 {
     context_t *context = R700_CONTEXT(ctx);
     int id = 0;
 
     if (!is_blit_supported(dst_mesaformat))
-	    return GL_FALSE;
+        return GL_FALSE;
 
     if (src_bo == dst_bo) {
         return GL_FALSE;
@@ -1603,7 +1603,7 @@ GLboolean r600_blit(GLcontext *ctx,
     }
 
     /* Flush is needed to make sure that source buffer has correct data */
-    radeonFlush(context->radeon.glCtx);
+    radeonFlush(ctx);
 
     rcommonEnsureCmdBufSpace(&context->radeon, 304, __FUNCTION__);
 
@@ -1654,7 +1654,7 @@ GLboolean r600_blit(GLcontext *ctx,
     /* 5 */
     r700WaitForIdleClean(context);
 
-    radeonFlush(context->radeon.glCtx);
+    radeonFlush(ctx);
 
     return GL_TRUE;
 }

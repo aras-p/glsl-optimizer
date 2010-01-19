@@ -185,7 +185,6 @@ extern void r700WaitForIdleClean(context_t *context);
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);
 extern void r700InitDraw(GLcontext *ctx);
-extern void r600_init_texcopy_functions(struct dd_function_table *table);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1

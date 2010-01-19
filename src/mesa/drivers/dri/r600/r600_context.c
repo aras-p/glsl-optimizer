@@ -65,6 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_queryobj.h"
+#include "r600_blit.h"
 
 #include "r700_state.h"
 #include "r700_ioctl.h"
@@ -240,6 +241,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
+	radeon->vtbl.blit = r600_blit;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -378,16 +380,12 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 
 	r700InitStateFuncs(&functions);
-	r600InitTextureFuncs(&functions);
+	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	r700InitIoctlFuncs(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 
-	if (r600->radeon.radeonScreen->kernel_mm) {
-                r600_init_texcopy_functions(&functions);
-        }
-	
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {

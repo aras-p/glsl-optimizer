@@ -93,8 +93,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/remap_helper.h"
 
-void r300_init_texcopy_functions(struct dd_function_table *table);
-
 static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
   {"GL_ARB_depth_texture",		NULL},
@@ -490,14 +488,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
-	r300InitTextureFuncs(&functions);
+	r300InitTextureFuncs(&r300->radeon, &functions);
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
-
-	if (r300->radeon.radeonScreen->kernel_mm) {
-		r300_init_texcopy_functions(&functions);
-	}
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,

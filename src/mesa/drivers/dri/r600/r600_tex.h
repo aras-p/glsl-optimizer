@@ -58,6 +58,6 @@ extern void r600SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
 extern GLboolean r600ValidateBuffers(GLcontext * ctx);
 
-extern void r600InitTextureFuncs(struct dd_function_table *functions);
+extern void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions);
 
 #endif				/* __r600_TEX_H__ */

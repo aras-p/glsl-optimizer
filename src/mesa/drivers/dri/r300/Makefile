@@ -39,7 +39,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_span.c \
 	radeon_queryobj.c \
-	radeon_texture.c
+	radeon_texture.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
@@ -50,7 +51,6 @@ DRIVER_SOURCES = \
 		 r300_state.c \
 		 r300_render.c \
 		 r300_tex.c \
-		 r300_texcopy.c \
 		 r300_texstate.c \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \
