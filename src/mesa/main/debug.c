@@ -26,7 +26,6 @@
 #include "mtypes.h"
 #include "attrib.h"
 #include "colormac.h"
-#include "context.h"
 #include "enums.h"
 #include "formats.h"
 #include "hash.h"
@@ -35,7 +34,6 @@
 #include "get.h"
 #include "pixelstore.h"
 #include "readpix.h"
-#include "texgetimage.h"
 #include "texobj.h"
 
 
