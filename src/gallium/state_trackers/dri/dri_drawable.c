@@ -183,6 +183,7 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       case __DRI_BUFFER_FRONT_LEFT:
 	 if (!st_screen->auto_fake_front)
 	    continue;
+	 /* fallthrough */
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
