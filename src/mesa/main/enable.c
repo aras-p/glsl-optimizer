@@ -32,7 +32,6 @@
 #include "context.h"
 #include "enable.h"
 #include "light.h"
-#include "macros.h"
 #include "simple_list.h"
 #include "mtypes.h"
 #include "enums.h"
