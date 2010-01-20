@@ -9,7 +9,6 @@ C_SOURCES = \
 	pb_bufmgr_alt.c \
 	pb_bufmgr_cache.c \
 	pb_bufmgr_debug.c \
-	pb_bufmgr_fenced.c \
 	pb_bufmgr_mm.c \
 	pb_bufmgr_ondemand.c \
 	pb_bufmgr_pool.c \

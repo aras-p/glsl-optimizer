@@ -175,7 +175,9 @@ struct pb_fence_ops;
  */
 struct pb_manager *
 fenced_bufmgr_create(struct pb_manager *provider,
-                     struct pb_fence_ops *ops);
+                     struct pb_fence_ops *ops,
+                     pb_size max_buffer_size,
+                     pb_size max_cpu_total_size);
 
 
 struct pb_manager *
