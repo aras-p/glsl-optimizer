@@ -241,7 +241,7 @@ static inline void calc_tex_coords(float img_width, float img_height,
     buf[3] = buf[2] + reg_height / img_height;
     if (flip_y)
     {
-        buf[2] = 1.0 - buf[1];
+        buf[2] = 1.0 - buf[2];
         buf[3] = 1.0 - buf[3];
     }
 }
