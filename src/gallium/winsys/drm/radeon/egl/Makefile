@@ -2,7 +2,7 @@ TOP = ../../../../../..
 GALLIUMDIR = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = egl_r300.so
+LIBNAME = egl_radeon.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/egl/libegldrm.a \

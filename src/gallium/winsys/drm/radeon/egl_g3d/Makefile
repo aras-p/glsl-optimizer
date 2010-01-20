@@ -1,7 +1,7 @@
 TOP = ../../../../../..
 include $(TOP)/configs/current
 
-EGL_DRIVER_NAME = r300
+EGL_DRIVER_NAME = radeon
 EGL_DRIVER_SOURCES = dummy.c
 EGL_DRIVER_LIBS = -ldrm_radeon
 
