@@ -41,6 +41,7 @@
 #define NEED_EVENTS
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
+#include <X11/extensions/extutil.h>
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #include <GL/glxext.h>
@@ -793,6 +794,10 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 GLboolean
 __driGetMscRateOML(__DRIdrawable * draw,
                    int32_t * numerator, int32_t * denominator, void *private);
+
+/* So that dri2.c:DRI2WireToEvent() can access
+ * glx_info->codes->first_event */
+XExtDisplayInfo *__glXFindDisplay (Display *dpy);
 #endif
 
 #endif /* !__GLX_client_h__ */
