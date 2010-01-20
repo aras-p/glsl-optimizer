@@ -223,8 +223,8 @@ extern "C" {
 
 
 /**
- * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN.
- * Do not use them unless absolutely necessary!
+ * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN, and CPU_TO_LE32.
+ * Do not use these unless absolutely necessary!
  * Try to use a runtime test instead.
  * For now, only used by some DRI hardware drivers for color/texel packing.
  */
@@ -236,10 +236,13 @@ extern "C" {
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
 #elif (defined(_AIX) || defined(__blrts))
-#define CPU_TO_LE32( x )        x = ((x & 0x000000ff) << 24) | \
-                                    ((x & 0x0000ff00) <<  8) | \
-                                    ((x & 0x00ff0000) >>  8) | \
-                                    ((x & 0xff000000) >> 24);
+static INLINE GLuint CPU_TO_LE32(GLuint x)
+{
+   return (((x & 0x000000ff) << 24) |
+           ((x & 0x0000ff00) <<  8) |
+           ((x & 0x00ff0000) >>  8) |
+           ((x & 0xff000000) >> 24));
+}
 #else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
