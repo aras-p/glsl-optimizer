@@ -113,6 +113,13 @@ library_suffix(void)
 #endif
 
 
+#define NUM_PROBE_CACHE_SLOTS 8
+static struct {
+   EGLint keys[NUM_PROBE_CACHE_SLOTS];
+   const void *values[NUM_PROBE_CACHE_SLOTS];
+} _eglProbeCache;
+
+
 /**
  * Open the named driver and find its bootstrap function: _eglMain().
  */
@@ -568,4 +575,45 @@ _eglFindAPIs(void)
    }
 
    return mask;
+}
+
+
+/**
+ * Set the probe cache at the given key.
+ *
+ * A key, instead of a _EGLDriver, is used to allow the probe cache to be share
+ * by multiple drivers.
+ */
+void
+_eglSetProbeCache(EGLint key, const void *val)
+{
+   EGLint idx;
+
+   for (idx = 0; idx < NUM_PROBE_CACHE_SLOTS; idx++) {
+      if (!_eglProbeCache.keys[idx] || _eglProbeCache.keys[idx] == key)
+         break;
+   }
+   assert(key > 0);
+   assert(idx < NUM_PROBE_CACHE_SLOTS);
+
+   _eglProbeCache.keys[idx] = key;
+   _eglProbeCache.values[idx] = val;
+}
+
+
+/**
+ * Return the probe cache at the given key.
+ */
+const void *
+_eglGetProbeCache(EGLint key)
+{
+   EGLint idx;
+
+   for (idx = 0; idx < NUM_PROBE_CACHE_SLOTS; idx++) {
+      if (!_eglProbeCache.keys[idx] || _eglProbeCache.keys[idx] == key)
+         break;
+   }
+
+   return (idx < NUM_PROBE_CACHE_SLOTS && _eglProbeCache.keys[idx] == key) ?
+      _eglProbeCache.values[idx] : NULL;
 }

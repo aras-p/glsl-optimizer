@@ -66,4 +66,12 @@ PUBLIC EGLint
 _eglFindAPIs(void);
 
 
+PUBLIC void
+_eglSetProbeCache(EGLint key, const void *val);
+
+
+PUBLIC const void *
+_eglGetProbeCache(EGLint key);
+
+
 #endif /* EGLDRIVER_INCLUDED */
