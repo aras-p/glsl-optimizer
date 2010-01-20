@@ -441,7 +441,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making SunOS static library: " ${LIBNAME}
-	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
+	    FINAL_LIBS=`make_ar_static_lib -ruc 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    if [ $NOPREFIX = 0 ] ; then
 		LIBNAME="lib${LIBNAME}.so"
