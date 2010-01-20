@@ -20,7 +20,7 @@
 #include "eglstring.h"
 #include "eglsurface.h"
 
-#if defined(_EGL_PLATFORM_X)
+#if defined(_EGL_PLATFORM_POSIX)
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -58,7 +58,7 @@ library_suffix(void)
 }
 
 
-#elif defined(_EGL_PLATFORM_X)
+#elif defined(_EGL_PLATFORM_POSIX)
 
 
 static const char DefaultDriverName[] = "egl_softpipe";
@@ -132,7 +132,7 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
    /* XXX untested */
    if (lib)
       mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
-#elif defined(_EGL_PLATFORM_X)
+#elif defined(_EGL_PLATFORM_POSIX)
    if (lib) {
       mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
       if (!mainFunc)
@@ -276,7 +276,7 @@ _eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
 static EGLBoolean
 _eglPreloadUserDriver(void)
 {
-#if defined(_EGL_PLATFORM_X) || defined(_EGL_PLATFORM_WINDOWS)
+#if defined(_EGL_PLATFORM_POSIX) || defined(_EGL_PLATFORM_WINDOWS)
    _EGLDriver *drv;
    char *env, *path;
    const char *suffix, *p;
@@ -312,7 +312,7 @@ _eglPreloadUserDriver(void)
    _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
 
    return EGL_TRUE;
-#else /* _EGL_PLATFORM_X || _EGL_PLATFORM_WINDOWS */
+#else /* _EGL_PLATFORM_POSIX || _EGL_PLATFORM_WINDOWS */
    return EGL_FALSE;
 #endif
 }
@@ -330,7 +330,7 @@ _eglPreloadUserDriver(void)
 static EGLBoolean
 _eglPreloadDisplayDrivers(void)
 {
-#if defined(_EGL_PLATFORM_X)
+#if defined(_EGL_PLATFORM_POSIX)
    const char *dpy, *suffix;
    char path[1024], prefix[32];
    DIR *dirp;
@@ -375,7 +375,7 @@ _eglPreloadDisplayDrivers(void)
    closedir(dirp);
 
    return (_eglGlobal.NumDrivers > 0);
-#else /* _EGL_PLATFORM_X */
+#else /* _EGL_PLATFORM_POSIX */
    return EGL_FALSE;
 #endif
 }
@@ -532,7 +532,7 @@ _eglFindAPIs(void)
    const char *es2_libname = "libGLESv2.dll";
    const char *gl_libname = "OpenGL32.dll";
    const char *vg_libname = "libOpenVG.dll";
-#elif defined(_EGL_PLATFORM_X)
+#elif defined(_EGL_PLATFORM_POSIX)
    const char *es1_libname = "libGLESv1_CM.so";
    const char *es2_libname = "libGLESv2.so";
    const char *gl_libname = "libGL.so";
