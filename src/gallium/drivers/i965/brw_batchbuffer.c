@@ -155,7 +155,7 @@ _brw_batchbuffer_flush(struct brw_batchbuffer *batch,
 enum pipe_error
 brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
 			   struct brw_winsys_buffer *buffer,
-			   uint32_t usage,
+			   enum brw_buffer_usage usage,
 			   uint32_t delta)
 {
    int ret;
