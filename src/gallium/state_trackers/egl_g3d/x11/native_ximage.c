@@ -66,7 +66,6 @@ struct ximage_buffer {
    XImage *ximage;
 
    struct pipe_texture *texture;
-   struct pipe_transfer *transfer;
    XShmSegmentInfo *shm_info;
    boolean xshm_attached;
 };
@@ -115,12 +114,7 @@ ximage_surface_free_buffer(struct native_surface *nsurf,
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
-   struct pipe_screen *screen = xsurf->xdpy->base.screen;
 
-   if (xbuf->transfer) {
-      screen->tex_transfer_destroy(xbuf->transfer);
-      xbuf->transfer = NULL;
-   }
    pipe_texture_reference(&xbuf->texture, NULL);
 
    if (xbuf->shm_info) {
@@ -193,13 +187,6 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
       xbuf->texture = screen->texture_create(screen, &templ);
    }
 
-   if (xbuf->texture) {
-      xbuf->transfer = screen->get_tex_transfer(screen, xbuf->texture,
-            0, 0, 0, PIPE_TRANSFER_READ, 0, 0, xsurf->width, xsurf->height);
-      if (!xbuf->transfer)
-         pipe_texture_reference(&xbuf->texture, NULL);
-   }
-
    /* clean up the buffer if allocation failed */
    if (!xbuf->texture)
       ximage_surface_free_buffer(&xsurf->base, which);
@@ -214,13 +201,25 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
    struct pipe_screen *screen = xsurf->xdpy->base.screen;
+   struct pipe_transfer *transfer;
 
    if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
       return TRUE;
 
    assert(xsurf->drawable && xbuf->ximage && xbuf->texture);
 
-   xbuf->ximage->data = screen->transfer_map(screen, xbuf->transfer);
+   transfer = screen->get_tex_transfer(screen, xbuf->texture,
+         0, 0, 0, PIPE_TRANSFER_READ, 0, 0, xsurf->width, xsurf->height);
+   if (!transfer)
+      return FALSE;
+
+   xbuf->ximage->bytes_per_line = transfer->stride;
+   xbuf->ximage->data = screen->transfer_map(screen, transfer);
+   if (!xbuf->ximage->data) {
+      screen->tex_transfer_destroy(transfer);
+      return FALSE;
+   }
+
 
    if (xbuf->shm_info)
       XShmPutImage(xsurf->xdpy->dpy, xsurf->drawable, xsurf->gc,
@@ -230,7 +229,13 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
             xbuf->ximage, 0, 0, 0, 0, xsurf->width, xsurf->height);
 
    xbuf->ximage->data = NULL;
-   screen->transfer_unmap(screen, xbuf->transfer);
+   screen->transfer_unmap(screen, transfer);
+
+   /*
+    * softpipe allows the pipe transfer to be re-used, but we don't want to
+    * rely on that behavior.
+    */
+   screen->tex_transfer_destroy(transfer);
 
    XSync(xsurf->xdpy->dpy, FALSE);
 
@@ -314,9 +319,8 @@ ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
          if (ximage_surface_alloc_buffer(&xsurf->base, att)) {
             /* update ximage */
             if (xbuf->ximage) {
-               xbuf->ximage->width = xbuf->transfer->width;
-               xbuf->ximage->height = xbuf->transfer->height;
-               xbuf->ximage->bytes_per_line = xbuf->transfer->stride;
+               xbuf->ximage->width = xsurf->width;
+               xbuf->ximage->height = xsurf->height;
             }
          }
       }
