@@ -70,6 +70,9 @@ x11_screen_get_glx_configs(struct x11_screen *xscr);
 const __GLcontextModes *
 x11_screen_get_glx_visuals(struct x11_screen *xscr);
 
+const char *
+x11_screen_probe_dri2(struct x11_screen *xscr);
+
 int
 x11_screen_enable_dri2(struct x11_screen *xscr, const char *driver);
 

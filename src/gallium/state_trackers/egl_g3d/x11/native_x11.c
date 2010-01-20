@@ -24,12 +24,88 @@
 
 #include <string.h>
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 #include "state_tracker/drm_api.h"
 #include "egllog.h"
 
 #include "native_x11.h"
+#include "x11_screen.h"
+
+#define X11_PROBE_MAGIC 0x11980BE /* "X11PROBE" */
 
 static struct drm_api *api;
+
+static void
+x11_probe_destroy(struct native_probe *nprobe)
+{
+   if (nprobe->data)
+      free(nprobe->data);
+   free(nprobe);
+}
+
+struct native_probe *
+native_create_probe(EGLNativeDisplayType dpy)
+{
+   struct native_probe *nprobe;
+   struct x11_screen *xscr;
+   int scr;
+   const char *driver_name = NULL;
+   Display *xdpy;
+
+   nprobe = CALLOC_STRUCT(native_probe);
+   if (!nprobe)
+      return NULL;
+
+   xdpy = dpy;
+   if (!xdpy) {
+      xdpy = XOpenDisplay(NULL);
+      if (!xdpy) {
+         free(nprobe);
+         return NULL;
+      }
+   }
+
+   scr = DefaultScreen(xdpy);
+   xscr = x11_screen_create(xdpy, scr);
+   if (xscr) {
+      if (x11_screen_support(xscr, X11_SCREEN_EXTENSION_DRI2)) {
+         driver_name = x11_screen_probe_dri2(xscr);
+         nprobe->data = strdup(driver_name);
+      }
+
+      x11_screen_destroy(xscr);
+   }
+
+   if (xdpy != dpy)
+      XCloseDisplay(xdpy);
+
+   nprobe->magic = X11_PROBE_MAGIC;
+   nprobe->display = dpy;
+
+   nprobe->destroy = x11_probe_destroy;
+
+   return nprobe;
+}
+
+enum native_probe_result
+native_get_probe_result(struct native_probe *nprobe)
+{
+   if (!nprobe || nprobe->magic != X11_PROBE_MAGIC)
+      return NATIVE_PROBE_UNKNOWN;
+
+   if (!api)
+      api = drm_api_create();
+
+   /* this is a software driver */
+   if (!api)
+      return NATIVE_PROBE_SUPPORTED;
+
+   /* the display does not support DRI2 or the driver mismatches */
+   if (!nprobe->data || strcmp(api->name, (const char *) nprobe->data) != 0)
+      return NATIVE_PROBE_FALLBACK;
+
+   return NATIVE_PROBE_EXACT;
+}
 
 const char *
 native_get_name(void)

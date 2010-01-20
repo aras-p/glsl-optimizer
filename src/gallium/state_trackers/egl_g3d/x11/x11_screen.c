@@ -250,6 +250,22 @@ x11_screen_is_driver_equal(struct x11_screen *xscr, const char *driver)
 }
 
 /**
+ * Probe the screen for the DRI2 driver name.
+ */
+const char *
+x11_screen_probe_dri2(struct x11_screen *xscr)
+{
+   /* get the driver name and the device name */
+   if (!xscr->dri_driver) {
+      if (!DRI2Connect(xscr->dpy, RootWindow(xscr->dpy, xscr->number),
+               &xscr->dri_driver, &xscr->dri_device))
+         xscr->dri_driver = xscr->dri_device = NULL;
+   }
+
+   return xscr->dri_driver;
+}
+
+/**
  * Enable DRI2 and returns the file descriptor of the DRM device.  The file
  * descriptor will be closed automatically when the screen is destoryed.
  */
@@ -261,13 +277,8 @@ x11_screen_enable_dri2(struct x11_screen *xscr, const char *driver)
       drm_magic_t magic;
 
       /* get the driver name and the device name first */
-      if (!xscr->dri_driver) {
-         if (!DRI2Connect(xscr->dpy, RootWindow(xscr->dpy, xscr->number),
-                  &xscr->dri_driver, &xscr->dri_device)) {
-            xscr->dri_driver = xscr->dri_device = NULL;
-            return -1;
-         }
-      }
+      if (!x11_screen_probe_dri2(xscr))
+         return -1;
 
       if (!x11_screen_is_driver_equal(xscr, driver)) {
          _eglLog(_EGL_WARNING, "Driver mismatch: %s != %s",

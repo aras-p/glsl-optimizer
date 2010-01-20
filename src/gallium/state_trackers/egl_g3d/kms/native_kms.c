@@ -820,6 +820,18 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
    return &kdpy->base;
 }
 
+struct native_probe *
+native_create_probe(EGLNativeDisplayType dpy)
+{
+   return NULL;
+}
+
+enum native_probe_result
+native_get_probe_result(struct native_probe *nprobe)
+{
+   return NATIVE_PROBE_UNKNOWN;
+}
+
 /* the api is destroyed with the native display */
 static struct drm_api *drm_api;
 
