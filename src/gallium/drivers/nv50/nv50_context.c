@@ -86,6 +86,10 @@ nv50_destroy(struct pipe_context *pipe)
 		so_ref(NULL, &nv50->state.vtxattr);
 
 	draw_destroy(nv50->draw);
+
+	if (nv50->screen->cur_ctx == nv50)
+		nv50->screen->cur_ctx = NULL;
+
 	FREE(nv50);
 }
 
