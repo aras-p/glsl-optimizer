@@ -333,10 +333,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
 
-   if (rmesa->radeon.radeonScreen->kernel_mm) {
-	   r200_init_texcopy_functions(&functions);
-   }
-
    if (!radeonInitContext(&rmesa->radeon, &functions,
 			  glVisual, driContextPriv,
 			  sharedContextPrivate)) {
