@@ -31,7 +31,6 @@
 
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_surface.h"
 
 #include "draw/draw_context.h"
 

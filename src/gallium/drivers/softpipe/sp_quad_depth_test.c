@@ -34,7 +34,6 @@
 #include "tgsi/tgsi_scan.h"
 #include "sp_context.h"
 #include "sp_quad.h"
-#include "sp_surface.h"
 #include "sp_quad_pipe.h"
 #include "sp_tile_cache.h"
 #include "sp_state.h"           /* for sp_fragment_shader */

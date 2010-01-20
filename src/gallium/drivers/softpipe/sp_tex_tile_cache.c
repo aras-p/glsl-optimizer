@@ -36,7 +36,6 @@
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "sp_context.h"
-#include "sp_surface.h"
 #include "sp_texture.h"
 #include "sp_tex_tile_cache.h"
 
