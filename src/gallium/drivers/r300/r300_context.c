@@ -129,6 +129,7 @@ static void r300_setup_atoms(struct r300_context* r300)
      * an upper bound on each atom, to keep the emission machinery from
      * underallocating space. */
     make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(invariant, 73);
     R300_INIT_ATOM(ztop, 2);
     R300_INIT_ATOM(blend, 8);
     R300_INIT_ATOM(blend_color, 3);
@@ -208,7 +209,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_init_state_functions(r300);
 
-    r300_emit_invariant_state(r300);
+    r300->invariant_state.dirty = TRUE;
 
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;

@@ -313,6 +313,9 @@ struct r300_context {
     /* ZTOP state. */
     struct r300_atom ztop_state;
 
+    /* Invariant state. This must be emitted to get the engine started. */
+    struct r300_atom invariant_state;
+
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
