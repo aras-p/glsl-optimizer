@@ -214,13 +214,28 @@ drv_init_drm(ScrnInfoPtr pScrn)
 	if (ms->fd >= 0)
 	    return TRUE;
 
-	if (ms->api->destroy)
+	if (ms->api && ms->api->destroy)
 	    ms->api->destroy(ms->api);
 
 	ms->api = NULL;
 
 	return FALSE;
     }
+
+    return TRUE;
+}
+
+static Bool
+drv_close_drm(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (ms->api && ms->api->destroy)
+	ms->api->destroy(ms->api);
+    ms->api = NULL;
+
+    drmClose(ms->fd);
+    ms->fd = -1;
 
     return TRUE;
 }
@@ -277,10 +292,6 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 	ms->screen->destroy(ms->screen);
     }
     ms->screen = NULL;
-
-    if (ms->api && ms->api->destroy)
-	ms->api->destroy(ms->api);
-    ms->api = NULL;
 
 #ifdef HAVE_LIBKMS
     if (ms->kms)
@@ -832,8 +843,7 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 
     drv_close_resource_management(pScrn);
 
-    drmClose(ms->fd);
-    ms->fd = -1;
+    drv_close_drm(pScrn);
 
     pScrn->vtSema = FALSE;
     pScreen->CloseScreen = ms->CloseScreen;
