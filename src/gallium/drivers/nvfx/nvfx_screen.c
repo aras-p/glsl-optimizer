@@ -126,6 +126,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
 			return TRUE;
 		default:
@@ -148,6 +149,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	} else {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G5R5A1_UNORM:
 		case PIPE_FORMAT_B4G4R4A4_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
