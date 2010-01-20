@@ -44,6 +44,8 @@ struct egl_g3d_driver {
    _EGLDriver base;
    const struct egl_g3d_st *stapis[NUM_EGL_G3D_STS];
    EGLint api_mask;
+
+   EGLint probe_key;
 };
 
 struct egl_g3d_display {
