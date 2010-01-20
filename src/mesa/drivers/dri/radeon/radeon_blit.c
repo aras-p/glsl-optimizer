@@ -234,9 +234,8 @@ static inline void calc_tex_coords(float img_width, float img_height,
     buf[3] = buf[2] + reg_height / img_height;
     if (flip_y)
     {
-        float tmp = buf[2];
-        buf[2] = 1.0 - buf[3];
-        buf[3] = 1.0 - tmp;
+        buf[2] = 1.0 - buf[2];
+        buf[3] = 1.0 - buf[3];
     }
 }
 
@@ -259,17 +258,17 @@ static inline void emit_draw_packet(struct r100_context *r100,
     verts[0] = dst_x_offset;
     verts[1] = dst_y_offset + reg_height;
     verts[2] = texcoords[0];
-    verts[3] = texcoords[2];
+    verts[3] = texcoords[3];
 
     verts[4] = dst_x_offset + reg_width;
     verts[5] = dst_y_offset + reg_height;
     verts[6] = texcoords[1];
-    verts[7] = texcoords[2];
+    verts[7] = texcoords[3];
 
     verts[8] = dst_x_offset + reg_width;
     verts[9] = dst_y_offset;
     verts[10] = texcoords[1];
-    verts[11] = texcoords[3];
+    verts[11] = texcoords[2];
 
     BEGIN_BATCH(15);
     OUT_BATCH(RADEON_CP_PACKET3_3D_DRAW_IMMD | (13 << 16));
