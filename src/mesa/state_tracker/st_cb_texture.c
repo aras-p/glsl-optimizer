@@ -686,9 +686,11 @@ st_TexImage(GLcontext * ctx,
       {
          char *dst = texImage->Data;
          const char *src = pixels;
-         int i;
+         GLuint i, bw, bh, lines;
+         _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
+         lines = (height + bh - 1) / bh;
 
-         for(i = 0; i < height; ++i)
+         for(i = 0; i < lines; ++i)
          {
             memcpy(dst, src, srcImageStride);
             dst += dstRowStride;
