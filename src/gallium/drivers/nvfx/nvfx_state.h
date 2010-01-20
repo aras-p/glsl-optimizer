@@ -46,6 +46,12 @@ struct nvfx_fragment_program_data {
 	unsigned index;
 };
 
+struct nvfx_fragment_program_bo {
+	struct nvfx_fragment_program_bo* next;
+	struct nouveau_bo* bo;
+	char insn[] __attribute__((aligned(16)));
+};
+
 struct nvfx_fragment_program {
 	struct pipe_shader_state pipe;
 	struct tgsi_shader_info info;
@@ -58,12 +64,13 @@ struct nvfx_fragment_program {
 
 	struct nvfx_fragment_program_data *consts;
 	unsigned nr_consts;
-	
-	/* XXX: just use a nouveau_bo for this? 
-	 */
-	struct pipe_resource *buffer;
 
 	uint32_t fp_control;
+
+	unsigned bo_prog_idx;
+	unsigned prog_size;
+	unsigned progs_per_bo;
+	struct nvfx_fragment_program_bo* fpbo;
 };
 
 

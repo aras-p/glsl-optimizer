@@ -823,45 +823,18 @@ out_err:
 	FREE(fpc);
 }
 
-static void
-nvfx_fragprog_upload(struct nvfx_context *nvfx,
-		     struct nvfx_fragment_program *fp)
+static inline void
+nvfx_fp_memcpy(void* dst, const void* src, size_t len)
 {
-	struct pipe_context *pipe = &nvfx->pipe;
-	const uint32_t le = 1;
-
-#if 0
-	for (i = 0; i < fp->insn_len; i++) {
-		fflush(stdout); fflush(stderr);
-		NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
-		fflush(stdout); fflush(stderr);
+#ifndef WORDS_BIGENDIAN
+	memcpy(dst, src, len);
+#else
+	size_t i;
+	for(i = 0; i < len; i += 4) {
+		uint32_t v = (uint32_t*)((char*)src + i);
+		*(uint32_t*)((char*)dst + i) = (v >> 16) | (v << 16);
 	}
 #endif
-
-	if ((*(const uint8_t *)&le)) {
-		/* Can do this with an inline transfer */
-		pipe_buffer_write(pipe,
-				  fp->buffer,
-				  0,
-				  fp->insn_len * sizeof fp->insn[0],
-				  fp->insn);
-	} else {
-		struct pipe_transfer *transfer;
-		uint32_t *map;
-		int i;
-
-		map = pipe_buffer_map(pipe, fp->buffer,
-				      PIPE_TRANSFER_WRITE,
-				      &transfer);
-	
-		/* Weird swapping for big-endian chips */
-		for (i = 0; i < fp->insn_len; i++) {
-			map[i] = ((fp->insn[i] & 0xffff) << 16) |
-				  ((fp->insn[i] >> 16) & 0xffff);
-		}
-
-		pipe_buffer_unmap(pipe, fp->buffer, transfer);
-	}
 }
 
 void
@@ -869,83 +842,118 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
-	struct pipe_resource *constbuf =
-		nvfx->constbuf[PIPE_SHADER_FRAGMENT];
-	struct pipe_screen *pscreen = nvfx->pipe.screen;
-	boolean new_consts = FALSE;
+	int update = 0;
 	int i;
 
-	if (fp->translated)
-		goto update_constants;
+	if (!fp->translated)
+	{
+		nvfx_fragprog_translate(nvfx, fp);
+		if (!fp->translated) {
+			static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
+			static int warned = 0;
+			if(!warned)
+			{
+				fprintf(stderr, "nvfx: failed to translate fragment program!\n");
+				warned = 1;
+			}
 
-	nvfx_fragprog_translate(nvfx, fp);
-	if (!fp->translated) {
-		static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
-		static int warned = 0;
-		if(!warned)
+			/* use dummy program: we cannot fail here */
+			fp->translated = TRUE;
+			fp->insn = malloc(sizeof(dummy));
+			memcpy(fp->insn, dummy, sizeof(dummy));
+			fp->insn_len = sizeof(dummy) / sizeof(dummy[0]);
+		}
+		update = TRUE;
+
+		fp->prog_size = (fp->insn_len * 4 + 63) & ~63;
+
+		int min_size = 4096;
+		if(fp->prog_size >= min_size)
+			fp->progs_per_bo = 1;
+		else
+			fp->progs_per_bo = min_size / fp->prog_size;
+		fp->bo_prog_idx = fp->progs_per_bo - 1;
+	}
+
+	if (nvfx->dirty & NVFX_NEW_FRAGCONST)
+		update = TRUE;
+
+	if(update) {
+		++fp->bo_prog_idx;
+		if(fp->bo_prog_idx >= fp->progs_per_bo)
 		{
-			fprintf(stderr, "nvfx: failed to translate fragment program!\n");
-			warned = 1;
+			if(fp->fpbo && !nouveau_bo_busy(fp->fpbo->next->bo, NOUVEAU_BO_WR))
+			{
+				fp->fpbo = fp->fpbo->next;
+			}
+			else
+			{
+				struct nvfx_fragment_program_bo* fpbo = os_malloc_aligned(sizeof(struct nvfx_fragment_program) + fp->prog_size * fp->progs_per_bo, 16);
+				if(fp->fpbo)
+				{
+					fpbo->next = fp->fpbo->next;
+					fp->fpbo->next = fpbo;
+				}
+				else
+					fpbo->next = fpbo;
+				fp->fpbo = fpbo;
+				fpbo->bo = 0;
+				nouveau_bo_new(nvfx->screen->base.device, NOUVEAU_BO_VRAM | NOUVEAU_BO_MAP, 64, fp->prog_size * fp->progs_per_bo, &fpbo->bo);
+				nouveau_bo_map(fpbo->bo, NOUVEAU_BO_NOSYNC);
+
+				char* map = fpbo->bo->map;
+				char* buf = fpbo->insn;
+				for(int i = 0; i < fp->progs_per_bo; ++i)
+				{
+					memcpy(buf, fp->insn, fp->insn_len * 4);
+					nvfx_fp_memcpy(map, fp->insn, fp->insn_len * 4);
+					map += fp->prog_size;
+					buf += fp->prog_size;
+				}
+			}
+			fp->bo_prog_idx = 0;
 		}
 
-		/* use a dummy program: we cannot fail here */
-		fp->translated = TRUE;
-		fp->insn = malloc(sizeof(dummy));
-		memcpy(fp->insn, dummy, sizeof(dummy));
-		fp->insn_len = sizeof(dummy) / sizeof(dummy[0]);
-		return;
-	}
+		int offset = fp->bo_prog_idx * fp->prog_size;
 
-	fp->buffer = pipe_buffer_create(pscreen,
-					/* XXX: no alignment, maybe use a priv bind flag
-					 * 0x100,
-					 */
-					0, fp->insn_len * 4);
-	nvfx_fragprog_upload(nvfx, fp);
+		if(nvfx->constbuf[PIPE_SHADER_FRAGMENT]) {
+			struct pipe_resource* constbuf = nvfx->constbuf[PIPE_SHADER_FRAGMENT];
+			// TODO: avoid using transfers, just directly the buffer
+			struct pipe_transfer* transfer;
+			// TODO: does this check make any sense, or should we do this unconditionally?
+			uint32_t* map = pipe_buffer_map(&nvfx->pipe, constbuf, PIPE_TRANSFER_READ, &transfer);
+			uint32_t* fpmap = (uint32_t*)((char*)fp->fpbo->bo->map + offset);
+			uint32_t* buf = (uint32_t*)((char*)fp->fpbo->insn + offset);
+			for (i = 0; i < fp->nr_consts; ++i) {
+				unsigned off = fp->consts[i].offset;
+				unsigned idx = fp->consts[i].index * 4;
 
-update_constants:
-	if (fp->nr_consts) {
-		struct pipe_transfer *transfer;
-		float *map;
-
-		map = pipe_buffer_map(&nvfx->pipe, constbuf,
-				      PIPE_TRANSFER_READ,
-				      &transfer);
-
-		/* XXX: probably a bad idea to be reading back data
-		 * from a buffer the gpu has been using.  Not really
-		 * sure what this code is doing though, or how to
-		 * avoid it - kw.
-		 */
-		for (i = 0; i < fp->nr_consts; i++) {
-			struct nvfx_fragment_program_data *fpd = &fp->consts[i];
-			uint32_t *p = &fp->insn[fpd->offset];
-			uint32_t *cb = (uint32_t *)&map[fpd->index * 4];
-
-			if (!memcmp(p, cb, 4 * sizeof(float)))
-				continue;
-			memcpy(p, cb, 4 * sizeof(float));
-			new_consts = TRUE;
+				/* TODO: is checking a good idea? */
+				if(memcmp(&buf[off], &map[idx], 4 * sizeof(uint32_t))) {
+					memcpy(&buf[off], &map[idx], 4 * sizeof(uint32_t));
+					nvfx_fp_memcpy(&fpmap[off], &map[idx], 4 * sizeof(uint32_t));
+				}
+			}
+			pipe_buffer_unmap(&nvfx->pipe, constbuf, transfer);
 		}
-		pipe_buffer_unmap(&nvfx->pipe, constbuf, transfer);
-
-		if (new_consts)
-			nvfx_fragprog_upload(nvfx, fp);
 	}
 
-	MARK_RING(chan, 8, 1);
-	OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
-	OUT_RELOC(chan, nvfx_resource(fp->buffer)->bo, 0, NOUVEAU_BO_VRAM |
-		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
-		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
-		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
-	OUT_RING(chan, RING_3D(NV34TCL_FP_CONTROL, 1));
-	OUT_RING(chan, fp->fp_control);
-	if(!nvfx->is_nv4x) {
-		OUT_RING(chan, RING_3D(NV34TCL_FP_REG_CONTROL, 1));
-		OUT_RING(chan, (1<<16)|0x4);
-		OUT_RING(chan, RING_3D(NV34TCL_TX_UNITS_ENABLE, 1));
-		OUT_RING(chan, fp->samplers);
+	if(update || (nvfx->dirty & NVFX_NEW_FRAGPROG)) {
+		int offset = fp->bo_prog_idx * fp->prog_size;
+		MARK_RING(chan, 8, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
+		OUT_RELOC(chan, fp->fpbo->bo, offset, NOUVEAU_BO_VRAM |
+			      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
+			      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
+			      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+		OUT_RING(chan, RING_3D(NV34TCL_FP_CONTROL, 1));
+		OUT_RING(chan, fp->fp_control);
+		if(!nvfx->is_nv4x) {
+			OUT_RING(chan, RING_3D(NV34TCL_FP_REG_CONTROL, 1));
+			OUT_RING(chan, (1<<16)|0x4);
+			OUT_RING(chan, RING_3D(NV34TCL_TX_UNITS_ENABLE, 1));
+			OUT_RING(chan, fp->samplers);
+		}
 	}
 }
 
@@ -954,12 +962,13 @@ nvfx_fragprog_relocate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
-	struct nouveau_bo* bo = nvfx_resource(fp->buffer)->bo;
+	struct nouveau_bo* bo = fp->fpbo->bo;
+	int offset = fp->bo_prog_idx * fp->prog_size;
 	unsigned fp_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD; // TODO: GART?
 	fp_flags |= NOUVEAU_BO_DUMMY;
 	MARK_RING(chan, 2, 2);
 	OUT_RELOC(chan, bo, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1), fp_flags, 0, 0);
-	OUT_RELOC(chan, bo, 0, fp_flags | NOUVEAU_BO_LOW |
+	OUT_RELOC(chan, bo, offset, fp_flags | NOUVEAU_BO_LOW |
 		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
 		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
 }
@@ -968,8 +977,19 @@ void
 nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 		      struct nvfx_fragment_program *fp)
 {
-	if (fp->buffer)
-		pipe_resource_reference(&fp->buffer, NULL);
+	struct nvfx_fragment_program_bo* fpbo = fp->fpbo;
+	if(fpbo)
+	{
+		do
+		{
+			struct nvfx_fragment_program_bo* next = fpbo->next;
+			nouveau_bo_unmap(fpbo->bo);
+			nouveau_bo_ref(0, &fpbo->bo);
+			free(fpbo);
+			fpbo = next;
+		}
+		while(fpbo != fp->fpbo);
+	}
 
 	if (fp->insn_len)
 		FREE(fp->insn);
