@@ -35,4 +35,4 @@ depend:
 symlinks:
 
 install: $(LIBNAME)
-	$(MINSTALL) -m 755 $(LIBNAME) $(INSTALL_DIR)/$(LIB_DIR)
+	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
