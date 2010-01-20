@@ -31,6 +31,8 @@
  * Code generate the whole fragment pipeline.
  *
  * The fragment pipeline consists of the following stages:
+ * - triangle edge in/out testing
+ * - scissor test
  * - stipple (TBI)
  * - early depth test
  * - fragment shader
