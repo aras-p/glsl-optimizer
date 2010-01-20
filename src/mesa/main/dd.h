@@ -1021,6 +1021,16 @@ struct dd_function_table {
    void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
                                   GLenum mode);
    void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
+
+#if FEATURE_OES_draw_texture
+   /**
+    * \name GL_OES_draw_texture interface
+    */
+   /*@{*/
+   void (*DrawTex)(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
+                   GLfloat width, GLfloat height);
+   /*@}*/
+#endif
 };
 
 

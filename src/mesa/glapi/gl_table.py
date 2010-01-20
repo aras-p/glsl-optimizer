@@ -30,9 +30,10 @@ import license
 import sys, getopt
 
 class PrintGlTable(gl_XML.gl_print_base):
-	def __init__(self):
+	def __init__(self, es=False):
 		gl_XML.gl_print_base.__init__(self)
 
+		self.es = es
 		self.header_tag = '_GLAPI_TABLE_H_'
 		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
@@ -68,9 +69,10 @@ class PrintGlTable(gl_XML.gl_print_base):
 
 
 class PrintRemapTable(gl_XML.gl_print_base):
-	def __init__(self):
+	def __init__(self, es=False):
 		gl_XML.gl_print_base.__init__(self)
 
+		self.es = es
 		self.header_tag = '_GLAPI_DISPATCH_H_'
 		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ("(C) Copyright IBM Corporation 2005", "IBM")
@@ -113,18 +115,21 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '    } while(0)'
 		print ''
 
-		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
-
 		functions = []
 		abi_functions = []
+		alias_functions = []
 		count = 0
 		for f in api.functionIterateByOffset():
-			[category, num] = api.get_category_for_name( f.name )
-			if category not in abi:
+			if not f.is_abi():
 				functions.append( [f, count] )
 				count += 1
 			else:
 				abi_functions.append( f )
+
+			if self.es:
+				# remember functions with aliases
+				if len(f.entry_points) > 1:
+					alias_functions.append(f)
 
 
 		for f in abi_functions:
@@ -165,33 +170,57 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 		print ''
 		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
+
+		if alias_functions:
+			print ''
+			print '/* define aliases for compatibility */'
+			for f in alias_functions:
+				for name in f.entry_points:
+					if name != f.name:
+						print '#define CALL_%s(disp, parameters) CALL_%s(disp, parameters)' % (name, f.name)
+						print '#define GET_%s(disp) GET_%s(disp)' % (name, f.name)
+						print '#define SET_%s(disp, fn) SET_%s(disp, fn)' % (name, f.name)
+			print ''
+
+			print '#if defined(_GLAPI_USE_REMAP_TABLE)'
+			for f in alias_functions:
+				for name in f.entry_points:
+					if name != f.name:
+						print '#define %s_remap_index %s_remap_index' % (name, f.name)
+			print '#endif /* defined(_GLAPI_USE_REMAP_TABLE) */'
+			print ''
+
 		return
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name] [-m mode]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-m mode] [-c]" % sys.argv[0]
 	print "    -m mode   Mode can be 'table' or 'remap_table'."
+	print "    -c        Enable compatibility with OpenGL ES."
 	sys.exit(1)
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
     
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:c")
 	except Exception,e:
 		show_usage()
 
 	mode = "table"
+	es = False
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
 		elif arg == "-m":
 			mode = val
+		elif arg == "-c":
+			es = True
 
 	if mode == "table":
-		printer = PrintGlTable()
+		printer = PrintGlTable(es)
 	elif mode == "remap_table":
-		printer = PrintRemapTable()
+		printer = PrintRemapTable(es)
 	else:
 		show_usage()
 

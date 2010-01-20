@@ -2519,6 +2519,9 @@ struct gl_extensions
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
+#if FEATURE_OES_draw_texture
+   GLboolean OES_draw_texture;
+#endif /* FEATURE_OES_draw_texture */
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */

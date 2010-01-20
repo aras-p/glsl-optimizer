@@ -45,7 +45,7 @@
 
 
 #define need_MESA_remap_table
-#include "remap_helper.h"
+#include "main/remap_helper.h"
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MAX_ENTRY_POINTS 16

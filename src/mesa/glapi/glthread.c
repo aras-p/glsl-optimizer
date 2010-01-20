@@ -33,7 +33,7 @@
 #endif
 
 #include "main/compiler.h"
-#include "glthread.h"
+#include "glapi/glthread.h"
 
 
 /*

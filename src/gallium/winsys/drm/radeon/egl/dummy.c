@@ -1,0 +1,1 @@
+/* mklib expects at least one .o is given */

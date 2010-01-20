@@ -48,7 +48,7 @@
 #include "st_cb_drawpixels.h"
 #include "st_cb_rasterpos.h"
 #endif
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
 #include "st_cb_drawtex.h"
 #endif
 #include "st_cb_fbo.h"
@@ -209,7 +209,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
 #endif
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
    st_destroy_drawtex(st);
 #endif
 
@@ -330,6 +330,11 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_drawpixels_functions(functions);
    st_init_rasterpos_functions(functions);
 #endif
+
+#if FEATURE_OES_draw_texture
+   st_init_drawtex_functions(functions);
+#endif
+
    st_init_fbo_functions(functions);
 #if FEATURE_feedback
    st_init_feedback_functions(functions);

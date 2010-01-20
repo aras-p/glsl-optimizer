@@ -191,6 +191,11 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_SELECTION_BUFFER_POINTER:
          *params = ctx->Select.Buffer;
          break;
+#if FEATURE_point_size_array
+      case GL_POINT_SIZE_ARRAY_POINTER_OES:
+         *params = (GLvoid *) ctx->Array.ArrayObj->PointSize.Ptr;
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;

@@ -426,7 +426,11 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="glsl mesa glew"
+
+dnl this variable will be prepended to SRC_DIRS and is not exported
+CORE_DIRS="glsl mesa"
+
+SRC_DIRS="glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -441,7 +445,7 @@ xlib)
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
     ;;
 dri)
-    SRC_DIRS="glx/x11 $SRC_DIRS"
+    CORE_DIRS="glx/x11 $CORE_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
@@ -1185,14 +1189,22 @@ yes)
         test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
 
-        if test "$tracker" = egl && test "x$enable_egl" != xyes; then
-            AC_MSG_ERROR([cannot build egl state tracker without EGL library])
-        fi
-        if test "$tracker" = xorg; then
+        case "$tracker" in
+        egl)
+            if test "x$enable_egl" != xyes; then
+                AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+            fi
+            ;;
+        xorg)
 	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
                   HAVE_XEXTPROTO_71="no")
-        fi
+            ;;
+        es)
+            # mesa/es is required to build es state tracker
+            CORE_DIRS="$CORE_DIRS mesa/es"
+            ;;
+        esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
@@ -1307,6 +1319,8 @@ if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv04 nv10 nv20 nv30 nv40 nv50"
 fi
 
+dnl prepend CORE_DIRS to SRC_DIRS
+SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
