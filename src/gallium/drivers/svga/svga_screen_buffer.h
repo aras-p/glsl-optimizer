@@ -183,9 +183,6 @@ svga_buffer_handle(struct svga_context *svga,
 void
 svga_context_flush_buffers(struct svga_context *svga);
 
-boolean
-svga_buffer_free_cached_hw_storage(struct svga_screen *ss);
-
 struct svga_winsys_buffer *
 svga_winsys_buffer_create(struct svga_screen *ss,
                           unsigned alignment, 

@@ -121,60 +121,6 @@ svga_buffer_destroy_hw_storage(struct svga_screen *ss, struct svga_buffer *sbuf)
    }
 }
 
-static INLINE enum pipe_error
-svga_buffer_backup(struct svga_screen *ss, struct svga_buffer *sbuf)
-{
-   if (sbuf->hw.buf && sbuf->hw.num_ranges) {
-      void *src;
-
-      if (!sbuf->swbuf)
-	 sbuf->swbuf = align_malloc(sbuf->base.size, sbuf->base.alignment);
-      if (!sbuf->swbuf)
-	 return PIPE_ERROR_OUT_OF_MEMORY;
-
-      src = ss->sws->buffer_map(ss->sws, sbuf->hw.buf,
-				PIPE_BUFFER_USAGE_CPU_READ);
-      if (!src)
-	 return PIPE_ERROR;
-
-      memcpy(sbuf->swbuf, src, sbuf->base.size);
-      ss->sws->buffer_unmap(ss->sws, sbuf->hw.buf);
-   }
-
-   return PIPE_OK;
-}
-
-/**
- * Try to make GMR space available by freeing the hardware storage of 
- * unmapped
- */
-boolean
-svga_buffer_free_cached_hw_storage(struct svga_screen *ss)
-{
-   struct list_head *curr;
-   struct svga_buffer *sbuf;
-   enum pipe_error ret = PIPE_OK;
-
-   curr = ss->cached_buffers.prev;
-   
-   /* free the least recently used buffer's hw storage which is not mapped */
-   do {
-      if(curr == &ss->cached_buffers)
-         return FALSE;
-
-      sbuf = LIST_ENTRY(struct svga_buffer, curr, head);
-      
-      curr = curr->prev;
-      if (sbuf->map.count == 0)
-	 ret = svga_buffer_backup(ss, sbuf);
-
-   } while(sbuf->map.count != 0 || ret != PIPE_OK);
-   
-   svga_buffer_destroy_hw_storage(ss, sbuf);
-   
-   return TRUE;
-}
-
 struct svga_winsys_buffer *
 svga_winsys_buffer_create( struct svga_screen *ss,
                            unsigned alignment, 
@@ -195,12 +141,6 @@ svga_winsys_buffer_create( struct svga_screen *ss,
       svga_screen_flush(ss, NULL);
       buf = sws->buffer_create(sws, alignment, usage, size);
 
-      SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "evicting buffers to find %d bytes GMR\n", 
-               size);
-
-      /* Try evicing all buffer storage */
-      while(!buf && svga_buffer_free_cached_hw_storage(ss))
-         buf = sws->buffer_create(sws, alignment, usage, size);
    }
    
    return buf;
