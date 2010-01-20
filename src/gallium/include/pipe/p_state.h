@@ -217,7 +217,7 @@ struct pipe_depth_stencil_alpha_state
 };
 
 
-struct pipe_blend_state
+struct pipe_rt_blend_state
 {
    unsigned blend_enable:1;
 
@@ -229,11 +229,16 @@ struct pipe_blend_state
    unsigned alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 
+   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
+};
+
+struct pipe_blend_state
+{
+   unsigned independent_blend_enable:1;
    unsigned logicop_enable:1;
    unsigned logicop_func:4;      /**< PIPE_LOGICOP_x */
-
-   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
    unsigned dither:1;
+   struct pipe_rt_blend_state rt[PIPE_MAX_COLOR_BUFS];
 };
 
 

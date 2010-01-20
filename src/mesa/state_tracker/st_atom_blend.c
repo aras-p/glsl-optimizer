@@ -169,30 +169,30 @@ update_blend( struct st_context *st )
    }
    else if (st->ctx->Color.BlendEnabled) {
       /* blending enabled */
-      blend->blend_enable = 1;
+      blend->rt[0].blend_enable = 1;
 
-      blend->rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
+      blend->rt[0].rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
       if (st->ctx->Color.BlendEquationRGB == GL_MIN ||
           st->ctx->Color.BlendEquationRGB == GL_MAX) {
          /* Min/max are special */
-         blend->rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend->rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
-         blend->rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
+         blend->rt[0].rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
+         blend->rt[0].rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
       }
 
-      blend->alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
+      blend->rt[0].alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
       if (st->ctx->Color.BlendEquationA == GL_MIN ||
           st->ctx->Color.BlendEquationA == GL_MAX) {
          /* Min/max are special */
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend->alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
-         blend->alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
+         blend->rt[0].alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
+         blend->rt[0].alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
       }
    }
    else {
@@ -201,13 +201,13 @@ update_blend( struct st_context *st )
 
    /* Colormask - maybe reverse these bits? */
    if (st->ctx->Color.ColorMask[0][0])
-      blend->colormask |= PIPE_MASK_R;
+      blend->rt[0].colormask |= PIPE_MASK_R;
    if (st->ctx->Color.ColorMask[0][1])
-      blend->colormask |= PIPE_MASK_G;
+      blend->rt[0].colormask |= PIPE_MASK_G;
    if (st->ctx->Color.ColorMask[0][2])
-      blend->colormask |= PIPE_MASK_B;
+      blend->rt[0].colormask |= PIPE_MASK_B;
    if (st->ctx->Color.ColorMask[0][3])
-      blend->colormask |= PIPE_MASK_A;
+      blend->rt[0].colormask |= PIPE_MASK_A;
 
    if (st->ctx->Color.DitherFlag)
       blend->dither = 1;
