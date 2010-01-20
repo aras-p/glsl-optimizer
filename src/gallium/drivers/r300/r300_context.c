@@ -129,13 +129,13 @@ static void r300_setup_atoms(struct r300_context* r300)
      * an upper bound on each atom, to keep the emission machinery from
      * underallocating space. */
     make_empty_list(&r300->atom_list);
-    R300_INIT_ATOM(invariant, 73);
+    R300_INIT_ATOM(invariant, 71);
     R300_INIT_ATOM(ztop, 2);
     R300_INIT_ATOM(blend, 8);
     R300_INIT_ATOM(blend_color, 3);
     R300_INIT_ATOM(clip, 29);
     R300_INIT_ATOM(dsa, 8);
-    R300_INIT_ATOM(rs, 22);
+    R300_INIT_ATOM(rs, 25);
     R300_INIT_ATOM(scissor, 3);
     R300_INIT_ATOM(viewport, 9);
 }

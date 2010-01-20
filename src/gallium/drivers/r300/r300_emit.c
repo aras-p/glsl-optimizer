@@ -587,8 +587,11 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     float scale, offset;
     CS_LOCALS(r300);
 
-    BEGIN_CS(18 + (rs->polygon_offset_enable ? 5 : 0));
+    BEGIN_CS(20 + (rs->polygon_offset_enable ? 5 : 0));
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+
+    OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
+
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
     OUT_CS(rs->point_minmax);
