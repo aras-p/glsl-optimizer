@@ -861,6 +861,9 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
  *
  * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
  *  GL_DEPTH_STENCIL_EXT or zero if error.
+ *
+ * XXX in the future when we support red-only and red-green formats
+ * we'll also return GL_RED and GL_RG.
  */
 GLenum
 _mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
