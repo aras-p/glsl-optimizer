@@ -53,7 +53,7 @@ vmw_pools_init(struct vmw_winsys_screen *vws)
       goto error;
 
    vws->pools.gmr_mm = mm_bufmgr_create(vws->pools.gmr,
-                                        16*1024*1024,
+                                        VMW_GMR_POOL_SIZE,
                                         12 /* 4096 alignment */);
    if(!vws->pools.gmr_mm)
       goto error;
