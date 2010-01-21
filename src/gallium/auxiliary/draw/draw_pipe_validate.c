@@ -151,8 +151,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
 {
    struct draw_context *draw = stage->draw;
    struct draw_stage *next = draw->pipeline.rasterize;
-   int need_det = 0;
-   int precalc_flat = 0;
+   boolean need_det = FALSE;
+   boolean precalc_flat = FALSE;
    boolean wide_lines, wide_points;
 
    /* Set the validate's next stage to the rasterize stage, so that it
@@ -194,7 +194,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    if (wide_lines) {
       draw->pipeline.wide_line->next = next;
       next = draw->pipeline.wide_line;
-      precalc_flat = 1;
+      precalc_flat = TRUE;
    }
 
    if (wide_points || draw->rasterizer->point_sprite) {
@@ -205,7 +205,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    if (draw->rasterizer->line_stipple_enable && draw->pipeline.line_stipple) {
       draw->pipeline.stipple->next = next;
       next = draw->pipeline.stipple;
-      precalc_flat = 1;		/* only needed for lines really */
+      precalc_flat = TRUE;		/* only needed for lines really */
    }
 
    if (draw->rasterizer->poly_stipple_enable
@@ -218,8 +218,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
        draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;
       next = draw->pipeline.unfilled;
-      precalc_flat = 1;		/* only needed for triangles really */
-      need_det = 1;
+      precalc_flat = TRUE;		/* only needed for triangles really */
+      need_det = TRUE;
    }
 
    if (draw->rasterizer->flatshade && precalc_flat) {
@@ -231,13 +231,13 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
        draw->rasterizer->offset_ccw) {
       draw->pipeline.offset->next = next;
       next = draw->pipeline.offset;
-      need_det = 1;
+      need_det = TRUE;
    }
 
    if (draw->rasterizer->light_twoside) {
       draw->pipeline.twoside->next = next;
       next = draw->pipeline.twoside;
-      need_det = 1;
+      need_det = TRUE;
    }
 
    /* Always run the cull stage as we calculate determinant there
