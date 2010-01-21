@@ -44,6 +44,7 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader *state;
+   unsigned i;
 
    /* debug */
    if (softpipe->dump_fs) 
@@ -59,6 +60,13 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &state->info);
+
+   for (i = 0; i < state->info.num_properties; ++i) {
+      if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN)
+         state->origin_lower_left = state->info.properties[i].data[0];
+      else if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_PIXEL_CENTER)
+	 state->pixel_center_integer = state->info.properties[i].data[0];
+   }
 
    return state;
 }

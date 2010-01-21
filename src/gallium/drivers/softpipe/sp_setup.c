@@ -504,21 +504,24 @@ static void tri_persp_coeff( struct setup_context *setup,
 
 /**
  * Special coefficient setup for gl_FragCoord.
- * X and Y are trivial, though Y has to be inverted for OpenGL.
+ * X and Y are trivial, though Y may have to be inverted for OpenGL.
  * Z and W are copied from posCoef which should have already been computed.
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
 static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
+   struct sp_fragment_shader* spfs = setup->softpipe->fs;
    /*X*/
-   setup->coef[slot].a0[0] = 0;
+   setup->coef[slot].a0[0] = spfs->pixel_center_integer ? 0.0 : 0.5;
    setup->coef[slot].dadx[0] = 1.0;
    setup->coef[slot].dady[0] = 0.0;
    /*Y*/
-   setup->coef[slot].a0[1] = 0.0;
+   setup->coef[slot].a0[1] =
+		   (spfs->origin_lower_left ? setup->softpipe->framebuffer.height : 0)
+		   + (spfs->pixel_center_integer ? 0.0 : 0.5);
    setup->coef[slot].dadx[1] = 0.0;
-   setup->coef[slot].dady[1] = 1.0;
+   setup->coef[slot].dady[1] = spfs->origin_lower_left ? -1.0 : 1.0;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
