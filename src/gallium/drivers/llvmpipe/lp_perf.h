@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,66 +10,65 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-
-#ifndef LP_DEBUG_H
-#define LP_DEBUG_H
-
-#include "pipe/p_compiler.h"
-#include "util/u_debug.h"
-
-extern void
-st_print_current(void);
+/**
+ * Performance / statistic counters, etc.
+ */
 
 
-#define DEBUG_PIPE      0x1
-#define DEBUG_TGSI      0x2
-#define DEBUG_TEX       0x4
-#define DEBUG_ASM       0x8
-#define DEBUG_SETUP     0x10
-#define DEBUG_RAST      0x20
-#define DEBUG_QUERY     0x40
-#define DEBUG_SCREEN    0x80
-#define DEBUG_JIT       0x100
-#define DEBUG_SHOW_TILES    0x200
-#define DEBUG_SHOW_SUBTILES 0x400
-#define DEBUG_COUNTERS      0x800
+#ifndef LP_PERF_H
+#define LP_PERF_H
 
 
+/**
+ * Various counters
+ */
+struct lp_counters
+{
+   unsigned nr_tris;
+   unsigned nr_culled_tris;
+   unsigned nr_empty_64;
+   unsigned nr_fully_covered_64;
+   unsigned nr_partially_covered_64;
+   unsigned nr_empty_16;
+   unsigned nr_fully_covered_16;
+   unsigned nr_partially_covered_16;
+   unsigned nr_empty_4;
+   unsigned nr_non_empty_4;
+};
+
+
+extern struct lp_counters lp_count;
+
+
+/** Increment the named counter (only for debug builds) */
 #ifdef DEBUG
-extern int LP_DEBUG;
+#define LP_COUNT(counter) lp_count.counter++
 #else
-#define LP_DEBUG 0
+#define LP_COUNT(counter)
 #endif
 
-void st_debug_init( void );
 
-static INLINE void
-LP_DBG( unsigned flag, const char *fmt, ... )
-{
-    if (LP_DEBUG & flag)
-    {
-        va_list args;
-
-        va_start( args, fmt );
-        debug_vprintf( fmt, args );
-        va_end( args );
-    }
-}
+extern void
+lp_reset_counters(void);
 
 
-#endif /* LP_DEBUG_H */
+extern void
+lp_print_counters(void);
+
+
+#endif /* LP_PERF_H */

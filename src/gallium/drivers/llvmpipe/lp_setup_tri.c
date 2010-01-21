@@ -29,10 +29,11 @@
  * Binning code for triangles
  */
 
-#include "lp_setup_context.h"
-#include "lp_rast.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "lp_perf.h"
+#include "lp_setup_context.h"
+#include "lp_rast.h"
 
 #define NUM_CHANNELS 4
 
@@ -278,12 +279,15 @@ do_triangle_ccw(struct setup_context *setup,
    area = (tri->dx12 * tri->dy31 - 
 	   tri->dx31 * tri->dy12);
 
+   LP_COUNT(nr_tris);
+
    /* Cull non-ccw and zero-sized triangles. 
     *
     * XXX: subject to overflow??
     */
    if (area <= 0.0f) {
       lp_scene_putback_data( scene, sizeof *tri );
+      LP_COUNT(nr_culled_tris);
       return;
    }
 
@@ -303,6 +307,7 @@ do_triangle_ccw(struct setup_context *setup,
    if (miny == maxy || 
        minx == maxx) {
       lp_scene_putback_data( scene, sizeof *tri );
+      LP_COUNT(nr_culled_tris);
       return;
    }
 
@@ -459,6 +464,7 @@ do_triangle_ccw(struct setup_context *setup,
 		cx3 + eo3 < 0) 
 	    {
 	       /* do nothing */
+               LP_COUNT(nr_empty_64);
 	       if (in)
 		  break;  /* exiting triangle, all done with this row */
 	    }
@@ -466,8 +472,9 @@ do_triangle_ccw(struct setup_context *setup,
 		     cx2 + ei2 > 0 &&
 		     cx3 + ei3 > 0) 
 	    {
-	       in = TRUE;
                /* triangle covers the whole tile- shade whole tile */
+               LP_COUNT(nr_fully_covered_64);
+	       in = TRUE;
 	       if(setup->fs.current.opaque) {
 	          lp_scene_bin_reset( scene, x, y );
 	          lp_scene_bin_command( scene, x, y,
@@ -480,8 +487,9 @@ do_triangle_ccw(struct setup_context *setup,
 	    }
 	    else 
 	    { 
+               /* rasterizer/shade partial tile */
+               LP_COUNT(nr_partially_covered_64);
 	       in = TRUE;
-               /* shade partial tile */
                lp_scene_bin_command( scene, x, y,
 				     lp_rast_triangle, 
 				     lp_rast_arg_triangle(tri) );

@@ -38,6 +38,7 @@
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_flush.h"
+#include "lp_perf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
@@ -53,6 +54,8 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    uint i;
+
+   lp_print_counters();
 
    /* This will also destroy llvmpipe->setup:
     */
@@ -194,6 +197,8 @@ llvmpipe_create( struct pipe_screen *screen )
 #endif
 
    lp_init_surface_functions(llvmpipe);
+
+   lp_reset_counters();
 
    return &llvmpipe->pipe;
 

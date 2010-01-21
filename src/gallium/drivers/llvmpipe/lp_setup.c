@@ -499,7 +499,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
  * Note: we have to check all scenes including any scenes currently
  * being rendered and the current scene being built.
  */
-boolean
+unsigned
 lp_setup_is_texture_referenced( const struct setup_context *setup,
                                 const struct pipe_texture *texture )
 {

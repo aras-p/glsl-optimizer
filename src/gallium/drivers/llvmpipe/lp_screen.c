@@ -54,6 +54,7 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "jit",    DEBUG_JIT },
    { "show_tiles",    DEBUG_SHOW_TILES },
    { "show_subtiles", DEBUG_SHOW_SUBTILES },
+   { "counters", DEBUG_COUNTERS },
    {NULL, 0}
 };
 #endif

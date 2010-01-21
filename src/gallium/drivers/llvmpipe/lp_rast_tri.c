@@ -32,6 +32,7 @@
 #include <limits.h>
 #include "util/u_math.h"
 #include "lp_debug.h"
+#include "lp_perf.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
 
@@ -167,6 +168,7 @@ do_block_16( struct lp_rasterizer_task *rast_task,
           cx2 + eo2 < 0 ||
           cx3 + eo3 < 0) {
          /* the block is completely outside the triangle - nop */
+         LP_COUNT(nr_empty_4);
       }
       else {
          int px = x + pos_table4[i][0];
@@ -174,6 +176,7 @@ do_block_16( struct lp_rasterizer_task *rast_task,
          /* Don't bother testing if the 4x4 block is entirely in/out of
           * the triangle.  It's a little faster to do it in the jit code.
           */
+         LP_COUNT(nr_non_empty_4);
          do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
       }
    }
@@ -223,6 +226,7 @@ lp_rast_triangle( struct lp_rasterizer *rast,
           cx2 + eo2 < 0 ||
           cx3 + eo3 < 0) {
          /* the block is completely outside the triangle - nop */
+         LP_COUNT(nr_empty_16);
       }
       else {
          int px = x + pos_table16[i][0];
@@ -232,10 +236,12 @@ lp_rast_triangle( struct lp_rasterizer *rast,
              cx2 + ei2 > 0 &&
              cx3 + ei3 > 0) {
             /* the block is completely inside the triangle */
+            LP_COUNT(nr_fully_covered_16);
             block_full_16(rast_task, tri, px, py);
          }
          else {
             /* the block is partially in/out of the triangle */
+            LP_COUNT(nr_partially_covered_16);
             do_block_16(rast_task, tri, px, py, cx1, cx2, cx3);
          }
       }

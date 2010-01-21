@@ -123,7 +123,7 @@ void
 lp_setup_set_sampler_textures( struct setup_context *setup,
                                unsigned num, struct pipe_texture **texture);
 
-boolean
+unsigned
 lp_setup_is_texture_referenced( const struct setup_context *setup,
                                 const struct pipe_texture *texture );
 
