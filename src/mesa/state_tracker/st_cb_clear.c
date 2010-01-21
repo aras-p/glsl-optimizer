@@ -162,10 +162,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   st_no_flush_pipe_buffer_write(st, st->clear.vbuf,
-				 st->clear.vbuf_slot * sizeof(st->clear.vertices),
-				 sizeof(st->clear.vertices),
-				 st->clear.vertices);
+   st_no_flush_pipe_buffer_write_nooverlap(st, st->clear.vbuf,
+                                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                                           sizeof(st->clear.vertices),
+                                           st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 

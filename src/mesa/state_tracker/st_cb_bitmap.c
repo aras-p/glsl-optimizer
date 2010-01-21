@@ -386,11 +386,11 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   st_no_flush_pipe_buffer_write(st,
-				 st->bitmap.vbuf,
-				 st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
-				 sizeof st->bitmap.vertices,
-				 st->bitmap.vertices);
+   st_no_flush_pipe_buffer_write_nooverlap(st,
+                                           st->bitmap.vbuf,
+                                           st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
+                                           sizeof st->bitmap.vertices,
+                                           st->bitmap.vertices);
 
    return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
 }

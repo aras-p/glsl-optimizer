@@ -126,6 +126,16 @@ st_no_flush_pipe_buffer_write(struct st_context *st,
 }
 
 static INLINE void
+st_no_flush_pipe_buffer_write_nooverlap(struct st_context *st,
+                                        struct pipe_buffer *buf,
+                                        unsigned int offset,
+                                        unsigned int size,
+                                        const void * data)
+{
+   pipe_buffer_write_nooverlap(st->pipe->screen, buf, offset, size, data);
+}
+
+static INLINE void
 st_cond_flush_pipe_buffer_read(struct st_context *st,
 			       struct pipe_buffer *buf,
 			       unsigned int offset,
