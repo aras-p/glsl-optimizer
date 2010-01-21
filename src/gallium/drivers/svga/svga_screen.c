@@ -144,6 +144,13 @@ svga_get_paramf(struct pipe_screen *screen, int param)
    case PIPE_CAP_BLEND_EQUATION_SEPARATE: /* req. for GL 1.5 */
       return 1;
 
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+      return 1;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+      return 0;
+
    default:
       return 0;
    }

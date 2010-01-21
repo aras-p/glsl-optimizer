@@ -44,6 +44,12 @@ nv10_screen_get_param(struct pipe_screen *screen, int param)
 		return 0;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
 		return 0;
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+		return 1;
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
