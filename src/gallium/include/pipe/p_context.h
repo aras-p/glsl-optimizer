@@ -103,7 +103,7 @@ struct pipe_context {
    /**
     * Predicate subsequent rendering on occlusion query result
     * \param query  the query predicate, or NULL if no predicate
-    * \param mode  one of PIPE_COND_RENDER_x
+    * \param mode  one of PIPE_RENDER_COND_x
     */
    void (*render_condition)( struct pipe_context *pipe,
                              struct pipe_query *query,
