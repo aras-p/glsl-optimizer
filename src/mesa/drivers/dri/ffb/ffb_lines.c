@@ -27,15 +27,11 @@
 
 #include "main/mtypes.h"
 #include "main/mm.h"
-#include "main/extensions.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
-#include "ffb_depth.h"
 #include "ffb_context.h"
 #include "ffb_vb.h"
 #include "ffb_lines.h"
-#include "ffb_tris.h"
-#include "ffb_lock.h"
 
 #undef FFB_LINE_TRACE
 

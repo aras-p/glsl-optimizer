@@ -30,7 +30,6 @@
 #include "ffb_lock.h"
 #include "ffb_bitmap.h"
 #include "swrast/swrast.h"
-#include "main/image.h"
 #include "main/macros.h"
 
 /* Compute ceiling of integer quotient of A divided by B: */
