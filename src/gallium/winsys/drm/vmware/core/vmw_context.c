@@ -73,6 +73,19 @@ struct vmw_svga_winsys_context
    struct pb_validate *validate;
 
    uint32_t last_fence;
+
+   /**
+    * The amount of GMR that is referred by the commands currently batched
+    * in the context.
+    */
+   uint32_t seen_regions;
+
+   /**
+    * Whether this context should fail to reserve more commands, not because it
+    * ran out of command space, but because a substantial ammount of GMR was
+    * referred.
+    */
+   boolean preemptive_flush;
 };
 
 
@@ -124,6 +137,8 @@ vmw_swc_flush(struct svga_winsys_context *swc,
 #ifdef DEBUG
    vswc->must_flush = FALSE;
 #endif
+   vswc->preemptive_flush = FALSE;
+   vswc->seen_regions = 0;
 
    if(pfence)
       *pfence = fence;
@@ -151,7 +166,8 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
    if(nr_bytes > vswc->command.size)
       return NULL;
 
-   if(vswc->command.used + nr_bytes > vswc->command.size ||
+   if(vswc->preemptive_flush ||
+      vswc->command.used + nr_bytes > vswc->command.size ||
       vswc->surface.used + nr_relocs > vswc->surface.size) {
 #ifdef DEBUG
       vswc->must_flush = TRUE;
@@ -220,6 +236,26 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
    ret = pb_validate_add_buffer(vswc->validate, buf, flags);
    /* TODO: Update pipebuffer to reserve buffers and not fail here */
    assert(ret == PIPE_OK);
+
+   /*
+    * Flush preemptively the FIFO commands to keep the GMR working set within
+    * the GMR pool size.
+    *
+    * This is necessary for applications like SPECviewperf that generate huge
+    * amounts of immediate vertex data, so that we don't pile up too much of
+    * that vertex data neither in the guest nor in the host.
+    *
+    * Note that in the current implementation if a region is referred twice in
+    * a command stream, it will be accounted twice. We could detect repeated
+    * regions and count only once, but there is no incentive to do that, since
+    * regions are typically short-lived; always referred in a single command;
+    * and at the worst we just flush the commands a bit sooner, which for the
+    * SVGA virtual device it's not a performance issue since flushing commands
+    * to the FIFO won't cause flushing in the host.
+    */
+   vswc->seen_regions += buf->base.size;
+   if(vswc->seen_regions >= VMW_GMR_POOL_SIZE/2)
+      vswc->preemptive_flush = TRUE;
 }
 
 
