@@ -34,8 +34,10 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
+#include "pipe/p_context.h"
 #include "tgsi/tgsi_ureg.h"
 #include "st_mesa_to_tgsi.h"
+#include "st_context.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
@@ -665,6 +667,22 @@ compile_instruction(
    }
 }
 
+/**
+ * Emit the TGSI instructions to adjust the WPOS pixel center convention
+ */
+static void
+emit_adjusted_wpos( struct st_translate *t,
+                    const struct gl_program *program, GLfloat value)
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst wpos_temp = ureg_DECL_temporary(ureg);
+   struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
+
+   ureg_ADD(ureg, ureg_writemask(wpos_temp, TGSI_WRITEMASK_X | TGSI_WRITEMASK_Y),
+		   wpos_input, ureg_imm1f(ureg, value));
+
+   t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
+}
 
 /**
  * Emit the TGSI instructions for inverting the WPOS y coordinate.
@@ -690,12 +708,17 @@ emit_inverted_wpos( struct st_translate *t,
                                                        winSizeState);
 
    struct ureg_src winsize = ureg_DECL_constant( ureg, winHeightConst );
-   struct ureg_dst wpos_temp = ureg_DECL_temporary( ureg );
+   struct ureg_dst wpos_temp;
    struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
 
    /* MOV wpos_temp, input[wpos]
     */
-   ureg_MOV( ureg, wpos_temp, wpos_input );
+   if (wpos_input.File == TGSI_FILE_TEMPORARY)
+      wpos_temp = ureg_dst(wpos_input);
+   else {
+      wpos_temp = ureg_DECL_temporary( ureg );
+      ureg_MOV( ureg, wpos_temp, wpos_input );
+   }
 
    /* SUB wpos_temp.y, winsize_const, wpos_input
     */
@@ -801,6 +824,7 @@ st_translate_mesa_program(
     * Declare input attributes.
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      struct gl_fragment_program* fp = (struct gl_fragment_program*)program;
       for (i = 0; i < numInputs; i++) {
          t->inputs[i] = ureg_DECL_fs_input(ureg,
                                            inputSemanticName[i],
@@ -812,7 +836,51 @@ st_translate_mesa_program(
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
-         emit_inverted_wpos( t, program );
+         struct pipe_screen* pscreen = st_context(ctx)->pipe->screen;
+         boolean invert = FALSE;
+
+         if (fp->OriginUpperLeft) {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
+            }
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
+               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+               invert = TRUE;
+            }
+            else
+               assert(0);
+         }
+         else {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
+               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
+               invert = TRUE;
+            else
+               assert(0);
+         }
+
+         if (fp->PixelCenterInteger) {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
+               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
+               emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
+            else
+               assert(0);
+         }
+         else {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
+            }
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
+               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+               emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
+            }
+            else
+               assert(0);
+         }
+
+         /* we invert after adjustment so that we avoid the MOV to temporary,
+          * and reuse the adjustment ADD instead */
+         if (invert)
+            emit_inverted_wpos(t, program);
       }
 
       if (program->InputsRead & FRAG_BIT_FACE) {
