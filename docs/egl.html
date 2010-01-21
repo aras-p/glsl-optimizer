@@ -1,0 +1,224 @@
+<html>
+
+<title>Mesa EGL</title>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<body>
+
+<h1>Mesa EGL</h1>
+
+<p>The current version of EGL in Mesa implements EGL 1.4.  More information
+about EGL can be found at
+<a href="http://www.khronos.org/egl/">http://www.khronos.org/egl/</a>.</p>
+
+<p>The Mesa's implementation of EGL uses a driver architecture.  The main
+library (<code>libEGL</code>) is window system neutral.  It provides the EGL
+API entry points and helper functions for use by the drivers.  Drivers are
+dynamically loaded by the main library and most of the EGL API calls are
+directly dispatched to the drivers.</p>
+
+<p>The driver in use decides the window system to support.  For drivers that
+support hardware rendering, there are usually multiple drivers supporting the
+same window system.  Each one of of them supports a certain range of graphics
+cards.</p>
+
+<h2>Build EGL</h2>
+
+<ol>
+<li>
+<p>Run <code>configure</code> with the desired state trackers and and enable
+the Gallium driver for your hardware.  For example</p>
+
+<pre>
+  $ ./configure --with-state-trackers=egl_g3d,es,vega --enable-gallium-intel
+</pre>
+
+<p>The main library will be enabled by default.  The <code>egl_g3d</code> state
+tracker is needed by a number of EGL drivers.  EGL drivers will be covered
+later.  The <a href="opengles.html">es state tracker</a> provides OpenGL ES 1.x
+and 2.x and the <a href="openvg.html">vega state tracker</a> provides OpenVG
+1.x.</p>
+</li>
+
+<li>Build and install Mesa as usual.</li>
+</ol>
+
+<p>In the given example, it will build and install <code>libEGL</code>,
+<code>libGLESv1_CM</code>, <code>libGLESv2</code>, <code>libOpenVG</code>, and
+one or more EGL drivers.</p>
+
+<h3>Configure Options</h3>
+
+<p>There are several options that control the build of EGL at configuration
+time</p>
+
+<ul>
+<li><code>--enable-egl</code>
+
+<p>By default, EGL is enabled.  When disabled, the main library and the drivers
+will not be built.</p>
+
+</li>
+
+<li><code>--with-egl-displays</code>
+
+<p>List the window system(s) to support.  It is by default <code>x11</code>,
+which supports the X Window System.  Its argument is a comma separated string
+like, for example, <code>--with-egl-displays=x11,kms</code>.  Because an EGL
+driver decides which window system to support, this example will enable two
+(sets of) EGL drivers.  One supports the X window system and the other supports
+bare KMS (kernel modesetting).</p>
+
+</li>
+
+<li><code>--with-state-trackers</code>
+
+<p>The argument is a comma separated string.  It is usually used to specify the
+rendering APIs, like OpenGL ES or OpenVG, to build.  But it should be noted
+that a number of EGL drivers depend on the <code>egl_g3d</code> state tracker.
+They will <em>not</em> be built without the <code>egl_g3d</code> state
+tracker.</p>
+
+</li>
+</ul>
+
+<h3>OpenGL</h3>
+
+<p>The OpenGL state tracker is not built in the above example.  It should be
+noted that the classic <code>libGL</code> is not a state tracker and cannot be
+used with EGL (unless the EGL driver in use is <code>egl_glx</code>).  To build
+the OpenGL state tracker, one may append <code>glx</code> to
+<code>--with-state-trackers</code> and manually build
+<code>src/gallium/winsys/xlib/</code>.</p>
+
+<h2>Use EGL</h2>
+
+<p> The demos for OpenGL ES and OpenVG can be found in <code>progs/es1/</code>,
+<code>progs/es2/</code> and <code>progs/openvg/</code>.  You can use them to
+test your build.  For example,</p>
+
+<pre>
+  $ cd progs/es1/xegl
+  $ make
+  $ ./torus
+</pre>
+
+<h3>Environment Variables</h3>
+
+<p>There are several environment variables that control the behavior of EGL at
+runtime</p>
+
+<ul>
+<li><code>EGL_DRIVER</code>
+
+<p>This variable forces the specified EGL driver to be loaded.  It comes in
+handy when one wants to test a specific driver.</p>
+
+</li>
+
+<li><code>EGL_DISPLAY</code>
+
+<p>When <code>EGL_DRIVER</code> is not set, the main library loads <em>all</em>
+EGL drivers that support a certain window system.  <code>EGL_DISPLAY</code> can
+be used to specify the window system and the valid values are, for example,
+<code>x11</code> or <code>kms</code>.  When the variable is not set, the main
+library defaults the value to the first window system listed in
+<code>--with-egl-displays</code> at configuration time.
+
+</li>
+
+<li><code>EGL_LOG_LEVEL</code>
+
+<p>This changes the log level of the main library and the drivers.  The valid
+values are: <code>debug</code>, <code>info</code>, <code>warning</code>, and
+<code>fatal</code>.</p>
+
+</li>
+
+<li><code>EGL_SOFTWARE</code>
+
+<p>For drivers that support both hardware and software rendering, setting this
+variable to true forces the use of software rendering.</p>
+
+</li>
+</ul>
+
+<h2>EGL Drivers</h2>
+
+<p>There are two categories of EGL drivers: Gallium and classic.</p>
+
+<p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  The
+support for optional EGL functions and EGL extensions is usually more complete
+than the classic ones.  These drivers depend on the <code>egl_g3d</code> state
+tracker to build.  The available drivers are</p>
+
+<ul>
+<li><code>egl_&lt;dpy&gt;_i915</code></li>
+<li><code>egl_&lt;dpy&gt;_i965</code></li>
+<li><code>egl_&lt;dpy&gt;_radeon</code></li>
+<li><code>egl_&lt;dpy&gt;_nouveau</code></li>
+<li><code>egl_&lt;dpy&gt;_vmwgfx</code></li>
+</ul>
+
+<p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-displays</code> at
+configuration time.  There will be one EGL driver for each combination of the
+displays listed and the hardware drivers enabled.</p>
+
+<p>Classic EGL drivers, on the other hand, supports only OpenGL as its
+rendering API.  They can be found under <code>src/egl/drivers/</code>.  There
+are 3 of them</p>
+
+<ul>
+<li><code>egl_glx</code>
+
+<p>This driver provides a wrapper to GLX.  It uses exclusively GLX to implement
+the EGL API.  It supports both direct and indirect rendering when the GLX does.
+It is accelerated when the GLX is.  As such, it cannot provide functions that
+is not available in GLX or GLX extensions.</p>
+</li>
+
+<li><code>egl_xdri</code>
+
+<p>This driver supports the X Window System as its window system.  It functions
+as a DRI driver loader.  Unlike <code>egl_glx</code>, it has no dependency on
+<code>libGL</code>.  It talks to the X server directly using DRI or DRI2
+protocols.  It also talks minimal GLX protocol for things like available
+visuals or fbconfigs.  With direct access to the DRI drivers, it has the
+potential to support more EGL functions that are not possible with
+<code>egl_glx</code></p>
+
+</li>
+<li><code>egl_dri</code>
+
+<p>This driver lacks maintenance and does <em>not</em> build.  It is similiar
+to <code>egl_xdri</code> in that it functions as a DRI driver loader.  But
+unlike <code>egl_xdri</code>, it supports Linux framebuffer devices as its
+window system and supports EGL_MESA_screen_surface extension.  It loads only
+DRI1 drivers.  As DRI1 drivers is phasing out, it might be better to rewrite
+the driver to support KMS and DRI2.</p>
+
+</li>
+</ul>
+
+<p>To use the classic drivers, one must manually set <code>EGL_DRIVER</code> at
+runtime.</p>
+
+<h2>Developers</h2>
+
+The sources of the main library and the classic drivers can be found at
+<code>src/egl/</code>.  The sources of the <code>egl_g3d</code> state tracker
+can be found at <code>src/gallium/state_trackers/egl_g3d/</code>.
+
+<h3>TODOs</h3>
+
+<ul>
+<li>Thread safety</li>
+<li>Pass the conformance tests</li>
+<li>Better automatic driver selection: <code>EGL_DISPLAY</code> loads all
+drivers and might eat too much memory.</li>
+
+</ul>
+
+</body>
+</html>
