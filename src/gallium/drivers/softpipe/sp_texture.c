@@ -291,6 +291,10 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
    assert(texture);
    assert(level <= texture->last_level);
 
+   /* make sure the requested region is in the image bounds */
+   assert(x + w <= u_minify(texture->width0, level));
+   assert(y + h <= u_minify(texture->height0, level));
+
    spt = CALLOC_STRUCT(softpipe_transfer);
    if (spt) {
       struct pipe_transfer *pt = &spt->base;
