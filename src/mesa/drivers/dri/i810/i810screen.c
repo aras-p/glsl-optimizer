@@ -36,8 +36,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "main/fbobject.h"
-#include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "main/simple_list.h"
 #include "utils.h"
@@ -48,8 +46,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i810state.h"
 #include "i810tex.h"
 #include "i810span.h"
-#include "i810tris.h"
-#include "i810ioctl.h"
 
 #include "GL/internal/dri_interface.h"
 
