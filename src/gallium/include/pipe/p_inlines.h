@@ -119,7 +119,8 @@ pipe_buffer_write(struct pipe_screen *screen,
 
    map = pipe_buffer_map_range(screen, buf, offset, size, 
                                PIPE_BUFFER_USAGE_CPU_WRITE | 
-                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
+                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
+                               PIPE_BUFFER_USAGE_DISCARD);
    assert(map);
    if(map) {
       memcpy((uint8_t *)map + offset, data, size);
