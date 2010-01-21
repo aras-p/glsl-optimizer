@@ -553,7 +553,7 @@ parse_register_dcl_bracket(
       report_error( ctx, "Expected literal unsigned integer" );
       return FALSE;
    }
-   bracket->first = (int) uindex;
+   bracket->first = uindex;
 
    eat_opt_white( &ctx->cur );
 
@@ -617,10 +617,12 @@ parse_register_dcl(
        * input primitive. so we want to declare just
        * the index relevant to the semantics which is in
        * the second bracket */
-      if (ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
+      if (ctx->processor == TGSI_PROCESSOR_GEOMETRY && *file == TGSI_FILE_INPUT) {
          brackets[0] = brackets[1];
+         *num_brackets = 1;
+      } else {
+         *num_brackets = 2;
       }
-      *num_brackets = 2;
    }
 
    return TRUE;
@@ -738,6 +740,13 @@ parse_src_operand(
       return FALSE;
 
    src->Register.File = file;
+   if (parsed_opt_brackets) {
+      src->Register.Dimension = 1;
+      src->Dimension.Indirect = 0;
+      src->Dimension.Dimension = 0;
+      src->Dimension.Index = bracket[0].index;
+      bracket[0] = bracket[1];
+   }
    src->Register.Index = bracket[0].index;
    if (bracket[0].ind_file != TGSI_FILE_NULL) {
       src->Register.Indirect = 1;
@@ -747,12 +756,6 @@ parse_src_operand(
       src->Indirect.SwizzleY = bracket[0].ind_comp;
       src->Indirect.SwizzleZ = bracket[0].ind_comp;
       src->Indirect.SwizzleW = bracket[0].ind_comp;
-   }
-   if (parsed_opt_brackets) {
-      src->Register.Dimension = 1;
-      src->Dimension.Indirect = 0;
-      src->Dimension.Dimension = 0;
-      src->Dimension.Index = bracket[1].index;
    }
 
    /* Parse optional swizzle.
@@ -969,8 +972,17 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = file;
    decl.Declaration.UsageMask = writemask;
-   decl.Range.First = brackets[0].first;
-   decl.Range.Last = brackets[0].last;
+
+   if (num_brackets == 1) {
+      decl.Range.First = brackets[0].first;
+      decl.Range.Last = brackets[0].last;
+   } else {
+      decl.Range.First = brackets[1].first;
+      decl.Range.Last = brackets[1].last;
+
+      decl.Declaration.Dimension = 1;
+      decl.Dim.Index2D = brackets[0].first;
+   }
 
    cur = ctx->cur;
    eat_opt_white( &cur );

@@ -64,6 +64,7 @@ tgsi_build_declaration(
    unsigned file,
    unsigned usage_mask,
    unsigned interpolate,
+   unsigned dimension,
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
@@ -88,6 +89,14 @@ tgsi_build_declaration_range(
    unsigned last,
    struct tgsi_declaration *declaration,
    struct tgsi_header *header );
+
+struct tgsi_declaration_dimension
+tgsi_default_declaration_dimension(void);
+
+struct tgsi_declaration_dimension
+tgsi_build_declaration_dimension(unsigned index_2d,
+                                 struct tgsi_declaration *declaration,
+                                 struct tgsi_header *header);
 
 struct tgsi_declaration_semantic
 tgsi_default_declaration_semantic( void );

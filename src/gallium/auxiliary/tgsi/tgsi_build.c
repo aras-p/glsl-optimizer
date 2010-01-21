@@ -103,6 +103,7 @@ tgsi_default_declaration( void )
    declaration.File = TGSI_FILE_NULL;
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
    declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+   declaration.Dimension = 0;
    declaration.Semantic = 0;
    declaration.Centroid = 0;
    declaration.Invariant = 0;
@@ -116,6 +117,7 @@ tgsi_build_declaration(
    unsigned file,
    unsigned usage_mask,
    unsigned interpolate,
+   unsigned dimension,
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
@@ -130,6 +132,7 @@ tgsi_build_declaration(
    declaration.File = file;
    declaration.UsageMask = usage_mask;
    declaration.Interpolate = interpolate;
+   declaration.Dimension = dimension;
    declaration.Semantic = semantic;
    declaration.Centroid = centroid;
    declaration.Invariant = invariant;
@@ -183,6 +186,7 @@ tgsi_build_full_declaration(
       full_decl->Declaration.File,
       full_decl->Declaration.UsageMask,
       full_decl->Declaration.Interpolate,
+      full_decl->Declaration.Dimension,
       full_decl->Declaration.Semantic,
       full_decl->Declaration.Centroid,
       full_decl->Declaration.Invariant,
@@ -198,6 +202,20 @@ tgsi_build_full_declaration(
       full_decl->Range.Last,
       declaration,
       header );
+
+   if (full_decl->Declaration.Dimension) {
+      struct tgsi_declaration_dimension *dd;
+
+      if (maxsize <= size) {
+         return 0;
+      }
+      dd = (struct tgsi_declaration_dimension *)&tokens[size];
+      size++;
+
+      *dd = tgsi_build_declaration_dimension(full_decl->Dim.Index2D,
+                                             declaration,
+                                             header);
+   }
 
    if( full_decl->Declaration.Semantic ) {
       struct tgsi_declaration_semantic *ds;
@@ -247,6 +265,34 @@ tgsi_build_declaration_range(
    declaration_grow( declaration, header );
 
    return declaration_range;
+}
+
+struct tgsi_declaration_dimension
+tgsi_default_declaration_dimension(void)
+{
+   struct tgsi_declaration_dimension dd;
+
+   dd.Index2D = 0;
+   dd.Padding = 0;
+
+   return dd;
+}
+
+struct tgsi_declaration_dimension
+tgsi_build_declaration_dimension(unsigned index_2d,
+                                 struct tgsi_declaration *declaration,
+                                 struct tgsi_header *header)
+{
+   struct tgsi_declaration_dimension dd;
+
+   assert(index_2d <= 0xFFFF);
+
+   dd = tgsi_default_declaration_dimension();
+   dd.Index2D = index_2d;
+
+   declaration_grow(declaration, header);
+
+   return dd;
 }
 
 struct tgsi_declaration_semantic
