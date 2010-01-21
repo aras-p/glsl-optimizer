@@ -594,6 +594,10 @@ intelInitContext(struct intel_context *intel,
    struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
 
+   /* we can't do anything without a connection to the device */
+   if (intelScreen->bufmgr == NULL)
+      return GL_FALSE;
+
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
                                  functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
