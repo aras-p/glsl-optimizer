@@ -32,7 +32,6 @@
 #include "mach64_context.h"
 #include "mach64_state.h"
 #include "mach64_lock.h"
-#include "mach64_tex.h"
 #include "drirenderbuffer.h"
 
 #if DEBUG_LOCKING

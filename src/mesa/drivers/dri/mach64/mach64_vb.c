@@ -42,7 +42,6 @@
 #include "mach64_vb.h"
 #include "mach64_ioctl.h"
 #include "mach64_tris.h"
-#include "mach64_state.h"
 
 
 #define MACH64_TEX1_BIT       0x1

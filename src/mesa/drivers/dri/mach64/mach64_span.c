@@ -31,7 +31,6 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_state.h"
 #include "mach64_span.h"
 
 #include "swrast/swrast.h"
