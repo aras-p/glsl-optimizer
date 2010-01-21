@@ -57,7 +57,8 @@ struct display_dispatch {
  */
 #ifdef GLX_INDIRECT_RENDERING
 
-#include "glapi/dispatch.h"
+#include "glapi/glapitable.h"
+#include "glapi/glapidispatch.h"
 
 #define KEYWORD1 PUBLIC
 

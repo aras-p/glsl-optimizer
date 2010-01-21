@@ -43,7 +43,6 @@ SERVER_OUTPUTS = \
 	$(GLX_DIR)/glapioffsets.h \
 	$(GLX_DIR)/glapidispatch.h \
 	$(GLX_DIR)/glprocs.h \
-	$(GLX_DIR)/dispatch.h \
 	$(SERVER_GLAPI_FILES)
 
 API_XML = gl_API.xml \

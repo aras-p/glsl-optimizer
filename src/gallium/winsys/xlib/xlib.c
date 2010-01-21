@@ -116,7 +116,8 @@ extern void (*linker_foo(const unsigned char *procName))()
 #define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "glapi/glapi.h"
-#include "glapi/dispatch.h"
+#include "glapi/glapitable.h"
+#include "glapi/glapidispatch.h"
 
 #if defined(USE_MGL_NAMESPACE)
 #define NAME(func)  mgl##func
