@@ -261,13 +261,6 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 
       if (y >= transfer->height)
 	 continue;
-      /* XXX: require tile-size aligned render target dimensions:
-       */
-      if (x + w > transfer->width)
-	 w -= x + w - transfer->width;
-
-      if (y + h > transfer->height)
-	 h -= y + h - transfer->height;
 
       assert(w >= 0);
       assert(h >= 0);
@@ -538,19 +531,6 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 
       if (y >= transfer->height)
 	 continue;
-
-      /* XXX: require tile-size aligned render target dimensions:
-       */
-      if (x + w > transfer->width)
-	 w -= x + w - transfer->width;
-
-      if (y + h > transfer->height)
-	 h -= y + h - transfer->height;
-
-      assert(w >= 0);
-      assert(h >= 0);
-      assert(w <= TILE_SIZE);
-      assert(h <= TILE_SIZE);
 
       LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
 	     thread_index, x, y, w, h);
