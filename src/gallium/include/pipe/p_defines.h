@@ -405,6 +405,8 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
 #define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
                                                  and fragment shaders combined */
+#define PIPE_CAP_INDEP_BLEND_ENABLE      32  /*< blend enables and write masks per rendertarget */
+#define PIPE_CAP_INDEP_BLEND_FUNC        33  /*< different blend funcs per rendertarget */
 
 
 /**
