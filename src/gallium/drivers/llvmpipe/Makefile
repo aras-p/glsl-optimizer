@@ -68,3 +68,8 @@ include ../../Makefile.template
 
 lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_access.py ../../auxiliary/util/u_format.csv
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
+
+
+# to make a .s file to inspect assembly code
+.c.s:
+	$(CC) -S $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $<
