@@ -60,7 +60,9 @@ vmw_pools_init(struct vmw_winsys_screen *vws)
 
    vws->pools.gmr_fenced = fenced_bufmgr_create(
       vws->pools.gmr_mm,
-      vmw_fence_ops_create(vws));
+      vmw_fence_ops_create(vws),
+      0,
+      0);
 
 #ifdef DEBUG
    vws->pools.gmr_fenced = pb_debug_manager_create(vws->pools.gmr_fenced,
