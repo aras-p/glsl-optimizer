@@ -496,10 +496,8 @@ svga_buffer_destroy( struct pipe_buffer *buf )
    
    assert(!sbuf->needs_flush);
 
-   if(sbuf->handle) {
-      SVGA_DBG(DEBUG_DMA, "release sid %p sz %d\n", sbuf->handle, sbuf->base.size);
-      svga_screen_surface_destroy(ss, &sbuf->key, &sbuf->handle);
-   }
+   if(sbuf->handle)
+      svga_buffer_destroy_host_surface(ss, sbuf);
    
    if(sbuf->hw.buf)
       svga_buffer_destroy_hw_storage(ss, sbuf);
