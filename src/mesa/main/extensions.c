@@ -50,7 +50,7 @@ static const struct {
    { OFF, "GL_ARB_depth_clamp",                F(ARB_depth_clamp) },
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_draw_elements_base_vertex",  F(ARB_draw_elements_base_vertex) },
-   { OFF, "GL_ARB_fragment_coord_conventions",    F(ARB_fragment_coord_conventions) },
+   { OFF, "GL_ARB_fragment_coord_conventions", F(ARB_fragment_coord_conventions) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_fragment_program_shadow",    F(ARB_fragment_program_shadow) },
    { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
