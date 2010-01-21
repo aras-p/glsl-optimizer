@@ -122,7 +122,9 @@ svga_vbuf_render_map_vertices( struct vbuf_render *render )
    char *ptr = (char*)pipe_buffer_map(screen,
                                       svga_render->vbuf,
                                       PIPE_BUFFER_USAGE_CPU_WRITE | 
-                                      PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
+                                      PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
+                                      PIPE_BUFFER_USAGE_DISCARD |
+                                      PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
    return ptr + svga_render->vbuf_offset;
 }
 
@@ -264,8 +266,8 @@ svga_vbuf_render_draw( struct vbuf_render *render,
       svga_render->ibuf_offset = 0;
    }
 
-   pipe_buffer_write(screen, svga_render->ibuf,
-                     svga_render->ibuf_offset, 2 * nr_indices, indices);
+   pipe_buffer_write_nooverlap(screen, svga_render->ibuf,
+                                 svga_render->ibuf_offset, 2 * nr_indices, indices);
 
 
    /* off to hardware */
