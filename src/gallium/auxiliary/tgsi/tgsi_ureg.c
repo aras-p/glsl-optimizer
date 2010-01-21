@@ -142,6 +142,8 @@ struct ureg_program
    unsigned property_gs_input_prim;
    unsigned property_gs_output_prim;
    unsigned property_gs_max_vertices;
+   unsigned char property_fs_coord_origin; /* = TGSI_FS_COORD_ORIGIN_* */
+   unsigned char property_fs_coord_pixel_center; /* = TGSI_FS_COORD_PIXEL_CENTER_* */
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -263,6 +265,20 @@ ureg_property_gs_max_vertices(struct ureg_program *ureg,
                               unsigned max_vertices)
 {
    ureg->property_gs_max_vertices = max_vertices;
+}
+
+void
+ureg_property_fs_coord_origin(struct ureg_program *ureg,
+                            unsigned fs_coord_origin)
+{
+   ureg->property_fs_coord_origin = fs_coord_origin;
+}
+
+void
+ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
+                            unsigned fs_coord_pixel_center)
+{
+   ureg->property_fs_coord_pixel_center = fs_coord_pixel_center;
 }
 
 
@@ -1200,6 +1216,22 @@ static void emit_decls( struct ureg_program *ureg )
       emit_property(ureg,
                     TGSI_PROPERTY_GS_MAX_VERTICES,
                     ureg->property_gs_max_vertices);
+   }
+
+   if (ureg->property_fs_coord_origin) {
+      assert(ureg->processor == TGSI_PROCESSOR_FRAGMENT);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_FS_COORD_ORIGIN,
+                    ureg->property_fs_coord_origin);
+   }
+
+   if (ureg->property_fs_coord_pixel_center) {
+      assert(ureg->processor == TGSI_PROCESSOR_FRAGMENT);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_FS_COORD_PIXEL_CENTER,
+                    ureg->property_fs_coord_pixel_center);
    }
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {

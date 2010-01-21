@@ -1129,7 +1129,9 @@ static const char *property_names[] =
 {
    "GS_INPUT_PRIMITIVE",
    "GS_OUTPUT_PRIMITIVE",
-   "GS_MAX_OUTPUT_VERTICES"
+   "GS_MAX_OUTPUT_VERTICES",
+   "FS_COORD_ORIGIN",
+   "FS_COORD_PIXEL_CENTER"
 };
 
 static const char *primitive_names[] =
@@ -1146,6 +1148,19 @@ static const char *primitive_names[] =
    "POLYGON"
 };
 
+static const char *fs_coord_origin_names[] =
+{
+   "UPPER_LEFT",
+   "LOWER_LEFT"
+};
+
+static const char *fs_coord_pixel_center_names[] =
+{
+   "HALF_INTEGER",
+   "INTEGER"
+};
+
+
 static boolean
 parse_primitive( const char **pcur, uint *primitive )
 {
@@ -1156,6 +1171,40 @@ parse_primitive( const char **pcur, uint *primitive )
 
       if (str_match_no_case( &cur, primitive_names[i])) {
          *primitive = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_origin( const char **pcur, uint *fs_coord_origin )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_origin_names) / sizeof(fs_coord_origin_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_origin_names[i])) {
+         *fs_coord_origin = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_pixel_center( const char **pcur, uint *fs_coord_pixel_center )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_pixel_center_names) / sizeof(fs_coord_pixel_center_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_pixel_center_names[i])) {
+         *fs_coord_pixel_center = i;
          *pcur = cur;
          return TRUE;
       }
@@ -1202,6 +1251,18 @@ static boolean parse_property( struct translate_ctx *ctx )
       if (property_name == TGSI_PROPERTY_GS_INPUT_PRIM &&
           ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
          ctx->implied_array_size = u_vertices_per_prim(values[0]);
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_ORIGIN:
+      if (!parse_fs_coord_origin(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord origin as property: must be UPPER_LEFT or LOWER_LEFT!" );
+         return FALSE;
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+      if (!parse_fs_coord_pixel_center(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord pixel center as property: must be HALF_INTEGER or INTEGER!" );
+         return FALSE;
       }
       break;
    default:

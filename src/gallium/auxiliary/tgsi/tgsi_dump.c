@@ -159,7 +159,9 @@ static const char *property_names[] =
 {
    "GS_INPUT_PRIMITIVE",
    "GS_OUTPUT_PRIMITIVE",
-   "GS_MAX_OUTPUT_VERTICES"
+   "GS_MAX_OUTPUT_VERTICES",
+   "FS_COORD_ORIGIN",
+   "FS_COORD_PIXEL_CENTER"
 };
 
 static const char *primitive_names[] =
@@ -174,6 +176,18 @@ static const char *primitive_names[] =
    "QUADS",
    "QUAD_STRIP",
    "POLYGON"
+};
+
+static const char *fs_coord_origin_names[] =
+{
+   "UPPER_LEFT",
+   "LOWER_LEFT"
+};
+
+static const char *fs_coord_pixel_center_names[] =
+{
+   "HALF_INTEGER",
+   "INTEGER"
 };
 
 
@@ -365,6 +379,12 @@ iter_property(
       case TGSI_PROPERTY_GS_INPUT_PRIM:
       case TGSI_PROPERTY_GS_OUTPUT_PRIM:
          ENM(prop->u[i].Data, primitive_names);
+         break;
+      case TGSI_PROPERTY_FS_COORD_ORIGIN:
+         ENM(prop->u[i].Data, fs_coord_origin_names);
+         break;
+      case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+         ENM(prop->u[i].Data, fs_coord_pixel_center_names);
          break;
       default:
          SID( prop->u[i].Data );
