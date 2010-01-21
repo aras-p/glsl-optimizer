@@ -391,8 +391,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
    pipe_mutex_init(svgascreen->tex_mutex);
    pipe_mutex_init(svgascreen->swc_mutex);
 
-   LIST_INITHEAD(&svgascreen->cached_buffers);
-   
    svga_screen_cache_init(svgascreen);
 
    return screen;

@@ -68,12 +68,6 @@ struct svga_screen
    pipe_mutex tex_mutex; 
    pipe_mutex swc_mutex; /* Protects the use of swc and dirty_buffers */
    
-   /** 
-    * List of buffers with cached GMR. Ordered from the most recently used to
-    * the least recently used 
-    */
-   struct list_head cached_buffers;
-   
    struct svga_host_surface_cache cache;
 };
 

@@ -113,11 +113,6 @@ svga_buffer_destroy_hw_storage(struct svga_screen *ss, struct svga_buffer *sbuf)
    if(sbuf->hw.buf) {
       sws->buffer_destroy(sws, sbuf->hw.buf);
       sbuf->hw.buf = NULL;
-      assert(sbuf->head.prev && sbuf->head.next);
-      LIST_DEL(&sbuf->head);
-#ifdef DEBUG
-      sbuf->head.next = sbuf->head.prev = NULL; 
-#endif
    }
 }
 
@@ -166,8 +161,6 @@ svga_buffer_create_hw_storage(struct svga_screen *ss,
          return PIPE_ERROR_OUT_OF_MEMORY;
       
       assert(!sbuf->needs_flush);
-      assert(!sbuf->head.prev && !sbuf->head.next);
-      LIST_ADD(&sbuf->head, &ss->cached_buffers);
    }
    
    return PIPE_OK;
@@ -288,9 +281,10 @@ svga_buffer_upload_flush(struct svga_context *svga,
 
    assert(sbuf->head.prev && sbuf->head.next);
    LIST_DEL(&sbuf->head);
+#ifdef DEBUG
+   sbuf->head.next = sbuf->head.prev = NULL; 
+#endif
    sbuf->needs_flush = FALSE;
-   /* XXX: do we care about cached_buffers any more ?*/
-   LIST_ADD(&sbuf->head, &ss->cached_buffers);
 
    sbuf->hw.svga = NULL;
    sbuf->hw.boxes = NULL;
@@ -417,17 +411,6 @@ svga_buffer_map_range( struct pipe_screen *screen,
             ss->swc->flush(ss->swc, &fence);
             sws->fence_finish(sws, fence, 0);
             sws->fence_reference(sws, &fence, NULL);
-         }
-      }
-      else {
-         if(!(usage & PIPE_BUFFER_USAGE_DISCARD) && !sbuf->needs_flush) {
-            /* We already had the hardware storage but we would have to issue
-             * a download if we hadn't, so move the buffer to the begginning
-             * of the LRU list.
-             */
-            assert(sbuf->head.prev && sbuf->head.next);
-            LIST_DEL(&sbuf->head);
-            LIST_ADD(&sbuf->head, &ss->cached_buffers);
          }
       }
          
@@ -699,8 +682,7 @@ svga_buffer_handle(struct svga_context *svga,
       assert(sbuf->hw.svga == svga);
 
       sbuf->needs_flush = TRUE;
-      assert(sbuf->head.prev && sbuf->head.next);
-      LIST_DEL(&sbuf->head);
+      assert(!sbuf->head.prev && !sbuf->head.next);
       LIST_ADDTAIL(&sbuf->head, &svga->dirty_buffers);
    }
 
