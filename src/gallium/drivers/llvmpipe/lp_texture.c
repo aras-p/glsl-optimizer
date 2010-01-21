@@ -40,9 +40,10 @@
 #include "util/u_memory.h"
 
 #include "lp_context.h"
+#include "lp_screen.h"
 #include "lp_state.h"
 #include "lp_texture.h"
-#include "lp_screen.h"
+#include "lp_tile_size.h"
 #include "lp_winsys.h"
 
 
@@ -67,8 +68,8 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       /* Allocate storage for whole quads. This is particularly important
        * for depth surfaces, which are currently stored in a swizzled format.
        */
-      nblocksx = util_format_get_nblocksx(pt->format, align(width, 2));
-      nblocksy = util_format_get_nblocksy(pt->format, align(height, 2));
+      nblocksx = util_format_get_nblocksx(pt->format, align(width, TILE_SIZE));
+      nblocksy = util_format_get_nblocksy(pt->format, align(height, TILE_SIZE));
 
       lpt->stride[level] = align(nblocksx * util_format_get_blocksize(pt->format), 16);
 
@@ -96,10 +97,15 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
 {
    struct llvmpipe_winsys *winsys = screen->winsys;
 
+   /* Round up the surface size to a multiple of the tile size to
+    * avoid tile clipping.
+    */
+   unsigned width = align(lpt->base.width0, TILE_SIZE);
+   unsigned height = align(lpt->base.height0, TILE_SIZE);
+
    lpt->dt = winsys->displaytarget_create(winsys,
                                           lpt->base.format,
-                                          lpt->base.width0,
-                                          lpt->base.height0,
+                                          width, height,
                                           16,
                                           &lpt->stride[0] );
 
@@ -299,8 +305,8 @@ llvmpipe_get_tex_transfer(struct pipe_screen *screen,
       pipe_texture_reference(&pt->texture, texture);
       pt->x = x;
       pt->y = y;
-      pt->width = w;
-      pt->height = h;
+      pt->width = align(w, TILE_SIZE);
+      pt->height = align(h, TILE_SIZE);
       pt->stride = lptex->stride[level];
       pt->usage = usage;
       pt->face = face;
