@@ -123,6 +123,8 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    case OPTION_FOG_LINEAR: program->FogOption = GL_LINEAR; break;
    default:                program->FogOption = GL_NONE;   break;
    }
+   program->OriginUpperLeft = state.option.OriginUpperLeft;
+   program->PixelCenterInteger = state.option.PixelCenterInteger;
 
    program->UsesKill            = state.fragment.UsesKill;
 
