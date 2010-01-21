@@ -274,7 +274,7 @@ struct pipe_sampler_state
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
-   unsigned prefilter:4;         /**< Wierd sampling state exposed by some api's */
+   unsigned prefilter:4;         /**< Cylindrical texcoord wrap, per coord, exposed by some api's */
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
    float border_color[4];
