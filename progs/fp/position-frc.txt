@@ -1,0 +1,6 @@
+!!ARBfp1.0
+# expected: brown triangle
+# black means the wrong pixel center convention is being used
+MOV result.color, {0}.x;
+FRC result.color.xy, fragment.position;
+END
