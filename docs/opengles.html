@@ -13,7 +13,8 @@ More informations about OpenGL ES can be found at
 <a href="http://www.khronos.org/opengles/">http://www.khronos.org/opengles/</a>.</p>
 
 <p>The OpenGL ES state trackers depends on the Gallium architecture and a
-working EGL implementation.</p>
+working EGL implementation.  Please refer to <a href="egl.html">Mesa EGL</a>
+for more information about EGL.</p>
 
 
 <h2>Build the Libraries</h2>
@@ -28,7 +29,6 @@ working EGL implementation.</p>
 <p>There are some demos in <code>progs/es1/</code> and <code>progs/es2/</code>.  You can use them to test your build.  For example,</p>
 
 <pre>
-  $ export EGL_DRIVER=/usr/local/lib/dri/egl_x11_i915.so # specify the EGL driver
   $ cd progs/es1/xegl
   $ make
   $ ./torus
