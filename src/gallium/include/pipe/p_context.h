@@ -271,30 +271,30 @@ struct pipe_context {
 
    /**
     * Check whether a texture is referenced by an unflushed hw command.
-    * The state-tracker uses this function to optimize away unnecessary
-    * flushes. It is safe (but wasteful) to always return.
+    * The state-tracker uses this function to avoid unnecessary flushes.
+    * It is safe (but wasteful) to always return
     * PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE.
-    * \param pipe  The pipe context whose unflushed hw commands will be
-    *              checked.
-    * \param level  mipmap level.
+    * \param pipe  context whose unflushed hw commands will be checked.
     * \param texture  texture to check.
     * \param face  cubemap face. Use 0 for non-cubemap texture.
+    * \param level  mipmap level.
+    * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
     */
-   unsigned int (*is_texture_referenced) (struct pipe_context *pipe,
-					  struct pipe_texture *texture,
-					  unsigned face, unsigned level);
+   unsigned int (*is_texture_referenced)(struct pipe_context *pipe,
+					 struct pipe_texture *texture,
+					 unsigned face, unsigned level);
 
    /**
     * Check whether a buffer is referenced by an unflushed hw command.
-    * The state-tracker uses this function to optimize away unnecessary
-    * flushes. It is safe (but wasteful) to always return
+    * The state-tracker uses this function to avoid unnecessary flushes.
+    * It is safe (but wasteful) to always return
     * PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE.
-    * \param pipe  The pipe context whose unflushed hw commands will be
-    *              checked.
-    * \param buf  Buffer to check.
+    * \param pipe  context whose unflushed hw commands will be checked.
+    * \param buf  buffer to check.
+    * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
     */
-   unsigned int (*is_buffer_referenced) (struct pipe_context *pipe,
-					 struct pipe_buffer *buf);
+   unsigned int (*is_buffer_referenced)(struct pipe_context *pipe,
+					struct pipe_buffer *buf);
 };
 
 
