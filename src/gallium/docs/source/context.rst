@@ -149,6 +149,42 @@ Queries can be created with ``create_query`` and deleted with
 use ``end_query`` to stop the query. Finally, ``get_query_result`` is used
 to retrieve the results.
 
+A common type of query is the occlusion query which counts the number of
+fragments/pixels which are written to the framebuffer (and not culled by
+Z/stencil/alpha testing or shader KILL instructions).
+
+
+Conditional Rendering
+^^^^^^^^^^^^^^^^^^^^^
+
+A drawing command can be skipped depending on the outcome of a query
+(typically an occlusion query).  The ``render_condition`` function specifies
+the query which should be checked prior to rendering anything.
+
+If ``render_condition`` is called with ``query`` = NULL, conditional
+rendering is disabled and drawing takes place normally.
+
+If ``render_condition`` is called with a non-null ``query`` subsequent
+drawing commands will be predicated on the outcome of the query.  If
+the query result is zero subsequent drawing commands will be skipped.
+
+If ``mode`` is PIPE_RENDER_COND_WAIT the driver will wait for the
+query to complete before deciding whether to render.
+
+If ``mode`` is PIPE_RENDER_COND_NO_WAIT and the query has not yet
+completed, the drawing command will be executed normally.  If the query
+has completed, drawing will be predicated on the outcome of the query.
+
+If ``mode`` is PIPE_RENDER_COND_BY_REGION_WAIT or
+PIPE_RENDER_COND_BY_REGION_NO_WAIT rendering will be predicated as above
+for the non-REGION modes but in the case that an occulusion query returns
+a non-zero result, regions which were occluded may be ommitted by subsequent
+drawing commands.  This can result in better performance with some GPUs.
+Normally, if the occlusion query returned a non-zero result subsequent
+drawing happens normally so fragments may be generated, shaded and
+processed even where they're known to be obscured.
+
+
 Flushing
 ^^^^^^^^
 
