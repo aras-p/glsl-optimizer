@@ -355,6 +355,8 @@ svga_buffer_upload_flush(struct svga_context *svga,
    sbuf->hw.svga = NULL;
    sbuf->hw.boxes = NULL;
 
+   sbuf->host_written = TRUE;
+
    /* Decrement reference count */
    pipe_buffer_reference((struct pipe_buffer **)&sbuf, NULL);
 }
@@ -436,17 +438,17 @@ svga_buffer_map_range( struct pipe_screen *screen,
    }
    else {
       if(!sbuf->hw.buf) {
-         struct svga_winsys_surface *handle = sbuf->handle;
-
          if(svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK)
             return NULL;
          
          /* Populate the hardware storage if the host surface pre-existed */
-         if((usage & PIPE_BUFFER_USAGE_CPU_READ) && handle) {
+         if(sbuf->host_written) {
             SVGA3dSurfaceDMAFlags flags;
             enum pipe_error ret;
             struct pipe_fence_handle *fence = NULL;
             
+            assert(sbuf->handle);
+
             SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p (buffer), bytes %u - %u\n", 
                      sbuf->handle, 0, sbuf->base.size);
 
@@ -478,7 +480,7 @@ svga_buffer_map_range( struct pipe_screen *screen,
          }
       }
       else {
-         if((usage & PIPE_BUFFER_USAGE_CPU_READ) && !sbuf->needs_flush) {
+         if(!(usage & PIPE_BUFFER_USAGE_DISCARD) && !sbuf->needs_flush) {
             /* We already had the hardware storage but we would have to issue
              * a download if we hadn't, so move the buffer to the begginning
              * of the LRU list.
