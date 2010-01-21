@@ -30,7 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "tgsi/tgsi_exec.h" /* for NUM_CHANNELS */
-
+#include "lp_tile_size.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,22 +40,15 @@ extern "C" {
 struct pipe_transfer;
 
 
-/**
- * Cache tile size (width and height). This needs to be a power of two.
- */
-#define TILE_ORDER 6
-#define TILE_SIZE (1 << TILE_ORDER)
-
-
 #define TILE_VECTOR_HEIGHT 4
 #define TILE_VECTOR_WIDTH 4
 
 extern const unsigned char
 tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 
-#define TILE_C_STRIDE (TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH)
-#define TILE_X_STRIDE (NUM_CHANNELS * TILE_C_STRIDE)
-#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS)
+#define TILE_C_STRIDE (TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH) //16
+#define TILE_X_STRIDE (NUM_CHANNELS * TILE_C_STRIDE) //64
+#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS) //1024
 
 #define TILE_PIXEL(_p, _x, _y, _c) \
    ((_p)[((_y) / TILE_VECTOR_HEIGHT) * TILE_Y_STRIDE + \
