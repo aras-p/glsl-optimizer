@@ -29,7 +29,6 @@
 #include "util/u_memory.h"
 
 #include "svga_tgsi_emit.h"
-#include "svga_context.h"
 
 static boolean translate_vs_ps_semantic( struct tgsi_declaration_semantic semantic,
                                          unsigned *usage,

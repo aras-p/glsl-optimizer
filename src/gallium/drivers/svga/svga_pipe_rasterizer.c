@@ -30,7 +30,6 @@
 #include "util/u_memory.h"
 
 #include "svga_context.h"
-#include "svga_state.h"
 
 #include "svga_hw_reg.h"
 

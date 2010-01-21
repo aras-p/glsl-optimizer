@@ -24,7 +24,6 @@
  **********************************************************/
 
 #include "pipe/p_inlines.h"
-#include "util/u_prim.h"
 #include "util/u_upload_mgr.h"
 #include "indices/u_indices.h"
 

@@ -33,7 +33,6 @@
 #include "svga_hw_reg.h"
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_winsys.h"
 #include "svga_draw.h"
 #include "svga_state.h"
 #include "svga_swtnl.h"

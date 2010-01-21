@@ -31,7 +31,6 @@
 #include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_simple_shaders.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
