@@ -35,7 +35,6 @@
 
 #include "lp_context.h"
 #include "lp_quad.h"
-#include "lp_surface.h"
 #include "lp_texture.h"
 #include "lp_tex_sample.h"
 #include "lp_tex_cache.h"

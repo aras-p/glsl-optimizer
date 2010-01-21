@@ -47,13 +47,11 @@
 #include "tgsi/tgsi_exec.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
-#include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_tgsi.h"
-#include "lp_bld_debug.h"
 
 
 #define LP_MAX_TEMPS 256

@@ -37,7 +37,6 @@
 #include "util/u_tile.h"
 #include "util/u_format.h"
 #include "lp_context.h"
-#include "lp_surface.h"
 #include "lp_texture.h"
 #include "lp_tex_cache.h"
 
