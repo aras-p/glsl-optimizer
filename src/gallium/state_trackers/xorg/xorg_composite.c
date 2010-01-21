@@ -4,10 +4,7 @@
 #include "xorg_exa_tgsi.h"
 
 #include "cso_cache/cso_context.h"
-#include "util/u_draw_quad.h"
-#include "util/u_math.h"
 
-#include "pipe/p_inlines.h"
 
 /*XXX also in Xrender.h but the including it here breaks compilition */
 #define XFixedToDouble(f)    (((double) (f)) / 65536.)

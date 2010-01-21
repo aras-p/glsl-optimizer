@@ -45,7 +45,6 @@
 #include "miscstruct.h"
 #include "dixstruct.h"
 #include "xf86xv.h"
-#include <X11/extensions/Xv.h>
 #ifndef XSERVER_LIBPCIACCESS
 #error "libpciaccess needed"
 #endif
