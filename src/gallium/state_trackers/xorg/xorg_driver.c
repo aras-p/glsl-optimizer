@@ -110,6 +110,28 @@ xorg_tracker_set_functions(ScrnInfoPtr scrn)
     scrn->ValidMode = drv_valid_mode;
 }
 
+Bool
+xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
+{
+    char *BusID = xalloc(64);
+    sprintf(BusID, "pci:%04x:%02x:%02x.%d",
+	    device->domain, device->bus,
+	    device->dev, device->func);
+
+    if (drmCheckModesettingSupported(BusID)) {
+	xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
+		       "Drm modesetting not supported %s\n", BusID);
+	xfree(BusID);
+	return FALSE;
+    }
+
+    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
+		   "Drm modesetting supported on %s\n", BusID);
+
+    xfree(BusID);
+    return TRUE;
+}
+
 
 /*
  * Internal function definitions
