@@ -26,6 +26,8 @@
 /* Target engine speed: */
 const int RPM = 100.0;
 
+static int Win = 0;
+
 
 /**
  * Engine description.
@@ -1154,6 +1156,7 @@ OptRotate(void)
 static void
 OptExit(void)
 {
+   glutDestroyWindow(Win);
    exit(0);
 }
 
@@ -1323,7 +1326,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(WinWidth, WinHeight);
    glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-   glutCreateWindow("OpenGL Engine Demo");
+   Win = glutCreateWindow("OpenGL Engine Demo");
    glewInit();
    glutReshapeFunc(Reshape);
    glutMouseFunc(Mouse);
