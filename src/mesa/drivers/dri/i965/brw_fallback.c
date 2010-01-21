@@ -41,8 +41,6 @@
 #include "intel_fbo.h"
 #include "intel_regions.h"
 
-#include "glapi/glapi.h"
-
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 
 static GLboolean do_check_fallback(struct brw_context *brw)

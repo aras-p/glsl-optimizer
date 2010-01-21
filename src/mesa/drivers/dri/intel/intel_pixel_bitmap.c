@@ -46,7 +46,6 @@
 #include "main/enable.h"
 #include "main/viewport.h"
 #include "shader/arbprogram.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"

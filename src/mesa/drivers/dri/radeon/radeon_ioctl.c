@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/shaders.h"
 #include "main/texstate.h"
 #include "main/varray.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 #include "main/stencil.h"
 #include "main/matrix.h"

@@ -25,8 +25,6 @@
  * 
  **************************************************************************/
 
-#include "glapi/glapi.h"
-
 #include "i830_context.h"
 #include "i830_reg.h"
 #include "intel_batchbuffer.h"

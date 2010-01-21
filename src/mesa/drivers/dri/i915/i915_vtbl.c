@@ -46,8 +46,6 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 
-#include "glapi/glapi.h"
-
 static void
 i915_render_prevalidate(struct intel_context *intel)
 {

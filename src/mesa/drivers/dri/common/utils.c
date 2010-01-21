@@ -34,7 +34,6 @@
 #include "main/mtypes.h"
 #include "main/cpuinfo.h"
 #include "main/extensions.h"
-#include "glapi/dispatch.h"
 #include "utils.h"
 
 
