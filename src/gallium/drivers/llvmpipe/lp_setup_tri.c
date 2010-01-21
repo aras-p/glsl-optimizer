@@ -362,31 +362,44 @@ do_triangle_ccw(struct setup_context *setup,
    tri->ei2 = tri->dx23 - tri->dy23 - tri->eo2;
    tri->ei3 = tri->dx31 - tri->dy31 - tri->eo3;
 
+   /* Fill in the inputs.step[][] arrays.
+    * We've manually unrolled some loops here.
+    */
    {
       const int xstep1 = -tri->dy12;
       const int xstep2 = -tri->dy23;
       const int xstep3 = -tri->dy31;
-
       const int ystep1 = tri->dx12;
       const int ystep2 = tri->dx23;
       const int ystep3 = tri->dx31;
-      
-      int qx, qy, ix, iy;
-      int i = 0;
 
-      for (qy = 0; qy < 2; qy++) {
-         for (qx = 0; qx < 2; qx++) {
-            for (iy = 0; iy < 2; iy++) {
-               for (ix = 0; ix < 2; ix++, i++) {
-                  int x = qx * 2 + ix;
-                  int y = qy * 2 + iy;
-                  tri->inputs.step[0][i] = x * xstep1 + y * ystep1;
-                  tri->inputs.step[1][i] = x * xstep2 + y * ystep2;
-                  tri->inputs.step[2][i] = x * xstep3 + y * ystep3;
-               }
-            }
-         }
-      }
+#define SETUP_STEP(i, x, y)                                \
+      do {                                                 \
+         tri->inputs.step[0][i] = x * xstep1 + y * ystep1; \
+         tri->inputs.step[1][i] = x * xstep2 + y * ystep2; \
+         tri->inputs.step[2][i] = x * xstep3 + y * ystep3; \
+      } while (0)
+
+      SETUP_STEP(0, 0, 0);
+      SETUP_STEP(1, 1, 0);
+      SETUP_STEP(2, 0, 1);
+      SETUP_STEP(3, 1, 1);
+
+      SETUP_STEP(4, 2, 0);
+      SETUP_STEP(5, 3, 0);
+      SETUP_STEP(6, 2, 1);
+      SETUP_STEP(7, 3, 1);
+
+      SETUP_STEP(8, 0, 2);
+      SETUP_STEP(9, 1, 2);
+      SETUP_STEP(10, 0, 3);
+      SETUP_STEP(11, 1, 3);
+
+      SETUP_STEP(12, 2, 2);
+      SETUP_STEP(13, 3, 2);
+      SETUP_STEP(14, 2, 3);
+      SETUP_STEP(15, 3, 3);
+#undef STEP
    }
 
    /*
