@@ -34,10 +34,10 @@
 #include "vmw_hook.h"
 
 static void vmw_xorg_identify(int flags);
-static Bool vmw_xorg_pci_probe(DriverPtr driver,
-			       int entity_num,
-			       struct pci_device *device,
-			       intptr_t match_data);
+_X_EXPORT Bool vmw_xorg_pci_probe(DriverPtr driver,
+				  int entity_num,
+				  struct pci_device *device,
+				  intptr_t match_data);
 
 static const struct pci_id_match vmw_xorg_device_match[] = {
     {0x15ad, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
@@ -126,7 +126,7 @@ vmw_xorg_identify(int flags)
 		      vmw_xorg_chipsets);
 }
 
-static Bool
+_X_EXPORT Bool
 vmw_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
