@@ -26,6 +26,7 @@
 # 
 ##########################################################################
 
+import struct
 
 from gallium import *
 
@@ -146,6 +147,42 @@ def test(dev, name):
     fs = Shader(file('frag-' + name + '.sh', 'rt').read())
     ctx.set_fragment_shader(fs)
 
+    constbuf0 = dev.buffer_create(16,
+                                  (PIPE_BUFFER_USAGE_CONSTANT |
+                                   PIPE_BUFFER_USAGE_GPU_READ |
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+                                  4 * 4 * 4)
+
+    cbdata = ''
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+
+    constbuf0.write(cbdata, 0)
+
+    ctx.set_constant_buffer(PIPE_SHADER_FRAGMENT,
+                            0,
+                            constbuf0)
+
+    constbuf1 = dev.buffer_create(64,
+                                  (PIPE_BUFFER_USAGE_CONSTANT |
+                                   PIPE_BUFFER_USAGE_GPU_READ |
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+                                  4 * 4 * 4)
+
+    cbdata = ''
+    cbdata += struct.pack('4f', 0.1, 0.1, 0.1, 0.1)
+    cbdata += struct.pack('4f', 0.25, 0.25, 0.25, 0.25)
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+    cbdata += struct.pack('4f', 0.75, 0.75, 0.75, 0.75)
+
+    constbuf1.write(cbdata, 0)
+
+    ctx.set_constant_buffer(PIPE_SHADER_FRAGMENT,
+                            1,
+                            constbuf1)
+
     xy = [
         -0.8, -0.8,
          0.8, -0.8,
@@ -184,6 +221,7 @@ def main():
     tests = [
         'abs',
         'add',
+        'cb-2d',
         'dp3',
         'dp4',
         'dst',
