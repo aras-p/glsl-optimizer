@@ -181,7 +181,7 @@ static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_
 		 * we have separate register for 1'st level offset so add
 		 * 2 image alignment after 1'st mip level */
 		if(rmesa->radeonScreen->chip_family >= CHIP_FAMILY_R600 &&
-		   level >= 1)
+		   mt->target == GL_TEXTURE_CUBE_MAP && level >= 1)
 			curOffset += 2 * mt->levels[level].size;
 	}
 
