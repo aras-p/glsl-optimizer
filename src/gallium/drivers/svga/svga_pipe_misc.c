@@ -27,12 +27,6 @@
 
 #include "svga_context.h"
 #include "svga_screen_texture.h"
-#include "svga_state.h"
-#include "svga_winsys.h"
-
-#include "svga_hw_reg.h"
-
-
 
 
 static void svga_set_scissor_state( struct pipe_context *pipe,

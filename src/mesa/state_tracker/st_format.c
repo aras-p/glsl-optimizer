@@ -35,7 +35,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/texstore.h"
-#include "main/texformat.h"
 #include "main/enums.h"
 #include "main/macros.h"
 
@@ -288,6 +287,8 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat)
       return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return MESA_FORMAT_ARGB8888_REV;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return MESA_FORMAT_XRGB8888_REV;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MESA_FORMAT_ARGB1555;
    case PIPE_FORMAT_A4R4G4B4_UNORM:

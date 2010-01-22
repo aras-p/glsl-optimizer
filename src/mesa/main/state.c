@@ -48,7 +48,6 @@
 #include "texenvprogram.h"
 #include "texobj.h"
 #include "texstate.h"
-#include "viewport.h"
 
 
 static void

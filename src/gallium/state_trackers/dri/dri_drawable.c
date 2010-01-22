@@ -123,11 +123,12 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_surface *surface = NULL;
-   struct pipe_screen *screen = dri_screen(drawable->sPriv)->pipe_screen;
+   struct dri_screen *st_screen = dri_screen(drawable->sPriv);
+   struct pipe_screen *screen = st_screen->pipe_screen;
    __DRIbuffer *buffers = NULL;
    __DRIscreen *dri_screen = drawable->sPriv;
    __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct drm_api *api = ((struct dri_screen*)(dri_screen->private))->api;
+   struct drm_api *api = st_screen->api;
    boolean have_depth = FALSE;
    int i, count;
 
@@ -180,7 +181,9 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 continue;
+	 if (!st_screen->auto_fake_front)
+	    continue;
+	 /* fallthrough */
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
 	 format = drawable->color_format;
@@ -373,8 +376,8 @@ dri_create_buffer(__DRIscreen * sPriv,
    /* TODO incase of double buffer visual, delay fake creation */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
-
+   if (!screen->auto_fake_front)
+      drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
    if (visual->doubleBufferMode)
       drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
    if (visual->depthBits && visual->stencilBits)

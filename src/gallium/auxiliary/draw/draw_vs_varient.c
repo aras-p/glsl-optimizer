@@ -38,7 +38,6 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_vs.h"
 #include "translate/translate.h"
-#include "translate/translate_cache.h"
 
 /* A first pass at incorporating vertex fetch/emit functionality into 
  */

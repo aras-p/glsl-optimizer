@@ -45,7 +45,6 @@
 #include "miscstruct.h"
 #include "dixstruct.h"
 #include "xf86xv.h"
-#include <X11/extensions/Xv.h>
 #ifndef XSERVER_LIBPCIACCESS
 #error "libpciaccess needed"
 #endif
@@ -206,11 +205,36 @@ drv_init_drm(ScrnInfoPtr pScrn)
 		ms->PciInfo->dev, ms->PciInfo->func
 	    );
 
-	ms->fd = drmOpen(NULL, BusID);
 
-	if (ms->fd < 0)
-	    return FALSE;
+	ms->api = drm_api_create();
+	ms->fd = drmOpen(ms->api ? ms->api->driver_name : NULL, BusID);
+	xfree(BusID);
+
+	if (ms->fd >= 0)
+	    return TRUE;
+
+	if (ms->api && ms->api->destroy)
+	    ms->api->destroy(ms->api);
+
+	ms->api = NULL;
+
+	return FALSE;
     }
+
+    return TRUE;
+}
+
+static Bool
+drv_close_drm(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (ms->api && ms->api->destroy)
+	ms->api->destroy(ms->api);
+    ms->api = NULL;
+
+    drmClose(ms->fd);
+    ms->fd = -1;
 
     return TRUE;
 }
@@ -229,7 +253,6 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     if (ms->screen || ms->kms)
 	return TRUE;
 
-    ms->api = drm_api_create();
     if (ms->api) {
 	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
 
@@ -268,10 +291,6 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 	ms->screen->destroy(ms->screen);
     }
     ms->screen = NULL;
-
-    if (ms->api && ms->api->destroy)
-	ms->api->destroy(ms->api);
-    ms->api = NULL;
 
 #ifdef HAVE_LIBKMS
     if (ms->kms)
@@ -823,8 +842,7 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 
     drv_close_resource_management(pScrn);
 
-    drmClose(ms->fd);
-    ms->fd = -1;
+    drv_close_drm(pScrn);
 
     pScrn->vtSema = FALSE;
     pScreen->CloseScreen = ms->CloseScreen;

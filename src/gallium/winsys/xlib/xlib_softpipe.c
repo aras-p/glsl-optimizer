@@ -204,6 +204,14 @@ xm_buffer_destroy(struct pipe_buffer *buf)
 {
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
+   /*
+    * Note oldBuf->data may point to one of three things:
+    * 1. XShm shared memory image data
+    * 2. User-provided (wrapped) memory, see xm_user_buffer_create()
+    * 3. Regular, malloc'd memory
+    * We need to be careful with freeing that data now.
+    */
+
    if (oldBuf->data) {
 #ifdef USE_XSHM
       if (oldBuf->shminfo.shmid >= 0) {
@@ -213,12 +221,19 @@ xm_buffer_destroy(struct pipe_buffer *buf)
          oldBuf->shminfo.shmid = -1;
          oldBuf->shminfo.shmaddr = (char *) -1;
       }
-      else
-#endif
-      {
-         if (!oldBuf->userBuffer) {
-            align_free(oldBuf->data);
+
+      if (oldBuf->tempImage) {
+         if (oldBuf->data == oldBuf->tempImage->data) {
+            /* oldBuf->data points at the xshm memory which we'll now free */
+            oldBuf->data = NULL;
          }
+         XDestroyImage(oldBuf->tempImage);
+      }
+#endif
+
+      if (oldBuf->data && !oldBuf->userBuffer) {
+         /* this was regular malloc'd memory */
+         align_free(oldBuf->data);
       }
 
       oldBuf->data = NULL;

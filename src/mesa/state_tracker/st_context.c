@@ -27,11 +27,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/extensions.h"
-#include "main/matrix.h"
-#include "main/buffers.h"
-#include "main/scissor.h"
-#include "main/viewport.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
@@ -69,7 +64,6 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "draw/draw_context.h"
-#include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
 
 

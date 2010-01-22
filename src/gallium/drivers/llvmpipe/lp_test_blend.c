@@ -38,7 +38,6 @@
 
 
 #include "lp_bld_type.h"
-#include "lp_bld_arit.h"
 #include "lp_bld_blend.h"
 #include "lp_bld_debug.h"
 #include "lp_test.h"

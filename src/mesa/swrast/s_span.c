@@ -1316,6 +1316,13 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
    ASSERT(span->end <= MAX_WIDTH);
 
+   /* Depth bounds test */
+   if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {
+      if (!_swrast_depth_bounds_test(ctx, span)) {
+         return;
+      }
+   }
+
 #ifdef DEBUG
    /* Make sure all fragments are within window bounds */
    if (span->arrayMask & SPAN_XY) {

@@ -30,7 +30,6 @@
 
 
 #include "draw/draw_context.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -38,7 +37,6 @@
 
 #include "i915_context.h"
 #include "i915_reg.h"
-#include "i915_state.h"
 #include "i915_state_inlines.h"
 #include "i915_fpc.h"
 

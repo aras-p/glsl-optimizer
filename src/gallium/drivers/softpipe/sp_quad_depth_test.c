@@ -30,11 +30,11 @@
  */
 
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_scan.h"
 #include "sp_context.h"
 #include "sp_quad.h"
-#include "sp_surface.h"
 #include "sp_quad_pipe.h"
 #include "sp_tile_cache.h"
 #include "sp_state.h"           /* for sp_fragment_shader */
@@ -651,6 +651,20 @@ static unsigned mask_count[16] =
 
 
 
+/** helper to get number of Z buffer bits */
+static unsigned
+get_depth_bits(struct quad_stage *qs)
+{
+   struct pipe_surface *zsurf = qs->softpipe->framebuffer.zsbuf;
+   if (zsurf)
+      return util_format_get_component_bits(zsurf->format,
+                                            UTIL_FORMAT_COLORSPACE_ZS, 0);
+   else
+      return 0;
+}
+
+
+
 static void
 depth_test_quads_fallback(struct quad_stage *qs, 
                           struct quad_header *quads[],
@@ -666,7 +680,7 @@ depth_test_quads_fallback(struct quad_stage *qs,
       nr = alpha_test_quads(qs, quads, nr);
    }
 
-   if (qs->softpipe->framebuffer.zsbuf && 
+   if (get_depth_bits(qs) > 0 &&
        (qs->softpipe->depth_stencil->depth.enabled ||
         qs->softpipe->depth_stencil->stencil[0].enabled)) {
 
@@ -884,7 +898,7 @@ choose_depth_test(struct quad_stage *qs,
 
    boolean alpha = qs->softpipe->depth_stencil->alpha.enabled;
 
-   boolean depth = (qs->softpipe->framebuffer.zsbuf && 
+   boolean depth = (get_depth_bits(qs) > 0 &&
                     qs->softpipe->depth_stencil->depth.enabled);
 
    unsigned depthfunc = qs->softpipe->depth_stencil->depth.func;
@@ -894,7 +908,6 @@ choose_depth_test(struct quad_stage *qs,
    boolean depthwrite = qs->softpipe->depth_stencil->depth.writemask;
 
    boolean occlusion = qs->softpipe->active_query_count;
-
 
    if (!alpha &&
        !depth &&

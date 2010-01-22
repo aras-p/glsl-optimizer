@@ -270,6 +270,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
 
 struct drm_api drm_api_hooks = {
     .name = "radeon",
+    .driver_name = "radeon",
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
     .texture_from_shared_handle = radeon_texture_from_shared_handle,

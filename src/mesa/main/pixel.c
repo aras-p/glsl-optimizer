@@ -32,7 +32,6 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
-#include "image.h"
 #include "macros.h"
 #include "pixel.h"
 #include "mtypes.h"

@@ -11,7 +11,6 @@
 #include "cso_cache/cso_context.h"
 
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
 
 #include "util/u_format.h"
 

@@ -27,14 +27,11 @@
 
 #include "main/glheader.h"
 #include "st_context.h"
-#include "st_public.h"
 #include "st_cb_viewport.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 
 static void st_viewport(GLcontext * ctx, GLint x, GLint y,

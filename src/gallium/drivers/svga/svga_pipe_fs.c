@@ -32,11 +32,9 @@
 
 #include "svga_screen.h"
 #include "svga_context.h"
-#include "svga_state.h"
 #include "svga_tgsi.h"
 #include "svga_hw_reg.h"
 #include "svga_cmd.h"
-#include "svga_draw.h"
 #include "svga_debug.h"
 
 

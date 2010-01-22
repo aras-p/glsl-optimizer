@@ -32,10 +32,6 @@
 #include "svga_screen.h"
 #include "svga_screen_buffer.h"
 #include "svga_context.h"
-#include "svga_state.h"
-#include "svga_winsys.h"
-
-#include "svga_hw_reg.h"
 
 
 static void svga_set_vertex_buffers(struct pipe_context *pipe,

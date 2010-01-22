@@ -24,7 +24,6 @@
  */
 
 #include "main/imports.h"
-#include "main/context.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 

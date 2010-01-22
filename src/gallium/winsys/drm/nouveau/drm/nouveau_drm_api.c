@@ -255,6 +255,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 
 struct drm_api drm_api_hooks = {
 	.name = "nouveau",
+	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,

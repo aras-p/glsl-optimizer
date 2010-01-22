@@ -41,7 +41,6 @@
 
 #include "i915_context.h"
 #include "i915_texture.h"
-#include "i915_debug.h"
 #include "i915_screen.h"
 #include "intel_winsys.h"
 

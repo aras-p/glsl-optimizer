@@ -62,7 +62,6 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_debug_dump.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_dump.h"
@@ -85,7 +84,6 @@
 #include "lp_context.h"
 #include "lp_buffer.h"
 #include "lp_state.h"
-#include "lp_quad.h"
 #include "lp_tex_sample.h"
 #include "lp_debug.h"
 

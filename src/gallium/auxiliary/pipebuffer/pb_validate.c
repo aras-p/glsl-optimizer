@@ -39,7 +39,6 @@
 #include "util/u_debug.h"
 
 #include "pb_buffer.h"
-#include "pb_buffer_fenced.h"
 #include "pb_validate.h"
 
 

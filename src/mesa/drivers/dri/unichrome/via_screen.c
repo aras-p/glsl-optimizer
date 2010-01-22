@@ -30,17 +30,13 @@
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
-#include "main/matrix.h"
 #include "main/simple_list.h"
 #include "vblank.h"
 
 #include "via_state.h"
 #include "via_tex.h"
 #include "via_span.h"
-#include "via_tris.h"
-#include "via_ioctl.h"
 #include "via_screen.h"
-#include "via_fb.h"
 #include "via_dri.h"
 
 #include "GL/internal/dri_interface.h"

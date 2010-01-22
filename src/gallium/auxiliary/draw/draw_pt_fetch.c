@@ -30,7 +30,6 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"
-#include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"

@@ -38,7 +38,6 @@
 #include "util/u_memory.h"
 
 #include "sp_context.h"
-#include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_screen.h"
 #include "sp_winsys.h"

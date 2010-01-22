@@ -33,8 +33,6 @@
 #include "svga_state.h"
 #include "svga_cmd.h"
 
-#include "svga_hw_reg.h"
-
 
 void svga_cleanup_tss_binding(struct svga_context *svga)
 {

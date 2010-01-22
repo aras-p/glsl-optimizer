@@ -45,8 +45,6 @@
 #include "sp_state.h"
 #include "sp_quad.h"
 #include "sp_quad_pipe.h"
-#include "sp_texture.h"
-#include "sp_tex_sample.h"
 
 
 struct quad_shade_stage

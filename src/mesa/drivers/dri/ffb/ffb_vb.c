@@ -30,8 +30,6 @@
 #include "ffb_vb.h"
 #include "main/imports.h"
 #include "tnl/t_context.h"
-#include "swrast_setup/swrast_setup.h"
-#include "math/m_translate.h"
 
 #undef VB_DEBUG
 

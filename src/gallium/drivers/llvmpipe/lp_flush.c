@@ -37,8 +37,6 @@
 #include "lp_surface.h"
 #include "lp_state.h"
 #include "lp_tile_cache.h"
-#include "lp_tex_cache.h"
-#include "lp_winsys.h"
 
 
 void

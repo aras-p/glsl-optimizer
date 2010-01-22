@@ -263,7 +263,7 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
    map[ZERO] = ZERO;
    map[ONE] = ONE;   
 
-/*
+#if 0
    _mesa_printf("from %x/%s to %x/%s map %d %d %d %d %d %d\n",
 		inFormat, _mesa_lookup_enum_by_nr(inFormat),
 		outFormat, _mesa_lookup_enum_by_nr(outFormat),
@@ -273,7 +273,7 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
 		map[3], 
 		map[4], 
 		map[5]); 
-*/
+#endif
 }
 
 

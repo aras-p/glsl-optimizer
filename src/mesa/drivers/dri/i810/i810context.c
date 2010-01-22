@@ -34,10 +34,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/matrix.h"
 #include "main/simple_list.h"
-#include "main/extensions.h"
-#include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/points.h"
 

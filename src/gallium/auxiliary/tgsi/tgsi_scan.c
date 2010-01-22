@@ -101,12 +101,10 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
                      const int ind = src->Register.Index;
                      if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        if (src->Register.SwizzleX == TGSI_SWIZZLE_X) {
-                           info->uses_fogcoord = TRUE;
-                        }
-                        else if (src->Register.SwizzleX == TGSI_SWIZZLE_Y) {
-                           info->uses_frontfacing = TRUE;
-                        }
+                        info->uses_fogcoord = TRUE;
+                     }
+                     else if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FACE) {
+                        info->uses_frontfacing = TRUE;
                      }
                   }
                }

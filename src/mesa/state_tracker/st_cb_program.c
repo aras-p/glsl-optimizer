@@ -36,7 +36,6 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
-#include "shader/programopt.h"
 #include "shader/shader_api.h"
 
 #include "cso_cache/cso_context.h"

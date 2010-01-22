@@ -306,11 +306,19 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.numFaces = 1;
    }
 
+   tex->key.cachable = 1;
+
    if(templat->tex_usage & PIPE_TEXTURE_USAGE_SAMPLER)
       tex->key.flags |= SVGA3D_SURFACE_HINT_TEXTURE;
 
-   if(templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      tex->key.cachable = 0;
+   }
+
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) {
       tex->key.flags |= SVGA3D_SURFACE_HINT_SCANOUT;
+      tex->key.cachable = 0;
+   }
    
    /* 
     * XXX: Never pass the SVGA3D_SURFACE_HINT_RENDERTARGET hint. Mesa cannot
@@ -333,8 +341,6 @@ svga_texture_create(struct pipe_screen *screen,
    if(tex->key.format == SVGA3D_FORMAT_INVALID)
       goto error2;
 
-   tex->key.cachable = 1;
-   
    SVGA_DBG(DEBUG_DMA, "surface_create for texture\n", tex->handle);
    tex->handle = svga_screen_surface_create(svgascreen, &tex->key);
    if (tex->handle)
@@ -411,6 +417,62 @@ svga_texture_blanket(struct pipe_screen * screen,
    assert(sbuf->key.cachable == 0);
    tex->key.cachable = 0;
    sws->surface_reference(sws, &tex->handle, sbuf->handle);
+
+   return &tex->base;
+}
+
+
+struct pipe_texture *
+svga_screen_texture_wrap_surface(struct pipe_screen *screen,
+				 struct pipe_texture *base,
+				 enum SVGA3dSurfaceFormat format,
+				 struct svga_winsys_surface *srf)
+{
+   struct svga_texture *tex;
+   assert(screen);
+
+   /* Only supports one type */
+   if (base->target != PIPE_TEXTURE_2D ||
+       base->last_level != 0 ||
+       base->depth0 != 1) {
+      return NULL;
+   }
+
+   if (!srf)
+      return NULL;
+
+   if (svga_translate_format(base->format) != format) {
+      unsigned f1 = svga_translate_format(base->format);
+      unsigned f2 = format;
+
+      /* It's okay for XRGB and ARGB or depth with/out stencil to get mixed up */
+      if ( !( (f1 == SVGA3D_X8R8G8B8 && f2 == SVGA3D_A8R8G8B8) ||
+              (f1 == SVGA3D_A8R8G8B8 && f2 == SVGA3D_X8R8G8B8) ||
+              (f1 == SVGA3D_Z_D24X8 && f2 == SVGA3D_Z_D24S8) ) ) {
+         debug_printf("%s wrong format %u != %u\n", __FUNCTION__, f1, f2);
+         return NULL;
+      }
+   }
+
+   tex = CALLOC_STRUCT(svga_texture);
+   if (!tex)
+      return NULL;
+
+   tex->base = *base;
+   
+
+   if (format == 1)
+      tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   else if (format == 2)
+      tex->base.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+   pipe_reference_init(&tex->base.reference, 1);
+   tex->base.screen = screen;
+
+   SVGA_DBG(DEBUG_DMA, "wrap surface sid %p\n", srf);
+
+   tex->key.cachable = 0;
+   tex->handle = srf;
 
    return &tex->base;
 }

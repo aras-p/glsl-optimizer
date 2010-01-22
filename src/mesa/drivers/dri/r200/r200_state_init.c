@@ -698,7 +698,8 @@ static void tex_emit_mm(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->check(ctx, atom);
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   if (!r200->state.texture.unit[i].unitneeded)
+
+   if (!r200->state.texture.unit[i].unitneeded && !(dwords <= atom->cmd_size))
         dwords -= 4;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 

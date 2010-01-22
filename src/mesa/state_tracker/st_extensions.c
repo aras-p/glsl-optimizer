@@ -28,7 +28,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/extensions.h"
 #include "main/macros.h"
 
 #include "pipe/p_context.h"

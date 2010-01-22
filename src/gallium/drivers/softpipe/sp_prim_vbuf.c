@@ -526,7 +526,8 @@ static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   align_free(cvbr->vertex_buffer);
+   if(cvbr->vertex_buffer)
+      align_free(cvbr->vertex_buffer);
    sp_setup_destroy_context(cvbr->setup);
    FREE(cvbr);
 }

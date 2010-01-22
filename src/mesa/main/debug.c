@@ -26,7 +26,6 @@
 #include "mtypes.h"
 #include "attrib.h"
 #include "colormac.h"
-#include "context.h"
 #include "enums.h"
 #include "formats.h"
 #include "hash.h"
@@ -35,7 +34,6 @@
 #include "get.h"
 #include "pixelstore.h"
 #include "readpix.h"
-#include "texgetimage.h"
 #include "texobj.h"
 
 
@@ -54,7 +52,7 @@ const char *_mesa_prim_name[GL_POLYGON+4] = {
    "GL_QUAD_STRIP",
    "GL_POLYGON",
    "outside begin/end",
-   "inside unkown primitive",
+   "inside unknown primitive",
    "unknown state"
 };
 

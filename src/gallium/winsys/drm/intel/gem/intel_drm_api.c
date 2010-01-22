@@ -196,6 +196,7 @@ destroy(struct drm_api *api)
 struct drm_api intel_drm_api =
 {
    .name = "i915",
+   .driver_name = "i915",
    .create_context = intel_drm_create_context,
    .create_screen = intel_drm_create_screen,
    .texture_from_shared_handle = intel_drm_texture_from_shared_handle,

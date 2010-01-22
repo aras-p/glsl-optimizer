@@ -30,8 +30,6 @@
 #include "ffb_context.h"
 #include "ffb_vb.h"
 #include "ffb_points.h"
-#include "ffb_tris.h"
-#include "ffb_lock.h"
 
 
 #undef FFB_POINT_TRACE

@@ -27,14 +27,10 @@
 
 #include "i915_context.h"
 #include "i915_blit.h"
-#include "i915_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "util/u_format.h"
-#include "util/u_tile.h"
-#include "util/u_rect.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -

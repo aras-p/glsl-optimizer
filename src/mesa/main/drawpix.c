@@ -30,7 +30,6 @@
 #include "enums.h"
 #include "feedback.h"
 #include "framebuffer.h"
-#include "image.h"
 #include "readpix.h"
 #include "state.h"
 #include "glapi/dispatch.h"

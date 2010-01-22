@@ -40,13 +40,10 @@
 #include "framebuffer.h"
 #include "hash.h"
 #include "macros.h"
-#include "mipmap.h"
 #include "renderbuffer.h"
 #include "state.h"
 #include "teximage.h"
 #include "texobj.h"
-#include "texstore.h"
-#include "texstate.h"
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */

@@ -38,7 +38,6 @@
 #include "main/enums.h"
 
 #include "via_context.h"
-#include "via_state.h"
 #include "via_tex.h"
 #include "via_3d_reg.h"
 

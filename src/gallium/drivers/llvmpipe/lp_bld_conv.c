@@ -63,11 +63,9 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
-#include "util/u_cpu_detect.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
-#include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_conv.h"

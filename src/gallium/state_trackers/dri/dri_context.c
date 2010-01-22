@@ -101,6 +101,12 @@ dri_destroy_context(__DRIcontext * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
 
+   /* note: we are freeing values and nothing more because
+    * driParseConfigFiles allocated values only - the rest
+    * is owned by screen optionCache.
+    */
+   FREE(ctx->optionCache.values);
+
    /* No particular reason to wait for command completion before
     * destroying a context, but it is probably worthwhile flushing it
     * to avoid having to add code elsewhere to cope with flushing a

@@ -42,7 +42,6 @@
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_texture.h"
-#include "lp_tex_cache.h"
 #include "lp_screen.h"
 #include "lp_winsys.h"
 

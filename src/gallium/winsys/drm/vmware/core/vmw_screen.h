@@ -40,6 +40,10 @@
 
 #include "svga_winsys.h"
 
+
+#define VMW_GMR_POOL_SIZE (16*1024*1024)
+
+
 struct pb_manager;
 struct vmw_region;
 
