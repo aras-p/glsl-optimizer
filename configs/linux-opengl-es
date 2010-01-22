@@ -18,13 +18,11 @@ EGL_DRIVERS_DIRS =
 
 GALLIUM_DRIVERS_DIRS = softpipe
 
-# build egl_softpipe.so
-GALLIUM_WINSYS_DIRS = egl_xlib
-# and libGLES*.so
+# build libGLES*.so
 GALLIUM_STATE_TRACKERS_DIRS = es
 
-# build egl_i915.so
+# build egl_x11_{swrast,i915}.so
 GALLIUM_DRIVERS_DIRS += trace i915
 GALLIUM_STATE_TRACKERS_DIRS += egl_g3d
 GALLIUM_WINSYS_DIRS += drm
-GALLIUM_WINSYS_DRM_DIRS = intel
+GALLIUM_WINSYS_DRM_DIRS += intel swrast

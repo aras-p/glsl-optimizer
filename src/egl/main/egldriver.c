@@ -61,7 +61,7 @@ library_suffix(void)
 #elif defined(_EGL_PLATFORM_POSIX)
 
 
-static const char DefaultDriverName[] = "egl_softpipe";
+static const char DefaultDriverName[] = "egl_glx";
 
 typedef void * lib_handle;
 
