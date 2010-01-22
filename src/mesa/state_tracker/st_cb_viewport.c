@@ -32,7 +32,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 
 static void st_viewport(GLcontext * ctx, GLint x, GLint y,
