@@ -34,10 +34,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "draw_context.h"
-#include "draw_vbuf.h"
 #include "draw_vs.h"
-#include "draw_pt.h"
-#include "draw_pipe.h"
 
 
 struct draw_context *draw_create( void )

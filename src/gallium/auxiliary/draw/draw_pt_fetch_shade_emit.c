@@ -40,7 +40,6 @@
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
 
-#include "translate/translate.h"
 
 struct fetch_shade_emit;
 
