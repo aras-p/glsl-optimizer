@@ -59,6 +59,7 @@ static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
 static void r700UpdatePolygonMode(GLcontext * ctx);
 static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
 static void r700SetStencilState(GLcontext * ctx, GLboolean state);
+static void r700UpdateWindow(GLcontext * ctx, int id);
 
 void r700UpdateShaders(GLcontext * ctx)
 {
@@ -779,6 +780,9 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		break;
 	case GL_LINE_STIPPLE:
 		r700UpdateLineStipple(ctx);
+		break;
+	case GL_DEPTH_CLAMP:
+		r700UpdateWindow(ctx, 0);
 		break;
 	default:
 		break;
