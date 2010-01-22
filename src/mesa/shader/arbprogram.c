@@ -561,6 +561,8 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    }
 }
 
+
+
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
@@ -569,10 +571,35 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
-                                   const GLfloat *params)
+                                const GLfloat *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, params[0], params[1],
-                                  params[2], params[3]);
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
+
+   if (target == GL_FRAGMENT_PROGRAM_ARB
+       && ctx->Extensions.ARB_fragment_program) {
+      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter4fv(index)");
+         return;
+      }
+      memcpy(ctx->FragmentProgram.Parameters[index], params,
+             4 * sizeof(GLfloat));
+   }
+   else if (target == GL_VERTEX_PROGRAM_ARB /* == GL_VERTEX_PROGRAM_NV */
+       && (ctx->Extensions.ARB_vertex_program || ctx->Extensions.NV_vertex_program)) {
+      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter4fv(index)");
+         return;
+      }
+      memcpy(ctx->VertexProgram.Parameters[index], params,
+             4 * sizeof(GLfloat));
+   }
+   else {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameter4fv(target)");
+      return;
+   }
 }
 
 
