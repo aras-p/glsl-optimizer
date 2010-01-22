@@ -187,14 +187,14 @@ static void do_triangle( struct draw_context *draw,
    do_triangle( draw,                                                   \
                 elts[i0],  /* flags */                                  \
                 verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
-                verts + stride * elts[i1],                              \
-                verts + stride * elts[i2])
+                verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i2] & ~DRAW_PIPE_FLAG_MASK) );
 
 #define LINE(flags,i0,i1)                                       \
    do_line( draw,                                               \
             elts[i0],                                           \
             verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * elts[i1])
+            verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK) );
 
 #define POINT(i0)                               \
    do_point( draw,                              \
