@@ -87,7 +87,6 @@ source = [
     'pipebuffer/pb_bufmgr_alt.c',
     'pipebuffer/pb_bufmgr_cache.c',
     'pipebuffer/pb_bufmgr_debug.c',
-    'pipebuffer/pb_bufmgr_fenced.c',
     'pipebuffer/pb_bufmgr_mm.c',
     'pipebuffer/pb_bufmgr_ondemand.c',
     'pipebuffer/pb_bufmgr_pool.c',
