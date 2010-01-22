@@ -180,7 +180,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 #error _GLAPI_SKIP_NORMAL_ENTRY_POINTS must not be defined
 #endif
 
-static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
+_glapi_proc DISPATCH_TABLE_NAME[] = {"""
 		for f in api.functionIterateByOffset():
 			print '   TABLE_ENTRY(%s),' % (f.dispatch_name())
 
@@ -204,7 +204,7 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
  * We list the functions which are not otherwise used.
  */
 #ifdef UNUSED_TABLE_NAME
-static _glapi_proc UNUSED_TABLE_NAME[] = {"""
+_glapi_proc UNUSED_TABLE_NAME[] = {"""
 
 		normal_entries = []
 		proto_entries = []

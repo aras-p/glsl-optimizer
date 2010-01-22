@@ -5764,7 +5764,7 @@ KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_366)(GLenum target, GLenum pname,
 #error _GLAPI_SKIP_NORMAL_ENTRY_POINTS must not be defined
 #endif
 
-static _glapi_proc DISPATCH_TABLE_NAME[] = {
+_glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(NewList),
    TABLE_ENTRY(EndList),
    TABLE_ENTRY(CallList),
@@ -6680,7 +6680,7 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
  * We list the functions which are not otherwise used.
  */
 #ifdef UNUSED_TABLE_NAME
-static _glapi_proc UNUSED_TABLE_NAME[] = {
+_glapi_proc UNUSED_TABLE_NAME[] = {
 #ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS
    TABLE_ENTRY(ArrayElementEXT),
    TABLE_ENTRY(BindTextureEXT),

@@ -25,6 +25,7 @@ GLX_DIR = $(XORG_BASE)/glx
 SERVER_GLAPI_FILES = \
 	$(GLX_DIR)/glapi.h \
 	$(GLX_DIR)/glapi.c \
+	$(GLX_DIR)/glapi_nop.c \
 	$(GLX_DIR)/glthread.c \
 	$(GLX_DIR)/glthread.h
 
