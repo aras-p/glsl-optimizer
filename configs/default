@@ -93,7 +93,7 @@ DRIVER_DIRS = x11 osmesa
 PROGRAM_DIRS = demos redbook samples glsl objviewer xdemos
 
 # EGL drivers to build
-EGL_DRIVERS_DIRS = demo
+EGL_DRIVERS_DIRS = glx
 
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
