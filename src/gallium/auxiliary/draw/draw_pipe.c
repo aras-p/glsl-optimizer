@@ -106,10 +106,9 @@ void draw_pipeline_destroy( struct draw_context *draw )
 
 
 
-
-
-
-
+/**
+ * Build primitive to render a point with vertex at v0.
+ */
 static void do_point( struct draw_context *draw,
 		      const char *v0 )
 {
@@ -123,6 +122,10 @@ static void do_point( struct draw_context *draw,
 }
 
 
+/**
+ * Build primitive to render a line with vertices at v0, v1.
+ * \param flags  bitmask of DRAW_PIPE_EDGE_x, DRAW_PIPE_RESET_STIPPLE
+ */
 static void do_line( struct draw_context *draw,
                      ushort flags,
 		     const char *v0,
@@ -139,6 +142,10 @@ static void do_line( struct draw_context *draw,
 }
 
 
+/**
+ * Build primitive to render a triangle with vertices at v0, v1, v2.
+ * \param flags  bitmask of DRAW_PIPE_EDGE_x, DRAW_PIPE_RESET_STIPPLE
+ */
 static void do_triangle( struct draw_context *draw,
                          ushort flags,
 			 char *v0,
@@ -157,7 +164,10 @@ static void do_triangle( struct draw_context *draw,
 }
 
 
-
+/*
+ * Set up macros for draw_pt_decompose.h template code.
+ * This code uses vertex indexes / elements.
+ */
 #define QUAD(i0,i1,i2,i3)                       \
    do_triangle( draw,                           \
                 ( DRAW_PIPE_RESET_STIPPLE |     \
@@ -175,14 +185,14 @@ static void do_triangle( struct draw_context *draw,
 
 #define TRIANGLE(flags,i0,i1,i2)                                        \
    do_triangle( draw,                                                   \
-                elts[i0],  /* flags */                          \
+                elts[i0],  /* flags */                                  \
                 verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
                 verts + stride * elts[i1],                              \
                 verts + stride * elts[i2])
 
 #define LINE(flags,i0,i1)                                       \
    do_line( draw,                                               \
-            elts[i0],                                   \
+            elts[i0],                                           \
             verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK), \
             verts + stride * elts[i1])
 
@@ -213,7 +223,9 @@ static void do_triangle( struct draw_context *draw,
 
 
 
-/* Code to run the pipeline on a fairly arbitary collection of vertices.
+/**
+ * Code to run the pipeline on a fairly arbitary collection of vertices.
+ * For drawing indexed primitives.
  *
  * Vertex headers must be pre-initialized with the
  * UNDEFINED_VERTEX_ID, this code will cause that id to become
@@ -243,6 +255,12 @@ void draw_pipeline_run( struct draw_context *draw,
    draw->pipeline.vertex_count = 0;
 }
 
+
+
+/*
+ * Set up macros for draw_pt_decompose.h template code.
+ * This code is for non-indexed rendering (no elts).
+ */
 #define QUAD(i0,i1,i2,i3)                                        \
    do_triangle( draw,                                            \
                 ( DRAW_PIPE_RESET_STIPPLE |                      \
@@ -293,6 +311,10 @@ void draw_pipeline_run( struct draw_context *draw,
 
 #include "draw_pt_decompose.h"
 
+
+/*
+ * For drawing non-indexed primitives.
+ */
 void draw_pipeline_run_linear( struct draw_context *draw,
                                unsigned prim,
                                struct vertex_header *vertices,
