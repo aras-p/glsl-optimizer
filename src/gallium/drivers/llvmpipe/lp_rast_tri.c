@@ -153,16 +153,18 @@ do_block_16( struct lp_rasterizer_task *rast_task,
    const int eo1 = tri->eo1 * 4;
    const int eo2 = tri->eo2 * 4;
    const int eo3 = tri->eo3 * 4;
-
+   const int *step0 = tri->inputs.step[0];
+   const int *step1 = tri->inputs.step[1];
+   const int *step2 = tri->inputs.step[2];
    int i;
 
    assert(x % 16 == 0);
    assert(y % 16 == 0);
 
    for (i = 0; i < 16; i++) {
-      int cx1 = c1 + (tri->inputs.step[0][i] * 4);
-      int cx2 = c2 + (tri->inputs.step[1][i] * 4);
-      int cx3 = c3 + (tri->inputs.step[2][i] * 4);
+      int cx1 = c1 + step0[i] * 4;
+      int cx2 = c2 + step1[i] * 4;
+      int cx3 = c3 + step2[i] * 4;
 
       if (cx1 + eo1 < 0 ||
           cx2 + eo2 < 0 ||
