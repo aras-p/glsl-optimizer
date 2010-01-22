@@ -1311,6 +1311,18 @@ if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv04 nv10 nv20 nv30 nv40 nv50"
 fi
 
+dnl
+dnl Gallium swrast configuration
+dnl
+AC_ARG_ENABLE([gallium-swrast],
+    [AS_HELP_STRING([--enable-gallium-swrast],
+        [build gallium swrast @<:@default=disabled@:>@])],
+    [enable_gallium_swrast="$enableval"],
+    [enable_gallium_swrast=auto])
+if test "x$enable_gallium_swrast" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS swrast"
+fi
+
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
