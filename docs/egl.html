@@ -182,12 +182,12 @@ is not available in GLX or GLX extensions.</p>
 <li><code>egl_xdri</code>
 
 <p>This driver supports the X Window System as its window system.  It functions
-as a DRI driver loader.  Unlike <code>egl_glx</code>, it has no dependency on
-<code>libGL</code>.  It talks to the X server directly using DRI or DRI2
-protocols.  It also talks minimal GLX protocol for things like available
-visuals or fbconfigs.  With direct access to the DRI drivers, it has the
-potential to support more EGL functions that are not possible with
-<code>egl_glx</code></p>
+as a DRI driver loader and can load DRI/DRI2/DRISW drivers.  Unlike
+<code>egl_glx</code>, it has no dependency on <code>libGL</code>.  It talks to
+the X server directly using DRI or DRI2 protocols.  It also talks minimal GLX
+protocol for things like available visuals or fbconfigs.  With direct access to
+the DRI drivers, it has the potential to support more EGL functions that are
+not possible with <code>egl_glx</code>.</p>
 
 </li>
 <li><code>egl_dri</code>
