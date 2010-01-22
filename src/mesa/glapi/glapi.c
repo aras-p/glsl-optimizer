@@ -121,7 +121,7 @@ warn(const char *func)
    warn(#func);
 
 #define RETURN_DISPATCH(func, args, msg)				      \
-   return warn(#func);
+   warn(#func); return 0
 
 #define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
 
