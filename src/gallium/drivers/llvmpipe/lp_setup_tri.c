@@ -181,17 +181,7 @@ static void setup_tri_coefficients( struct setup_context *setup,
 				    const float (*v3)[4],
 				    boolean frontface)
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
    unsigned slot;
-
-   /* Allocate space for the a0, dadx and dady arrays
-    */
-   {
-      unsigned bytes = (setup->fs.nr_inputs + 1) * 4 * sizeof(float);
-      tri->inputs.a0   = lp_scene_alloc_aligned( scene, bytes, 16 );
-      tri->inputs.dadx = lp_scene_alloc_aligned( scene, bytes, 16 );
-      tri->inputs.dady = lp_scene_alloc_aligned( scene, bytes, 16 );
-   }
 
    /* The internal position input is in slot zero:
     */
@@ -243,6 +233,41 @@ static inline int subpixel_snap( float a )
 }
 
 
+
+/**
+ * Alloc space for a new triangle plus the input.a0/dadx/dady arrays
+ * immediately after it.
+ * The memory is allocated from the per-scene pool, not per-tile.
+ * \param tri_size  returns number of bytes allocated
+ * \param nr_inputs  number of fragment shader inputs
+ * \return pointer to triangle space
+ */
+static INLINE struct lp_rast_triangle *
+alloc_triangle(struct lp_scene *scene, unsigned nr_inputs, unsigned *tri_size)
+{
+   unsigned input_array_sz = NUM_CHANNELS * (nr_inputs + 1) * sizeof(float);
+   struct lp_rast_triangle *tri;
+   unsigned bytes;
+   char *inputs;
+
+   assert(sizeof(*tri) % 16 == 0);
+
+   bytes = sizeof(*tri) + (3 * input_array_sz);
+
+   tri = lp_scene_alloc_aligned( scene, bytes, 16 );
+
+   inputs = (char *) (tri + 1);
+   tri->inputs.a0   = (float (*)[4]) inputs;
+   tri->inputs.dadx = (float (*)[4]) (inputs + input_array_sz);
+   tri->inputs.dady = (float (*)[4]) (inputs + 2 * input_array_sz);
+
+   *tri_size = bytes;
+
+   return tri;
+}
+
+
+
 /**
  * Do basic setup for triangle rasterization and determine which
  * framebuffer tiles are touched.  Put the triangle in the scene's
@@ -264,10 +289,13 @@ do_triangle_ccw(struct setup_context *setup,
    const int y3 = subpixel_snap(v3[0][1]);
 
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
-   struct lp_rast_triangle *tri = lp_scene_alloc_aligned( scene, sizeof *tri, 16 );
+   struct lp_rast_triangle *tri;
    int area;
    float oneoverarea;
    int minx, maxx, miny, maxy;
+   unsigned tri_bytes;
+
+   tri = alloc_triangle(scene, setup->fs.nr_inputs, &tri_bytes);
 
    tri->dx12 = x1 - x2;
    tri->dx23 = x2 - x3;
@@ -286,7 +314,7 @@ do_triangle_ccw(struct setup_context *setup,
     * XXX: subject to overflow??
     */
    if (area <= 0) {
-      lp_scene_putback_data( scene, sizeof *tri );
+      lp_scene_putback_data( scene, tri_bytes );
       LP_COUNT(nr_culled_tris);
       return;
    }
@@ -306,7 +334,7 @@ do_triangle_ccw(struct setup_context *setup,
 
    if (miny == maxy || 
        minx == maxx) {
-      lp_scene_putback_data( scene, sizeof *tri );
+      lp_scene_putback_data( scene, tri_bytes );
       LP_COUNT(nr_culled_tris);
       return;
    }
