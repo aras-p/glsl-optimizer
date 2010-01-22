@@ -28,7 +28,6 @@
 #include "i915_context.h"
 #include "i915_blit.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -
