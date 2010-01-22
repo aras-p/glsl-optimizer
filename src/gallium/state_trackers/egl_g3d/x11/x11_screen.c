@@ -42,6 +42,10 @@ struct x11_screen {
    Display *dpy;
    int number;
 
+   /*
+    * This is used to fetch GLX visuals/fbconfigs.  It uses code from egl_xdri.
+    * It might be better to rewrite the part in Xlib or XCB.
+    */
    __GLXdisplayPrivate *glx_dpy;
 
    int dri_major, dri_minor;
@@ -93,8 +97,8 @@ x11_screen_destroy(struct x11_screen *xscr)
    if (xscr->dri_device)
       Xfree(xscr->dri_device);
 
-   if (xscr->glx_dpy)
-      __glXRelease(xscr->glx_dpy);
+   /* xscr->glx_dpy will be destroyed with the X display */
+
    if (xscr->visuals)
       XFree(xscr->visuals);
    free(xscr);
