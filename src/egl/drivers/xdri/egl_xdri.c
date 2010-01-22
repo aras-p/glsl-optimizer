@@ -167,14 +167,10 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
 static EGLBoolean
 convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
 {
-   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
-                                   EGL_OPENGL_ES2_BIT |
-                                   EGL_OPENVG_BIT |
-                                   EGL_OPENGL_BIT);
    EGLint val;
 
    _eglInitConfig(conf, id);
-   if (!_eglConfigFromContextModesRec(conf, m, all_apis, all_apis))
+   if (!_eglConfigFromContextModesRec(conf, m, EGL_OPENGL_BIT, EGL_OPENGL_BIT))
       return EGL_FALSE;
 
    if (m->doubleBufferMode) {
@@ -302,10 +298,7 @@ xdri_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
    create_configs(dpy, psc->configs, first_id);
 
    dpy->DriverData = xdri_dpy;
-   dpy->ClientAPIsMask = (EGL_OPENGL_BIT |
-                          EGL_OPENGL_ES_BIT |
-                          EGL_OPENGL_ES2_BIT |
-                          EGL_OPENVG_BIT);
+   dpy->ClientAPIsMask = EGL_OPENGL_BIT;
 
    /* we're supporting EGL 1.4 */
    *minor = 1;
