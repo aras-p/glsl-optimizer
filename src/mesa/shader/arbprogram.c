@@ -609,7 +609,6 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				 const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint i;
    GLfloat * dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -640,11 +639,7 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
       return;
    }
 
-   for ( i = 0 ; i < count ; i++ ) {
-      COPY_4V(dest, params);
-      params += 4;
-      dest += 4;
-   }
+   memcpy(dest, params, count * 4 * sizeof(GLfloat));
 }
 
 
@@ -757,8 +752,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				   const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_program *prog;
-   GLint i;
+   GLfloat *dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
@@ -773,7 +767,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
          return;
       }
-      prog = &(ctx->FragmentProgram.Current->Base);
+      dest = ctx->FragmentProgram.Current->Base.LocalParams[index];
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
             && ctx->Extensions.ARB_vertex_program) {
@@ -781,18 +775,14 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
          return;
       }
-      prog = &(ctx->VertexProgram.Current->Base);
+      dest = ctx->VertexProgram.Current->Base.LocalParams[index];
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameters4fvEXT(target)");
       return;
    }
 
-   for (i = 0; i < count; i++) {
-      ASSERT((index + i) < MAX_PROGRAM_LOCAL_PARAMS);
-      COPY_4V(prog->LocalParams[index + i], params);
-      params += 4;
-   }
+   memcpy(dest, params, count * 4 * sizeof(GLfloat));
 }
 
 
