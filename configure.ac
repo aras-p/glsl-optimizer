@@ -100,7 +100,7 @@ if test "x$GCC" = xyes; then
 
     # Enable -fvisibility=hidden if using a gcc that supports it
     save_CFLAGS="$CFLAGS"
-    AC_MSG_CHECKING([whether $(CC) supports -fvisibility=hidden])
+    AC_MSG_CHECKING([whether $CC supports -fvisibility=hidden])
     CFLAGS="$CFLAGS -fvisibility=hidden"
     AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
 		   [CFLAGS="$save_CFLAGS" ; AC_MSG_RESULT([no])]);
