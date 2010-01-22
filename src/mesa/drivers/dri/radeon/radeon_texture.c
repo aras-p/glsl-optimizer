@@ -233,8 +233,15 @@ static void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
 
 void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
 {
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	struct radeon_bo *bo;
 	GLuint face = _mesa_tex_target_to_face(target);
 	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
+	bo = !baseimage->mt ? baseimage->bo : baseimage->mt->bo;
+
+	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+		radeon_firevertices(rmesa);
+	}
 
 	radeon_teximage_map(baseimage, GL_FALSE);
 	radeon_generate_mipmap(ctx, target, texObj);
