@@ -62,6 +62,7 @@
 struct xdri_egl_driver
 {
    _EGLDriver Base;   /**< base class */
+   void (*FlushCurrentContext)(void);
 };
 
 
@@ -433,12 +434,22 @@ static EGLBoolean
 xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
                     _EGLSurface *r, _EGLContext *context)
 {
+   struct xdri_egl_driver *xdri_driver = xdri_egl_driver(drv);
    struct xdri_egl_context *xdri_ctx = lookup_context(context);
    struct xdri_egl_surface *draw = lookup_surface(d);
    struct xdri_egl_surface *read = lookup_surface(r);
+   _EGLContext *old = _eglGetCurrentContext();
+
+   /* an unlinked context will be invalid after context switch */
+   if (!_eglIsContextLinked(old))
+      old = NULL;
 
    if (!_eglMakeCurrent(drv, dpy, d, r, context))
       return EGL_FALSE;
+
+   /* flush before context switch */
+   if (old && old != context && xdri_driver->FlushCurrentContext)
+      xdri_driver->FlushCurrentContext();
 
    /* the symbol is defined in libGL.so */
    _glapi_check_multithread();
@@ -450,12 +461,9 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
          return EGL_FALSE;
       }
    }
-   else {
-      _EGLContext *old = _eglGetCurrentContext();
-      if (old) {
-         xdri_ctx = lookup_context(old);
-         xdri_ctx->driContext->unbindContext(xdri_ctx->driContext);
-      }
+   else if (old) {
+      xdri_ctx = lookup_context(old);
+      xdri_ctx->driContext->unbindContext(xdri_ctx->driContext);
    }
 
    return EGL_TRUE;
@@ -551,9 +559,15 @@ xdri_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 static EGLBoolean
 xdri_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
+   struct xdri_egl_driver *xdri_driver = xdri_egl_driver(drv);
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
 
+   /* swapBuffers does not flush commands */
+   if (draw == _eglGetCurrentSurface(EGL_DRAW) &&
+       xdri_driver->FlushCurrentContext)
+      xdri_driver->FlushCurrentContext();
+ 
    xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable, 0, 0, 0);
 
    return EGL_TRUE;
@@ -597,6 +611,10 @@ _eglMain(const char *args)
 
    xdri_drv->Base.Name = "X/DRI";
    xdri_drv->Base.Unload = xdri_Unload;
+
+   /* we need a way to flush commands */
+   xdri_drv->FlushCurrentContext =
+      (void (*)(void)) xdri_eglGetProcAddress(&xdri_drv->Base, "glFlush");
 
    return &xdri_drv->Base;
 }
