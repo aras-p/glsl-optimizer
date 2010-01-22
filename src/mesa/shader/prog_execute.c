@@ -351,6 +351,28 @@ fetch_vector1(const struct prog_src_register *source,
 }
 
 
+static GLuint
+fetch_vector1ui(const struct prog_src_register *source,
+                const struct gl_program_machine *machine)
+{
+   const GLuint *src = (GLuint *) get_src_register_pointer(source, machine);
+   GLuint result;
+
+   ASSERT(src);
+
+   result = src[GET_SWZ(source->Swizzle, 0)];
+
+   if (source->Abs) {
+      result = FABSF(result);
+   }
+   if (source->Negate) {
+      result = -result;
+   }
+
+   return result;
+}
+
+
 /**
  * Fetch texel from texture.  Use partial derivatives when possible.
  */
@@ -1667,13 +1689,11 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_UP2H:        /* unpack two 16-bit floats */
          {
-            GLfloat a[4], result[4];
-            fi_type fi;
-            GLhalfNV hx, hy;
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            fi.f = a[0];
-            hx = fi.i & 0xffff;
-            hy = fi.i >> 16;
+            const GLuint raw = fetch_vector1ui(&inst->SrcReg[0], machine);
+            GLfloat result[4];
+            GLushort hx, hy;
+            hx = raw & 0xffff;
+            hy = raw >> 16;
             result[0] = result[2] = _mesa_half_to_float(hx);
             result[1] = result[3] = _mesa_half_to_float(hy);
             store_vector4(inst, machine, result);
@@ -1681,13 +1701,11 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_UP2US:       /* unpack two GLushorts */
          {
-            GLfloat a[4], result[4];
-            fi_type fi;
+            const GLuint raw = fetch_vector1ui(&inst->SrcReg[0], machine);
+            GLfloat result[4];
             GLushort usx, usy;
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            fi.f = a[0];
-            usx = fi.i & 0xffff;
-            usy = fi.i >> 16;
+            usx = raw & 0xffff;
+            usy = raw >> 16;
             result[0] = result[2] = usx * (1.0f / 65535.0f);
             result[1] = result[3] = usy * (1.0f / 65535.0f);
             store_vector4(inst, machine, result);
@@ -1695,27 +1713,23 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_UP4B:        /* unpack four GLbytes */
          {
-            GLfloat a[4], result[4];
-            fi_type fi;
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            fi.f = a[0];
-            result[0] = (((fi.i >> 0) & 0xff) - 128) / 127.0F;
-            result[1] = (((fi.i >> 8) & 0xff) - 128) / 127.0F;
-            result[2] = (((fi.i >> 16) & 0xff) - 128) / 127.0F;
-            result[3] = (((fi.i >> 24) & 0xff) - 128) / 127.0F;
+            const GLuint raw = fetch_vector1ui(&inst->SrcReg[0], machine);
+            GLfloat result[4];
+            result[0] = (((raw >> 0) & 0xff) - 128) / 127.0F;
+            result[1] = (((raw >> 8) & 0xff) - 128) / 127.0F;
+            result[2] = (((raw >> 16) & 0xff) - 128) / 127.0F;
+            result[3] = (((raw >> 24) & 0xff) - 128) / 127.0F;
             store_vector4(inst, machine, result);
          }
          break;
       case OPCODE_UP4UB:       /* unpack four GLubytes */
          {
-            GLfloat a[4], result[4];
-            fi_type fi;
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            fi.f = a[0];
-            result[0] = ((fi.i >> 0) & 0xff) / 255.0F;
-            result[1] = ((fi.i >> 8) & 0xff) / 255.0F;
-            result[2] = ((fi.i >> 16) & 0xff) / 255.0F;
-            result[3] = ((fi.i >> 24) & 0xff) / 255.0F;
+            const GLuint raw = fetch_vector1ui(&inst->SrcReg[0], machine);
+            GLfloat result[4];
+            result[0] = ((raw >> 0) & 0xff) / 255.0F;
+            result[1] = ((raw >> 8) & 0xff) / 255.0F;
+            result[2] = ((raw >> 16) & 0xff) / 255.0F;
+            result[3] = ((raw >> 24) & 0xff) / 255.0F;
             store_vector4(inst, machine, result);
          }
          break;
