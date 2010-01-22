@@ -180,23 +180,24 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
          }
          else if (prog) {
             /* Unbind program if necessary */
-            if (prog->Target == GL_VERTEX_PROGRAM_ARB || /* == GL_VERTEX_PROGRAM_NV */
-                prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
+            switch (prog->Target) {
+            case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
+            case GL_VERTEX_STATE_PROGRAM_NV:
                if (ctx->VertexProgram.Current &&
                    ctx->VertexProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
                   _mesa_BindProgram(prog->Target, 0);
                }
-            }
-            else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
-                     prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+               break;
+            case GL_FRAGMENT_PROGRAM_NV:
+            case GL_FRAGMENT_PROGRAM_ARB:
                if (ctx->FragmentProgram.Current &&
                    ctx->FragmentProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
                   _mesa_BindProgram(prog->Target, 0);
                }
-            }
-            else {
+               break;
+            default:
                _mesa_problem(ctx, "bad target in glDeleteProgramsNV");
                return;
             }
