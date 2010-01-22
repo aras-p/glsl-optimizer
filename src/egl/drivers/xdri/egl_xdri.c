@@ -72,6 +72,7 @@ struct xdri_egl_display
    Display *dpy;
    __GLXdisplayPrivate *dpyPriv;
    __GLXDRIdisplay *driDisplay;
+   int driVersion;
 
    __GLXscreenConfigs *psc;
    EGLint scr;
@@ -212,6 +213,7 @@ convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
 static EGLint
 create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
 {
+   struct xdri_egl_display *xdri_dpy = lookup_display(disp);
    int id = first_id;
 
    for (; m; m = m->next) {
@@ -221,8 +223,15 @@ create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
 
       if (!convert_config(&conf, id, m))
          continue;
-
-      rb = (m->doubleBufferMode) ? EGL_BACK_BUFFER : EGL_SINGLE_BUFFER;
+      if (m->doubleBufferMode) {
+         rb = EGL_BACK_BUFFER;
+      }
+      else {
+         /* ignore single-buffered mode for DRISW */
+         if (xdri_dpy->driVersion == 0)
+            continue;
+         rb = EGL_SINGLE_BUFFER;
+      }
 
       xdri_conf = CALLOC_STRUCT(xdri_egl_config);
       if (xdri_conf) {
@@ -272,7 +281,7 @@ xdri_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_NOT_INITIALIZED, "eglInitialize");
    }
 
-   driDisplay = __driCreateDisplay(dpyPriv, NULL);
+   driDisplay = __driCreateDisplay(dpyPriv, &xdri_dpy->driVersion);
    if (!driDisplay) {
       _eglLog(_EGL_WARNING, "failed to create DRI display");
       free(xdri_dpy);
@@ -294,12 +303,12 @@ xdri_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_NOT_INITIALIZED, "eglInitialize");
    }
 
+   dpy->DriverData = xdri_dpy;
+   dpy->ClientAPIsMask = EGL_OPENGL_BIT;
+
    /* add visuals and fbconfigs */
    first_id = create_configs(dpy, psc->visuals, first_id);
    create_configs(dpy, psc->configs, first_id);
-
-   dpy->DriverData = xdri_dpy;
-   dpy->ClientAPIsMask = EGL_OPENGL_BIT;
 
    /* we're supporting EGL 1.4 */
    *minor = 1;

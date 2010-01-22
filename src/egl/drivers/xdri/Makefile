@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 EGL_DRIVER = egl_xdri.so
 
 # steal sources from GLX
-GLX_SOURCES = dri_common.c XF86dri.c dri2.c dri2_glx.c dri_glx.c
+GLX_SOURCES = dri_common.c XF86dri.c dri2.c dri2_glx.c dri_glx.c drisw_glx.c
 GLX_SOURCES := $(addprefix ../../../glx/x11/,$(GLX_SOURCES))
 GLX_INCLUDES = \
 	$(shell pkg-config --cflags-only-I libdrm) \
