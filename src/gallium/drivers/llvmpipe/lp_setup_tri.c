@@ -89,7 +89,7 @@ static void linear_coef( struct lp_rast_triangle *tri,
     * to define a0 as the sample at a pixel center somewhere near vmin
     * instead - i'll switch to this later.
     */
-   tri->inputs.a0[slot][i] = (v1[vert_attr][i] -
+   tri->inputs.a0[slot][i] = (a1 -
                               (dadx * (v1[0][0] - 0.5f) +
                                dady * (v1[0][1] - 0.5f)));
 }
