@@ -98,6 +98,43 @@ struct pb_fence_ops
 };
 
 
+/**
+ * Create a fenced buffer list.
+ * 
+ * See also fenced_bufmgr_create for a more convenient way to use this.
+ */
+struct fenced_buffer_list *
+fenced_buffer_list_create(struct pb_fence_ops *ops);
+
+
+/**
+ * Walk the fenced buffer list to check and free signalled buffers.
+ */ 
+void
+fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list, 
+                              int wait);
+
+
+#ifdef DEBUG
+void
+fenced_buffer_list_dump(struct fenced_buffer_list *fenced_list);
+#endif
+
+
+void
+fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list);
+
+
+/**
+ * Wrap a buffer in a fenced buffer.
+ * 
+ * NOTE: this will not increase the buffer reference count.
+ */
+struct pb_buffer *
+fenced_buffer_create(struct fenced_buffer_list *fenced, 
+                     struct pb_buffer *buffer);
+
+
 #ifdef __cplusplus
 }
 #endif
