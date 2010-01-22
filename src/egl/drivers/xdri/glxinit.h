@@ -8,7 +8,4 @@
 extern void
 _gl_context_modes_destroy(__GLcontextModes * modes);
 
-extern void
-__glXRelease(__GLXdisplayPrivate *dpyPriv);
-
 #endif /* GLXINIT_INCLUDED */

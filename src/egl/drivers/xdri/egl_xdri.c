@@ -342,7 +342,6 @@ xdri_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
    }
 
    xdri_dpy->driDisplay->destroyDisplay(xdri_dpy->driDisplay);
-   __glXRelease(xdri_dpy->dpyPriv);
 
    free(xdri_dpy);
    dpy->DriverData = NULL;
