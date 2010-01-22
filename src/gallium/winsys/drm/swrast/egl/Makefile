@@ -9,4 +9,4 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/winsys/drm/swrast/core/libswrastdrm.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 
-include ../../Makefile.egl_g3d
+include ../../Makefile.egl

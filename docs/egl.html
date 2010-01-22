@@ -32,10 +32,10 @@ cards.</p>
 the Gallium driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --with-state-trackers=egl_g3d,es,vega --enable-gallium-intel
+  $ ./configure --with-state-trackers=egl,es,vega --enable-gallium-intel
 </pre>
 
-<p>The main library will be enabled by default.  The <code>egl_g3d</code> state
+<p>The main library will be enabled by default.  The <code>egl</code> state
 tracker is needed by a number of EGL drivers.  EGL drivers will be covered
 later.  The <a href="opengles.html">es state tracker</a> provides OpenGL ES 1.x
 and 2.x and the <a href="openvg.html">vega state tracker</a> provides OpenVG
@@ -77,9 +77,8 @@ bare KMS (kernel modesetting).</p>
 
 <p>The argument is a comma separated string.  It is usually used to specify the
 rendering APIs, like OpenGL ES or OpenVG, to build.  But it should be noted
-that a number of EGL drivers depend on the <code>egl_g3d</code> state tracker.
-They will <em>not</em> be built without the <code>egl_g3d</code> state
-tracker.</p>
+that a number of EGL drivers depend on the <code>egl</code> state tracker.
+They will <em>not</em> be built without the <code>egl</code> state tracker.</p>
 
 </li>
 
@@ -160,7 +159,7 @@ variable to true forces the use of software rendering.</p>
 
 <p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  The
 support for optional EGL functions and EGL extensions is usually more complete
-than the classic ones.  These drivers depend on the <code>egl_g3d</code> state
+than the classic ones.  These drivers depend on the <code>egl</code> state
 tracker to build.  The available drivers are</p>
 
 <ul>
@@ -218,8 +217,8 @@ runtime.</p>
 <h2>Developers</h2>
 
 The sources of the main library and the classic drivers can be found at
-<code>src/egl/</code>.  The sources of the <code>egl_g3d</code> state tracker
-can be found at <code>src/gallium/state_trackers/egl_g3d/</code>.
+<code>src/egl/</code>.  The sources of the <code>egl</code> state tracker can
+be found at <code>src/gallium/state_trackers/egl/</code>.
 
 <h3>TODOs</h3>
 

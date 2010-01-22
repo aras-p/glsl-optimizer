@@ -11,4 +11,4 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
-include ../../Makefile.egl_g3d
+include ../../Makefile.egl

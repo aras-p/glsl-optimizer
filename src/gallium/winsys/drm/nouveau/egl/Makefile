@@ -16,4 +16,4 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 
-include ../../Makefile.egl_g3d
+include ../../Makefile.egl

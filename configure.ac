@@ -1165,7 +1165,7 @@ yes)
     dri)
         GALLIUM_STATE_TRACKERS_DIRS="dri"
         if test "x$enable_egl" = xyes; then
-            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl_g3d"
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
         fi
         # Have only tested st/xorg on 1.6.0 servers
         PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
@@ -1182,9 +1182,9 @@ yes)
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
 
         case "$tracker" in
-        egl_g3d)
+        egl)
             if test "x$enable_egl" != xyes; then
-                AC_MSG_ERROR([cannot build egl_g3d state tracker without EGL library])
+                AC_MSG_ERROR([cannot build egl state tracker without EGL library])
             fi
             ;;
         xorg)
@@ -1223,7 +1223,7 @@ yes)
     # verify the requested driver directories exist
     egl_displays=`IFS=', '; echo $with_egl_displays`
     for dpy in $egl_displays; do
-        test -d "$srcdir/src/gallium/state_trackers/egl_g3d/$dpy" || \
+        test -d "$srcdir/src/gallium/state_trackers/egl/$dpy" || \
             AC_MSG_ERROR([EGL display '$dpy' does't exist])
     done
     EGL_DISPLAYS="$egl_displays"

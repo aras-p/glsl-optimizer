@@ -1,4 +1,4 @@
-# src/gallium/winsys/drm/Makefile.egl_g3d
+# src/gallium/winsys/drm/Makefile.egl
 
 # The driver Makefile should define
 #
@@ -13,10 +13,10 @@ EGL_DRIVER_OBJECTS = $(EGL_DRIVER_SOURCES:.c=.o)
 
 common_LIBS = -ldrm -lm -ldl
 
-x11_ST = $(TOP)/src/gallium/state_trackers/egl_g3d/libeglx11.a
+x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a
 x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
 
-kms_ST = $(TOP)/src/gallium/state_trackers/egl_g3d/libeglkms.a
+kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a
 kms_LIBS = $(common_LIBS)
 
 ##### RULES #####
