@@ -62,7 +62,7 @@ struct xm_buffer
 
    XImage *tempImage;
 #ifdef USE_XSHM
-   int shm;
+   boolean shm;         /** Is this a shared memory buffer? */
    XShmSegmentInfo shminfo;
 #endif
 };
@@ -151,7 +151,7 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
                                   &b->shminfo,
                                   width, height);
    if (b->tempImage == NULL) {
-      b->shm = 0;
+      b->shm = FALSE;
       return;
    }
 
@@ -168,12 +168,12 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
       mesaXErrorFlag = 0;
       XDestroyImage(b->tempImage);
       b->tempImage = NULL;
-      b->shm = 0;
+      b->shm = FALSE;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   b->shm = 1;
+   b->shm = TRUE;
 }
 
 #endif /* USE_XSHM */
@@ -221,12 +221,13 @@ xm_buffer_destroy(struct pipe_buffer *buf)
          oldBuf->shminfo.shmaddr = (char *) -1;
       }
 
+      if (oldBuf->shm) {
+         oldBuf->data = NULL;
+      }
+
       if (oldBuf->tempImage) {
-         if (oldBuf->data == oldBuf->tempImage->data) {
-            /* oldBuf->data points at the xshm memory which we'll now free */
-            oldBuf->data = NULL;
-         }
          XDestroyImage(oldBuf->tempImage);
+         oldBuf->tempImage = NULL;
       }
 #endif
 
@@ -341,10 +342,8 @@ xm_buffer_create(struct pipe_winsys *pws,
    buffer->base.usage = usage;
    buffer->base.size = size;
 
-   if (buffer->data == NULL) {
-      /* align to 16-byte multiple for Cell */
-      buffer->data = align_malloc(size, max(alignment, 16));
-   }
+   /* align to 16-byte multiple for Cell */
+   buffer->data = align_malloc(size, max(alignment, 16));
 
    return &buffer->base;
 }
