@@ -39,7 +39,8 @@ $(EGL_DISPLAY_LIBS): $(LIB_GALLIUM_DIR)/%.so: %.so
 	$(INSTALL) $^ $(LIB_GALLIUM_DIR)
 
 define mklib-egl
-$(MKLIB) -noprefix -o $@ $(EGL_DRIVER_OBJECTS) \
+$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB_OPTIONS) $(EGL_DRIVER_OBJECTS) \
 	-Wl,--whole-archive $($(1)_ST) -Wl,--no-whole-archive \
 	$(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) $($(1)_LIBS) $(EGL_DRIVER_LIBS)
 endef
