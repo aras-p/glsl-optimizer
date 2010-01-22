@@ -244,7 +244,6 @@ static void
 svga_buffer_upload_flush(struct svga_context *svga,
                          struct svga_buffer *sbuf)
 {
-   struct svga_screen *ss = svga_screen(svga->pipe.screen);
    SVGA3dCopyBox *boxes;
    unsigned i;
 
