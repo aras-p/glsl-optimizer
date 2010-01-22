@@ -265,7 +265,8 @@ do_triangle_ccw(struct setup_context *setup,
 
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    struct lp_rast_triangle *tri = lp_scene_alloc_aligned( scene, sizeof *tri, 16 );
-   float area, oneoverarea;
+   int area;
+   float oneoverarea;
    int minx, maxx, miny, maxy;
 
    tri->dx12 = x1 - x2;
@@ -276,8 +277,7 @@ do_triangle_ccw(struct setup_context *setup,
    tri->dy23 = y2 - y3;
    tri->dy31 = y3 - y1;
 
-   area = (tri->dx12 * tri->dy31 - 
-	   tri->dx31 * tri->dy12);
+   area = (tri->dx12 * tri->dy31 - tri->dx31 * tri->dy12);
 
    LP_COUNT(nr_tris);
 
@@ -285,7 +285,7 @@ do_triangle_ccw(struct setup_context *setup,
     *
     * XXX: subject to overflow??
     */
-   if (area <= 0.0f) {
+   if (area <= 0) {
       lp_scene_putback_data( scene, sizeof *tri );
       LP_COUNT(nr_culled_tris);
       return;
