@@ -415,14 +415,6 @@ one_time_init( GLcontext *ctx )
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
 
-      if (_mesa_getenv("MESA_DEBUG")) {
-         _glapi_noop_enable_warnings(GL_TRUE);
-         _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
-      }
-      else {
-         _glapi_noop_enable_warnings(GL_FALSE);
-      }
-
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
       _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
                   MESA_VERSION_STRING, __DATE__, __TIME__);

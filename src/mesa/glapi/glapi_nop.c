@@ -42,78 +42,49 @@
 #include "glapi/glapi.h"
 
 
-static GLboolean WarnFlag = GL_FALSE;
-static _glapi_warning_func warning_func;
-
-/*
- * Enable/disable printing of warning messages.
+/**
+ * Called by each of the no-op GL entrypoints.
  */
-PUBLIC void
-_glapi_noop_enable_warnings(GLboolean enable)
-{
-  WarnFlag = enable;
-}
-
-/*
- * Register a callback function for reporting errors.
- */
-PUBLIC void
-_glapi_set_warning_func( _glapi_warning_func func )
-{
-  warning_func = func;
-}
-
-
 static int
-warn(const char *func)
+Warn(const char *func)
 {
 #if !defined(_WIN32_WCE)
-   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
-       && warning_func) {
-     warning_func(NULL, "GL User Error: called without context: %s", func);
+   if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
+      fprintf(stderr, "GL User Error: gl%s called without a rendering context\n",
+              func);
    }
 #endif
-  return 0;
+   return 0;
 }
 
-#ifdef DEBUG
 
+/**
+ * This is called if the user somehow calls an unassigned GL dispatch function.
+ */
+static GLint
+NoOpUnused(void)
+{
+   return Warn(" function");
+}
+
+
+/*
+ * Defines for the glapitemp.h functions.
+ */
 #define KEYWORD1 static
 #define KEYWORD1_ALT static
 #define KEYWORD2 GLAPIENTRY
 #define NAME(func)  NoOp##func
-#define F NULL
+#define DISPATCH(func, args, msg)  Warn(#func);
+#define RETURN_DISPATCH(func, args, msg)  Warn(#func); return 0
 
-#define DISPATCH(func, args, msg)					      \
-  warn(#func);
 
-#define RETURN_DISPATCH(func, args, msg)				      \
-  warn(#func); return 0
-
+/*
+ * Defines for the table of no-op entry points.
+ */
 #define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
-
-#else
-
-static void
-NoOpGeneric(void)
-{
-   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
-      && warning_func) {
-      warning_func(NULL, "GL User Error: calling GL function");
-   }
-}
-
-
-#define TABLE_ENTRY(name) (_glapi_proc) NoOpGeneric
-
-#endif
-
 #define DISPATCH_TABLE_NAME __glapi_noop_table
 #define UNUSED_TABLE_NAME __unused_noop_functions
 
-static int NoOpUnused(void)
-{
-   return warn("extension function");
-}
 
 #include "glapi/glapitemp.h"
