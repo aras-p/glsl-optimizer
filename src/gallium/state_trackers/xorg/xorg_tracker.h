@@ -112,6 +112,7 @@ typedef struct _modesettingRec
     /* exa */
     struct exa_context *exa;
     Bool noEvict;
+    Bool accelerate_2d;
     Bool debug_fallback;
 
     /* winsys hocks */

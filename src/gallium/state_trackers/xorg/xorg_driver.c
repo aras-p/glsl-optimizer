@@ -78,11 +78,13 @@ typedef enum
 {
     OPTION_SW_CURSOR,
     OPTION_2D_ACCEL,
+    OPTION_DEBUG_FALLBACK,
 } drv_option_enums;
 
 static const OptionInfoRec drv_options[] = {
     {OPTION_SW_CURSOR, "SWcursor", OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_2D_ACCEL, "2DAccel", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_DEBUG_FALLBACK, "DebugFallback", OPTV_BOOLEAN, {0}, FALSE},
     {-1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
@@ -670,16 +672,28 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     xf86SetBlackWhitePixels(pScreen);
 
+    ms->accelerate_2d = xf86ReturnOptValBool(ms->Options, OPTION_2D_ACCEL, FALSE);
+    ms->debug_fallback = xf86ReturnOptValBool(ms->Options, OPTION_DEBUG_FALLBACK, TRUE);
+
     if (ms->screen) {
-	ms->exa = xorg_exa_init(pScrn, xf86ReturnOptValBool(ms->Options,
-							    OPTION_2D_ACCEL, TRUE));
-	ms->debug_fallback = debug_get_bool_option("XORG_DEBUG_FALLBACK", TRUE);
+	ms->exa = xorg_exa_init(pScrn, ms->accelerate_2d);
 
 	xorg_xv_init(pScreen);
 #ifdef DRI2
 	xorg_dri2_init(pScreen);
 #endif
     }
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "2D Acceleration is %s\n",
+	       ms->screen && ms->accelerate_2d ? "enabled" : "disabled");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Fallback debugging is %s\n",
+	       ms->debug_fallback ? "enabled" : "disabled");
+#ifdef DRI2
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is %s\n",
+	       ms->screen ? "enabled" : "disabled");
+#else
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is disabled\n");
+#endif
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
