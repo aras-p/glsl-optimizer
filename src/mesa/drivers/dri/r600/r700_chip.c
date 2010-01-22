@@ -303,14 +303,13 @@ static void r700SetRenderTarget(context_t *context, int id)
     R600_STATECHANGE(context, cb_target);
 
     /* color buffer */
-    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
+    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset / 256;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
-    r700->render_target[id].CB_COLOR0_BASE.u32All = 0;
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
              CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
