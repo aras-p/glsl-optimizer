@@ -699,19 +699,11 @@ yes)
     ;;
 esac
 
-dnl Just default to no EGL for now
-USING_EGL=0
-AC_SUBST([USING_EGL])
-
 dnl Set DRI_DIRS, DEFINES and LIB_DEPS
 if test "$mesa_driver" = dri; then
     # Use TLS in GLX?
     if test "x$GLX_USE_TLS" = xyes; then
         DEFINES="$DEFINES -DGLX_USE_TLS -DPTHREADS"
-    fi
-
-    if test "x$USING_EGL" = x1; then
-        PROGRAM_DIRS="egl"
     fi
 
     # Platform specific settings and drivers to build

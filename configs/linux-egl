@@ -46,12 +46,6 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
                 $(LIBDRM_LIB)
 
 
-# This is now 0 by default since it seems to confuse the hell out of people
-# and generate a lot of extra noise on bugzilla.  If you need to build with
-# EGL, do 'make linux-dri USING_EGL=1'
-
-USING_EGL=0
-
 # Directories
 SRC_DIRS = gallium mesa gallium/winsys glu egl
 PROGRAM_DIRS = egl
