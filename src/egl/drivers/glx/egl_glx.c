@@ -54,13 +54,6 @@
 #error "GL/glx.h must be equal to or greater than GLX 1.4"
 #endif
 
-/*
- * report OpenGL ES bits because apps usually forget to specify
- * EGL_RENDERABLE_TYPE when choosing configs
- */
-#define GLX_EGL_APIS (EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)
-
-
 /** subclass of _EGLDriver */
 struct GLX_egl_driver
 {
@@ -244,7 +237,7 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
 
    GLX_conf->double_buffered = (mode.doubleBufferMode != 0);
    return _eglConfigFromContextModesRec(&GLX_conf->Base, &mode,
-                                        GLX_EGL_APIS, GLX_EGL_APIS);
+                                        EGL_OPENGL_BIT, EGL_OPENGL_BIT);
 }
 
 
@@ -364,7 +357,7 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
 
    GLX_conf->double_buffered = (mode.doubleBufferMode != 0);
    return _eglConfigFromContextModesRec(&GLX_conf->Base, &mode,
-                                        GLX_EGL_APIS, GLX_EGL_APIS);
+                                        EGL_OPENGL_BIT, EGL_OPENGL_BIT);
 }
 
 
@@ -559,7 +552,7 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    disp->DriverData = (void *) GLX_dpy;
-   disp->ClientAPIsMask = GLX_EGL_APIS;
+   disp->ClientAPIsMask = EGL_OPENGL_BIT;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
