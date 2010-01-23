@@ -52,14 +52,14 @@ update_scissor( struct st_context *st )
    scissor.maxy = fb->Height;
 
    if (st->ctx->Scissor.Enabled) {
-      if ((GLuint)st->ctx->Scissor.X > scissor.minx)
+      if (st->ctx->Scissor.X > (GLint)scissor.minx)
          scissor.minx = st->ctx->Scissor.X;
-      if ((GLuint)st->ctx->Scissor.Y > scissor.miny)
+      if (st->ctx->Scissor.Y > (GLint)scissor.miny)
          scissor.miny = st->ctx->Scissor.Y;
 
-      if ((GLuint)st->ctx->Scissor.X + st->ctx->Scissor.Width < scissor.maxx)
+      if (st->ctx->Scissor.X + st->ctx->Scissor.Width < (GLint)scissor.maxx)
          scissor.maxx = st->ctx->Scissor.X + st->ctx->Scissor.Width;
-      if ((GLuint)st->ctx->Scissor.Y + st->ctx->Scissor.Height < scissor.maxy)
+      if (st->ctx->Scissor.Y + st->ctx->Scissor.Height < (GLint)scissor.maxy)
          scissor.maxy = st->ctx->Scissor.Y + st->ctx->Scissor.Height;
 
       /* check for null space */
