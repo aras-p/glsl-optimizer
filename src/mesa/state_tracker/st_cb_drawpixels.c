@@ -1132,6 +1132,8 @@ st_destroy_drawpix(struct st_context *st)
 {
    st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[0], NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[1], NULL);
+   if (st->drawpix.vert_shaders[0])
+      free(st->drawpix.vert_shaders[0]);
+   if (st->drawpix.vert_shaders[1])
+      free(st->drawpix.vert_shaders[1]);
 }
