@@ -36,9 +36,7 @@
 #include "tdfx_dri.h"
 #include "tdfx_context.h"
 #include "tdfx_lock.h"
-#include "tdfx_vb.h"
 #include "tdfx_span.h"
-#include "tdfx_tris.h"
 
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"

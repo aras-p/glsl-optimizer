@@ -38,7 +38,6 @@
  */
 
 #include "tdfx_state.h"
-#include "tdfx_tex.h"
 #include "tdfx_texman.h"
 #include "tdfx_texstate.h"
 
