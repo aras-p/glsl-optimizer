@@ -108,6 +108,11 @@ static void radeon_flush_cs(struct radeon_winsys* winsys)
 {
     int retval;
 
+    /* Don't flush a zero-sized CS. */
+    if (!winsys->priv->cs->cdw) {
+        return;
+    }
+
     /* Emit the CS. */
     retval = radeon_cs_emit(winsys->priv->cs);
     if (retval) {
