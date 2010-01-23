@@ -183,48 +183,6 @@ _eglCleanupDisplay(_EGLDisplay *disp)
 
 
 /**
- * Link a context to a display and return the handle of the link.
- * The handle can be passed to client directly.
- */
-EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
-{
-   ctx->Display = dpy;
-   ctx->Next = dpy->ContextList;
-   dpy->ContextList = ctx;
-   return (EGLContext) ctx;
-}
-
-
-/**
- * Unlink a linked context from its display.
- * Accessing an unlinked context should generate EGL_BAD_CONTEXT error.
- */
-void
-_eglUnlinkContext(_EGLContext *ctx)
-{
-   _EGLContext *prev;
-
-   prev = ctx->Display->ContextList;
-   if (prev != ctx) {
-      while (prev) {
-         if (prev->Next == ctx)
-            break;
-         prev = prev->Next;
-      }
-      assert(prev);
-      prev->Next = ctx->Next;
-   }
-   else {
-      ctx->Display->ContextList = ctx->Next;
-   }
-
-   ctx->Next = NULL;
-   ctx->Display = NULL;
-}
-
-
-/**
  * Link a surface to a display and return the handle of the link.
  * The handle can be passed to client directly.
  */
@@ -286,27 +244,6 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
       cur = cur->Next;
    }
    _eglUnlockMutex(_eglGlobal.Mutex);
-   return (cur != NULL);
-}
-
-
-/**
- * Return EGL_TRUE if the given handle is a valid handle to a context.
- */
-EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
-{
-   _EGLContext *cur = NULL;
-
-   if (dpy)
-      cur = dpy->ContextList;
-   while (cur) {
-      if (cur == (_EGLContext *) ctx) {
-         assert(cur->Display == dpy);
-         break;
-      }
-      cur = cur->Next;
-   }
    return (cur != NULL);
 }
 

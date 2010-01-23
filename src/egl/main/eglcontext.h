@@ -65,4 +65,67 @@ _eglIsContextBound(_EGLContext *ctx)
 }
 
 
+extern EGLContext
+_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy);
+
+
+extern void
+_eglUnlinkContext(_EGLContext *ctx);
+
+
+#ifndef _EGL_SKIP_HANDLE_CHECK
+
+
+extern EGLBoolean
+_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy);
+
+
+#else /* !_EGL_SKIP_HANDLE_CHECK */
+
+
+static INLINE EGLBoolean
+_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
+{
+   _EGLContext *c = (_EGLContext *) ctx;
+   return (dpy && c && c->Display == dpy);
+}
+
+
+#endif /* _EGL_SKIP_HANDLE_CHECK */
+
+
+/**
+ * Lookup a handle to find the linked context.
+ * Return NULL if the handle has no corresponding linked context.
+ */
+static INLINE _EGLContext *
+_eglLookupContext(EGLContext context, _EGLDisplay *dpy)
+{
+   _EGLContext *ctx = (_EGLContext *) context;
+   if (!_eglCheckContextHandle(context, dpy))
+      ctx = NULL;
+   return ctx;
+}
+
+
+/**
+ * Return the handle of a linked context, or EGL_NO_CONTEXT.
+ */
+static INLINE EGLContext
+_eglGetContextHandle(_EGLContext *ctx)
+{
+   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
+}
+
+
+/**
+ * Return true if the context is linked to a display.
+ */
+static INLINE EGLBoolean
+_eglIsContextLinked(_EGLContext *ctx)
+{
+   return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
+}
+
+
 #endif /* EGLCONTEXT_INCLUDED */

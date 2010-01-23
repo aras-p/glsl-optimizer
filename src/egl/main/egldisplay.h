@@ -3,7 +3,6 @@
 
 #include "egltypedefs.h"
 #include "egldefines.h"
-#include "eglcontext.h"
 #include "eglsurface.h"
 
 
@@ -81,14 +80,6 @@ PUBLIC void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 
-extern EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkContext(_EGLContext *ctx);
-
-
 extern EGLSurface
 _eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
 
@@ -105,10 +96,6 @@ _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
 extern EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy);
-
-
-extern EGLBoolean
 _eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy);
 
 
@@ -120,14 +107,6 @@ static INLINE EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy)
 {
    return ((_EGLDisplay *) dpy != NULL);
-}
-
-
-static INLINE EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
-{
-   _EGLContext *c = (_EGLContext *) ctx;
-   return (dpy && c && c->Display == dpy);
 }
 
 
@@ -173,40 +152,6 @@ static INLINE EGLBoolean
 _eglIsDisplayLinked(_EGLDisplay *dpy)
 {
    return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
-}
-
-
-/**
- * Lookup a handle to find the linked context.
- * Return NULL if the handle has no corresponding linked context.
- */
-static INLINE _EGLContext *
-_eglLookupContext(EGLContext context, _EGLDisplay *dpy)
-{
-   _EGLContext *ctx = (_EGLContext *) context;
-   if (!_eglCheckContextHandle(context, dpy))
-      ctx = NULL;
-   return ctx;
-}
-
-
-/**
- * Return the handle of a linked context, or EGL_NO_CONTEXT.
- */
-static INLINE EGLContext
-_eglGetContextHandle(_EGLContext *ctx)
-{
-   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
-}
-
-
-/**
- * Return true if the context is linked to a display.
- */
-static INLINE EGLBoolean
-_eglIsContextLinked(_EGLContext *ctx)
-{
-   return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
 }
 
 
