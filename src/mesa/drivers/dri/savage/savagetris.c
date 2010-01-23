@@ -52,7 +52,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "savagestate.h"
 #include "savagetex.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 
 static void savageRasterPrimitive( GLcontext *ctx, GLuint prim );
 static void savageRenderPrimitive( GLcontext *ctx, GLenum prim );

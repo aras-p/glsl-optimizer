@@ -33,8 +33,6 @@
 #include "main/simple_list.h"
 #include "main/enums.h"
 
-#include "swrast/swrast.h"
-
 #include "savagecontext.h"
 #include "savagetex.h"
 #include "savagetris.h"

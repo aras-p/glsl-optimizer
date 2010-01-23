@@ -29,15 +29,11 @@
 #include <stdio.h>
 
 #include "main/mm.h"
-#include "swrast/swrast.h"
 
 #include "savagedd.h"
 #include "savagestate.h"
-#include "savagespan.h"
 #include "savagetex.h"
-#include "savagetris.h"
 #include "savagecontext.h"
-#include "main/extensions.h"
 
 #include "utils.h"
 

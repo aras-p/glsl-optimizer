@@ -37,12 +37,10 @@
 
 #include "savagecontext.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 #include "savagestate.h"
 #include "savagespan.h"
 
 #include "drm.h"
-#include <sys/ioctl.h>
 #include <sys/timeb.h>
 
 #define DEPTH_SCALE_16 ((1<<16)-1)

@@ -36,7 +36,6 @@
 #include "tnl/t_context.h"
 
 #include "savagecontext.h"
-#include "savagetris.h"
 #include "savagestate.h"
 #include "savageioctl.h"
 
