@@ -311,7 +311,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         indexSize = 2;
     }
 
-    r300_emit_buffer_validate(r300->winsys);
+    r300_emit_buffer_validate(r300);
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
