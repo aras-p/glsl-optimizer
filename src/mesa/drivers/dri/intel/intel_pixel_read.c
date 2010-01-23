@@ -36,7 +36,6 @@
 
 #include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
 #include "intel_regions.h"

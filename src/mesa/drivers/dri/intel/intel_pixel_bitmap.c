@@ -37,7 +37,6 @@
 #include "main/polygon.h"
 #include "main/state.h"
 #include "main/teximage.h"
-#include "main/texenv.h"
 #include "main/texobj.h"
 #include "main/texstate.h"
 #include "main/texparam.h"
@@ -46,7 +45,6 @@
 #include "main/enable.h"
 #include "main/viewport.h"
 #include "shader/arbprogram.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"
@@ -54,7 +52,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
-#include "intel_buffer_objects.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
 #include "intel_reg.h"

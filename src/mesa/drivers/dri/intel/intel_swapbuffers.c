@@ -29,7 +29,6 @@
 #include "intel_buffers.h"
 #include "intel_swapbuffers.h"
 #include "intel_fbo.h"
-#include "intel_batchbuffer.h"
 #include "drirenderbuffer.h"
 #include "vblank.h"
 #include "i915_drm.h"
