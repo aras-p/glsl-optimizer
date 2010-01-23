@@ -56,6 +56,7 @@ static const struct {
    { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
    { OFF, "GL_ARB_framebuffer_object",         F(ARB_framebuffer_object) },
    { OFF, "GL_ARB_half_float_pixel",           F(ARB_half_float_pixel) },
+   { OFF, "GL_ARB_half_float_vertex",          F(ARB_half_float_vertex) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_map_buffer_range",           F(ARB_map_buffer_range) },
    { ON,  "GL_ARB_multisample",                F(ARB_multisample) },
@@ -220,6 +221,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
+   ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;

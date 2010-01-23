@@ -154,6 +154,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
    { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
+   { "GL_ARB_half_float_vertex",          NULL },
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_seamless_cube_map",          NULL },

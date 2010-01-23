@@ -73,6 +73,7 @@ __glCallLists_size(GLenum e)
     case GL_SHORT:
     case GL_UNSIGNED_SHORT:
     case GL_2_BYTES:
+    case GL_HALF_FLOAT:
         return 2;
     case GL_3_BYTES:
         return 3;
