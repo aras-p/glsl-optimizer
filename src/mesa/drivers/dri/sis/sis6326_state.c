@@ -34,14 +34,12 @@
 #include "sis_reg.h"
 
 #include "main/context.h"
-#include "main/enums.h"
 #include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
-#include "tnl/t_pipeline.h"
 
 /* =============================================================
  * Alpha blending

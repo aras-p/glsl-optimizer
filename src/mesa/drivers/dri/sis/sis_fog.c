@@ -33,7 +33,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sis_context.h"
 #include "sis_state.h"
-#include "swrast/swrast.h"
 
 #include "main/macros.h"
 
