@@ -90,6 +90,7 @@ C_SOURCES = \
 	util/u_debug_dump.c \
 	util/u_debug_symbol.c \
 	util/u_debug_stack.c \
+	util/u_bitmask.c \
 	util/u_blit.c \
 	util/u_blitter.c \
 	util/u_cache.c \
