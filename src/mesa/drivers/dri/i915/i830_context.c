@@ -28,14 +28,11 @@
 #include "i830_context.h"
 #include "main/imports.h"
 #include "texmem.h"
-#include "intel_tex.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "utils.h"
 #include "intel_span.h"
-#include "intel_pixel.h"
 #include "intel_tris.h"
 
 /***************************************

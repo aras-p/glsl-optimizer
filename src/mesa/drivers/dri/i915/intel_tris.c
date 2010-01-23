@@ -52,7 +52,6 @@
 #include "intel_buffers.h"
 #include "intel_reg.h"
 #include "intel_span.h"
-#include "intel_tex.h"
 #include "intel_chipset.h"
 #include "i830_context.h"
 #include "i830_reg.h"
