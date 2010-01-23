@@ -325,8 +325,8 @@ vmw_drm_handle_from_texture(struct drm_api *drm_api,
 
     vsrf = vmw_svga_winsys_surface(surface);
     *handle = vsrf->sid;
-    *stride = pf_get_nblocksx(&texture->block, texture->width[0]) *
-	texture->block.size;
+    *stride = util_format_get_nblocksx(texture->format, texture->width0) *
+       util_format_get_blocksize(texture->format);
 
     vmw_svga_winsys_surface_reference(&vsrf, NULL);
     return TRUE;
