@@ -40,10 +40,7 @@
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
-#include "mgatris.h"
 #include "mgaioctl.h"
-
-#include "swrast/swrast.h"
 
 #include "xmlpool.h"
 

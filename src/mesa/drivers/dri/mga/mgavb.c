@@ -39,7 +39,6 @@
 #include "main/colormac.h"
 
 #include "tnl/t_context.h"
-#include "swrast_setup/swrast_setup.h"
 #include "swrast/swrast.h"
 
 
