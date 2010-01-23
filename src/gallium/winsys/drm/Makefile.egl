@@ -29,14 +29,12 @@ kms_LIBS = $(common_LIBS)
 
 EGL_DISPLAY_DRIVERS = $(foreach dpy, $(EGL_DISPLAYS), egl_$(dpy)_$(EGL_DRIVER_NAME).so)
 
-LIB_GALLIUM_DIR = $(TOP)/$(LIB_DIR)/gallium
-EGL_DISPLAY_LIBS = $(foreach drv, $(EGL_DISPLAY_DRIVERS), $(LIB_GALLIUM_DIR)/$(drv))
+EGL_DISPLAY_LIBS = $(foreach drv, $(EGL_DISPLAY_DRIVERS), $(TOP)/$(LIB_DIR)/$(drv))
 
 default: $(EGL_DISPLAY_LIBS)
 
-$(EGL_DISPLAY_LIBS): $(LIB_GALLIUM_DIR)/%.so: %.so
-	@mkdir -p $(LIB_GALLIUM_DIR)
-	$(INSTALL) $^ $(LIB_GALLIUM_DIR)
+$(EGL_DISPLAY_LIBS): $(TOP)/$(LIB_DIR)/%.so: %.so
+	$(INSTALL) $< $(TOP)/$(LIB_DIR)
 
 define mklib-egl
 $(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
@@ -56,10 +54,9 @@ clean:
 	-rm -f $(EGL_DISPLAY_DRIVERS)
 
 install: $(EGL_DISPLAY_LIBS)
-	@$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
-	@echo "Install $(EGL_DISPLAY_DRIVERS)"
-	@for lib in "$(EGL_DISPLAY_LIBS)"; do \
-		$(MINSTALL) -m 755 "$$lib" $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR); \
+	$(INSTALL) -d $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
+	for lib in "$(EGL_DISPLAY_LIBS)"; do \
+		$(MINSTALL) -m 755 "$$lib" $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR); \
 	done
 
 depend:

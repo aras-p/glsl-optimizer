@@ -130,6 +130,9 @@ DRI_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/dri
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
 
+# EGL driver install directory
+EGL_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/egl
+
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/xorg/modules/drivers
 
