@@ -220,11 +220,8 @@ nv50_tex_validate(struct nv50_context *nv50)
 		return;
 	}
 
-	/* not sure if the following really do what I think: */
 	so_method(so, tesla, 0x1330, 1); /* flush TIC */
 	so_data  (so, 0);
-	so_method(so, tesla, 0x1338, 1); /* flush texture caches */
-	so_data  (so, 0x20);
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);

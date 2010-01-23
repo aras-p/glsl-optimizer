@@ -34,6 +34,11 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->base.channel;
 
+	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+		BEGIN_RING(chan, nv50->screen->tesla, 0x1338, 1);
+		OUT_RING  (chan, 0x20);
+	}
+
 	if (flags & PIPE_FLUSH_FRAME)
 		FIRE_RING(chan);
 }
