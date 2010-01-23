@@ -29,19 +29,15 @@
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
-#include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-#include "intel_tex.h"
 
 static GLuint double_types[5] = {
    0,

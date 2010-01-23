@@ -35,7 +35,6 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_defines.h"
 
 /* Creates a new VS constant buffer reflecting the current VS program's
  * constants, if needed by the VS program.
