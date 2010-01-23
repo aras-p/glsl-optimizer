@@ -49,7 +49,7 @@ default: $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAM
 
 # Make the shared libs
 $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME): $(ES1_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES)
-	$(MKLIB) -o $(GLES_1_LIB) \
+	$(MKLIB) -o $(GLES_1_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLES_1_VERSION_MAJOR) \
 		-minor $(GLES_1_VERSION_MINOR) \
 		-patch $(GLES_1_VERSION_PATCH) \
@@ -59,7 +59,7 @@ $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME): $(ES1_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXIL
 		$(GALLIUM_AUXILIARIES) $(SYS_LIBS)
 
 $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME): $(ES2_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES)
-	$(MKLIB) -o $(GLES_2_LIB) \
+	$(MKLIB) -o $(GLES_2_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLES_2_VERSION_MAJOR) \
 		-minor $(GLES_2_VERSION_MINOR) \
 		-patch $(GLES_2_VERSION_PATCH) \
