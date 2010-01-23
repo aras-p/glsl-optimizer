@@ -311,6 +311,8 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         indexSize = 2;
     }
 
+    r300_emit_buffer_validate(r300->winsys);
+
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {
         goto cleanup;
@@ -360,6 +362,8 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     }
 
     r300_update_derived_state(r300);
+
+    r300_emit_buffer_validate(r300);
 
     if (!r300_setup_vertex_buffers(r300)) {
         return;

@@ -1014,31 +1014,11 @@ static void r300_flush_pvs(struct r300_context* r300)
     END_CS;
 }
 
-/* Emit all dirty state. */
-void r300_emit_dirty_state(struct r300_context* r300)
+void r300_emit_buffer_validate(struct r300_context *r300)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_texture* tex;
-    struct r300_atom* atom;
-    unsigned i, dwords = 1024;
-    int dirty_tex = 0;
+    unsigned i;
     boolean invalid = FALSE;
-
-    /* Check the required number of dwords against the space remaining in the
-     * current CS object. If we need more, then flush. */
-
-    foreach(atom, &r300->atom_list) {
-        if (atom->dirty || atom->always_dirty) {
-            dwords += atom->size;
-        }
-    }
-
-    /* Make sure we have at least 2*1024 spare dwords. */
-    /* XXX It would be nice to know the number of dwords we really need to
-     * XXX emit. */
-    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
-        r300->context.flush(&r300->context, 0, NULL);
-    }
 
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
@@ -1102,6 +1082,32 @@ validate:
         }
         invalid = TRUE;
         goto validate;
+    }
+}
+
+/* Emit all dirty state. */
+void r300_emit_dirty_state(struct r300_context* r300)
+{
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_atom* atom;
+    unsigned i, dwords = 1024;
+    int dirty_tex = 0;
+
+    /* Check the required number of dwords against the space remaining in the
+     * current CS object. If we need more, then flush. */
+
+    foreach(atom, &r300->atom_list) {
+        if (atom->dirty || atom->always_dirty) {
+            dwords += atom->size;
+        }
+    }
+
+    /* Make sure we have at least 2*1024 spare dwords. */
+    /* XXX It would be nice to know the number of dwords we really need to
+     * XXX emit. */
+    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
+        r300->context.flush(&r300->context, 0, NULL);
+	r300_emit_buffer_validate(r300);
     }
 
     if (r300->dirty_state & R300_NEW_QUERY) {
