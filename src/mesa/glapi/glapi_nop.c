@@ -87,4 +87,11 @@ NoOpUnused(void)
 #define UNUSED_TABLE_NAME __unused_noop_functions
 
 
+/*
+ * Types needed when generating ES 1 functions.
+ */
+typedef int GLfixed;
+typedef int GLclampx;
+
+
 #include "glapi/glapitemp.h"
