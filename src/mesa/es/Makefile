@@ -10,12 +10,14 @@ ES1_LIBS := libes1gallium.a libes1api.a
 ES2_LIBS := libes2gallium.a libes2api.a
 
 # Default rule: create ES1 and ES2 libs
-.PHONY: default
-default: subdirs depend es1 es2
+.PHONY: default es1 es2
+default: depend es1 es2
 
 es1: $(ES1_LIBS)
+	@rm -f subdirs-stamp-tmp
 
 es2: $(ES2_LIBS)
+	@rm -f subdirs-stamp-tmp
 
 # force the inclusion of es's mfeatures.h
 ES1_CPPFLAGS := -include main/mfeatures_es1.h -D__GL_EXPORTS
@@ -104,24 +106,26 @@ clean:
 	-rm -f $(ES1_LIBS) $(ES2_LIBS)
 	-rm -rf $(ES1_OBJ_DIR) $(ES2_OBJ_DIR)
 	-rm -f $(GENERATED_SOURCES)
-	-rm -f depend
-	-rm -f *~
+	-rm -f depend depend.bak
+	-rm -f subdirs-stamp-tmp
+	@$(MAKE) -C glapi clean
 
 # nothing to install
 install:
 
-glapi/glapi-stamp:
-	$(MAKE) -C glapi
+subdirs-stamp-tmp:
+	@$(MAKE) -C $(MESA) asm_subdirs
+	@$(MAKE) -C $(MESA) glsl_builtin
+	@$(MAKE) -C glapi
+	@touch subdirs-stamp-tmp
 
-subdirs: glapi/glapi-stamp
-	$(MAKE) -C $(MESA) asm_subdirs
-	$(MAKE) -C $(MESA) glsl_builtin
+# sort to avoid duplicates
+ALL_SOURCES := $(sort $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES))
 
-# remove generated sources because "depend" is checked even when "make clean"
-DEPEND_SOURCES := $(filter-out $(GENERATED_SOURCES), $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES))
-DEPEND_SOURCES := $(filter-out glapi/%, $(DEPEND_SOURCES))
+# need to make sure the subdirs are processed first
+$(ALL_SOURCES): | subdirs-stamp-tmp
 
-depend: glapi/glapi-stamp $(DEPEND_SOURCES)
+depend: $(ALL_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@# MESA is "..", but luckily, directories are longer than 2 characters
@@ -132,4 +136,6 @@ depend: glapi/glapi-stamp $(DEPEND_SOURCES)
 		$(ES2_INCLUDES) $(ES2_ALL_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(ES2_OBJ_DIR)/$(MESA)/,$(ES2_OBJ_DIR)/,' >> depend
 
+ifneq ($(MAKECMDGOALS),clean)
 -include depend
+endif
