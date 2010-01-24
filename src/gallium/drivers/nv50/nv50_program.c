@@ -3283,7 +3283,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 static unsigned
 nv50_revdep_reorder(unsigned m[4], unsigned rdep[4])
 {
-	unsigned i, c, x, unsafe;
+	unsigned i, c, x, unsafe = 0;
 
 	for (c = 0; c < 4; c++)
 		m[c] = c;
