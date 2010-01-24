@@ -302,6 +302,8 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_update_derived_state(r300);
 
+    r300_emit_buffer_validate(r300);
+
     if (!r300_setup_vertex_buffers(r300)) {
         return;
     }
@@ -310,8 +312,6 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         r300_shorten_ubyte_elts(r300, &indexBuffer, count);
         indexSize = 2;
     }
-
-    r300_emit_buffer_validate(r300);
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
                                   RADEON_GEM_DOMAIN_GTT, 0)) {

@@ -1105,9 +1105,10 @@ void r300_emit_dirty_state(struct r300_context* r300)
     /* Make sure we have at least 2*1024 spare dwords. */
     /* XXX It would be nice to know the number of dwords we really need to
      * XXX emit. */
+again:
     if (!r300->winsys->check_cs(r300->winsys, dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
-	r300_emit_buffer_validate(r300);
+	goto again;
     }
 
     if (r300->dirty_state & R300_NEW_QUERY) {
