@@ -39,19 +39,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/context.h"
 #include "main/simple_list.h"
-#include "swrast/swrast.h"
 
 #include "drm.h"
 #include "radeon_drm.h"
 
 #include "r300_context.h"
-#include "r300_ioctl.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_mipmap_tree.h"
-#include "r300_state.h"
 #include "radeon_queryobj.h"
 
 /** # of dwords reserved for additional instructions that may need to be written

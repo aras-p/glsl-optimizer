@@ -34,7 +34,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/program.h"
 #include "shader/programopt.h"
 #include "shader/prog_instruction.h"
-#include "shader/prog_optimize.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"

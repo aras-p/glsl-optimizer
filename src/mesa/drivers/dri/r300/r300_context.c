@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
-#include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -52,12 +50,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
 
 #include "r300_context.h"
-#include "radeon_context.h"
 #include "radeon_span.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
@@ -69,7 +65,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_buffer_objects.h"
 #include "radeon_queryobj.h"
 
-#include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 

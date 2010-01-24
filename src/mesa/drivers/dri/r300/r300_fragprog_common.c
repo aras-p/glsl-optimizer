@@ -38,14 +38,12 @@
 
 #include "r300_fragprog_common.h"
 
-#include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
 #include "compiler/radeon_compiler.h"
 
 #include "radeon_mesa_to_rc.h"
-#include "r300_state.h"
 
 
 static GLuint build_dtm(GLuint depthmode)

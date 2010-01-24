@@ -58,8 +58,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_context.h"
 
-#include "vblank.h"
-
 #define R200_3D_DRAW_IMMD_2      0xC0003500
 
 #define CLEARBUFFER_COLOR	0x1
