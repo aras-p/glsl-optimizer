@@ -5,6 +5,24 @@
 #include "egldefines.h"
 
 
+enum _egl_resource_type {
+   _EGL_RESOURCE_CONTEXT,
+   _EGL_RESOURCE_SURFACE,
+
+   _EGL_NUM_RESOURCES
+};
+
+
+/**
+ * A resource of a display.
+ */
+struct _egl_resource
+{
+   _EGLDisplay *Display;
+   _EGLResource *Next;
+};
+
+
 /**
  * Optional EGL extensions info.
  */
@@ -48,6 +66,8 @@ struct _egl_display
    /* lists of linked contexts and surface */
    _EGLContext *ContextList;
    _EGLSurface *SurfaceList;
+
+   _EGLResource *ResourceLists[_EGL_NUM_RESOURCES];
 };
 
 
@@ -86,6 +106,10 @@ extern EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
+extern EGLBoolean
+_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy);
+
+
 #else /* !_EGL_SKIP_HANDLE_CHECK */
 
 /* Only do a quick check.  This is NOT standard compliant. */
@@ -94,6 +118,13 @@ static INLINE EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy)
 {
    return ((_EGLDisplay *) dpy != NULL);
+}
+
+
+static INLINE EGLBoolean
+_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+{
+   return (res->Display == dpy);
 }
 
 
@@ -131,6 +162,24 @@ static INLINE EGLBoolean
 _eglIsDisplayLinked(_EGLDisplay *dpy)
 {
    return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
+}
+
+
+extern void
+_eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy);
+
+
+extern void
+_eglUnlinkResource(_EGLResource *res, _EGLResourceType type);
+
+
+/**
+ * Return true if the resource is linked.
+ */
+static INLINE EGLBoolean
+_eglIsResourceLinked(_EGLResource *res)
+{
+   return (res->Display != NULL);
 }
 
 

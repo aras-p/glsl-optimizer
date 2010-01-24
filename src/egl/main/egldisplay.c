@@ -205,4 +205,64 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
 }
 
 
+/**
+ * Return EGL_TRUE if the given resource is valid.  That is, the display does
+ * own the resource.
+ */
+EGLBoolean
+_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+{
+   _EGLResource *list = dpy->ResourceLists[type];
+   
+   while (list) {
+      if (res == list) {
+         assert(list->Display == dpy);
+         break;
+      }
+      list = list->Next;
+   }
+
+   return (list != NULL);
+}
+
+
 #endif /* !_EGL_SKIP_HANDLE_CHECK */
+
+
+/**
+ * Link a resource to a display.
+ */
+void
+_eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+{
+   res->Display = dpy;
+   res->Next = dpy->ResourceLists[type];
+   dpy->ResourceLists[type] = res;
+}
+
+
+/**
+ * Unlink a linked resource from its display.
+ */
+void
+_eglUnlinkResource(_EGLResource *res, _EGLResourceType type)
+{
+   _EGLResource *prev;
+
+   prev = res->Display->ResourceLists[type];
+   if (prev != res) {
+      while (prev) {
+         if (prev->Next == res)
+            break;
+         prev = prev->Next;
+      }
+      assert(prev);
+      prev->Next = res->Next;
+   }
+   else {
+      res->Display->ResourceLists[type] = res->Next;
+   }
+
+   res->Next = NULL;
+   res->Display = NULL;
+}

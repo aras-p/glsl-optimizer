@@ -8,6 +8,8 @@
 
 #include "eglcompiler.h"
 
+typedef enum _egl_resource_type _EGLResourceType;
+
 typedef struct _egl_api _EGLAPI;
 
 typedef struct _egl_config _EGLConfig;
@@ -21,6 +23,8 @@ typedef struct _egl_driver _EGLDriver;
 typedef struct _egl_extensions _EGLExtensions;
 
 typedef struct _egl_mode _EGLMode;
+
+typedef struct _egl_resource _EGLResource;
 
 typedef struct _egl_screen _EGLScreen;
 
