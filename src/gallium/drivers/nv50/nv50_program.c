@@ -3728,13 +3728,21 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		copy_semantic_info(p);
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
-		int rid, aid, base;
+		int rid, aid;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
 		pc->allow32 = TRUE;
 
-		base = (TGSI_SEMANTIC_POSITION ==
-			p->info.input_semantic_name[0]) ? 0 : 1;
+		/* do we read FragCoord ? */
+		if (pc->attr_nr &&
+		    p->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+			/* select FCRD components we want accessible */
+			for (c = 0; c < 4; ++c)
+				if (pc->attr[c].acc)
+					p->cfg.regs[1] |= 1 << (24 + c);
+			aid = 0;
+		} else /* offset by 1 if FCRD.w is needed for pinterp */
+			aid = popcnt4(p->cfg.regs[1] >> 24);
 
 		/* non-flat interpolants have to be mapped to
 		 * the lower hardware IDs, so sort them:
@@ -3749,12 +3757,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 		}
 		copy_semantic_info(p);
-
-		if (!base) /* set w-coordinate mask from perspective interp */
-			p->cfg.in[0].mask |= p->cfg.regs[1] >> 24;
-
-		aid = popcnt4( /* if fcrd isn't contained in cfg.io */
-			base ? (p->cfg.regs[1] >> 24) : p->cfg.in[0].mask);
 
 		for (n = 0; n < pc->attr_nr; ++n) {
 			p->cfg.in[n].hw = rid = aid;
@@ -3776,9 +3778,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 			aid += popcnt4(p->cfg.in[n].mask);
 		}
-
-		if (!base)
-			p->cfg.regs[1] |= p->cfg.in[0].mask << 24;
 
 		m = popcnt4(p->cfg.regs[1] >> 24);
 
