@@ -526,58 +526,6 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 }
 
 
-
-/**
- * Try to determine which EGL APIs (OpenGL, OpenGL ES, OpenVG, etc)
- * are supported on the system by looking for standard library names.
- */
-EGLint
-_eglFindAPIs(void)
-{
-   EGLint mask = 0x0;
-   lib_handle lib;
-#if defined(_EGL_PLATFORM_WINDOWS)
-   /* XXX not sure about these names */
-   const char *es1_libname = "libGLESv1_CM.dll";
-   const char *es2_libname = "libGLESv2.dll";
-   const char *gl_libname = "OpenGL32.dll";
-   const char *vg_libname = "libOpenVG.dll";
-#elif defined(_EGL_PLATFORM_POSIX)
-   const char *es1_libname = "libGLESv1_CM.so";
-   const char *es2_libname = "libGLESv2.so";
-   const char *gl_libname = "libGL.so";
-   const char *vg_libname = "libOpenVG.so";
-#else /* _EGL_PLATFORM_NO_OS */
-   const char *es1_libname = NULL;
-   const char *es2_libname = NULL;
-   const char *gl_libname = NULL;
-   const char *vg_libname = NULL;
-#endif
-
-   if ((lib = open_library(es1_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_ES_BIT;
-   }
-
-   if ((lib = open_library(es2_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_ES2_BIT;
-   }
-
-   if ((lib = open_library(gl_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_BIT;
-   }
-
-   if ((lib = open_library(vg_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENVG_BIT;
-   }
-
-   return mask;
-}
-
-
 /**
  * Set the probe cache at the given key.
  *

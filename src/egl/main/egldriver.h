@@ -62,10 +62,6 @@ PUBLIC void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
-PUBLIC EGLint
-_eglFindAPIs(void);
-
-
 PUBLIC void
 _eglSetProbeCache(EGLint key, const void *val);
 
