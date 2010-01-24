@@ -3,6 +3,7 @@
 
 
 #include "egltypedefs.h"
+#include "egldisplay.h"
 
 
 /**
@@ -10,9 +11,8 @@
  */
 struct _egl_surface
 {
-   /* Managed by EGLDisplay for linking */
-   _EGLDisplay *Display;
-   _EGLSurface *Next;
+   /* A surface is a display resource */
+   _EGLResource Resource;
 
    /* The bound status of the surface */
    _EGLContext *Binding;
@@ -111,33 +111,27 @@ _eglIsSurfaceBound(_EGLSurface *surf)
 }
 
 
-extern EGLSurface
-_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkSurface(_EGLSurface *surf);
-
-
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
-extern EGLBoolean
-_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy);
-
-
-#else /* !_EGL_SKIP_HANDLE_CHECK */
-
-
-static INLINE EGLBoolean
-_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
+/**
+ * Link a surface to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+static INLINE EGLSurface
+_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
 {
-   _EGLSurface *s = (_EGLSurface *) surf;
-   return (dpy && s && s->Display == dpy);
+   _eglLinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE, dpy);
+   return (EGLSurface) surf;
 }
 
 
-#endif /* _EGL_SKIP_HANDLE_CHECK */
+/**
+ * Unlink a linked surface from its display.
+ * Accessing an unlinked surface should generate EGL_BAD_SURFACE error.
+ */
+static INLINE void
+_eglUnlinkSurface(_EGLSurface *surf)
+{
+   _eglUnlinkResource(&surf->Resource, _EGL_RESOURCE_SURFACE);
+}
 
 
 /**
@@ -147,8 +141,9 @@ _eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
 static INLINE _EGLSurface *
 _eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
 {
+   _EGLResource *res = (_EGLResource *) surface;
    _EGLSurface *surf = (_EGLSurface *) surface;
-   if (!_eglCheckSurfaceHandle(surf, dpy))
+   if (!res || !dpy || !_eglCheckResource(res, _EGL_RESOURCE_SURFACE, dpy))
       surf = NULL;
    return surf;
 }
@@ -160,7 +155,9 @@ _eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
 static INLINE EGLSurface
 _eglGetSurfaceHandle(_EGLSurface *surf)
 {
-   return (EGLSurface) ((surf && surf->Display) ? surf : EGL_NO_SURFACE);
+   _EGLResource *res = (_EGLResource *) surf;
+   return (res && _eglIsResourceLinked(res)) ?
+      (EGLSurface) surf : EGL_NO_SURFACE;
 }
 
 
@@ -170,7 +167,8 @@ _eglGetSurfaceHandle(_EGLSurface *surf)
 static INLINE EGLBoolean
 _eglIsSurfaceLinked(_EGLSurface *surf)
 {
-   return (EGLBoolean) (_eglGetSurfaceHandle(surf) != EGL_NO_SURFACE);
+   _EGLResource *res = (_EGLResource *) surf;
+   return (res && _eglIsResourceLinked(res));
 }
 
 

@@ -26,12 +26,18 @@ _eglFiniDisplay(void)
    /* atexit function is called with global mutex locked */
    dpyList = _eglGlobal.DisplayList;
    while (dpyList) {
+      EGLint i;
+
       /* pop list head */
       dpy = dpyList;
       dpyList = dpyList->Next;
 
-      if (dpy->ContextList || dpy->SurfaceList)
-         _eglLog(_EGL_DEBUG, "Display %p is destroyed with resources", dpy);
+      for (i = 0; i < _EGL_NUM_RESOURCES; i++) {
+         if (dpy->ResourceLists[i]) {
+            _eglLog(_EGL_DEBUG, "Display %p is destroyed with resources", dpy);
+            break;
+         }
+      }
 
       free(dpy);
    }
@@ -135,29 +141,27 @@ _eglFindDisplay(NativeDisplayType nativeDisplay)
 void
 _eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *display)
 {
-   _EGLContext *contexts;
-   _EGLSurface *surfaces;
+   _EGLResource *list;
 
-   contexts = display->ContextList;
-   surfaces = display->SurfaceList;
-
-   while (contexts) {
-      _EGLContext *ctx = contexts;
-      contexts = contexts->Next;
+   list = display->ResourceLists[_EGL_RESOURCE_CONTEXT];
+   while (list) {
+      _EGLContext *ctx = (_EGLContext *) list;
+      list = list->Next;
 
       _eglUnlinkContext(ctx);
       drv->API.DestroyContext(drv, display, ctx);
    }
-   assert(!display->ContextList);
+   assert(!display->ResourceLists[_EGL_RESOURCE_CONTEXT]);
 
-   while (surfaces) {
-      _EGLSurface *surf = surfaces;
-      surfaces = surfaces->Next;
+   list = display->ResourceLists[_EGL_RESOURCE_SURFACE];
+   while (list) {
+      _EGLSurface *surf = (_EGLSurface *) list;
+      list = list->Next;
 
       _eglUnlinkSurface(surf);
       drv->API.DestroySurface(drv, display, surf);
    }
-   assert(!display->SurfaceList);
+   assert(!display->ResourceLists[_EGL_RESOURCE_SURFACE]);
 }
 
 

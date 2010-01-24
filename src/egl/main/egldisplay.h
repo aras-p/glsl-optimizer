@@ -63,10 +63,7 @@ struct _egl_display
    EGLint NumConfigs;
    _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
 
-   /* lists of linked contexts and surface */
-   _EGLContext *ContextList;
-   _EGLSurface *SurfaceList;
-
+   /* lists of resources */
    _EGLResource *ResourceLists[_EGL_NUM_RESOURCES];
 };
 

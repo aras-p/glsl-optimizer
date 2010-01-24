@@ -526,7 +526,7 @@ eglSwapInterval(EGLDisplay dpy, EGLint interval)
    _EGLSurface *surf;
    _EGL_DECLARE_DD(dpy);
 
-   if (!ctx || !_eglIsContextLinked(ctx) || ctx->Display != disp)
+   if (!ctx || !_eglIsContextLinked(ctx) || ctx->Resource.Display != disp)
       return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
 
    surf = ctx->DrawSurface;
@@ -573,7 +573,7 @@ eglWaitClient(void)
       return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
 
    /* a valid current context implies an initialized current display */
-   disp = ctx->Display;
+   disp = ctx->Resource.Display;
    drv = disp->Driver;
    assert(drv);
 
@@ -617,7 +617,7 @@ eglWaitNative(EGLint engine)
       return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
 
    /* a valid current context implies an initialized current display */
-   disp = ctx->Display;
+   disp = ctx->Resource.Display;
    drv = disp->Driver;
    assert(drv);
 

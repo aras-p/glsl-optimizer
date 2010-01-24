@@ -246,7 +246,7 @@ _eglGetCurrentDisplay(void)
    _EGLThreadInfo *t = _eglGetCurrentThread();
    _EGLContext *ctx = t->CurrentContexts[t->CurrentAPIIndex];
    if (ctx)
-      return ctx->Display;
+      return ctx->Resource.Display;
    else
       return NULL;
 }

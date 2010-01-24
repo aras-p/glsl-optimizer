@@ -543,7 +543,7 @@ egl_g3d_update_buffer(struct pipe_screen *screen, void *context_private)
     * Set force_validate to skip an unnecessary check.
     */
    gctx->force_validate = EGL_TRUE;
-   egl_g3d_validate_context(gctx->base.Display, &gctx->base);
+   egl_g3d_validate_context(gctx->base.Resource.Display, &gctx->base);
 }
 
 static EGLBoolean

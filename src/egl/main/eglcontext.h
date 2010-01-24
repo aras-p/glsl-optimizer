@@ -4,6 +4,7 @@
 
 
 #include "egltypedefs.h"
+#include "egldisplay.h"
 
 
 /**
@@ -11,9 +12,8 @@
  */
 struct _egl_context
 {
-   /* Managed by EGLDisplay for linking */
-   _EGLDisplay *Display;
-   _EGLContext *Next;
+   /* A context is a display resource */
+   _EGLResource Resource;
 
    /* The bound status of the context */
    _EGLThreadInfo *Binding;
@@ -65,33 +65,27 @@ _eglIsContextBound(_EGLContext *ctx)
 }
 
 
-extern EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkContext(_EGLContext *ctx);
-
-
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
-extern EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy);
-
-
-#else /* !_EGL_SKIP_HANDLE_CHECK */
-
-
-static INLINE EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
+/**
+ * Link a context to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+static INLINE EGLContext
+_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
 {
-   _EGLContext *c = (_EGLContext *) ctx;
-   return (dpy && c && c->Display == dpy);
+   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT, dpy);
+   return (EGLContext) ctx;
 }
 
 
-#endif /* _EGL_SKIP_HANDLE_CHECK */
+/**
+ * Unlink a linked context from its display.
+ * Accessing an unlinked context should generate EGL_BAD_CONTEXT error.
+ */
+static INLINE void
+_eglUnlinkContext(_EGLContext *ctx)
+{
+   _eglUnlinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT);
+}
 
 
 /**
@@ -101,8 +95,9 @@ _eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
 static INLINE _EGLContext *
 _eglLookupContext(EGLContext context, _EGLDisplay *dpy)
 {
+   _EGLResource *res = (_EGLResource *) context;
    _EGLContext *ctx = (_EGLContext *) context;
-   if (!_eglCheckContextHandle(context, dpy))
+   if (!res || !dpy || !_eglCheckResource(res, _EGL_RESOURCE_CONTEXT, dpy))
       ctx = NULL;
    return ctx;
 }
@@ -114,7 +109,9 @@ _eglLookupContext(EGLContext context, _EGLDisplay *dpy)
 static INLINE EGLContext
 _eglGetContextHandle(_EGLContext *ctx)
 {
-   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
+   _EGLResource *res = (_EGLResource *) ctx;
+   return (res && _eglIsResourceLinked(res)) ?
+      (EGLContext) ctx : EGL_NO_CONTEXT;
 }
 
 
@@ -124,7 +121,8 @@ _eglGetContextHandle(_EGLContext *ctx)
 static INLINE EGLBoolean
 _eglIsContextLinked(_EGLContext *ctx)
 {
-   return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
+   _EGLResource *res = (_EGLResource *) ctx;
+   return (res && _eglIsResourceLinked(res));
 }
 
 
