@@ -70,7 +70,8 @@ native_create_probe(EGLNativeDisplayType dpy)
    if (xscr) {
       if (x11_screen_support(xscr, X11_SCREEN_EXTENSION_DRI2)) {
          driver_name = x11_screen_probe_dri2(xscr);
-         nprobe->data = strdup(driver_name);
+         if (driver_name)
+            nprobe->data = strdup(driver_name);
       }
 
       x11_screen_destroy(xscr);
