@@ -58,6 +58,20 @@ library_suffix(void)
 }
 
 
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   EGLBoolean need_suffix;
+   const char *suffix = ".dll";
+   int ret;
+
+   need_suffix = (strchr(name, '.') == NULL);
+   ret = snprintf(buf, size, "%s%s", name, (need_suffix) ? suffix : "");
+
+   return ((unsigned int) ret < size);
+}
+
+
 #elif defined(_EGL_PLATFORM_POSIX)
 
 
@@ -85,6 +99,24 @@ library_suffix(void)
 }
 
 
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   EGLBoolean need_dir, need_suffix;
+   const char *suffix = ".so";
+   int ret;
+
+   need_dir = (strchr(name, '/') == NULL);
+   need_suffix = (strchr(name, '.') == NULL);
+
+   ret = snprintf(buf, size, "%s%s%s",
+         (need_dir) ? _EGL_DRIVER_SEARCH_DIR"/" : "", name,
+         (need_suffix) ? suffix : "");
+
+   return ((unsigned int) ret < size);
+}
+
+
 #else /* _EGL_PLATFORM_NO_OS */
 
 static const char DefaultDriverName[] = "builtin";
@@ -107,6 +139,14 @@ static const char *
 library_suffix(void)
 {
    return NULL;
+}
+
+
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   int ret = snprintf(buf, size, name);
+   return ((unsigned int) ret < size);
 }
 
 
@@ -288,36 +328,21 @@ _eglPreloadUserDriver(void)
 {
 #if defined(_EGL_PLATFORM_POSIX) || defined(_EGL_PLATFORM_WINDOWS)
    _EGLDriver *drv;
-   char *env, *path;
-   const char *suffix, *p;
+   char path[1024];
+   char *env;
 
    env = getenv("EGL_DRIVER");
    if (!env)
       return EGL_FALSE;
 
-   path = env;
-   suffix = library_suffix();
-
-   /* append suffix if there isn't */
-   p = strrchr(path, '.');
-   if (!p && suffix) {
-      size_t len = strlen(path);
-      char *tmp = malloc(len + strlen(suffix) + 2);
-      if (tmp) {
-         memcpy(tmp, path, len);
-         tmp[len++] = '.';
-         tmp[len] = '\0';
-         strcat(tmp + len, suffix);
-
-         path = tmp;
-      }
-   }
+   if (!make_library_path(path, sizeof(path), env))
+      return EGL_FALSE;
 
    drv = _eglLoadDriver(path, NULL);
-   if (path != env)
-      free(path);
-   if (!drv)
+   if (!drv) {
+      _eglLog(_EGL_WARNING, "EGL_DRIVER is set to an invalid driver");
       return EGL_FALSE;
+   }
 
    _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
 
@@ -399,12 +424,9 @@ _eglPreloadDefaultDriver(void)
 {
    _EGLDriver *drv;
    char path[1024];
-   const char *suffix = library_suffix();
 
-   if (suffix)
-      snprintf(path, sizeof(path), "%s.%s", DefaultDriverName, suffix);
-   else
-      snprintf(path, sizeof(path), DefaultDriverName);
+   if (!make_library_path(path, sizeof(path), DefaultDriverName))
+      return EGL_FALSE;
 
    drv = _eglLoadDriver(path, NULL);
    if (!drv)
