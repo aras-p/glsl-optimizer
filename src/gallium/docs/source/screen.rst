@@ -78,7 +78,29 @@ Returns the screen vendor.
 get_param
 ^^^^^^^^^
 
-Get an integer/boolean screen parameter.
+Get an integer/boolean screen parameter. Valid parameter names include.
+
+* ``PIPE_CAP_MAX_CONST_BUFFERS``: Maximum number of constant buffers that
+  can be bound to any shader stage using ``set_constant_buffer``.
+  
+  If 0 is returned, the driver is not aware of multiple constant buffers,
+  supports binding of only one constant buffer, and does not support
+  two-dimensional CONST register file access in TGSI shaders.
+  
+  If a value greater than 0 is returned, the driver can have multiple
+  constant buffers bound to shader stages. The CONST register file can
+  be accessed with two-dimensional indices, like in the example below.
+  
+    DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
+    DCL CONST[3][0]          # declare first vector of constbuf 3
+    MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
+  
+  For backwards compatibility, one-dimensional access to CONST register
+  file is still supported. In that case, the constbuf index is assumed
+  to be 0.
+
+* ``PIPE_CAP_MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant
+  buffer.
 
 get_paramf
 ^^^^^^^^^^
