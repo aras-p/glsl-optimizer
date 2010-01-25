@@ -1066,12 +1066,22 @@ drv_bind_front_buffer_kms(ScrnInfoPtr pScrn)
 	goto err_destroy;
 
     pScreen->ModifyPixmapHeader(rootPixmap,
-				pScreen->width,
-				pScreen->height,
+				pScrn->virtualX,
+				pScrn->virtualY,
 				pScreen->rootDepth,
 				pScrn->bitsPerPixel,
 				stride,
 				ptr);
+
+    /* This a hack to work around EnableDisableFBAccess setting the pointer
+     * the real fix would be to replace pScrn->EnableDisableFBAccess hook
+     * and set the rootPixmap->devPrivate.ptr to something valid before that.
+     *
+     * But in its infinit visdome something uses either this some times before
+     * that, so our hook doesn't get called before the crash happens.
+     */
+    pScrn->pixmapPrivate.ptr = ptr;
+
     return TRUE;
 
 err_destroy:
