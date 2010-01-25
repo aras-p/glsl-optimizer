@@ -105,13 +105,13 @@ i915_create_blend_state(struct pipe_context *pipe,
    struct i915_blend_state *cso_data = CALLOC_STRUCT( i915_blend_state );
 
    {
-      unsigned eqRGB  = blend->rgb_func;
-      unsigned srcRGB = blend->rgb_src_factor;
-      unsigned dstRGB = blend->rgb_dst_factor;
+      unsigned eqRGB  = blend->rt[0].rgb_func;
+      unsigned srcRGB = blend->rt[0].rgb_src_factor;
+      unsigned dstRGB = blend->rt[0].rgb_dst_factor;
 
-      unsigned eqA    = blend->alpha_func;
-      unsigned srcA   = blend->alpha_src_factor;
-      unsigned dstA   = blend->alpha_dst_factor;
+      unsigned eqA    = blend->rt[0].alpha_func;
+      unsigned srcA   = blend->rt[0].alpha_src_factor;
+      unsigned dstA   = blend->rt[0].alpha_dst_factor;
 
       /* Special handling for MIN/MAX filter modes handled at
        * state_tracker level.
@@ -148,22 +148,22 @@ i915_create_blend_state(struct pipe_context *pipe,
    if (blend->dither)
       cso_data->LIS5 |= S5_COLOR_DITHER_ENABLE;
 
-   if ((blend->colormask & PIPE_MASK_R) == 0)
+   if ((blend->rt[0].colormask & PIPE_MASK_R) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_RED;
 
-   if ((blend->colormask & PIPE_MASK_G) == 0)
+   if ((blend->rt[0].colormask & PIPE_MASK_G) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_GREEN;
 
-   if ((blend->colormask & PIPE_MASK_B) == 0)
+   if ((blend->rt[0].colormask & PIPE_MASK_B) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_BLUE;
 
-   if ((blend->colormask & PIPE_MASK_A) == 0)
+   if ((blend->rt[0].colormask & PIPE_MASK_A) == 0)
       cso_data->LIS5 |= S5_WRITEDISABLE_ALPHA;
 
-   if (blend->blend_enable) {
-      unsigned funcRGB = blend->rgb_func;
-      unsigned srcRGB  = blend->rgb_src_factor;
-      unsigned dstRGB  = blend->rgb_dst_factor;
+   if (blend->rt[0].blend_enable) {
+      unsigned funcRGB = blend->rt[0].rgb_func;
+      unsigned srcRGB  = blend->rt[0].rgb_src_factor;
+      unsigned dstRGB  = blend->rt[0].rgb_dst_factor;
 
       cso_data->LIS6 |= (S6_CBUF_BLEND_ENABLE |
                          SRC_BLND_FACT(i915_translate_blend_factor(srcRGB)) |
