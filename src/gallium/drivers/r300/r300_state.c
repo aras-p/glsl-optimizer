@@ -924,22 +924,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
 }
 
-static boolean r300_validate_aos(struct r300_context *r300)
-{
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
-    int i;
-
-    /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->vertex_element_count; i++) {
-        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
-            util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
 static void r300_set_vertex_elements(struct pipe_context* pipe,
                                     unsigned count,
                                     const struct pipe_vertex_element* elements)
@@ -954,12 +938,6 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, count, elements);
-    }
-
-    if (!r300_validate_aos(r300)) {
-        /* XXX We should fallback using draw. */
-        assert(0);
-        abort();
     }
 }
 

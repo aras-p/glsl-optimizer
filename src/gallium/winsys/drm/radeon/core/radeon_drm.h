@@ -81,7 +81,7 @@ void radeon_destroy_drm_api(struct drm_api* api);
 /* Guess at whether this chipset should use r300g.
  *
  * I believe that this check is valid, but I haven't been exhaustive. */
-static INLINE boolean is_r3xx(int pciid)
+static boolean is_r3xx(int pciid)
 {
     return (pciid > 0x3150) && (pciid < 0x796f);
 }

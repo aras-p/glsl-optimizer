@@ -81,13 +81,9 @@ static void radeon_write_cs_reloc(struct radeon_winsys* winsys,
                                   uint32_t flags)
 {
     int retval = 0;
-    struct radeon_pipe_buffer* radeon_buffer =
-        (struct radeon_pipe_buffer*)pbuffer;
 
-    assert(!radeon_buffer->pb);
-
-    retval = radeon_cs_write_reloc(winsys->priv->cs, radeon_buffer->bo,
-                                   rd, wd, flags);
+    retval = radeon_cs_write_reloc(winsys->priv->cs,
+            ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
 
     if (retval) {
         debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
