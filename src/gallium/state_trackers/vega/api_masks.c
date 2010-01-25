@@ -128,14 +128,11 @@ clear_with_quad(struct vg_context *st, float x0, float y0,
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.colormask |= PIPE_MASK_R;
-      blend.colormask |= PIPE_MASK_G;
-      blend.colormask |= PIPE_MASK_B;
-      blend.colormask |= PIPE_MASK_A;
+      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].colormask = PIPE_MASK_RGBA;
       cso_set_blend(st->cso_context, &blend);
    }
 
