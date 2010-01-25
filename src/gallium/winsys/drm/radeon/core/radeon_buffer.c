@@ -51,6 +51,23 @@ static const char *radeon_get_name(struct pipe_winsys *ws)
     return "Radeon/GEM+KMS";
 }
 
+static uint32_t radeon_domain_from_usage(unsigned usage)
+{
+    uint32_t domain = 0;
+
+    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
+        domain |= RADEON_GEM_DOMAIN_VRAM;
+    }
+    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+    if (usage & PIPE_BUFFER_USAGE_INDEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+
+    return domain;
+}
+
 static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
                                                 unsigned alignment,
                                                 unsigned usage,
@@ -79,17 +96,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
         return &radeon_buffer->base;
     }
 
-    domain = 0;
-
-    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
-    if (usage & PIPE_BUFFER_USAGE_INDEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
+    domain = radeon_domain_from_usage(usage);
 
     radeon_buffer->bo = radeon_bo_open(radeon_ws->priv->bom, 0, size,
             alignment, domain, 0);
