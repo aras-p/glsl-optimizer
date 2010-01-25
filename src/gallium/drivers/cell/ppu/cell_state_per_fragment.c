@@ -999,23 +999,23 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
    /* Does the selected blend mode make use of the source / destination
     * color (RGB) blend factors?
     */
-   boolean need_color_factor = b->blend_enable
-       && (b->rgb_func != PIPE_BLEND_MIN)
-       && (b->rgb_func != PIPE_BLEND_MAX);
+   boolean need_color_factor = b->rt[0].blend_enable
+       && (b->rt[0].rgb_func != PIPE_BLEND_MIN)
+       && (b->rt[0].rgb_func != PIPE_BLEND_MAX);
 
    /* Does the selected blend mode make use of the source / destination
     * alpha blend factors?
     */
-   boolean need_alpha_factor = b->blend_enable
-       && (b->alpha_func != PIPE_BLEND_MIN)
-       && (b->alpha_func != PIPE_BLEND_MAX);
+   boolean need_alpha_factor = b->rt[0].blend_enable
+       && (b->rt[0].alpha_func != PIPE_BLEND_MIN)
+       && (b->rt[0].alpha_func != PIPE_BLEND_MAX);
 
 
-   if (b->blend_enable) {
-      sF[0] = b->rgb_src_factor;
+   if (b->rt[0].blend_enable) {
+      sF[0] = b->rt[0].rgb_src_factor;
       sF[1] = sF[0];
       sF[2] = sF[0];
-      switch (b->alpha_src_factor & 0x0f) {
+      switch (b->rt[0].alpha_src_factor & 0x0f) {
       case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
          sF[3] = PIPE_BLENDFACTOR_ONE;
          break;
@@ -1023,30 +1023,30 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
       case PIPE_BLENDFACTOR_DST_COLOR:
       case PIPE_BLENDFACTOR_CONST_COLOR:
       case PIPE_BLENDFACTOR_SRC1_COLOR:
-         sF[3] = b->alpha_src_factor + 1;
+         sF[3] = b->rt[0].alpha_src_factor + 1;
          break;
       default:
-         sF[3] = b->alpha_src_factor;
+         sF[3] = b->rt[0].alpha_src_factor;
       }
 
-      dF[0] = b->rgb_dst_factor;
+      dF[0] = b->rt[0].rgb_dst_factor;
       dF[1] = dF[0];
       dF[2] = dF[0];
-      switch (b->alpha_dst_factor & 0x0f) {
+      switch (b->rt[0].alpha_dst_factor & 0x0f) {
       case PIPE_BLENDFACTOR_SRC_COLOR:
       case PIPE_BLENDFACTOR_DST_COLOR:
       case PIPE_BLENDFACTOR_CONST_COLOR:
       case PIPE_BLENDFACTOR_SRC1_COLOR:
-         dF[3] = b->alpha_dst_factor + 1;
+         dF[3] = b->rt[0].alpha_dst_factor + 1;
          break;
       default:
-         dF[3] = b->alpha_dst_factor;
+         dF[3] = b->rt[0].alpha_dst_factor;
       }
 
-      func[0] = b->rgb_func;
+      func[0] = b->rt[0].rgb_func;
       func[1] = func[0];
       func[2] = func[0];
-      func[3] = b->alpha_func;
+      func[3] = b->rt[0].alpha_func;
    } else {
       sF[0] = PIPE_BLENDFACTOR_ONE;
       sF[1] = PIPE_BLENDFACTOR_ONE;
@@ -1067,7 +1067,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
    /* If alpha writing is enabled and the alpha blend mode requires use of
     * the alpha factor, calculate the alpha factor.
     */
-   if (((b->colormask & 8) != 0) && need_alpha_factor) {
+   if (((b->rt[0].colormask & 8) != 0) && need_alpha_factor) {
       src_factor[3] = emit_alpha_factor_calculation(f, sF[3], const_color[3],
                                                     frag[3], pixel[3]);
 
@@ -1091,8 +1091,8 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
       src_factor[2] = dst_factor[3];
    } else if (need_color_factor) {
       emit_color_factor_calculation(f,
-                                    b->rgb_src_factor,
-                                    b->colormask,
+                                    b->rt[0].rgb_src_factor,
+                                    b->rt[0].colormask,
                                     frag, pixel, const_color, src_factor);
    }
 
@@ -1111,15 +1111,15 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
       dst_factor[2] = src_factor[2];
    } else if (need_color_factor) {
       emit_color_factor_calculation(f,
-                                    b->rgb_dst_factor,
-                                    b->colormask,
+                                    b->rt[0].rgb_dst_factor,
+                                    b->rt[0].colormask,
                                     frag, pixel, const_color, dst_factor);
    }
 
 
 
    for (i = 0; i < 4; ++i) {
-      if ((b->colormask & (1U << i)) != 0) {
+      if ((b->rt[0].colormask & (1U << i)) != 0) {
          emit_blend_calculation(f,
                                 func[i], sF[i], dF[i],
                                 frag[i], src_factor[i],
@@ -1216,7 +1216,7 @@ cell_generate_logic_op(struct spe_function *f,
 
    /* Short-circuit the noop and invert cases.
     */
-   if ((logic_op == PIPE_LOGICOP_NOOP) || (blend->colormask == 0)) {
+   if ((logic_op == PIPE_LOGICOP_NOOP) || (blend->rt[0].colormask == 0)) {
       spe_bi(f, 0, 0, 0);
       return;
    } else if (logic_op == PIPE_LOGICOP_INVERT) {
