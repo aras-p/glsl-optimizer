@@ -17,11 +17,11 @@ nv04_blend_state_create(struct pipe_context *pipe,
 
 	cb = MALLOC(sizeof(struct nv04_blend_state));
 
-	cb->b_enable = cso->blend_enable ? 1 : 0;
-	cb->b_src = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_src_factor)));
-	cb->b_dst = ((nvgl_blend_func(cso->alpha_dst_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_dst_factor)));
+	cb->b_enable = cso->rt[0].blend_enable ? 1 : 0;
+	cb->b_src = ((nvgl_blend_func(cso->rt[0].alpha_src_factor)<<16) |
+			 (nvgl_blend_func(cso->rt[0].rgb_src_factor)));
+	cb->b_dst = ((nvgl_blend_func(cso->rt[0].alpha_dst_factor)<<16) |
+			 (nvgl_blend_func(cso->rt[0].rgb_dst_factor)));
 	
 
 	return (void *)cb;

@@ -44,7 +44,7 @@ nv50_blend_state_create(struct pipe_context *pipe,
 	 * 	- dither
 	 */
 
-	if (cso->blend_enable == 0) {
+	if (cso->rt[0].blend_enable == 0) {
 		so_method(so, tesla, NV50TCL_BLEND_ENABLE(0), 8);
 		for (i = 0; i < 8; i++)
 			so_data(so, 0);
@@ -53,13 +53,13 @@ nv50_blend_state_create(struct pipe_context *pipe,
 		for (i = 0; i < 8; i++)
 			so_data(so, 1);
 		so_method(so, tesla, NV50TCL_BLEND_EQUATION_RGB, 5);
-		so_data  (so, nvgl_blend_eqn(cso->rgb_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rgb_src_factor));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->rgb_dst_factor));
-		so_data  (so, nvgl_blend_eqn(cso->alpha_func));
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->alpha_src_factor));
+		so_data  (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_src_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_dst_factor));
+		so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_src_factor));
 		so_method(so, tesla, NV50TCL_BLEND_FUNC_DST_ALPHA, 1);
-		so_data  (so, 0x4000 | nvgl_blend_func(cso->alpha_dst_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].alpha_dst_factor));
 	}
 
 	if (cso->logicop_enable == 0 ) {
@@ -71,13 +71,13 @@ nv50_blend_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_logicop_func(cso->logicop_func));
 	}
 
-	if (cso->colormask & PIPE_MASK_R)
+	if (cso->rt[0].colormask & PIPE_MASK_R)
 		cmask |= (1 << 0);
-	if (cso->colormask & PIPE_MASK_G)
+	if (cso->rt[0].colormask & PIPE_MASK_G)
 		cmask |= (1 << 4);
-	if (cso->colormask & PIPE_MASK_B)
+	if (cso->rt[0].colormask & PIPE_MASK_B)
 		cmask |= (1 << 8);
-	if (cso->colormask & PIPE_MASK_A)
+	if (cso->rt[0].colormask & PIPE_MASK_A)
 		cmask |= (1 << 12);
 	so_method(so, tesla, NV50TCL_COLOR_MASK(0), 8);
 	for (i = 0; i < 8; i++)
