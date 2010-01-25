@@ -315,7 +315,7 @@ enum pipe_error cso_set_blend(struct cso_context *ctx,
    void *handle;
 
    key_size = templ->independent_blend_enable ? sizeof(struct pipe_blend_state) :
-              (void *)&(templ->rt[1]) - (void *)templ;
+              (char *)&(templ->rt[1]) - (char *)templ;
    hash_key = cso_construct_key((void*)templ, key_size);
    iter = cso_find_state_template(ctx->cache, hash_key, CSO_BLEND, (void*)templ);
 
