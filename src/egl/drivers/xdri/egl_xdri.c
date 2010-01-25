@@ -484,7 +484,8 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
  */
 static _EGLSurface *
 xdri_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                            NativeWindowType window, const EGLint *attrib_list)
+                            EGLNativeWindowType window,
+                            const EGLint *attrib_list)
 {
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_config *xdri_config = lookup_config(conf);

@@ -76,7 +76,7 @@ _eglFiniDisplay(void);
 
 
 extern _EGLDisplay *
-_eglNewDisplay(NativeDisplayType displayName);
+_eglNewDisplay(EGLNativeDisplayType displayName);
 
 
 extern EGLDisplay
@@ -88,7 +88,7 @@ _eglUnlinkDisplay(_EGLDisplay *dpy);
 
 
 extern _EGLDisplay *
-_eglFindDisplay(NativeDisplayType nativeDisplay);
+_eglFindDisplay(EGLNativeDisplayType nativeDisplay);
 
 
 PUBLIC void

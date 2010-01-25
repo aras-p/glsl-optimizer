@@ -50,7 +50,7 @@ _eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf);
 
 
 extern EGLBoolean
-_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, NativePixmapType target);
+_eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLNativePixmapType target);
 
 
 extern EGLBoolean
@@ -58,11 +58,11 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint at
 
 
 extern _EGLSurface *
-_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativeWindowType window, const EGLint *attrib_list);
+_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLNativeWindowType window, const EGLint *attrib_list);
 
 
 extern _EGLSurface *
-_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, NativePixmapType pixmap, const EGLint *attrib_list);
+_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf, EGLNativePixmapType pixmap, const EGLint *attrib_list);
 
 
 extern _EGLSurface *

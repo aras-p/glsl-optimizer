@@ -73,7 +73,7 @@
  * We initialize our global vars and create a private _EGLDisplay object.
  */
 EGLDisplay EGLAPIENTRY
-eglGetDisplay(NativeDisplayType nativeDisplay)
+eglGetDisplay(EGLNativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy;
    dpy = _eglFindDisplay(nativeDisplay);
@@ -418,7 +418,7 @@ eglQueryContext(EGLDisplay dpy, EGLContext ctx,
 
 EGLSurface EGLAPIENTRY
 eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-                       NativeWindowType window, const EGLint *attrib_list)
+                       EGLNativeWindowType window, const EGLint *attrib_list)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLConfig *conf = _eglLookupConfig(config, disp);
@@ -439,7 +439,7 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 
 EGLSurface EGLAPIENTRY
 eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
-                       NativePixmapType pixmap, const EGLint *attrib_list)
+                       EGLNativePixmapType pixmap, const EGLint *attrib_list)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLConfig *conf = _eglLookupConfig(config, disp);
@@ -553,7 +553,7 @@ eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 
 
 EGLBoolean EGLAPIENTRY
-eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, NativePixmapType target)
+eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
 {
    _EGL_DECLARE_DD_AND_SURFACE(dpy, surface);
    return drv->API.CopyBuffers(drv, disp, surf, target);

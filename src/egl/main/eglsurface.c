@@ -237,7 +237,7 @@ _eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 
 EGLBoolean
 _eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
-                NativePixmapType target)
+                EGLNativePixmapType target)
 {
    /* copy surface to native pixmap */
    /* All implementation burdon for this is in the device driver */
@@ -319,7 +319,7 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
  */
 _EGLSurface *
 _eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        NativeWindowType window, const EGLint *attrib_list)
+                        EGLNativeWindowType window, const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
@@ -344,7 +344,7 @@ _eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
  */
 _EGLSurface *
 _eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        NativePixmapType pixmap, const EGLint *attrib_list)
+                        EGLNativePixmapType pixmap, const EGLint *attrib_list)
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;

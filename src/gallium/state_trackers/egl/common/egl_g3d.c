@@ -974,7 +974,7 @@ get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
 
 static EGLBoolean
 egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
-                     NativePixmapType target)
+                     EGLNativePixmapType target)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);

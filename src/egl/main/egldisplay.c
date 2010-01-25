@@ -52,7 +52,7 @@ _eglFiniDisplay(void)
  * Note that nativeDisplay may be an X Display ptr, or a string.
  */
 _EGLDisplay *
-_eglNewDisplay(NativeDisplayType nativeDisplay)
+_eglNewDisplay(EGLNativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
@@ -114,7 +114,7 @@ _eglUnlinkDisplay(_EGLDisplay *dpy)
  * linked displays.
  */
 _EGLDisplay *
-_eglFindDisplay(NativeDisplayType nativeDisplay)
+_eglFindDisplay(EGLNativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy;
 

@@ -677,8 +677,9 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
 static _EGLSurface *
-GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
-                            NativeWindowType window, const EGLint *attrib_list)
+GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
+                           _EGLConfig *conf, EGLNativeWindowType window,
+                           const EGLint *attrib_list)
 {
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
@@ -719,8 +720,9 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 }
 
 static _EGLSurface *
-GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
-			   NativePixmapType pixmap, const EGLint *attrib_list)
+GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
+                           _EGLConfig *conf, EGLNativePixmapType pixmap,
+                           const EGLint *attrib_list)
 {
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
