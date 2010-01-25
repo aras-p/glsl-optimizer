@@ -126,29 +126,8 @@ intelDRI2Flush(__DRIdrawable *drawable)
 static void
 intelDRI2FlushInvalidate(__DRIdrawable *drawable)
 {
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
-
    intelDRI2Flush(drawable);
    drawable->validBuffers = GL_FALSE;
-
-   /* We're using FlushInvalidate as an indicator that a frame is
-    * done.  It's only called immediately after SwapBuffers, so it
-    * won't affect front-buffer rendering or applications explicitly
-    * managing swap regions using MESA_copy_buffer.
-    *
-    * Wait for the swapbuffers before the one we just emitted, so we don't
-    * get too many swaps outstanding for apps that are GPU-heavy but not
-    * CPU-heavy.
-    *
-    * Unfortunately, we don't have a handle to the batch containing the swap,
-    * and getting our hands on that doesn't seem worth it, so we just use the
-    * first batch we emitted after the last swap.
-    */
-   if (intel->first_post_swapbuffers_batch != NULL) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
-   }
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {

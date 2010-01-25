@@ -505,7 +505,27 @@ intelFlush(GLcontext * ctx)
 static void
 intel_glFlush(GLcontext *ctx)
 {
+   struct intel_context *intel = intel_context(ctx);
+
    intel_flush(ctx, GL_TRUE);
+
+   /* We're using glFlush as an indicator that a frame is done, which is
+    * what DRI2 does before calling SwapBuffers (and means we should catch
+    * people doing front-buffer rendering, as well)..
+    *
+    * Wait for the swapbuffers before the one we just emitted, so we don't
+    * get too many swaps outstanding for apps that are GPU-heavy but not
+    * CPU-heavy.
+    *
+    * Unfortunately, we don't have a handle to the batch containing the swap,
+    * and getting our hands on that doesn't seem worth it, so we just us the
+    * first batch we emitted after the last swap.
+    */
+   if (intel->first_post_swapbuffers_batch != NULL) {
+      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
+      intel->first_post_swapbuffers_batch = NULL;
+   }
 }
 
 void
