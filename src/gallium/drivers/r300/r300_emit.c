@@ -772,22 +772,6 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-static boolean r300_validate_aos(struct r300_context *r300)
-{
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
-    int i;
-
-    /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->vertex_element_count; i++) {
-        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
-            util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
 void r300_emit_aos(struct r300_context* r300, unsigned offset)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
@@ -796,12 +780,6 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     unsigned size1, size2, aos_count = r300->vertex_element_count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
-
-    /* XXX Move this checking to a more approriate place. */
-    if (!r300_validate_aos(r300)) {
-        /* XXX We should fallback using Draw. */
-        assert(0);
-    }
 
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
