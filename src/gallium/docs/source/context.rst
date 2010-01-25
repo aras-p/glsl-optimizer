@@ -54,7 +54,10 @@ objects. They all follow simple, one-method binding calls, e.g.
 * ``set_blend_color``
 * ``set_clip_state``
 * ``set_polygon_stipple``
-* ``set_scissor_state``
+* ``set_scissor_state`` sets the bounds for the scissor test, which culls
+  pixels before blending to render targets. If the :ref:`Rasterizer` does
+  not have the scissor test enabled, then the scissor bounds never need to
+  be set since they will not be used.
 * ``set_viewport_state``
 * ``set_vertex_elements``
 
