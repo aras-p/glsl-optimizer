@@ -451,7 +451,7 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
 		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 	}
-	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350)
   		_mesa_enable_extension(ctx, "GL_ARB_half_float_vertex");
 }
 
