@@ -649,7 +649,8 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
 	return XvBadAlloc;
     }
 
-    port->currBuf = ++port->currBuf & (VMWARE_VID_NUM_BUFFERS - 1);
+    if (++(port->currBuf) >= VMWARE_VID_NUM_BUFFERS)
+	port->currBuf = 0;
 
     return Success;
 }

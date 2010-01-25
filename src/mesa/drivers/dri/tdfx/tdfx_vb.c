@@ -29,13 +29,8 @@
 #include "main/macros.h"
 #include "main/colormac.h"
 
-#include "math/m_translate.h"
-#include "swrast_setup/swrast_setup.h"
-
 #include "tdfx_context.h"
 #include "tdfx_vb.h"
-#include "tdfx_tris.h"
-#include "tdfx_state.h"
 #include "tdfx_render.h"
 
 static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )

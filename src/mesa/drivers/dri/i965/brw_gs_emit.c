@@ -40,7 +40,6 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "brw_util.h"
 #include "brw_gs.h"
 
 static void brw_gs_alloc_regs( struct brw_gs_compile *c,

@@ -377,7 +377,10 @@ def generate(env):
             '-Wl,-Bsymbolic',
         ]
         # Handle circular dependencies in the libraries
-        env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+        if env['platform'] in ('darwin'):
+            pass
+        else:
+            env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
         if not env['debug']:
             # enable Link-time Code Generation

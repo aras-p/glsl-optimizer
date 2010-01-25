@@ -113,6 +113,8 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'PTHREADS',
 		'HAVE_POSIX_MEMALIGN',
 	])
+	if platform == 'darwin':
+		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(CPPPATH = ['/usr/X11R6/include'])
 	env.Append(LIBPATH = ['/usr/X11R6/lib'])
 	env.Append(LIBS = [

@@ -43,8 +43,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_alloc.h"
 
 #include "main/imports.h"
-#include "main/matrix.h"
-#include "main/extensions.h"
 #include "utils.h"
 #include "main/framebuffer.h"
 
@@ -55,7 +53,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
 
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color

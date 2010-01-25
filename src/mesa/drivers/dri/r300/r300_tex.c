@@ -41,17 +41,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mipmap.h"
 #include "main/simple_list.h"
 #include "main/texstore.h"
-#include "main/teximage.h"
 #include "main/texobj.h"
 
 #include "texmem.h"
 
 #include "r300_context.h"
-#include "r300_state.h"
 #include "radeon_mipmap_tree.h"
 #include "r300_tex.h"
-
-#include "xmlpool.h"
 
 
 static unsigned int translate_wrap_mode(GLenum wrapmode)

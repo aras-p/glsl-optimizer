@@ -42,10 +42,7 @@
 #include "mgacontext.h"
 #include "mgadd.h"
 #include "mgastate.h"
-#include "mgatex.h"
-#include "mgavb.h"
 #include "mgaioctl.h"
-#include "mgatris.h"
 
 #include "vblank.h"
 

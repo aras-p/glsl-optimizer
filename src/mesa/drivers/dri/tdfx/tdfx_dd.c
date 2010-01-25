@@ -35,17 +35,10 @@
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
 #include "tdfx_lock.h"
-#include "tdfx_vb.h"
 #include "tdfx_pixels.h"
 
 #include "utils.h"
 #include "main/context.h"
-#include "main/enums.h"
-#include "main/framebuffer.h"
-#include "swrast/swrast.h"
-#if defined(USE_X86_ASM)
-#include "x86/common_x86_asm.h"
-#endif
 
 
 #define DRIVER_DATE	"20061113"

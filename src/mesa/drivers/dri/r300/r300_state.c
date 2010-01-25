@@ -58,12 +58,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_emit.h"
-#include "r300_tex.h"
 #include "r300_fragprog_common.h"
 #include "r300_render.h"
 #include "r300_vertprog.h"
-
-#include "drirenderbuffer.h"
 
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {

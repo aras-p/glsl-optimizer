@@ -29,7 +29,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
 #include "main/simple_list.h"
 
@@ -47,8 +46,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 #include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 
 
 static int getTypeSize(GLenum type)

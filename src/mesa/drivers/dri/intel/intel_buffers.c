@@ -28,10 +28,8 @@
 #include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "main/framebuffer.h"
-#include "drirenderbuffer.h"
 
 
 /**

@@ -26,7 +26,6 @@
 #include "savagedd.h"
 #include "savagespan.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 #include "savage_3d_reg.h"
 #include "swrast/swrast.h"
 

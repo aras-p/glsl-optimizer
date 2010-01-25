@@ -38,7 +38,6 @@
 #include "intel_reg.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
-#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 

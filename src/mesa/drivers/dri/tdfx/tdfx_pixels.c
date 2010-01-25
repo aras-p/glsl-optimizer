@@ -38,7 +38,6 @@
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
 #include "tdfx_lock.h"
-#include "tdfx_vb.h"
 #include "tdfx_pixels.h"
 #include "tdfx_render.h"
 

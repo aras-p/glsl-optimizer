@@ -39,10 +39,8 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 
 #include "intel_batchbuffer.h"
-#include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 

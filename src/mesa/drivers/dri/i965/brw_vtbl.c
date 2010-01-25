@@ -44,7 +44,6 @@
 #include "brw_state.h"
 #include "brw_draw.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 #include "brw_vs.h"
 #include "brw_wm.h"
 

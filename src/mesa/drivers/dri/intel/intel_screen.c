@@ -37,11 +37,9 @@
 #include "intel_buffers.h"
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
-#include "intel_extensions.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
 #include "intel_screen.h"
-#include "intel_span.h"
 #include "intel_tex.h"
 
 #include "i915_drm.h"

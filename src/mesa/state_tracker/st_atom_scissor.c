@@ -31,6 +31,7 @@
   */
  
 
+#include "main/macros.h"
 #include "st_context.h"
 #include "pipe/p_context.h"
 #include "st_atom.h"
@@ -52,15 +53,19 @@ update_scissor( struct st_context *st )
    scissor.maxy = fb->Height;
 
    if (st->ctx->Scissor.Enabled) {
-      if ((GLuint)st->ctx->Scissor.X > scissor.minx)
+      /* need to be careful here with xmax or ymax < 0 */
+      GLint xmax = MAX2(0, st->ctx->Scissor.X + st->ctx->Scissor.Width);
+      GLint ymax = MAX2(0, st->ctx->Scissor.Y + st->ctx->Scissor.Height);
+
+      if (st->ctx->Scissor.X > (GLint)scissor.minx)
          scissor.minx = st->ctx->Scissor.X;
-      if ((GLuint)st->ctx->Scissor.Y > scissor.miny)
+      if (st->ctx->Scissor.Y > (GLint)scissor.miny)
          scissor.miny = st->ctx->Scissor.Y;
 
-      if ((GLuint)st->ctx->Scissor.X + st->ctx->Scissor.Width < scissor.maxx)
-         scissor.maxx = st->ctx->Scissor.X + st->ctx->Scissor.Width;
-      if ((GLuint)st->ctx->Scissor.Y + st->ctx->Scissor.Height < scissor.maxy)
-         scissor.maxy = st->ctx->Scissor.Y + st->ctx->Scissor.Height;
+      if (xmax < (GLint) scissor.maxx)
+         scissor.maxx = xmax;
+      if (ymax < (GLint) scissor.maxy)
+         scissor.maxy = ymax;
 
       /* check for null space */
       if (scissor.minx >= scissor.maxx || scissor.miny >= scissor.maxy)

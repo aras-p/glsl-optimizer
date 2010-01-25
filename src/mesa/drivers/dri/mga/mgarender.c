@@ -48,7 +48,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "mgacontext.h"
 #include "mgatris.h"
-#include "mgastate.h"
 #include "mgaioctl.h"
 #include "mgavb.h"
 

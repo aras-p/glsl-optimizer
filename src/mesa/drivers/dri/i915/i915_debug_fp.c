@@ -30,9 +30,6 @@
 #include "i915_reg.h"
 #include "i915_debug.h"
 #include "main/imports.h"
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_print.h"
 
 #define PRINTF( ... ) _mesa_printf( __VA_ARGS__ )
 

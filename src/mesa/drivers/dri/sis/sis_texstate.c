@@ -38,7 +38,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 
 #include "sis_context.h"
-#include "sis_state.h"
 #include "sis_tex.h"
 #include "sis_tris.h"
 #include "sis_alloc.h"

@@ -376,6 +376,7 @@ xorg_dri2_init(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
+#if DRI2INFOREC_VERSION >= 2
     int major, minor;
 
     if (xf86LoaderCheckSymbol("DRI2Version")) {
@@ -385,6 +386,7 @@ xorg_dri2_init(ScreenPtr pScreen)
 	major = 1;
 	minor = 0;
     }
+#endif
 
     dri2info.version = DRI2INFOREC_VERSION;
     dri2info.fd = ms->fd;
