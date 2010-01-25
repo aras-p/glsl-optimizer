@@ -135,8 +135,8 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
       textures[2] = stfb->blend_texture;
 
       if (!samplers[0] || !textures[0]) {
-         samplers[1] = samplers[2];
-         textures[1] = textures[2];
+         samplers[0] = samplers[2];
+         textures[0] = textures[2];
       }
       if (!samplers[1] || !textures[1]) {
          samplers[1] = samplers[0];
