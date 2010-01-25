@@ -403,7 +403,7 @@ bind_blend_state(struct xorg_xv_port_priv *port)
    struct pipe_blend_state blend;
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
-   blend.rt[0].blend_enable = 1; /* XXX why? */
+   blend.rt[0].blend_enable = 0;
    blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* porter&duff src */
