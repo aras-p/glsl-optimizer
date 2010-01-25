@@ -27,6 +27,8 @@
 ##########################################################################
 
 
+import struct
+
 from gallium import *
 
 def make_image(surface):
@@ -143,6 +145,42 @@ def test(dev, name):
     ''')
     ctx.set_fragment_shader(fs)
 
+    constbuf0 = dev.buffer_create(64,
+                                  (PIPE_BUFFER_USAGE_CONSTANT |
+                                   PIPE_BUFFER_USAGE_GPU_READ |
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+                                  4 * 4 * 4)
+
+    cbdata = ''
+    cbdata += struct.pack('4f', 0.4, 0.0, 0.0, 1.0)
+    cbdata += struct.pack('4f', 1.0, 1.0, 1.0, 1.0)
+    cbdata += struct.pack('4f', 2.0, 2.0, 2.0, 2.0)
+    cbdata += struct.pack('4f', 4.0, 8.0, 16.0, 32.0)
+
+    constbuf0.write(cbdata, 0)
+
+    ctx.set_constant_buffer(PIPE_SHADER_VERTEX,
+                            0,
+                            constbuf0)
+
+    constbuf1 = dev.buffer_create(64,
+                                  (PIPE_BUFFER_USAGE_CONSTANT |
+                                   PIPE_BUFFER_USAGE_GPU_READ |
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+                                  4 * 4 * 4)
+
+    cbdata = ''
+    cbdata += struct.pack('4f', 0.1, 0.1, 0.1, 0.1)
+    cbdata += struct.pack('4f', 0.25, 0.25, 0.25, 0.25)
+    cbdata += struct.pack('4f', 0.5, 0.5, 0.5, 0.5)
+    cbdata += struct.pack('4f', 0.75, 0.75, 0.75, 0.75)
+
+    constbuf1.write(cbdata, 0)
+
+    ctx.set_constant_buffer(PIPE_SHADER_VERTEX,
+                            1,
+                            constbuf1)
+
     xy = [
          0.0,  0.8,
         -0.2,  0.4,
@@ -213,6 +251,8 @@ def main():
         'add',
         'arl',
         'arr',
+        'cb-1d',
+        'cb-2d',
         'dp3',
         'dp4',
         'dst',
