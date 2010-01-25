@@ -405,6 +405,8 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
 #define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
                                                  and fragment shaders combined */
+#define PIPE_CAP_MAX_CONST_BUFFERS       32
+#define PIPE_CAP_MAX_CONST_BUFFER_SIZE   33  /*< In bytes */
 
 
 /**
