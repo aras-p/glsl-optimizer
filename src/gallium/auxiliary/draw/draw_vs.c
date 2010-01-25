@@ -48,24 +48,27 @@
 
 
 
-void draw_vs_set_constants( struct draw_context *draw,
-                            const float (*constants)[4],
-                            unsigned size )
+void
+draw_vs_set_constants(struct draw_context *draw,
+                      unsigned slot,
+                      const void *constants,
+                      unsigned size)
 {
    if (((uintptr_t)constants) & 0xf) {
-      if (size > draw->vs.const_storage_size) {
-         if (draw->vs.aligned_constant_storage)
-            align_free((void *)draw->vs.aligned_constant_storage);
-         draw->vs.aligned_constant_storage = align_malloc( size, 16 );
+      if (size > draw->vs.const_storage_size[slot]) {
+         if (draw->vs.aligned_constant_storage[slot]) {
+            align_free((void *)draw->vs.aligned_constant_storage[slot]);
+         }
+         draw->vs.aligned_constant_storage[slot] = align_malloc(size, 16);
       }
-      memcpy( (void*)draw->vs.aligned_constant_storage,
-              constants, 
-              size );
-      constants = draw->vs.aligned_constant_storage;
+      memcpy((void *)draw->vs.aligned_constant_storage[slot],
+             constants,
+             size);
+      constants = draw->vs.aligned_constant_storage[slot];
    }
-      
-   draw->vs.aligned_constants = constants;
-   draw_vs_aos_machine_constants( draw->vs.aos_machine, constants );
+
+   draw->vs.aligned_constants[slot] = constants;
+   draw_vs_aos_machine_constants(draw->vs.aos_machine, slot, constants);
 }
 
 
@@ -182,6 +185,8 @@ draw_vs_init( struct draw_context *draw )
 void
 draw_vs_destroy( struct draw_context *draw )
 {
+   uint i;
+
    if (draw->vs.fetch_cache)
       translate_cache_destroy(draw->vs.fetch_cache);
 
@@ -191,8 +196,11 @@ draw_vs_destroy( struct draw_context *draw )
    if (draw->vs.aos_machine)
       draw_vs_aos_machine_destroy(draw->vs.aos_machine);
 
-   if (draw->vs.aligned_constant_storage)
-      align_free((void*)draw->vs.aligned_constant_storage);
+   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+      if (draw->vs.aligned_constant_storage[i]) {
+         align_free((void *)draw->vs.aligned_constant_storage[i]);
+      }
+   }
 
    tgsi_exec_machine_destroy(draw->vs.machine);
 }

@@ -122,7 +122,7 @@ struct aos_machine {
    ushort fpucntl;              /* one of FPU_* above */
 
    const float (*immediates)[4];     /* points to shader data */
-   const float (*constants)[4];      /* points to draw data */
+   const void *constants[PIPE_MAX_CONSTANT]; /* points to draw data */
 
    const struct aos_buffer *buffer; /* points to ? */
 };

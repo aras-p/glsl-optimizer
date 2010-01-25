@@ -85,7 +85,7 @@ static void
 vs_exec_run_linear( struct draw_vertex_shader *shader,
 		    const float (*input)[4],
 		    float (*output)[4],
-		    const float (*constants)[4],
+                   const void *constants[PIPE_MAX_CONSTANT],
 		    unsigned count,
 		    unsigned input_stride,
 		    unsigned output_stride )
@@ -95,7 +95,9 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    unsigned int i, j;
    unsigned slot;
 
-   machine->Consts[0] = constants;
+   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+      machine->Consts[i] = constants[i];
+   }
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);

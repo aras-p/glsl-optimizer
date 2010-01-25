@@ -151,10 +151,12 @@ void draw_set_mapped_element_buffer( struct draw_context *draw,
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);
 
-void draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                     unsigned shader_type,
-                                     const void *buffer,
-                                     unsigned size );
+void
+draw_set_mapped_constant_buffer(struct draw_context *draw,
+                                unsigned shader_type,
+                                unsigned slot,
+                                const void *buffer,
+                                unsigned size);
 
 
 /***********************************************************************

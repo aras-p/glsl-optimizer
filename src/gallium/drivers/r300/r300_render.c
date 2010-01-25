@@ -462,6 +462,7 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     draw_set_mapped_constant_buffer(r300->draw,
 				    PIPE_SHADER_VERTEX,
+                                    0,
 				    r300->shader_constants[PIPE_SHADER_VERTEX].constants,
 				    r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
@@ -506,6 +507,7 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     draw_set_mapped_constant_buffer(r300->draw,
 				    PIPE_SHADER_VERTEX,
+                                    0,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
             r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));

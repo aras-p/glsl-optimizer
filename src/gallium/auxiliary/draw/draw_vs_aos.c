@@ -2114,11 +2114,14 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
+   unsigned i;
 
    if (0) debug_printf("%s %d\n", __FUNCTION__, count);
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   machine->constants = vaos->draw->vs.aligned_constants;
+   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+      machine->constants[i] = vaos->draw->vs.aligned_constants[i];
+   }
    machine->immediates = vaos->base.vs->immediates;
    machine->buffer = vaos->buffer;
 
@@ -2135,12 +2138,15 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
+   unsigned i;
 
    if (0) debug_printf("%s %d %d const: %x\n", __FUNCTION__, start, count, 
                        vaos->base.key.const_vbuffers);
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   machine->constants = vaos->draw->vs.aligned_constants;
+   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+      machine->constants[i] = vaos->draw->vs.aligned_constants[i];
+   }
    machine->immediates = vaos->base.vs->immediates;
    machine->buffer = vaos->buffer;
 

@@ -219,10 +219,12 @@ static void PIPE_CDECL populate_lut( struct aos_machine *machine,
 }
 
 
-void draw_vs_aos_machine_constants( struct aos_machine *machine,
-                                    const float (*constants)[4] )
+void
+draw_vs_aos_machine_constants(struct aos_machine *machine,
+                              unsigned slot,
+                              const void *constants)
 {
-   machine->constants = constants;
+   machine->constants[slot] = constants;
 
    {
       unsigned i;
@@ -307,8 +309,10 @@ void draw_vs_aos_machine_viewport( struct aos_machine *machine,
 {
 }
 
-void draw_vs_aos_machine_constants( struct aos_machine *machine,
-                                    const float (*constants)[4] )
+void
+draw_vs_aos_machine_constants(struct aos_machine *machine,
+                              unsigned slot,
+                              const void *constants)
 {
 }
 

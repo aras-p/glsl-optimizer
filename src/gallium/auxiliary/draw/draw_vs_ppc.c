@@ -85,7 +85,7 @@ static void
 vs_ppc_run_linear( struct draw_vertex_shader *base,
 		   const float (*input)[4],
 		   float (*output)[4],
-		   const float (*constants)[4],
+                  const void *constants[PIPE_MAX_CONSTANT],
 		   unsigned count,
 		   unsigned input_stride,
 		   unsigned output_stride )
@@ -125,7 +125,7 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
        */
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4]) shader->base.immediates,
-		   (float (*)[4]) constants,
+                   (const float (*)[4])constants[0],
                    ppc_builtin_constants);
 
       /* convert (up to) four output verts from SoA back to AoS format */

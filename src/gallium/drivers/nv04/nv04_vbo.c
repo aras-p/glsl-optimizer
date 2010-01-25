@@ -45,7 +45,7 @@ void nv04_draw_elements( struct pipe_context *pipe,
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 
-	draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX,
+	draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
 					nv04->constbuf[PIPE_SHADER_VERTEX],
 					nv04->constbuf_nr[PIPE_SHADER_VERTEX]);
 

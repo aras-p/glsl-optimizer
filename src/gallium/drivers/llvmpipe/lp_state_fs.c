@@ -731,7 +731,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    }
 
    if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX,
+      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, 0,
                                       data, size);
    }
 

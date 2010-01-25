@@ -81,7 +81,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    }
 
 
-   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX,
+   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
                                    (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
                                       4 * sizeof(float)));
