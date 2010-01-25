@@ -74,7 +74,15 @@ $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS)
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(EGL_LIB_DEPS) $(OBJECTS)
 
-install: default
+install-headers:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/KHR
+	$(INSTALL) -m 644 $(TOP)/include/KHR/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/KHR
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/EGL
+	$(INSTALL) -m 644 $(TOP)/include/EGL/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/EGL
+
+install: default install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(EGL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
