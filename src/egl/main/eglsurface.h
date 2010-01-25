@@ -141,9 +141,8 @@ _eglUnlinkSurface(_EGLSurface *surf)
 static INLINE _EGLSurface *
 _eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
 {
-   _EGLResource *res = (_EGLResource *) surface;
    _EGLSurface *surf = (_EGLSurface *) surface;
-   if (!res || !dpy || !_eglCheckResource(res, _EGL_RESOURCE_SURFACE, dpy))
+   if (!dpy || !_eglCheckResource((void *) surf, _EGL_RESOURCE_SURFACE, dpy))
       surf = NULL;
    return surf;
 }

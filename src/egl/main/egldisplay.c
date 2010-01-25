@@ -214,12 +214,15 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
  * own the resource.
  */
 EGLBoolean
-_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 {
    _EGLResource *list = dpy->ResourceLists[type];
    
+   if (!res)
+      return EGL_FALSE;
+
    while (list) {
-      if (res == list) {
+      if (res == (void *) list) {
          assert(list->Display == dpy);
          break;
       }

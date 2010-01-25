@@ -95,9 +95,8 @@ _eglUnlinkContext(_EGLContext *ctx)
 static INLINE _EGLContext *
 _eglLookupContext(EGLContext context, _EGLDisplay *dpy)
 {
-   _EGLResource *res = (_EGLResource *) context;
    _EGLContext *ctx = (_EGLContext *) context;
-   if (!res || !dpy || !_eglCheckResource(res, _EGL_RESOURCE_CONTEXT, dpy))
+   if (!dpy || !_eglCheckResource((void *) ctx, _EGL_RESOURCE_CONTEXT, dpy))
       ctx = NULL;
    return ctx;
 }

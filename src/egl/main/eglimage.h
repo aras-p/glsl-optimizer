@@ -61,9 +61,8 @@ _eglUnlinkImage(_EGLImage *img)
 static INLINE _EGLImage *
 _eglLookupImage(EGLImageKHR image, _EGLDisplay *dpy)
 {
-   _EGLResource *res = (_EGLResource *) image;
    _EGLImage *img = (_EGLImage *) image;
-   if (!res || !dpy || !_eglCheckResource(res, _EGL_RESOURCE_IMAGE, dpy))
+   if (!dpy || !_eglCheckResource((void *) img, _EGL_RESOURCE_IMAGE, dpy))
       img = NULL;
    return img;
 }

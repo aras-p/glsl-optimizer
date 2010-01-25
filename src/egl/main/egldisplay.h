@@ -107,7 +107,7 @@ _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
 extern EGLBoolean
-_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy);
+_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
 
 
 #else /* !_EGL_SKIP_HANDLE_CHECK */
@@ -122,9 +122,9 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
 
 
 static INLINE EGLBoolean
-_eglCheckResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
+_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
 {
-   return (res->Display == dpy);
+   return (((_EGLResource *) res)->Display == dpy);
 }
 
 
