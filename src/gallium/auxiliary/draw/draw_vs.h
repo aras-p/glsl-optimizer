@@ -132,7 +132,7 @@ struct draw_vertex_shader {
    void (*run_linear)( struct draw_vertex_shader *shader,
 		       const float (*input)[4],
 		       float (*output)[4],
-                      const void *constants[PIPE_MAX_CONSTANT],
+                      const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
 		       unsigned count,
 		       unsigned input_stride,
 		       unsigned output_stride );

@@ -114,7 +114,7 @@ softpipe_destroy( struct pipe_context *pipe )
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       uint j;
 
-      for (j = 0; j < PIPE_MAX_CONSTANT; j++) {
+      for (j = 0; j < PIPE_MAX_CONSTANT_BUFFERS; j++) {
          if (softpipe->constants[i][j]) {
             pipe_buffer_reference(&softpipe->constants[i][j], NULL);
          }

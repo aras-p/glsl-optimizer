@@ -153,8 +153,8 @@ struct draw_context
          const void *vbuffer[PIPE_MAX_ATTRIBS];
          
          /** constant buffer (for vertex/geometry shader) */
-         const void *vs_constants[PIPE_MAX_CONSTANT];
-         const void *gs_constants[PIPE_MAX_CONSTANT];
+         const void *vs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         const void *gs_constants[PIPE_MAX_CONSTANT_BUFFERS];
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -202,10 +202,10 @@ struct draw_context
       struct aos_machine *aos_machine; 
 
 
-      const void *aligned_constants[PIPE_MAX_CONSTANT];
+      const void *aligned_constants[PIPE_MAX_CONSTANT_BUFFERS];
 
-      const void *aligned_constant_storage[PIPE_MAX_CONSTANT];
-      unsigned const_storage_size[PIPE_MAX_CONSTANT];
+      const void *aligned_constant_storage[PIPE_MAX_CONSTANT_BUFFERS];
+      unsigned const_storage_size[PIPE_MAX_CONSTANT_BUFFERS];
 
 
       struct translate *fetch;

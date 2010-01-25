@@ -240,7 +240,7 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 {
    debug_assert(shader_type == PIPE_SHADER_VERTEX ||
                 shader_type == PIPE_SHADER_GEOMETRY);
-   debug_assert(slot < PIPE_MAX_CONSTANT);
+   debug_assert(slot < PIPE_MAX_CONSTANT_BUFFERS);
 
    if (shader_type == PIPE_SHADER_VERTEX) {
       draw->pt.user.vs_constants[slot] = buffer;

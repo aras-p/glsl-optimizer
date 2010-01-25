@@ -293,7 +293,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
 void draw_geometry_shader_run(struct draw_geometry_shader *shader,
                               const float (*input)[4],
                               float (*output)[4],
-                              const void *constants[PIPE_MAX_CONSTANT],
+                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
                               unsigned count,
                               unsigned input_stride,
                               unsigned vertex_size)
@@ -304,7 +304,7 @@ void draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned num_primitives = count/num_vertices;
    unsigned inputs_from_vs = 0;
 
-   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       machine->Consts[i] = constants[i];
    }
 

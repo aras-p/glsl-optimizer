@@ -164,7 +164,7 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index < PIPE_MAX_CONSTANT);
+   assert(index < PIPE_MAX_CONSTANT_BUFFERS);
 
    draw_flush(softpipe->draw);
 

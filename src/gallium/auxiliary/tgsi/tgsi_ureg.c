@@ -136,7 +136,7 @@ struct ureg_program
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
 
-   struct const_decl const_decls[PIPE_MAX_CONSTANT];
+   struct const_decl const_decls[PIPE_MAX_CONSTANT_BUFFERS];
 
    unsigned property_gs_input_prim;
 
@@ -367,7 +367,7 @@ ureg_DECL_constant2D(struct ureg_program *ureg,
 {
    struct const_decl *decl = &ureg->const_decls[index2D];
 
-   assert(index2D < PIPE_MAX_CONSTANT);
+   assert(index2D < PIPE_MAX_CONSTANT_BUFFERS);
 
    if (decl->nr_constant_ranges < UREG_MAX_CONSTANT_RANGE) {
       uint i = decl->nr_constant_ranges++;
@@ -1209,7 +1209,7 @@ static void emit_decls( struct ureg_program *ureg )
                        ureg->sampler[i].Index, 1 );
    }
 
-   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       struct const_decl *decl = &ureg->const_decls[i];
 
       if (decl->nr_constant_ranges) {

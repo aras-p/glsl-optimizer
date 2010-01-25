@@ -54,7 +54,7 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       uint j;
 
-      for (j = 0; j < PIPE_MAX_CONSTANT; j++) {
+      for (j = 0; j < PIPE_MAX_CONSTANT_BUFFERS; j++) {
          if (sp->constants[i][j] && sp->constants[i][j]->size) {
             sp->mapped_constants[i][j] = ws->buffer_map(ws,
                                                         sp->constants[i][j],
@@ -63,7 +63,7 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
       }
    }
 
-   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       if (sp->constants[PIPE_SHADER_VERTEX][i]) {
          draw_set_mapped_constant_buffer(sp->draw,
                                          PIPE_SHADER_VERTEX,
@@ -93,7 +93,7 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
     */
    draw_flush(sp->draw);
 
-   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       draw_set_mapped_constant_buffer(sp->draw,
                                       PIPE_SHADER_VERTEX,
                                       i,
@@ -109,7 +109,7 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       uint j;
 
-      for (j = 0; j < PIPE_MAX_CONSTANT; j++) {
+      for (j = 0; j < PIPE_MAX_CONSTANT_BUFFERS; j++) {
          if (sp->constants[i][j] && sp->constants[i][j]->size) {
             ws->buffer_unmap(ws, sp->constants[i][j]);
          }

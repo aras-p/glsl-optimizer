@@ -196,7 +196,7 @@ draw_vs_destroy( struct draw_context *draw )
    if (draw->vs.aos_machine)
       draw_vs_aos_machine_destroy(draw->vs.aos_machine);
 
-   for (i = 0; i < PIPE_MAX_CONSTANT; i++) {
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       if (draw->vs.aligned_constant_storage[i]) {
          align_free((void *)draw->vs.aligned_constant_storage[i]);
       }

@@ -965,7 +965,7 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
    switch (file) {
    case TGSI_FILE_CONSTANT:
       for (i = 0; i < QUAD_SIZE; i++) {
-         assert(index2D->i[i] >= 0 && index2D->i[i] < PIPE_MAX_CONSTANT);
+         assert(index2D->i[i] >= 0 && index2D->i[i] < PIPE_MAX_CONSTANT_BUFFERS);
          assert(mach->Consts[index2D->i[i]]);
 
          if (index->i[i] < 0) {
