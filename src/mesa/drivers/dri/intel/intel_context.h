@@ -186,6 +186,7 @@ struct intel_context
    struct intel_batchbuffer *batch;
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
+   GLboolean using_dri2_swapbuffers;
 
    struct
    {

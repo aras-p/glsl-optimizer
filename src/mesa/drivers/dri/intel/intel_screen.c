@@ -126,6 +126,10 @@ intelDRI2Flush(__DRIdrawable *drawable)
 static void
 intelDRI2FlushInvalidate(__DRIdrawable *drawable)
 {
+   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
+
+   intel->using_dri2_swapbuffers = GL_TRUE;
+
    intelDRI2Flush(drawable);
    drawable->validBuffers = GL_FALSE;
 }

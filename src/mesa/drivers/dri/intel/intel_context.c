@@ -521,7 +521,8 @@ intel_glFlush(GLcontext *ctx)
     * and getting our hands on that doesn't seem worth it, so we just us the
     * first batch we emitted after the last swap.
     */
-   if (intel->first_post_swapbuffers_batch != NULL) {
+   if (!intel->using_dri2_swapbuffers &&
+       intel->first_post_swapbuffers_batch != NULL) {
       drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
