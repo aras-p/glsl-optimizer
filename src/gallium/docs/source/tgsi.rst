@@ -1111,6 +1111,117 @@ BREAKC - Break Conditional
 
   TBD
 
+Double Opcodes
+^^^^^^^^^^^^^^^
+
+DADD - Add Double
+
+.. math::
+
+  dst.xy = src0.xy + src1.xy
+
+  dst.zw = src0.zw + src1.zw
+
+
+DDIV - Divide Double
+
+.. math::
+
+  dst.xy = src0.xy / src1.xy
+
+  dst.zw = src0.zw / src1.zw
+
+DSEQ - Set Double on Equal
+
+.. math::
+
+  dst.xy = src0.xy == src1.xy ? 1.0F : 0.0F
+
+  dst.zw = src0.zw == src1.zw ? 1.0F : 0.0F
+
+DSLT - Set Double on Less than
+
+.. math::
+
+  dst.xy = src0.xy < src1.xy ? 1.0F : 0.0F
+
+  dst.zw = src0.zw < src1.zw ? 1.0F : 0.0F
+
+DFRAC - Double Fraction
+
+.. math::
+
+  dst.xy = src.xy - \lfloor src.xy\rfloor
+
+  dst.zw = src.zw - \lfloor src.zw\rfloor
+
+
+DFRACEXP - Convert Double Number to Fractional and Integral Components
+
+.. math::
+
+  dst0.xy = frexp(src.xy, dst1.xy)
+
+  dst0.zw = frexp(src.zw, dst1.zw)
+
+DLDEXP - Multiple Double Number by Integral Power of 2
+
+.. math::
+
+  dst.xy = ldexp(src0.xy, src1.xy)
+
+  dst.zw = ldexp(src0.zw, src1.zw)
+
+DMIN - Minimum Double
+
+.. math::
+
+  dst.xy = min(src0.xy, src1.xy)
+
+  dst.zw = min(src0.zw, src1.zw)
+
+DMAX - Maximum Double
+
+.. math::
+
+  dst.xy = max(src0.xy, src1.xy)
+
+  dst.zw = max(src0.zw, src1.zw)
+
+DMUL - Multiply Double
+
+.. math::
+
+  dst.xy = src0.xy \times src1.xy
+
+  dst.zw = src0.zw \times src1.zw
+
+
+DMAD - Multiply And Add Doubles
+
+.. math::
+
+  dst.xy = src0.xy \times src1.xy + src2.xy
+
+  dst.zw = src0.zw \times src1.zw + src2.zw
+
+
+DRCP - Reciprocal Double
+
+.. math::
+
+   dst.xy = \frac{1}{src.xy}
+
+   dst.zw = \frac{1}{src.zw}
+
+DSQRT - Square root double
+
+.. math::
+
+   dst.xy = \sqrt{src.xy}
+
+   dst.zw = \sqrt{src.zw}
+
 
 Explanation of symbols used
 ------------------------------
