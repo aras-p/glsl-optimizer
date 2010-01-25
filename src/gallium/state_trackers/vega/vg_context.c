@@ -286,8 +286,6 @@ static void update_clip_state(struct vg_context *ctx)
          renderer_draw_quad(ctx->renderer, minx, miny, maxx, maxy, 0.0f);
       }
 
-      blend->rt[0].colormask = PIPE_MASK_R; /*enable colorwrites*/
-      /* XXX really only for red channel? */
       cso_restore_blend(ctx->cso_context);
       cso_restore_fragment_shader(ctx->cso_context);
 
@@ -311,7 +309,7 @@ void vg_validate_state(struct vg_context *ctx)
          blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
          blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
          blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         /* could disable blending ? */
+         blend->rt[0].blend_enable = 0;
          break;
       case VG_BLEND_SRC_OVER:
          blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
@@ -345,7 +343,7 @@ void vg_validate_state(struct vg_context *ctx)
          blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
          blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
          blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         /* could disable blending ? */
+         blend->rt[0].blend_enable = 0;
          break;
       case VG_BLEND_ADDITIVE:
          blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;

@@ -139,7 +139,7 @@ static void setup_blend()
       blend.rt[0].colormask |= PIPE_MASK_B;
    if (ctx->state.vg.filter_channel_mask & VG_ALPHA)
       blend.rt[0].colormask |= PIPE_MASK_A;
-   blend.rt[0].blend_enable = 1; /* XXX why? */
+   blend.rt[0].blend_enable = 0;
    cso_set_blend(ctx->cso_context, &blend);
 }
 
