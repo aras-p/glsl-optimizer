@@ -15,38 +15,39 @@ if progs_env['platform'] == 'windows':
         'gdi32',
     ])
 
-# OpenGL
-if progs_env['platform'] == 'windows':
-    progs_env.Prepend(LIBS = ['glu32', 'opengl32'])
-else:
-    progs_env.Prepend(LIBS = ['GLU', 'GL'])
+if platform != 'embedded':
+	# OpenGL
+	if progs_env['platform'] == 'windows':
+   		progs_env.Prepend(LIBS = ['glu32', 'opengl32'])
+	else:
+		progs_env.Prepend(LIBS = ['GLU', 'GL'])
 
-# Glut
-progs_env.Prepend(LIBS = [glut])
+	# Glut
+	progs_env.Prepend(LIBS = [glut])
 
-# GLEW
-progs_env.Prepend(LIBS = [glew])
+	# GLEW
+	progs_env.Prepend(LIBS = [glew])
 
-progs_env.Prepend(CPPPATH = [
-	'#progs/util',
-])
+	progs_env.Prepend(CPPPATH = [
+		'#progs/util',
+	])
 
-progs_env.Prepend(LIBS = [
-	util,
-])
+	progs_env.Prepend(LIBS = [
+		util,
+	])
 
-Export('progs_env')
+	Export('progs_env')
 
-SConscript([
-    'demos/SConscript',
-    'glsl/SConscript',
-    'redbook/SConscript',
-    'samples/SConscript',
-    'tests/SConscript',
-    'trivial/SConscript',
-    'vp/SConscript',
-    'vpglsl/SConscript',
-    'fp/SConscript',
-    'wgl/SConscript',
-    'perf/SConscript',
-])
+	SConscript([
+	    'demos/SConscript',
+	    'glsl/SConscript',
+	    'redbook/SConscript',
+	    'samples/SConscript',
+	    'tests/SConscript',
+	    'trivial/SConscript',
+	    'vp/SConscript',
+	    'vpglsl/SConscript',
+	    'fp/SConscript',
+	    'wgl/SConscript',
+	    'perf/SConscript',
+	])

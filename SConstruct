@@ -38,6 +38,9 @@ if common.default_platform in ('linux', 'freebsd', 'darwin'):
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
 	default_winsys = 'all'
+elif common.default_platform in ('embedded',):
+	default_drivers = 'softpipe,llvmpipe'
+	default_winsys = 'xlib'
 else:
 	default_drivers = 'all'
 	default_winsys = 'all'
@@ -83,7 +86,7 @@ platform = env['platform']
 # derived options
 x86 = machine == 'x86'
 ppc = machine == 'ppc'
-gcc = platform in ('linux', 'freebsd', 'darwin')
+gcc = platform in ('linux', 'freebsd', 'darwin', 'embedded')
 msvc = platform in ('windows', 'winddk')
 
 Export([
@@ -114,7 +117,7 @@ if env['msvc']:
 
 
 # Posix
-if platform in ('posix', 'linux', 'freebsd', 'darwin'):
+if platform in ('posix', 'linux', 'freebsd', 'darwin', 'embedded'):
 	env.Append(CPPDEFINES = [
 		'_POSIX_SOURCE',
 		('_POSIX_C_SOURCE', '199309L'), 
@@ -132,9 +135,13 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 	env.Append(LIBS = [
 		'm',
 		'pthread',
-		'expat',
 		'dl',
 	])
+	if platform != 'embedded':
+		env.Append(LIBS = [
+			'expat',
+		])
+		
 
 
 # DRI
