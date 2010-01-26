@@ -1350,15 +1350,26 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
             ASSERT(fb == &DummyFramebuffer || fb->Name == framebuffers[i]);
 
             /* check if deleting currently bound framebuffer object */
-            if (fb == ctx->DrawBuffer) {
-               /* bind default */
-               ASSERT(fb->RefCount >= 2);
-               _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+            if (ctx->Extensions.EXT_framebuffer_blit) {
+               /* separate draw/read binding points */
+               if (fb == ctx->DrawBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+               }
+               if (fb == ctx->ReadBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+               }
             }
-            if (fb == ctx->ReadBuffer) {
-               /* bind default */
-               ASSERT(fb->RefCount >= 2);
-               _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+            else {
+               /* only one binding point for read/draw buffers */
+               if (fb == ctx->DrawBuffer || fb == ctx->ReadBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+               }    
             }
 
 	    /* remove from hash table immediately, to free the ID */
