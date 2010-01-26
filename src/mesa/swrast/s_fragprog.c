@@ -144,10 +144,20 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
              const struct gl_fragment_program *program,
              const SWspan *span, GLuint col)
 {
+   GLfloat *wpos = span->array->attribs[FRAG_ATTRIB_WPOS][col];
+
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero(machine->Temporaries,
                   MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   }
+
+   /* ARB_fragment_coord_conventions */
+   if (program->OriginUpperLeft)
+      wpos[1] = ctx->DrawBuffer->Height - 1 - wpos[1];
+   if (!program->PixelCenterInteger) {
+      wpos[0] += 0.5;
+      wpos[1] += 0.5;
    }
 
    /* Setup pointer to input attributes */
