@@ -43,11 +43,7 @@ _eglMain(const char *args);
 
 
 extern _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy);
-
-
-extern EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy);
+_eglMatchDriver(_EGLDisplay *dpy);
 
 
 extern EGLBoolean

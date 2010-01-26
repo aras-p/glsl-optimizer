@@ -104,15 +104,13 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
    if (!drv) {
       _eglPreloadDrivers();
 
-      drv = _eglOpenDriver(disp);
+      drv = _eglMatchDriver(disp);
       if (!drv)
          return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
 
       /* Initialize the particular display now */
-      if (!drv->API.Initialize(drv, disp, &major_int, &minor_int)) {
-         _eglCloseDriver(drv, disp);
+      if (!drv->API.Initialize(drv, disp, &major_int, &minor_int))
          return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
-      }
 
       disp->APImajor = major_int;
       disp->APIminor = minor_int;
@@ -150,7 +148,6 @@ eglTerminate(EGLDisplay dpy)
    drv = disp->Driver;
    if (drv) {
       drv->API.Terminate(drv, disp);
-      _eglCloseDriver(drv, disp);
       disp->Driver = NULL;
    }
 

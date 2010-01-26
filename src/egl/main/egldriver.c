@@ -269,7 +269,7 @@ _eglLoadDriver(const char *path, const char *args)
  *
  * The matching is done by finding the driver with the highest score.
  */
-static _EGLDriver *
+_EGLDriver *
 _eglMatchDriver(_EGLDisplay *dpy)
 {
    _EGLDriver *best_drv = NULL;
@@ -295,27 +295,6 @@ _eglMatchDriver(_EGLDisplay *dpy)
    }
 
    return best_drv;
-}
-
-
-/**
- * Open a preloaded driver.
- */
-_EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy)
-{
-   _EGLDriver *drv = _eglMatchDriver(dpy);
-   return drv;
-}
-
-
-/**
- * Close a preloaded driver.
- */
-EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   return EGL_TRUE;
 }
 
 
