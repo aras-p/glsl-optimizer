@@ -37,6 +37,7 @@
 #include "shader/shader_api.h"
 
 #include "brw_context.h"
+#include "brw_defines.h"
 #include "brw_draw.h"
 #include "brw_state.h"
 #include "intel_span.h"
