@@ -23,6 +23,7 @@
 import os
 import os.path
 import sys
+import SCons.Util
 
 import common
 
