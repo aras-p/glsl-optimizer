@@ -276,8 +276,7 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
-        if env['CCVERSION'].startswith('4.2.') or
-           env['CCVERSION'].startswith('4.3.'):
+        if env['CCVERSION'].startswith('4.2.') or env['CCVERSION'].startswith('4.3.'):
 	    ccflags += [
             	'-Werror=pointer-arith',
 	    ]
