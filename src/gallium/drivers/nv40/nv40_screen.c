@@ -52,6 +52,10 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 		if (screen->curie->grclass == NV40TCL)
 			return 1;
 		return 0;
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+		return 0;
+	case PIPE_CAP_INDEP_BLEND_FUNC:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
