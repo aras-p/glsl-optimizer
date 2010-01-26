@@ -194,8 +194,19 @@ static boolean ps30_output( struct svga_shader_emitter *emit,
 
    switch (semantic.Name) {
    case TGSI_SEMANTIC_COLOR:
-      emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 
-                                            semantic.Index );
+      if (emit->unit == PIPE_SHADER_FRAGMENT &&
+          emit->key.fkey.white_fragments) {
+
+         emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
+                                               emit->nr_hw_temp++ );
+         emit->temp_col[idx] = emit->output_map[idx];
+         emit->true_col[idx] = dst_register( SVGA3DREG_COLOROUT, 
+                                              semantic.Index );
+      }
+      else {
+         emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 
+                                               semantic.Index );
+      }
       break;
    case TGSI_SEMANTIC_POSITION:
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,

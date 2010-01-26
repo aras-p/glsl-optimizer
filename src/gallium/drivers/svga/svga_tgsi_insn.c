@@ -1011,10 +1011,10 @@ static boolean emit_kilp(struct svga_shader_emitter *emit,
 {
    SVGA3dShaderInstToken inst;
    SVGA3dShaderDestToken temp;
-   struct src_register one = get_zero_immediate( emit );
+   struct src_register one = scalar( get_zero_immediate( emit ),
+                                     TGSI_SWIZZLE_W );
 
    inst = inst_token( SVGA3DOP_TEXKILL );
-   one = scalar( one, TGSI_SWIZZLE_W );
 
    /* texkill doesn't allow negation on the operand so lets move
     * negation of {1} to a temp register */
@@ -2254,11 +2254,28 @@ static boolean emit_ps_postamble( struct svga_shader_emitter *emit )
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       if (SVGA3dShaderGetRegType(emit->true_col[i].value) != 0) {
 
-         if (!submit_op1( emit,
-                          inst_token(SVGA3DOP_MOV),
-                          emit->true_col[i],
-                          src(emit->temp_col[i]) ))
-            return FALSE;
+         /* Potentially override output colors with white for XOR
+          * logicop workaround.
+          */
+         if (emit->unit == PIPE_SHADER_FRAGMENT &&
+             emit->key.fkey.white_fragments) {
+
+            struct src_register one = scalar( get_zero_immediate( emit ),
+                                              TGSI_SWIZZLE_W );
+
+            if (!submit_op1( emit,
+                             inst_token(SVGA3DOP_MOV),
+                             emit->true_col[i],
+                             one ))
+               return FALSE;
+         }
+         else {
+            if (!submit_op1( emit,
+                             inst_token(SVGA3DOP_MOV),
+                             emit->true_col[i],
+                             src(emit->temp_col[i]) ))
+               return FALSE;
+         }
       }
    }
 
@@ -2465,6 +2482,9 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
          return TRUE;
 
       if (emit->key.fkey.light_twoside)
+         return TRUE;
+
+      if (emit->key.fkey.white_fragments)
          return TRUE;
 
       if (emit->emit_frontface)

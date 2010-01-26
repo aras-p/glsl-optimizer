@@ -215,7 +215,6 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
    svga->state.hw_draw.num_views = 0;
 
    svga->dirty = ~0;
-   svga->state.white_fs_id = SVGA3D_INVALID_ID;
 
    LIST_INITHEAD(&svga->dirty_buffers);
 
