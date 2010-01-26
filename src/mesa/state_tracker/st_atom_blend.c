@@ -152,17 +152,33 @@ translate_logicop(GLenum logicop)
    }
 }
 
-static boolean
-colormask_perrt(GLcontext *ctx)
+/**
+ * Figure out if colormasks are different per rt.
+ */
+static GLboolean
+colormask_per_rt(GLcontext *ctx)
 {
-   /* XXX this is ugly beyond belief */
+   /* a bit suboptimal have to compare lots of values */
    unsigned i;
    for (i = 1; i < ctx->Const.MaxDrawBuffers; i++) {
-      if (!TEST_EQ_4V(ctx->Color.ColorMask[0], ctx->Color.ColorMask[i])) {
-         return true;
+      if (memcmp(ctx->Color.ColorMask[0], ctx->Color.ColorMask[i], 4)) {
+         return GL_TRUE;
       }
    }
-   return false;
+   return GL_FALSE;
+}
+
+/**
+ * Figure out if blend enables are different per rt.
+ */
+static GLboolean
+blend_per_rt(GLcontext *ctx)
+{
+   if (ctx->Color.BlendEnabled &&
+      (ctx->Color.BlendEnabled != ((1 << ctx->Const.MaxDrawBuffers) - 1))) {
+      return GL_TRUE;
+   }
+   return GL_FALSE;
 }
 
 static void 
@@ -174,9 +190,7 @@ update_blend( struct st_context *st )
 
    memset(blend, 0, sizeof(*blend));
 
-   if ((st->ctx->Color.BlendEnabled &&
-      (st->ctx->Color.BlendEnabled != ((1 << st->ctx->Const.MaxDrawBuffers) - 1))) ||
-      colormask_perrt(st->ctx)) {
+   if (blend_per_rt(st->ctx) || colormask_per_rt(st->ctx)) {
       num_state = st->ctx->Const.MaxDrawBuffers;
       blend->independent_blend_enable = 1;
    }
