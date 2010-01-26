@@ -140,7 +140,7 @@ sl_pp_purify_state_init(struct sl_pp_purify_state *state,
 }
 
 
-unsigned int
+static unsigned int
 _purify_comment(struct sl_pp_purify_state *state,
                 char *output,
                 unsigned int *current_line,
