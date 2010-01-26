@@ -63,7 +63,7 @@
 #include <stdbool.h>
 
 
-#ifndef __HAIKU__
+#if !defined(__HAIKU__) && !defined(__USE_MISC)
 typedef unsigned int       uint;
 typedef unsigned short     ushort;
 #endif
