@@ -106,7 +106,7 @@ extern EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
 
 
