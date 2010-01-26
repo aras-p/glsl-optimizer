@@ -31,6 +31,23 @@
 
 #include "nouveau/nouveau_stateobj.h"
 
+static INLINE uint32_t
+nv50_colormask(unsigned mask)
+{
+	uint32_t cmask = 0;
+
+	if (mask & PIPE_MASK_R)
+		cmask |= 0x0001;
+	if (mask & PIPE_MASK_G)
+		cmask |= 0x0010;
+	if (mask & PIPE_MASK_B)
+		cmask |= 0x0100;
+	if (mask & PIPE_MASK_A)
+		cmask |= 0x1000;
+
+	return cmask;
+}
+
 static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
@@ -38,20 +55,29 @@ nv50_blend_state_create(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(5, 24, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_blend_stateobj *bso = CALLOC_STRUCT(nv50_blend_stateobj);
-	unsigned cmask = 0, i;
+	unsigned i, blend_enabled = 0;
 
 	/*XXX ignored:
 	 * 	- dither
 	 */
 
-	if (cso->rt[0].blend_enable == 0) {
-		so_method(so, tesla, NV50TCL_BLEND_ENABLE(0), 8);
-		for (i = 0; i < 8; i++)
-			so_data(so, 0);
-	} else {
-		so_method(so, tesla, NV50TCL_BLEND_ENABLE(0), 8);
+	so_method(so, tesla, NV50TCL_BLEND_ENABLE(0), 8);
+	if (cso->independent_blend_enable) {
+		for (i = 0; i < 8; ++i) {
+			so_data(so, cso->rt[i].blend_enable);
+			if (cso->rt[i].blend_enable)
+				blend_enabled = 1;
+		}
+	} else
+	if (cso->rt[0].blend_enable) {
+		blend_enabled = 1;
 		for (i = 0; i < 8; i++)
 			so_data(so, 1);
+	} else {
+		for (i = 0; i < 8; i++)
+			so_data(so, 0);
+	}
+	if (blend_enabled) {
 		so_method(so, tesla, NV50TCL_BLEND_EQUATION_RGB, 5);
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
 		so_data  (so, 0x4000 | nvgl_blend_func(cso->rt[0].rgb_src_factor));
@@ -71,17 +97,15 @@ nv50_blend_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_logicop_func(cso->logicop_func));
 	}
 
-	if (cso->rt[0].colormask & PIPE_MASK_R)
-		cmask |= (1 << 0);
-	if (cso->rt[0].colormask & PIPE_MASK_G)
-		cmask |= (1 << 4);
-	if (cso->rt[0].colormask & PIPE_MASK_B)
-		cmask |= (1 << 8);
-	if (cso->rt[0].colormask & PIPE_MASK_A)
-		cmask |= (1 << 12);
 	so_method(so, tesla, NV50TCL_COLOR_MASK(0), 8);
-	for (i = 0; i < 8; i++)
-		so_data(so, cmask);
+	if (cso->independent_blend_enable)
+		for (i = 0; i < 8; ++i)
+			so_data(so, nv50_colormask(cso->rt[i].colormask));
+	else {
+		uint32_t cmask = nv50_colormask(cso->rt[0].colormask);
+		for (i = 0; i < 8; i++)
+			so_data(so, cmask);
+	}
 
 	bso->pipe = *cso;
 	so_ref(so, &bso->so);
