@@ -268,16 +268,22 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wmissing-field-initializers',
-            '-Werror=pointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
         ]
         cflags += [
-            '-Werror=declaration-after-statement',
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
+        if env['CCVERSION'].startswith('4.2.') or
+           env['CCVERSION'].startswith('4.3.'):
+	    ccflags += [
+            	'-Werror=pointer-arith',
+	    ]
+	    cflags += [
+            	'-Werror=declaration-after-statement',
+	    ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
