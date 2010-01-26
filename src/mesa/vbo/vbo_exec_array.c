@@ -748,6 +748,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           */
       }
 #endif
+
+      /* Set 'end' to the max possible legal value */
+      assert(ctx->Array.ArrayObj->_MaxElement >= 1);
+      end = ctx->Array.ArrayObj->_MaxElement - 1;
    }
    else if (0) {
       _mesa_printf("glDraw[Range]Elements{,BaseVertex}"
