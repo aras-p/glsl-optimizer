@@ -48,6 +48,7 @@
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
+#define need_GL_EXT_draw_buffers2
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_framebuffer_blit
@@ -161,6 +162,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_shadow",                     NULL },
    { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_EXT_texture_sRGB",		  NULL },

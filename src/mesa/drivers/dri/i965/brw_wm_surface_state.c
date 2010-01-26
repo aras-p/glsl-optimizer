@@ -577,7 +577,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.draw_y = 0;
    }
    /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask[0],
+   memcpy(key.color_mask, ctx->Color.ColorMask[unit],
 	  sizeof(key.color_mask));
 
    /* As mentioned above, disable writes to the alpha component when the
@@ -587,7 +587,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
      key.color_mask[3] = GL_FALSE;
 
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      ctx->Color.BlendEnabled);
+		      (ctx->Color.BlendEnabled & (1 << unit)));
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
