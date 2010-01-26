@@ -35,6 +35,7 @@
 #include <X11/keysym.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <GL/glxext.h>
 
 #ifndef GLX_MESA_swap_control
 #define GLX_MESA_swap_control 1
@@ -586,11 +587,17 @@ is_glx_extension_supported(Display *dpy, const char *query)
  * Attempt to determine whether or not the display is synched to vblank.
  */
 static void
-query_vsync(Display *dpy)
+query_vsync(Display *dpy, GLXDrawable drawable)
 {
    int interval = 0;
 
-
+#if defined(GLX_EXT_swap_control)
+   if (is_glx_extension_supported(dpy, "GLX_EXT_swap_control")) {
+       unsigned int tmp = -1;
+       glXQueryDrawable(dpy, drawable, GLX_SWAP_INTERVAL_EXT, &tmp);
+       interval = tmp;
+   } else
+#endif
    if (is_glx_extension_supported(dpy, "GLX_MESA_swap_control")) {
       PFNGLXGETSWAPINTERVALMESAPROC pglXGetSwapIntervalMESA =
           (PFNGLXGETSWAPINTERVALMESAPROC)
@@ -749,7 +756,7 @@ main(int argc, char *argv[])
    make_window(dpy, "glxgears", x, y, winWidth, winHeight, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
-   query_vsync(dpy);
+   query_vsync(dpy, win);
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
