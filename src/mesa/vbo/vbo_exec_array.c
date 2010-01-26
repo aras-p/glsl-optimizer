@@ -688,6 +688,16 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
     * or we can read/write out of memory in several different places!
     */
 
+   /* Catch/fix some potential user errors */
+   if (type == GL_UNSIGNED_BYTE) {
+      start = MIN2(start, 0xff);
+      end = MIN2(end, 0xff);
+   }
+   else if (type == GL_UNSIGNED_SHORT) {
+      start = MIN2(start, 0xffff);
+      end = MIN2(end, 0xffff);
+   }
+
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       warnCount++;
