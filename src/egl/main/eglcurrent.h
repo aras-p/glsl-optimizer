@@ -73,6 +73,10 @@ _eglIsCurrentThreadDummy(void);
 
 
 PUBLIC _EGLContext *
+_eglGetAPIContext(EGLenum api);
+
+
+PUBLIC _EGLContext *
 _eglGetCurrentContext(void);
 
 

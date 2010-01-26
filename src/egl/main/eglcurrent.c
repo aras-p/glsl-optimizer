@@ -227,7 +227,18 @@ _eglIsCurrentThreadDummy(void)
 
 
 /**
- * Return the currently bound context, or NULL.
+ * Return the currently bound context of the given API, or NULL.
+ */
+PUBLIC _EGLContext *
+_eglGetAPIContext(EGLenum api)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   return t->CurrentContexts[_eglConvertApiToIndex(api)];
+}
+
+
+/**
+ * Return the currently bound context of the current API, or NULL.
  */
 _EGLContext *
 _eglGetCurrentContext(void)
