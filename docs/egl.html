@@ -32,7 +32,7 @@ cards.</p>
 the Gallium driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --with-state-trackers=egl,es,vega --enable-gallium-intel
+  $ ./configure --with-state-trackers=egl,es,vega --enable-gallium-{swrast,intel}
 </pre>
 
 <p>The main library will be enabled by default.  The <code>egl</code> state
@@ -59,6 +59,13 @@ time</p>
 
 <p>By default, EGL is enabled.  When disabled, the main library and the drivers
 will not be built.</p>
+
+</li>
+
+<li><code>--with-egl-driver-dir</code>
+
+<p>The directory EGL drivers should be installed to.  If not specified, EGL
+drivers will be installed to <code>${libdir}/egl</code>.</p>
 
 </li>
 
@@ -227,6 +234,7 @@ be found at <code>src/gallium/state_trackers/egl/</code>.
 <li>Pass the conformance tests</li>
 <li>Better automatic driver selection: <code>EGL_DISPLAY</code> loads all
 drivers and might eat too much memory.</li>
+<li>Stop using <code>glxinit.c</code> and sources from <code>src/glx/x11/</code></li>
 
 </ul>
 
