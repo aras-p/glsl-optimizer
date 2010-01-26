@@ -132,6 +132,8 @@ intelDRI2FlushInvalidate(__DRIdrawable *drawable)
 
    intelDRI2Flush(drawable);
    drawable->validBuffers = GL_FALSE;
+
+   intel_update_renderbuffers(intel->driContext, drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
