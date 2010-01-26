@@ -242,7 +242,10 @@ _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 void
 _eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy)
 {
+   assert(!res->Display || res->Display == dpy);
+
    res->Display = dpy;
+   res->IsLinked = EGL_TRUE;
    res->Next = dpy->ResourceLists[type];
    dpy->ResourceLists[type] = res;
 }
@@ -271,5 +274,6 @@ _eglUnlinkResource(_EGLResource *res, _EGLResourceType type)
    }
 
    res->Next = NULL;
-   res->Display = NULL;
+   /* do not reset res->Display */
+   res->IsLinked = EGL_FALSE;
 }

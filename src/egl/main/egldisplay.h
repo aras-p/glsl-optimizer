@@ -19,7 +19,11 @@ enum _egl_resource_type {
  */
 struct _egl_resource
 {
+   /* which display the resource belongs to */
    _EGLDisplay *Display;
+   EGLBoolean IsLinked;
+
+   /* used to link resources of the same type */
    _EGLResource *Next;
 };
 
@@ -179,7 +183,7 @@ _eglUnlinkResource(_EGLResource *res, _EGLResourceType type);
 static INLINE EGLBoolean
 _eglIsResourceLinked(_EGLResource *res)
 {
-   return (res->Display != NULL);
+   return res->IsLinked;
 }
 
 
