@@ -180,6 +180,7 @@ _eglCleanupDisplay(_EGLDisplay *disp)
       free(disp->Configs);
       disp->Configs = NULL;
       disp->NumConfigs = 0;
+      disp->MaxConfigs = 0;
    }
 
    /* XXX incomplete */
