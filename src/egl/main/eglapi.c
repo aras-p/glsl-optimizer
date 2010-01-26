@@ -984,13 +984,20 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 EGLBoolean
 eglReleaseThread(void)
 {
-   /* unbind current context */
+   /* unbind current contexts */
    if (!_eglIsCurrentThreadDummy()) {
-      _EGLDisplay *disp = _eglGetCurrentDisplay();
-      _EGLDriver *drv;
-      if (disp) {
-         drv = disp->Driver;
-         (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
+      _EGLThreadInfo *t = _eglGetCurrentThread();
+      EGLint i;
+
+      for (i = 0; i < _EGL_API_NUM_APIS; i++) {
+         _EGLContext *ctx = t->CurrentContexts[i];
+         if (ctx) {
+            _EGLDisplay *disp = ctx->Resource.Display;
+            _EGLDriver *drv = disp->Driver;
+            /* what if drv is not avaialbe? */
+            if (drv)
+               (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
+         }
       }
    }
 
