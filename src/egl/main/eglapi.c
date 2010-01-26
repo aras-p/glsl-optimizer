@@ -629,8 +629,8 @@ eglWaitNative(EGLint engine)
 EGLDisplay EGLAPIENTRY
 eglGetCurrentDisplay(void)
 {
-   _EGLDisplay *dpy = _eglGetCurrentDisplay();
-   return _eglGetDisplayHandle(dpy);
+   _EGLContext *ctx = _eglGetCurrentContext();
+   return (ctx) ? _eglGetDisplayHandle(ctx->Resource.Display) : EGL_NO_DISPLAY;
 }
 
 

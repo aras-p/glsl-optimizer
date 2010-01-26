@@ -249,43 +249,6 @@ _eglGetCurrentContext(void)
 
 
 /**
- * Return the display of the currently bound context, or NULL.
- */
-_EGLDisplay *
-_eglGetCurrentDisplay(void)
-{
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLContext *ctx = t->CurrentContexts[t->CurrentAPIIndex];
-   if (ctx)
-      return ctx->Resource.Display;
-   else
-      return NULL;
-}
-
-
-/**
- * Return the read or write surface of the currently bound context, or NULL.
- */
-_EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw)
-{
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLContext *ctx = t->CurrentContexts[t->CurrentAPIIndex];
-   if (ctx) {
-      switch (readdraw) {
-      case EGL_DRAW:
-         return ctx->DrawSurface;
-      case EGL_READ:
-         return ctx->ReadSurface;
-      default:
-         return NULL;
-      }
-   }
-   return NULL;
-}
-
-
-/**
  * Record EGL error code.
  */
 EGLBoolean

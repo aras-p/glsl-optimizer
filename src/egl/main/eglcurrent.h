@@ -80,14 +80,6 @@ PUBLIC _EGLContext *
 _eglGetCurrentContext(void);
 
 
-PUBLIC _EGLDisplay *
-_eglGetCurrentDisplay(void);
-
-
-PUBLIC _EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw);
-
-
 PUBLIC EGLBoolean
 _eglError(EGLint errCode, const char *msg);
 

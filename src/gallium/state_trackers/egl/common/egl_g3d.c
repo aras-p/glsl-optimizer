@@ -1037,14 +1037,15 @@ egl_g3d_wait_client(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 static EGLBoolean
 egl_g3d_wait_native(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 {
-   _EGLSurface *surf = _eglGetCurrentSurface(EGL_DRAW);
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+   _EGLContext *ctx = _eglGetCurrentContext();
 
    if (engine != EGL_CORE_NATIVE_ENGINE)
       return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
 
-   if (gsurf)
+   if (ctx && ctx->DrawSurface) {
+      struct egl_g3d_surface *gsurf = egl_g3d_surface(ctx->DrawSurface);
       gsurf->native->wait(gsurf->native);
+   }
 
    return EGL_TRUE;
 }
