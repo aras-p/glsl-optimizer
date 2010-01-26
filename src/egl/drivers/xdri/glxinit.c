@@ -53,7 +53,6 @@ static /* const */ XExtensionHooks __glXExtensionHooks = {
   NULL,                   /* error_string */
 };
 
-static
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
                            __glXExtensionName, &__glXExtensionHooks,
                            __GLX_NUMBER_EVENTS, NULL)
