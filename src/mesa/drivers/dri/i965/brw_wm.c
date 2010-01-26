@@ -336,11 +336,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
     * drawable height in order to invert the Y axis.
     */
    if (fp->program.Base.InputsRead & FRAG_BIT_WPOS) {
-      if (brw->intel.driDrawable != NULL) {
-         key->origin_x = brw->intel.driDrawable->x;
-         key->origin_y = brw->intel.driDrawable->y;
-         key->drawable_height = brw->intel.driDrawable->h;
-      }
+      key->drawable_height = ctx->DrawBuffer->Height;
    }
 
    key->nr_color_regions = brw->state.nr_color_regions;
