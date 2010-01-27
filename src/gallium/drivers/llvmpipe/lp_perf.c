@@ -82,5 +82,9 @@ lp_print_counters(void)
 
       debug_printf("llvmpipe: nr_empty_4x4:               %9u (%2.0f%% of %u)\n", lp_count.nr_empty_4, p1, total_4);
       debug_printf("llvmpipe: nr_non_empty_4x4:           %9u (%2.0f%% of %u)\n", lp_count.nr_non_empty_4, p2, total_4);
+
+      debug_printf("llvmpipe: nr_llvm_compiles:           %u\n", lp_count.nr_llvm_compiles);
+      debug_printf("llvmpipe: total LLVM compile time:    %.2f sec\n", lp_count.llvm_compile_time / 1000000.0);
+      debug_printf("llvmpipe: average LLVM compile time:  %.2f sec\n", lp_count.llvm_compile_time / 1000000.0 / lp_count.nr_llvm_compiles);
    }
 }

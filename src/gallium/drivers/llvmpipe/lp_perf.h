@@ -49,6 +49,8 @@ struct lp_counters
    unsigned nr_partially_covered_16;
    unsigned nr_empty_4;
    unsigned nr_non_empty_4;
+   unsigned nr_llvm_compiles;
+   int64_t llvm_compile_time;  /**< total, in microseconds */
 };
 
 
@@ -58,8 +60,10 @@ extern struct lp_counters lp_count;
 /** Increment the named counter (only for debug builds) */
 #ifdef DEBUG
 #define LP_COUNT(counter) lp_count.counter++
+#define LP_COUNT_ADD(counter, incr)  lp_count.counter += (incr)
 #else
 #define LP_COUNT(counter)
+#define LP_COUNT_ADD(counter, incr) (void) incr
 #endif
 
 

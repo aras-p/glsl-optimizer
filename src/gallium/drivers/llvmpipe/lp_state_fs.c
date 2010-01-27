@@ -65,6 +65,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_debug_dump.h"
+#include "util/u_time.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
@@ -84,13 +85,14 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_debug.h"
-#include "lp_screen.h"
-#include "lp_context.h"
 #include "lp_buffer.h"
+#include "lp_context.h"
+#include "lp_debug.h"
+#include "lp_perf.h"
+#include "lp_screen.h"
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
-#include "lp_debug.h"
 
 
 static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
@@ -1108,8 +1110,18 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       variant = variant->next;
    }
 
-   if(!variant)
+   if (!variant) {
+      struct util_time t0, t1;
+      int64_t dt;
+      util_time_get(&t0);
+
       variant = generate_variant(lp, shader, &key);
+
+      util_time_get(&t1);
+      dt = util_time_diff(&t0, &t1);
+      LP_COUNT_ADD(llvm_compile_time, dt);
+      LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
+   }
 
    shader->current = variant;
 
