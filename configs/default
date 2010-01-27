@@ -102,7 +102,7 @@ GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = drm xlib
 GALLIUM_WINSYS_DRM_DIRS = swrast
-GALLIUM_STATE_TRACKERS_DIRS = glx
+GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
 # native displays EGL should support
 EGL_DISPLAYS = x11
