@@ -249,6 +249,9 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	context_t *r600 = R700_CONTEXT(ctx);
 
 	ctx->Const.MaxTextureImageUnits = 16;
+	/* 8 per clause on r6xx, 16 on r7xx
+	 * but I think mesa only supports 8 at the moment
+	 */
 	ctx->Const.MaxTextureCoordUnits = 8;
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
@@ -284,9 +287,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 32;
 	ctx->Const.FragmentProgram.MaxNativeParameters = 256;
 	ctx->Const.FragmentProgram.MaxNativeAluInstructions = 8192;
-	/* 8 per clause on r6xx, 16 on rv670/r7xx */
-	if ((screen->chip_family == CHIP_FAMILY_RV670) ||
-	    (screen->chip_family >= CHIP_FAMILY_RV770))
+	/* 8 per clause on r6xx, 16 on r7xx */
+	if (screen->chip_family >= CHIP_FAMILY_RV770)
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 16;
 	else
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 8;
