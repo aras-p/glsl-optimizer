@@ -223,9 +223,43 @@ runtime.</p>
 
 <h2>Developers</h2>
 
-The sources of the main library and the classic drivers can be found at
+<p>The sources of the main library and the classic drivers can be found at
 <code>src/egl/</code>.  The sources of the <code>egl</code> state tracker can
-be found at <code>src/gallium/state_trackers/egl/</code>.
+be found at <code>src/gallium/state_trackers/egl/</code>.</p>
+
+<p>The suggested way to learn to write a EGL driver is to see how other drivers
+are written.  <code>egl_glx</code> should be a good reference.  It works in any
+environment that has GLX support, and it is simpler than most drivers.</p>
+
+<h3>Lifetime of Display Resources</h3>
+
+<p>Contexts and surfaces are examples of display resources.  They might live
+longer than the display that creates them.</p>
+
+<p>In EGL, when a display is terminated through <code>eglTerminate</code>, all
+display resources should be destroyed.  Similarly, when a thread is released
+throught <code>eglReleaseThread</code>, all current display resources should be
+released.  Another way to destory or release resources is through functions
+such as <code>eglDestroySurface</code> or <code>eglMakeCurrent</code>.</p>
+
+<p>When a resource that is current to some thread is destroyed, the resource
+should not be destroyed immediately.  EGL requires the resource to live until
+it is no longer current.  A driver usually calls
+<code>eglIs&lt;Resource&gt;Bound</code> to check if a resource is bound
+(current) to any thread in the destroy callbacks.  If it is still bound, the
+resource is not destroyed.</p>
+
+<p>The main library will mark destroyed current resources as unlinked.  In a
+driver's <code>MakeCurrent</code> callback,
+<code>eglIs&lt;Resource&gt;Linked</code> can then be called to check if a newly
+released resource is linked to a display.  If it is not, the last reference to
+the resource is removed and the driver should destroy the resource.  But it
+should be careful here because <code>MakeCurrent</code> might be called with an
+uninitialized display.</p>
+
+<p>This is the only mechanism provided by the main library to help manage the
+resources.  The drivers are responsible to the correct behavior as defined by
+EGL.</p>
 
 <h3>TODOs</h3>
 
