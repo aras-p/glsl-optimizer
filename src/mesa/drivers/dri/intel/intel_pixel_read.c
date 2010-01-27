@@ -168,6 +168,8 @@ do_blit_readpixels(GLcontext * ctx,
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    GLuint rowLength;
+   drm_intel_bo *dst_buffer;
+   drm_clip_rect_t read_bounds, rect, src_rect;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -208,56 +210,47 @@ do_blit_readpixels(GLcontext * ctx,
       return GL_FALSE;
    }
    else {
-      rowLength = -rowLength;
+      if (ctx->ReadBuffer->Name == 0)
+	 rowLength = -rowLength;
    }
 
    dst_offset = (GLintptr) _mesa_image_address(2, pack, pixels, width, height,
 					       format, type, 0, 0, 0);
 
+   GLboolean all = (width * height * src->cpp == dst->Base.Size &&
+		    x == 0 && dst_offset == 0);
 
-   /* Although the blits go on the command buffer, need to do this and
-    * fire with lock held to guarentee cliprects are correct.
-    */
-   intelFlush(&intel->ctx);
+   dst_buffer = intel_bufferobj_buffer(intel, dst,
+					       all ? INTEL_WRITE_FULL :
+					       INTEL_WRITE_PART);
 
-   if (intel->driReadDrawable->numClipRects) {
-      GLboolean all = (width * height * src->cpp == dst->Base.Size &&
-                       x == 0 && dst_offset == 0);
+   src_rect.x1 = x;
+   if (ctx->ReadBuffer->Name == 0)
+      src_rect.y1 = ctx->ReadBuffer->Height - (y + height);
+   else
+      src_rect.y1 = y;
+   src_rect.x2 = src_rect.x1 + width;
+   src_rect.y2 = src_rect.y1 + height;
 
-      dri_bo *dst_buffer = intel_bufferobj_buffer(intel, dst,
-						  all ? INTEL_WRITE_FULL :
-						  INTEL_WRITE_PART);
-      __DRIdrawable *dPriv = intel->driReadDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t rect;
-      drm_clip_rect_t src_rect;
-      int i;
+   read_bounds.x1 = 0;
+   read_bounds.y1 = 0;
+   read_bounds.x2 = ctx->ReadBuffer->Width;
+   read_bounds.y2 = ctx->ReadBuffer->Height;
 
-      src_rect.x1 = dPriv->x + x;
-      src_rect.y1 = dPriv->y + dPriv->h - (y + height);
-      src_rect.x2 = src_rect.x1 + width;
-      src_rect.y2 = src_rect.y1 + height;
+   if (!intel_intersect_cliprects(&rect, &src_rect, &read_bounds))
+      return GL_TRUE;
 
-
-
-      for (i = 0; i < nbox; i++) {
-         if (!intel_intersect_cliprects(&rect, &src_rect, &box[i]))
-            continue;
-
-         if (!intelEmitCopyBlit(intel,
-				src->cpp,
-				src->pitch, src->buffer, 0, src->tiling,
-				rowLength, dst_buffer, dst_offset, GL_FALSE,
-				rect.x1,
-				rect.y1,
-				rect.x1 - src_rect.x1,
-				rect.y2 - src_rect.y2,
-				rect.x2 - rect.x1, rect.y2 - rect.y1,
-				GL_COPY)) {
-	    return GL_FALSE;
-	 }
-      }
+   if (!intelEmitCopyBlit(intel,
+			  src->cpp,
+			  src->pitch, src->buffer, 0, src->tiling,
+			  rowLength, dst_buffer, dst_offset, GL_FALSE,
+			  rect.x1,
+			  rect.y1,
+			  rect.x1 - src_rect.x1,
+			  rect.y2 - src_rect.y2,
+			  rect.x2 - rect.x1, rect.y2 - rect.y1,
+			  GL_COPY)) {
+      return GL_FALSE;
    }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
