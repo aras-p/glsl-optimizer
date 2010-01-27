@@ -246,8 +246,6 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
-	context_t *r600 = R700_CONTEXT(ctx);
-
 	ctx->Const.MaxTextureImageUnits = 16;
 	/* 8 per clause on r6xx, 16 on r7xx
 	 * but I think mesa only supports 8 at the moment
