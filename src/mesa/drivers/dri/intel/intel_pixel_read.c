@@ -169,7 +169,8 @@ do_blit_readpixels(GLcontext * ctx,
    GLuint dst_offset;
    GLuint rowLength;
    drm_intel_bo *dst_buffer;
-   drm_clip_rect_t read_bounds, rect, src_rect;
+   GLboolean all;
+   GLint dst_x, dst_y;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -217,38 +218,33 @@ do_blit_readpixels(GLcontext * ctx,
    dst_offset = (GLintptr) _mesa_image_address(2, pack, pixels, width, height,
 					       format, type, 0, 0, 0);
 
-   GLboolean all = (width * height * src->cpp == dst->Base.Size &&
-		    x == 0 && dst_offset == 0);
+   if (!_mesa_clip_copytexsubimage(ctx,
+				   &dst_x, &dst_y,
+				   &x, &y,
+				   &width, &height)) {
+      return GL_TRUE;
+   }
+
+   all = (width * height * src->cpp == dst->Base.Size &&
+	  x == 0 && dst_offset == 0);
+
+   dst_x = 0;
+   dst_y = 0;
 
    dst_buffer = intel_bufferobj_buffer(intel, dst,
 					       all ? INTEL_WRITE_FULL :
 					       INTEL_WRITE_PART);
 
-   src_rect.x1 = x;
    if (ctx->ReadBuffer->Name == 0)
-      src_rect.y1 = ctx->ReadBuffer->Height - (y + height);
-   else
-      src_rect.y1 = y;
-   src_rect.x2 = src_rect.x1 + width;
-   src_rect.y2 = src_rect.y1 + height;
-
-   read_bounds.x1 = 0;
-   read_bounds.y1 = 0;
-   read_bounds.x2 = ctx->ReadBuffer->Width;
-   read_bounds.y2 = ctx->ReadBuffer->Height;
-
-   if (!intel_intersect_cliprects(&rect, &src_rect, &read_bounds))
-      return GL_TRUE;
+      y = ctx->ReadBuffer->Height - (y + height);
 
    if (!intelEmitCopyBlit(intel,
 			  src->cpp,
 			  src->pitch, src->buffer, 0, src->tiling,
 			  rowLength, dst_buffer, dst_offset, GL_FALSE,
-			  rect.x1,
-			  rect.y1,
-			  rect.x1 - src_rect.x1,
-			  rect.y2 - src_rect.y2,
-			  rect.x2 - rect.x1, rect.y2 - rect.y1,
+			  x, y,
+			  dst_x, dst_y,
+			  width, height,
 			  GL_COPY)) {
       return GL_FALSE;
    }

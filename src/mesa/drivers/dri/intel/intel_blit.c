@@ -102,7 +102,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 	 return GL_FALSE;
    }
 
-   /* do space/cliprects check before going any further */
+   /* do space check before going any further */
    do {
        aper_array[0] = intel->batch->buf;
        aper_array[1] = dst_buffer;

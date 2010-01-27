@@ -31,41 +31,6 @@
 #include "intel_batchbuffer.h"
 #include "main/framebuffer.h"
 
-
-/**
- * XXX move this into a new dri/common/cliprects.c file.
- */
-GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dst,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b)
-{
-   GLint bx = b->x1;
-   GLint by = b->y1;
-   GLint bw = b->x2 - bx;
-   GLint bh = b->y2 - by;
-
-   if (bx < a->x1)
-      bw -= a->x1 - bx, bx = a->x1;
-   if (by < a->y1)
-      bh -= a->y1 - by, by = a->y1;
-   if (bx + bw > a->x2)
-      bw = a->x2 - bx;
-   if (by + bh > a->y2)
-      bh = a->y2 - by;
-   if (bw <= 0)
-      return GL_FALSE;
-   if (bh <= 0)
-      return GL_FALSE;
-
-   dst->x1 = bx;
-   dst->y1 = by;
-   dst->x2 = bx + bw;
-   dst->y2 = by + bh;
-
-   return GL_TRUE;
-}
-
 /**
  * Return pointer to current color drawing region, or NULL.
  */
