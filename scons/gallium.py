@@ -30,6 +30,7 @@ Frontend-tool for Gallium3D architecture.
 #
 
 
+import distutils.version
 import os
 import os.path
 import re
@@ -276,7 +277,7 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
-        if env['CCVERSION'].startswith('4.2.') or env['CCVERSION'].startswith('4.3.'):
+        if distutils.version.LooseVersion(env['CCVERSION']) >= distutils.version.LooseVersion('4.2'):
 	    ccflags += [
             	'-Werror=pointer-arith',
 	    ]
