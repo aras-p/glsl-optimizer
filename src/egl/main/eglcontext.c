@@ -321,16 +321,19 @@ _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw,
    if (!_eglBindContext(&ctx, &draw, &read))
       return EGL_FALSE;
 
-   /* avoid double destroy */
-   if (read && read == draw)
-      read = NULL;
+   /* nothing we can do if the display is uninitialized */
+   if (dpy->Initialized) {
+      /* avoid double destroy */
+      if (read && read == draw)
+         read = NULL;
 
-   if (ctx && !_eglIsContextLinked(ctx))
-      drv->API.DestroyContext(drv, dpy, ctx);
-   if (draw && !_eglIsSurfaceLinked(draw))
-      drv->API.DestroySurface(drv, dpy, draw);
-   if (read && !_eglIsSurfaceLinked(read))
-      drv->API.DestroySurface(drv, dpy, read);
+      if (ctx && !_eglIsContextLinked(ctx))
+         drv->API.DestroyContext(drv, dpy, ctx);
+      if (draw && !_eglIsSurfaceLinked(draw))
+         drv->API.DestroySurface(drv, dpy, draw);
+      if (read && !_eglIsSurfaceLinked(read))
+         drv->API.DestroySurface(drv, dpy, read);
+   }
 
    return EGL_TRUE;
 }

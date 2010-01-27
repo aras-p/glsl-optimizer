@@ -103,6 +103,8 @@ struct GLX_egl_surface
 
    Drawable drawable;
    GLXDrawable glx_drawable;
+
+   void (*destroy)(Display *, GLXDrawable);
 };
 
 
@@ -631,6 +633,21 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 
 
 /**
+ * Destroy a surface.  The display is allowed to be uninitialized.
+ */
+static void
+destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
+{
+   struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
+
+   if (GLX_surf->destroy)
+      GLX_surf->destroy(disp->NativeDisplay, GLX_surf->glx_drawable);
+
+   free(GLX_surf);
+}
+
+
+/**
  * Called via eglMakeCurrent(), drv->API.MakeCurrent().
  */
 static EGLBoolean
@@ -712,6 +729,9 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
+   if (GLX_dpy->have_1_3 && !GLX_dpy->glx_window_quirk)
+      GLX_surf->destroy = glXDestroyWindow;
+
    get_drawable_size(GLX_dpy->dpy, window, &width, &height);
    GLX_surf->Base.Width = width;
    GLX_surf->Base.Height = height;
@@ -768,6 +788,9 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
       free(GLX_surf);
       return NULL;
    }
+
+   GLX_surf->destroy = (GLX_dpy->have_1_3) ?
+      glXDestroyPixmap : glXDestroyGLXPixmap;
 
    get_drawable_size(GLX_dpy->dpy, pixmap, &width, &height);
    GLX_surf->Base.Width = width;
@@ -833,47 +856,18 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
+   GLX_surf->destroy = (GLX_dpy->have_1_3) ?
+      glXDestroyPbuffer : GLX_dpy->glXDestroyGLXPbufferSGIX;
+
    return &GLX_surf->Base;
 }
+
 
 static EGLBoolean
 GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
-   struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
-   if (!_eglIsSurfaceBound(surf)) {
-      struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
-
-      if (GLX_dpy->have_1_3) {
-         switch (surf->Type) {
-         case EGL_WINDOW_BIT:
-            if (!GLX_dpy->glx_window_quirk)
-               glXDestroyWindow(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         case EGL_PBUFFER_BIT:
-            glXDestroyPbuffer(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         case EGL_PIXMAP_BIT:
-            glXDestroyPixmap(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         default:
-            break;
-         }
-      }
-      else {
-         switch (surf->Type) {
-         case EGL_PBUFFER_BIT:
-            GLX_dpy->glXDestroyGLXPbufferSGIX(GLX_dpy->dpy,
-                                              GLX_surf->glx_drawable);
-            break;
-         case EGL_PIXMAP_BIT:
-            glXDestroyGLXPixmap(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         default:
-            break;
-         }
-      }
-      free(surf);
-   }
+   if (!_eglIsSurfaceBound(surf))
+      destroy_surface(disp, surf);
 
    return EGL_TRUE;
 }

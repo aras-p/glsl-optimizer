@@ -394,9 +394,19 @@ eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read,
    _EGLSurface *read_surf = _eglLookupSurface(read, disp);
    _EGLDriver *drv;
 
-   drv = _eglCheckDisplay(disp, __FUNCTION__);
+   if (!disp)
+      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+   drv = disp->Driver;
+
+   /* display is allowed to be uninitialized under certain condition */
+   if (!disp->Initialized) {
+      if (draw != EGL_NO_SURFACE || read != EGL_NO_SURFACE ||
+          ctx != EGL_NO_CONTEXT)
+         return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+   }
    if (!drv)
-      return EGL_FALSE;
+      return EGL_TRUE;
+
    if (!context && ctx != EGL_NO_CONTEXT)
       return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
    if ((!draw_surf && draw != EGL_NO_SURFACE) ||
@@ -994,9 +1004,7 @@ eglReleaseThread(void)
          if (ctx) {
             _EGLDisplay *disp = ctx->Resource.Display;
             _EGLDriver *drv = disp->Driver;
-            /* what if display is not initialized? */
-            if (disp->Initialized)
-               (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
+            (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
          }
       }
    }

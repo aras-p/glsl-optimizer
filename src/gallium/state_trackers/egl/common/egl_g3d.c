@@ -672,21 +672,30 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    return &gctx->base;
 }
 
-static EGLBoolean
-egl_g3d_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+/**
+ * Destroy a context.
+ */
+static void
+destroy_context(_EGLDisplay *dpy, _EGLContext *ctx)
 {
    struct egl_g3d_context *gctx = egl_g3d_context(ctx);
 
-   if (_eglIsContextBound(&gctx->base))
-      return EGL_TRUE;
+   /* FIXME a context might live longer than its display */
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a context with an unitialized display");
 
    egl_g3d_realloc_context(dpy, &gctx->base);
-
-   /* it will destroy pipe context */
+   /* it will destroy the associated pipe context */
    gctx->stapi->st_destroy_context(gctx->st_ctx);
 
    free(gctx);
+}
 
+static EGLBoolean
+egl_g3d_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+{
+   if (!_eglIsContextBound(ctx))
+      destroy_context(dpy, ctx);
    return EGL_TRUE;
 }
 
@@ -817,17 +826,28 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
    return &gsurf->base;
 }
 
-static EGLBoolean
-egl_g3d_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+/**
+ * Destroy a surface.
+ */
+static void
+destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
 {
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
 
-   if (_eglIsSurfaceBound(&gsurf->base))
-         return EGL_TRUE;
+   /* FIXME a surface might live longer than its display */
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a surface with an unitialized display");
 
    pipe_surface_reference(&gsurf->render_surface, NULL);
    gsurf->native->destroy(gsurf->native);
    free(gsurf);
+}
+
+static EGLBoolean
+egl_g3d_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+{
+   if (!_eglIsSurfaceBound(surf))
+      destroy_surface(dpy, surf);
    return EGL_TRUE;
 }
 

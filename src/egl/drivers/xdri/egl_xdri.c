@@ -419,19 +419,47 @@ xdri_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
-static EGLBoolean
-xdri_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+/**
+ * Destroy a context.
+ */
+static void
+destroy_context(_EGLDisplay *dpy, _EGLContext *ctx)
 {
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_context *xdri_ctx = lookup_context(ctx);
 
-   if (!_eglIsContextBound(ctx)) {
-      xdri_ctx->driContext->destroyContext(xdri_ctx->driContext,
-                                           xdri_dpy->psc, xdri_dpy->dpy);
-      free(xdri_ctx->dummy_gc);
-      free(xdri_ctx);
-   }
+   /* FIXME a context might live longer than its display */
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a context with an unitialized display");
 
+   xdri_ctx->driContext->destroyContext(xdri_ctx->driContext,
+         xdri_dpy->psc, xdri_dpy->dpy);
+   free(xdri_ctx->dummy_gc);
+   free(xdri_ctx);
+}
+
+
+/**
+ * Destroy a surface.
+ */
+static void
+destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
+{
+   struct xdri_egl_surface *xdri_surf = lookup_surface(surf);
+
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a surface with an unitialized display");
+
+   xdri_surf->driDrawable->destroyDrawable(xdri_surf->driDrawable);
+   free(xdri_surf);
+}
+
+
+static EGLBoolean
+xdri_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+{
+   if (!_eglIsContextBound(ctx))
+      destroy_context(dpy, ctx);
    return EGL_TRUE;
 }
 
@@ -539,13 +567,8 @@ xdri_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf
 static EGLBoolean
 xdri_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
-   struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
-
-   if (!_eglIsSurfaceBound(&xdri_surf->Base)) {
-      xdri_surf->driDrawable->destroyDrawable(xdri_surf->driDrawable);
-      free(xdri_surf);
-   }
-
+   if (!_eglIsSurfaceBound(surface))
+      destroy_surface(dpy, surface);
    return EGL_TRUE;
 }
 
