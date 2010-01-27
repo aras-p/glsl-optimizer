@@ -305,7 +305,7 @@ static void r300_update_rs_block(struct r300_context* r300,
                                  struct r300_shader_semantics* vs_outputs,
                                  struct r300_shader_semantics* fs_inputs)
 {
-    struct r300_rs_block rs = { 0 };
+    struct r300_rs_block rs = { { 0 } };
     int i, col_count = 0, tex_count = 0, fp_offset = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
