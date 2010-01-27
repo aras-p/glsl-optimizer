@@ -248,10 +248,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
 	context_t *r600 = R700_CONTEXT(ctx);
 
-	ctx->Const.MaxTextureImageUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_image_units");
-	ctx->Const.MaxTextureCoordUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_coord_units");
+	ctx->Const.MaxTextureImageUnits = 16;
+	ctx->Const.MaxTextureCoordUnits = 8;
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);

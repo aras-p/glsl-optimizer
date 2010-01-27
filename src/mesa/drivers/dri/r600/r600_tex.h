@@ -42,7 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Texel pitch is 8 alignment. */
 #define R700_TEXEL_PITCH_ALIGNMENT_MASK 0x7
 
-#define R700_MAX_TEXTURE_UNITS 8 /* TODO : should be 16, lets make it work, review later */
+#define R700_MAX_TEXTURE_UNITS 16
 
 extern void r600SetDepthTexMode(struct gl_texture_object *tObj);
 
