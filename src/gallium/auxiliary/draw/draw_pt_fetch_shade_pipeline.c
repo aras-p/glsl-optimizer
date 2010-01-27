@@ -33,7 +33,6 @@
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
 #include "draw/draw_gs.h"
-#include "translate/translate.h"
 
 
 struct fetch_pipeline_middle_end {

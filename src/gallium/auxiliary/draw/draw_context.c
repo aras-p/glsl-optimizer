@@ -36,8 +36,6 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
-#include "draw_pt.h"
-#include "draw_pipe.h"
 
 
 struct draw_context *draw_create( void )
