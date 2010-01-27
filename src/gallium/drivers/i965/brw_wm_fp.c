@@ -41,7 +41,6 @@
 #include "tgsi/tgsi_util.h"
 
 #include "brw_wm.h"
-#include "brw_util.h"
 #include "brw_debug.h"
 
 

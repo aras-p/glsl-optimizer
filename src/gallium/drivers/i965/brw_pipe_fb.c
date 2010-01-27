@@ -3,7 +3,6 @@
 #include "pipe/p_state.h"
 
 #include "brw_context.h"
-#include "brw_debug.h"
 
 /**
  * called from intelDrawBuffer()

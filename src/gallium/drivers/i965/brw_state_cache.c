@@ -59,7 +59,6 @@
 
 #include "brw_debug.h"
 #include "brw_state.h"
-#include "brw_batchbuffer.h"
 
 /* XXX: Fixme - have to include these to get the sizes of the prog_key
  * structs:

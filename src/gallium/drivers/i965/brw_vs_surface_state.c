@@ -31,7 +31,6 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_defines.h"
 #include "brw_winsys.h"
 
 /* XXX: disabled true constant buffer functionality
