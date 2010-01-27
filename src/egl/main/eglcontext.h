@@ -48,6 +48,10 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint att
 
 
 PUBLIC EGLBoolean
+_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
+
+
+PUBLIC EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
 
 

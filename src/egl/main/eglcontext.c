@@ -140,34 +140,31 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
 
 
 /**
- * Bind the context to the surface as the draw or read surface.  Return the
- * previous surface that the context is bound to.
- *
- * Note that the context may be NULL.
+ * Bind the context to the surfaces.  Return the surfaces that are "orphaned".
+ * That is, when the context is not NULL, return the surfaces it previously
+ * bound to;  when the context is NULL, the same surfaces are returned.
  */
-static _EGLSurface *
-_eglBindContextToSurface(_EGLContext *ctx, _EGLSurface *surf, EGLint readdraw)
+static void
+_eglBindContextToSurfaces(_EGLContext *ctx,
+                          _EGLSurface **draw, _EGLSurface **read)
 {
-   _EGLSurface **attachment, *oldSurf;
+   _EGLSurface *newDraw = *draw, *newRead = *read;
 
-   if (!ctx) {
-      surf->Binding = NULL;
-      return NULL;
+   if (newDraw->Binding)
+      newDraw->Binding->DrawSurface = NULL;
+   newDraw->Binding = ctx;
+
+   if (newRead->Binding)
+      newRead->Binding->ReadSurface = NULL;
+   newRead->Binding = ctx;
+
+   if (ctx) {
+      *draw = ctx->DrawSurface;
+      ctx->DrawSurface = newDraw;
+
+      *read = ctx->ReadSurface;
+      ctx->ReadSurface = newRead;
    }
-
-   attachment = (readdraw == EGL_DRAW) ?
-      &ctx->DrawSurface : &ctx->ReadSurface;
-   oldSurf = *attachment;
-
-   if (oldSurf == surf)
-      return NULL;
-
-   if (oldSurf)
-      oldSurf->Binding = NULL;
-   surf->Binding = ctx;
-   *attachment = surf;
-
-   return oldSurf;
 }
 
 
@@ -272,6 +269,47 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
 
 
 /**
+ * Bind the context to the current thread and given surfaces.  Return the
+ * previously bound context and the surfaces it bound to.  Each argument is
+ * both input and output.
+ */
+EGLBoolean
+_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   _EGLContext *newCtx = *ctx, *oldCtx;
+
+   if (!_eglCheckMakeCurrent(newCtx, *draw, *read))
+      return EGL_FALSE;
+
+   /* bind the new context */
+   oldCtx = _eglBindContextToThread(newCtx, t);
+   *ctx = oldCtx;
+   if (newCtx)
+      _eglBindContextToSurfaces(newCtx, draw, read);
+
+   /* unbind the old context from its binding surfaces */
+   if (oldCtx) {
+      /*
+       * If the new context replaces some old context, the new one should not
+       * be current before the replacement and it should not be bound to any
+       * surface.
+       */
+      if (newCtx)
+         assert(!*draw && !*read);
+
+      *draw = oldCtx->DrawSurface;
+      *read = oldCtx->ReadSurface;
+      assert(*draw && *read);
+
+      _eglBindContextToSurfaces(NULL, draw, read);
+   }
+
+   return EGL_TRUE;
+}
+
+
+/**
  * Drivers will typically call this to do the error checking and
  * update the various flags.
  * Then, the driver will do its device-dependent Make-Current stuff.
@@ -280,40 +318,19 @@ EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw,
                 _EGLSurface *read, _EGLContext *ctx)
 {
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLSurface *oldDraw = NULL, *oldRead = NULL;
-   _EGLContext *oldCtx;
-
-   if (!_eglCheckMakeCurrent(ctx, draw, read))
+   if (!_eglBindContext(&ctx, &draw, &read))
       return EGL_FALSE;
 
-   oldCtx = _eglBindContextToThread(ctx, t);
-
-   if (ctx) {
-      oldDraw = _eglBindContextToSurface(ctx, draw, EGL_DRAW);
-      oldRead = _eglBindContextToSurface(ctx, read, EGL_READ);
-   }
-   else if (oldCtx) {
-      /* unbind the old context from its binding surfaces */
-      oldDraw = oldCtx->DrawSurface;
-      oldRead = oldCtx->ReadSurface;
-
-      if (oldDraw)
-         _eglBindContextToSurface(NULL, oldDraw, EGL_DRAW);
-      if (oldRead && oldRead != oldDraw)
-         _eglBindContextToSurface(NULL, oldRead, EGL_READ);
-   }
-
    /* avoid double destroy */
-   if (oldRead && oldRead == oldDraw)
-      oldRead = NULL;
+   if (read && read == draw)
+      read = NULL;
 
-   if (oldCtx && !_eglIsContextLinked(oldCtx))
-      drv->API.DestroyContext(drv, dpy, oldCtx);
-   if (oldDraw && !_eglIsSurfaceLinked(oldDraw))
-      drv->API.DestroySurface(drv, dpy, oldDraw);
-   if (oldRead && !_eglIsSurfaceLinked(oldRead))
-      drv->API.DestroySurface(drv, dpy, oldRead);
+   if (ctx && !_eglIsContextLinked(ctx))
+      drv->API.DestroyContext(drv, dpy, ctx);
+   if (draw && !_eglIsSurfaceLinked(draw))
+      drv->API.DestroySurface(drv, dpy, draw);
+   if (read && !_eglIsSurfaceLinked(read))
+      drv->API.DestroySurface(drv, dpy, read);
 
    return EGL_TRUE;
 }
