@@ -273,10 +273,6 @@ struct intel_context
 
    GLboolean use_texture_tiling;
    GLboolean use_early_z;
-   drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
-
-   drm_clip_rect_t draw_rect;
-   drm_clip_rect_t scissor_rect;
 
    int driFd;
 

@@ -94,24 +94,6 @@ intel_readbuf_region(struct intel_context *intel)
       return NULL;
 }
 
-void
-intel_get_cliprects(struct intel_context *intel,
-		    struct drm_clip_rect **cliprects,
-		    unsigned int *num_cliprects,
-		    int *x_off, int *y_off)
-{
-   intel->fboRect.x1 = 0;
-   intel->fboRect.y1 = 0;
-   intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
-   intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
-
-   *cliprects = &intel->fboRect;
-   *num_cliprects = 1;
-   *x_off = 0;
-   *y_off = 0;
-}
-
-
 /**
  * Check if we're about to draw into the front color buffer.
  * If so, set the intel->front_buffer_dirty field to true.
