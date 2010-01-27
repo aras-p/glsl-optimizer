@@ -112,9 +112,10 @@ do_blit_copypixels(GLcontext * ctx,
    struct intel_region *src = copypix_src_region(intel, type);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
-   unsigned int num_cliprects;
-   drm_clip_rect_t *cliprects;
-   int x_off, y_off;
+   GLint orig_dstx;
+   GLint orig_dsty;
+   GLint orig_srcx;
+   GLint orig_srcy;
 
    if (type == GL_DEPTH || type == GL_STENCIL) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
@@ -135,94 +136,56 @@ do_blit_copypixels(GLcontext * ctx,
    if (!src || !dst)
       return GL_FALSE;
 
-
-
    intelFlush(&intel->ctx);
 
-   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
-   if (num_cliprects != 0) {
-      GLint delta_x;
-      GLint delta_y;
-      GLint orig_dstx;
-      GLint orig_dsty;
-      GLint orig_srcx;
-      GLint orig_srcy;
-      GLuint i;
+   /* XXX: We fail to handle different inversion between read and draw framebuffer. */
 
-      /* XXX: We fail to handle different inversion between read and draw framebuffer. */
+   /* Clip to destination buffer. */
+   orig_dstx = dstx;
+   orig_dsty = dsty;
+   if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+			     fb->_Xmax, fb->_Ymax,
+			     &dstx, &dsty, &width, &height))
+      goto out;
+   /* Adjust src coords for our post-clipped destination origin */
+   srcx += dstx - orig_dstx;
+   srcy += dsty - orig_dsty;
 
-      /* Clip to destination buffer. */
-      orig_dstx = dstx;
-      orig_dsty = dsty;
-      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
-				fb->_Xmax, fb->_Ymax,
-				&dstx, &dsty, &width, &height))
-	 goto out;
-      /* Adjust src coords for our post-clipped destination origin */
-      srcx += dstx - orig_dstx;
-      srcy += dsty - orig_dsty;
+   /* Clip to source buffer. */
+   orig_srcx = srcx;
+   orig_srcy = srcy;
+   if (!_mesa_clip_to_region(0, 0,
+			     read_fb->Width, read_fb->Height,
+			     &srcx, &srcy, &width, &height))
+      goto out;
+   /* Adjust dst coords for our post-clipped source origin */
+   dstx += srcx - orig_srcx;
+   dsty += srcy - orig_srcy;
 
-      /* Clip to source buffer. */
-      orig_srcx = srcx;
-      orig_srcy = srcy;
-      if (!_mesa_clip_to_region(0, 0,
-				read_fb->Width, read_fb->Height,
-				&srcx, &srcy, &width, &height))
-	 goto out;
-      /* Adjust dst coords for our post-clipped source origin */
-      dstx += srcx - orig_srcx;
-      dsty += srcy - orig_srcy;
-
-      /* Convert from GL to hardware coordinates:
-       */
-      if (fb->Name == 0) {
-	 /* copypixels to a system framebuffer */
-	 dstx = x_off + dstx;
-	 dsty = y_off + (fb->Height - dsty - height);
-      } else {
-	 /* copypixels to a user framebuffer object */
-	 dstx = x_off + dstx;
-	 dsty = y_off + dsty;
-      }
-
-      /* Flip source Y if it's a system framebuffer. */
-      if (read_fb->Name == 0) {
-	 srcx = intel->driReadDrawable->x + srcx;
-	 srcy = intel->driReadDrawable->y + (fb->Height - srcy - height);
-      }
-
-      delta_x = srcx - dstx;
-      delta_y = srcy - dsty;
-      /* Could do slightly more clipping: Eg, take the intersection of
-       * the destination cliprects and the read drawable cliprects
-       *
-       * This code will not overwrite other windows, but will
-       * introduce garbage when copying from obscured window regions.
-       */
-      for (i = 0; i < num_cliprects; i++) {
-	 GLint clip_x = dstx;
-	 GLint clip_y = dsty;
-	 GLint clip_w = width;
-	 GLint clip_h = height;
-
-         if (!_mesa_clip_to_region(cliprects[i].x1, cliprects[i].y1,
-				   cliprects[i].x2, cliprects[i].y2,
-				   &clip_x, &clip_y, &clip_w, &clip_h))
-            continue;
-
-	 if (!intel_region_copy(intel,
-				dst, 0, clip_x, clip_y,
-				src, 0, clip_x + delta_x, clip_y + delta_y,
-				clip_w, clip_h,
-				ctx->Color.ColorLogicOpEnabled ?
-				ctx->Color.LogicOp : GL_COPY)) {
-	    DBG("%s: blit failure\n", __FUNCTION__);
-	    return GL_FALSE;
-	 }
-      }
+   /* Convert from GL to hardware coordinates: */
+   if (fb->Name == 0) {
+      /* copypixels to a system framebuffer */
+      dsty = fb->Height - dsty - height;
+   } else {
+      /* copypixels to a user framebuffer object */
+      dsty = dsty;
    }
-out:
 
+   /* Flip source Y if it's a system framebuffer. */
+   if (read_fb->Name == 0)
+      srcy = fb->Height - srcy - height;
+
+   if (!intel_region_copy(intel,
+			  dst, 0, dstx, dsty,
+			  src, 0, srcx, srcy,
+			  width, height,
+			  ctx->Color.ColorLogicOpEnabled ?
+			  ctx->Color.LogicOp : GL_COPY)) {
+      DBG("%s: blit failure\n", __FUNCTION__);
+      return GL_FALSE;
+   }
+
+out:
    intel_check_front_buffer_rendering(intel);
 
    DBG("%s: success\n", __FUNCTION__);
