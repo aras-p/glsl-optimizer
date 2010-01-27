@@ -48,7 +48,9 @@ static void r300_draw_emit_attrib(struct r300_context* r300,
     output = draw_find_shader_output(r300->draw,
                                      info->output_semantic_name[index],
                                      info->output_semantic_index[index]);
-    draw_emit_vertex_attr(&r300->vertex_info->vinfo, emit, interp, output);
+    draw_emit_vertex_attr(
+        (struct vertex_info*)r300->vertex_format_state.state,
+        emit, interp, output);
 }
 
 static void r300_draw_emit_all_attribs(struct r300_context* r300)
@@ -104,7 +106,8 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 /* Update the PSC tables. */
 static void r300_vertex_psc(struct r300_context* r300)
 {
-    struct r300_vertex_info *vformat = r300->vertex_info;
+    struct r300_vertex_info *vformat =
+        (struct r300_vertex_info*)r300->vertex_format_state.state;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
@@ -156,7 +159,8 @@ static void r300_vertex_psc(struct r300_context* r300)
 /* Update the PSC tables for SW TCL, using Draw. */
 static void r300_swtcl_vertex_psc(struct r300_context* r300)
 {
-    struct r300_vertex_info *vformat = r300->vertex_info;
+    struct r300_vertex_info *vformat =
+        (struct r300_vertex_info*)r300->vertex_format_state.state;
     struct vertex_info* vinfo = &vformat->vinfo;
     uint16_t type, swizzle;
     enum pipe_format format;
@@ -413,11 +417,15 @@ static void r300_update_rs_block(struct r300_context* r300,
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_vertex_info *vformat =
+        (struct r300_vertex_info*)r300->vertex_format_state.state;
+    struct vertex_info* vinfo = &vformat->vinfo;
 
     /* Reset structures */
     memset(r300->rs_block, 0, sizeof(struct r300_rs_block));
-    memset(r300->vertex_info, 0, sizeof(struct r300_vertex_info));
-    memcpy(r300->vertex_info->vinfo.hwfmt, r300->vs->hwfmt, sizeof(uint)*4);
+    /* Mmm, delicious hax */
+    memset(r300->vertex_format_state.state, 0, sizeof(struct r300_vertex_info));
+    memcpy(vinfo->hwfmt, r300->vs->hwfmt, sizeof(uint)*4);
 
     r300_update_rs_block(r300, &r300->vs->outputs, &r300->fs->inputs);
 
@@ -425,7 +433,8 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
         r300_vertex_psc(r300);
     } else {
         r300_draw_emit_all_attribs(r300);
-        draw_compute_vertex_size(&r300->vertex_info->vinfo);
+        draw_compute_vertex_size(
+            (struct vertex_info*)r300->vertex_format_state.state);
         r300_swtcl_vertex_psc(r300);
     }
 
@@ -507,8 +516,8 @@ void r300_update_derived_state(struct r300_context* r300)
 {
     /* XXX */
     if (r300->dirty_state &
-        (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER |
-         R300_NEW_VERTEX_FORMAT) || r300->rs_state.dirty) {
+        (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER) ||
+        r300->vertex_format_state.dirty || r300->rs_state.dirty) {
         r300_update_derived_shader_state(r300);
     }
 

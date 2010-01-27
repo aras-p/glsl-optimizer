@@ -73,7 +73,7 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_buffer(struct r300_context* r300);
 
-void r300_emit_vertex_format_state(struct r300_context* r300);
+void r300_emit_vertex_format_state(struct r300_context* r300, void* state);
 
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code);
