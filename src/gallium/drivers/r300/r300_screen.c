@@ -219,6 +219,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         case PIPE_FORMAT_DXT5_RGBA:
         case PIPE_FORMAT_YCBCR:
         case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_A8L8_UNORM:
             retval = usage & PIPE_TEXTURE_USAGE_SAMPLER;
             break;

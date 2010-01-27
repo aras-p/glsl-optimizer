@@ -42,6 +42,7 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 {
     switch (format) {
         /* X8 */
+        case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
         case PIPE_FORMAT_L8_UNORM:
