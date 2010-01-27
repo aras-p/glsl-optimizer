@@ -34,6 +34,7 @@ import distutils.version
 import os
 import os.path
 import re
+import subprocess
 
 import SCons.Action
 import SCons.Builder
@@ -108,6 +109,9 @@ def generate(env):
         elif platform == 'wince':
             env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
+
+    if os.environ.has_key('CC'):
+        env['CC'] = os.environ['CC']
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
@@ -232,9 +236,19 @@ def generate(env):
     cxxflags = [] # C++
     ccflags = [] # C & C++
     if gcc:
+        ccversion = ''
+        pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                     stdin = 'devnull',
+                                     stderr = 'devnull',
+                                     stdout = subprocess.PIPE)
+        if pipe.wait() == 0:
+            line = pipe.stdout.readline()
+            match = re.search(r'[0-9]+(\.[0-9]+)+', line)
+            if match:
+            	ccversion = match.group(0)
         if debug:
             ccflags += ['-O0', '-g3']
-        elif env['CCVERSION'].startswith('4.2.'):
+        elif ccversion.startswith('4.2.'):
             # gcc 4.2.x optimizer is broken
             print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
             ccflags += ['-O0', '-g3']
@@ -277,7 +291,7 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
-        if distutils.version.LooseVersion(env['CCVERSION']) >= distutils.version.LooseVersion('4.2'):
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
 	    ccflags += [
             	'-Werror=pointer-arith',
 	    ]
