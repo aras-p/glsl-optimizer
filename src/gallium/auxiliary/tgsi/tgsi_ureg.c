@@ -139,6 +139,8 @@ struct ureg_program
    struct const_decl const_decls[PIPE_MAX_CONSTANT_BUFFERS];
 
    unsigned property_gs_input_prim;
+   unsigned property_gs_output_prim;
+   unsigned property_gs_max_vertices;
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -243,9 +245,23 @@ ureg_dst_register( unsigned file,
 
 void
 ureg_property_gs_input_prim(struct ureg_program *ureg,
-                            unsigned gs_input_prim)
+                            unsigned input_prim)
 {
-   ureg->property_gs_input_prim = gs_input_prim;
+   ureg->property_gs_input_prim = input_prim;
+}
+
+void
+ureg_property_gs_output_prim(struct ureg_program *ureg,
+                             unsigned output_prim)
+{
+   ureg->property_gs_output_prim = output_prim;
+}
+
+void
+ureg_property_gs_max_vertices(struct ureg_program *ureg,
+                              unsigned max_vertices)
+{
+   ureg->property_gs_max_vertices = max_vertices;
 }
 
 
@@ -1161,6 +1177,22 @@ static void emit_decls( struct ureg_program *ureg )
                     ureg->property_gs_input_prim);
    }
 
+   if (ureg->property_gs_output_prim != ~0) {
+      assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_GS_OUTPUT_PRIM,
+                    ureg->property_gs_output_prim);
+   }
+
+   if (ureg->property_gs_max_vertices != ~0) {
+      assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_GS_MAX_VERTICES,
+                    ureg->property_gs_max_vertices);
+   }
+
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {
       for (i = 0; i < UREG_MAX_INPUT; i++) {
          if (ureg->vs_inputs[i/32] & (1 << (i%32))) {
@@ -1378,6 +1410,8 @@ struct ureg_program *ureg_create( unsigned processor )
 
    ureg->processor = processor;
    ureg->property_gs_input_prim = ~0;
+   ureg->property_gs_output_prim = ~0;
+   ureg->property_gs_max_vertices = ~0;
    return ureg;
 }
 

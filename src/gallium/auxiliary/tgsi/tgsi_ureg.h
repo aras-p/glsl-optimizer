@@ -126,7 +126,15 @@ ureg_create_shader_and_destroy( struct ureg_program *p,
 
 void
 ureg_property_gs_input_prim(struct ureg_program *ureg,
-                            unsigned gs_input_prim);
+                            unsigned input_prim);
+
+void
+ureg_property_gs_output_prim(struct ureg_program *ureg,
+                             unsigned output_prim);
+
+void
+ureg_property_gs_max_vertices(struct ureg_program *ureg,
+                              unsigned max_vertices);
 
 
 /***********************************************************************
