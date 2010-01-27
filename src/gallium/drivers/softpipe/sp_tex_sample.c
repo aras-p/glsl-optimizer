@@ -517,7 +517,6 @@ compute_lambda_1d(const struct sp_sampler_varient *samp,
                   const float p[QUAD_SIZE])
 {
    const struct pipe_texture *texture = samp->texture;
-   const struct pipe_sampler_state *sampler = samp->sampler;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float rho = MAX2(dsdx, dsdy) * texture->width0;
@@ -533,7 +532,6 @@ compute_lambda_2d(const struct sp_sampler_varient *samp,
                   const float p[QUAD_SIZE])
 {
    const struct pipe_texture *texture = samp->texture;
-   const struct pipe_sampler_state *sampler = samp->sampler;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
@@ -553,7 +551,6 @@ compute_lambda_3d(const struct sp_sampler_varient *samp,
                   const float p[QUAD_SIZE])
 {
    const struct pipe_texture *texture = samp->texture;
-   const struct pipe_sampler_state *sampler = samp->sampler;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
