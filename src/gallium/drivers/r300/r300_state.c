@@ -720,7 +720,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
-    r300->dirty_state |= R300_NEW_RS_BLOCK;
     if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }

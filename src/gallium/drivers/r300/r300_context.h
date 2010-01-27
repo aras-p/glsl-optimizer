@@ -142,7 +142,6 @@ struct r300_ztop_state {
 #define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
 #define R300_NEW_TEXTURE         0x00040000
@@ -294,7 +293,7 @@ struct r300_context {
     /* Rasterizer state. */
     struct r300_atom rs_state;
     /* RS block state. */
-    struct r300_rs_block* rs_block;
+    struct r300_atom rs_block_state;
     /* Sampler states. */
     struct r300_sampler_state* sampler_states[8];
     int sampler_count;

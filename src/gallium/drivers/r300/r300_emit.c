@@ -627,10 +627,10 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-void r300_emit_rs_block_state(struct r300_context* r300,
-                              struct r300_rs_block* rs)
+void r300_emit_rs_block_state(struct r300_context* r300, void* state)
 {
-    int i;
+    struct r300_rs_block* rs = (struct r300_rs_block*)state;
+    unsigned i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
@@ -1140,11 +1140,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     if (r300->dirty_state & R300_NEW_FRAMEBUFFERS) {
         r300_emit_fb_state(r300, &r300->framebuffer_state);
         r300->dirty_state &= ~R300_NEW_FRAMEBUFFERS;
-    }
-
-    if (r300->dirty_state & R300_NEW_RS_BLOCK) {
-        r300_emit_rs_block_state(r300, r300->rs_block);
-        r300->dirty_state &= ~R300_NEW_RS_BLOCK;
     }
 
     /* Samplers and textures are tracked separately but emitted together. */
