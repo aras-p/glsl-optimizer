@@ -4491,20 +4491,21 @@ GLboolean assemble_TEX(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_XPD(r700_AssemblerBase *pAsm) 
 {
-    BITS tmp;
+    BITS tmp1;
+    BITS tmp2 = 0;
 
     if( GL_FALSE == checkop2(pAsm) )
     {
 	    return GL_FALSE;
     }
 
-    tmp = gethelpr(pAsm);
+    tmp1 = gethelpr(pAsm);
 
     pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg   = tmp;
+    pAsm->D.dst.reg   = tmp1;
     nomask_PVSDST(&(pAsm->D.dst));
   
     if( GL_FALSE == assemble_src(pAsm, 0, -1) )
@@ -4530,11 +4531,11 @@ GLboolean assemble_XPD(r700_AssemblerBase *pAsm)
 
     if(0xF != pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask)
     {
-        tmp = gethelpr(pAsm);
+        tmp2 = gethelpr(pAsm);
 
         setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
         pAsm->D.dst.rtype = DST_REG_TEMPORARY;
-        pAsm->D.dst.reg   = tmp;
+        pAsm->D.dst.reg   = tmp2;
 
         nomask_PVSDST(&(pAsm->D.dst));
     }
@@ -4562,7 +4563,7 @@ GLboolean assemble_XPD(r700_AssemblerBase *pAsm)
     // result1 + (neg) result0
     setaddrmode_PVSSRC(&(pAsm->S[2].src),ADDR_ABSOLUTE);
     pAsm->S[2].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[2].src.reg   = tmp;
+    pAsm->S[2].src.reg   = tmp1;
 
     neg_PVSSRC(&(pAsm->S[2].src));
     noswizzle_PVSSRC(&(pAsm->S[2].src));
@@ -4585,7 +4586,7 @@ GLboolean assemble_XPD(r700_AssemblerBase *pAsm)
         // Use tmp as source
         setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
         pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-        pAsm->S[0].src.reg   = tmp;
+        pAsm->S[0].src.reg   = tmp2;
 
         noneg_PVSSRC(&(pAsm->S[0].src));
         noswizzle_PVSSRC(&(pAsm->S[0].src));
