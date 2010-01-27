@@ -94,19 +94,20 @@ EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   _EGLDriver *drv;
    EGLint major_int, minor_int;
 
    if (!disp)
       return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
 
-   drv = disp->Driver;
-   if (!drv) {
-      _eglPreloadDrivers();
+   if (!disp->Initialized) {
+      _EGLDriver *drv = disp->Driver;
 
-      drv = _eglMatchDriver(disp);
-      if (!drv)
-         return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
+      if (!drv) {
+         _eglPreloadDrivers();
+         drv = _eglMatchDriver(disp);
+         if (!drv)
+            return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
+      }
 
       /* Initialize the particular display now */
       if (!drv->API.Initialize(drv, disp, &major_int, &minor_int))
@@ -121,6 +122,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       disp->ClientAPIsMask &= _EGL_API_ALL_BITS;
 
       disp->Driver = drv;
+      disp->Initialized = EGL_TRUE;
    } else {
       major_int = disp->APImajor;
       minor_int = disp->APIminor;
@@ -140,15 +142,16 @@ EGLBoolean EGLAPIENTRY
 eglTerminate(EGLDisplay dpy)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   _EGLDriver *drv;
 
    if (!disp)
       return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
 
-   drv = disp->Driver;
-   if (drv) {
+   if (disp->Initialized) {
+      _EGLDriver *drv = disp->Driver;
+
       drv->API.Terminate(drv, disp);
-      disp->Driver = NULL;
+      /* do not reset disp->Driver */
+      disp->Initialized = EGL_FALSE;
    }
 
    return EGL_TRUE;
@@ -165,7 +168,7 @@ _eglCheckDisplay(_EGLDisplay *disp, const char *msg)
       _eglError(EGL_BAD_DISPLAY, msg);
       return NULL;
    }
-   if (!disp->Driver) {
+   if (!disp->Initialized) {
       _eglError(EGL_NOT_INITIALIZED, msg);
       return NULL;
    }
@@ -572,8 +575,8 @@ eglWaitClient(void)
 
    /* a valid current context implies an initialized current display */
    disp = ctx->Resource.Display;
+   assert(disp->Initialized);
    drv = disp->Driver;
-   assert(drv);
 
    return drv->API.WaitClient(drv, disp, ctx);
 }
@@ -616,8 +619,8 @@ eglWaitNative(EGLint engine)
 
    /* a valid current context implies an initialized current display */
    disp = ctx->Resource.Display;
+   assert(disp->Initialized);
    drv = disp->Driver;
-   assert(drv);
 
    return drv->API.WaitNative(drv, disp, engine);
 }
@@ -991,8 +994,8 @@ eglReleaseThread(void)
          if (ctx) {
             _EGLDisplay *disp = ctx->Resource.Display;
             _EGLDriver *drv = disp->Driver;
-            /* what if drv is not avaialbe? */
-            if (drv)
+            /* what if display is not initialized? */
+            if (disp->Initialized)
                (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
          }
       }

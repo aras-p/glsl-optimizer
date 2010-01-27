@@ -49,6 +49,7 @@ struct _egl_display
 
    EGLNativeDisplayType NativeDisplay;
 
+   EGLBoolean Initialized; /**< True if the display is initialized */
    _EGLDriver *Driver;
    void *DriverData; /* private to driver */
 
