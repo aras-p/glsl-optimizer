@@ -272,9 +272,6 @@ struct r300_context {
     struct r300_query *query_current;
     struct r300_query query_list;
 
-    /* Shader hash table. Used to store vertex formatting information, which
-     * depends on the combination of both currently loaded shaders. */
-    struct util_hash_table* shader_hash_table;
     /* Vertex formatting information. */
     struct r300_vertex_info* vertex_info;
 

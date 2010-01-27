@@ -37,32 +37,6 @@
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
-struct r300_shader_key {
-    struct r300_vertex_shader* vs;
-    struct r300_fragment_shader* fs;
-};
-
-struct r300_shader_derived_value {
-    struct r300_vertex_format* vformat;
-    struct r300_rs_block* rs_block;
-};
-
-unsigned r300_shader_key_hash(void* key) {
-    struct r300_shader_key* shader_key = (struct r300_shader_key*)key;
-    unsigned vs = (intptr_t)shader_key->vs;
-    unsigned fs = (intptr_t)shader_key->fs;
-
-    return (vs << 16) | (fs & 0xffff);
-}
-
-int r300_shader_key_compare(void* key1, void* key2) {
-    struct r300_shader_key* shader_key1 = (struct r300_shader_key*)key1;
-    struct r300_shader_key* shader_key2 = (struct r300_shader_key*)key2;
-
-    return (shader_key1->vs == shader_key2->vs) &&
-        (shader_key1->fs == shader_key2->fs);
-}
-
 static void r300_draw_emit_attrib(struct r300_context* r300,
                                   enum attrib_emit emit,
                                   enum interp_mode interp,
@@ -439,32 +413,6 @@ static void r300_update_rs_block(struct r300_context* r300,
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-
-    /*
-    struct r300_shader_key* key;
-    struct r300_shader_derived_value* value;
-    key = CALLOC_STRUCT(r300_shader_key);
-    key->vs = r300->vs;
-    key->fs = r300->fs;
-
-    value = (struct r300_shader_derived_value*)
-        util_hash_table_get(r300->shader_hash_table, (void*)key);
-    if (value) {
-        //vformat = value->vformat;
-        rs_block = value->rs_block;
-
-        FREE(key);
-    } else {
-        rs_block = CALLOC_STRUCT(r300_rs_block);
-        value = CALLOC_STRUCT(r300_shader_derived_value);
-
-        r300_update_rs_block(r300, rs_block);
-
-        //value->vformat = vformat;
-        value->rs_block = rs_block;
-        util_hash_table_set(r300->shader_hash_table,
-            (void*)key, (void*)value);
-    } */
 
     /* Reset structures */
     memset(r300->rs_block, 0, sizeof(struct r300_rs_block));
