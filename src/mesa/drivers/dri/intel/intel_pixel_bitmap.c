@@ -103,7 +103,7 @@ static void set_bit( GLubyte *dest, GLuint bit )
 }
 
 /* Extract a rectangle's worth of data from the bitmap.  Called
- * per-cliprect.
+ * per chunk of HW-sized bitmap.
  */
 static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 			      const struct gl_pixelstore_attrib *unpack,

@@ -69,9 +69,9 @@ static void upload_sf_vp(struct brw_context *brw)
     * for DrawBuffer->_[XY]{min,max}
     */
 
-   /* The scissor only needs to handle the intersection of drawable and
-    * scissor rect.  Clipping to the boundaries of static shared buffers
-    * for front/back/depth is covered by looping over cliprects in brw_draw.c.
+   /* The scissor only needs to handle the intersection of drawable
+    * and scissor rect, since there are no longer cliprects for shared
+    * buffers with DRI2.
     *
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
