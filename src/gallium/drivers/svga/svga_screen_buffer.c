@@ -311,10 +311,20 @@ svga_buffer_upload_queue(struct svga_buffer *sbuf,
                          unsigned end)
 {
    unsigned i;
+   unsigned nearest_range;
+   unsigned nearest_dist;
 
    assert(sbuf->hw.buf);
    assert(end > start);
    
+   if (sbuf->hw.num_ranges < SVGA_BUFFER_MAX_RANGES) {
+      nearest_range = sbuf->hw.num_ranges;
+      nearest_dist = ~0;
+   } else {
+      nearest_range = SVGA_BUFFER_MAX_RANGES - 1;
+      nearest_dist = 0;
+   }
+
    /*
     * Try to grow one of the ranges.
     *
@@ -326,10 +336,32 @@ svga_buffer_upload_queue(struct svga_buffer *sbuf,
     */
 
    for(i = 0; i < sbuf->hw.num_ranges; ++i) {
-      if(start <= sbuf->hw.ranges[i].end && sbuf->hw.ranges[i].start <= end) {
+      int left_dist;
+      int right_dist;
+      int dist;
+
+      left_dist = start - sbuf->hw.ranges[i].end;
+      right_dist = sbuf->hw.ranges[i].start - end;
+      dist = MAX2(left_dist, right_dist);
+
+      if (dist <= 0) {
+         /*
+          * Ranges are contiguous or overlapping -- extend this one and return.
+          */
+
          sbuf->hw.ranges[i].start = MIN2(sbuf->hw.ranges[i].start, start);
-         sbuf->hw.ranges[i].end   = MAX2(sbuf->hw.ranges[i].end,    end);
+         sbuf->hw.ranges[i].end   = MAX2(sbuf->hw.ranges[i].end,   end);
          return;
+      }
+      else {
+         /*
+          * Discontiguous ranges -- keep track of the nearest range.
+          */
+
+         if (dist < nearest_dist) {
+            nearest_range = i;
+            nearest_dist = dist;
+         }
       }
    }
 
@@ -345,13 +377,27 @@ svga_buffer_upload_queue(struct svga_buffer *sbuf,
    assert(!sbuf->hw.svga);
    assert(!sbuf->hw.boxes);
 
-   /*
-    * Add a new range.
-    */
+   if (sbuf->hw.num_ranges < SVGA_BUFFER_MAX_RANGES) {
+      /*
+       * Add a new range.
+       */
 
-   sbuf->hw.ranges[sbuf->hw.num_ranges].start = start;
-   sbuf->hw.ranges[sbuf->hw.num_ranges].end = end;
-   ++sbuf->hw.num_ranges;
+      sbuf->hw.ranges[sbuf->hw.num_ranges].start = start;
+      sbuf->hw.ranges[sbuf->hw.num_ranges].end = end;
+      ++sbuf->hw.num_ranges;
+   } else {
+      /*
+       * Everything else failed, so just extend the nearest range.
+       *
+       * It is OK to do this because we always keep a local copy of the
+       * host buffer data, for SW TNL, and the host never modifies the buffer.
+       */
+
+      assert(nearest_range < SVGA_BUFFER_MAX_RANGES);
+      assert(nearest_range < sbuf->hw.num_ranges);
+      sbuf->hw.ranges[nearest_range].start = MIN2(sbuf->hw.ranges[nearest_range].start, start);
+      sbuf->hw.ranges[nearest_range].end   = MAX2(sbuf->hw.ranges[nearest_range].end,   end);
+   }
 }
 
 
