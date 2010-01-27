@@ -138,6 +138,9 @@ brw_get_name(struct pipe_screen *screen)
    case PCI_CHIP_ILM_G:
       chipset = "ILM_G";
       break;
+   default:
+      chipset = "unknown";
+      break;
    }
 
    util_snprintf(buffer, sizeof(buffer), "i965 (chipset: %s)", chipset);
