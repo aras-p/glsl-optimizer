@@ -136,7 +136,8 @@ struct ureg_program
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
 
-   struct const_decl const_decls[PIPE_MAX_CONSTANT_BUFFERS];
+   struct const_decl const_decls;
+   struct const_decl const_decls2D[PIPE_MAX_CONSTANT_BUFFERS];
 
    unsigned property_gs_input_prim;
    unsigned property_gs_output_prim;
@@ -371,6 +372,9 @@ out:
 /* Returns a new constant register.  Keep track of which have been
  * referred to so that we can emit decls later.
  *
+ * Constant operands declared with this function must be addressed
+ * with a two-dimensional index.
+ *
  * There is nothing in this code to bind this constant to any tracked
  * value or manage any constant_buffer contents -- that's the
  * resposibility of the calling code.
@@ -381,7 +385,7 @@ ureg_DECL_constant2D(struct ureg_program *ureg,
                      unsigned last,
                      unsigned index2D)
 {
-   struct const_decl *decl = &ureg->const_decls[index2D];
+   struct const_decl *decl = &ureg->const_decls2D[index2D];
 
    assert(index2D < PIPE_MAX_CONSTANT_BUFFERS);
 
@@ -394,11 +398,16 @@ ureg_DECL_constant2D(struct ureg_program *ureg,
 }
 
 
+/* A one-dimensional, depricated version of ureg_DECL_constant2D().
+ *
+ * Constant operands declared with this function must be addressed
+ * with a one-dimensional index.
+ */
 struct ureg_src
 ureg_DECL_constant(struct ureg_program *ureg,
                    unsigned index)
 {
-   struct const_decl *decl = &ureg->const_decls[0];
+   struct const_decl *decl = &ureg->const_decls;
    unsigned minconst = index, maxconst = index;
    unsigned i;
 
@@ -1241,8 +1250,17 @@ static void emit_decls( struct ureg_program *ureg )
                        ureg->sampler[i].Index, 1 );
    }
 
+   if (ureg->const_decls.nr_constant_ranges) {
+      for (i = 0; i < ureg->const_decls.nr_constant_ranges; i++) {
+         emit_decl_range(ureg,
+                         TGSI_FILE_CONSTANT,
+                         ureg->const_decls.constant_range[i].first,
+                         ureg->const_decls.constant_range[i].last - ureg->const_decls.constant_range[i].first + 1);
+      }
+   }
+
    for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
-      struct const_decl *decl = &ureg->const_decls[i];
+      struct const_decl *decl = &ureg->const_decls2D[i];
 
       if (decl->nr_constant_ranges) {
          uint j;
