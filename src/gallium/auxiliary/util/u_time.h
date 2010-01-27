@@ -74,14 +74,23 @@ struct util_time
 void 
 util_time_get(struct util_time *t);
 
+/**
+ * Return t2 = t1 + usecs
+ */
 void 
 util_time_add(const struct util_time *t1,
               int64_t usecs,
               struct util_time *t2);
 
+/**
+ * Return current time in microseconds
+ */
 uint64_t
 util_time_micros( void );
 
+/**
+ * Return difference between times, in microseconds
+ */
 int64_t
 util_time_diff(const struct util_time *t1, 
                const struct util_time *t2);
