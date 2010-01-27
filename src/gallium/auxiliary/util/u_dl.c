@@ -26,8 +26,8 @@
  *
  **************************************************************************/
 
-
 #include "pipe/p_config.h"
+#include "util/u_debug.h"
 
 #if defined(PIPE_OS_UNIX)
 #include <dlfcn.h>
@@ -43,7 +43,12 @@ struct util_dl_library *
 util_dl_open(const char *filename)
 {
 #if defined(PIPE_OS_UNIX)
-   return (struct util_dl_library *)dlopen(filename, RTLD_LAZY | RTLD_GLOBAL);
+   struct util_dl_library *lib;
+   lib = (struct util_dl_library *)dlopen(filename, RTLD_LAZY | RTLD_GLOBAL);
+   if (!lib) {
+      debug_printf("gallium: dlopen() failed: %s\n", dlerror());
+   }
+   return lib;
 #elif defined(PIPE_OS_WINDOWS)
    return (struct util_dl_library *)LoadLibraryA(filename);
 #else
