@@ -100,8 +100,10 @@ struct spu_framebuffer
    void *depth_start;              /**< addr of depth surface in main memory */
    enum pipe_format color_format;
    enum pipe_format depth_format;
-   uint width, height;             /**< size in pixels */
-   uint width_tiles, height_tiles; /**< width and height in tiles */
+   uint width;                     /**< width in pixels */
+   uint height;                    /**< height in pixels */
+   uint width_tiles;               /**< width in tiles */
+   uint height_tiles;              /**< width in tiles */
 
    uint color_clear_value;
    uint depth_clear_value;
@@ -116,15 +118,23 @@ PIPE_ALIGN_TYPE(16,
 struct spu_texture_level
 {
    void *start;
-   ushort width, height, depth;
+   ushort width;
+   ushort height;
+   ushort depth;
    ushort tiles_per_row;
    uint bytes_per_image;
    /** texcoord scale factors */
-   vector float scale_s, scale_t, scale_r;
+   vector float scale_s;
+   vector float scale_t;
+   vector float scale_r;
    /** texcoord masks (if REPEAT then size-1, else ~0) */
-   vector signed int mask_s, mask_t, mask_r;
+   vector signed int mask_s;
+   vector signed int mask_t;
+   vector signed int mask_r;
    /** texcoord clamp limits */
-   vector signed int max_s, max_t, max_r;
+   vector signed int max_s;
+   vector signed int max_t;
+   vector signed int max_r;
 });
 
 
@@ -166,7 +176,8 @@ struct spu_global
    boolean read_depth_stencil;
 
    /** Current tiles' status */
-   ubyte cur_ctile_status, cur_ztile_status;
+   ubyte cur_ctile_status;
+   ubyte cur_ztile_status;
 
    /** Status of all tiles in framebuffer */
    PIPE_ALIGN_VAR(16) ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE];
