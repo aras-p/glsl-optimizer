@@ -126,8 +126,9 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin', 'embedded'):
 		'_GNU_SOURCE',
 		
 		'PTHREADS',
-		'HAVE_POSIX_MEMALIGN',
 	])
+	if platform != 'embedded':
+		env.Append(CPPDEFINES = ['HAVE_POSIX_MEMALIGN'])
 	if platform == 'darwin':
 		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(CPPPATH = ['/usr/X11R6/include'])
