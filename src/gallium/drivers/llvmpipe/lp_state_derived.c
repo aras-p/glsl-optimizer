@@ -33,7 +33,6 @@
 #include "draw/draw_private.h"
 #include "lp_context.h"
 #include "lp_screen.h"
-#include "lp_tex_cache.h"
 #include "lp_state.h"
 
 
