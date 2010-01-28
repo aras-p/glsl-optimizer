@@ -37,14 +37,10 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 
-#include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_format.h"
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_cb_fbo.h"
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
