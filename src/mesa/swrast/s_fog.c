@@ -172,14 +172,14 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 
    /* compute (scaled) fog color */
    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-      rFog = ctx->Fog.Color[RCOMP] * 255.0;
-      gFog = ctx->Fog.Color[GCOMP] * 255.0;
-      bFog = ctx->Fog.Color[BCOMP] * 255.0;
+      rFog = ctx->Fog.Color[RCOMP] * 255.0F;
+      gFog = ctx->Fog.Color[GCOMP] * 255.0F;
+      bFog = ctx->Fog.Color[BCOMP] * 255.0F;
    }
    else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-      rFog = ctx->Fog.Color[RCOMP] * 65535.0;
-      gFog = ctx->Fog.Color[GCOMP] * 65535.0;
-      bFog = ctx->Fog.Color[BCOMP] * 65535.0;
+      rFog = ctx->Fog.Color[RCOMP] * 65535.0F;
+      gFog = ctx->Fog.Color[GCOMP] * 65535.0F;
+      bFog = ctx->Fog.Color[BCOMP] * 65535.0F;
    }
    else {
       rFog = ctx->Fog.Color[RCOMP];

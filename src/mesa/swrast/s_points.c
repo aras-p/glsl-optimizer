@@ -125,16 +125,16 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
       GLfloat s, r, dsdx;
 
       /* texcoord / pointcoord interpolants */
-      s = 0.0;
-      dsdx = 1.0 / size;
+      s = 0.0F;
+      dsdx = 1.0F / size;
       if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT) {
-         dtdy = 1.0 / size;
-         t0 = 0.5 * dtdy;
+         dtdy = 1.0F / size;
+         t0 = 0.5F * dtdy;
       }
       else {
          /* GL_UPPER_LEFT */
-         dtdy = -1.0 / size;
-         t0 = 1.0 + 0.5 * dtdy;
+         dtdy = -1.0F / size;
+         t0 = 1.0F + 0.5F * dtdy;
       }
 
       ATTRIB_LOOP_BEGIN

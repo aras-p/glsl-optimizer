@@ -645,7 +645,7 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
 {
    GLfloat (*wpos)[4] = span->array->attribs[FRAG_ATTRIB_WPOS];
    GLuint i;
-   const GLfloat zScale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
+   const GLfloat zScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat w, dw;
 
    if (span->arrayMask & SPAN_XY) {

@@ -156,8 +156,8 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    if (program->OriginUpperLeft)
       wpos[1] = ctx->DrawBuffer->Height - 1 - wpos[1];
    if (!program->PixelCenterInteger) {
-      wpos[0] += 0.5;
-      wpos[1] += 0.5;
+      wpos[0] += 0.5F;
+      wpos[1] += 0.5F;
    }
 
    /* Setup pointer to input attributes */
@@ -172,7 +172,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* if running a GLSL program (not ARB_fragment_program) */
    if (ctx->Shader.CurrentProgram) {
       /* Store front/back facing value */
-      machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0 - span->facing;
+      machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0F - span->facing;
    }
 
    machine->CurElement = col;

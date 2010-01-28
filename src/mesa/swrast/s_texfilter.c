@@ -445,7 +445,7 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
    switch (wrapMode) {
    case GL_CLAMP:
       /* Not exactly what the spec says, but it matches NVIDIA output */
-      fcol = CLAMP(coord - 0.5F, 0.0, max-1);
+      fcol = CLAMP(coord - 0.5F, 0.0F, max - 1);
       i0 = IFLOOR(fcol);
       i1 = i0 + 1;
       break;
