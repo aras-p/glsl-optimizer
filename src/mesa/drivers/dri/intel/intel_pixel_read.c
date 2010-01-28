@@ -64,99 +64,6 @@
  * any case.
  */
 
-
-static GLboolean
-do_texture_readpixels(GLcontext * ctx,
-                      GLint x, GLint y, GLsizei width, GLsizei height,
-                      GLenum format, GLenum type,
-                      const struct gl_pixelstore_attrib *pack,
-                      struct intel_region *dest_region)
-{
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   intelScreenPrivate *screen = intel->intelScreen;
-   GLint pitch = pack->RowLength ? pack->RowLength : width;
-   __DRIdrawable *dPriv = intel->driDrawable;
-   int textureFormat;
-   GLenum glTextureFormat;
-   int destFormat, depthFormat, destPitch;
-   drm_clip_rect_t tmp;
-
-   if (INTEL_DEBUG & DEBUG_PIXEL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-
-   if (ctx->_ImageTransferState ||
-       pack->SwapBytes || pack->LsbFirst || !pack->Invert) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         fprintf(stderr, "%s: check_color failed\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   intel->vtbl.meta_texrect_source(intel, intel_readbuf_region(intel));
-
-   if (!intel->vtbl.meta_render_dest(intel, dest_region, type, format)) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         fprintf(stderr, "%s: couldn't set dest %s/%s\n",
-                 __FUNCTION__,
-                 _mesa_lookup_enum_by_nr(type),
-                 _mesa_lookup_enum_by_nr(format));
-      return GL_FALSE;
-   }
-
-   if (intel->driDrawable->numClipRects) {
-      intel->vtbl.install_meta_state(intel);
-      intel->vtbl.meta_no_depth_write(intel);
-      intel->vtbl.meta_no_stencil_write(intel);
-
-      if (!driClipRectToFramebuffer(ctx->ReadBuffer, &x, &y, &width, &height)) {
-         SET_STATE(i830, state);
-         if (INTEL_DEBUG & DEBUG_PIXEL)
-            fprintf(stderr, "%s: cliprect failed\n", __FUNCTION__);
-         return GL_TRUE;
-      }
-
-      y = dPriv->h - y - height;
-      x += dPriv->x;
-      y += dPriv->y;
-
-
-      /* Set the frontbuffer up as a large rectangular texture.
-       */
-      intel->vtbl.meta_tex_rect_source(intel, src_region, textureFormat);
-
-
-      intel->vtbl.meta_texture_blend_replace(i830, glTextureFormat);
-
-
-      /* Set the 3d engine to draw into the destination region:
-       */
-
-      intel->vtbl.meta_draw_region(intel, dest_region);
-      intel->vtbl.meta_draw_format(intel, destFormat, depthFormat);     /* ?? */
-
-
-      /* Draw a single quad, no cliprects:
-       */
-      intel->vtbl.meta_disable_cliprects(intel);
-
-      intel->vtbl.draw_quad(intel,
-                            0, width, 0, height,
-                            0x00ff00ff, x, x + width, y, y + height);
-
-      intel->vtbl.leave_meta_state(intel);
-   }
-
-   intel_region_wait_fence(ctx, dest_region);   /* required by GL */
-   return GL_TRUE;
-#endif
-
-   return GL_FALSE;
-}
-
-
-
-
 static GLboolean
 do_blit_readpixels(GLcontext * ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height,
@@ -269,15 +176,6 @@ intelReadPixels(GLcontext * ctx,
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
-
-#ifdef I915
-   if (do_texture_readpixels
-       (ctx, x, y, width, height, format, type, pack, pixels))
-      return;
-#else
-   (void)do_blit_readpixels;
-   (void)do_texture_readpixels;
-#endif
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);

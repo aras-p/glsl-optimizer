@@ -105,7 +105,6 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
 
    i830InitState(i830);
-   i830InitMetaFuncs(i830);
 
    _tnl_allow_vertex_fog(ctx, 1);
    _tnl_allow_pixel_fog(ctx, 0);

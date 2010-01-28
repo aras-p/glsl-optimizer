@@ -124,40 +124,6 @@ struct intel_context
       void (*invalidate_state) (struct intel_context *intel,
 				GLuint new_state);
 
-
-      /* Metaops: 
-       */
-      void (*install_meta_state) (struct intel_context * intel);
-      void (*leave_meta_state) (struct intel_context * intel);
-
-      void (*meta_draw_region) (struct intel_context * intel,
-                                struct intel_region * draw_region,
-                                struct intel_region * depth_region);
-
-      void (*meta_color_mask) (struct intel_context * intel, GLboolean);
-
-      void (*meta_stencil_replace) (struct intel_context * intel,
-                                    GLuint mask, GLuint clear);
-
-      void (*meta_depth_replace) (struct intel_context * intel);
-
-      void (*meta_texture_blend_replace) (struct intel_context * intel);
-
-      void (*meta_no_stencil_write) (struct intel_context * intel);
-      void (*meta_no_depth_write) (struct intel_context * intel);
-      void (*meta_no_texture) (struct intel_context * intel);
-
-      void (*meta_import_pixel_state) (struct intel_context * intel);
-      void (*meta_frame_buffer_texture) (struct intel_context *intel,
-					 GLint xoff, GLint yoff);
-
-      GLboolean(*meta_tex_rect_source) (struct intel_context * intel,
-					dri_bo * buffer,
-					GLuint offset,
-					GLuint pitch,
-					GLuint height,
-					GLenum format, GLenum type);
-
       void (*assert_not_dirty) (struct intel_context *intel);
 
       void (*debug_batch)(struct intel_context *intel);

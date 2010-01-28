@@ -259,7 +259,7 @@ struct i915_context
 
    struct i915_fragment_program *current_program;
 
-   struct i915_hw_state meta, initial, state, *current;
+   struct i915_hw_state initial, state, *current;
 };
 
 
@@ -344,12 +344,6 @@ extern void i915_update_provoking_vertex(GLcontext *ctx);
  */
 extern void i915UpdateTextureState(struct intel_context *intel);
 extern void i915InitTextureFuncs(struct dd_function_table *functions);
-
-/*======================================================================
- * i915_metaops.c
- */
-void i915InitMetaFuncs(struct i915_context *i915);
-
 
 /*======================================================================
  * i915_fragprog.c

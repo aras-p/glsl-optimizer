@@ -111,7 +111,6 @@ i915CreateContext(const __GLcontextModes * mesaVis,
       _mesa_printf("\ntexmem-0-3 branch\n\n");
 
    i915InitVtbl(i915);
-   i915InitMetaFuncs(i915);
 
    i915InitDriverFunctions(&functions);
 

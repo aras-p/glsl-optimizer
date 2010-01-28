@@ -541,10 +541,6 @@ i830_emit_state(struct intel_context *intel)
 		      I915_GEM_DOMAIN_SAMPLER, 0,
                       state->tex_offset[i]);
          }
-	 else if (state == &i830->meta) {
-	    assert(i == 0);
-	    OUT_BATCH(0);
-	 }
 	 else {
 	    OUT_BATCH(state->tex_offset[i]);
 	 }
@@ -579,8 +575,6 @@ i830_destroy_context(struct intel_context *intel)
 
    intel_region_release(&i830->state.draw_region);
    intel_region_release(&i830->state.depth_region);
-   intel_region_release(&i830->meta.draw_region);
-   intel_region_release(&i830->meta.depth_region);
    intel_region_release(&i830->initial.draw_region);
    intel_region_release(&i830->initial.depth_region);
 
@@ -594,24 +588,22 @@ i830_destroy_context(struct intel_context *intel)
    _tnl_free_vertices(&intel->ctx);
 }
 
-
-void
-i830_state_draw_region(struct intel_context *intel,
-		       struct i830_hw_state *state,
-		       struct intel_region *color_region,
-		       struct intel_region *depth_region)
+static void
+i830_set_draw_region(struct intel_context *intel,
+                     struct intel_region *color_regions[],
+                     struct intel_region *depth_region,
+		     GLuint num_regions)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    GLcontext *ctx = &intel->ctx;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
+   struct i830_hw_state *state = &i830->state;
 
-   ASSERT(state == &i830->state || state == &i830->meta);
-
-   if (state->draw_region != color_region) {
+   if (state->draw_region != color_regions[0]) {
       intel_region_release(&state->draw_region);
-      intel_region_reference(&state->draw_region, color_region);
+      intel_region_reference(&state->draw_region, color_regions[0]);
    }
    if (state->depth_region != depth_region) {
       intel_region_release(&state->depth_region);
@@ -622,7 +614,7 @@ i830_state_draw_region(struct intel_context *intel,
     * Set stride/cpp values
     */
    i915_set_buf_info_for_region(&state->Buffer[I830_DESTREG_CBUFADDR0],
-				color_region, BUF_3D_ID_COLOR_BACK);
+				color_regions[0], BUF_3D_ID_COLOR_BACK);
 
    i915_set_buf_info_for_region(&state->Buffer[I830_DESTREG_DBUFADDR0],
 				depth_region, BUF_3D_ID_DEPTH);
@@ -672,19 +664,6 @@ i830_state_draw_region(struct intel_context *intel,
    state->Buffer[I830_DESTREG_DRAWRECT5] = 0;
 
    I830_STATECHANGE(i830, I830_UPLOAD_BUFFERS);
-
-
-}
-
-
-static void
-i830_set_draw_region(struct intel_context *intel,
-                     struct intel_region *color_regions[],
-                     struct intel_region *depth_region,
-		     GLuint num_regions)
-{
-   struct i830_context *i830 = i830_context(&intel->ctx);
-   i830_state_draw_region(intel, &i830->state, color_regions[0], depth_region);
 }
 
 /* This isn't really handled at the moment.
