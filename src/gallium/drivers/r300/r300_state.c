@@ -288,18 +288,12 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
     }
 
-    /* Color Channel Mask */
-    if (state->rt[0].colormask & PIPE_MASK_R) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_RED_MASK0;
-    }
-    if (state->rt[0].colormask & PIPE_MASK_G) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0;
-    }
-    if (state->rt[0].colormask & PIPE_MASK_B) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0;
-    }
-    if (state->rt[0].colormask & PIPE_MASK_A) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0;
+    /* Color channel masks for all MRTs. */
+    blend->color_channel_mask = state->rt[0].colormask;
+    if (state->independent_blend_enable) {
+        blend->color_channel_mask |= (state->rt[1].colormask << 4);
+        blend->color_channel_mask |= (state->rt[2].colormask << 8);
+        blend->color_channel_mask |= (state->rt[3].colormask << 12);
     }
 
     if (state->dither) {
