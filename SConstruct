@@ -115,9 +115,8 @@ env.Append(CPPPATH = [
 if env['msvc']:
     env.Append(CPPPATH = ['#include/c99'])
 
-
-# Posix
-if platform in ('posix', 'linux', 'freebsd', 'darwin', 'embedded'):
+# Embedded
+if platform == 'embedded':
 	env.Append(CPPDEFINES = [
 		'_POSIX_SOURCE',
 		('_POSIX_C_SOURCE', '199309L'), 
@@ -127,8 +126,24 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin', 'embedded'):
 		
 		'PTHREADS',
 	])
-	if platform != 'embedded':
-		env.Append(CPPDEFINES = ['HAVE_POSIX_MEMALIGN'])
+	env.Append(LIBS = [
+		'm',
+		'pthread',
+		'dl',
+	])
+
+# Posix
+if platform in ('posix', 'linux', 'freebsd', 'darwin'):
+	env.Append(CPPDEFINES = [
+		'_POSIX_SOURCE',
+		('_POSIX_C_SOURCE', '199309L'), 
+		'_SVID_SOURCE',
+		'_BSD_SOURCE', 
+		'_GNU_SOURCE',
+		
+		'PTHREADS',
+		'HAVE_POSIX_MEMALIGN',
+	])
 	if platform == 'darwin':
 		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(CPPPATH = ['/usr/X11R6/include'])
@@ -136,14 +151,9 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin', 'embedded'):
 	env.Append(LIBS = [
 		'm',
 		'pthread',
+		'expat',
 		'dl',
 	])
-	if platform != 'embedded':
-		env.Append(LIBS = [
-			'expat',
-		])
-		
-
 
 # DRI
 if dri:
