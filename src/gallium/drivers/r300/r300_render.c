@@ -168,6 +168,8 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         }
     }
 
+    r300_emit_dirty_state(r300);
+
     BEGIN_CS(10 + count * vertex_size);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
@@ -419,7 +421,6 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     r300_emit_buffer_validate(r300);
 
     if (immd_is_good_idea(r300, count)) {
-        r300_emit_dirty_state(r300);
         r300_emit_draw_arrays_immediate(r300, mode, start, count);
     } else {
         if (!r300_setup_vertex_buffers(r300)) {
