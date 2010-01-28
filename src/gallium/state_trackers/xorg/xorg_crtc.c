@@ -242,7 +242,11 @@ crtc_load_cursor_argb_kms(xf86CrtcPtr crtc, CARD32 * image)
 	unsigned attr[8];
 
 	attr[0] = KMS_BO_TYPE;
+#ifdef KMS_BO_TYPE_CURSOR_64X64_A8R8G8B8
+	attr[1] = KMS_BO_TYPE_CURSOR_64X64_A8R8G8B8;
+#else
 	attr[1] = KMS_BO_TYPE_CURSOR;
+#endif
 	attr[2] = KMS_WIDTH;
 	attr[3] = 64;
 	attr[4] = KMS_HEIGHT;

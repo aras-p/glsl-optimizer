@@ -1008,7 +1008,11 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     int ret;
 
     attr[0] = KMS_BO_TYPE;
+#ifdef KMS_BO_TYPE_SCANOUT_X8R8G8B8
+    attr[1] = KMS_BO_TYPE_SCANOUT_X8R8G8B8;
+#else
     attr[1] = KMS_BO_TYPE_SCANOUT;
+#endif
     attr[2] = KMS_WIDTH;
     attr[3] = pScrn->virtualX;
     attr[4] = KMS_HEIGHT;
