@@ -144,7 +144,7 @@ struct i830_context
    GLuint lodbias_tm0s3[MAX_TEXTURE_UNITS];
      DECLARE_RENDERINPUTS(last_index_bitset);
 
-   struct i830_hw_state initial, state, *current;
+   struct i830_hw_state state;
 };
 
 

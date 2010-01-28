@@ -235,8 +235,8 @@ static GLboolean
 i830_check_vertex_size(struct intel_context *intel, GLuint expected)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   int vft0 = i830->current->Ctx[I830_CTXREG_VF];
-   int vft1 = i830->current->Ctx[I830_CTXREG_VF2];
+   int vft0 = i830->state.Ctx[I830_CTXREG_VF];
+   int vft1 = i830->state.Ctx[I830_CTXREG_VF2];
    int nrtex = (vft0 & VFT0_TEX_COUNT_MASK) >> VFT0_TEX_COUNT_SHIFT;
    int i, sz = 0;
 
@@ -412,7 +412,7 @@ static void
 i830_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   struct i830_hw_state *state = i830->current;
+   struct i830_hw_state *state = &i830->state;
    int i, count;
    GLuint dirty;
    dri_bo *aper_array[3 + I830_TEX_UNITS];
@@ -575,8 +575,6 @@ i830_destroy_context(struct intel_context *intel)
 
    intel_region_release(&i830->state.draw_region);
    intel_region_release(&i830->state.depth_region);
-   intel_region_release(&i830->initial.draw_region);
-   intel_region_release(&i830->initial.depth_region);
 
    for (i = 0; i < I830_TEX_UNITS; i++) {
       if (i830->state.tex_buffer[i] != NULL) {
@@ -679,8 +677,7 @@ static void
 i830_assert_not_dirty( struct intel_context *intel )
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   struct i830_hw_state *state = i830->current;
-   assert(!get_dirty(state));
+   assert(!get_dirty(&i830->state));
 }
 
 static void

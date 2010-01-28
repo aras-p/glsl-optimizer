@@ -97,8 +97,8 @@ static GLboolean
 i915_check_vertex_size(struct intel_context *intel, GLuint expected)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
-   int lis2 = i915->current->Ctx[I915_CTXREG_LIS2];
-   int lis4 = i915->current->Ctx[I915_CTXREG_LIS4];
+   int lis2 = i915->state.Ctx[I915_CTXREG_LIS2];
+   int lis4 = i915->state.Ctx[I915_CTXREG_LIS4];
    int i, sz = 0;
 
    switch (lis4 & S4_VFMT_XYZW_MASK) {
@@ -284,7 +284,7 @@ static void
 i915_emit_state(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
-   struct i915_hw_state *state = i915->current;
+   struct i915_hw_state *state = &i915->state;
    int i, count, aper_count;
    GLuint dirty;
    dri_bo *aper_array[3 + I915_TEX_UNITS];
@@ -493,8 +493,6 @@ i915_destroy_context(struct intel_context *intel)
 
    intel_region_release(&i915->state.draw_region);
    intel_region_release(&i915->state.depth_region);
-   intel_region_release(&i915->initial.draw_region);
-   intel_region_release(&i915->initial.depth_region);
 
    for (i = 0; i < I915_TEX_UNITS; i++) {
       if (i915->state.tex_buffer[i] != NULL) {
@@ -628,8 +626,7 @@ static void
 i915_assert_not_dirty( struct intel_context *intel )
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
-   struct i915_hw_state *state = i915->current;
-   GLuint dirty = get_dirty(state);
+   GLuint dirty = get_dirty(&i915->state);
    assert(!dirty);
 }
 

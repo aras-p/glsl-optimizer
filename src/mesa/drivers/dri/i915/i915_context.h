@@ -259,7 +259,7 @@ struct i915_context
 
    struct i915_fragment_program *current_program;
 
-   struct i915_hw_state initial, state, *current;
+   struct i915_hw_state state;
 };
 
 

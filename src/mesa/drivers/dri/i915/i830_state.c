@@ -1127,9 +1127,6 @@ i830InitState(struct i830_context *i830)
 
    _mesa_init_driver_state(ctx);
 
-   memcpy(&i830->initial, &i830->state, sizeof(i830->state));
-
-   i830->current = &i830->state;
    i830->state.emitted = 0;
    i830->state.active = (I830_UPLOAD_INVARIENT |
                          I830_UPLOAD_RASTER_RULES |
