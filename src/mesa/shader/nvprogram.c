@@ -515,7 +515,7 @@ _mesa_emit_nv_temp_initialization(GLcontext *ctx,
 				  struct gl_program *program)
 {
    struct prog_instruction *inst;
-   int i;
+   GLuint i;
 
    if (!ctx->Shader.EmitNVTempInitialization)
       return;
@@ -559,7 +559,7 @@ _mesa_emit_nv_temp_initialization(GLcontext *ctx,
 void
 _mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program)
 {
-   int i;
+   GLuint i;
 
    program->NumTemporaries = 0;
    for (i = 0; i < program->NumInstructions; i++) {

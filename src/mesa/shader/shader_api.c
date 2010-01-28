@@ -955,7 +955,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
 
    if (size) {
       GLint typeSize = sizeof_glsl_type(param->DataType);
-      if (param->Size > typeSize) {
+      if ((GLint) param->Size > typeSize) {
          /* This is an array.
           * Array elements are placed on vector[4] boundaries so they're
           * a multiple of four floats.  We round typeSize up to next multiple
@@ -1726,7 +1726,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       const GLint typeSize = sizeof_glsl_type(param->DataType);
       GLsizei k, i;
 
-      if (param->Size > typeSize) {
+      if ((GLint) param->Size > typeSize) {
          /* an array */
          /* we'll ignore extra data below */
       }
@@ -1911,7 +1911,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
    GLuint mat, row, col;
    GLuint src = 0;
    const struct gl_program_parameter * param = &program->Parameters->Parameters[index];
-   const GLint slots = (param->Size + 3) / 4;
+   const GLuint slots = (param->Size + 3) / 4;
    const GLint typeSize = sizeof_glsl_type(param->DataType);
    GLint nr, nc;
 
@@ -1923,7 +1923,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
       return;
    }
 
-   if (param->Size <= typeSize) {
+   if ((GLint) param->Size <= typeSize) {
       /* non-array: count must be at most one; count == 0 is handled by the loop below */
       if (count > 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
