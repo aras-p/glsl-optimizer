@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "eglconfigutil.h"
-#include "egllog.h"
 
 
 /**

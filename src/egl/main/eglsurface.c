@@ -9,7 +9,6 @@
 #include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
-#include "egldriver.h"
 #include "eglglobals.h"
 #include "egllog.h"
 #include "eglsurface.h"

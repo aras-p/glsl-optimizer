@@ -2,7 +2,6 @@
 #include <assert.h>
 #include "eglglobals.h"
 #include "egldriver.h"
-#include "egllog.h"
 #include "eglmutex.h"
 
 
