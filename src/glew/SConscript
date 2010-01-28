@@ -52,6 +52,9 @@ prog_env = env.Clone()
 
 prog_env.Prepend(LIBS = [glew])
 
+if prog_env['platform'] == 'darwin':
+    prog_env.Append(FRAMEWORKS = ['AGL'])
+
 prog_env.Program(
     target = 'glewinfo',
     source = ['glewinfo.c'],
