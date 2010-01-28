@@ -393,9 +393,10 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-        shlinkflags += [
-            '-Wl,-Bsymbolic',
-        ]
+        if env['platform'] not in ('darwin'):
+            shlinkflags += [
+                '-Wl,-Bsymbolic',
+            ]
         # Handle circular dependencies in the libraries
         if env['platform'] in ('darwin'):
             pass
