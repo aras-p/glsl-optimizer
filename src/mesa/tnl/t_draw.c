@@ -399,7 +399,7 @@ void _tnl_draw_prims( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const GLuint TEST_SPLIT = 0;
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
-   GLuint max_basevertex = prim->basevertex;
+   GLint max_basevertex = prim->basevertex;
    GLuint i;
 
    if (!_mesa_check_conditional_render(ctx))

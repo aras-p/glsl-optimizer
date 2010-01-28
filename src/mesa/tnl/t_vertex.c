@@ -383,7 +383,7 @@ static void adjust_input_ptrs( GLcontext *ctx, GLint diff)
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    struct tnl_clipspace_attr *a = vtx->attr;
    const GLuint count = vtx->attr_count;
-   int j;
+   GLuint j;
 
    diff -= 1;
    for (j=0; j<count; ++j) {
