@@ -442,6 +442,7 @@ intel_region_attach_pbo(struct intel_context *intel,
    region->pbo->region = region;
    dri_bo_reference(buffer);
    region->buffer = buffer;
+   region->tiling = I915_TILING_NONE;
 }
 
 
