@@ -997,6 +997,7 @@ eglReleaseThread(void)
    /* unbind current contexts */
    if (!_eglIsCurrentThreadDummy()) {
       _EGLThreadInfo *t = _eglGetCurrentThread();
+      EGLint api_index = t->CurrentAPIIndex;
       EGLint i;
 
       for (i = 0; i < _EGL_API_NUM_APIS; i++) {
@@ -1004,9 +1005,12 @@ eglReleaseThread(void)
          if (ctx) {
             _EGLDisplay *disp = ctx->Resource.Display;
             _EGLDriver *drv = disp->Driver;
+            t->CurrentAPIIndex = i;
             (void) drv->API.MakeCurrent(drv, disp, NULL, NULL, NULL);
          }
       }
+
+      t->CurrentAPIIndex = api_index;
    }
 
    _eglDestroyCurrentThread();
