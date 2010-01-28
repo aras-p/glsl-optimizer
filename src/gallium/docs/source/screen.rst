@@ -6,6 +6,61 @@ A screen is an object representing the context-independent part of a device.
 Useful Flags
 ------------
 
+.. _pipe_cap:
+
+PIPE_CAP
+^^^^^^^^
+
+Pipe capabilities help expose hardware functionality not explicitly required
+by Gallium. For floating-point values, use :ref:`get_paramf`, and for boolean
+or integer values, use :ref:`get_param`.
+
+The integer capabilities:
+
+* ``MAX_TEXTURE_IMAGE_UNITS``: The maximum number of samplers available.
+* ``NPOT_TEXTURES``: Whether :term:`NPOT` textures may have repeat modes,
+  normalized coordinates, and mipmaps.
+* ``TWO_SIDED_STENCIL``: Whether the stencil test can also affect back-facing
+  polygons.
+* ``GLSL``: Deprecated.
+* ``S3TC``: Deprecated.
+* ``ANISOTROPIC_FILTER``: Whether textures can be filtered anisotropically.
+* ``POINT_SPRITE``: Whether point sprites are available.
+* ``MAX_RENDER_TARGETS``: The maximum number of render targets that may be
+  bound.
+* ``OCCLUSION_QUERY``: Whether occlusion queries are available.
+* ``TEXTURE_SHADOW_MAP``: XXX
+* ``MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
+  for a 2D texture.
+* ``MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
+  for a 3D texture.
+* ``MAX_TEXTURE_CUBE_LEVELS``: The maximum number of mipmap levels available
+  for a cubemap.
+* ``TEXTURE_MIRROR_CLAMP``: Whether mirrored texture coordinates with clamp
+  are supported.
+* ``TEXTURE_MIRROR_REPEAT``: Whether mirrored repeating texture coordinates
+  are supported.
+* ``MAX_VERTEX_TEXTURE_UNITS``: The maximum number of samplers addressable
+  inside the vertex shader. If this is 0, then the vertex shader cannot
+  sample textures.
+* ``TGSI_CONT_SUPPORTED``: Whether the TGSI CONT opcode is supported.
+* ``BLEND_EQUATION_SEPARATE``: Whether alpha blend equations may be different
+  from color blend equations, in :ref:`Blend` state.
+* ``SM3``: Whether the vertex shader and fragment shader support equivalent
+  opcodes to the Shader Model 3 specification. XXX oh god this is horrible
+* ``MAX_PREDICATE_REGISTERS``: XXX
+* ``MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
+  the vertex and fragment shader, inclusive.
+
+The floating-point capabilities:
+
+* ``MAX_LINE_WIDTH``: The maximum width of a regular line.
+* ``MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
+* ``MAX_POINT_WIDTH``: The maximum width and height of a point.
+* ``MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
+* ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
+  ``GUARD_BAND_BOTTOM``: XXX
+
 .. _pipe_buffer_usage:
 
 PIPE_BUFFER_USAGE
@@ -75,6 +130,8 @@ get_vendor
 
 Returns the screen vendor.
 
+.. _get_param:
+
 get_param
 ^^^^^^^^^
 
@@ -102,10 +159,16 @@ Get an integer/boolean screen parameter. Valid parameter names include.
 * ``PIPE_CAP_MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant
   buffer.
 
+**param** is one of the :ref:`PIPE_CAP` names.
+
+.. _get_paramf:
+
 get_paramf
 ^^^^^^^^^^
 
 Get a floating-point screen parameter.
+
+**param** is one of the :ref:`PIPE_CAP` names.
 
 is_format_supported
 ^^^^^^^^^^^^^^^^^^^

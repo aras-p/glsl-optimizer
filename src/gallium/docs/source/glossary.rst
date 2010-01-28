@@ -13,3 +13,7 @@ Glossary
       Transform, Clipping, & Lighting. The three stages of preparation in a
       rasterizing pipeline prior to the actual rasterization of vertices into
       fragments.
+
+   NPOT
+      Non-power-of-two. Usually applied to textures which have at least one
+      dimension which is not a power of two.
