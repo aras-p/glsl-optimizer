@@ -55,6 +55,9 @@ static uint32_t radeon_domain_from_usage(unsigned usage)
 {
     uint32_t domain = 0;
 
+    if (usage & PIPE_BUFFER_USAGE_GPU_WRITE) {
+        domain |= RADEON_GEM_DOMAIN_VRAM;
+    }
     if (usage & PIPE_BUFFER_USAGE_PIXEL) {
         domain |= RADEON_GEM_DOMAIN_VRAM;
     }
@@ -88,7 +91,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
 
-    if (usage == PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) {
+    if (usage & PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) {
         /* Don't bother allocating a BO, as it'll never get to the card. */
         desc.alignment = alignment;
         desc.usage = usage;
