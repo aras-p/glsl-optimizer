@@ -49,7 +49,7 @@ vbo_get_minmax_index(GLcontext *ctx,
 		     GLuint *min_index, GLuint *max_index)
 {
    GLuint i;
-   GLsizei count = prim->count;
+   GLuint count = prim->count;
    const void *indices;
 
    if (_mesa_is_bufferobj(ib->obj)) {
@@ -132,7 +132,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
       case GL_FLOAT:
          {
             GLfloat *f = (GLfloat *) ((GLubyte *) data + array->StrideB * j);
-            GLuint k;
+            GLint k;
             for (k = 0; k < array->Size; k++) {
                if (IS_INF_OR_NAN(f[k]) ||
                    f[k] >= 1.0e20 || f[k] <= -1.0e10) {
@@ -542,7 +542,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_BYTE:
       {
          const GLubyte *us = (const GLubyte *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
             _mesa_printf("%02x ", us[i]);
             if (i % 32 == 31)
@@ -554,7 +554,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_SHORT:
       {
          const GLushort *us = (const GLushort *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
             _mesa_printf("%04x ", us[i]);
             if (i % 16 == 15)
@@ -566,7 +566,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_INT:
       {
          const GLuint *us = (const GLuint *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
             _mesa_printf("%08x ", us[i]);
             if (i % 8 == 7)
