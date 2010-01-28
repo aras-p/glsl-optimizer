@@ -146,8 +146,8 @@ _swrast_alpha_test(const GLcontext *ctx, SWspan *span)
          ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
       }
       else {
-         const GLfloat alphaStep = FIXED_TO_FLOAT(span->alphaStep);
-         GLfloat alpha = FIXED_TO_FLOAT(span->alpha);
+         const GLfloat alphaStep = FixedToFloat(span->alphaStep);
+         GLfloat alpha = FixedToFloat(span->alpha);
          const GLfloat ref = ctx->Color.AlphaRef;
          ALPHA_TEST(alpha, alpha += alphaStep);
       }
