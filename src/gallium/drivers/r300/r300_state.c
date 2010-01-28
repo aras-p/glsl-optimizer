@@ -487,20 +487,30 @@ static void
     struct r300_context* r300 = r300_context(pipe);
     uint32_t zbuffer_bpp = 0;
 
+    r300->fb_state.size = (10 * state->nr_cbufs) +
+        (2 * (4 - state->nr_cbufs)) +
+        (state->zsbuf ? 10 : 0) + 6;
+
+    if (state->nr_cbufs > 4) {
+        debug_printf("r300: Implementation error: Too many MRTs in %s, "
+            "refusing to bind framebuffer state!\n", __FUNCTION__);
+        return;
+    }
+
     if (r300->draw) {
         draw_flush(r300->draw);
     }
 
-    r300->framebuffer_state = *state;
+    r300->fb_state.state = state;
 
     /* Don't rely on the order of states being set for the first time. */
-    r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
-
+    /* XXX wait what */
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
+    r300->fb_state.dirty = TRUE;
     r300->scissor_state.dirty = TRUE;
 
-    /* Polyfon offset depends on the zbuffer bit depth. */
+    /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
         switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
             case 2:

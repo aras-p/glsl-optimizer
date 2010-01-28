@@ -73,13 +73,15 @@ void r300_clear(struct pipe_context* pipe,
      */
 
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
 
     r300_blitter_save_states(r300);
 
     util_blitter_clear(r300->blitter,
-                       r300->framebuffer_state.width,
-                       r300->framebuffer_state.height,
-                       r300->framebuffer_state.nr_cbufs,
+                       fb->width,
+                       fb->height,
+                       fb->nr_cbufs,
                        buffers, rgba, depth, stencil);
 }
 
@@ -97,7 +99,7 @@ void r300_surface_copy(struct pipe_context* pipe,
      * is really transparent. The states will be restored by the blitter once
      * copying is done. */
     r300_blitter_save_states(r300);
-    util_blitter_save_framebuffer(r300->blitter, &r300->framebuffer_state);
+    util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
     util_blitter_save_fragment_sampler_states(
         r300->blitter, r300->sampler_count, (void**)r300->sampler_states);
@@ -121,7 +123,7 @@ void r300_surface_fill(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     r300_blitter_save_states(r300);
-    util_blitter_save_framebuffer(r300->blitter, &r300->framebuffer_state);
+    util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
     util_blitter_fill(r300->blitter,
                       dst, dstx, dsty, width, height, value);

@@ -118,6 +118,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(blend_color, 3);
     R300_INIT_ATOM(clip, 29);
     R300_INIT_ATOM(dsa, 8);
+    R300_INIT_ATOM(fb, 56);
     R300_INIT_ATOM(rs, 25);
     R300_INIT_ATOM(scissor, 3);
     R300_INIT_ATOM(viewport, 9);

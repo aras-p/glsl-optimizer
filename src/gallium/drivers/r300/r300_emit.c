@@ -38,12 +38,14 @@
 void r300_emit_blend_state(struct r300_context* r300, void* state)
 {
     struct r300_blend_state* blend = (struct r300_blend_state*)state;
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     BEGIN_CS(8);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
-    if (r300->framebuffer_state.nr_cbufs) {
+    if (fb->nr_cbufs) {
         OUT_CS(blend->blend_control);
         OUT_CS(blend->alpha_blend_control);
         OUT_CS(blend->color_channel_mask);
@@ -110,6 +112,8 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 {
     struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
@@ -122,7 +126,7 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
 
-    if (r300->framebuffer_state.zsbuf) {
+    if (fb->zsbuf) {
         OUT_CS(dsa->z_buffer_control);
         OUT_CS(dsa->z_stencil_control);
     } else {
@@ -382,16 +386,13 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_fb_state(struct r300_context* r300,
-                        struct pipe_framebuffer_state* fb)
+void r300_emit_fb_state(struct r300_context* r300, void* state)
 {
+    struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_texture* tex;
     struct pipe_surface* surf;
     int i;
     CS_LOCALS(r300);
-
-    /* Shouldn't fail unless there is a bug in the state tracker. */
-    assert(fb->nr_cbufs <= 4);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
              (fb->zsbuf ? 10 : 0) + 6);
@@ -671,11 +672,13 @@ void r300_emit_scissor_state(struct r300_context* r300, void* state)
     uint32_t top_left, bottom_right;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct pipe_scissor_state* scissor = (struct pipe_scissor_state*)state;
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     minx = miny = 0;
-    maxx = r300->framebuffer_state.width;
-    maxy = r300->framebuffer_state.height;
+    maxx = fb->width;
+    maxy = fb->height;
 
     if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
         minx = MAX2(minx, scissor->minx);
@@ -1009,6 +1012,8 @@ static void r300_flush_pvs(struct r300_context* r300)
 
 void r300_emit_buffer_validate(struct r300_context *r300)
 {
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_texture* tex;
     unsigned i;
     boolean invalid = FALSE;
@@ -1018,8 +1023,8 @@ void r300_emit_buffer_validate(struct r300_context *r300)
 
 validate:
     /* Color buffers... */
-    for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
-        tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
+    for (i = 0; i < fb->nr_cbufs; i++) {
+        tex = (struct r300_texture*)fb->cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1028,8 +1033,8 @@ validate:
         }
     }
     /* ...depth buffer... */
-    if (r300->framebuffer_state.zsbuf) {
-        tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
+    if (fb->zsbuf) {
+        tex = (struct r300_texture*)fb->zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1133,11 +1138,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
                                          &r300->fs->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
-    }
-
-    if (r300->dirty_state & R300_NEW_FRAMEBUFFERS) {
-        r300_emit_fb_state(r300, &r300->framebuffer_state);
-        r300->dirty_state &= ~R300_NEW_FRAMEBUFFERS;
     }
 
     /* Samplers and textures are tracked separately but emitted together. */
