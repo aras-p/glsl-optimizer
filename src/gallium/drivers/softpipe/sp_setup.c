@@ -38,7 +38,6 @@
 #include "sp_setup.h"
 #include "sp_state.h"
 #include "draw/draw_context.h"
-#include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
