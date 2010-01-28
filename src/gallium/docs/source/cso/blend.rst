@@ -6,6 +6,14 @@ Blend
 This state controls blending of the final fragments into the target rendering
 buffers.
 
+Blend Factors
+-------------
+
+The blend factors largely follow the same pattern as their counterparts
+in other modern and legacy drawing APIs.
+
+XXX blurb about dual-source blends
+
 Members
 -------
 
@@ -22,9 +30,9 @@ logicop_func
 dither
    Whether dithering is enabled.
 rt
-   Contains the per rendertarget blend state.
+   Contains the per-rendertarget blend state.
 
-per rendertarget members
+Per-rendertarget Members
 ------------------------
 
 blend_enable

@@ -23,7 +23,8 @@ The integer capabilities:
 * ``TWO_SIDED_STENCIL``: Whether the stencil test can also affect back-facing
   polygons.
 * ``GLSL``: Deprecated.
-* ``S3TC``: Deprecated.
+* ``DUAL_SOURCE_BLEND``: Whether dual-source blend factors are supported. See
+  :ref:`Blend` for more information.
 * ``ANISOTROPIC_FILTER``: Whether textures can be filtered anisotropically.
 * ``POINT_SPRITE``: Whether point sprites are available.
 * ``MAX_RENDER_TARGETS``: The maximum number of render targets that may be
