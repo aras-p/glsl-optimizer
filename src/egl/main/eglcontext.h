@@ -51,7 +51,7 @@ PUBLIC EGLBoolean
 _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
 
 
-PUBLIC EGLBoolean
+extern EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
 
 

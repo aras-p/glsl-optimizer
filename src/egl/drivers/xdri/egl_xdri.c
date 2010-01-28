@@ -475,17 +475,13 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
    struct xdri_egl_context *xdri_ctx = lookup_context(context);
    struct xdri_egl_surface *draw = lookup_surface(d);
    struct xdri_egl_surface *read = lookup_surface(r);
-   _EGLContext *old = _eglGetCurrentContext();
 
-   /* an unlinked context will be invalid after context switch */
-   if (!_eglIsContextLinked(old))
-      old = NULL;
-
-   if (!_eglMakeCurrent(drv, dpy, d, r, context))
+   /* bind the new context and return the "orphaned" one */
+   if (!_eglBindContext(&context, &d, &r))
       return EGL_FALSE;
 
    /* flush before context switch */
-   if (old && old != context && xdri_driver->FlushCurrentContext)
+   if (context && xdri_driver->FlushCurrentContext)
       xdri_driver->FlushCurrentContext();
 
    /* the symbol is defined in libGL.so */
@@ -498,10 +494,17 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
          return EGL_FALSE;
       }
    }
-   else if (old) {
-      xdri_ctx = lookup_context(old);
+   else if (context) {
+      xdri_ctx = lookup_context(context);
       xdri_ctx->driContext->unbindContext(xdri_ctx->driContext);
    }
+
+   if (context && !_eglIsContextLinked(context))
+      destroy_context(dpy, context);
+   if (d && !_eglIsSurfaceLinked(d))
+      destroy_surface(dpy, d);
+   if (r && r != d && !_eglIsSurfaceLinked(r))
+      destroy_surface(dpy, r);
 
    return EGL_TRUE;
 }

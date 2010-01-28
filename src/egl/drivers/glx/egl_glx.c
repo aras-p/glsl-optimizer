@@ -660,8 +660,10 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
    GLXDrawable ddraw, rdraw;
    GLXContext cctx;
+   EGLBoolean ret = EGL_FALSE;
 
-   if (!_eglMakeCurrent(drv, disp, dsurf, rsurf, ctx))
+   /* bind the new context and return the "orphaned" one */
+   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
       return EGL_FALSE;
 
    ddraw = (GLX_dsurf) ? GLX_dsurf->glx_drawable : None;
@@ -669,11 +671,21 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    cctx = (GLX_ctx) ? GLX_ctx->context : NULL;
 
    if (GLX_dpy->have_make_current_read)
-      return glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
+      ret = glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
    else if (ddraw == rdraw)
-      return glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
+      ret = glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
-   return EGL_FALSE;
+   if (ret) {
+      if (dsurf && !_eglIsSurfaceLinked(dsurf))
+         destroy_surface(disp, dsurf);
+      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(rsurf))
+         destroy_surface(disp, rsurf);
+   }
+   else {
+      _eglBindContext(&ctx, &dsurf, &rsurf);
+   }
+
+   return ret;
 }
 
 /** Get size of given window */

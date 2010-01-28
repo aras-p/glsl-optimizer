@@ -856,18 +856,14 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
                      _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx)
 {
    struct egl_g3d_context *gctx = egl_g3d_context(ctx);
+   struct egl_g3d_surface *gdraw = egl_g3d_surface(draw);
    struct egl_g3d_context *old_gctx;
-   EGLint api;
    EGLBoolean ok = EGL_TRUE;
 
-   /* find the old context */
-   api = (gctx) ? gctx->base.ClientAPI : eglQueryAPI();
-   old_gctx = egl_g3d_get_current_context(api);
-   if (old_gctx && !_eglIsContextLinked(&old_gctx->base))
-         old_gctx = NULL;
-
-   if (!_eglMakeCurrent(drv, dpy, draw, read, ctx))
+   /* bind the new context and return the "orphaned" one */
+   if (!_eglBindContext(&ctx, &draw, &read))
       return EGL_FALSE;
+   old_gctx = egl_g3d_context(ctx);
 
    if (old_gctx) {
       /* flush old context */
@@ -883,8 +879,6 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 
    if (gctx) {
-      struct egl_g3d_surface *gdraw = egl_g3d_surface(draw);
-
       ok = egl_g3d_realloc_context(dpy, &gctx->base);
       if (ok) {
          ok = gctx->stapi->st_make_current(gctx->st_ctx,
@@ -903,6 +897,13 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
       ok = old_gctx->stapi->st_make_current(NULL, NULL, NULL);
       old_gctx->base.WindowRenderBuffer = EGL_NONE;
    }
+
+   if (ctx && !_eglIsContextLinked(ctx))
+      destroy_context(dpy, ctx);
+   if (draw && !_eglIsSurfaceLinked(draw))
+      destroy_surface(dpy, draw);
+   if (read && read != draw && !_eglIsSurfaceLinked(read))
+      destroy_surface(dpy, read);
 
    return ok;
 }

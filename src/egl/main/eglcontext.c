@@ -310,32 +310,13 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
 
 
 /**
- * Drivers will typically call this to do the error checking and
- * update the various flags.
- * Then, the driver will do its device-dependent Make-Current stuff.
+ * Just a placeholder/demo function.  Drivers should override this.
  */
 EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw,
                 _EGLSurface *read, _EGLContext *ctx)
 {
-   if (!_eglBindContext(&ctx, &draw, &read))
-      return EGL_FALSE;
-
-   /* nothing we can do if the display is uninitialized */
-   if (dpy->Initialized) {
-      /* avoid double destroy */
-      if (read && read == draw)
-         read = NULL;
-
-      if (ctx && !_eglIsContextLinked(ctx))
-         drv->API.DestroyContext(drv, dpy, ctx);
-      if (draw && !_eglIsSurfaceLinked(draw))
-         drv->API.DestroySurface(drv, dpy, draw);
-      if (read && !_eglIsSurfaceLinked(read))
-         drv->API.DestroySurface(drv, dpy, read);
-   }
-
-   return EGL_TRUE;
+   return EGL_FALSE;
 }
 
 
