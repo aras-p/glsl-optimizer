@@ -12,8 +12,6 @@
 
 #include "pipe/p_screen.h"
 
-#include "util/u_format.h"
-
 /*XXX get these from pipe's texture limits */
 #define IMAGE_MAX_WIDTH		2048
 #define IMAGE_MAX_HEIGHT	2048

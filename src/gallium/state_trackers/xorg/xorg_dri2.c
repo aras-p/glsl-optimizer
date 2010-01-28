@@ -41,7 +41,6 @@
 #include "pipe/p_inlines.h"
 
 #include "util/u_format.h"
-#include "util/u_rect.h"
 
 /* Make all the #if cases in the code esier to read */
 #ifndef DRI2INFOREC_VERSION

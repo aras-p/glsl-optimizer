@@ -42,7 +42,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
-#include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_debug.h"
