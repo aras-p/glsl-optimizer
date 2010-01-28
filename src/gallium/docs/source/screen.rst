@@ -51,6 +51,11 @@ The integer capabilities:
 * ``MAX_PREDICATE_REGISTERS``: XXX
 * ``MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
   the vertex and fragment shader, inclusive.
+* ``MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound
+  to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
+  only permit binding one constant buffer per shader, and the shaders will
+  not permit two-dimensional access to constants.
+* ``MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant buffer.
 
 The floating-point capabilities:
 
@@ -60,6 +65,24 @@ The floating-point capabilities:
 * ``MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
 * ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
   ``GUARD_BAND_BOTTOM``: XXX
+
+XXX Is there a better home for this? vvv
+
+If 0 is returned, the driver is not aware of multiple constant buffers,
+supports binding of only one constant buffer, and does not support
+two-dimensional CONST register file access in TGSI shaders.
+
+If a value greater than 0 is returned, the driver can have multiple
+constant buffers bound to shader stages. The CONST register file can
+be accessed with two-dimensional indices, like in the example below.
+
+DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
+DCL CONST[3][0]          # declare first vector of constbuf 3
+MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
+
+For backwards compatibility, one-dimensional access to CONST register
+file is still supported. In that case, the constbuf index is assumed
+to be 0.
 
 .. _pipe_buffer_usage:
 
@@ -135,29 +158,7 @@ Returns the screen vendor.
 get_param
 ^^^^^^^^^
 
-Get an integer/boolean screen parameter. Valid parameter names include.
-
-* ``PIPE_CAP_MAX_CONST_BUFFERS``: Maximum number of constant buffers that
-  can be bound to any shader stage using ``set_constant_buffer``.
-  
-  If 0 is returned, the driver is not aware of multiple constant buffers,
-  supports binding of only one constant buffer, and does not support
-  two-dimensional CONST register file access in TGSI shaders.
-  
-  If a value greater than 0 is returned, the driver can have multiple
-  constant buffers bound to shader stages. The CONST register file can
-  be accessed with two-dimensional indices, like in the example below.
-  
-    DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
-    DCL CONST[3][0]          # declare first vector of constbuf 3
-    MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
-  
-  For backwards compatibility, one-dimensional access to CONST register
-  file is still supported. In that case, the constbuf index is assumed
-  to be 0.
-
-* ``PIPE_CAP_MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant
-  buffer.
+Get an integer/boolean screen parameter.
 
 **param** is one of the :ref:`PIPE_CAP` names.
 
