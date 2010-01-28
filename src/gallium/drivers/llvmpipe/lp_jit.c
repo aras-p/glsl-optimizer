@@ -37,6 +37,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_cpu_detect.h"
+#include "lp_debug.h"
 #include "lp_screen.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_misc.h"
@@ -165,20 +166,23 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 
    screen->pass = LLVMCreateFunctionPassManager(screen->provider);
    LLVMAddTargetData(screen->target, screen->pass);
-   /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
-    * but there are more on SVN. */
-   /* TODO: Add more passes */
-   LLVMAddConstantPropagationPass(screen->pass);
-   if(util_cpu_caps.has_sse4_1) {
-      /* FIXME: There is a bug in this pass, whereby the combination of fptosi
-       * and sitofp (necessary for trunc/floor/ceil/round implementation)
-       * somehow becomes invalid code.
-       */
-      LLVMAddInstructionCombiningPass(screen->pass);
+
+   if ((LP_DEBUG & DEBUG_NO_LLVM_OPT) == 0) {
+      /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
+       * but there are more on SVN. */
+      /* TODO: Add more passes */
+      LLVMAddConstantPropagationPass(screen->pass);
+      if(util_cpu_caps.has_sse4_1) {
+         /* FIXME: There is a bug in this pass, whereby the combination of fptosi
+          * and sitofp (necessary for trunc/floor/ceil/round implementation)
+          * somehow becomes invalid code.
+          */
+         LLVMAddInstructionCombiningPass(screen->pass);
+      }
+      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
+      LLVMAddGVNPass(screen->pass);
+      LLVMAddCFGSimplificationPass(screen->pass);
    }
-   LLVMAddPromoteMemoryToRegisterPass(screen->pass);
-   LLVMAddGVNPass(screen->pass);
-   LLVMAddCFGSimplificationPass(screen->pass);
 
    lp_jit_init_globals(screen);
 }
