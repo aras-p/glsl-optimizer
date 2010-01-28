@@ -116,3 +116,38 @@ texture_destroy
 
 Destroy a texture. The buffer backing the texture is destroyed if it has no
 more references.
+
+buffer_map
+^^^^^^^^^^
+
+Map a buffer into memory.
+
+**usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
+
+Returns a pointer to the map, or NULL if the mapping failed.
+
+buffer_map_range
+^^^^^^^^^^^^^^^^
+
+Map a range of a buffer into memory.
+
+The returned map is always relative to the beginning of the buffer, not the
+beginning of the mapped range.
+
+.. _buffer_flush_mapped_range:
+
+buffer_flush_mapped_range
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Flush a range of mapped memory into a buffer.
+
+The buffer must have been mapped with ``PIPE_BUFFER_USAGE_FLUSH_EXPLICIT``.
+
+**usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
+
+buffer_unmap
+^^^^^^^^^^^^
+
+Unmap a buffer from memory.
+
+Any pointers into the map should be considered invalid and discarded.
