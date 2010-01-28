@@ -118,14 +118,14 @@ static void *brw_create_blend_state( struct pipe_context *pipe,
       blend->cc2.logicop_enable = 1;
       blend->cc5.logicop_func = translate_logicop(templ->logicop_func);
    } 
-   else if (templ->blend_enable) {
-      blend->cc6.dest_blend_factor = translate_blend_factor(templ->rgb_dst_factor);
-      blend->cc6.src_blend_factor = translate_blend_factor(templ->rgb_src_factor);
-      blend->cc6.blend_function = translate_blend_equation(templ->rgb_func);
+   else if (templ->rt[0].blend_enable) {
+      blend->cc6.dest_blend_factor = translate_blend_factor(templ->rt[0].rgb_dst_factor);
+      blend->cc6.src_blend_factor = translate_blend_factor(templ->rt[0].rgb_src_factor);
+      blend->cc6.blend_function = translate_blend_equation(templ->rt[0].rgb_func);
 
-      blend->cc5.ia_dest_blend_factor = translate_blend_factor(templ->alpha_dst_factor);
-      blend->cc5.ia_src_blend_factor = translate_blend_factor(templ->alpha_src_factor);
-      blend->cc5.ia_blend_function = translate_blend_equation(templ->alpha_func);
+      blend->cc5.ia_dest_blend_factor = translate_blend_factor(templ->rt[0].alpha_dst_factor);
+      blend->cc5.ia_src_blend_factor = translate_blend_factor(templ->rt[0].alpha_src_factor);
+      blend->cc5.ia_blend_function = translate_blend_equation(templ->rt[0].alpha_func);
 
       blend->cc3.blend_enable = 1;
       blend->cc3.ia_blend_enable = 
@@ -146,10 +146,10 @@ static void *brw_create_blend_state( struct pipe_context *pipe,
 
    /* Per-surface color mask -- just follow global state:
     */
-   blend->ss0.writedisable_red   = (templ->colormask & PIPE_MASK_R) ? 0 : 1;
-   blend->ss0.writedisable_green = (templ->colormask & PIPE_MASK_G) ? 0 : 1;
-   blend->ss0.writedisable_blue  = (templ->colormask & PIPE_MASK_B) ? 0 : 1;
-   blend->ss0.writedisable_alpha = (templ->colormask & PIPE_MASK_A) ? 0 : 1;
+   blend->ss0.writedisable_red   = (templ->rt[0].colormask & PIPE_MASK_R) ? 0 : 1;
+   blend->ss0.writedisable_green = (templ->rt[0].colormask & PIPE_MASK_G) ? 0 : 1;
+   blend->ss0.writedisable_blue  = (templ->rt[0].colormask & PIPE_MASK_B) ? 0 : 1;
+   blend->ss0.writedisable_alpha = (templ->rt[0].colormask & PIPE_MASK_A) ? 0 : 1;
 
    return (void *)blend;
 }

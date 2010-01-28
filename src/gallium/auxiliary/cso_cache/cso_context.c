@@ -310,18 +310,21 @@ void cso_destroy_context( struct cso_context *ctx )
 enum pipe_error cso_set_blend(struct cso_context *ctx,
                               const struct pipe_blend_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_blend_state));
-   struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, CSO_BLEND,
-                                                       (void*)templ);
+   unsigned key_size, hash_key;
+   struct cso_hash_iter iter;
    void *handle;
+
+   key_size = templ->independent_blend_enable ? sizeof(struct pipe_blend_state) :
+              (char *)&(templ->rt[1]) - (char *)templ;
+   hash_key = cso_construct_key((void*)templ, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_BLEND, (void*)templ);
 
    if (cso_hash_iter_is_null(iter)) {
       struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      memcpy(&cso->state, templ, sizeof(*templ));
+      memcpy(&cso->state, templ, key_size);
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_blend_state;
       cso->context = ctx->pipe;

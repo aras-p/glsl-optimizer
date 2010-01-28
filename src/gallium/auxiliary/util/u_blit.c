@@ -92,7 +92,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.colormask = PIPE_MASK_RGBA;
+   ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
    memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));

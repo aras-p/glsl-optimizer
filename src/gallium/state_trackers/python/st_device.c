@@ -180,11 +180,11 @@ st_context_create(struct st_device *st_dev)
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.colormask = PIPE_MASK_RGBA;
+      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].colormask = PIPE_MASK_RGBA;
       cso_set_blend(st_ctx->cso, &blend);
    }
 

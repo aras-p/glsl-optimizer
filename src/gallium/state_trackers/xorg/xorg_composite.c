@@ -217,13 +217,13 @@ bind_blend_state(struct exa_context *exa, int op,
    blend_for_op(&blend_opt, op, pSrcPicture, pMaskPicture, pDstPicture);
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
-   blend.blend_enable = 1;
-   blend.colormask |= PIPE_MASK_RGBA;
+   blend.rt[0].blend_enable = 1;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
 
-   blend.rgb_src_factor   = blend_opt.rgb_src;
-   blend.alpha_src_factor = blend_opt.rgb_src;
-   blend.rgb_dst_factor   = blend_opt.rgb_dst;
-   blend.alpha_dst_factor = blend_opt.rgb_dst;
+   blend.rt[0].rgb_src_factor   = blend_opt.rgb_src;
+   blend.rt[0].alpha_src_factor = blend_opt.rgb_src;
+   blend.rt[0].rgb_dst_factor   = blend_opt.rgb_dst;
+   blend.rt[0].alpha_dst_factor = blend_opt.rgb_dst;
 
    cso_set_blend(exa->renderer->cso, &blend);
 }

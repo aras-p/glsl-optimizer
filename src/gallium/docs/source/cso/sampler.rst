@@ -12,8 +12,6 @@ with the traditional (S, T, R, Q) notation.
 Members
 -------
 
-XXX undocumented compare_mode, compare_func
-
 wrap_s
     How to wrap the S coordinate. One of PIPE_TEX_WRAP.
 wrap_t
@@ -27,12 +25,18 @@ min_mip_filter
     PIPE_TEX_FILTER.
 mag_img_filter
     The filter to use when magnifying texels. One of PIPE_TEX_FILTER.
+compare_mode
+    If set to PIPE_TEX_COMPARE_R_TO_TEXTURE, texture output is computed
+    according to compare_func, using r coord and the texture value as operands.
+    If set to PIPE_TEX_COMPARE_NONE, no comparison calculation is performed.
+compare_func
+    How the comparison is computed. One of PIPE_FUNC.
 normalized_coords
     Whether the texture coordinates are normalized. If normalized, they will
     always be in [0, 1]. If not, they will be in the range of each dimension
     of the loaded texture.
 prefilter
-    XXX From the Doxy, "weird sampling state exposed by some APIs." Refine.
+    Cylindrical texcoord wrap enable per coord. Not exposed by most APIs.
 lod_bias
     The bias to apply to the level of detail.
 min_lod

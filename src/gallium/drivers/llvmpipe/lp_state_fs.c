@@ -352,7 +352,7 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_blend_soa(builder, blend, type, src, dst, con, res);
 
    for(chan = 0; chan < 4; ++chan) {
-      if(blend->colormask & (1 << chan)) {
+      if(blend->rt[0].colormask & (1 << chan)) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
          lp_build_name(res[chan], "res.%c", "rgba"[chan]);
          res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
@@ -421,15 +421,15 @@ generate_fragment(struct llvmpipe_context *lp,
       if(key->blend.logicop_enable) {
          debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
       }
-      else if(key->blend.blend_enable) {
-         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rgb_func, TRUE));
-         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_src_factor, TRUE));
-         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rgb_dst_factor, TRUE));
-         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.alpha_func, TRUE));
-         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_src_factor, TRUE));
-         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.alpha_dst_factor, TRUE));
+      else if(key->blend.rt[0].blend_enable) {
+         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rt[0].rgb_func, TRUE));
+         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rt[0].rgb_src_factor, TRUE));
+         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rt[0].rgb_dst_factor, TRUE));
+         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.rt[0].alpha_func, TRUE));
+         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.rt[0].alpha_src_factor, TRUE));
+         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
       }
-      debug_printf("blend.colormask = 0x%x\n", key->blend.colormask);
+      debug_printf("blend.colormask = 0x%x\n", key->blend.rt[0].colormask);
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
          if(key->sampler[i].format) {
             debug_printf("sampler[%u] = \n", i);
@@ -780,7 +780,7 @@ make_variant_key(struct llvmpipe_context *lp,
       for(chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
          if(swizzle > 4)
-            key->blend.colormask &= ~(1 << chan);
+            key->blend.rt[0].colormask &= ~(1 << chan);
       }
    }
 

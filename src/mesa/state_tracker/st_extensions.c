@@ -314,4 +314,14 @@ void st_init_extensions(struct st_context *st)
    if (st->pipe->render_condition) {
       ctx->Extensions.NV_conditional_render = GL_TRUE;
    }
+
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_ENABLE)) {
+      ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
+   }
+
+#if 0 /* not yet */
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
+      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
+   }
+#endif
 }

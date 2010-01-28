@@ -163,15 +163,15 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 {
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
 
-    if (state->blend_enable)
+    if (state->rt[0].blend_enable)
     {
-        unsigned eqRGB = state->rgb_func;
-        unsigned srcRGB = state->rgb_src_factor;
-        unsigned dstRGB = state->rgb_dst_factor;
+        unsigned eqRGB = state->rt[0].rgb_func;
+        unsigned srcRGB = state->rt[0].rgb_src_factor;
+        unsigned dstRGB = state->rt[0].rgb_dst_factor;
 
-        unsigned eqA = state->alpha_func;
-        unsigned srcA = state->alpha_src_factor;
-        unsigned dstA = state->alpha_dst_factor;
+        unsigned eqA = state->rt[0].alpha_func;
+        unsigned srcA = state->rt[0].alpha_src_factor;
+        unsigned dstA = state->rt[0].alpha_dst_factor;
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
@@ -289,16 +289,16 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     }
 
     /* Color Channel Mask */
-    if (state->colormask & PIPE_MASK_R) {
+    if (state->rt[0].colormask & PIPE_MASK_R) {
         blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_RED_MASK0;
     }
-    if (state->colormask & PIPE_MASK_G) {
+    if (state->rt[0].colormask & PIPE_MASK_G) {
         blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0;
     }
-    if (state->colormask & PIPE_MASK_B) {
+    if (state->rt[0].colormask & PIPE_MASK_B) {
         blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0;
     }
-    if (state->colormask & PIPE_MASK_A) {
+    if (state->rt[0].colormask & PIPE_MASK_A) {
         blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0;
     }
 

@@ -400,14 +400,14 @@ bind_blend_state(struct xorg_xv_port_priv *port)
    struct pipe_blend_state blend;
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
-   blend.blend_enable = 1;
-   blend.colormask |= PIPE_MASK_RGBA;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* porter&duff src */
-   blend.rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
 
    cso_set_blend(port->r->cso, &blend);
 }

@@ -45,6 +45,10 @@ nv04_screen_get_param(struct pipe_screen *screen, int param)
 	case NOUVEAU_CAP_HW_VTXBUF:
 	case NOUVEAU_CAP_HW_IDXBUF:
 		return 0;
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+		return 0;
+	case PIPE_CAP_INDEP_BLEND_FUNC:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;

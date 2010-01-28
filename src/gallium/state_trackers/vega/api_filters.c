@@ -127,19 +127,19 @@ static void setup_blend()
    struct vg_context *ctx = vg_current_context();
    struct pipe_blend_state blend;
    memset(&blend, 0, sizeof(blend));
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    if (ctx->state.vg.filter_channel_mask & VG_RED)
-      blend.colormask |= PIPE_MASK_R;
+      blend.rt[0].colormask |= PIPE_MASK_R;
    if (ctx->state.vg.filter_channel_mask & VG_GREEN)
-      blend.colormask |= PIPE_MASK_G;
+      blend.rt[0].colormask |= PIPE_MASK_G;
    if (ctx->state.vg.filter_channel_mask & VG_BLUE)
-      blend.colormask |= PIPE_MASK_B;
+      blend.rt[0].colormask |= PIPE_MASK_B;
    if (ctx->state.vg.filter_channel_mask & VG_ALPHA)
-      blend.colormask |= PIPE_MASK_A;
-   blend.blend_enable = 1;
+      blend.rt[0].colormask |= PIPE_MASK_A;
+   blend.rt[0].blend_enable = 0;
    cso_set_blend(ctx->cso_context, &blend);
 }
 

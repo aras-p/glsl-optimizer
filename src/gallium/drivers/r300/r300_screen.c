@@ -149,6 +149,9 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
+        case PIPE_CAP_INDEP_BLEND_ENABLE:
+        case PIPE_CAP_INDEP_BLEND_FUNC:
+            return 0;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);

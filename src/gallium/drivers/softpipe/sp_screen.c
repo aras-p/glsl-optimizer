@@ -95,6 +95,10 @@ softpipe_get_param(struct pipe_screen *screen, int param)
       return PIPE_MAX_CONSTANT_BUFFERS;
    case PIPE_CAP_MAX_CONST_BUFFER_SIZE:
       return 4096 * 4 * sizeof(float);
+   case PIPE_CAP_INDEP_BLEND_ENABLE:
+      return 1;
+   case PIPE_CAP_INDEP_BLEND_FUNC:
+      return 1;
    default:
       return 0;
    }

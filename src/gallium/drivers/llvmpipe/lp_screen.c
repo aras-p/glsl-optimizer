@@ -110,6 +110,10 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
       return 1;
+   case PIPE_CAP_INDEP_BLEND_ENABLE:
+      return 0;
+   case PIPE_CAP_INDEP_BLEND_FUNC:
+      return 0;
    default:
       return 0;
    }

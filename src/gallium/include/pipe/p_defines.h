@@ -377,7 +377,7 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_NPOT_TEXTURES           2
 #define PIPE_CAP_TWO_SIDED_STENCIL       3
 #define PIPE_CAP_GLSL                    4  /* XXX need something better */
-#define PIPE_CAP_S3TC                    5  /* XXX: deprecated; cap determined via supported sampler formats */
+#define PIPE_CAP_DUAL_SOURCE_BLEND       5  
 #define PIPE_CAP_ANISOTROPIC_FILTER      6
 #define PIPE_CAP_POINT_SPRITE            7
 #define PIPE_CAP_MAX_RENDER_TARGETS      8
@@ -407,6 +407,8 @@ enum pipe_transfer_usage {
                                                  and fragment shaders combined */
 #define PIPE_CAP_MAX_CONST_BUFFERS       32
 #define PIPE_CAP_MAX_CONST_BUFFER_SIZE   33  /*< In bytes */
+#define PIPE_CAP_INDEP_BLEND_ENABLE      34  /*< blend enables and write masks per rendertarget */
+#define PIPE_CAP_INDEP_BLEND_FUNC        35  /*< different blend funcs per rendertarget */
 
 
 /**
