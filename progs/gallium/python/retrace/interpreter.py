@@ -572,7 +572,7 @@ class Context(Object):
 
         sys.stdout.write('\t{\n')
         for i in range(start, start + count):
-            if i >= start + 16:
+            if i >= start + 16 and not self.interpreter.verbosity(3):
                 sys.stdout.write('\t...\n')
                 break
             offset = i*isize
