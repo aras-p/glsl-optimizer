@@ -291,7 +291,8 @@ _mesa_ActiveTextureARB(GLenum texture)
                   _mesa_lookup_enum_by_nr(texture));
 
    if (texUnit >= ctx->Const.MaxTextureImageUnits) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture=%s)",
+                  _mesa_lookup_enum_by_nr(texture));
       return;
    }
 
