@@ -22,9 +22,6 @@
 
 #include "draw/draw_context.h"
 
-#include "tgsi/tgsi_scan.h"
-
-#include "util/u_hash_table.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
@@ -35,7 +32,6 @@
 #include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
-#include "r300_state_derived.h"
 #include "r300_state_invariant.h"
 #include "r300_texture.h"
 #include "r300_winsys.h"

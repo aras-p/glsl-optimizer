@@ -23,8 +23,6 @@
 #include "r300_blit.h"
 #include "r300_context.h"
 
-#include "util/u_rect.h"
-
 static void r300_blitter_save_states(struct r300_context* r300)
 {
     util_blitter_save_blend(r300->blitter, r300->blend_state.state);

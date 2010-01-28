@@ -22,8 +22,6 @@
 
 #include "r300_context.h"
 
-#include <ctype.h>
-
 
 struct debug_option {
     const char * name;

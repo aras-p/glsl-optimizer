@@ -30,7 +30,6 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "pipe/p_config.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 #include "r300_context.h"
 #include "r300_reg.h"
