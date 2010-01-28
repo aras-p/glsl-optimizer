@@ -3224,8 +3224,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
    }
 
    if (((width == 1 || width == 2) &&
-        (GLuint) width != texImage->Width) ||
-       (width > texImage->Width)) {
+        width != (GLsizei) texImage->Width) ||
+       (width > (GLsizei) texImage->Width)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCompressedTexSubImage%uD(width=%d)", dims, width);
       return GL_TRUE;
@@ -3233,8 +3233,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
 
    if (dims >= 2) {
       if (((height == 1 || height == 2) &&
-           (GLuint) height != texImage->Height) ||
-          (height > texImage->Height)) {
+           height != (GLsizei) texImage->Height) ||
+          (height > (GLsizei) texImage->Height)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCompressedTexSubImage%uD(height=%d)", dims, height);
          return GL_TRUE;
@@ -3243,8 +3243,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
 
    if (dims >= 3) {
       if (((depth == 1 || depth == 2) &&
-           (GLuint) depth != texImage->Depth) ||
-          (depth > texImage->Depth)) {
+           depth != (GLsizei) texImage->Depth) ||
+          (depth > (GLsizei) texImage->Depth)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCompressedTexSubImage%uD(depth=%d)", dims, depth);
          return GL_TRUE;

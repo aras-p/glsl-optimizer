@@ -954,7 +954,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       /* NumSamples == 0 indicates non-multisampling */
       samples = 0;
    }
-   else if (samples > ctx->Const.MaxSamples) {
+   else if (samples > (GLsizei) ctx->Const.MaxSamples) {
       /* note: driver may choose to use more samples than what's requested */
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(samples)", func);
       return;
