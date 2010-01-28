@@ -40,7 +40,6 @@
 #include <string.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
 
 static unsigned data[16];
 
