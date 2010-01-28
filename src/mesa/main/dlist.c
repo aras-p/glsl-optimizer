@@ -3729,7 +3729,7 @@ save_TexEnvi(GLenum target, GLenum pname, GLint param)
 {
    GLfloat p[4];
    p[0] = (GLfloat) param;
-   p[1] = p[2] = p[3] = 0.0;
+   p[1] = p[2] = p[3] = 0.0F;
    save_TexEnvfv(target, pname, p);
 }
 
@@ -3863,7 +3863,7 @@ save_TexParameteri(GLenum target, GLenum pname, GLint param)
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) param;
-   fparam[1] = fparam[2] = fparam[3] = 0.0;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
    save_TexParameterfv(target, pname, fparam);
 }
 
@@ -3873,7 +3873,7 @@ save_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) params[0];
-   fparam[1] = fparam[2] = fparam[3] = 0.0;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
    save_TexParameterfv(target, pname, fparam);
 }
 
