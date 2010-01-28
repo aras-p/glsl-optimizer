@@ -17,7 +17,7 @@ uniform float BumpDensity;     // = 16.0
 uniform float BumpSize;        // = 0.15
 uniform float SpecularFactor;  // = 0.5
 
-sampler2D Tex;
+uniform sampler2D Tex;
 
 void main()
 {
