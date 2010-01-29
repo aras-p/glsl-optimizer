@@ -110,7 +110,6 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_vs_prog,
    &brw_gs_prog,
 #if 0
-   &brw_sf_prog,
    &brw_wm_prog,
 
    /* Once all the programs are done, we know how large urb entry
@@ -118,8 +117,6 @@ const struct brw_tracked_state *gen6_atoms[] =
     * layout.
     */
    &brw_curbe_offsets,
-
-
 #endif
    &gen6_clip_vp,
    &gen6_sf_vp,
@@ -144,11 +141,11 @@ const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_wm_unit,
 #endif
+   &gen6_sf_state,
+
    &gen6_scissor_state,
 
 #if 0
-   &brw_sf_unit,
-
    /* Command packets:
     */
    &brw_invarient_state,

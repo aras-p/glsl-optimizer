@@ -885,6 +885,76 @@
 # define GEN6_CLIP_MIN_POINT_WIDTH_SHIFT		17
 # define GEN6_CLIP_MAX_POINT_WIDTH_SHIFT		6
 
+#define CMD_3D_SF_STATE				0x7813 /* GEN6+ */
+/* DW1 */
+# define GEN6_SF_NUM_OUTPUTS_SHIFT			22
+# define GEN6_SF_SWIZZLE_ENABLE				(1 << 21)
+# define GEN6_SF_POINT_SPRITE_LOWERLEFT			(1 << 20)
+# define GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT		11
+# define GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT		4
+/* DW2 */
+# define GEN6_SF_LEGACY_GLOBAL_DEPTH_BIAS		(1 << 11)
+# define GEN6_SF_STATISTICS_ENABLE			(1 << 10)
+# define GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID		(1 << 9)
+# define GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME		(1 << 8)
+# define GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT		(1 << 7)
+# define GEN6_SF_FRONT_SOLID				(0 << 5)
+# define GEN6_SF_FRONT_WIREFRAME			(1 << 5)
+# define GEN6_SF_FRONT_POINT				(2 << 5)
+# define GEN6_SF_BACK_SOLID				(0 << 3)
+# define GEN6_SF_BACK_WIREFRAME				(1 << 3)
+# define GEN6_SF_BACK_POINT				(2 << 3)
+# define GEN6_SF_VIEWPORT_TRANSFORM_ENABLE		(1 << 1)
+# define GEN6_SF_WINDING_CCW				(1 << 0)
+/* DW3 */
+# define GEN6_SF_LINE_AA_ENABLE				(1 << 31)
+# define GEN6_SF_CULL_BOTH				(0 << 29)
+# define GEN6_SF_CULL_NONE				(1 << 29)
+# define GEN6_SF_CULL_FRONT				(2 << 29)
+# define GEN6_SF_CULL_BACK				(3 << 29)
+# define GEN6_SF_LINE_WIDTH_SHIFT			18 /* U3.7 */
+# define GEN6_SF_LINE_END_CAP_WIDTH_0_5			(0 << 16)
+# define GEN6_SF_LINE_END_CAP_WIDTH_1_0			(1 << 16)
+# define GEN6_SF_LINE_END_CAP_WIDTH_2_0			(2 << 16)
+# define GEN6_SF_LINE_END_CAP_WIDTH_4_0			(3 << 16)
+# define GEN6_SF_SCISSOR_ENABLE				(1 << 11)
+# define GEN6_SF_MSRAST_OFF_PIXEL			(0 << 8)
+# define GEN6_SF_MSRAST_OFF_PATTERN			(1 << 8)
+# define GEN6_SF_MSRAST_ON_PIXEL			(2 << 8)
+# define GEN6_SF_MSRAST_ON_PATTERN			(3 << 8)
+/* DW4 */
+# define GEN6_SF_TRI_PROVOKE_SHIFT			29
+# define GEN6_SF_LINE_PROVOKE_SHIFT			27
+# define GEN6_SF_TRIFAN_PROVOKE_SHIFT			25
+# define GEN6_SF_LINE_AA_MODE_MANHATTAN			(0 << 14)
+# define GEN6_SF_LINE_AA_MODE_TRUE			(1 << 14)
+# define GEN6_SF_VERTEX_SUBPIXEL_8BITS			(0 << 12)
+# define GEN6_SF_VERTEX_SUBPIXEL_4BITS			(1 << 12)
+# define GEN6_SF_USE_STATE_POINT_WIDTH			(1 << 11)
+# define GEN6_SF_POINT_WIDTH_SHIFT			0 /* U8.3 */
+/* DW5: depth offset constant */
+/* DW6: depth offset scale */
+/* DW7: depth offset clamp */
+/* DW8 */
+# define ATTRIBUTE_1_OVERRIDE_W				(1 << 31)
+# define ATTRIBUTE_1_OVERRIDE_Z				(1 << 30)
+# define ATTRIBUTE_1_OVERRIDE_Y				(1 << 29)
+# define ATTRIBUTE_1_OVERRIDE_X				(1 << 28)
+# define ATTRIBUTE_1_CONST_SOURCE_SHIFT			25
+# define ATTRIBUTE_1_SWIZZLE_SHIFT			22
+# define ATTRIBUTE_1_SOURCE_SHIFT			16
+# define ATTRIBUTE_0_OVERRIDE_W				(1 << 15)
+# define ATTRIBUTE_0_OVERRIDE_Z				(1 << 14)
+# define ATTRIBUTE_0_OVERRIDE_Y				(1 << 13)
+# define ATTRIBUTE_0_OVERRIDE_X				(1 << 12)
+# define ATTRIBUTE_0_CONST_SOURCE_SHIFT			9
+# define ATTRIBUTE_0_SWIZZLE_SHIFT			6
+# define ATTRIBUTE_0_SOURCE_SHIFT			0
+/* DW16: Point sprite texture coordinate enables */
+/* DW17: Constant interpolation enables */
+/* DW18: attr 0-7 wrap shortest enables */
+/* DW19: attr 8-16 wrap shortest enables */
+
 #define CMD_3D_CONSTANT_VS_STATE	      0x7815 /* GEN6+ */
 #define CMD_3D_CONSTANT_GS_STATE	      0x7816 /* GEN6+ */
 # define GEN6_CONSTANT_BUFFER_3_ENABLE			(1 << 15)
