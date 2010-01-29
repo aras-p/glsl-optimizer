@@ -31,8 +31,6 @@
 #include "gluos.h"
 #include "gluint.h"
 #include <GL/glu.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 
 struct token_string

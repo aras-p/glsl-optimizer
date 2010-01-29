@@ -40,7 +40,6 @@
 #include "glimports.h"
 #include "mystdio.h"
 #include "renderhints.h"
-#include "defines.h"
 #include "nurbsconsts.h"
 
 

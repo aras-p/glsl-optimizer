@@ -44,9 +44,7 @@
 #include "backend.h"
 #include "mapdesc.h"
 #include "flist.h"
-#include "knotvector.h"
 #include "patchlist.h"
-#include "math.h"     //fglu_abs()
 #include "simplemath.h" //min()
 
 /* local preprocessor definitions */

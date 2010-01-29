@@ -43,7 +43,6 @@
 #include "quilt.h"
 #include "curvelist.h"
 #include "curve.h"
-#include "nurbsconsts.h"
 #include "types.h"
 
 Curvelist::Curvelist( Quilt *quilts, REAL pta, REAL ptb )
