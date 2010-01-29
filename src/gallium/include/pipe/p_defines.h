@@ -409,6 +409,10 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_CONST_BUFFER_SIZE   33  /*< In bytes */
 #define PIPE_CAP_INDEP_BLEND_ENABLE      34  /*< blend enables and write masks per rendertarget */
 #define PIPE_CAP_INDEP_BLEND_FUNC        35  /*< different blend funcs per rendertarget */
+#define PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT 36
+#define PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT 37
+#define PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 38
+#define PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER 39
 
 
 /**

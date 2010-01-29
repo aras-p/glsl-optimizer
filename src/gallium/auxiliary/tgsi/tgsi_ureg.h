@@ -136,6 +136,13 @@ void
 ureg_property_gs_max_vertices(struct ureg_program *ureg,
                               unsigned max_vertices);
 
+void
+ureg_property_fs_coord_origin(struct ureg_program *ureg,
+                            unsigned fs_coord_origin);
+
+void
+ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
+                            unsigned fs_coord_pixel_center);
 
 /***********************************************************************
  * Build shader declarations:

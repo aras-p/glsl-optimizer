@@ -170,7 +170,9 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
 #define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
 #define TGSI_PROPERTY_GS_MAX_VERTICES        2
-#define TGSI_PROPERTY_COUNT                  3
+#define TGSI_PROPERTY_FS_COORD_ORIGIN        3
+#define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
+#define TGSI_PROPERTY_COUNT                  5
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
@@ -178,6 +180,12 @@ struct tgsi_property {
    unsigned PropertyName : 8;  /**< one of TGSI_PROPERTY */
    unsigned Padding      : 12;
 };
+
+#define TGSI_FS_COORD_ORIGIN_UPPER_LEFT 0
+#define TGSI_FS_COORD_ORIGIN_LOWER_LEFT 1
+
+#define TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 0
+#define TGSI_FS_COORD_PIXEL_CENTER_INTEGER 1
 
 struct tgsi_property_data {
    unsigned Data;

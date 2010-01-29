@@ -57,6 +57,14 @@ The integer capabilities:
   only permit binding one constant buffer per shader, and the shaders will
   not permit two-dimensional access to constants.
 * ``MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant buffer.
+* ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT``: Whether the TGSI property
+  FS_COORD_ORIGIN with value UPPER_LEFT is supported
+* ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT``: Whether the TGSI property
+  FS_COORD_ORIGIN with value LOWER_LEFT is supported
+* ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER``: Whether the TGSI
+  property FS_COORD_PIXEL_CENTER with value HALF_INTEGER is supported
+* ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER``: Whether the TGSI
+  property FS_COORD_PIXEL_CENTER with value INTEGER is supported
 
 The floating-point capabilities:
 
