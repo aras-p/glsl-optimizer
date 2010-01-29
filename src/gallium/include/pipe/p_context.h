@@ -122,6 +122,11 @@ struct pipe_context {
    void (*begin_query)(struct pipe_context *pipe, struct pipe_query *q);
    void (*end_query)(struct pipe_context *pipe, struct pipe_query *q);
 
+   /**
+    * Get results of a query.
+    * \param wait  if true, this query will block until the result is ready
+    * \return TRUE if results are ready, FALSE otherwise
+    */
    boolean (*get_query_result)(struct pipe_context *pipe, 
                                struct pipe_query *q,
                                boolean wait,

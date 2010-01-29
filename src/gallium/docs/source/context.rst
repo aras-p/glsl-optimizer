@@ -148,9 +148,15 @@ draws.  Queries may be nested, though no state tracker currently
 exercises this.  
 
 Queries can be created with ``create_query`` and deleted with
-``destroy_query``. To enable a query, use ``begin_query``, and when finished,
-use ``end_query`` to stop the query. Finally, ``get_query_result`` is used
-to retrieve the results.
+``destroy_query``. To start a query, use ``begin_query``, and when finished,
+use ``end_query`` to end the query.
+
+``get_query_result`` is used to retrieve the results of a query.  If
+the ``wait`` parameter is TRUE, then the ``get_query_result`` call
+will block until the results of the query are ready (and TRUE will be
+returned).  Otherwise, if the ``wait`` parameter is FALSE, the call
+will not block and the return value will be TRUE if the query has
+completed or FALSE otherwise.
 
 A common type of query is the occlusion query which counts the number of
 fragments/pixels which are written to the framebuffer (and not culled by
