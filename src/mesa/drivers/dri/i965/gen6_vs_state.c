@@ -59,6 +59,8 @@ upload_vs_state(struct brw_context *brw)
 	     GEN6_VS_STATISTICS_ENABLE);
    ADVANCE_BATCH();
 
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
    if (vp->use_const_buffer || nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
@@ -102,6 +104,8 @@ upload_vs_state(struct brw_context *brw)
 
       drm_intel_bo_unreference(constant_bo);
    }
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_vs_state = {

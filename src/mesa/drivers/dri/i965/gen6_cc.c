@@ -273,6 +273,8 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_RELOC(brw->cc.blend_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 

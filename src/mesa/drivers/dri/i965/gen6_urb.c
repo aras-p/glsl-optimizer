@@ -68,6 +68,8 @@ upload_urb(struct brw_context *brw)
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
 	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_SIZE_SHIFT));
    ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_urb = {

@@ -74,6 +74,8 @@ upload_gs_state(struct brw_context *brw)
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_gs_state = {
