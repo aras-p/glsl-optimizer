@@ -110,7 +110,6 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog,
-   &brw_clip_prog,
    &brw_sf_prog,
    &brw_wm_prog,
 
@@ -135,13 +134,13 @@ const struct brw_tracked_state *gen6_atoms[] =
 
    &gen6_vs_state,
    &gen6_gs_state,
+   &gen6_clip_state,
 #if 0
    &brw_wm_samplers,
 
    &brw_wm_unit,
    &brw_sf_vp,
    &brw_sf_unit,
-   &brw_clip_unit,
 
    /* Command packets:
     */

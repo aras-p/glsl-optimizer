@@ -845,6 +845,27 @@
 /* DW6 */
 # define GEN6_GS_ENABLE					(1 << 15)
 
+#define CMD_3D_CLIP_STATE		      0x7812 /* GEN6+ */
+/* DW1 */
+# define GEN6_CLIP_STATISTICS_ENABLE			(1 << 10)
+/* DW2 */
+# define GEN6_CLIP_ENABLE				(1 << 31)
+# define GEN6_CLIP_API_OGL				(1 << 30)
+# define GEN6_CLIP_XY_TEST				(1 << 28)
+# define GEN6_CLIP_Z_TEST				(1 << 27)
+# define GEN6_CLIP_GB_TEST				(1 << 26)
+# define GEN6_CLIP_MODE_NORMAL				(0 << 13)
+# define GEN6_CLIP_MODE_REJECT_ALL			(3 << 13)
+# define GEN6_CLIP_MODE_ACCEPT_ALL			(4 << 13)
+# define GEN6_CLIP_PERSPECTIVE_DIVIDE_DISABLE		(1 << 9)
+# define GEN6_CLIP_BARYCENTRIC_ENABLE			(1 << 8)
+# define GEN6_CLIP_TRI_PROVOKE_SHIFT			4
+# define GEN6_CLIP_LINE_PROVOKE_SHIFT			2
+# define GEN6_CLIP_TRIFAN_PROVOKE_SHIFT			0
+/* DW3 */
+# define GEN6_CLIP_MIN_POINT_WIDTH_SHIFT		17
+# define GEN6_CLIP_MAX_POINT_WIDTH_SHIFT		6
+
 #define CMD_3D_CONSTANT_VS_STATE	      0x7815 /* GEN6+ */
 #define CMD_3D_CONSTANT_GS_STATE	      0x7816 /* GEN6+ */
 # define GEN6_CONSTANT_BUFFER_3_ENABLE			(1 << 15)
