@@ -722,8 +722,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 
 #ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
-       * indexes to see if any of them are out of bounds.  If so, warn
-       * and skip the draw to avoid potential segfault, etc.
+       * indexes to see if any of them are out of bounds.
        */
       {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
@@ -740,7 +739,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              ctx->Array.ElementArrayBufferObj->Name,
                              ctx->Array.ElementArrayBufferObj->Size);
             }
-            return;
          }
          /* XXX we could also find the min index and compare to 'start'
           * to see if start is correct.  But it's more likely to get the
