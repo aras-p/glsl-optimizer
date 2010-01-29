@@ -402,6 +402,9 @@ void _tnl_draw_prims( GLcontext *ctx,
    GLint max_basevertex = prim->basevertex;
    GLuint i;
 
+   /* Mesa core state should have been validated already */
+   assert(ctx->NewState == 0x0);
+
    if (!_mesa_check_conditional_render(ctx))
       return; /* don't draw */
 
