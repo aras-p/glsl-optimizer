@@ -1578,6 +1578,10 @@ _mesa_set_mvp_with_dp4( GLcontext *ctx,
 GLboolean
 _mesa_valid_to_render(GLcontext *ctx, const char *where)
 {
+   /* This depends on having up to date derived state (shaders) */
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    if (ctx->Shader.CurrentProgram) {
       /* using shaders */
       if (!ctx->Shader.CurrentProgram->LinkStatus) {

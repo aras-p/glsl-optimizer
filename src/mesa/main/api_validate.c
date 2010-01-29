@@ -190,9 +190,6 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    if (!check_valid_to_render(ctx, "glDrawElements"))
       return GL_FALSE;
 
@@ -254,9 +251,6 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    if (!check_valid_to_render(ctx, "glDrawRangeElements"))
       return GL_FALSE;
 
@@ -303,9 +297,6 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (!check_valid_to_render(ctx, "glDrawArrays"))
       return GL_FALSE;
