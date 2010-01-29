@@ -87,49 +87,6 @@ struct drm_vmw_getparam_arg {
 
 /*************************************************************************/
 /**
- * DRM_VMW_EXTENSION - Query device extensions.
- */
-
-/**
- * struct drm_vmw_extension_rep
- *
- * @exists: The queried extension exists.
- * @driver_ioctl_offset: Ioctl number of the first ioctl in the extension.
- * @driver_sarea_offset: Offset to any space in the DRI SAREA
- * used by the extension.
- * @major: Major version number of the extension.
- * @minor: Minor version number of the extension.
- * @pl: Patch level version number of the extension.
- *
- * Output argument to the DRM_VMW_EXTENSION Ioctl.
- */
-
-struct drm_vmw_extension_rep {
-	int32_t exists;
-	uint32_t driver_ioctl_offset;
-	uint32_t driver_sarea_offset;
-	uint32_t major;
-	uint32_t minor;
-	uint32_t pl;
-	uint32_t pad64;
-};
-
-/**
- * union drm_vmw_extension_arg
- *
- * @extension - Ascii name of the extension to be queried. //In
- * @rep - Reply as defined above. //Out
- *
- * Argument to the DRM_VMW_EXTENSION Ioctl.
- */
-
-union drm_vmw_extension_arg {
-	char extension[DRM_VMW_EXT_NAME_LEN];
-	struct drm_vmw_extension_rep rep;
-};
-
-/*************************************************************************/
-/**
  * DRM_VMW_CREATE_CONTEXT - Create a host context.
  *
  * Allocates a device unique context id, and queues a create context command
