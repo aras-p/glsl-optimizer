@@ -276,8 +276,11 @@ def generate(env):
                 # instead.
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
-                    '-mstackrealign', # ensure stack is aligned
                 ]
+        	if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+		    ccflags += [
+                    	'-mstackrealign', # ensure stack is aligned
+		    ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
         # See also:
