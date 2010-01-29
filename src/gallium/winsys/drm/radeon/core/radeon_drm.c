@@ -130,6 +130,24 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
     }
 }
 
+
+static struct pipe_video_context *
+radeon_create_video_context(struct drm_api *api, struct pipe_screen *pscreen,
+                            enum pipe_video_profile profile,
+                            enum pipe_video_chroma_format chroma_format,
+                            unsigned width, unsigned height)
+{
+    struct radeon_winsys *winsys = (struct radeon_winsys*)pscreen->winsys;
+    struct pipe_context *pipe;
+    struct pipe_video_context pvctx;
+
+    pipe = radeon_create_context(api, pscreen);
+    if (!pipe)
+        return NULL;
+
+    pvctx = r300_video_create(pipe, profile, chroma_format, width, height, i);
+}
+
 boolean radeon_buffer_from_texture(struct drm_api* api,
                                    struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
@@ -249,6 +267,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
 struct drm_api drm_api_hooks = {
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
+    .create_video_context = radeon_create_video_context,
     .texture_from_shared_handle = radeon_texture_from_shared_handle,
     .shared_handle_from_texture = radeon_shared_handle_from_texture,
     .local_handle_from_texture = radeon_local_handle_from_texture,
