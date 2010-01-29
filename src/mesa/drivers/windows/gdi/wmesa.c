@@ -1286,9 +1286,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	    rb->PutMonoValues = write_mono_rgba_pixels_16;
 	    rb->GetRow = read_rgba_span_16;
 	    rb->GetValues = read_rgba_pixels_16;
-            rb->RedBits = 5;
-            rb->GreenBits = 6;
-            rb->BlueBits = 5;
 	    break;
 	case PF_8R8G8B:
 		if (cColorBits == 24)
@@ -1300,9 +1297,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 		    rb->PutMonoValues = write_mono_rgba_pixels_24;
 		    rb->GetRow = read_rgba_span_24;
 		    rb->GetValues = read_rgba_pixels_24;
-	        rb->RedBits = 8;
-	        rb->GreenBits = 8;
-	        rb->BlueBits = 8;		
 		}
 		else
 		{
@@ -1313,9 +1307,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	        rb->PutMonoValues = write_mono_rgba_pixels_32;
 	        rb->GetRow = read_rgba_span_32;
 	        rb->GetValues = read_rgba_pixels_32;
-            rb->RedBits = 8;
-            rb->GreenBits = 8;
-            rb->BlueBits = 8;
 		}
 	    break;
 	default:
@@ -1331,9 +1322,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	rb->PutMonoValues = write_mono_rgba_pixels_front;
 	rb->GetRow = read_rgba_span_front;
 	rb->GetValues = read_rgba_pixels_front;
-        rb->RedBits = 8; /* XXX fix these (565?) */
-        rb->GreenBits = 8;
-        rb->BlueBits = 8;
     }
 }
 
