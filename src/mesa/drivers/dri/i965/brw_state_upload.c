@@ -122,9 +122,13 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_recalculate_urb_fence,
 
    &brw_cc_vp,
-   &brw_cc_unit,
 
 #endif
+   &gen6_blend_state,		/* must do before cc unit */
+   &gen6_color_calc_state,	/* must do before cc unit */
+   &gen6_depth_stencil_state,	/* must do before cc unit */
+   &gen6_cc_state_pointers,
+
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
@@ -282,6 +286,7 @@ static struct dirty_bit_map brw_bits[] = {
 };
 
 static struct dirty_bit_map cache_bits[] = {
+   DEFINE_BIT(CACHE_NEW_BLEND_STATE),
    DEFINE_BIT(CACHE_NEW_CC_VP),
    DEFINE_BIT(CACHE_NEW_CC_UNIT),
    DEFINE_BIT(CACHE_NEW_WM_PROG),

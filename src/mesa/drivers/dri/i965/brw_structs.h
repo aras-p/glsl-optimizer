@@ -658,7 +658,105 @@ struct brw_clip_unit_state
    GLfloat viewport_ymax;  
 };
 
+struct gen6_blend_state
+{
+   struct {
+      GLuint dest_blend_factor:5;
+      GLuint source_blend_factor:5;
+      GLuint pad3:1;
+      GLuint blend_func:3;
+      GLuint pad2:1;
+      GLuint ia_dest_blend_factor:5;
+      GLuint ia_source_blend_factor:5;
+      GLuint pad1:1;
+      GLuint ia_blend_func:3;
+      GLuint pad0:1;
+      GLuint ia_blend_enable:1;
+      GLuint blend_enable:1;
+   } blend0;
 
+   struct {
+      GLuint post_blend_clamp_enable:1;
+      GLuint pre_blend_clamp_enable:1;
+      GLuint clamp_range:2;
+      GLuint pad0:4;
+      GLuint x_dither_offset:2;
+      GLuint y_dither_offset:2;
+      GLuint dither_enable:1;
+      GLuint alpha_test_func:3;
+      GLuint alpha_test_enable:1;
+      GLuint pad1:1;
+      GLuint logic_op_func:4;
+      GLuint logic_op_enable:1;
+      GLuint pad2:1;
+      GLuint write_disable_b:1;
+      GLuint write_disable_g:1;
+      GLuint write_disable_r:1;
+      GLuint write_disable_a:1;
+      GLuint pad3:1;
+      GLuint alpha_to_coverage_dither:1;
+      GLuint alpha_to_one:1;
+      GLuint alpha_to_coverage:1;
+   } blend1;
+};
+
+struct gen6_color_calc_state
+{
+   struct {
+      GLuint alpha_test_format:1;
+      GLuint pad0:14;
+      GLuint round_disable:1;
+      GLuint bf_stencil_ref:8;
+      GLuint stencil_ref:8;
+   } cc0;
+
+   union {
+      GLfloat alpha_ref_f;
+      struct {
+	 GLuint ui:8;
+	 GLuint pad0:24;
+      } alpha_ref_fi;
+   } cc1;
+
+   GLfloat constant_r;
+   GLfloat constant_g;
+   GLfloat constant_b;
+   GLfloat constant_a;
+};
+
+struct gen6_depth_stencil_state
+{
+   struct {
+      GLuint pad0:3;
+      GLuint bf_stencil_pass_depth_pass_op:3;
+      GLuint bf_stencil_pass_depth_fail_op:3;
+      GLuint bf_stencil_fail_op:3;
+      GLuint bf_stencil_func:3;
+      GLuint bf_stencil_enable:1;
+      GLuint pad1:2;
+      GLuint stencil_write_enable:1;
+      GLuint stencil_pass_depth_pass_op:3;
+      GLuint stencil_pass_depth_fail_op:3;
+      GLuint stencil_fail_op:3;
+      GLuint stencil_func:3;
+      GLuint stencil_enable:1;
+   } ds0;
+
+   struct {
+      GLuint bf_stencil_write_mask:8;
+      GLuint bf_stencil_test_mask:8;
+      GLuint stencil_write_mask:8;
+      GLuint stencil_test_mask:8;
+   } ds1;
+
+   struct {
+      GLuint pad0:25;
+      GLuint depth_write_enable:1;
+      GLuint depth_test_func:3;
+      GLuint pad1:1;
+      GLuint depth_test_enable:1;
+   } ds2;
+};
 
 struct brw_cc_unit_state
 {
@@ -751,8 +849,6 @@ struct brw_cc_unit_state
       } alpha_ref;
    } cc7;
 };
-
-
 
 struct brw_sf_unit_state
 {

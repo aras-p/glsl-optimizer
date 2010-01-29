@@ -84,7 +84,9 @@ DRIVER_SOURCES = \
 	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
-	brw_wm_surface_state.c 
+	brw_wm_surface_state.c \
+	gen6_cc.c \
+	gen6_depthstencil.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

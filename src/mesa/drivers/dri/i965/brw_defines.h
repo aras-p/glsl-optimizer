@@ -807,6 +807,7 @@
 # define BRW_VE1_COMPONENT_3_SHIFT	16
 # define BRW_VE1_DST_OFFSET_SHIFT	0
 
+#define CMD_3D_CC_STATE_POINTERS      0x780e /* GEN6+ */
 #define CMD_INDEX_BUFFER              0x780a
 #define CMD_VF_STATISTICS_965         0x780b
 #define CMD_VF_STATISTICS_GM45        0x680b
