@@ -1,9 +1,8 @@
 #ifndef EGLGLOBALS_INCLUDED
 #define EGLGLOBALS_INCLUDED
 
+
 #include "egltypedefs.h"
-#include "egldisplay.h"
-#include "eglcurrent.h"
 #include "eglmutex.h"
 
 

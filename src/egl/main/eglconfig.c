@@ -4,12 +4,11 @@
 
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "eglconfig.h"
 #include "egldisplay.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 
 

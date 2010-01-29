@@ -1,6 +1,7 @@
 #ifndef EGLCURRENT_INCLUDED
 #define EGLCURRENT_INCLUDED
 
+
 #include "egltypedefs.h"
 
 

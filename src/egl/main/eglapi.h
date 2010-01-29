@@ -4,7 +4,7 @@
 /**
  * A generic function ptr type
  */
-typedef void (*_EGLProc)();
+typedef void (*_EGLProc)(void);
 
 
 /**

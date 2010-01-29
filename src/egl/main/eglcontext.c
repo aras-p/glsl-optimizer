@@ -5,7 +5,7 @@
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egldriver.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "eglsurface.h"
 
 

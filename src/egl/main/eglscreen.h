@@ -2,6 +2,9 @@
 #define EGLSCREEN_INCLUDED
 
 
+#include "egltypedefs.h"
+
+
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to

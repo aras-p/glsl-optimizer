@@ -6,6 +6,9 @@
 #include "eglapi.h"
 
 
+typedef _EGLDriver *(*_EGLMain_t)(const char *args);
+
+
 /**
  * Base class for device drivers.
  */

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +5,7 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglmode.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "eglscreen.h"
 
 

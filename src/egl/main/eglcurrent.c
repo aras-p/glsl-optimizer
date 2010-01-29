@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
-#include "eglcurrent.h"
+#include "eglglobals.h"
 #include "eglcontext.h"
 #include "egllog.h"
 #include "eglmutex.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 
 
 /* This should be kept in sync with _eglInitThreadInfo() */

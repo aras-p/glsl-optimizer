@@ -33,7 +33,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "eglmisc.h"
 #include "egldisplay.h"
 

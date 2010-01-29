@@ -13,6 +13,7 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 #include "eglmisc.h"
 #include "eglmode.h"
