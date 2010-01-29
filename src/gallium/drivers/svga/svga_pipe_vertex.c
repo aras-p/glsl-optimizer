@@ -26,7 +26,6 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_screen.h"
