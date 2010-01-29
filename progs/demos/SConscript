@@ -8,6 +8,7 @@ progs = [
     'clearspd',
     'copypix',
     'cubemap',
+    'dissolve',
     'drawpix',
     'engine',
     'fbo_firecube',
