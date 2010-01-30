@@ -1135,8 +1135,7 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
-   /* XXX change to EGL_OPENGL_ES_API once OpenGL ES is merged */
-   gctx = egl_g3d_get_current_context(EGL_OPENGL_API);
+   gctx = egl_g3d_get_current_context(EGL_OPENGL_ES_API);
    if (gctx) {
       if (!gsurf->render_surface)
          return EGL_FALSE;
@@ -1163,9 +1162,8 @@ egl_g3d_release_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
 
    if (gsurf->render_surface) {
       _EGLThreadInfo *t = _eglGetCurrentThread();
-      /* XXX change to EGL_OPENGL_ES_API once OpenGL ES is merged */
       struct egl_g3d_context *gctx = egl_g3d_context(
-            t->CurrentContexts[_eglConvertApiToIndex(EGL_OPENGL_API)]);
+            t->CurrentContexts[_eglConvertApiToIndex(EGL_OPENGL_ES_API)]);
 
       /* what if the context the surface binds to is no longer current? */
       if (gctx)
