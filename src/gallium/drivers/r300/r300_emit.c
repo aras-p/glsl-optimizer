@@ -170,9 +170,8 @@ static const float * get_shader_constant(
                     vec[1] = 1.0 / tex->height0;
                     break;
 
-                /* Texture compare-fail value. */
-                /* XXX Since Gallium doesn't support GL_ARB_shadow_ambient,
-                 * this is always (0,0,0,0), right? */
+                /* Texture compare-fail value. Shouldn't ever show up, but if
+                 * it does, we'll be ready. */
                 case RC_STATE_SHADOW_AMBIENT:
                     vec[3] = 0;
                     break;
