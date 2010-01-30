@@ -229,9 +229,9 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 
    cx = fb->_Xmin;
    if (fb->Name == 0)
-      cy = fb->_Ymin;
-   else
       cy = ctx->DrawBuffer->Height - fb->_Ymax;
+   else
+      cy = fb->_Ymin;
    cw = fb->_Xmax - fb->_Xmin;
    ch = fb->_Ymax - fb->_Ymin;
 
