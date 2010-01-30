@@ -33,7 +33,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-#include <GL/gl.h>
+#include <GLES/gl.h>
 #include <EGL/egl.h>
 
 static EGLDisplay dpy;
@@ -53,7 +53,6 @@ make_pbuffer(int width, int height)
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
       EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE,
-      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
    EGLint pbuf_attribs[] = {
@@ -72,7 +71,6 @@ make_pbuffer(int width, int height)
       exit(1);
    }
 
-   eglBindAPI(EGL_OPENGL_API);
    ctx_pbuf = eglCreateContext(dpy, config, EGL_NO_CONTEXT, NULL );
    surf_pbuf = eglCreatePbufferSurface(dpy, config, pbuf_attribs);
    if (surf_pbuf == EGL_NO_SURFACE) {
@@ -101,7 +99,7 @@ use_pbuffer(void)
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      glFrustum(-ar, ar, -1, 1, 1.0, 10.0);
+      glFrustumf(-ar, ar, -1, 1, 1.0, 10.0);
 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
@@ -128,7 +126,6 @@ make_window(Display *x_dpy, const char *name,
       EGL_BLUE_SIZE, 8,
       EGL_ALPHA_SIZE, 8,
       EGL_DEPTH_SIZE, 8,
-      EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
       EGL_NONE
    };
 
@@ -189,10 +186,9 @@ make_window(Display *x_dpy, const char *name,
                               None, (char **)NULL, 0, &sizehints);
    }
 
-   eglBindAPI(EGL_OPENGL_API);
    ctx_win = eglCreateContext(dpy, config, EGL_NO_CONTEXT, NULL );
    if (!ctx_win) {
-      printf("Error: glXCreateContext failed\n");
+      printf("Error: eglCreateContext failed\n");
       exit(1);
    }
 
@@ -227,10 +223,10 @@ draw_triangle(void)
       {  3, -3 },
       {  0,  3 }
    };
-   GLfloat colors[3][3] = {
-      { 1, 0, 0 },
-      { 0, 1, 0 },
-      { 0, 0, 1 }
+   GLfloat colors[3][4] = {
+      { 1, 0, 0, 1 },
+      { 0, 1, 0, 1 },
+      { 0, 0, 1, 1 }
    };
    GLint i;
 
@@ -250,7 +246,7 @@ draw_triangle(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    glVertexPointer(2, GL_FLOAT, 0, verts);
-   glColorPointer(3, GL_FLOAT, 0, colors);
+   glColorPointer(4, GL_FLOAT, 0, colors);
    glEnableClientState(GL_VERTEX_ARRAY);
    glEnableClientState(GL_COLOR_ARRAY);
 
@@ -356,7 +352,7 @@ reshape(int width, int height)
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-ar, ar, -1, 1, 5.0, 60.0);
+   glFrustumf(-ar, ar, -1, 1, 5.0, 60.0);
 
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();

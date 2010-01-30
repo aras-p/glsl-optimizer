@@ -20,6 +20,7 @@ ES1_LIBS = \
 	-L$(TOP)/$(LIB_DIR) -lGLESv1_CM $(LIBDRM_LIB) -lX11
 
 PROGRAMS = \
+	bindtex \
 	drawtex \
 	es1_info \
 	msaa \
@@ -37,6 +38,10 @@ PROGRAMS = \
 
 default: $(PROGRAMS)
 
+
+
+bindtex: bindtex.o $(ES1_LIB_DEPS)
+	$(CC) $(CFLAGS) bindtex.o $(ES1_LIBS) -o $@
 
 
 drawtex: drawtex.o $(ES1_LIB_DEPS)
