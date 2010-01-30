@@ -464,18 +464,18 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       struct egl_g3d_config *gconf;
       EGLBoolean valid;
 
-      api_mask = get_mode_api_mask(&native_configs[i]->mode, gdrv->api_mask);
-      if (!api_mask) {
-         _eglLog(_EGL_DEBUG, "no state tracker supports config 0x%x",
-               native_configs[i]->mode.visualID);
-         continue;
-      }
-
       gconf = CALLOC_STRUCT(egl_g3d_config);
       if (!gconf)
          continue;
 
       _eglInitConfig(&gconf->base, id);
+
+      api_mask = get_mode_api_mask(&native_configs[i]->mode, gdrv->api_mask);
+      if (!api_mask) {
+         _eglLog(_EGL_DEBUG, "no state tracker supports config 0x%x",
+               native_configs[i]->mode.visualID);
+      }
+
       valid = _eglConfigFromContextModesRec(&gconf->base,
             &native_configs[i]->mode, api_mask, api_mask);
       if (valid) {
