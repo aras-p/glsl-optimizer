@@ -170,6 +170,12 @@ static const float * get_shader_constant(
                     vec[1] = 1.0 / tex->height0;
                     break;
 
+                /* Texture compare-fail value. Shouldn't ever show up, but if
+                 * it does, we'll be ready. */
+                case RC_STATE_SHADOW_AMBIENT:
+                    vec[3] = 0;
+                    break;
+
                 case RC_STATE_R300_VIEWPORT_SCALE:
                     if (r300->tcl_bypass) {
                         vec[0] = 1;
