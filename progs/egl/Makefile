@@ -45,7 +45,7 @@ egltri: egltri.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
 
 eglinfo: eglinfo.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
 eglgears: eglgears.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
