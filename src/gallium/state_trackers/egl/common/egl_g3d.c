@@ -244,17 +244,6 @@ egl_g3d_realloc_context(_EGLDisplay *dpy, _EGLContext *ctx)
 }
 
 /**
- * Return the current context of the given API.
- */
-static struct egl_g3d_context *
-egl_g3d_get_current_context(EGLint api)
-{
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   EGLint api_index = _eglConvertApiToIndex(api);
-   return egl_g3d_context(t->CurrentContexts[api_index]);
-}
-
-/**
  * Return the state tracker for the given context.
  */
 static const struct egl_g3d_st *
@@ -1098,7 +1087,8 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
                        _EGLSurface *surf, EGLint buffer)
 {
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   struct egl_g3d_context *gctx;
+   _EGLContext *ctx = _eglGetAPIContext(EGL_OPENGL_ES_API);
+   struct egl_g3d_context *gctx = egl_g3d_context(ctx);
    enum pipe_format target_format;
    int target;
 
@@ -1135,7 +1125,6 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
-   gctx = egl_g3d_get_current_context(EGL_OPENGL_ES_API);
    if (gctx) {
       if (!gsurf->render_surface)
          return EGL_FALSE;
@@ -1161,9 +1150,8 @@ egl_g3d_release_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_BAD_PARAMETER, "eglReleaseTexImage");
 
    if (gsurf->render_surface) {
-      _EGLThreadInfo *t = _eglGetCurrentThread();
-      struct egl_g3d_context *gctx = egl_g3d_context(
-            t->CurrentContexts[_eglConvertApiToIndex(EGL_OPENGL_ES_API)]);
+      _EGLContext *ctx = _eglGetAPIContext(EGL_OPENGL_ES_API);
+      struct egl_g3d_context *gctx = egl_g3d_context(ctx);
 
       /* what if the context the surface binds to is no longer current? */
       if (gctx)
