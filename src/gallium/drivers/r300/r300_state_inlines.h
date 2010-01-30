@@ -81,9 +81,6 @@ static INLINE uint32_t r300_translate_blend_factor(int blend_fact)
             return R300_BLEND_GL_CONST_COLOR;
         case PIPE_BLENDFACTOR_CONST_ALPHA:
             return R300_BLEND_GL_CONST_ALPHA;
-        /* XXX WTF are these?
-        case PIPE_BLENDFACTOR_SRC1_COLOR:
-        case PIPE_BLENDFACTOR_SRC1_ALPHA: */
         case PIPE_BLENDFACTOR_ZERO:
             return R300_BLEND_GL_ZERO;
         case PIPE_BLENDFACTOR_INV_SRC_COLOR:
@@ -98,9 +95,16 @@ static INLINE uint32_t r300_translate_blend_factor(int blend_fact)
             return R300_BLEND_GL_ONE_MINUS_CONST_COLOR;
         case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
             return R300_BLEND_GL_ONE_MINUS_CONST_ALPHA;
-        /* XXX see above
+
+        case PIPE_BLENDFACTOR_SRC1_COLOR:
+        case PIPE_BLENDFACTOR_SRC1_ALPHA:
         case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-        case PIPE_BLENDFACTOR_INV_SRC1_ALPHA: */
+        case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+            debug_printf("r300: Implementation error: "
+                "Bad blend factor %d not supported!\n", blend_fact);
+            assert(0);
+            break;
+
         default:
             debug_printf("r300: Unknown blend factor %d\n", blend_fact);
             assert(0);

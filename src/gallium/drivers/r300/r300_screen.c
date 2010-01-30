@@ -114,7 +114,6 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
              */
             return 1;
         case PIPE_CAP_DUAL_SOURCE_BLEND:
-            /* XXX need to figure out how to do it */
             return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             return 1;
