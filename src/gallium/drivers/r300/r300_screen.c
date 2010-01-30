@@ -152,7 +152,11 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
                 return 0;
             }
         case PIPE_CAP_INDEP_BLEND_ENABLE:
-            return 1;
+            if (r300screen->caps->is_r500) {
+                return 1;
+            } else {
+                return 0;
+            }
         case PIPE_CAP_INDEP_BLEND_FUNC:
             return 0;
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:

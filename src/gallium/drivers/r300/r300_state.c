@@ -161,6 +161,7 @@ static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA
 static void* r300_create_blend_state(struct pipe_context* pipe,
                                      const struct pipe_blend_state* state)
 {
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
 
     if (state->rt[0].blend_enable)
@@ -290,10 +291,16 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
     /* Color channel masks for all MRTs. */
     blend->color_channel_mask = state->rt[0].colormask;
-    if (state->independent_blend_enable) {
-        blend->color_channel_mask |= (state->rt[1].colormask << 4);
-        blend->color_channel_mask |= (state->rt[2].colormask << 8);
-        blend->color_channel_mask |= (state->rt[3].colormask << 12);
+    if (r300screen->caps->is_r500 && state->independent_blend_enable) {
+        if (state->rt[1].blend_enable) {
+            blend->color_channel_mask |= (state->rt[1].colormask << 4);
+        }
+        if (state->rt[2].blend_enable) {
+            blend->color_channel_mask |= (state->rt[2].colormask << 8);
+        }
+        if (state->rt[3].blend_enable) {
+            blend->color_channel_mask |= (state->rt[3].colormask << 12);
+        }
     }
 
     if (state->dither) {
