@@ -7,25 +7,10 @@
 #include "eglmode.h"
 #include "eglcurrent.h"
 #include "eglscreen.h"
+#include "eglstring.h"
 
 
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
-
-
-static char *
-my_strdup(const char *s)
-{
-   if (s) {
-      int l = strlen(s);
-      char *s2 = malloc(l + 1);
-      if (s2)
-         strcpy(s2, s);
-      return s2;
-   }
-   else {
-      return NULL;
-   }
-}
 
 
 /**
@@ -81,7 +66,7 @@ _eglAddNewMode(_EGLScreen *screen, EGLint width, EGLint height,
       screen->Modes[n].RefreshRate = refreshRate;
       screen->Modes[n].Optimal = EGL_FALSE;
       screen->Modes[n].Interlaced = EGL_FALSE;
-      screen->Modes[n].Name = my_strdup(name);
+      screen->Modes[n].Name = _eglstrdup(name);
       screen->NumModes++;
       return screen->Modes + n;
    }
