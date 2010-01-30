@@ -28,9 +28,6 @@ struct _egl_surface
    /* True if the surface is bound to an OpenGL ES texture */
    EGLBoolean BoundToTexture;
 
-   /* If type == EGL_SCREEN_BIT: */
-   EGLint VisibleRefCount; /* number of screens I'm displayed on */
-
 #ifdef EGL_VERSION_1_2
    EGLint SwapBehavior; /* one of EGL_BUFFER_PRESERVED/DESTROYED */
    EGLint HorizontalResolution, VerticalResolution;
