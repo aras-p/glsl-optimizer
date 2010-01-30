@@ -57,14 +57,20 @@ The integer capabilities:
   only permit binding one constant buffer per shader, and the shaders will
   not permit two-dimensional access to constants.
 * ``MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant buffer.
+* ``INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
+  masks are supported. If 0, then the first rendertarget's blend mask is
+  replicated across all MRTs.
+* ``INDEP_BLEND_FUNC``: Whether per-rendertarget blend functions are
+  available. If 0, then the first rendertarget's blend functions affect all
+  MRTs.
 * ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT``: Whether the TGSI property
-  FS_COORD_ORIGIN with value UPPER_LEFT is supported
+  FS_COORD_ORIGIN with value UPPER_LEFT is supported.
 * ``PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT``: Whether the TGSI property
-  FS_COORD_ORIGIN with value LOWER_LEFT is supported
+  FS_COORD_ORIGIN with value LOWER_LEFT is supported.
 * ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER``: Whether the TGSI
-  property FS_COORD_PIXEL_CENTER with value HALF_INTEGER is supported
+  property FS_COORD_PIXEL_CENTER with value HALF_INTEGER is supported.
 * ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER``: Whether the TGSI
-  property FS_COORD_PIXEL_CENTER with value INTEGER is supported
+  property FS_COORD_PIXEL_CENTER with value INTEGER is supported.
 
 The floating-point capabilities:
 
@@ -72,6 +78,10 @@ The floating-point capabilities:
 * ``MAX_LINE_WIDTH_AA``: The maximum width of a smoothed line.
 * ``MAX_POINT_WIDTH``: The maximum width and height of a point.
 * ``MAX_POINT_WIDTH_AA``: The maximum width and height of a smoothed point.
+* ``MAX_TEXTURE_ANISOTROPY``: The maximum level of anisotropy that can be
+  applied to anisotropically filtered textures.
+* ``MAX_TEXTURE_LOD_BIAS``: The maximum :term:`LOD` bias that may be applied
+  to filtered textures.
 * ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
   ``GUARD_BAND_BOTTOM``: XXX
 

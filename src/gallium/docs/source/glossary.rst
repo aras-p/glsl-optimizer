@@ -17,3 +17,7 @@ Glossary
    NPOT
       Non-power-of-two. Usually applied to textures which have at least one
       dimension which is not a power of two.
+
+   LOD
+      Level of Detail. Also spelled "LoD." The value that determines when the
+      switches between mipmaps occur during texture sampling.
