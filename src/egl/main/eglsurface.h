@@ -14,9 +14,8 @@ struct _egl_surface
    /* A surface is a display resource */
    _EGLResource Resource;
 
-   /* The bound status of the surface */
-   _EGLContext *Binding;
-   EGLBoolean BoundToTexture;
+   /* The context that is currently bound to the surface */
+   _EGLContext *CurrentContext;
 
    _EGLConfig *Config;
 
@@ -25,6 +24,9 @@ struct _egl_surface
    EGLint TextureFormat, TextureTarget;
    EGLint MipmapTexture, MipmapLevel;
    EGLint SwapInterval;
+
+   /* True if the surface is bound to an OpenGL ES texture */
+   EGLBoolean BoundToTexture;
 
    /* If type == EGL_SCREEN_BIT: */
    EGLint VisibleRefCount; /* number of screens I'm displayed on */
@@ -100,14 +102,12 @@ _eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
 
 
 /**
- * Return true if the surface is bound to a thread.
- * A surface bound to a texutre is not considered bound by
- * this function.
+ * Return true if there is a context bound to the surface.
  */
 static INLINE EGLBoolean
 _eglIsSurfaceBound(_EGLSurface *surf)
 {
-   return (surf->Binding != NULL);
+   return (surf->CurrentContext != NULL);
 }
 
 

@@ -150,13 +150,13 @@ _eglBindContextToSurfaces(_EGLContext *ctx,
 {
    _EGLSurface *newDraw = *draw, *newRead = *read;
 
-   if (newDraw->Binding)
-      newDraw->Binding->DrawSurface = NULL;
-   newDraw->Binding = ctx;
+   if (newDraw->CurrentContext)
+      newDraw->CurrentContext->DrawSurface = NULL;
+   newDraw->CurrentContext = ctx;
 
-   if (newRead->Binding)
-      newRead->Binding->ReadSurface = NULL;
-   newRead->Binding = ctx;
+   if (newRead->CurrentContext)
+      newRead->CurrentContext->ReadSurface = NULL;
+   newRead->CurrentContext = ctx;
 
    if (ctx) {
       *draw = ctx->DrawSurface;
@@ -238,8 +238,8 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
     *
     * The latter is more restrictive so we can check only the latter case.
     */
-   if ((draw->Binding && draw->Binding != ctx) ||
-       (read->Binding && read->Binding != ctx))
+   if ((draw->CurrentContext && draw->CurrentContext != ctx) ||
+       (read->CurrentContext && read->CurrentContext != ctx))
       return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
 
    /* simply require the configs to be equal */

@@ -1129,8 +1129,8 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 
    /* flush properly if the surface is bound */
-   if (gsurf->base.Binding) {
-      gctx = egl_g3d_context(gsurf->base.Binding);
+   if (gsurf->base.CurrentContext) {
+      gctx = egl_g3d_context(gsurf->base.CurrentContext);
       gctx->stapi->st_flush(gctx->st_ctx,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
