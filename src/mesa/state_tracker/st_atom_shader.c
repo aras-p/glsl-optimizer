@@ -50,7 +50,6 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_program.h"
-#include "st_atom_shader.h"
 
 
 

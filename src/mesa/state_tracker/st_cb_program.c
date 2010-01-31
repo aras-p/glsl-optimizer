@@ -43,7 +43,6 @@
 
 #include "st_context.h"
 #include "st_program.h"
-#include "st_atom_shader.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_cb_program.h"
 

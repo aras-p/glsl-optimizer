@@ -40,7 +40,6 @@
 #include "st_context.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
