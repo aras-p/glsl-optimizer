@@ -20,22 +20,29 @@ struct _egl_surface
    _EGLConfig *Config;
 
    EGLint Type; /* one of EGL_WINDOW_BIT, EGL_PIXMAP_BIT or EGL_PBUFFER_BIT */
+
+   /* attributes set by attribute list */
    EGLint Width, Height;
-   EGLint TextureFormat, TextureTarget;
-   EGLint MipmapTexture, MipmapLevel;
+   EGLenum TextureFormat;
+   EGLenum TextureTarget;
+   EGLBoolean MipmapTexture;
+   EGLBoolean LargestPbuffer;
+   EGLenum RenderBuffer;
+   EGLenum VGAlphaFormat;
+   EGLenum VGColorspace;
+
+   /* attributes set by eglSurfaceAttrib */
+   EGLint MipmapLevel;
+   EGLenum MultisampleResolve;
+   EGLenum SwapBehavior;
+
+   EGLint HorizontalResolution, VerticalResolution;
+   EGLint AspectRatio;
+
    EGLint SwapInterval;
 
    /* True if the surface is bound to an OpenGL ES texture */
    EGLBoolean BoundToTexture;
-
-#ifdef EGL_VERSION_1_2
-   EGLint SwapBehavior; /* one of EGL_BUFFER_PRESERVED/DESTROYED */
-   EGLint HorizontalResolution, VerticalResolution;
-   EGLint AspectRatio;
-   EGLint RenderBuffer; /* EGL_BACK_BUFFER or EGL_SINGLE_BUFFER */
-   EGLint AlphaFormat; /* EGL_ALPHA_FORMAT_NONPRE or EGL_ALPHA_FORMAT_PRE */
-   EGLint Colorspace; /* EGL_COLORSPACE_sRGB or EGL_COLORSPACE_LINEAR */
-#endif /* EGL_VERSION_1_2 */
 };
 
 

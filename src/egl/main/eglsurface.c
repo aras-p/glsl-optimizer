@@ -47,7 +47,6 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
       EGLint val = attrib_list[i];
 
       switch (attr) {
-#ifdef EGL_VERSION_1_3
       /* common (except for screen surfaces) attributes */
       case EGL_VG_COLORSPACE:
          if (type == EGL_SCREEN_BIT_MESA) {
@@ -64,7 +63,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          }
          if (err != EGL_SUCCESS)
             break;
-         surf->Colorspace = val;
+         surf->VGColorspace = val;
          break;
       case EGL_VG_ALPHA_FORMAT:
          if (type == EGL_SCREEN_BIT_MESA) {
@@ -81,7 +80,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          }
          if (err != EGL_SUCCESS)
             break;
-         surf->AlphaFormat = val;
+         surf->VGAlphaFormat = val;
          break;
       /* window surface attributes */
       case EGL_RENDER_BUFFER:
@@ -95,7 +94,6 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          }
          surf->RenderBuffer = val;
          break;
-#endif /* EGL_VERSION_1_3 */
       /* pbuffer surface attributes */
       case EGL_WIDTH:
          if (type != EGL_PBUFFER_BIT && type != EGL_SCREEN_BIT_MESA) {
@@ -124,12 +122,24 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
+         surf->LargestPbuffer = !!val;
          break;
       case EGL_TEXTURE_FORMAT:
          if (type != EGL_PBUFFER_BIT) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
+         switch (val) {
+         case EGL_TEXTURE_RGB:
+         case EGL_TEXTURE_RGBA:
+         case EGL_NO_TEXTURE:
+            break;
+         default:
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (err != EGL_SUCCESS)
+            break;
          surf->TextureFormat = val;
          break;
       case EGL_TEXTURE_TARGET:
@@ -137,6 +147,16 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
+         switch (val) {
+         case EGL_TEXTURE_2D:
+         case EGL_NO_TEXTURE:
+            break;
+         default:
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (err != EGL_SUCCESS)
+            break;
          surf->TextureTarget = val;
          break;
       case EGL_MIPMAP_TEXTURE:
@@ -144,7 +164,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
-         surf->MipmapTexture = val;
+         surf->MipmapTexture = !!val;
          break;
       /* no pixmap surface specific attributes */
       default:
@@ -210,19 +230,21 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
    surf->TextureFormat = EGL_NO_TEXTURE;
    surf->TextureTarget = EGL_NO_TEXTURE;
    surf->MipmapTexture = EGL_FALSE;
+   surf->LargestPbuffer = EGL_FALSE;
+   surf->RenderBuffer = renderBuffer;
+   surf->VGAlphaFormat = EGL_VG_ALPHA_FORMAT_NONPRE;
+   surf->VGColorspace = EGL_VG_COLORSPACE_sRGB;
+
    surf->MipmapLevel = 0;
+   surf->MultisampleResolve = EGL_MULTISAMPLE_RESOLVE_DEFAULT;
+   surf->SwapBehavior = EGL_BUFFER_DESTROYED;
+
+   surf->HorizontalResolution = EGL_UNKNOWN;
+   surf->VerticalResolution = EGL_UNKNOWN;
+   surf->AspectRatio = EGL_UNKNOWN;
+
    /* the default swap interval is 1 */
    _eglClampSwapInterval(surf, 1);
-
-#ifdef EGL_VERSION_1_2
-   surf->SwapBehavior = EGL_BUFFER_DESTROYED; /* XXX ok? */
-   surf->HorizontalResolution = EGL_UNKNOWN; /* set by caller */
-   surf->VerticalResolution = EGL_UNKNOWN; /* set by caller */
-   surf->AspectRatio = EGL_UNKNOWN; /* set by caller */
-   surf->RenderBuffer = renderBuffer;
-   surf->AlphaFormat = EGL_ALPHA_FORMAT_NONPRE;
-   surf->Colorspace = EGL_COLORSPACE_sRGB;
-#endif
 
    err = _eglParseSurfaceAttribList(surf, attrib_list);
    if (err != EGL_SUCCESS)
@@ -257,65 +279,63 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
    switch (attribute) {
    case EGL_WIDTH:
       *value = surface->Width;
-      return EGL_TRUE;
+      break;
    case EGL_HEIGHT:
       *value = surface->Height;
-      return EGL_TRUE;
+      break;
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
-      return EGL_TRUE;
+      break;
    case EGL_LARGEST_PBUFFER:
-      *value = dpy->LargestPbuffer;
-      return EGL_TRUE;
-   case EGL_SURFACE_TYPE:
-      *value = surface->Type;
-      return EGL_TRUE;
-#ifdef EGL_VERSION_1_1
+      *value = surface->LargestPbuffer;
+      break;
    case EGL_TEXTURE_FORMAT:
       /* texture attributes: only for pbuffers, no error otherwise */
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->TextureFormat;
-      return EGL_TRUE;
+      break;
    case EGL_TEXTURE_TARGET:
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->TextureTarget;
-      return EGL_TRUE;
+      break;
    case EGL_MIPMAP_TEXTURE:
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->MipmapTexture;
-      return EGL_TRUE;
+      break;
    case EGL_MIPMAP_LEVEL:
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->MipmapLevel;
-      return EGL_TRUE;
-#endif /* EGL_VERSION_1_1 */
-#ifdef EGL_VERSION_1_2
+      break;
    case EGL_SWAP_BEHAVIOR:
       *value = surface->SwapBehavior;
-      return EGL_TRUE;
+      break;
    case EGL_RENDER_BUFFER:
       *value = surface->RenderBuffer;
-      return EGL_TRUE;
+      break;
    case EGL_PIXEL_ASPECT_RATIO:
       *value = surface->AspectRatio;
-      return EGL_TRUE;
+      break;
    case EGL_HORIZONTAL_RESOLUTION:
       *value = surface->HorizontalResolution;
-      return EGL_TRUE;
+      break;
    case EGL_VERTICAL_RESOLUTION:
       *value = surface->VerticalResolution;
-      return EGL_TRUE;
-   case EGL_ALPHA_FORMAT:
-      *value = surface->AlphaFormat;
-      return EGL_TRUE;
-   case EGL_COLORSPACE:
-      *value = surface->Colorspace;
-      return EGL_TRUE;
-#endif /* EGL_VERSION_1_2 */
+      break;
+   case EGL_MULTISAMPLE_RESOLVE:
+      *value = surface->MultisampleResolve;
+      break;
+   case EGL_VG_ALPHA_FORMAT:
+      *value = surface->VGAlphaFormat;
+      break;
+   case EGL_VG_COLORSPACE:
+      *value = surface->VGColorspace;
+      break;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");
       return EGL_FALSE;
    }
+
+   return EGL_TRUE;
 }
 
 
@@ -371,14 +391,59 @@ EGLBoolean
 _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                   EGLint attribute, EGLint value)
 {
+   EGLint confval;
+   EGLint err = EGL_SUCCESS;
+
    switch (attribute) {
    case EGL_MIPMAP_LEVEL:
+      confval = GET_CONFIG_ATTRIB(surface->Config, EGL_RENDERABLE_TYPE);
+      if (!(confval & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT))) {
+         err = EGL_BAD_PARAMETER;
+         break;
+      }
       surface->MipmapLevel = value;
       break;
+   case EGL_MULTISAMPLE_RESOLVE:
+      switch (value) {
+      case EGL_MULTISAMPLE_RESOLVE_DEFAULT:
+         break;
+      case EGL_MULTISAMPLE_RESOLVE_BOX:
+         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         if (!(confval & EGL_MULTISAMPLE_RESOLVE_BOX_BIT))
+            err = EGL_BAD_MATCH;
+         break;
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+      if (err != EGL_SUCCESS)
+         break;
+      surface->MultisampleResolve = value;
+      break;
+   case EGL_SWAP_BEHAVIOR:
+      switch (value) {
+      case EGL_BUFFER_DESTROYED:
+         break;
+      case EGL_BUFFER_PRESERVED:
+         confval = GET_CONFIG_ATTRIB(surface->Config, EGL_SURFACE_TYPE);
+         if (!(confval & EGL_SWAP_BEHAVIOR_PRESERVED_BIT))
+            err = EGL_BAD_MATCH;
+         break;
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+      if (err != EGL_SUCCESS)
+         break;
+      surface->SwapBehavior = value;
+      break;
    default:
-      _eglError(EGL_BAD_ATTRIBUTE, "eglSurfaceAttrib");
-      return EGL_FALSE;
+      err = EGL_BAD_ATTRIBUTE;
+      break;
    }
+
+   if (err != EGL_SUCCESS)
+      return _eglError(err, "eglSurfaceAttrib");
    return EGL_TRUE;
 }
 

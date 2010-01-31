@@ -68,8 +68,6 @@ struct _egl_display
 
    _EGLExtensions Extensions;
 
-   int LargestPbuffer;
-
    EGLint NumScreens;
    _EGLScreen **Screens;  /* array [NumScreens] */
 
