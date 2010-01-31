@@ -38,12 +38,10 @@
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "intel_screen.h"
 #include "intel_tex.h"
 
 #include "i915_drm.h"
-#include "i830_dri.h"
 
 #define DRI_CONF_TEXTURE_TILING(def) \
 	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\

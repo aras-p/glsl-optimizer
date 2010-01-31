@@ -51,13 +51,11 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
-#include "intel_decode.h"
 #include "intel_bufmgr.h"
 #include "intel_screen.h"
 
 #include "drirenderbuffer.h"
 #include "utils.h"
-#include "xmlpool.h"            /* for symbolic values of enum-type options */
 
 
 #ifndef INTEL_DEBUG
