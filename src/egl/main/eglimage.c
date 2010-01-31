@@ -1,30 +1,60 @@
 #include <assert.h>
+#include <string.h>
 
 #include "eglimage.h"
-#include "egldisplay.h"
+#include "eglcurrent.h"
+#include "egllog.h"
 
 
 #ifdef EGL_KHR_image_base
 
 
-EGLBoolean
-_eglInitImage(_EGLDriver *drv, _EGLImage *img, const EGLint *attrib_list)
+/**
+ * Parse the list of image attributes and return the proper error code.
+ */
+static EGLint
+_eglParseImageAttribList(_EGLImage *img, const EGLint *attrib_list)
 {
-   EGLint i;
+   EGLint i, err = EGL_SUCCESS;
 
-   img->Preserved = EGL_FALSE;
+   if (!attrib_list)
+      return EGL_SUCCESS;
 
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
+   for (i = 0; attrib_list[i] != EGL_NONE; i++) {
+      EGLint attr = attrib_list[i++];
+      EGLint val = attrib_list[i];
+
+      switch (attr) {
       case EGL_IMAGE_PRESERVED_KHR:
-         i++;
-         img->Preserved = attrib_list[i];
+         img->Preserved = val;
          break;
       default:
-         /* not an error */
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+
+      if (err != EGL_SUCCESS) {
+         _eglLog(_EGL_DEBUG, "bad image attribute 0x%04x", attr);
          break;
       }
    }
+
+   return err;
+}
+
+
+EGLBoolean
+_eglInitImage(_EGLDriver *drv, _EGLImage *img, const EGLint *attrib_list)
+{
+   EGLint err;
+
+   memset(img, 0, sizeof(_EGLImage));
+
+   img->Preserved = EGL_FALSE;
+
+   err = _eglParseImageAttribList(img, attrib_list);
+   if (err != EGL_SUCCESS)
+      return _eglError(err, "eglCreateImageKHR");
 
    return EGL_TRUE;
 }
