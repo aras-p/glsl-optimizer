@@ -146,7 +146,7 @@ static void nv10_init_hwctx(struct nv10_context *nv10)
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, celsius, NV10TCL_LIGHT_MODEL, 1);
 	OUT_RING  (chan, 0);
-	BEGIN_RING(chan, celsius, NV10TCL_COLOR_CONTROL, 1);
+	BEGIN_RING(chan, celsius, NV10TCL_SEPARATE_SPECULAR_ENABLE, 1);
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, celsius, NV10TCL_ENABLED_LIGHTS, 1);
 	OUT_RING  (chan, 0);

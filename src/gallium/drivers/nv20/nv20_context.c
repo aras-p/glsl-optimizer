@@ -245,7 +245,7 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	}
 	BEGIN_RING(chan, kelvin, NV20TCL_LIGHTING_ENABLE, 1);
 	OUT_RING  (chan, 0);
-	BEGIN_RING(chan, kelvin, NV20TCL_LIGHT_CONTROL, 1);
+	BEGIN_RING(chan, kelvin, NV20TCL_LIGHT_MODEL, 1);
 	OUT_RING  (chan, 0x00020000);
 	BEGIN_RING(chan, kelvin, NV20TCL_SEPARATE_SPECULAR_ENABLE, 1);
 	OUT_RING  (chan, 0);
