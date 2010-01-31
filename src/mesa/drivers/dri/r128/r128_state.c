@@ -47,8 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
-#include "tnl/t_pipeline.h"
-
 #include "drirenderbuffer.h"
 
 

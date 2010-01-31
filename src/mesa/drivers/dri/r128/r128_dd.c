@@ -34,12 +34,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r128_context.h"
 #include "r128_ioctl.h"
-#include "r128_state.h"
 #include "r128_dd.h"
-#include "swrast/swrast.h"
 
 #include "main/context.h"
-#include "main/framebuffer.h"
 
 #include "utils.h"
 

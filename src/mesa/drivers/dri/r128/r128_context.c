@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
 
 #include "swrast/swrast.h"
