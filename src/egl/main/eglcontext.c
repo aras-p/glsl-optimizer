@@ -4,9 +4,96 @@
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
-#include "egldriver.h"
 #include "eglcurrent.h"
 #include "eglsurface.h"
+#include "egllog.h"
+
+
+/**
+ * Return the API bit (one of EGL_xxx_BIT) of the context.
+ */
+static EGLint
+_eglGetContextAPIBit(_EGLContext *ctx)
+{
+   EGLint bit = 0;
+
+   switch (ctx->ClientAPI) {
+   case EGL_OPENGL_ES_API:
+      switch (ctx->ClientVersion) {
+      case 1:
+         bit = EGL_OPENGL_ES_BIT;
+         break;
+      case 2:
+         bit = EGL_OPENGL_ES2_BIT;
+         break;
+      default:
+         break;
+      }
+      break;
+   case EGL_OPENVG_API:
+      bit = EGL_OPENVG_BIT;
+      break;
+   case EGL_OPENGL_API:
+      bit = EGL_OPENGL_BIT;
+      break;
+   default:
+      break;
+   }
+
+   return bit;
+}
+
+
+/**
+ * Parse the list of context attributes and return the proper error code.
+ */
+static EGLint
+_eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
+{
+   EGLenum api = ctx->ClientAPI;
+   EGLint i, err = EGL_SUCCESS;
+
+   if (!attrib_list)
+      return EGL_SUCCESS;
+
+   for (i = 0; attrib_list[i] != EGL_NONE; i++) {
+      EGLint attr = attrib_list[i++];
+      EGLint val = attrib_list[i];
+
+      switch (attr) {
+      case EGL_CONTEXT_CLIENT_VERSION:
+         if (api != EGL_OPENGL_ES_API) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (val != 1 && val != 2) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         ctx->ClientVersion = val;
+         break;
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+
+      if (err != EGL_SUCCESS) {
+         _eglLog(_EGL_DEBUG, "bad context attribute 0x%04x", attr);
+         break;
+      }
+   }
+
+   if (err == EGL_SUCCESS) {
+      EGLint renderable_type, api_bit;
+
+      renderable_type = GET_CONFIG_ATTRIB(ctx->Config, EGL_RENDERABLE_TYPE);
+      api_bit = _eglGetContextAPIBit(ctx);
+      if (!(renderable_type & api_bit))
+         err = EGL_BAD_CONFIG;
+   }
+
+   return err;
+}
 
 
 /**
@@ -17,8 +104,8 @@ EGLBoolean
 _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
                 _EGLConfig *conf, const EGLint *attrib_list)
 {
-   EGLint i;
    const EGLenum api = eglQueryAPI();
+   EGLint err;
 
    if (api == EGL_NONE) {
       _eglError(EGL_BAD_MATCH, "eglCreateContext(no client API)");
@@ -26,26 +113,15 @@ _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
    }
 
    memset(ctx, 0, sizeof(_EGLContext));
+   ctx->ClientAPI = api;
+   ctx->Config = conf;
+   ctx->WindowRenderBuffer = EGL_NONE;
 
    ctx->ClientVersion = 1; /* the default, per EGL spec */
 
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-      case EGL_CONTEXT_CLIENT_VERSION:
-         i++;
-         ctx->ClientVersion = attrib_list[i];
-         break;
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "_eglInitContext");
-         return EGL_FALSE;
-      }
-   }
-
-   ctx->Config = conf;
-   ctx->DrawSurface = EGL_NO_SURFACE;
-   ctx->ReadSurface = EGL_NO_SURFACE;
-   ctx->ClientAPI = api;
-   ctx->WindowRenderBuffer = EGL_NONE;
+   err = _eglParseContextAttribList(ctx, attrib_list);
+   if (err != EGL_SUCCESS)
+      return _eglError(err, "eglCreateContext");
 
    return EGL_TRUE;
 }
