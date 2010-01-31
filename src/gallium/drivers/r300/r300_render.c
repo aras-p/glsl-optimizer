@@ -142,7 +142,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     /* Stride to the same attrib in the next vertex in the vertex buffer,
      * in dwords. */
-    unsigned stride[PIPE_MAX_ATTRIBS];
+    unsigned stride[PIPE_MAX_ATTRIBS] = {0};
 
     /* Mapped vertex buffers. */
     uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
