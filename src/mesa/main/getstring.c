@@ -27,7 +27,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "get.h"
-#include "version.h"
 #include "enums.h"
 #include "extensions.h"
 

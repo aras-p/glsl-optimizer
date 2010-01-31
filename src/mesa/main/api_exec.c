@@ -66,14 +66,12 @@
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
 #endif
-#include "ffvertex_prog.h"
 #include "framebuffer.h"
 #include "hint.h"
 #include "histogram.h"
 #include "imports.h"
 #include "light.h"
 #include "lines.h"
-#include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
 #include "pixel.h"
@@ -83,7 +81,6 @@
 #include "queryobj.h"
 #include "readpix.h"
 #include "scissor.h"
-#include "state.h"
 #include "stencil.h"
 #include "texenv.h"
 #include "texgetimage.h"
@@ -109,7 +106,6 @@
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#include "debug.h"
 #include "glapi/dispatch.h"
 
 
