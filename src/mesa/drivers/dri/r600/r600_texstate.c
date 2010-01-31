@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 
 #include "r600_context.h"
-#include "r700_state.h"
 #include "radeon_mipmap_tree.h"
 #include "r600_tex.h"
 #include "r700_fragprog.h"

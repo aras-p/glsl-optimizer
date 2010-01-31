@@ -26,7 +26,6 @@
 
 #include "main/glheader.h"
 #include "main/mtypes.h"
-#include "main/state.h"
 #include "main/imports.h"
 #include "main/enums.h"
 #include "main/macros.h"
@@ -36,11 +35,9 @@
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "main/api_arrayelt.h"
-#include "main/state.h"
 #include "main/framebuffer.h"
 
 #include "shader/prog_parameter.h"

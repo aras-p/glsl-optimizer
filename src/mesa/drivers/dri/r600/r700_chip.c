@@ -32,12 +32,10 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_state.h"
 #include "r600_tex.h"
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
-#include "r700_ioctl.h"
 
 #include "radeon_mipmap_tree.h"
 

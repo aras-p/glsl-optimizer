@@ -35,7 +35,6 @@
 #include "main/glheader.h"
 
 #include "r600_context.h"
-#include "r700_debug.h"
 
 #include "r700_shader.h"
 

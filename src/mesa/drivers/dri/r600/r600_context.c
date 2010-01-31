@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
-#include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -52,7 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
 
@@ -71,9 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r700_ioctl.h"
 
 
-#include "vblank.h"
 #include "utils.h"
-#include "xmlpool.h"		/* for symbolic values of enum-type options */
 
 #define R600_ENABLE_GLSL_TEST 1
 

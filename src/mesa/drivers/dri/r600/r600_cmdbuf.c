@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/context.h"
 #include "main/simple_list.h"
-#include "swrast/swrast.h"
 
 #include "drm.h"
 #include "radeon_drm.h"
@@ -49,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
-#include "radeon_mipmap_tree.h"
 #include "radeon_reg.h"
 
 #ifdef HAVE_LIBDRM_RADEON

@@ -42,7 +42,6 @@
 #include "tnl/t_vp_build.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
-#include "tnl/t_pipeline.h"
 #include "vbo/vbo_context.h"
 
 #include "r600_context.h"
