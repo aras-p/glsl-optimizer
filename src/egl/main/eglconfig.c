@@ -325,11 +325,12 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
             mask = EGL_PBUFFER_BIT |
                    EGL_PIXMAP_BIT |
                    EGL_WINDOW_BIT |
-                   EGL_SCREEN_BIT_MESA | /* XXX should check the extension */
                    EGL_VG_COLORSPACE_LINEAR_BIT |
                    EGL_VG_ALPHA_FORMAT_PRE_BIT |
                    EGL_MULTISAMPLE_RESOLVE_BOX_BIT |
                    EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+            if (conf->Display->Extensions.MESA_screen_surface)
+               mask |= EGL_SCREEN_BIT_MESA;
             break;
          case EGL_RENDERABLE_TYPE:
          case EGL_CONFORMANT:
