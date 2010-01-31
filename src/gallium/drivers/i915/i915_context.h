@@ -167,7 +167,7 @@ struct i915_depth_stencil_state {
 };
 
 struct i915_rasterizer_state {
-   int light_twoside : 1;
+   unsigned light_twoside : 1;
    unsigned st;
    enum interp_mode color_interp;
 
