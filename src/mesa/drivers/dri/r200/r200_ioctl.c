@@ -46,13 +46,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_common.h"
 #include "radeon_lock.h"
 #include "r200_context.h"
-#include "r200_state.h"
 #include "r200_ioctl.h"
-#include "r200_tcl.h"
-#include "r200_sanity.h"
 #include "radeon_reg.h"
 
-#include "drirenderbuffer.h"
 #include "vblank.h"
 
 #define R200_TIMEOUT             512

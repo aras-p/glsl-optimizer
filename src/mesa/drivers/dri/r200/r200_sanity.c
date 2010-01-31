@@ -38,7 +38,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 
 #include "r200_context.h"
-#include "r200_ioctl.h"
 #include "r200_sanity.h"
 #include "radeon_reg.h"
 #include "r200_reg.h"

@@ -44,7 +44,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/s_context.h"
 #include "swrast/s_fog.h"
 #include "swrast_setup/swrast_setup.h"
-#include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
