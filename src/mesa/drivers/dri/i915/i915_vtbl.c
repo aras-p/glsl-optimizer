@@ -40,7 +40,6 @@
 #include "intel_regions.h"
 #include "intel_tris.h"
 #include "intel_fbo.h"
-#include "intel_chipset.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
