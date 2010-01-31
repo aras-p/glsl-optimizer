@@ -25,7 +25,6 @@
 #include <X11/Xlib.h>
 
 #include "glutint.h"
-#include "layerutil.h"
 
 /* CENTRY */
 /* DEPRICATED, use glutMenuStatusFunc instead. */

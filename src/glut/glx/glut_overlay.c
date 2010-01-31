@@ -17,7 +17,6 @@
 #if !defined(_WIN32)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>  /* for XA_RGB_DEFAULT_MAP atom */
 #if defined (__vms)
 #include <Xmu/StdCmap.h>  /* for XmuLookupStandardColormap */
 #else
