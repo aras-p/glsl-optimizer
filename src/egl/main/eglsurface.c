@@ -31,6 +31,138 @@ _eglClampSwapInterval(_EGLSurface *surf, EGLint interval)
 
 
 /**
+ * Parse the list of surface attributes and return the proper error code.
+ */
+static EGLint
+_eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
+{
+   EGLint type = surf->Type;
+   EGLint i, err = EGL_SUCCESS;
+
+   if (!attrib_list)
+      return EGL_SUCCESS;
+
+   for (i = 0; attrib_list[i] != EGL_NONE; i++) {
+      EGLint attr = attrib_list[i++];
+      EGLint val = attrib_list[i];
+
+      switch (attr) {
+#ifdef EGL_VERSION_1_3
+      /* common (except for screen surfaces) attributes */
+      case EGL_VG_COLORSPACE:
+         if (type == EGL_SCREEN_BIT_MESA) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         switch (val) {
+         case EGL_VG_COLORSPACE_sRGB:
+         case EGL_VG_COLORSPACE_LINEAR:
+            break;
+         default:
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (err != EGL_SUCCESS)
+            break;
+         surf->Colorspace = val;
+         break;
+      case EGL_VG_ALPHA_FORMAT:
+         if (type == EGL_SCREEN_BIT_MESA) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         switch (val) {
+         case EGL_VG_ALPHA_FORMAT_NONPRE:
+         case EGL_VG_ALPHA_FORMAT_PRE:
+            break;
+         default:
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (err != EGL_SUCCESS)
+            break;
+         surf->AlphaFormat = val;
+         break;
+      /* window surface attributes */
+      case EGL_RENDER_BUFFER:
+         if (type != EGL_WINDOW_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (val != EGL_BACK_BUFFER && val != EGL_SINGLE_BUFFER) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         surf->RenderBuffer = val;
+         break;
+#endif /* EGL_VERSION_1_3 */
+      /* pbuffer surface attributes */
+      case EGL_WIDTH:
+         if (type != EGL_PBUFFER_BIT && type != EGL_SCREEN_BIT_MESA) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (val < 0) {
+            err = EGL_BAD_PARAMETER;
+            break;
+         }
+         surf->Width = val;
+         break;
+      case EGL_HEIGHT:
+         if (type != EGL_PBUFFER_BIT && type != EGL_SCREEN_BIT_MESA) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (val < 0) {
+            err = EGL_BAD_PARAMETER;
+            break;
+         }
+         surf->Height = val;
+         break;
+      case EGL_LARGEST_PBUFFER:
+         if (type != EGL_PBUFFER_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         break;
+      case EGL_TEXTURE_FORMAT:
+         if (type != EGL_PBUFFER_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         surf->TextureFormat = val;
+         break;
+      case EGL_TEXTURE_TARGET:
+         if (type != EGL_PBUFFER_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         surf->TextureTarget = val;
+         break;
+      case EGL_MIPMAP_TEXTURE:
+         if (type != EGL_PBUFFER_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         surf->MipmapTexture = val;
+         break;
+      /* no pixmap surface specific attributes */
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+
+      if (err != EGL_SUCCESS) {
+         _eglLog(_EGL_WARNING, "bad surface attribute 0x%04x", attr);
+         break;
+      }
+   }
+
+   return err;
+}
+
+
+/**
  * Do error check on parameters and initialize the given _EGLSurface object.
  * \return EGL_TRUE if no errors, EGL_FALSE otherwise.
  */
@@ -39,15 +171,8 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
                 _EGLConfig *conf, const EGLint *attrib_list)
 {
    const char *func;
-   EGLint width = 0, height = 0, largest = 0;
-   EGLint texFormat = EGL_NO_TEXTURE, texTarget = EGL_NO_TEXTURE;
-   EGLint mipmapTex = EGL_FALSE;
    EGLint renderBuffer = EGL_BACK_BUFFER;
-#ifdef EGL_VERSION_1_2
-   EGLint colorspace = EGL_COLORSPACE_sRGB;
-   EGLint alphaFormat = EGL_ALPHA_FORMAT_NONPRE;
-#endif
-   EGLint i;
+   EGLint err;
 
    switch (type) {
    case EGL_WINDOW_BIT:
@@ -69,145 +194,21 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
       return EGL_FALSE;
    }
 
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, func);
-      return EGL_FALSE;
-   }
-
    if ((GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) & type) == 0) {
       /* The config can't be used to create a surface of this type */
       _eglError(EGL_BAD_CONFIG, func);
       return EGL_FALSE;
    }
 
-   /*
-    * Parse attribute list.  Different kinds of surfaces support different
-    * attributes.
-    */
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-      case EGL_WIDTH:
-         if (type == EGL_PBUFFER_BIT || type == EGL_SCREEN_BIT_MESA) {
-            width = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_HEIGHT:
-         if (type == EGL_PBUFFER_BIT || type == EGL_SCREEN_BIT_MESA) {
-            height = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_LARGEST_PBUFFER:
-         if (type == EGL_PBUFFER_BIT) {
-            largest = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_TEXTURE_FORMAT:
-         if (type == EGL_PBUFFER_BIT) {
-            texFormat = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_TEXTURE_TARGET:
-         if (type == EGL_PBUFFER_BIT) {
-            texTarget = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_MIPMAP_TEXTURE:
-         if (type == EGL_PBUFFER_BIT) {
-            mipmapTex = attrib_list[++i];
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-#ifdef EGL_VERSION_1_2
-      case EGL_RENDER_BUFFER:
-         if (type == EGL_WINDOW_BIT) {
-            renderBuffer = attrib_list[++i];
-            if (renderBuffer != EGL_BACK_BUFFER &&
-                renderBuffer != EGL_SINGLE_BUFFER) {
-               _eglError(EGL_BAD_ATTRIBUTE, func);
-               return EGL_FALSE;
-            }
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_COLORSPACE:
-         if (type == EGL_WINDOW_BIT ||
-             type == EGL_PBUFFER_BIT ||
-             type == EGL_PIXMAP_BIT) {
-            colorspace = attrib_list[++i];
-            if (colorspace != EGL_COLORSPACE_sRGB &&
-                colorspace != EGL_COLORSPACE_LINEAR) {
-               _eglError(EGL_BAD_ATTRIBUTE, func);
-               return EGL_FALSE;
-            }
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-      case EGL_ALPHA_FORMAT:
-         if (type == EGL_WINDOW_BIT ||
-             type == EGL_PBUFFER_BIT ||
-             type == EGL_PIXMAP_BIT) {
-            alphaFormat = attrib_list[++i];
-            if (alphaFormat != EGL_ALPHA_FORMAT_NONPRE &&
-                alphaFormat != EGL_ALPHA_FORMAT_PRE) {
-               _eglError(EGL_BAD_ATTRIBUTE, func);
-               return EGL_FALSE;
-            }
-         }
-         else {
-            _eglError(EGL_BAD_ATTRIBUTE, func);
-            return EGL_FALSE;
-         }
-         break;
-
-#endif /* EGL_VERSION_1_2 */
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, func);
-         return EGL_FALSE;
-      }
-   }
-
-   if (width < 0 || height < 0) {
-      _eglError(EGL_BAD_ATTRIBUTE, func);
-      return EGL_FALSE;
-   }
-
    memset(surf, 0, sizeof(_EGLSurface));
-   surf->Config = conf;
    surf->Type = type;
-   surf->Width = width;
-   surf->Height = height;
-   surf->TextureFormat = texFormat;
-   surf->TextureTarget = texTarget;
-   surf->MipmapTexture = mipmapTex;
+   surf->Config = conf;
+
+   surf->Width = 0;
+   surf->Height = 0;
+   surf->TextureFormat = EGL_NO_TEXTURE;
+   surf->TextureTarget = EGL_NO_TEXTURE;
+   surf->MipmapTexture = EGL_FALSE;
    surf->MipmapLevel = 0;
    /* the default swap interval is 1 */
    _eglClampSwapInterval(surf, 1);
@@ -218,9 +219,13 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
    surf->VerticalResolution = EGL_UNKNOWN; /* set by caller */
    surf->AspectRatio = EGL_UNKNOWN; /* set by caller */
    surf->RenderBuffer = renderBuffer;
-   surf->AlphaFormat = alphaFormat;
-   surf->Colorspace = colorspace;
+   surf->AlphaFormat = EGL_ALPHA_FORMAT_NONPRE;
+   surf->Colorspace = EGL_COLORSPACE_sRGB;
 #endif
+
+   err = _eglParseSurfaceAttribList(surf, attrib_list);
+   if (err != EGL_SUCCESS)
+      return _eglError(err, func);
 
    return EGL_TRUE;
 }
