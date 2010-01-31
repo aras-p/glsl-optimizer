@@ -111,27 +111,12 @@ _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *display, EGLScreenMESA *screens
 
 
 /**
- * Example function - drivers should do a proper implementation.
+ * Drivers should do a proper implementation.
  */
 _EGLSurface *
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                             const EGLint *attrib_list)
 {
-#if 0 /* THIS IS JUST EXAMPLE CODE */
-   _EGLSurface *surf;
-
-   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
-   if (!surf)
-      return NULL;
-
-   if (!_eglInitSurface(drv, surf, EGL_SCREEN_BIT_MESA,
-                        conf, attrib_list)) {
-      free(surf);
-      return NULL;
-   }
-
-   return surf;
-#endif
    return NULL;
 }
 

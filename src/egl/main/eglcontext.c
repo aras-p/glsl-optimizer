@@ -58,20 +58,6 @@ _EGLContext *
 _eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                   _EGLContext *share_list, const EGLint *attrib_list)
 {
-#if 0 /* example code */
-   _EGLContext *context;
-
-   context = (_EGLContext *) calloc(1, sizeof(_EGLContext));
-   if (!context)
-      return NULL;
-
-   if (!_eglInitContext(drv, context, conf, attrib_list)) {
-      free(context);
-      return NULL;
-   }
-
-   return context;
-#endif
    return NULL;
 }
 
