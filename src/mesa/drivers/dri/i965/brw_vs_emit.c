@@ -1438,7 +1438,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint insn, if_depth = 0, loop_depth = 0;
    GLuint end_offset = 0;
    struct brw_instruction *end_inst, *last_inst;
-   struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
+   struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH] = { 0 };
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
