@@ -59,6 +59,7 @@ static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
 static void r700UpdatePolygonMode(GLcontext * ctx);
 static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
 static void r700SetStencilState(GLcontext * ctx, GLboolean state);
+static void r700UpdateWindow(GLcontext * ctx, int id);
 
 void r700UpdateShaders(GLcontext * ctx)
 {
@@ -779,6 +780,9 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		break;
 	case GL_LINE_STIPPLE:
 		r700UpdateLineStipple(ctx);
+		break;
+	case GL_DEPTH_CLAMP:
+		r700UpdateWindow(ctx, 0);
 		break;
 	default:
 		break;
@@ -1576,9 +1580,9 @@ static void r700InitSQConfig(GLcontext * ctx)
     SETbit(r700->sq_config.SQ_CONFIG.u32All, DX9_CONSTS_bit);
     SETbit(r700->sq_config.SQ_CONFIG.u32All, ALU_INST_PREFER_VECTOR_bit);
     SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, PS_PRIO_shift, PS_PRIO_mask);
-    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, VS_PRIO_shift, VS_PRIO_mask);
-    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, GS_PRIO_shift, GS_PRIO_mask);
-    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, ES_PRIO_shift, ES_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, vs_prio, VS_PRIO_shift, VS_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, gs_prio, GS_PRIO_shift, GS_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, es_prio, ES_PRIO_shift, ES_PRIO_mask);
 
     r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All = 0;
     SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, num_ps_gprs, NUM_PS_GPRS_shift, NUM_PS_GPRS_mask);

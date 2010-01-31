@@ -64,7 +64,7 @@ run_point_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       for (i = 0; i < VB->Count; i++) {
          const GLfloat dist = FABSF(*eyeCoord);
          const GLfloat q = p0 + dist * (p1 + dist * p2);
-         const GLfloat atten = (q != 0.0) ? SQRTF(1.0 / q) : 1.0;
+         const GLfloat atten = (q != 0.0F) ? SQRTF(1.0F / q) : 1.0F;
          size[i][0] = pointSize * atten; /* clamping done in rasterization */
          eyeCoord += eyeCoordStride;
       }

@@ -1157,7 +1157,4 @@ i915InitState(struct i915_context *i915)
    i915_init_packets(i915);
 
    _mesa_init_driver_state(ctx);
-
-   memcpy(&i915->initial, &i915->state, sizeof(i915->state));
-   i915->current = &i915->state;
 }

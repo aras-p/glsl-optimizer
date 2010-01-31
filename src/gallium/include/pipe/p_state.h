@@ -58,7 +58,7 @@ extern "C" {
 #define PIPE_MAX_ATTRIBS          32
 #define PIPE_MAX_CLIP_PLANES       6
 #define PIPE_MAX_COLOR_BUFS        8
-#define PIPE_MAX_CONSTANT         32
+#define PIPE_MAX_CONSTANT_BUFFERS 32
 #define PIPE_MAX_SAMPLERS         16
 #define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
@@ -217,7 +217,7 @@ struct pipe_depth_stencil_alpha_state
 };
 
 
-struct pipe_blend_state
+struct pipe_rt_blend_state
 {
    unsigned blend_enable:1;
 
@@ -229,11 +229,16 @@ struct pipe_blend_state
    unsigned alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 
+   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
+};
+
+struct pipe_blend_state
+{
+   unsigned independent_blend_enable:1;
    unsigned logicop_enable:1;
    unsigned logicop_func:4;      /**< PIPE_LOGICOP_x */
-
-   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
    unsigned dither:1;
+   struct pipe_rt_blend_state rt[PIPE_MAX_COLOR_BUFS];
 };
 
 
@@ -269,7 +274,7 @@ struct pipe_sampler_state
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
-   unsigned prefilter:4;         /**< Wierd sampling state exposed by some api's */
+   unsigned prefilter:4;         /**< Cylindrical texcoord wrap, per coord, exposed by some api's */
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
    float border_color[4];

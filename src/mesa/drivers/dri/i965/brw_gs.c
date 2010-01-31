@@ -125,12 +125,13 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Upload
     */
    dri_bo_unreference(brw->gs.prog_bo);
-   brw->gs.prog_bo = brw_upload_cache( &brw->cache, BRW_GS_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->gs.prog_data );
+   brw->gs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_GS_PROG,
+						   &c.key, sizeof(c.key),
+						   NULL, 0,
+						   program, program_size,
+						   &c.prog_data,
+						   sizeof(c.prog_data),
+						   &brw->gs.prog_data);
 }
 
 static const GLenum gs_prim[GL_POLYGON+1] = {  

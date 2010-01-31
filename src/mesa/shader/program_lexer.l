@@ -23,12 +23,12 @@
  */
 #include "main/glheader.h"
 #include "main/imports.h"
-#include "prog_instruction.h"
-#include "prog_statevars.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_statevars.h"
 
-#include "symbol_table.h"
-#include "program_parser.h"
-#include "program_parse.tab.h"
+#include "shader/symbol_table.h"
+#include "shader/program_parser.h"
+#include "shader/program_parse.tab.h"
 
 #define require_ARB_vp (yyextra->mode == ARB_vertex)
 #define require_ARB_fp (yyextra->mode == ARB_fragment)

@@ -38,7 +38,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"

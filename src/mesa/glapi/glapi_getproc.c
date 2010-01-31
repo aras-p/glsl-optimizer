@@ -34,9 +34,9 @@
 #include <string.h>
 #include "main/glheader.h"
 #include "main/compiler.h"
-#include "glapi.h"
-#include "glapioffsets.h"
-#include "glapitable.h"
+#include "glapi/glapi.h"
+#include "glapi/glapioffsets.h"
+#include "glapi/glapitable.h"
 
 
 static void
@@ -75,7 +75,7 @@ str_dup(const char *str)
 #endif
 
 /* The code in this file is auto-generated with Python */
-#include "glprocs.h"
+#include "glapi/glprocs.h"
 
 
 /**

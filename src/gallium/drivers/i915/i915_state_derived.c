@@ -33,7 +33,6 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
-#include "i915_fpc.h"
 
 
 

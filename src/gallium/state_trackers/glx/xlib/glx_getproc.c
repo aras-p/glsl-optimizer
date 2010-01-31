@@ -193,7 +193,7 @@ _glxapi_get_proc_address(const char *funcName)
 }
 
 
-__GLXextFuncPtr
+PUBLIC __GLXextFuncPtr
 glXGetProcAddressARB(const GLubyte *procName)
 {
    __GLXextFuncPtr f;

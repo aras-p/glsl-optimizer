@@ -36,7 +36,6 @@
 #include <string.h>
 #include <limits.h>		/* UINT_MAX */
 #include <math.h>
-#include "gluint.h"
 
 typedef union {
     unsigned char ub[4];

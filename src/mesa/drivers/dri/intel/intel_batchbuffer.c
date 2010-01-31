@@ -32,44 +32,6 @@
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
 
-/* Relocations in kernel space:
- *    - pass dma buffer seperately
- *    - memory manager knows how to patch
- *    - pass list of dependent buffers
- *    - pass relocation list
- *
- * Either:
- *    - get back an offset for buffer to fire
- *    - memory manager knows how to fire buffer
- *
- * Really want the buffer to be AGP and pinned.
- *
- */
-
-/* Cliprect fence: The highest fence protecting a dma buffer
- * containing explicit cliprect information.  Like the old drawable
- * lock but irq-driven.  X server must wait for this fence to expire
- * before changing cliprects [and then doing sw rendering?].  For
- * other dma buffers, the scheduler will grab current cliprect info
- * and mix into buffer.  X server must hold the lock while changing
- * cliprects???  Make per-drawable.  Need cliprects in shared memory
- * -- beats storing them with every cmd buffer in the queue.
- *
- * ==> X server must wait for this fence to expire before touching the
- * framebuffer with new cliprects.
- *
- * ==> Cliprect-dependent buffers associated with a
- * cliprect-timestamp.  All of the buffers associated with a timestamp
- * must go to hardware before any buffer with a newer timestamp.
- *
- * ==> Dma should be queued per-drawable for correct X/GL
- * synchronization.  Or can fences be used for this?
- *
- * Applies to: Blit operations, metaops, X server operations -- X
- * server automatically waits on its own dma to complete before
- * modifying cliprects ???
- */
-
 void
 intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 {
@@ -167,7 +129,8 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
+   if (!intel->using_dri2_swapbuffers &&
+       intel->first_post_swapbuffers_batch == NULL) {
       intel->first_post_swapbuffers_batch = intel->batch->buf;
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }

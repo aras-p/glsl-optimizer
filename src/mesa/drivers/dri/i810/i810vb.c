@@ -38,7 +38,6 @@
 #include "i810context.h"
 #include "i810vb.h"
 #include "i810ioctl.h"
-#include "i810tris.h"
 #include "i810state.h"
 
 

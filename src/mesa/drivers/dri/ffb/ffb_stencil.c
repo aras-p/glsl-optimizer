@@ -32,8 +32,6 @@
 #include "ffb_stencil.h"
 #include "ffb_lock.h"
 
-#include "swrast/swrast.h"
-
 #undef STENCIL_TRACE
 
 static void FFBWriteStencilSpan( GLcontext *ctx,

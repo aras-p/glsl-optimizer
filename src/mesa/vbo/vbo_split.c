@@ -108,11 +108,13 @@ void vbo_split_prims( GLcontext *ctx,
 		      vbo_draw_func draw,
 		      const struct split_limits *limits )
 {
-   GLuint max_basevertex = prim->basevertex;
+   GLint max_basevertex = prim->basevertex;
    GLuint i;
 
    for (i = 1; i < nr_prims; i++)
       max_basevertex = MAX2(max_basevertex, prim[i].basevertex);
+
+   /* XXX max_basevertex is computed but not used, why? */
 
    if (ib) {
       if (limits->max_indices == 0) {

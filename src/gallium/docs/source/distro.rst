@@ -61,10 +61,7 @@ VMWare SVGA
 ATI r300
 ^^^^^^^^
 
-AMD/ATI r600
-^^^^^^^^^^^^
-
-Highly experimental.
+Testing-quality.
 
 Softpipe
 ^^^^^^^^
@@ -109,8 +106,16 @@ Auxiliary
 CSO Cache
 ^^^^^^^^^
 
+The CSO cache is used to accelerate preparation of state by saving
+driver-specific state structures for later use.
+
+.. _draw:
+
 Draw
 ^^^^
+
+Draw is a software :term:`TCL` pipeline for hardware that lacks vertex shaders
+or other essential parts of pre-rasterization vertex preparation.
 
 Gallivm
 ^^^^^^^
@@ -118,11 +123,14 @@ Gallivm
 Indices
 ^^^^^^^
 
-Tool for translating or generating element indices for element-based
-rendering.
+Indices provides tools for translating or generating element indices for
+use with element-based rendering.
 
-Pipe Buffer Manager
-^^^^^^^^^^^^^^^^^^^
+Pipe Buffer Managers
+^^^^^^^^^^^^^^^^^^^^
+
+Each of these managers provides various services to drivers that are not
+fully utilizing a memory manager.
 
 Remote Debugger
 ^^^^^^^^^^^^^^^
@@ -133,7 +141,8 @@ Runtime Assembly Emission
 TGSI
 ^^^^
 
-Basic utilities for manipulating TGSI streams.
+The TGSI auxiliary module provides basic utilities for manipulating TGSI
+streams.
 
 Translate
 ^^^^^^^^^

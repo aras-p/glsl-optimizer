@@ -6,6 +6,9 @@
 #include "eglapi.h"
 
 
+typedef _EGLDriver *(*_EGLMain_t)(const char *args);
+
+
 /**
  * Base class for device drivers.
  */
@@ -16,9 +19,22 @@ struct _egl_driver
    const char *Args;  /**< args to load this driver */
 
    const char *Name;  /**< name of this driver */
-   /**< probe a display to see if it is supported */
-   EGLBoolean (*Probe)(_EGLDriver *drv, _EGLDisplay *dpy);
-   /**< called before dlclose to release this driver */
+
+   /**
+    * Probe a display and return a score.
+    *
+    * Roughly,
+    *  50 means the driver supports the display;
+    *  90 means the driver can accelerate the display;
+    * 100 means a perfect match.
+    */
+   EGLint (*Probe)(_EGLDriver *drv, _EGLDisplay *dpy);
+
+   /**
+    * Release the driver resource.
+    *
+    * It is called before dlclose().
+    */
    void (*Unload)(_EGLDriver *drv);
 
    _EGLAPI API;  /**< EGL API dispatch table */
@@ -29,32 +45,28 @@ PUBLIC _EGLDriver *
 _eglMain(const char *args);
 
 
-extern const char *
-_eglPreloadDriver(_EGLDisplay *dpy);
-
-
 extern _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy);
+_eglMatchDriver(_EGLDisplay *dpy);
 
 
 extern EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy);
+_eglPreloadDrivers(void);
 
 
-void
+extern void
 _eglUnloadDrivers(void);
-
-
-extern _EGLDriver *
-_eglLookupDriver(EGLDisplay d);
 
 
 PUBLIC void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
-PUBLIC EGLint
-_eglFindAPIs(void);
+PUBLIC void
+_eglSetProbeCache(EGLint key, const void *val);
+
+
+PUBLIC const void *
+_eglGetProbeCache(EGLint key);
 
 
 #endif /* EGLDRIVER_INCLUDED */

@@ -42,10 +42,10 @@ class PrintGlEnums(gl_XML.gl_print_base):
 
 
 	def printRealHeader(self):
-		print '#include "glheader.h"'
-		print '#include "mfeatures.h"'
-		print '#include "enums.h"'
-		print '#include "imports.h"'
+		print '#include "main/glheader.h"'
+		print '#include "main/mfeatures.h"'
+		print '#include "main/enums.h"'
+		print '#include "main/imports.h"'
 		print ''
 		print 'typedef struct {'
 		print '   size_t offset;'

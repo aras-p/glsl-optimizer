@@ -259,36 +259,20 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define DBG 0
 
 #define LOCAL_VARS							\
-   struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
    const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
-   unsigned int num_cliprects;						\
-   struct drm_clip_rect *cliprects;					\
-   int x_off, y_off;							\
+   int minx = 0, miny = 0;						\
+   int maxx = ctx->DrawBuffer->Width;					\
+   int maxy = ctx->DrawBuffer->Height;					\
    int pitch = irb->region->pitch * irb->region->cpp;			\
    void *buf = irb->region->buffer->virtual;				\
    GLuint p;								\
    (void) p;								\
    (void)buf; (void)pitch; /* unused for non-gttmap. */			\
-   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
 
-/* XXX FBO: this is identical to the macro in spantmp2.h except we get
- * the cliprect info from the context, not the driDrawable.
- * Move this into spantmp2.h someday.
- */
-#define HW_CLIPLOOP()							\
-   do {									\
-      int _nc = num_cliprects;						\
-      while ( _nc-- ) {							\
-	 int minx = cliprects[_nc].x1 - x_off;				\
-	 int miny = cliprects[_nc].y1 - y_off;				\
-	 int maxx = cliprects[_nc].x2 - x_off;				\
-	 int maxy = cliprects[_nc].y2 - y_off;
-	
-#if 0
-      }}
-#endif
+#define HW_CLIPLOOP()
+#define HW_ENDCLIPLOOP()
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
@@ -297,9 +281,9 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define HW_UNLOCK()
 
 /* Convenience macros to avoid typing the swizzle argument over and over */
-#define NO_TILE(_X, _Y) no_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
-#define X_TILE(_X, _Y) x_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
-#define Y_TILE(_X, _Y) y_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
+#define NO_TILE(_X, _Y) no_tile_swizzle(irb, (_X), (_Y))
+#define X_TILE(_X, _Y) x_tile_swizzle(irb, (_X), (_Y))
+#define Y_TILE(_X, _Y) y_tile_swizzle(irb, (_X), (_Y))
 
 /* r5g6b5 color span and pixel functions */
 #define INTEL_PIXEL_FMT GL_RGB
@@ -342,18 +326,15 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #include "intel_spantmp.h"
 
 #define LOCAL_DEPTH_VARS						\
-   struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
    const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
-   unsigned int num_cliprects;						\
-   struct drm_clip_rect *cliprects;					\
-   int x_off, y_off;							\
+   int minx = 0, miny = 0;						\
+   int maxx = ctx->DrawBuffer->Width;					\
+   int maxy = ctx->DrawBuffer->Height;					\
    int pitch = irb->region->pitch * irb->region->cpp;			\
    void *buf = irb->region->buffer->virtual;				\
    (void)buf; (void)pitch; /* unused for non-gttmap. */			\
-   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
-
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 

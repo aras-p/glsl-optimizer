@@ -28,45 +28,7 @@
 #include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
 #include "main/framebuffer.h"
-#include "drirenderbuffer.h"
-
-
-/**
- * XXX move this into a new dri/common/cliprects.c file.
- */
-GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dst,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b)
-{
-   GLint bx = b->x1;
-   GLint by = b->y1;
-   GLint bw = b->x2 - bx;
-   GLint bh = b->y2 - by;
-
-   if (bx < a->x1)
-      bw -= a->x1 - bx, bx = a->x1;
-   if (by < a->y1)
-      bh -= a->y1 - by, by = a->y1;
-   if (bx + bw > a->x2)
-      bw = a->x2 - bx;
-   if (by + bh > a->y2)
-      bh = a->y2 - by;
-   if (bw <= 0)
-      return GL_FALSE;
-   if (bh <= 0)
-      return GL_FALSE;
-
-   dst->x1 = bx;
-   dst->y1 = by;
-   dst->x2 = bx + bw;
-   dst->y2 = by + bh;
-
-   return GL_TRUE;
-}
 
 /**
  * Return pointer to current color drawing region, or NULL.
@@ -95,24 +57,6 @@ intel_readbuf_region(struct intel_context *intel)
    else
       return NULL;
 }
-
-void
-intel_get_cliprects(struct intel_context *intel,
-		    struct drm_clip_rect **cliprects,
-		    unsigned int *num_cliprects,
-		    int *x_off, int *y_off)
-{
-   intel->fboRect.x1 = 0;
-   intel->fboRect.y1 = 0;
-   intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
-   intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
-
-   *cliprects = &intel->fboRect;
-   *num_cliprects = 1;
-   *x_off = 0;
-   *y_off = 0;
-}
-
 
 /**
  * Check if we're about to draw into the front color buffer.

@@ -36,7 +36,6 @@
 #include <math.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
 
 #if !defined(GL_EXT_texture_array) && !defined(GL_MESA_texture_array)
 # error "This demo requires enums for either GL_EXT_texture_array or GL_MESA_texture_array to build."

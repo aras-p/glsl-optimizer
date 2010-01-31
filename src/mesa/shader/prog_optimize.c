@@ -459,7 +459,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
        */
       for (j = i + 1; j < prog->NumInstructions; j++) {
 	 struct prog_instruction *inst2 = prog->Instructions + j;
-	 int arg;
+	 GLuint arg;
 
 	 if (_mesa_is_flow_control_opcode(inst2->Opcode))
 	     break;
@@ -867,7 +867,7 @@ find_live_intervals(struct gl_program *prog,
          _mesa_printf("Reg[%d] live [%d, %d]:",
                       inv->Reg, inv->Start, inv->End);
          if (1) {
-            int j;
+            GLuint j;
             for (j = 0; j < inv->Start; j++)
                _mesa_printf(" ");
             for (j = inv->Start; j <= inv->End; j++)
@@ -945,7 +945,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
           */
          {
             GLint j;
-            for (j = 0; j < activeIntervals.Num; j++) {
+            for (j = 0; j < (GLint) activeIntervals.Num; j++) {
                const struct interval *inv = activeIntervals.Intervals + j;
                if (inv->End >= live->Start) {
                   /* Stop now.  Since the activeInterval list is sorted
@@ -994,7 +994,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
       }
    }
 
-   if (maxTemp + 1 < liveIntervals.Num) {
+   if (maxTemp + 1 < (GLint) liveIntervals.Num) {
       /* OK, we've reduced the number of registers needed.
        * Scan the program and replace all the old temporary register
        * indexes with the new indexes.

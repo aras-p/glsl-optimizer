@@ -100,6 +100,12 @@ struct radeon_winsys {
 			 void (*flush_cb)(void *), void *data);
 
     void (*reset_bos)(struct radeon_winsys *winsys);
+
+    void (*buffer_set_tiling)(struct radeon_winsys* winsys,
+                              struct pipe_buffer* buffer,
+                              uint32_t pitch,
+                              boolean microtiled,
+                              boolean macrotiled);
 };
 
 #endif

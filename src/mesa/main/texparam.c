@@ -33,7 +33,6 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
-#include "main/enums.h"
 #include "main/formats.h"
 #include "main/macros.h"
 #include "main/texcompress.h"

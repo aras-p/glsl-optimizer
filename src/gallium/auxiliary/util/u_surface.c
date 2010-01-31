@@ -37,7 +37,6 @@
 #include "pipe/p_defines.h"
 
 #include "util/u_memory.h"
-#include "util/u_format.h"
 #include "util/u_surface.h"
 
 

@@ -248,12 +248,12 @@ VGboolean polygon_is_closed(struct polygon *p)
 static void set_blend_for_fill(struct pipe_blend_state *blend)
 {
    memset(blend, 0, sizeof(struct pipe_blend_state));
-   blend->colormask = 0; /*disable colorwrites*/
+   blend->rt[0].colormask = 0; /*disable colorwrites*/
 
-   blend->rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend->rgb_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-   blend->alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+   blend->rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend->rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+   blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
 }
 
 static void draw_polygon(struct vg_context *ctx,

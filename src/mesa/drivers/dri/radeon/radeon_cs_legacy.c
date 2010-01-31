@@ -180,7 +180,6 @@ static int cs_begin(struct radeon_cs_int *cs,
 
     if (cs->cdw + ndw > cs->ndw) {
         uint32_t tmp, *ptr;
-	int num = (ndw > 0x3FF) ? ndw : 0x3FF;
 
         tmp = (cs->cdw + ndw + 0x3ff) & (~0x3ff);
         ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);

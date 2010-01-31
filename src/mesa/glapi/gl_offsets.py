@@ -30,9 +30,10 @@ import license
 import sys, getopt
 
 class PrintGlOffsets(gl_XML.gl_print_base):
-	def __init__(self):
+	def __init__(self, es=False):
 		gl_XML.gl_print_base.__init__(self)
 
+		self.es = es
 		self.name = "gl_offsets.py (from Mesa)"
 		self.header_tag = '_GLAPI_OFFSETS_H_'
 		self.license = license.bsd_license_template % ( \
@@ -41,22 +42,24 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		return
 
 	def printBody(self, api):
-		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
-
 		print '/* this file should not be included directly in mesa */'
 		print ''
 
 		functions = []
 		abi_functions = []
+		alias_functions = []
 		count = 0
 		for f in api.functionIterateByOffset():
-			[category, num] = api.get_category_for_name( f.name )
-			if category not in abi:
+			if not f.is_abi():
 				functions.append( [f, count] )
 				count += 1
 			else:
 				abi_functions.append( f )
 
+			if self.es:
+				# remember functions with aliases
+				if len(f.entry_points) > 1:
+					alias_functions.append(f)
 
 		for f in abi_functions:
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
@@ -81,26 +84,37 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		print ''
 		print '#endif /* !defined(_GLAPI_USE_REMAP_TABLE) */'
 
+		if alias_functions:
+			print ''
+			print '/* define aliases for compatibility */'
+			for f in alias_functions:
+				for name in f.entry_points:
+					if name != f.name:
+						print '#define _gloffset_%s _gloffset_%s' % (name, f.name)
 		return
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-c]" % sys.argv[0]
+	print "    -c        Enable compatibility with OpenGL ES."
 	sys.exit(1)
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
     
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:c")
 	except Exception,e:
 		show_usage()
 
+	es = False
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
+		elif arg == "-c":
+			es = True
 
 	api = gl_XML.parse_GL_API( file_name )
 
-	printer = PrintGlOffsets()
+	printer = PrintGlOffsets(es)
 	printer.Print( api )

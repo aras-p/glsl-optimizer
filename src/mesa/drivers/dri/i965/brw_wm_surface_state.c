@@ -256,8 +256,7 @@ brw_create_texture_surface( struct brw_context *brw,
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
-			 &surf, sizeof(surf),
-			 NULL, NULL);
+			 &surf, sizeof(surf));
 
    if (key->bo) {
       /* Emit relocation to surface contents */
@@ -351,8 +350,7 @@ brw_create_constant_surface( struct brw_context *brw,
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
-			 &surf, sizeof(surf),
-			 NULL, NULL);
+			 &surf, sizeof(surf));
 
    if (key->bo) {
       /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
@@ -579,7 +577,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.draw_y = 0;
    }
    /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask[0],
+   memcpy(key.color_mask, ctx->Color.ColorMask[unit],
 	  sizeof(key.color_mask));
 
    /* As mentioned above, disable writes to the alpha component when the
@@ -589,7 +587,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
      key.color_mask[3] = GL_FALSE;
 
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      ctx->Color.BlendEnabled);
+		      (ctx->Color.BlendEnabled & (1 << unit)));
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
@@ -653,8 +651,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
                                                BRW_SS_SURFACE,
                                                &key, sizeof(key),
 					       &region_bo, 1,
-					       &surf, sizeof(surf),
-					       NULL, NULL);
+					       &surf, sizeof(surf));
       if (region_bo != NULL) {
 	 /* We might sample from it, and we might render to it, so flag
 	  * them both.  We might be able to figure out from other state
@@ -701,8 +698,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
       bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->wm.surf_bo, brw->wm.nr_surfaces,
-				  data, data_size,
-				  NULL, NULL);
+				  data, data_size);
 
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_WM_MAX_SURF; i++) {

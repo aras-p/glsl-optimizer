@@ -149,26 +149,26 @@ _swrast_update_polygon( GLcontext *ctx )
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
-         backface_sign = -1.0;
+         backface_sign = -1.0F;
 	 break;
       case GL_FRONT:
-         backface_sign = 1.0;
+         backface_sign = 1.0F;
 	 break;
       case GL_FRONT_AND_BACK:
          /* fallthrough */
       default:
-	 backface_sign = 0.0;
+	 backface_sign = 0.0F;
       }
    }
    else {
-      backface_sign = 0.0;
+      backface_sign = 0.0F;
    }
 
    SWRAST_CONTEXT(ctx)->_BackfaceCullSign = backface_sign;
 
    /* This is for front/back-face determination, but not for culling */
    SWRAST_CONTEXT(ctx)->_BackfaceSign
-      = (ctx->Polygon.FrontFace == GL_CW) ? -1.0 : 1.0;
+      = (ctx->Polygon.FrontFace == GL_CW) ? -1.0F : 1.0F;
 }
 
 

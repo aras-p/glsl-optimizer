@@ -63,7 +63,7 @@
 #include <stdbool.h>
 
 
-#ifndef __HAIKU__
+#if !defined(__HAIKU__) && !defined(__USE_MISC)
 typedef unsigned int       uint;
 typedef unsigned short     ushort;
 #endif
@@ -104,7 +104,8 @@ typedef unsigned char boolean;
 
 /* Function visibility */
 #ifndef PUBLIC
-#  if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  if (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303) \
+	|| (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PUBLIC __attribute__((visibility("default")))
 #  else
 #    define PUBLIC
@@ -140,7 +141,7 @@ typedef unsigned char boolean;
 
 
 /* Macros for data alignment. */
-#if defined(__GNUC__)
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 
 /* See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Type-Attributes.html */
 #define PIPE_ALIGN_TYPE(_alignment, _type) _type __attribute__((aligned(_alignment)))
@@ -159,6 +160,13 @@ typedef unsigned char boolean;
 /* See http://msdn.microsoft.com/en-us/library/83ythb65.aspx */
 #define PIPE_ALIGN_TYPE(_alignment, _type) __declspec(align(_alignment)) _type
 #define PIPE_ALIGN_VAR(_alignment) __declspec(align(_alignment))
+
+#define PIPE_ALIGN_STACK
+
+#elif defined(SWIG)
+
+#define PIPE_ALIGN_TYPE(_alignment, _type) _type
+#define PIPE_ALIGN_VAR(_alignment)
 
 #define PIPE_ALIGN_STACK
 

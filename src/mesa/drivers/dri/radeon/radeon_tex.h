@@ -52,6 +52,6 @@ extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,
 
 extern void radeonDestroyTexObj( r100ContextPtr rmesa, radeonTexObjPtr t );
 
-extern void radeonInitTextureFuncs( struct dd_function_table *functions );
+extern void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions );
 
 #endif /* __RADEON_TEX_H__ */

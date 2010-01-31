@@ -434,7 +434,7 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 
 
 
-void radeonInitTextureFuncs( struct dd_function_table *functions )
+void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
    functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
    functions->TexImage1D		= radeonTexImage1D;
@@ -454,6 +454,11 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
 
    functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
    functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
+
+   if (radeon->radeonScreen->kernel_mm) {
+      functions->CopyTexImage2D = radeonCopyTexImage2D;
+      functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
+   }
 
    functions->GenerateMipmap = radeonGenerateMipmap;
 

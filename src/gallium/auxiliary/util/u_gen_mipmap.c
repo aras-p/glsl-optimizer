@@ -1287,7 +1287,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.colormask = PIPE_MASK_RGBA;
+   ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
    memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
@@ -1411,8 +1411,8 @@ set_vertex_data(struct gen_mipmap_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
-                     offset, sizeof(ctx->vertices), ctx->vertices);
+   pipe_buffer_write_nooverlap(ctx->pipe->screen, ctx->vbuf,
+                               offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
 }

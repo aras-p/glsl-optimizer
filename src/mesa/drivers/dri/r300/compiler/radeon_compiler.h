@@ -23,6 +23,8 @@
 #ifndef RADEON_COMPILER_H
 #define RADEON_COMPILER_H
 
+#include "../../../../main/compiler.h"
+
 #include "memory_pool.h"
 #include "radeon_code.h"
 #include "radeon_program.h"

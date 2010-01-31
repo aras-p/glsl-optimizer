@@ -345,7 +345,7 @@ struct parse_state {
 };
 
 
-static __inline unsigned int
+static unsigned int
 _emit(struct parse_context *ctx,
       unsigned int *out,
       unsigned char b)

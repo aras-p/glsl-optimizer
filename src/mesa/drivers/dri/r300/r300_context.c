@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
-#include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -52,13 +50,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
 
 #include "r300_context.h"
-#include "radeon_context.h"
 #include "radeon_span.h"
 #include "r300_blit.h"
 #include "r300_cmdbuf.h"
@@ -70,7 +66,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_buffer_objects.h"
 #include "radeon_queryobj.h"
 
-#include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
@@ -92,8 +87,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_NV_vertex_program
 
 #include "main/remap_helper.h"
-
-void r300_init_texcopy_functions(struct dd_function_table *table);
 
 static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
@@ -326,6 +319,8 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 			radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
 	} else
 		radeon->vtbl.emit_query_finish = r300_emit_query_finish;
+
+    radeon->vtbl.blit = r300_blit;
 }
 
 static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -451,6 +446,8 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
 		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 	}
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350)
+  		_mesa_enable_extension(ctx, "GL_ARB_half_float_vertex");
 }
 
 static void r300InitIoctlFuncs(struct dd_function_table *functions)
@@ -488,14 +485,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
-	r300InitTextureFuncs(&functions);
+	r300InitTextureFuncs(&r300->radeon, &functions);
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
-
-	if (r300->radeon.radeonScreen->kernel_mm) {
-		r300_init_texcopy_functions(&functions);
-	}
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,

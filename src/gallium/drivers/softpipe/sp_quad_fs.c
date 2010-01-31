@@ -45,8 +45,6 @@
 #include "sp_state.h"
 #include "sp_quad.h"
 #include "sp_quad_pipe.h"
-#include "sp_texture.h"
-#include "sp_tex_sample.h"
 
 
 struct quad_shade_stage
@@ -109,10 +107,11 @@ shade_quads(struct quad_stage *qs,
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = qss->machine;
-
    unsigned i, pass = 0;
-   
-   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+
+   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
+      machine->Consts[i] = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT][i];
+   }
    machine->InterpCoefs = quads[0]->coef;
 
    for (i = 0; i < nr; i++) {

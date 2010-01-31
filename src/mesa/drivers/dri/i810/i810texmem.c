@@ -35,7 +35,6 @@
 #include "i810_dri.h"
 #include "i810context.h"
 #include "i810tex.h"
-#include "i810state.h"
 #include "i810ioctl.h"
 
 

@@ -85,6 +85,7 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 	CLEARfield(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
+	CLEARbit(t->SQ_TEX_RESOURCE4, SQ_TEX_RESOURCE_WORD4_0__FORCE_DEGAMMA_bit);
 
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
 		 FORMAT_COMP_X_shift, FORMAT_COMP_X_mask);
@@ -94,6 +95,11 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 		 FORMAT_COMP_Z_shift, FORMAT_COMP_Z_mask);
 	SETfield(t->SQ_TEX_RESOURCE4, SQ_FORMAT_COMP_UNSIGNED,
 		 FORMAT_COMP_W_shift, FORMAT_COMP_W_mask);
+
+	CLEARbit(t->SQ_TEX_RESOURCE0, TILE_TYPE_bit);
+	SETfield(t->SQ_TEX_RESOURCE0, ARRAY_LINEAR_GENERAL,
+		 SQ_TEX_RESOURCE_WORD0_0__TILE_MODE_shift,
+		 SQ_TEX_RESOURCE_WORD0_0__TILE_MODE_mask);
 
 	switch (mesa_format) /* This is mesa format. */
 	{
@@ -156,6 +162,32 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
+		break;
+	case MESA_FORMAT_XRGB8888:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Z,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Y,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_1,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
+		break;
+	case MESA_FORMAT_XRGB8888_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_1,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_Z,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_W,
+			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+		SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
 			 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		break;
 	case MESA_FORMAT_ARGB8888_REV:
@@ -515,6 +547,10 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 	case MESA_FORMAT_Z24_S8:
 	case MESA_FORMAT_Z32:
 	case MESA_FORMAT_S8:
+		SETbit(t->SQ_TEX_RESOURCE0, TILE_TYPE_bit);
+		SETfield(t->SQ_TEX_RESOURCE0, ARRAY_1D_TILED_THIN1,
+			 SQ_TEX_RESOURCE_WORD0_0__TILE_MODE_shift,
+			 SQ_TEX_RESOURCE_WORD0_0__TILE_MODE_mask);
 		switch (mesa_format) {
 		case MESA_FORMAT_Z16:
 			SETfield(t->SQ_TEX_RESOURCE1, FMT_16,
@@ -651,6 +687,12 @@ static GLuint r600_translate_shadow_func(GLenum func)
    }
 }
 
+static INLINE uint32_t
+S_FIXED(float value, uint32_t frac_bits)
+{
+   return value * (1 << frac_bits);
+}
+
 void r600SetDepthTexMode(struct gl_texture_object *tObj)
 {
 	radeonTexObjPtr t;
@@ -670,8 +712,9 @@ void r600SetDepthTexMode(struct gl_texture_object *tObj)
  * \param rmesa Context pointer
  * \param t the r300 texture object
  */
-static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *texObj)
+static void setup_hardware_state(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
 {
+	context_t *rmesa = R700_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	const struct gl_texture_image *firstImage;
 	GLuint uTexelPitch, row_align;
@@ -733,11 +776,21 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
 
 	t->SQ_TEX_RESOURCE2 = get_base_teximage_offset(t) / 256;
 
-	if ((t->maxLod - t->minLod) > 0) {
-		t->SQ_TEX_RESOURCE3 = radeon_miptree_image_offset(t->mt, 0, t->minLod + 1) / 256;
-		SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask);
-		SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
-	}
+	t->SQ_TEX_RESOURCE3 = radeon_miptree_image_offset(t->mt, 0, t->minLod + 1) / 256;
+
+	SETfield(t->SQ_TEX_RESOURCE4, 0, BASE_LEVEL_shift, BASE_LEVEL_mask);
+	SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
+
+	SETfield(t->SQ_TEX_SAMPLER1,
+		S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 6),
+		MIN_LOD_shift, MIN_LOD_mask);
+	SETfield(t->SQ_TEX_SAMPLER1,
+		S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 6),
+		MAX_LOD_shift, MAX_LOD_mask);
+	SETfield(t->SQ_TEX_SAMPLER1,
+		S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 6),
+		SQ_TEX_SAMPLER_WORD1_0__LOD_BIAS_shift, SQ_TEX_SAMPLER_WORD1_0__LOD_BIAS_mask);
+
 	if(texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
 	{
 		SETfield(t->SQ_TEX_SAMPLER0, r600_translate_shadow_func(texObj->CompareFunc), DEPTH_COMPARE_FUNCTION_shift, DEPTH_COMPARE_FUNCTION_mask);
@@ -754,9 +807,8 @@ static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *tex
  *
  * Mostly this means populating the texture object's mipmap tree.
  */
-static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj)
+static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj, int unit)
 {
-	context_t *rmesa = R700_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
 
 	if (!radeon_validate_texture_miptree(ctx, texObj))
@@ -764,7 +816,7 @@ static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object
 
 	/* Configure the hardware registers (more precisely, the cached version
 	 * of the hardware registers). */
-	setup_hardware_state(rmesa, texObj);
+	setup_hardware_state(ctx, texObj, unit);
 
 	t->validated = GL_TRUE;
 	return GL_TRUE;
@@ -805,7 +857,7 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 		if (!ctx->Texture.Unit[i]._ReallyEnabled)
 			continue;
 
-		if (!r600_validate_texture(ctx, ctx->Texture.Unit[i]._Current)) {
+		if (!r600_validate_texture(ctx, ctx->Texture.Unit[i]._Current, i)) {
 			radeon_warning("failed to validate texture for unit %d.\n", i);
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);

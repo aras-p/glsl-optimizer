@@ -32,7 +32,6 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_defines.h"
 
 
 static enum pipe_error prepare_cc_vp( struct brw_context *brw )

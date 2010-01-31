@@ -7,32 +7,69 @@ The rasterizer state controls the rendering of points, lines and triangles.
 Attributes include polygon culling state, line width, line stipple,
 multisample state, scissoring and flat/smooth shading.
 
-
 Members
 -------
 
+bypass_vs_clip_and_viewport
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Whether the entire TCL pipeline should be bypassed. This implies that
+vertices are pre-transformed for the viewport, and will not be run
+through the vertex shader.
+
+.. note::
+   
+   Implementations may still clip away vertices that are not in the viewport
+   when this is set.
+
 flatshade
-    If set, the provoking vertex of each polygon is used to determine the
-    color of the entire polygon.  If not set, fragment colors will be
-    interpolated between the vertex colors.
-    Note that this is separate from the fragment shader input attributes
-    CONSTANT, LINEAR and PERSPECTIVE.  We need the flatshade state at
+^^^^^^^^^
+
+If set, the provoking vertex of each polygon is used to determine the color
+of the entire polygon.  If not set, fragment colors will be interpolated
+between the vertex colors.
+
+The actual interpolated shading algorithm is obviously
+implementation-dependent, but will usually be Gourard for most hardware.
+
+.. note::
+
+    This is separate from the fragment shader input attributes
+    CONSTANT, LINEAR and PERSPECTIVE. The flatshade state is needed at
     clipping time to determine how to set the color of new vertices.
-    Also note that the draw module can implement flat shading by copying
-    the provoking vertex color to all the other vertices in the primitive.
+
+    :ref:`Draw` can implement flat shading by copying the provoking vertex
+    color to all the other vertices in the primitive.
 
 flatshade_first
-    Whether the first vertex should be the provoking vertex, for most
-    primitives. If not set, the last vertex is the provoking vertex.
+^^^^^^^^^^^^^^^
+
+Whether the first vertex should be the provoking vertex, for most primitives.
+If not set, the last vertex is the provoking vertex.
+
+There are several important exceptions to the specification of this rule.
+
+* ``PIPE_PRIMITIVE_POLYGON``: The provoking vertex is always the first
+  vertex. If the caller wishes to change the provoking vertex, they merely
+  need to rotate the vertices themselves.
+* ``PIPE_PRIMITIVE_QUAD``, ``PIPE_PRIMITIVE_QUAD_STRIP``: This option has no
+  effect; the provoking vertex is always the last vertex.
+* ``PIPE_PRIMITIVE_TRIANGLE_FAN``: When set, the provoking vertex is the
+  second vertex, not the first. This permits each segment of the fan to have
+  a different color.
+
+Other Members
+^^^^^^^^^^^^^
 
 light_twoside
-    If set, there are per-vertex back-facing colors.  The draw module
+    If set, there are per-vertex back-facing colors. :ref:`Draw`
     uses this state along with the front/back information to set the
     final vertex colors prior to rasterization.
 
 front_winding
     Indicates the window order of front-facing polygons, either
     PIPE_WINDING_CW or PIPE_WINDING_CCW
+
 cull_mode
     Indicates which polygons to cull, either PIPE_WINDING_NONE (cull no
     polygons), PIPE_WINDING_CW (cull clockwise-winding polygons),
@@ -68,7 +105,7 @@ line_stipple_enable
 line_stipple_pattern
     16-bit bitfield of on/off flags, used to pattern the line stipple.
 line_stipple_factor
-    When drawinga stippled line, each bit in the stipple pattern is
+    When drawing a stippled line, each bit in the stipple pattern is
     repeated N times, where N = line_stipple_factor + 1.
 line_last_pixel
     Controls whether the last pixel in a line is drawn or not.  OpenGL
@@ -96,7 +133,7 @@ sprite_coord_mode
     lower left vertex will have coordinate (0,0,0,1).
     For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left vertex will have
     coordinate (0,0,0,1).
-    This state is needed by the 'draw' module because that's where each
+    This state is needed by :ref:`Draw` because that's where each
     point vertex is converted into four quad vertices.  There's no other
     place to emit the new vertex texture coordinates which are required for
     sprite rendering.
@@ -108,45 +145,9 @@ scissor
     Whether the scissor test is enabled.
 
 multisample
-    Whether :ref:`MSAA` is enabled.
-
-bypass_vs_clip_and_viewport
-    Whether the entire TCL pipeline should be bypassed. This implies that
-    vertices are pre-transformed for the viewport, and will not be run
-    through the vertex shader. Note that implementations may still clip away
-    vertices that are not in the viewport.
+    Whether :term:`MSAA` is enabled.
 
 gl_rasterization_rules
     Whether the rasterizer should use (0.5, 0.5) pixel centers. When not set,
     the rasterizer will use (0, 0) for pixel centers.
 
-
-Notes
------
-
-flatshade
-^^^^^^^^^
-
-The actual interpolated shading algorithm is obviously
-implementation-dependent, but will usually be Gourard for most hardware.
-
-bypass_vs_clip_and_viewport
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When set, this implies that vertices are pre-transformed for the viewport, and
-will not be run through the vertex shader. Note that implementations may still
-clip away vertices that are not visible.
-
-flatshade_first
-^^^^^^^^^^^^^^^
-
-There are several important exceptions to the specification of this rule.
-
-* ``PIPE_PRIMITIVE_POLYGON``: The provoking vertex is always the first
-  vertex. If the caller wishes to change the provoking vertex, they merely
-  need to rotate the vertices themselves.
-* ``PIPE_PRIMITIVE_QUAD``, ``PIPE_PRIMITIVE_QUAD_STRIP``: This option has no
-  effect; the provoking vertex is always the last vertex.
-* ``PIPE_PRIMITIVE_TRIANGLE_FAN``: When set, the provoking vertex is the
-  second vertex, not the first. This permits each segment of the fan to have
-  a different color.

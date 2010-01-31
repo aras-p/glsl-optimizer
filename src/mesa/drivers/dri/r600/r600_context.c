@@ -65,6 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_queryobj.h"
+#include "r600_blit.h"
 
 #include "r700_state.h"
 #include "r700_ioctl.h"
@@ -240,16 +241,16 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
+	radeon->vtbl.blit = r600_blit;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
-	context_t *r600 = R700_CONTEXT(ctx);
-
-	ctx->Const.MaxTextureImageUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_image_units");
-	ctx->Const.MaxTextureCoordUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_coord_units");
+	ctx->Const.MaxTextureImageUnits = 16;
+	/* 8 per clause on r6xx, 16 on r7xx
+	 * but I think mesa only supports 8 at the moment
+	 */
+	ctx->Const.MaxTextureCoordUnits = 8;
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
@@ -284,9 +285,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 32;
 	ctx->Const.FragmentProgram.MaxNativeParameters = 256;
 	ctx->Const.FragmentProgram.MaxNativeAluInstructions = 8192;
-	/* 8 per clause on r6xx, 16 on rv670/r7xx */
-	if ((screen->chip_family == CHIP_FAMILY_RV670) ||
-	    (screen->chip_family >= CHIP_FAMILY_RV770))
+	/* 8 per clause on r6xx, 16 on r7xx */
+	if (screen->chip_family >= CHIP_FAMILY_RV770)
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 16;
 	else
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 8;
@@ -378,16 +378,12 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 
 	r700InitStateFuncs(&functions);
-	r600InitTextureFuncs(&functions);
+	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	r700InitIoctlFuncs(&functions);
 	radeonInitBufferObjectFuncs(&functions);
 
-	if (r600->radeon.radeonScreen->kernel_mm) {
-                r600_init_texcopy_functions(&functions);
-        }
-	
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {

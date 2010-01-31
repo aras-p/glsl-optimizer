@@ -138,19 +138,43 @@ void emit_wpos_xy(struct brw_wm_compile *c,
     * X and Y channels.
     */
    if (mask & WRITEMASK_X) {
-      /* X' = X - origin */
-      brw_ADD(p,
-	      dst[0],
-	      retype(arg0[0], BRW_REGISTER_TYPE_W),
-	      brw_imm_d(0 - c->key.origin_x));
+      if (c->fp->program.PixelCenterInteger) {
+	 /* X' = X */
+	 brw_MOV(p,
+		 dst[0],
+		 retype(arg0[0], BRW_REGISTER_TYPE_W));
+      } else {
+	 /* X' = X + 0.5 */
+	 brw_ADD(p,
+		 dst[0],
+		 retype(arg0[0], BRW_REGISTER_TYPE_W),
+		 brw_imm_f(0.5));
+      }
    }
 
    if (mask & WRITEMASK_Y) {
-      /* Y' = height - (Y - origin_y) = height + origin_y - Y */
-      brw_ADD(p,
-	      dst[1],
-	      negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
-	      brw_imm_d(c->key.origin_y + c->key.drawable_height - 1));
+      if (c->fp->program.OriginUpperLeft) {
+	 if (c->fp->program.PixelCenterInteger) {
+	    /* Y' = Y */
+	    brw_MOV(p,
+		    dst[1],
+		    retype(arg0[1], BRW_REGISTER_TYPE_W));
+	 } else {
+	    /* Y' = Y + 0.5 */
+	    brw_ADD(p,
+		    dst[1],
+		    retype(arg0[1], BRW_REGISTER_TYPE_W),
+		    brw_imm_f(0.5));
+	 }
+      } else {
+	 float center_offset = c->fp->program.PixelCenterInteger ? 0.0 : 0.5;
+
+	 /* Y' = (height - 1) - Y + center */
+	 brw_ADD(p,
+		 dst[1],
+		 negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
+		 brw_imm_f(c->key.drawable_height - 1 + center_offset));
+      }
    }
 }
 

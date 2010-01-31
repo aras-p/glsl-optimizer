@@ -20,6 +20,7 @@ PROGS = \
 	copypix \
 	cubemap \
 	dinoshade \
+	dissolve \
 	drawpix \
 	engine \
 	fbo_firecube \
@@ -122,13 +123,6 @@ reflect: reflect.o showbuffer.o readtex.o
 
 reflect.o: reflect.c showbuffer.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
-
-
-shadowtex: shadowtex.o showbuffer.o
-	$(APP_CC) $(CFLAGS) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
-
-shadowtex.o: shadowtex.c showbuffer.h
-	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o

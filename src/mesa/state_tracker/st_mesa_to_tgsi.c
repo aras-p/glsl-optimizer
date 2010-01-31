@@ -34,8 +34,10 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
+#include "pipe/p_context.h"
 #include "tgsi/tgsi_ureg.h"
 #include "st_mesa_to_tgsi.h"
+#include "st_context.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
@@ -48,6 +50,10 @@ struct label {
    unsigned token;
 };
 
+
+/**
+ * Intermediate state used during shader translation.
+ */
 struct st_translate {
    struct ureg_program *ureg;
 
@@ -661,6 +667,22 @@ compile_instruction(
    }
 }
 
+/**
+ * Emit the TGSI instructions to adjust the WPOS pixel center convention
+ */
+static void
+emit_adjusted_wpos( struct st_translate *t,
+                    const struct gl_program *program, GLfloat value)
+{
+   struct ureg_program *ureg = t->ureg;
+   struct ureg_dst wpos_temp = ureg_DECL_temporary(ureg);
+   struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
+
+   ureg_ADD(ureg, ureg_writemask(wpos_temp, TGSI_WRITEMASK_X | TGSI_WRITEMASK_Y),
+		   wpos_input, ureg_imm1f(ureg, value));
+
+   t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
+}
 
 /**
  * Emit the TGSI instructions for inverting the WPOS y coordinate.
@@ -686,12 +708,17 @@ emit_inverted_wpos( struct st_translate *t,
                                                        winSizeState);
 
    struct ureg_src winsize = ureg_DECL_constant( ureg, winHeightConst );
-   struct ureg_dst wpos_temp = ureg_DECL_temporary( ureg );
+   struct ureg_dst wpos_temp;
    struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
 
    /* MOV wpos_temp, input[wpos]
     */
-   ureg_MOV( ureg, wpos_temp, wpos_input );
+   if (wpos_input.File == TGSI_FILE_TEMPORARY)
+      wpos_temp = ureg_dst(wpos_input);
+   else {
+      wpos_temp = ureg_DECL_temporary( ureg );
+      ureg_MOV( ureg, wpos_temp, wpos_input );
+   }
 
    /* SUB wpos_temp.y, winsize_const, wpos_input
     */
@@ -730,6 +757,7 @@ emit_face_var( struct st_translate *t,
    t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
 }
 
+
 static void
 emit_edgeflags( struct st_translate *t,
                  const struct gl_program *program )
@@ -740,6 +768,7 @@ emit_edgeflags( struct st_translate *t,
 
    ureg_MOV( ureg, edge_dst, edge_src );
 }
+
 
 /**
  * Translate Mesa program to TGSI format.
@@ -758,7 +787,7 @@ emit_edgeflags( struct st_translate *t,
  * \param outputSemanticIndex  the semantic index (ex: which texcoord) for
  *                             each output
  *
- * \return  array of translated tokens, caller's responsibility to free
+ * \return  PIPE_OK or PIPE_ERROR_OUT_OF_MEMORY
  */
 enum pipe_error
 st_translate_mesa_program(
@@ -779,6 +808,7 @@ st_translate_mesa_program(
 {
    struct st_translate translate, *t;
    unsigned i;
+   enum pipe_error ret = PIPE_OK;
 
    t = &translate;
    memset(t, 0, sizeof *t);
@@ -794,6 +824,7 @@ st_translate_mesa_program(
     * Declare input attributes.
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      struct gl_fragment_program* fp = (struct gl_fragment_program*)program;
       for (i = 0; i < numInputs; i++) {
          t->inputs[i] = ureg_DECL_fs_input(ureg,
                                            inputSemanticName[i],
@@ -805,7 +836,51 @@ st_translate_mesa_program(
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
-         emit_inverted_wpos( t, program );
+         struct pipe_screen* pscreen = st_context(ctx)->pipe->screen;
+         boolean invert = FALSE;
+
+         if (fp->OriginUpperLeft) {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
+            }
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
+               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+               invert = TRUE;
+            }
+            else
+               assert(0);
+         }
+         else {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
+               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
+               invert = TRUE;
+            else
+               assert(0);
+         }
+
+         if (fp->PixelCenterInteger) {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
+               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
+               emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
+            else
+               assert(0);
+         }
+         else {
+            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
+            }
+            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
+               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+               emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
+            }
+            else
+               assert(0);
+         }
+
+         /* we invert after adjustment so that we avoid the MOV to temporary,
+          * and reuse the adjustment ADD instead */
+         if (invert)
+            emit_inverted_wpos(t, program);
       }
 
       if (program->InputsRead & FRAG_BIT_FACE) {
@@ -865,8 +940,10 @@ st_translate_mesa_program(
       
       t->constants = CALLOC( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
-      if (t->constants == NULL)
+      if (t->constants == NULL) {
+         ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
+      }
       
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
@@ -920,8 +997,6 @@ st_translate_mesa_program(
                         t->insn[t->labels[i].branch_target] );
    }
 
-   return PIPE_OK;
-
 out:
    FREE(t->insn);
    FREE(t->labels);
@@ -931,7 +1006,7 @@ out:
       debug_printf("%s: translate error flag set\n", __FUNCTION__);
    }
 
-   return PIPE_ERROR_OUT_OF_MEMORY;
+   return ret;
 }
 
 

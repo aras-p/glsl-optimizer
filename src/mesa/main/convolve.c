@@ -38,7 +38,6 @@
 #include "context.h"
 #include "image.h"
 #include "mtypes.h"
-#include "pixel.h"
 #include "state.h"
 #include "glapi/dispatch.h"
 

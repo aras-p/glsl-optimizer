@@ -38,7 +38,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 
 #include "r128_context.h"
-#include "r128_state.h"
 #include "r128_ioctl.h"
 #include "r128_tris.h"
 #include "r128_tex.h"

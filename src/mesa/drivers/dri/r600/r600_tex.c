@@ -396,7 +396,7 @@ static struct gl_texture_object *r600NewTextureObject(GLcontext * ctx,
 	return &t->base;
 }
 
-void r600InitTextureFuncs(struct dd_function_table *functions)
+void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 	/* Note: we only plug in the functions we implement in the driver
 	 * since _mesa_init_driver_functions() was already called.
@@ -423,6 +423,11 @@ void r600InitTextureFuncs(struct dd_function_table *functions)
 
 	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
+
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyTexImage2D = radeonCopyTexImage2D;
+		functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
+	}
 
 	functions->GenerateMipmap = radeonGenerateMipmap;
 

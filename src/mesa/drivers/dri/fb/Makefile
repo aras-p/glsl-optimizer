@@ -5,9 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = fb_dri.so
 
-ifeq ($(USING_EGL), 1)
-EGL_SOURCES = server/radeon_egl.c
-endif
 
 DRIVER_SOURCES = \
 	fb_dri.c \

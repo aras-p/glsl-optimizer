@@ -210,7 +210,7 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
    GLfloat p[4];
@@ -269,7 +269,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    struct gl_texture_unit *texUnit;

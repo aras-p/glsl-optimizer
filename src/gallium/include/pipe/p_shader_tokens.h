@@ -109,16 +109,23 @@ struct tgsi_declaration
    unsigned File        : 4;  /**< one of TGSI_FILE_x */
    unsigned UsageMask   : 4;  /**< bitmask of TGSI_WRITEMASK_x flags */
    unsigned Interpolate : 4;  /**< one of TGSI_INTERPOLATE_x */
+   unsigned Dimension   : 1;  /**< any extra dimension info? */
    unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
    unsigned Centroid    : 1;  /**< centroid sampling? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
-   unsigned Padding     : 5;
+   unsigned Padding     : 4;
 };
 
 struct tgsi_declaration_range
 {
    unsigned First   : 16; /**< UINT */
    unsigned Last    : 16; /**< UINT */
+};
+
+struct tgsi_declaration_dimension
+{
+   unsigned Index2D:16; /**< UINT */
+   unsigned Padding:16;
 };
 
 #define TGSI_SEMANTIC_POSITION   0
@@ -163,7 +170,9 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
 #define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
 #define TGSI_PROPERTY_GS_MAX_VERTICES        2
-#define TGSI_PROPERTY_COUNT                  3
+#define TGSI_PROPERTY_FS_COORD_ORIGIN        3
+#define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
+#define TGSI_PROPERTY_COUNT                  5
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
@@ -171,6 +180,12 @@ struct tgsi_property {
    unsigned PropertyName : 8;  /**< one of TGSI_PROPERTY */
    unsigned Padding      : 12;
 };
+
+#define TGSI_FS_COORD_ORIGIN_UPPER_LEFT 0
+#define TGSI_FS_COORD_ORIGIN_LOWER_LEFT 1
+
+#define TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 0
+#define TGSI_FS_COORD_PIXEL_CENTER_INTEGER 1
 
 struct tgsi_property_data {
    unsigned Data;

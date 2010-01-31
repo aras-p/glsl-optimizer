@@ -1036,10 +1036,11 @@ static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state
 			OUT_BATCH_TABLE(atom->cmd, dwords);
 			END_BATCH();
 		}
+		atom->dirty = GL_FALSE;
+
 	} else {
 		radeon_print(RADEON_STATE, RADEON_VERBOSE, "  skip state %s\n", atom->name);
 	}
-	atom->dirty = GL_FALSE;
 
 }
 

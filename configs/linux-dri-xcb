@@ -47,21 +47,8 @@ DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
                 $(LIBDRM_LIB) $(shell pkg-config --libs xcb) $(shell pkg-config --libs x11-xcb) $(shell pkg-config --libs xcb-glx)
 
-
-# This is now 0 by default since it seems to confuse the hell out of people
-# and generate a lot of extra noise on bugzilla.  If you need to build with
-# EGL, do 'make linux-dri USING_EGL=1'
-
-USING_EGL=0
-
-# Directories
-ifeq ($(USING_EGL), 1)
-SRC_DIRS = egl glx/x11 gallium mesa glu glut/glx glew glw
-PROGRAM_DIRS = egl
-else
 SRC_DIRS = glx/x11 gallium mesa glu glut/glx glew glw
 PROGRAM_DIRS = xdemos
-endif
 
 DRIVER_DIRS = dri
 WINDOW_SYSTEM=dri

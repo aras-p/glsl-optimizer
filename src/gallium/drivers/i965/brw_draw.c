@@ -34,7 +34,6 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_debug.h"
-#include "brw_screen.h"
 
 #include "brw_batchbuffer.h"
 

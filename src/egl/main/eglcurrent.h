@@ -1,6 +1,7 @@
 #ifndef EGLCURRENT_INCLUDED
 #define EGLCURRENT_INCLUDED
 
+
 #include "egltypedefs.h"
 
 
@@ -73,15 +74,11 @@ _eglIsCurrentThreadDummy(void);
 
 
 PUBLIC _EGLContext *
+_eglGetAPIContext(EGLenum api);
+
+
+PUBLIC _EGLContext *
 _eglGetCurrentContext(void);
-
-
-PUBLIC _EGLDisplay *
-_eglGetCurrentDisplay(void);
-
-
-PUBLIC _EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw);
 
 
 PUBLIC EGLBoolean

@@ -1,9 +1,9 @@
-
 #ifndef EGLCONTEXT_INCLUDED
 #define EGLCONTEXT_INCLUDED
 
 
 #include "egltypedefs.h"
+#include "egldisplay.h"
 
 
 /**
@@ -11,9 +11,8 @@
  */
 struct _egl_context
 {
-   /* Managed by EGLDisplay for linking */
-   _EGLDisplay *Display;
-   _EGLContext *Next;
+   /* A context is a display resource */
+   _EGLResource Resource;
 
    /* The bound status of the context */
    _EGLThreadInfo *Binding;
@@ -48,6 +47,10 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint att
 
 
 PUBLIC EGLBoolean
+_eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read);
+
+
+extern EGLBoolean
 _eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
 
 
@@ -62,6 +65,66 @@ static INLINE EGLBoolean
 _eglIsContextBound(_EGLContext *ctx)
 {
    return (ctx->Binding != NULL);
+}
+
+
+/**
+ * Link a context to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+static INLINE EGLContext
+_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
+{
+   _eglLinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT, dpy);
+   return (EGLContext) ctx;
+}
+
+
+/**
+ * Unlink a linked context from its display.
+ * Accessing an unlinked context should generate EGL_BAD_CONTEXT error.
+ */
+static INLINE void
+_eglUnlinkContext(_EGLContext *ctx)
+{
+   _eglUnlinkResource(&ctx->Resource, _EGL_RESOURCE_CONTEXT);
+}
+
+
+/**
+ * Lookup a handle to find the linked context.
+ * Return NULL if the handle has no corresponding linked context.
+ */
+static INLINE _EGLContext *
+_eglLookupContext(EGLContext context, _EGLDisplay *dpy)
+{
+   _EGLContext *ctx = (_EGLContext *) context;
+   if (!dpy || !_eglCheckResource((void *) ctx, _EGL_RESOURCE_CONTEXT, dpy))
+      ctx = NULL;
+   return ctx;
+}
+
+
+/**
+ * Return the handle of a linked context, or EGL_NO_CONTEXT.
+ */
+static INLINE EGLContext
+_eglGetContextHandle(_EGLContext *ctx)
+{
+   _EGLResource *res = (_EGLResource *) ctx;
+   return (res && _eglIsResourceLinked(res)) ?
+      (EGLContext) ctx : EGL_NO_CONTEXT;
+}
+
+
+/**
+ * Return true if the context is linked to a display.
+ */
+static INLINE EGLBoolean
+_eglIsContextLinked(_EGLContext *ctx)
+{
+   _EGLResource *res = (_EGLResource *) ctx;
+   return (res && _eglIsResourceLinked(res));
 }
 
 

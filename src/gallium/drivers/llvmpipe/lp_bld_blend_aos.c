@@ -314,9 +314,10 @@ lp_build_blend_aos(LLVMBuilderRef builder,
    LLVMValueRef dst_term;
 
    /* FIXME */
-   assert(blend->colormask == 0xf);
+   assert(blend->independent_blend_enable == 0);
+   assert(blend->rt[0].colormask == 0xf);
 
-   if(!blend->blend_enable)
+   if(!blend->rt[0].blend_enable)
       return src;
 
    /* It makes no sense to blend unless values are normalized */
@@ -333,14 +334,16 @@ lp_build_blend_aos(LLVMBuilderRef builder,
     * combinations it is possible to reorder the operations and therefore saving
     * some instructions. */
 
-   src_term = lp_build_blend_factor(&bld, src, blend->rgb_src_factor, blend->alpha_src_factor, alpha_swizzle);
-   dst_term = lp_build_blend_factor(&bld, dst, blend->rgb_dst_factor, blend->alpha_dst_factor, alpha_swizzle);
+   src_term = lp_build_blend_factor(&bld, src, blend->rt[0].rgb_src_factor,
+                                    blend->rt[0].alpha_src_factor, alpha_swizzle);
+   dst_term = lp_build_blend_factor(&bld, dst, blend->rt[0].rgb_dst_factor,
+                                    blend->rt[0].alpha_dst_factor, alpha_swizzle);
 
    lp_build_name(src_term, "src_term");
    lp_build_name(dst_term, "dst_term");
 
-   if(blend->rgb_func == blend->alpha_func) {
-      return lp_build_blend_func(&bld.base, blend->rgb_func, src_term, dst_term);
+   if(blend->rt[0].rgb_func == blend->rt[0].alpha_func) {
+      return lp_build_blend_func(&bld.base, blend->rt[0].rgb_func, src_term, dst_term);
    }
    else {
       /* Seperate RGB / A functions */
@@ -348,8 +351,8 @@ lp_build_blend_aos(LLVMBuilderRef builder,
       LLVMValueRef rgb;
       LLVMValueRef alpha;
 
-      rgb   = lp_build_blend_func(&bld.base, blend->rgb_func,   src_term, dst_term);
-      alpha = lp_build_blend_func(&bld.base, blend->alpha_func, src_term, dst_term);
+      rgb   = lp_build_blend_func(&bld.base, blend->rt[0].rgb_func,   src_term, dst_term);
+      alpha = lp_build_blend_func(&bld.base, blend->rt[0].alpha_func, src_term, dst_term);
 
       return lp_build_blend_swizzle(&bld, rgb, alpha, LP_BUILD_BLEND_SWIZZLE_RGBA, alpha_swizzle);
    }

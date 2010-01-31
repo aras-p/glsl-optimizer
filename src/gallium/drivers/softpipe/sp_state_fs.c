@@ -44,6 +44,7 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader *state;
+   unsigned i;
 
    /* debug */
    if (softpipe->dump_fs) 
@@ -59,6 +60,13 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &state->info);
+
+   for (i = 0; i < state->info.num_properties; ++i) {
+      if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_ORIGIN)
+         state->origin_lower_left = state->info.properties[i].data[0];
+      else if (state->info.properties[i].name == TGSI_PROPERTY_FS_COORD_PIXEL_CENTER)
+	 state->pixel_center_integer = state->info.properties[i].data[0];
+   }
 
    return state;
 }
@@ -164,12 +172,12 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
+   assert(index < PIPE_MAX_CONSTANT_BUFFERS);
 
    draw_flush(softpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&softpipe->constants[shader], buf);
+   pipe_buffer_reference(&softpipe->constants[shader][index], buf);
 
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }

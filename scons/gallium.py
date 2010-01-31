@@ -30,9 +30,11 @@ Frontend-tool for Gallium3D architecture.
 #
 
 
+import distutils.version
 import os
 import os.path
 import re
+import subprocess
 
 import SCons.Action
 import SCons.Builder
@@ -107,6 +109,9 @@ def generate(env):
         elif platform == 'wince':
             env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
+
+    if os.environ.has_key('CC'):
+        env['CC'] = os.environ['CC']
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
@@ -224,6 +229,8 @@ def generate(env):
     if platform == 'wince':
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE']
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE_OGL']
+    if platform == 'embedded':
+        cppdefines += ['PIPE_SUBSYSTEM_EMBEDDED']
     env.Append(CPPDEFINES = cppdefines)
 
     # C compiler options
@@ -231,9 +238,19 @@ def generate(env):
     cxxflags = [] # C++
     ccflags = [] # C & C++
     if gcc:
+        ccversion = ''
+        pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                     stdin = 'devnull',
+                                     stderr = 'devnull',
+                                     stdout = subprocess.PIPE)
+        if pipe.wait() == 0:
+            line = pipe.stdout.readline()
+            match = re.search(r'[0-9]+(\.[0-9]+)+', line)
+            if match:
+            	ccversion = match.group(0)
         if debug:
             ccflags += ['-O0', '-g3']
-        elif env['CCVERSION'].startswith('4.2.'):
+        elif ccversion.startswith('4.2.'):
             # gcc 4.2.x optimizer is broken
             print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
             ccflags += ['-O0', '-g3']
@@ -259,8 +276,11 @@ def generate(env):
                 # instead.
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
-                    '-mstackrealign', # ensure stack is aligned
                 ]
+        	if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+		    ccflags += [
+                    	'-mstackrealign', # ensure stack is aligned
+		    ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
         # See also:
@@ -268,16 +288,21 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wmissing-field-initializers',
-            '-Werror=pointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
         ]
         cflags += [
-            '-Werror=declaration-after-statement',
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+	    ccflags += [
+            	'-Werror=pointer-arith',
+	    ]
+	    cflags += [
+            	'-Werror=declaration-after-statement',
+	    ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -373,11 +398,15 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-        shlinkflags += [
-            '-Wl,-Bsymbolic',
-        ]
+        if env['platform'] not in ('darwin'):
+            shlinkflags += [
+                '-Wl,-Bsymbolic',
+            ]
         # Handle circular dependencies in the libraries
-        env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+        if env['platform'] in ('darwin'):
+            pass
+        else:
+            env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
         if not env['debug']:
             # enable Link-time Code Generation

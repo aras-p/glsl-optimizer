@@ -104,9 +104,47 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* Vertex program parameters from curbe:
     */
    if (c->vp->use_const_buffer) {
-      /* get constants from a real constant buffer */
-      c->prog_data.curb_read_length = 0;
-      c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
+      int max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
+      int constant = 0;
+
+      /* We've got more constants than we can load with the push
+       * mechanism.  This is often correlated with reladdr loads where
+       * we should probably be using a pull mechanism anyway to avoid
+       * excessive reading.  However, the pull mechanism is slow in
+       * general.  So, we try to allocate as many non-reladdr-loaded
+       * constants through the push buffer as we can before giving up.
+       */
+      memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
+      for (i = 0;
+	   i < c->vp->program.Base.NumInstructions && constant < max_constant;
+	   i++) {
+	 struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
+	 int arg;
+
+	 for (arg = 0; arg < 3 && constant < max_constant; arg++) {
+	    if ((inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
+		 inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
+		 inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
+		 inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
+		 inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) ||
+		inst->SrcReg[arg].RelAddr)
+	       continue;
+
+	    if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
+	       c->constant_map[inst->SrcReg[arg].Index] = constant++;
+	    }
+	 }
+      }
+
+      for (i = 0; i < constant; i++) {
+         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2,
+							      (i%2) * 4),
+						 0, 4, 1);
+      }
+      reg += (constant + 1) / 2;
+      c->prog_data.curb_read_length = reg - 1;
+      /* XXX 0 causes a bug elsewhere... */
+      c->prog_data.nr_params = MAX2(constant * 4, 4);
    }
    else {
       /* use a section of the GRF for constants */
@@ -214,8 +252,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       }
    }
 
-   c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
-   reg += 2;
+   if (c->needs_stack) {
+      c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
+      reg += 2;
+   }
 
    /* Some opcodes need an internal temporary:
     */
@@ -762,15 +802,14 @@ get_constant(struct brw_vs_compile *c,
 {
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
-   struct brw_reg const_reg;
-   struct brw_reg const2_reg;
-   const GLboolean relAddr = src->RelAddr;
+   struct brw_reg const_reg = c->current_const[argIndex].reg;
 
    assert(argIndex < 3);
 
-   if (c->current_const[argIndex].index != src->Index || relAddr) {
+   if (c->current_const[argIndex].index != src->Index) {
       struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
+      /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;
 
 #if 0
@@ -779,48 +818,74 @@ get_constant(struct brw_vs_compile *c,
 #endif
       /* need to fetch the constant now */
       brw_dp_READ_4_vs(p,
-                       c->current_const[argIndex].reg,/* writeback dest */
+                       const_reg,                     /* writeback dest */
                        0,                             /* oword */
-                       relAddr,                       /* relative indexing? */
+                       0,                             /* relative indexing? */
                        addrReg,                       /* address register */
                        16 * src->Index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
-
-      if (relAddr) {
-         /* second read */
-         const2_reg = get_tmp(c);
-
-         /* use upper half of address reg for second read */
-         addrReg = stride(addrReg, 0, 4, 0);
-         addrReg.subnr = 16;
-
-         brw_dp_READ_4_vs(p,
-                          const2_reg,              /* writeback dest */
-                          1,                       /* oword */
-                          relAddr,                 /* relative indexing? */
-                          addrReg,                 /* address register */
-                          16 * src->Index,         /* byte offset */
-                          SURF_INDEX_VERT_CONST_BUFFER
-                          );
-      }
    }
 
-   const_reg = c->current_const[argIndex].reg;
+   /* replicate lower four floats into upper half (to get XYZWXYZW) */
+   const_reg = stride(const_reg, 0, 4, 0);
+   const_reg.subnr = 0;
 
-   if (relAddr) {
-      /* merge the two Owords into the constant register */
-      /* const_reg[7..4] = const2_reg[7..4] */
-      brw_MOV(p,
-              suboffset(stride(const_reg, 0, 4, 1), 4),
-              suboffset(stride(const2_reg, 0, 4, 1), 4));
-      release_tmp(c, const2_reg);
-   }
-   else {
-      /* replicate lower four floats into upper half (to get XYZWXYZW) */
-      const_reg = stride(const_reg, 0, 4, 0);
-      const_reg.subnr = 0;
-   }
+   return const_reg;
+}
+
+static struct brw_reg
+get_reladdr_constant(struct brw_vs_compile *c,
+		     const struct prog_instruction *inst,
+		     GLuint argIndex)
+{
+   const struct prog_src_register *src = &inst->SrcReg[argIndex];
+   struct brw_compile *p = &c->func;
+   struct brw_reg const_reg = c->current_const[argIndex].reg;
+   struct brw_reg const2_reg;
+   struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
+
+   assert(argIndex < 3);
+
+   /* Can't reuse a reladdr constant load. */
+   c->current_const[argIndex].index = -1;
+
+ #if 0
+   printf("  fetch const[a0.x+%d] for arg %d into reg %d\n",
+	  src->Index, argIndex, c->current_const[argIndex].reg.nr);
+#endif
+
+   /* fetch the first vec4 */
+   brw_dp_READ_4_vs(p,
+		    const_reg,                     /* writeback dest */
+		    0,                             /* oword */
+		    1,                             /* relative indexing? */
+		    addrReg,                       /* address register */
+		    16 * src->Index,               /* byte offset */
+		    SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
+		    );
+   /* second vec4 */
+   const2_reg = get_tmp(c);
+
+   /* use upper half of address reg for second read */
+   addrReg = stride(addrReg, 0, 4, 0);
+   addrReg.subnr = 16;
+
+   brw_dp_READ_4_vs(p,
+		    const2_reg,              /* writeback dest */
+		    1,                       /* oword */
+		    1,                       /* relative indexing? */
+		    addrReg,                 /* address register */
+		    16 * src->Index,         /* byte offset */
+		    SURF_INDEX_VERT_CONST_BUFFER
+		    );
+
+   /* merge the two Owords into the constant register */
+   /* const_reg[7..4] = const2_reg[7..4] */
+   brw_MOV(p,
+	   suboffset(stride(const_reg, 0, 4, 1), 4),
+	   suboffset(stride(const2_reg, 0, 4, 1), 4));
+   release_tmp(c, const2_reg);
 
    return const_reg;
 }
@@ -928,7 +993,13 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
       if (c->vp->use_const_buffer) {
-         return get_constant(c, inst, argIndex);
+	 if (!relAddr && c->constant_map[index] != -1) {
+	    assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
+	    return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
+	 } else if (relAddr)
+	    return get_reladdr_constant(c, inst, argIndex);
+	 else
+	    return get_constant(c, inst, argIndex);
       }
       else if (relAddr) {
          return deref(c, c->regs[PROGRAM_STATE_VAR][0], index);
@@ -1380,12 +1451,14 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
-   
-   /* Message registers can't be read, so copy the output into GRF register
-      if they are used in source registers */
+
    for (insn = 0; insn < nr_insns; insn++) {
        GLuint i;
        struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
+
+       /* Message registers can't be read, so copy the output into GRF
+	* register if they are used in source registers
+	*/
        for (i = 0; i < 3; i++) {
 	   struct prog_src_register *src = &inst->SrcReg[i];
 	   GLuint index = src->Index;
@@ -1393,12 +1466,23 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
 	       c->output_regs[index].used_in_src = GL_TRUE;
        }
+
+       switch (inst->Opcode) {
+       case OPCODE_CAL:
+       case OPCODE_RET:
+	  c->needs_stack = GL_TRUE;
+	  break;
+       default:
+	  break;
+       }
    }
 
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
-   brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+
+   if (c->needs_stack)
+      brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
    for (insn = 0; insn < nr_insns; insn++) {
 

@@ -36,13 +36,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 
-/* This is used to initialize brw->state.atoms[].  We could use this
- * list directly except for a single atom, brw_constant_buffer, which
- * has a .dirty value which changes according to the parameters of the
- * current fragment and vertex programs, and so cannot be a static
- * value.
- */
-const struct brw_tracked_state *atoms[] =
+static const struct brw_tracked_state *atoms[] =
 {
    &brw_check_fallback,
 
@@ -208,7 +202,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_CONTEXT),
    DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
    DEFINE_BIT(BRW_NEW_PSP),
-   DEFINE_BIT(BRW_NEW_FENCE),
    DEFINE_BIT(BRW_NEW_INDICES),
    DEFINE_BIT(BRW_NEW_INDEX_BUFFER),
    DEFINE_BIT(BRW_NEW_VERTICES),

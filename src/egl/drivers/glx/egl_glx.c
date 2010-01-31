@@ -43,7 +43,7 @@
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egldriver.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 #include "eglsurface.h"
 
@@ -53,13 +53,6 @@
 #ifndef GLX_VERSION_1_4
 #error "GL/glx.h must be equal to or greater than GLX 1.4"
 #endif
-
-/*
- * report OpenGL ES bits because apps usually forget to specify
- * EGL_RENDERABLE_TYPE when choosing configs
- */
-#define GLX_EGL_APIS (EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)
-
 
 /** subclass of _EGLDriver */
 struct GLX_egl_driver
@@ -110,6 +103,8 @@ struct GLX_egl_surface
 
    Drawable drawable;
    GLXDrawable glx_drawable;
+
+   void (*destroy)(Display *, GLXDrawable);
 };
 
 
@@ -244,7 +239,7 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
 
    GLX_conf->double_buffered = (mode.doubleBufferMode != 0);
    return _eglConfigFromContextModesRec(&GLX_conf->Base, &mode,
-                                        GLX_EGL_APIS, GLX_EGL_APIS);
+                                        EGL_OPENGL_BIT, EGL_OPENGL_BIT);
 }
 
 
@@ -364,7 +359,7 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
 
    GLX_conf->double_buffered = (mode.doubleBufferMode != 0);
    return _eglConfigFromContextModesRec(&GLX_conf->Base, &mode,
-                                        GLX_EGL_APIS, GLX_EGL_APIS);
+                                        EGL_OPENGL_BIT, EGL_OPENGL_BIT);
 }
 
 
@@ -559,7 +554,7 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    disp->DriverData = (void *) GLX_dpy;
-   disp->ClientAPIsMask = GLX_EGL_APIS;
+   disp->ClientAPIsMask = EGL_OPENGL_BIT;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
@@ -638,6 +633,21 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 
 
 /**
+ * Destroy a surface.  The display is allowed to be uninitialized.
+ */
+static void
+destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
+{
+   struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
+
+   if (GLX_surf->destroy)
+      GLX_surf->destroy(disp->NativeDisplay, GLX_surf->glx_drawable);
+
+   free(GLX_surf);
+}
+
+
+/**
  * Called via eglMakeCurrent(), drv->API.MakeCurrent().
  */
 static EGLBoolean
@@ -650,8 +660,10 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
    GLXDrawable ddraw, rdraw;
    GLXContext cctx;
+   EGLBoolean ret = EGL_FALSE;
 
-   if (!_eglMakeCurrent(drv, disp, dsurf, rsurf, ctx))
+   /* bind the new context and return the "orphaned" one */
+   if (!_eglBindContext(&ctx, &dsurf, &rsurf))
       return EGL_FALSE;
 
    ddraw = (GLX_dsurf) ? GLX_dsurf->glx_drawable : None;
@@ -659,11 +671,21 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    cctx = (GLX_ctx) ? GLX_ctx->context : NULL;
 
    if (GLX_dpy->have_make_current_read)
-      return glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
+      ret = glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
    else if (ddraw == rdraw)
-      return glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
+      ret = glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
-   return EGL_FALSE;
+   if (ret) {
+      if (dsurf && !_eglIsSurfaceLinked(dsurf))
+         destroy_surface(disp, dsurf);
+      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(rsurf))
+         destroy_surface(disp, rsurf);
+   }
+   else {
+      _eglBindContext(&ctx, &dsurf, &rsurf);
+   }
+
+   return ret;
 }
 
 /** Get size of given window */
@@ -684,8 +706,9 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
 static _EGLSurface *
-GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
-                            NativeWindowType window, const EGLint *attrib_list)
+GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
+                           _EGLConfig *conf, EGLNativeWindowType window,
+                           const EGLint *attrib_list)
 {
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
@@ -718,6 +741,9 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
+   if (GLX_dpy->have_1_3 && !GLX_dpy->glx_window_quirk)
+      GLX_surf->destroy = glXDestroyWindow;
+
    get_drawable_size(GLX_dpy->dpy, window, &width, &height);
    GLX_surf->Base.Width = width;
    GLX_surf->Base.Height = height;
@@ -726,8 +752,9 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 }
 
 static _EGLSurface *
-GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
-			   NativePixmapType pixmap, const EGLint *attrib_list)
+GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
+                           _EGLConfig *conf, EGLNativePixmapType pixmap,
+                           const EGLint *attrib_list)
 {
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
@@ -773,6 +800,9 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       free(GLX_surf);
       return NULL;
    }
+
+   GLX_surf->destroy = (GLX_dpy->have_1_3) ?
+      glXDestroyPixmap : glXDestroyGLXPixmap;
 
    get_drawable_size(GLX_dpy->dpy, pixmap, &width, &height);
    GLX_surf->Base.Width = width;
@@ -838,47 +868,18 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
+   GLX_surf->destroy = (GLX_dpy->have_1_3) ?
+      glXDestroyPbuffer : GLX_dpy->glXDestroyGLXPbufferSGIX;
+
    return &GLX_surf->Base;
 }
+
 
 static EGLBoolean
 GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
-   struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
-   if (!_eglIsSurfaceBound(surf)) {
-      struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
-
-      if (GLX_dpy->have_1_3) {
-         switch (surf->Type) {
-         case EGL_WINDOW_BIT:
-            if (!GLX_dpy->glx_window_quirk)
-               glXDestroyWindow(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         case EGL_PBUFFER_BIT:
-            glXDestroyPbuffer(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         case EGL_PIXMAP_BIT:
-            glXDestroyPixmap(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         default:
-            break;
-         }
-      }
-      else {
-         switch (surf->Type) {
-         case EGL_PBUFFER_BIT:
-            GLX_dpy->glXDestroyGLXPbufferSGIX(GLX_dpy->dpy,
-                                              GLX_surf->glx_drawable);
-            break;
-         case EGL_PIXMAP_BIT:
-            glXDestroyGLXPixmap(GLX_dpy->dpy, GLX_surf->glx_drawable);
-            break;
-         default:
-            break;
-         }
-      }
-      free(surf);
-   }
+   if (!_eglIsSurfaceBound(surf))
+      destroy_surface(disp, surf);
 
    return EGL_TRUE;
 }

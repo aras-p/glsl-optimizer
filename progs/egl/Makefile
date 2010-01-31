@@ -20,7 +20,6 @@ PROGRAMS = \
 	eglgears \
 	eglscreen \
 	peglgears \
-	xeglbindtex \
 	xeglgears \
 	xeglthreads \
 	xegl_tri
@@ -46,7 +45,7 @@ egltri: egltri.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
 
 eglinfo: eglinfo.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
 
 eglgears: eglgears.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
@@ -56,9 +55,6 @@ eglscreen: eglscreen.o $(HEADERS) $(LIB_DEP)
 
 peglgears: peglgears.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
-
-xeglbindtex: xeglbindtex.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lX11
 
 xeglgears: xeglgears.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lX11

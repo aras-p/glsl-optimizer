@@ -34,6 +34,11 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->base.channel;
 
+	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+		BEGIN_RING(chan, nv50->screen->tesla, 0x1338, 1);
+		OUT_RING  (chan, 0x20);
+	}
+
 	if (flags & PIPE_FLUSH_FRAME)
 		FIRE_RING(chan);
 }
@@ -81,6 +86,10 @@ nv50_destroy(struct pipe_context *pipe)
 		so_ref(NULL, &nv50->state.vtxattr);
 
 	draw_destroy(nv50->draw);
+
+	if (nv50->screen->cur_ctx == nv50)
+		nv50->screen->cur_ctx = NULL;
+
 	FREE(nv50);
 }
 
@@ -104,7 +113,9 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv50->pipe.destroy = nv50_destroy;
 
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
+	nv50->pipe.draw_arrays_instanced = nv50_draw_arrays_instanced;
 	nv50->pipe.draw_elements = nv50_draw_elements;
+	nv50->pipe.draw_elements_instanced = nv50_draw_elements_instanced;
 	nv50->pipe.clear = nv50_clear;
 
 	nv50->pipe.flush = nv50_flush;

@@ -32,7 +32,6 @@
 #include "svga_screen.h"
 #include "svga_screen_buffer.h"
 #include "svga_winsys.h"
-#include "svga_draw.h"
 #include "svga_debug.h"
 
 

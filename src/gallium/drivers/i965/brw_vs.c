@@ -33,9 +33,7 @@
 
 #include "brw_context.h"
 #include "brw_vs.h"
-#include "brw_util.h"
 #include "brw_state.h"
-#include "brw_pipe_rast.h"
 
 
 

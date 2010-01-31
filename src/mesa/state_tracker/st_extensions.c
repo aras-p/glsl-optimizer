@@ -28,7 +28,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/extensions.h"
 #include "main/macros.h"
 
 #include "pipe/p_context.h"
@@ -148,6 +147,7 @@ void st_init_extensions(struct st_context *st)
     * Extensions that are supported by all Gallium drivers:
     */
    ctx->Extensions.ARB_copy_buffer = GL_TRUE;
+   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multisample = GL_TRUE;
@@ -168,6 +168,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
+   ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
@@ -186,6 +187,10 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
+
+#if FEATURE_OES_draw_texture
+   ctx->Extensions.OES_draw_texture = GL_TRUE;
+#endif
 
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
@@ -310,4 +315,14 @@ void st_init_extensions(struct st_context *st)
    if (st->pipe->render_condition) {
       ctx->Extensions.NV_conditional_render = GL_TRUE;
    }
+
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_ENABLE)) {
+      ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
+   }
+
+#if 0 /* not yet */
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
+      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
+   }
+#endif
 }

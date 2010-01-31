@@ -29,7 +29,6 @@
 #include "i915_context.h"
 #include "i915_debug.h"
 #include "i915_batch.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_debug.h"
 
 

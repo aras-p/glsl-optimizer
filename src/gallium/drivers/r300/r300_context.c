@@ -22,9 +22,6 @@
 
 #include "draw/draw_context.h"
 
-#include "tgsi/tgsi_scan.h"
-
-#include "util/u_hash_table.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
@@ -35,18 +32,9 @@
 #include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
-#include "r300_state_derived.h"
 #include "r300_state_invariant.h"
 #include "r300_texture.h"
 #include "r300_winsys.h"
-
-static enum pipe_error r300_clear_hash_table(void* key, void* value,
-                                             void* data)
-{
-    FREE(key);
-    FREE(value);
-    return PIPE_OK;
-}
 
 static void r300_destroy_context(struct pipe_context* context)
 {
@@ -54,11 +42,6 @@ static void r300_destroy_context(struct pipe_context* context)
     struct r300_query* query, * temp;
 
     util_blitter_destroy(r300->blitter);
-
-    util_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
-        NULL);
-    util_hash_table_destroy(r300->shader_hash_table);
-
     draw_destroy(r300->draw);
 
     /* Free the OQ BO. */
@@ -72,9 +55,9 @@ static void r300_destroy_context(struct pipe_context* context)
 
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
-    FREE(r300->rs_block);
+    FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
-    FREE(r300->vertex_info);
+    FREE(r300->vertex_format_state.state);
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
     FREE(r300);
@@ -87,7 +70,7 @@ r300_is_texture_referenced(struct pipe_context *pipe,
 {
     struct pipe_buffer* buf = 0;
 
-    r300_get_texture_buffer(texture, &buf, NULL);
+    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
 
     return pipe->is_buffer_referenced(pipe, buf);
 }
@@ -129,14 +112,18 @@ static void r300_setup_atoms(struct r300_context* r300)
      * an upper bound on each atom, to keep the emission machinery from
      * underallocating space. */
     make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(invariant, 71);
     R300_INIT_ATOM(ztop, 2);
     R300_INIT_ATOM(blend, 8);
     R300_INIT_ATOM(blend_color, 3);
     R300_INIT_ATOM(clip, 29);
     R300_INIT_ATOM(dsa, 8);
-    R300_INIT_ATOM(rs, 22);
+    R300_INIT_ATOM(fb, 56);
+    R300_INIT_ATOM(rs, 25);
     R300_INIT_ATOM(scissor, 3);
     R300_INIT_ATOM(viewport, 9);
+    R300_INIT_ATOM(rs_block, 21);
+    R300_INIT_ATOM(vertex_format, 26);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -152,8 +139,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
-
-    r300_init_debug(r300);
 
     r300->context.destroy = r300_destroy_context;
 
@@ -184,16 +169,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
-    r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
-        r300_shader_key_compare);
-
     r300_setup_atoms(r300);
 
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
-    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
+    r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
-    r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
+    r300->vertex_format_state.state = CALLOC_STRUCT(r300_vertex_info);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
@@ -210,7 +192,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_init_state_functions(r300);
 
-    r300_emit_invariant_state(r300);
+    r300->invariant_state.dirty = TRUE;
 
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;

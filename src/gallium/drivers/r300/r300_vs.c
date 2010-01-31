@@ -124,7 +124,8 @@ static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
 
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
+            vs_outputs->color[1] != ATTR_UNUSED) {
             hwfmt[1] |= R300_INPUT_CNTL_COLOR;
             hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
         }
@@ -182,7 +183,8 @@ static void r300_stream_locations_notcl(
 
     /* Colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used) {
+        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
+            vs_outputs->color[1] != ATTR_UNUSED) {
             stream_loc[tabi++] = 2 + i;
         }
     }
@@ -259,7 +261,8 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (outputs->color[i] != ATTR_UNUSED) {
             c->code->outputs[outputs->color[i]] = reg++;
-        } else if (any_bcolor_used) {
+        } else if (any_bcolor_used ||
+                   outputs->color[1] != ATTR_UNUSED) {
             reg++;
         }
     }

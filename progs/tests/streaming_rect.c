@@ -13,8 +13,6 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
-#include "readtex.h"
-
 
 #define ANIMATE 10
 #define PBO 11

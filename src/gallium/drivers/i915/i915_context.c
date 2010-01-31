@@ -29,12 +29,9 @@
 #include "i915_state.h"
 #include "i915_screen.h"
 #include "i915_batch.h"
-#include "i915_texture.h"
-#include "i915_reg.h"
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "pipe/p_screen.h"
@@ -84,7 +81,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    }
 
 
-   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX,
+   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
                                    (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
                                       4 * sizeof(float)));

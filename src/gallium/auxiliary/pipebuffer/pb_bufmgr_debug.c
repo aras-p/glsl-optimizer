@@ -371,6 +371,9 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_desc real_desc;
    pb_size real_size;
    
+   assert(size);
+   assert(desc->alignment);
+
    buf = CALLOC_STRUCT(pb_debug_buffer);
    if(!buf)
       return NULL;

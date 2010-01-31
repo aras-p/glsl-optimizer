@@ -44,7 +44,6 @@
 #include "quilt.h"
 #include "patchlist.h"
 #include "patch.h"
-#include "nurbsconsts.h"
 
 Patchlist::Patchlist( Quilt *quilts, REAL *pta, REAL *ptb )
 {

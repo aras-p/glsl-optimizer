@@ -29,7 +29,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
 #include "main/simple_list.h"
 
@@ -47,8 +46,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 #include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 
 
 static int getTypeSize(GLenum type)
@@ -56,6 +53,8 @@ static int getTypeSize(GLenum type)
 	switch (type) {
 		case GL_DOUBLE:
 			return sizeof(GLdouble);
+		case GL_HALF_FLOAT:
+			return sizeof(GLhalfARB);
 		case GL_FLOAT:
 			return sizeof(GLfloat);
 		case GL_INT:
@@ -384,6 +383,18 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 			}
 			r300_attr._signed = 0;
 			r300_attr.normalize = 0;
+			break;
+		case GL_HALF_FLOAT:
+			switch (input->Size) {
+				case 1:
+				case 2:
+					r300_attr.data_type = R300_DATA_TYPE_FLT16_2;
+					break;
+				case 3:
+				case 4:
+					r300_attr.data_type = R300_DATA_TYPE_FLT16_4;
+					break;
+			}
 			break;
 		case GL_SHORT:
 			r300_attr._signed = 1;

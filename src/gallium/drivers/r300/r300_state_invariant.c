@@ -38,12 +38,12 @@ struct pipe_viewport_state r300_viewport_identity = {
  *
  * Note that eventually this should be empty, but it's useful for development
  * and general unduplication of code. */
-void r300_emit_invariant_state(struct r300_context* r300)
+void r300_emit_invariant_state(struct r300_context* r300, void* state)
 {
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(16 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(14 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
@@ -58,8 +58,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
      */
     /* Source of fog depth */
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
-    /* AA enable */
-    OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
 
     /*** Fog (FG) ***/
     OUT_CS_REG(R300_FG_FOG_BLEND, 0x0);
@@ -79,7 +77,8 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) + (caps->is_r500 ? 4 : 0));
+    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) +
+             (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
 
     if (caps->has_tcl) {
         /*Flushing PVS is required before the VAP_GB registers can be changed*/

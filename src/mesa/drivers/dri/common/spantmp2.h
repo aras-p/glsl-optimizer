@@ -400,7 +400,7 @@
 #  define READ_RGBA( rgba, _x, _y )				        \
      do {								\
         GLuint p = GET_VALUE(_x, _y);					\
-        *((uint32_t *) rgba) = (t << 8) | 0xff;				\
+        *((uint32_t *) rgba) = (p << 8) | 0xff;				\
      } while (0)
 # else
 #  define READ_RGBA( rgba, _x, _y )				        \

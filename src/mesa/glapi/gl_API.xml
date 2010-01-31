@@ -866,6 +866,9 @@
     <enum name="4_BYTES"                       count="4"  value="0x1409">
         <size name="CallLists"/>
     </enum>
+    <enum name="HALF_FLOAT"                    count="2"  value="0x140B">
+        <size name="CallLists"/>
+    </enum>
     <enum name="CLEAR"                                    value="0x1500"/>
     <enum name="AND"                                      value="0x1501"/>
     <enum name="AND_REVERSE"                              value="0x1502"/>

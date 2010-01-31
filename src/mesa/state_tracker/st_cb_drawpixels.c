@@ -36,24 +36,18 @@
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
-#include "main/state.h"
 #include "shader/program.h"
-#include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
-#include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_cb_texture.h"
-#include "st_draw.h"
 #include "st_format.h"
-#include "st_mesa_to_tgsi.h"
 #include "st_texture.h"
 #include "st_inlines.h"
 
@@ -1138,6 +1132,8 @@ st_destroy_drawpix(struct st_context *st)
 {
    st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[0], NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[1], NULL);
+   if (st->drawpix.vert_shaders[0])
+      free(st->drawpix.vert_shaders[0]);
+   if (st->drawpix.vert_shaders[1])
+      free(st->drawpix.vert_shaders[1]);
 }

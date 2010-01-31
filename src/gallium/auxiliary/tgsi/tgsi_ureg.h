@@ -52,9 +52,10 @@ struct ureg_src
    unsigned Absolute    : 1;  /* BOOL */
    unsigned Negate      : 1;  /* BOOL */
    int      Index       : 16; /* SINT */
+   unsigned IndirectFile    : 4;  /* TGSI_FILE_ */
    int      IndirectIndex   : 16; /* SINT */
-   int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
-   int      DimensionIndex : 16;  /* SINT */
+   unsigned IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
+   int      DimensionIndex  : 16; /* SINT */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
@@ -125,8 +126,23 @@ ureg_create_shader_and_destroy( struct ureg_program *p,
 
 void
 ureg_property_gs_input_prim(struct ureg_program *ureg,
-                            unsigned gs_input_prim);
+                            unsigned input_prim);
 
+void
+ureg_property_gs_output_prim(struct ureg_program *ureg,
+                             unsigned output_prim);
+
+void
+ureg_property_gs_max_vertices(struct ureg_program *ureg,
+                              unsigned max_vertices);
+
+void
+ureg_property_fs_coord_origin(struct ureg_program *ureg,
+                            unsigned fs_coord_origin);
+
+void
+ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
+                            unsigned fs_coord_pixel_center);
 
 /***********************************************************************
  * Build shader declarations:
@@ -168,9 +184,20 @@ ureg_DECL_immediate_uint( struct ureg_program *,
                           unsigned nr );
 
 struct ureg_src
+ureg_DECL_immediate_block_uint( struct ureg_program *,
+                                const unsigned *v,
+                                unsigned nr );
+
+struct ureg_src
 ureg_DECL_immediate_int( struct ureg_program *,
                          const int *v,
                          unsigned nr );
+
+void
+ureg_DECL_constant2D(struct ureg_program *ureg,
+                     unsigned first,
+                     unsigned last,
+                     unsigned index2D);
 
 struct ureg_src
 ureg_DECL_constant( struct ureg_program *,
@@ -768,8 +795,9 @@ static INLINE struct ureg_src
 ureg_src_indirect( struct ureg_src reg, struct ureg_src addr )
 {
    assert(reg.File != TGSI_FILE_NULL);
-   assert(addr.File == TGSI_FILE_ADDRESS);
+   assert(addr.File == TGSI_FILE_ADDRESS || addr.File == TGSI_FILE_TEMPORARY);
    reg.Indirect = 1;
+   reg.IndirectFile = addr.File;
    reg.IndirectIndex = addr.Index;
    reg.IndirectSwizzle = addr.SwizzleX;
    return reg;
@@ -789,6 +817,8 @@ ureg_dst( struct ureg_src src )
 {
    struct ureg_dst dst;
 
+   assert(!src.Indirect || src.IndirectFile == TGSI_FILE_ADDRESS);
+
    dst.File      = src.File;
    dst.WriteMask = TGSI_WRITEMASK_XYZW;
    dst.Indirect  = src.Indirect;
@@ -807,6 +837,30 @@ ureg_dst( struct ureg_src src )
 }
 
 static INLINE struct ureg_src
+ureg_src_register(unsigned file,
+                  unsigned index)
+{
+   struct ureg_src src;
+
+   src.File = file;
+   src.SwizzleX = TGSI_SWIZZLE_X;
+   src.SwizzleY = TGSI_SWIZZLE_Y;
+   src.SwizzleZ = TGSI_SWIZZLE_Z;
+   src.SwizzleW = TGSI_SWIZZLE_W;
+   src.Indirect = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
+   src.IndirectIndex = 0;
+   src.IndirectSwizzle = 0;
+   src.Absolute = 0;
+   src.Index = index;
+   src.Negate = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
+
+   return src;
+}
+
+static INLINE struct ureg_src
 ureg_src( struct ureg_dst dst )
 {
    struct ureg_src src;
@@ -817,6 +871,7 @@ ureg_src( struct ureg_dst dst )
    src.SwizzleZ  = TGSI_SWIZZLE_Z;
    src.SwizzleW  = TGSI_SWIZZLE_W;
    src.Indirect  = dst.Indirect;
+   src.IndirectFile = TGSI_FILE_ADDRESS;
    src.IndirectIndex = dst.IndirectIndex;
    src.IndirectSwizzle = dst.IndirectSwizzle;
    src.Absolute  = 0;
@@ -863,6 +918,7 @@ ureg_src_undef( void )
    src.SwizzleZ  = 0;
    src.SwizzleW  = 0;
    src.Indirect  = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute  = 0;

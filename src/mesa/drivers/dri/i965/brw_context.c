@@ -33,7 +33,6 @@
 #include "main/imports.h"
 #include "main/api_noop.h"
 #include "main/macros.h"
-#include "main/vtxfmt.h"
 #include "main/simple_list.h"
 #include "shader/shader_api.h"
 
@@ -41,15 +40,8 @@
 #include "brw_defines.h"
 #include "brw_draw.h"
 #include "brw_state.h"
-#include "brw_vs.h"
-#include "intel_tex.h"
-#include "intel_blit.h"
-#include "intel_batchbuffer.h"
-#include "intel_pixel.h"
 #include "intel_span.h"
 #include "tnl/t_pipeline.h"
-
-#include "utils.h"
 
 
 /***************************************

@@ -8,7 +8,6 @@ MINIGLX_SOURCES = server/intel_dri.c
 
 DRIVER_SOURCES = \
 	i830_context.c \
-	i830_metaops.c \
 	i830_state.c \
 	i830_texblend.c \
 	i830_texstate.c \
@@ -40,7 +39,6 @@ DRIVER_SOURCES = \
 	i915_debug.c \
 	i915_debug_fp.c \
 	i915_fragprog.c \
-	i915_metaops.c \
 	i915_program.c \
 	i915_state.c \
 	i915_vtbl.c \

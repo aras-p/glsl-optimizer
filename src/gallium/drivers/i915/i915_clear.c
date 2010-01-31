@@ -32,7 +32,6 @@
 
 #include "util/u_clear.h"
 #include "i915_context.h"
-#include "i915_state.h"
 
 
 /**

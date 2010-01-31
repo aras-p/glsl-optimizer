@@ -31,7 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "main/imports.h"
 #include "main/texstore.h"
-#include "main/teximage.h"
 #include "main/texobj.h"
 
 #include "sis_context.h"

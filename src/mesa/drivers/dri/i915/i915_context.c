@@ -28,7 +28,6 @@
 #include "i915_context.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "intel_tex.h"
 #include "intel_tris.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -38,15 +37,11 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
-#include "utils.h"
 #include "i915_reg.h"
 #include "i915_program.h"
 
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
 #include "intel_tris.h"
 #include "intel_span.h"
-#include "intel_pixel.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -116,7 +111,6 @@ i915CreateContext(const __GLcontextModes * mesaVis,
       _mesa_printf("\ntexmem-0-3 branch\n\n");
 
    i915InitVtbl(i915);
-   i915InitMetaFuncs(i915);
 
    i915InitDriverFunctions(&functions);
 

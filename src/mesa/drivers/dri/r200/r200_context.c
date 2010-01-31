@@ -61,6 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_maos.h"
 #include "r200_vertprog.h"
 #include "radeon_queryobj.h"
+#include "r200_blit.h"
 
 #include "radeon_span.h"
 
@@ -268,6 +269,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.fallback = r200Fallback;
    radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
    radeon->vtbl.emit_query_finish = r200_emit_query_finish;
+   radeon->vtbl.blit = r200_blit;
 }
 
 
@@ -294,6 +296,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    if ( !rmesa )
       return GL_FALSE;
 
+   rmesa->radeon.radeonScreen = screen;
    r200_init_vtbl(&rmesa->radeon);
    /* init exp fog table data */
    r200InitStaticFogData();
@@ -326,7 +329,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
    r200InitStateFuncs(&functions);
-   r200InitTextureFuncs(&functions);
+   r200InitTextureFuncs(&rmesa->radeon, &functions);
    r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
 

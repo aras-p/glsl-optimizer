@@ -35,35 +35,9 @@
 #include "context.h"
 #include "formats.h"
 #include "image.h"
-#include "texcompress.h"
 #include "texgetimage.h"
 #include "teximage.h"
-#include "texstate.h"
 
-
-
-#if FEATURE_EXT_texture_sRGB
-
-/**
- * Convert a float value from linear space to a
- * non-linear sRGB value in [0, 255].
- * Not terribly efficient.
- */
-static INLINE GLfloat
-linear_to_nonlinear(GLfloat cl)
-{
-   /* can't have values outside [0, 1] */
-   GLfloat cs;
-   if (cl < 0.0031308f) {
-      cs = 12.92f * cl;
-   }
-   else {
-      cs = (GLfloat)(1.055 * _mesa_pow(cl, 0.41666) - 0.055);
-   }
-   return cs;
-}
-
-#endif /* FEATURE_EXT_texture_sRGB */
 
 
 /**
@@ -233,6 +207,29 @@ get_tex_ycbcr(GLcontext *ctx, GLuint dimensions,
 }
 
 
+#if FEATURE_EXT_texture_sRGB
+
+
+/**
+ * Convert a float value from linear space to a
+ * non-linear sRGB value in [0, 255].
+ * Not terribly efficient.
+ */
+static INLINE GLfloat
+linear_to_nonlinear(GLfloat cl)
+{
+   /* can't have values outside [0, 1] */
+   GLfloat cs;
+   if (cl < 0.0031308f) {
+      cs = 12.92f * cl;
+   }
+   else {
+      cs = (GLfloat)(1.055 * _mesa_pow(cl, 0.41666) - 0.055);
+   }
+   return cs;
+}
+
+
 /**
  * glGetTexImagefor sRGB pixels;
  */
@@ -282,6 +279,21 @@ get_tex_srgb(GLcontext *ctx, GLuint dimensions,
       }
    }
 }
+
+
+#else /* FEATURE_EXT_texture_sRGB */
+
+
+static INLINE void
+get_tex_srgb(GLcontext *ctx, GLuint dimensions,
+             GLenum format, GLenum type, GLvoid *pixels,
+             const struct gl_texture_image *texImage)
+{
+   ASSERT_NO_FEATURE();
+}
+
+
+#endif /* FEATURE_EXT_texture_sRGB */
 
 
 /**

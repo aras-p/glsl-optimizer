@@ -30,7 +30,8 @@
 #include "indirect.h"
 #include "glxclient.h"
 #include "indirect_size.h"
-#include "dispatch.h"
+#include "glapitable.h"
+#include "glapidispatch.h"
 #include "glapi.h"
 #include "glthread.h"
 #include <GL/glxproto.h>
@@ -47,7 +48,7 @@
 #  else
 #    define FASTCALL
 #  endif
-#  if defined(__GNUC__)
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define NOINLINE __attribute__((noinline))
 #  else
 #    define NOINLINE

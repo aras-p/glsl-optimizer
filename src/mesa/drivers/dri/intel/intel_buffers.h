@@ -35,12 +35,6 @@
 struct intel_context;
 struct intel_framebuffer;
 
-
-extern GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dest,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b);
-
 extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
 extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);

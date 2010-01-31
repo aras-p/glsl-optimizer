@@ -48,7 +48,6 @@
 #include "intel_buffer_objects.h"
 #include "intel_bufmgr.h"
 #include "intel_batchbuffer.h"
-#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
 
@@ -443,6 +442,7 @@ intel_region_attach_pbo(struct intel_context *intel,
    region->pbo->region = region;
    dri_bo_reference(buffer);
    region->buffer = buffer;
+   region->tiling = I915_TILING_NONE;
 }
 
 

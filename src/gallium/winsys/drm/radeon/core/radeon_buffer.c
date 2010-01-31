@@ -51,6 +51,26 @@ static const char *radeon_get_name(struct pipe_winsys *ws)
     return "Radeon/GEM+KMS";
 }
 
+static uint32_t radeon_domain_from_usage(unsigned usage)
+{
+    uint32_t domain = 0;
+
+    if (usage & PIPE_BUFFER_USAGE_GPU_WRITE) {
+        domain |= RADEON_GEM_DOMAIN_VRAM;
+    }
+    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
+        domain |= RADEON_GEM_DOMAIN_VRAM;
+    }
+    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+    if (usage & PIPE_BUFFER_USAGE_INDEX) {
+        domain |= RADEON_GEM_DOMAIN_GTT;
+    }
+
+    return domain;
+}
+
 static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
                                                 unsigned alignment,
                                                 unsigned usage,
@@ -58,6 +78,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
 {
     struct radeon_winsys *radeon_ws = (struct radeon_winsys *)ws;
     struct radeon_pipe_buffer *radeon_buffer;
+    struct pb_desc desc;
     uint32_t domain;
 
     radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
@@ -70,17 +91,15 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
 
-    domain = 0;
+    if (usage & PIPE_BUFFER_USAGE_CONSTANT && is_r3xx(radeon_ws->pci_id)) {
+        /* Don't bother allocating a BO, as it'll never get to the card. */
+        desc.alignment = alignment;
+        desc.usage = usage;
+        radeon_buffer->pb = pb_malloc_buffer_create(size, &desc);
+        return &radeon_buffer->base;
+    }
 
-    if (usage & PIPE_BUFFER_USAGE_PIXEL) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    if (usage & PIPE_BUFFER_USAGE_VERTEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
-    if (usage & PIPE_BUFFER_USAGE_INDEX) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
+    domain = radeon_domain_from_usage(usage);
 
     radeon_buffer->bo = radeon_bo_open(radeon_ws->priv->bom, 0, size,
             alignment, domain, 0);
@@ -133,8 +152,16 @@ static void radeon_buffer_del(struct pipe_buffer *buffer)
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unref(radeon_buffer->bo);
-    free(radeon_buffer);
+    if (radeon_buffer->pb) {
+        pipe_reference_init(&radeon_buffer->pb->base.reference, 0);
+        pb_destroy(radeon_buffer->pb);
+    }
+
+    if (radeon_buffer->bo) {
+        radeon_bo_unref(radeon_buffer->bo);
+    }
+
+    FREE(radeon_buffer);
 }
 
 static void *radeon_buffer_map(struct pipe_winsys *ws,
@@ -145,6 +172,10 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
     int write = 0;
+
+    if (radeon_buffer->pb) {
+        return pb_map(radeon_buffer->pb, flags);
+    }
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
@@ -174,7 +205,31 @@ static void radeon_buffer_unmap(struct pipe_winsys *ws,
     struct radeon_pipe_buffer *radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unmap(radeon_buffer->bo);
+    if (radeon_buffer->pb) {
+        pb_unmap(radeon_buffer->pb);
+    } else {
+        radeon_bo_unmap(radeon_buffer->bo);
+    }
+}
+
+static void radeon_buffer_set_tiling(struct radeon_winsys *ws,
+                                     struct pipe_buffer *buffer,
+                                     uint32_t pitch,
+                                     boolean microtiled,
+                                     boolean macrotiled)
+{
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    uint32_t flags = 0;
+
+    if (microtiled) {
+        flags |= RADEON_BO_FLAGS_MICRO_TILE;
+    }
+    if (macrotiled) {
+        flags |= RADEON_BO_FLAGS_MACRO_TILE;
+    }
+
+    radeon_bo_set_tiling(radeon_buffer->bo, flags, pitch);
 }
 
 static void radeon_fence_reference(struct pipe_winsys *ws,
@@ -278,6 +333,8 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
     radeon_ws->base.fence_finish = radeon_fence_finish;
 
     radeon_ws->base.get_name = radeon_get_name;
+
+    radeon_ws->buffer_set_tiling = radeon_buffer_set_tiling;
 
     return radeon_ws;
 }

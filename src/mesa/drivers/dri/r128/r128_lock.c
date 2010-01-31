@@ -33,8 +33,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r128_context.h"
 #include "r128_lock.h"
-#include "r128_tex.h"
-#include "r128_state.h"
 
 #include "drirenderbuffer.h"
 

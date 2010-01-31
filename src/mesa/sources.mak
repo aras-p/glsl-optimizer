@@ -89,6 +89,7 @@ GLAPI_SOURCES = \
 	main/dispatch.c \
 	glapi/glapi.c \
 	glapi/glapi_getproc.c \
+	glapi/glapi_nop.c \
 	glapi/glthread.c
 
 MATH_SOURCES = \

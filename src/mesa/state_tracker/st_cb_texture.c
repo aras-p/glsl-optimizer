@@ -31,15 +31,14 @@
 #include "main/convolve.h"
 #endif
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/formats.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
-#include "main/pixel.h"
 #include "main/texcompress.h"
 #include "main/texfetch.h"
-#include "main/texformat.h"
 #include "main/texgetimage.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
@@ -687,9 +686,11 @@ st_TexImage(GLcontext * ctx,
       {
          char *dst = texImage->Data;
          const char *src = pixels;
-         int i;
+         GLuint i, bw, bh, lines;
+         _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
+         lines = (height + bh - 1) / bh;
 
-         for(i = 0; i < height; ++i)
+         for(i = 0; i < lines; ++i)
          {
             memcpy(dst, src, srcImageStride);
             dst += dstRowStride;
@@ -1368,33 +1369,64 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+
+/**
+ * If the format of the src renderbuffer and the format of the dest
+ * texture are compatible (in terms of blitting), return a TGSI writemask
+ * to be used during the blit.
+ * If the src/dest are incompatible, return 0.
+ */
 static unsigned
-compatible_src_dst_formats(const struct gl_renderbuffer *src,
+compatible_src_dst_formats(GLcontext *ctx,
+                           const struct gl_renderbuffer *src,
                            const struct gl_texture_image *dst)
 {
-   const GLenum srcFormat = _mesa_get_format_base_format(src->Format);
-   const GLenum dstLogicalFormat = _mesa_get_format_base_format(dst->TexFormat);
+   /* Get logical base formats for the src and dest.
+    * That is, use the user-requested formats and not the actual, device-
+    * chosen formats.
+    * For example, the user may have requested an A8 texture but the
+    * driver may actually be using an RGBA texture format.  When we
+    * copy/blit to that texture, we only want to copy the Alpha channel
+    * and not the RGB channels.
+    *
+    * Similarly, when the src FBO was created an RGB format may have been
+    * requested but the driver actually chose an RGBA format.  In that case,
+    * we don't want to copy the undefined Alpha channel to the dest texture
+    * (it should be 1.0).
+    */
+   const GLenum srcFormat = _mesa_base_fbo_format(ctx, src->InternalFormat);
+   const GLenum dstFormat = _mesa_base_tex_format(ctx, dst->InternalFormat);
 
-   if (srcFormat == dstLogicalFormat) {
+   /**
+    * XXX when we have red-only and red/green renderbuffers we'll need
+    * to add more cases here (or implement a general-purpose routine that
+    * queries the existance of the R,G,B,A channels in the src and dest).
+    */
+   if (srcFormat == dstFormat) {
       /* This is the same as matching_base_formats, which should
        * always pass, as it did previously.
        */
       return TGSI_WRITEMASK_XYZW;
    }
-   else if (srcFormat == GL_RGBA &&
-            dstLogicalFormat == GL_RGB) {
-      /* Add a single special case to cope with RGBA->RGB transfers,
-       * setting A to 1.0 to cope with situations where the RGB
-       * destination is actually stored as RGBA.
+   else if (srcFormat == GL_RGB && dstFormat == GL_RGBA) {
+      /* Make sure that A in the dest is 1.  The actual src format
+       * may be RGBA and have undefined A values.
        */
-      return TGSI_WRITEMASK_XYZ; /* A ==> 1.0 */
+      return TGSI_WRITEMASK_XYZ;
+   }
+   else if (srcFormat == GL_RGBA && dstFormat == GL_RGB) {
+      /* Make sure that A in the dest is 1.  The actual dst format
+       * may be RGBA and will need A=1 to provide proper alpha values
+       * when sampled later.
+       */
+      return TGSI_WRITEMASK_XYZ;
    }
    else {
       if (ST_DEBUG & DEBUG_FALLBACK)
          debug_printf("%s failed for src %s, dst %s\n",
                       __FUNCTION__, 
                       _mesa_lookup_enum_by_nr(srcFormat),
-                      _mesa_lookup_enum_by_nr(dstLogicalFormat));
+                      _mesa_lookup_enum_by_nr(dstFormat));
 
       /* Otherwise fail.
        */
@@ -1505,7 +1537,7 @@ st_copy_texsubimage(GLcontext *ctx,
    matching_base_formats =
       (_mesa_get_format_base_format(strb->Base.Format) ==
        _mesa_get_format_base_format(texImage->TexFormat));
-   format_writemask = compatible_src_dst_formats(&strb->Base, texImage);
+   format_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
 
    if (ctx->_ImageTransferState == 0x0) {
 

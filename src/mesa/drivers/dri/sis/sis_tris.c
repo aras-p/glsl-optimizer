@@ -47,7 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "sis_lock.h"
 #include "sis_span.h"
-#include "sis_alloc.h"
 #include "sis_tex.h"
 
 /* 6326 and 300-series shared */

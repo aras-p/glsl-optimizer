@@ -65,7 +65,7 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 
 			}
 			radeon_print(RADEON_STATE, RADEON_TRACE,
-				     "%d start: %lx, end: %lx %ld\n", i, start, end, end - start);
+				     "%d start: %llx, end: %llx %lld\n", i, start, end, end - start);
 		}
 	} else {
 		for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {

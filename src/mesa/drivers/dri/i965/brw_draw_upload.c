@@ -29,19 +29,15 @@
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
-#include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-#include "intel_tex.h"
 
 static GLuint double_types[5] = {
    0,
@@ -57,6 +53,14 @@ static GLuint float_types[5] = {
    BRW_SURFACEFORMAT_R32G32_FLOAT,
    BRW_SURFACEFORMAT_R32G32B32_FLOAT,
    BRW_SURFACEFORMAT_R32G32B32A32_FLOAT
+};
+
+static GLuint half_float_types[5] = {
+   0,
+   BRW_SURFACEFORMAT_R16_FLOAT,
+   BRW_SURFACEFORMAT_R16G16_FLOAT,
+   0, /* can't seem to render this one */
+   BRW_SURFACEFORMAT_R16G16B16A16_FLOAT
 };
 
 static GLuint uint_types_norm[5] = {
@@ -172,6 +176,7 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       switch (type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
+      case GL_HALF_FLOAT: return half_float_types[size];
       case GL_INT: return int_types_norm[size];
       case GL_SHORT: return short_types_norm[size];
       case GL_BYTE: return byte_types_norm[size];
@@ -194,6 +199,7 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       switch (type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
+      case GL_HALF_FLOAT: return half_float_types[size];
       case GL_INT: return int_types_scale[size];
       case GL_SHORT: return short_types_scale[size];
       case GL_BYTE: return byte_types_scale[size];
@@ -211,6 +217,7 @@ static GLuint get_size( GLenum type )
    switch (type) {
    case GL_DOUBLE: return sizeof(GLdouble);
    case GL_FLOAT: return sizeof(GLfloat);
+   case GL_HALF_FLOAT: return sizeof(GLhalfARB);
    case GL_INT: return sizeof(GLint);
    case GL_SHORT: return sizeof(GLshort);
    case GL_BYTE: return sizeof(GLbyte);

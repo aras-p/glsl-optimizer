@@ -63,7 +63,7 @@ struct xm_buffer
 
    XImage *tempImage;
 #ifdef USE_XSHM
-   int shm;
+   boolean shm;         /** Is this a shared memory buffer? */
    XShmSegmentInfo shminfo;
 #endif
 };
@@ -152,7 +152,7 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
                                   &b->shminfo,
                                   width, height);
    if (b->tempImage == NULL) {
-      b->shm = 0;
+      b->shm = FALSE;
       return;
    }
 
@@ -169,12 +169,12 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
       mesaXErrorFlag = 0;
       XDestroyImage(b->tempImage);
       b->tempImage = NULL;
-      b->shm = 0;
+      b->shm = FALSE;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   b->shm = 1;
+   b->shm = TRUE;
 }
 
 #endif /* USE_XSHM */
@@ -204,6 +204,14 @@ xm_buffer_destroy(struct pipe_buffer *buf)
 {
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
+   /*
+    * Note oldBuf->data may point to one of three things:
+    * 1. XShm shared memory image data
+    * 2. User-provided (wrapped) memory, see xm_user_buffer_create()
+    * 3. Regular, malloc'd memory
+    * We need to be careful with freeing that data now.
+    */
+
    if (oldBuf->data) {
 #ifdef USE_XSHM
       if (oldBuf->shminfo.shmid >= 0) {
@@ -213,12 +221,20 @@ xm_buffer_destroy(struct pipe_buffer *buf)
          oldBuf->shminfo.shmid = -1;
          oldBuf->shminfo.shmaddr = (char *) -1;
       }
-      else
+
+      if (oldBuf->shm) {
+         oldBuf->data = NULL;
+      }
+
+      if (oldBuf->tempImage) {
+         XDestroyImage(oldBuf->tempImage);
+         oldBuf->tempImage = NULL;
+      }
 #endif
-      {
-         if (!oldBuf->userBuffer) {
-            align_free(oldBuf->data);
-         }
+
+      if (oldBuf->data && !oldBuf->userBuffer) {
+         /* this was regular malloc'd memory */
+         align_free(oldBuf->data);
       }
 
       oldBuf->data = NULL;
@@ -327,10 +343,8 @@ xm_buffer_create(struct pipe_winsys *pws,
    buffer->base.usage = usage;
    buffer->base.size = size;
 
-   if (buffer->data == NULL) {
-      /* align to 16-byte multiple for Cell */
-      buffer->data = align_malloc(size, max(alignment, 16));
-   }
+   /* align to 16-byte multiple for Cell */
+   buffer->data = align_malloc(size, max(alignment, 16));
 
    return &buffer->base;
 }

@@ -37,15 +37,11 @@
 #include "intel_buffers.h"
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
-#include "intel_extensions.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "intel_screen.h"
-#include "intel_span.h"
 #include "intel_tex.h"
 
 #include "i915_drm.h"
-#include "i830_dri.h"
 
 #define DRI_CONF_TEXTURE_TILING(def) \
 	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\
@@ -128,8 +124,14 @@ intelDRI2Flush(__DRIdrawable *drawable)
 static void
 intelDRI2FlushInvalidate(__DRIdrawable *drawable)
 {
+   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
+
+   intel->using_dri2_swapbuffers = GL_TRUE;
+
    intelDRI2Flush(drawable);
    drawable->validBuffers = GL_FALSE;
+
+   intel_update_renderbuffers(intel->driContext, drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {

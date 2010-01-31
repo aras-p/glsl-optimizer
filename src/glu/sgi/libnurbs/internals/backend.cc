@@ -46,7 +46,6 @@
 #include "backend.h"
 #include "basiccrveval.h"
 #include "basicsurfeval.h"
-#include "nurbsconsts.h"
 
 #define NOWIREFRAME
 

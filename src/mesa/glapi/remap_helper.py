@@ -123,18 +123,26 @@ class PrintGlRemap(gl_XML.gl_print_base):
 		print '};'
 		print ''
 
-		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
+		# collect functions by versions/extensions
 		extension_functions = {}
-
-		# collect non-ABI functions
+		abi_extensions = []
 		for f in api.functionIterateAll():
 			for n in f.entry_points:
 				category, num = api.get_category_for_name(n)
-				if category not in abi:
-					c = gl_XML.real_category_name(category)
+				# consider only GL_VERSION_X_Y or extensions
+				c = gl_XML.real_category_name(category)
+				if c.startswith("GL_"):
 					if not extension_functions.has_key(c):
 						extension_functions[c] = []
 					extension_functions[c].append(f)
+					# remember the ext names of the ABI
+					if (f.is_abi() and n == f.name and
+						c not in abi_extensions):
+						abi_extensions.append(c)
+		# ignore the ABI itself
+		for ext in abi_extensions:
+			extension_functions.pop(ext)
+
 		extensions = extension_functions.keys()
 		extensions.sort()
 
@@ -144,8 +152,8 @@ class PrintGlRemap(gl_XML.gl_print_base):
 		for ext in extensions:
 			funcs = []
 			for f in extension_functions[ext]:
-				# test if the function is in the ABI
-				if not f.assign_offset and f.offset >= 0:
+				# test if the function is in the ABI and has alt names
+				if f.is_abi() and len(f.entry_points) > 1:
 					funcs.append(f)
 			if not funcs:
 				continue
@@ -171,7 +179,7 @@ class PrintGlRemap(gl_XML.gl_print_base):
 					remapped.append(f)
 				else:
 					# these functions are either in the
-                                        # abi, or have offset -1
+					# abi, or have offset -1
 					funcs.append(f)
 
 			print '#if defined(need_%s)' % (ext)

@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "eglglobals.h"
+#include "egldisplay.h"
 #include "egldriver.h"
-#include "egllog.h"
 #include "eglmutex.h"
 
 

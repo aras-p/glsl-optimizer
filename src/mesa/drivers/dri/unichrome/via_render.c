@@ -37,7 +37,6 @@
 
 #include "via_context.h"
 #include "via_tris.h"
-#include "via_state.h"
 #include "via_ioctl.h"
 
 /*

@@ -31,12 +31,9 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_state.h"
-#include "mach64_vb.h"
 #include "mach64_dd.h"
 
 #include "main/context.h"
-#include "main/framebuffer.h"
 
 #include "utils.h"
 

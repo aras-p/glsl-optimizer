@@ -41,7 +41,6 @@
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_cb_queryobj.h"
-#include "st_public.h"
 
 
 static struct gl_query_object *

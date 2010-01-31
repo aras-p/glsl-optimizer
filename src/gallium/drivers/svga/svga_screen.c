@@ -33,10 +33,8 @@
 #include "svga_screen.h"
 #include "svga_screen_texture.h"
 #include "svga_screen_buffer.h"
-#include "svga_cmd.h"
 #include "svga_debug.h"
 
-#include "svga_hw_reg.h"
 #include "svga3d_shaderdefs.h"
 
 
@@ -145,6 +143,13 @@ svga_get_paramf(struct pipe_screen *screen, int param)
 
    case PIPE_CAP_BLEND_EQUATION_SEPARATE: /* req. for GL 1.5 */
       return 1;
+
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+      return 1;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+      return 0;
 
    default:
       return 0;
@@ -393,8 +398,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
    pipe_mutex_init(svgascreen->tex_mutex);
    pipe_mutex_init(svgascreen->swc_mutex);
 
-   LIST_INITHEAD(&svgascreen->cached_buffers);
-   
    svga_screen_cache_init(svgascreen);
 
    return screen;

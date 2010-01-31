@@ -40,7 +40,8 @@ extern "C" {
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct radeon_winsys* radeon_winsys);
 
-boolean r300_get_texture_buffer(struct pipe_texture* texture,
+boolean r300_get_texture_buffer(struct pipe_screen* screen,
+                                struct pipe_texture* texture,
                                 struct pipe_buffer** buffer,
                                 unsigned* stride);
 

@@ -37,7 +37,6 @@
 #include "main/polygon.h"
 #include "main/state.h"
 #include "main/teximage.h"
-#include "main/texenv.h"
 #include "main/texobj.h"
 #include "main/texstate.h"
 #include "main/texparam.h"
@@ -46,7 +45,6 @@
 #include "main/enable.h"
 #include "main/viewport.h"
 #include "shader/arbprogram.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"
@@ -54,7 +52,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
-#include "intel_buffer_objects.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
 #include "intel_reg.h"
@@ -106,7 +103,7 @@ static void set_bit( GLubyte *dest, GLuint bit )
 }
 
 /* Extract a rectangle's worth of data from the bitmap.  Called
- * per-cliprect.
+ * per chunk of HW-sized bitmap.
  */
 static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 			      const struct gl_pixelstore_attrib *unpack,
@@ -191,11 +188,12 @@ do_blit_bitmap( GLcontext *ctx,
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
    GLuint color;
-   unsigned int num_cliprects;
-   drm_clip_rect_t *cliprects;
-   int x_off, y_off;
    GLsizei bitmap_width = width;
    GLsizei bitmap_height = height;
+   GLint px, py;
+   GLuint stipple[32];
+   GLint orig_dstx = dstx;
+   GLint orig_dsty = dsty;
 
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
@@ -236,90 +234,60 @@ do_blit_bitmap( GLcontext *ctx,
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
 
-   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
-   if (num_cliprects != 0) {
-      GLuint i;
-      GLint orig_dstx = dstx;
-      GLint orig_dsty = dsty;
+   /* Clip to buffer bounds and scissor. */
+   if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+			     fb->_Xmax, fb->_Ymax,
+			     &dstx, &dsty, &width, &height))
+      goto out;
 
-      /* Clip to buffer bounds and scissor. */
-      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
-				fb->_Xmax, fb->_Ymax,
-				&dstx, &dsty, &width, &height))
-            goto out;
-
-      dstx = x_off + dstx;
-      dsty = y_off + y_flip(fb, dsty, height);
-
-      for (i = 0; i < num_cliprects; i++) {
-	 int box_x, box_y, box_w, box_h;
-	 GLint px, py;
-	 GLuint stipple[32];  
-
-	 box_x = dstx;
-	 box_y = dsty;
-	 box_w = width;
-	 box_h = height;
-
-	 /* Clip to drawable cliprect */
-         if (!_mesa_clip_to_region(cliprects[i].x1,
-				   cliprects[i].y1,
-				   cliprects[i].x2,
-				   cliprects[i].y2,
-				   &box_x, &box_y, &box_w, &box_h))
-	    continue;
+   dsty = y_flip(fb, dsty, height);
 
 #define DY 32
 #define DX 32
 
-	 /* Then, finally, chop it all into chunks that can be
-	  * digested by hardware:
+   /* Chop it all into chunks that can be digested by hardware: */
+   for (py = 0; py < height; py += DY) {
+      for (px = 0; px < width; px += DX) {
+	 int h = MIN2(DY, height - py);
+	 int w = MIN2(DX, width - px);
+	 GLuint sz = ALIGN(ALIGN(w,8) * h, 64)/8;
+	 GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
+	    ctx->Color.LogicOp : GL_COPY;
+
+	 assert(sz <= sizeof(stipple));
+	 memset(stipple, 0, sz);
+
+	 /* May need to adjust this when padding has been introduced in
+	  * sz above:
+	  *
+	  * Have to translate destination coordinates back into source
+	  * coordinates.
 	  */
-	 for (py = 0; py < box_h; py += DY) { 
-	    for (px = 0; px < box_w; px += DX) { 
-	       int h = MIN2(DY, box_h - py);
-	       int w = MIN2(DX, box_w - px); 
-	       GLuint sz = ALIGN(ALIGN(w,8) * h, 64)/8;
-	       GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
-		  ctx->Color.LogicOp : GL_COPY;
+	 if (get_bitmap_rect(bitmap_width, bitmap_height, unpack,
+			     bitmap,
+			     -orig_dstx + (dstx + px),
+			     -orig_dsty + y_flip(fb, dsty + py, h),
+			     w, h,
+			     (GLubyte *)stipple,
+			     8,
+			     fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
+	    continue;
 
-	       assert(sz <= sizeof(stipple));
-	       memset(stipple, 0, sz);
-
-	       /* May need to adjust this when padding has been introduced in
-		* sz above:
-		*
-		* Have to translate destination coordinates back into source
-		* coordinates.
-		*/
-	       if (get_bitmap_rect(bitmap_width, bitmap_height, unpack,
-				   bitmap,
-				   -orig_dstx + (box_x + px - x_off),
-				   -orig_dsty + y_flip(fb,
-						       box_y + py - y_off, h),
-				   w, h,
-				   (GLubyte *)stipple,
-				   8,
-				   fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
-		  continue;
-
-	       if (!intelEmitImmediateColorExpandBlit(intel,
-						      dst->cpp,
-						      (GLubyte *)stipple,
-						      sz,
-						      color,
-						      dst->pitch,
-						      dst->buffer,
-						      0,
-						      dst->tiling,
-						      box_x + px,
-						      box_y + py,
-						      w, h,
-						      logic_op)) {
-		  return GL_FALSE;
-	       }
-	    } 
-	 } 
+	 if (!intelEmitImmediateColorExpandBlit(intel,
+						dst->cpp,
+						(GLubyte *)stipple,
+						sz,
+						color,
+						dst->pitch,
+						dst->buffer,
+						0,
+						dst->tiling,
+						dstx + px,
+						dsty + py,
+						w, h,
+						logic_op)) {
+	    return GL_FALSE;
+	 }
       }
    }
 out:

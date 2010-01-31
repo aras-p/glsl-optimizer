@@ -553,7 +553,7 @@ parse_register_dcl_bracket(
       report_error( ctx, "Expected literal unsigned integer" );
       return FALSE;
    }
-   bracket->first = (int) uindex;
+   bracket->first = uindex;
 
    eat_opt_white( &ctx->cur );
 
@@ -617,10 +617,12 @@ parse_register_dcl(
        * input primitive. so we want to declare just
        * the index relevant to the semantics which is in
        * the second bracket */
-      if (ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
+      if (ctx->processor == TGSI_PROCESSOR_GEOMETRY && *file == TGSI_FILE_INPUT) {
          brackets[0] = brackets[1];
+         *num_brackets = 1;
+      } else {
+         *num_brackets = 2;
       }
-      *num_brackets = 2;
    }
 
    return TRUE;
@@ -738,6 +740,13 @@ parse_src_operand(
       return FALSE;
 
    src->Register.File = file;
+   if (parsed_opt_brackets) {
+      src->Register.Dimension = 1;
+      src->Dimension.Indirect = 0;
+      src->Dimension.Dimension = 0;
+      src->Dimension.Index = bracket[0].index;
+      bracket[0] = bracket[1];
+   }
    src->Register.Index = bracket[0].index;
    if (bracket[0].ind_file != TGSI_FILE_NULL) {
       src->Register.Indirect = 1;
@@ -747,12 +756,6 @@ parse_src_operand(
       src->Indirect.SwizzleY = bracket[0].ind_comp;
       src->Indirect.SwizzleZ = bracket[0].ind_comp;
       src->Indirect.SwizzleW = bracket[0].ind_comp;
-   }
-   if (parsed_opt_brackets) {
-      src->Register.Dimension = 1;
-      src->Dimension.Indirect = 0;
-      src->Dimension.Dimension = 0;
-      src->Dimension.Index = bracket[1].index;
    }
 
    /* Parse optional swizzle.
@@ -933,7 +936,8 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "NORMAL",
    "FACE",
    "EDGEFLAG",
-   "PRIM_ID"
+   "PRIM_ID",
+   "INSTANCEID"
 };
 
 static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
@@ -968,8 +972,17 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = file;
    decl.Declaration.UsageMask = writemask;
-   decl.Range.First = brackets[0].first;
-   decl.Range.Last = brackets[0].last;
+
+   if (num_brackets == 1) {
+      decl.Range.First = brackets[0].first;
+      decl.Range.Last = brackets[0].last;
+   } else {
+      decl.Range.First = brackets[1].first;
+      decl.Range.Last = brackets[1].last;
+
+      decl.Declaration.Dimension = 1;
+      decl.Dim.Index2D = brackets[0].first;
+   }
 
    cur = ctx->cur;
    eat_opt_white( &cur );
@@ -1116,7 +1129,9 @@ static const char *property_names[] =
 {
    "GS_INPUT_PRIMITIVE",
    "GS_OUTPUT_PRIMITIVE",
-   "GS_MAX_OUTPUT_VERTICES"
+   "GS_MAX_OUTPUT_VERTICES",
+   "FS_COORD_ORIGIN",
+   "FS_COORD_PIXEL_CENTER"
 };
 
 static const char *primitive_names[] =
@@ -1133,6 +1148,19 @@ static const char *primitive_names[] =
    "POLYGON"
 };
 
+static const char *fs_coord_origin_names[] =
+{
+   "UPPER_LEFT",
+   "LOWER_LEFT"
+};
+
+static const char *fs_coord_pixel_center_names[] =
+{
+   "HALF_INTEGER",
+   "INTEGER"
+};
+
+
 static boolean
 parse_primitive( const char **pcur, uint *primitive )
 {
@@ -1143,6 +1171,40 @@ parse_primitive( const char **pcur, uint *primitive )
 
       if (str_match_no_case( &cur, primitive_names[i])) {
          *primitive = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_origin( const char **pcur, uint *fs_coord_origin )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_origin_names) / sizeof(fs_coord_origin_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_origin_names[i])) {
+         *fs_coord_origin = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_pixel_center( const char **pcur, uint *fs_coord_pixel_center )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_pixel_center_names) / sizeof(fs_coord_pixel_center_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_pixel_center_names[i])) {
+         *fs_coord_pixel_center = i;
          *pcur = cur;
          return TRUE;
       }
@@ -1189,6 +1251,18 @@ static boolean parse_property( struct translate_ctx *ctx )
       if (property_name == TGSI_PROPERTY_GS_INPUT_PRIM &&
           ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
          ctx->implied_array_size = u_vertices_per_prim(values[0]);
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_ORIGIN:
+      if (!parse_fs_coord_origin(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord origin as property: must be UPPER_LEFT or LOWER_LEFT!" );
+         return FALSE;
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+      if (!parse_fs_coord_pixel_center(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord pixel center as property: must be HALF_INTEGER or INTEGER!" );
+         return FALSE;
       }
       break;
    default:

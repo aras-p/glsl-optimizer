@@ -531,6 +531,9 @@ st_draw_vbo(GLcontext *ctx,
    GLboolean userSpace = GL_FALSE;
    GLboolean vertDataEdgeFlags;
 
+   /* Mesa core state should have been validated already */
+   assert(ctx->NewState == 0x0);
+
    /* Gallium probably doesn't want this in some cases. */
    if (!index_bounds_valid)
       if (!vbo_all_varyings_in_vbos(arrays))

@@ -408,7 +408,7 @@ gen_blend(const struct pipe_blend_state *blend,
    int one_reg = -1;
    int constR_reg = -1, constG_reg = -1, constB_reg = -1, constA_reg = -1;
 
-   ASSERT(blend->blend_enable);
+   ASSERT(blend->rt[0].blend_enable);
 
    /* packed RGBA -> float colors */
    unpack_colors(f, color_format, fbRGBA_reg,
@@ -420,7 +420,7 @@ gen_blend(const struct pipe_blend_state *blend,
     * because in some cases (like PIPE_BLENDFACTOR_ONE and 
     * PIPE_BLENDFACTOR_ZERO) we can avoid doing unnecessary math.
     */
-   switch (blend->rgb_src_factor) {
+   switch (blend->rt[0].rgb_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* factors = (1,1,1), so term = (R,G,B) */
       spe_move(f, term1R_reg, fragR_reg);
@@ -574,7 +574,7 @@ gen_blend(const struct pipe_blend_state *blend,
     * the full term A*factor, not just the factor itself, because
     * in many cases we can avoid doing unnecessary multiplies.
     */
-   switch (blend->alpha_src_factor) {
+   switch (blend->rt[0].alpha_src_factor) {
    case PIPE_BLENDFACTOR_ZERO:
       /* factor = 0, so term = 0 */
       spe_load_float(f, term1A_reg, 0.0f);
@@ -648,7 +648,7 @@ gen_blend(const struct pipe_blend_state *blend,
     * the full term (Rfb,Gfb,Bfb)*(factor), not just the factor itself, because
     * in many cases we can avoid doing unnecessary multiplies.
     */
-   switch (blend->rgb_dst_factor) {
+   switch (blend->rt[0].rgb_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* factors = (1,1,1), so term = (Rfb,Gfb,Bfb) */
       spe_move(f, term2R_reg, fbR_reg);
@@ -786,7 +786,7 @@ gen_blend(const struct pipe_blend_state *blend,
     * the full term Afb*factor, not just the factor itself, because
     * in many cases we can avoid doing unnecessary multiplies.
     */
-   switch (blend->alpha_dst_factor) {
+   switch (blend->rt[0].alpha_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* factor = 1, so term = Afb */
       spe_move(f, term2A_reg, fbA_reg);
@@ -858,7 +858,7 @@ gen_blend(const struct pipe_blend_state *blend,
    /*
     * Combine Src/Dest RGB terms as per the blend equation.
     */
-   switch (blend->rgb_func) {
+   switch (blend->rt[0].rgb_func) {
    case PIPE_BLEND_ADD:
       spe_fa(f, fragR_reg, term1R_reg, term2R_reg);
       spe_fa(f, fragG_reg, term1G_reg, term2G_reg);
@@ -891,7 +891,7 @@ gen_blend(const struct pipe_blend_state *blend,
    /*
     * Combine Src/Dest A term
     */
-   switch (blend->alpha_func) {
+   switch (blend->rt[0].alpha_func) {
    case PIPE_BLEND_ADD:
       spe_fa(f, fragA_reg, term1A_reg, term2A_reg);
       break;
@@ -2118,7 +2118,7 @@ cell_gen_fragment_function(struct cell_context *cell,
    spe_comment(f, 0, "Fetch quad colors from tile");
    spe_lqx(f, fbRGBA_reg, color_tile_reg, quad_offset_reg);
 
-   if (blend->blend_enable) {
+   if (blend->rt[0].blend_enable) {
       spe_comment(f, 0, "Perform blending");
       gen_blend(blend, blend_color, f, color_format,
                 fragR_reg, fragG_reg, fragB_reg, fragA_reg, fbRGBA_reg);
@@ -2143,9 +2143,9 @@ cell_gen_fragment_function(struct cell_context *cell,
          gen_logicop(blend, f, rgba_reg, fbRGBA_reg);
       }
 
-      if (blend->colormask != PIPE_MASK_RGBA) {
+      if (blend->rt[0].colormask != PIPE_MASK_RGBA) {
          spe_comment(f, 0, "Compute color mask");
-         gen_colormask(f, blend->colormask, color_format, rgba_reg, fbRGBA_reg);
+         gen_colormask(f, blend->rt[0].colormask, color_format, rgba_reg, fbRGBA_reg);
       }
 
       /* Mix fragment colors with framebuffer colors using the quad/pixel mask:

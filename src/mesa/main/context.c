@@ -415,14 +415,6 @@ one_time_init( GLcontext *ctx )
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
 
-      if (_mesa_getenv("MESA_DEBUG")) {
-         _glapi_noop_enable_warnings(GL_TRUE);
-         _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
-      }
-      else {
-         _glapi_noop_enable_warnings(GL_FALSE);
-      }
-
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
       _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
                   MESA_VERSION_STRING, __DATE__, __TIME__);
@@ -1586,6 +1578,10 @@ _mesa_set_mvp_with_dp4( GLcontext *ctx,
 GLboolean
 _mesa_valid_to_render(GLcontext *ctx, const char *where)
 {
+   /* This depends on having up to date derived state (shaders) */
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
    if (ctx->Shader.CurrentProgram) {
       /* using shaders */
       if (!ctx->Shader.CurrentProgram->LinkStatus) {

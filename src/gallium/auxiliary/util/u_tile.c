@@ -390,7 +390,7 @@ a4r4g4b4_put_tile_rgba(ushort *dst,
          g >>= 4;
          b >>= 4;
          a >>= 4;
-         *dst++ = (a << 12) | (r << 16) | (g << 4) | b;
+         *dst++ = (a << 12) | (r << 8) | (g << 4) | b;
       }
       p += src_stride;
    }

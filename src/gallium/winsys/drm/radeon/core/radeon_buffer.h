@@ -36,7 +36,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 
-//#include "state_tracker/st_public.h"
+#include "pipebuffer/pb_buffer.h"
 
 #include "util/u_memory.h"
 
@@ -49,7 +49,10 @@
 
 struct radeon_pipe_buffer {
     struct pipe_buffer  base;
+    /* Pointer to GPU-backed BO. */
     struct radeon_bo    *bo;
+    /* Pointer to fallback PB buffer. */
+    struct pb_buffer    *pb;
     boolean flinked;
     uint32_t flink;
 };

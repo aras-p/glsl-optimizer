@@ -13,15 +13,19 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 #include "eglmisc.h"
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglstring.h"
 #include "eglsurface.h"
+#include "eglimage.h"
 
-#if defined(_EGL_PLATFORM_X)
+#if defined(_EGL_PLATFORM_POSIX)
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <dirent.h>
 #endif
 
 
@@ -49,10 +53,31 @@ close_library(HMODULE lib)
 }
 
 
-#elif defined(_EGL_PLATFORM_X)
+static const char *
+library_suffix(void)
+{
+   return "dll";
+}
 
 
-static const char DefaultDriverName[] = "egl_softpipe";
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   EGLBoolean need_suffix;
+   const char *suffix = ".dll";
+   int ret;
+
+   need_suffix = (strchr(name, '.') == NULL);
+   ret = snprintf(buf, size, "%s%s", name, (need_suffix) ? suffix : "");
+
+   return ((unsigned int) ret < size);
+}
+
+
+#elif defined(_EGL_PLATFORM_POSIX)
+
+
+static const char DefaultDriverName[] = "egl_glx";
 
 typedef void * lib_handle;
 
@@ -67,6 +92,32 @@ close_library(void *lib)
 {
    dlclose(lib);
 }
+
+
+static const char *
+library_suffix(void)
+{
+   return "so";
+}
+
+
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   EGLBoolean need_dir, need_suffix;
+   const char *suffix = ".so";
+   int ret;
+
+   need_dir = (strchr(name, '/') == NULL);
+   need_suffix = (strchr(name, '.') == NULL);
+
+   ret = snprintf(buf, size, "%s%s%s",
+         (need_dir) ? _EGL_DRIVER_SEARCH_DIR"/" : "", name,
+         (need_suffix) ? suffix : "");
+
+   return ((unsigned int) ret < size);
+}
+
 
 #else /* _EGL_PLATFORM_NO_OS */
 
@@ -86,67 +137,29 @@ close_library(void *lib)
 }
 
 
-#endif
-
-
-/**
- * Choose a driver for a given display.
- * The caller may free() the returned strings.
- */
-static char *
-_eglChooseDriver(_EGLDisplay *dpy, char **argsRet)
+static const char *
+library_suffix(void)
 {
-   char *path = NULL;
-   const char *args = NULL;
-   const char *suffix = NULL;
-   const char *p;
+   return NULL;
+}
 
-   path = getenv("EGL_DRIVER");
-   if (path)
-      path = _eglstrdup(path);
 
-#if defined(_EGL_PLATFORM_X)
-   if (!path && dpy && dpy->NativeDisplay) {
-      /* assume (wrongly!) that the native display is a display string */
-      path = _eglSplitDisplayString((const char *) dpy->NativeDisplay, &args);
-   }
-   suffix = "so";
-#elif defined(_EGL_PLATFORM_WINDOWS)
-   suffix = "dll";
-#else /* _EGL_PLATFORM_NO_OS */
-   if (path) {
-      /* force the use of the default driver */
-      _eglLog(_EGL_DEBUG, "ignore EGL_DRIVER");
-      free(path);
-      path = NULL;
-   }
-   suffix = NULL;
+static EGLBoolean
+make_library_path(char *buf, unsigned int size, const char *name)
+{
+   int ret = snprintf(buf, size, name);
+   return ((unsigned int) ret < size);
+}
+
+
 #endif
 
-   if (!path)
-      path = _eglstrdup(DefaultDriverName);
 
-   /* append suffix if there isn't */
-   p = strrchr(path, '.');
-   if (!p && suffix) {
-      size_t len = strlen(path);
-      char *tmp = malloc(len + strlen(suffix) + 2);
-      if (tmp) {
-         memcpy(tmp, path, len);
-         tmp[len++] = '.';
-         tmp[len] = '\0';
-         strcat(tmp + len, suffix);
-
-         free(path);
-         path = tmp;
-      }
-   }
-
-   if (argsRet)
-      *argsRet = (args) ? _eglstrdup(args) : NULL;
-
-   return path;
-}
+#define NUM_PROBE_CACHE_SLOTS 8
+static struct {
+   EGLint keys[NUM_PROBE_CACHE_SLOTS];
+   const void *values[NUM_PROBE_CACHE_SLOTS];
+} _eglProbeCache;
 
 
 /**
@@ -168,7 +181,7 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
    /* XXX untested */
    if (lib)
       mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
-#elif defined(_EGL_PLATFORM_X)
+#elif defined(_EGL_PLATFORM_POSIX)
    if (lib) {
       mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
       if (!mainFunc)
@@ -208,11 +221,10 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
 
 
 /**
- * Load the named driver.  The path and args passed will be
- * owned by the driver and freed.
+ * Load the named driver.
  */
 static _EGLDriver *
-_eglLoadDriver(char *path, char *args)
+_eglLoadDriver(const char *path, const char *args)
 {
    _EGLMain_t mainFunc;
    lib_handle lib;
@@ -234,8 +246,19 @@ _eglLoadDriver(char *path, char *args)
       drv->Name = "UNNAMED";
    }
 
-   drv->Path = path;
-   drv->Args = args;
+   drv->Path = _eglstrdup(path);
+   drv->Args = (args) ? _eglstrdup(args) : NULL;
+   if (!drv->Path || (args && !drv->Args)) {
+      if (drv->Path)
+         free((char *) drv->Path);
+      if (drv->Args)
+         free((char *) drv->Args);
+      drv->Unload(drv);
+      if (lib)
+         close_library(lib);
+      return NULL;
+   }
+
    drv->LibHandle = lib;
 
    return drv;
@@ -244,89 +267,178 @@ _eglLoadDriver(char *path, char *args)
 
 /**
  * Match a display to a preloaded driver.
+ *
+ * The matching is done by finding the driver with the highest score.
  */
-static _EGLDriver *
+_EGLDriver *
 _eglMatchDriver(_EGLDisplay *dpy)
 {
-   _EGLDriver *defaultDriver = NULL;
-   EGLint i;
+   _EGLDriver *best_drv = NULL;
+   EGLint best_score = -1, i;
 
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
       _EGLDriver *drv = _eglGlobal.Drivers[i];
+      EGLint score;
 
-      /* display specifies a driver */
-      if (dpy->DriverName) {
-         if (strcmp(dpy->DriverName, drv->Name) == 0)
-            return drv;
-      }
-      else if (drv->Probe) {
-         if (drv->Probe(drv, dpy))
-            return drv;
-      }
-      else {
-         if (!defaultDriver)
-            defaultDriver = drv;
+      score = (drv->Probe) ? drv->Probe(drv, dpy) : 0;
+      if (score > best_score) {
+         if (best_drv) {
+            _eglLog(_EGL_DEBUG, "driver %s has higher score than %s",
+                  drv->Name, best_drv->Name);
+         }
+
+         best_drv = drv;
+         best_score = score;
+         /* perfect match */
+         if (score >= 100)
+            break;
       }
    }
 
-   return defaultDriver;
+   return best_drv;
 }
 
 
 /**
- * Load a driver and save it.
+ * Preload a user driver.
+ *
+ * A user driver can be specified by EGL_DRIVER.
  */
-const char *
-_eglPreloadDriver(_EGLDisplay *dpy)
+static EGLBoolean
+_eglPreloadUserDriver(void)
 {
-   char *path, *args;
+#if defined(_EGL_PLATFORM_POSIX) || defined(_EGL_PLATFORM_WINDOWS)
    _EGLDriver *drv;
-   EGLint i;
+   char path[1024];
+   char *env;
 
-   path = _eglChooseDriver(dpy, &args);
-   if (!path)
-      return NULL;
+   env = getenv("EGL_DRIVER");
+   if (!env)
+      return EGL_FALSE;
 
-   for (i = 0; i < _eglGlobal.NumDrivers; i++) {
-      drv = _eglGlobal.Drivers[i];
-      if (strcmp(drv->Path, path) == 0) {
-         _eglLog(_EGL_DEBUG, "Driver %s is already preloaded",
-                 drv->Name);
-         free(path);
-         if (args)
-            free(args);
-         return drv->Name;
-      }
+   if (!make_library_path(path, sizeof(path), env))
+      return EGL_FALSE;
+
+   drv = _eglLoadDriver(path, NULL);
+   if (!drv) {
+      _eglLog(_EGL_WARNING, "EGL_DRIVER is set to an invalid driver");
+      return EGL_FALSE;
    }
-
-   drv = _eglLoadDriver(path, args);
-   if (!drv)
-      return NULL;
 
    _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
 
-   return drv->Name;
+   return EGL_TRUE;
+#else /* _EGL_PLATFORM_POSIX || _EGL_PLATFORM_WINDOWS */
+   return EGL_FALSE;
+#endif
 }
 
 
 /**
- * Open a preloaded driver.
+ * Preload display drivers.
+ *
+ * Display drivers are a set of drivers that support a certain display system.
+ * The display system may be specified by EGL_DISPLAY.
+ *
+ * FIXME This makes libEGL a memory hog if an user driver is not specified and
+ * there are many display drivers.
  */
-_EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy)
+static EGLBoolean
+_eglPreloadDisplayDrivers(void)
 {
-   _EGLDriver *drv = _eglMatchDriver(dpy);
-   return drv;
+#if defined(_EGL_PLATFORM_POSIX)
+   const char *dpy, *suffix;
+   char path[1024], prefix[32];
+   DIR *dirp;
+   struct dirent *dirent;
+
+   dpy = getenv("EGL_DISPLAY");
+   if (!dpy || !dpy[0])
+      dpy = _EGL_DEFAULT_DISPLAY;
+   if (!dpy || !dpy[0])
+      return EGL_FALSE;
+
+   snprintf(prefix, sizeof(prefix), "egl_%s_", dpy);
+   suffix = library_suffix();
+
+   dirp = opendir(_EGL_DRIVER_SEARCH_DIR);
+   if (!dirp)
+      return EGL_FALSE;
+
+   while ((dirent = readdir(dirp))) {
+      _EGLDriver *drv;
+      const char *p;
+
+      /* match the prefix */
+      if (strncmp(dirent->d_name, prefix, strlen(prefix)) != 0)
+         continue;
+
+      /* match the suffix */
+      p = strrchr(dirent->d_name, '.');
+      if ((p && !suffix) || (!p && suffix))
+         continue;
+      else if (p && suffix && strcmp(p + 1, suffix) != 0)
+         continue;
+
+      snprintf(path, sizeof(path),
+            _EGL_DRIVER_SEARCH_DIR"/%s", dirent->d_name);
+
+      drv = _eglLoadDriver(path, NULL);
+      if (drv)
+         _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
+   }
+
+   closedir(dirp);
+
+   return (_eglGlobal.NumDrivers > 0);
+#else /* _EGL_PLATFORM_POSIX */
+   return EGL_FALSE;
+#endif
 }
 
 
 /**
- * Close a preloaded driver.
+ * Preload the default driver.
+ */
+static EGLBoolean
+_eglPreloadDefaultDriver(void)
+{
+   _EGLDriver *drv;
+   char path[1024];
+
+   if (!make_library_path(path, sizeof(path), DefaultDriverName))
+      return EGL_FALSE;
+
+   drv = _eglLoadDriver(path, NULL);
+   if (!drv)
+      return EGL_FALSE;
+
+   _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
+
+   return EGL_TRUE;
+}
+
+
+/**
+ * Preload drivers.
+ *
+ * This function loads the driver modules and creates the corresponding
+ * _EGLDriver objects.
  */
 EGLBoolean
-_eglCloseDriver(_EGLDriver *drv, _EGLDisplay *dpy)
+_eglPreloadDrivers(void)
 {
-   return EGL_TRUE;
+   EGLBoolean loaded;
+
+   /* already preloaded */
+   if (_eglGlobal.NumDrivers)
+      return EGL_TRUE;
+
+   loaded = (_eglPreloadUserDriver() ||
+             _eglPreloadDisplayDrivers() ||
+             _eglPreloadDefaultDriver());
+
+   return loaded;
 }
 
 
@@ -356,20 +468,6 @@ _eglUnloadDrivers(void)
    }
 
    _eglGlobal.NumDrivers = 0;
-}
-
-
-/**
- * Given a display handle, return the _EGLDriver for that display.
- */
-_EGLDriver *
-_eglLookupDriver(EGLDisplay dpy)
-{
-   _EGLDisplay *d = _eglLookupDisplay(dpy);
-   if (d)
-      return d->Driver;
-   else
-      return NULL;
 }
 
 
@@ -428,56 +526,50 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 #ifdef EGL_VERSION_1_2
    drv->API.CreatePbufferFromClientBuffer = _eglCreatePbufferFromClientBuffer;
 #endif /* EGL_VERSION_1_2 */
+
+#ifdef EGL_KHR_image_base
+   drv->API.CreateImageKHR = _eglCreateImageKHR;
+   drv->API.DestroyImageKHR = _eglDestroyImageKHR;
+#endif /* EGL_KHR_image_base */
 }
 
 
+/**
+ * Set the probe cache at the given key.
+ *
+ * A key, instead of a _EGLDriver, is used to allow the probe cache to be share
+ * by multiple drivers.
+ */
+void
+_eglSetProbeCache(EGLint key, const void *val)
+{
+   EGLint idx;
+
+   for (idx = 0; idx < NUM_PROBE_CACHE_SLOTS; idx++) {
+      if (!_eglProbeCache.keys[idx] || _eglProbeCache.keys[idx] == key)
+         break;
+   }
+   assert(key > 0);
+   assert(idx < NUM_PROBE_CACHE_SLOTS);
+
+   _eglProbeCache.keys[idx] = key;
+   _eglProbeCache.values[idx] = val;
+}
+
 
 /**
- * Try to determine which EGL APIs (OpenGL, OpenGL ES, OpenVG, etc)
- * are supported on the system by looking for standard library names.
+ * Return the probe cache at the given key.
  */
-EGLint
-_eglFindAPIs(void)
+const void *
+_eglGetProbeCache(EGLint key)
 {
-   EGLint mask = 0x0;
-   lib_handle lib;
-#if defined(_EGL_PLATFORM_WINDOWS)
-   /* XXX not sure about these names */
-   const char *es1_libname = "libGLESv1_CM.dll";
-   const char *es2_libname = "libGLESv2.dll";
-   const char *gl_libname = "OpenGL32.dll";
-   const char *vg_libname = "libOpenVG.dll";
-#elif defined(_EGL_PLATFORM_X)
-   const char *es1_libname = "libGLESv1_CM.so";
-   const char *es2_libname = "libGLESv2.so";
-   const char *gl_libname = "libGL.so";
-   const char *vg_libname = "libOpenVG.so";
-#else /* _EGL_PLATFORM_NO_OS */
-   const char *es1_libname = NULL;
-   const char *es2_libname = NULL;
-   const char *gl_libname = NULL;
-   const char *vg_libname = NULL;
-#endif
+   EGLint idx;
 
-   if ((lib = open_library(es1_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_ES_BIT;
+   for (idx = 0; idx < NUM_PROBE_CACHE_SLOTS; idx++) {
+      if (!_eglProbeCache.keys[idx] || _eglProbeCache.keys[idx] == key)
+         break;
    }
 
-   if ((lib = open_library(es2_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_ES2_BIT;
-   }
-
-   if ((lib = open_library(gl_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENGL_BIT;
-   }
-
-   if ((lib = open_library(vg_libname))) {
-      close_library(lib);
-      mask |= EGL_OPENVG_BIT;
-   }
-
-   return mask;
+   return (idx < NUM_PROBE_CACHE_SLOTS && _eglProbeCache.keys[idx] == key) ?
+      _eglProbeCache.values[idx] : NULL;
 }

@@ -51,8 +51,7 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
-void r300_emit_fb_state(struct r300_context* r300,
-                        struct pipe_framebuffer_state* fb);
+void r300_emit_fb_state(struct r300_context* r300, void* state);
 
 void r300_emit_query_begin(struct r300_context* r300,
                            struct r300_query* query);
@@ -61,8 +60,7 @@ void r300_emit_query_end(struct r300_context* r300);
 
 void r300_emit_rs_state(struct r300_context* r300, void* state);
 
-void r300_emit_rs_block_state(struct r300_context* r300,
-                              struct r300_rs_block* rs);
+void r300_emit_rs_block_state(struct r300_context* r300, void* state);
 
 void r300_emit_scissor_state(struct r300_context* r300, void* state);
 
@@ -73,7 +71,7 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_buffer(struct r300_context* r300);
 
-void r300_emit_vertex_format_state(struct r300_context* r300);
+void r300_emit_vertex_format_state(struct r300_context* r300, void* state);
 
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code);
@@ -94,5 +92,7 @@ void r300_flush_textures(struct r300_context* r300);
 
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300);
+
+void r300_emit_buffer_validate(struct r300_context *r300);
 
 #endif /* R300_EMIT_H */

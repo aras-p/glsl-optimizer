@@ -96,7 +96,14 @@ esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math -fvisibility=hidden"
+    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math"
+
+    # Enable -fvisibility=hidden if using a gcc that supports it
+    save_CFLAGS="$CFLAGS"
+    AC_MSG_CHECKING([whether $CC supports -fvisibility=hidden])
+    CFLAGS="$CFLAGS -fvisibility=hidden"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
+		   [CFLAGS="$save_CFLAGS" ; AC_MSG_RESULT([no])]);
 
     # Work around aliasing bugs - developers should comment this out
     CFLAGS="$CFLAGS -fno-strict-aliasing"
@@ -419,7 +426,11 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="glsl mesa glew"
+
+dnl this variable will be prepended to SRC_DIRS and is not exported
+CORE_DIRS="glsl mesa"
+
+SRC_DIRS="glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -434,7 +445,7 @@ xlib)
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
     ;;
 dri)
-    SRC_DIRS="glx/x11 $SRC_DIRS"
+    SRC_DIRS="$SRC_DIRS glx/x11"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
@@ -688,19 +699,11 @@ yes)
     ;;
 esac
 
-dnl Just default to no EGL for now
-USING_EGL=0
-AC_SUBST([USING_EGL])
-
 dnl Set DRI_DIRS, DEFINES and LIB_DEPS
 if test "$mesa_driver" = dri; then
     # Use TLS in GLX?
     if test "x$GLX_USE_TLS" = xyes; then
         DEFINES="$DEFINES -DGLX_USE_TLS -DPTHREADS"
-    fi
-
-    if test "x$USING_EGL" = x1; then
-        PROGRAM_DIRS="egl"
     fi
 
     # Platform specific settings and drivers to build
@@ -1162,7 +1165,7 @@ yes)
     dri)
         GALLIUM_STATE_TRACKERS_DIRS="dri"
         if test "x$enable_egl" = xyes; then
-            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl egl_g3d"
+            GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
         fi
         # Have only tested st/xorg on 1.6.0 servers
         PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
@@ -1178,14 +1181,22 @@ yes)
         test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
 
-        if test "$tracker" = egl && test "x$enable_egl" != xyes; then
-            AC_MSG_ERROR([cannot build egl state tracker without EGL library])
-        fi
-        if test "$tracker" = xorg; then
+        case "$tracker" in
+        egl)
+            if test "x$enable_egl" != xyes; then
+                AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+            fi
+            ;;
+        xorg)
 	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
                   HAVE_XEXTPROTO_71="no")
-        fi
+            ;;
+        es)
+            # mesa/es is required to build es state tracker
+            CORE_DIRS="$CORE_DIRS mesa/es"
+            ;;
+        esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
@@ -1212,13 +1223,20 @@ yes)
     # verify the requested driver directories exist
     egl_displays=`IFS=', '; echo $with_egl_displays`
     for dpy in $egl_displays; do
-        test -d "$srcdir/src/gallium/state_trackers/egl_g3d/$dpy" || \
+        test -d "$srcdir/src/gallium/state_trackers/egl/$dpy" || \
             AC_MSG_ERROR([EGL display '$dpy' does't exist])
     done
     EGL_DISPLAYS="$egl_displays"
     ;;
 esac
 AC_SUBST([EGL_DISPLAYS])
+
+AC_ARG_WITH([egl-driver-dir],
+    [AS_HELP_STRING([--with-egl-driver-dir=DIR],
+                    [directory for EGL drivers [[default=${libdir}/egl]]])],
+    [EGL_DRIVER_INSTALL_DIR="$withval"],
+    [EGL_DRIVER_INSTALL_DIR='${libdir}/egl'])
+AC_SUBST([EGL_DRIVER_INSTALL_DIR])
 
 AC_ARG_WITH([xorg-driver-dir],
     [AS_HELP_STRING([--with-xorg-driver-dir=DIR],
@@ -1300,6 +1318,20 @@ if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv04 nv10 nv20 nv30 nv40 nv50"
 fi
 
+dnl
+dnl Gallium swrast configuration
+dnl
+AC_ARG_ENABLE([gallium-swrast],
+    [AS_HELP_STRING([--enable-gallium-swrast],
+        [build gallium swrast @<:@default=disabled@:>@])],
+    [enable_gallium_swrast="$enableval"],
+    [enable_gallium_swrast=auto])
+if test "x$enable_gallium_swrast" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS swrast"
+fi
+
+dnl prepend CORE_DIRS to SRC_DIRS
+SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"

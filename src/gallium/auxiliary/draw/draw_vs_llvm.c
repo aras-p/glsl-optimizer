@@ -64,7 +64,7 @@ static void
 vs_llvm_run_linear( struct draw_vertex_shader *base,
 		   const float (*input)[4],
 		   float (*output)[4],
-		   const float (*constants)[4],
+                   const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
 		   unsigned count,
 		   unsigned input_stride,
 		   unsigned output_stride )
@@ -74,7 +74,8 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 
    gallivm_cpu_vs_exec(shader->llvm_prog, shader->machine,
                        input, base->info.num_inputs, output, base->info.num_outputs,
-                       constants, count, input_stride, output_stride);
+                       (const float (*)[4])constants[0],
+                       count, input_stride, output_stride);
 }
 
 

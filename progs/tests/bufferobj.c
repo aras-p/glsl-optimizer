@@ -29,6 +29,7 @@ struct object
    GLuint VertexStride;
    GLuint ColorStride;
    GLuint NumElements;
+   GLuint MaxElement;
 };
 
 static struct object Objects[NUM_OBJECTS];
@@ -58,7 +59,8 @@ static void DrawObject( const struct object *obj )
       if (obj->NumElements > 0) {
          /* indexed arrays */
          glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
-         glDrawElements(GL_LINE_LOOP, obj->NumElements, GL_UNSIGNED_INT, NULL);
+         glDrawRangeElements(GL_LINE_LOOP, 0, obj->MaxElement,
+                             obj->NumElements, GL_UNSIGNED_INT, NULL);
       }
       else {
          /* non-indexed arrays */
@@ -300,6 +302,7 @@ static void MakeObject1(struct object *obj)
    obj->VertexStride = 0;
    obj->ColorStride = 0;
    obj->NumElements = 0;
+   obj->MaxElement = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 
@@ -345,6 +348,7 @@ static void MakeObject2(struct object *obj)
    obj->ColorStride = 6 * sizeof(GLfloat);
 
    obj->NumElements = 0;
+   obj->MaxElement = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 
@@ -401,6 +405,7 @@ static void MakeObject3(struct object *obj)
    i[3] = 3;
    glUnmapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB);
    obj->NumElements = 4;
+   obj->MaxElement = 3;
 
    if (Have_ARB_vertex_array_object) {
       CreateVertexArrayObject(obj);
@@ -445,6 +450,7 @@ static void MakeObject4(struct object *obj)
    /* Setup a buffer of indices to test the ELEMENTS path */
    obj->ElementsBufferID = 0;
    obj->NumElements = 0;
+   obj->MaxElement = 0;
 
    if (Have_ARB_vertex_array_object) {
       CreateVertexArrayObject(obj);

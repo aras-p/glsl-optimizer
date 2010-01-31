@@ -33,7 +33,6 @@
 #include "main/colormac.h"
 #include "main/texobj.h"
 #include "main/mm.h"
-#include "swrast/swrast.h"
 
 #include "texmem.h"
 
@@ -42,7 +41,6 @@
 
 #include "i810context.h"
 #include "i810tex.h"
-#include "i810state.h"
 #include "i810ioctl.h"
 
 

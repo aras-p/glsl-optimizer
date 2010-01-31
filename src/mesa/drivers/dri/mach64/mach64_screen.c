@@ -31,8 +31,6 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_tris.h"
-#include "mach64_vb.h"
 #include "mach64_span.h"
 
 #include "main/context.h"

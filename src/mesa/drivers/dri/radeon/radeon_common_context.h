@@ -518,6 +518,26 @@ struct radeon_context {
 	   void (*free_context)(GLcontext *ctx);
 	   void (*emit_query_finish)(radeonContextPtr radeon);
 	   void (*update_scissor)(GLcontext *ctx);
+	   unsigned (*blit)(GLcontext *ctx,
+                        struct radeon_bo *src_bo,
+                        intptr_t src_offset,
+                        gl_format src_mesaformat,
+                        unsigned src_pitch,
+                        unsigned src_width,
+                        unsigned src_height,
+                        unsigned src_x_offset,
+                        unsigned src_y_offset,
+                        struct radeon_bo *dst_bo,
+                        intptr_t dst_offset,
+                        gl_format dst_mesaformat,
+                        unsigned dst_pitch,
+                        unsigned dst_width,
+                        unsigned dst_height,
+                        unsigned dst_x_offset,
+                        unsigned dst_y_offset,
+                        unsigned reg_width,
+                        unsigned reg_height,
+                        unsigned flip_y);
    } vtbl;
 };
 

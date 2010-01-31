@@ -55,8 +55,6 @@ struct _glapi_table;
 
 typedef void (*_glapi_proc)(void); /* generic function pointer */
 
-typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
-
 
 #if defined(USE_MGL_NAMESPACE)
 #define _glapi_set_dispatch _mglapi_set_dispatch
@@ -105,12 +103,6 @@ extern struct _glapi_table *_glapi_Dispatch;
 /**
  ** GL API public functions
  **/
-
-extern void
-_glapi_noop_enable_warnings(GLboolean enable);
-
-extern void
-_glapi_set_warning_func(_glapi_warning_func func);
 
 extern void
 _glapi_check_multithread(void);

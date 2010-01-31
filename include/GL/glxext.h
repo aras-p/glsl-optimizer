@@ -698,10 +698,10 @@ typedef void ( * PFNGLXJOINSWAPGROUPSGIXPROC) (Display *dpy, GLXDrawable drawabl
 
 #ifndef GLX_INTEL_swap_event
 #define GLX_INTEL_swap_event
-#define GLX_BUFFER_SWAP_COMPLETE_MASK      0x10000000
-#define GLX_EXCHANGE_COMPLETE              0x8024
-#define GLX_BLIT_COMPLETE                  0x8025
-#define GLX_FLIP_COMPLETE                  0x8026
+#define GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK 0x10000000
+#define GLX_EXCHANGE_COMPLETE_INTEL	    0x8024
+#define GLX_BLIT_COMPLETE_INTEL		    0x8025
+#define GLX_FLIP_COMPLETE_INTEL		    0x8026
 #endif
 
 #ifndef GLX_SGIX_swap_barrier

@@ -131,7 +131,6 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_WM_SURFACES		0x1000
-#define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
 /**
@@ -332,7 +331,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
    /* Record of the last BOs chosen for each cache_id.  Used to set
@@ -583,6 +581,7 @@ struct brw_context
 
    struct {
       struct brw_vs_prog_data *prog_data;
+      int8_t *constant_map; /* variable array following prog_data */
 
       dri_bo *prog_bo;
       dri_bo *state_bo;

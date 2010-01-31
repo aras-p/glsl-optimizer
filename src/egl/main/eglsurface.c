@@ -9,8 +9,7 @@
 #include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
-#include "egldriver.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 #include "eglsurface.h"
 
@@ -237,7 +236,7 @@ _eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 
 EGLBoolean
 _eglCopyBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
-                NativePixmapType target)
+                EGLNativePixmapType target)
 {
    /* copy surface to native pixmap */
    /* All implementation burdon for this is in the device driver */
@@ -315,76 +314,34 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
 
 
 /**
- * Example function - drivers should do a proper implementation.
+ * Drivers should do a proper implementation.
  */
 _EGLSurface *
 _eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        NativeWindowType window, const EGLint *attrib_list)
+                        EGLNativeWindowType window, const EGLint *attrib_list)
 {
-#if 0 /* THIS IS JUST EXAMPLE CODE */
-   _EGLSurface *surf;
-
-   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
-   if (!surf)
-      return NULL;
-
-   if (!_eglInitSurface(drv, surf, EGL_WINDOW_BIT, conf, attrib_list)) {
-      free(surf);
-      return NULL;
-   }
-
-   return surf;
-#endif
    return NULL;
 }
 
 
 /**
- * Example function - drivers should do a proper implementation.
+ * Drivers should do a proper implementation.
  */
 _EGLSurface *
 _eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                        NativePixmapType pixmap, const EGLint *attrib_list)
+                        EGLNativePixmapType pixmap, const EGLint *attrib_list)
 {
-#if 0 /* THIS IS JUST EXAMPLE CODE */
-   _EGLSurface *surf;
-
-   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
-   if (!surf)
-      return NULL;
-
-   if (!_eglInitSurface(drv, surf, EGL_PIXMAP_BIT, conf, attrib_list)) {
-      free(surf);
-      return NULL;
-   }
-
-   return surf;
-#endif
    return NULL;
 }
 
 
 /**
- * Example function - drivers should do a proper implementation.
+ * Drivers should do a proper implementation.
  */
 _EGLSurface *
 _eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                          const EGLint *attrib_list)
 {
-#if 0 /* THIS IS JUST EXAMPLE CODE */
-   _EGLSurface *surf;
-
-   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
-   if (!surf)
-      return NULL;
-
-   if (!_eglInitSurface(drv, surf, EGL_PBUFFER_BIT, conf, attrib_list)) {
-      free(surf);
-      return NULL;
-   }
-
-   return NULL;
-#endif
    return NULL;
 }
 

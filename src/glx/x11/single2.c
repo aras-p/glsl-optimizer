@@ -35,7 +35,8 @@
 #include "glxextensions.h"
 #include "indirect.h"
 #include "indirect_vertex_array.h"
-#include "dispatch.h"
+#include "glapitable.h"
+#include "glapidispatch.h"
 #include "glapi.h"
 #ifdef USE_XCB
 #include <xcb/xcb.h>

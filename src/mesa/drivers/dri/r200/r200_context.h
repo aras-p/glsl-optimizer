@@ -645,6 +645,8 @@ extern GLboolean r200MakeCurrent( __DRIcontext *driContextPriv,
 				  __DRIdrawable *driReadPriv );
 extern GLboolean r200UnbindContext( __DRIcontext *driContextPriv );
 
+extern void r200_init_texcopy_functions(struct dd_function_table *table);
+
 /* ================================================================
  * Debugging:
  */

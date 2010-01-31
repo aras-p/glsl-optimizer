@@ -40,13 +40,10 @@
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"
-#include "slang_emit.h"
 #include "slang_log.h"
 #include "slang_mem.h"
 #include "slang_vartable.h"
 #include "slang_simplify.h"
-
-#include "slang_print.h"
 
 /*
  * This is a straightforward implementation of the slang front-end

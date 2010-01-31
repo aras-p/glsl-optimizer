@@ -1,10 +1,32 @@
 #ifndef EGLDISPLAY_INCLUDED
 #define EGLDISPLAY_INCLUDED
 
+
 #include "egltypedefs.h"
 #include "egldefines.h"
-#include "eglcontext.h"
-#include "eglsurface.h"
+
+
+enum _egl_resource_type {
+   _EGL_RESOURCE_CONTEXT,
+   _EGL_RESOURCE_SURFACE,
+   _EGL_RESOURCE_IMAGE,
+
+   _EGL_NUM_RESOURCES
+};
+
+
+/**
+ * A resource of a display.
+ */
+struct _egl_resource
+{
+   /* which display the resource belongs to */
+   _EGLDisplay *Display;
+   EGLBoolean IsLinked;
+
+   /* used to link resources of the same type */
+   _EGLResource *Next;
+};
 
 
 /**
@@ -14,6 +36,8 @@ struct _egl_extensions
 {
    EGLBoolean MESA_screen_surface;
    EGLBoolean MESA_copy_context;
+   EGLBoolean KHR_image_base;
+   EGLBoolean KHR_image_pixmap;
 
    char String[_EGL_MAX_EXTENSIONS_LEN];
 };
@@ -26,7 +50,7 @@ struct _egl_display
 
    EGLNativeDisplayType NativeDisplay;
 
-   const char *DriverName;
+   EGLBoolean Initialized; /**< True if the display is initialized */
    _EGLDriver *Driver;
    void *DriverData; /* private to driver */
 
@@ -48,9 +72,8 @@ struct _egl_display
    EGLint NumConfigs;
    _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
 
-   /* lists of linked contexts and surface */
-   _EGLContext *ContextList;
-   _EGLSurface *SurfaceList;
+   /* lists of resources */
+   _EGLResource *ResourceLists[_EGL_NUM_RESOURCES];
 };
 
 
@@ -58,12 +81,8 @@ extern void
 _eglFiniDisplay(void);
 
 
-extern char *
-_eglSplitDisplayString(const char *dpyString, const char **args);
-
-
 extern _EGLDisplay *
-_eglNewDisplay(NativeDisplayType displayName);
+_eglNewDisplay(EGLNativeDisplayType displayName);
 
 
 extern EGLDisplay
@@ -75,7 +94,7 @@ _eglUnlinkDisplay(_EGLDisplay *dpy);
 
 
 extern _EGLDisplay *
-_eglFindDisplay(NativeDisplayType nativeDisplay);
+_eglFindDisplay(EGLNativeDisplayType nativeDisplay);
 
 
 PUBLIC void
@@ -86,22 +105,6 @@ PUBLIC void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 
-extern EGLContext
-_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkContext(_EGLContext *ctx);
-
-
-extern EGLSurface
-_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkSurface(_EGLSurface *surf);
-
-
 #ifndef _EGL_SKIP_HANDLE_CHECK
 
 
@@ -109,12 +112,8 @@ extern EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
-extern EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy);
-
-
-extern EGLBoolean
-_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy);
+PUBLIC EGLBoolean
+_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
 
 
 #else /* !_EGL_SKIP_HANDLE_CHECK */
@@ -129,18 +128,9 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
 
 
 static INLINE EGLBoolean
-_eglCheckContextHandle(EGLContext ctx, _EGLDisplay *dpy)
+_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
 {
-   _EGLContext *c = (_EGLContext *) ctx;
-   return (dpy && c && c->Display == dpy);
-}
-
-
-static INLINE EGLBoolean
-_eglCheckSurfaceHandle(EGLSurface surf, _EGLDisplay *dpy)
-{
-   _EGLSurface *s = (_EGLSurface *) surf;
-   return (dpy && s && s->Display == dpy);
+   return (((_EGLResource *) res)->Display == dpy);
 }
 
 
@@ -181,92 +171,21 @@ _eglIsDisplayLinked(_EGLDisplay *dpy)
 }
 
 
-/**
- * Lookup a handle to find the linked context.
- * Return NULL if the handle has no corresponding linked context.
- */
-static INLINE _EGLContext *
-_eglLookupContext(EGLContext context, _EGLDisplay *dpy)
-{
-   _EGLContext *ctx = (_EGLContext *) context;
-   if (!_eglCheckContextHandle(context, dpy))
-      ctx = NULL;
-   return ctx;
-}
+extern void
+_eglLinkResource(_EGLResource *res, _EGLResourceType type, _EGLDisplay *dpy);
+
+
+extern void
+_eglUnlinkResource(_EGLResource *res, _EGLResourceType type);
 
 
 /**
- * Return the handle of a linked context, or EGL_NO_CONTEXT.
- */
-static INLINE EGLContext
-_eglGetContextHandle(_EGLContext *ctx)
-{
-   return (EGLContext) ((ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT);
-}
-
-
-/**
- * Return true if the context is linked to a display.
+ * Return true if the resource is linked.
  */
 static INLINE EGLBoolean
-_eglIsContextLinked(_EGLContext *ctx)
+_eglIsResourceLinked(_EGLResource *res)
 {
-   return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
-}
-
-
-/**
- * Lookup a handle to find the linked surface.
- * Return NULL if the handle has no corresponding linked surface.
- */
-static INLINE _EGLSurface *
-_eglLookupSurface(EGLSurface surface, _EGLDisplay *dpy)
-{
-   _EGLSurface *surf = (_EGLSurface *) surface;
-   if (!_eglCheckSurfaceHandle(surf, dpy))
-      surf = NULL;
-   return surf;
-}
-
-
-/**
- * Return the handle of a linked surface, or EGL_NO_SURFACE.
- */
-static INLINE EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surf)
-{
-   return (EGLSurface) ((surf && surf->Display) ? surf : EGL_NO_SURFACE);
-}
-
-
-/**
- * Return true if the surface is linked to a display.
- */
-static INLINE EGLBoolean
-_eglIsSurfaceLinked(_EGLSurface *surf)
-{
-   return (EGLBoolean) (_eglGetSurfaceHandle(surf) != EGL_NO_SURFACE);
-}
-
-
-/**
- * Cast an unsigned int to a pointer.
- */
-static INLINE void *
-_eglUIntToPointer(unsigned int v)
-{
-   return (void *) ((uintptr_t) v);
-}
-
-
-/**
- * Cast a pointer to an unsigned int.  The pointer must be one that is
- * returned by _eglUIntToPointer.
- */
-static INLINE unsigned int
-_eglPointerToUInt(const void *p)
-{
-   return (unsigned int) ((uintptr_t) p);
+   return res->IsLinked;
 }
 
 

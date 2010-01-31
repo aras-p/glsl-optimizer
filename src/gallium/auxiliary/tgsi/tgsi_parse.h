@@ -58,6 +58,7 @@ struct tgsi_full_declaration
 {
    struct tgsi_declaration Declaration;
    struct tgsi_declaration_range Range;
+   struct tgsi_declaration_dimension Dim;
    struct tgsi_declaration_semantic Semantic;
 };
 

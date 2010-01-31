@@ -21,6 +21,7 @@ if 'python' in env['statetrackers']:
             'gdi32',
             'user32',
             'kernel32',
+            'ws2_32',
         ])
     else:
         env.Append(LIBS = [

@@ -34,14 +34,12 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "i915_context.h"
 #include "i915_texture.h"
-#include "i915_debug.h"
 #include "i915_screen.h"
 #include "intel_winsys.h"
 

@@ -38,7 +38,6 @@
 #include "mgaioctl.h"
 #include "mgatris.h"
 #include "mgavb.h"
-#include "mgastate.h"
 
 
 static void mgaRenderPrimitive( GLcontext *ctx, GLenum prim );

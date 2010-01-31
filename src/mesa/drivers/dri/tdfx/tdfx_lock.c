@@ -38,7 +38,6 @@
 #include "tdfx_state.h"
 #include "tdfx_render.h"
 #include "tdfx_texman.h"
-#include "tdfx_tris.h"
 
 #include "drirenderbuffer.h"
 

@@ -63,6 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_maos.h"
 #include "radeon_queryobj.h"
+#include "radeon_blit.h"
 
 #define need_GL_ARB_occlusion_query
 #define need_GL_EXT_blend_minmax
@@ -202,6 +203,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.fallback = radeonFallback;
    radeon->vtbl.free_context = r100_vtbl_free_context;
    radeon->vtbl.emit_query_finish = r100_emit_query_finish;
+   radeon->vtbl.blit = r100_blit;
 }
 
 /* Create the device specific context.
@@ -228,6 +230,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
    if ( !rmesa )
       return GL_FALSE;
 
+   rmesa->radeon.radeonScreen = screen;
    r100_init_vtbl(&rmesa->radeon);
 
    /* init exp fog table data */
@@ -257,7 +260,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
     * (the texture functions are especially important)
     */
    _mesa_init_driver_functions( &functions );
-   radeonInitTextureFuncs( &functions );
+   radeonInitTextureFuncs( &rmesa->radeon, &functions );
    radeonInitQueryObjFunctions(&functions);
 
    if (!radeonInitContext(&rmesa->radeon, &functions,

@@ -335,10 +335,6 @@ iter_instruction(
          fill_scan_register1d(ind_reg,
                               inst->Src[i].Indirect.File,
                               inst->Src[i].Indirect.Index);
-         if (!(ind_reg->file == TGSI_FILE_ADDRESS || ind_reg->file == TGSI_FILE_LOOP) ||
-             ind_reg->indices[0] != 0) {
-            report_warning(ctx, "Indirect register neither ADDR[0] nor LOOP[0]");
-         }
          check_register_usage(
             ctx,
             ind_reg,
@@ -412,12 +408,16 @@ iter_declaration(
          uint vert;
          for (vert = 0; vert < ctx->implied_array_size; ++vert) {
             scan_register *reg = MALLOC(sizeof(scan_register));
-            fill_scan_register2d(reg, file, vert, i);
+            fill_scan_register2d(reg, file, i, vert);
             check_and_declare(ctx, reg);
          }
       } else {
          scan_register *reg = MALLOC(sizeof(scan_register));
-         fill_scan_register1d(reg, file, i);
+         if (decl->Declaration.Dimension) {
+            fill_scan_register2d(reg, file, i, decl->Dim.Index2D);
+         } else {
+            fill_scan_register1d(reg, file, i);
+         }
          check_and_declare(ctx, reg);
       }
    }

@@ -49,7 +49,7 @@ vbo_get_minmax_index(GLcontext *ctx,
 		     GLuint *min_index, GLuint *max_index)
 {
    GLuint i;
-   GLsizei count = prim->count;
+   GLuint count = prim->count;
    const void *indices;
 
    if (_mesa_is_bufferobj(ib->obj)) {
@@ -132,7 +132,7 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
       case GL_FLOAT:
          {
             GLfloat *f = (GLfloat *) ((GLubyte *) data + array->StrideB * j);
-            GLuint k;
+            GLint k;
             for (k = 0; k < array->Size; k++) {
                if (IS_INF_OR_NAN(f[k]) ||
                    f[k] >= 1.0e20 || f[k] <= -1.0e10) {
@@ -443,6 +443,13 @@ recalculate_input_bindings(GLcontext *ctx)
 }
 
 
+/**
+ * Examine the enabled vertex arrays to set the exec->array.inputs[] values.
+ * These will point to the arrays to actually use for drawing.  Some will
+ * be user-provided arrays, other will be zero-stride const-valued arrays.
+ * Note that this might set the _NEW_ARRAY dirty flag so state validation
+ * must be done after this call.
+ */
 static void
 bind_arrays(GLcontext *ctx)
 {
@@ -484,9 +491,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-      
    if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {
       return;
    }
@@ -542,7 +546,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_BYTE:
       {
          const GLubyte *us = (const GLubyte *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
             _mesa_printf("%02x ", us[i]);
             if (i % 32 == 31)
@@ -554,7 +558,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_SHORT:
       {
          const GLushort *us = (const GLushort *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
             _mesa_printf("%04x ", us[i]);
             if (i % 16 == 15)
@@ -566,7 +570,7 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_INT:
       {
          const GLuint *us = (const GLuint *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
             _mesa_printf("%08x ", us[i]);
             if (i % 8 == 7)
@@ -600,17 +604,15 @@ vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
    if (!_mesa_valid_to_render(ctx, "glDraw[Range]Elements")) {
       return;
    }
 
+   bind_arrays( ctx );
+
+   /* check for dirty state again */
    if (ctx->NewState)
       _mesa_update_state( ctx );
-
-   bind_arrays( ctx );
 
    ib.count = count;
    ib.type = type;
@@ -688,6 +690,16 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
     * or we can read/write out of memory in several different places!
     */
 
+   /* Catch/fix some potential user errors */
+   if (type == GL_UNSIGNED_BYTE) {
+      start = MIN2(start, 0xff);
+      end = MIN2(end, 0xff);
+   }
+   else if (type == GL_UNSIGNED_SHORT) {
+      start = MIN2(start, 0xffff);
+      end = MIN2(end, 0xffff);
+   }
+
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       warnCount++;
@@ -712,8 +724,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 
 #ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
-       * indexes to see if any of them are out of bounds.  If so, warn
-       * and skip the draw to avoid potential segfault, etc.
+       * indexes to see if any of them are out of bounds.
        */
       {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
@@ -730,7 +741,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              ctx->Array.ElementArrayBufferObj->Name,
                              ctx->Array.ElementArrayBufferObj->Size);
             }
-            return;
          }
          /* XXX we could also find the min index and compare to 'start'
           * to see if start is correct.  But it's more likely to get the
@@ -738,6 +748,10 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           */
       }
 #endif
+
+      /* Set 'end' to the max possible legal value */
+      assert(ctx->Array.ArrayObj->_MaxElement >= 1);
+      end = ctx->Array.ArrayObj->_MaxElement - 1;
    }
    else if (0) {
       _mesa_printf("glDraw[Range]Elements{,BaseVertex}"
@@ -836,15 +850,9 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
    if (!_mesa_valid_to_render(ctx, "glMultiDrawElements")) {
       return;
    }
-
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
 
    prim = _mesa_calloc(primcount * sizeof(*prim));
    if (prim == NULL) {
@@ -856,6 +864,10 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
     * same index buffer, or if we have to reset the index pointer per primitive.
     */
    bind_arrays( ctx );
+
+   /* check for dirty state again */
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
 
    switch (type) {
    case GL_UNSIGNED_INT:

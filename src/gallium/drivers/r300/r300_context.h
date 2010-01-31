@@ -30,6 +30,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 
+#include "r300_screen.h"
+
 struct r300_context;
 
 struct r300_fragment_shader;
@@ -82,13 +84,14 @@ struct r300_rs_state {
     struct pipe_rasterizer_state rs;
 
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
+    uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
-    uint32_t depth_scale_front;  /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
-    uint32_t depth_offset_front;/* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
-    uint32_t depth_scale_back;    /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
-    uint32_t depth_offset_back;  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
+    float depth_scale;            /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
+                                  /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
+    float depth_offset;           /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
+                                  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
     uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
     uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
     uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
@@ -136,15 +139,12 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_RS_BLOCK        0x00000100
 #define R300_NEW_SAMPLER         0x00000200
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
 #define R300_NEW_TEXTURE         0x00040000
 #define R300_ANY_NEW_TEXTURES    0x03fc0000
-#define R300_NEW_VERTEX_FORMAT   0x04000000
 #define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
 #define R300_NEW_QUERY           0x40000000
@@ -269,11 +269,8 @@ struct r300_context {
     struct r300_query *query_current;
     struct r300_query query_list;
 
-    /* Shader hash table. Used to store vertex formatting information, which
-     * depends on the combination of both currently loaded shaders. */
-    struct util_hash_table* shader_hash_table;
     /* Vertex formatting information. */
-    struct r300_vertex_info* vertex_info;
+    struct r300_atom vertex_format_state;
 
     /* Various CSO state objects. */
     /* Beginning of atom list. */
@@ -290,12 +287,12 @@ struct r300_context {
     struct r300_atom dsa_state;
     /* Fragment shader. */
     struct r300_fragment_shader* fs;
-    /* Framebuffer state. We currently don't need our own version of this. */
-    struct pipe_framebuffer_state framebuffer_state;
+    /* Framebuffer state. */
+    struct r300_atom fb_state;
     /* Rasterizer state. */
     struct r300_atom rs_state;
     /* RS block state. */
-    struct r300_rs_block* rs_block;
+    struct r300_atom rs_block_state;
     /* Sampler states. */
     struct r300_sampler_state* sampler_states[8];
     int sampler_count;
@@ -311,6 +308,9 @@ struct r300_context {
     /* ZTOP state. */
     struct r300_atom ztop_state;
 
+    /* Invariant state. This must be emitted to get the engine started. */
+    struct r300_atom invariant_state;
+
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
@@ -324,9 +324,10 @@ struct r300_context {
     uint32_t dirty_hw;
     /* Whether the TCL engine should be in bypass mode. */
     boolean tcl_bypass;
-
-    /** Combination of DBG_xxx flags */
-    unsigned debug;
+    /* Whether polygon offset is enabled. */
+    boolean polygon_offset_enabled;
+    /* Z buffer bit depth. */
+    uint32_t zbuffer_bpp;
 };
 
 /* Convenience cast wrapper. */
@@ -340,35 +341,15 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
 
-/* Debug functionality. */
-
-/**
- * Debug flags to disable/enable certain groups of debugging outputs.
- *
- * \note These may be rather coarse, and the grouping may be impractical.
- * If you find, while debugging the driver, that a different grouping
- * of these flags would be beneficial, just feel free to change them
- * but make sure to update the documentation in r300_debug.c to reflect
- * those changes.
- */
-/*@{*/
-#define DBG_HELP    0x0000001
-#define DBG_FP      0x0000002
-#define DBG_VP      0x0000004
-#define DBG_CS      0x0000008
-#define DBG_DRAW    0x0000010
-#define DBG_TEX     0x0000020
-#define DBG_FALL    0x0000040
-/*@}*/
-
-static INLINE boolean DBG_ON(struct r300_context * ctx, unsigned flags)
+static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
-    return (ctx->debug & flags) ? TRUE : FALSE;
+    return SCREEN_DBG_ON(r300_screen(ctx->context.screen), flags);
 }
 
-static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * fmt, ...)
+static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
+                       const char * fmt, ...)
 {
-    if (DBG_ON(ctx, flags)) {
+    if (CTX_DBG_ON(ctx, flags)) {
         va_list va;
         va_start(va, fmt);
         debug_vprintf(fmt, va);
@@ -376,6 +357,8 @@ static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * f
     }
 }
 
-void r300_init_debug(struct r300_context * ctx);
+#define DBG_ON  CTX_DBG_ON
+#define DBG     CTX_DBG
 
 #endif /* R300_CONTEXT_H */
+

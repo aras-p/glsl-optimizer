@@ -451,6 +451,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\formats.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\framebuffer.c"
 				>
 			</File>
@@ -1320,6 +1324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\formats.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\framebuffer.h"
 				>
 			</File>
@@ -1876,11 +1884,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\texformat.h"
+				RelativePath="..\..\..\..\src\mesa\main\texfetch_tmp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\texfetch_tmp.h"
+				RelativePath="..\..\..\..\src\mesa\main\texformat.h"
 				>
 			</File>
 			<File

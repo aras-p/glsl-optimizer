@@ -526,6 +526,8 @@ static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   if(cvbr->vertex_buffer)
+      align_free(cvbr->vertex_buffer);
    sp_setup_destroy_context(cvbr->setup);
    FREE(cvbr);
 }
@@ -540,7 +542,6 @@ sp_create_vbuf_backend(struct softpipe_context *sp)
    struct softpipe_vbuf_render *cvbr = CALLOC_STRUCT(softpipe_vbuf_render);
 
    assert(sp->draw);
-
 
    cvbr->base.max_indices = SP_MAX_VBUF_INDEXES;
    cvbr->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;

@@ -271,7 +271,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 		map = pipe_buffer_map(pscreen,
 				      nv40->constbuf[PIPE_SHADER_VERTEX],
 				      PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_constant_buffer(nv40->draw, PIPE_SHADER_VERTEX,
+		draw_set_mapped_constant_buffer(nv40->draw, PIPE_SHADER_VERTEX, 0,
                                                 map, nr);
 	}
 

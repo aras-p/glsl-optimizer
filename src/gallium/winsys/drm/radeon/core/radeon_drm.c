@@ -40,12 +40,16 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
     struct drm_radeon_info info = {0};
     int target = 0;
     int retval;
+    drmVersionPtr version;
 
     info.value = (unsigned long)&target;
 
     /* We do things in a specific order here.
      *
-     * First, the PCI ID. This is essential and should return usable numbers
+     * DRM version first. We need to be sure we're running on a KMS chipset.
+     * This is also for some features.
+     *
+     * Then, the PCI ID. This is essential and should return usable numbers
      * for all Radeons. If this fails, we probably got handed an FD for some
      * non-Radeon card.
      *
@@ -55,8 +59,18 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
      *
      * The GEM info is actually bogus on the kernel side, as well as our side
      * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
-     * we don't actually use the info for anything yet.
-     * XXX update the above when we can safely use vram_size instead of vram_visible */
+     * we don't actually use the info for anything yet. */
+
+    version = drmGetVersion(fd);
+    if (version->version_major != 2) {
+        fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
+                "only compatible with 2.x.x\n", __FUNCTION__,
+                version->version_major, version->version_minor,
+                version->version_patchlevel);
+        drmFreeVersion(version);
+        exit(1);
+    }
+
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
@@ -92,16 +106,18 @@ static void do_ioctls(int fd, struct radeon_winsys* winsys)
         exit(1);
     }
     winsys->gart_size = gem_info.gart_size;
-    /* XXX */
-    winsys->vram_size = gem_info.vram_visible;
-}
+    winsys->vram_size = gem_info.vram_size;
 
-/* Guess at whether this chipset should use r300g.
- *
- * I believe that this check is valid, but I haven't been exhaustive. */
-static boolean is_r3xx(int pciid)
-{
-    return (pciid > 0x3150) && (pciid < 0x796f);
+    debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
+                 "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
+                 "radeon: GART size: %d MB VRAM size: %d MB\n",
+                 version->version_major, version->version_minor,
+                 version->version_patchlevel, winsys->pci_id,
+                 winsys->gb_pipes, winsys->z_pipes,
+                 winsys->gart_size / 1024 / 1024,
+                 winsys->vram_size / 1024 / 1024);
+
+    drmFreeVersion(version);
 }
 
 /* Create a pipe_screen. */
@@ -136,12 +152,13 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
 }
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
+                                   struct pipe_screen* screen,
                                    struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride)
 {
     /* XXX fix this */
-    return r300_get_texture_buffer(texture, buffer, stride);
+    return r300_get_texture_buffer(screen, texture, buffer, stride);
 }
 
 /* Create a buffer from a handle. */
@@ -208,7 +225,7 @@ static boolean radeon_shared_handle_from_texture(struct drm_api *api,
     struct radeon_pipe_buffer* radeon_buffer;
     struct pipe_buffer *buffer = NULL;
 
-    if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
+    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
         return FALSE;
     }
 
@@ -240,7 +257,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
                                                 unsigned *handle)
 {
     struct pipe_buffer *buffer = NULL;
-    if (!radeon_buffer_from_texture(api, texture, &buffer, stride)) {
+    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
         return FALSE;
     }
 
@@ -253,6 +270,7 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
 
 struct drm_api drm_api_hooks = {
     .name = "radeon",
+    .driver_name = "radeon",
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
     .texture_from_shared_handle = radeon_texture_from_shared_handle,

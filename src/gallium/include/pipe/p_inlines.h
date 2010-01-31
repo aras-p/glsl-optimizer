@@ -63,13 +63,6 @@ pipe_buffer_map(struct pipe_screen *screen,
    if(screen->buffer_map_range) {
       unsigned offset = 0;
       unsigned length = buf->size;
-
-      /* XXX: Actually we should be using/detecting DISCARD
-       * instead of assuming that WRITE implies discard */
-      if((usage & PIPE_BUFFER_USAGE_CPU_WRITE) &&
-         !(usage & PIPE_BUFFER_USAGE_DISCARD))
-         usage |= PIPE_BUFFER_USAGE_CPU_READ;
-
       return screen->buffer_map_range(screen, buf, offset, length, usage);
    }
    else
@@ -126,7 +119,39 @@ pipe_buffer_write(struct pipe_screen *screen,
 
    map = pipe_buffer_map_range(screen, buf, offset, size, 
                                PIPE_BUFFER_USAGE_CPU_WRITE | 
-                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
+                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
+                               PIPE_BUFFER_USAGE_DISCARD);
+   assert(map);
+   if(map) {
+      memcpy((uint8_t *)map + offset, data, size);
+      pipe_buffer_flush_mapped_range(screen, buf, offset, size);
+      pipe_buffer_unmap(screen, buf);
+   }
+}
+
+/**
+ * Special case for writing non-overlapping ranges.
+ *
+ * We can avoid GPU/CPU synchronization when writing range that has never
+ * been written before.
+ */
+static INLINE void
+pipe_buffer_write_nooverlap(struct pipe_screen *screen,
+                            struct pipe_buffer *buf,
+                            unsigned offset, unsigned size,
+                            const void *data)
+{
+   void *map;
+
+   assert(offset < buf->size);
+   assert(offset + size <= buf->size);
+   assert(size);
+
+   map = pipe_buffer_map_range(screen, buf, offset, size,
+                               PIPE_BUFFER_USAGE_CPU_WRITE |
+                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
+                               PIPE_BUFFER_USAGE_DISCARD |
+                               PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
    assert(map);
    if(map) {
       memcpy((uint8_t *)map + offset, data, size);

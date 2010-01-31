@@ -83,7 +83,7 @@ static void
 vs_sse_run_linear( struct draw_vertex_shader *base,
 		   const float (*input)[4],
 		   float (*output)[4],
-		   const float (*constants)[4],
+                  const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
 		   unsigned count,
 		   unsigned input_stride,
 		   unsigned output_stride )
@@ -112,7 +112,7 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
       /* run compiled shader
        */
       shader->func(machine,
-		   constants,
+                   (const float (*)[4])constants[0],
 		   shader->base.immediates,
                    input,
                    base->info.num_inputs,

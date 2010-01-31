@@ -870,7 +870,6 @@ EXPORTS
 	_mesa_bzero
 	_mesa_calloc
 	_mesa_choose_tex_format
-	_mesa_compressed_texture_size
 	_mesa_create_framebuffer
 	_mesa_create_visual
 	_mesa_delete_array_object
@@ -932,6 +931,8 @@ EXPORTS
 	_mesa_update_framebuffer_visual
 	_mesa_use_program
 	_mesa_Viewport
+	_mesa_meta_init
+	_mesa_meta_free
 	_mesa_meta_CopyColorSubTable
 	_mesa_meta_CopyColorTable
 	_mesa_meta_CopyConvolutionFilter1D
@@ -941,7 +942,6 @@ EXPORTS
 	_mesa_meta_CopyTexSubImage1D
 	_mesa_meta_CopyTexSubImage2D
 	_mesa_meta_CopyTexSubImage3D
-	_mesa_wait_query
 	_swrast_Accum
 	_swrast_Bitmap
 	_swrast_BlitFramebuffer

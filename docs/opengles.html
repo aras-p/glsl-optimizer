@@ -1,0 +1,79 @@
+<html>
+
+<title>OpenGL ES State Trackers</title>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<body>
+
+<h1>OpenGL ES State Trackers</h1>
+
+<p>The current version of the OpenGL ES state trackers implement OpenGL ES 1.1 and OpenGL ES 2.0.
+More informations about OpenGL ES can be found at
+<a href="http://www.khronos.org/opengles/" target="_parent">
+http://www.khronos.org/opengles/</a>.</p>
+
+<p>The OpenGL ES state trackers depends on the Gallium architecture and a
+working EGL implementation.  Please refer to <a href="egl.html">Mesa EGL</a>
+for more information about EGL.</p>
+
+
+<h2>Build the Libraries</h2>
+<ol>
+<li>Run <code>configure</code> with <code>--with-state-trackers=egl,es</code> and enable the Gallium driver for your hardware.</li>
+<li>Build and install Mesa as usual.</li>
+</ol>
+
+<p>It will install libGLESv1_CM, libGLESv2, libEGL, and one or more EGL drivers for your hardware.</p>
+<h2>Run the Demos</h2>
+
+<p>There are some demos in <code>progs/es1/</code> and <code>progs/es2/</code>.  You can use them to test your build.  For example,</p>
+
+<pre>
+  $ cd progs/es1/xegl
+  $ make
+  $ ./torus
+</pre>
+
+<h2>Developers</h2>
+
+<p>The core of OpenGL ES state trackers is the ES overlay.  It is located in
+<code>src/mesa/es/</code>.</p>
+
+<h3>Structure</h3>
+
+<p>The ES overlay uses as much code as possible from Mesa.  It has its own glapi XMLs to describe the APIs of OpenGL ES.  The ES overlay can be built parallelly with Mesa, and they will give</p>
+
+<table border="1">
+	<tr><td>Library Name</td><td>Usage</td><td>Source</td></tr>
+	<tr><td>libmesagallium.a</td><td>OpenGL state tracker</td><td>Mesa</td></tr>
+	<tr><td>libes1gallium.a</td><td>OpenGL ES 1.x state tracker</td><td>ES overlay</td></tr>
+	<tr><td>libes2gallium.a</td><td>OpenGL ES 2.x state tracker</td><td>ES overlay</td></tr>
+	<tr><td>libglapi.a</td><td>OpenGL API</td><td>Mesa</td></tr>
+	<tr><td>libes1api.a</td><td>OpenGL ES 1.x API</td><td>ES overlay</td></tr>
+	<tr><td>libes2api.a</td><td>OpenGL ES 2.x API</td><td>ES overlay</td></tr>
+</table>
+
+<p>The OpenGL ES state trackers and APIs are then used by <code>src/gallium/state_trackers/es/</code> to create the final libraries.</p>
+
+<h3>Dispatch Table</h3>
+
+<p>The ES overlay uses an additional indirection when dispatching fucntions</p>
+
+<pre>
+  Mesa:       glFoo() --&gt; _mesa_Foo()
+  ES overlay: glFoo() --&gt; _es_Foo() --&gt; _mesa_Foo()
+</pre>
+
+<p>The indirection serves several purposes</p>
+
+<ul>
+<li>When a function is in Mesa and the type matches, it checks the arguments and calls the Mesa function.</li>
+<li>When a function is in Mesa but the type mismatches, it checks and converts the arguments before calling the Mesa function.</li>
+<li>When a function is not available in Mesa, or accepts arguments that are not available in OpenGL, it provides its own implementation.</li>
+</ul>
+
+<p>Other than the last case, the ES overlay uses <code>APIspec.xml</code> to generate functions to check and/or converts the arguments.</p>
+
+</body>
+</html>

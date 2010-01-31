@@ -35,7 +35,6 @@
 #include "mga_drm.h"
 #include "mga_xmesa.h"
 #include "main/context.h"
-#include "main/matrix.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/framebuffer.h"
@@ -64,7 +63,6 @@
 #include "utils.h"
 #include "vblank.h"
 
-#include "main/extensions.h"
 #include "drirenderbuffer.h"
 
 #include "GL/internal/dri_interface.h"

@@ -29,7 +29,8 @@
 #ifndef EGLMISC_INCLUDED
 #define EGLMISC_INCLUDED
 
-#include "egldriver.h"
+
+#include "egltypedefs.h"
 
 
 extern const char *

@@ -327,7 +327,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
 
 static void upload_polygon_stipple_offset(struct brw_context *brw)
 {
-   __DRIdrawable *dPriv = brw->intel.driDrawable;
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple_offset bpso;
 
    memset(&bpso, 0, sizeof(bpso));
@@ -343,8 +343,8 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
     * worry about.
     */
    if (brw->intel.ctx.DrawBuffer->Name == 0) {
-      bpso.bits0.x_offset = (32 - (dPriv->x & 31)) & 31;
-      bpso.bits0.y_offset = (32 - ((dPriv->y + dPriv->h) & 31)) & 31;
+      bpso.bits0.x_offset = 0;
+      bpso.bits0.y_offset = (32 - (ctx->DrawBuffer->Height & 31)) & 31;
    }
    else {
       bpso.bits0.y_offset = 0;

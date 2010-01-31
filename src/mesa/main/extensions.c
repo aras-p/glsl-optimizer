@@ -50,11 +50,14 @@ static const struct {
    { OFF, "GL_ARB_depth_clamp",                F(ARB_depth_clamp) },
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_draw_elements_base_vertex",  F(ARB_draw_elements_base_vertex) },
+   /* TODO: uncomment the following line once GLSL layout(...) support is implemented */
+   /* { OFF, "GL_ARB_fragment_coord_conventions", F(ARB_fragment_coord_conventions) }, */
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_fragment_program_shadow",    F(ARB_fragment_program_shadow) },
    { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
    { OFF, "GL_ARB_framebuffer_object",         F(ARB_framebuffer_object) },
    { OFF, "GL_ARB_half_float_pixel",           F(ARB_half_float_pixel) },
+   { OFF, "GL_ARB_half_float_vertex",          F(ARB_half_float_vertex) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_map_buffer_range",           F(ARB_map_buffer_range) },
    { ON,  "GL_ARB_multisample",                F(ARB_multisample) },
@@ -189,6 +192,9 @@ static const struct {
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
    { ON,  "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
+#if FEATURE_OES_draw_texture
+   { OFF, "GL_OES_draw_texture",               F(OES_draw_texture) },
+#endif /* FEATURE_OES_draw_texture */
 };
 
 
@@ -216,6 +222,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
+   ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;

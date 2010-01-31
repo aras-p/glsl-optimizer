@@ -144,7 +144,7 @@ struct i830_context
    GLuint lodbias_tm0s3[MAX_TEXTURE_UNITS];
      DECLARE_RENDERINPUTS(last_index_bitset);
 
-   struct i830_hw_state meta, initial, state, *current;
+   struct i830_hw_state state;
 };
 
 
@@ -205,10 +205,6 @@ extern void i830EmitState(struct i830_context *i830);
 
 extern void i830InitState(struct i830_context *i830);
 extern void i830_update_provoking_vertex(GLcontext *ctx);
-
-/* i830_metaops.c
- */
-extern void i830InitMetaFuncs(struct i830_context *i830);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

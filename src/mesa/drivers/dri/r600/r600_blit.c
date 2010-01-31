@@ -32,18 +32,73 @@
 #include "r600_blit_shaders.h"
 #include "r600_cmdbuf.h"
 
+/* common formats supported as both textures and render targets */
+static unsigned is_blit_supported(gl_format mesa_format)
+{
+    switch (mesa_format) {
+    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_SIGNED_RGBA8888:
+    case MESA_FORMAT_RGBA8888_REV:
+    case MESA_FORMAT_SIGNED_RGBA8888_REV:
+    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_ARGB8888_REV:
+    case MESA_FORMAT_XRGB8888_REV:
+    case MESA_FORMAT_RGB565:
+    case MESA_FORMAT_RGB565_REV:
+    case MESA_FORMAT_ARGB4444:
+    case MESA_FORMAT_ARGB4444_REV:
+    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_ARGB1555_REV:
+    case MESA_FORMAT_AL88:
+    case MESA_FORMAT_AL88_REV:
+    case MESA_FORMAT_RGB332:
+    case MESA_FORMAT_A8:
+    case MESA_FORMAT_I8:
+    case MESA_FORMAT_CI8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_RGBA_FLOAT32:
+    case MESA_FORMAT_RGBA_FLOAT16:
+    case MESA_FORMAT_ALPHA_FLOAT32:
+    case MESA_FORMAT_ALPHA_FLOAT16:
+    case MESA_FORMAT_LUMINANCE_FLOAT32:
+    case MESA_FORMAT_LUMINANCE_FLOAT16:
+    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+    case MESA_FORMAT_INTENSITY_FLOAT32: /* X, X, X, X */
+    case MESA_FORMAT_INTENSITY_FLOAT16: /* X, X, X, X */
+    case MESA_FORMAT_X8_Z24:
+    case MESA_FORMAT_S8_Z24:
+    case MESA_FORMAT_Z24_S8:
+    case MESA_FORMAT_Z16:
+    case MESA_FORMAT_Z32:
+    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SLA8:
+    case MESA_FORMAT_SL8:
+	    break;
+    default:
+	    return 0;
+    }
+
+    /* ??? */
+    /* not sure blit to depth works or not yet */
+    if (_mesa_get_format_bits(mesa_format, GL_DEPTH_BITS) > 0)
+	    return 0;
+
+    return 1;
+}
+
 static inline void
 set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_format,
-                  int pitch, int w, int h, intptr_t dst_offset)
+                  int nPitchInPixel, int w, int h, intptr_t dst_offset)
 {
     uint32_t cb_color0_base, cb_color0_size = 0, cb_color0_info = 0, cb_color0_view = 0;
-    int nPitchInPixel, id = 0;
-    uint32_t comp_swap, format, bpp = _mesa_get_format_bytes(mesa_format);
+    int id = 0;
+    uint32_t comp_swap, format;
     BATCH_LOCALS(&context->radeon);
 
     cb_color0_base = dst_offset / 256;
 
-    nPitchInPixel = pitch/bpp;
     SETfield(cb_color0_size, (nPitchInPixel / 8) - 1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(cb_color0_size, ((nPitchInPixel * h) / 64) - 1,
@@ -310,12 +365,31 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    END_BATCH();
     }
 
-    BEGIN_BATCH_NO_AUTOSTATE(18);
+    /* Set CMASK & TILE buffer to the offset of color buffer as
+     * we don't use those this shouldn't cause any issue and we
+     * then have a valid cmd stream
+     */
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
+    R600_OUT_BATCH(cb_color0_base);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
+    END_BATCH();
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
+    R600_OUT_BATCH(cb_color0_base);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
+    END_BATCH();
+
+    BEGIN_BATCH_NO_AUTOSTATE(12);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), cb_color0_size);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), cb_color0_view);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_TILE + (4 * id), 0);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_FRAG + (4 * id), 0);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), 0);
     END_BATCH();
 
@@ -481,11 +555,9 @@ set_vtx_resource(context_t *context)
 static inline void
 set_tex_resource(context_t * context,
 		 gl_format mesa_format, struct radeon_bo *bo, int w, int h,
-		 int pitch, intptr_t src_offset)
+		 int TexelPitch, intptr_t src_offset)
 {
     uint32_t sq_tex_resource0, sq_tex_resource1, sq_tex_resource2, sq_tex_resource4, sq_tex_resource6;
-    int bpp = _mesa_get_format_bytes(mesa_format);
-    int TexelPitch = pitch/bpp;
 
     sq_tex_resource0 = sq_tex_resource1 = sq_tex_resource2 = sq_tex_resource4 = sq_tex_resource6 = 0;
     BATCH_LOCALS(&context->radeon);
@@ -1484,34 +1556,38 @@ static GLboolean validate_buffers(context_t *rmesa,
     return GL_TRUE;
 }
 
-GLboolean r600_blit(context_t *context,
-                    struct radeon_bo *src_bo,
-                    intptr_t src_offset,
-                    gl_format src_mesaformat,
-                    unsigned src_pitch,
-                    unsigned src_width,
-                    unsigned src_height,
-                    unsigned src_x,
-                    unsigned src_y,
-                    struct radeon_bo *dst_bo,
-                    intptr_t dst_offset,
-                    gl_format dst_mesaformat,
-                    unsigned dst_pitch,
-                    unsigned dst_width,
-                    unsigned dst_height,
-                    unsigned dst_x,
-                    unsigned dst_y,
-                    unsigned w,
-                    unsigned h,
-                    unsigned flip_y)
+unsigned r600_blit(GLcontext *ctx,
+                   struct radeon_bo *src_bo,
+                   intptr_t src_offset,
+                   gl_format src_mesaformat,
+                   unsigned src_pitch,
+                   unsigned src_width,
+                   unsigned src_height,
+                   unsigned src_x,
+                   unsigned src_y,
+                   struct radeon_bo *dst_bo,
+                   intptr_t dst_offset,
+                   gl_format dst_mesaformat,
+                   unsigned dst_pitch,
+                   unsigned dst_width,
+                   unsigned dst_height,
+                   unsigned dst_x,
+                   unsigned dst_y,
+                   unsigned w,
+                   unsigned h,
+                   unsigned flip_y)
 {
+    context_t *context = R700_CONTEXT(ctx);
     int id = 0;
 
-    /* not sure blit to depth works or not yet */
-    if (_mesa_get_format_bits(src_mesaformat, GL_DEPTH_BITS) > 0)
-	    return GL_FALSE;
+    if (!is_blit_supported(dst_mesaformat))
+        return GL_FALSE;
 
     if (src_bo == dst_bo) {
+        return GL_FALSE;
+    }
+
+    if (src_offset % 256 || dst_offset % 256) {
         return GL_FALSE;
     }
 
@@ -1527,9 +1603,9 @@ GLboolean r600_blit(context_t *context,
     }
 
     /* Flush is needed to make sure that source buffer has correct data */
-    radeonFlush(context->radeon.glCtx);
+    radeonFlush(ctx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 302, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 304, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1554,7 +1630,7 @@ GLboolean r600_blit(context_t *context,
     set_tex_sampler(context);
 
     /* dst */
-    /* 25 */
+    /* 27 */
     set_render_target(context, dst_bo, dst_mesaformat,
 		      dst_pitch, dst_width, dst_height, dst_offset);
     /* scissors */
@@ -1578,7 +1654,7 @@ GLboolean r600_blit(context_t *context,
     /* 5 */
     r700WaitForIdleClean(context);
 
-    radeonFlush(context->radeon.glCtx);
+    radeonFlush(ctx);
 
     return GL_TRUE;
 }

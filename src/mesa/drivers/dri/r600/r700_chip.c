@@ -303,14 +303,13 @@ static void r700SetRenderTarget(context_t *context, int id)
     R600_STATECHANGE(context, cb_target);
 
     /* color buffer */
-    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
+    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset / 256;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
-    r700->render_target[id].CB_COLOR0_BASE.u32All = 0;
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
              CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
@@ -453,13 +452,31 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 		R600_OUT_BATCH((2 << id));
 		END_BATCH();
 	}
+	/* Set CMASK & TILE buffer to the offset of color buffer as
+	 * we don't use those this shouldn't cause any issue and we
+	 * then have a valid cmd stream
+	 */
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
+	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_TILE.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+	END_BATCH();
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
+	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_FRAG.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+        END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(18);
+        BEGIN_BATCH_NO_AUTOSTATE(12);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), r700->render_target[id].CB_COLOR0_SIZE.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), r700->render_target[id].CB_COLOR0_VIEW.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_TILE + (4 * id), r700->render_target[id].CB_COLOR0_TILE.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_FRAG + (4 * id), r700->render_target[id].CB_COLOR0_FRAG.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), r700->render_target[id].CB_COLOR0_MASK.u32All);
         END_BATCH();
 

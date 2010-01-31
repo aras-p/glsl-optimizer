@@ -26,13 +26,9 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
-#include "svga_state.h"
-#include "svga_hw_reg.h"
-#include "svga_cmd.h"
 
 /***********************************************************************
  * Constant buffers 

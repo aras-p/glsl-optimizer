@@ -59,6 +59,7 @@ struct dri_screen
    struct pipe_screen *pipe_screen;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
+   boolean auto_fake_front;
 };
 
 /** cast wrapper */

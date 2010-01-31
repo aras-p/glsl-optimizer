@@ -7,7 +7,6 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/formats.h"
-#include "main/image.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"
@@ -241,7 +240,8 @@ try_pbo_upload(struct intel_context *intel,
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_stride, src_buffer, src_offset, GL_FALSE,
-			     dst_stride, dst_buffer, 0, GL_FALSE,
+			     dst_stride, dst_buffer, 0,
+			     intelImage->mt->region->tiling,
 			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
 	 return GL_FALSE;

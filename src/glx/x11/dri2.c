@@ -81,12 +81,15 @@ static XEXT_GENERATE_FIND_DISPLAY (DRI2FindDisplay,
                                    dri2Info,
                                    dri2ExtensionName,
                                    &dri2ExtensionHooks,
-                                   0, NULL)
+                                   1, NULL)
 
 static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+   XExtDisplayInfo *glx_info = __glXFindDisplay(dpy);
+   static int glx_event_base;
+   static Bool found_glx_info = False;
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -95,21 +98,26 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
-      switch (awire->type) {
+      aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
+      aevent->type =
+	  (glx_info->codes->first_event + GLX_BufferSwapComplete) & 0x75;
+      aevent->send_event = (awire->type & 0x80) != 0;
+      aevent->display = dpy;
+      aevent->drawable = awire->drawable;
+      switch (awire->event_type) {
       case DRI2_EXCHANGE_COMPLETE:
-	 aevent->event_type = GLX_EXCHANGE_COMPLETE;
+	 aevent->event_type = GLX_EXCHANGE_COMPLETE_INTEL;
 	 break;
       case DRI2_BLIT_COMPLETE:
-	 aevent->event_type = GLX_BLIT_COMPLETE;
+	 aevent->event_type = GLX_BLIT_COMPLETE_INTEL;
 	 break;
       case DRI2_FLIP_COMPLETE:
-	 aevent->event_type = GLX_FLIP_COMPLETE;
+	 aevent->event_type = GLX_FLIP_COMPLETE_INTEL;
 	 break;
       default:
 	 /* unknown swap completion type */
 	 return False;
       }
-      aevent->drawable = awire->drawable;
       aevent->ust = ((CARD64)awire->ust_hi << 32) | awire->ust_lo;
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
       aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;

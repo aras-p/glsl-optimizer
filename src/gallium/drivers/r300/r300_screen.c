@@ -113,6 +113,8 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
              * ~ C.
              */
             return 1;
+        case PIPE_CAP_DUAL_SOURCE_BLEND:
+            return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             return 1;
         case PIPE_CAP_POINT_SPRITE:
@@ -149,6 +151,20 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
+        case PIPE_CAP_INDEP_BLEND_ENABLE:
+            if (r300screen->caps->is_r500) {
+                return 1;
+            } else {
+                return 0;
+            }
+        case PIPE_CAP_INDEP_BLEND_FUNC:
+            return 0;
+        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+	    return 1;
+        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+        case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+            return 0;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
@@ -183,10 +199,20 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
-static boolean check_tex_format(enum pipe_format format, uint32_t usage,
-                                boolean is_r500)
+static boolean r300_is_format_supported(struct pipe_screen* screen,
+                                        enum pipe_format format,
+                                        enum pipe_texture_target target,
+                                        unsigned usage,
+                                        unsigned geom_flags)
 {
     uint32_t retval = 0;
+    boolean is_r500 = r300_screen(screen)->caps->is_r500;
+
+    if (target >= PIPE_MAX_TEXTURE_TYPES) {
+        debug_printf("r300: Implementation error: Received bogus texture "
+            "target %d in %s\n", target, __FUNCTION__);
+        return FALSE;
+    }
 
     switch (format) {
         /* Supported formats. */
@@ -194,6 +220,8 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
         case PIPE_FORMAT_A4R4G4B4_UNORM:
         case PIPE_FORMAT_R5G6B5_UNORM:
         case PIPE_FORMAT_A1R5G5B5_UNORM:
+        case PIPE_FORMAT_A8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
             retval = usage &
                 (PIPE_TEXTURE_USAGE_RENDER_TARGET |
                  PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
@@ -208,7 +236,6 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
         case PIPE_FORMAT_DXT3_RGBA:
         case PIPE_FORMAT_DXT5_RGBA:
         case PIPE_FORMAT_YCBCR:
-        case PIPE_FORMAT_L8_UNORM:
         case PIPE_FORMAT_A8L8_UNORM:
             retval = usage & PIPE_TEXTURE_USAGE_SAMPLER;
             break;
@@ -247,28 +274,13 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
         case PIPE_FORMAT_Z32_UNORM:
         case PIPE_FORMAT_S8Z24_UNORM:
         case PIPE_FORMAT_X8Z24_UNORM:
-            debug_printf("r300: Note: Got unsupported format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
+            SCREEN_DBG(r300_screen(screen), DBG_TEX,
+                       "r300: Note: Got unsupported format: %s in %s\n",
+                       pf_name(format), __FUNCTION__);
             return FALSE;
 
-        /* XXX These don't even exist
-        case PIPE_FORMAT_A32R32G32B32:
-        case PIPE_FORMAT_A16R16G16B16: */
-        /* XXX What the deuce is UV88? (r3xx accel page 14)
-            debug_printf("r300: Warning: Got unimplemented format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
-            return FALSE; */
-
-        /* XXX Supported yet unimplemented r5xx formats: */
-        /* XXX Again, what is UV1010 this time? (r5xx accel page 148) */
-        /* XXX Even more that don't exist
-        case PIPE_FORMAT_A10R10G10B10_UNORM:
-        case PIPE_FORMAT_A2R10G10B10_UNORM:
-        case PIPE_FORMAT_I10_UNORM:
-            debug_printf(
-                "r300: Warning: Got unimplemented r500 format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
-            return FALSE; */
+        /* XXX Add all remaining gallium-supported formats,
+         * see util/u_format.csv. */
 
         default:
             /* Unknown format... */
@@ -286,30 +298,6 @@ static boolean check_tex_format(enum pipe_format format, uint32_t usage,
     return (retval >= usage);
 }
 
-static boolean r300_is_format_supported(struct pipe_screen* pscreen,
-                                        enum pipe_format format,
-                                        enum pipe_texture_target target,
-                                        unsigned tex_usage,
-                                        unsigned geom_flags)
-{
-    switch (target) {
-        case PIPE_TEXTURE_1D:   /* handle 1D textures as 2D ones */
-        case PIPE_TEXTURE_2D:
-        case PIPE_TEXTURE_3D:
-        case PIPE_TEXTURE_CUBE:
-            return check_tex_format(format, tex_usage,
-                r300_screen(pscreen)->caps->is_r500);
-
-        default:
-            debug_printf("r300: Fatal: This is not a format target: %d\n",
-                target);
-            assert(0);
-            break;
-    }
-
-    return FALSE;
-}
-
 static struct pipe_transfer*
 r300_get_tex_transfer(struct pipe_screen *screen,
                       struct pipe_texture *texture,
@@ -319,6 +307,7 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 {
     struct r300_texture *tex = (struct r300_texture *)texture;
     struct r300_transfer *trans;
+    struct r300_screen *rscreen = r300_screen(screen);
     unsigned offset;
 
     offset = r300_texture_get_offset(tex, level, zslice, face);  /* in bytes */
@@ -330,11 +319,8 @@ r300_get_tex_transfer(struct pipe_screen *screen,
         trans->transfer.y = y;
         trans->transfer.width = w;
         trans->transfer.height = h;
-        trans->transfer.stride = r300_texture_get_stride(tex, level);
+        trans->transfer.stride = r300_texture_get_stride(rscreen, tex, level);
         trans->transfer.usage = usage;
-
-        /* XXX not sure whether it's required to set these two,
-               the driver doesn't use them */
         trans->transfer.zslice = zslice;
         trans->transfer.face = face;
 
@@ -396,6 +382,7 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     caps->num_frag_pipes = radeon_winsys->gb_pipes;
     caps->num_z_pipes = radeon_winsys->z_pipes;
 
+    r300_init_debug(r300screen);
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;

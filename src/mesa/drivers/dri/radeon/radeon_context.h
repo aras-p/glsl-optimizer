@@ -453,7 +453,6 @@ struct r100_context {
 extern GLboolean r100CreateContext( const __GLcontextModes *glVisual,
 				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
-  
 
 
 #endif				/* __RADEON_CONTEXT_H__ */

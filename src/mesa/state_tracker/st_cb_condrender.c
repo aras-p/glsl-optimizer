@@ -69,7 +69,7 @@ st_BeginConditionalRender(GLcontext *ctx, struct gl_query_object *q,
       break;
    default:
       assert(0 && "bad mode in st_BeginConditionalRender");
-      return;
+      m = PIPE_RENDER_COND_WAIT;
    }
 
    pipe->render_condition(pipe, stq->pq, m);

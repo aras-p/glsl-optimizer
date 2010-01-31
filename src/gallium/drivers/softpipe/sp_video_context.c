@@ -185,17 +185,18 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
 
-   blend.blend_enable = 0;
-   blend.rgb_func = PIPE_BLEND_ADD;
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_func = PIPE_BLEND_ADD;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.independent_blend_enable = 0;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
    blend.logicop_enable = 0;
    blend.logicop_func = PIPE_LOGICOP_CLEAR;
    /* Needed to allow color writes to FB, even if blending disabled */
-   blend.colormask = PIPE_MASK_RGBA;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
    blend.dither = 0;
    ctx->blend = ctx->pipe->create_blend_state(ctx->pipe, &blend);
    ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);

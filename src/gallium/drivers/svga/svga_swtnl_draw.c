@@ -27,7 +27,6 @@
 #include "draw/draw_vbuf.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
-#include "util/u_memory.h"
 
 #include "svga_context.h"
 #include "svga_swtnl.h"
@@ -90,7 +89,7 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
                             PIPE_BUFFER_USAGE_CPU_READ);
       assert(map);
       draw_set_mapped_constant_buffer(
-         draw, PIPE_SHADER_VERTEX,
+         draw, PIPE_SHADER_VERTEX, 0,
          map,
          svga->curr.cb[PIPE_SHADER_VERTEX]->size);
    }

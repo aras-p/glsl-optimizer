@@ -121,6 +121,9 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+      case GL_HALF_FLOAT:
+         elementSize = size * sizeof(GLhalfARB);
+         break;
 #if FEATURE_fixedpt
       case GL_FIXED:
          elementSize = size * sizeof(GLfixed);
@@ -173,6 +176,9 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          break;
       case GL_DOUBLE:
          elementSize = 3 * sizeof(GLdouble);
+         break;
+      case GL_HALF_FLOAT:
+         elementSize = 3 * sizeof(GLhalfARB);
          break;
 #if FEATURE_fixedpt
       case GL_FIXED:
@@ -250,6 +256,9 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+      case GL_HALF_FLOAT:
+         elementSize = size * sizeof(GLhalfARB);
+         break;
 #if FEATURE_fixedpt
       case GL_FIXED:
          elementSize = size * sizeof(GLfixed);
@@ -284,6 +293,9 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
          break;
       case GL_DOUBLE:
          elementSize = sizeof(GLdouble);
+         break;
+      case GL_HALF_FLOAT:
+         elementSize = sizeof(GLhalfARB);
          break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glFogCoordPointer(type)" );
@@ -394,6 +406,9 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+      case GL_HALF_FLOAT:
+         elementSize = size * sizeof(GLhalfARB);
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type=%s)",
                       _mesa_lookup_enum_by_nr(type));
@@ -440,6 +455,9 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          break;
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
+         break;
+      case GL_HALF_FLOAT:
+         elementSize = size * sizeof(GLhalfARB);
          break;
 #if FEATURE_fixedpt
       case GL_FIXED:
@@ -669,6 +687,9 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
          break;
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
+         break;
+      case GL_HALF_FLOAT:
+         elementSize = size * sizeof(GLhalfARB);
          break;
 #if FEATURE_fixedpt
       case GL_FIXED:

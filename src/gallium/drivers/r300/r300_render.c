@@ -26,10 +26,9 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 
-#include "indices/u_indices.h"
-
 #include "pipe/p_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
 
@@ -116,20 +115,60 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
-static void r300_emit_draw_immediate(struct r300_context *r300,
-                                     unsigned mode,
-                                     unsigned start,
-                                     unsigned count)
+static boolean immd_is_good_idea(struct r300_context *r300,
+                                      unsigned count)
 {
-    struct pipe_buffer* vbo = r300->vertex_buffer[0].buffer;
-    unsigned vertex_size = r300->vertex_buffer[0].stride / sizeof(float);
-    unsigned i;
-    uint32_t* map;
+    return count <= 4;
+}
+
+static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
+                                            unsigned mode,
+                                            unsigned start,
+                                            unsigned count)
+{
+    struct pipe_vertex_element* velem;
+    struct pipe_vertex_buffer* vbuf;
+    unsigned vertex_element_count = r300->vertex_element_count;
+    unsigned i, v, vbi, dw, elem_offset;
+
+    /* Size of the vertex, in dwords. */
+    unsigned vertex_size = 0;
+
+    /* Offsets of the attribute, in dwords, from the start of the vertex. */
+    unsigned offset[PIPE_MAX_ATTRIBS];
+
+    /* Size of the vertex element, in dwords. */
+    unsigned size[PIPE_MAX_ATTRIBS];
+
+    /* Stride to the same attrib in the next vertex in the vertex buffer,
+     * in dwords. */
+    unsigned stride[PIPE_MAX_ATTRIBS];
+
+    /* Mapped vertex buffers. */
+    uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
+
     CS_LOCALS(r300);
 
-    map = (uint32_t*)pipe_buffer_map_range(r300->context.screen, vbo,
-            start * vertex_size, count * vertex_size,
-            PIPE_BUFFER_USAGE_CPU_READ);
+    /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
+    for (i = 0; i < vertex_element_count; i++) {
+        velem = &r300->vertex_element[i];
+        offset[i] = velem->src_offset / 4;
+        size[i] = util_format_get_blocksize(velem->src_format) / 4;
+        vertex_size += size[i];
+        vbi = velem->vertex_buffer_index;
+
+        /* Map the buffer. */
+        if (!map[vbi]) {
+            vbuf = &r300->vertex_buffer[vbi];
+            map[vbi] = (uint32_t*)pipe_buffer_map(r300->context.screen,
+                                                  vbuf->buffer,
+                                                  PIPE_BUFFER_USAGE_CPU_READ);
+            map[vbi] += vbuf->buffer_offset / 4;
+            stride[vbi] = vbuf->stride / 4;
+        }
+    }
+
+    r300_emit_dirty_state(r300);
 
     BEGIN_CS(10 + count * vertex_size);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
@@ -140,18 +179,31 @@ static void r300_emit_draw_immediate(struct r300_context *r300,
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
-    //debug_printf("r300: Immd %d verts, %d attrs\n", count, vertex_size);
-    for (i = 0; i < count * vertex_size; i++) {
-        if (i % vertex_size == 0) {
-            //debug_printf("r300: -- vert --\n");
+
+    /* Emit vertices. */
+    for (v = 0; v < count; v++) {
+        for (i = 0; i < vertex_element_count; i++) {
+            velem = &r300->vertex_element[i];
+            vbi = velem->vertex_buffer_index;
+            elem_offset = offset[i] + stride[vbi] * (v + start);
+
+            for (dw = 0; dw < size[i]; dw++) {
+                OUT_CS(map[vbi][elem_offset + dw]);
+            }
         }
-        //debug_printf("r300: 0x%08x\n", *map);
-        OUT_CS(*map);
-        map++;
     }
     END_CS;
 
-    pipe_buffer_unmap(r300->context.screen, vbo);
+    /* Unmap buffers. */
+    for (i = 0; i < vertex_element_count; i++) {
+        vbi = r300->vertex_element[i].vertex_buffer_index;
+
+        if (map[vbi]) {
+            vbuf = &r300->vertex_buffer[vbi];
+            pipe_buffer_unmap(r300->context.screen, vbuf->buffer);
+            map[vbi] = NULL;
+        }
+    }
 }
 
 static void r300_emit_draw_arrays(struct r300_context *r300,
@@ -223,17 +275,18 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     END_CS;
 }
 
-
 static boolean r300_setup_vertex_buffers(struct r300_context *r300)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_buffer *pbuf;
 
 validate:
     for (int i = 0; i < r300->vertex_element_count; i++) {
-        if (!r300->winsys->add_buffer(r300->winsys,
-                vbuf[velem[i].vertex_buffer_index].buffer,
-            RADEON_GEM_DOMAIN_GTT, 0)) {
+        pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
+
+        if (!r300->winsys->add_buffer(r300->winsys, pbuf,
+                                      RADEON_GEM_DOMAIN_GTT, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -247,40 +300,35 @@ validate:
     return TRUE;
 }
 
-static struct pipe_buffer* r300_translate_elts(struct r300_context* r300,
-                                               struct pipe_buffer* elts,
-                                               unsigned* size,
-                                               unsigned* mode,
-                                               unsigned* count)
+static void r300_shorten_ubyte_elts(struct r300_context* r300,
+                                    struct pipe_buffer** elts,
+                                    unsigned count)
 {
     struct pipe_screen* screen = r300->context.screen;
     struct pipe_buffer* new_elts;
-    void *in_map, *out_map;
-    unsigned out_prim, out_index_size, out_nr;
-    u_translate_func out_translate;
-
-    (void)u_index_translator(~0, *mode, *size, *count, PV_LAST, PV_LAST,
-        &out_prim, &out_index_size, &out_nr, &out_translate);
+    unsigned char *in_map;
+    unsigned short *out_map;
+    unsigned i;
 
     new_elts = screen->buffer_create(screen, 32,
                                      PIPE_BUFFER_USAGE_INDEX |
                                      PIPE_BUFFER_USAGE_CPU_WRITE |
                                      PIPE_BUFFER_USAGE_GPU_READ,
-                                     out_index_size * out_nr);
+                                     2 * count);
 
-    in_map = pipe_buffer_map(screen, elts, PIPE_BUFFER_USAGE_CPU_READ);
+    in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
     out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
 
-    out_translate(in_map, *count, out_map);
+    for (i = 0; i < count; i++) {
+        *out_map = (unsigned short)*in_map;
+        in_map++;
+        out_map++;
+    }
 
-    pipe_buffer_unmap(screen, elts);
+    pipe_buffer_unmap(screen, *elts);
     pipe_buffer_unmap(screen, new_elts);
 
-    *size = out_index_size;
-    *mode = out_prim;
-    *count = out_nr;
-
-    return new_elts;
+    *elts = new_elts;
 }
 
 /* This is the fast-path drawing & emission for HW TCL. */
@@ -309,13 +357,15 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_update_derived_state(r300);
 
+    r300_emit_buffer_validate(r300);
+
     if (!r300_setup_vertex_buffers(r300)) {
         return;
     }
 
     if (indexSize == 1) {
-        indexBuffer = r300_translate_elts(r300, indexBuffer,
-            &indexSize, &mode, &count);
+        r300_shorten_ubyte_elts(r300, &indexBuffer, count);
+        indexSize = 2;
     }
 
     if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
@@ -368,15 +418,16 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_update_derived_state(r300);
 
-    if (!r300_setup_vertex_buffers(r300)) {
-        return;
-    }
+    r300_emit_buffer_validate(r300);
 
-    r300_emit_dirty_state(r300);
-
-    if (FALSE && count <= 4 && r300->vertex_buffer_count == 1) {
-        r300_emit_draw_immediate(r300, mode, start, count);
+    if (immd_is_good_idea(r300, count)) {
+        r300_emit_draw_arrays_immediate(r300, mode, start, count);
     } else {
+        if (!r300_setup_vertex_buffers(r300)) {
+            return;
+        }
+
+        r300_emit_dirty_state(r300);
         r300_emit_aos(r300, start);
         r300_emit_draw_arrays(r300, mode, count);
     }
@@ -411,6 +462,7 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     draw_set_mapped_constant_buffer(r300->draw,
 				    PIPE_SHADER_VERTEX,
+                                    0,
 				    r300->shader_constants[PIPE_SHADER_VERTEX].constants,
 				    r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
@@ -455,6 +507,7 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     draw_set_mapped_constant_buffer(r300->draw,
 				    PIPE_SHADER_VERTEX,
+                                    0,
             r300->shader_constants[PIPE_SHADER_VERTEX].constants,
             r300->shader_constants[PIPE_SHADER_VERTEX].count *
                 (sizeof(float) * 4));
@@ -506,7 +559,7 @@ r300_render_get_vertex_info(struct vbuf_render* render)
 
     r300_update_derived_state(r300);
 
-    return &r300->vertex_info->vinfo;
+    return (struct vertex_info*)r300->vertex_format_state.state;
 }
 
 static boolean r300_render_allocate_vertices(struct vbuf_render* render,

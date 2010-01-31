@@ -23,6 +23,7 @@
 import os
 import os.path
 import sys
+import SCons.Util
 
 import common
 
@@ -37,6 +38,9 @@ if common.default_platform in ('linux', 'freebsd', 'darwin'):
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
 	default_winsys = 'all'
+elif common.default_platform in ('embedded',):
+	default_drivers = 'softpipe,llvmpipe'
+	default_winsys = 'xlib'
 else:
 	default_drivers = 'all'
 	default_winsys = 'all'
@@ -59,6 +63,17 @@ env = Environment(
 	ENV = os.environ,
 )
 
+if os.environ.has_key('CC'):
+	env['CC'] = os.environ['CC']
+if os.environ.has_key('CFLAGS'):
+	env['CCFLAGS'] += SCons.Util.CLVar(os.environ['CFLAGS'])
+if os.environ.has_key('CXX'):
+	env['CXX'] = os.environ['CXX']
+if os.environ.has_key('CXXFLAGS'):
+	env['CXXFLAGS'] += SCons.Util.CLVar(os.environ['CXXFLAGS'])
+if os.environ.has_key('LDFLAGS'):
+	env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
+
 Help(opts.GenerateHelpText(env))
 
 # replicate options values in local variables
@@ -71,7 +86,7 @@ platform = env['platform']
 # derived options
 x86 = machine == 'x86'
 ppc = machine == 'ppc'
-gcc = platform in ('linux', 'freebsd', 'darwin')
+gcc = platform in ('linux', 'freebsd', 'darwin', 'embedded')
 msvc = platform in ('windows', 'winddk')
 
 Export([
@@ -100,6 +115,22 @@ env.Append(CPPPATH = [
 if env['msvc']:
     env.Append(CPPPATH = ['#include/c99'])
 
+# Embedded
+if platform == 'embedded':
+	env.Append(CPPDEFINES = [
+		'_POSIX_SOURCE',
+		('_POSIX_C_SOURCE', '199309L'), 
+		'_SVID_SOURCE',
+		'_BSD_SOURCE', 
+		'_GNU_SOURCE',
+		
+		'PTHREADS',
+	])
+	env.Append(LIBS = [
+		'm',
+		'pthread',
+		'dl',
+	])
 
 # Posix
 if platform in ('posix', 'linux', 'freebsd', 'darwin'):
@@ -113,6 +144,8 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'PTHREADS',
 		'HAVE_POSIX_MEMALIGN',
 	])
+	if platform == 'darwin':
+		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(CPPPATH = ['/usr/X11R6/include'])
 	env.Append(LIBPATH = ['/usr/X11R6/lib'])
 	env.Append(LIBS = [
@@ -121,7 +154,6 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'expat',
 		'dl',
 	])
-
 
 # DRI
 if dri:

@@ -25,6 +25,7 @@ GLX_DIR = $(XORG_BASE)/glx
 SERVER_GLAPI_FILES = \
 	$(GLX_DIR)/glapi.h \
 	$(GLX_DIR)/glapi.c \
+	$(GLX_DIR)/glapi_nop.c \
 	$(GLX_DIR)/glthread.c \
 	$(GLX_DIR)/glthread.h
 
@@ -43,7 +44,6 @@ SERVER_OUTPUTS = \
 	$(GLX_DIR)/glapioffsets.h \
 	$(GLX_DIR)/glapidispatch.h \
 	$(GLX_DIR)/glprocs.h \
-	$(GLX_DIR)/dispatch.h \
 	$(SERVER_GLAPI_FILES)
 
 API_XML = gl_API.xml \

@@ -95,6 +95,8 @@ struct nv50_reg {
 
 	int vtx; /* vertex index, for GP inputs (TGSI Dimension.Index) */
 	int indirect[2]; /* index into pc->addr, or -1 */
+
+	ubyte buf_index; /* c{0 .. 15}[] or g{0 .. 15}[] */
 };
 
 #define NV50_MOD_NEG 1
@@ -188,6 +190,7 @@ ctor_reg(struct nv50_reg *reg, unsigned type, int index, int hw)
 	reg->vtx = -1;
 	reg->acc = 0;
 	reg->indirect[0] = reg->indirect[1] = -1;
+	reg->buf_index = (type == P_CONST) ? 1 : 0;
 }
 
 static INLINE unsigned
@@ -474,6 +477,12 @@ is_join(struct nv50_program_exec *e)
 	return FALSE;
 }
 
+static INLINE boolean
+is_control_flow(struct nv50_program_exec *e)
+{
+	return (e->inst[0] & 2);
+}
+
 static INLINE void
 set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx,
 	 struct nv50_program_exec *e)
@@ -631,7 +640,7 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 		set_addr(e, pc->addr[src->indirect[0]]);
 	}
 
-	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
+	e->inst[1] |= (src->buf_index << 22);
 }
 
 /* Never apply nv50_reg::mod in emit_mov, or carefully check the code !!! */
@@ -3163,7 +3172,9 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		if (!is_long(pc->p->exec_tail))
 			convert_to_long(pc, pc->p->exec_tail);
 		else
-		if (is_immd(pc->p->exec_tail) || is_join(pc->p->exec_tail))
+		if (is_immd(pc->p->exec_tail) ||
+		    is_join(pc->p->exec_tail) ||
+		    is_control_flow(pc->p->exec_tail))
 			emit_nop(pc);
 
 		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
@@ -3272,7 +3283,7 @@ prep_inspect_insn(struct nv50_pc *pc, const struct tgsi_full_instruction *insn)
 static unsigned
 nv50_revdep_reorder(unsigned m[4], unsigned rdep[4])
 {
-	unsigned i, c, x, unsafe;
+	unsigned i, c, x, unsafe = 0;
 
 	for (c = 0; c < 4; c++)
 		m[c] = c;
@@ -3483,6 +3494,19 @@ load_frontfacing(struct nv50_pc *pc, struct nv50_reg *sv)
 }
 
 static void
+load_instance_id(struct nv50_pc *pc, unsigned index)
+{
+	struct nv50_reg reg, mem;
+
+	ctor_reg(&reg, P_TEMP, -1, -1);
+	ctor_reg(&mem, P_CONST, -1, 24); /* startInstance */
+	mem.buf_index = 2;
+
+	emit_add_b32(pc, &reg, &pc->sysval[index], &mem);
+	pc->sysval[index] = reg;
+}
+
+static void
 copy_semantic_info(struct nv50_program *p)
 {
 	unsigned i, id;
@@ -3668,8 +3692,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 			if (p->cfg.regs[0] & (1 << 0))
 				pc->sysval[vertex_id].hw = rid++;
-			if (p->cfg.regs[0] & (1 << 4))
+			if (p->cfg.regs[0] & (1 << 4)) {
 				pc->sysval[instance_id].hw = rid++;
+				load_instance_id(pc, instance_id);
+			}
 		}
 
 		for (i = 0, rid = 0; i < pc->result_nr; ++i) {
@@ -3702,13 +3728,21 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		copy_semantic_info(p);
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
-		int rid, aid, base;
+		int rid, aid;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
 		pc->allow32 = TRUE;
 
-		base = (TGSI_SEMANTIC_POSITION ==
-			p->info.input_semantic_name[0]) ? 0 : 1;
+		/* do we read FragCoord ? */
+		if (pc->attr_nr &&
+		    p->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+			/* select FCRD components we want accessible */
+			for (c = 0; c < 4; ++c)
+				if (pc->attr[c].acc)
+					p->cfg.regs[1] |= 1 << (24 + c);
+			aid = 0;
+		} else /* offset by 1 if FCRD.w is needed for pinterp */
+			aid = popcnt4(p->cfg.regs[1] >> 24);
 
 		/* non-flat interpolants have to be mapped to
 		 * the lower hardware IDs, so sort them:
@@ -3723,12 +3757,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 		}
 		copy_semantic_info(p);
-
-		if (!base) /* set w-coordinate mask from perspective interp */
-			p->cfg.in[0].mask |= p->cfg.regs[1] >> 24;
-
-		aid = popcnt4( /* if fcrd isn't contained in cfg.io */
-			base ? (p->cfg.regs[1] >> 24) : p->cfg.in[0].mask);
 
 		for (n = 0; n < pc->attr_nr; ++n) {
 			p->cfg.in[n].hw = rid = aid;
@@ -3750,9 +3778,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			}
 			aid += popcnt4(p->cfg.in[n].mask);
 		}
-
-		if (!base)
-			p->cfg.regs[1] |= p->cfg.in[0].mask << 24;
 
 		m = popcnt4(p->cfg.regs[1] >> 24);
 
@@ -4641,6 +4666,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 
 	nouveau_bo_ref(NULL, &p->bo);
 
+	FREE(p->immd);
 	nouveau_resource_free(&p->data[0]);
 
 	p->translated = 0;

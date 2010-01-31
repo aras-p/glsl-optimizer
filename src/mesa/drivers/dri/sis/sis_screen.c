@@ -39,7 +39,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_context.h"
 #include "sis_dri.h"
 #include "sis_lock.h"
-#include "sis_span.h"
 
 #include "xmlpool.h"
 

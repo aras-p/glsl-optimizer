@@ -26,7 +26,6 @@
  */
 
 #include "main/mtypes.h"
-#include "swrast/swrast.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_context.h"

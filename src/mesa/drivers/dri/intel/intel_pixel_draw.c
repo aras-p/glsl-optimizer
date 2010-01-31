@@ -46,10 +46,6 @@
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
-#include "intel_blit.h"
-#include "intel_buffers.h"
-#include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_fbo.h"
 

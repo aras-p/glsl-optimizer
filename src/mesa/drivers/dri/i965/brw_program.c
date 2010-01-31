@@ -37,7 +37,6 @@
 #include "tnl/tnl.h"
 
 #include "brw_context.h"
-#include "brw_util.h"
 #include "brw_wm.h"
 
 static void brwBindProgram( GLcontext *ctx,

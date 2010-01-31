@@ -37,13 +37,13 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
+
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glScissor" );
       return;
    }
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
 
    _mesa_set_scissor(ctx, x, y, width, height);
 }

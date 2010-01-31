@@ -3196,7 +3196,7 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
          newOper = slang_operation_new(1);
          newOper->type = SLANG_OPER_LITERAL_INT;
          newOper->literal_size = 1;
-         newOper->literal[0] = iter;
+         newOper->literal[0] = (GLfloat) iter;
 
          /* replace instances of the loop variable with newOper */
          slang_substitute(A, body, 1, &oldVar, &newOper, GL_FALSE);

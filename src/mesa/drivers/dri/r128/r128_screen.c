@@ -37,7 +37,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_context.h"
 #include "r128_ioctl.h"
 #include "r128_span.h"
-#include "r128_tris.h"
 
 #include "main/context.h"
 #include "main/imports.h"

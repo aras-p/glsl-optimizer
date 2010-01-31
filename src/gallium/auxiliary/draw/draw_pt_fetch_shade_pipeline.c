@@ -33,7 +33,6 @@
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
 #include "draw/draw_gs.h"
-#include "translate/translate.h"
 
 
 struct fetch_pipeline_middle_end {
@@ -164,7 +163,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       vshader->run_linear(vshader,
                           (const float (*)[4])pipeline_verts->data,
                           (      float (*)[4])pipeline_verts->data,
-                          (const float (*)[4])draw->pt.user.vs_constants,
+                          draw->pt.user.vs_constants,
                           fetch_count,
                           fpme->vertex_size,
                           fpme->vertex_size);
@@ -172,7 +171,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
          draw_geometry_shader_run(gshader,
                                   (const float (*)[4])pipeline_verts->data,
                                   (      float (*)[4])pipeline_verts->data,
-                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  draw->pt.user.gs_constants,
                                   fetch_count,
                                   fpme->vertex_size,
                                   fpme->vertex_size);
@@ -249,7 +248,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.vs_constants,
+                         draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
@@ -258,7 +257,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
          draw_geometry_shader_run(geometry_shader,
                                   (const float (*)[4])pipeline_verts->data,
                                   (      float (*)[4])pipeline_verts->data,
-                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  draw->pt.user.gs_constants,
                                   count,
                                   fpme->vertex_size,
                                   fpme->vertex_size);
@@ -329,7 +328,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.vs_constants,
+                         draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
@@ -338,7 +337,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
          draw_geometry_shader_run(geometry_shader,
                                   (const float (*)[4])pipeline_verts->data,
                                   (      float (*)[4])pipeline_verts->data,
-                                  (const float (*)[4])draw->pt.user.gs_constants,
+                                  draw->pt.user.gs_constants,
                                   count,
                                   fpme->vertex_size,
                                   fpme->vertex_size);

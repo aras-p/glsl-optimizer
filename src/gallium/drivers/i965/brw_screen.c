@@ -138,6 +138,9 @@ brw_get_name(struct pipe_screen *screen)
    case PCI_CHIP_ILM_G:
       chipset = "ILM_G";
       break;
+   default:
+      chipset = "unknown";
+      break;
    }
 
    util_snprintf(buffer, sizeof(buffer), "i965 (chipset: %s)", chipset);
@@ -172,6 +175,12 @@ brw_get_param(struct pipe_screen *screen, int param)
       return 8;  /* max 128x128x128 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 11; /* max 1024x1024 */
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+      return 1;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+      return 0;
    default:
       return 0;
    }

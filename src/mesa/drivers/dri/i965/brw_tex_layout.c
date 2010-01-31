@@ -36,7 +36,6 @@
 #include "intel_tex_layout.h"
 #include "intel_context.h"
 #include "main/macros.h"
-#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 

@@ -93,16 +93,16 @@ DRIVER_DIRS = x11 osmesa
 PROGRAM_DIRS = demos redbook samples glsl objviewer xdemos
 
 # EGL drivers to build
-EGL_DRIVERS_DIRS = demo
+EGL_DRIVERS_DIRS = glx
 
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
 GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
-GALLIUM_WINSYS_DIRS = xlib egl_xlib
-GALLIUM_WINSYS_DRM_DIRS =
-GALLIUM_STATE_TRACKERS_DIRS = glx
+GALLIUM_WINSYS_DIRS = drm xlib
+GALLIUM_WINSYS_DRM_DIRS = swrast
+GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
 # native displays EGL should support
 EGL_DISPLAYS = x11
@@ -129,6 +129,9 @@ DRI_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
+
+# EGL driver install directory
+EGL_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/egl
 
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/xorg/modules/drivers

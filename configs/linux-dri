@@ -55,7 +55,7 @@ SRC_DIRS := glx/x11 egl $(SRC_DIRS)
 PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 
 # EGL directories
-EGL_DRIVERS_DIRS = demo glx
+EGL_DRIVERS_DIRS = glx
 
 DRIVER_DIRS = dri
 WINDOW_SYSTEM = dri

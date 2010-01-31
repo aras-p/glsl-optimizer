@@ -32,7 +32,6 @@
 #include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_state.h"
-#include "lp_surface.h"
 #include "lp_setup.h"
 
 #include "draw/draw_context.h"

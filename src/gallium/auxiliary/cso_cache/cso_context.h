@@ -84,6 +84,10 @@ enum pipe_error cso_single_sampler( struct cso_context *cso,
 
 void cso_single_sampler_done( struct cso_context *cso );
 
+enum pipe_error cso_set_vertex_samplers(struct cso_context *cso,
+                                        unsigned count,
+                                        const struct pipe_sampler_state **states);
+
 void
 cso_save_vertex_samplers(struct cso_context *cso);
 

@@ -34,7 +34,6 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "brw_util.h"
 #include "brw_state.h"
 #include "brw_gs.h"
 

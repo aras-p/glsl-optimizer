@@ -128,6 +128,7 @@ linux-icc \
 linux-icc-static \
 linux-llvm \
 linux-llvm-debug \
+linux-opengl-es \
 linux-osmesa \
 linux-osmesa-static \
 linux-osmesa16 \
@@ -309,10 +310,25 @@ MAIN_FILES = \
 	$(DIRECTORY)/progs/util/sampleMakefile				\
 	$(DIRECTORY)/windows/VC8/
 
-EGL_FILES = \
-	$(DIRECTORY)/include/EGL/*.h					\
+ES_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
 	$(DIRECTORY)/include/GLES2/*.h					\
+	$(DIRECTORY)/src/mesa/glapi/*.xml				\
+	$(DIRECTORY)/src/mesa/glapi/*.py				\
+	$(DIRECTORY)/src/mesa/glapi/*.dtd				\
+	$(DIRECTORY)/src/mesa/es/glapi/Makefile				\
+	$(DIRECTORY)/src/mesa/es/glapi/*.xml				\
+	$(DIRECTORY)/src/mesa/es/glapi/*.py				\
+	$(DIRECTORY)/src/mesa/es/state_tracker/*.[ch]			\
+	$(DIRECTORY)/src/mesa/es/main/*.[ch]				\
+	$(DIRECTORY)/src/mesa/es/main/*.xml				\
+	$(DIRECTORY)/src/mesa/es/main/*.py				\
+	$(DIRECTORY)/src/mesa/es/main/*.dtd				\
+	$(DIRECTORY)/src/mesa/es/Makefile				\
+	$(DIRECTORY)/src/mesa/es/sources.mak				\
+
+EGL_FILES = \
+	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
@@ -480,6 +496,7 @@ DEPEND_FILES = \
 
 LIB_FILES = \
 	$(MAIN_FILES)		\
+	$(ES_FILES)		\
 	$(EGL_FILES)		\
 	$(GALLIUM_FILES)	\
 	$(DRI_FILES)		\

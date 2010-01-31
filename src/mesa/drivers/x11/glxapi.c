@@ -50,6 +50,37 @@ struct display_dispatch {
    struct display_dispatch *Next;
 };
 
+
+/**
+ * When GLX_INDIRECT_RENDERING is defined, some symbols are missing in
+ * libglapi.a.  We need to define them here.
+ */
+#ifdef GLX_INDIRECT_RENDERING
+
+#include "glapi/glapitable.h"
+#include "glapi/glapidispatch.h"
+
+#define KEYWORD1 PUBLIC
+
+#if defined(USE_MGL_NAMESPACE)
+#define NAME(func)  mgl##func
+#else
+#define NAME(func)  gl##func
+#endif
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)		\
+   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
+   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+
+/* skip normal ones */
+#define _GLAPI_SKIP_NORMAL_ENTRY_POINTS
+#include "glapi/glapitemp.h"
+
+#endif /* GLX_INDIRECT_RENDERING */
+
+
 static struct display_dispatch *DispatchList = NULL;
 
 

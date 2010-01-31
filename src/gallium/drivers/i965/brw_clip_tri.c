@@ -31,7 +31,6 @@
 
 #include "brw_defines.h"
 #include "brw_eu.h"
-#include "brw_util.h"
 #include "brw_clip.h"
 
 static void release_tmps( struct brw_clip_compile *c )

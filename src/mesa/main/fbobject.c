@@ -40,13 +40,10 @@
 #include "framebuffer.h"
 #include "hash.h"
 #include "macros.h"
-#include "mipmap.h"
 #include "renderbuffer.h"
 #include "state.h"
 #include "teximage.h"
 #include "texobj.h"
-#include "texstore.h"
-#include "texstate.h"
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */
@@ -861,6 +858,9 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
  *
  * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
  *  GL_DEPTH_STENCIL_EXT or zero if error.
+ *
+ * XXX in the future when we support red-only and red-green formats
+ * we'll also return GL_RED and GL_RG.
  */
 GLenum
 _mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
@@ -954,7 +954,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       /* NumSamples == 0 indicates non-multisampling */
       samples = 0;
    }
-   else if (samples > ctx->Const.MaxSamples) {
+   else if (samples > (GLsizei) ctx->Const.MaxSamples) {
       /* note: driver may choose to use more samples than what's requested */
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(samples)", func);
       return;
@@ -1353,15 +1353,26 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
             ASSERT(fb == &DummyFramebuffer || fb->Name == framebuffers[i]);
 
             /* check if deleting currently bound framebuffer object */
-            if (fb == ctx->DrawBuffer) {
-               /* bind default */
-               ASSERT(fb->RefCount >= 2);
-               _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+            if (ctx->Extensions.EXT_framebuffer_blit) {
+               /* separate draw/read binding points */
+               if (fb == ctx->DrawBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+               }
+               if (fb == ctx->ReadBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+               }
             }
-            if (fb == ctx->ReadBuffer) {
-               /* bind default */
-               ASSERT(fb->RefCount >= 2);
-               _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+            else {
+               /* only one binding point for read/draw buffers */
+               if (fb == ctx->DrawBuffer || fb == ctx->ReadBuffer) {
+                  /* bind default */
+                  ASSERT(fb->RefCount >= 2);
+                  _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+               }    
             }
 
 	    /* remove from hash table immediately, to free the ID */

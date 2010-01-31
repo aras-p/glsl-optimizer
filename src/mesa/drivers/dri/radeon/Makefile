@@ -26,7 +26,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_queryobj.c \
 	radeon_span.c \
-	radeon_texture.c
+	radeon_texture.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = \
 	radeon_context.c \
@@ -40,6 +41,7 @@ DRIVER_SOURCES = \
 	radeon_swtcl.c \
 	radeon_maos.c \
 	radeon_sanity.c \
+	radeon_blit.c \
 	$(RADEON_COMMON_SOURCES)
 
 C_SOURCES = \
@@ -47,7 +49,7 @@ C_SOURCES = \
 	$(DRIVER_SOURCES) \
 	$(CS_SOURCES)
 
-DRIVER_DEFINES = -DRADEON_R100 -Wall
+DRIVER_DEFINES = -DRADEON_R100
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 

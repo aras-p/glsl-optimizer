@@ -64,12 +64,12 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch);
  * Consider it a convenience function wrapping multple
  * intel_buffer_dword() calls.
  */
-int brw_batchbuffer_data(struct brw_batchbuffer *batch,
+enum pipe_error brw_batchbuffer_data(struct brw_batchbuffer *batch,
                             const void *data, GLuint bytes,
 			    enum cliprect_mode cliprect_mode);
 
 
-int brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
+enum pipe_error brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
 			       struct brw_winsys_buffer *buffer,
 			       enum brw_buffer_usage usage,
 			       uint32_t offset);

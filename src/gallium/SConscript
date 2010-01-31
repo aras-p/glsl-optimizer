@@ -8,9 +8,10 @@ for driver in env['drivers']:
 	SConscript(os.path.join('drivers', driver, 'SConscript'))
 
 SConscript('state_trackers/python/SConscript')
-SConscript('state_trackers/glx/xlib/SConscript')
-SConscript('state_trackers/dri/SConscript')
-SConscript('state_trackers/xorg/SConscript')
+if platform != 'embedded':
+	SConscript('state_trackers/glx/xlib/SConscript')
+	SConscript('state_trackers/dri/SConscript')
+	SConscript('state_trackers/xorg/SConscript')
 
 if platform == 'windows':
 	SConscript('state_trackers/wgl/SConscript')

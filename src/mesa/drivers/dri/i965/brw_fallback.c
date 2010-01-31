@@ -36,12 +36,8 @@
 #include "swrast/swrast.h"
 #include "tnl/tnl.h"
 #include "brw_context.h"
-#include "brw_fallback.h"
-#include "intel_chipset.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
-
-#include "glapi/glapi.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 

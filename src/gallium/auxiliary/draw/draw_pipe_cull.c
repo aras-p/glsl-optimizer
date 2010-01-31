@@ -50,8 +50,6 @@ static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
 }
 
 
-
-
 static void cull_tri( struct draw_stage *stage,
 		      struct prim_header *header )
 {
@@ -62,7 +60,7 @@ static void cull_tri( struct draw_stage *stage,
    const float *v1 = header->v[1]->data[pos];
    const float *v2 = header->v[2]->data[pos];
 
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   /* edge vectors: e = v0 - v2, f = v1 - v2 */
    const float ex = v0[0] - v2[0];
    const float ey = v0[1] - v2[1];
    const float fx = v1[0] - v2[0];
@@ -72,7 +70,7 @@ static void cull_tri( struct draw_stage *stage,
    header->det = ex * fy - ey * fx;
 
    if (header->det != 0) {
-      /* if (det < 0 then Z points toward camera and triangle is 
+      /* if det < 0 then Z points toward the camera and the triangle is 
        * counter-clockwise winding.
        */
       unsigned winding = (header->det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
@@ -83,6 +81,7 @@ static void cull_tri( struct draw_stage *stage,
       }
    }
 }
+
 
 static void cull_first_tri( struct draw_stage *stage, 
 			    struct prim_header *header )
@@ -96,12 +95,12 @@ static void cull_first_tri( struct draw_stage *stage,
 }
 
 
-
 static void cull_flush( struct draw_stage *stage, unsigned flags )
 {
    stage->tri = cull_first_tri;
    stage->next->flush( stage->next, flags );
 }
+
 
 static void cull_reset_stipple_counter( struct draw_stage *stage )
 {
@@ -140,7 +139,7 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
 
    return &cull->stage;
 
- fail:
+fail:
    if (cull)
       cull->stage.destroy( &cull->stage );
 

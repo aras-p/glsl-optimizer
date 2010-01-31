@@ -28,7 +28,6 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/arrayobj.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
@@ -52,13 +51,11 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
-#include "intel_decode.h"
 #include "intel_bufmgr.h"
 #include "intel_screen.h"
 
 #include "drirenderbuffer.h"
 #include "utils.h"
-#include "xmlpool.h"            /* for symbolic values of enum-type options */
 
 
 #ifndef INTEL_DEBUG
@@ -522,7 +519,8 @@ intel_glFlush(GLcontext *ctx)
     * and getting our hands on that doesn't seem worth it, so we just us the
     * first batch we emitted after the last swap.
     */
-   if (intel->first_post_swapbuffers_batch != NULL) {
+   if (!intel->using_dri2_swapbuffers &&
+       intel->first_post_swapbuffers_batch != NULL) {
       drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;

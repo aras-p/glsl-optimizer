@@ -35,7 +35,6 @@
 #include "lp_flush.h"
 #include "lp_context.h"
 #include "lp_surface.h"
-#include "lp_winsys.h"
 #include "lp_setup.h"
 
 

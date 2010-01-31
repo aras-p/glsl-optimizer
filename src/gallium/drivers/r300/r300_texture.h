@@ -31,7 +31,8 @@ struct r300_texture;
 
 void r300_init_screen_texture_functions(struct pipe_screen* screen);
 
-unsigned r300_texture_get_stride(struct r300_texture* tex, unsigned level);
+unsigned r300_texture_get_stride(struct r300_screen* screen,
+                                 struct r300_texture* tex, unsigned level);
 
 unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
                                  unsigned zslice, unsigned face);
@@ -41,6 +42,7 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 {
     switch (format) {
         /* X8 */
+        case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
         case PIPE_FORMAT_L8_UNORM:
@@ -115,7 +117,8 @@ r300_video_surface(struct pipe_video_surface *pvs)
 
 #ifndef R300_WINSYS_H
 
-boolean r300_get_texture_buffer(struct pipe_texture* texture,
+boolean r300_get_texture_buffer(struct pipe_screen* screen,
+                                struct pipe_texture* texture,
                                 struct pipe_buffer** buffer,
                                 unsigned* stride);
 

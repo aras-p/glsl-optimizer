@@ -23,6 +23,8 @@ struct nv50_screen {
 	struct nouveau_resource *immd_heap[1];
 	struct nouveau_resource *parm_heap[PIPE_SHADER_TYPES];
 
+	struct pipe_buffer *strm_vbuf[16];
+
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
 

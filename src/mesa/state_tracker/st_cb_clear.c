@@ -42,10 +42,8 @@
 #include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
-#include "st_draw.h"
 #include "st_program.h"
 #include "st_public.h"
-#include "st_mesa_to_tgsi.h"
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
@@ -53,7 +51,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
-#include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
 
@@ -166,10 +163,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   st_no_flush_pipe_buffer_write(st, st->clear.vbuf,
-				 st->clear.vbuf_slot * sizeof(st->clear.vertices),
-				 sizeof(st->clear.vertices),
-				 st->clear.vertices);
+   st_no_flush_pipe_buffer_write_nooverlap(st, st->clear.vbuf,
+                                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                                           sizeof(st->clear.vertices),
+                                           st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 
@@ -227,19 +224,19 @@ clear_with_quad(GLcontext *ctx,
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       if (color) {
          if (ctx->Color.ColorMask[0][0])
-            blend.colormask |= PIPE_MASK_R;
+            blend.rt[0].colormask |= PIPE_MASK_R;
          if (ctx->Color.ColorMask[0][1])
-            blend.colormask |= PIPE_MASK_G;
+            blend.rt[0].colormask |= PIPE_MASK_G;
          if (ctx->Color.ColorMask[0][2])
-            blend.colormask |= PIPE_MASK_B;
+            blend.rt[0].colormask |= PIPE_MASK_B;
          if (ctx->Color.ColorMask[0][3])
-            blend.colormask |= PIPE_MASK_A;
+            blend.rt[0].colormask |= PIPE_MASK_A;
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }

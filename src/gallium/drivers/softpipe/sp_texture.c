@@ -38,7 +38,6 @@
 #include "util/u_memory.h"
 
 #include "sp_context.h"
-#include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_screen.h"
 #include "sp_winsys.h"
@@ -57,12 +56,7 @@ softpipe_texture_layout(struct pipe_screen *screen,
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
-
    unsigned buffer_size = 0;
-
-   pt->width0 = width;
-   pt->height0 = height;
-   pt->depth0 = depth;
 
    for (level = 0; level <= pt->last_level; level++) {
       spt->stride[level] = util_format_get_stride(pt->format, width);
@@ -295,6 +289,10 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
 
    assert(texture);
    assert(level <= texture->last_level);
+
+   /* make sure the requested region is in the image bounds */
+   assert(x + w <= u_minify(texture->width0, level));
+   assert(y + h <= u_minify(texture->height0, level));
 
    spt = CALLOC_STRUCT(softpipe_transfer);
    if (spt) {

@@ -37,7 +37,7 @@
 /* XXX this would have to change for accum buffers with more or less
  * than 16 bits per color channel.
  */
-#define ACCUM_SCALE16 32767.0
+#define ACCUM_SCALE16 32767.0F
 
 
 /*

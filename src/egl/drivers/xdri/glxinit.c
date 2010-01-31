@@ -1,8 +1,10 @@
 /**
  * GLX initialization.  Code based on glxext.c, glx_query.c, and
- * glcontextmodes.c under src/glx/x11/.  The major difference is that no DRI
- * related code here.
+ * glcontextmodes.c under src/glx/x11/.  The major difference is that DRI
+ * related code is stripped out.
  *
+ * If the maintenance of this file takes too much time, we should consider
+ * refactoring glxext.c.
  */
 
 #include <assert.h>
@@ -31,8 +33,26 @@ typedef struct GLXGenericGetString
 static char *__glXExtensionName = GLX_EXTENSION_NAME;
 static XExtensionInfo *__glXExtensionInfo = NULL;
 
-static /* const */ XExtensionHooks __glXExtensionHooks = { NULL };
-static
+static int
+__glXCloseDisplay(Display * dpy, XExtCodes * codes)
+{
+   return XextRemoveDisplay(__glXExtensionInfo, dpy);
+}
+
+static /* const */ XExtensionHooks __glXExtensionHooks = {
+  NULL,                   /* create_gc */
+  NULL,                   /* copy_gc */
+  NULL,                   /* flush_gc */
+  NULL,                   /* free_gc */
+  NULL,                   /* create_font */
+  NULL,                   /* free_font */
+  __glXCloseDisplay,      /* close_display */
+  NULL,                   /* wire_to_event */
+  NULL,                   /* event_to_wire */
+  NULL,                   /* error */
+  NULL,                   /* error_string */
+};
+
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
                            __glXExtensionName, &__glXExtensionHooks,
                            __GLX_NUMBER_EVENTS, NULL)
@@ -178,6 +198,30 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
    }
    XFree((char *) priv->screenConfigs);
    priv->screenConfigs = NULL;
+}
+
+/*
+** Release the private memory referred to in a display private
+** structure.  The caller will free the extension structure.
+*/
+static int
+__glXFreeDisplayPrivate(XExtData * extension)
+{
+   __GLXdisplayPrivate *priv;
+
+   priv = (__GLXdisplayPrivate *) extension->private_data;
+   FreeScreenConfigs(priv);
+   if (priv->serverGLXvendor) {
+      Xfree((char *) priv->serverGLXvendor);
+      priv->serverGLXvendor = 0x0;      /* to protect against double free's */
+   }
+   if (priv->serverGLXversion) {
+      Xfree((char *) priv->serverGLXversion);
+      priv->serverGLXversion = 0x0;     /* to protect against double free's */
+   }
+
+   Xfree((char *) priv);
+   return 0;
 }
 
 /************************************************************************/
@@ -570,40 +614,40 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    return GL_TRUE;
 }
 
-_X_HIDDEN void
-__glXRelease(__GLXdisplayPrivate *dpyPriv)
-{
-   FreeScreenConfigs(dpyPriv);
-
-   if (dpyPriv->serverGLXvendor) {
-      Xfree((char *) dpyPriv->serverGLXvendor);
-      dpyPriv->serverGLXvendor = NULL;
-   }
-   if (dpyPriv->serverGLXversion) {
-      Xfree((char *) dpyPriv->serverGLXversion);
-      dpyPriv->serverGLXversion = NULL;
-   }
-
-   Xfree(dpyPriv);
-}
-
 _X_HIDDEN __GLXdisplayPrivate *
 __glXInitialize(Display * dpy)
 {
    XExtDisplayInfo *info = __glXFindDisplay(dpy);
+   XExtData **privList, *private, *found;
    __GLXdisplayPrivate *dpyPriv;
+   XEDataObject dataObj;
    int major, minor;
 
    if (!XextHasExtension(info))
       return NULL;
 
+   /* See if a display private already exists.  If so, return it */
+   dataObj.display = dpy;
+   privList = XEHeadOfExtensionList(dataObj);
+   found = XFindOnExtensionList(privList, info->codes->extension);
+   if (found)
+      return (__GLXdisplayPrivate *) found->private_data;
+
    /* See if the versions are compatible */
    if (!QueryVersion(dpy, info->codes->major_opcode, &major, &minor))
       return NULL;
 
-   dpyPriv = (__GLXdisplayPrivate *) Xcalloc(1, sizeof(__GLXdisplayPrivate));
-   if (!dpyPriv)
+   /*
+    ** Allocate memory for all the pieces needed for this buffer.
+    */
+   private = (XExtData *) Xmalloc(sizeof(XExtData));
+   if (!private)
       return NULL;
+   dpyPriv = (__GLXdisplayPrivate *) Xcalloc(1, sizeof(__GLXdisplayPrivate));
+   if (!dpyPriv) {
+      Xfree(private);
+      return NULL;
+   }
 
    /*
     ** Init the display private and then read in the screen config
@@ -619,8 +663,20 @@ __glXInitialize(Display * dpy)
 
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
       Xfree(dpyPriv);
+      Xfree(private);
       return NULL;
    }
+
+   /*
+    ** Fill in the private structure.  This is the actual structure that
+    ** hangs off of the Display structure.  Our private structure is
+    ** referred to by this structure.  Got that?
+    */
+   private->number = info->codes->extension;
+   private->next = 0;
+   private->free_private = __glXFreeDisplayPrivate;
+   private->private_data = (char *) dpyPriv;
+   XAddToExtensionList(privList, private);
 
    return dpyPriv;
 }

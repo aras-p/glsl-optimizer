@@ -2,6 +2,7 @@
  * DRI initialization.  The DRI loaders are defined in src/glx/x11/.
  */
 
+#include <stdlib.h>
 #include <sys/time.h>
 
 #include "glxclient.h"
@@ -42,22 +43,39 @@ __glXEnableDirectExtension(__GLXscreenConfigs * psc, const char *name)
 _X_HIDDEN __GLXDRIdisplay *
 __driCreateDisplay(__GLXdisplayPrivate *dpyPriv, int *version)
 {
-   __GLXDRIdisplay *driDisplay;
+   __GLXDRIdisplay *driDisplay = NULL;
    int ver = 0;
+   char *env;
+   int force_sw;
+
+   env = getenv("EGL_SOFTWARE");
+   force_sw = (env && *env != '0');
 
    /* try DRI2 first */
-   driDisplay = dri2CreateDisplay(dpyPriv->dpy);
-   if (driDisplay) {
-      /* fill in the required field */
-      dpyPriv->dri2Display = driDisplay;
-      ver = 2;
+   if (!force_sw) {
+      driDisplay = dri2CreateDisplay(dpyPriv->dpy);
+      if (driDisplay) {
+         /* fill in the required field */
+         dpyPriv->dri2Display = driDisplay;
+         ver = 2;
+      }
    }
-   else {
-      /* try DRI */
+
+   /* and then DRI */
+   if (!force_sw && !driDisplay) {
       driDisplay = driCreateDisplay(dpyPriv->dpy);
       if (driDisplay) {
          dpyPriv->driDisplay = driDisplay;
          ver = 1;
+      }
+   }
+
+   /* and then DRISW */
+   if (!driDisplay) {
+      driDisplay = driswCreateDisplay(dpyPriv->dpy);
+      if (driDisplay) {
+         dpyPriv->driDisplay = driDisplay;
+         ver = 0;
       }
    }
 

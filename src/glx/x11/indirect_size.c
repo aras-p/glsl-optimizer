@@ -29,7 +29,7 @@
 #include <GL/gl.h>
 #include "indirect_size.h"
 
-#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
+#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PURE __attribute__((pure))
 #  else
 #    define PURE
@@ -41,7 +41,7 @@
 #    define FASTCALL
 #  endif
 
-#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) && defined(__ELF__)
+#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))) && defined(__ELF__)
 #    define INTERNAL  __attribute__((visibility("internal")))
 #  else
 #    define INTERNAL
@@ -73,6 +73,7 @@ __glCallLists_size(GLenum e)
     case GL_SHORT:
     case GL_UNSIGNED_SHORT:
     case GL_2_BYTES:
+    case GL_HALF_FLOAT:
         return 2;
     case GL_3_BYTES:
         return 3;

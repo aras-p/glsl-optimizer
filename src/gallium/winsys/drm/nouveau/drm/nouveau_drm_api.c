@@ -54,6 +54,16 @@ static struct dri1_api nouveau_dri1_api = {
 	nouveau_dri1_front_surface,
 };
 
+static void
+nouveau_drm_destroy_winsys(struct pipe_winsys *s)
+{
+	struct nouveau_winsys *nv_winsys = nouveau_winsys(s);
+	struct nouveau_screen *nv_screen= nouveau_screen(nv_winsys->pscreen);
+	nouveau_device_close(&nv_screen->device);
+	FREE(nv_winsys->pctx);
+	FREE(nv_winsys);
+}
+
 static struct pipe_screen *
 nouveau_drm_create_screen(struct drm_api *api, int fd,
 			  struct drm_create_screen_arg *arg)
@@ -105,6 +115,7 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 		return NULL;
 	}
 	ws = &nvws->base;
+	ws->destroy = nouveau_drm_destroy_winsys;
 
 	nvws->pscreen = init(ws, dev);
 	if (!nvws->pscreen) {
@@ -255,6 +266,7 @@ nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
 
 struct drm_api drm_api_hooks = {
 	.name = "nouveau",
+	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
 	.create_context = nouveau_drm_create_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,

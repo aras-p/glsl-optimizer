@@ -36,7 +36,6 @@
 
 #include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -114,8 +113,6 @@ do_copy_texsubimage(struct intel_context *intel,
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
 						 INTEL_WRITE_PART);
-      const GLint orig_x = x;
-      const GLint orig_y = y;
       GLuint image_x, image_y;
       GLshort src_pitch;
 
@@ -125,9 +122,6 @@ do_copy_texsubimage(struct intel_context *intel,
 				     intelImage->face,
 				     0,
 				     &image_x, &image_y);
-      /* Update dst for clipped src.  Need to also clip the source rect. */
-      dstx += x - orig_x;
-      dsty += y - orig_y;
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {

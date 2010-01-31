@@ -310,18 +310,21 @@ void cso_destroy_context( struct cso_context *ctx )
 enum pipe_error cso_set_blend(struct cso_context *ctx,
                               const struct pipe_blend_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_blend_state));
-   struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, CSO_BLEND,
-                                                       (void*)templ);
+   unsigned key_size, hash_key;
+   struct cso_hash_iter iter;
    void *handle;
+
+   key_size = templ->independent_blend_enable ? sizeof(struct pipe_blend_state) :
+              (char *)&(templ->rt[1]) - (char *)templ;
+   hash_key = cso_construct_key((void*)templ, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_BLEND, (void*)templ, key_size);
 
    if (cso_hash_iter_is_null(iter)) {
       struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      memcpy(&cso->state, templ, sizeof(*templ));
+      memcpy(&cso->state, templ, key_size);
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_blend_state;
       cso->context = ctx->pipe;
@@ -369,10 +372,11 @@ enum pipe_error cso_single_sampler(struct cso_context *ctx,
    void *handle = NULL;
 
    if (templ != NULL) {
-      unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_sampler_state));
+      unsigned key_size = sizeof(struct pipe_sampler_state);
+      unsigned hash_key = cso_construct_key((void*)templ, key_size);
       struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                           hash_key, CSO_SAMPLER,
-                                                          (void*)templ);
+                                                          (void*)templ, key_size);
 
       if (cso_hash_iter_is_null(iter)) {
          struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
@@ -409,10 +413,11 @@ cso_single_vertex_sampler(struct cso_context *ctx,
    void *handle = NULL;
 
    if (templ != NULL) {
-      unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_sampler_state));
+      unsigned key_size = sizeof(struct pipe_sampler_state);
+      unsigned hash_key = cso_construct_key((void*)templ, key_size);
       struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                           hash_key, CSO_SAMPLER,
-                                                          (void*)templ);
+                                                          (void*)templ, key_size);
 
       if (cso_hash_iter_is_null(iter)) {
          struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
@@ -537,6 +542,38 @@ void cso_restore_samplers(struct cso_context *ctx)
    ctx->nr_samplers = ctx->nr_samplers_saved;
    memcpy(ctx->samplers, ctx->samplers_saved, sizeof(ctx->samplers));
    cso_single_sampler_done( ctx );
+}
+
+/*
+ * If the function encouters any errors it will return the
+ * last one. Done to always try to set as many samplers
+ * as possible.
+ */
+enum pipe_error cso_set_vertex_samplers(struct cso_context *ctx,
+                                        unsigned nr,
+                                        const struct pipe_sampler_state **templates)
+{
+   unsigned i;
+   enum pipe_error temp, error = PIPE_OK;
+
+   /* TODO: fastpath
+    */
+
+   for (i = 0; i < nr; i++) {
+      temp = cso_single_vertex_sampler( ctx, i, templates[i] );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
+
+   for ( ; i < ctx->nr_samplers; i++) {
+      temp = cso_single_vertex_sampler( ctx, i, NULL );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
+
+   cso_single_vertex_sampler_done( ctx );
+
+   return error;
 }
 
 void
@@ -666,12 +703,12 @@ cso_restore_vertex_sampler_textures(struct cso_context *ctx)
 enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
                                             const struct pipe_depth_stencil_alpha_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)templ,
-                                         sizeof(struct pipe_depth_stencil_alpha_state));
+   unsigned key_size = sizeof(struct pipe_depth_stencil_alpha_state);
+   unsigned hash_key = cso_construct_key((void*)templ, key_size);
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                        hash_key, 
-						       CSO_DEPTH_STENCIL_ALPHA,
-                                                       (void*)templ);
+                                                       CSO_DEPTH_STENCIL_ALPHA,
+                                                       (void*)templ, key_size);
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
@@ -723,11 +760,11 @@ void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
 enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
                                    const struct pipe_rasterizer_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)templ,
-                                         sizeof(struct pipe_rasterizer_state));
+   unsigned key_size = sizeof(struct pipe_rasterizer_state);
+   unsigned hash_key = cso_construct_key((void*)templ, key_size);
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                        hash_key, CSO_RASTERIZER,
-                                                       (void*)templ);
+                                                       (void*)templ, key_size);
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
@@ -809,7 +846,8 @@ enum pipe_error cso_set_fragment_shader(struct cso_context *ctx,
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                        hash_key, 
                                                        CSO_FRAGMENT_SHADER,
-                                                       (void*)tokens);
+                                                       (void*)tokens,
+                                                       sizeof(*templ)); /* XXX correct? tokens_size? */
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
@@ -888,7 +926,8 @@ enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
                                          sizeof(struct pipe_shader_state));
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
                                                        hash_key, CSO_VERTEX_SHADER,
-                                                       (void*)templ);
+                                                       (void*)templ,
+                                                       sizeof(*templ));
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {

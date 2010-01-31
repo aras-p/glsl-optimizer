@@ -38,7 +38,6 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_vs.h"
 #include "translate/translate.h"
-#include "translate/translate_cache.h"
 
 /* A first pass at incorporating vertex fetch/emit functionality into 
  */
@@ -148,7 +147,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.vs_constants,
+                             vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);
@@ -211,7 +210,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.vs_constants,
+                             vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);

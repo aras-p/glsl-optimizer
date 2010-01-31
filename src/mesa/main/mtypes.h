@@ -1762,6 +1762,8 @@ struct gl_fragment_program
    struct gl_program Base;   /**< base class */
    GLenum FogOption;
    GLboolean UsesKill;          /**< shader uses KIL instruction */
+   GLboolean OriginUpperLeft;
+   GLboolean PixelCenterInteger;
 };
 
 
@@ -2395,11 +2397,13 @@ struct gl_extensions
    GLboolean ARB_depth_clamp;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_draw_elements_base_vertex;
+   GLboolean ARB_fragment_coord_conventions;
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
    GLboolean ARB_framebuffer_object;
    GLboolean ARB_half_float_pixel;
+   GLboolean ARB_half_float_vertex;
    GLboolean ARB_imaging;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;
@@ -2519,6 +2523,9 @@ struct gl_extensions
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
+#if FEATURE_OES_draw_texture
+   GLboolean OES_draw_texture;
+#endif /* FEATURE_OES_draw_texture */
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */

@@ -516,8 +516,11 @@ SEQ - Set On Equal
 .. math::
 
   dst.x = (src0.x == src1.x) ? 1 : 0
+
   dst.y = (src0.y == src1.y) ? 1 : 0
+
   dst.z = (src0.z == src1.z) ? 1 : 0
+
   dst.w = (src0.w == src1.w) ? 1 : 0
 
 
@@ -526,8 +529,11 @@ SFL - Set On False
 .. math::
 
   dst.x = 0
+
   dst.y = 0
+
   dst.z = 0
+
   dst.w = 0
 
 Considered for removal.
@@ -537,8 +543,11 @@ SGT - Set On Greater Than
 .. math::
 
   dst.x = (src0.x > src1.x) ? 1 : 0
+
   dst.y = (src0.y > src1.y) ? 1 : 0
+
   dst.z = (src0.z > src1.z) ? 1 : 0
+
   dst.w = (src0.w > src1.w) ? 1 : 0
 
 
@@ -560,8 +569,11 @@ SLE - Set On Less Equal Than
 .. math::
 
   dst.x = (src0.x <= src1.x) ? 1 : 0
+
   dst.y = (src0.y <= src1.y) ? 1 : 0
+
   dst.z = (src0.z <= src1.z) ? 1 : 0
+
   dst.w = (src0.w <= src1.w) ? 1 : 0
 
 
@@ -570,8 +582,11 @@ SNE - Set On Not Equal
 .. math::
 
   dst.x = (src0.x != src1.x) ? 1 : 0
+
   dst.y = (src0.y != src1.y) ? 1 : 0
+
   dst.z = (src0.z != src1.z) ? 1 : 0
+
   dst.w = (src0.w != src1.w) ? 1 : 0
 
 
@@ -580,8 +595,11 @@ STR - Set On True
 .. math::
 
   dst.x = 1
+
   dst.y = 1
+
   dst.z = 1
+
   dst.w = 1
 
 
@@ -629,8 +647,11 @@ X2D - 2D Coordinate Transformation
 .. math::
 
   dst.x = src0.x + src1.x \times src2.x + src1.y \times src2.y
+
   dst.y = src0.y + src1.x \times src2.z + src1.y \times src2.w
+
   dst.z = src0.x + src1.x \times src2.x + src1.y \times src2.y
+
   dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w
 
 Considered for removal.
@@ -979,13 +1000,13 @@ XOR - Bitwise Xor
 
 .. math::
 
-  dst.x = src0.x ^ src1.x
+  dst.x = src0.x \oplus src1.x
 
-  dst.y = src0.y ^ src1.y
+  dst.y = src0.y \oplus src1.y
 
-  dst.z = src0.z ^ src1.z
+  dst.z = src0.z \oplus src1.z
 
-  dst.w = src0.w ^ src1.w
+  dst.w = src0.w \oplus src1.w
 
 
 SAD - Sum Of Absolute Differences
@@ -1090,6 +1111,117 @@ BREAKC - Break Conditional
 
   TBD
 
+Double Opcodes
+^^^^^^^^^^^^^^^
+
+DADD - Add Double
+
+.. math::
+
+  dst.xy = src0.xy + src1.xy
+
+  dst.zw = src0.zw + src1.zw
+
+
+DDIV - Divide Double
+
+.. math::
+
+  dst.xy = src0.xy / src1.xy
+
+  dst.zw = src0.zw / src1.zw
+
+DSEQ - Set Double on Equal
+
+.. math::
+
+  dst.xy = src0.xy == src1.xy ? 1.0F : 0.0F
+
+  dst.zw = src0.zw == src1.zw ? 1.0F : 0.0F
+
+DSLT - Set Double on Less than
+
+.. math::
+
+  dst.xy = src0.xy < src1.xy ? 1.0F : 0.0F
+
+  dst.zw = src0.zw < src1.zw ? 1.0F : 0.0F
+
+DFRAC - Double Fraction
+
+.. math::
+
+  dst.xy = src.xy - \lfloor src.xy\rfloor
+
+  dst.zw = src.zw - \lfloor src.zw\rfloor
+
+
+DFRACEXP - Convert Double Number to Fractional and Integral Components
+
+.. math::
+
+  dst0.xy = frexp(src.xy, dst1.xy)
+
+  dst0.zw = frexp(src.zw, dst1.zw)
+
+DLDEXP - Multiple Double Number by Integral Power of 2
+
+.. math::
+
+  dst.xy = ldexp(src0.xy, src1.xy)
+
+  dst.zw = ldexp(src0.zw, src1.zw)
+
+DMIN - Minimum Double
+
+.. math::
+
+  dst.xy = min(src0.xy, src1.xy)
+
+  dst.zw = min(src0.zw, src1.zw)
+
+DMAX - Maximum Double
+
+.. math::
+
+  dst.xy = max(src0.xy, src1.xy)
+
+  dst.zw = max(src0.zw, src1.zw)
+
+DMUL - Multiply Double
+
+.. math::
+
+  dst.xy = src0.xy \times src1.xy
+
+  dst.zw = src0.zw \times src1.zw
+
+
+DMAD - Multiply And Add Doubles
+
+.. math::
+
+  dst.xy = src0.xy \times src1.xy + src2.xy
+
+  dst.zw = src0.zw \times src1.zw + src2.zw
+
+
+DRCP - Reciprocal Double
+
+.. math::
+
+   dst.xy = \frac{1}{src.xy}
+
+   dst.zw = \frac{1}{src.zw}
+
+DSQRT - Square root double
+
+.. math::
+
+   dst.xy = \sqrt{src.xy}
+
+   dst.zw = \sqrt{src.zw}
+
 
 Explanation of symbols used
 ------------------------------
@@ -1187,9 +1319,8 @@ are the Cartesian coordinates, and ``w`` is the homogenous coordinate and used
 for the perspective divide, if enabled.
 
 As a vertex shader output, position should be scaled to the viewport. When
-used in fragment shaders, position will ---
-
-XXX --- wait a minute. Should position be in [0,1] for x and y?
+used in fragment shaders, position will be in window coordinates. The convention
+used depends on the FS_COORD_ORIGIN and FS_COORD_PIXEL_CENTER properties.
 
 XXX additionally, is there a way to configure the perspective divide? it's
 accelerated on most chipsets AFAIK...
@@ -1268,3 +1399,45 @@ TGSI_SEMANTIC_EDGEFLAG
 """"""""""""""""""""""
 
 XXX no clue
+
+
+Properties
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+  Properties are general directives that apply to the whole TGSI program.
+
+FS_COORD_ORIGIN
+"""""""""""""""
+
+Specifies the fragment shader TGSI_SEMANTIC_POSITION coordinate origin.
+The default value is UPPER_LEFT.
+
+If UPPER_LEFT, the position will be (0,0) at the upper left corner and
+increase downward and rightward.
+If LOWER_LEFT, the position will be (0,0) at the lower left corner and
+increase upward and rightward.
+
+OpenGL defaults to LOWER_LEFT, and is configurable with the
+GL_ARB_fragment_coord_conventions extension.
+
+DirectX 9/10 use UPPER_LEFT.
+
+FS_COORD_PIXEL_CENTER
+"""""""""""""""""""""
+
+Specifies the fragment shader TGSI_SEMANTIC_POSITION pixel center convention.
+The default value is HALF_INTEGER.
+
+If HALF_INTEGER, the fractionary part of the position will be 0.5
+If INTEGER, the fractionary part of the position will be 0.0
+
+Note that this does not affect the set of fragments generated by
+rasterization, which is instead controlled by gl_rasterization_rules in the
+rasterizer.
+
+OpenGL defaults to HALF_INTEGER, and is configurable with the
+GL_ARB_fragment_coord_conventions extension.
+
+DirectX 9 uses INTEGER.
+DirectX 10 uses HALF_INTEGER.

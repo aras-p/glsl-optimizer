@@ -125,7 +125,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    memset(&blend, 0, sizeof(blend));
    ctx->blend_keep_color = pipe->create_blend_state(pipe, &blend);
 
-   blend.colormask = PIPE_MASK_RGBA;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */

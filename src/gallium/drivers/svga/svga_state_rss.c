@@ -31,9 +31,6 @@
 #include "svga_state.h"
 #include "svga_cmd.h"
 
-#include "svga_hw_reg.h"
-
-
 
 struct rs_queue {
    unsigned rs_count;

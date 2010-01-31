@@ -35,11 +35,9 @@
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
-#include "texcompress.h"
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "texenvprogram.h"
 #include "mtypes.h"
 
 
@@ -293,7 +291,8 @@ _mesa_ActiveTextureARB(GLenum texture)
                   _mesa_lookup_enum_by_nr(texture));
 
    if (texUnit >= ctx->Const.MaxTextureImageUnits) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture=%s)",
+                  _mesa_lookup_enum_by_nr(texture));
       return;
    }
 

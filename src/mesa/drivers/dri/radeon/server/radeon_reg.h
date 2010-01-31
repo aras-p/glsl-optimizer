@@ -1959,7 +1959,30 @@
 #define RADEON_SE_ZBIAS_FACTOR              0x1db0
 #define RADEON_SE_ZBIAS_CONSTANT            0x1db4
 
-
+#define RADEON_SE_VTX_FMT                   0x2080
+#       define RADEON_SE_VTX_FMT_XY         0x00000000
+#       define RADEON_SE_VTX_FMT_W0         0x00000001
+#       define RADEON_SE_VTX_FMT_FPCOLOR    0x00000002
+#       define RADEON_SE_VTX_FMT_FPALPHA    0x00000004
+#       define RADEON_SE_VTX_FMT_PKCOLOR    0x00000008
+#       define RADEON_SE_VTX_FMT_FPSPEC     0x00000010
+#       define RADEON_SE_VTX_FMT_FPFOG      0x00000020
+#       define RADEON_SE_VTX_FMT_PKSPEC     0x00000040
+#       define RADEON_SE_VTX_FMT_ST0        0x00000080
+#       define RADEON_SE_VTX_FMT_ST1        0x00000100
+#       define RADEON_SE_VTX_FMT_Q1         0x00000200
+#       define RADEON_SE_VTX_FMT_ST2        0x00000400
+#       define RADEON_SE_VTX_FMT_Q2         0x00000800
+#       define RADEON_SE_VTX_FMT_ST3        0x00001000
+#       define RADEON_SE_VTX_FMT_Q3         0x00002000
+#       define RADEON_SE_VTX_FMT_Q0         0x00004000
+#       define RADEON_SE_VTX_FMT_BLND_WEIGHT_CNT_MASK  0x00038000
+#       define RADEON_SE_VTX_FMT_N0         0x00040000
+#       define RADEON_SE_VTX_FMT_XY1        0x08000000
+#       define RADEON_SE_VTX_FMT_Z1         0x10000000
+#       define RADEON_SE_VTX_FMT_W1         0x20000000
+#       define RADEON_SE_VTX_FMT_N1         0x40000000
+#       define RADEON_SE_VTX_FMT_Z          0x80000000
 
 				/* Registers for CP and Microcode Engine */
 #define RADEON_CP_ME_RAM_ADDR               0x07d4

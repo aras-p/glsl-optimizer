@@ -32,8 +32,6 @@
 #include "svga_cmd.h"
 #include "svga_debug.h"
 
-#include "svga_hw_reg.h"
-
 
 /***********************************************************************
  * Hardware state update

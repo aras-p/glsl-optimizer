@@ -32,20 +32,20 @@
 #include "r300_emit.h"
 #include "r300_fs.h"
 #include "r300_screen.h"
-#include "r300_state_derived.h"
 #include "r300_state_inlines.h"
-#include "r300_texture.h"
 #include "r300_vs.h"
 
 void r300_emit_blend_state(struct r300_context* r300, void* state)
 {
     struct r300_blend_state* blend = (struct r300_blend_state*)state;
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     BEGIN_CS(8);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
-    if (r300->framebuffer_state.nr_cbufs) {
+    if (fb->nr_cbufs) {
         OUT_CS(blend->blend_control);
         OUT_CS(blend->alpha_blend_control);
         OUT_CS(blend->color_channel_mask);
@@ -112,6 +112,8 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 {
     struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
@@ -124,7 +126,7 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
 
-    if (r300->framebuffer_state.zsbuf) {
+    if (fb->zsbuf) {
         OUT_CS(dsa->z_buffer_control);
         OUT_CS(dsa->z_stencil_control);
     } else {
@@ -168,9 +170,8 @@ static const float * get_shader_constant(
                     vec[1] = 1.0 / tex->height0;
                     break;
 
-                /* Texture compare-fail value. */
-                /* XXX Since Gallium doesn't support GL_ARB_shadow_ambient,
-                 * this is always (0,0,0,0), right? */
+                /* Texture compare-fail value. Shouldn't ever show up, but if
+                 * it does, we'll be ready. */
                 case RC_STATE_SHADOW_AMBIENT:
                     vec[3] = 0;
                     break;
@@ -384,16 +385,13 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_fb_state(struct r300_context* r300,
-                        struct pipe_framebuffer_state* fb)
+void r300_emit_fb_state(struct r300_context* r300, void* state)
 {
+    struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_texture* tex;
     struct pipe_surface* surf;
     int i;
     CS_LOCALS(r300);
-
-    /* Shouldn't fail unless there is a bug in the state tracker. */
-    assert(fb->nr_cbufs <= 4);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
              (fb->zsbuf ? 10 : 0) + 6);
@@ -407,7 +405,14 @@ void r300_emit_fb_state(struct r300_context* r300,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 
     /* Set the number of colorbuffers. */
-    OUT_CS_REG(R300_RB3D_CCTL, R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs));
+    if (fb->nr_cbufs > 1) {
+        OUT_CS_REG(R300_RB3D_CCTL,
+            R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
+            R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_ENABLE |
+            R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
+    } else {
+        OUT_CS_REG(R300_RB3D_CCTL, 0x0);
+    }
 
     /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
@@ -584,19 +589,40 @@ void r300_emit_query_end(struct r300_context* r300)
 void r300_emit_rs_state(struct r300_context* r300, void* state)
 {
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
+    float scale, offset;
     CS_LOCALS(r300);
 
-    BEGIN_CS(22);
+    BEGIN_CS(20 + (rs->polygon_offset_enable ? 5 : 0));
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+
+    OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
+
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
     OUT_CS(rs->point_minmax);
     OUT_CS(rs->line_control);
-    OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 6);
-    OUT_CS(rs->depth_scale_front);
-    OUT_CS(rs->depth_offset_front);
-    OUT_CS(rs->depth_scale_back);
-    OUT_CS(rs->depth_offset_back);
+
+    if (rs->polygon_offset_enable) {
+        scale = rs->depth_scale * 12;
+        offset = rs->depth_offset;
+
+        switch (r300->zbuffer_bpp) {
+            case 16:
+                offset *= 4;
+                break;
+            case 24:
+                offset *= 2;
+                break;
+        }
+
+        OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
+        OUT_CS_32F(scale);
+        OUT_CS_32F(offset);
+        OUT_CS_32F(scale);
+        OUT_CS_32F(offset);
+    }
+
+    OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_ENABLE, 2);
     OUT_CS(rs->polygon_offset_enable);
     OUT_CS(rs->cull_mode);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
@@ -606,10 +632,10 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-void r300_emit_rs_block_state(struct r300_context* r300,
-                              struct r300_rs_block* rs)
+void r300_emit_rs_block_state(struct r300_context* r300, void* state)
 {
-    int i;
+    struct r300_rs_block* rs = (struct r300_rs_block*)state;
+    unsigned i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
@@ -652,17 +678,35 @@ void r300_emit_scissor_state(struct r300_context* r300, void* state)
     uint32_t top_left, bottom_right;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct pipe_scissor_state* scissor = (struct pipe_scissor_state*)state;
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     minx = miny = 0;
-    maxx = r300->framebuffer_state.width;
-    maxy = r300->framebuffer_state.height;
+    maxx = fb->width;
+    maxy = fb->height;
 
     if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
         minx = MAX2(minx, scissor->minx);
         miny = MAX2(miny, scissor->miny);
         maxx = MIN2(maxx, scissor->maxx);
         maxy = MIN2(maxy, scissor->maxy);
+    }
+
+    /* Special case for zero-area scissor.
+     *
+     * We can't allow the variables maxx and maxy to be zero because they are
+     * subtracted from later in the code, which would cause emitting ~0 and
+     * making the kernel checker angry.
+     *
+     * Let's consider we change maxx and maxy to 1, which is effectively
+     * a one-pixel area. We must then change minx and miny to a number which is
+     * greater than 1 to get the zero area back. */
+    if (!maxx || !maxy) {
+        minx = 2;
+        miny = 2;
+        maxx = 1;
+        maxy = 1;
     }
 
     if (r300screen->caps->is_r500) {
@@ -705,12 +749,18 @@ void r300_emit_texture(struct r300_context* r300,
         filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
     }
 
-    /* determine min/max levels */
-    /* the MAX_MIP level is the largest (finest) one */
-    max_level = MIN2(sampler->max_lod, tex->tex.last_level);
-    min_level = MIN2(sampler->min_lod, max_level);
-    format0 |= R300_TX_NUM_LEVELS(max_level);
-    filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+    if (tex->is_npot) {
+        /* NPOT textures don't support mip filter, unfortunately.
+         * This prevents incorrect rendering. */
+        filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
+    } else {
+        /* determine min/max levels */
+        /* the MAX_MIP level is the largest (finest) one */
+        max_level = MIN2(sampler->max_lod, tex->tex.last_level);
+        min_level = MIN2(sampler->min_lod, max_level);
+        format0 |= R300_TX_NUM_LEVELS(max_level);
+        filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+    }
 
     BEGIN_CS(16);
     OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
@@ -729,22 +779,6 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
-static boolean r300_validate_aos(struct r300_context *r300)
-{
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
-    int i;
-
-    /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->vertex_element_count; i++) {
-        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
-            util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
 void r300_emit_aos(struct r300_context* r300, unsigned offset)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
@@ -753,12 +787,6 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     unsigned size1, size2, aos_count = r300->vertex_element_count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
-
-    /* XXX Move this checking to a more approriate place. */
-    if (!r300_validate_aos(r300)) {
-        /* XXX We should fallback using Draw. */
-        assert(0);
-    }
 
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
@@ -791,38 +819,39 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     END_CS;
 }
 
-void r300_emit_vertex_format_state(struct r300_context* r300)
+void r300_emit_vertex_format_state(struct r300_context* r300, void* state)
 {
-    int i;
+    struct r300_vertex_info* vertex_info = (struct r300_vertex_info*)state;
+    unsigned i;
     CS_LOCALS(r300);
 
     DBG(r300, DBG_DRAW, "r300: VAP/PSC emit:\n");
 
     BEGIN_CS(26);
-    OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info->vinfo.size);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_info->vinfo.size);
 
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
-    OUT_CS(r300->vertex_info->vinfo.hwfmt[0]);
-    OUT_CS(r300->vertex_info->vinfo.hwfmt[1]);
+    OUT_CS(vertex_info->vinfo.hwfmt[0]);
+    OUT_CS(vertex_info->vinfo.hwfmt[1]);
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(r300->vertex_info->vinfo.hwfmt[2]);
-    OUT_CS(r300->vertex_info->vinfo.hwfmt[3]);
+    OUT_CS(vertex_info->vinfo.hwfmt[2]);
+    OUT_CS(vertex_info->vinfo.hwfmt[3]);
     for (i = 0; i < 4; i++) {
        DBG(r300, DBG_DRAW, "    : hwfmt%d: 0x%08x\n", i,
-               r300->vertex_info->vinfo.hwfmt[i]);
+               vertex_info->vinfo.hwfmt[i]);
     }
 
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
     for (i = 0; i < 8; i++) {
-        OUT_CS(r300->vertex_info->vap_prog_stream_cntl[i]);
+        OUT_CS(vertex_info->vap_prog_stream_cntl[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl%d: 0x%08x\n", i,
-               r300->vertex_info->vap_prog_stream_cntl[i]);
+               vertex_info->vap_prog_stream_cntl[i]);
     }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
     for (i = 0; i < 8; i++) {
-        OUT_CS(r300->vertex_info->vap_prog_stream_cntl_ext[i]);
+        OUT_CS(vertex_info->vap_prog_stream_cntl_ext[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
-               r300->vertex_info->vap_prog_stream_cntl_ext[i]);
+               vertex_info->vap_prog_stream_cntl_ext[i]);
     }
     END_CS;
 }
@@ -987,39 +1016,21 @@ static void r300_flush_pvs(struct r300_context* r300)
     END_CS;
 }
 
-/* Emit all dirty state. */
-void r300_emit_dirty_state(struct r300_context* r300)
+void r300_emit_buffer_validate(struct r300_context *r300)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct pipe_framebuffer_state* fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_texture* tex;
-    struct r300_atom* atom;
-    unsigned i, dwords = 1024;
-    int dirty_tex = 0;
+    unsigned i;
     boolean invalid = FALSE;
-
-    /* Check the required number of dwords against the space remaining in the
-     * current CS object. If we need more, then flush. */
-
-    foreach(atom, &r300->atom_list) {
-        if (atom->dirty || atom->always_dirty) {
-            dwords += atom->size;
-        }
-    }
-
-    /* Make sure we have at least 2*1024 spare dwords. */
-    /* XXX It would be nice to know the number of dwords we really need to
-     * XXX emit. */
-    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
-        r300->context.flush(&r300->context, 0, NULL);
-    }
 
     /* Clean out BOs. */
     r300->winsys->reset_bos(r300->winsys);
 
 validate:
     /* Color buffers... */
-    for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
-        tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
+    for (i = 0; i < fb->nr_cbufs; i++) {
+        tex = (struct r300_texture*)fb->cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1028,8 +1039,8 @@ validate:
         }
     }
     /* ...depth buffer... */
-    if (r300->framebuffer_state.zsbuf) {
-        tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
+    if (fb->zsbuf) {
+        tex = (struct r300_texture*)fb->zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1076,6 +1087,31 @@ validate:
         invalid = TRUE;
         goto validate;
     }
+}
+
+/* Emit all dirty state. */
+void r300_emit_dirty_state(struct r300_context* r300)
+{
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_atom* atom;
+    unsigned i, dwords = 1024;
+    int dirty_tex = 0;
+
+    /* Check the required number of dwords against the space remaining in the
+     * current CS object. If we need more, then flush. */
+
+    foreach(atom, &r300->atom_list) {
+        if (atom->dirty || atom->always_dirty) {
+            dwords += atom->size;
+        }
+    }
+
+    /* Make sure we have at least 2*1024 spare dwords. */
+    /* XXX It would be nice to know the number of dwords we really need to
+     * XXX emit. */
+    while (!r300->winsys->check_cs(r300->winsys, dwords)) {
+        r300->context.flush(&r300->context, 0, NULL);
+    }
 
     if (r300->dirty_state & R300_NEW_QUERY) {
         r300_emit_query_start(r300);
@@ -1110,16 +1146,6 @@ validate:
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
 
-    if (r300->dirty_state & R300_NEW_FRAMEBUFFERS) {
-        r300_emit_fb_state(r300, &r300->framebuffer_state);
-        r300->dirty_state &= ~R300_NEW_FRAMEBUFFERS;
-    }
-
-    if (r300->dirty_state & R300_NEW_RS_BLOCK) {
-        r300_emit_rs_block_state(r300, r300->rs_block);
-        r300->dirty_state &= ~R300_NEW_RS_BLOCK;
-    }
-
     /* Samplers and textures are tracked separately but emitted together. */
     if (r300->dirty_state &
             (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
@@ -1143,11 +1169,6 @@ validate:
 
     if (dirty_tex) {
         r300_flush_textures(r300);
-    }
-
-    if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
-        r300_emit_vertex_format_state(r300);
-        r300->dirty_state &= ~R300_NEW_VERTEX_FORMAT;
     }
 
     if (r300->dirty_state & (R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS)) {

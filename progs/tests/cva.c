@@ -17,7 +17,6 @@
 #define GL_GLEXT_LEGACY
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
 
 GLfloat verts[][4] = {
    { -0.5, -0.5, -2.0, 0.0 },

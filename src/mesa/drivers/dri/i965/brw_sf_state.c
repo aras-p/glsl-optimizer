@@ -35,7 +35,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "main/macros.h"
-#include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
@@ -70,9 +69,9 @@ static void upload_sf_vp(struct brw_context *brw)
     * for DrawBuffer->_[XY]{min,max}
     */
 
-   /* The scissor only needs to handle the intersection of drawable and
-    * scissor rect.  Clipping to the boundaries of static shared buffers
-    * for front/back/depth is covered by looping over cliprects in brw_draw.c.
+   /* The scissor only needs to handle the intersection of drawable
+    * and scissor rect, since there are no longer cliprects for shared
+    * buffers with DRI2.
     *
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
@@ -309,8 +308,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 2,
-			 &sf, sizeof(sf),
-			 NULL, NULL);
+			 &sf, sizeof(sf));
 
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.

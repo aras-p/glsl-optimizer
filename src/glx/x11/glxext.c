@@ -120,7 +120,6 @@ static /* const */ XExtensionHooks __glXExtensionHooks = {
   __glXErrorString,       /* error_string */
 };
 
-static
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
                            __glXExtensionName, &__glXExtensionHooks,
                            __GLX_NUMBER_EVENTS, NULL)
@@ -194,11 +193,11 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
       break;
    case GLX_SAVED:
       break;
-   case GLX_EXCHANGE_COMPLETE:
+   case GLX_EXCHANGE_COMPLETE_INTEL:
       break;
-   case GLX_BLIT_COMPLETE:
+   case GLX_BLIT_COMPLETE_INTEL:
       break;
-   case GLX_FLIP_COMPLETE:
+   case GLX_FLIP_COMPLETE_INTEL:
       break;
    default:
       /* client doesn't support server event */

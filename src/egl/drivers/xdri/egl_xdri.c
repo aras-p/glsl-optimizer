@@ -52,7 +52,7 @@
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egldriver.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 #include "eglsurface.h"
 
@@ -62,6 +62,7 @@
 struct xdri_egl_driver
 {
    _EGLDriver Base;   /**< base class */
+   void (*FlushCurrentContext)(void);
 };
 
 
@@ -71,6 +72,7 @@ struct xdri_egl_display
    Display *dpy;
    __GLXdisplayPrivate *dpyPriv;
    __GLXDRIdisplay *driDisplay;
+   int driVersion;
 
    __GLXscreenConfigs *psc;
    EGLint scr;
@@ -167,14 +169,10 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
 static EGLBoolean
 convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
 {
-   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
-                                   EGL_OPENGL_ES2_BIT |
-                                   EGL_OPENVG_BIT |
-                                   EGL_OPENGL_BIT);
    EGLint val;
 
    _eglInitConfig(conf, id);
-   if (!_eglConfigFromContextModesRec(conf, m, all_apis, all_apis))
+   if (!_eglConfigFromContextModesRec(conf, m, EGL_OPENGL_BIT, EGL_OPENGL_BIT))
       return EGL_FALSE;
 
    if (m->doubleBufferMode) {
@@ -215,6 +213,7 @@ convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
 static EGLint
 create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
 {
+   struct xdri_egl_display *xdri_dpy = lookup_display(disp);
    int id = first_id;
 
    for (; m; m = m->next) {
@@ -224,8 +223,15 @@ create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
 
       if (!convert_config(&conf, id, m))
          continue;
-
-      rb = (m->doubleBufferMode) ? EGL_BACK_BUFFER : EGL_SINGLE_BUFFER;
+      if (m->doubleBufferMode) {
+         rb = EGL_BACK_BUFFER;
+      }
+      else {
+         /* ignore single-buffered mode for DRISW */
+         if (xdri_dpy->driVersion == 0)
+            continue;
+         rb = EGL_SINGLE_BUFFER;
+      }
 
       xdri_conf = CALLOC_STRUCT(xdri_egl_config);
       if (xdri_conf) {
@@ -275,7 +281,7 @@ xdri_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_NOT_INITIALIZED, "eglInitialize");
    }
 
-   driDisplay = __driCreateDisplay(dpyPriv, NULL);
+   driDisplay = __driCreateDisplay(dpyPriv, &xdri_dpy->driVersion);
    if (!driDisplay) {
       _eglLog(_EGL_WARNING, "failed to create DRI display");
       free(xdri_dpy);
@@ -297,15 +303,12 @@ xdri_eglInitialize(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_NOT_INITIALIZED, "eglInitialize");
    }
 
+   dpy->DriverData = xdri_dpy;
+   dpy->ClientAPIsMask = EGL_OPENGL_BIT;
+
    /* add visuals and fbconfigs */
    first_id = create_configs(dpy, psc->visuals, first_id);
    create_configs(dpy, psc->configs, first_id);
-
-   dpy->DriverData = xdri_dpy;
-   dpy->ClientAPIsMask = (EGL_OPENGL_BIT |
-                          EGL_OPENGL_ES_BIT |
-                          EGL_OPENGL_ES2_BIT |
-                          EGL_OPENVG_BIT);
 
    /* we're supporting EGL 1.4 */
    *minor = 1;
@@ -342,7 +345,6 @@ xdri_eglTerminate(_EGLDriver *drv, _EGLDisplay *dpy)
    }
 
    xdri_dpy->driDisplay->destroyDisplay(xdri_dpy->driDisplay);
-   __glXRelease(xdri_dpy->dpyPriv);
 
    free(xdri_dpy);
    dpy->DriverData = NULL;
@@ -417,19 +419,47 @@ xdri_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
-static EGLBoolean
-xdri_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+/**
+ * Destroy a context.
+ */
+static void
+destroy_context(_EGLDisplay *dpy, _EGLContext *ctx)
 {
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_context *xdri_ctx = lookup_context(ctx);
 
-   if (!_eglIsContextBound(ctx)) {
-      xdri_ctx->driContext->destroyContext(xdri_ctx->driContext,
-                                           xdri_dpy->psc, xdri_dpy->dpy);
-      free(xdri_ctx->dummy_gc);
-      free(xdri_ctx);
-   }
+   /* FIXME a context might live longer than its display */
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a context with an unitialized display");
 
+   xdri_ctx->driContext->destroyContext(xdri_ctx->driContext,
+         xdri_dpy->psc, xdri_dpy->dpy);
+   free(xdri_ctx->dummy_gc);
+   free(xdri_ctx);
+}
+
+
+/**
+ * Destroy a surface.
+ */
+static void
+destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
+{
+   struct xdri_egl_surface *xdri_surf = lookup_surface(surf);
+
+   if (!dpy->Initialized)
+      _eglLog(_EGL_FATAL, "destroy a surface with an unitialized display");
+
+   xdri_surf->driDrawable->destroyDrawable(xdri_surf->driDrawable);
+   free(xdri_surf);
+}
+
+
+static EGLBoolean
+xdri_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+{
+   if (!_eglIsContextBound(ctx))
+      destroy_context(dpy, ctx);
    return EGL_TRUE;
 }
 
@@ -441,12 +471,18 @@ static EGLBoolean
 xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
                     _EGLSurface *r, _EGLContext *context)
 {
+   struct xdri_egl_driver *xdri_driver = xdri_egl_driver(drv);
    struct xdri_egl_context *xdri_ctx = lookup_context(context);
    struct xdri_egl_surface *draw = lookup_surface(d);
    struct xdri_egl_surface *read = lookup_surface(r);
 
-   if (!_eglMakeCurrent(drv, dpy, d, r, context))
+   /* bind the new context and return the "orphaned" one */
+   if (!_eglBindContext(&context, &d, &r))
       return EGL_FALSE;
+
+   /* flush before context switch */
+   if (context && xdri_driver->FlushCurrentContext)
+      xdri_driver->FlushCurrentContext();
 
    /* the symbol is defined in libGL.so */
    _glapi_check_multithread();
@@ -458,13 +494,17 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
          return EGL_FALSE;
       }
    }
-   else {
-      _EGLContext *old = _eglGetCurrentContext();
-      if (old) {
-         xdri_ctx = lookup_context(old);
-         xdri_ctx->driContext->unbindContext(xdri_ctx->driContext);
-      }
+   else if (context) {
+      xdri_ctx = lookup_context(context);
+      xdri_ctx->driContext->unbindContext(xdri_ctx->driContext);
    }
+
+   if (context && !_eglIsContextLinked(context))
+      destroy_context(dpy, context);
+   if (d && !_eglIsSurfaceLinked(d))
+      destroy_surface(dpy, d);
+   if (r && r != d && !_eglIsSurfaceLinked(r))
+      destroy_surface(dpy, r);
 
    return EGL_TRUE;
 }
@@ -475,7 +515,8 @@ xdri_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *d,
  */
 static _EGLSurface *
 xdri_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
-                            NativeWindowType window, const EGLint *attrib_list)
+                            EGLNativeWindowType window,
+                            const EGLint *attrib_list)
 {
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_config *xdri_config = lookup_config(conf);
@@ -529,13 +570,8 @@ xdri_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf
 static EGLBoolean
 xdri_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface)
 {
-   struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
-
-   if (!_eglIsSurfaceBound(&xdri_surf->Base)) {
-      xdri_surf->driDrawable->destroyDrawable(xdri_surf->driDrawable);
-      free(xdri_surf);
-   }
-
+   if (!_eglIsSurfaceBound(surface))
+      destroy_surface(dpy, surface);
    return EGL_TRUE;
 }
 
@@ -559,9 +595,14 @@ xdri_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 static EGLBoolean
 xdri_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw)
 {
+   struct xdri_egl_driver *xdri_driver = xdri_egl_driver(drv);
    struct xdri_egl_display *xdri_dpy = lookup_display(dpy);
    struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
 
+   /* swapBuffers does not flush commands */
+   if (draw->CurrentContext && xdri_driver->FlushCurrentContext)
+      xdri_driver->FlushCurrentContext();
+ 
    xdri_dpy->psc->driScreen->swapBuffers(xdri_surf->driDrawable, 0, 0, 0);
 
    return EGL_TRUE;
@@ -605,6 +646,10 @@ _eglMain(const char *args)
 
    xdri_drv->Base.Name = "X/DRI";
    xdri_drv->Base.Unload = xdri_Unload;
+
+   /* we need a way to flush commands */
+   xdri_drv->FlushCurrentContext =
+      (void (*)(void)) xdri_eglGetProcAddress(&xdri_drv->Base, "glFlush");
 
    return &xdri_drv->Base;
 }

@@ -44,7 +44,6 @@
 #include "nurbsconsts.h"
 #include "maplist.h"
 #include "mapdesc.h"
-#include "backend.h"
  
 Maplist::Maplist( Backend& b )
     : mapdescPool( sizeof( Mapdesc ), 10, "mapdesc pool" ),

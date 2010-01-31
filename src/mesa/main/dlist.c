@@ -35,46 +35,25 @@
 #include "api_loopback.h"
 #include "config.h"
 #include "mfeatures.h"
-#include "attrib.h"
-#include "blend.h"
-#include "buffers.h"
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
 #endif
 #include "arrayobj.h"
-#include "clip.h"
-#include "colortab.h"
 #include "context.h"
-#include "convolve.h"
-#include "depth.h"
 #include "dlist.h"
-#include "enable.h"
 #include "enums.h"
 #include "eval.h"
-#include "extensions.h"
-#include "feedback.h"
 #include "framebuffer.h"
-#include "get.h"
 #include "glapi/glapi.h"
 #include "hash.h"
-#include "histogram.h"
 #include "image.h"
 #include "light.h"
-#include "lines.h"
 #include "dlist.h"
 #include "macros.h"
-#include "matrix.h"
-#include "pixel.h"
-#include "points.h"
-#include "polygon.h"
 #include "queryobj.h"
-#include "state.h"
-#include "texobj.h"
 #include "teximage.h"
-#include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#include "vtxfmt.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "shader/arbprogram.h"
 #include "shader/program.h"
@@ -3750,7 +3729,7 @@ save_TexEnvi(GLenum target, GLenum pname, GLint param)
 {
    GLfloat p[4];
    p[0] = (GLfloat) param;
-   p[1] = p[2] = p[3] = 0.0;
+   p[1] = p[2] = p[3] = 0.0F;
    save_TexEnvfv(target, pname, p);
 }
 
@@ -3884,7 +3863,7 @@ save_TexParameteri(GLenum target, GLenum pname, GLint param)
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) param;
-   fparam[1] = fparam[2] = fparam[3] = 0.0;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
    save_TexParameterfv(target, pname, fparam);
 }
 
@@ -3894,7 +3873,7 @@ save_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) params[0];
-   fparam[1] = fparam[2] = fparam[3] = 0.0;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
    save_TexParameterfv(target, pname, fparam);
 }
 

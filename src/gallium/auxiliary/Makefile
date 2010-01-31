@@ -48,12 +48,10 @@ C_SOURCES = \
 	draw/draw_vs_sse.c \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
-	pipebuffer/pb_buffer_fenced.c \
 	pipebuffer/pb_buffer_malloc.c \
 	pipebuffer/pb_bufmgr_alt.c \
 	pipebuffer/pb_bufmgr_cache.c \
 	pipebuffer/pb_bufmgr_debug.c \
-	pipebuffer/pb_bufmgr_fenced.c \
 	pipebuffer/pb_bufmgr_mm.c \
 	pipebuffer/pb_bufmgr_ondemand.c \
 	pipebuffer/pb_bufmgr_pool.c \
@@ -92,6 +90,7 @@ C_SOURCES = \
 	util/u_debug_dump.c \
 	util/u_debug_symbol.c \
 	util/u_debug_stack.c \
+	util/u_bitmask.c \
 	util/u_blit.c \
 	util/u_blitter.c \
 	util/u_cache.c \

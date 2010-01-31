@@ -95,8 +95,6 @@ stw_pf_depth_stencil[] = {
    { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
    { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
-   /* pure stencil */
-   { PIPE_FORMAT_S8_UNORM,    { 0, 8} },
    /* combined depth-stencil */
    { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
    { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
@@ -220,7 +218,8 @@ stw_pixelformat_init( void )
          const struct stw_pf_color_info *color = &stw_pf_color[j];
          
          if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
-                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+                                         PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                         PIPE_TEXTURE_USAGE_DISPLAY_TARGET, 0))
             continue;
          
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {

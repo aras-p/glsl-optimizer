@@ -29,9 +29,7 @@
 #define NV50_CB_PVP		1
 #define NV50_CB_PFP		2
 #define NV50_CB_PGP		3
-#define NV50_CB_TIC		4
-#define NV50_CB_TSC		5
-#define NV50_CB_PUPLOAD         6
+#define NV50_CB_AUX		4
 
 #define NV50_NEW_BLEND		(1 << 0)
 #define NV50_NEW_ZSA		(1 << 1)
@@ -137,6 +135,7 @@ struct nv50_state {
 	struct nouveau_stateobj *vtxfmt;
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
+	struct nouveau_stateobj *instbuf;
 	unsigned vtxelt_nr;
 };
 
@@ -198,11 +197,22 @@ extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 /* nv50_vbo.c */
 extern void nv50_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
+extern void nv50_draw_arrays_instanced(struct pipe_context *, unsigned mode,
+					unsigned start, unsigned count,
+					unsigned startInstance,
+					unsigned instanceCount);
 extern void nv50_draw_elements(struct pipe_context *pipe,
 				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);
+extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
+					 struct pipe_buffer *indexBuffer,
+					 unsigned indexSize,
+					 unsigned mode, unsigned start,
+					 unsigned count,
+					 unsigned startInstance,
+					 unsigned instanceCount);
 extern void nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_clear.c */

@@ -54,7 +54,10 @@ objects. They all follow simple, one-method binding calls, e.g.
 * ``set_blend_color``
 * ``set_clip_state``
 * ``set_polygon_stipple``
-* ``set_scissor_state``
+* ``set_scissor_state`` sets the bounds for the scissor test, which culls
+  pixels before blending to render targets. If the :ref:`Rasterizer` does
+  not have the scissor test enabled, then the scissor bounds never need to
+  be set since they will not be used.
 * ``set_viewport_state``
 * ``set_vertex_elements``
 
@@ -145,9 +148,51 @@ draws.  Queries may be nested, though no state tracker currently
 exercises this.  
 
 Queries can be created with ``create_query`` and deleted with
-``destroy_query``. To enable a query, use ``begin_query``, and when finished,
-use ``end_query`` to stop the query. Finally, ``get_query_result`` is used
-to retrieve the results.
+``destroy_query``. To start a query, use ``begin_query``, and when finished,
+use ``end_query`` to end the query.
+
+``get_query_result`` is used to retrieve the results of a query.  If
+the ``wait`` parameter is TRUE, then the ``get_query_result`` call
+will block until the results of the query are ready (and TRUE will be
+returned).  Otherwise, if the ``wait`` parameter is FALSE, the call
+will not block and the return value will be TRUE if the query has
+completed or FALSE otherwise.
+
+A common type of query is the occlusion query which counts the number of
+fragments/pixels which are written to the framebuffer (and not culled by
+Z/stencil/alpha testing or shader KILL instructions).
+
+
+Conditional Rendering
+^^^^^^^^^^^^^^^^^^^^^
+
+A drawing command can be skipped depending on the outcome of a query
+(typically an occlusion query).  The ``render_condition`` function specifies
+the query which should be checked prior to rendering anything.
+
+If ``render_condition`` is called with ``query`` = NULL, conditional
+rendering is disabled and drawing takes place normally.
+
+If ``render_condition`` is called with a non-null ``query`` subsequent
+drawing commands will be predicated on the outcome of the query.  If
+the query result is zero subsequent drawing commands will be skipped.
+
+If ``mode`` is PIPE_RENDER_COND_WAIT the driver will wait for the
+query to complete before deciding whether to render.
+
+If ``mode`` is PIPE_RENDER_COND_NO_WAIT and the query has not yet
+completed, the drawing command will be executed normally.  If the query
+has completed, drawing will be predicated on the outcome of the query.
+
+If ``mode`` is PIPE_RENDER_COND_BY_REGION_WAIT or
+PIPE_RENDER_COND_BY_REGION_NO_WAIT rendering will be predicated as above
+for the non-REGION modes but in the case that an occulusion query returns
+a non-zero result, regions which were occluded may be ommitted by subsequent
+drawing commands.  This can result in better performance with some GPUs.
+Normally, if the occlusion query returned a non-zero result subsequent
+drawing happens normally so fragments may be generated, shaded and
+processed even where they're known to be obscured.
+
 
 Flushing
 ^^^^^^^^

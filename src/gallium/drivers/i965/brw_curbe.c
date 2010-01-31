@@ -36,9 +36,7 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_state.h"
-#include "brw_util.h"
 #include "brw_debug.h"
-#include "brw_screen.h"
 
 
 /**

@@ -43,7 +43,6 @@
 
 #include "st_context.h"
 #include "st_format.h"
-#include "st_program.h"
 #include "st_texture.h"
 #include "st_inlines.h"
 

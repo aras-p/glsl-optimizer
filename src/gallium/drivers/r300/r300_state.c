@@ -30,7 +30,6 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "pipe/p_config.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 #include "r300_context.h"
 #include "r300_reg.h"
@@ -162,17 +161,18 @@ static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA
 static void* r300_create_blend_state(struct pipe_context* pipe,
                                      const struct pipe_blend_state* state)
 {
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
 
-    if (state->blend_enable)
+    if (state->rt[0].blend_enable)
     {
-        unsigned eqRGB = state->rgb_func;
-        unsigned srcRGB = state->rgb_src_factor;
-        unsigned dstRGB = state->rgb_dst_factor;
+        unsigned eqRGB = state->rt[0].rgb_func;
+        unsigned srcRGB = state->rt[0].rgb_src_factor;
+        unsigned dstRGB = state->rt[0].rgb_dst_factor;
 
-        unsigned eqA = state->alpha_func;
-        unsigned srcA = state->alpha_src_factor;
-        unsigned dstA = state->alpha_dst_factor;
+        unsigned eqA = state->rt[0].alpha_func;
+        unsigned srcA = state->rt[0].alpha_src_factor;
+        unsigned dstA = state->rt[0].alpha_dst_factor;
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
@@ -289,18 +289,18 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
     }
 
-    /* Color Channel Mask */
-    if (state->colormask & PIPE_MASK_R) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_RED_MASK0;
-    }
-    if (state->colormask & PIPE_MASK_G) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0;
-    }
-    if (state->colormask & PIPE_MASK_B) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0;
-    }
-    if (state->colormask & PIPE_MASK_A) {
-        blend->color_channel_mask |= RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0;
+    /* Color channel masks for all MRTs. */
+    blend->color_channel_mask = state->rt[0].colormask;
+    if (r300screen->caps->is_r500 && state->independent_blend_enable) {
+        if (state->rt[1].blend_enable) {
+            blend->color_channel_mask |= (state->rt[1].colormask << 4);
+        }
+        if (state->rt[2].blend_enable) {
+            blend->color_channel_mask |= (state->rt[2].colormask << 8);
+        }
+        if (state->rt[3].blend_enable) {
+            blend->color_channel_mask |= (state->rt[3].colormask << 12);
+        }
     }
 
     if (state->dither) {
@@ -486,19 +486,47 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    uint32_t zbuffer_bpp = 0;
+
+    r300->fb_state.size = (10 * state->nr_cbufs) +
+        (2 * (4 - state->nr_cbufs)) +
+        (state->zsbuf ? 10 : 0) + 6;
+
+    if (state->nr_cbufs > 4) {
+        debug_printf("r300: Implementation error: Too many MRTs in %s, "
+            "refusing to bind framebuffer state!\n", __FUNCTION__);
+        return;
+    }
 
     if (r300->draw) {
         draw_flush(r300->draw);
     }
 
-    r300->framebuffer_state = *state;
+    r300->fb_state.state = state;
 
     /* Don't rely on the order of states being set for the first time. */
-    r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
-
+    /* XXX wait what */
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
+    r300->fb_state.dirty = TRUE;
     r300->scissor_state.dirty = TRUE;
+
+    /* Polygon offset depends on the zbuffer bit depth. */
+    if (state->zsbuf && r300->polygon_offset_enabled) {
+        switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
+            case 2:
+                zbuffer_bpp = 16;
+                break;
+            case 4:
+                zbuffer_bpp = 24;
+                break;
+        }
+
+        if (r300->zbuffer_bpp != zbuffer_bpp) {
+            r300->zbuffer_bpp = zbuffer_bpp;
+            r300->rs_state.dirty = TRUE;
+        }
+    }
 }
 
 /* Create fragment shader state. */
@@ -534,7 +562,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300_pick_fragment_shader(r300);
 
     if (r300->vs && r300_vertex_shader_setup_wpos(r300)) {
-        r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
+        r300->vertex_format_state.dirty = TRUE;
     }
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
@@ -602,9 +630,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
-    /* XXX I think there is something wrong with the polygon mode,
-     * XXX re-test when r300g is in a better shape */
-
     /* Enable polygon mode */
     if (state->fill_cw != PIPE_POLYGON_MODE_FILL ||
         state->fill_ccw != PIPE_POLYGON_MODE_FILL) {
@@ -657,10 +682,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     }
 
     if (rs->polygon_offset_enable) {
-        rs->depth_offset_front = rs->depth_offset_back =
-            fui(state->offset_units);
-        rs->depth_scale_front = rs->depth_scale_back =
-            fui(state->offset_scale);
+        rs->depth_offset = state->offset_units;
+        rs->depth_scale = state->offset_scale;
     }
 
     if (state->line_stipple_enable) {
@@ -694,8 +717,10 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (rs) {
         r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
+        r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
     } else {
         r300->tcl_bypass = FALSE;
+        r300->polygon_offset_enabled = FALSE;
     }
 
     r300->rs_state.state = rs;
@@ -705,7 +730,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     r300->viewport_state.dirty = TRUE;
 
     /* XXX Clean these up when we move to atom emits */
-    r300->dirty_state |= R300_NEW_RS_BLOCK;
     if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
@@ -906,7 +930,23 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 
-    r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
+    r300->vertex_format_state.dirty = TRUE;
+}
+
+static boolean r300_validate_aos(struct r300_context *r300)
+{
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    int i;
+
+    /* Check if formats and strides are aligned to the size of DWORD. */
+    for (i = 0; i < r300->vertex_element_count; i++) {
+        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
+            util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
+            return FALSE;
+        }
+    }
+    return TRUE;
 }
 
 static void r300_set_vertex_elements(struct pipe_context* pipe,
@@ -923,6 +963,12 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, count, elements);
+    }
+
+    if (!r300_validate_aos(r300)) {
+        /* XXX We should fallback using draw. */
+        assert(0);
+        abort();
     }
 }
 
@@ -964,9 +1010,10 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
             r300_vertex_shader_setup_wpos(r300);
         }
 
+        r300->vertex_format_state.dirty = TRUE;
+
         r300->dirty_state |=
-            R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS |
-            R300_NEW_VERTEX_FORMAT;
+            R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS;
     } else {
         draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,

@@ -197,21 +197,6 @@ void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeon_bo_unmap(t->mt->bo);
 }
 
-GLuint radeon_face_for_target(GLenum target)
-{
-	switch (target) {
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-		return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-	default:
-		return 0;
-	}
-}
-
 /**
  * Wraps Mesa's implementation to ensure that the base level image is mapped.
  *
@@ -248,8 +233,15 @@ static void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
 
 void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
 {
-	GLuint face = radeon_face_for_target(target);
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	struct radeon_bo *bo;
+	GLuint face = _mesa_tex_target_to_face(target);
 	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
+	bo = !baseimage->mt ? baseimage->bo : baseimage->mt->bo;
+
+	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
+		radeon_firevertices(rmesa);
+	}
 
 	radeon_teximage_map(baseimage, GL_FALSE);
 	radeon_generate_mipmap(ctx, target, texObj);
@@ -710,7 +702,7 @@ static void radeon_teximage(
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 	GLint postConvWidth = width;
 	GLint postConvHeight = height;
-	GLuint face = radeon_face_for_target(target);
+	GLuint face = _mesa_tex_target_to_face(target);
 
 	{
 		struct radeon_bo *bo;
@@ -863,7 +855,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int leve
 
 	if (RADEON_DEBUG & RADEON_TEXTURE) {
 		fprintf(stderr, "radeon_texsubimage%dd: texObj %p, texImage %p, face %d, level %d\n",
-				dims, texObj, texImage, radeon_face_for_target(target), level);
+				dims, texObj, texImage, _mesa_tex_target_to_face(target), level);
 	}
 
 	t->validated = GL_FALSE;

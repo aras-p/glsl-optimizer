@@ -92,7 +92,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.colormask = PIPE_MASK_RGBA;
+   ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
    memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
@@ -226,8 +226,8 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
-                     offset, sizeof(ctx->vertices), ctx->vertices);
+   pipe_buffer_write_nooverlap(ctx->pipe->screen, ctx->vbuf,
+                               offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
 }
@@ -262,6 +262,10 @@ regions_overlap(int srcX0, int srcY0,
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
+ * \param filter  one of PIPE_TEX_MIPFILTER_NEAREST/LINEAR
+ * \param writemask  controls which channels in the dest surface are sourced
+ *                   from the src surface.  Disabled channels are sourced
+ *                   from (0,0,0,1).
  * XXX what about clipping???
  * XXX need some control over blitting Z and/or stencil.
  */
