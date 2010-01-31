@@ -36,7 +36,6 @@
 #include "swrast/swrast.h"
 #include "tnl/tnl.h"
 #include "brw_context.h"
-#include "intel_chipset.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
 
