@@ -44,9 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 #include "radeon_mipmap_tree.h"
-#include "radeon_state.h"
 #include "radeon_ioctl.h"
-#include "radeon_swtcl.h"
 #include "radeon_tex.h"
 
 #include "xmlpool.h"

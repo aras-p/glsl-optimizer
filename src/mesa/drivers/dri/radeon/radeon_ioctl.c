@@ -38,17 +38,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <errno.h>
 
 #include "main/attrib.h"
-#include "main/enable.h"
-#include "main/blend.h"
 #include "main/bufferobj.h"
-#include "main/buffers.h"
-#include "main/depth.h"
-#include "main/shaders.h"
-#include "main/texstate.h"
-#include "main/varray.h"
 #include "swrast/swrast.h"
-#include "main/stencil.h"
-#include "main/matrix.h"
 
 #include "main/glheader.h"
 #include "main/imports.h"
@@ -57,15 +48,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 #include "radeon_common.h"
-#include "radeon_state.h"
 #include "radeon_ioctl.h"
-#include "radeon_tcl.h"
-#include "radeon_sanity.h"
 
 #define STANDALONE_MMIO
-#include "radeon_macros.h"  /* for INREG() */
 
-#include "drirenderbuffer.h"
 #include "vblank.h"
 
 #define RADEON_TIMEOUT             512

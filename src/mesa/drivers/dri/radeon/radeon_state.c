@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/api_arrayelt.h"
 #include "main/enums.h"
 #include "main/light.h"
-#include "main/state.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/simple_list.h"
@@ -54,7 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
-#include "drirenderbuffer.h"
 
 static void radeonUpdateSpecular( GLcontext *ctx );
 

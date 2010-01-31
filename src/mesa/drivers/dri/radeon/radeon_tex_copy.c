@@ -34,7 +34,6 @@
 #include "drivers/common/meta.h"
 
 #include "radeon_mipmap_tree.h"
-#include <main/debug.h>
 
 static GLboolean
 do_copy_texsubimage(GLcontext *ctx,

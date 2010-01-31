@@ -33,7 +33,6 @@
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
-#include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
@@ -41,9 +40,6 @@
 #include "radeon_mipmap_tree.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
-#include "radeon_tcl.h"
-#include "radeon_tex.h"
-#include "radeon_swtcl.h"
 #include "radeon_queryobj.h"
 
 #include "../r200/r200_reg.h"

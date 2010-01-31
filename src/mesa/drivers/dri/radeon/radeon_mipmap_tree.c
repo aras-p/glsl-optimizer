@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #include "main/simple_list.h"
-#include "main/texcompress.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "radeon_texture.h"

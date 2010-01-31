@@ -39,17 +39,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "drivers/common/meta.h"
 #include "main/context.h"
-#include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/state.h"
 #include "main/simple_list.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-
-#if defined(RADEON_R600)
-#include "r600_context.h"
-#endif
 
 #define DRIVER_DATE "20090101"
 

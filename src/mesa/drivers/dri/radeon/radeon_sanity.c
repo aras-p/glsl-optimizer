@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 
 #include "radeon_context.h"
-#include "radeon_ioctl.h"
 #include "radeon_sanity.h"
 
 /* Set this '1' to get more verbiage.

@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_common.h"
-#include "radeon_span.h"
 #if defined(RADEON_R100)
 #include "radeon_context.h"
 #include "radeon_tex.h"
@@ -66,7 +65,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 #include "vblank.h"
-#include "drirenderbuffer.h"
 
 #include "radeon_bocs_wrapper.h"
 
