@@ -39,30 +39,64 @@
 
 
 /**
+ * Copy the extension into the string and update the string pointer.
+ */
+static EGLint
+_eglAppendExtension(char **str, const char *ext)
+{
+   char *s = *str;
+   EGLint len = strlen(ext);
+
+   if (s) {
+      memcpy(s, ext, len);
+      s[len++] = ' ';
+      s[len] = '\0';
+
+      *str += len;
+   }
+   else {
+      len++;
+   }
+
+   return len;
+}
+
+
+/**
  * Examine the individual extension enable/disable flags and recompute
  * the driver's Extensions string.
  */
 static void
 _eglUpdateExtensionsString(_EGLDisplay *dpy)
 {
+#define _EGL_CHECK_EXTENSION(ext)                                          \
+   do {                                                                    \
+      if (dpy->Extensions.ext) {                                           \
+         _eglAppendExtension(&exts, "EGL_" #ext);                          \
+         assert(exts <= dpy->Extensions.String + _EGL_MAX_EXTENSIONS_LEN); \
+      }                                                                    \
+   } while (0)
+
    char *exts = dpy->Extensions.String;
 
    if (exts[0])
       return;
 
-   if (dpy->Extensions.MESA_screen_surface)
-      strcat(exts, "EGL_MESA_screen_surface ");
-   if (dpy->Extensions.MESA_copy_context)
-      strcat(exts, "EGL_MESA_copy_context ");
+   _EGL_CHECK_EXTENSION(MESA_screen_surface);
+   _EGL_CHECK_EXTENSION(MESA_copy_context);
 
-   if (dpy->Extensions.KHR_image_base)
-      strcat(exts, "EGL_KHR_image_base ");
-   if (dpy->Extensions.KHR_image_pixmap)
-      strcat(exts, "EGL_KHR_image_pixmap ");
+   _EGL_CHECK_EXTENSION(KHR_image_base);
+   _EGL_CHECK_EXTENSION(KHR_image_pixmap);
    if (dpy->Extensions.KHR_image_base && dpy->Extensions.KHR_image_pixmap)
-      strcat(exts, "EGL_KHR_image ");
+      _eglAppendExtension(&exts, "EGL_KHR_image");
 
-   assert(strlen(exts) < _EGL_MAX_EXTENSIONS_LEN);
+   _EGL_CHECK_EXTENSION(KHR_vg_parent_image);
+   _EGL_CHECK_EXTENSION(KHR_gl_texture_2D_image);
+   _EGL_CHECK_EXTENSION(KHR_gl_texture_cubemap_image);
+   _EGL_CHECK_EXTENSION(KHR_gl_texture_3D_image);
+   _EGL_CHECK_EXTENSION(KHR_gl_renderbuffer_image);
+
+#undef _EGL_CHECK_EXTENSION
 }
 
 

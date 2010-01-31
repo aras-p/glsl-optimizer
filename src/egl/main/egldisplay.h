@@ -38,6 +38,11 @@ struct _egl_extensions
    EGLBoolean MESA_copy_context;
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;
+   EGLBoolean KHR_vg_parent_image;
+   EGLBoolean KHR_gl_texture_2D_image;
+   EGLBoolean KHR_gl_texture_cubemap_image;
+   EGLBoolean KHR_gl_texture_3D_image;
+   EGLBoolean KHR_gl_renderbuffer_image;
 
    char String[_EGL_MAX_EXTENSIONS_LEN];
 };

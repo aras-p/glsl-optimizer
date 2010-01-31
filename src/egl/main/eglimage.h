@@ -15,6 +15,8 @@ struct _egl_image
    _EGLResource Resource;
 
    EGLBoolean Preserved;
+   EGLint GLTextureLevel;
+   EGLint GLTextureZOffset;
 };
 
 

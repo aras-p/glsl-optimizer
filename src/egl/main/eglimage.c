@@ -28,8 +28,14 @@ _eglParseImageAttribList(_EGLImage *img, const EGLint *attrib_list)
       case EGL_IMAGE_PRESERVED_KHR:
          img->Preserved = val;
          break;
+      case EGL_GL_TEXTURE_LEVEL_KHR:
+         img->GLTextureLevel = val;
+         break;
+      case EGL_GL_TEXTURE_ZOFFSET_KHR:
+         img->GLTextureZOffset = val;
+         break;
       default:
-         err = EGL_BAD_ATTRIBUTE;
+         /* unknown attrs are ignored */
          break;
       }
 
@@ -52,6 +58,8 @@ _eglInitImage(_EGLImage *img, _EGLDisplay *dpy, const EGLint *attrib_list)
    img->Resource.Display = dpy;
 
    img->Preserved = EGL_FALSE;
+   img->GLTextureLevel = 0;
+   img->GLTextureZOffset = 0;
 
    err = _eglParseImageAttribList(img, attrib_list);
    if (err != EGL_SUCCESS)
