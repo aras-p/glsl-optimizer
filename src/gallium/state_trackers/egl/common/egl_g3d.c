@@ -468,7 +468,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       if (!gconf)
          continue;
 
-      _eglInitConfig(&gconf->base, id);
+      _eglInitConfig(&gconf->base, dpy, id);
 
       api_mask = get_mode_api_mask(&native_configs[i]->mode, gdrv->api_mask);
       if (!api_mask) {

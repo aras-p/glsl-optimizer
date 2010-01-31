@@ -92,7 +92,7 @@ _eglSetConfigAttrib(_EGLConfig *conf, EGLint attr, EGLint val)
 
 
 PUBLIC void
-_eglInitConfig(_EGLConfig *config, EGLint id);
+_eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id);
 
 
 PUBLIC EGLConfig

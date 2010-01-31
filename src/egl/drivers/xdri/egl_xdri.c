@@ -171,7 +171,6 @@ convert_config(_EGLConfig *conf, EGLint id, const __GLcontextModes *m)
 {
    EGLint val;
 
-   _eglInitConfig(conf, id);
    if (!_eglConfigFromContextModesRec(conf, m, EGL_OPENGL_BIT, EGL_OPENGL_BIT))
       return EGL_FALSE;
 
@@ -221,6 +220,7 @@ create_configs(_EGLDisplay *disp, const __GLcontextModes *m, EGLint first_id)
       _EGLConfig conf;
       EGLint rb;
 
+      _eglInitConfig(&conf, disp, id);
       if (!convert_config(&conf, id, m))
          continue;
       if (m->doubleBufferMode) {

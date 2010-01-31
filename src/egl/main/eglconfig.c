@@ -25,9 +25,11 @@
  * IDs are from 1 to N respectively.
  */
 void
-_eglInitConfig(_EGLConfig *config, EGLint id)
+_eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id)
 {
    memset(config, 0, sizeof(*config));
+
+   config->Display = dpy;
 
    /* some attributes take non-zero default values */
    SET_CONFIG_ATTRIB(config, EGL_CONFIG_ID,               id);
@@ -730,7 +732,7 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!num_configs)
       return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
 
-   _eglInitConfig(&criteria, 0);
+   _eglInitConfig(&criteria, disp, 0);
    if (!_eglParseConfigAttribList(&criteria, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 

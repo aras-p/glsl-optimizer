@@ -422,7 +422,7 @@ create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
       EGLBoolean ok;
 
       memset(&template, 0, sizeof(template));
-      _eglInitConfig(&template.Base, id);
+      _eglInitConfig(&template.Base, dpy, id);
       if (GLX_dpy->have_fbconfig)
          ok = convert_fbconfig(GLX_dpy->dpy, GLX_dpy->fbconfigs[i], &template);
       else
