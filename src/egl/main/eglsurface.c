@@ -167,7 +167,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
  * \return EGL_TRUE if no errors, EGL_FALSE otherwise.
  */
 EGLBoolean
-_eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
+_eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
                 _EGLConfig *conf, const EGLint *attrib_list)
 {
    const char *func;
@@ -201,6 +201,7 @@ _eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
    }
 
    memset(surf, 0, sizeof(_EGLSurface));
+   surf->Resource.Display = dpy;
    surf->Type = type;
    surf->Config = conf;
 

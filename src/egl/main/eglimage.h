@@ -19,7 +19,7 @@ struct _egl_image
 
 
 PUBLIC EGLBoolean
-_eglInitImage(_EGLDriver *drv, _EGLImage *img, const EGLint *attrib_list);
+_eglInitImage(_EGLImage *img, _EGLDisplay *dpy, const EGLint *attrib_list);
 
 
 extern _EGLImage *

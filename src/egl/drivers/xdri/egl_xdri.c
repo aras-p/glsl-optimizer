@@ -391,7 +391,7 @@ xdri_eglCreateContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
-   if (!_eglInitContext(drv, &xdri_ctx->Base, &xdri_config->Base, attrib_list)) {
+   if (!_eglInitContext(&xdri_ctx->Base, dpy, &xdri_config->Base, attrib_list)) {
       free(xdri_ctx->dummy_gc);
       free(xdri_ctx);
       return NULL;
@@ -529,7 +529,7 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &xdri_surf->Base, EGL_WINDOW_BIT,
+   if (!_eglInitSurface(&xdri_surf->Base, dpy, EGL_WINDOW_BIT,
                         &xdri_config->Base, attrib_list)) {
       free(xdri_surf);
       return NULL;

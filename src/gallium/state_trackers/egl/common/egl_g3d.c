@@ -631,7 +631,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
-   if (!_eglInitContext(drv, &gctx->base, conf, attribs)) {
+   if (!_eglInitContext(&gctx->base, dpy, conf, attribs)) {
       free(gctx);
       return NULL;
    }
@@ -713,7 +713,7 @@ egl_g3d_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &gsurf->base, EGL_WINDOW_BIT, conf, attribs)) {
+   if (!_eglInitSurface(&gsurf->base, dpy, EGL_WINDOW_BIT, conf, attribs)) {
       free(gsurf);
       return NULL;
    }
@@ -753,7 +753,7 @@ egl_g3d_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &gsurf->base, EGL_PIXMAP_BIT, conf, attribs)) {
+   if (!_eglInitSurface(&gsurf->base, dpy, EGL_PIXMAP_BIT, conf, attribs)) {
       free(gsurf);
       return NULL;
    }
@@ -790,7 +790,7 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &gsurf->base, EGL_PBUFFER_BIT, conf, attribs)) {
+   if (!_eglInitSurface(&gsurf->base, dpy, EGL_PBUFFER_BIT, conf, attribs)) {
       free(gsurf);
       return NULL;
    }
@@ -1180,7 +1180,7 @@ egl_g3d_create_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &gsurf->base,
+   if (!_eglInitSurface(&gsurf->base, dpy,
             EGL_SCREEN_BIT_MESA, conf, attribs)) {
       free(gsurf);
       return NULL;

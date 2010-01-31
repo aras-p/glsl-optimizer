@@ -101,8 +101,8 @@ _eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
  * in the attrib_list.
  */
 EGLBoolean
-_eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
-                _EGLConfig *conf, const EGLint *attrib_list)
+_eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
+                const EGLint *attrib_list)
 {
    const EGLenum api = eglQueryAPI();
    EGLint err;
@@ -113,6 +113,7 @@ _eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
    }
 
    memset(ctx, 0, sizeof(_EGLContext));
+   ctx->Resource.Display = dpy;
    ctx->ClientAPI = api;
    ctx->Config = conf;
    ctx->WindowRenderBuffer = EGL_NONE;

@@ -44,11 +44,12 @@ _eglParseImageAttribList(_EGLImage *img, const EGLint *attrib_list)
 
 
 EGLBoolean
-_eglInitImage(_EGLDriver *drv, _EGLImage *img, const EGLint *attrib_list)
+_eglInitImage(_EGLImage *img, _EGLDisplay *dpy, const EGLint *attrib_list)
 {
    EGLint err;
 
    memset(img, 0, sizeof(_EGLImage));
+   img->Resource.Display = dpy;
 
    img->Preserved = EGL_FALSE;
 

@@ -605,7 +605,7 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-   if (!_eglInitContext(drv, &GLX_ctx->Base, conf, attrib_list)) {
+   if (!_eglInitContext(&GLX_ctx->Base, disp, conf, attrib_list)) {
       free(GLX_ctx);
       return NULL;
    }
@@ -720,7 +720,7 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_WINDOW_BIT,
+   if (!_eglInitSurface(&GLX_surf->Base, disp, EGL_WINDOW_BIT,
                         conf, attrib_list)) {
       free(GLX_surf);
       return NULL;
@@ -766,7 +766,7 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_PIXMAP_BIT,
+   if (!_eglInitSurface(&GLX_surf->Base, disp, EGL_PIXMAP_BIT,
                         conf, attrib_list)) {
       free(GLX_surf);
       return NULL;
@@ -826,7 +826,7 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
       return NULL;
    }
 
-   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_PBUFFER_BIT,
+   if (!_eglInitSurface(&GLX_surf->Base, disp, EGL_PBUFFER_BIT,
                         conf, attrib_list)) {
       free(GLX_surf);
       return NULL;

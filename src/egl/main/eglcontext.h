@@ -30,7 +30,7 @@ struct _egl_context
 
 
 PUBLIC EGLBoolean
-_eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
+_eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy,
                 _EGLConfig *config, const EGLint *attrib_list);
 
 

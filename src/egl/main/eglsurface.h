@@ -40,7 +40,7 @@ struct _egl_surface
 
 
 PUBLIC EGLBoolean
-_eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
+_eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
                 _EGLConfig *config, const EGLint *attrib_list);
 
 
