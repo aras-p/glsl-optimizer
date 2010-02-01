@@ -10,7 +10,6 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
-#include "eglcurrent.h"
 #include "eglmutex.h"
 #include "egllog.h"
 

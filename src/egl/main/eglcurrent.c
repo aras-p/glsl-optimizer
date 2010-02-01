@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "eglglobals.h"
-#include "eglcontext.h"
 #include "egllog.h"
 #include "eglmutex.h"
 #include "eglcurrent.h"
