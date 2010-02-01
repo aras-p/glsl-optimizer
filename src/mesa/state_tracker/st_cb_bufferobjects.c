@@ -75,6 +75,8 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
+   assert(obj->RefCount == 0);
+
    if (st_obj->buffer) 
       pipe_buffer_reference(&st_obj->buffer, NULL);
 
