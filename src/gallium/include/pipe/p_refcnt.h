@@ -31,6 +31,7 @@
 
 #include "p_defines.h"
 #include "p_atomic.h"
+#include "util/u_debug.h" /* FIXME: remove this */
 
 
 #ifdef __cplusplus

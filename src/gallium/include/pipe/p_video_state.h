@@ -30,7 +30,6 @@
 
 /* u_reduce_video_profile() needs these */
 #include <pipe/p_compiler.h>
-#include <util/u_debug.h>
 
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>

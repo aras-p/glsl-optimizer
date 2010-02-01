@@ -31,10 +31,6 @@
 
 #include "p_compiler.h"
 
-/* FIXME: remove these header dependencies */
-#include "util/u_debug.h"
-#include "util/u_string.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

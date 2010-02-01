@@ -38,6 +38,7 @@
 #include "xf86_ansic.h"
 #include "xf86_libc.h"
 #endif
+#include <stddef.h>
 
 
 #if defined(_WIN32) && !defined(__WIN32__)
