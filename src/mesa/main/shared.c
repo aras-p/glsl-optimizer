@@ -288,8 +288,8 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
  *
  * \sa alloc_shared_state().
  */
-void
-_mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+static void
+free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 {
    GLuint i;
 
@@ -367,4 +367,31 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _glthread_DESTROY_MUTEX(shared->TexMutex);
 
    _mesa_free(shared);
+}
+
+
+/**
+ * Decrement shared state object reference count and potentially free it
+ * and all children structures.
+ *
+ * \param ctx GL context.
+ * \param shared shared state pointer.
+ *
+ * \sa free_shared_state().
+ */
+void
+_mesa_release_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+{
+   GLint RefCount;
+
+   _glthread_LOCK_MUTEX(shared->Mutex);
+   RefCount = --shared->RefCount;
+   _glthread_UNLOCK_MUTEX(shared->Mutex);
+
+   assert(RefCount >= 0);
+
+   if (RefCount == 0) {
+      /* free shared state */
+      free_shared_state( ctx, shared );
+   }
 }
