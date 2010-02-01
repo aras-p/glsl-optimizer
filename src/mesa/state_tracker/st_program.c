@@ -286,19 +286,12 @@ st_translate_fragment_program(struct st_context *st,
    enum pipe_error error;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
    struct ureg_program *ureg;
-   GLuint vslot = 0;
 
    uint fs_num_inputs = 0;
 
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
-
-   /* which vertex output goes to the first fragment input: */
-   if (inputsRead & FRAG_BIT_WPOS)
-      vslot = 0;
-   else
-      vslot = 1;
 
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
@@ -308,8 +301,6 @@ st_translate_fragment_program(struct st_context *st,
          const GLuint slot = fs_num_inputs;
 
          defaultInputMapping[attr] = slot;
-
-         stfp->input_map[slot] = vslot++;
 
          fs_num_inputs++;
 
