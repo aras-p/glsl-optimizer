@@ -375,8 +375,11 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
 
-    if (!r300screen || !caps)
+    if (!r300screen || !caps) {
+        FREE(r300screen);
+        FREE(caps);
         return NULL;
+    }
 
     caps->pci_id = radeon_winsys->pci_id;
     caps->num_frag_pipes = radeon_winsys->gb_pipes;
