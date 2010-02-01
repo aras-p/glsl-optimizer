@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_format.h"
+#include "util/u_debug.h"
 
 #ifdef __cplusplus
 extern "C" {

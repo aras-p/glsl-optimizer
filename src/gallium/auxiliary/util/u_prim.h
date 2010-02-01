@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #include "pipe/p_defines.h"
+#include "util/u_debug.h"
 
 static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 {
