@@ -133,9 +133,6 @@
 #include "shader/program.h"
 #include "shader/prog_print.h"
 #include "shader/shader_api.h"
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
-#endif
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif

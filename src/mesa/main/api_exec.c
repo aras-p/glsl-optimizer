@@ -97,8 +97,6 @@
 #endif
 #if FEATURE_NV_fragment_program
 #include "shader/nvprogram.h"
-#include "shader/program.h"
-#include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
