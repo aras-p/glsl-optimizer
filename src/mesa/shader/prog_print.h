@@ -37,6 +37,12 @@ typedef enum {
 } gl_prog_print_mode;
 
 
+extern void
+_mesa_print_vp_inputs(GLbitfield inputs);
+
+extern void
+_mesa_print_fp_inputs(GLbitfield inputs);
+
 extern const char *
 _mesa_condcode_string(GLuint condcode);
 

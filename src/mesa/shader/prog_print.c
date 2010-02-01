@@ -150,6 +150,10 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.varying[7]"
    };
 
+   /* sanity checks */
+   assert(strcmp(vertAttribs[VERT_ATTRIB_TEX0], "vertex.texcoord[0]") == 0);
+   assert(strcmp(vertAttribs[VERT_ATTRIB_GENERIC15], "vertex.attrib[15]") == 0);
+
    if (progType == GL_VERTEX_PROGRAM_ARB) {
       assert(index < sizeof(vertAttribs) / sizeof(vertAttribs[0]));
       return vertAttribs[index];
@@ -159,6 +163,43 @@ arb_input_attrib_string(GLint index, GLenum progType)
       return fragAttribs[index];
    }
 }
+
+
+/**
+ * Print a vertex program's InputsRead field in human-readable format.
+ * For debugging.
+ */
+void
+_mesa_print_vp_inputs(GLbitfield inputs)
+{
+   _mesa_printf("VP Inputs 0x%x: \n", inputs);
+   while (inputs) {
+      GLint attr = _mesa_ffs(inputs) - 1;
+      const char *name = arb_input_attrib_string(attr,
+                                                 GL_VERTEX_PROGRAM_ARB);
+      _mesa_printf("  %d: %s\n", attr, name);
+      inputs &= ~(1 << attr);
+   }
+}
+
+
+/**
+ * Print a fragment program's InputsRead field in human-readable format.
+ * For debugging.
+ */
+void
+_mesa_print_fp_inputs(GLbitfield inputs)
+{
+   _mesa_printf("FP Inputs 0x%x: \n", inputs);
+   while (inputs) {
+      GLint attr = _mesa_ffs(inputs) - 1;
+      const char *name = arb_input_attrib_string(attr,
+                                                 GL_FRAGMENT_PROGRAM_ARB);
+      _mesa_printf("  %d: %s\n", attr, name);
+      inputs &= ~(1 << attr);
+   }
+}
+
 
 
 /**
