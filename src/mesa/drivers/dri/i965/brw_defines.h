@@ -1024,6 +1024,8 @@
 # define GEN6_CONSTANT_BUFFER_1_ENABLE			(1 << 13)
 # define GEN6_CONSTANT_BUFFER_0_ENABLE			(1 << 12)
 
+#define CMD_3D_SAMPLE_MASK			0x7818 /* GEN6+ */
+
 #define CMD_DRAW_RECT                 0x7900
 #define CMD_BLEND_CONSTANT_COLOR      0x7901
 #define CMD_CHROMA_KEY                0x7904
@@ -1033,6 +1035,25 @@
 #define CMD_LINE_STIPPLE_PATTERN      0x7908
 #define CMD_GLOBAL_DEPTH_OFFSET_CLAMP 0x7909
 #define CMD_AA_LINE_PARAMETERS        0x790a
+
+#define CMD_GS_SVB_INDEX			0x790b /* CTG+ */
+/* DW1 */
+# define SVB_INDEX_SHIFT				29
+# define SVB_LOAD_INTERNAL_VERTEX_COUNT			(1 << 0) /* SNB+ */
+/* DW2: SVB index */
+/* DW3: SVB maximum index */
+
+#define CMD_3D_MULTISAMPLE			0x790d /* SNB+ */
+/* DW1 */
+# define MS_PIXEL_LOCATION_CENTER			(0 << 4)
+# define MS_PIXEL_LOCATION_UPPER_LEFT			(1 << 4)
+# define MS_NUMSAMPLES_1				(0 << 1)
+# define MS_NUMSAMPLES_4				(2 << 1)
+# define MS_NUMSAMPLES_8				(3 << 1)
+
+#define CMD_3D_CLEAR_PARAMS			0x7910 /* ILK+ */
+# define DEPTH_CLEAR_VALID				(1 << 15)
+/* DW1: depth clear value */
 
 #define CMD_PIPE_CONTROL              0x7a00
 

@@ -314,6 +314,14 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       ADVANCE_BATCH();
    }
+
+   /* Initialize it for safety. */
+   if (intel->gen >= 6) {
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_3D_CLEAR_PARAMS << 16 | (2 - 2));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
 }
 
 const struct brw_tracked_state brw_depthbuffer = {
@@ -511,6 +519,32 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &gdo);
    }
 
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
+   if (intel->gen >= 6) {
+      int i;
+
+      BEGIN_BATCH(3);
+      OUT_BATCH(CMD_3D_MULTISAMPLE << 16 | (3 - 2));
+      OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
+		MS_NUMSAMPLES_1);
+      OUT_BATCH(0); /* positions for 4/8-sample */
+      ADVANCE_BATCH();
+
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_3D_SAMPLE_MASK << 16 | (2 - 2));
+      OUT_BATCH(1);
+      ADVANCE_BATCH();
+
+      for (i = 0; i < 4; i++) {
+	 BEGIN_BATCH(4);
+	 OUT_BATCH(CMD_GS_SVB_INDEX << 16 | (4 - 2));
+	 OUT_BATCH(i << SVB_INDEX_SHIFT);
+	 OUT_BATCH(0);
+	 OUT_BATCH(0xffffffff);
+	 ADVANCE_BATCH();
+      }
+   }
 
    /* 0x61020000  State Instruction Pointer */
    {
