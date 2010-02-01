@@ -38,7 +38,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include "xf86dri.h"
 #include "dri2.h"
 #include "sarea.h"

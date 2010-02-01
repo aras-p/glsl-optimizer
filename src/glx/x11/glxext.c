@@ -41,7 +41,6 @@
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
-#include "glapi.h"
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 

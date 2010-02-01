@@ -25,7 +25,6 @@
 
 #include <X11/Xlib.h>
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include <dlfcn.h>
 #include "dri_common.h"
 

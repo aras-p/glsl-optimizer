@@ -35,9 +35,7 @@
 #include <X11/extensions/Xext.h>
 #include <assert.h>
 #include <string.h>
-#include "glapi.h"
 #include "glxextensions.h"
-#include "glcontextmodes.h"
 
 #define WARN_ONCE_GLX_1_3(a, b) {		\
 		static int warned=1;		\

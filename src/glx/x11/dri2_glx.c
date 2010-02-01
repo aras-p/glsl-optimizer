@@ -37,7 +37,6 @@
 #include <X11/extensions/Xdamage.h>
 #include "glapi.h"
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include "xf86dri.h"
 #include <dlfcn.h>
 #include <fcntl.h>

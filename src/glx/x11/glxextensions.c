@@ -32,7 +32,6 @@
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/Xext.h>
 #include <string.h>
-#include "glapi.h"
 #include "glxextensions.h"
 
 

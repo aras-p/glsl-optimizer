@@ -37,10 +37,6 @@
 #include "glapi.h"
 #include "indirect_init.h"
 
-#ifdef GLX_DIRECT_RENDERING
-#include "xf86dri.h"
-#endif
-
 /*
 ** We setup some dummy structures here so that the API can be used
 ** even if no context is current.
