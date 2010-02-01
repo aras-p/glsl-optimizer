@@ -366,6 +366,7 @@ static int format (FILE *f, char *format, ...)
     va_start (args, format);
 
     vsnprintf (buf, sizeof (buf) - 1, format, args);
+    va_end (args);
     string (f, buf);
     return 0;
 }
