@@ -782,6 +782,14 @@
 # define GEN6_BINDING_TABLE_MODIFY_GS	(1 << 9)
 # define GEN6_BINDING_TABLE_MODIFY_PS	(1 << 10)
 
+#define CMD_3D_SAMPLER_STATE_POINTERS			0x7802 /* SNB+ */
+# define PS_SAMPLER_STATE_CHANGE				(1 << 12)
+# define GS_SAMPLER_STATE_CHANGE				(1 << 9)
+# define VS_SAMPLER_STATE_CHANGE				(1 << 8)
+/* DW1: VS */
+/* DW2: GS */
+/* DW3: PS */
+
 #define CMD_VERTEX_BUFFER             0x7808
 # define BRW_VB0_INDEX_SHIFT		27
 # define GEN6_VB0_INDEX_SHIFT		26

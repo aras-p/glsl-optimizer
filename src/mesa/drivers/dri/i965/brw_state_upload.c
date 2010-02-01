@@ -131,6 +131,7 @@ const struct brw_tracked_state *gen6_atoms[] =
    &brw_wm_surfaces,		/* must do before samplers and unit */
 
    &brw_wm_samplers,
+   &gen6_sampler_state,
 
    &gen6_vs_state,
    &gen6_gs_state,

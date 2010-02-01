@@ -89,6 +89,7 @@ DRIVER_SOURCES = \
 	gen6_clip_state.c \
 	gen6_depthstencil.c \
 	gen6_gs_state.c \
+	gen6_sampler_state.c \
 	gen6_scissor_state.c \
 	gen6_sf_state.c \
 	gen6_urb.c \
