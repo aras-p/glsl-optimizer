@@ -26,8 +26,8 @@ extern "C" {
 #if (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || \
      defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
 #define PIPE_ATOMIC_OS_UNLOCKED 
-#elif (defined(PIPE_CC_MSVC) && defined(PIPE_SUBSYSTEM_WINDOWS_USER))
-#define PIPE_ATOMIC_OS_MS_INTERLOCK
+#elif defined(PIPE_CC_MSVC)
+#define PIPE_ATOMIC_MSVC_INTRINSIC
 #elif (defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86))
 #define PIPE_ATOMIC_ASM_MSVC_X86                
 #elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86))
@@ -217,16 +217,20 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 #endif
 
 
-#if defined(PIPE_ATOMIC_OS_MS_INTERLOCK)
+#if defined(PIPE_ATOMIC_MSVC_INTRINSIC)
 
-#define PIPE_ATOMIC "MS userspace interlocks"
-
-#include <windows.h>
+#define PIPE_ATOMIC "MSVC Intrinsics"
 
 struct pipe_atomic
 {
-   volatile long count;
+   int32_t count;
 };
+
+#include <intrin.h>
+
+#pragma intrinsic(_InterlockedIncrement)
+#pragma intrinsic(_InterlockedDecrement)
+#pragma intrinsic(_InterlockedCompareExchange)
 
 #define p_atomic_set(_v, _i) ((_v)->count = (_i))
 #define p_atomic_read(_v) ((_v)->count)
@@ -234,25 +238,25 @@ struct pipe_atomic
 static INLINE boolean
 p_atomic_dec_zero(struct pipe_atomic *v)
 {
-   return InterlockedDecrement(&v->count) == 0;
+   return _InterlockedDecrement(&v->count) == 0;
 }
 
 static INLINE void
 p_atomic_inc(struct pipe_atomic *v)
 {
-   InterlockedIncrement(&v->count);
+   _InterlockedIncrement(&v->count);
 }
 
 static INLINE void
 p_atomic_dec(struct pipe_atomic *v)
 {
-   InterlockedDecrement(&v->count);
+   _InterlockedDecrement(&v->count);
 }
 
 static INLINE int32_t
 p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 {
-   return InterlockedCompareExchange(&v->count, _new, old);
+   return _InterlockedCompareExchange(&v->count, _new, old);
 }
 
 #endif
