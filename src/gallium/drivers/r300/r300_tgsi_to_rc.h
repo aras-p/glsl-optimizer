@@ -29,11 +29,18 @@ struct tgsi_full_declaration;
 struct tgsi_shader_info;
 struct tgsi_token;
 
+struct swizzled_imms {
+    unsigned index;
+    unsigned swizzle;
+};
+
 struct tgsi_to_rc {
     struct radeon_compiler * compiler;
     const struct tgsi_shader_info * info;
 
     int immediate_offset;
+    struct swizzled_imms imms_to_swizzle[10];
+    unsigned imms_to_swizzle_count;
 };
 
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens);
