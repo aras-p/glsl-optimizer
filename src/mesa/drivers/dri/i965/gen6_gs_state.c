@@ -49,7 +49,8 @@ upload_gs_state(struct brw_context *brw)
 		(brw->gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT) |
 		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
       OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		GEN6_GS_STATISTICS_ENABLE);
+		GEN6_GS_STATISTICS_ENABLE |
+		GEN6_GS_RENDERING_ENABLE);
       OUT_BATCH(GEN6_GS_ENABLE);
       ADVANCE_BATCH();
    } else {
@@ -63,7 +64,8 @@ upload_gs_state(struct brw_context *brw)
 		(0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
 		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
       OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		GEN6_GS_STATISTICS_ENABLE);
+		GEN6_GS_STATISTICS_ENABLE |
+		GEN6_GS_RENDERING_ENABLE);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
