@@ -30,6 +30,7 @@
  */
 
 #include "radeon_drm.h"
+#include "r300_video_context.h"
 
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(int fd, struct radeon_winsys* winsys)
@@ -139,13 +140,13 @@ radeon_create_video_context(struct drm_api *api, struct pipe_screen *pscreen,
 {
     struct radeon_winsys *winsys = (struct radeon_winsys*)pscreen->winsys;
     struct pipe_context *pipe;
-    struct pipe_video_context pvctx;
+    struct pipe_video_context *pvctx;
 
     pipe = radeon_create_context(api, pscreen);
     if (!pipe)
         return NULL;
 
-    pvctx = r300_video_create(pipe, profile, chroma_format, width, height, i);
+    pvctx = r300_video_create(pipe, profile, chroma_format, width, height, 0);
 }
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
