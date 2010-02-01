@@ -221,7 +221,7 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp->bitmap_program, NULL);
+      st_translate_fragment_program(st, stfp->bitmap_program);
    }
 
    return stfp->bitmap_program;

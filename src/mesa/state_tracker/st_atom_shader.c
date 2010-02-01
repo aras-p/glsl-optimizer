@@ -60,26 +60,10 @@ static void
 translate_fp(struct st_context *st,
              struct st_fragment_program *stfp)
 {
-   const GLbitfield fragInputsRead = stfp->Base.Base.InputsRead;
-
    if (!stfp->state.tokens) {
-      GLuint inAttr, numIn = 0;
-
-      for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
-         if (fragInputsRead & (1 << inAttr)) {
-            stfp->input_to_slot[inAttr] = numIn;
-            numIn++;
-         }
-         else {
-            stfp->input_to_slot[inAttr] = -1;
-         }
-      }
-
-      stfp->num_input_slots = numIn;
-
       assert(stfp->Base.Base.NumInstructions > 0);
 
-      st_translate_fragment_program(st, stfp, stfp->input_to_slot);
+      st_translate_fragment_program(st, stfp);
    }
 }
 

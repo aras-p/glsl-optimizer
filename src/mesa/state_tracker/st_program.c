@@ -269,18 +269,15 @@ fail:
 
 /**
  * Translate a Mesa fragment shader into a TGSI shader.
- * \param inputMapping  to map fragment program input registers to TGSI
- *                      input slots
  * \return  pointer to cached pipe_shader object.
  */
 void
 st_translate_fragment_program(struct st_context *st,
-                              struct st_fragment_program *stfp,
-                              const GLuint inputMapping[])
+                              struct st_fragment_program *stfp )
 {
    struct pipe_context *pipe = st->pipe;
    GLuint outputMapping[FRAG_RESULT_MAX];
-   GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
+   GLuint inputMapping[FRAG_ATTRIB_MAX];
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
    enum pipe_error error;
@@ -298,11 +295,9 @@ st_translate_fragment_program(struct st_context *st,
     */
    for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
       if (inputsRead & (1 << attr)) {
-         const GLuint slot = fs_num_inputs;
+         const GLuint slot = fs_num_inputs++;
 
-         defaultInputMapping[attr] = slot;
-
-         fs_num_inputs++;
+         inputMapping[attr] = slot;
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
@@ -367,6 +362,9 @@ st_translate_fragment_program(struct st_context *st,
             break;
          }
       }
+      else {
+	 inputMapping[attr] = -1;
+      }
    }
 
    /*
@@ -407,9 +405,6 @@ st_translate_fragment_program(struct st_context *st,
          }
       }
    }
-
-   if (!inputMapping)
-      inputMapping = defaultInputMapping;
 
    ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)

@@ -52,9 +52,6 @@ struct st_fragment_program
    struct gl_fragment_program Base;
    GLuint serialNo;
 
-   GLuint input_to_slot[FRAG_ATTRIB_MAX];  /**< Maps FRAG_ATTRIB_x to slot */
-   GLuint num_input_slots;
-
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
 
@@ -168,8 +165,7 @@ st_reference_fragprog(struct st_context *st,
 
 extern void
 st_translate_fragment_program(struct st_context *st,
-                              struct st_fragment_program *fp,
-                              const GLuint inputMapping[]);
+                              struct st_fragment_program *fp);
 
 
 /* Called after program string change, discard all previous

@@ -140,7 +140,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL);
+      st_translate_fragment_program(st, stfp);
 
       /* save new program, update serial numbers */
       st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
@@ -221,7 +221,7 @@ make_fragment_shader_z(struct st_context *st)
    p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    st->drawpix.z_shader = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, st->drawpix.z_shader, NULL);
+   st_translate_fragment_program(st, st->drawpix.z_shader);
 
    return st->drawpix.z_shader;
 }
