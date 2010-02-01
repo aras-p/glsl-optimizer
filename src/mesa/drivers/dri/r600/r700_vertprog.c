@@ -647,7 +647,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
         /* _mesa_reference_program has already checked glsl shProg is ok and set ctx->VertexProgem._Current */
         /* so, use ctx->VertexProgem._Current */       
         struct gl_program_parameter_list *paramListOrginal = 
-                         paramListOrginal = ctx->VertexProgram._Current->Base.Parameters;
+                         ctx->VertexProgram._Current->Base.Parameters;
          
 	    _mesa_load_state_parameters(ctx, paramList);
 
