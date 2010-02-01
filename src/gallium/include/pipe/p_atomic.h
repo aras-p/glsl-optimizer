@@ -35,7 +35,7 @@ extern "C" {
 #elif defined(PIPE_CC_GCC)
 #define PIPE_ATOMIC_GCC_INTRINSIC
 #else
-#define PIPE_ATOMIC_MUTEX                       
+#error "Unsupported platform"
 #endif
 
 
@@ -257,87 +257,6 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 #endif
 
-
-
-#if defined(PIPE_ATOMIC_MUTEX)
-
-#define PIPE_ATOMIC "mutex-based fallback"
-
-#include "pipe/p_thread.h"
-
-/**
- * This implementation should really not be used.
- * Add an assembly port instead. It may abort and
- * doesn't destroy used mutexes.
- */
-
-struct pipe_atomic {
-   pipe_mutex mutex;
-   int32_t count;
-};
-
-static INLINE void
-p_atomic_set(struct pipe_atomic *v, int32_t i)
-{
-   pipe_mutex_init(v->mutex);
-   pipe_mutex_lock(v->mutex);
-   v->count = i;
-   pipe_mutex_unlock(v->mutex);
-}
-
-static INLINE int32_t
-p_atomic_read(struct pipe_atomic *v)
-{
-   int32_t ret;
-
-   pipe_mutex_lock(v->mutex);
-   ret = v->count;
-   pipe_mutex_unlock(v->mutex);
-   return ret;
-}
-
-static INLINE void
-p_atomic_inc(struct pipe_atomic *v)
-{
-   pipe_mutex_lock(v->mutex);
-   ++v->count;
-   pipe_mutex_unlock(v->mutex);
-}
-
-static INLINE void
-p_atomic_dec(struct pipe_atomic *v)
-{
-   pipe_mutex_lock(v->mutex);
-   --v->count;
-   pipe_mutex_unlock(v->mutex);
-}
-
-static INLINE boolean
-p_atomic_dec_zero(struct pipe_atomic *v)
-{
-   boolean ret;
-
-   pipe_mutex_lock(v->mutex);
-   ret = (--v->count == 0);
-   pipe_mutex_unlock(v->mutex);
-   return ret;
-}
-
-static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
-{
-   int32_t ret;
-
-   pipe_mutex_lock(v->mutex);
-   ret = v->count;
-   if (ret == old)
-      v->count = _new;
-   pipe_mutex_unlock(v->mutex);
-
-   return ret;
-}
-
-#endif 
 
 
 #ifndef PIPE_ATOMIC
