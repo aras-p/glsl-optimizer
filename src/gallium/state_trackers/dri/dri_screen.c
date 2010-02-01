@@ -194,7 +194,7 @@ dri_fill_in_modes(struct dri_screen *screen,
       return NULL;
    }
 
-   return (const const __DRIconfig **)configs;
+   return (const __DRIconfig **)configs;
 }
 
 /**
