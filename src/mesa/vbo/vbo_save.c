@@ -58,8 +58,19 @@ void vbo_save_init( GLcontext *ctx )
 
    {
       struct gl_client_array *arrays = save->arrays;
+      unsigned i;
+
       memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
       memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+
+      for (i = 0; i < 16; ++i) {
+         arrays[i     ].BufferObj = NULL;
+         arrays[i + 16].BufferObj = NULL;
+         _mesa_reference_buffer_object(ctx, &arrays[i     ].BufferObj, 
+                                       vbo->legacy_currval[i].BufferObj);
+         _mesa_reference_buffer_object(ctx, &arrays[i + 16].BufferObj,
+                                       vbo->generic_currval[i].BufferObj);
+      }
    }
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;

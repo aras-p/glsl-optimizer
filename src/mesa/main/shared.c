@@ -93,12 +93,14 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->BufferObjects = _mesa_NewHashTable();
 #endif
 
-   /* Allocate the default buffer object and set refcount so high that
-    * it never gets deleted.
-    * XXX with recent/improved refcounting this may not longer be needed.
-    */
+   /* Allocate the default buffer object */
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
+#ifndef DEBUG
+   /* Set refcount so high that it never gets deleted.
+    * XXX with recent/improved refcounting this should be no longer be needed.
+    */
    shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
+#endif
 
    /* Create default texture objects */
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
@@ -202,7 +204,7 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
       ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
       bufObj->Pointer = NULL;
    }
-   ctx->Driver.DeleteBuffer(ctx, bufObj);
+   _mesa_reference_buffer_object(ctx, &bufObj, NULL);
 }
 
 
@@ -335,7 +337,7 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
-   ctx->Driver.DeleteBuffer(ctx, shared->NullBufferObj);
+   _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 #endif
 
 #if FEATURE_ARB_sync
