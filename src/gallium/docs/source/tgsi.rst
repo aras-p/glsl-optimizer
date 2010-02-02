@@ -1441,3 +1441,32 @@ GL_ARB_fragment_coord_conventions extension.
 
 DirectX 9 uses INTEGER.
 DirectX 10 uses HALF_INTEGER.
+
+
+
+Texture Sampling and Texture Formats
+------------------------------------
+
+This table shows how texture image components are returned as (x,y,z,w)
+tuples by TGSI texture instructions, such as TEX, TXD, and TXP.
+For reference, OpenGL and Direct3D convensions are shown as well::
+
+  Texture Components  Gallium       OpenGL        DX9
+  ---------------------------------------------------------
+  R,G,B,A             (R,G,B,A)     (R,G,B,A)     (R,G,B,A)
+  R,G,B               (R,G,B,1)     (R,G,B,1)     (R,G,B,1)
+  R,G                 tbd           (R,G,0,1)     (R,G,1,1)
+  R                   tbd           (R,0,0,1)     (R,1,1,1)
+  A                   (0,0,0,A)     (0,0,0,A)     (0,0,0,A)
+  L                   (L,L,L,1)     (L,L,L,1)     (L,L,L,1)
+  LA                  (L,L,L,A)     (L,L,L,A)     (L,L,L,A)
+  I                   (I,I,I,I)     (I,I,I,I)     n/a
+  UV                  tbd           (0,0,0,1)*    (U,V,1,1)
+  Z                   tbd           (Z,Z,Z,Z) or  (0,Z,0,1)
+                                    (Z,Z,Z,1) or
+                                    (0,0,0,Z)**
+
+  Footnotes:
+  * per http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
+  ** depends on GL_DEPTH_TEXTURE_MODE state
+ 
