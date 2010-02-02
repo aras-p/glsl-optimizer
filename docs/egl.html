@@ -131,7 +131,8 @@ runtime</p>
 <p>By default, the main library will look for drivers in the directory where
 the drivers are installed to.  This variable specifies a list of
 colon-separated directories where the main library will look for drivers, in
-addition to the default directory.</p>
+addition to the default directory.  This variable is ignored for setuid/setgid
+binaries.</p>
 
 </li>
 
@@ -139,7 +140,7 @@ addition to the default directory.</p>
 
 <p>This variable specifies a full path to an EGL driver and it forces the
 specified EGL driver to be loaded.  It comes in handy when one wants to test a
-specific driver.</p>
+specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
 </li>
 

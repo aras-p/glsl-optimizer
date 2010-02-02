@@ -415,6 +415,14 @@ _eglGetSearchPath(void)
       int ret;
 
       p = getenv("EGL_DRIVERS_PATH");
+#if defined(_EGL_PLATFORM_POSIX)
+      if (p && (geteuid() != getuid() || getegid() != getgid())) {
+         _eglLog(_EGL_DEBUG,
+               "ignore EGL_DRIVERS_PATH for setuid/setgid binaries");
+         p = NULL;
+      }
+#endif /* _EGL_PLATFORM_POSIX */
+
       if (p) {
          ret = snprintf(buffer, sizeof(buffer),
                "%s:%s", p, _EGL_DRIVER_SEARCH_DIR);
@@ -446,9 +454,15 @@ _eglPreloadUserDriver(void)
 
    env = getenv("EGL_DRIVER");
 #if defined(_EGL_PLATFORM_POSIX)
-   if (env && strchr(env, '/'))
+   if (env && strchr(env, '/')) {
       search_path = "";
-#endif
+      if ((geteuid() != getuid() || getegid() != getgid())) {
+         _eglLog(_EGL_DEBUG,
+               "ignore EGL_DRIVER for setuid/setgid binaries");
+         env = NULL;
+      }
+   }
+#endif /* _EGL_PLATFORM_POSIX */
    if (!env)
       return EGL_FALSE;
 
