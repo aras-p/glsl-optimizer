@@ -49,7 +49,7 @@ static void trace_dump_reference(const struct pipe_reference *reference)
       return;
 
    trace_dump_struct_begin("pipe_reference");
-   trace_dump_member(int, &reference->count, count);
+   trace_dump_member(int, reference, count);
    trace_dump_struct_end();
 }
 

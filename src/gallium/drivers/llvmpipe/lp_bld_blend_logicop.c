@@ -35,6 +35,7 @@
 
 
 #include "pipe/p_state.h"
+#include "util/u_debug.h"
 
 #include "lp_bld_blend.h"
 

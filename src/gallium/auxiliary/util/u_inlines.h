@@ -30,7 +30,10 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_state.h"
 #include "pipe/p_screen.h"
+#include "util/u_debug.h"
+#include "pipe/p_atomic.h"
 
 
 #ifdef __cplusplus

@@ -44,41 +44,37 @@ extern "C" {
 
 #define PIPE_ATOMIC "GCC x86 assembly"
 
-struct pipe_atomic {
-   int32_t count;
-};
-
-#define p_atomic_set(_v, _i) ((_v)->count = (_i))
-#define p_atomic_read(_v) ((_v)->count)
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
 
 
 static INLINE boolean
-p_atomic_dec_zero(struct pipe_atomic *v)
+p_atomic_dec_zero(int32_t *v)
 {
    unsigned char c;
 
-   __asm__ __volatile__("lock; decl %0; sete %1":"+m"(v->count), "=qm"(c)
+   __asm__ __volatile__("lock; decl %0; sete %1":"+m"(*v), "=qm"(c)
 			::"memory");
 
    return c != 0;
 }
 
 static INLINE void
-p_atomic_inc(struct pipe_atomic *v)
+p_atomic_inc(int32_t *v)
 {
-   __asm__ __volatile__("lock; incl %0":"+m"(v->count));
+   __asm__ __volatile__("lock; incl %0":"+m"(*v));
 }
 
 static INLINE void
-p_atomic_dec(struct pipe_atomic *v)
+p_atomic_dec(int32_t *v)
 {
-   __asm__ __volatile__("lock; decl %0":"+m"(v->count));
+   __asm__ __volatile__("lock; decl %0":"+m"(*v));
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
+p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
-   return __sync_val_compare_and_swap(&v->count, old, _new);
+   return __sync_val_compare_and_swap(v, old, _new);
 }
 #endif
 
@@ -90,36 +86,32 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 #define PIPE_ATOMIC "GCC Sync Intrinsics"
 
-struct pipe_atomic {
-   int32_t count;
-};
-
-#define p_atomic_set(_v, _i) ((_v)->count = (_i))
-#define p_atomic_read(_v) ((_v)->count)
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
 
 
 static INLINE boolean
-p_atomic_dec_zero(struct pipe_atomic *v)
+p_atomic_dec_zero(int32_t *v)
 {
-   return (__sync_sub_and_fetch(&v->count, 1) == 0);
+   return (__sync_sub_and_fetch(v, 1) == 0);
 }
 
 static INLINE void
-p_atomic_inc(struct pipe_atomic *v)
+p_atomic_inc(int32_t *v)
 {
-   (void) __sync_add_and_fetch(&v->count, 1);
+   (void) __sync_add_and_fetch(v, 1);
 }
 
 static INLINE void
-p_atomic_dec(struct pipe_atomic *v)
+p_atomic_dec(int32_t *v)
 {
-   (void) __sync_sub_and_fetch(&v->count, 1);
+   (void) __sync_sub_and_fetch(v, 1);
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
+p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
-   return __sync_val_compare_and_swap(&v->count, old, _new);
+   return __sync_val_compare_and_swap(v, old, _new);
 }
 #endif
 
@@ -132,17 +124,12 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 #define PIPE_ATOMIC "Unlocked"
 
-struct pipe_atomic
-{
-   int32_t count;
-};
-
-#define p_atomic_set(_v, _i) ((_v)->count = (_i))
-#define p_atomic_read(_v) ((_v)->count)
-#define p_atomic_dec_zero(_v) ((boolean) --(_v)->count)
-#define p_atomic_inc(_v) ((void) (_v)->count++)
-#define p_atomic_dec(_v) ((void) (_v)->count--)
-#define p_atomic_cmpxchg(_v, old, _new) ((_v)->count == old ? (_v)->count = (_new) : (_v)->count)
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
+#define p_atomic_dec_zero(_v) ((boolean) --(*(_v)))
+#define p_atomic_inc(_v) ((void) (*(_v))++)
+#define p_atomic_dec(_v) ((void) (*(_v))--)
+#define p_atomic_cmpxchg(_v, old, _new) (*(_v) == old ? *(_v) = (_new) : *(_v))
 
 #endif
 
@@ -153,22 +140,16 @@ struct pipe_atomic
 
 #define PIPE_ATOMIC "MSVC x86 assembly"
 
-struct pipe_atomic
-{
-   int32_t count;
-};
-
-#define p_atomic_set(_v, _i) ((_v)->count = (_i))
-#define p_atomic_read(_v) ((_v)->count)
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
 
 static INLINE boolean
-p_atomic_dec_zero(struct pipe_atomic *v)
+p_atomic_dec_zero(int32_t *v)
 {
-   int32_t *pcount = &v->count;
    unsigned char c;
 
    __asm {
-      mov       eax, [pcount]
+      mov       eax, [v]
       lock dec  dword ptr [eax]
       sete      byte ptr [c]
    }
@@ -177,35 +158,30 @@ p_atomic_dec_zero(struct pipe_atomic *v)
 }
 
 static INLINE void
-p_atomic_inc(struct pipe_atomic *v)
+p_atomic_inc(int32_t *v)
 {
-   int32_t *pcount = &v->count;
-
    __asm {
-      mov       eax, [pcount]
+      mov       eax, [v]
       lock inc  dword ptr [eax]
    }
 }
 
 static INLINE void
-p_atomic_dec(struct pipe_atomic *v)
+p_atomic_dec(int32_t *v)
 {
-   int32_t *pcount = &v->count;
-
    __asm {
-      mov       eax, [pcount]
+      mov       eax, [v]
       lock dec  dword ptr [eax]
    }
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
+p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
-   int32_t *pcount = &v->count;
    int32_t orig;
 
    __asm {
-      mov ecx, [pcount]
+      mov ecx, [v]
       mov eax, [old]
       mov edx, [_new]
       lock cmpxchg [ecx], edx
@@ -221,42 +197,37 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 #define PIPE_ATOMIC "MSVC Intrinsics"
 
-struct pipe_atomic
-{
-   int32_t count;
-};
-
 #include <intrin.h>
 
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
 #pragma intrinsic(_InterlockedCompareExchange)
 
-#define p_atomic_set(_v, _i) ((_v)->count = (_i))
-#define p_atomic_read(_v) ((_v)->count)
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
 
 static INLINE boolean
-p_atomic_dec_zero(struct pipe_atomic *v)
+p_atomic_dec_zero(int32_t *v)
 {
-   return _InterlockedDecrement(&v->count) == 0;
+   return _InterlockedDecrement(v) == 0;
 }
 
 static INLINE void
-p_atomic_inc(struct pipe_atomic *v)
+p_atomic_inc(int32_t *v)
 {
-   _InterlockedIncrement(&v->count);
+   _InterlockedIncrement(v);
 }
 
 static INLINE void
-p_atomic_dec(struct pipe_atomic *v)
+p_atomic_dec(int32_t *v)
 {
-   _InterlockedDecrement(&v->count);
+   _InterlockedDecrement(v);
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
+p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
-   return _InterlockedCompareExchange(&v->count, _new, old);
+   return _InterlockedCompareExchange(v, _new, old);
 }
 
 #endif

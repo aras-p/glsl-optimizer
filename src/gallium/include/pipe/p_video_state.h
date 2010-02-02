@@ -33,7 +33,7 @@
 
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>
-#include <pipe/p_refcnt.h>
+#include <pipe/p_state.h>
 #include <pipe/p_screen.h>
 #include <util/u_inlines.h>
 

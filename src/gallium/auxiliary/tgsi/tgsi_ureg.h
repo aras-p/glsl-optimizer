@@ -30,6 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_debug.h"
 
 #ifdef __cplusplus
 extern "C" {

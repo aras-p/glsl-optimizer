@@ -43,7 +43,6 @@
 #include "p_compiler.h"
 #include "p_defines.h"
 #include "p_format.h"
-#include "p_refcnt.h"
 #include "p_screen.h"
 
 
@@ -64,6 +63,12 @@ extern "C" {
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
+
+
+struct pipe_reference
+{
+   int32_t count; /* atomic */
+};
 
 
 /**

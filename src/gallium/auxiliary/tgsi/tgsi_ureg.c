@@ -33,6 +33,7 @@
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_sanity.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
