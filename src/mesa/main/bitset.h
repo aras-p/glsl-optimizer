@@ -27,7 +27,12 @@
  * \brief Bitset of arbitrary size definitions.
  * \author Michal Krol
  */
- 
+
+#ifndef BITSET_H
+#define BITSET_H
+
+#include "imports.h"
+
 /****************************************************************************
  * generic bitset implementation
  */
@@ -73,6 +78,23 @@
    (BITSET_BITWORD(b) == BITSET_BITWORD(e) ? \
    ((x)[BITSET_BITWORD(b)] &= ~BITSET_RANGE(b, e)) : \
    (assert (!"BITSET_CLEAR_RANGE: bit range crosses word boundary"), 0))
+
+/* Get first bit set in a bitset.
+ */
+static INLINE int
+__bitset_ffs(const BITSET_WORD *x, int n)
+{
+   int i;
+
+   for (i = 0; i < n; i++) {
+      if (x[i])
+	 return _mesa_ffs(x[i]) + BITSET_WORDBITS * i;
+   }
+
+   return 0;
+}
+
+#define BITSET_FFS(x) __bitset_ffs(x, Elements(x))
 
 /****************************************************************************
  * 64-bit bitset implementation
@@ -120,3 +142,4 @@
    ((x)[BITSET64_BITWORD(b)] &= ~BITSET64_RANGE(b, e)) : \
    (assert (!"BITSET64_CLEAR_RANGE: bit range crosses word boundary"), 0))
 
+#endif
