@@ -79,6 +79,8 @@ struct svga_shader_emitter
 
    int ps30_input_count;
 
+   int dynamic_branching_level;
+
    boolean in_main_func;
 
    boolean created_zero_immediate;
