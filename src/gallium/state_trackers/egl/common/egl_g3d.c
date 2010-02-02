@@ -1087,8 +1087,8 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
                        _EGLSurface *surf, EGLint buffer)
 {
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   _EGLContext *ctx = _eglGetAPIContext(EGL_OPENGL_ES_API);
-   struct egl_g3d_context *gctx = egl_g3d_context(ctx);
+   _EGLContext *es1 = _eglGetAPIContext(EGL_OPENGL_ES_API);
+   struct egl_g3d_context *gctx;
    enum pipe_format target_format;
    int target;
 
@@ -1118,6 +1118,11 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
       return _eglError(EGL_BAD_MATCH, "eglBindTexImage");
    }
 
+   if (!es1)
+      return EGL_TRUE;
+   if (!gsurf->render_surface)
+      return EGL_FALSE;
+
    /* flush properly if the surface is bound */
    if (gsurf->base.CurrentContext) {
       gctx = egl_g3d_context(gsurf->base.CurrentContext);
@@ -1125,14 +1130,11 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
-   if (gctx) {
-      if (!gsurf->render_surface)
-         return EGL_FALSE;
+   gctx = egl_g3d_context(es1);
+   gctx->stapi->st_bind_texture_surface(gsurf->render_surface,
+         target, gsurf->base.MipmapLevel, target_format);
 
-      gctx->stapi->st_bind_texture_surface(gsurf->render_surface,
-            target, gsurf->base.MipmapLevel, target_format);
-      gsurf->base.BoundToTexture = EGL_TRUE;
-   }
+   gsurf->base.BoundToTexture = EGL_TRUE;
 
    return EGL_TRUE;
 }
