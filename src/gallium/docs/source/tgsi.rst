@@ -1449,7 +1449,7 @@ Texture Sampling and Texture Formats
 
 This table shows how texture image components are returned as (x,y,z,w)
 tuples by TGSI texture instructions, such as TEX, TXD, and TXP.
-For reference, OpenGL and Direct3D convensions are shown as well.
+For reference, OpenGL and Direct3D conventions are shown as well.
 
 +--------------------+--------------+--------------------+--------------+
 | Texture Components | Gallium      | OpenGL             | Direct3D 9   |
