@@ -114,7 +114,7 @@ static void create_fragment_program(struct r300_context *r300)
     inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZW;
 
     compiler.Base.Program.InputsRead = (1 << FRAG_ATTRIB_TEX0);
-    compiler.OutputColor = FRAG_RESULT_COLOR;
+    compiler.OutputColor[0] = FRAG_RESULT_COLOR;
     compiler.OutputDepth = FRAG_RESULT_DEPTH;
     compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515);
     compiler.code = &r300->blit.fp_code;
