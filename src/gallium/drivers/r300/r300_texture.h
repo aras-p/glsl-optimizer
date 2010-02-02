@@ -37,24 +37,31 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
 unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
                                  unsigned zslice, unsigned face);
 
-/* Note the signature of R300_EASY_TX_FORMAT(A, R, G, B, FORMAT)... */
+/* Translate a pipe_format into a useful texture format for sampling.
+ *
+ * R300_EASY_TX_FORMAT swizzles the texture.
+ * Note the signature of R300_EASY_TX_FORMAT:
+ *   R300_EASY_TX_FORMAT(B, G, R, A, FORMAT);
+ *
+ * The FORMAT specifies how the texture sampler will treat the texture, and
+ * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 {
     switch (format) {
         /* X8 */
         case PIPE_FORMAT_A8_UNORM:
+            return R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8);
         case PIPE_FORMAT_I8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
         case PIPE_FORMAT_L8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
         /* X16 */
         case PIPE_FORMAT_R16_UNORM:
+        case PIPE_FORMAT_Z16_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16);
         case PIPE_FORMAT_R16_SNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, X16) |
                 R300_TX_FORMAT_SIGNED;
-        case PIPE_FORMAT_Z16_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, X, X16);
         /* Y8X8 */
         case PIPE_FORMAT_A8L8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
