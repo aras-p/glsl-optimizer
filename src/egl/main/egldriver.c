@@ -448,7 +448,6 @@ _eglGetSearchPath(void)
 static EGLBoolean
 _eglPreloadUserDriver(void)
 {
-#if defined(_EGL_PLATFORM_POSIX) || defined(_EGL_PLATFORM_WINDOWS)
    const char *search_path = _eglGetSearchPath();
    char *env;
 
@@ -472,9 +471,6 @@ _eglPreloadUserDriver(void)
    }
 
    return EGL_TRUE;
-#else /* _EGL_PLATFORM_POSIX || _EGL_PLATFORM_WINDOWS */
-   return EGL_FALSE;
-#endif
 }
 
 
@@ -490,7 +486,6 @@ _eglPreloadUserDriver(void)
 static EGLBoolean
 _eglPreloadDisplayDrivers(void)
 {
-#if defined(_EGL_PLATFORM_POSIX)
    const char *dpy;
    char prefix[32];
    int ret;
@@ -507,9 +502,6 @@ _eglPreloadDisplayDrivers(void)
 
    return (_eglPreloadForEach(_eglGetSearchPath(),
             _eglPreloadPattern, (void *) prefix) > 0);
-#else /* _EGL_PLATFORM_POSIX */
-   return EGL_FALSE;
-#endif
 }
 
 
