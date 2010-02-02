@@ -334,14 +334,15 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
       exit(1);
    }
 
+   /* sanity checks */
    {
       EGLint val;
       eglQuerySurface(egl_dpy, *surfRet, EGL_WIDTH, &val);
       assert(val == width);
       eglQuerySurface(egl_dpy, *surfRet, EGL_HEIGHT, &val);
       assert(val == height);
-      eglQuerySurface(egl_dpy, *surfRet, EGL_SURFACE_TYPE, &val);
-      assert(val == EGL_WINDOW_BIT);
+      assert(eglGetConfigAttrib(egl_dpy, config, EGL_SURFACE_TYPE, &val));
+      assert(val & EGL_WINDOW_BIT);
    }
 
    XFree(visInfo);
