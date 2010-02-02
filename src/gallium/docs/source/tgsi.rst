@@ -1473,10 +1473,10 @@ For reference, OpenGL and Direct3D conventions are shown as well.
 | UV                 | XXX TBD      | (0, 0, 0, 1)       | (u, v, 1, 1) |
 |                    |              | [#envmap-bumpmap]_ |              |
 +--------------------+--------------+--------------------+--------------+
-| Z                  | XXX TBD      | (z, z, z, z)       | (0, z, 0, 1) |
+| Z                  | XXX TBD      | (z, z, z, 1)       | (0, z, 0, 1) |
 |                    |              | [#depth-tex-mode]_ |              |
 +--------------------+--------------+--------------------+--------------+
 
 .. [#envmap-bumpmap] http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
-.. [#depth-tex-mode] Z may be (z, z, z, 1) or (0, 0, 0, z) also; it changes
-   depending on GL_DEPTH_TEXTURE_MODE state.
+.. [#depth-tex-mode] the default is (z, z, z, 1) but may also be (0, 0, 0, z)
+ or (z, z, z, z) depending on the value of GL_DEPTH_TEXTURE_MODE.
