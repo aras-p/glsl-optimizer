@@ -186,6 +186,7 @@ GLNAME(_mesa_sse_transform_points2_3d_no_rot):
     MOV_L( REGOFF(V4F_START, EDI), EDI ) 	/* ptr to first dest vertex */
     ADD_L( EDI, ECX ) 				/* count += dest ptr */
 
+    XORPS( XMM0, XMM0 )                         /* clean the working register */
 
 ALIGNTEXT32
     MOVSS    ( M(0), XMM1 )			/* - | - |  -  | m0  */
