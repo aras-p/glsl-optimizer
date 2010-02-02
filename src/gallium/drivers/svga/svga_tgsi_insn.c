@@ -46,8 +46,6 @@ translate_opcode(
    case TGSI_OPCODE_ABS:        return SVGA3DOP_ABS;
    case TGSI_OPCODE_ADD:        return SVGA3DOP_ADD;
    case TGSI_OPCODE_BREAKC:     return SVGA3DOP_BREAKC;
-   case TGSI_OPCODE_DDX:        return SVGA3DOP_DSX;
-   case TGSI_OPCODE_DDY:        return SVGA3DOP_DSY;
    case TGSI_OPCODE_DP2A:       return SVGA3DOP_DP2ADD;
    case TGSI_OPCODE_DP3:        return SVGA3DOP_DP3;
    case TGSI_OPCODE_DP4:        return SVGA3DOP_DP4;
@@ -1204,7 +1202,8 @@ static boolean emit_tex2(struct svga_shader_emitter *emit,
    /* Can't do mipmapping inside dynamic branch constructs.  Force LOD
     * zero in that case.
     */
-   if (emit->dynamic_branching_level > 0) {
+   if (emit->dynamic_branching_level > 0 &&
+       SVGA3dShaderGetRegType(texcoord.base.value) == SVGA3DREG_TEMP) {
       struct src_register zero = get_zero_immediate( emit );
 
       /* MOV  tmp, texcoord */
@@ -1435,6 +1434,46 @@ static boolean emit_simple_instruction(struct svga_shader_emitter *emit,
    default:
       assert(0);
       return FALSE;
+   }
+}
+
+
+static boolean emit_deriv(struct svga_shader_emitter *emit,
+                          const struct tgsi_full_instruction *insn )
+{
+   if (emit->dynamic_branching_level > 0 &&
+       insn->Src[0].Register.File == TGSI_FILE_TEMPORARY) 
+   {
+      struct src_register zero = get_zero_immediate( emit );
+      SVGA3dShaderDestToken dst = 
+         translate_dst_register( emit, insn, 0 );
+
+      /* Deriv opcodes not valid inside dynamic branching, workaround
+       * by zeroing out the destination.
+       */
+      if (!submit_op1(emit, 
+                      inst_token( SVGA3DOP_MOV ), 
+                      dst,
+                      scalar(zero, TGSI_SWIZZLE_X)))
+         return FALSE;
+      
+      return TRUE;
+   }
+   else {
+      unsigned opcode;
+
+      switch (insn->Instruction.Opcode) {
+      case TGSI_OPCODE_DDX:
+         opcode = SVGA3DOP_DSX;
+         break;
+      case TGSI_OPCODE_DDY:
+         opcode = SVGA3DOP_DSY;
+         break;
+      default:
+         return FALSE;
+      }
+
+      return emit_simple_instruction( emit, opcode, insn );
    }
 }
 
@@ -2042,6 +2081,10 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
    case TGSI_OPCODE_TXD:
       return emit_tex( emit, insn );
 
+   case TGSI_OPCODE_DDX:
+   case TGSI_OPCODE_DDY:
+      return emit_deriv( emit, insn );
+
    case TGSI_OPCODE_BGNSUB:
       return emit_bgnsub( emit, position, insn );
 
@@ -2538,6 +2581,8 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
    if (emit->info.opcode_count[TGSI_OPCODE_IF] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_BGNLOOP] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_BGNFOR] >= 1 ||
+       emit->info.opcode_count[TGSI_OPCODE_DDX] >= 1 ||
+       emit->info.opcode_count[TGSI_OPCODE_DDY] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SGE] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SGT] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SLE] >= 1 ||
