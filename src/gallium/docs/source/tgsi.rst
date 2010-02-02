@@ -1449,24 +1449,34 @@ Texture Sampling and Texture Formats
 
 This table shows how texture image components are returned as (x,y,z,w)
 tuples by TGSI texture instructions, such as TEX, TXD, and TXP.
-For reference, OpenGL and Direct3D convensions are shown as well::
+For reference, OpenGL and Direct3D convensions are shown as well.
 
-  Texture Components  Gallium       OpenGL        DX9
-  ---------------------------------------------------------
-  R,G,B,A             (R,G,B,A)     (R,G,B,A)     (R,G,B,A)
-  R,G,B               (R,G,B,1)     (R,G,B,1)     (R,G,B,1)
-  R,G                 tbd           (R,G,0,1)     (R,G,1,1)
-  R                   tbd           (R,0,0,1)     (R,1,1,1)
-  A                   (0,0,0,A)     (0,0,0,A)     (0,0,0,A)
-  L                   (L,L,L,1)     (L,L,L,1)     (L,L,L,1)
-  LA                  (L,L,L,A)     (L,L,L,A)     (L,L,L,A)
-  I                   (I,I,I,I)     (I,I,I,I)     n/a
-  UV                  tbd           (0,0,0,1)*    (U,V,1,1)
-  Z                   tbd           (Z,Z,Z,Z) or  (0,Z,0,1)
-                                    (Z,Z,Z,1) or
-                                    (0,0,0,Z)**
++--------------------+--------------+--------------------+--------------+
+| Texture Components | Gallium      | OpenGL             | Direct3D 9   |
++====================+==============+====================+==============+
+| R                  | XXX TBD      | (r, 0, 0, 1)       | (r, 1, 1, 1) |
++--------------------+--------------+--------------------+--------------+
+| RG                 | XXX TBD      | (r, g, 0, 1)       | (r, g, 1, 1) |
++--------------------+--------------+--------------------+--------------+
+| RGB                | (r, g, b, 1) | (r, g, b, 1)       | (r, g, b, 1) |
++--------------------+--------------+--------------------+--------------+
+| RGBA               | (r, g, b, a) | (r, g, b, a)       | (r, g, b, a) |
++--------------------+--------------+--------------------+--------------+
+| A                  | (0, 0, 0, a) | (0, 0, 0, a)       | (0, 0, 0, a) |
++--------------------+--------------+--------------------+--------------+
+| L                  | (l, l, l, 1) | (l, l, l, 1)       | (l, l, l, 1) |
++--------------------+--------------+--------------------+--------------+
+| LA                 | (l, l, l, a) | (l, l, l, a)       | (l, l, l, a) |
++--------------------+--------------+--------------------+--------------+
+| I                  | (i, i, i, i) | (i, i, i, i)       | N/A          |
++--------------------+--------------+--------------------+--------------+
+| UV                 | XXX TBD      | (0, 0, 0, 1)       | (u, v, 1, 1) |
+|                    |              | [#envmap-bumpmap]_ |              |
++--------------------+--------------+--------------------+--------------+
+| Z                  | XXX TBD      | (z, z, z, z)       | (0, z, 0, 1) |
+|                    |              | [#depth-tex-mode]_ |              |
++--------------------+--------------+--------------------+--------------+
 
-  Footnotes:
-  * per http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
-  ** depends on GL_DEPTH_TEXTURE_MODE state
- 
+.. [#envmap-bumpmap] http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
+.. [#depth-tex-mode] Z may be (z, z, z, 1) or (0, 0, 0, z) also; it changes
+   depending on GL_DEPTH_TEXTURE_MODE state.
