@@ -33,7 +33,7 @@
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "pipe/p_compiler.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "softpipe/sp_winsys.h"
 #include "egllog.h"
 

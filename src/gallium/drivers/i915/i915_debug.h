@@ -72,7 +72,7 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 
 #if defined(DEBUG) && defined(FILE_DEBUG_FLAG)
 
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 
 static INLINE void
 I915_DBG(

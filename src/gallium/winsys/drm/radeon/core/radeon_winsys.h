@@ -30,7 +30,7 @@
 #ifndef RADEON_WINSYS_H
 #define RADEON_WINSYS_H
 
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 
 struct radeon_winsys_priv;
 

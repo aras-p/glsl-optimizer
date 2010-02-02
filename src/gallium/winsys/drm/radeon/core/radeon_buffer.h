@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 
