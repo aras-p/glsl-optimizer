@@ -413,6 +413,88 @@ static boolean submit_op3( struct svga_shader_emitter *emit,
 }
 
 
+
+
+/* SVGA shaders may not refer to >1 constant register in a single
+ * instruction.  This function checks for that usage and inserts a
+ * move to temporary if detected.
+ */
+static boolean submit_op4( struct svga_shader_emitter *emit,
+                           SVGA3dShaderInstToken inst,
+                           SVGA3dShaderDestToken dest,
+                           struct src_register src0,
+                           struct src_register src1,
+                           struct src_register src2,
+                           struct src_register src3)
+{
+   SVGA3dShaderDestToken temp0;
+   SVGA3dShaderDestToken temp3;
+   boolean need_temp0 = FALSE;
+   boolean need_temp3 = FALSE;
+   SVGA3dShaderRegType type0, type1, type2, type3;
+
+   temp0.value = 0;
+   temp3.value = 0;
+   type0 = SVGA3dShaderGetRegType( src0.base.value );
+   type1 = SVGA3dShaderGetRegType( src1.base.value );
+   type2 = SVGA3dShaderGetRegType( src2.base.value );
+   type3 = SVGA3dShaderGetRegType( src2.base.value );
+
+   /* Make life a little easier - this is only used by the TXD
+    * instruction which is guaranteed not to have a constant/input reg
+    * in one slot at least:
+    */
+   assert(type1 == SVGA3DREG_SAMPLER);
+
+   if (type0 == SVGA3DREG_CONST &&
+       ((type3 == SVGA3DREG_CONST && src0.base.num != src3.base.num) ||
+        (type2 == SVGA3DREG_CONST && src0.base.num != src2.base.num)))
+      need_temp0 = TRUE;
+
+   if (type3 == SVGA3DREG_CONST &&
+       (type2 == SVGA3DREG_CONST && src3.base.num != src2.base.num))
+      need_temp3 = TRUE;
+
+   if (type0 == SVGA3DREG_INPUT &&
+       ((type3 == SVGA3DREG_INPUT && src0.base.num != src3.base.num) ||
+        (type2 == SVGA3DREG_INPUT && src0.base.num != src2.base.num)))
+      need_temp0 = TRUE;
+
+   if (type3 == SVGA3DREG_INPUT &&
+       (type2 == SVGA3DREG_INPUT && src3.base.num != src2.base.num))
+      need_temp3 = TRUE;
+
+   if (need_temp0)
+   {
+      temp0 = get_temp( emit );
+ 
+      if (!emit_op1( emit, inst_token( SVGA3DOP_MOV ), temp0, src0 ))
+         return FALSE;
+         
+      src0 = src( temp0 );
+   }
+
+   if (need_temp3)
+   {
+      temp3 = get_temp( emit );
+
+      if (!emit_op1( emit, inst_token( SVGA3DOP_MOV ), temp3, src3 ))
+         return FALSE;
+
+      src3 = src( temp3 );
+   }
+
+   if (!emit_op4( emit, inst, dest, src0, src1, src2, src3 ))
+      return FALSE;
+
+   if (need_temp3)
+      release_temp( emit, temp3 );
+   if (need_temp0)
+      release_temp( emit, temp0 );
+   return TRUE;
+}
+
+
 static boolean emit_def_const( struct svga_shader_emitter *emit,
                                SVGA3dShaderConstType type,
                                unsigned idx,
@@ -1176,16 +1258,21 @@ static boolean emit_tex2(struct svga_shader_emitter *emit,
    SVGA3dShaderDestToken tmp;
    
    inst.value = 0;
-   inst.op = SVGA3DOP_TEX;
 
    switch (insn->Instruction.Opcode) {
    case TGSI_OPCODE_TEX:
+      inst.op = SVGA3DOP_TEX;
       break;
    case TGSI_OPCODE_TXP:
+      inst.op = SVGA3DOP_TEX;
       inst.control = SVGA3DOPCONT_PROJECT;
       break;
    case TGSI_OPCODE_TXB:
+      inst.op = SVGA3DOP_TEX;
       inst.control = SVGA3DOPCONT_BIAS;
+      break;
+   case TGSI_OPCODE_TXL:
+      inst.op = SVGA3DOP_TEXLDL;
       break;
    default:
       assert(0);
@@ -1203,6 +1290,7 @@ static boolean emit_tex2(struct svga_shader_emitter *emit,
     * zero in that case.
     */
    if (emit->dynamic_branching_level > 0 &&
+       inst.op == SVGA3DOP_TEX &&
        SVGA3dShaderGetRegType(texcoord.base.value) == SVGA3DREG_TEMP) {
       struct src_register zero = get_zero_immediate( emit );
 
@@ -1245,14 +1333,20 @@ static boolean emit_tex2(struct svga_shader_emitter *emit,
 
 /* Translate texture instructions to SVGA3D representation.
  */
-static boolean emit_tex3(struct svga_shader_emitter *emit,
+static boolean emit_tex4(struct svga_shader_emitter *emit,
                          const struct tgsi_full_instruction *insn,
                          SVGA3dShaderDestToken dst )
 {
    SVGA3dShaderInstToken inst;
-   struct src_register src0;
-   struct src_register src1;
-   struct src_register src2;
+   struct src_register texcoord;
+   struct src_register ddx;
+   struct src_register ddy;
+   struct src_register sampler;
+
+   texcoord = translate_src_register( emit, &insn->Src[0] );
+   ddx      = translate_src_register( emit, &insn->Src[1] );
+   ddy      = translate_src_register( emit, &insn->Src[2] );
+   sampler  = translate_src_register( emit, &insn->Src[3] );
 
    inst.value = 0;
 
@@ -1260,16 +1354,12 @@ static boolean emit_tex3(struct svga_shader_emitter *emit,
    case TGSI_OPCODE_TXD: 
       inst.op = SVGA3DOP_TEXLDD; /* 4 args! */
       break;
-   case TGSI_OPCODE_TXL:
-      inst.op = SVGA3DOP_TEXLDL; /* 2 args! */
-      break;
+   default:
+      assert(0);
+      return FALSE;
    }
 
-   src0 = translate_src_register( emit, &insn->Src[0] );
-   src1 = translate_src_register( emit, &insn->Src[1] );
-   src2 = translate_src_register( emit, &insn->Src[2] );
-
-   return submit_op3( emit, inst, dst, src0, src1, src2 );
+   return submit_op4( emit, inst, dst, texcoord, sampler, ddx, ddy );
 }
 
 
@@ -1305,12 +1395,12 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
    case TGSI_OPCODE_TEX:
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_TXL:
       if (!emit_tex2( emit, insn, tex_result ))
          return FALSE;
       break;
-   case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXD:
-      if (!emit_tex3( emit, insn, tex_result ))
+      if (!emit_tex4( emit, insn, tex_result ))
          return FALSE;
       break;
    default:
