@@ -317,11 +317,8 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
     }
 
     if (can_swizzle) {
-        struct swizzled_imms* si =
-            &ttr->imms_to_swizzle[ttr->imms_to_swizzle_count];
-
-        si->index = index;
-        si->swizzle = swizzle;
+        ttr->imms_to_swizzle[ttr->imms_to_swizzle_count].index = index;
+        ttr->imms_to_swizzle[ttr->imms_to_swizzle_count].swizzle = swizzle;
         ttr->imms_to_swizzle_count++;
     } else {
         constant.Type = RC_CONSTANT_IMMEDIATE;
@@ -352,6 +349,9 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens)
 
     ttr->immediate_offset = ttr->compiler->Program.Constants.Count;
 
+    ttr->imms_to_swizzle = malloc(ttr->info->immediate_count * sizeof(struct swizzled_imms));
+    ttr->imms_to_swizzle_count = 0;
+
     tgsi_parse_init(&parser, tokens);
 
     while (!tgsi_parse_end_of_tokens(&parser)) {
@@ -371,6 +371,8 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens)
     }
 
     tgsi_parse_free(&parser);
+
+    free(ttr->imms_to_swizzle);
 
     rc_calculate_inputs_outputs(ttr->compiler);
 }

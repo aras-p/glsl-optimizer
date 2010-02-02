@@ -39,7 +39,7 @@ struct tgsi_to_rc {
     const struct tgsi_shader_info * info;
 
     int immediate_offset;
-    struct swizzled_imms imms_to_swizzle[10];
+    struct swizzled_imms * imms_to_swizzle;
     unsigned imms_to_swizzle_count;
 };
 
