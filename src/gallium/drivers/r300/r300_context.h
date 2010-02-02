@@ -28,7 +28,7 @@
 #include "util/u_blitter.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "r300_screen.h"
 

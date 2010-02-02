@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 
 #include "id_public.h"

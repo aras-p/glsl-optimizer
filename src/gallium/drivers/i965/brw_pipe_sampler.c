@@ -4,6 +4,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "util/u_inlines.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"

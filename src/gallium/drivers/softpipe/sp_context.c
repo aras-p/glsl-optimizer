@@ -35,6 +35,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"

@@ -32,7 +32,7 @@
  *    Brian Paul
  */
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_tile.h"

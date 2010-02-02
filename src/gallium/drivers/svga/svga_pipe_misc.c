@@ -25,6 +25,8 @@
 
 #include "svga_cmd.h"
 
+#include "util/u_inlines.h"
+
 #include "svga_context.h"
 #include "svga_screen_texture.h"
 

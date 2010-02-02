@@ -28,7 +28,7 @@
 #include "vl_mpeg12_mc_renderer.h"
 #include <assert.h>
 #include <pipe/p_context.h>
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
 #include <util/u_format.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>

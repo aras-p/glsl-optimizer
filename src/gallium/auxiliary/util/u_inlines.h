@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#ifndef P_INLINES_H
-#define P_INLINES_H
+#ifndef U_INLINES_H
+#define U_INLINES_H
 
-#include "p_context.h"
-#include "p_defines.h"
-#include "p_screen.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 
 
 #ifdef __cplusplus
@@ -38,7 +38,84 @@ extern "C" {
 #endif
 
 
+/*
+ * Reference counting helper functions.
+ */
+
+
+static INLINE void
+pipe_reference_init(struct pipe_reference *reference, unsigned count)
+{
+   p_atomic_set(&reference->count, count);
+}
+
+static INLINE boolean
+pipe_is_referenced(struct pipe_reference *reference)
+{
+   return p_atomic_read(&reference->count) != 0;
+}
+
 /**
+ * Update reference counting.
+ * The old thing pointed to, if any, will be unreferenced.
+ * Both 'ptr' and 'reference' may be NULL.
+ * \return TRUE if the object's refcount hits zero and should be destroyed.
+ */
+static INLINE boolean
+pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
+{
+   boolean destroy = FALSE;
+
+   if(ptr != reference) {
+      /* bump the reference.count first */
+      if (reference) {
+         assert(pipe_is_referenced(reference));
+         p_atomic_inc(&reference->count);
+      }
+
+      if (ptr) {
+         assert(pipe_is_referenced(ptr));
+         if (p_atomic_dec_zero(&ptr->count)) {
+            destroy = TRUE;
+         }
+      }
+   }
+
+   return destroy;
+}
+
+static INLINE void
+pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
+{
+   struct pipe_buffer *old_buf = *ptr;
+
+   if (pipe_reference(&(*ptr)->reference, &buf->reference))
+      old_buf->screen->buffer_destroy(old_buf);
+   *ptr = buf;
+}
+
+static INLINE void
+pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
+{
+   struct pipe_surface *old_surf = *ptr;
+
+   if (pipe_reference(&(*ptr)->reference, &surf->reference))
+      old_surf->texture->screen->tex_surface_destroy(old_surf);
+   *ptr = surf;
+}
+
+static INLINE void
+pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
+{
+   struct pipe_texture *old_tex = *ptr;
+
+   if (pipe_reference(&(*ptr)->reference, &tex->reference))
+      old_tex->screen->texture_destroy(old_tex);
+   *ptr = tex;
+}
+
+
+/*
  * Convenience wrappers for screen buffer functions.
  */
 
@@ -221,4 +298,4 @@ pipe_transfer_buffer_flags( struct pipe_transfer *transf )
 }
 #endif
 
-#endif /* P_INLINES_H */
+#endif /* U_INLINES_H */

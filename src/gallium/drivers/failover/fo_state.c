@@ -28,6 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "util/u_inlines.h"
+
 #include "fo_context.h"
 
 

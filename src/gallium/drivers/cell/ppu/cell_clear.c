@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "cell/common.h"

@@ -383,38 +383,6 @@ struct pipe_vertex_element
 };
 
 
-/* Reference counting helper functions */
-static INLINE void
-pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
-{
-   struct pipe_buffer *old_buf = *ptr;
-
-   if (pipe_reference(&(*ptr)->reference, &buf->reference))
-      old_buf->screen->buffer_destroy(old_buf);
-   *ptr = buf;
-}
-
-static INLINE void
-pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
-{
-   struct pipe_surface *old_surf = *ptr;
-
-   if (pipe_reference(&(*ptr)->reference, &surf->reference))
-      old_surf->texture->screen->tex_surface_destroy(old_surf);
-   *ptr = surf;
-}
-
-static INLINE void
-pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
-{
-   struct pipe_texture *old_tex = *ptr;
-
-   if (pipe_reference(&(*ptr)->reference, &tex->reference))
-      old_tex->screen->texture_destroy(old_tex);
-   *ptr = tex;
-}
-
-
 #ifdef __cplusplus
 }
 #endif

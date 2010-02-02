@@ -9,7 +9,7 @@
 #include "util/u_memory.h"
 #include "util/u_rect.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include <math.h>
 

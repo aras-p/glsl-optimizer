@@ -38,7 +38,7 @@
 
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"

@@ -28,6 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "util/u_inlines.h"
+
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_tile_cache.h"

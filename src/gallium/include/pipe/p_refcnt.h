@@ -45,50 +45,6 @@ struct pipe_reference
 };
 
 
-static INLINE void
-pipe_reference_init(struct pipe_reference *reference, unsigned count)
-{
-   p_atomic_set(&reference->count, count);
-}
-
-
-static INLINE boolean
-pipe_is_referenced(struct pipe_reference *reference)
-{
-   return p_atomic_read(&reference->count) != 0;
-}
-
-
-/**
- * Update reference counting.
- * The old thing pointed to, if any, will be unreferenced.
- * Both 'ptr' and 'reference' may be NULL.
- * \return TRUE if the object's refcount hits zero and should be destroyed.
- */
-static INLINE boolean
-pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
-{
-   boolean destroy = FALSE;
-
-   if(ptr != reference) {
-      /* bump the reference.count first */
-      if (reference) {
-         assert(pipe_is_referenced(reference));
-         p_atomic_inc(&reference->count);
-      }
-   
-      if (ptr) {
-         assert(pipe_is_referenced(ptr));
-         if (p_atomic_dec_zero(&ptr->count)) {
-            destroy = TRUE;
-         }
-      }
-   }
-
-   return destroy;
-}
-
-
 #ifdef __cplusplus
 }
 #endif

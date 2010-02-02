@@ -23,7 +23,7 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_bitmask.h"

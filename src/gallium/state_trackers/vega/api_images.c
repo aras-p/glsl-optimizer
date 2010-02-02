@@ -35,7 +35,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_blit.h"
 #include "util/u_tile.h"
 #include "util/u_memory.h"

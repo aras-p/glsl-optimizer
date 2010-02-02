@@ -40,6 +40,7 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
+#include "util/u_inlines.h"
 
 
 

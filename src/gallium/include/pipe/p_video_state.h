@@ -35,6 +35,7 @@
 #include <pipe/p_format.h>
 #include <pipe/p_refcnt.h>
 #include <pipe/p_screen.h>
+#include <util/u_inlines.h>
 
 #ifdef __cplusplus
 extern "C" {

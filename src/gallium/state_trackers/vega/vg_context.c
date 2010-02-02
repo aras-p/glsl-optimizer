@@ -34,7 +34,7 @@
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "cso_cache/cso_context.h"

@@ -28,7 +28,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
 
 

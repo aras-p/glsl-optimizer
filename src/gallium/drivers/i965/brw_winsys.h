@@ -29,6 +29,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_refcnt.h"
+#include "util/u_inlines.h"
 
 struct brw_winsys;
 struct pipe_fence_handle;

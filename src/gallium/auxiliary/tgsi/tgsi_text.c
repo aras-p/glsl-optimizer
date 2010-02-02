@@ -29,7 +29,7 @@
 #include "util/u_memory.h"
 #include "util/u_prim.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_info.h"

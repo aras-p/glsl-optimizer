@@ -39,6 +39,7 @@
 #include "st_texture.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
+#include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
 

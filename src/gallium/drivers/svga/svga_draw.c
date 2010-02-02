@@ -24,7 +24,7 @@
  **********************************************************/
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"

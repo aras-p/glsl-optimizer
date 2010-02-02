@@ -35,6 +35,7 @@
 #include "st_cb_fbo.h"
 #include "st_public.h"
 #include "pipe/p_defines.h"
+#include "util/u_inlines.h"
 
 
 struct st_framebuffer *
