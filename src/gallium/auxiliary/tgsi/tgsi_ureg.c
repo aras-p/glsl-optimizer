@@ -103,6 +103,8 @@ struct ureg_program
 
    struct {
       unsigned index;
+      unsigned semantic_name;
+      unsigned semantic_index;
    } gs_input[UREG_MAX_INPUT];
    unsigned nr_gs_inputs;
 
@@ -325,10 +327,14 @@ ureg_DECL_vs_input( struct ureg_program *ureg,
 
 struct ureg_src
 ureg_DECL_gs_input(struct ureg_program *ureg,
-                   unsigned index)
+                   unsigned index,
+                   unsigned semantic_name,
+                   unsigned semantic_index)
 {
    if (ureg->nr_gs_inputs < UREG_MAX_INPUT) {
       ureg->gs_input[ureg->nr_gs_inputs].index = index;
+      ureg->gs_input[ureg->nr_gs_inputs].semantic_name = semantic_name;
+      ureg->gs_input[ureg->nr_gs_inputs].semantic_index = semantic_index;
       ureg->nr_gs_inputs++;
    } else {
       set_bad(ureg);
@@ -1251,10 +1257,12 @@ static void emit_decls( struct ureg_program *ureg )
       }
    } else {
       for (i = 0; i < ureg->nr_gs_inputs; i++) {
-         emit_decl_range(ureg, 
-                         TGSI_FILE_INPUT, 
-                         ureg->gs_input[i].index,
-                         1);
+         emit_decl(ureg,
+                   TGSI_FILE_INPUT,
+                   ureg->gs_input[i].index,
+                   ureg->gs_input[i].semantic_name,
+                   ureg->gs_input[i].semantic_index,
+                   TGSI_INTERPOLATE_CONSTANT);
       }
    }
 
