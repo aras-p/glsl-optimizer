@@ -543,27 +543,25 @@ st_TexImage(GLcontext * ctx,
       _mesa_align_free(texImage->Data);
    }
 
-   if (width == 0 || height == 0 || depth == 0) {
-      /* stop after freeing old image */
-      return;
-   }
-
-   /* If this is the only mipmap level in the texture, could call
-    * bmBufferData with NULL data to free the old block and avoid
-    * waiting on any outstanding fences.
+   /*
+    * See if the new image is somehow incompatible with the existing
+    * mipmap.  If so, free the old mipmap.
     */
    if (stObj->pt) {
       if (stObj->teximage_realloc ||
           level > (GLint) stObj->pt->last_level ||
-          (stObj->pt->last_level == level &&
-           stObj->pt->target != PIPE_TEXTURE_CUBE &&
-           !st_texture_match_image(stObj->pt, &stImage->base,
-                                   stImage->face, stImage->level))) {
+          !st_texture_match_image(stObj->pt, &stImage->base,
+                                  stImage->face, stImage->level)) {
          DBG("release it\n");
          pipe_texture_reference(&stObj->pt, NULL);
          assert(!stObj->pt);
          stObj->teximage_realloc = FALSE;
       }
+   }
+
+   if (width == 0 || height == 0 || depth == 0) {
+      /* stop after freeing old image */
+      return;
    }
 
    if (!stObj->pt) {
