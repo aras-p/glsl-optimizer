@@ -39,8 +39,6 @@
 #define U_DEBUG_H_
 
 
-#include <stdarg.h>
-
 #include "pipe/p_compiler.h"
 
 
@@ -60,11 +58,6 @@ extern "C" {
 #endif
 
    
-/* MSVC bebore VC7 does not have the __FUNCTION__ macro */
-#if defined(_MSC_VER) && _MSC_VER < 1300
-#define __FUNCTION__ "???"
-#endif
-
 #if defined(__GNUC__)
 #define _util_printf_format(fmt, list) __attribute__ ((format (printf, fmt, list)))
 #else
