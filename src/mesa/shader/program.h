@@ -119,8 +119,14 @@ _mesa_combine_programs(GLcontext *ctx,
                        const struct gl_program *progA,
                        const struct gl_program *progB);
 
+extern void
+_mesa_find_used_registers(const struct gl_program *prog,
+                          gl_register_file file,
+                          GLboolean used[], GLuint usedSize);
+
 extern GLint
-_mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
+_mesa_find_free_register(const GLboolean used[],
+                         GLuint maxRegs, GLuint firstReg);
 
 extern void
 _mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog);

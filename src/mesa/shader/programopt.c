@@ -495,6 +495,11 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    GLuint i;
    GLint outputMap[VERT_RESULT_MAX];
    GLuint numVaryingReads = 0;
+   GLboolean usedTemps[MAX_PROGRAM_TEMPS];
+   GLuint firstTemp = 0;
+
+   _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
+                             usedTemps, MAX_PROGRAM_TEMPS);
 
    assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
@@ -513,8 +518,10 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
             const GLuint var = inst->SrcReg[j].Index;
             if (outputMap[var] == -1) {
                numVaryingReads++;
-               outputMap[var] = _mesa_find_free_register(prog,
-                                                         PROGRAM_TEMPORARY);
+               outputMap[var] = _mesa_find_free_register(usedTemps,
+                                                         MAX_PROGRAM_TEMPS,
+                                                         firstTemp);
+               firstTemp = outputMap[var] + 1;
             }
             inst->SrcReg[j].File = PROGRAM_TEMPORARY;
             inst->SrcReg[j].Index = outputMap[var];
