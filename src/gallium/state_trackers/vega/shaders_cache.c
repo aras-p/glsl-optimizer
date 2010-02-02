@@ -123,17 +123,23 @@ static INLINE VGint range_max(VGint max, VGint current)
    return MAX2(max, current);
 }
 
-static void
-create_preamble(char *txt,
-                const struct shader_asm_info *shaders[SHADER_STAGES],
-                int num_shaders)
+static void *
+combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_shaders,
+                struct pipe_context *pipe,
+                struct pipe_shader_state *shader)
 {
    VGboolean declare_input = VG_FALSE;
    VGint start_const   = -1, end_const   = 0;
    VGint start_temp    = -1, end_temp    = 0;
    VGint start_sampler = -1, end_sampler = 0;
-   VGint i;
+   VGint i, current_shader = 0;
    VGint num_consts, num_temps, num_samplers;
+   struct ureg_program *ureg;
+   struct ureg_src in[2];
+   struct ureg_src *sampler = NULL;
+   struct ureg_src *constant = NULL;
+   struct ureg_dst out, *temp = NULL;
+   void *p = NULL;
 
    for (i = 0; i < num_shaders; ++i) {
       if (shaders[i]->num_consts)
@@ -158,99 +164,94 @@ create_preamble(char *txt,
    if (start_temp < 0)
       start_temp = 0;
    if (start_sampler < 0)
-      start_sampler = 0;
+       start_sampler = 0;
 
    num_consts   = end_const   - start_const;
    num_temps    = end_temp    - start_temp;
    num_samplers = end_sampler - start_sampler;
-   /* end exclusive */
-   --end_const;
-   --end_temp;
-   --end_sampler;
 
-   sprintf(txt, "FRAG\n");
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!ureg)
+       return NULL;
 
    if (declare_input) {
-      sprintf(txt + strlen(txt), "DCL IN[0], POSITION, LINEAR\n");
-      sprintf(txt + strlen(txt), "DCL IN[1], GENERIC[0], PERSPECTIVE\n");
+      in[0] = ureg_DECL_fs_input(ureg,
+                                 TGSI_SEMANTIC_POSITION,
+                                 0,
+                                 TGSI_INTERPOLATE_LINEAR);
+      in[1] = ureg_DECL_fs_input(ureg,
+                                 TGSI_SEMANTIC_GENERIC,
+                                 0,
+                                 TGSI_INTERPOLATE_PERSPECTIVE);
    }
 
    /* we always have a color output */
-   sprintf(txt + strlen(txt), "DCL OUT[0], COLOR, CONSTANT\n");
+   out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
 
-   if (num_consts > 1)
-      sprintf(txt + strlen(txt), "DCL CONST[%d..%d], CONSTANT\n", start_const, end_const);
-   else if (num_consts == 1)
-      sprintf(txt + strlen(txt), "DCL CONST[%d], CONSTANT\n", start_const);
+   if (num_consts >= 1) {
+      constant = (struct ureg_src *) malloc(sizeof(struct ureg_src) * end_const);
+      for (i = start_const; i < end_const; i++) {
+         constant[i] = ureg_DECL_constant(ureg, i);
+      }
 
-   if (num_temps > 1)
-      sprintf(txt + strlen(txt), "DCL TEMP[%d..%d], CONSTANT\n", start_temp, end_temp);
-   else if (num_temps > 1)
-      sprintf(txt + strlen(txt), "DCL TEMP[%d], CONSTANT\n", start_temp);
-
-   if (num_samplers > 1)
-      sprintf(txt + strlen(txt), "DCL SAMP[%d..%d], CONSTANT\n", start_sampler, end_sampler);
-   else if (num_samplers == 1)
-      sprintf(txt + strlen(txt), "DCL SAMP[%d], CONSTANT\n", start_sampler);
-}
-
-static void *
-combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_shaders,
-                struct pipe_context *pipe,
-                struct pipe_shader_state *shader)
-{
-   char *combined_txt;
-   int combined_len = MAX_PREAMBLE;
-   int combined_tokens = 0;
-   int i = 0;
-   int current_shader = 0;
-   int current_len;
-
-   for (i = 0; i < num_shaders; ++i) {
-      combined_len += strlen(shaders[i]->txt);
-      combined_tokens += shaders[i]->num_tokens;
    }
-   /* add for the %s->TEMP[0] substitutions */
-   combined_len += num_shaders * 7 /*TEMP[0]*/ + 4 /*"END\n"*/;
 
-   combined_txt = (char*)malloc(combined_len);
-   combined_txt[0] = '\0';
+   if (num_temps >= 1) {
+      temp = (struct ureg_dst *) malloc(sizeof(struct ureg_dst) * end_temp);
+      for (i = start_temp; i < end_temp; i++) {
+         temp[i] = ureg_DECL_temporary(ureg);
+      }
+   }
 
-   create_preamble(combined_txt, shaders, num_shaders);
+   if (num_samplers >= 1) {
+      sampler = (struct ureg_src *) malloc(sizeof(struct ureg_src) * end_sampler);
+      for (i = start_sampler; i < end_sampler; i++) {
+         sampler[i] = ureg_DECL_sampler(ureg, i);
+      }
+   }
 
    while (current_shader < num_shaders) {
-      const char temp[] = "TEMP[0]";
-      const char out[] = "OUT[0]";
-      const char *subst = temp;
-
-      current_len = strlen(combined_txt);
-
-      /* if the last shader then output */
-      if (current_shader + 1 == num_shaders)
-         subst = out;
-
-      snprintf(combined_txt + current_len,
-               combined_len - current_len,
-               shaders[current_shader]->txt,
-               subst);
-      ++current_shader;
+      if ((current_shader + 1) == num_shaders) {
+         shaders[current_shader]->func(ureg,
+                                       &out,
+                                       in,
+                                       sampler,
+                                       temp,
+                                       constant);
+      } else {
+         shaders[current_shader]->func(ureg,
+                                      &temp[0],
+                                      in,
+                                      sampler,
+                                      temp,
+                                      constant);
+      }
+      current_shader++;
    }
 
+   ureg_END(ureg);
 
-   current_len = strlen(combined_txt);
-   snprintf(combined_txt + current_len,
-            combined_len - current_len,
-            "END\n");
+   shader->tokens = ureg_finalize(ureg);
+   if(!shader->tokens)
+      return NULL;
 
-   debug_printf("Combined shader is : \n%s\n",
-                 combined_txt);
+   p = pipe->create_fs_state(pipe, shader);
+   ureg_destroy(ureg);
 
-   shader->tokens = tokens_from_assembly(
-            combined_txt, combined_tokens);
+   if (num_temps >= 1) {
+      for (i = start_temp; i < end_temp; i++) {
+         ureg_release_temporary(ureg, temp[i]);
+      }
+   }
 
-   free(combined_txt);
+   if (temp)
+      free(temp);
+   if (constant)
+      free(constant);
+   if (sampler)
+      free(sampler);
 
-   return pipe->create_fs_state(pipe, shader);
+   return p;
 }
 
 static void *
