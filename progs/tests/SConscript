@@ -51,6 +51,7 @@ progs = [
     'ext422square',
     'fbotest1',
     'fbotest2',
+    'fbotest3',
     'fillrate',
     'floattex',
     'fog',
