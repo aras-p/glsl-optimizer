@@ -1,5 +1,5 @@
 
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "pipe/p_defines.h"
 #include "util/u_ringbuffer.h"
 #include "util/u_math.h"

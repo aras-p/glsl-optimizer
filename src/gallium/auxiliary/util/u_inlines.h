@@ -33,7 +33,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_screen.h"
 #include "util/u_debug.h"
-#include "pipe/p_atomic.h"
+#include "util/u_atomic.h"
 
 
 #ifdef __cplusplus

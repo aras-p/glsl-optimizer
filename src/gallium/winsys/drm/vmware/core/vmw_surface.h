@@ -36,8 +36,8 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_atomic.h"
-#include "pipe/p_atomic.h"
+#include "util/u_atomic.h"
+#include "util/u_atomic.h"
 
 #define VMW_MAX_PRESENTS 3
 

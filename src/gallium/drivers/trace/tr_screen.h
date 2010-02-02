@@ -30,7 +30,7 @@
 
 
 #include "pipe/p_screen.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 
 
 #ifdef __cplusplus

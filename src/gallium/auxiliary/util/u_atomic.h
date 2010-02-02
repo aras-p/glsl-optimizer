@@ -6,11 +6,11 @@
  *
  */
 
-#ifndef P_ATOMIC_H
-#define P_ATOMIC_H
+#ifndef U_ATOMIC_H
+#define U_ATOMIC_H
 
-#include "p_compiler.h"
-#include "p_defines.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -244,4 +244,4 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 }
 #endif
 
-#endif /* P_ATOMIC_H */
+#endif /* U_ATOMIC_H */

@@ -31,8 +31,8 @@
  */
 
 
-#ifndef _P_THREAD2_H_
-#define _P_THREAD2_H_
+#ifndef OS_THREAD_H_
+#define OS_THREAD_H_
 
 
 #include "pipe/p_compiler.h"
@@ -276,4 +276,4 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
 
 
 
-#endif /* _P_THREAD2_H_ */
+#endif /* OS_THREAD_H_ */
