@@ -419,18 +419,37 @@ static void const_coeff( struct setup_context *setup,
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
  */
-static void tri_linear_coeff( struct setup_context *setup,
-                              struct tgsi_interp_coef *coef,
-                              uint vertSlot, uint i)
+static void
+tri_linear_coeff(struct setup_context *setup,
+                 struct tgsi_interp_coef *coef,
+                 uint vertSlot,
+                 uint i,
+                 uint cylindrical_wrap)
 {
    float botda = setup->vmid[vertSlot][i] - setup->vmin[vertSlot][i];
    float majda = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
-   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
-   float dadx = a * setup->oneoverarea;
-   float dady = b * setup->oneoverarea;
+   float a, b;
+   float dadx, dady;
 
    assert(i <= 3);
+
+   if (cylindrical_wrap) {
+      if (botda > 0.5f) {
+         botda -= 1.0f;
+      } else if (botda < -0.5f) {
+         botda += 1.0f;
+      }
+      if (majda > 0.5f) {
+         majda -= 1.0f;
+      } else if (majda < -0.5f) {
+         majda += 1.0f;
+      }
+   }
+
+   a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+   b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+   dadx = a * setup->oneoverarea;
+   dady = b * setup->oneoverarea;
 
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
@@ -547,8 +566,8 @@ static void setup_tri_coefficients( struct setup_context *setup )
 
    /* z and w are done by linear interpolation:
     */
-   tri_linear_coeff(setup, &setup->posCoef, 0, 2);
-   tri_linear_coeff(setup, &setup->posCoef, 0, 3);
+   tri_linear_coeff(setup, &setup->posCoef, 0, 2, 0);
+   tri_linear_coeff(setup, &setup->posCoef, 0, 3, 0);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -562,8 +581,13 @@ static void setup_tri_coefficients( struct setup_context *setup )
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         for (j = 0; j < NUM_CHANNELS; j++) {
+            tri_linear_coeff(setup,
+                             &setup->coef[fragSlot],
+                             vertSlot,
+                             j,
+                             spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j));
+         }
          break;
       case INTERP_PERSPECTIVE:
          for (j = 0; j < NUM_CHANNELS; j++)
