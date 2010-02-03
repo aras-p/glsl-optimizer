@@ -65,7 +65,7 @@ llvmpipe_get_vertex_info(struct llvmpipe_context *llvmpipe)
       /* compute vertex layout now */
       const struct lp_fragment_shader *lpfs = llvmpipe->fs;
       struct vertex_info *vinfo_vbuf = &llvmpipe->vertex_info_vbuf;
-      const uint num = draw_current_shader_outputs(llvmpipe->draw);
+      const uint num = draw_num_shader_outputs(llvmpipe->draw);
       uint i;
 
       /* Tell draw_vbuf to simply emit the whole post-xform vertex
