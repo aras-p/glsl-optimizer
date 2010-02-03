@@ -27,6 +27,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_inlines.h"
 #include "egldriver.h"
 #include "eglcurrent.h"
 #include "eglconfigutil.h"
