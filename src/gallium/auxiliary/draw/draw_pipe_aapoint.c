@@ -81,16 +81,19 @@ struct aapoint_stage
 {
    struct draw_stage stage;
 
-   int psize_slot;
+   /** half of pipe_rasterizer_state::point_size */
    float radius;
+
+   /** vertex attrib slot containing point size */
+   int psize_slot;
 
    /** this is the vertex attrib slot for the new texcoords */
    uint tex_slot;
+
+   /** vertex attrib slot containing position */
    uint pos_slot;
 
-   /*
-    * Currently bound state
-    */
+   /** Currently bound fragment shader */
    struct aapoint_fragment_shader *fs;
 
    /*
@@ -575,8 +578,8 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    const struct aapoint_stage *aapoint = aapoint_stage(stage);
    struct prim_header tri;
    struct vertex_header *v[4];
-   uint texPos = aapoint->tex_slot;
-   uint pos_slot = aapoint->pos_slot;
+   const uint tex_slot = aapoint->tex_slot;
+   const uint pos_slot = aapoint->pos_slot;
    float radius, *pos, *tex;
    uint i;
    float k;
@@ -643,16 +646,16 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    pos[1] += radius;
 
    /* new texcoords */
-   tex = v[0]->data[texPos];
+   tex = v[0]->data[tex_slot];
    ASSIGN_4V(tex, -1, -1, k, 1);
 
-   tex = v[1]->data[texPos];
+   tex = v[1]->data[tex_slot];
    ASSIGN_4V(tex,  1, -1, k, 1);
 
-   tex = v[2]->data[texPos];
+   tex = v[2]->data[tex_slot];
    ASSIGN_4V(tex,  1,  1, k, 1);
 
-   tex = v[3]->data[texPos];
+   tex = v[3]->data[tex_slot];
    ASSIGN_4V(tex, -1,  1, k, 1);
 
    /* emit 2 tris for the quad strip */
