@@ -347,9 +347,11 @@ _eglPreloadPattern(const char *dir, size_t len, void *preload_data)
       if (strncmp(dirent->d_name, prefix, prefix_len) != 0)
          continue;
       /* match the suffix */
-      p = dirent->d_name + dirent_len - suffix_len;
-      if (p < dirent->d_name || strcmp(p, suffix) != 0)
-         continue;
+      if (suffix) {
+         p = dirent->d_name + dirent_len - suffix_len;
+         if (p < dirent->d_name || strcmp(p, suffix) != 0)
+            continue;
+      }
 
       /* make a full path and load the driver */
       if (len + dirent_len + 1 <= sizeof(path)) {
