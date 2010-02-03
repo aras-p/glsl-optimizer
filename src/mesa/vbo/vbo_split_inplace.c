@@ -72,7 +72,8 @@ static void flush_vertex( struct split_context *split )
       ib = *split->ib;
 
       ib.count = split->max_index - split->min_index + 1;
-      ib.ptr += split->min_index * _mesa_sizeof_type(ib.type);
+      ib.ptr = (const void *)((const char *)ib.ptr + 
+                              split->min_index * _mesa_sizeof_type(ib.type));
 
       /* Rebase the primitives to save index buffer entries. */
       for (i = 0; i < split->dstprim_nr; i++)
