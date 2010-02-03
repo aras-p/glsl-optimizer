@@ -6,6 +6,19 @@ for describing shaders. Since Gallium is inherently shaderful, shaders are
 an important part of the API. TGSI is the only intermediate representation
 used by all drivers.
 
+Basics
+------
+
+All TGSI instructions, known as *opcodes*, operate on arbitrary-precision
+floating-point four-component vectors. An opcode may have up to one
+destination register, known as *dst*, and between zero and three source
+registers, called *src0* through *src2*, or simply *src* if there is only
+one.
+
+Some instructions, like :opcode:`I2F`, permit re-interpretation of vector
+components as integers. Other instructions permit using registers as
+two-component vectors with double precision; see :ref:`Double Opcodes`.
+
 Instruction Set
 ---------------
 
@@ -1111,6 +1124,8 @@ ps_2_x
 
   TBD
 
+.. _doubleopcodes:
+
 Double Opcodes
 ^^^^^^^^^^^^^^^
 
@@ -1269,19 +1284,7 @@ Keywords
 
   discard           Discard fragment.
 
-  dst               First destination register.
-
-  dst0              First destination register.
-
   pc                Program counter.
-
-  src               First source register.
-
-  src0              First source register.
-
-  src1              Second source register.
-
-  src2              Third source register.
 
   target            Label of target instruction.
 
