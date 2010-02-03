@@ -19,6 +19,10 @@ Some instructions, like :opcode:`I2F`, permit re-interpretation of vector
 components as integers. Other instructions permit using registers as
 two-component vectors with double precision; see :ref:`Double Opcodes`.
 
+When an instruction has a scalar result, the result is usually copied into
+each of the components of *dst*. When this happens, the result is said to be
+*replicated* to *dst*. :opcode:`RCP` is one such instruction.
+
 Instruction Set
 ---------------
 
@@ -67,28 +71,20 @@ From GL_NV_vertex_program
 
 .. opcode:: RCP - Reciprocal
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \frac{1}{src.x}
-
-  dst.y = \frac{1}{src.x}
-
-  dst.z = \frac{1}{src.x}
-
-  dst.w = \frac{1}{src.x}
+  dst = \frac{1}{src.x}
 
 
 .. opcode:: RSQ - Reciprocal Square Root
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \frac{1}{\sqrt{|src.x|}}
-
-  dst.y = \frac{1}{\sqrt{|src.x|}}
-
-  dst.z = \frac{1}{\sqrt{|src.x|}}
-
-  dst.w = \frac{1}{\sqrt{|src.x|}}
+  dst = \frac{1}{\sqrt{|src.x|}}
 
 
 .. opcode:: EXP - Approximate Exponential Base 2
@@ -145,28 +141,20 @@ From GL_NV_vertex_program
 
 .. opcode:: DP3 - 3-component Dot Product
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
-
-  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
-
-  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
-
-  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
+  dst = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z
 
 
 .. opcode:: DP4 - 4-component Dot Product
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
-
-  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
-
-  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
-
-  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
+  dst = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src0.w \times src1.w
 
 
 .. opcode:: DST - Distance Vector
@@ -327,7 +315,7 @@ From GL_NV_vertex_program
 
 .. opcode:: FLR - Floor
 
-This is identical to ARL.
+This is identical to :opcode:`ARL`.
 
 .. math::
 
@@ -355,41 +343,29 @@ This is identical to ARL.
 
 .. opcode:: EX2 - Exponential Base 2
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = 2^{src.x}
-
-  dst.y = 2^{src.x}
-
-  dst.z = 2^{src.x}
-
-  dst.w = 2^{src.x}
+  dst = 2^{src.x}
 
 
 .. opcode:: LG2 - Logarithm Base 2
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \log_2{src.x}
-
-  dst.y = \log_2{src.x}
-
-  dst.z = \log_2{src.x}
-
-  dst.w = \log_2{src.x}
+  dst = \log_2{src.x}
 
 
 .. opcode:: POW - Power
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = src0.x^{src1.x}
-
-  dst.y = src0.x^{src1.x}
-
-  dst.z = src0.x^{src1.x}
-
-  dst.w = src0.x^{src1.x}
+  dst = src0.x^{src1.x}
 
 .. opcode:: XPD - Cross Product
 
@@ -419,43 +395,31 @@ This is identical to ARL.
 
 .. opcode:: RCC - Reciprocal Clamped
 
+This instruction replicates its result.
+
 XXX cleanup on aisle three
 
 .. math::
 
-  dst.x = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
-
-  dst.y = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
-
-  dst.z = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
-
-  dst.w = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+  dst = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
 
 
 .. opcode:: DPH - Homogeneous Dot Product
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
-
-  dst.y = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
-
-  dst.z = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
-
-  dst.w = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
+  dst = src0.x \times src1.x + src0.y \times src1.y + src0.z \times src1.z + src1.w
 
 
 .. opcode:: COS - Cosine
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \cos{src.x}
-
-  dst.y = \cos{src.x}
-
-  dst.z = \cos{src.x}
-
-  dst.w = \cos{src.x}
+  dst = \cos{src.x}
 
 
 .. opcode:: DDX - Derivative Relative To X
@@ -521,7 +485,9 @@ XXX cleanup on aisle three
 
   dst.w = 1
 
-Considered for removal.
+.. note::
+
+   Considered for removal.
 
 
 .. opcode:: SEQ - Set On Equal
@@ -539,17 +505,16 @@ Considered for removal.
 
 .. opcode:: SFL - Set On False
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = 0
+  dst = 0
 
-  dst.y = 0
+.. note::
 
-  dst.z = 0
+   Considered for removal.
 
-  dst.w = 0
-
-Considered for removal.
 
 .. opcode:: SGT - Set On Greater Than
 
@@ -566,15 +531,11 @@ Considered for removal.
 
 .. opcode:: SIN - Sine
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \sin{src.x}
-
-  dst.y = \sin{src.x}
-
-  dst.z = \sin{src.x}
-
-  dst.w = \sin{src.x}
+  dst = \sin{src.x}
 
 
 .. opcode:: SLE - Set On Less Equal Than
@@ -605,15 +566,11 @@ Considered for removal.
 
 .. opcode:: STR - Set On True
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = 1
-
-  dst.y = 1
-
-  dst.z = 1
-
-  dst.w = 1
+  dst = 1
 
 
 .. opcode:: TEX - Texture Lookup
@@ -635,25 +592,33 @@ Considered for removal.
 
   TBD
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: UP2US - Unpack Two Unsigned 16-Bit Scalars
 
   TBD
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: UP4B - Unpack Four Signed 8-Bit Values
 
   TBD
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: UP4UB - Unpack Four Unsigned 8-Bit Scalars
 
   TBD
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: X2D - 2D Coordinate Transformation
 
@@ -667,7 +632,9 @@ Considered for removal.
 
   dst.w = src0.y + src1.x \times src2.z + src1.y \times src2.w
 
-Considered for removal.
+.. note::
+
+   Considered for removal.
 
 
 From GL_NV_vertex_program2
@@ -678,7 +645,9 @@ From GL_NV_vertex_program2
 
   TBD
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: ARR - Address Register Load With Round
 
@@ -697,7 +666,9 @@ From GL_NV_vertex_program2
 
   pc = target
 
-  Considered for removal.
+.. note::
+
+   Considered for removal.
 
 .. opcode:: CAL - Subroutine Call
 
@@ -793,15 +764,11 @@ From GL_NV_vertex_program2
 
 .. opcode:: DP2 - 2-component Dot Product
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = src0.x \times src1.x + src0.y \times src1.y
-
-  dst.y = src0.x \times src1.x + src0.y \times src1.y
-
-  dst.z = src0.x \times src1.x + src0.y \times src1.y
-
-  dst.w = src0.x \times src1.x + src0.y \times src1.y
+  dst = src0.x \times src1.x + src0.y \times src1.y
 
 
 .. opcode:: TXL - Texture Lookup With LOD
@@ -832,7 +799,13 @@ From GL_NV_vertex_program2
   Note: The destination must be a loop register.
         The source must be a constant register.
 
-  Considered for cleanup / removal.
+.. note::
+
+   Considered for cleanup.
+
+.. note::
+
+   Considered for removal.
 
 
 .. opcode:: REP - Repeat
@@ -861,7 +834,13 @@ From GL_NV_vertex_program2
 
   Note: The destination must be a loop register.
 
-  Considered for cleanup / removal.
+.. note::
+
+   Considered for cleanup.
+
+.. note::
+
+   Considered for removal.
 
 .. opcode:: ENDREP - End Repeat
 
@@ -875,7 +854,13 @@ From GL_NV_vertex_program2
   push(src.z)
   push(src.w)
 
-  Considered for cleanup / removal.
+.. note::
+
+   Considered for cleanup.
+
+.. note::
+
+   Considered for removal.
 
 .. opcode:: POPA - Pop Address Register From Stack
 
@@ -884,7 +869,13 @@ From GL_NV_vertex_program2
   dst.y = pop()
   dst.x = pop()
 
-  Considered for cleanup / removal.
+.. note::
+
+   Considered for cleanup.
+
+.. note::
+
+   Considered for removal.
 
 
 From GL_NV_gpu_program4
@@ -1095,15 +1086,11 @@ From GLSL
 
 .. opcode:: NRM4 - 4-component Vector Normalise
 
+This instruction replicates its result.
+
 .. math::
 
-  dst.x = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
-
-  dst.y = \frac{src.y}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
-
-  dst.z = \frac{src.z}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
-
-  dst.w = \frac{src.w}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
+  dst = \frac{src.x}{src.x \times src.x + src.y \times src.y + src.z \times src.z + src.w \times src.w}
 
 
 ps_2_x
