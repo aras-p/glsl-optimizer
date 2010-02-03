@@ -29,37 +29,7 @@
 
 #include "pipe/p_config.h" 
 
-#include <stdarg.h>
-
-
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
-
-#include <windows.h>
-#include <winddi.h>
-
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
-
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <windows.h> 
-#include <types.h> 
-
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN      // Exclude rarely-used stuff from Windows headers
-#endif
-#include <windows.h>
-#include <stdio.h>
-
-#else
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#endif
-
-#include "pipe/p_compiler.h" 
+#include "pipe/p_compiler.h"
 #include "util/u_debug.h" 
 #include "pipe/p_format.h" 
 #include "pipe/p_state.h" 
@@ -73,81 +43,16 @@
 #include "util/u_prim.h" 
 
 
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
-static INLINE void 
-_EngDebugPrint(const char *format, ...)
-{
-   va_list ap;
-   va_start(ap, format);
-   EngDebugPrint("", (PCHAR)format, ap);
-   va_end(ap);
-}
-#endif
-
-
 void _debug_vprintf(const char *format, va_list ap)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-   /* EngDebugPrint does not handle float point arguments, so we need to use
-    * our own vsnprintf implementation. It is also very slow, so buffer until
-    * we find a newline. */
-   static char buf[512] = {'\0'};
-   size_t len = strlen(buf);
-   int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
-   if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
-      _EngDebugPrint("%s", buf);
-      buf[0] = '\0';
-   }
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-   /* OutputDebugStringA can be very slow, so buffer until we find a newline. */
+   /* We buffer until we find a newline. */
    static char buf[4096] = {'\0'};
    size_t len = strlen(buf);
    int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
    if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
-      OutputDebugStringA(buf);
+      os_log_message(buf);
       buf[0] = '\0';
    }
-   
-   if(GetConsoleWindow() && !IsDebuggerPresent()) {
-      fflush(stdout);
-      vfprintf(stderr, format, ap);
-      fflush(stderr);
-   }
-   
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
-   wchar_t *wide_format;
-   long wide_str_len;   
-   char buf[512];   
-   int ret;   
-#if (_WIN32_WCE < 600)
-   ret = vsprintf(buf, format, ap);   
-   if(ret < 0){   
-       sprintf(buf, "Cant handle debug print!");   
-       ret = 25;
-   }
-#else
-   ret = vsprintf_s(buf, 512, format, ap);   
-   if(ret < 0){   
-       sprintf_s(buf, 512, "Cant handle debug print!");   
-       ret = 25;
-   }
-#endif
-   buf[ret] = '\0';   
-   /* Format is ascii - needs to be converted to wchar_t for printing */   
-   wide_str_len = MultiByteToWideChar(CP_ACP, 0, (const char *) buf, -1, NULL, 0);   
-   wide_format = (wchar_t *) malloc((wide_str_len+1) * sizeof(wchar_t));   
-   if (wide_format) {   
-      MultiByteToWideChar(CP_ACP, 0, (const char *) buf, -1,   
-            wide_format, wide_str_len);   
-      NKDbgPrintfW(wide_format, wide_format);   
-      free(wide_format);   
-   } 
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-   /* TODO */
-#else /* !PIPE_SUBSYSTEM_WINDOWS */
-   fflush(stdout);
-   vfprintf(stderr, format, ap);
-#endif
 }
 
 
@@ -169,108 +74,12 @@ void debug_print_blob( const char *name,
 #endif
 
 
-#ifndef debug_break
-void debug_break(void) 
-{
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-   DebugBreak();
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-   EngDebugBreak();
-#else
-   abort();
-#endif
-}
-#endif
-
-
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
-static const char *
-find(const char *start, const char *end, char c) 
-{
-   const char *p;
-   for(p = start; !end || p != end; ++p) {
-      if(*p == c)
-	 return p;
-      if(*p < 32)
-	 break;
-   }
-   return NULL;
-}
-
-static int 
-compare(const char *start, const char *end, const char *s)
-{
-   const char *p, *q;
-   for(p = start, q = s; p != end && *q != '\0'; ++p, ++q) {
-      if(*p != *q)
-	 return 0;
-   }
-   return p == end && *q == '\0';
-}
-
-static void 
-copy(char *dst, const char *start, const char *end, size_t n) 
-{
-   const char *p;
-   char *q;
-   for(p = start, q = dst, n = n - 1; p != end && n; ++p, ++q, --n)
-      *q = *p;
-   *q = '\0';
-}
-#endif
-
-
-static INLINE const char *
-_debug_get_option(const char *name)
-{
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-   /* EngMapFile creates the file if it does not exists, so it must either be
-    * disabled on release versions (or put in a less conspicuous place). */
-#ifdef DEBUG
-   const char *result = NULL;
-   ULONG_PTR iFile = 0;
-   const void *pMap = NULL;
-   const char *sol, *eol, *sep;
-   static char output[1024];
-   
-   pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
-   if(pMap) {
-      sol = (const char *)pMap;
-      while(1) {
-	 /* TODO: handle LF line endings */
-	 eol = find(sol, NULL, '\r');
-	 if(!eol || eol == sol)
-	    break;
-	 sep = find(sol, eol, '=');
-	 if(!sep)
-	    break;
-	 if(compare(sol, sep, name)) {
-	    copy(output, sep + 1, eol, sizeof(output));
-	    result = output;
-	    break;
-	 }
-	 sol = eol + 2;
-      }
-      EngUnmapFile(iFile);
-   }
-   return result;
-#else
-   return NULL;
-#endif
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) 
-   /* TODO: implement */
-   return NULL;
-#else
-   return getenv(name);
-#endif
-}
-
 const char *
 debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
 
-   result = _debug_get_option(name);
+   result = os_get_option(name);
    if(!result)
       result = dfault;
       
@@ -282,7 +91,7 @@ debug_get_option(const char *name, const char *dfault)
 boolean
 debug_get_bool_option(const char *name, boolean dfault)
 {
-   const char *str = _debug_get_option(name);
+   const char *str = os_get_option(name);
    boolean result;
    
    if(str == NULL)
@@ -312,7 +121,7 @@ debug_get_num_option(const char *name, long dfault)
    long result;
    const char *str;
    
-   str = _debug_get_option(name);
+   str = os_get_option(name);
    if(!str)
       result = dfault;
    else {
@@ -348,7 +157,7 @@ debug_get_flags_option(const char *name,
    unsigned long result;
    const char *str;
    
-   str = _debug_get_option(name);
+   str = os_get_option(name);
    if(!str)
       result = dfault;
    else if (!util_strcmp(str, "help")) {
@@ -389,7 +198,7 @@ void _debug_assert_fail(const char *expr,
 #else
    if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", TRUE))
 #endif
-      debug_break();
+      os_abort();
    else
       _debug_printf("continuing...\n");
 }

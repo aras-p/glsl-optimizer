@@ -39,7 +39,7 @@
 #define U_DEBUG_H_
 
 
-#include "pipe/p_compiler.h"
+#include "os/os_misc.h"
 
 
 #ifdef	__cplusplus
@@ -47,17 +47,6 @@ extern "C" {
 #endif
 
 
-#if defined(DBG) || defined(DEBUG)
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-#else
-#ifndef NDEBUG
-#define NDEBUG 1
-#endif
-#endif
-
-   
 #if defined(__GNUC__)
 #define _util_printf_format(fmt, list) __attribute__ ((format (printf, fmt, list)))
 #else
@@ -148,13 +137,7 @@ void debug_print_format(const char *msg, unsigned fmt );
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
-#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && defined(PIPE_CC_GCC)
-#define debug_break() __asm("int3")
-#elif defined(PIPE_CC_MSVC)
-#define debug_break()  __debugbreak()
-#else
-void debug_break(void);
-#endif
+#define debug_break() os_break()
 #else /* !DEBUG */
 #define debug_break() ((void)0)
 #endif /* !DEBUG */
@@ -320,22 +303,6 @@ debug_get_flags_option(const char *name,
                        const struct debug_named_value *flags,
                        unsigned long dfault);
 
-
-void *
-debug_malloc(const char *file, unsigned line, const char *function,
-             size_t size);
-
-void
-debug_free(const char *file, unsigned line, const char *function,
-           void *ptr);
-
-void *
-debug_calloc(const char *file, unsigned line, const char *function,
-             size_t count, size_t size );
-
-void *
-debug_realloc(const char *file, unsigned line, const char *function,
-              void *old_ptr, size_t old_size, size_t new_size );
 
 unsigned long
 debug_memory_begin(void);
