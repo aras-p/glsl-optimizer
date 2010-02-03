@@ -915,6 +915,10 @@ if test "x$enable_egl" = xyes; then
         # build egl_glx when libGL is built
         EGL_DRIVERS_DIRS="glx"
     fi
+    if test "$mesa_driver" == dri; then
+        # build egl_dri2 when dri is enabled
+        EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
+    fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
 AC_SUBST([EGL_DRIVERS_DIRS])
@@ -1395,7 +1399,11 @@ dnl Libraries
 echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
-echo "        EGL:             $enable_egl"
+if test "$enable_egl" = yes; then
+    echo "        EGL:             $EGL_DRIVERS_DIRS"
+else
+    echo "        EGL:             no"
+fi
 echo "        GLU:             $enable_glu"
 echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"
