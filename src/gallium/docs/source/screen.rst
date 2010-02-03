@@ -227,7 +227,7 @@ buffer_map
 
 Map a buffer into memory.
 
-**usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
+**usage** is a bitmask of :ref:`PIPE_BUFFER_USAGE` flags.
 
 Returns a pointer to the map, or NULL if the mapping failed.
 
@@ -248,7 +248,7 @@ Flush a range of mapped memory into a buffer.
 
 The buffer must have been mapped with ``PIPE_BUFFER_USAGE_FLUSH_EXPLICIT``.
 
-**usage** is a bitmask of :ref:`PIPE_TEXTURE_USAGE` flags.
+**usage** is a bitmask of :ref:`PIPE_BUFFER_USAGE` flags.
 
 buffer_unmap
 ^^^^^^^^^^^^
