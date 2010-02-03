@@ -1437,9 +1437,10 @@ DirectX 10 uses HALF_INTEGER.
 Texture Sampling and Texture Formats
 ------------------------------------
 
-This table shows how texture image components are returned as (x,y,z,w)
-tuples by TGSI texture instructions, such as TEX, TXD, and TXP.
-For reference, OpenGL and Direct3D conventions are shown as well.
+This table shows how texture image components are returned as (x,y,z,w) tuples
+by TGSI texture instructions, such as :opcode:`TEX`, :opcode:`TXD`, and
+:opcode:`TXP`. For reference, OpenGL and Direct3D conventions are shown as
+well.
 
 +--------------------+--------------+--------------------+--------------+
 | Texture Components | Gallium      | OpenGL             | Direct3D 9   |
@@ -1469,4 +1470,4 @@ For reference, OpenGL and Direct3D conventions are shown as well.
 
 .. [#envmap-bumpmap] http://www.opengl.org/registry/specs/ATI/envmap_bumpmap.txt
 .. [#depth-tex-mode] the default is (z, z, z, 1) but may also be (0, 0, 0, z)
- or (z, z, z, z) depending on the value of GL_DEPTH_TEXTURE_MODE.
+   or (z, z, z, z) depending on the value of GL_DEPTH_TEXTURE_MODE.
