@@ -352,7 +352,10 @@ draw_find_shader_output(const struct draw_context *draw,
 
 
 /**
- * Return number of the shader outputs.
+ * Return total number of the shader outputs.  This function is similar to
+ * draw_current_shader_outputs() but this function also counts any extra
+ * vertex/geometry output attributes that may be filled in by some draw
+ * stages (such as AA point, AA line).
  *
  * If geometry shader is present, its output will be returned,
  * if not vertex shader is used.
@@ -362,8 +365,9 @@ draw_num_shader_outputs(const struct draw_context *draw)
 {
    uint count = draw->vs.vertex_shader->info.num_outputs;
 
-   /* if geometry shader is present, its outputs go to te
-    * driver, not the vertex shaders */
+   /* If a geometry shader is present, its outputs go to the
+    * driver, else the vertex shader's outputs.
+    */
    if (draw->gs.geometry_shader)
       count = draw->gs.geometry_shader->info.num_outputs;
 
@@ -374,7 +378,8 @@ draw_num_shader_outputs(const struct draw_context *draw)
 
 
 /**
- * Provide TGSI sampler objects for vertex/geometry shaders that use texture fetches.
+ * Provide TGSI sampler objects for vertex/geometry shaders that use
+ * texture fetches.
  * This might only be used by software drivers for the time being.
  */
 void
@@ -454,6 +459,12 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 }
 
 
+/**
+ * Return the number of output attributes produced by the geometry
+ * shader, if present.  If no geometry shader, return the number of
+ * outputs from the vertex shader.
+ * \sa draw_num_shader_outputs
+ */
 int draw_current_shader_outputs(struct draw_context *draw)
 {
    if (draw->gs.geometry_shader)
@@ -461,6 +472,11 @@ int draw_current_shader_outputs(struct draw_context *draw)
    return draw->vs.num_vs_outputs;
 }
 
+
+/**
+ * Return the index of the shader output which will contain the
+ * vertex position.
+ */
 int draw_current_shader_position_output(struct draw_context *draw)
 {
    if (draw->gs.geometry_shader)
