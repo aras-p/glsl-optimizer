@@ -356,6 +356,7 @@ update_texture_matrices( GLcontext *ctx )
    ctx->Texture._TexMatEnabled = 0x0;
 
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
+      ASSERT(u < Elements(ctx->TextureMatrixStack));
       if (_math_matrix_is_dirty(ctx->TextureMatrixStack[u].Top)) {
 	 _math_matrix_analyse( ctx->TextureMatrixStack[u].Top );
 
@@ -627,6 +628,7 @@ update_texture_state( GLcontext *ctx )
 	 ctx->Texture._GenFlags |= texUnit->_GenFlags;
       }
 
+      ASSERT(unit < Elements(ctx->TextureMatrixStack));
       if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY)
 	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(unit);
    }
