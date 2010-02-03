@@ -392,7 +392,7 @@ _eglPreloadForEach(const char *search_path,
       next = strchr(cur, ':');
       len = (next) ? next - cur : strlen(cur);
 
-      if (!loader(cur, len, loader))
+      if (!loader(cur, len, loader_data))
          break;
 
       cur = (next) ? next + 1 : NULL;
