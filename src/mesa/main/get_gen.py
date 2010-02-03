@@ -166,20 +166,32 @@ StateVars = [
 	   "ctx->Current.RasterSecondaryColor[2]",
 	   "ctx->Current.RasterSecondaryColor[3]"], "", None ),
 	( "GL_CURRENT_RASTER_TEXTURE_COORDS", GLfloat,
-	  ["ctx->Current.RasterTexCoords[texUnit][0]",
-	   "ctx->Current.RasterTexCoords[texUnit][1]",
-	   "ctx->Current.RasterTexCoords[texUnit][2]",
-	   "ctx->Current.RasterTexCoords[texUnit][3]"],
-	  "const GLuint texUnit = ctx->Texture.CurrentUnit;", None ),
+	  ["ctx->Current.RasterTexCoords[unit][0]",
+	   "ctx->Current.RasterTexCoords[unit][1]",
+	   "ctx->Current.RasterTexCoords[unit][2]",
+	   "ctx->Current.RasterTexCoords[unit][3]"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(raster tex coords, unit %u)", unit);
+            return;
+         }""",
+	  None ),
 	( "GL_CURRENT_RASTER_POSITION_VALID", GLboolean,
 	  ["ctx->Current.RasterPosValid"], "", None ),
 	( "GL_CURRENT_TEXTURE_COORDS", GLfloat,
-	  ["ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][3]"],
-	  """const GLuint texUnit = ctx->Texture.CurrentUnit;
-         FLUSH_CURRENT(ctx, 0);""", None ),
+	  ["ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][0]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][1]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][2]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][3]"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(current tex coords, unit %u)", unit);
+            return;
+         }
+         FLUSH_CURRENT(ctx, 0);""",
+	  None ),
 	( "GL_DEPTH_BIAS", GLfloat, ["ctx->Pixel.DepthBias"], "", None ),
 	( "GL_DEPTH_BITS", GLint, ["ctx->DrawBuffer->Visual.depthBits"],
 	  "", None ),
@@ -467,7 +479,14 @@ StateVars = [
          matrix = ctx->TextureMatrixStack[unit].Top->m;""",
 	  None ),
 	( "GL_TEXTURE_STACK_DEPTH", GLint,
-	  ["ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Depth + 1"], "", None ),
+	  ["ctx->TextureMatrixStack[unit].Depth + 1"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(texture stack depth, unit %u)", unit);
+            return;
+         }""",
+	  None ),
 	( "GL_UNPACK_ALIGNMENT", GLint, ["ctx->Unpack.Alignment"], "", None ),
 	( "GL_UNPACK_LSB_FIRST", GLboolean, ["ctx->Unpack.LsbFirst"], "", None ),
 	( "GL_UNPACK_ROW_LENGTH", GLint, ["ctx->Unpack.RowLength"], "", None ),
