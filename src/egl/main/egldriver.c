@@ -261,15 +261,15 @@ _eglMatchDriver(_EGLDisplay *dpy)
 
 
 /**
- * A preload function for use with _eglPreloadForEach.  The preload data is the
+ * A loader function for use with _eglPreloadForEach.  The loader data is the
  * filename of the driver.   This function stops on the first valid driver.
  */
 static EGLBoolean
-_eglPreloadFile(const char *dir, size_t len, void *preload_data)
+_eglLoaderFile(const char *dir, size_t len, void *loader_data)
 {
    _EGLDriver *drv;
    char path[1024];
-   const char *filename = (const char *) preload_data;
+   const char *filename = (const char *) loader_data;
    size_t flen = strlen(filename);
 
    /* make a full path */
@@ -308,11 +308,11 @@ _eglPreloadFile(const char *dir, size_t len, void *preload_data)
 
 
 /**
- * A preload function for use with _eglPreloadForEach.  The preload data is the
+ * A loader function for use with _eglPreloadForEach.  The loader data is the
  * pattern (prefix) of the files to look for.
  */
 static EGLBoolean
-_eglPreloadPattern(const char *dir, size_t len, void *preload_data)
+_eglLoaderPattern(const char *dir, size_t len, void *loader_data)
 {
 #if defined(_EGL_PLATFORM_POSIX)
    const char *prefix, *suffix;
@@ -333,7 +333,7 @@ _eglPreloadPattern(const char *dir, size_t len, void *preload_data)
    if (!dirp)
       return EGL_TRUE;
 
-   prefix = (const char *) preload_data;
+   prefix = (const char *) loader_data;
    prefix_len = strlen(prefix);
    suffix = library_suffix();
    suffix_len = (suffix) ? strlen(suffix) : 0;
@@ -380,8 +380,8 @@ _eglPreloadPattern(const char *dir, size_t len, void *preload_data)
  */
 static EGLint
 _eglPreloadForEach(const char *search_path,
-                   EGLBoolean (*preload)(const char *, size_t, void *),
-                   void *preload_data)
+                   EGLBoolean (*loader)(const char *, size_t, void *),
+                   void *loader_data)
 {
    const char *cur, *next;
    size_t len;
@@ -392,7 +392,7 @@ _eglPreloadForEach(const char *search_path,
       next = strchr(cur, ':');
       len = (next) ? next - cur : strlen(cur);
 
-      if (!preload(cur, len, preload_data))
+      if (!loader(cur, len, loader))
          break;
 
       cur = (next) ? next + 1 : NULL;
@@ -467,7 +467,7 @@ _eglPreloadUserDriver(void)
    if (!env)
       return EGL_FALSE;
 
-   if (!_eglPreloadForEach(search_path, _eglPreloadFile, (void *) env)) {
+   if (!_eglPreloadForEach(search_path, _eglLoaderFile, (void *) env)) {
       _eglLog(_EGL_WARNING, "EGL_DRIVER is set to an invalid driver");
       return EGL_FALSE;
    }
@@ -503,7 +503,7 @@ _eglPreloadDisplayDrivers(void)
       return EGL_FALSE;
 
    return (_eglPreloadForEach(_eglGetSearchPath(),
-            _eglPreloadPattern, (void *) prefix) > 0);
+            _eglLoaderPattern, (void *) prefix) > 0);
 }
 
 
@@ -514,7 +514,7 @@ static EGLBoolean
 _eglPreloadDefaultDriver(void)
 {
    return (_eglPreloadForEach(_eglGetSearchPath(),
-            _eglPreloadFile, (void *) DefaultDriverName) > 0);
+            _eglLoaderFile, (void *) DefaultDriverName) > 0);
 }
 
 
