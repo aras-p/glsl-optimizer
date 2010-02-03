@@ -475,6 +475,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          return;
    }
 
+   ASSERT(unit < Elements(ctx->Array.ArrayObj->TexCoord));
+
    update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
                 _NEW_ARRAY_TEXCOORD(unit),
                 elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
