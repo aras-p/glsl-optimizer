@@ -32,7 +32,7 @@
 
 #include "main/mtypes.h"
 
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 
 struct pipe_surface;
 struct stw_pixelformat_info;

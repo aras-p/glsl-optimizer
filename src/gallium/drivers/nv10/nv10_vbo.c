@@ -1,7 +1,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"

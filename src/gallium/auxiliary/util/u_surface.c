@@ -35,6 +35,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "util/u_inlines.h"
 
 #include "util/u_surface.h"
 

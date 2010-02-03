@@ -1,6 +1,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "draw/draw_context.h"
 

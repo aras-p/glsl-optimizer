@@ -1,5 +1,5 @@
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "nv04_context.h"
 #include "nv04_screen.h"

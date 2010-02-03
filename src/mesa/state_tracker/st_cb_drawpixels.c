@@ -53,7 +53,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "tgsi/tgsi_ureg.h"
 #include "util/u_tile.h"
 #include "util/u_draw_quad.h"

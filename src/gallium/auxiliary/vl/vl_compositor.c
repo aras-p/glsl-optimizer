@@ -28,7 +28,7 @@
 #include "vl_compositor.h"
 #include <assert.h>
 #include <pipe/p_context.h>
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
 #include <util/u_memory.h>

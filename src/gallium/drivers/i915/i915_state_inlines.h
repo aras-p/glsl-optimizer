@@ -30,6 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_defines.h"
+#include "util/u_debug.h"
 #include "i915_reg.h"
 
 

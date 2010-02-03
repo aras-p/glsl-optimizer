@@ -33,6 +33,7 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "util/u_debug.h"
 
 void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr)
 {

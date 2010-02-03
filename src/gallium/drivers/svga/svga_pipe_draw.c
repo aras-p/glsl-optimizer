@@ -25,7 +25,7 @@
 
 #include "svga_cmd.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_time.h"
 #include "indices/u_indices.h"

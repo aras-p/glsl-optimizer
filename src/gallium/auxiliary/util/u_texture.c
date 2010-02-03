@@ -37,6 +37,7 @@
 
 #include "pipe/p_defines.h"
 
+#include "util/u_debug.h"
 #include "util/u_texture.h"
 
 void util_map_texcoords2d_onto_cubemap(unsigned face,

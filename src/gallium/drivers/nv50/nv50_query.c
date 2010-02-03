@@ -21,7 +21,7 @@
  */
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "nv50_context.h"
 

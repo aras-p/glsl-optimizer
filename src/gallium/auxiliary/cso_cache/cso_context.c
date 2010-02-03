@@ -36,6 +36,7 @@
   */
 
 #include "pipe/p_state.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 

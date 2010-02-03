@@ -34,15 +34,10 @@
 
 #include "pipe/p_config.h" 
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-#include <windows.h>
-#include <winddi.h>
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-#include <wdm.h>
-#else
-#include <stdio.h>
-#include <stdlib.h>
-#endif
+#define DEBUG_MEMORY_IMPLEMENTATION
+
+#include "os/os_memory.h"
+#include "os/os_memory_debug.h"
 
 #include "util/u_debug.h" 
 #include "util/u_debug_stack.h" 
@@ -51,18 +46,6 @@
 
 #define DEBUG_MEMORY_MAGIC 0x6e34090aU 
 #define DEBUG_MEMORY_STACK 0 /* XXX: disabled until we have symbol lookup */
-
-
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
-#define real_malloc(_size) EngAllocMem(0, _size, 'D3AG')
-#define real_free(_ptr) EngFreeMem(_ptr)
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
-#define real_malloc(_size) ExAllocatePool(0, _size)
-#define real_free(_ptr) ExFreePool(_ptr)
-#else
-#define real_malloc(_size) malloc(_size)
-#define real_free(_ptr) free(_ptr)
-#endif
 
 
 struct debug_memory_header 
@@ -127,7 +110,7 @@ debug_malloc(const char *file, unsigned line, const char *function,
    struct debug_memory_header *hdr;
    struct debug_memory_footer *ftr;
    
-   hdr = real_malloc(sizeof(*hdr) + size + sizeof(*ftr));
+   hdr = os_malloc(sizeof(*hdr) + size + sizeof(*ftr));
    if(!hdr) {
       debug_printf("%s:%u:%s: out of memory when trying to allocate %lu bytes\n",
                    file, line, function,
@@ -185,7 +168,7 @@ debug_free(const char *file, unsigned line, const char *function,
    hdr->magic = 0;
    ftr->magic = 0;
    
-   real_free(hdr);
+   os_free(hdr);
 }
 
 void *
@@ -232,7 +215,7 @@ debug_realloc(const char *file, unsigned line, const char *function,
    }
 
    /* alloc new */
-   new_hdr = real_malloc(sizeof(*new_hdr) + new_size + sizeof(*new_ftr));
+   new_hdr = os_malloc(sizeof(*new_hdr) + new_size + sizeof(*new_ftr));
    if(!new_hdr) {
       debug_printf("%s:%u:%s: out of memory when trying to allocate %lu bytes\n",
                    file, line, function,
@@ -258,7 +241,7 @@ debug_realloc(const char *file, unsigned line, const char *function,
    /* free old */
    old_hdr->magic = 0;
    old_ftr->magic = 0;
-   real_free(old_hdr);
+   os_free(old_hdr);
 
    return new_ptr;
 }

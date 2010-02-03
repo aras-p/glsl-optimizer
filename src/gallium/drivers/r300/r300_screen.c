@@ -20,7 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_simple_screen.h"

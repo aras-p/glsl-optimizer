@@ -30,7 +30,7 @@
 
 
 #include "draw/draw_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"

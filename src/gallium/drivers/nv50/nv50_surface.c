@@ -25,8 +25,8 @@
 #include "nouveau/nouveau_pushbuf.h"
 #include "nv50_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_simple_screen.h"
+#include "util/u_inlines.h"
 
 #include "util/u_tile.h"
 

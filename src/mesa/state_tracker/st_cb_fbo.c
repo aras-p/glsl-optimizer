@@ -50,6 +50,7 @@
 
 #include "util/u_format.h"
 #include "util/u_rect.h"
+#include "util/u_inlines.h"
 
 
 /**

@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include "sp_video_context.h"
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include "softpipe/sp_winsys.h"
 #include "softpipe/sp_texture.h"

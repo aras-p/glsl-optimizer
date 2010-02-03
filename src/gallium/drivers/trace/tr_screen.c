@@ -35,7 +35,7 @@
 #include "tr_texture.h"
 #include "tr_screen.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_format.h"
 
 

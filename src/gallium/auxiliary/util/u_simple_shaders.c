@@ -38,6 +38,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_debug.h"
 #include "tgsi/tgsi_ureg.h"
 
 

@@ -39,8 +39,8 @@
 
 
 #include "util/u_debug.h"
-#include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_simple_screen.h"
 
 #include "nv20_context.h"
 #include "nv20_state.h"

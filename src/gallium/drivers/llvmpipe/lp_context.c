@@ -33,6 +33,7 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "pipe/p_defines.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "lp_clear.h"

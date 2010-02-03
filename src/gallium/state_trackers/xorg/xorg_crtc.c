@@ -49,7 +49,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_rect.h"
 
 #ifdef HAVE_LIBKMS

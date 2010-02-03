@@ -30,12 +30,12 @@
 
 /* u_reduce_video_profile() needs these */
 #include <pipe/p_compiler.h>
-#include <util/u_debug.h>
 
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>
-#include <pipe/p_refcnt.h>
+#include <pipe/p_state.h>
 #include <pipe/p_screen.h>
+#include <util/u_inlines.h>
 
 #ifdef __cplusplus
 extern "C" {

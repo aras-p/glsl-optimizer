@@ -25,7 +25,7 @@
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_state.h"
 
 #include "svga_context.h"

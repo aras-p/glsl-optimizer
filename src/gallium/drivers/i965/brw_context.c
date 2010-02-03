@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_context.h"
+#include "util/u_inlines.h"
 #include "util/u_simple_list.h"
 
 #include "brw_context.h"

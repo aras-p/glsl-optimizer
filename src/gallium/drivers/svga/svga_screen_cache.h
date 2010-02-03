@@ -31,7 +31,7 @@
 #include "svga_reg.h"
 #include "svga3d_reg.h"
 
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 
 #include "util/u_double_list.h"
 

@@ -27,8 +27,8 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_simple_screen.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_parse.h"
 

@@ -4,7 +4,7 @@
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
 
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 
 #include "nouveau_dri.h"
 

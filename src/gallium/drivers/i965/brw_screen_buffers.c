@@ -4,7 +4,7 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "brw_screen.h"
 #include "brw_winsys.h"

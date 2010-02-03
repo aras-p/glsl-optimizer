@@ -46,7 +46,7 @@
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define sleep Sleep
 #elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_APPLE)
-void usleep(int);
+#  include <unistd.h>
 #  define sleep usleep
 #else
 #  warning "No socket implementation"

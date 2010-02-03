@@ -38,6 +38,8 @@
 #include "xf86_ansic.h"
 #include "xf86_libc.h"
 #endif
+#include <stddef.h>
+#include <stdarg.h>
 
 
 #if defined(_WIN32) && !defined(__WIN32__)
@@ -124,6 +126,9 @@ typedef unsigned char boolean;
 #  else
 #   define __FUNCTION__ "<unknown>"
 #  endif
+# endif
+# if defined(_MSC_VER) && _MSC_VER < 1300
+#  define __FUNCTION__ "<unknown>"
 # endif
 #endif
 

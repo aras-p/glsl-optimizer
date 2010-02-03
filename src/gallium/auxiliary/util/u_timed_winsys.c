@@ -30,7 +30,7 @@
  */
 
 #include "pipe/p_state.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "u_timed_winsys.h"
 #include "util/u_memory.h"
 #include "util/u_time.h"

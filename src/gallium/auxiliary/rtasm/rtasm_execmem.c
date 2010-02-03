@@ -32,7 +32,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "util/u_memory.h"
 
 #include "rtasm_execmem.h"
@@ -58,7 +58,7 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "util/u_mm.h"
 
 #define EXEC_HEAP_SIZE (10*1024*1024)

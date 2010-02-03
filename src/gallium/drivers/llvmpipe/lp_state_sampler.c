@@ -29,6 +29,7 @@
  *  Brian Paul
  */
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 
 #include "draw/draw_context.h"

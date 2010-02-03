@@ -37,7 +37,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "st_debug.h"
 #include "st_context.h"
