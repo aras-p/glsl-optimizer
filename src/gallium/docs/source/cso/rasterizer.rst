@@ -82,17 +82,18 @@ point_size_per_vertex
     Whether vertices have a point size element.
 point_size
     The size of points, if not specified per-vertex.
-point_sprite
-    Whether points are drawn as sprites (textured quads). This is mutually
-    exclusive with point_smooth. Note that sprite_coord_mode set to
-    PIPE_SPRITE_COORD_NONE for all coords and point_sprite enabled is basically
-    equivalent to point_sprite disabled.
+sprite_coord_enable
+    Specifies if a coord has its texture coordinates replaced or not. This
+    is a packed bitfield containing the enable for all coords - if all are 0
+    point sprites are effectively disabled. If any coord is non-zero,
+    point_smooth should be disabled.
+    If enabled, the four vertices of the resulting quad will be assigned
+    texture coordinates, according to sprite_coord_mode.
 sprite_coord_mode
     Specifies how the value for each shader output should be computed when
-    drawing sprites.  If PIPE_SPRITE_COORD_NONE, don't change the vertex
-    shader output.  Otherwise, the four vertices of the resulting quad will
-    be assigned texture coordinates.  For PIPE_SPRITE_COORD_LOWER_LEFT, the
-    lower left vertex will have coordinate (0,0,0,1).
+    drawing sprites, for each coord which has sprite_coord_enable set.
+    For PIPE_SPRITE_COORD_LOWER_LEFT, the lower left vertex will have
+    coordinate (0,0,0,1).
     For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left vertex will have
     coordinate (0,0,0,1).
     This state is needed by the 'draw' module because that's where each
