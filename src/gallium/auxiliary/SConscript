@@ -109,7 +109,6 @@ source = [
     'rtasm/rtasm_ppc_spe.c',
     'tgsi/tgsi_build.c',
     'tgsi/tgsi_dump.c',
-    'tgsi/tgsi_dump_c.c',
     'tgsi/tgsi_exec.c',
     'tgsi/tgsi_info.c',
     'tgsi/tgsi_iterate.c',
