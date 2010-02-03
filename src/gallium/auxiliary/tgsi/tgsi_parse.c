@@ -284,3 +284,14 @@ tgsi_dup_tokens(const struct tgsi_token *tokens)
       memcpy(new_tokens, tokens, bytes);
    return new_tokens;
 }
+
+
+/**
+ * Allocate memory for num_tokens tokens.
+ */
+struct tgsi_token *
+tgsi_alloc_tokens(unsigned num_tokens)
+{
+   unsigned bytes = num_tokens * sizeof(struct tgsi_token);
+   return (struct tgsi_token *) MALLOC(bytes);
+}
