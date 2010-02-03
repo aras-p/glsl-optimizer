@@ -188,18 +188,19 @@ static void update_raster_state( struct st_context *st )
     */
    raster->point_size = ctx->Point.Size;
 
-   raster->point_smooth = ctx->Point.SmoothFlag;
-   raster->point_sprite = ctx->Point.PointSprite;
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
-      if (ctx->Point.CoordReplace[i]) {
-         if ((ctx->Point.SpriteOrigin == GL_UPPER_LEFT) ^
-             (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM))
-            raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_UPPER_LEFT;
-         else 
-            raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_LOWER_LEFT;
-      }
-      else {
-         raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_NONE;
+   if (!ctx->Point.PointSprite && ctx->Point.SmoothFlag)
+      raster->point_smooth = 1;
+
+   if (ctx->Point.PointSprite) {
+      if ((ctx->Point.SpriteOrigin == GL_UPPER_LEFT) ^
+          (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM))
+         raster->sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
+      else 
+         raster->sprite_coord_mode = PIPE_SPRITE_COORD_LOWER_LEFT;
+      for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+         if (ctx->Point.CoordReplace[i]) {
+            raster->sprite_coord_enable |= 1 << i;
+         }
       }
    }
 

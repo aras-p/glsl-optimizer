@@ -83,7 +83,10 @@ point_size_per_vertex
 point_size
     The size of points, if not specified per-vertex.
 point_sprite
-    Whether points are drawn as sprites (textured quads)
+    Whether points are drawn as sprites (textured quads). This is mutually
+    exclusive with point_smooth. Note that sprite_coord_mode set to
+    PIPE_SPRITE_COORD_NONE for all coords and point_sprite enabled is basically
+    equivalent to point_sprite disabled.
 sprite_coord_mode
     Specifies how the value for each shader output should be computed when
     drawing sprites.  If PIPE_SPRITE_COORD_NONE, don't change the vertex
@@ -98,7 +101,7 @@ sprite_coord_mode
     sprite rendering.
     Note that when geometry shaders are available, this state could be
     removed.  A special geometry shader defined by the state tracker could
-    converts the incoming points into quads with the proper texture coords.
+    convert the incoming points into quads with the proper texture coords.
 
 scissor
     Whether the scissor test is enabled.

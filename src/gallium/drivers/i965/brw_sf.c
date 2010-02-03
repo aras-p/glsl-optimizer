@@ -128,6 +128,7 @@ static enum pipe_error compile_sf_prog( struct brw_context *brw,
 static enum pipe_error upload_sf_prog(struct brw_context *brw)
 {
    const struct brw_fs_signature *sig = &brw->curr.fragment_shader->signature;
+   const struct pipe_rasterizer_state *rast = &brw->curr.rast->templ;
    struct brw_sf_prog_key key;
    enum pipe_error ret;
    unsigned i;
@@ -166,8 +167,8 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    case PIPE_PRIM_TRIANGLES: 
       /* PIPE_NEW_RAST
        */
-      if (brw->curr.rast->templ.fill_cw != PIPE_POLYGON_MODE_FILL ||
-	  brw->curr.rast->templ.fill_ccw != PIPE_POLYGON_MODE_FILL)
+      if (rast->fill_cw != PIPE_POLYGON_MODE_FILL ||
+	  rast->fill_ccw != PIPE_POLYGON_MODE_FILL)
 	 key.primitive = SF_UNFILLED_TRIS;
       else
 	 key.primitive = SF_TRIANGLES;
@@ -180,14 +181,14 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
       break;
    }
 
-   key.do_point_sprite = brw->curr.rast->templ.point_sprite;
-   key.sprite_origin_lower_left = 0; /* XXX: ctx->Point.SpriteOrigin - fix rast state */
-   key.do_flat_shading = brw->curr.rast->templ.flatshade;
-   key.do_twoside_color = brw->curr.rast->templ.light_twoside;
+   key.do_point_sprite = rast->sprite_coord_enable ? 1 : 0;
+   key.sprite_origin_lower_left = (rast->sprite_coord_mode == PIPE_SPRITE_COORD_LOWER_LEFT);
+   key.point_coord_replace_attrs = rast->sprite_coord_enable;
+   key.do_flat_shading = rast->flatshade;
+   key.do_twoside_color = rast->light_twoside;
 
    if (key.do_twoside_color) {
-      key.frontface_ccw = (brw->curr.rast->templ.front_winding == 
-			   PIPE_WINDING_CCW);
+      key.frontface_ccw = (rast->front_winding == PIPE_WINDING_CCW);
    }
 
    if (brw_search_cache(&brw->cache, BRW_SF_PROG,

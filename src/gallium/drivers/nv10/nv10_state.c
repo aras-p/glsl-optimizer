@@ -299,10 +299,10 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 		break;
 	}
 
-	if (cso->point_sprite) {
+	if (cso->sprite_coord_enable) {
 		rs->point_sprite = (1 << 0);
 		for (i = 0; i < 8; i++) {
-			if (cso->sprite_coord_mode[i] != PIPE_SPRITE_COORD_NONE)
+			if ((cso->sprite_coord_enable >> i) & 1)
 				rs->point_sprite |= (1 << (8 + i));
 		}
 	} else {

@@ -167,7 +167,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.scissor = 0;
    rast.poly_smooth = 0;
    rast.poly_stipple_enable = 0;
-   rast.point_sprite = 0;
+   rast.sprite_coord_enable = 0;
    rast.point_size_per_vertex = 0;
    rast.multisample = 0;
    rast.line_smooth = 0;
@@ -181,7 +181,6 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.point_size = 1;
    rast.offset_units = 1;
    rast.offset_scale = 1;
-   /*rast.sprite_coord_mode[i] = ;*/
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
 

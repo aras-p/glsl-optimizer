@@ -105,7 +105,7 @@ draw_need_pipeline(const struct draw_context *draw,
          return TRUE;
 
       /* point sprites */
-      if (rasterizer->point_sprite && draw->pipeline.point_sprite)
+      if (rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)
          return TRUE;
    }
 
@@ -165,7 +165,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
                  && !draw->rasterizer->line_smooth);
 
    /* drawing large points? */
-   if (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)
+   if (draw->rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)
       wide_points = TRUE;
    else if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
       wide_points = FALSE;
@@ -197,7 +197,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       precalc_flat = 1;
    }
 
-   if (wide_points || draw->rasterizer->point_sprite) {
+   if (wide_points || draw->rasterizer->sprite_coord_enable) {
       draw->pipeline.wide_point->next = next;
       next = draw->pipeline.wide_point;
    }

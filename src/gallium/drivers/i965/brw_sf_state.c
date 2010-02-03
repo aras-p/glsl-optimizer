@@ -123,7 +123,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->line_last_pixel_enable = rast->line_last_pixel;
    key->gl_rasterization_rules = rast->gl_rasterization_rules;
 
-   key->point_sprite = rast->point_sprite;
+   key->point_sprite = rast->sprite_coord_enable ? 1 : 0;
    key->point_attenuated = rast->point_size_per_vertex;
 
    key->point_size = rast->point_size;

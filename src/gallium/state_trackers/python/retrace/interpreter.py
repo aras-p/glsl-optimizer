@@ -113,7 +113,7 @@ struct_factories = {
 
 
 member_array_factories = {
-    "pipe_rasterizer_state": {"sprite_coord_mode": gallium.ByteArray},                          
+    #"pipe_rasterizer_state": {"sprite_coord_mode": gallium.ByteArray},                          
     "pipe_poly_stipple": {"stipple": gallium.UnsignedArray},                          
     "pipe_viewport_state": {"scale": gallium.FloatArray, "translate": gallium.FloatArray},                          
     #"pipe_clip_state": {"ucp": gallium.FloatArray},

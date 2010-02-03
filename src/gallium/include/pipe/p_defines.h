@@ -364,9 +364,8 @@ enum pipe_transfer_usage {
 /**
  * Point sprite coord modes
  */
-#define PIPE_SPRITE_COORD_NONE       0
-#define PIPE_SPRITE_COORD_UPPER_LEFT 1
-#define PIPE_SPRITE_COORD_LOWER_LEFT 2
+#define PIPE_SPRITE_COORD_UPPER_LEFT 0
+#define PIPE_SPRITE_COORD_LOWER_LEFT 1
 
 
 /**

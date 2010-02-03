@@ -69,8 +69,9 @@ struct widepoint_stage {
    float ybias;
 
    uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
-   uint texcoord_mode[PIPE_MAX_SHADER_OUTPUTS];
+   uint texcoord_enable[PIPE_MAX_SHADER_OUTPUTS];
    uint num_texcoords;
+   uint texcoord_mode;
 
    int psize_slot;
 
@@ -96,10 +97,10 @@ static void set_texcoords(const struct widepoint_stage *wide,
 {
    uint i;
    for (i = 0; i < wide->num_texcoords; i++) {
-      if (wide->texcoord_mode[i] != PIPE_SPRITE_COORD_NONE) {
+      if (wide->texcoord_enable[i]) {
          uint j = wide->texcoord_slot[i];
          v->data[j][0] = tc[0];
-         if (wide->texcoord_mode[i] == PIPE_SPRITE_COORD_LOWER_LEFT)
+         if (wide->texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
             v->data[j][1] = 1.0f - tc[1];
          else
             v->data[j][1] = tc[1];
@@ -129,7 +130,7 @@ static void widepoint_point( struct draw_stage *stage,
 {
    const struct widepoint_stage *wide = widepoint_stage(stage);
    const unsigned pos = draw_current_shader_position_output(stage->draw);
-   const boolean sprite = (boolean) stage->draw->rasterizer->point_sprite;
+   const boolean sprite = (boolean) stage->draw->rasterizer->sprite_coord_enable;
    float half_size;
    float left_adj, right_adj, bot_adj, top_adj;
 
@@ -222,21 +223,22 @@ static void widepoint_first_point( struct draw_stage *stage,
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
    if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
-       (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)) {
+       (draw->rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {
       stage->point = draw_pipe_passthrough_point;
    }
 
-   if (draw->rasterizer->point_sprite) {
+   if (draw->rasterizer->sprite_coord_enable) {
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i, j = 0;
+      wide->texcoord_mode = draw->rasterizer->sprite_coord_mode;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             wide->texcoord_slot[j] = i;
-            wide->texcoord_mode[j] = draw->rasterizer->sprite_coord_mode[j];
+            wide->texcoord_enable[j] = (draw->rasterizer->sprite_coord_enable >> j) & 1;
             j++;
          }
       }

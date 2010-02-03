@@ -71,7 +71,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* light_twoside          - XXX: need fragment shader varient */
    /* poly_smooth            - XXX: no fallback available */
    /* poly_stipple_enable    - draw module */
-   /* point_sprite           - ? */
+   /* sprite_coord_enable    - ? */
    /* point_size_per_vertex  - ? */
    /* sprite_coord_mode      - ??? */
    /* bypass_vs_viewport_and_clip        - handled by viewport setup */
