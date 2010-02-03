@@ -922,7 +922,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_TEXTURE_MATRIX:
          {
-         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;
          params[0] = FLOAT_TO_BOOLEAN(matrix[0]);
          params[1] = FLOAT_TO_BOOLEAN(matrix[1]);
          params[2] = FLOAT_TO_BOOLEAN(matrix[2]);
@@ -2766,7 +2773,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_TEXTURE_MATRIX:
          {
-         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;
          params[0] = matrix[0];
          params[1] = matrix[1];
          params[2] = matrix[2];
@@ -4610,7 +4624,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_MATRIX:
          {
-         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;
          params[0] = IROUND(matrix[0]);
          params[1] = IROUND(matrix[1]);
          params[2] = IROUND(matrix[2]);
@@ -6455,7 +6476,14 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_TEXTURE_MATRIX:
          {
-         const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;
+         const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;
          params[0] = IROUND64(matrix[0]);
          params[1] = IROUND64(matrix[1]);
          params[2] = IROUND64(matrix[2]);

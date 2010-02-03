@@ -457,7 +457,15 @@ StateVars = [
 	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
 	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
 	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
-	  "const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;", None ),
+	  """const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;""",
+	  None ),
 	( "GL_TEXTURE_STACK_DEPTH", GLint,
 	  ["ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Depth + 1"], "", None ),
 	( "GL_UNPACK_ALIGNMENT", GLint, ["ctx->Unpack.Alignment"], "", None ),
