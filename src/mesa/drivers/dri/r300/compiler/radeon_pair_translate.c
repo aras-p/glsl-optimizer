@@ -208,8 +208,8 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
         } else {
             for (i = 0; i < 4; i++) {
                 if (inst->DstReg.Index == c->OutputColor[i]) {
-                    pair->RGB.Target = inst->DstReg.Index;
-                    pair->Alpha.Target = inst->DstReg.Index;
+                    pair->RGB.Target = i;
+                    pair->Alpha.Target = i;
                     pair->RGB.OutputWriteMask |=
                         inst->DstReg.WriteMask & RC_MASK_XYZ;
                     pair->Alpha.OutputWriteMask |=
