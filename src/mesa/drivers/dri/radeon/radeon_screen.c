@@ -1479,7 +1479,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     if (!rfb)
       return GL_FALSE;
 
-    _mesa_initialize_framebuffer(&rfb->base, mesaVis);
+    _mesa_initialize_window_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->redBits == 5)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;

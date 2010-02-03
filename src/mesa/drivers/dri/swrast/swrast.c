@@ -368,7 +368,7 @@ driCreateNewDrawable(__DRIscreen *screen,
     buf->row = _mesa_malloc(MAX_WIDTH * 4);
 
     /* basic framebuffer setup */
-    _mesa_initialize_framebuffer(&buf->Base, &config->modes);
+    _mesa_initialize_window_framebuffer(&buf->Base, &config->modes);
 
     /* add front renderbuffer */
     frontrb = swrast_new_renderbuffer(&config->modes, GL_TRUE);

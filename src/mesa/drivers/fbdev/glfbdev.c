@@ -626,7 +626,7 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
       return NULL;
 
    /* basic framebuffer setup */
-   _mesa_initialize_framebuffer(&buf->glframebuffer, &visual->glvisual);
+   _mesa_initialize_window_framebuffer(&buf->glframebuffer, &visual->glvisual);
    /* add front renderbuffer */
    frontrb = new_glfbdev_renderbuffer(frontBuffer, visual);
    _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_FRONT_LEFT,

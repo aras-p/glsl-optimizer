@@ -53,7 +53,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
       if (visual->sampleBuffers)
          samples = visual->samples;
 
-      _mesa_initialize_framebuffer(&stfb->Base, visual);
+      _mesa_initialize_window_framebuffer(&stfb->Base, visual);
 
       if (visual->doubleBufferMode) {
          struct gl_renderbuffer *rb

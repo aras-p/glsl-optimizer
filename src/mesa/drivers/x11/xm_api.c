@@ -375,7 +375,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->type = type;
    b->cmap = cmap;
 
-   _mesa_initialize_framebuffer(&b->mesa_buffer, &vis->mesa_visual);
+   _mesa_initialize_window_framebuffer(&b->mesa_buffer, &vis->mesa_visual);
    b->mesa_buffer.Delete = xmesa_delete_framebuffer;
 
    /*

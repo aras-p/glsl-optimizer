@@ -813,7 +813,7 @@ directfbgl_create_context( GLcontext        *context,
 {
      struct dd_function_table functions;
      
-     _mesa_initialize_framebuffer( framebuffer, visual ); 
+     _mesa_initialize_window_framebuffer( framebuffer, visual );
      
      _mesa_init_driver_functions( &functions );
      functions.GetString     = dfbGetString;

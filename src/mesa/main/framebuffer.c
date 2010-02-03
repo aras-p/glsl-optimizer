@@ -88,7 +88,7 @@ _mesa_create_framebuffer(const GLvisual *visual)
    struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
    assert(visual);
    if (fb) {
-      _mesa_initialize_framebuffer(fb, visual);
+      _mesa_initialize_window_framebuffer(fb, visual);
    }
    return fb;
 }
@@ -109,15 +109,7 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
    assert(name != 0);
    fb = CALLOC_STRUCT(gl_framebuffer);
    if (fb) {
-      fb->Name = name;
-      fb->RefCount = 1;
-      fb->_NumColorDrawBuffers = 1;
-      fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
-      fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorReadBufferIndex = BUFFER_COLOR0;
-      fb->Delete = _mesa_destroy_framebuffer;
-      _glthread_INIT_MUTEX(fb->Mutex);
+      _mesa_initialize_user_framebuffer(fb, name);
    }
    return fb;
 }
@@ -126,10 +118,11 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
 /**
  * Initialize a gl_framebuffer object.  Typically used to initialize
  * window system-created framebuffers, not user-created framebuffers.
- * \sa _mesa_create_framebuffer
+ * \sa _mesa_initialize_user_framebuffer
  */
 void
-_mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
+_mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
+				     const GLvisual *visual)
 {
    assert(fb);
    assert(visual);
@@ -163,6 +156,30 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
 
    compute_depth_max(fb);
+}
+
+
+/**
+ * Initialize a user-created gl_framebuffer object.
+ * \sa _mesa_initialize_window_framebuffer
+ */
+void
+_mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
+{
+   assert(fb);
+   assert(name);
+
+   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+
+   fb->Name = name;
+   fb->RefCount = 1;
+   fb->_NumColorDrawBuffers = 1;
+   fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
+   fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
+   fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
+   fb->_ColorReadBufferIndex = BUFFER_COLOR0;
+   fb->Delete = _mesa_destroy_framebuffer;
+   _glthread_INIT_MUTEX(fb->Mutex);
 }
 
 

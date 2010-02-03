@@ -35,7 +35,7 @@ wmesa_new_framebuffer(HDC hdc, GLvisual *visual)
     WMesaFramebuffer pwfb
         = (WMesaFramebuffer) malloc(sizeof(struct wmesa_framebuffer));
     if (pwfb) {
-        _mesa_initialize_framebuffer(&pwfb->Base, visual);
+        _mesa_initialize_window_framebuffer(&pwfb->Base, visual);
         pwfb->hDC = hdc;
         /* insert at head of list */
         pwfb->next = FirstFramebuffer;

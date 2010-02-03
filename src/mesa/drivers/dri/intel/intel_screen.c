@@ -202,7 +202,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       if (!fb)
 	 return GL_FALSE;
 
-      _mesa_initialize_framebuffer(fb, mesaVis);
+      _mesa_initialize_window_framebuffer(fb, mesaVis);
 
       if (mesaVis->redBits == 5)
 	 rgbFormat = MESA_FORMAT_RGB565;
