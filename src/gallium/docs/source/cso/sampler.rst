@@ -35,8 +35,6 @@ normalized_coords
     Whether the texture coordinates are normalized. If normalized, they will
     always be in [0, 1]. If not, they will be in the range of each dimension
     of the loaded texture.
-prefilter
-    Cylindrical texcoord wrap enable per coord. Not exposed by most APIs.
 lod_bias
     The bias to apply to the level of detail.
 min_lod

@@ -762,7 +762,6 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
       sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
       sampler.compare_func = PIPE_FUNC_ALWAYS;
       sampler.normalized_coords = 1;
-      /*sampler.prefilter = ; */
       /*sampler.shadow_ambient = ; */
       /*sampler.lod_bias = ; */
       sampler.min_lod = 0;

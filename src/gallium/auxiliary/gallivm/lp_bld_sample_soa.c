@@ -592,7 +592,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
 
    /* FIXME: respect static_state->min_mip_filter */;
    /* FIXME: respect static_state->mag_img_filter */;
-   /* FIXME: respect static_state->prefilter */;
 
    lp_build_sample_compare(&bld, p, texel);
 }

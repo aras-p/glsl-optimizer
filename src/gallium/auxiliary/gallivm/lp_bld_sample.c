@@ -74,7 +74,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
       state->compare_func      = sampler->compare_func;
    }
    state->normalized_coords = sampler->normalized_coords;
-   state->prefilter         = sampler->prefilter;
 }
 
 
