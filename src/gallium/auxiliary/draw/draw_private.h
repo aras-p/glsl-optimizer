@@ -280,8 +280,8 @@ void draw_gs_destroy( struct draw_context *draw );
 /*******************************************************************************
  * Common shading code:
  */
-int draw_current_shader_outputs(struct draw_context *draw);
-int draw_current_shader_position_output(struct draw_context *draw);
+uint draw_current_shader_outputs(const struct draw_context *draw);
+uint draw_current_shader_position_output(const struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex processing (was passthrough) code:

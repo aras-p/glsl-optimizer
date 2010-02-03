@@ -465,7 +465,8 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
  * outputs from the vertex shader.
  * \sa draw_num_shader_outputs
  */
-int draw_current_shader_outputs(struct draw_context *draw)
+uint
+draw_current_shader_outputs(const struct draw_context *draw)
 {
    if (draw->gs.geometry_shader)
       return draw->gs.num_gs_outputs;
@@ -477,7 +478,8 @@ int draw_current_shader_outputs(struct draw_context *draw)
  * Return the index of the shader output which will contain the
  * vertex position.
  */
-int draw_current_shader_position_output(struct draw_context *draw)
+uint
+draw_current_shader_position_output(const struct draw_context *draw)
 {
    if (draw->gs.geometry_shader)
       return draw->gs.position_output;
