@@ -1231,10 +1231,8 @@ TGSI_SEMANTIC_PSIZE
 """""""""""""""""""
 
 PSIZE, or point size, is used to specify point sizes per-vertex. It should
-be in ``(p, n, x, f)`` format, where ``p`` is the point size, ``n`` is the minimum
-size, ``x`` is the maximum size, and ``f`` is the fade threshold.
-
-XXX this is arb_vp. is this what we actually do? should double-check...
+be in ``(s, 0, 0, 1)`` format, where ``s`` is the (possibly clamped) point size.
+Only the first component matters when writing from the vertex shader.
 
 When using this semantic, be sure to set the appropriate state in the
 :ref:`rasterizer` first.
