@@ -12,11 +12,6 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_defines.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /* Favor OS-provided implementations.
  *
  * Where no OS-provided implementation is available, fall back to
@@ -44,9 +39,12 @@ extern "C" {
 
 #define PIPE_ATOMIC "GCC x86 assembly"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
-
 
 static INLINE boolean
 p_atomic_dec_zero(int32_t *v)
@@ -76,6 +74,11 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
    return __sync_val_compare_and_swap(v, old, _new);
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 
@@ -86,9 +89,12 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 
 #define PIPE_ATOMIC "GCC Sync Intrinsics"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
-
 
 static INLINE boolean
 p_atomic_dec_zero(int32_t *v)
@@ -113,6 +119,11 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
    return __sync_val_compare_and_swap(v, old, _new);
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 
@@ -139,6 +150,10 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 #if defined(PIPE_ATOMIC_ASM_MSVC_X86)
 
 #define PIPE_ATOMIC "MSVC x86 assembly"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
@@ -190,6 +205,11 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 
    return orig;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 
@@ -202,6 +222,10 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
 #pragma intrinsic(_InterlockedCompareExchange)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
@@ -230,6 +254,10 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
    return _InterlockedCompareExchange(v, _new, old);
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 
@@ -239,9 +267,5 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 #endif
 
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* U_ATOMIC_H */
