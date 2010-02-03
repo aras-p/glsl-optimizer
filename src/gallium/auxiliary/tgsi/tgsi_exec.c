@@ -1478,7 +1478,7 @@ emit_primitive(struct tgsi_exec_machine *mach)
 }
 
 /*
- * Fetch a four texture samples using STR texture coordinates.
+ * Fetch four texture samples using STR texture coordinates.
  */
 static void
 fetch_texel( struct tgsi_sampler *sampler,
