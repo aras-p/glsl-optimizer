@@ -178,12 +178,7 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
 static int
 free_bit(uint bitfield)
 {
-   int i;
-   for (i = 0; i < 32; i++) {
-      if ((bitfield & (1 << i)) == 0)
-         return i;
-   }
-   return -1;
+   return ffs(~bitfield) - 1;
 }
 
 
