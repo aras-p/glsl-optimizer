@@ -342,6 +342,22 @@ iter_declaration(
       TXT( ", INVARIANT" );
    }
 
+   if (decl->Declaration.CylindricalWrap) {
+      TXT(", CYLWRAP_");
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_X) {
+         CHR('X');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Y) {
+         CHR('Y');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Z) {
+         CHR('Z');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_W) {
+         CHR('W');
+      }
+   }
+
    EOL();
 
    return TRUE;

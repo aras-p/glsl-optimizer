@@ -1,7 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -102,6 +102,11 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
 #define TGSI_INTERPOLATE_COUNT         3
 
+#define TGSI_CYLINDRICAL_WRAP_X (1 << 0)
+#define TGSI_CYLINDRICAL_WRAP_Y (1 << 1)
+#define TGSI_CYLINDRICAL_WRAP_Z (1 << 2)
+#define TGSI_CYLINDRICAL_WRAP_W (1 << 3)
+
 struct tgsi_declaration
 {
    unsigned Type        : 4;  /**< TGSI_TOKEN_TYPE_DECLARATION */
@@ -113,7 +118,7 @@ struct tgsi_declaration
    unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
    unsigned Centroid    : 1;  /**< centroid sampling? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
-   unsigned Padding     : 4;
+   unsigned CylindricalWrap:4;   /**< TGSI_CYLINDRICAL_WRAP_x flags */
 };
 
 struct tgsi_declaration_range

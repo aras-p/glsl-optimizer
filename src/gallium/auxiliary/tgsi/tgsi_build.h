@@ -68,6 +68,7 @@ tgsi_build_declaration(
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
+   unsigned cylindrical_wrap,
    struct tgsi_header *header );
 
 struct tgsi_full_declaration

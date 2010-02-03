@@ -107,7 +107,7 @@ tgsi_default_declaration( void )
    declaration.Semantic = 0;
    declaration.Centroid = 0;
    declaration.Invariant = 0;
-   declaration.Padding = 0;
+   declaration.CylindricalWrap = 0;
 
    return declaration;
 }
@@ -121,6 +121,7 @@ tgsi_build_declaration(
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
+   unsigned cylindrical_wrap,
    struct tgsi_header *header )
 {
    struct tgsi_declaration declaration;
@@ -136,6 +137,7 @@ tgsi_build_declaration(
    declaration.Semantic = semantic;
    declaration.Centroid = centroid;
    declaration.Invariant = invariant;
+   declaration.CylindricalWrap = cylindrical_wrap;
 
    header_bodysize_grow( header );
 
@@ -190,6 +192,7 @@ tgsi_build_full_declaration(
       full_decl->Declaration.Semantic,
       full_decl->Declaration.Centroid,
       full_decl->Declaration.Invariant,
+      full_decl->Declaration.CylindricalWrap,
       header );
 
    if (maxsize <= size)
