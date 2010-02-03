@@ -302,9 +302,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             matrix = &ctx->_ModelProjectMatrix;
          }
          else if (mat == STATE_TEXTURE_MATRIX) {
+            ASSERT(index < Elements(ctx->TextureMatrixStack));
             matrix = ctx->TextureMatrixStack[index].Top;
          }
          else if (mat == STATE_PROGRAM_MATRIX) {
+            ASSERT(index < Elements(ctx->ProgramMatrixStack));
             matrix = ctx->ProgramMatrixStack[index].Top;
          }
          else if (mat == STATE_COLOR_MATRIX) {
@@ -1075,7 +1077,9 @@ _mesa_load_tracked_matrices(GLcontext *ctx)
          mat = ctx->ProjectionMatrixStack.Top;
       }
       else if (ctx->VertexProgram.TrackMatrix[i] == GL_TEXTURE) {
-         mat = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top;
+         GLuint unit = MIN2(ctx->Texture.CurrentUnit,
+                            Elements(ctx->TextureMatrixStack) - 1);
+         mat = ctx->TextureMatrixStack[unit].Top;
       }
       else if (ctx->VertexProgram.TrackMatrix[i] == GL_COLOR) {
          mat = ctx->ColorMatrixStack.Top;
@@ -1087,7 +1091,7 @@ _mesa_load_tracked_matrices(GLcontext *ctx)
       else if (ctx->VertexProgram.TrackMatrix[i] >= GL_MATRIX0_NV &&
                ctx->VertexProgram.TrackMatrix[i] <= GL_MATRIX7_NV) {
          GLuint n = ctx->VertexProgram.TrackMatrix[i] - GL_MATRIX0_NV;
-         ASSERT(n < MAX_PROGRAM_MATRICES);
+         ASSERT(n < Elements(ctx->ProgramMatrixStack));
          mat = ctx->ProgramMatrixStack[n].Top;
       }
       else {
