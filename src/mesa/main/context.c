@@ -577,6 +577,9 @@ _mesa_init_constants(GLcontext *ctx)
                                              ctx->Const.MaxTextureCoordUnits));
    ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
    ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
+   ASSERT(ctx->Const.MaxCombinedTextureImageUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+   ASSERT(ctx->Const.MaxTextureCoordUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+   ASSERT(MAX_COMBINED_TEXTURE_IMAGE_UNITS <= 32); /* GLbitfield size limit */
 
    ASSERT(MAX_NV_FRAGMENT_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
    ASSERT(MAX_NV_VERTEX_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);

@@ -1361,7 +1361,7 @@ struct gl_texture_unit
 struct gl_texture_attrib
 {
    GLuint CurrentUnit;   /**< GL_ACTIVE_TEXTURE */
-   struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
+   struct gl_texture_unit Unit[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
 
    struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 

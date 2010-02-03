@@ -87,7 +87,7 @@ get_texobj(GLcontext *ctx, GLenum target, GLboolean get)
 {
    struct gl_texture_unit *texUnit;
 
-   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxCombinedTextureImageUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "gl%sTexParameter(current unit)", get ? "Get" : "");
       return NULL;
@@ -815,7 +815,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureImageUnits) {
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxCombinedTextureImageUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetTexLevelParameteriv(current unit)");
       return;

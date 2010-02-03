@@ -77,7 +77,7 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
    dst->Texture.SharedPalette = src->Texture.SharedPalette;
 
    /* per-unit state */
-   for (u = 0; u < src->Const.MaxTextureImageUnits; u++) {
+   for (u = 0; u < src->Const.MaxCombinedTextureImageUnits; u++) {
       dst->Texture.Unit[u].Enabled = src->Texture.Unit[u].Enabled;
       dst->Texture.Unit[u].EnvMode = src->Texture.Unit[u].EnvMode;
       COPY_4V(dst->Texture.Unit[u].EnvColor, src->Texture.Unit[u].EnvColor);
@@ -282,15 +282,23 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 void GLAPIENTRY
 _mesa_ActiveTextureARB(GLenum texture)
 {
-   GET_CURRENT_CONTEXT(ctx);
    const GLuint texUnit = texture - GL_TEXTURE0;
+   GLuint k;
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* See OpenGL spec for glActiveTexture: */
+   k = MAX2(ctx->Const.MaxCombinedTextureImageUnits,
+            ctx->Const.MaxTextureCoordUnits);
+
+   ASSERT(k <= Elements(ctx->Texture.Unit));
+   
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glActiveTexture %s\n",
                   _mesa_lookup_enum_by_nr(texture));
 
-   if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+   if (texUnit >= k) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture=%s)",
                   _mesa_lookup_enum_by_nr(texture));
       return;
@@ -510,7 +518,7 @@ update_texture_state( GLcontext *ctx )
    /*
     * Update texture unit state.
     */
-   for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
+   for (unit = 0; unit < ctx->Const.MaxCombinedTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
       GLbitfield enabledVertTargets = 0x0;
       GLbitfield enabledFragTargets = 0x0;
@@ -760,14 +768,15 @@ _mesa_init_texture(GLcontext *ctx)
    ctx->Texture.SharedPalette = GL_FALSE;
    _mesa_init_colortable(&ctx->Texture.Palette);
 
-   for (u = 0; u < MAX_TEXTURE_UNITS; u++)
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++)
       init_texture_unit(ctx, u);
 
    /* After we're done initializing the context's texture state the default
-    * texture objects' refcounts should be at least MAX_TEXTURE_UNITS + 1.
+    * texture objects' refcounts should be at least
+    * MAX_COMBINED_TEXTURE_IMAGE_UNITS + 1.
     */
    assert(ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]->RefCount
-          >= MAX_TEXTURE_UNITS + 1);
+          >= MAX_COMBINED_TEXTURE_IMAGE_UNITS + 1);
 
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
@@ -786,7 +795,7 @@ _mesa_free_texture_data(GLcontext *ctx)
    GLuint u, tgt;
 
    /* unreference current textures */
-   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
       /* The _Current texture could account for another reference */
       _mesa_reference_texobj(&ctx->Texture.Unit[u]._Current, NULL);
 
@@ -799,7 +808,7 @@ _mesa_free_texture_data(GLcontext *ctx)
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
 
-   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++)
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++)
       _mesa_free_colortable_data(&ctx->Texture.Unit[u].ColorTable);
 }
 
@@ -814,7 +823,7 @@ _mesa_update_default_objects_texture(GLcontext *ctx)
 {
    GLuint u, tex;
 
-   for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
       for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
          _mesa_reference_texobj(&texUnit->CurrentTex[tex],
