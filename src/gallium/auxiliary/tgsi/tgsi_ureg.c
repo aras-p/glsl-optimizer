@@ -97,6 +97,7 @@ struct ureg_program
       unsigned semantic_name;
       unsigned semantic_index;
       unsigned interp;
+      unsigned cylindrical_wrap;
    } fs_input[UREG_MAX_INPUT];
    unsigned nr_fs_inputs;
 
@@ -286,32 +287,34 @@ ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
 
 
 
-struct ureg_src 
-ureg_DECL_fs_input( struct ureg_program *ureg,
-                    unsigned name,
-                    unsigned index,
-                    unsigned interp_mode )
+struct ureg_src
+ureg_DECL_fs_input_cyl(struct ureg_program *ureg,
+                       unsigned semantic_name,
+                       unsigned semantic_index,
+                       unsigned interp_mode,
+                       unsigned cylindrical_wrap)
 {
    unsigned i;
 
    for (i = 0; i < ureg->nr_fs_inputs; i++) {
-      if (ureg->fs_input[i].semantic_name == name &&
-          ureg->fs_input[i].semantic_index == index) 
+      if (ureg->fs_input[i].semantic_name == semantic_name &&
+          ureg->fs_input[i].semantic_index == semantic_index) {
          goto out;
+      }
    }
 
    if (ureg->nr_fs_inputs < UREG_MAX_INPUT) {
-      ureg->fs_input[i].semantic_name = name;
-      ureg->fs_input[i].semantic_index = index;
+      ureg->fs_input[i].semantic_name = semantic_name;
+      ureg->fs_input[i].semantic_index = semantic_index;
       ureg->fs_input[i].interp = interp_mode;
+      ureg->fs_input[i].cylindrical_wrap = cylindrical_wrap;
       ureg->nr_fs_inputs++;
-   }
-   else {
-      set_bad( ureg );
+   } else {
+      set_bad(ureg);
    }
 
 out:
-   return ureg_src_register( TGSI_FILE_INPUT, i );
+   return ureg_src_register(TGSI_FILE_INPUT, i);
 }
 
 
@@ -1088,32 +1091,59 @@ ureg_label_insn(struct ureg_program *ureg,
 }
 
 
-
-static void emit_decl( struct ureg_program *ureg,
-                       unsigned file,
-                       unsigned index,
-                       unsigned semantic_name,
-                       unsigned semantic_index,
-                       unsigned interp )
+static void
+emit_decl_semantic(struct ureg_program *ureg,
+                   unsigned file,
+                   unsigned index,
+                   unsigned semantic_name,
+                   unsigned semantic_index)
 {
-   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 3 );
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
 
    out[0].value = 0;
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
    out[0].decl.NrTokens = 3;
    out[0].decl.File = file;
    out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW; /* FIXME! */
-   out[0].decl.Interpolate = interp;
    out[0].decl.Semantic = 1;
 
    out[1].value = 0;
-   out[1].decl_range.First = 
-      out[1].decl_range.Last = index;
+   out[1].decl_range.First = index;
+   out[1].decl_range.Last = index;
 
    out[2].value = 0;
    out[2].decl_semantic.Name = semantic_name;
    out[2].decl_semantic.Index = semantic_index;
+}
 
+
+static void
+emit_decl_fs(struct ureg_program *ureg,
+             unsigned file,
+             unsigned index,
+             unsigned semantic_name,
+             unsigned semantic_index,
+             unsigned interpolate,
+             unsigned cylindrical_wrap)
+{
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
+
+   out[0].value = 0;
+   out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
+   out[0].decl.NrTokens = 3;
+   out[0].decl.File = file;
+   out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW; /* FIXME! */
+   out[0].decl.Interpolate = interpolate;
+   out[0].decl.Semantic = 1;
+   out[0].decl.CylindricalWrap = cylindrical_wrap;
+
+   out[1].value = 0;
+   out[1].decl_range.First = index;
+   out[1].decl_range.Last = index;
+
+   out[2].value = 0;
+   out[2].decl_semantic.Name = semantic_name;
+   out[2].decl_semantic.Index = semantic_index;
 }
 
 
@@ -1249,40 +1279,38 @@ static void emit_decls( struct ureg_program *ureg )
       }
    } else if (ureg->processor == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < ureg->nr_fs_inputs; i++) {
-         emit_decl( ureg, 
-                    TGSI_FILE_INPUT, 
-                    i,
-                    ureg->fs_input[i].semantic_name,
-                    ureg->fs_input[i].semantic_index,
-                    ureg->fs_input[i].interp );
+         emit_decl_fs(ureg,
+                      TGSI_FILE_INPUT,
+                      i,
+                      ureg->fs_input[i].semantic_name,
+                      ureg->fs_input[i].semantic_index,
+                      ureg->fs_input[i].interp,
+                      ureg->fs_input[i].cylindrical_wrap);
       }
    } else {
       for (i = 0; i < ureg->nr_gs_inputs; i++) {
-         emit_decl(ureg,
-                   TGSI_FILE_INPUT,
-                   ureg->gs_input[i].index,
-                   ureg->gs_input[i].semantic_name,
-                   ureg->gs_input[i].semantic_index,
-                   TGSI_INTERPOLATE_CONSTANT);
+         emit_decl_semantic(ureg,
+                            TGSI_FILE_INPUT,
+                            ureg->gs_input[i].index,
+                            ureg->gs_input[i].semantic_name,
+                            ureg->gs_input[i].semantic_index);
       }
    }
 
    for (i = 0; i < ureg->nr_system_values; i++) {
-      emit_decl(ureg,
-                TGSI_FILE_SYSTEM_VALUE,
-                ureg->system_value[i].index,
-                ureg->system_value[i].semantic_name,
-                ureg->system_value[i].semantic_index,
-                TGSI_INTERPOLATE_CONSTANT);
+      emit_decl_semantic(ureg,
+                         TGSI_FILE_SYSTEM_VALUE,
+                         ureg->system_value[i].index,
+                         ureg->system_value[i].semantic_name,
+                         ureg->system_value[i].semantic_index);
    }
 
    for (i = 0; i < ureg->nr_outputs; i++) {
-      emit_decl( ureg, 
-                 TGSI_FILE_OUTPUT, 
-                 i,
-                 ureg->output[i].semantic_name,
-                 ureg->output[i].semantic_index,
-                 TGSI_INTERPOLATE_CONSTANT );
+      emit_decl_semantic(ureg,
+                         TGSI_FILE_OUTPUT,
+                         i,
+                         ureg->output[i].semantic_name,
+                         ureg->output[i].semantic_index);
    }
 
    for (i = 0; i < ureg->nr_samplers; i++) {
