@@ -1280,6 +1280,34 @@ Other tokens
 ---------------
 
 
+Declaration
+^^^^^^^^^^^
+
+
+Declares a register that is will be referenced as an operand in Instruction
+tokens.
+
+File field contains register file that is being declared and is one
+of TGSI_FILE.
+
+UsageMask field specifies which of the register components can be accessed
+and is one of TGSI_WRITEMASK.
+
+Interpolate field is only valid for fragment shader INPUT register files.
+It specifes the way input is being interpolated by the rasteriser and is one
+of TGSI_INTERPOLATE.
+
+If Dimension flag is set to 1, a Declaration Dimension token follows.
+
+If Semantic flag is set to 1, a Declaration Semantic token follows.
+
+CylindricalWrap bitfield is only valid for fragment shader INPUT register
+files. It specifies which register components should be subject to cylindrical
+wrapping when interpolating by the rasteriser. If TGSI_CYLINDRICAL_WRAP_X
+is set to 1, the X component should be interpolated according to cylindrical
+wrapping rules.
+
+
 Declaration Semantic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
