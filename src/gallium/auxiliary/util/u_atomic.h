@@ -233,25 +233,25 @@ extern "C" {
 static INLINE boolean
 p_atomic_dec_zero(int32_t *v)
 {
-   return _InterlockedDecrement(v) == 0;
+   return _InterlockedDecrement((long *)v) == 0;
 }
 
 static INLINE void
 p_atomic_inc(int32_t *v)
 {
-   _InterlockedIncrement(v);
+   _InterlockedIncrement((long *)v);
 }
 
 static INLINE void
 p_atomic_dec(int32_t *v)
 {
-   _InterlockedDecrement(v);
+   _InterlockedDecrement((long *)v);
 }
 
 static INLINE int32_t
 p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 {
-   return _InterlockedCompareExchange(v, _new, old);
+   return _InterlockedCompareExchange((long *)v, _new, old);
 }
 
 #ifdef __cplusplus
