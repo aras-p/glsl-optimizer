@@ -450,12 +450,20 @@ static const union tgsi_exec_channel ZeroVec =
    { { 0.0, 0.0, 0.0, 0.0 } };
 
 
-#define CHECK_INF_OR_NAN(chan) do {\
-      assert(!util_is_inf_or_nan((chan)->f[0]));\
-      assert(!util_is_inf_or_nan((chan)->f[1]));\
-      assert(!util_is_inf_or_nan((chan)->f[2]));\
-      assert(!util_is_inf_or_nan((chan)->f[3]));\
-   } while (0)
+/**
+ * Assert that none of the float values in 'chan' are infinite or NaN.
+ * NaN and Inf may occur normally during program execution and should
+ * not lead to crashes, etc.  But when debugging, it's helpful to catch
+ * them.
+ */
+static INLINE void
+check_inf_or_nan(const union tgsi_exec_channel *chan)
+{
+   assert(!util_is_inf_or_nan((chan)->f[0]));
+   assert(!util_is_inf_or_nan((chan)->f[1]));
+   assert(!util_is_inf_or_nan((chan)->f[2]));
+   assert(!util_is_inf_or_nan((chan)->f[3]));
+}
 
 
 #ifdef DEBUG
@@ -1219,8 +1227,9 @@ store_dest(struct tgsi_exec_machine *mach,
    int offset = 0;  /* indirection offset */
    int index;
 
-   if (dst_datatype == TGSI_EXEC_DATA_FLOAT) {
-      CHECK_INF_OR_NAN(chan);
+   /* for debugging */
+   if (0 && dst_datatype == TGSI_EXEC_DATA_FLOAT) {
+      check_inf_or_nan(chan);
    }
 
    /* There is an extra source register that indirectly subscripts
