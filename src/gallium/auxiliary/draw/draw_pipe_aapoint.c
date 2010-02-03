@@ -53,6 +53,10 @@
 #include "draw_pipe.h"
 
 
+/** Approx number of new tokens for instructions in aa_transform_inst() */
+#define NUM_NEW_TOKENS 200
+
+
 /*
  * Enabling NORMALIZE might give _slightly_ better results.
  * Basically, it controls whether we compute distance as d=sqrt(x*x+y*y) or
@@ -494,11 +498,10 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    const struct pipe_shader_state *orig_fs = &aapoint->fs->state;
    struct pipe_shader_state aapoint_fs;
    struct aa_transform_context transform;
-
-#define MAX 1000
+   const uint newLen = tgsi_num_tokens(orig_fs->tokens) + NUM_NEW_TOKENS;
 
    aapoint_fs = *orig_fs; /* copy to init */
-   aapoint_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   aapoint_fs.tokens = tgsi_alloc_tokens(newLen);
    if (aapoint_fs.tokens == NULL)
       return FALSE;
 
@@ -514,7 +517,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
    tgsi_transform_shader(orig_fs->tokens,
                          (struct tgsi_token *) aapoint_fs.tokens,
-                         MAX, &transform.base);
+                         newLen, &transform.base);
 
 #if 0 /* DEBUG */
    printf("draw_aapoint, orig shader:\n");

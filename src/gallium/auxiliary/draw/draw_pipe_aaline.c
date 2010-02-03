@@ -48,6 +48,10 @@
 #include "draw_pipe.h"
 
 
+/** Approx number of new tokens for instructions in aa_transform_inst() */
+#define NUM_NEW_TOKENS 50
+
+
 /**
  * Max texture level for the alpha texture used for antialiasing
  */
@@ -337,11 +341,10 @@ generate_aaline_fs(struct aaline_stage *aaline)
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
-
-#define MAX 1000
+   const uint newLen = tgsi_num_tokens(orig_fs->tokens) + NUM_NEW_TOKENS;
 
    aaline_fs = *orig_fs; /* copy to init */
-   aaline_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   aaline_fs.tokens = tgsi_alloc_tokens(newLen);
    if (aaline_fs.tokens == NULL)
       return FALSE;
 
@@ -357,7 +360,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    tgsi_transform_shader(orig_fs->tokens,
                          (struct tgsi_token *) aaline_fs.tokens,
-                         MAX, &transform.base);
+                         newLen, &transform.base);
 
 #if 0 /* DEBUG */
    tgsi_dump(orig_fs->tokens, 0);

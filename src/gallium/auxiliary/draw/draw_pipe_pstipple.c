@@ -49,6 +49,9 @@
 #include "draw_pipe.h"
 
 
+/** Approx number of new tokens for instructions in pstip_transform_inst() */
+#define NUM_NEW_TOKENS 50
+
 
 /**
  * Subclass of pipe_shader_state to carry extra fragment shader info.
@@ -327,11 +330,10 @@ generate_pstip_fs(struct pstip_stage *pstip)
    /*struct draw_context *draw = pstip->stage.draw;*/
    struct pipe_shader_state pstip_fs;
    struct pstip_transform_context transform;
-
-#define MAX 1000
+   const uint newLen = tgsi_num_tokens(orig_fs->tokens) + NUM_NEW_TOKENS;
 
    pstip_fs = *orig_fs; /* copy to init */
-   pstip_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   pstip_fs.tokens = tgsi_alloc_tokens(newLen);
    if (pstip_fs.tokens == NULL)
       return FALSE;
 
@@ -346,7 +348,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    tgsi_transform_shader(orig_fs->tokens,
                          (struct tgsi_token *) pstip_fs.tokens,
-                         MAX, &transform.base);
+                         newLen, &transform.base);
 
 #if 0 /* DEBUG */
    tgsi_dump(orig_fs->tokens, 0);
