@@ -46,6 +46,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_inlines.h"
  
 static struct pipe_surface *
 dri_surface_from_handle(struct drm_api *api,

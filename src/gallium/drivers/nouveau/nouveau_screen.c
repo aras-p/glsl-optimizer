@@ -3,7 +3,9 @@
 #include <pipe/p_state.h>
 
 #include <util/u_memory.h>
+#include <util/u_inlines.h>
 
+#include <stdio.h>
 #include <errno.h>
 
 #include "nouveau/nouveau_bo.h"

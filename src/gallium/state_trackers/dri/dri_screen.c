@@ -42,6 +42,8 @@
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
 
+#include "util/u_debug.h"
+
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
    DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)

@@ -47,6 +47,8 @@
 #endif
 
 #include "pipe/p_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_debug.h"
 #include "state_tracker/drm_api.h"
 
 #define DRV_ERROR(msg)	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, msg);

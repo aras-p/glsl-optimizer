@@ -27,6 +27,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "vmw_screen.h"
 
 #include "trace/tr_drm.h"

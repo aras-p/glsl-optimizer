@@ -10,6 +10,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_inlines.h"
 
 #include "draw/draw_vertex.h"
 
