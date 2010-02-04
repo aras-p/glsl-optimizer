@@ -35,6 +35,8 @@
 
 #include "pipe/p_config.h"
 
+#if !defined(PIPE_OS_EMBEDDED)
+
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
 #include <sys/time.h>
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
@@ -223,3 +225,5 @@ void util_time_sleep(unsigned usecs)
    Sleep((usecs + 999)/ 1000);
 }
 #endif
+
+#endif /* !PIPE_OS_EMBEDDED */
