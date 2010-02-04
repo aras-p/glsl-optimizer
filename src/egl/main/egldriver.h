@@ -6,6 +6,27 @@
 #include "eglapi.h"
 
 
+/**
+ * Define an inline driver typecast function.
+ */
+#define _EGL_DRIVER_TYPECAST(drvtype, egltype, code)           \
+   static INLINE struct drvtype *drvtype(const egltype *obj)   \
+   { return (struct drvtype *) code; }
+
+
+/**
+ * Define the driver typecast functions for _EGLDriver, _EGLDisplay,
+ * _EGLContext, _EGLSurface, and _EGLConfig.
+ */
+#define _EGL_DRIVER_STANDARD_TYPECASTS(drvname)                            \
+   _EGL_DRIVER_TYPECAST(drvname ## _driver, _EGLDriver, obj)               \
+   /* note that this is not a direct cast */                               \
+   _EGL_DRIVER_TYPECAST(drvname ## _display, _EGLDisplay, obj->DriverData) \
+   _EGL_DRIVER_TYPECAST(drvname ## _context, _EGLContext, obj)             \
+   _EGL_DRIVER_TYPECAST(drvname ## _surface, _EGLSurface, obj)             \
+   _EGL_DRIVER_TYPECAST(drvname ## _config, _EGLConfig, obj)
+
+
 typedef _EGLDriver *(*_EGLMain_t)(const char *args);
 
 
