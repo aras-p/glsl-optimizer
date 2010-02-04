@@ -33,6 +33,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "shader/programopt.h"
 
@@ -367,7 +368,14 @@ st_translate_fragment_program(struct st_context *st,
             assert(attr >= FRAG_ATTRIB_TEX0);
             stfp->input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
             stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+
+            /* XXX this test is very temporary */
+            if (stfp->Base.Base.InputFlags[0] & PROG_PARAM_BIT_CYL_WRAP) {
+               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+            }
+            else {
+               interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+            }
             break;
          }
       }
