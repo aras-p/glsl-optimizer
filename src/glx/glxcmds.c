@@ -42,6 +42,9 @@
 #include <sys/time.h>
 #include <X11/extensions/xf86vmode.h>
 #include "xf86dri.h"
+#define GC_IS_DIRECT(gc) ((gc)->driContext != NULL)
+#else
+#define GC_IS_DIRECT(gc) (0)
 #endif
 
 #if defined(USE_XCB)
@@ -431,11 +434,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->visual = vis->visualid;
          req->screen = vis->screen;
          req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
+         req->isDirect = GC_IS_DIRECT(gc);
       }
       else if (use_glx_1_3) {
          xGLXCreateNewContextReq *req;
@@ -449,11 +448,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->screen = fbconfig->screen;
          req->renderType = renderType;
          req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
+         req->isDirect = GC_IS_DIRECT(gc);
       }
       else {
          xGLXVendorPrivateWithReplyReq *vpreq;
@@ -472,11 +467,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->screen = fbconfig->screen;
          req->renderType = renderType;
          req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
+         req->isDirect = GC_IS_DIRECT(gc);
       }
 
       UnlockDisplay(dpy);
@@ -864,11 +855,9 @@ glXIsDirect(Display * dpy, GLXContext gc)
 {
    if (!gc) {
       return GL_FALSE;
-#ifdef GLX_DIRECT_RENDERING
    }
-   else if (gc->driContext) {
+   else if (GC_IS_DIRECT(gc)) {
       return GL_TRUE;
-#endif
    }
    return __glXIsDirect(dpy, gc->xid);
 }
@@ -2874,13 +2863,8 @@ __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
    INT32 *buffer_ptr;
    CARD8 opcode;
 
-   if (gc == NULL)
+   if ((gc == NULL) || GC_IS_DIRECT(gc))
       return;
-
-#ifdef GLX_DIRECT_RENDERING
-   if (gc->driContext)
-      return;
-#endif
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
