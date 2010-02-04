@@ -230,7 +230,7 @@ def generate(env):
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE']
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE_OGL']
     if platform == 'embedded':
-        cppdefines += ['PIPE_SUBSYSTEM_EMBEDDED']
+        cppdefines += ['PIPE_OS_EMBEDDED']
     env.Append(CPPDEFINES = cppdefines)
 
     # C compiler options
