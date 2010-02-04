@@ -112,43 +112,13 @@ struct xdri_egl_config
 
 
 
-/** cast wrapper */
-static INLINE struct xdri_egl_driver *
-xdri_egl_driver(_EGLDriver *drv)
-{
-   return (struct xdri_egl_driver *) drv;
-}
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(xdri_egl)
 
-
-static INLINE struct xdri_egl_display *
-lookup_display(_EGLDisplay *dpy)
-{
-   return (struct xdri_egl_display *) dpy->DriverData;
-}
-
-
-/** Map EGLSurface handle to xdri_egl_surface object */
-static INLINE struct xdri_egl_surface *
-lookup_surface(_EGLSurface *surface)
-{
-   return (struct xdri_egl_surface *) surface;
-}
-
-
-/** Map EGLContext handle to xdri_egl_context object */
-static INLINE struct xdri_egl_context *
-lookup_context(_EGLContext *context)
-{
-   return (struct xdri_egl_context *) context;
-}
-
-
-/** Map EGLConfig handle to xdri_egl_config object */
-static INLINE struct xdri_egl_config *
-lookup_config(_EGLConfig *conf)
-{
-   return (struct xdri_egl_config *) conf;
-}
+#define lookup_display(dpy) xdri_egl_display(dpy)
+#define lookup_context(ctx) xdri_egl_context(ctx)
+#define lookup_surface(surf) xdri_egl_surface(surf)
+#define lookup_config(conf) xdri_egl_config(conf)
 
 
 /** Get size of given window */

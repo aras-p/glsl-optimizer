@@ -116,35 +116,14 @@ struct GLX_egl_config
    int index;
 };
 
-/** cast wrapper */
-static struct GLX_egl_driver *
-GLX_egl_driver(_EGLDriver *drv)
-{
-   return (struct GLX_egl_driver *) drv;
-}
-
-static struct GLX_egl_display *
-GLX_egl_display(_EGLDisplay *dpy)
-{
-   return (struct GLX_egl_display *) dpy->DriverData;
-}
-
-static struct GLX_egl_context *
-GLX_egl_context(_EGLContext *ctx)
-{
-   return (struct GLX_egl_context *) ctx;
-}
-
-static struct GLX_egl_surface *
-GLX_egl_surface(_EGLSurface *surf)
-{
-   return (struct GLX_egl_surface *) surf;
-}
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(GLX_egl)
 
 static int
 GLX_egl_config_index(_EGLConfig *conf)
 {
-   return ((struct GLX_egl_config *) conf)->index;
+   struct GLX_egl_config *GLX_conf = GLX_egl_config(conf);
+   return GLX_conf->index;
 }
 
 
