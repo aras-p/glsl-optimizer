@@ -105,5 +105,7 @@ env.InstallSharedLibrary(glut, version=(3, 7, 1))
 
 if env['platform'] == 'windows':
     glut = env.FindIxes(glut, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    glut = env.FindIxes(glut, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
 Export('glut')
