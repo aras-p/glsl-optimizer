@@ -120,7 +120,6 @@ C_SOURCES = \
 	util/u_surface.c \
 	util/u_texture.c \
 	util/u_tile.c \
-	util/u_time.c \
 	util/u_timed_winsys.c \
 	util/u_upload_mgr.c \
 	util/u_simple_screen.c \
