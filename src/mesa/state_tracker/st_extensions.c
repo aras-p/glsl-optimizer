@@ -114,6 +114,11 @@ void st_init_limits(struct st_context *st)
       = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
       = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
+   /* these are not queryable. Note that GL basically mandates a 1.0 minimum
+    * for non-aa sizes, but we can go down to 0.0 for aa points.
+    */
+   c->MinPointSize = 1.0f;
+   c->MinPointSizeAA = 0.0f;
 
    c->MaxTextureMaxAnisotropy
       = _maxf(2.0f, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
