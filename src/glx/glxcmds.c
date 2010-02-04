@@ -1090,7 +1090,7 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
 
 #define MATCH_DONT_CARE( param )        \
   do {                                  \
-    if ( (a-> param != GLX_DONT_CARE)   \
+    if ( ((int) a-> param != (int) GLX_DONT_CARE)   \
          && (a-> param != b-> param) ) {        \
       return False;                             \
     }                                           \
@@ -1098,7 +1098,7 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
 
 #define MATCH_MINIMUM( param )                  \
   do {                                          \
-    if ( (a-> param != GLX_DONT_CARE)           \
+    if ( ((int) a-> param != (int) GLX_DONT_CARE)	\
          && (a-> param > b-> param) ) {         \
       return False;                             \
     }                                           \
@@ -1165,7 +1165,7 @@ fbconfigs_compatible(const __GLcontextModes * const a,
     * the (broken) drivers.
     */
 
-   if (a->transparentPixel != GLX_DONT_CARE && a->transparentPixel != 0) {
+   if (a->transparentPixel != (int) GLX_DONT_CARE && a->transparentPixel != 0) {
       if (a->transparentPixel == GLX_NONE) {
          if (b->transparentPixel != GLX_NONE && b->transparentPixel != 0)
             return False;
@@ -1812,14 +1812,15 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
    if (priv && (priv->screenConfigs != NULL)
        && (screen >= 0) && (screen <= ScreenCount(dpy))
        && (priv->screenConfigs[screen].configs != NULL)
-       && (priv->screenConfigs[screen].configs->fbconfigID != GLX_DONT_CARE)) {
+       && (priv->screenConfigs[screen].configs->fbconfigID
+	   != (int) GLX_DONT_CARE)) {
       unsigned num_configs = 0;
       __GLcontextModes *modes;
 
 
       for (modes = priv->screenConfigs[screen].configs; modes != NULL;
            modes = modes->next) {
-         if (modes->fbconfigID != GLX_DONT_CARE) {
+         if (modes->fbconfigID != (int) GLX_DONT_CARE) {
             num_configs++;
          }
       }
@@ -1831,7 +1832,7 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
          i = 0;
          for (modes = priv->screenConfigs[screen].configs; modes != NULL;
               modes = modes->next) {
-            if (modes->fbconfigID != GLX_DONT_CARE) {
+            if (modes->fbconfigID != (int) GLX_DONT_CARE) {
                config[i] = modes;
                i++;
             }
@@ -2295,7 +2296,7 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
 
    if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
-       && (psc->configs->fbconfigID != GLX_DONT_CARE)) {
+       && (psc->configs->fbconfigID != (int) GLX_DONT_CARE)) {
       return (GLXFBConfigSGIX) _gl_context_modes_find_visual(psc->configs,
                                                              vis->visualid);
    }
