@@ -22,12 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
 #include "egllog.h"
 
 #include "native_kms.h"
