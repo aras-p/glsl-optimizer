@@ -115,8 +115,6 @@ void r700Start3D(context_t *context)
     END_BATCH();
 
     COMMIT_BATCH();
-
-    r700WaitForIdleClean(context);
 }
 
 GLboolean r700SyncSurf(context_t *context,
@@ -421,7 +419,7 @@ static void r700RunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end,
 }
 
 /* start 3d, idle, cb/db flush */
-#define PRE_EMIT_STATE_BUFSZ 10 + 5 + 18
+#define PRE_EMIT_STATE_BUFSZ 5 + 5 + 18
 
 static GLuint r700PredictRenderSize(GLcontext* ctx,
 				    const struct _mesa_prim *prim,
@@ -934,6 +932,7 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
     radeon_debug_remove_indent();
 
     /* Flush render op cached for last several quads. */
+    /* XXX drm should handle this in fence submit */
     r700WaitForIdleClean(context);
 
     rrb = radeon_get_colorbuffer(&context->radeon);

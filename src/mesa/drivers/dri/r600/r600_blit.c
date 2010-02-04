@@ -1652,6 +1652,7 @@ unsigned r600_blit(GLcontext *ctx,
 		 CB_ACTION_ENA_bit | (1 << (id + 6)));
 
     /* 5 */
+    /* XXX drm should handle this in fence submit */
     r700WaitForIdleClean(context);
 
     radeonFlush(ctx);
