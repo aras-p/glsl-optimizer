@@ -2464,6 +2464,12 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
    radeon_firevertices(&r200->radeon);
 
+   radeon_print(RADEON_STATE, RADEON_TRACE,
+		   "%s(%p) first 32 bits are %x.\n",
+		   __func__,
+		   ctx,
+		   *(uint32_t*)mask);
+
    R200_STATECHANGE(r200, stp);
 
    /* Must flip pattern upside down.
