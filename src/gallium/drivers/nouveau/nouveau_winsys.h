@@ -27,24 +27,6 @@
 #define NOUVEAU_BUFFER_USAGE_NO_RENDER (1 << 19)
 
 extern struct pipe_screen *
-nv04_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
-
-extern struct pipe_context *
-nv04_create(struct pipe_screen *, unsigned pctx_id);
-
-extern struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
-
-extern struct pipe_context *
-nv10_create(struct pipe_screen *, unsigned pctx_id);
-
-extern struct pipe_screen *
-nv20_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
-
-extern struct pipe_context *
-nv20_create(struct pipe_screen *, unsigned pctx_id);
-
-extern struct pipe_screen *
 nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *

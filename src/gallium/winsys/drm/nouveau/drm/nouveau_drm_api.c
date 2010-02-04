@@ -81,15 +81,6 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 		return NULL;
 
 	switch (dev->chipset & 0xf0) {
-	case 0x00:
-		init = nv04_screen_create;
-		break;
-	case 0x10:
-		init = nv10_screen_create;
-		break;
-	case 0x20:
-		init = nv20_screen_create;
-		break;
 	case 0x30:
 		init = nv30_screen_create;
 		break;
@@ -160,15 +151,6 @@ nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 	int i;
 
 	switch (chipset & 0xf0) {
-	case 0x00:
-		init = nv04_create;
-		break;
-	case 0x10:
-		init = nv10_create;
-		break;
-	case 0x20:
-		init = nv20_create;
-		break;
 	case 0x30:
 		init = nv30_create;
 		break;

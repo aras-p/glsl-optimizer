@@ -5,7 +5,7 @@
 #include "util/u_math.h"
 
 #include "nv40_context.h"
-#include "../nv04/nv04_surface_2d.h"
+#include "../nouveau/nv04_surface_2d.h"
 
 
 

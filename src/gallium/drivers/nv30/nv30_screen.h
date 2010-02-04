@@ -3,7 +3,7 @@
 
 #include "nouveau/nouveau_screen.h"
 
-#include "nv04/nv04_surface_2d.h"
+#include "nouveau/nv04_surface_2d.h"
 
 struct nv30_screen {
 	struct nouveau_screen base;
