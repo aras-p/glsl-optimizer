@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -32,47 +32,46 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
+#if defined(PIPE_OS_UNIX) || defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
+#include <stdlib.h>
 #include <stdio.h>
 
-#include "util/u_memory.h"
-
-#include "u_stream.h"
+#include "os_stream.h"
 
 
-struct util_stream 
+struct os_stream 
 {
    FILE *file;
 };
 
 
-struct util_stream *
-util_stream_create(const char *filename, size_t max_size)
+struct os_stream *
+os_stream_create(const char *filename, size_t max_size)
 {
-   struct util_stream *stream;
+   struct os_stream *stream;
    
    (void)max_size;
    
-   stream = CALLOC_STRUCT(util_stream);
+   stream = (struct os_stream *)calloc(1, sizeof(struct os_stream));
    if(!stream)
-      goto error1;
+      goto no_stream;
    
    stream->file = fopen(filename, "w");
    if(!stream->file)
-      goto error2;
+      goto no_file;
    
    return stream;
    
-error2:
-   FREE(stream);
-error1:
+no_file:
+   free(stream);
+no_stream:
    return NULL;
 }
 
 
 boolean
-util_stream_write(struct util_stream *stream, const void *data, size_t size)
+os_stream_write(struct os_stream *stream, const void *data, size_t size)
 {
    if(!stream)
       return FALSE;
@@ -82,7 +81,7 @@ util_stream_write(struct util_stream *stream, const void *data, size_t size)
 
 
 void
-util_stream_flush(struct util_stream *stream) 
+os_stream_flush(struct os_stream *stream) 
 {
    if(!stream)
       return;
@@ -92,14 +91,14 @@ util_stream_flush(struct util_stream *stream)
 
 
 void
-util_stream_close(struct util_stream *stream) 
+os_stream_close(struct os_stream *stream) 
 {
    if(!stream)
       return;
    
    fclose(stream->file);
 
-   FREE(stream);
+   free(stream);
 }
 
 

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -37,16 +37,14 @@
 #include <windows.h>
 #include <winddi.h>
 
-#include "util/u_memory.h"
-#include "util/u_string.h"
-
-#include "u_stream.h"
+#include "os_memory.h"
+#include "os_stream.h"
 
 
 #define MAP_FILE_SIZE (4*1024*1024)
 
 
-struct util_stream 
+struct os_stream 
 {
    char filename[MAX_PATH + 1];
    WCHAR wFileName[MAX_PATH + 1];
@@ -60,23 +58,23 @@ struct util_stream
 
 
 static INLINE boolean
-util_stream_map(struct util_stream *stream)
+os_stream_map(struct os_stream *stream)
 {
    ULONG BytesInUnicodeString;
    static char filename[MAX_PATH + 1];
    unsigned filename_len;
 
    if(stream->growable)
-      filename_len = util_snprintf(filename,
-                                   sizeof(filename),
-                                   "%s.%04x",
-                                   stream->filename,
-                                   stream->suffix++);
+      filename_len = snprintf(filename,
+                              sizeof(filename),
+                              "%s.%04x",
+                              stream->filename,
+                              stream->suffix++);
    else
-      filename_len = util_snprintf(filename,
-                                   sizeof(filename),
-                                   "%s",
-                                   stream->filename);
+      filename_len = snprintf(filename,
+                              sizeof(filename),
+                              "%s",
+                              stream->filename);
 
    EngMultiByteToUnicodeN(
          stream->wFileName,
@@ -97,7 +95,7 @@ util_stream_map(struct util_stream *stream)
 
 
 static INLINE void
-util_stream_unmap(struct util_stream *stream)
+os_stream_unmap(struct os_stream *stream)
 {
    EngUnmapFile(stream->iFile);
    if(stream->written < stream->map_size) {
@@ -112,7 +110,7 @@ util_stream_unmap(struct util_stream *stream)
 
 
 static INLINE void
-util_stream_full_qualified_filename(char *dst, size_t size, const char *src)
+os_stream_full_qualified_filename(char *dst, size_t size, const char *src)
 {
    boolean need_drive, need_root;
    
@@ -125,24 +123,24 @@ util_stream_full_qualified_filename(char *dst, size_t size, const char *src)
       need_root = src[0] == '\\' ? FALSE : TRUE;
    }
    
-   util_snprintf(dst, size, 
-                 "\\??\\%s%s%s",
-                 need_drive ? "C:" : "",
-                 need_root ? "\\" : "",
-                 src);
+   snprintf(dst, size,
+            "\\??\\%s%s%s",
+            need_drive ? "C:" : "",
+            need_root ? "\\" : "",
+            src);
 }
 
 
-struct util_stream *
-util_stream_create(const char *filename, size_t max_size)
+struct os_stream *
+os_stream_create(const char *filename, size_t max_size)
 {
-   struct util_stream *stream;
+   struct os_stream *stream;
    
-   stream = CALLOC_STRUCT(util_stream);
+   stream = CALLOC_STRUCT(os_stream);
    if(!stream)
       goto error1;
    
-   util_stream_full_qualified_filename(stream->filename,
+   os_stream_full_qualified_filename(stream->filename,
                                        sizeof(stream->filename),
                                        filename);
    
@@ -155,7 +153,7 @@ util_stream_create(const char *filename, size_t max_size)
       stream->map_size = MAP_FILE_SIZE;
    }
    
-   if(!util_stream_map(stream))
+   if(!os_stream_map(stream))
       goto error2;
    
    return stream;
@@ -168,7 +166,7 @@ error1:
 
 
 static INLINE void
-util_stream_copy(struct util_stream *stream, const char *data, size_t size)
+os_stream_copy(struct os_stream *stream, const char *data, size_t size)
 {
    assert(stream->written + size <= stream->map_size);
    memcpy(stream->pMap + stream->written, data, size);
@@ -177,7 +175,7 @@ util_stream_copy(struct util_stream *stream, const char *data, size_t size)
 
 
 boolean
-util_stream_write(struct util_stream *stream, const void *data, size_t size)
+os_stream_write(struct os_stream *stream, const void *data, size_t size)
 {
    if(!stream)
       return FALSE;
@@ -187,35 +185,35 @@ util_stream_write(struct util_stream *stream, const void *data, size_t size)
    
    while(stream->written + size > stream->map_size) {
       size_t step = stream->map_size - stream->written;
-      util_stream_copy(stream, data, step);
+      os_stream_copy(stream, data, step);
       data = (const char *)data + step;
       size -= step;
       
-      util_stream_unmap(stream);
-      if(!stream->growable || !util_stream_map(stream))
+      os_stream_unmap(stream);
+      if(!stream->growable || !os_stream_map(stream))
          return FALSE;
    }
 
-   util_stream_copy(stream, data, size);
+   os_stream_copy(stream, data, size);
    
    return TRUE;
 }
 
 
 void
-util_stream_flush(struct util_stream *stream) 
+os_stream_flush(struct os_stream *stream) 
 {
    (void)stream;
 }
 
 
 void
-util_stream_close(struct util_stream *stream) 
+os_stream_close(struct os_stream *stream) 
 {
    if(!stream)
       return;
    
-   util_stream_unmap(stream);
+   os_stream_unmap(stream);
 
    FREE(stream);
 }

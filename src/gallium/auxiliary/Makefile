@@ -49,6 +49,8 @@ C_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	os/os_misc.c \
+	os/os_stream_stdc.c \
+	os/os_stream_wd.c \
 	os/os_time.c \
 	pipebuffer/pb_buffer_malloc.c \
 	pipebuffer/pb_bufmgr_alt.c \
@@ -115,8 +117,6 @@ C_SOURCES = \
 	util/u_ringbuffer.c \
 	util/u_simple_shaders.c \
 	util/u_snprintf.c \
-	util/u_stream_stdc.c \
-	util/u_stream_wd.c \
 	util/u_surface.c \
 	util/u_texture.c \
 	util/u_tile.c \

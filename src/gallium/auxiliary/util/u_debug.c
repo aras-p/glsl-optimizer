@@ -30,6 +30,7 @@
 #include "pipe/p_config.h" 
 
 #include "pipe/p_compiler.h"
+#include "os/os_stream.h"
 #include "util/u_debug.h" 
 #include "pipe/p_format.h" 
 #include "pipe/p_state.h" 
@@ -37,7 +38,6 @@
 #include "util/u_format.h"
 #include "util/u_memory.h" 
 #include "util/u_string.h" 
-#include "util/u_stream.h" 
 #include "util/u_math.h" 
 #include "util/u_tile.h" 
 #include "util/u_prim.h" 
@@ -606,7 +606,7 @@ debug_dump_float_rgba_bmp(const char *filename,
                           float *rgba, unsigned stride)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
-   struct util_stream *stream;
+   struct os_stream *stream;
    struct bmp_file_header bmfh;
    struct bmp_info_header bmih;
    unsigned x, y;
@@ -632,12 +632,12 @@ debug_dump_float_rgba_bmp(const char *filename,
    bmih.biClrUsed = 0;
    bmih.biClrImportant = 0;
 
-   stream = util_stream_create(filename, bmfh.bfSize);
+   stream = os_stream_create(filename, bmfh.bfSize);
    if(!stream)
       goto error1;
 
-   util_stream_write(stream, &bmfh, 14);
-   util_stream_write(stream, &bmih, 40);
+   os_stream_write(stream, &bmfh, 14);
+   os_stream_write(stream, &bmih, 40);
 
    y = height;
    while(y--) {
@@ -649,11 +649,11 @@ debug_dump_float_rgba_bmp(const char *filename,
          pixel.rgbGreen = float_to_ubyte(ptr[x*4 + 1]);
          pixel.rgbBlue  = float_to_ubyte(ptr[x*4 + 2]);
          pixel.rgbAlpha = 255;
-         util_stream_write(stream, &pixel, 4);
+         os_stream_write(stream, &pixel, 4);
       }
    }
 
-   util_stream_close(stream);
+   os_stream_close(stream);
 error1:
    ;
 #endif
