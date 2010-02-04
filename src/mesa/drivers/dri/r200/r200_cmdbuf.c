@@ -88,6 +88,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
        insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.pix[i] );
    insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[0] );
    insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[1] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.stp );
    for (i = 0; i < 8; ++i)
        insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)
