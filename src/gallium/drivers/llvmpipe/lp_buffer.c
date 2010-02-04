@@ -32,7 +32,6 @@
 
 #include "lp_winsys.h"
 #include "lp_screen.h"
-#include "lp_texture.h"
 #include "lp_buffer.h"
 
 
