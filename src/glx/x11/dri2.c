@@ -94,6 +94,8 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
    switch ((wire->u.u.type & 0x7f) - info->codes->first_event) {
+
+#ifdef X_DRI2SwapBuffers
    case DRI2_BufferSwapComplete:
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
@@ -123,6 +125,8 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       aevent->sbc = ((CARD64)awire->sbc_hi << 32) | awire->sbc_lo;
       return True;
    }
+#endif
+
    default:
       /* client doesn't support server event */
       break;
@@ -455,6 +459,7 @@ DRI2CopyRegion(Display * dpy, XID drawable, XserverRegion region,
    SyncHandle();
 }
 
+#ifdef X_DRI2SwapBuffers
 static void
 load_swap_req(xDRI2SwapBuffersReq *req, CARD64 target, CARD64 divisor,
 	     CARD64 remainder)
@@ -496,7 +501,9 @@ void DRI2SwapBuffers(Display *dpy, XID drawable, CARD64 target_msc,
     UnlockDisplay(dpy);
     SyncHandle();
 }
+#endif
 
+#ifdef X_DRI2GetMSC
 Bool DRI2GetMSC(Display *dpy, XID drawable, CARD64 *ust, CARD64 *msc,
 		CARD64 *sbc)
 {
@@ -527,7 +534,9 @@ Bool DRI2GetMSC(Display *dpy, XID drawable, CARD64 *ust, CARD64 *msc,
 
     return True;
 }
+#endif
 
+#ifdef X_DRI2WaitMSC
 static void
 load_msc_req(xDRI2WaitMSCReq *req, CARD64 target, CARD64 divisor,
 	     CARD64 remainder)
@@ -571,7 +580,9 @@ Bool DRI2WaitMSC(Display *dpy, XID drawable, CARD64 target_msc, CARD64 divisor,
 
     return True;
 }
+#endif
 
+#ifdef X_DRI2WaitSBC
 static void
 load_sbc_req(xDRI2WaitSBCReq *req, CARD64 target)
 {
@@ -610,7 +621,9 @@ Bool DRI2WaitSBC(Display *dpy, XID drawable, CARD64 target_sbc, CARD64 *ust,
 
     return True;
 }
+#endif
 
+#ifdef X_DRI2SwapInterval
 void DRI2SwapInterval(Display *dpy, XID drawable, int interval)
 {
     XExtDisplayInfo *info = DRI2FindDisplay(dpy);
@@ -627,5 +640,6 @@ void DRI2SwapInterval(Display *dpy, XID drawable, int interval)
     UnlockDisplay(dpy);
     SyncHandle();
 }
+#endif
 
 #endif /* GLX_DIRECT_RENDERING */

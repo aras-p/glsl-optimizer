@@ -380,8 +380,10 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        return 0;
     }
 
+#ifdef X_DRI2SwapBuffers
     DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
 		    remainder, &ret);
+#endif
 
 #if __DRI2_FLUSH_VERSION >= 2
     if (pdraw->psc->f)
@@ -576,18 +578,24 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->swapBuffers = dri2SwapBuffers;
    psp->waitGL = dri2WaitGL;
    psp->waitX = dri2WaitX;
+   psp->getDrawableMSC = NULL;
+   psp->waitForMSC = NULL;
+   psp->waitForSBC = NULL;
+   psp->setSwapInterval = NULL;
+   psp->getSwapInterval = NULL;
+
    if (pdp->driMinor >= 2) {
+#ifdef X_DRI2GetMSC
       psp->getDrawableMSC = dri2DrawableGetMSC;
+#endif
+#ifdef X_DRI2WaitMSC
       psp->waitForMSC = dri2WaitForMSC;
       psp->waitForSBC = dri2WaitForSBC;
+#endif
+#ifdef X_DRI2SwapInterval
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
-   } else {
-      psp->getDrawableMSC = NULL;
-      psp->waitForMSC = NULL;
-      psp->waitForSBC = NULL;
-      psp->setSwapInterval = NULL;
-      psp->getSwapInterval = NULL;
+#endif
    }
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
@@ -643,8 +651,10 @@ dri2CreateDisplay(Display * dpy)
 
    pdp->driPatch = 0;
    pdp->swapAvailable = 0;
+#ifdef X_DRI2SwapBuffers
    if (pdp->driMinor >= 2)
       pdp->swapAvailable = 1;
+#endif
 
    pdp->base.destroyDisplay = dri2DestroyDisplay;
    pdp->base.createScreen = dri2CreateScreen;
