@@ -43,7 +43,7 @@
  * Return memory on given byte alignment
  */
 static INLINE void *
-os_malloc_aligned(size_t size, uint alignment)
+os_malloc_aligned(size_t size, size_t alignment)
 {
    char *ptr, *buf;
 
@@ -51,7 +51,7 @@ os_malloc_aligned(size_t size, uint alignment)
    if (!ptr)
       return NULL;
 
-   buf = (char *)(((uintptr_t)ptr + sizeof(void *) + alignment - 1) & ~(alignment - 1));
+   buf = (char *)(((uintptr_t)ptr + sizeof(void *) + alignment - 1) & ~((uintptr_t)(alignment - 1)));
    *(char **)(buf - sizeof(void *)) = ptr;
 
    return buf;

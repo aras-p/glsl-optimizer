@@ -58,7 +58,7 @@ void *
 os_realloc(void *ptr, size_t old_size, size_t new_size);
 
 void *
-os_malloc_aligned(size_t size, uint alignment);
+os_malloc_aligned(size_t size, size_t alignment);
 
 void
 os_free_aligned(void *ptr);
