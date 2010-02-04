@@ -98,7 +98,7 @@ static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 	_mesa_delete_program(ctx, prog);
 }
 
-static void
+static GLboolean
 r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
@@ -116,7 +116,10 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	}
 
 	/* need this for tcl fallbacks */
-	_tnl_program_string(ctx, target, prog);
+	(void) _tnl_program_string(ctx, target, prog);
+
+	/* XXX check if program is legal, within limits */
+	return GL_TRUE;
 }
 
 static GLboolean

@@ -177,9 +177,9 @@ static GLboolean st_is_program_native( GLcontext *ctx,
 }
 
 
-static void st_program_string_notify( GLcontext *ctx,
-				      GLenum target,
-				      struct gl_program *prog )
+static GLboolean st_program_string_notify( GLcontext *ctx,
+                                           GLenum target,
+                                           struct gl_program *prog )
 {
    struct st_context *st = st_context(ctx);
 
@@ -211,6 +211,9 @@ static void st_program_string_notify( GLcontext *ctx,
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
    }
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 

@@ -203,13 +203,14 @@ vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
  * Called via ctx->Driver.ProgramStringNotify() after a new vertex program
  * string has been parsed.
  */
-void
+GLboolean
 _tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
 {
    /* No-op.
     * If we had derived anything from the program that was private to this
     * stage we'd recompute/validate it here.
     */
+   return GL_TRUE;
 }
 
 

@@ -1205,7 +1205,7 @@ i915IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
       return GL_TRUE;
 }
 
-static void
+static GLboolean
 i915ProgramStringNotify(GLcontext * ctx,
                         GLenum target, struct gl_program *prog)
 {
@@ -1223,7 +1223,10 @@ i915ProgramStringNotify(GLcontext * ctx,
       }
    }
 
-   _tnl_program_string(ctx, target, prog);
+   (void) _tnl_program_string(ctx, target, prog);
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 void

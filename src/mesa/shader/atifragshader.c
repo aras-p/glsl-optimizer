@@ -378,8 +378,11 @@ _mesa_EndFragmentShaderATI(void)
    }
    if (ctx->ATIFragmentShader.Current->cur_pass > 1)
       ctx->ATIFragmentShader.Current->NumPasses = 2;
-   else ctx->ATIFragmentShader.Current->NumPasses = 1;
-   ctx->ATIFragmentShader.Current->cur_pass=0;
+   else
+      ctx->ATIFragmentShader.Current->NumPasses = 1;
+
+   ctx->ATIFragmentShader.Current->cur_pass = 0;
+
 #if MESA_DEBUG_ATI_FS
    for (j = 0; j < MAX_NUM_PASSES_ATI; j++) {
       for (i = 0; i < MAX_NUM_FRAGMENT_REGISTERS_ATI; i++) {
@@ -402,8 +405,13 @@ _mesa_EndFragmentShaderATI(void)
       }
    }
 #endif
-   if (ctx->Driver.ProgramStringNotify)
-      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_SHADER_ATI, NULL );
+
+   if (!ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_SHADER_ATI, NULL)) {
+      ctx->ATIFragmentShader.Current->isValid = GL_FALSE;
+      /* XXX is this the right error? */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEndFragmentShaderATI(driver rejected shader)");
+   }
 }
 
 void GLAPIENTRY

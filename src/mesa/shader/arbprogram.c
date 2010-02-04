@@ -489,8 +489,13 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       return;
    }
 
-   if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-      ctx->Driver.ProgramStringNotify( ctx, target, base );
+   if (ctx->Program.ErrorPos == -1) {
+      /* finally, give the program to the driver for translation/checking */
+      if (!ctx->Driver.ProgramStringNotify(ctx, target, base)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glProgramStringARB(rejected by driver");
+      }
+   }
 }
 
 

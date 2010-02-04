@@ -132,7 +132,7 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 	_mesa_delete_program(ctx, prog);
 }
 
-static void
+static GLboolean
 r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
@@ -153,6 +153,8 @@ r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 		break;
 	}
 		
+	/* XXX check if program is legal, within limits */
+	return GL_TRUE;
 }
 
 static GLboolean r700IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)

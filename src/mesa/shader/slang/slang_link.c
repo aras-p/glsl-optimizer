@@ -719,6 +719,7 @@ _slang_link(GLcontext *ctx,
 {
    const struct gl_vertex_program *vertProg = NULL;
    const struct gl_fragment_program *fragProg = NULL;
+   GLboolean vertNotify = GL_TRUE, fragNotify = GL_TRUE;
    GLuint numSamplers = 0;
    GLuint i;
 
@@ -871,8 +872,8 @@ _slang_link(GLcontext *ctx,
       _mesa_update_shader_textures_used(&shProg->FragmentProgram->Base);
 
       /* notify driver that a new fragment program has been compiled/linked */
-      ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                                      &shProg->FragmentProgram->Base);
+      vertNotify = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+                                                 &shProg->FragmentProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
          _mesa_printf("Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
@@ -889,8 +890,8 @@ _slang_link(GLcontext *ctx,
       _mesa_update_shader_textures_used(&shProg->VertexProgram->Base);
 
       /* notify driver that a new vertex program has been compiled/linked */
-      ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
-                                      &shProg->VertexProgram->Base);
+      fragNotify = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+                                                   &shProg->VertexProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
          _mesa_printf("Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
@@ -918,6 +919,12 @@ _slang_link(GLcontext *ctx,
       }
    }
 
-   shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
+   if (!vertNotify || !fragNotify) {
+      /* driver rejected one/both of the vertex/fragment programs */
+      link_error(shProg, "Vertex and/or fragment program rejected by driver\n");
+   }
+   else {
+      shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
+   }
 }
 

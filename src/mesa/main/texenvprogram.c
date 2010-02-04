@@ -1535,8 +1535,15 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    /* Notify driver the fragment program has (actually) changed.
     */
    if (ctx->Driver.ProgramStringNotify) {
-      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
-                                       &p.program->Base );
+      GLboolean ok = ctx->Driver.ProgramStringNotify(ctx,
+                                                     GL_FRAGMENT_PROGRAM_ARB, 
+                                                     &p.program->Base);
+      /* Driver should be able to handle any texenv programs as long as
+       * the driver correctly reported max number of texture units correctly,
+       * etc.
+       */
+      ASSERT(ok);
+      (void) ok; /* silence unused var warning */
    }
 
    if (DISASSEM) {

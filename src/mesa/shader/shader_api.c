@@ -1715,7 +1715,11 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
           */
          FLUSH_VERTICES(ctx, _NEW_TEXTURE | _NEW_PROGRAM);
          _mesa_update_shader_textures_used(program);
-         ctx->Driver.ProgramStringNotify(ctx, program->Target, program);
+         /* Do we need to care about the return value here?
+          * This should not be the first time the driver was notified of
+          * this program.
+          */
+         (void) ctx->Driver.ProgramStringNotify(ctx, program->Target, program);
       }
    }
    else {
