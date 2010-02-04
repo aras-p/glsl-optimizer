@@ -26,11 +26,13 @@
  **************************************************************************/
 
 
+#include "os/os_thread.h"
 #include "util/u_format.h"
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "util/u_network.h"
+#include "util/u_time.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -42,15 +44,6 @@
 #include "rbug/rbug.h"
 
 #include <errno.h>
-
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-#  define sleep Sleep
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_APPLE)
-#  include <unistd.h>
-#  define sleep usleep
-#else
-#  warning "No socket implementation"
-#endif
 
 #define U642VOID(x) ((void *)(unsigned long)(x))
 #define VOID2U64(x) ((uint64_t)(unsigned long)(x))
@@ -805,7 +798,7 @@ PIPE_THREAD_ROUTINE(trace_rbug_thread, void_tr_rbug)
    debug_printf("trace_rbug - remote debugging listening on port %u\n", --port);
 
    while(tr_rbug->running) {
-      sleep(1);
+      util_time_sleep(1);
 
       c = u_socket_accept(s);
       if (c < 0)
