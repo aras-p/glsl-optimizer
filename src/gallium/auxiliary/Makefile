@@ -49,6 +49,7 @@ C_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	os/os_misc.c \
+	os/os_time.c \
 	pipebuffer/pb_buffer_malloc.c \
 	pipebuffer/pb_bufmgr_alt.c \
 	pipebuffer/pb_bufmgr_cache.c \
