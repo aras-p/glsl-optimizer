@@ -23,6 +23,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
