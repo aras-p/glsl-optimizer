@@ -281,10 +281,10 @@ def generate(env):
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
                 ]
-        	if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
-		    ccflags += [
-                    	'-mstackrealign', # ensure stack is aligned
-		    ]
+            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+                ccflags += [
+                    '-mstackrealign', # ensure stack is aligned
+                ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
         # See also:
@@ -301,12 +301,12 @@ def generate(env):
             '-std=gnu99',
         ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
-	    ccflags += [
-            	'-Werror=pointer-arith',
-	    ]
-	    cflags += [
-            	'-Werror=declaration-after-statement',
-	    ]
+            ccflags += [
+                '-Werror=pointer-arith',
+            ]
+            cflags += [
+                '-Werror=declaration-after-statement',
+            ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
