@@ -113,6 +113,8 @@ struct state_key {
       GLuint NumArgsA:3;  /**< up to MAX_COMBINER_TERMS */
       GLuint ModeA:5;     /**< MODE_x */
 
+      GLuint texture_cyl_wrap:1; /**< For gallium test/debug only */
+
       struct mode_opt OptRGB[MAX_COMBINER_TERMS];
       struct mode_opt OptA[MAX_COMBINER_TERMS];
    } unit[MAX_TEXTURE_UNITS];
@@ -464,6 +466,10 @@ static GLuint make_state_key( GLcontext *ctx,  struct state_key *key )
          key->unit[i].OptRGB[1].Operand = OPR_SRC_COLOR;
          key->unit[i].OptRGB[1].Source = texUnit->BumpTarget - GL_TEXTURE0 + SRC_TEXTURE0;
        }
+
+      /* this is a back-door for enabling cylindrical texture wrap mode */
+      if (texObj->Priority == 0.125)
+         key->unit[i].texture_cyl_wrap = 1;
    }
 
    /* _NEW_LIGHT | _NEW_FOG */
@@ -1302,6 +1308,12 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
       }
       else
 	 p->src_texture[unit] = get_zero(p);
+
+      if (p->state->unit[unit].texture_cyl_wrap) {
+         /* set flag which is checked by Mesa->Gallium program translation */
+         p->program->Base.InputFlags[0] |= PROG_PARAM_BIT_CYL_WRAP;
+      }
+
    }
 }
 
