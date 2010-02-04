@@ -110,8 +110,21 @@ def generate(env):
             env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
 
-    if os.environ.has_key('CC'):
-        env['CC'] = os.environ['CC']
+    if env['platform'] == 'embedded':
+        # Allow overriding compiler from environment
+        if os.environ.has_key('CC'):
+            env['CC'] = os.environ['CC']
+            # Update CCVERSION to match
+            pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                         stdin = 'devnull',
+                                         stderr = 'devnull',
+                                         stdout = subprocess.PIPE)
+            if pipe.wait() == 0:
+                line = pipe.stdout.readline()
+                match = re.search(r'[0-9]+(\.[0-9]+)+', line)
+                if match:
+                    env['CCVERSION'] = match.group(0)
+            
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
@@ -238,16 +251,7 @@ def generate(env):
     cxxflags = [] # C++
     ccflags = [] # C & C++
     if gcc:
-        ccversion = ''
-        pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
-                                     stdin = 'devnull',
-                                     stderr = 'devnull',
-                                     stdout = subprocess.PIPE)
-        if pipe.wait() == 0:
-            line = pipe.stdout.readline()
-            match = re.search(r'[0-9]+(\.[0-9]+)+', line)
-            if match:
-            	ccversion = match.group(0)
+        ccversion = env['CCVERSION']
         if debug:
             ccflags += ['-O0', '-g3']
         elif ccversion.startswith('4.2.'):
