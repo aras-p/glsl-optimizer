@@ -38,6 +38,12 @@
 #include "pipe/p_compiler.h"
 
 
+#if defined(PIPE_OS_UNIX)
+#  include <signal.h> /* for kill() */
+#  include <unistd.h> /* getpid() */
+#endif
+
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -51,8 +57,6 @@ extern "C" {
 #elif defined(PIPE_CC_MSVC)
 #  define os_break()  __debugbreak()
 #elif defined(PIPE_OS_UNIX)
-#  include <signal.h> /* for kill() */
-#  include <unistd.h> /* for getpid() */
 #  define os_break() kill(getpid(), SIGTRAP)
 #elif defined(PIPE_OS_EMBEDDED)
 void os_break(void);
