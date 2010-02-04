@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 #include "state_tracker/drm_api.h"
 
