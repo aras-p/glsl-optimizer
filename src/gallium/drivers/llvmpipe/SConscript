@@ -73,21 +73,22 @@ llvmpipe = env.ConvenienceLibrary(
 	])
 
 
-env = env.Clone()
+if env['platform'] != 'embedded':
+    env = env.Clone()
 
-env.Prepend(LIBS = [llvmpipe] + gallium)
+    env.Prepend(LIBS = [llvmpipe] + gallium)
 
-tests = [
-    'format',
-    'blend',
-    'conv',
-]
+    tests = [
+        'format',
+        'blend',
+        'conv',
+    ]
 
-for test in tests:
-    target = env.Program(
-        target = 'lp_test_' + test,
-        source = ['lp_test_' + test + '.c', 'lp_test_main.c'],
-    )
-    env.InstallProgram(target)
+    for test in tests:
+        target = env.Program(
+            target = 'lp_test_' + test,
+            source = ['lp_test_' + test + '.c', 'lp_test_main.c'],
+        )
+        env.InstallProgram(target)
 
-Export('llvmpipe')
+    Export('llvmpipe')
