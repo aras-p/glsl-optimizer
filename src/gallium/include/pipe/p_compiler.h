@@ -145,6 +145,14 @@ typedef unsigned char boolean;
 
 
 
+#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#define PIPE_DEPRECATED  __attribute__((__deprecated__))
+#else
+#define PIPE_DEPRECATED
+#endif
+
+
+
 /* Macros for data alignment. */
 #if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 
