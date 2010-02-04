@@ -1,6 +1,7 @@
 
 #include "i965_drm_winsys.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
 
 #include "i915_drm.h"
 #include "intel_bufmgr.h"
