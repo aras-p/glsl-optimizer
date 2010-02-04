@@ -114,6 +114,7 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(bool, state, point_smooth);
    trace_dump_member(uint, state, sprite_coord_enable);
    trace_dump_member(bool, state, sprite_coord_mode);
+   trace_dump_member(bool, state, point_quad_rasterization);
    trace_dump_member(bool, state, point_size_per_vertex);
    trace_dump_member(bool, state, multisample);
    trace_dump_member(bool, state, line_smooth);

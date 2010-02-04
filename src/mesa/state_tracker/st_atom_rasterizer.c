@@ -183,7 +183,7 @@ static void update_raster_state( struct st_context *st )
 
    if (ctx->Polygon.StippleFlag)
       raster->poly_stipple_enable = 1;
-     
+
    /* _NEW_POINT
     */
    raster->point_size = ctx->Point.Size;
@@ -202,6 +202,7 @@ static void update_raster_state( struct st_context *st )
             raster->sprite_coord_enable |= 1 << i;
          }
       }
+      raster->point_quad_rasterization = 1;
    }
 
    /* ST_NEW_VERTEX_PROGRAM

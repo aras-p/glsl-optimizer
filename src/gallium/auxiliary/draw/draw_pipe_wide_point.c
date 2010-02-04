@@ -128,6 +128,7 @@ static void set_texcoords(const struct widepoint_stage *wide,
 static void widepoint_point( struct draw_stage *stage,
                              struct prim_header *header )
 {
+   /* XXX should take point_quad_rasterization into account? */
    const struct widepoint_stage *wide = widepoint_stage(stage);
    const unsigned pos = draw_current_shader_position_output(stage->draw);
    const boolean sprite = (boolean) stage->draw->rasterizer->sprite_coord_enable;

@@ -401,7 +401,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	}
 
 	so_method(so, curie, NV40TCL_POINT_SPRITE, 1);
-	if (cso->sprite_coord_enable) {
+	if (cso->point_quad_rasterization) {
 		unsigned psctl = (1 << 0), i;
 
 		for (i = 0; i < 8; i++) {

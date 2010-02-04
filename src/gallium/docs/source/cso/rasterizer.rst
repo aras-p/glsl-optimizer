@@ -85,8 +85,10 @@ point_size
 sprite_coord_enable
     Specifies if a coord has its texture coordinates replaced or not. This
     is a packed bitfield containing the enable for all coords - if all are 0
-    point sprites are effectively disabled. If any coord is non-zero,
-    point_smooth should be disabled.
+    point sprites are effectively disabled, though points may still be
+    rendered slightly different according to point_quad_rasterization.
+    If any coord is non-zero, point_smooth should be disabled, and
+    point_quad_rasterization enabled.
     If enabled, the four vertices of the resulting quad will be assigned
     texture coordinates, according to sprite_coord_mode.
 sprite_coord_mode
@@ -103,6 +105,14 @@ sprite_coord_mode
     Note that when geometry shaders are available, this state could be
     removed.  A special geometry shader defined by the state tracker could
     convert the incoming points into quads with the proper texture coords.
+point_quad_rasterization
+    This determines if points should be rasterized as quads or points.
+    d3d always uses quad rasterization for points, regardless if point sprites
+    are enabled or not, but OGL has different rules. If point_quad_rasterization
+    is set, point_smooth should be disabled, and points will be rendered as
+    squares even if multisample is enabled.
+    sprite_coord_enable should be zero if point_quad_rasterization is not
+    enabled.
 
 scissor
     Whether the scissor test is enabled.
