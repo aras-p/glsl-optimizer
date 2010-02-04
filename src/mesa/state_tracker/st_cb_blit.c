@@ -43,8 +43,6 @@
 #include "util/u_blit.h"
 #include "util/u_inlines.h"
 
-#include "cso_cache/cso_context.h"
-
 
 void
 st_init_blit(struct st_context *st)

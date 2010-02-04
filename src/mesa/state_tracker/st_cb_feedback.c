@@ -40,7 +40,6 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/feedback.h"
-#include "main/macros.h"
 
 #include "vbo/vbo.h"
 

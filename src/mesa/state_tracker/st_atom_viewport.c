@@ -27,7 +27,6 @@
 
 
 #include "main/context.h"
-#include "main/colormac.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"

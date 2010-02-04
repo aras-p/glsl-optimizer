@@ -37,7 +37,6 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "main/macros.h"
 #include "shader/program.h"
 
 #include "pipe/p_context.h"
