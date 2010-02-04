@@ -45,6 +45,7 @@ progs = [
     'copypixrate',
     'crossbar',
     'cva',
+    'cylwrap',
     'drawbuffers',
     'drawbuffers2',
     'exactrast',
