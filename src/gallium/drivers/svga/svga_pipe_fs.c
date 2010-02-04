@@ -28,7 +28,6 @@
 #include "util/u_memory.h"
 #include "util/u_bitmask.h"
 #include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_text.h"
 
 #include "svga_screen.h"
 #include "svga_context.h"
