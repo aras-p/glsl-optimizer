@@ -65,6 +65,8 @@ static Bool windowExistsFlag;
 static int
 windowExistsErrorHandler(Display * dpy, XErrorEvent * xerr)
 {
+   (void) dpy;
+
    if (xerr->error_code == BadWindow) {
       windowExistsFlag = GL_FALSE;
    }
@@ -1471,6 +1473,8 @@ glXQueryExtensionsString(Display * dpy, int screen)
 PUBLIC const char *
 glXGetClientString(Display * dpy, int name)
 {
+   (void) dpy;
+
    switch (name) {
    case GLX_VENDOR:
       return (__glXGLXClientVendorName);
@@ -2379,6 +2383,8 @@ __driGetMscRateOML(__DRIdrawable * draw,
    int i;
    __GLXDRIdrawable *glxDraw = private;
 
+   (void) draw;
+
    psc = glxDraw->psc;
    if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
        XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line)) {
@@ -2425,6 +2431,11 @@ __driGetMscRateOML(__DRIdrawable * draw,
    else
       return False;
 #else
+   (void) draw;
+   (void) numerator;
+   (void) denominator;
+   (void) private;
+
    return False;
 #endif
 }
