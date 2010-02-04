@@ -28,6 +28,7 @@
 
 
 #include "pipe/p_config.h"
+#include "pipe/p_compiler.h"
 
 #if defined(PIPE_OS_UNIX)
 #include <dlfcn.h>
