@@ -1,6 +1,8 @@
 #ifndef __NV04_CONTEXT_H__
 #define __NV04_CONTEXT_H__
 
+#include <stdio.h>
+
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"

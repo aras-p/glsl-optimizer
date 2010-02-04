@@ -1,6 +1,7 @@
 #ifndef __NV50_CONTEXT_H__
 #define __NV50_CONTEXT_H__
 
+#include <stdio.h>
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -8,6 +9,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_inlines.h"
 
 #include "draw/draw_vertex.h"
 
