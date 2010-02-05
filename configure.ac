@@ -918,8 +918,8 @@ if test "x$enable_egl" = xyes; then
         fi
 
         # build egl_dri2 when xcb-dri2 is available
-        PKG_CHECK_EXISTS([x11-xcb xcb-dri2 xcb-xfixes],
-			 [have_xcb_dri2=yes],[have_xcb_dri2=no])
+        PKG_CHECK_MODULES([EGL_DRI2], [x11-xcb xcb-dri2 xcb-xfixes libdrm],
+			  [have_xcb_dri2=yes],[have_xcb_dri2=no])
         if test "$have_xcb_dri2" = yes; then
             EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
         fi
