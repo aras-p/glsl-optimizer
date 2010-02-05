@@ -171,8 +171,8 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_SWAP_METHOD */
    EGL_MAX_SWAP_INTERVAL,	/* __DRI_ATTRIB_MAX_SWAP_INTERVAL */
    EGL_MIN_SWAP_INTERVAL,	/* __DRI_ATTRIB_MIN_SWAP_INTERVAL */
-   EGL_BIND_TO_TEXTURE_RGB,	/* __DRI_ATTRIB_BIND_TO_TEXTURE_RGB */
-   EGL_BIND_TO_TEXTURE_RGBA,	/* __DRI_ATTRIB_BIND_TO_TEXTURE_RGBA */
+   0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_RGB */
+   0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_RGBA */
    0,				/* __DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE */
    0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS */
    0,				/* __DRI_ATTRIB_YINVERTED */
@@ -183,8 +183,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
-   unsigned int attrib, value, surface_type;
-   EGLint key;
+   unsigned int attrib, value, double_buffer;
+   EGLint key, bind_to_texture_rgb, bind_to_texture_rgba;
    int i;
 
    dri2_dpy = disp->DriverData;
@@ -194,7 +194,6 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
 
    conf->dri_config = dri_config;
    _eglInitConfig(&conf->base, disp, id);
-   surface_type = EGL_PBUFFER_BIT | EGL_PIXMAP_BIT;
    
    i = 0;
    while (dri2_dpy->core->indexConfigAttrib(dri_config, i++, &attrib, &value)) {
@@ -222,9 +221,16 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
 	 _eglSetConfigKey(&conf->base, EGL_CONFIG_CAVEAT, value);
          break;
 
+      case __DRI_ATTRIB_BIND_TO_TEXTURE_RGB:
+	 bind_to_texture_rgb = value;
+	 break;
+
+      case __DRI_ATTRIB_BIND_TO_TEXTURE_RGBA:
+	 bind_to_texture_rgba = value;
+	 break;
+
       case __DRI_ATTRIB_DOUBLE_BUFFER:
-	 if (value)
-	    surface_type |= EGL_WINDOW_BIT;
+	 double_buffer = value;
 	 break;
 
       default:
@@ -236,22 +242,28 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
    }
 
    /* EGL_SWAP_BEHAVIOR_PRESERVED_BIT */
-   _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE, surface_type);
+
+   if (double_buffer) {
+      /* FIXME: Figure out how to get the visual ID and types */
+      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, 0x21);
+      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE,
+		       XCB_VISUAL_CLASS_TRUE_COLOR);
+   } else {
+      _eglSetConfigKey(&conf->base,
+		       EGL_SURFACE_TYPE, EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
+      _eglSetConfigKey(&conf->base,
+		       EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
+      _eglSetConfigKey(&conf->base,
+		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+   }
 
    /* EGL_OPENGL_ES_BIT, EGL_OPENVG_BIT, EGL_OPENGL_ES2_BIT */
    _eglSetConfigKey(&conf->base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
    _eglSetConfigKey(&conf->base, EGL_CONFORMANT, EGL_OPENGL_BIT);
 
-   /* FIXME: Figure out how to get the visual ID and types */
-   _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, 0x21);
-   _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE,
-		    XCB_VISUAL_CLASS_TRUE_COLOR);
-
-   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE);
-   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE);
-
    if (!_eglValidateConfig(&conf->base, EGL_FALSE)) {
-      _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", i);
+      _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
       free(conf);
       return;
    }
@@ -835,8 +847,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    xcb_dri2_copy_region_cookie_t cookie;
 
-   if (dri2_dpy->flush)
-      (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
+   (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
 
 #if 0
    /* FIXME: Add support for dri swapbuffers, that'll give us swap
@@ -873,15 +884,21 @@ dri2_get_proc_address(_EGLDriver *drv, const char *procname)
 }
 
 static EGLBoolean
-dri2_wait_client(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
+dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
 {
-   /* glXWaitGL(); */
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(ctx->DrawSurface);
+
+   /* FIXME: If EGL allows frontbuffer rendering for window surfaces,
+    * we need to copy fake to real here.*/
+
+   (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
 
    return EGL_TRUE;
 }
 
 static EGLBoolean
-dri2_wait_native(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
+dri2_wait_native(_EGLDriver *drv, _EGLDisplay *disp, EGLint engine)
 {
    if (engine != EGL_CORE_NATIVE_ENGINE)
       return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
@@ -895,6 +912,31 @@ dri2_unload(_EGLDriver *drv)
 {
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    free(dri2_drv);
+}
+
+static EGLBoolean
+dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
+		  EGLNativePixmapType target)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+   xcb_gcontext_t gc;
+
+   (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
+
+   gc = xcb_generate_id(dri2_dpy->conn);
+   xcb_create_gc(dri2_dpy->conn, gc, target, 0, NULL);
+   xcb_copy_area(dri2_dpy->conn,
+		  dri2_surf->drawable,
+		  target,
+		  gc,
+		  0, 0,
+		  0, 0,
+		  dri2_surf->base.Width,
+		  dri2_surf->base.Height);
+   xcb_free_gc(dri2_dpy->conn, gc);
+
+   return EGL_TRUE;
 }
 
 /**
@@ -923,6 +965,7 @@ _eglMain(const char *args)
    dri2_drv->base.API.GetProcAddress = dri2_get_proc_address;
    dri2_drv->base.API.WaitClient = dri2_wait_client;
    dri2_drv->base.API.WaitNative = dri2_wait_native;
+   dri2_drv->base.API.CopyBuffers = dri2_copy_buffers;
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;
