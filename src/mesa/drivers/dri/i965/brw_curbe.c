@@ -179,6 +179,7 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void prepare_constant_buffer(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
@@ -304,9 +305,9 @@ static void prepare_constant_buffer(struct brw_context *brw)
       brw->curbe.last_bufsz = bufsz;
 
       if (brw->curbe.curbe_bo != NULL &&
-	  (brw->curbe.need_new_bo ||
-	   brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size))
+	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
       {
+	 intel_bo_unmap_gtt_preferred(intel, brw->curbe.curbe_bo);
 	 dri_bo_unreference(brw->curbe.curbe_bo);
 	 brw->curbe.curbe_bo = NULL;
       }
@@ -318,7 +319,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
 					    4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
-	 brw->curbe.need_new_bo = GL_FALSE;
+	 intel_bo_map_gtt_preferred(intel, brw->curbe.curbe_bo, GL_TRUE);
       }
 
       brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;
@@ -327,7 +328,9 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
       /* Copy data to the buffer:
        */
-      dri_bo_subdata(brw->curbe.curbe_bo, brw->curbe.curbe_offset, bufsz, buf);
+      memcpy(brw->curbe.curbe_bo->virtual + brw->curbe.curbe_offset,
+	     buf,
+	     bufsz);
    }
 
    brw_add_validated_bo(brw, brw->curbe.curbe_bo);

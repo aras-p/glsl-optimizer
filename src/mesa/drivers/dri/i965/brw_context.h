@@ -572,11 +572,6 @@ struct brw_context
 
       GLfloat *last_buf;
       GLuint last_bufsz;
-      /**
-       *  Whether we should create a new bo instead of reusing the old one
-       * (if we just dispatch the batch pointing at the old one.
-       */
-      GLboolean need_new_bo;
    } curbe;
 
    struct {

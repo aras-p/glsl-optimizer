@@ -139,6 +139,12 @@ static void brw_finish_batch(struct intel_context *intel)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
    brw_emit_query_end(brw);
+
+   if (brw->curbe.curbe_bo) {
+      intel_bo_unmap_gtt_preferred(intel, brw->curbe.curbe_bo);
+      drm_intel_bo_unreference(brw->curbe.curbe_bo);
+      brw->curbe.curbe_bo = NULL;
+   }
 }
 
 
@@ -148,8 +154,6 @@ static void brw_finish_batch(struct intel_context *intel)
 static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-
-   brw->curbe.need_new_bo = GL_TRUE;
 
    /* Mark all context state as needing to be re-emitted.
     * This is probably not as severe as on 915, since almost all of our state
