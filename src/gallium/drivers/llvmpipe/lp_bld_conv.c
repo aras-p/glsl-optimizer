@@ -123,6 +123,10 @@ lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
       res = LLVMBuildShl(builder, res, lp_build_int_const_scalar(src_type, shift), "");
 
       /* TODO: Fill in the empty lower bits for additional precision? */
+      /* YES: this fixes progs/trivial/tri-z-eq.c.
+       * Otherwise vertex Z=1.0 values get converted to something like
+       * 0xfffffb00 and the test for equality with 0xffffffff fails.
+       */
 #if 0
       {
          LLVMValueRef msb;

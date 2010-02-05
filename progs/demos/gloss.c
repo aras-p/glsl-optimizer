@@ -41,6 +41,7 @@
 /* for convolution */
 #define FILTER_SIZE 7
 
+static GLint Win;
 static GLint WinWidth = 500, WinHeight = 500;
 static GLuint CylinderObj = 0;
 static GLuint TeapotObj = 0;
@@ -214,7 +215,11 @@ static void Key( unsigned char key, int x, int y )
       case ' ':
          ToggleAnimate();
          break;
+      case 'n':
+         Idle();
+         break;
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -439,7 +444,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize(WinWidth, WinHeight);
    glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0] );
+   Win = glutCreateWindow(argv[0] );
    glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

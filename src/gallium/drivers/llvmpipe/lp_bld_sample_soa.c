@@ -172,7 +172,7 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       /* FIXME */
-      _debug_printf("warning: failed to translate texture wrap mode %s\n",
+      _debug_printf("llvmpipe: failed to translate texture wrap mode %s\n",
                     debug_dump_tex_wrap(wrap_mode, TRUE));
       coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
       coord = lp_build_min(int_coord_bld, coord, length_minus_one);
@@ -201,9 +201,13 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
 
    x = lp_build_ifloor(&bld->coord_bld, s);
    y = lp_build_ifloor(&bld->coord_bld, t);
+   lp_build_name(x, "tex.x.floor");
+   lp_build_name(y, "tex.y.floor");
 
    x = lp_build_sample_wrap(bld, x, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y = lp_build_sample_wrap(bld, y, height, bld->static_state->pot_height, bld->static_state->wrap_t);
+   lp_build_name(x, "tex.x.wrapped");
+   lp_build_name(y, "tex.y.wrapped");
 
    lp_build_sample_texel_soa(bld, x, y, stride, data_ptr, texel);
 }

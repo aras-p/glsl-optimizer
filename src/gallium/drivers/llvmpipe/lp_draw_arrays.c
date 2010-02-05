@@ -68,12 +68,8 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    struct draw_context *draw = lp->draw;
    unsigned i;
 
-   lp->reduced_api_prim = u_reduced_prim(mode);
-
    if (lp->dirty)
       llvmpipe_update_derived( lp );
-
-   llvmpipe_map_transfers(lp);
 
    /*
     * Map vertex buffers
@@ -116,10 +112,6 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     * internally when this condition is seen?)
     */
    draw_flush(draw);
-
-   /* Note: leave drawing surfaces mapped */
-
-   lp->dirty_render_cache = TRUE;
 }
 
 

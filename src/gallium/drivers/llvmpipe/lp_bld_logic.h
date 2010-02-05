@@ -46,6 +46,14 @@ struct lp_type;
 struct lp_build_context;
 
 
+LLVMValueRef
+lp_build_compare(LLVMBuilderRef builder,
+                 const struct lp_type type,
+                 unsigned func,
+                 LLVMValueRef a,
+                 LLVMValueRef b);
+
+
 /**
  * @param func is one of PIPE_FUNC_xxx
  */

@@ -56,6 +56,7 @@
 #include "lp_bld_intr.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
 
 
@@ -628,7 +629,7 @@ lp_build_abs(struct lp_build_context *bld,
    if(type.floating) {
       /* Mask out the sign bit */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      unsigned long absMask = ~(1 << (type.width - 1));
+      unsigned long long absMask = ~(1ULL << (type.width - 1));
       LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
       a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       a = LLVMBuildAnd(bld->builder, a, mask, "");
@@ -873,6 +874,9 @@ lp_build_iround(struct lp_build_context *bld,
 }
 
 
+/**
+ * Convert float[] to int[] with floor().
+ */
 LLVMValueRef
 lp_build_ifloor(struct lp_build_context *bld,
                 LLVMValueRef a)
@@ -899,6 +903,7 @@ lp_build_ifloor(struct lp_build_context *bld,
       sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
       sign = LLVMBuildAShr(bld->builder, sign, lp_build_int_const_scalar(type, type.width - 1), "");
+      lp_build_name(sign, "floor.sign");
 
       /* offset = -0.99999(9)f */
       offset = lp_build_const_scalar(type, -(double)(((unsigned long long)1 << mantissa) - 1)/((unsigned long long)1 << mantissa));
@@ -907,11 +912,14 @@ lp_build_ifloor(struct lp_build_context *bld,
       /* offset = a < 0 ? -0.99999(9)f : 0.0f */
       offset = LLVMBuildAnd(bld->builder, offset, sign, "");
       offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "");
+      lp_build_name(offset, "floor.offset");
 
       res = LLVMBuildAdd(bld->builder, a, offset, "");
+      lp_build_name(res, "floor.res");
    }
 
    res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "");
+   lp_build_name(res, "floor");
 
    return res;
 }

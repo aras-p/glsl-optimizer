@@ -35,8 +35,7 @@
 #include "lp_flush.h"
 #include "lp_context.h"
 #include "lp_surface.h"
-#include "lp_state.h"
-#include "lp_tile_cache.h"
+#include "lp_setup.h"
 
 
 void
@@ -45,56 +44,52 @@ llvmpipe_flush( struct pipe_context *pipe,
                 struct pipe_fence_handle **fence )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   uint i;
 
    draw_flush(llvmpipe->draw);
 
-   if (flags & PIPE_FLUSH_SWAPBUFFERS) {
-      /* If this is a swapbuffers, just flush color buffers.
-       *
-       * The zbuffer changes are not discarded, but held in the cache
-       * in the hope that a later clear will wipe them out.
-       */
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i]) {
-            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
-            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
-         }
+   if (fence) {
+      if ((flags & (PIPE_FLUSH_SWAPBUFFERS |
+                    PIPE_FLUSH_RENDER_CACHE))) {
+         /* if we're going to flush the setup/rasterization modules, emit
+          * a fence.
+          * XXX this (and the code below) may need fine tuning...
+          */
+         *fence = lp_setup_fence( llvmpipe->setup );
+      }
+      else {
+         *fence = NULL;
+      }
+   }
 
-      /* Need this call for hardware buffers before swapbuffers.
-       *
-       * there should probably be another/different flush-type function
-       * that's called before swapbuffers because we don't always want
-       * to unmap surfaces when flushing.
-       */
-      llvmpipe_unmap_transfers(llvmpipe);
+   /* XXX the lp_setup_flush(flags) param is not a bool, and it's ignored
+    * at this time!
+    */
+   if (flags & PIPE_FLUSH_SWAPBUFFERS) {
+      lp_setup_flush( llvmpipe->setup, FALSE );
    }
    else if (flags & PIPE_FLUSH_RENDER_CACHE) {
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
-         if (llvmpipe->cbuf_cache[i]) {
-            lp_tile_cache_map_transfers(llvmpipe->cbuf_cache[i]);
-            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
-         }
-
-      /* FIXME: untile zsbuf! */
-     
-      llvmpipe->dirty_render_cache = FALSE;
+      lp_setup_flush( llvmpipe->setup, TRUE );
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
 #if 0
-   if(flags & PIPE_FLUSH_FRAME) {
+   if (flags & PIPE_FLUSH_FRAME) {
       static unsigned frame_no = 1;
-      static char filename[256];
-      util_snprintf(filename, sizeof(filename), "cbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, llvmpipe->framebuffer.cbufs[0]);
-      util_snprintf(filename, sizeof(filename), "zsbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, llvmpipe->framebuffer.zsbuf);
+      char filename[256];
+      unsigned i;
+
+      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
+	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
+         debug_dump_surface(filename, llvmpipe->framebuffer.cbufs[i]);
+      }
+
+      if (0) {
+         util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
+         debug_dump_surface(filename, llvmpipe->framebuffer.zsbuf);
+      }
+
       ++frame_no;
    }
 #endif
-   
-   if (fence)
-      *fence = NULL;
 }
 

@@ -42,13 +42,17 @@
 #include "lp_bld_logic.h"
 
 
+/**
+ * Build code to compare two values 'a' and 'b' of 'type' using the given func.
+ * \param func  one of PIPE_FUNC_x
+ */
 LLVMValueRef
-lp_build_cmp(struct lp_build_context *bld,
-             unsigned func,
-             LLVMValueRef a,
-             LLVMValueRef b)
+lp_build_compare(LLVMBuilderRef builder,
+                 const struct lp_type type,
+                 unsigned func,
+                 LLVMValueRef a,
+                 LLVMValueRef b)
 {
-   const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef zeros = LLVMConstNull(int_vec_type);
@@ -56,6 +60,9 @@ lp_build_cmp(struct lp_build_context *bld,
    LLVMValueRef cond;
    LLVMValueRef res;
    unsigned i;
+
+   assert(func >= PIPE_FUNC_NEVER);
+   assert(func <= PIPE_FUNC_ALWAYS);
 
    if(func == PIPE_FUNC_NEVER)
       return zeros;
@@ -69,6 +76,7 @@ lp_build_cmp(struct lp_build_context *bld,
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating && util_cpu_caps.has_sse) {
+         /* float[4] comparison */
          LLVMValueRef args[3];
          unsigned cc;
          boolean swap;
@@ -97,7 +105,7 @@ lp_build_cmp(struct lp_build_context *bld,
             break;
          default:
             assert(0);
-            return bld->undef;
+            return lp_build_undef(type);
          }
 
          if(swap) {
@@ -110,14 +118,15 @@ lp_build_cmp(struct lp_build_context *bld,
          }
 
          args[2] = LLVMConstInt(LLVMInt8Type(), cc, 0);
-         res = lp_build_intrinsic(bld->builder,
+         res = lp_build_intrinsic(builder,
                                   "llvm.x86.sse.cmp.ps",
                                   vec_type,
                                   args, 3);
-         res = LLVMBuildBitCast(bld->builder, res, int_vec_type, "");
+         res = LLVMBuildBitCast(builder, res, int_vec_type, "");
          return res;
       }
       else if(util_cpu_caps.has_sse2) {
+         /* int[4] comparison */
          static const struct {
             unsigned swap:1;
             unsigned eq:1;
@@ -153,7 +162,7 @@ lp_build_cmp(struct lp_build_context *bld,
             break;
          default:
             assert(0);
-            return bld->undef;
+            return lp_build_undef(type);
          }
 
          /* There are no signed byte and unsigned word/dword comparison
@@ -163,8 +172,8 @@ lp_build_cmp(struct lp_build_context *bld,
             ((type.width == 8 && type.sign) ||
              (type.width != 8 && !type.sign))) {
             LLVMValueRef msb = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
-            a = LLVMBuildXor(bld->builder, a, msb, "");
-            b = LLVMBuildXor(bld->builder, b, msb, "");
+            a = LLVMBuildXor(builder, a, msb, "");
+            b = LLVMBuildXor(builder, b, msb, "");
          }
 
          if(table[func].swap) {
@@ -177,14 +186,14 @@ lp_build_cmp(struct lp_build_context *bld,
          }
 
          if(table[func].eq)
-            res = lp_build_intrinsic(bld->builder, pcmpeq, vec_type, args, 2);
+            res = lp_build_intrinsic(builder, pcmpeq, vec_type, args, 2);
          else if (table[func].gt)
-            res = lp_build_intrinsic(bld->builder, pcmpgt, vec_type, args, 2);
+            res = lp_build_intrinsic(builder, pcmpgt, vec_type, args, 2);
          else
             res = LLVMConstNull(vec_type);
 
          if(table[func].not)
-            res = LLVMBuildNot(bld->builder, res, "");
+            res = LLVMBuildNot(builder, res, "");
 
          return res;
       }
@@ -220,28 +229,28 @@ lp_build_cmp(struct lp_build_context *bld,
          break;
       default:
          assert(0);
-         return bld->undef;
+         return lp_build_undef(type);
       }
 
 #if 0
       /* XXX: Although valid IR, no LLVM target currently support this */
-      cond = LLVMBuildFCmp(bld->builder, op, a, b, "");
-      res = LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+      cond = LLVMBuildFCmp(builder, op, a, b, "");
+      res = LLVMBuildSelect(builder, cond, ones, zeros, "");
 #else
       debug_printf("%s: warning: using slow element-wise vector comparison\n",
                    __FUNCTION__);
       res = LLVMGetUndef(int_vec_type);
       for(i = 0; i < type.length; ++i) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-         cond = LLVMBuildFCmp(bld->builder, op,
-                              LLVMBuildExtractElement(bld->builder, a, index, ""),
-                              LLVMBuildExtractElement(bld->builder, b, index, ""),
+         cond = LLVMBuildFCmp(builder, op,
+                              LLVMBuildExtractElement(builder, a, index, ""),
+                              LLVMBuildExtractElement(builder, b, index, ""),
                               "");
-         cond = LLVMBuildSelect(bld->builder, cond,
+         cond = LLVMBuildSelect(builder, cond,
                                 LLVMConstExtractElement(ones, index),
                                 LLVMConstExtractElement(zeros, index),
                                 "");
-         res = LLVMBuildInsertElement(bld->builder, res, cond, index, "");
+         res = LLVMBuildInsertElement(builder, res, cond, index, "");
       }
 #endif
    }
@@ -268,33 +277,48 @@ lp_build_cmp(struct lp_build_context *bld,
          break;
       default:
          assert(0);
-         return bld->undef;
+         return lp_build_undef(type);
       }
 
 #if 0
       /* XXX: Although valid IR, no LLVM target currently support this */
-      cond = LLVMBuildICmp(bld->builder, op, a, b, "");
-      res = LLVMBuildSelect(bld->builder, cond, ones, zeros, "");
+      cond = LLVMBuildICmp(builder, op, a, b, "");
+      res = LLVMBuildSelect(builder, cond, ones, zeros, "");
 #else
-      debug_printf("%s: warning: using slow element-wise vector comparison\n",
+      debug_printf("%s: warning: using slow element-wise int vector comparison\n",
                    __FUNCTION__);
       res = LLVMGetUndef(int_vec_type);
       for(i = 0; i < type.length; ++i) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-         cond = LLVMBuildICmp(bld->builder, op,
-                              LLVMBuildExtractElement(bld->builder, a, index, ""),
-                              LLVMBuildExtractElement(bld->builder, b, index, ""),
+         cond = LLVMBuildICmp(builder, op,
+                              LLVMBuildExtractElement(builder, a, index, ""),
+                              LLVMBuildExtractElement(builder, b, index, ""),
                               "");
-         cond = LLVMBuildSelect(bld->builder, cond,
+         cond = LLVMBuildSelect(builder, cond,
                                 LLVMConstExtractElement(ones, index),
                                 LLVMConstExtractElement(zeros, index),
                                 "");
-         res = LLVMBuildInsertElement(bld->builder, res, cond, index, "");
+         res = LLVMBuildInsertElement(builder, res, cond, index, "");
       }
 #endif
    }
 
    return res;
+}
+
+
+
+/**
+ * Build code to compare two values 'a' and 'b' using the given func.
+ * \param func  one of PIPE_FUNC_x
+ */
+LLVMValueRef
+lp_build_cmp(struct lp_build_context *bld,
+             unsigned func,
+             LLVMValueRef a,
+             LLVMValueRef b)
+{
+   return lp_build_compare(bld->builder, bld->type, func, a, b);
 }
 
 

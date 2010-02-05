@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# Configuration for Linux and LLVM with debugging info
+# Configuration for Linux and LLVM with optimizations
 # Builds the llvmpipe gallium driver
 
 include $(TOP)/configs/linux
@@ -9,8 +9,10 @@ CONFIG_NAME = linux-llvm
 # Add llvmpipe driver
 GALLIUM_DRIVERS_DIRS += llvmpipe
 
-OPT_FLAGS = -g -ansi -pedantic
-DEFINES += -DDEBUG -DDEBUG_MATH -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
+OPT_FLAGS = -O3 -ansi -pedantic
+ARCH_FLAGS = -m32 -mmmx -msse -msse2 -mstackrealign
+
+DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
 
 # override -std=c99
 CFLAGS += -std=gnu99

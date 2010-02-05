@@ -157,6 +157,27 @@ lp_build_int_vec_type(struct lp_type type)
 }
 
 
+/**
+ * Build int32[4] vector type
+ */
+LLVMTypeRef
+lp_build_int32_vec4_type(void)
+{
+   struct lp_type t;
+   LLVMTypeRef type;
+
+   memset(&t, 0, sizeof(t));
+   t.floating = FALSE; /* floating point values */
+   t.sign = TRUE;      /* values are signed */
+   t.norm = FALSE;     /* values are not limited to [0,1] or [-1,1] */
+   t.width = 32;       /* 32-bit int */
+   t.length = 4;       /* 4 elements per vector */
+
+   type = lp_build_int_elem_type(t);
+   return LLVMVectorType(type, t.length);
+}
+
+
 struct lp_type
 lp_int_type(struct lp_type type)
 {

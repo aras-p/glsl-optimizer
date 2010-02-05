@@ -42,12 +42,10 @@
 struct llvmpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
-struct llvmpipe_tile_cache;
-struct llvmpipe_tex_tile_cache;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
-
+struct setup_context;
 
 struct llvmpipe_context {
    struct pipe_context pipe;  /**< base class */
@@ -62,7 +60,7 @@ struct llvmpipe_context {
    const struct lp_vertex_shader *vs;
 
    /** Other rendering state */
-   struct pipe_blend_color blend_color[4][16];
+   struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
    struct pipe_buffer *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
@@ -94,49 +92,19 @@ struct llvmpipe_context {
    
    /** Vertex format */
    struct vertex_info vertex_info;
-   struct vertex_info vertex_info_vbuf;
 
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   /* The reduced version of the primitive supplied by the state
-    * tracker.
-    */
-   unsigned reduced_api_prim;
-
-   /* The reduced primitive after unfilled triangles, wide-line
-    * decomposition, etc, are taken into account.  This is the
-    * primitive actually rasterized.
-    */
-   unsigned reduced_prim;
-
-   /** Derived from scissor and surface bounds: */
-   struct pipe_scissor_state cliprect;
-
-   unsigned line_stipple_counter;
+   /** The tiling engine */
+   struct setup_context *setup;
 
    /** The primitive drawing context */
    struct draw_context *draw;
 
-   /** Draw module backend */
-   struct vbuf_render *vbuf_backend;
-   struct draw_stage *vbuf;
-
-   boolean dirty_render_cache;
-   
-   struct llvmpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
-   
-   /* TODO: we shouldn't be using external interfaces internally like this */
-   struct pipe_transfer *zsbuf_transfer;
-   uint8_t *zsbuf_map;
-
    unsigned tex_timestamp;
-   struct llvmpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
-   struct llvmpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
+   boolean no_rast;
 
-   unsigned no_rast : 1;
-
-   struct lp_jit_context jit_context;
 };
 
 

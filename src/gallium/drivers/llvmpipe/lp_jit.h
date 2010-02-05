@@ -79,6 +79,9 @@ struct lp_jit_context
 
    float alpha_ref_value;
 
+   /** floats, not ints */
+   float scissor_xmin, scissor_ymin, scissor_xmax, scissor_ymax;
+
    /* FIXME: store (also?) in floats */
    uint8_t *blend_color;
 
@@ -92,25 +95,43 @@ struct lp_jit_context
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 1, "alpha_ref_value")
 
-#define lp_jit_context_blend_color(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "blend_color")
+#define lp_jit_context_scissor_xmin_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 2, "scissor_xmin")
 
-#define LP_JIT_CONTEXT_TEXTURES_INDEX 3
+#define lp_jit_context_scissor_ymin_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 3, "scissor_ymin")
+
+#define lp_jit_context_scissor_xmax_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 4, "scissor_xmax")
+
+#define lp_jit_context_scissor_ymax_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 5, "scissor_ymax")
+
+#define lp_jit_context_blend_color(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 6, "blend_color")
+
+#define LP_JIT_CONTEXT_TEXTURES_INDEX 7
 
 #define lp_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES_INDEX, "textures")
 
 
 typedef void
-(*lp_jit_frag_func)(struct lp_jit_context *context,
+(*lp_jit_frag_func)(const struct lp_jit_context *context,
                     uint32_t x,
                     uint32_t y,
                     const void *a0,
                     const void *dadx,
                     const void *dady,
-                    uint32_t *mask,
-                    void *color,
-                    void *depth);
+                    uint8_t **color,
+                    void *depth,
+                    const int32_t c1,
+                    const int32_t c2,
+                    const int32_t c3,
+                    const int32_t *step1,
+                    const int32_t *step2,
+                    const int32_t *step3);
+
 
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen);

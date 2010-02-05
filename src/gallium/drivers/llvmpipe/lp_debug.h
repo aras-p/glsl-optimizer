@@ -45,6 +45,11 @@ st_print_current(void);
 #define DEBUG_QUERY     0x40
 #define DEBUG_SCREEN    0x80
 #define DEBUG_JIT       0x100
+#define DEBUG_SHOW_TILES    0x200
+#define DEBUG_SHOW_SUBTILES 0x400
+#define DEBUG_COUNTERS      0x800
+#define DEBUG_NO_LLVM_OPT  0x1000
+
 
 #ifdef DEBUG
 extern int LP_DEBUG;

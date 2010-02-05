@@ -45,6 +45,36 @@
 #include "lp_bld_interp.h"
 
 
+/*
+ * The shader JIT function operates on blocks of quads.
+ * Each block has 2x2 quads and each quad has 2x2 pixels.
+ *
+ * We iterate over the quads in order 0, 1, 2, 3:
+ *
+ * #################
+ * #   |   #   |   #
+ * #---0---#---1---#
+ * #   |   #   |   #
+ * #################
+ * #   |   #   |   #
+ * #---2---#---3---#
+ * #   |   #   |   #
+ * #################
+ *
+ * Within each quad, we have four pixels which are represented in SOA
+ * order:
+ *
+ * #########
+ * # 0 | 1 #
+ * #---+---#
+ * # 2 | 3 #
+ * #########
+ *
+ * So the green channel (for example) of the four pixels is stored in
+ * a single vector register: {g0, g1, g2, g3}.
+ */
+
+
 static void
 attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix)
 {
@@ -55,6 +85,10 @@ attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix
 }
 
 
+/**
+ * Initialize the bld->a0, dadx, dady fields.  This involves fetching
+ * those values from the arrays which are passed into the JIT function.
+ */
 static void
 coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef a0_ptr,
@@ -91,7 +125,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             case TGSI_INTERPOLATE_CONSTANT:
                a0 = LLVMBuildLoad(builder, LLVMBuildGEP(builder, a0_ptr, &index, 1, ""), "");
                a0 = lp_build_broadcast_scalar(&bld->base, a0);
-               attrib_name(a0, attrib, chan, ".dady");
+               attrib_name(a0, attrib, chan, ".a0");
                break;
 
             default:
@@ -109,29 +143,12 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
 
 
 /**
- * Multiply the dadx and dady with the xstep and ystep respectively.
+ * Emit LLVM code to compute the fragment shader input attribute values.
+ * For example, for a color input, we'll compute red, green, blue and alpha
+ * values for the four pixels in a quad.
+ * Recall that we're operating on 4-element vectors so each arithmetic
+ * operation is operating on the four pixels in a quad.
  */
-static void
-coeffs_update(struct lp_build_interp_soa_context *bld)
-{
-   unsigned attrib;
-   unsigned chan;
-
-   for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      unsigned mask = bld->mask[attrib];
-      unsigned mode = bld->mode[attrib];
-      if (mode != TGSI_INTERPOLATE_CONSTANT) {
-         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
-            if(mask & (1 << chan)) {
-               bld->dadx[attrib][chan] = lp_build_mul_imm(&bld->base, bld->dadx[attrib][chan], bld->xstep);
-               bld->dady[attrib][chan] = lp_build_mul_imm(&bld->base, bld->dady[attrib][chan], bld->ystep);
-            }
-         }
-      }
-   }
-}
-
-
 static void
 attribs_init(struct lp_build_interp_soa_context *bld)
 {
@@ -154,7 +171,9 @@ attribs_init(struct lp_build_interp_soa_context *bld)
             res = a0;
 
             if (mode != TGSI_INTERPOLATE_CONSTANT) {
+               /* res = res + x * dadx */
                res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, x, dadx));
+               /* res = res + y * dady */
                res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, y, dady));
             }
 
@@ -178,12 +197,18 @@ attribs_init(struct lp_build_interp_soa_context *bld)
 }
 
 
+/**
+ * Increment the shader input attribute values.
+ * This is called when we move from one quad to the next.
+ */
 static void
-attribs_update(struct lp_build_interp_soa_context *bld)
+attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 {
    LLVMValueRef oow = NULL;
    unsigned attrib;
    unsigned chan;
+
+   assert(quad_index < 4);
 
    for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
       unsigned mask = bld->mask[attrib];
@@ -198,13 +223,21 @@ attribs_update(struct lp_build_interp_soa_context *bld)
 
                res = bld->attribs_pre[attrib][chan];
 
-               if(bld->xstep)
+               if (quad_index == 1 || quad_index == 3) {
+                  /* top-right or bottom-right quad */
+                  /* build res = res + dadx + dadx */
                   res = lp_build_add(&bld->base, res, dadx);
+                  res = lp_build_add(&bld->base, res, dadx);
+               }
 
-               if(bld->ystep)
+               if (quad_index == 2 || quad_index == 3) {
+                  /* bottom-left or bottom-right quad */
+                  /* build res = res + dady + dady */
                   res = lp_build_add(&bld->base, res, dady);
+                  res = lp_build_add(&bld->base, res, dady);
+               }
 
-               bld->attribs_pre[attrib][chan] = res;
+               //XXX bld->attribs_pre[attrib][chan] = res;
 
                if (mode == TGSI_INTERPOLATE_PERSPECTIVE) {
                   LLVMValueRef w = bld->pos[3];
@@ -242,17 +275,32 @@ pos_init(struct lp_build_interp_soa_context *bld,
 }
 
 
+/**
+ * Update quad position values when moving to the next quad.
+ */
 static void
-pos_update(struct lp_build_interp_soa_context *bld)
+pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
 {
    LLVMValueRef x = bld->attribs[0][0];
    LLVMValueRef y = bld->attribs[0][1];
+   const int xstep = 2, ystep = 2;
 
-   if(bld->xstep)
-      x = lp_build_add(&bld->base, x, lp_build_const_scalar(bld->base.type, bld->xstep));
+   if (quad_index == 1 || quad_index == 3) {
+      /* top-right or bottom-right quad in block */
+      /* build x += xstep */
+      x = lp_build_add(&bld->base, x,
+                       lp_build_const_scalar(bld->base.type, xstep));
+   }
 
-   if(bld->ystep)
-      y = lp_build_add(&bld->base, y, lp_build_const_scalar(bld->base.type, bld->ystep));
+   if (quad_index == 2) {
+      /* bottom-left quad in block */
+      /* build y += ystep */
+      y = lp_build_add(&bld->base, y,
+                       lp_build_const_scalar(bld->base.type, ystep));
+      /* build x -= xstep */
+      x = lp_build_sub(&bld->base, x,
+                       lp_build_const_scalar(bld->base.type, xstep));
+   }
 
    lp_build_name(x, "pos.x");
    lp_build_name(y, "pos.y");
@@ -262,18 +310,20 @@ pos_update(struct lp_build_interp_soa_context *bld)
 }
 
 
+/**
+ * Initialize fragment shader input attribute info.
+ */
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct tgsi_token *tokens,
+                         boolean flatshade,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
                          LLVMValueRef x0,
-                         LLVMValueRef y0,
-                         int xstep,
-                         int ystep)
+                         LLVMValueRef y0)
 {
    struct tgsi_parse_context parse;
    struct tgsi_full_declaration *decl;
@@ -309,7 +359,15 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
             for( attrib = first; attrib <= last; ++attrib ) {
                bld->mask[1 + attrib] = mask;
-               bld->mode[1 + attrib] = decl->Declaration.Interpolate;
+
+               /* XXX: have mesa set INTERP_CONSTANT in the fragment
+                * shader.
+                */
+               if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
+                   flatshade)
+                  bld->mode[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
+               else
+                  bld->mode[1 + attrib] = decl->Declaration.Interpolate;
             }
 
             bld->num_attribs = MAX2(bld->num_attribs, 1 + last + 1);
@@ -331,21 +389,19 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    pos_init(bld, x0, y0);
 
    attribs_init(bld);
-
-   bld->xstep = xstep;
-   bld->ystep = ystep;
-
-   coeffs_update(bld);
 }
 
 
 /**
- * Advance the position and inputs with the xstep and ystep.
+ * Advance the position and inputs to the given quad within the block.
  */
 void
-lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld)
+lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,
+                           int quad_index)
 {
-   pos_update(bld);
+   assert(quad_index < 4);
 
-   attribs_update(bld);
+   pos_update(bld, quad_index);
+
+   attribs_update(bld, quad_index);
 }

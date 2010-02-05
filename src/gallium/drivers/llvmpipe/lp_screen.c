@@ -33,6 +33,7 @@
 
 #include "lp_texture.h"
 #include "lp_buffer.h"
+#include "lp_fence.h"
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
@@ -51,6 +52,10 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "query",  DEBUG_QUERY },
    { "screen", DEBUG_SCREEN },
    { "jit",    DEBUG_JIT },
+   { "show_tiles",    DEBUG_SHOW_TILES },
+   { "show_subtiles", DEBUG_SHOW_SUBTILES },
+   { "counters", DEBUG_COUNTERS },
+   { "nopt", DEBUG_NO_LLVM_OPT },
    {NULL, 0}
 };
 #endif
@@ -309,6 +314,7 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
 
    llvmpipe_init_screen_texture_funcs(&screen->base);
    llvmpipe_init_screen_buffer_funcs(&screen->base);
+   llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
 

@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,57 +22,26 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/*
+ * Binning code for lines
  */
 
-#include "pipe/p_state.h"
-#include "util/u_inlines.h"
-#include "util/u_surface.h"
-#include "lp_context.h"
-#include "lp_state.h"
-#include "lp_setup.h"
+#include "lp_setup_context.h"
 
-#include "draw/draw_context.h"
-
-#include "util/u_format.h"
-
-
-/**
- * Set the framebuffer surface info: color buffers, zbuffer, stencil buffer.
- */
-void
-llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
-                               const struct pipe_framebuffer_state *fb)
+static void line_nop( struct setup_context *setup,
+                      const float (*v0)[4],
+                      const float (*v1)[4] )
 {
-   struct llvmpipe_context *lp = llvmpipe_context(pipe);
-
-   boolean changed = !util_framebuffer_state_equal(&lp->framebuffer, fb);
-
-   if (changed) {
-
-      util_copy_framebuffer_state(&lp->framebuffer, fb);
-
-      /* Tell draw module how deep the Z/depth buffer is */
-      if (lp->framebuffer.zsbuf) {
-         int depth_bits;
-         double mrd;
-         depth_bits = util_format_get_component_bits(lp->framebuffer.zsbuf->format,
-                                                     UTIL_FORMAT_COLORSPACE_ZS,
-                                                     0);
-         if (depth_bits > 16) {
-            mrd = 0.0000001;
-         }
-         else {
-            mrd = 0.00002;
-         }
-         draw_set_mrd(lp->draw, mrd);
-      }
-
-      lp_setup_bind_framebuffer( lp->setup, &lp->framebuffer );
-
-      lp->dirty |= LP_NEW_FRAMEBUFFER;
-   }
 }
+
+
+void 
+lp_setup_choose_line( struct setup_context *setup )
+{
+   setup->line = line_nop;
+}
+
+

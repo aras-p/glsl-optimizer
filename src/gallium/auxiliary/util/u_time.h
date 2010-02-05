@@ -67,6 +67,9 @@ util_time_get(struct util_time *t)
 }
 
 
+/**
+ * Return t2 = t1 + usecs
+ */
 PIPE_DEPRECATED
 static INLINE void
 util_time_add(const struct util_time *t1,
@@ -77,6 +80,9 @@ util_time_add(const struct util_time *t1,
 }
 
 
+/**
+ * Return difference between times, in microseconds
+ */
 PIPE_DEPRECATED
 static INLINE int64_t
 util_time_diff(const struct util_time *t1, 
@@ -105,6 +111,9 @@ _util_time_compare(const struct util_time *t1,
 }
 
 
+/**
+ * Returns non-zero when the timeout expires.
+ */
 PIPE_DEPRECATED
 static INLINE boolean
 util_time_timeout(const struct util_time *start, 
@@ -115,6 +124,9 @@ util_time_timeout(const struct util_time *start,
 }
 
 
+/**
+ * Return current time in microseconds
+ */
 PIPE_DEPRECATED
 static INLINE int64_t
 util_time_micros(void)

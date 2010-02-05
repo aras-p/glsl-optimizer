@@ -39,65 +39,16 @@
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_flush.h"
-#include "lp_prim_vbuf.h"
+#include "lp_perf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
-#include "lp_tile_cache.h"
-#include "lp_tex_cache.h"
 #include "lp_texture.h"
 #include "lp_winsys.h"
 #include "lp_query.h"
+#include "lp_setup.h"
 
 
 
-/**
- * Map any drawing surfaces which aren't already mapped
- */
-void
-llvmpipe_map_transfers(struct llvmpipe_context *lp)
-{
-   struct pipe_screen *screen = lp->pipe.screen;
-   struct pipe_surface *zsbuf = lp->framebuffer.zsbuf;
-   unsigned i;
-
-   for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
-      lp_tile_cache_map_transfers(lp->cbuf_cache[i]);
-   }
-
-   if(zsbuf) {
-      if(!lp->zsbuf_transfer)
-         lp->zsbuf_transfer = screen->get_tex_transfer(screen, zsbuf->texture,
-                                                       zsbuf->face, zsbuf->level, zsbuf->zslice,
-                                                       PIPE_TRANSFER_READ_WRITE,
-                                                       0, 0, zsbuf->width, zsbuf->height);
-      if(lp->zsbuf_transfer && !lp->zsbuf_map)
-         lp->zsbuf_map = screen->transfer_map(screen, lp->zsbuf_transfer);
-
-   }
-}
-
-
-/**
- * Unmap any mapped drawing surfaces
- */
-void
-llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
-{
-   uint i;
-
-   for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
-      lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
-   }
-
-   if(lp->zsbuf_transfer) {
-      struct pipe_screen *screen = lp->pipe.screen;
-
-      if(lp->zsbuf_map) {
-         screen->transfer_unmap(screen, lp->zsbuf_transfer);
-         lp->zsbuf_map = NULL;
-      }
-   }
-}
 
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
@@ -105,22 +56,24 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    uint i;
 
+   lp_print_counters();
+
+   /* This will also destroy llvmpipe->setup:
+    */
    if (llvmpipe->draw)
       draw_destroy( llvmpipe->draw );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      lp_destroy_tile_cache(llvmpipe->cbuf_cache[i]);
       pipe_surface_reference(&llvmpipe->framebuffer.cbufs[i], NULL);
    }
+
    pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      lp_destroy_tex_tile_cache(llvmpipe->tex_cache[i]);
       pipe_texture_reference(&llvmpipe->texture[i], NULL);
    }
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      lp_destroy_tex_tile_cache(llvmpipe->vertex_tex_cache[i]);
       pipe_texture_reference(&llvmpipe->vertex_textures[i], NULL);
    }
 
@@ -139,33 +92,8 @@ llvmpipe_is_texture_referenced( struct pipe_context *pipe,
 				unsigned face, unsigned level)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
-   unsigned i;
 
-   /* check if any of the bound drawing surfaces are this texture */
-   if(llvmpipe->dirty_render_cache) {
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
-         if(llvmpipe->framebuffer.cbufs[i] && 
-            llvmpipe->framebuffer.cbufs[i]->texture == texture)
-            return PIPE_REFERENCED_FOR_WRITE;
-      }
-      if(llvmpipe->framebuffer.zsbuf && 
-         llvmpipe->framebuffer.zsbuf->texture == texture)
-         return PIPE_REFERENCED_FOR_WRITE;
-   }
-
-   /* check if any of the tex_cache textures are this texture */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      if (llvmpipe->tex_cache[i] &&
-            llvmpipe->tex_cache[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ;
-   }
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      if (llvmpipe->vertex_tex_cache[i] &&
-          llvmpipe->vertex_tex_cache[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ;
-   }
-   
-   return PIPE_UNREFERENCED;
+   return lp_setup_is_texture_referenced(llvmpipe->setup, texture);
 }
 
 static unsigned int
@@ -179,7 +107,6 @@ struct pipe_context *
 llvmpipe_create( struct pipe_screen *screen )
 {
    struct llvmpipe_context *llvmpipe;
-   uint i;
 
    llvmpipe = align_malloc(sizeof(struct llvmpipe_context), 16);
    if (!llvmpipe)
@@ -243,19 +170,6 @@ llvmpipe_create( struct pipe_screen *screen )
    llvmpipe->pipe.is_buffer_referenced = llvmpipe_is_buffer_referenced;
 
    llvmpipe_init_query_funcs( llvmpipe );
-   llvmpipe_init_texture_funcs( llvmpipe );
-
-   /*
-    * Alloc caches for accessing drawing surfaces and textures.
-    */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      llvmpipe->cbuf_cache[i] = lp_create_tile_cache( screen );
-
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      llvmpipe->tex_cache[i] = lp_create_tex_tile_cache( screen );
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
-      llvmpipe->vertex_tex_cache[i] = lp_create_tex_tile_cache(screen);
-
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -269,18 +183,10 @@ llvmpipe_create( struct pipe_screen *screen )
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   llvmpipe->vbuf_backend = lp_create_vbuf_backend(llvmpipe);
-   if (!llvmpipe->vbuf_backend)
+   llvmpipe->setup = lp_setup_create( screen,
+                                      llvmpipe->draw );
+   if (!llvmpipe->setup)
       goto fail;
-
-   llvmpipe->vbuf = draw_vbuf_stage(llvmpipe->draw, llvmpipe->vbuf_backend);
-   if (!llvmpipe->vbuf)
-      goto fail;
-
-   draw_set_rasterize_stage(llvmpipe->draw, llvmpipe->vbuf);
-   draw_set_render(llvmpipe->draw, llvmpipe->vbuf_backend);
-
-
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(llvmpipe->draw, &llvmpipe->pipe);
@@ -292,6 +198,8 @@ llvmpipe_create( struct pipe_screen *screen )
 #endif
 
    lp_init_surface_functions(llvmpipe);
+
+   lp_reset_counters();
 
    return &llvmpipe->pipe;
 

@@ -69,6 +69,8 @@ static void Key(unsigned char key, int x, int y)
 
 static void Draw(void)
 {
+   float z = 1.0;
+
    glClearColor(0.0, 0.0, 1.0, 0.0);
    glClearDepth(1.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
@@ -77,14 +79,20 @@ static void Draw(void)
 
    glBegin(GL_TRIANGLES);
    glColor3f(0,0,.7); 
-   glVertex3f( 0.9, -0.9, 1.0);
+   glVertex3f( 0.9, -0.9, z);
    glColor3f(.8,0,0); 
-   glVertex3f( 0.9,  0.9, 1.0);
+   glVertex3f( 0.9,  0.9, z);
    glColor3f(0,.9,0); 
-   glVertex3f(-0.9,  0.0, 1.0);
+   glVertex3f(-0.9,  0.0, z);
    glEnd();
 
    glFlush();
+
+   {
+      GLfloat z;
+      glReadPixels(125, 125, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+      printf("Z at (125, 125) = %f\n", z);
+   }
 
    if (doubleBuffer) {
       glutSwapBuffers();

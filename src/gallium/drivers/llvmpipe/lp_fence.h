@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,29 +10,51 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-#ifndef LP_VBUF_H
-#define LP_VBUF_H
+
+#ifndef LP_FENCE_H
+#define LP_FENCE_H
 
 
-struct llvmpipe_context;
-
-extern struct vbuf_render *
-lp_create_vbuf_backend(struct llvmpipe_context *llvmpipe);
+#include "os/os_thread.h"
+#include "pipe/p_state.h"
 
 
-#endif /* LP_VBUF_H */
+struct pipe_screen;
+
+
+struct lp_fence
+{
+   struct pipe_reference reference;
+
+   pipe_mutex mutex;
+   pipe_condvar signalled;
+
+   unsigned rank;
+   unsigned count;
+};
+
+
+struct lp_fence *
+lp_fence_create(unsigned rank);
+
+
+void
+llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen);
+
+
+#endif /* LP_FENCE_H */

@@ -27,7 +27,8 @@
 /**
  * @file
  * 
- * Thread, mutex, condition var and thread-specific data functions.
+ * Thread, mutex, condition variable, barrier, semaphore and
+ * thread-specific data functions.
  */
 
 
@@ -46,6 +47,8 @@
 
 #define PIPE_THREAD_HAVE_CONDVAR
 
+/* pipe_thread
+ */
 typedef pthread_t pipe_thread;
 
 #define PIPE_THREAD_ROUTINE( name, param ) \
@@ -69,8 +72,10 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
    return pthread_detach( thread );
 }
 
+
+/* pipe_mutex
+ */
 typedef pthread_mutex_t pipe_mutex;
-typedef pthread_cond_t pipe_condvar;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = PTHREAD_MUTEX_INITIALIZER
@@ -86,6 +91,11 @@ typedef pthread_cond_t pipe_condvar;
 
 #define pipe_mutex_unlock(mutex) \
    (void) pthread_mutex_unlock(&(mutex))
+
+
+/* pipe_condvar
+ */
+typedef pthread_cond_t pipe_condvar;
 
 #define pipe_static_condvar(mutex) \
    static pipe_condvar mutex = PTHREAD_COND_INITIALIZER
@@ -106,10 +116,32 @@ typedef pthread_cond_t pipe_condvar;
   pthread_cond_broadcast(&(cond))
 
 
+/* pipe_barrier
+ */
+typedef pthread_barrier_t pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   pthread_barrier_init(barrier, NULL, count);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   pthread_barrier_destroy(barrier);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   pthread_barrier_wait(barrier);
+}
+
+
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
 #include <windows.h>
 
+/* pipe_thread
+ */
 typedef HANDLE pipe_thread;
 
 #define PIPE_THREAD_ROUTINE( name, param ) \
@@ -135,6 +167,9 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
    return -1;
 }
 
+
+/* pipe_mutex
+ */
 typedef CRITICAL_SECTION pipe_mutex;
 
 #define pipe_static_mutex(mutex) \
@@ -152,15 +187,48 @@ typedef CRITICAL_SECTION pipe_mutex;
 #define pipe_mutex_unlock(mutex) \
    LeaveCriticalSection(&mutex)
 
-/* XXX: dummy definitions, make it compile */
 
+/* pipe_condvar (XXX FIX THIS)
+ */
 typedef unsigned pipe_condvar;
 
-#define pipe_condvar_init(condvar) \
-   (void) condvar
+#define pipe_condvar_init(cond) \
+   (void) cond
 
-#define pipe_condvar_broadcast(condvar) \
-   (void) condvar
+#define pipe_condvar_destroy(cond) \
+   (void) cond
+
+#define pipe_condvar_wait(cond, mutex) \
+   (void) cond; (void) mutex
+
+#define pipe_condvar_signal(cond) \
+   (void) cond
+
+#define pipe_condvar_broadcast(cond) \
+   (void) cond
+
+
+/* pipe_barrier (XXX FIX THIS)
+ */
+typedef unsigned pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   /* XXX we could implement barriers with a mutex and condition var */
+   assert(0);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+
 
 #else
 
@@ -188,6 +256,7 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 
 typedef unsigned pipe_mutex;
 typedef unsigned pipe_condvar;
+typedef unsigned pipe_barrier;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -223,7 +292,75 @@ typedef unsigned pipe_condvar;
    (void) condvar
 
 
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   /* XXX we could implement barriers with a mutex and condition var */
+   assert(0);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+
+
 #endif  /* PIPE_OS_? */
+
+
+/*
+ * Semaphores
+ */
+
+typedef struct
+{
+   pipe_mutex mutex;
+   pipe_condvar cond;
+   int counter;
+} pipe_semaphore;
+
+
+static INLINE void
+pipe_semaphore_init(pipe_semaphore *sema, int init_val)
+{
+   pipe_mutex_init(sema->mutex);
+   pipe_condvar_init(sema->cond);
+   sema->counter = init_val;
+}
+
+static INLINE void
+pipe_semaphore_destroy(pipe_semaphore *sema)
+{
+   pipe_mutex_destroy(sema->mutex);
+   pipe_condvar_destroy(sema->cond);
+}
+
+/** Signal/increment semaphore counter */
+static INLINE void
+pipe_semaphore_signal(pipe_semaphore *sema)
+{
+   pipe_mutex_lock(sema->mutex);
+   sema->counter++;
+   pipe_condvar_signal(sema->cond);
+   pipe_mutex_unlock(sema->mutex);
+}
+
+/** Wait for semaphore counter to be greater than zero */
+static INLINE void
+pipe_semaphore_wait(pipe_semaphore *sema)
+{
+   pipe_mutex_lock(sema->mutex);
+   while (sema->counter <= 0) {
+      pipe_condvar_wait(sema->cond, sema->mutex);
+   }
+   sema->counter--;
+   pipe_mutex_unlock(sema->mutex);
+}
 
 
 

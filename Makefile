@@ -127,6 +127,7 @@ linux-ia64-icc-static \
 linux-icc \
 linux-icc-static \
 linux-llvm \
+linux-llvm-debug \
 linux-opengl-es \
 linux-osmesa \
 linux-osmesa-static \

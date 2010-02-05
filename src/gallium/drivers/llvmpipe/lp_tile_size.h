@@ -1,8 +1,7 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
- * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -19,40 +18,22 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL THE AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
 
-/* Author:
- *    Brian Paul
- *    Michel Dänzer
- */
-
-
-#include "pipe/p_defines.h"
-#include "lp_clear.h"
-#include "lp_context.h"
-#include "lp_setup.h"
+#ifndef LP_TILE_SIZE_H
+#define LP_TILE_SIZE_H
 
 
 /**
- * Clear the given buffers to the specified values.
- * No masking, no scissor (clear entire buffer).
+ * Tile size (width and height). This needs to be a power of two.
  */
-void
-llvmpipe_clear(struct pipe_context *pipe, 
-               unsigned buffers,
-               const float *rgba,
-               double depth,
-               unsigned stencil)
-{
-   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+#define TILE_ORDER 6
+#define TILE_SIZE (1 << TILE_ORDER)
 
-   if (llvmpipe->no_rast)
-      return;
 
-   lp_setup_clear( llvmpipe->setup, rgba, depth, stencil, buffers );
-}
+#endif

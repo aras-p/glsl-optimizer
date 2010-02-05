@@ -46,7 +46,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_sample.h"
 #include "lp_bld_tgsi.h"
-#include "lp_state.h"
+#include "lp_jit.h"
 #include "lp_tex_sample.h"
 
 

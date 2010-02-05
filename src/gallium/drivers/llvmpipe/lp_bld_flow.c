@@ -41,13 +41,13 @@
 #define LP_BUILD_FLOW_MAX_VARIABLES 32
 #define LP_BUILD_FLOW_MAX_DEPTH 32
 
-
 /**
  * Enumeration of all possible flow constructs.
  */
 enum lp_build_flow_construct_kind {
-   lP_BUILD_FLOW_SCOPE,
-   LP_BUILD_FLOW_SKIP
+   LP_BUILD_FLOW_SCOPE,
+   LP_BUILD_FLOW_SKIP,
+   LP_BUILD_FLOW_IF
 };
 
 
@@ -73,7 +73,21 @@ struct lp_build_flow_skip
    /** Number of variables declared at the beginning */
    unsigned num_variables;
 
-   LLVMValueRef *phi;
+   LLVMValueRef *phi;  /**< array [num_variables] */
+};
+
+
+/**
+ * if/else/endif.
+ */
+struct lp_build_flow_if
+{
+   unsigned num_variables;
+
+   LLVMValueRef *phi;  /**< array [num_variables] */
+
+   LLVMValueRef condition;
+   LLVMBasicBlockRef entry_block, true_block, false_block, merge_block;
 };
 
 
@@ -84,6 +98,7 @@ union lp_build_flow_construct_data
 {
    struct lp_build_flow_scope scope;
    struct lp_build_flow_skip skip;
+   struct lp_build_flow_if ifthen;
 };
 
 
@@ -145,6 +160,10 @@ lp_build_flow_destroy(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Begin/push a new flow control construct, such as a loop, skip block
+ * or variable scope.
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_push(struct lp_build_flow_context *flow,
                    enum lp_build_flow_construct_kind kind)
@@ -158,6 +177,10 @@ lp_build_flow_push(struct lp_build_flow_context *flow,
 }
 
 
+/**
+ * Return the current/top flow control construct on the stack.
+ * \param kind  the expected type of the top-most construct
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_peek(struct lp_build_flow_context *flow,
                    enum lp_build_flow_construct_kind kind)
@@ -174,6 +197,10 @@ lp_build_flow_peek(struct lp_build_flow_context *flow,
 }
 
 
+/**
+ * End/pop the current/top flow control construct on the stack.
+ * \param kind  the expected type of the top-most construct
+ */
 static union lp_build_flow_construct_data *
 lp_build_flow_pop(struct lp_build_flow_context *flow,
                   enum lp_build_flow_construct_kind kind)
@@ -200,7 +227,7 @@ lp_build_flow_scope_begin(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_push(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_push(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
@@ -213,11 +240,11 @@ lp_build_flow_scope_begin(struct lp_build_flow_context *flow)
  *
  * A variable is a named entity which can have different LLVMValueRef's at
  * different points of the program. This is relevant for control flow because
- * when there are mutiple branches to a same location we need to replace
+ * when there are multiple branches to a same location we need to replace
  * the variable's value with a Phi function as explained in
  * http://en.wikipedia.org/wiki/Static_single_assignment_form .
  *
- * We keep track of variables by keeping around a pointer to where their
+ * We keep track of variables by keeping around a pointer to where they're
  * current.
  *
  * There are a few cautions to observe:
@@ -241,7 +268,7 @@ lp_build_flow_scope_declare(struct lp_build_flow_context *flow,
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_peek(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_peek(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
@@ -263,7 +290,7 @@ lp_build_flow_scope_end(struct lp_build_flow_context *flow)
 {
    struct lp_build_flow_scope *scope;
 
-   scope = &lp_build_flow_pop(flow, lP_BUILD_FLOW_SCOPE)->scope;
+   scope = &lp_build_flow_pop(flow, LP_BUILD_FLOW_SCOPE)->scope;
    if(!scope)
       return;
 
@@ -277,27 +304,47 @@ lp_build_flow_scope_end(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Note: this function has no dependencies on the flow code and could
+ * be used elsewhere.
+ */
 static LLVMBasicBlockRef
-lp_build_flow_insert_block(struct lp_build_flow_context *flow)
+lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
 {
    LLVMBasicBlockRef current_block;
    LLVMBasicBlockRef next_block;
    LLVMBasicBlockRef new_block;
 
-   current_block = LLVMGetInsertBlock(flow->builder);
+   /* get current basic block */
+   current_block = LLVMGetInsertBlock(builder);
 
+   /* check if there's another block after this one */
    next_block = LLVMGetNextBasicBlock(current_block);
-   if(next_block) {
-      new_block = LLVMInsertBasicBlock(next_block, "");
+   if (next_block) {
+      /* insert the new block before the next block */
+      new_block = LLVMInsertBasicBlock(next_block, name);
    }
    else {
+      /* append new block after current block */
       LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
-      new_block = LLVMAppendBasicBlock(function, "");
+      new_block = LLVMAppendBasicBlock(function, name);
    }
 
    return new_block;
 }
 
+
+static LLVMBasicBlockRef
+lp_build_flow_insert_block(struct lp_build_flow_context *flow)
+{
+   return lp_build_insert_new_block(flow->builder, "");
+}
+
+
+/**
+ * Begin a "skip" block.  Inside this block we can test a condition and
+ * skip to the end of the block if the condition is false.
+ */
 void
 lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
 {
@@ -309,13 +356,16 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
    if(!skip)
       return;
 
+   /* create new basic block */
    skip->block = lp_build_flow_insert_block(flow);
+
    skip->num_variables = flow->num_variables;
    if(!skip->num_variables) {
       skip->phi = NULL;
       return;
    }
 
+   /* Allocate a Phi node for each variable in this skip scope */
    skip->phi = MALLOC(skip->num_variables * sizeof *skip->phi);
    if(!skip->phi) {
       skip->num_variables = 0;
@@ -325,6 +375,7 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, skip->block);
 
+   /* create a Phi node for each variable */
    for(i = 0; i < skip->num_variables; ++i)
       skip->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
@@ -332,6 +383,10 @@ lp_build_flow_skip_begin(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Insert code to test a condition and branch to the end of the current
+ * skip block if the condition is true.
+ */
 void
 lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
                               LLVMValueRef cond)
@@ -349,15 +404,17 @@ lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
 
    new_block = lp_build_flow_insert_block(flow);
 
+   /* for each variable, update the Phi node with a (variable, block) pair */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
    }
 
+   /* if cond is true, goto skip->block, else goto new_block */
    LLVMBuildCondBr(flow->builder, cond, skip->block, new_block);
 
    LLVMPositionBuilderAtEnd(flow->builder, new_block);
- }
+}
 
 
 void
@@ -373,12 +430,14 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 
    current_block = LLVMGetInsertBlock(flow->builder);
 
+   /* add (variable, block) tuples to the phi nodes */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
       *flow->variables[i] = skip->phi[i];
    }
 
+   /* goto block */
    LLVMBuildBr(flow->builder, skip->block);
    LLVMPositionBuilderAtEnd(flow->builder, skip->block);
 
@@ -386,22 +445,34 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
 }
 
 
+/**
+ * Check if the mask predicate is zero.  If so, jump to the end of the block.
+ */
 static void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
    LLVMBuilderRef builder = mask->flow->builder;
    LLVMValueRef cond;
 
+   /* cond = (mask == 0) */
    cond = LLVMBuildICmp(builder,
                         LLVMIntEQ,
                         LLVMBuildBitCast(builder, mask->value, mask->reg_type, ""),
                         LLVMConstNull(mask->reg_type),
                         "");
 
+   /* if cond, goto end of block */
    lp_build_flow_skip_cond_break(mask->flow, cond);
 }
 
 
+/**
+ * Begin a section of code which is predicated on a mask.
+ * \param mask  the mask context, initialized here
+ * \param flow  the flow context
+ * \param type  the type of the mask
+ * \param value  storage for the mask
+ */
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
                     struct lp_build_flow_context *flow,
@@ -422,6 +493,11 @@ lp_build_mask_begin(struct lp_build_mask_context *mask,
 }
 
 
+/**
+ * Update boolean mask with given value (bitwise AND).
+ * Typically used to update the quad's pixel alive/killed mask
+ * after depth testing, alpha testing, TGSI_OPCODE_KIL, etc.
+ */
 void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
@@ -432,6 +508,9 @@ lp_build_mask_update(struct lp_build_mask_context *mask,
 }
 
 
+/**
+ * End section of code which is predicated on a mask.
+ */
 LLVMValueRef
 lp_build_mask_end(struct lp_build_mask_context *mask)
 {
@@ -491,3 +570,188 @@ lp_build_loop_end(LLVMBuilderRef builder,
    LLVMPositionBuilderAtEnd(builder, after_block);
 }
 
+
+
+/*
+  Example of if/then/else building:
+
+     int x;
+     if (cond) {
+        x = 1 + 2;
+     }
+     else {
+        x = 2 + 3;
+     }
+
+  Is built with:
+
+     LLVMValueRef x = LLVMGetUndef();  // or something else
+
+     flow = lp_build_flow_create(builder);
+
+        lp_build_flow_scope_begin(flow);
+
+           // x needs a phi node
+           lp_build_flow_scope_declare(flow, &x);
+
+           lp_build_if(ctx, flow, builder, cond);
+              x = LLVMAdd(1, 2);
+           lp_build_else(ctx);
+              x = LLVMAdd(2, 3);
+           lp_build_endif(ctx);
+
+        lp_build_flow_scope_end(flow);
+
+     lp_build_flow_destroy(flow);
+ */
+
+
+
+/**
+ * Begin an if/else/endif construct.
+ */
+void
+lp_build_if(struct lp_build_if_state *ctx,
+            struct lp_build_flow_context *flow,
+            LLVMBuilderRef builder,
+            LLVMValueRef condition)
+{
+   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
+   struct lp_build_flow_if *ifthen;
+   unsigned i;
+
+   memset(ctx, 0, sizeof(*ctx));
+   ctx->builder = builder;
+   ctx->flow = flow;
+
+   /* push/create new scope */
+   ifthen = &lp_build_flow_push(flow, LP_BUILD_FLOW_IF)->ifthen;
+   assert(ifthen);
+
+   ifthen->num_variables = flow->num_variables;
+   ifthen->condition = condition;
+   ifthen->entry_block = block;
+
+   /* create a Phi node for each variable in this flow scope */
+   ifthen->phi = MALLOC(ifthen->num_variables * sizeof(*ifthen->phi));
+   if (!ifthen->phi) {
+      ifthen->num_variables = 0;
+      return;
+   }
+
+   /* create endif/merge basic block for the phi functions */
+   ifthen->merge_block = lp_build_insert_new_block(builder, "endif-block");
+   LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
+
+   /* create a phi node for each variable */
+   for (i = 0; i < flow->num_variables; i++) {
+      ifthen->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
+
+      /* add add the initial value of the var from the entry block */
+      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->entry_block, 1);
+   }
+
+   /* create/insert true_block before merge_block */
+   ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
+
+   /* successive code goes into the true block */
+   LLVMPositionBuilderAtEnd(builder, ifthen->true_block);
+}
+
+
+/**
+ * Begin else-part of a conditional
+ */
+void
+lp_build_else(struct lp_build_if_state *ctx)
+{
+   struct lp_build_flow_context *flow = ctx->flow;
+   struct lp_build_flow_if *ifthen;
+   unsigned i;
+
+   ifthen = &lp_build_flow_peek(flow, LP_BUILD_FLOW_IF)->ifthen;
+   assert(ifthen);
+
+   /* for each variable, update the Phi node with a (variable, block) pair */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+   for (i = 0; i < flow->num_variables; i++) {
+      assert(*flow->variables[i]);
+      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
+   }
+
+   /* create/insert false_block before the merge block */
+   ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
+
+   /* successive code goes into the else block */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+}
+
+
+/**
+ * End a conditional.
+ */
+void
+lp_build_endif(struct lp_build_if_state *ctx)
+{
+   struct lp_build_flow_context *flow = ctx->flow;
+   struct lp_build_flow_if *ifthen;
+   unsigned i;
+
+   ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
+   assert(ifthen);
+
+   if (ifthen->false_block) {
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+      /* for each variable, update the Phi node with a (variable, block) pair */
+      for (i = 0; i < flow->num_variables; i++) {
+         assert(*flow->variables[i]);
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->false_block, 1);
+
+         /* replace the variable ref with the phi function */
+         *flow->variables[i] = ifthen->phi[i];
+      }
+   }
+   else {
+      /* no else clause */
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+      for (i = 0; i < flow->num_variables; i++) {
+         assert(*flow->variables[i]);
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->true_block, 1);
+
+         /* replace the variable ref with the phi function */
+         *flow->variables[i] = ifthen->phi[i];
+      }
+   }
+
+   FREE(ifthen->phi);
+
+   /***
+    *** Now patch in the various branch instructions.
+    ***/
+
+   /* Insert the conditional branch instruction at the end of entry_block */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->entry_block);
+   if (ifthen->false_block) {
+      /* we have an else clause */
+      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+                      ifthen->true_block, ifthen->false_block);
+   }
+   else {
+      /* no else clause */
+      LLVMBuildCondBr(ctx->builder, ifthen->condition,
+                      ifthen->true_block, ifthen->merge_block);
+   }
+
+   /* Append an unconditional Br(anch) instruction on the true_block */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
+   LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   if (ifthen->false_block) {
+      /* Append an unconditional Br(anch) instruction on the false_block */
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+      LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   }
+
+
+   /* Resume building code at end of the ifthen->merge_block */
+   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+}
