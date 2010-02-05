@@ -592,7 +592,7 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     float scale, offset;
     CS_LOCALS(r300);
 
-    BEGIN_CS(20 + (rs->polygon_offset_enable ? 5 : 0));
+    BEGIN_CS(18 + (rs->polygon_offset_enable ? 5 : 0));
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
 
     OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
@@ -627,7 +627,6 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     OUT_CS(rs->cull_mode);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
-    OUT_CS_REG(R300_GA_COLOR_CONTROL, rs->color_control);
     OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
     END_CS;
 }
