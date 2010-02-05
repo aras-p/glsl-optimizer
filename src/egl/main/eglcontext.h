@@ -60,6 +60,9 @@ _eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLConte
 
 /**
  * Return true if the context is bound to a thread.
+ *
+ * The binding is considered a reference to the context.  Drivers should not
+ * destroy a context when it is bound.
  */
 static INLINE EGLBoolean
 _eglIsContextBound(_EGLContext *ctx)
@@ -119,6 +122,9 @@ _eglGetContextHandle(_EGLContext *ctx)
 
 /**
  * Return true if the context is linked to a display.
+ *
+ * The link is considered a reference to the context (the display is owning the
+ * context).  Drivers should not destroy a context when it is linked.
  */
 static INLINE EGLBoolean
 _eglIsContextLinked(_EGLContext *ctx)

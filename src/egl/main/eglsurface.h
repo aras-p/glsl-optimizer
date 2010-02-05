@@ -107,6 +107,9 @@ _eglCreatePbufferFromClientBuffer(_EGLDriver *drv, _EGLDisplay *dpy,
 
 /**
  * Return true if there is a context bound to the surface.
+ *
+ * The binding is considered a reference to the surface.  Drivers should not
+ * destroy a surface when it is bound.
  */
 static INLINE EGLBoolean
 _eglIsSurfaceBound(_EGLSurface *surf)
@@ -166,6 +169,9 @@ _eglGetSurfaceHandle(_EGLSurface *surf)
 
 /**
  * Return true if the surface is linked to a display.
+ *
+ * The link is considered a reference to the surface (the display is owning the
+ * surface).  Drivers should not destroy a surface when it is linked.
  */
 static INLINE EGLBoolean
 _eglIsSurfaceLinked(_EGLSurface *surf)
