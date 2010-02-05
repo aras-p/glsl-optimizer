@@ -595,6 +595,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
    for (i = 0; extensions[i]; i++) {
+      _eglLog(_EGL_DEBUG, "DRI2: found extension `%s'", extensions[i]->name);
       if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0))
 	 dri2_dpy->flush = (__DRI2flushExtension *) extensions[i];
    }
