@@ -511,7 +511,7 @@ static void
         draw_flush(r300->draw);
     }
 
-    r300->fb_state.state = state;
+    memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     /* Don't rely on the order of states being set for the first time. */
     /* XXX wait what */

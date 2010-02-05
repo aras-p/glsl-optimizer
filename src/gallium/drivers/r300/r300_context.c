@@ -55,6 +55,7 @@ static void r300_destroy_context(struct pipe_context* context)
 
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
+    FREE(r300->fb_state.state);
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->vertex_format_state.state);
@@ -124,6 +125,9 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(viewport, 9);
     R300_INIT_ATOM(rs_block, 21);
     R300_INIT_ATOM(vertex_format, 26);
+
+    /* Some non-CSO atoms need explicit space to store the state locally. */
+    r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
