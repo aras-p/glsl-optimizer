@@ -267,6 +267,41 @@ uninitialized display.</p>
 resources.  The drivers are responsible to the correct behavior as defined by
 EGL.</p>
 
+<h3><code>EGL_RENDER_BUFFER</code></h3>
+
+<p>In EGL, the color buffer a context should try to render to is decided by the
+binding surface.  It should try to render to the front buffer if the binding
+surface has <code>EGL_RENDER_BUFFER</code> set to
+<code>EGL_SINGLE_BUFFER</code>;  If the same context is later bound to a
+surface with <code>EGL_RENDER_BUFFER</code> set to
+<code>EGL_BACK_BUFFER</code>, the context should try to render to the back
+buffer.  However, the context is allowed to make the final decision as to which
+color buffer it wants to or is able to render to.</p>
+
+<p>For pbuffer surfaces, the render buffer is always
+<code>EGL_BACK_BUFFER</code>.  And for pixmap surfaces, the render buffer is
+always <code>EGL_SINGLE_BUFFER</code>.  Unlike window surfaces, EGL spec
+requires their <code>EGL_RENDER_BUFFER</code> values to be honored.  As a
+result, a driver should never set <code>EGL_PIXMAP_BIT</code> or
+<code>EGL_PBUFFER_BIT</code> bits of a config if the contexts created with the
+config won't be able to honor the <code>EGL_RENDER_BUFFER</code> of pixmap or
+pbuffer surfaces.</p>
+
+<p>It should also be noted that pixmap and pbuffer surfaces are assumed to be
+single-buffered, in that <code>eglSwapBuffers</code> has no effect on them.  It
+is desirable that a driver allocates a private color buffer for each pbuffer
+surface created.  If the window system the driver supports has native pbuffers,
+or if the native pixmaps have more than one color buffers, the driver should
+carefully attach the native color buffers to the EGL surfaces, re-route them if
+required.</p>
+
+<p>There is no defined behavior as to, for example, how
+<code>glDrawBuffer</code> interacts with <code>EGL_RENDER_BUFFER</code>.  Right
+now, it is desired that the draw buffer in a client API be fixed for pixmap and
+pbuffer surfaces.  Therefore, the driver is responsible to guarantee that the
+client API renders to the specified render buffer for pixmap and pbuffer
+surfaces.</p>
+
 <h3>TODOs</h3>
 
 <ul>
