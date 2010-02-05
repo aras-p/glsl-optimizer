@@ -55,6 +55,9 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
             return R300_EASY_TX_FORMAT(X, X, X, X, X8);
         case PIPE_FORMAT_L8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
+        case PIPE_FORMAT_L8_SRGB:
+            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8) |
+                R300_TX_FORMAT_GAMMA;
         /* X16 */
         case PIPE_FORMAT_R16_UNORM:
         case PIPE_FORMAT_Z16_UNORM:
@@ -65,6 +68,9 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         /* Y8X8 */
         case PIPE_FORMAT_A8L8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
+        case PIPE_FORMAT_A8L8_SRGB:
+            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) |
+                R300_TX_FORMAT_GAMMA;
         /* W8Z8Y8X8 */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
             return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
