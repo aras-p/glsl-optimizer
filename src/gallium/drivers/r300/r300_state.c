@@ -441,7 +441,6 @@ static void*
             (r300_translate_stencil_op(state->stencil[1].zfail_op) <<
                 R300_S_BACK_ZFAIL_OP_SHIFT);
 
-            /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
             if (caps->is_r500)
             {
                 dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
@@ -460,8 +459,7 @@ static void*
             r300_translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
 
-        /* XXX figure out why emitting 10bit alpha ref causes CS to dump */
-        /* always use 8bit alpha ref */
+        /* We could use 10bit alpha ref but who needs that? */
         dsa->alpha_function |= float_to_ubyte(state->alpha.ref_value);
 
         if (caps->is_r500)

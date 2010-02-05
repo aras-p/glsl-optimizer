@@ -118,12 +118,6 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 
     BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
-
-    /* not needed since we use the 8bit alpha ref */
-    /*if (r300screen->caps->is_r500) {
-        OUT_CS_REG(R500_FG_ALPHA_VALUE, dsa->alpha_reference);
-    }*/
-
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
 
     if (fb->zsbuf) {
@@ -136,7 +130,6 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
 
     OUT_CS(dsa->stencil_ref_mask);
 
-    /* XXX it seems r3xx doesn't support STENCILREFMASK_BF */
     if (r300screen->caps->is_r500) {
         OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
     }
