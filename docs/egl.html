@@ -206,25 +206,20 @@ It is accelerated when the GLX is.  As such, it cannot provide functions that
 is not available in GLX or GLX extensions.</p>
 </li>
 
-<li><code>egl_xdri</code>
+<li><code>egl_dri2</code>
 
 <p>This driver supports the X Window System as its window system.  It functions
-as a DRI driver loader and can load DRI/DRI2/DRISW drivers.  Unlike
-<code>egl_glx</code>, it has no dependency on <code>libGL</code>.  It talks to
-the X server directly using DRI or DRI2 protocols.  It also talks minimal GLX
-protocol for things like available visuals or fbconfigs.  With direct access to
-the DRI drivers, it has the potential to support more EGL functions that are
-not possible with <code>egl_glx</code>.</p>
+as a DRI2 driver loader.  Unlike <code>egl_glx</code>, it has no dependency on
+<code>libGL</code>.  It talks to the X server directly using DRI2 protocol.</p>
 
 </li>
 <li><code>egl_dri</code>
 
 <p>This driver lacks maintenance and does <em>not</em> build.  It is similiar
-to <code>egl_xdri</code> in that it functions as a DRI driver loader.  But
-unlike <code>egl_xdri</code>, it supports Linux framebuffer devices as its
-window system and supports EGL_MESA_screen_surface extension.  It loads only
-DRI1 drivers.  As DRI1 drivers is phasing out, it might be better to rewrite
-the driver to support KMS and DRI2.</p>
+to <code>egl_dri2</code> in that it functions as a DRI(1) driver loader.  But
+unlike <code>egl_dri2</code>, it supports Linux framebuffer devices as its
+window system and supports EGL_MESA_screen_surface extension.  As DRI1 drivers
+are phasing out, it might eventually be replaced by <code>egl_dri2</code>.</p>
 
 </li>
 </ul>

@@ -15,13 +15,11 @@ common_OBJECTS = $(common_SOURCES:.c=.o)
 x11_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/glx/x11 \
-	-I$(TOP)/src/egl/drivers/xdri \
 	-I$(TOP)/src/mesa \
 	$(shell pkg-config --cflags-only-I libdrm)
 
 x11_SOURCES = $(wildcard x11/*.c) \
-	      $(TOP)/src/glx/x11/dri2.c \
-	      $(TOP)/src/egl/drivers/xdri/glxinit.c
+	      $(TOP)/src/glx/x11/dri2.c
 x11_OBJECTS = $(x11_SOURCES:.c=.o)
 
 

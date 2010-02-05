@@ -43,7 +43,7 @@ struct x11_screen {
    int number;
 
    /*
-    * This is used to fetch GLX visuals/fbconfigs.  It uses code from egl_xdri.
+    * This is used to fetch GLX visuals/fbconfigs.  It steals code from GLX.
     * It might be better to rewrite the part in Xlib or XCB.
     */
    __GLXdisplayPrivate *glx_dpy;
