@@ -366,7 +366,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
               const __GLcontextModes * const fbconfig,
               GLXContext shareList,
               Bool allowDirect, GLXContextID contextID,
-              Bool use_glx_1_3, int renderType)
+	      unsigned code, int renderType)
 {
    GLXContext gc;
 #ifdef GLX_DIRECT_RENDERING
@@ -425,7 +425,8 @@ CreateContext(Display * dpy, XVisualInfo * vis,
 #endif
 
       LockDisplay(dpy);
-      if (fbconfig == NULL) {
+      switch (code) {
+      case X_GLXCreateContext: {
          xGLXCreateContextReq *req;
 
          /* Send the glXCreateContext request */
@@ -437,8 +438,10 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->screen = vis->screen;
          req->shareList = shareList ? shareList->xid : None;
          req->isDirect = GC_IS_DIRECT(gc);
+	 break;
       }
-      else if (use_glx_1_3) {
+
+      case X_GLXCreateNewContext: {
          xGLXCreateNewContextReq *req;
 
          /* Send the glXCreateNewContext request */
@@ -451,8 +454,10 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->renderType = renderType;
          req->shareList = shareList ? shareList->xid : None;
          req->isDirect = GC_IS_DIRECT(gc);
+	 break;
       }
-      else {
+
+      case X_GLXvop_CreateContextWithConfigSGIX: {
          xGLXVendorPrivateWithReplyReq *vpreq;
          xGLXCreateContextWithConfigSGIXReq *req;
 
@@ -470,6 +475,14 @@ CreateContext(Display * dpy, XVisualInfo * vis,
          req->renderType = renderType;
          req->shareList = shareList ? shareList->xid : None;
          req->isDirect = GC_IS_DIRECT(gc);
+	 break;
+      }
+
+      default:
+	 /* What to do here?  This case is the sign of an internal error.  It
+	  * should never be reachable.
+	  */
+	 break;
       }
 
       UnlockDisplay(dpy);
@@ -491,7 +504,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
    return CreateContext(dpy, vis, NULL, shareList, allowDirect, None,
-                        False, 0);
+                        X_GLXCreateContext, 0);
 }
 
 _X_HIDDEN void
@@ -1740,7 +1753,8 @@ glXImportContextEXT(Display * dpy, GLXContextID contextID)
       return NULL;
    }
 
-   ctx = CreateContext(dpy, NULL, NULL, NULL, False, contextID, False, 0);
+   ctx = CreateContext(dpy, NULL, NULL, NULL, False, contextID,
+		       X_GLXCreateContext, 0);
    if (NULL != ctx) {
       if (Success != __glXQueryContextInfo(dpy, ctx)) {
          return NULL;
@@ -1790,7 +1804,7 @@ glXCreateNewContext(Display * dpy, GLXFBConfig config,
                     int renderType, GLXContext shareList, Bool allowDirect)
 {
    return CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
-                        allowDirect, None, True, renderType);
+                        allowDirect, None, X_GLXCreateNewContext, renderType);
 }
 
 
@@ -2278,7 +2292,8 @@ glXCreateContextWithConfigSGIX(Display * dpy,
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
       gc = CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
-                         allowDirect, None, False, renderType);
+                         allowDirect, None,
+			 X_GLXvop_CreateContextWithConfigSGIX, renderType);
    }
 
    return gc;
