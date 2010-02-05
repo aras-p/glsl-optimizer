@@ -371,8 +371,6 @@ CreateContext(Display * dpy, XVisualInfo * vis,
    GLXContext gc;
 #ifdef GLX_DIRECT_RENDERING
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-#else
-   (void) screen;
 #endif
 
    if (dpy == NULL)
@@ -409,7 +407,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->glxCode = X_GLXCreateContext;
       req->context = gc->xid = XAllocID(dpy);
       req->visual = vis->visualid;
-      req->screen = vis->screen;
+      req->screen = screen;
       req->shareList = shareList ? shareList->xid : None;
       req->isDirect = GC_IS_DIRECT(gc);
       break;
@@ -424,7 +422,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->glxCode = X_GLXCreateNewContext;
       req->context = gc->xid = XAllocID(dpy);
       req->fbconfig = fbconfig->fbconfigID;
-      req->screen = fbconfig->screen;
+      req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
       req->isDirect = GC_IS_DIRECT(gc);
@@ -445,7 +443,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
       req->context = gc->xid = XAllocID(dpy);
       req->fbconfig = fbconfig->fbconfigID;
-      req->screen = fbconfig->screen;
+      req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
       req->isDirect = GC_IS_DIRECT(gc);
