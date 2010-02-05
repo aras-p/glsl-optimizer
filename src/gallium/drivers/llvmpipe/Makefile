@@ -74,3 +74,16 @@ lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxil
 # to make a .s file to inspect assembly code
 .c.s:
 	$(CC) -S $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $<
+
+
+testprogs := lp_test_format	\
+	     lp_test_blend	\
+	     lp_test_conv
+
+LIBS += $(GL_LIB_DEPS) -L. -lllvmpipe -L../../auxiliary/ -lgallium
+
+$(testprogs): lp_test_% : lp_test_%.o lp_test_main.o
+	$(LD) $^ -o $@ -Wl,--start-group  $(LIBS) -Wl,--end-group
+
+
+default: $(testprogs)
