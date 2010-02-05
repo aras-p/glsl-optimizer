@@ -325,6 +325,16 @@ st_translate_fragment_program(struct st_context *st,
             stfp->input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
+         case FRAG_ATTRIB_PNTC:
+            /* This is a hack.  We really need a new semantic label for
+             * point coord.  The draw module needs to know which fragment
+             * shader input is the point coord attribute so that it can set
+             * up the right vertex attribute values.
+             */
+            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            stfp->input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+            break;
 
             /* In most cases, there is nothing special about these
              * inputs, so adopt a convention to use the generic
@@ -349,7 +359,6 @@ st_translate_fragment_program(struct st_context *st,
          case FRAG_ATTRIB_TEX5:
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
-         case FRAG_ATTRIB_PNTC:
          case FRAG_ATTRIB_VAR0:
          default:
             /* Actually, let's try and zero-base this just for
