@@ -155,6 +155,15 @@ static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA
             dstA == PIPE_BLENDFACTOR_ONE);
 }
 
+static unsigned bgra_cmask(unsigned mask)
+{
+    /* Gallium uses RGBA color ordering while R300 expects BGRA. */
+
+    return ((mask & PIPE_MASK_R) << 2) |
+           ((mask & PIPE_MASK_B) >> 2) |
+           (mask & (PIPE_MASK_G | PIPE_MASK_A));
+}
+
 /* Create a new blend state based on the CSO blend state.
  *
  * This encompasses alpha blending, logic/raster ops, and blend dithering. */
@@ -290,16 +299,16 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     }
 
     /* Color channel masks for all MRTs. */
-    blend->color_channel_mask = state->rt[0].colormask;
+    blend->color_channel_mask = bgra_cmask(state->rt[0].colormask);
     if (r300screen->caps->is_r500 && state->independent_blend_enable) {
         if (state->rt[1].blend_enable) {
-            blend->color_channel_mask |= (state->rt[1].colormask << 4);
+            blend->color_channel_mask |= bgra_cmask(state->rt[1].colormask) << 4;
         }
         if (state->rt[2].blend_enable) {
-            blend->color_channel_mask |= (state->rt[2].colormask << 8);
+            blend->color_channel_mask |= bgra_cmask(state->rt[2].colormask) << 8;
         }
         if (state->rt[3].blend_enable) {
-            blend->color_channel_mask |= (state->rt[3].colormask << 12);
+            blend->color_channel_mask |= bgra_cmask(state->rt[3].colormask) << 12;
         }
     }
 
