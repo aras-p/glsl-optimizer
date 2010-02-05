@@ -12,6 +12,7 @@ static int Win;
 static int WinWidth = 600, WinHeight = 400;
 static GLfloat Xrot = 0, Yrot = 0;
 static GLboolean CylWrap = GL_TRUE;
+static GLboolean Lines = GL_FALSE;
 
 
 
@@ -32,17 +33,35 @@ DrawSample(GLboolean wrap)
 
    glEnable(GL_TEXTURE_2D);
 
-   /* texured quad */
-   glBegin(GL_QUAD_STRIP);
-   for (p = 0.0; p <= 1.001; p += 0.1) {
-      float x = -2.0 + p * 4.0;
-      float s = p + 0.5;
-      if (wrap && s > 1.0)
-         s -= 1.0;
-      glTexCoord2f(s, 0);  glVertex2f(x, -1);
-      glTexCoord2f(s, 1);  glVertex2f(x, +1);
+   if (Lines) {
+      /* texured lines */
+      float t;
+      for (t = 0; t <= 1.0; t += 0.125) {
+         float y = -1.0 + 2.0 * t;
+         glBegin(GL_LINE_STRIP);
+         for (p = 0.0; p <= 1.001; p += 0.05) {
+            float x = -2.0 + p * 4.0;
+            float s = p + 0.5;
+            if (wrap && s > 1.0)
+               s -= 1.0;
+            glTexCoord2f(s, t);  glVertex2f(x, y);
+         }
+         glEnd();
+      }
    }
-   glEnd();
+   else {
+      /* texured quads */
+      glBegin(GL_QUAD_STRIP);
+      for (p = 0.0; p <= 1.001; p += 0.1) {
+         float x = -2.0 + p * 4.0;
+         float s = p + 0.5;
+         if (wrap && s > 1.0)
+            s -= 1.0;
+         glTexCoord2f(s, 0);  glVertex2f(x, -1);
+         glTexCoord2f(s, 1);  glVertex2f(x, +1);
+      }
+      glEnd();
+   }
 
    glDisable(GL_TEXTURE_2D);
 
@@ -138,6 +157,10 @@ Key(unsigned char key, int x, int y)
       else
          printf("Cylindrical wrap off.\n");
       break;
+   case 'l':
+   case 'L':
+      Lines = !Lines;
+      break;
    case 27:
       glutDestroyWindow(Win);
       exit(0);
@@ -215,6 +238,7 @@ Init(void)
    glPointSize(3.0);
 
    printf("Press 'c' to toggle cylindrical wrap mode.\n");
+   printf("Press 'l' to toggle line / quad drawing.\n");
 }
 
 
