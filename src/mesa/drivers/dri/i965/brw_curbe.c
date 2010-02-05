@@ -318,6 +318,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
 					    4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
+	 brw->curbe.need_new_bo = GL_FALSE;
       }
 
       brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;
