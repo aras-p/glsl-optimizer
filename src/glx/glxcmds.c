@@ -362,7 +362,7 @@ AllocateGLXContext(Display * dpy)
  */
 
 static GLXContext
-CreateContext(Display * dpy, XVisualInfo * vis,
+CreateContext(Display * dpy, int generic_id,
               const __GLcontextModes * const fbconfig,
               GLXContext shareList,
               Bool allowDirect,
@@ -376,11 +376,11 @@ CreateContext(Display * dpy, XVisualInfo * vis,
    if (dpy == NULL)
       return NULL;
 
-   gc = AllocateGLXContext(dpy);
-   if (!gc)
+   if (generic_id == None)
       return NULL;
 
-   if ((vis == NULL) && (fbconfig == NULL))
+   gc = AllocateGLXContext(dpy);
+   if (!gc)
       return NULL;
 
 #ifdef GLX_DIRECT_RENDERING
@@ -406,7 +406,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->reqType = gc->majorOpcode;
       req->glxCode = X_GLXCreateContext;
       req->context = gc->xid = XAllocID(dpy);
-      req->visual = vis->visualid;
+      req->visual = generic_id;
       req->screen = screen;
       req->shareList = shareList ? shareList->xid : None;
       req->isDirect = GC_IS_DIRECT(gc);
@@ -421,7 +421,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->reqType = gc->majorOpcode;
       req->glxCode = X_GLXCreateNewContext;
       req->context = gc->xid = XAllocID(dpy);
-      req->fbconfig = fbconfig->fbconfigID;
+      req->fbconfig = generic_id;
       req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
@@ -442,7 +442,7 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       req->glxCode = X_GLXVendorPrivateWithReply;
       req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
       req->context = gc->xid = XAllocID(dpy);
-      req->fbconfig = fbconfig->fbconfigID;
+      req->fbconfig = generic_id;
       req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
@@ -493,7 +493,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
    renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
 #endif
 
-   return CreateContext(dpy, vis, mode, shareList, allowDirect,
+   return CreateContext(dpy, vis->visualid, mode, shareList, allowDirect,
                         X_GLXCreateContext, renderType, vis->screen);
 }
 
@@ -1799,7 +1799,7 @@ glXCreateNewContext(Display * dpy, GLXFBConfig config,
    const __GLcontextModes *const fbconfig =
       (const __GLcontextModes *const) config;
 
-   return CreateContext(dpy, NULL, fbconfig, shareList,
+   return CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
                         allowDirect, X_GLXCreateNewContext, renderType,
 			fbconfig->screen);
 }
@@ -2288,7 +2288,7 @@ glXCreateContextWithConfigSGIX(Display * dpy,
    psc = GetGLXScreenConfigs(dpy, fbconfig->screen);
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
-      gc = CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
+      gc = CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
                          allowDirect,
 			 X_GLXvop_CreateContextWithConfigSGIX, renderType,
 			 fbconfig->screen);
