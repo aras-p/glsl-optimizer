@@ -21,6 +21,9 @@ struct _egl_config
 };
 
 
+/**
+ * Macros for source level compatibility.
+ */
 #define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) _eglSetConfigKey(CONF, ATTR, VAL)
 #define GET_CONFIG_ATTRIB(CONF, ATTR) _eglGetConfigKey(CONF, ATTR)
 
@@ -55,6 +58,10 @@ _eglResetConfigKeys(_EGLConfig *conf, EGLint val)
 
 /**
  * Update a config for a given key.
+ *
+ * Note that a valid key is not necessarily a valid attribute.  There are gaps
+ * in the attribute enums.  The separation is to catch application errors.
+ * Drivers should never set a key that is an invalid attribute.
  */
 static INLINE void
 _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
@@ -74,20 +81,6 @@ _eglGetConfigKey(const _EGLConfig *conf, EGLint key)
    EGLint idx = _eglIndexConfig(conf, key);
    assert(idx >= 0);
    return conf->Storage[idx];
-}
-
-
-/**
- * Set a given attribute.
- *
- * Because _eglGetConfigAttrib is already used as a fallback driver
- * function, this function is not considered to have a good name.
- * SET_CONFIG_ATTRIB is preferred over this function.
- */
-static INLINE void
-_eglSetConfigAttrib(_EGLConfig *conf, EGLint attr, EGLint val)
-{
-   SET_CONFIG_ATTRIB(conf, attr, val);
 }
 
 
