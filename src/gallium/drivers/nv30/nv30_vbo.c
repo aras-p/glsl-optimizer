@@ -223,7 +223,6 @@ nv30_draw_arrays(struct pipe_context *pipe,
 	}
 
 	pipe->flush(pipe, 0, NULL);
-	return TRUE;
 }
 
 static INLINE void
@@ -382,7 +381,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
-		return FALSE;
+		return;
 	}
 
 	switch (ib_size) {
@@ -424,7 +423,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 			FIRE_RING(chan);
 			continue;
 		}
-		
+
 		BEGIN_RING(chan, rankine, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
@@ -468,7 +467,7 @@ nv30_draw_elements(struct pipe_context *pipe,
 	if (FORCE_SWTNL || !nv30_state_validate(nv30)) {
 		/*return nv30_draw_elements_swtnl(pipe, NULL, 0,
 						mode, start, count);*/
-		return;	
+		return;
 	}
 
 	if (idxbuf) {

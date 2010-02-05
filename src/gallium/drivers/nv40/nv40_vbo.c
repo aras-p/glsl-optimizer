@@ -382,7 +382,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
-		return FALSE;
+		return;
 	}
 
 	switch (ib_size) {
@@ -424,7 +424,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 			FIRE_RING(chan);
 			continue;
 		}
-		
+
 		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
