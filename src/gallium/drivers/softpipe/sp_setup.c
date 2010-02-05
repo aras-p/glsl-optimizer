@@ -908,7 +908,6 @@ line_persp_coeff(const struct setup_context *setup,
                  uint i,
                  const float v[2])
 {
-   /* XXX double-check/verify this arithmetic */
    const float a0 = v[0] * setup->vmin[0][3];
    const float a1 = v[1] * setup->vmax[0][3];
    const float da = a1 - a0;
@@ -916,7 +915,7 @@ line_persp_coeff(const struct setup_context *setup,
    const float dady = da * setup->emaj.dy * setup->oneoverarea;
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
-   coef->a0[i] = (v[0] - /* XXX: <-- shouldn't that be a0? */
+   coef->a0[i] = (a0 -
                   (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
                    dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
