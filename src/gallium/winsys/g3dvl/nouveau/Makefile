@@ -20,14 +20,11 @@ LDFLAGS		+= -L${DRMDIR}/lib				\
 		   -L${DRIDIR}/lib				\
 		   -L${GALLIUMDIR}/winsys/drm/nouveau/common	\
 		   -L${GALLIUMDIR}/auxiliary			\
-		   -L${GALLIUMDIR}/drivers/nv04			\
-		   -L${GALLIUMDIR}/drivers/nv10			\
-		   -L${GALLIUMDIR}/drivers/nv20			\
 		   -L${GALLIUMDIR}/drivers/nv30			\
 		   -L${GALLIUMDIR}/drivers/nv40			\
 		   -L${GALLIUMDIR}/drivers/nv50
 
-LIBS		+= -lnouveaudrm -ldriclient -ldrm_nouveau -ldrm -lnv04 -lnv10 -lnv20 -lnv30 -lnv40 -lnv50 -lgallium -lm
+LIBS		+= -lnouveaudrm -ldriclient -ldrm_nouveau -ldrm -lnv30 -lnv40 -lnv50 -lgallium -lm
 
 #############################################
 

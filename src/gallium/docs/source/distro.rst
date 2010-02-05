@@ -31,21 +31,6 @@ Wrapper driver.
 LLVM Softpipe
 ^^^^^^^^^^^^^
 
-nVidia nv04
-^^^^^^^^^^^
-
-Deprecated.
-
-nVidia nv10
-^^^^^^^^^^^
-
-Deprecated.
-
-nVidia nv20
-^^^^^^^^^^^
-
-Deprecated.
-
 nVidia nv30
 ^^^^^^^^^^^
 
