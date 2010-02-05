@@ -735,11 +735,11 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
 
    if ((cctx == NULL && ddraw == NULL && rdraw == NULL) ||
        dri2_dpy->core->bindContext(cctx, ddraw, rdraw)) {
-      if (dsurf)
+      if (dsurf && !_eglIsSurfaceLinked(dsurf))
 	 dri2_destroy_surface(drv, disp, dsurf);
-      if (rsurf && rsurf != dsurf)
+      if (rsurf && rsurf != dsurf && !_eglIsSurfaceLinked(dsurf))
 	 dri2_destroy_surface(drv, disp, rsurf);
-      if (ctx != NULL)
+      if (ctx != NULL && !_eglIsContextLinked(ctx))
 	 dri2_dpy->core->unbindContext(dri2_egl_context(ctx)->dri_context);
 
       return EGL_TRUE;
