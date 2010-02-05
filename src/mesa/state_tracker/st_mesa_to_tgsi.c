@@ -177,13 +177,13 @@ src_register( struct st_translate *t,
          t->temps[index] = ureg_DECL_temporary( t->ureg );
       return ureg_src(t->temps[index]);
 
-   case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
       ASSERT(index >= 0);
       return t->constants[index];
+   case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:       /* ie, immediate */
       if (index < 0)
          return ureg_DECL_constant( t->ureg, 0 );
