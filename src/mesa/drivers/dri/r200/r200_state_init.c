@@ -347,6 +347,15 @@ static int check_rrb(GLcontext *ctx, struct radeon_state_atom *atom)
    return atom->cmd_size;
 }
 
+static int check_polygon_stipple(GLcontext *ctx,
+		struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   if (r200->hw.set.cmd[SET_RE_CNTL] & R200_STIPPLE_ENABLE)
+	   return atom->cmd_size;
+   return 0;
+}
+
 static void mtl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
@@ -885,7 +894,7 @@ void r200InitState( r200ContextPtr rmesa )
       }
    }
 
-   ALLOC_STATE( stp, always, STP_STATE_SIZE, "STP/stp", 0 );
+   ALLOC_STATE( stp, polygon_stipple, STP_STATE_SIZE, "STP/stp", 0 );
 
    for (i = 0; i < 6; i++)
       if (rmesa->radeon.radeonScreen->kernel_mm)
