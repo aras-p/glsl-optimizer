@@ -1636,7 +1636,6 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
    else {
       int *propList, *pProp;
       int nPropListBytes;
-      int i;
 
       nPropListBytes = numValues << 3;
       propList = (int *) Xmalloc(nPropListBytes);
@@ -1644,6 +1643,8 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
          retval = 0;
       }
       else {
+	 unsigned i;
+
          _XRead(dpy, (char *) propList, nPropListBytes);
          pProp = propList;
          for (i = 0; i < numValues; i++) {
