@@ -129,7 +129,7 @@ Init(void)
 
    Image[1] = LoadRGBImage(FILE2, &ImgWidth[1], &ImgHeight[1], &ImgFormat[1]);
    if (!Image[1]) {
-      printf("Couldn't read %s\n", FILE1);
+      printf("Couldn't read %s\n", FILE2);
       exit(0);
    }
 
