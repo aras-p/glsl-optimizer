@@ -1951,10 +1951,6 @@ __glXSwapIntervalMESA(unsigned int interval)
 {
    GLXContext gc = __glXGetCurrentContext();
 
-   if (interval < 0) {
-      return GLX_BAD_VALUE;
-   }
-
 #ifdef __DRI_SWAP_CONTROL
    if (gc != NULL && gc->driContext) {
       __GLXscreenConfigs *const psc = GetGLXScreenConfigs(gc->currentDpy,

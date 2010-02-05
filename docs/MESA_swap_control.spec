@@ -43,7 +43,7 @@ Issues
 
 New Procedures and Functions
 
-    int glXSwapIntervalMESA(int interval)
+    int glXSwapIntervalMESA(unsigned int interval)
     int glXGetSwapIntervalMESA(void)
 
 New Tokens
@@ -103,11 +103,8 @@ Additions to the GLX 1.3 Specification
 
 Errors
 
-    glXSwapIntervalMESA returns GLX_BAD_VALUE if parameter <interval> is
-    less than zero.
-
     glXSwapIntervalMESA returns GLX_BAD_CONTEXT if there is no current
-    GLXContext.
+    GLXContext or if the current context is not a direct rendering context.
 
 GLX Protocol
 
