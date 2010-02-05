@@ -10,6 +10,7 @@
 
 static int Win;
 static int WinWidth = 600, WinHeight = 400;
+static GLfloat Xrot = 0, Yrot = 0;
 static GLboolean CylWrap = GL_TRUE;
 
 
@@ -83,20 +84,26 @@ Draw(void)
    glClear(GL_COLOR_BUFFER_BIT);
 
    glPushMatrix();
-      glTranslatef(0, +1.2, 0);
-      DrawSample(GL_FALSE);
+      glRotatef(Xrot, 1, 0, 0);
+      glRotatef(Yrot, 0, 1, 0);
+
+      glPushMatrix();
+         glTranslatef(0, +1.2, 0);
+         DrawSample(GL_FALSE);
+      glPopMatrix();
+
+      /* set Mesa back-door state for testing cylindrical wrap mode */
+      if (CylWrap)
+         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 0.125);
+
+      glPushMatrix();
+         glTranslatef(0, -1.2, 0);
+         DrawSample(GL_TRUE);
+      glPopMatrix();
+
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
+
    glPopMatrix();
-
-   /* set Mesa back-door state for testing cylindrical wrap mode */
-   if (CylWrap)
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 0.125);
-
-   glPushMatrix();
-      glTranslatef(0, -1.2, 0);
-      DrawSample(GL_TRUE);
-   glPopMatrix();
-
-   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
 
    glutSwapBuffers();
 }
@@ -110,17 +117,16 @@ Reshape(int width, int height)
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+   glFrustum(-1.0, 1.0, -1.0, 1.0, 3.0, 25.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0.0, 0.0, -15.0);
+   glTranslatef(0.0, 0.0, -10.0);
 }
 
 
 static void
 Key(unsigned char key, int x, int y)
 {
-   const GLfloat step = 3.0;
    (void) x;
    (void) y;
    switch (key) {
@@ -135,6 +141,30 @@ Key(unsigned char key, int x, int y)
    case 27:
       glutDestroyWindow(Win);
       exit(0);
+      break;
+   }
+   glutPostRedisplay();
+}
+
+
+static void
+SpecialKey(int key, int x, int y)
+{
+   const GLfloat step = 3.0;
+   (void) x;
+   (void) y;
+   switch (key) {
+   case GLUT_KEY_UP:
+      Xrot -= step;
+      break;
+   case GLUT_KEY_DOWN:
+      Xrot += step;
+      break;
+   case GLUT_KEY_LEFT:
+      Yrot -= step;
+      break;
+   case GLUT_KEY_RIGHT:
+      Yrot += step;
       break;
    }
    glutPostRedisplay();
@@ -196,6 +226,7 @@ main(int argc, char *argv[])
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
    Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
+   glutSpecialFunc(SpecialKey);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Draw);
    Init();
