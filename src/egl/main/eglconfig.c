@@ -366,8 +366,11 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
          if (_eglValidationTable[i].criterion == ATTRIB_CRITERION_SPECIAL)
             valid = EGL_TRUE;
       }
-      if (!valid)
+      if (!valid) {
+         _eglLog(_EGL_DEBUG,
+               "attribute 0x%04x has an invalid value 0x%x", attr, val);
          break;
+      }
    }
 
    /* any invalid attribute value should have been catched */
@@ -390,10 +393,18 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
          valid = EGL_FALSE;
       break;
    }
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting color buffer type and channel sizes");
+      return EGL_FALSE;
+   }
 
    val = GET_CONFIG_ATTRIB(conf, EGL_SAMPLE_BUFFERS);
    if (!val && GET_CONFIG_ATTRIB(conf, EGL_SAMPLES))
       valid = EGL_FALSE;
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting samples and sample buffers");
+      return EGL_FALSE;
+   }
 
    val = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
    if (!(val & EGL_WINDOW_BIT)) {
@@ -405,6 +416,10 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
       if (GET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGB) ||
           GET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGBA))
          valid = EGL_FALSE;
+   }
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting surface type and native visual/texture binding");
+      return EGL_FALSE;
    }
 
    return valid;
@@ -457,8 +472,14 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
          break;
       }
 
-      if (!matched)
+      if (!matched) {
+#ifdef DEBUG
+         _eglLog(_EGL_DEBUG,
+               "the value (0x%x) of attribute 0x%04x did not meet the criteria (0x%x)",
+               val, attr, cmp);
+#endif
          break;
+      }
    }
 
    return matched;
