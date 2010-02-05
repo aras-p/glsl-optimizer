@@ -97,35 +97,8 @@ struct dri2_egl_config
    const __DRIconfig *dri_config;
 };
 
-static struct dri2_egl_driver *
-dri2_egl_driver(_EGLDriver *drv)
-{
-   return (struct dri2_egl_driver *) drv;
-}
-
-static struct dri2_egl_display *
-dri2_egl_display(_EGLDisplay *dpy)
-{
-   return (struct dri2_egl_display *) dpy->DriverData;
-}
-
-static struct dri2_egl_context *
-dri2_egl_context(_EGLContext *ctx)
-{
-   return (struct dri2_egl_context *) ctx;
-}
-
-static struct dri2_egl_surface *
-dri2_egl_surface(_EGLSurface *surf)
-{
-   return (struct dri2_egl_surface *) surf;
-}
-
-static struct dri2_egl_config *
-dri2_egl_config(_EGLConfig *conf)
-{
-   return (struct dri2_egl_config *) conf;
-}
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
 
 EGLint dri2_to_egl_attribute_map[] = {
    0,
