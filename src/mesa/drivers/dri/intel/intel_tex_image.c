@@ -177,6 +177,7 @@ check_pbo_format(GLint internalFormat,
    switch (internalFormat) {
    case 4:
    case GL_RGBA:
+   case GL_RGBA8:
       return (format == GL_BGRA &&
               (type == GL_UNSIGNED_BYTE ||
                type == GL_UNSIGNED_INT_8_8_8_8_REV) &&
