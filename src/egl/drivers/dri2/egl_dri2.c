@@ -496,13 +496,16 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    dri2_dpy->driver = NULL;
    end = search_paths + strlen(search_paths);
    for (p = search_paths; p < end && dri2_dpy->driver == NULL; p = next + 1) {
+      int path_len;
+
       next = strchr(p, ':');
       if (next == NULL)
          next = end;
+      path_len = next - p;
 
       snprintf(path, sizeof path,
 	       dri_driver_format,
-	       next - p, p,
+	       path_len, p,
 	       xcb_dri2_connect_driver_name_length (connect),
 	       xcb_dri2_connect_driver_name (connect));
 
