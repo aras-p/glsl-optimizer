@@ -387,37 +387,12 @@ CreateContext(Display * dpy, XVisualInfo * vis,
 
 #ifdef GLX_DIRECT_RENDERING
    if (allowDirect && psc->driScreen) {
-      const __GLcontextModes *mode;
-
-      if (fbconfig == NULL) {
-	 mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
-	 if (mode == NULL) {
-	    xError error;
-
-	    error.errorCode = BadValue;
-	    error.resourceID = vis->visualid;
-	    error.sequenceNumber = dpy->request;
-	    error.type = X_Error;
-	    error.majorCode = gc->majorOpcode;
-	    error.minorCode = X_GLXCreateContext;
-	    _XError(dpy, &error);
-	    return None;
-	 }
-	 if (renderType == 0) {
-	    /* Initialize renderType now */
-	    renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
-	 }
-      }
-      else {
-	 mode = fbconfig;
-      }
-
-      gc->driContext = psc->driScreen->createContext(psc, mode, gc, shareList,
-						     renderType);
+      gc->driContext = psc->driScreen->createContext(psc, fbconfig, gc,
+						     shareList, renderType);
       if (gc->driContext != NULL) {
-	 gc->screen = mode->screen;
+	 gc->screen = screen;
 	 gc->psc = psc;
-	 gc->mode = mode;
+	 gc->mode = fbconfig;
 	 gc->isDirect = GL_TRUE;
       }
    }
@@ -497,8 +472,31 @@ PUBLIC GLXContext
 glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
-   return CreateContext(dpy, vis, NULL, shareList, allowDirect,
-                        X_GLXCreateContext, 0, vis->screen);
+   const __GLcontextModes *mode = NULL;
+   int renderType = 0;
+
+#ifdef GLX_DIRECT_RENDERING
+   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, vis->screen);
+
+   mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+   if (mode == NULL) {
+      xError error;
+
+      error.errorCode = BadValue;
+      error.resourceID = vis->visualid;
+      error.sequenceNumber = dpy->request;
+      error.type = X_Error;
+      error.majorCode = __glXSetupForCommand(dpy);
+      error.minorCode = X_GLXCreateContext;
+      _XError(dpy, &error);
+      return None;
+   }
+
+   renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+#endif
+
+   return CreateContext(dpy, vis, mode, shareList, allowDirect,
+                        X_GLXCreateContext, renderType, vis->screen);
 }
 
 _X_HIDDEN void
