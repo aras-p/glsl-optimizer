@@ -382,113 +382,112 @@ CreateContext(Display * dpy, XVisualInfo * vis,
    if (!gc)
       return NULL;
 
-      if ((vis == NULL) && (fbconfig == NULL))
-         return NULL;
+   if ((vis == NULL) && (fbconfig == NULL))
+      return NULL;
 
 #ifdef GLX_DIRECT_RENDERING
-      if (allowDirect && psc->driScreen) {
-         const __GLcontextModes *mode;
+   if (allowDirect && psc->driScreen) {
+      const __GLcontextModes *mode;
 
-         if (fbconfig == NULL) {
-            mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
-            if (mode == NULL) {
-               xError error;
+      if (fbconfig == NULL) {
+	 mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+	 if (mode == NULL) {
+	    xError error;
 
-               error.errorCode = BadValue;
-               error.resourceID = vis->visualid;
-               error.sequenceNumber = dpy->request;
-               error.type = X_Error;
-               error.majorCode = gc->majorOpcode;
-               error.minorCode = X_GLXCreateContext;
-               _XError(dpy, &error);
-               return None;
-            }
-            if (renderType == 0) {
-               /* Initialize renderType now */
-               renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
-            }
-         }
-         else {
-            mode = fbconfig;
-         }
-
-         gc->driContext = psc->driScreen->createContext(psc, mode, gc,
-                                                        shareList,
-                                                        renderType);
-         if (gc->driContext != NULL) {
-            gc->screen = mode->screen;
-            gc->psc = psc;
-            gc->mode = mode;
-            gc->isDirect = GL_TRUE;
-         }
+	    error.errorCode = BadValue;
+	    error.resourceID = vis->visualid;
+	    error.sequenceNumber = dpy->request;
+	    error.type = X_Error;
+	    error.majorCode = gc->majorOpcode;
+	    error.minorCode = X_GLXCreateContext;
+	    _XError(dpy, &error);
+	    return None;
+	 }
+	 if (renderType == 0) {
+	    /* Initialize renderType now */
+	    renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+	 }
       }
+      else {
+	 mode = fbconfig;
+      }
+
+      gc->driContext = psc->driScreen->createContext(psc, mode, gc, shareList,
+						     renderType);
+      if (gc->driContext != NULL) {
+	 gc->screen = mode->screen;
+	 gc->psc = psc;
+	 gc->mode = mode;
+	 gc->isDirect = GL_TRUE;
+      }
+   }
 #endif
 
-      LockDisplay(dpy);
-      switch (code) {
-      case X_GLXCreateContext: {
-         xGLXCreateContextReq *req;
+   LockDisplay(dpy);
+   switch (code) {
+   case X_GLXCreateContext: {
+      xGLXCreateContextReq *req;
 
-         /* Send the glXCreateContext request */
-         GetReq(GLXCreateContext, req);
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXCreateContext;
-         req->context = gc->xid = XAllocID(dpy);
-         req->visual = vis->visualid;
-         req->screen = vis->screen;
-         req->shareList = shareList ? shareList->xid : None;
-         req->isDirect = GC_IS_DIRECT(gc);
-	 break;
-      }
+      /* Send the glXCreateContext request */
+      GetReq(GLXCreateContext, req);
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXCreateContext;
+      req->context = gc->xid = XAllocID(dpy);
+      req->visual = vis->visualid;
+      req->screen = vis->screen;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
+   }
 
-      case X_GLXCreateNewContext: {
-         xGLXCreateNewContextReq *req;
+   case X_GLXCreateNewContext: {
+      xGLXCreateNewContextReq *req;
 
-         /* Send the glXCreateNewContext request */
-         GetReq(GLXCreateNewContext, req);
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXCreateNewContext;
-         req->context = gc->xid = XAllocID(dpy);
-         req->fbconfig = fbconfig->fbconfigID;
-         req->screen = fbconfig->screen;
-         req->renderType = renderType;
-         req->shareList = shareList ? shareList->xid : None;
-         req->isDirect = GC_IS_DIRECT(gc);
-	 break;
-      }
+      /* Send the glXCreateNewContext request */
+      GetReq(GLXCreateNewContext, req);
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXCreateNewContext;
+      req->context = gc->xid = XAllocID(dpy);
+      req->fbconfig = fbconfig->fbconfigID;
+      req->screen = fbconfig->screen;
+      req->renderType = renderType;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
+   }
 
-      case X_GLXvop_CreateContextWithConfigSGIX: {
-         xGLXVendorPrivateWithReplyReq *vpreq;
-         xGLXCreateContextWithConfigSGIXReq *req;
+   case X_GLXvop_CreateContextWithConfigSGIX: {
+      xGLXVendorPrivateWithReplyReq *vpreq;
+      xGLXCreateContextWithConfigSGIXReq *req;
 
-         /* Send the glXCreateNewContext request */
-         GetReqExtra(GLXVendorPrivateWithReply,
-                     sz_xGLXCreateContextWithConfigSGIXReq -
-                     sz_xGLXVendorPrivateWithReplyReq, vpreq);
-         req = (xGLXCreateContextWithConfigSGIXReq *) vpreq;
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXVendorPrivateWithReply;
-         req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
-         req->context = gc->xid = XAllocID(dpy);
-         req->fbconfig = fbconfig->fbconfigID;
-         req->screen = fbconfig->screen;
-         req->renderType = renderType;
-         req->shareList = shareList ? shareList->xid : None;
-         req->isDirect = GC_IS_DIRECT(gc);
-	 break;
-      }
+      /* Send the glXCreateNewContext request */
+      GetReqExtra(GLXVendorPrivateWithReply,
+		  sz_xGLXCreateContextWithConfigSGIXReq -
+		  sz_xGLXVendorPrivateWithReplyReq, vpreq);
+      req = (xGLXCreateContextWithConfigSGIXReq *) vpreq;
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXVendorPrivateWithReply;
+      req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
+      req->context = gc->xid = XAllocID(dpy);
+      req->fbconfig = fbconfig->fbconfigID;
+      req->screen = fbconfig->screen;
+      req->renderType = renderType;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
+   }
 
-      default:
-	 /* What to do here?  This case is the sign of an internal error.  It
-	  * should never be reachable.
-	  */
-	 break;
-      }
+   default:
+      /* What to do here?  This case is the sign of an internal error.  It
+       * should never be reachable.
+       */
+      break;
+   }
 
-      UnlockDisplay(dpy);
-      SyncHandle();
-      gc->imported = GL_FALSE;
+   UnlockDisplay(dpy);
+   SyncHandle();
 
+   gc->imported = GL_FALSE;
    gc->renderType = renderType;
 
    return gc;
