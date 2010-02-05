@@ -701,6 +701,9 @@ _mesa_execute_program(GLcontext * ctx,
             GLfloat t[4];
             fetch_vector4(&inst->SrcReg[0], machine, t);
             machine->AddressReg[0][0] = IFLOOR(t[0]);
+            if (DEBUG_PROG) {
+               printf("ARL %d\n", machine->AddressReg[0][0]);
+            }
          }
          break;
       case OPCODE_BGNLOOP:
