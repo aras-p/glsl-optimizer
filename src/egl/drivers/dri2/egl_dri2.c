@@ -390,7 +390,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    xcb_xfixes_query_version_cookie_t xfixes_query_cookie;
    xcb_dri2_query_version_reply_t *dri2_query;
    xcb_dri2_query_version_cookie_t dri2_query_cookie;
-   xcb_dri2_connect_reply_t *connect = NULL;
+   xcb_dri2_connect_reply_t *connect;
    xcb_dri2_connect_cookie_t connect_cookie;
    xcb_dri2_authenticate_reply_t *authenticate;
    xcb_dri2_authenticate_cookie_t authenticate_cookie;
@@ -409,8 +409,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       dri2_dpy->conn = xcb_connect(0, 0);
       if (!dri2_dpy->conn) {
          _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
-         free(dri2_dpy);
-         return EGL_FALSE;
+	 goto cleanup_dpy;
       }
    }
 
@@ -437,7 +436,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
        error != NULL || xfixes_query->major_version < 2) {
       _eglLog(_EGL_FATAL, "DRI2: failed to query xfixes version");
       free(error);
-      goto handle_error;
+      goto cleanup_conn;
    }
    free(xfixes_query);
 
@@ -446,16 +445,17 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (dri2_query == NULL || error != NULL) {
       _eglLog(_EGL_FATAL, "DRI2: failed to query version");
       free(error);
-      goto handle_error;
+      goto cleanup_conn;
    }
    dri2_dpy->dri2_major = dri2_query->major_version;
    dri2_dpy->dri2_minor = dri2_query->minor_version;
    free(dri2_query);
 
    connect = xcb_dri2_connect_reply (dri2_dpy->conn, connect_cookie, NULL);
-   if (connect->driver_name_length == 0 && connect->device_name_length == 0) {
+   if (connect == NULL ||
+       connect->driver_name_length + connect->device_name_length == 0) {
       _eglLog(_EGL_FATAL, "DRI2: failed to authenticate");
-      goto handle_error;
+      goto cleanup_connect;
    }
 
    search_paths = NULL;
@@ -486,7 +486,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       _eglLog(_EGL_FATAL,
 	      "DRI2: failed to open any driver (search paths %s)",
 	      search_paths);
-      goto handle_error;
+      goto cleanup_connect;
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
@@ -494,7 +494,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (extensions == NULL) {
       _eglLog(_EGL_FATAL,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
-      goto handle_error;
+      goto cleanup_driver;
    }
 
    for (i = 0; extensions[i]; i++) {
@@ -506,12 +506,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    if (dri2_dpy->core == NULL) {
       _eglLog(_EGL_FATAL, "DRI2: driver has no core extension");
-      goto handle_error;
+      goto cleanup_driver;
    }
 
    if (dri2_dpy->dri2 == NULL) {
       _eglLog(_EGL_FATAL, "DRI2: driver has no dri2 extension");
-      goto handle_error;
+      goto cleanup_driver;
    }
 
    snprintf(path, sizeof path, "%.*s",
@@ -521,12 +521,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (dri2_dpy->fd == -1) {
       _eglLog(_EGL_FATAL,
 	      "DRI2: could not open %s (%s)", path, strerror(errno));
-      goto handle_error;
+      goto cleanup_driver;
    }
 
    if (drmGetMagic(dri2_dpy->fd, &magic)) {
       _eglLog(_EGL_FATAL, "DRI2: failed to get drm magic");
-      goto handle_error;
+      goto cleanup_fd;
    }
 
    authenticate_cookie = xcb_dri2_authenticate_unchecked (dri2_dpy->conn,
@@ -535,9 +535,11 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 					       authenticate_cookie, NULL);
    if (authenticate == NULL || !authenticate->authenticated) {
       _eglLog(_EGL_FATAL, "DRI2: failed to authenticate");
-      goto handle_error;
+      free(authenticate);
+      goto cleanup_fd;
    }
 
+   free(authenticate);
    if (dri2_dpy->dri2_minor >= 1) {
       dri2_dpy->loader_extension.base.name = __DRI_DRI2_LOADER;
       dri2_dpy->loader_extension.base.version = 3;
@@ -562,8 +564,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    if (dri2_dpy->dri_screen == NULL) {
       _eglLog(_EGL_FATAL, "DRI2: failed to create dri screen");
-      free(dri2_dpy);
-      goto handle_error;
+      goto cleanup_fd;
    }
 
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
@@ -575,15 +576,14 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    if (dri2_dpy->flush == NULL) {
       _eglLog(_EGL_FATAL, "DRI2: driver doesn't support the flush extension");
-      free(dri2_dpy);
-      goto handle_error;
+      goto cleanup_dri_screen;
    }
 
    for (i = 0; driver_configs[i]; i++)
       dri2_add_config(disp, driver_configs[i], i + 1);
    if (!disp->NumConfigs) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
-      goto handle_error;
+      goto cleanup_configs;
    }
 
    disp->ClientAPIsMask = EGL_OPENGL_BIT;
@@ -591,13 +591,25 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    /* we're supporting EGL 1.4 */
    *major = 1;
    *minor = 4;
-
    free (connect);
    return EGL_TRUE;
 
- handle_error:
+ cleanup_configs:
+   _eglCleanupDisplay(disp);
+ cleanup_dri_screen:
+   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
+ cleanup_fd:
+   close(dri2_dpy->fd);
+ cleanup_driver:
+   dlclose(dri2_dpy->driver);
+ cleanup_connect:
    free(connect);
+ cleanup_conn:
+   if (disp->NativeDisplay == NULL)
+      xcb_disconnect(dri2_dpy->conn);
+ cleanup_dpy:
    free(dri2_dpy);
+
    return EGL_FALSE;
 }
 
@@ -612,10 +624,12 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglReleaseDisplayResources(drv, disp);
    _eglCleanupDisplay(disp);
 
+   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
    close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
+   if (disp->NativeDisplay == NULL)
+      xcb_disconnect(dri2_dpy->conn);
    free(dri2_dpy);
-
    disp->DriverData = NULL;
 
    return EGL_TRUE;
@@ -640,10 +654,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-   if (!_eglInitContext(&dri2_ctx->base, disp, conf, attrib_list)) {
-      free(dri2_ctx);
-      return NULL;
-   }
+   if (!_eglInitContext(&dri2_ctx->base, disp, conf, attrib_list))
+      goto cleanup;
 
    dri2_ctx->dri_context =
       dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
@@ -652,12 +664,14 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 				       dri2_ctx_shared->dri_context : NULL,
 				       dri2_ctx);
 
-   if (!dri2_ctx->dri_context) {
-      free(dri2_ctx);
-      return NULL;
-   }
+   if (!dri2_ctx->dri_context)
+      goto cleanup;
 
    return &dri2_ctx->base;
+
+ cleanup:
+   free(dri2_ctx);
+   return NULL;
 }
 
 static EGLBoolean
@@ -738,14 +752,12 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf = malloc(sizeof *dri2_surf);
    if (!dri2_surf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreateWindowSurface");
+      _eglError(EGL_BAD_ALLOC, "dri2_create_surface");
       return NULL;
    }
    
-   if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list)) {
-      free(dri2_surf);
-      return NULL;
-   }
+   if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
+      goto cleanup_surf;
 
    dri2_surf->region = XCB_NONE;
    if (type == EGL_PBUFFER_BIT) {
@@ -762,27 +774,38 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    dri2_surf->dri_drawable = 
       (*dri2_dpy->dri2->createNewDrawable) (dri2_dpy->dri_screen,
 					    dri2_conf->dri_config, dri2_surf);
-   if (dri2_surf == NULL) {
-      _eglError(EGL_BAD_ALLOC, "eglCreateWindowSurface");
-      free(dri2_surf);
-      return NULL;
+   if (dri2_surf->dri_drawable == NULL) {
+      _eglError(EGL_BAD_ALLOC, "dri2->createNewDrawable");
+      goto cleanup_pixmap;
    }
 
    xcb_dri2_create_drawable (dri2_dpy->conn, dri2_surf->drawable);
 
-   cookie = xcb_get_geometry (dri2_dpy->conn, dri2_surf->drawable);
-   reply = xcb_get_geometry_reply (dri2_dpy->conn, cookie, &error);
-   if (reply == NULL || error != NULL) {
-      _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
-      free(dri2_surf);
-      free(error);
-      return NULL;
+   if (type != EGL_PBUFFER_BIT) {
+      cookie = xcb_get_geometry (dri2_dpy->conn, dri2_surf->drawable);
+      reply = xcb_get_geometry_reply (dri2_dpy->conn, cookie, &error);
+      if (reply == NULL || error != NULL) {
+	 _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
+	 free(error);
+	 goto cleanup_dri_drawable;
+      }
+
+      dri2_surf->base.Width = reply->width;
+      dri2_surf->base.Height = reply->height;
+      free(reply);
    }
-   dri2_surf->base.Width = reply->width;
-   dri2_surf->base.Height = reply->height;
-   free(reply);
 
    return &dri2_surf->base;
+
+ cleanup_dri_drawable:
+   dri2_dpy->core->destroyDrawable(dri2_surf->dri_drawable);
+ cleanup_pixmap:
+   if (type == EGL_PBUFFER_BIT)
+      xcb_free_pixmap(dri2_dpy->conn, dri2_surf->drawable);
+ cleanup_surf:
+   free(dri2_surf);
+
+   return NULL;
 }
 
 /**
