@@ -215,12 +215,10 @@ typedef unsigned pipe_barrier;
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
 {
    /* XXX we could implement barriers with a mutex and condition var */
-   assert(0);
 }
 
 static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
 {
-   assert(0);
 }
 
 static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
