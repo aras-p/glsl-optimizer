@@ -104,7 +104,7 @@ XEXT_GENERATE_CLOSE_DISPLAY(close_display, xf86dri_info)
 #define TRACE(msg)
 #endif
 
-PUBLIC Bool
+Bool
 XF86DRIQueryExtension(Display * dpy, int *event_basep,
                       int *error_basep)
 {
@@ -123,7 +123,7 @@ XF86DRIQueryExtension(Display * dpy, int *event_basep,
    }
 }
 
-PUBLIC Bool
+Bool
 XF86DRIQueryVersion(Display * dpy, int *majorVersion, int *minorVersion,
                     int *patchVersion)
 {
@@ -153,7 +153,7 @@ XF86DRIQueryVersion(Display * dpy, int *majorVersion, int *minorVersion,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIQueryDirectRenderingCapable(Display * dpy, int screen,
                                    Bool * isCapable)
 {
@@ -182,7 +182,7 @@ XF86DRIQueryDirectRenderingCapable(Display * dpy, int screen,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIOpenConnection(Display * dpy, int screen, drm_handle_t * hSAREA,
                       char **busIdString)
 {
@@ -230,7 +230,7 @@ XF86DRIOpenConnection(Display * dpy, int screen, drm_handle_t * hSAREA,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIAuthConnection(Display * dpy, int screen, drm_magic_t magic)
 {
    XExtDisplayInfo *info = find_display(dpy);
@@ -259,7 +259,7 @@ XF86DRIAuthConnection(Display * dpy, int screen, drm_magic_t magic)
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRICloseConnection(Display * dpy, int screen)
 {
    XExtDisplayInfo *info = find_display(dpy);
@@ -280,7 +280,7 @@ XF86DRICloseConnection(Display * dpy, int screen)
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIGetClientDriverName(Display * dpy, int screen,
                            int *ddxDriverMajorVersion,
                            int *ddxDriverMinorVersion,
@@ -331,7 +331,7 @@ XF86DRIGetClientDriverName(Display * dpy, int screen,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRICreateContextWithConfig(Display * dpy, int screen, int configID,
                                XID * context, drm_context_t * hHWContext)
 {
@@ -363,7 +363,7 @@ XF86DRICreateContextWithConfig(Display * dpy, int screen, int configID,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRICreateContext(Display * dpy, int screen, Visual * visual,
                      XID * context, drm_context_t * hHWContext)
 {
@@ -371,7 +371,7 @@ XF86DRICreateContext(Display * dpy, int screen, Visual * visual,
                                          context, hHWContext);
 }
 
-PUBLIC Bool
+Bool
 XF86DRIDestroyContext(Display * dpy, int screen, XID context)
 {
    XExtDisplayInfo *info = find_display(dpy);
@@ -392,7 +392,7 @@ XF86DRIDestroyContext(Display * dpy, int screen, XID context)
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRICreateDrawable(Display * dpy, int screen,
                       XID drawable, drm_drawable_t * hHWDrawable)
 {
@@ -428,7 +428,7 @@ noopErrorHandler(Display * dpy, XErrorEvent * xerr)
    return 0;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIDestroyDrawable(Display * dpy, int screen, XID drawable)
 {
    XExtDisplayInfo *info = find_display(dpy);
@@ -468,7 +468,7 @@ XF86DRIDestroyDrawable(Display * dpy, int screen, XID drawable)
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIGetDrawableInfo(Display * dpy, int screen, Drawable drawable,
                        unsigned int *index, unsigned int *stamp,
                        int *X, int *Y, int *W, int *H,
@@ -557,7 +557,7 @@ XF86DRIGetDrawableInfo(Display * dpy, int screen, Drawable drawable,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIGetDeviceInfo(Display * dpy, int screen, drm_handle_t * hFrameBuffer,
                      int *fbOrigin, int *fbSize, int *fbStride,
                      int *devPrivateSize, void **pDevPrivate)
@@ -612,7 +612,7 @@ XF86DRIGetDeviceInfo(Display * dpy, int screen, drm_handle_t * hFrameBuffer,
    return True;
 }
 
-PUBLIC Bool
+Bool
 XF86DRIOpenFullScreen(Display * dpy, int screen, Drawable drawable)
 {
    /* This function and the underlying X protocol are deprecated.
@@ -623,7 +623,7 @@ XF86DRIOpenFullScreen(Display * dpy, int screen, Drawable drawable)
    return False;
 }
 
-PUBLIC Bool
+Bool
 XF86DRICloseFullScreen(Display * dpy, int screen, Drawable drawable)
 {
    /* This function and the underlying X protocol are deprecated.
