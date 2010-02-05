@@ -911,13 +911,18 @@ if test "x$enable_egl" = xyes; then
     SRC_DIRS="$SRC_DIRS egl"
     EGL_LIB_DEPS="$DLOPEN_LIBS -lpthread"
     EGL_DRIVERS_DIRS=""
-    if test "$enable_static" != yes && test "$mesa_driver" != osmesa; then
+    if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
-        EGL_DRIVERS_DIRS="glx"
-    fi
-    if test "$mesa_driver" == dri; then
-        # build egl_dri2 when dri is enabled
-        EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
+        if test "$mesa_driver" != osmesa; then
+            EGL_DRIVERS_DIRS="glx"
+        fi
+
+        # build egl_dri2 when xcb-dri2 is available
+        PKG_CHECK_EXISTS([x11-xcb xcb-dri2 xcb-xfixes],
+			 [have_xcb_dri2=yes],[have_xcb_dri2=no])
+        if test "$have_xcb_dri2" = yes; then
+            EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
+        fi
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
