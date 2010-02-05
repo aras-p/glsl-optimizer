@@ -42,6 +42,7 @@
 #include "main/glheader.h"
 #include "glapi/glapi.h"
 
+#ifdef DEBUG
 
 /**
  * Called by each of the no-op GL entrypoints.
@@ -68,7 +69,6 @@ NoOpUnused(void)
    return Warn(" function");
 }
 
-
 /*
  * Defines for the glapitemp.h functions.
  */
@@ -84,8 +84,24 @@ NoOpUnused(void)
  * Defines for the table of no-op entry points.
  */
 #define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
+
+#else
+
+static void
+NoOpGeneric(void)
+{
+#if !defined(_WIN32_WCE)
+   if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
+      fprintf(stderr, "GL User Error: calling GL function without a rendering context\n");
+   }
+#endif
+}
+
+#define TABLE_ENTRY(name) (_glapi_proc) NoOpGeneric
+
+#endif
+
 #define DISPATCH_TABLE_NAME __glapi_noop_table
 #define UNUSED_TABLE_NAME __unused_noop_functions
-
 
 #include "glapi/glapitemp.h"
