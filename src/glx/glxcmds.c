@@ -365,7 +365,7 @@ static GLXContext
 CreateContext(Display * dpy, XVisualInfo * vis,
               const __GLcontextModes * const fbconfig,
               GLXContext shareList,
-              Bool allowDirect, GLXContextID contextID,
+              Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
    GLXContext gc;
@@ -382,7 +382,6 @@ CreateContext(Display * dpy, XVisualInfo * vis,
    if (!gc)
       return NULL;
 
-   if (None == contextID) {
       if ((vis == NULL) && (fbconfig == NULL))
          return NULL;
 
@@ -489,11 +488,6 @@ CreateContext(Display * dpy, XVisualInfo * vis,
       UnlockDisplay(dpy);
       SyncHandle();
       gc->imported = GL_FALSE;
-   }
-   else {
-      gc->xid = contextID;
-      gc->imported = GL_TRUE;
-   }
 
    gc->renderType = renderType;
 
@@ -504,7 +498,7 @@ PUBLIC GLXContext
 glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
-   return CreateContext(dpy, vis, NULL, shareList, allowDirect, None,
+   return CreateContext(dpy, vis, NULL, shareList, allowDirect,
                         X_GLXCreateContext, 0, vis->screen);
 }
 
@@ -1754,14 +1748,14 @@ glXImportContextEXT(Display * dpy, GLXContextID contextID)
       return NULL;
    }
 
-   /* FIXME: Why does this call CreateContext?  There is no protocol sent for
-    * FIXME: this function.
-    */
-   ctx = CreateContext(dpy, NULL, NULL, NULL, False, contextID,
-		       X_GLXCreateContext, 0, 0);
+   ctx = AllocateGLXContext(dpy);
    if (NULL != ctx) {
+      ctx->xid = contextID;
+      ctx->imported = GL_TRUE;
+
       if (Success != __glXQueryContextInfo(dpy, ctx)) {
-         return NULL;
+	 __glXFreeContext(ctx);
+	 ctx = NULL;
       }
    }
    return ctx;
@@ -1811,7 +1805,7 @@ glXCreateNewContext(Display * dpy, GLXFBConfig config,
       (const __GLcontextModes *const) config;
 
    return CreateContext(dpy, NULL, fbconfig, shareList,
-                        allowDirect, None, X_GLXCreateNewContext, renderType,
+                        allowDirect, X_GLXCreateNewContext, renderType,
 			fbconfig->screen);
 }
 
@@ -2300,7 +2294,7 @@ glXCreateContextWithConfigSGIX(Display * dpy,
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
       gc = CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
-                         allowDirect, None,
+                         allowDirect,
 			 X_GLXvop_CreateContextWithConfigSGIX, renderType,
 			 fbconfig->screen);
    }
