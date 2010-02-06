@@ -81,19 +81,6 @@ static unsigned get_compressed_image_size(
 	return rowStride * ((height + blockHeight - 1) / blockHeight);
 }
 
-static int find_next_power_of_two(GLuint value)
-{
-	int i, tmp;
-
-	i = 0;
-	tmp = value - 1;
-	while (tmp) {
-		tmp >>= 1;
-		i++;
-	}
-	return (1 << i);
-}
-
 /**
  * Compute sizes and fill in offset and blit information for the given
  * image (determined by \p face and \p level).
@@ -108,7 +95,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	uint32_t row_align;
 	GLuint height;
 
-	height = find_next_power_of_two(lvl->height);
+	height = _mesa_next_pow_two_32(lvl->height);
 
 	/* Find image size in bytes */
 	if (_mesa_is_format_compressed(mt->mesaFormat)) {
