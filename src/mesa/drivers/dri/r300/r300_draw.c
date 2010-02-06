@@ -605,13 +605,23 @@ static void r300FreeData(GLcontext *ctx)
 	}
 }
 
-static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
+static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx,
+		GLuint nr_prims, const struct _mesa_prim *prim)
 {
 	struct r300_context *r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
 	GLboolean flushed;
 	GLuint dwords;
 	GLuint state_size;
+	int i;
+	GLuint extra_prims = 0;
+
+	/* Check for primitive splitting. */
+	for (i = 0; i < nr_prims; ++i) {
+		const GLuint num_verts =  r300NumVerts(r300, prim[i].count, prim[i].mode);
+		extra_prims += num_verts/(65535 - 32);
+	}
+	nr_prims += extra_prims;
 
 	dwords = 2*CACHE_FLUSH_BUFSZ;
 	dwords += PRE_EMIT_STATE_BUFSZ;
@@ -667,7 +677,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	/* ensure we have the cmd buf space in advance to cover
 	 * the state + DMA AOS pointers */
-	GLuint emit_end = r300PredictTryDrawPrimsSize(ctx, nr_prims)
+	GLuint emit_end = r300PredictTryDrawPrimsSize(ctx, nr_prims, prim)
 		+ r300->radeon.cmdbuf.cs->cdw;
 
 	r300SetupIndexBuffer(ctx, ib);
