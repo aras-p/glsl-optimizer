@@ -57,6 +57,12 @@ struct vmw_region
    uint32_t size;
 };
 
+/* XXX: This isn't a real hardware flag, but just a hack for kernel to
+ * know about primary surfaces. In newer versions of the kernel
+ * interface the driver uses a special field.
+ */
+#define SVGA3D_SURFACE_HINT_SCANOUT (1 << 9)
+
 static void
 vmw_check_last_cmd(struct vmw_winsys_screen *vws)
 {
@@ -169,7 +175,17 @@ vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
    vmw_printf("%s flags %d format %d\n", __FUNCTION__, flags, format);
 
    memset(&s_arg, 0, sizeof(s_arg));
-   req->flags = (uint32_t) flags;
+   if (vws->use_old_scanout_flag &&
+       (req->flags & SVGA3D_SURFACE_HINT_SCANOUT)) {
+      req->flags = (uint32_t) (flags & ~SVGA3D_SURFACE_HINT_SCANOUT);
+      req->scanout = false;
+   } else if (req->flags & SVGA3D_SURFACE_HINT_SCANOUT) {
+      req->flags = (uint32_t) (flags & ~SVGA3D_SURFACE_HINT_SCANOUT);
+      req->scanout = false;
+   } else {
+      req->flags = (uint32_t) flags;
+      req->scanout = false;
+   }
    req->format = (uint32_t) format;
    req->shareable = 1;
 
