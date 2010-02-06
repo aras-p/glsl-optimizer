@@ -245,6 +245,227 @@ void tile_image(const void * src, unsigned src_pitch,
     }
 }
 
+static void micro_untile_8_x_4_8bit(const void * const src, unsigned src_pitch,
+                                    void * const dst, unsigned dst_pitch,
+                                    unsigned width, unsigned height)
+{
+    unsigned row; /* current destination row */
+    unsigned col; /* current destination column */
+    unsigned k; /* current tile number */
+    const unsigned tile_width = 8, tile_height = 4;
+    const unsigned tiles_in_row = (width + (tile_width - 1)) / tile_width;
+
+    assert(src_pitch % tile_width == 0);
+
+    k = 0;
+    for (row = 0; row < height; row += tile_height)
+    {
+        for (col = 0; col < width; col += tile_width, ++k)
+        {
+            uint8_t *src2 = (uint8_t *)src + row * src_pitch +
+                             (k % tiles_in_row) * MICRO_TILE_SIZE / sizeof(uint8_t);
+            uint8_t *dst2 = (uint8_t *)dst + dst_pitch * row + col;
+            unsigned j;
+
+            for (j = 0; j < MIN2(tile_height, height - row); ++j)
+            {
+                unsigned columns = MIN2(tile_width, width - col);
+                memcpy(dst2, src2, columns * sizeof(uint8_t));
+                dst2 += dst_pitch;
+                src2 += tile_width;
+            }
+        }
+    }
+}
+
+static void micro_untile_8_x_2_16bit(const void * const src, unsigned src_pitch,
+                                     void * const dst, unsigned dst_pitch,
+                                     unsigned width, unsigned height)
+{
+    unsigned row; /* current destination row */
+    unsigned col; /* current destination column */
+    unsigned k; /* current tile number */
+    const unsigned tile_width = 8, tile_height = 2;
+    const unsigned tiles_in_row = (width + (tile_width - 1)) / tile_width;
+
+    assert(src_pitch % tile_width == 0);
+
+    k = 0;
+    for (row = 0; row < height; row += tile_height)
+    {
+        for (col = 0; col < width; col += tile_width, ++k)
+        {
+            uint16_t *src2 = (uint16_t *)src + row * src_pitch +
+                             (k % tiles_in_row) * MICRO_TILE_SIZE / sizeof(uint16_t);
+            uint16_t *dst2 = (uint16_t *)dst + dst_pitch * row + col;
+            unsigned j;
+
+            for (j = 0; j < MIN2(tile_height, height - row); ++j)
+            {
+                unsigned columns = MIN2(tile_width, width - col);
+                memcpy(dst2, src2, columns * sizeof(uint16_t));
+                dst2 += dst_pitch;
+                src2 += tile_width;
+            }
+        }
+    }
+}
+
+static void micro_untile_4_x_4_16bit(const void * const src, unsigned src_pitch,
+                                     void * const dst, unsigned dst_pitch,
+                                     unsigned width, unsigned height)
+{
+    unsigned row; /* current destination row */
+    unsigned col; /* current destination column */
+    unsigned k; /* current tile number */
+    const unsigned tile_width = 4, tile_height = 4;
+    const unsigned tiles_in_row = (width + (tile_width - 1)) / tile_width;
+
+    assert(src_pitch % tile_width == 0);
+
+    k = 0;
+    for (row = 0; row < height; row += tile_height)
+    {
+        for (col = 0; col < width; col += tile_width, ++k)
+        {
+            uint16_t *src2 = (uint16_t *)src + row * src_pitch +
+                             (k % tiles_in_row) * MICRO_TILE_SIZE / sizeof(uint16_t);
+            uint16_t *dst2 = (uint16_t *)dst + dst_pitch * row + col;
+            unsigned j;
+
+            for (j = 0; j < MIN2(tile_height, height - row); ++j)
+            {
+                unsigned columns = MIN2(tile_width, width - col);
+                memcpy(dst2, src2, columns * sizeof(uint16_t));
+                dst2 += dst_pitch;
+                src2 += tile_width;
+            }
+        }
+    }
+}
+
+static void micro_untile_4_x_2_32bit(const void * const src, unsigned src_pitch,
+                                     void * const dst, unsigned dst_pitch,
+                                     unsigned width, unsigned height)
+{
+    unsigned row; /* current destination row */
+    unsigned col; /* current destination column */
+    unsigned k; /* current tile number */
+    const unsigned tile_width = 4, tile_height = 2;
+    const unsigned tiles_in_row = (width + (tile_width - 1)) / tile_width;
+
+    assert(src_pitch % tile_width == 0);
+
+    k = 0;
+    for (row = 0; row < height; row += tile_height)
+    {
+        for (col = 0; col < width; col += tile_width, ++k)
+        {
+            uint32_t *src2 = (uint32_t *)src + row * src_pitch +
+                             (k % tiles_in_row) * MICRO_TILE_SIZE / sizeof(uint32_t);
+            uint32_t *dst2 = (uint32_t *)dst + dst_pitch * row + col;
+            unsigned j;
+
+            for (j = 0; j < MIN2(tile_height, height - row); ++j)
+            {
+                unsigned columns = MIN2(tile_width, width - col);
+                memcpy(dst2, src2, columns * sizeof(uint32_t));
+                dst2 += dst_pitch;
+                src2 += tile_width;
+            }
+        }
+    }
+}
+
+static void micro_untile_2_x_2_64bit(const void * const src, unsigned src_pitch,
+                                     void * const dst, unsigned dst_pitch,
+                                     unsigned width, unsigned height)
+{
+    unsigned row; /* current destination row */
+    unsigned col; /* current destination column */
+    unsigned k; /* current tile number */
+    const unsigned tile_width = 2, tile_height = 2;
+    const unsigned tiles_in_row = (width + (tile_width - 1)) / tile_width;
+
+    assert(src_pitch % tile_width == 0);
+
+    k = 0;
+    for (row = 0; row < height; row += tile_height)
+    {
+        for (col = 0; col < width; col += tile_width, ++k)
+        {
+            uint64_t *src2 = (uint64_t *)src + row * src_pitch +
+                             (k % tiles_in_row) * MICRO_TILE_SIZE / sizeof(uint64_t);
+            uint64_t *dst2 = (uint64_t *)dst + dst_pitch * row + col;
+            unsigned j;
+
+            for (j = 0; j < MIN2(tile_height, height - row); ++j)
+            {
+                unsigned columns = MIN2(tile_width, width - col);
+                memcpy(dst2, src2, columns * sizeof(uint64_t));
+                dst2 += dst_pitch;
+                src2 += tile_width;
+            }
+        }
+    }
+}
+
+static void micro_untile_1_x_1_128bit(const void * src, unsigned src_pitch,
+                                      void * dst, unsigned dst_pitch,
+                                      unsigned width, unsigned height)
+{
+    unsigned i, j;
+    const unsigned elem_size = 16; /* sizeof(uint128_t) */
+
+    for (j = 0; j < height; ++j)
+    {
+        for (i = 0; i < width; ++i)
+        {
+            memcpy(dst, src, width * elem_size);
+            dst += dst_pitch * elem_size;
+            src += src_pitch * elem_size;
+        }
+    }
+}
+
+void untile_image(const void * src, unsigned src_pitch,
+                  void *dst, unsigned dst_pitch,
+                  gl_format format, unsigned width, unsigned height)
+{
+    assert(src_pitch >= width);
+    assert(dst_pitch >= width);
+    assert(src_pitch * _mesa_get_format_bytes(format) % MICRO_TILE_SIZE == 0);
+
+    switch (_mesa_get_format_bytes(format))
+    {
+        case 16:
+            micro_untile_1_x_1_128bit(src, src_pitch, dst, dst_pitch, width, height);
+            break;
+        case 8:
+            micro_untile_2_x_2_64bit(src, src_pitch, dst, dst_pitch, width, height);
+            break;
+        case 4:
+            micro_untile_4_x_2_32bit(src, src_pitch, dst, dst_pitch, width, height);
+            break;
+        case 2:
+            if (_mesa_get_format_bits(format, GL_DEPTH_BITS))
+            {
+                micro_untile_4_x_4_16bit(src, src_pitch, dst, dst_pitch, width, height);
+            }
+            else
+            {
+                micro_untile_8_x_2_16bit(src, src_pitch, dst, dst_pitch, width, height);
+            }
+            break;
+        case 1:
+            micro_untile_8_x_4_8bit(src, src_pitch, dst, dst_pitch, width, height);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
+
 void get_tile_size(gl_format format, unsigned *block_width, unsigned *block_height)
 {
     switch (_mesa_get_format_bytes(format))
