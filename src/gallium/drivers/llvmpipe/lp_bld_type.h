@@ -253,7 +253,7 @@ lp_build_int_vec_type(struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_int32_vec4_type();
+lp_build_int32_vec4_type(void);
 
 
 struct lp_type
