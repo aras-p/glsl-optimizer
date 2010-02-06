@@ -381,6 +381,9 @@ static GLboolean validate_buffers(struct r300_context *r300,
                                   struct radeon_bo *dst_bo)
 {
     int ret;
+
+    radeon_cs_space_reset_bos(r300->radeon.cmdbuf.cs);
+
     ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
                                         src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
     if (ret)
