@@ -50,7 +50,7 @@ static struct dri1_api_version ddx_compat = { 0, 0, 0 };
 static struct dri1_api_version dri_required = { 4, 0, 0 };
 static struct dri1_api_version dri_compat = { 4, 0, 0 };
 static struct dri1_api_version drm_required = { 0, 1, 0 };
-static struct dri1_api_version drm_compat = { 0, 0, 0 };
+static struct dri1_api_version drm_compat = { 1, 0, 0 };
 static struct dri1_api_version drm_scanout = { 0, 9, 0 };
 
 static boolean
