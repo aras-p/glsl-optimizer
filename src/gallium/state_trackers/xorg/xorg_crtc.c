@@ -39,6 +39,7 @@
 #include <xf86.h>
 #include <xf86i2c.h>
 #include <xf86Crtc.h>
+#include <cursorstr.h>
 #include "xorg_tracker.h"
 #include "xf86Modes.h"
 
