@@ -187,6 +187,11 @@ check_pbo_format(GLint internalFormat,
       return (format == GL_RGB &&
               type == GL_UNSIGNED_SHORT_5_6_5 &&
               mesa_format == MESA_FORMAT_RGB565);
+   case 1:
+   case GL_LUMINANCE:
+      return (format == GL_LUMINANCE &&
+	      type == GL_UNSIGNED_BYTE &&
+	      mesa_format == MESA_FORMAT_L8);
    case GL_YCBCR_MESA:
       return (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE);
    default:
