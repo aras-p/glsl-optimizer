@@ -65,6 +65,13 @@ static void r200SetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap, GLenu
    GLboolean  is_clamp_to_border = GL_FALSE;
    struct gl_texture_object *tObj = &t->base;
 
+   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(tex %p) sw %s, tw %s, rw %s\n",
+		__func__, t,
+		_mesa_lookup_enum_by_nr(swrap),
+		_mesa_lookup_enum_by_nr(twrap),
+		_mesa_lookup_enum_by_nr(rwrap));
+
    t->pp_txfilter &= ~(R200_CLAMP_S_MASK | R200_CLAMP_T_MASK | R200_BORDER_MODE_D3D);
 
    switch ( swrap ) {
@@ -180,6 +187,9 @@ static void r200SetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap, GLenu
 static void r200SetTexMaxAnisotropy( radeonTexObjPtr t, GLfloat max )
 {
    t->pp_txfilter &= ~R200_MAX_ANISO_MASK;
+   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+	"%s(tex %p) max %f.\n",
+	__func__, t, max);
 
    if ( max <= 1.0 ) {
       t->pp_txfilter |= R200_MAX_ANISO_1_TO_1;
@@ -211,6 +221,13 @@ static void r200SetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
 
    t->pp_txfilter &= ~(R200_MIN_FILTER_MASK | R200_MAG_FILTER_MASK);
    t->pp_txformat_x &= ~R200_VOLUME_FILTER_MASK;
+
+   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+	"%s(tex %p) minf %s, maxf %s, anisotropy %d.\n",
+	__func__, t,
+	_mesa_lookup_enum_by_nr(minf),
+	_mesa_lookup_enum_by_nr(magf),
+	anisotropy);
 
    if ( anisotropy == R200_MAX_ANISO_1_TO_1 ) {
       switch ( minf ) {
@@ -284,10 +301,8 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   if ( R200_DEBUG & RADEON_STATE ) {
-      fprintf( stderr, "%s( %s )\n",
+   radeon_print(RADEON_TEXTURE | RADEON_STATE, RADEON_VERBOSE, "%s( %s )\n",
 	       __FUNCTION__, _mesa_lookup_enum_by_nr( pname ) );
-   }
 
    /* This is incorrect: Need to maintain this data for each of
     * GL_TEXTURE_{123}D, GL_TEXTURE_RECTANGLE_NV, etc, and switch
@@ -356,10 +371,11 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 {
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   if ( R200_DEBUG & (RADEON_STATE|RADEON_TEXTURE) ) {
-      fprintf( stderr, "%s( %s )\n", __FUNCTION__,
+   radeon_print(RADEON_TEXTURE | RADEON_STATE, RADEON_VERBOSE,
+		"%s(%p, tex %p)  target %s, pname %s\n",
+		__FUNCTION__, ctx, texObj,
+		_mesa_lookup_enum_by_nr( target ),
 	       _mesa_lookup_enum_by_nr( pname ) );
-   }
 
    switch ( pname ) {
    case GL_TEXTURE_MIN_FILTER:
@@ -397,11 +413,10 @@ static void r200DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj* t = radeon_tex_obj(texObj);
 
-   if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
-      fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
-	      (void *)texObj,
-	      _mesa_lookup_enum_by_nr(texObj->Target));
-   }
+   radeon_print(RADEON_TEXTURE | RADEON_STATE, RADEON_NORMAL,
+           "%s( %p (target = %s) )\n", __FUNCTION__,
+	   (void *)texObj,
+	   _mesa_lookup_enum_by_nr(texObj->Target));
 
    if (rmesa) {
       int i;
@@ -456,10 +471,10 @@ static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
    radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
-   if (RADEON_DEBUG & (RADEON_STATE | RADEON_TEXTURE)) {
-     fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
-	     t, _mesa_lookup_enum_by_nr(target));
-   }
+   radeon_print(RADEON_STATE | RADEON_TEXTURE, RADEON_NORMAL,
+           "%s(%p) target %s, new texture %p.\n",
+	   __FUNCTION__, ctx,
+	   _mesa_lookup_enum_by_nr(target), t);
 
    _mesa_initialize_texture_object(&t->base, name, target);
    t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
