@@ -30,7 +30,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <main/macros.h>
+#include "main/macros.h"
+#include "radeon_debug.h"
 
 #define MICRO_TILE_SIZE 32
 
@@ -214,6 +215,10 @@ void tile_image(const void * src, unsigned src_pitch,
     assert(src_pitch >= width);
     assert(dst_pitch >= width);
     assert(dst_pitch * _mesa_get_format_bytes(format) % MICRO_TILE_SIZE == 0);
+
+    radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+                 "Software tiling: src_pitch %d, dst_pitch %d, width %d, height %d, bpp %d\n",
+                 src_pitch, dst_pitch, width, height, _mesa_get_format_bytes(format));
 
     switch (_mesa_get_format_bytes(format))
     {
@@ -435,6 +440,10 @@ void untile_image(const void * src, unsigned src_pitch,
     assert(src_pitch >= width);
     assert(dst_pitch >= width);
     assert(src_pitch * _mesa_get_format_bytes(format) % MICRO_TILE_SIZE == 0);
+
+    radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+                 "Software untiling: src_pitch %d, dst_pitch %d, width %d, height %d, bpp %d\n",
+                 src_pitch, dst_pitch, width, height, _mesa_get_format_bytes(format));
 
     switch (_mesa_get_format_bytes(format))
     {
