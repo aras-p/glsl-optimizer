@@ -46,13 +46,9 @@
 #include <assert.h>
 #include "pbutil.h"
 
-/* I had to use the SGIX versions of these because for some reason glxext.h
- * doesn't define the core versions if GLX_VERSION_1_3 is defined, and glx.h
- * doesn't define them at all.  One or both header files is clearly broken.
- */
-static PFNGLXCHOOSEFBCONFIGSGIXPROC choose_fbconfig = NULL;
-static PFNGLXGETVISUALFROMFBCONFIGSGIXPROC get_visual_from_fbconfig = NULL;
-static PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC create_new_context = NULL;
+static PFNGLXCHOOSEFBCONFIGPROC choose_fbconfig = NULL;
+static PFNGLXGETVISUALFROMFBCONFIGPROC get_visual_from_fbconfig = NULL;
+static PFNGLXCREATENEWCONTEXTPROC create_new_context = NULL;
 
 #define BENCHMARK
 
@@ -359,20 +355,20 @@ init_fbconfig_functions(Display *dpy, int scrnum)
 	   ext_name, (ext_version_supported) ? "" : "not " );
 
    if ( glx_1_3_supported ) {
-      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXChooseFBConfig");
-      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXGetVisualFromFBConfig");
-      create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLubyte *) "glXCreateNewContext");
+      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXChooseFBConfig");
+      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXGetVisualFromFBConfig");
+      create_new_context = (PFNGLXCREATENEWCONTEXTPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXCreateNewContext");
    }
    else if ( ext_version_supported ) {
-      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXChooseFBConfigSGIX");
-      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXGetVisualFromFBConfigSGIX");
-      create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLubyte *) "glXCreateContextWithConfigSGIX");
+      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXChooseFBConfigSGIX");
+      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXGetVisualFromFBConfigSGIX");
+      create_new_context = (PFNGLXCREATENEWCONTEXTPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXCreateContextWithConfigSGIX");
    }
    else {
       printf( "This demo requires either GLX 1.3 or %s be supported.\n",
