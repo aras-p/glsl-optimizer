@@ -1,6 +1,6 @@
 # linux-cell  (non-debug build)
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-cell
 
@@ -25,10 +25,10 @@ OPT_FLAGS = -O3
 SDK = /opt/cell/sdk/usr
 
 
-CFLAGS = $(OPT_FLAGS) -Wall -Winline -Wmissing-prototypes \
+CFLAGS = $(OPT_FLAGS) -mcpu=cell -Wall -Winline -Wmissing-prototypes \
 	-fPIC -m32 -std=c99 -mabi=altivec -maltivec \
 	-I. -I$(SDK)/include \
-	-DGALLIUM_CELL -DUSE_XSHM -D_BSD_SOURCE -D_SVID_SOURCE
+	-DGALLIUM_CELL $(DEFINES)
 
 CXXFLAGS = $(CFLAGS)
 

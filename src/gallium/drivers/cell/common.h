@@ -36,7 +36,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-
+#include <stdio.h>
 
 /** The standard assert macro doesn't seem to work reliably */
 #define ASSERT(x) \
@@ -47,7 +47,6 @@
       *p = 0; \
       exit(1); \
    }
-
 
 
 #define JOIN(x, y) JOIN_AGAIN(x, y)
