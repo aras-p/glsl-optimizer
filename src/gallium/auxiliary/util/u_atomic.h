@@ -20,7 +20,9 @@
  */
 #if (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || \
      defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
-#define PIPE_ATOMIC_OS_UNLOCKED 
+#define PIPE_ATOMIC_OS_UNLOCKED
+#elif defined(PIPE_OS_SOLARIS)
+#define PIPE_ATOMIC_OS_SOLARIS
 #elif defined(PIPE_CC_MSVC)
 #define PIPE_ATOMIC_MSVC_INTRINSIC
 #elif (defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86))
@@ -260,6 +262,38 @@ p_atomic_cmpxchg(int32_t *v, int32_t old, int32_t _new)
 
 #endif
 
+#if defined(PIPE_ATOMIC_OS_SOLARIS)
+
+#define PIPE_ATOMIC "Solaris OS atomic functions"
+
+#include <atomic.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define p_atomic_set(_v, _i) (*(_v) = (_i))
+#define p_atomic_read(_v) (*(_v))
+
+static INLINE boolean
+p_atomic_dec_zero(int32_t *v)
+{
+   uint32_t n = atomic_dec_32_nv((uint32_t *) v);
+
+   return n != 0;
+}
+
+#define p_atomic_inc(_v) atomic_inc_32((uint32_t *) _v)
+#define p_atomic_dec(_v) atomic_dec_32((uint32_t *) _v)
+
+#define p_atomic_cmpxchg(_v, _old, _new) \
+	atomic_cas_32( (uint32_t *) _v, (uint32_t) _old, (uint32_t) _new)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
 
 
 #ifndef PIPE_ATOMIC
