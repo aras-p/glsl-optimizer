@@ -53,13 +53,13 @@ install:
 
 ##### RULES #####
 
-.c.o:
+%.o: %.c
 	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
 
-.cpp.o:
+%.o: %.cpp
 	$(CXX) -c $(INCLUDES) $(DEFINES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
 
-.S.o:
+%.o: %.S
 	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES)  $< -o $@
 
 
