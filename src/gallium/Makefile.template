@@ -53,6 +53,9 @@ install:
 
 ##### RULES #####
 
+%.s: %.c
+	$(CC) -S $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
+
 %.o: %.c
 	$(CC) -c $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
 
