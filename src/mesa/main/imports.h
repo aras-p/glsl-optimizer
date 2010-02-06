@@ -405,6 +405,52 @@ _mesa_is_pow_two(int x)
    return !(x & (x - 1));
 }
 
+/**
+ * Round given integer to next higer power of two
+ * If X is zero result is undefined.
+ *
+ * Source for the fallback implementation is
+ * Sean Eron Anderson's webpage "Bit Twiddling Hacks"
+ * http://graphics.stanford.edu/~seander/bithacks.html
+ */
+static INLINE int32_t
+_mesa_next_pow_two_32(uint32_t x)
+{
+#ifdef __GNUC__
+	return 1 << (__builtin_clz(x) ^ 31);
+#else
+	x--;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x++;
+	return x;
+#endif
+}
+
+static INLINE int64_t
+_mesa_next_pow_two_64(uint64_t x)
+{
+#ifdef __GNUC__
+	if (sizeof(x) == sizeof(long))
+		return 1 << (__builtin_clzl(x) ^ 63);
+	else
+		return 1 << (__builtin_clzll(x) ^ 63);
+#else
+	x--;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x |= x >> 32;
+	x++;
+	return x;
+#endif
+}
+
 
 /***
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
