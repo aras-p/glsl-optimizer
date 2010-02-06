@@ -176,12 +176,12 @@ vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
 
    memset(&s_arg, 0, sizeof(s_arg));
    if (vws->use_old_scanout_flag &&
-       (req->flags & SVGA3D_SURFACE_HINT_SCANOUT)) {
-      req->flags = (uint32_t) (flags & ~SVGA3D_SURFACE_HINT_SCANOUT);
+       (flags & SVGA3D_SURFACE_HINT_SCANOUT)) {
+      req->flags = (uint32_t) flags;
       req->scanout = false;
-   } else if (req->flags & SVGA3D_SURFACE_HINT_SCANOUT) {
+   } else if (flags & SVGA3D_SURFACE_HINT_SCANOUT) {
       req->flags = (uint32_t) (flags & ~SVGA3D_SURFACE_HINT_SCANOUT);
-      req->scanout = false;
+      req->scanout = true;
    } else {
       req->flags = (uint32_t) flags;
       req->scanout = false;
