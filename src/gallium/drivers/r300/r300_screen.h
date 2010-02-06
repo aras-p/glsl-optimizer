@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,25 +43,14 @@ struct r300_screen {
     unsigned debug;
 };
 
-struct r300_transfer {
-    /* Parent class */
-    struct pipe_transfer transfer;
-
-    /* Offset from start of buffer. */
-    unsigned offset;
-};
 
 /* Convenience cast wrapper. */
 static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
 }
 
-/* Convenience cast wrapper. */
-static INLINE struct r300_transfer*
-r300_transfer(struct pipe_transfer* transfer)
-{
-    return (struct r300_transfer*)transfer;
-}
+/* Creates a new r300 screen. */
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 /* Debug functionality. */
 
