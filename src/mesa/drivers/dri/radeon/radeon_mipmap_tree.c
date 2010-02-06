@@ -41,18 +41,24 @@ static unsigned get_aligned_compressed_row_stride(
 		unsigned width,
 		unsigned minStride)
 {
-	const unsigned blockSize = _mesa_get_format_bytes(format);
-	unsigned blockWidth, blockHeight, numXBlocks;
+	const unsigned blockBytes = _mesa_get_format_bytes(format);
+	unsigned blockWidth, blockHeight;
+	unsigned stride;
 
 	_mesa_get_format_block_size(format, &blockWidth, &blockHeight);
-	numXBlocks = (width + blockWidth - 1) / blockWidth;
 
-	while (numXBlocks * blockSize < minStride)
-	{
-		++numXBlocks;
-	}
+	/* Count number of blocks required to store the given width.
+	 * And then multiple it with bytes required to store a block.
+	 */
+	stride = (width + blockWidth - 1) / blockWidth * blockBytes;
 
-	return numXBlocks * blockSize;
+	/* Round the given minimum stride to the next full blocksize.
+	 * (minStride + blockBytes - 1) / blockBytes * blockBytes
+	 */
+	if ( stride < minStride )
+		stride = (minStride + blockBytes - 1) / blockBytes * blockBytes;
+
+	return stride;
 }
 
 static unsigned get_compressed_image_size(
