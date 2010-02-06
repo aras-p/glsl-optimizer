@@ -1,0 +1,407 @@
+/**********************************************************
+ * Copyright 2010 VMware, Inc.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ **********************************************************/
+
+
+#ifndef _ST_API_H_
+#define _ST_API_H_
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
+
+/**
+ * \file API for communication between state trackers and state tracker
+ * managers.
+ *
+ * While both are state tackers, we use the term state tracker for rendering
+ * APIs such as OpenGL or OpenVG, and state tracker manager for window system
+ * APIs such as EGL or GLX in this file.
+ *
+ * This file defines an API to be implemented by both state trackers and state
+ * tracker managers.
+ */
+
+/**
+ * The entry points of the state trackers.
+ */
+#define ST_MODULE_OPENGL_SYMBOL      "st_module_OpenGL"
+#define ST_MODULE_OPENGL_ES1_SYMBOL  "st_module_OpenGL_ES1"
+#define ST_MODULE_OPENGL_ES2_SYMBOL  "st_module_OpenGL_ES2"
+#define ST_MODULE_OPENVG_SYMBOL      "st_module_OpenVG"
+
+/**
+ * The supported rendering API of a state tracker.
+ */
+enum st_api_type {
+   ST_API_OPENGL,
+   ST_API_OPENGL_ES1,
+   ST_API_OPENGL_ES2,
+   ST_API_OPENVG,
+
+   ST_API_COUNT
+};
+
+/**
+ * Used in st_context_iface->teximage.
+ */
+enum st_texture_type {
+   ST_TEXTURE_1D,
+   ST_TEXTURE_2D,
+   ST_TEXTURE_3D,
+   ST_TEXTURE_RECT,
+};
+
+/**
+ * Available attachments of framebuffer.
+ */
+enum st_attachment_type {
+   ST_ATTACHMENT_FRONT_LEFT,
+   ST_ATTACHMENT_BACK_LEFT,
+   ST_ATTACHMENT_FRONT_RIGHT,
+   ST_ATTACHMENT_BACK_RIGHT,
+   ST_ATTACHMENT_DEPTH_STENCIL,
+   ST_ATTACHMENT_ACCUM,
+   ST_ATTACHMENT_SAMPLE,
+
+   ST_ATTACHMENT_COUNT,
+   ST_ATTACHMENT_INVALID = -1
+};
+
+/* for buffer_mask in st_visual */
+#define ST_ATTACHMENT_FRONT_LEFT_MASK     (1 << ST_ATTACHMENT_FRONT_LEFT)
+#define ST_ATTACHMENT_BACK_LEFT_MASK      (1 << ST_ATTACHMENT_BACK_LEFT)
+#define ST_ATTACHMENT_FRONT_RIGHT_MASK    (1 << ST_ATTACHMENT_FRONT_RIGHT)
+#define ST_ATTACHMENT_BACK_RIGHT_MASK     (1 << ST_ATTACHMENT_BACK_RIGHT)
+#define ST_ATTACHMENT_DEPTH_STENCIL_MASK  (1 << ST_ATTACHMENT_DEPTH_STENCIL)
+#define ST_ATTACHMENT_ACCUM_MASK          (1 << ST_ATTACHMENT_ACCUM)
+#define ST_ATTACHMENT_SAMPLE_MASK         (1 << ST_ATTACHMENT_SAMPLE)
+
+/**
+ * Enumerations of state tracker context resources.
+ */
+enum st_context_resource_type {
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_2D,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_3D,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_POSITIVE_X,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+   ST_CONTEXT_RESOURCE_OPENGL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+   ST_CONTEXT_RESOURCE_OPENGL_RENDERBUFFER,
+   ST_CONTEXT_RESOURCE_OPENVG_PARENT_IMAGE,
+};
+
+/**
+ * The return type of st_api->get_proc_address.
+ */
+typedef void (*st_proc_t)(void);
+
+struct pipe_context;
+struct pipe_texture;
+struct pipe_fence_handle;
+
+/**
+ * Used in st_context_iface->get_resource_for_egl_image.
+ */
+struct st_context_resource
+{
+   /* these fields are filled by the caller */
+   enum st_context_resource_type type;
+   void *resource;
+
+   /* this is owned by the caller */
+   struct pipe_texture *texture;
+};
+
+/**
+ * Used in st_manager_iface->get_egl_image.
+ */
+struct st_egl_image
+{
+   /* these fields are filled by the caller */
+   struct st_context_iface *stctxi;
+   void *egl_image;
+
+   /* this is owned by the caller */
+   struct pipe_texture *texture;
+
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+};
+
+/**
+ * Represent the visual of a framebuffer.
+ */
+struct st_visual
+{
+   /**
+    * Available buffers.  Tested with ST_FRAMEBUFFER_*_MASK.
+    */
+   unsigned buffer_mask;
+
+   /**
+    * Buffer formats.  The formats are always set even when the buffer is
+    * not available.
+    */
+   enum pipe_format color_format;
+   enum pipe_format depth_stencil_format;
+   enum pipe_format accum_format;
+   int samples;
+
+   /**
+    * Desired render buffer.
+    */
+   enum st_attachment_type render_buffer;
+};
+
+/**
+ * Represent a windowing system drawable.
+ *
+ * The framebuffer is implemented by the state tracker manager and
+ * used by the state trackers.
+ *
+ * Instead of the winsys pokeing into the API context to figure
+ * out what buffers that might be needed in the future by the API
+ * context, it calls into the framebuffer to get the textures.
+ *
+ * This structure along with the notify_invalid_framebuffer
+ * allows framebuffers to be shared between different threads
+ * but at the same make the API context free from thread
+ * syncronisation primitves, with the exception of a small
+ * atomic flag used for notification of framebuffer dirty status.
+ *
+ * The thread syncronisation is put inside the framebuffer
+ * and only called once the framebuffer has become dirty.
+ */
+struct st_framebuffer_iface
+{
+   /**
+    * Available for the state tracker manager to use.
+    */
+   void *st_manager_private;
+
+   /**
+    * The visual of a framebuffer.
+    */
+   const struct st_visual *visual;
+
+   /**
+    * Flush the front buffer.
+    *
+    * On some window systems, changes to the front buffers are not immediately
+    * visible.  They need to be flushed.
+    *
+    * @att is one of the front buffer attachments.
+    */
+   boolean (*flush_front)(struct st_framebuffer_iface *stfbi,
+                          enum st_attachment_type statt);
+
+   /**
+    * The state tracker asks for the textures it needs.
+    *
+    * It should try to only ask for attachments that it currently renders
+    * to, thus allowing the winsys to delay the allocation of textures not
+    * needed. For example front buffer attachments are not needed if you
+    * only do back buffer rendering.
+    *
+    * The implementor of this function needs to also ensure
+    * thread safty as this call might be done from multiple threads.
+    *
+    * The returned textures are owned by the caller.  They should be
+    * unreferenced when no longer used.  If this function is called multiple
+    * times with different sets of attachments, those buffers not included in
+    * the last call might be destroyed.  This behavior might change in the
+    * future.
+    */
+   boolean (*validate)(struct st_framebuffer_iface *stfbi,
+                       const enum st_attachment_type *statts,
+                       unsigned count,
+                       struct pipe_texture **out);
+};
+
+/**
+ * Represent a rendering context.
+ *
+ * This entity is created from st_api and used by the state tracker manager.
+ */
+struct st_context_iface
+{
+   /**
+    * Available for the state tracker and the manager to use.
+    */
+   void *st_context_private;
+   void *st_manager_private;
+
+   /**
+    * Destroy the context.
+    */
+   void (*destroy)(struct st_context_iface *stctxi);
+
+   /**
+    * Invalidate the current textures that was taken from a framebuffer.
+    *
+    * The state tracker manager calls this function to let the rendering
+    * context know that it should update the textures it got from
+    * st_framebuffer_iface::validate.  It should do so at the latest time possible.
+    * Possible right before sending triangles to the pipe context.
+    *
+    * For certain platforms this function might be called from a thread other
+    * than the thread that the context is currently bound in, and must
+    * therefore be thread safe. But it is the state tracker manager's
+    * responsibility to make sure that the framebuffer is bound to the context
+    * and the API context is current for the duration of this call.
+    *
+    * Thus reducing the sync primitive needed to a single atomic flag.
+    */
+   void (*notify_invalid_framebuffer)(struct st_context_iface *stctxi,
+                                      struct st_framebuffer_iface *stfbi);
+
+   /**
+    * Flush all drawing from context to the pipe also flushes the pipe.
+    */
+   void (*flush)(struct st_context_iface *stctxi, unsigned flags,
+                 struct pipe_fence_handle **fence);
+
+   /**
+    * Replace the texture image of a texture object at the specified level.
+    *
+    * This function is optional.
+    */
+   boolean (*teximage)(struct st_context_iface *stctxi, enum st_texture_type target,
+                       int level, enum pipe_format internal_format,
+                       struct pipe_texture *tex, boolean mipmap);
+
+   /**
+    * Used to implement glXCopyContext.
+    */
+   void (*copy)(struct st_context_iface *stctxi,
+                struct st_context_iface *stsrci, unsigned mask);
+
+   /**
+    * Look up and return the info of a resource for EGLImage.
+    *
+    * This function is optional.
+    */
+   boolean (*get_resource_for_egl_image)(struct st_context_iface *stctxi,
+                                         struct st_context_resource *stres);
+};
+
+
+/**
+ * Represent a state tracker manager.
+ *
+ * This interface is implemented by the state tracker manager.  It corresponds
+ * to a "display" in the window system.
+ */
+struct st_manager
+{
+   struct pipe_screen *screen;
+
+   /**
+    * Look up and return the info of an EGLImage.
+    *
+    * This function is optional.
+    */
+   boolean (*get_egl_image)(struct st_manager *smapi,
+                            struct st_egl_image *stimg);
+};
+
+/**
+ * Represent a rendering API such as OpenGL or OpenVG.
+ *
+ * Implemented by the state tracker and used by the state tracker manager.
+ */
+struct st_api
+{
+   /**
+    * Destroy the API.
+    */
+   void (*destroy)(struct st_api *stapi);
+
+   /**
+    * Return an API entry point.
+    *
+    * For GL this is the same as _glapi_get_proc_address.
+    */
+   st_proc_t (*get_proc_address)(struct st_api *stapi, const char *procname);
+
+   /**
+    * Return true if the visual is supported by the state tracker.
+    */
+   boolean (*is_visual_supported)(struct st_api *stapi,
+                                  const struct st_visual *visual);
+
+   /**
+    * Create a rendering context.
+    */
+   struct st_context_iface *(*create_context)(struct st_api *stapi,
+                                              struct st_manager *smapi,
+                                              const struct st_visual *visual,
+                                              struct st_context_iface *stsharei);
+
+   /**
+    * Bind the context to the calling thread with draw and read as drawables.
+    *
+    * The framebuffers might have different visuals than the context does.
+    */
+   boolean (*make_current)(struct st_api *stapi,
+                           struct st_context_iface *stctxi,
+                           struct st_framebuffer_iface *stdrawi,
+                           struct st_framebuffer_iface *streadi);
+
+   /**
+    * Get the currently bound context in the calling thread.
+    */
+   struct st_context_iface *(*get_current)(struct st_api *stapi);
+};
+
+/**
+ * Represent a state tracker.
+ *
+ * This is the entry point of a state tracker.
+ */
+struct st_module
+{
+   enum st_api_type api;
+   struct st_api *(*create_api)(void);
+};
+
+/**
+ * Return true if the visual has the specified buffers.
+ */
+static INLINE boolean
+st_visual_have_buffers(const struct st_visual *visual, unsigned mask)
+{
+   return ((visual->buffer_mask & mask) == mask);
+}
+
+/* these symbols may need to be dynamically lookup up */
+extern PUBLIC const struct st_module st_module_OpenGL;
+extern PUBLIC const struct st_module st_module_OpenGL_ES1;
+extern PUBLIC const struct st_module st_module_OpenGL_ES2;
+extern PUBLIC const struct st_module st_module_OpenVG;
+
+#endif /* _ST_API_H_ */
