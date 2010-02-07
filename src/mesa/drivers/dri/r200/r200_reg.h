@@ -938,7 +938,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_CLAMP_Q_CLAMP_GL                     (6  << 9)
 #define     R200_CLAMP_Q_MIRROR_CLAMP_GL              (7  << 9)
 #define     R200_CLAMP_Q_MASK                         (7  << 9)
-#define     R200_MIN_MIP_LEVEL_MASK                   (0xff << 12)
+#define     R200_MIN_MIP_LEVEL_MASK                   (0x0f << 12)
 #define     R200_MIN_MIP_LEVEL_SHIFT                  12
 #define     R200_TEXCOORD_NONPROJ                     (0  << 16)
 #define     R200_TEXCOORD_CUBIC_ENV                   (1  << 16)

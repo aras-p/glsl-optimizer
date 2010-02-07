@@ -1055,6 +1055,7 @@ static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
 
 #define TEXOBJ_TXFORMAT_X_MASK (R200_DEPTH_LOG2_MASK |		\
                                 R200_TEXCOORD_MASK |		\
+                                R200_MIN_MIP_LEVEL_MASK |	\
                                 R200_CLAMP_Q_MASK | 		\
                                 R200_VOLUME_FILTER_MASK)
 
@@ -1410,6 +1411,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 {
    const struct gl_texture_image *firstImage = t->base.Image[0][t->minLod];
    GLint log2Width, log2Height, log2Depth, texelBytes;
+   uint extra_size = 0;
 
    if ( t->bo ) {
        return;
@@ -1420,6 +1422,10 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    log2Depth  = firstImage->DepthLog2;
    texelBytes = _mesa_get_format_bytes(firstImage->TexFormat);
 
+   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+	"%s(%p, tex %p) log2(w %d, h %d, d %d), texelBytes %d. format %d\n",
+	__func__, rmesa, t, log2Width, log2Height,
+	log2Depth, texelBytes, firstImage->TexFormat);
 
    if (!t->image_override) {
       if (VALID_FORMAT(firstImage->TexFormat)) {
@@ -1432,6 +1438,8 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 	 
 	 t->pp_txformat |= table[ firstImage->TexFormat ].format;
 	 t->pp_txfilter |= table[ firstImage->TexFormat ].filter;
+
+
       } else {
 	 _mesa_problem(NULL, "unexpected texture format in %s",
 		       __FUNCTION__);
@@ -1440,19 +1448,34 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    }
 
    t->pp_txfilter &= ~R200_MAX_MIP_LEVEL_MASK;
-   t->pp_txfilter |= (t->maxLod - t->minLod) << R200_MAX_MIP_LEVEL_SHIFT;
-	
+   t->pp_txfilter |= ((t->maxLod) << R200_MAX_MIP_LEVEL_SHIFT)
+	   & R200_MAX_MIP_LEVEL_MASK;
+
+   if ( t->pp_txfilter &
+		(R200_MIN_FILTER_NEAREST_MIP_NEAREST
+		 | R200_MIN_FILTER_NEAREST_MIP_LINEAR
+		 | R200_MIN_FILTER_LINEAR_MIP_NEAREST
+		 | R200_MIN_FILTER_LINEAR_MIP_LINEAR
+		 | R200_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST
+		 | R200_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR))
+		 extra_size = t->minLod;
+
    t->pp_txformat &= ~(R200_TXFORMAT_WIDTH_MASK |
 		       R200_TXFORMAT_HEIGHT_MASK |
 		       R200_TXFORMAT_CUBIC_MAP_ENABLE |
 		       R200_TXFORMAT_F5_WIDTH_MASK |
 		       R200_TXFORMAT_F5_HEIGHT_MASK);
-   t->pp_txformat |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
-		      (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
+   t->pp_txformat |= (((log2Width + extra_size) << R200_TXFORMAT_WIDTH_SHIFT) |
+		      ((log2Height + extra_size)<< R200_TXFORMAT_HEIGHT_SHIFT));
    
    t->tile_bits = 0;
    
-   t->pp_txformat_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
+   t->pp_txformat_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK
+		   | R200_MIN_MIP_LEVEL_MASK);
+
+   t->pp_txformat_x |= (t->minLod << R200_MIN_MIP_LEVEL_SHIFT)
+	   & R200_MIN_MIP_LEVEL_MASK;
+
    if (t->base.Target == GL_TEXTURE_3D) {
       t->pp_txformat_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
       t->pp_txformat_x |= R200_TEXCOORD_VOLUME;
@@ -1480,7 +1503,7 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
        */
       t->pp_txformat_x |= R200_TEXCOORD_PROJ;
    }
-
+   /* FIXME: NPOT sizes, Is it correct realy? */
    t->pp_txsize = (((firstImage->Width - 1) << R200_PP_TX_WIDTHMASK_SHIFT)
 		   | ((firstImage->Height - 1) << R200_PP_TX_HEIGHTMASK_SHIFT));
 
