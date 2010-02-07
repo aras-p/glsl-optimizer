@@ -152,7 +152,7 @@ union lp_rast_cmd_arg {
 
 /* Cast wrappers.  Hopefully these compile to noops!
  */
-static INLINE const union lp_rast_cmd_arg
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_inputs( const struct lp_rast_shader_inputs *shade_tile )
 {
    union lp_rast_cmd_arg arg;
@@ -160,7 +160,7 @@ lp_rast_arg_inputs( const struct lp_rast_shader_inputs *shade_tile )
    return arg;
 }
 
-static INLINE const union lp_rast_cmd_arg
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_triangle( const struct lp_rast_triangle *triangle )
 {
    union lp_rast_cmd_arg arg;
@@ -168,7 +168,7 @@ lp_rast_arg_triangle( const struct lp_rast_triangle *triangle )
    return arg;
 }
 
-static INLINE const union lp_rast_cmd_arg
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_state( const struct lp_rast_state *state )
 {
    union lp_rast_cmd_arg arg;
@@ -176,7 +176,7 @@ lp_rast_arg_state( const struct lp_rast_state *state )
    return arg;
 }
 
-static INLINE const union lp_rast_cmd_arg
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_fence( struct lp_fence *fence )
 {
    union lp_rast_cmd_arg arg;
@@ -185,7 +185,7 @@ lp_rast_arg_fence( struct lp_fence *fence )
 }
 
 
-static INLINE const union lp_rast_cmd_arg
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_null( void )
 {
    union lp_rast_cmd_arg arg;
