@@ -417,7 +417,8 @@ static INLINE int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
 #ifdef __GNUC__
-	return 1 << (__builtin_clz(x) ^ 31);
+	x--;
+	return 1 << ((__builtin_clz(x) ^ 31) + 1);
 #else
 	x--;
 	x |= x >> 1;
@@ -434,10 +435,11 @@ static INLINE int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
 #ifdef __GNUC__
+	x--;
 	if (sizeof(x) == sizeof(long))
-		return 1 << (__builtin_clzl(x) ^ 63);
+		return 1 << ((__builtin_clzl(x) ^ 63) + 1);
 	else
-		return 1 << (__builtin_clzll(x) ^ 63);
+		return 1 << ((__builtin_clzll(x) ^ 63) + 1);
 #else
 	x--;
 	x |= x >> 1;
