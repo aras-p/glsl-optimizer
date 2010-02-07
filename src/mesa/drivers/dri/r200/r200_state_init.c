@@ -1386,7 +1386,7 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
-          0x100000);	/* Small default bias */
+          R200_LOD_BIAS_CORRECTION);	/* Small default bias */
       if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
 	 rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
 	     rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];

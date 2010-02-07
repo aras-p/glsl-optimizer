@@ -324,18 +324,19 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_LOD_BIAS_EXT: {
       GLfloat bias, min;
       GLuint b;
-      const int fixed_one = 0x8000000;
+      const int fixed_one = R200_LOD_BIAS_FIXED_ONE;
 
       /* The R200's LOD bias is a signed 2's complement value with a
        * range of -16.0 <= bias < 16.0. 
        *
        * NOTE: Add a small bias to the bias for conform mipsel.c test.
        */
-      bias = *param + .01;
+      bias = *param;
       min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -16.0;
       bias = CLAMP( bias, min, 16.0 );
-      b = (int)(bias * fixed_one) & R200_LOD_BIAS_MASK;
+      b = ((int)(bias * fixed_one)
+		+ R200_LOD_BIAS_CORRECTION) & R200_LOD_BIAS_MASK;
       
       if ( (rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT_X] & R200_LOD_BIAS_MASK) != b ) {
 	 R200_STATECHANGE( rmesa, tex[unit] );
