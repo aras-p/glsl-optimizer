@@ -40,6 +40,7 @@
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"
+#include "st_manager.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -74,12 +75,9 @@ display_front_buffer(struct st_context *st)
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 
    if (strb) {
-      struct pipe_surface *front_surf = strb->surface;
-      
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
-                                           st->winsys_drawable_handle );
+      st_manager_flush_frontbuffer(st);
 
       /*
         st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
