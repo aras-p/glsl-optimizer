@@ -403,10 +403,14 @@ static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
 static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
 {
     switch (format) {
+        case PIPE_FORMAT_R5G6B5_UNORM:
+            /* C_5_6_5 is missing in US_OUT_FMT, but C4_8 works just fine. */
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
+            /* C_1_5_5_5 is missing in US_OUT_FMT, but C4_8 works just fine. */
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+            /* C4_4 is missing in US_OUT_FMT, but C4_8 works just fine. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
-        /* XXX */
-        case PIPE_FORMAT_Z24S8_UNORM:
             return R300_US_OUT_FMT_C4_8 |
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
