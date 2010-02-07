@@ -249,6 +249,10 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
+	ctx->Const.MaxCombinedTextureImageUnits =
+		ctx->Const.MaxVertexTextureImageUnits +
+		ctx->Const.MaxTextureImageUnits;
+
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 

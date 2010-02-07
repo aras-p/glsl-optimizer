@@ -350,6 +350,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
+   ctx->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxTextureUnits;
+
    i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
 
    /* FIXME: When no memory manager is available we should set this 

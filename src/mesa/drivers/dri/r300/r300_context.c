@@ -333,6 +333,10 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	    driQueryOptioni(&r300->radeon.optionCache, "texture_coord_units");
 	ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
+	ctx->Const.MaxCombinedTextureImageUnits =
+		ctx->Const.MaxVertexTextureImageUnits +
+		ctx->Const.MaxTextureImageUnits;
+
 
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;

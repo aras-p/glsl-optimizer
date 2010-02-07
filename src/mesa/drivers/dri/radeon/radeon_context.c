@@ -279,6 +279,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
 						 "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxTextureUnits;
 
    i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
 
