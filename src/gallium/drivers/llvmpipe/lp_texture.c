@@ -40,7 +40,6 @@
 
 #include "lp_context.h"
 #include "lp_screen.h"
-#include "lp_state.h"
 #include "lp_texture.h"
 #include "lp_tile_size.h"
 #include "lp_winsys.h"

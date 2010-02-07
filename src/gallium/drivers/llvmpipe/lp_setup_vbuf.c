@@ -37,11 +37,9 @@
 
 
 #include "lp_setup_context.h"
-#include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "util/u_memory.h"
-#include "util/u_prim.h"
 
 
 #define LP_MAX_VBUF_INDEXES 1024

@@ -37,7 +37,6 @@
 #include "lp_context.h"
 #include "lp_context.h"
 #include "lp_state.h"
-#include "lp_texture.h"
 #include "draw/draw_context.h"
 
 
