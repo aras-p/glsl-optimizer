@@ -341,8 +341,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    GLenum fb_type[3];
 
    static const GLenum back_buffer_modes[] = {
-       GLX_NONE, GLX_SWAP_UNDEFINED_OML,
-       GLX_SWAP_EXCHANGE_OML, GLX_SWAP_COPY_OML
+       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
    uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
