@@ -66,7 +66,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_debug_dump.h"
-#include "util/u_time.h"
+#include "os/os_time.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_dump.h"
@@ -1111,14 +1111,14 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    }
 
    if (!variant) {
-      struct util_time t0, t1;
+      int64_t t0, t1;
       int64_t dt;
-      util_time_get(&t0);
+      t0 = os_time_get();
 
       variant = generate_variant(lp, shader, &key);
 
-      util_time_get(&t1);
-      dt = util_time_diff(&t0, &t1);
+      t1 = os_time_get();
+      dt = t1 - t0;
       LP_COUNT_ADD(llvm_compile_time, dt);
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
