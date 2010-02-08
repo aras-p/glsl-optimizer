@@ -29,8 +29,6 @@
  *      Joakim Sindholt <opensource@zhasha.com>
  */
 
-#include "softpipe/sp_winsys.h"
-
 #include "radeon_drm.h"
 
 /* Helper function to do the ioctls needed for setup and init. */
@@ -128,10 +126,10 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
     struct radeon_winsys* rwinsys = radeon_pipe_winsys(drmFB);
     do_ioctls(drmFB, rwinsys);
 
-    if (!is_r3xx(rwinsys->pci_id) ||
-        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
-        return softpipe_create_screen((struct pipe_winsys*)rwinsys);
-    } else {
+    /* The state tracker can organize a softpipe fallback if no hw
+     * driver is found.
+     */
+    if (is_r3xx(rwinsys->pci_id)) {
         radeon_setup_winsys(drmFB, rwinsys);
         return r300_create_screen(rwinsys);
     }
