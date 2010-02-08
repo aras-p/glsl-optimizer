@@ -374,15 +374,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;
 
-   depth_bits[0] = 0;
-   stencil_bits[0] = 0;
-   depth_bits[1] = 16;
-   stencil_bits[1] = 0;
-   depth_bits[2] = 24;
-   stencil_bits[2] = 0;
-   depth_bits[3] = 24;
-   stencil_bits[3] = 8;
-
    msaa_samples_array[0] = 0;
 
    fb_format[0] = GL_RGB;
