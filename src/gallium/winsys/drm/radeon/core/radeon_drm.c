@@ -256,6 +256,11 @@ static boolean radeon_local_handle_from_texture(struct drm_api *api,
     return TRUE;
 }
 
+static void radeon_drm_api_destroy(struct drm_api *api)
+{
+    return;
+}
+
 struct drm_api drm_api_hooks = {
     .name = "radeon",
     .driver_name = "radeon",
@@ -263,6 +268,7 @@ struct drm_api drm_api_hooks = {
     .texture_from_shared_handle = radeon_texture_from_shared_handle,
     .shared_handle_from_texture = radeon_shared_handle_from_texture,
     .local_handle_from_texture = radeon_local_handle_from_texture,
+    .destroy = radeon_drm_api_destroy,
 };
 
 struct drm_api* drm_api_create()
