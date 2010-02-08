@@ -214,6 +214,7 @@ _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
    bufObj->RefCount = -1000;
    bufObj->Name = ~0;
 
+   _glthread_DESTROY_MUTEX(bufObj->Mutex);
    _mesa_free(bufObj);
 }
 
@@ -235,7 +236,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_buffer_object *oldObj = *ptr;
 
-      /*_glthread_LOCK_MUTEX(oldObj->Mutex);*/
+      _glthread_LOCK_MUTEX(oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
       oldObj->RefCount--;
 #if 0
@@ -243,7 +244,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
              (void *) oldObj, oldObj->Name, oldObj->RefCount);
 #endif
       deleteFlag = (oldObj->RefCount == 0);
-      /*_glthread_UNLOCK_MUTEX(oldObj->Mutex);*/
+      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
 
       if (deleteFlag) {
 
@@ -265,7 +266,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
 
    if (bufObj) {
       /* reference new buffer */
-      /*_glthread_LOCK_MUTEX(tex->Mutex);*/
+      _glthread_LOCK_MUTEX(bufObj->Mutex);
       if (bufObj->RefCount == 0) {
          /* this buffer's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -280,7 +281,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
 #endif
          *ptr = bufObj;
       }
-      /*_glthread_UNLOCK_MUTEX(tex->Mutex);*/
+      _glthread_UNLOCK_MUTEX(bufObj->Mutex);
    }
 }
 
@@ -295,6 +296,7 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
    (void) target;
 
    _mesa_bzero(obj, sizeof(struct gl_buffer_object));
+   _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
