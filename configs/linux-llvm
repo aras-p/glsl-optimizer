@@ -12,7 +12,7 @@ GALLIUM_DRIVERS_DIRS += llvmpipe
 OPT_FLAGS = -O3 -ansi -pedantic
 ARCH_FLAGS = -m32 -mmmx -msse -msse2 -mstackrealign
 
-DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
+DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DDRAW_LLVM -DHAVE_UDIS86
 
 # override -std=c99
 CFLAGS += -std=gnu99

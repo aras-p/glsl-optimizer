@@ -79,9 +79,10 @@ Help(opts.GenerateHelpText(env))
 # replicate options values in local variables
 debug = env['debug']
 dri = env['dri']
-llvm = env['llvm']
 machine = env['machine']
 platform = env['platform']
+drawllvm = 'llvmpipe' in env['drivers']
+
 
 # derived options
 x86 = machine == 'x86'
@@ -94,7 +95,7 @@ Export([
 	'x86', 
 	'ppc', 
 	'dri', 
-	'llvm',
+	'drawllvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -165,13 +166,12 @@ if dri:
 		'GLX_INDIRECT_RENDERING',
 	])
 
-# LLVM
-if llvm:
+# LLVM support in the Draw module
+if drawllvm:
 	# See also http://www.scons.org/wiki/UsingPkgConfig
-	env.ParseConfig('llvm-config --cflags --ldflags --libs backend bitreader engine instrumentation interpreter ipo')
-	env.Append(CPPDEFINES = ['MESA_LLVM'])
-        # Force C++ linkage
-	env['LINK'] = env['CXX']
+        # currently  --ldflags --libsdisabled since the driver will force the correct linkage
+	env.ParseConfig('llvm-config --cflags backend bitreader engine instrumentation interpreter ipo')
+	env.Append(CPPDEFINES = ['DRAW_LLVM'])
 
 # libGL
 if platform in ('linux', 'freebsd', 'darwin'):

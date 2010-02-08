@@ -38,7 +38,7 @@
 #include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 
-#include "lp_bld_format.h"
+#include "gallivm/lp_bld_format.h"
 #include "lp_test.h"
 
 

@@ -166,16 +166,31 @@ source = [
     'vl/vl_shader_build.c',
 ]
 
-if env['llvm']:
+if drawllvm:
     source += [
-        'gallivm/gallivm.cpp',
-        'gallivm/gallivm_cpu.cpp',
-        'gallivm/instructions.cpp',
-        'gallivm/loweringpass.cpp',
-        'gallivm/tgsitollvm.cpp',
-        'gallivm/storage.cpp',
-        'gallivm/storagesoa.cpp',
-        'gallivm/instructionssoa.cpp',
+    'gallivm/lp_bld_alpha.c',
+    'gallivm/lp_bld_arit.c',
+    'gallivm/lp_bld_blend_aos.c',
+    'gallivm/lp_bld_blend_logicop.c',
+    'gallivm/lp_bld_blend_soa.c',
+    'gallivm/lp_bld_const.c',
+    'gallivm/lp_bld_conv.c',
+    'gallivm/lp_bld_debug.c',
+    'gallivm/lp_bld_depth.c',
+    'gallivm/lp_bld_flow.c',
+    'gallivm/lp_bld_format_aos.c',
+    'gallivm/lp_bld_format_query.c',
+    'gallivm/lp_bld_format_soa.c',
+    'gallivm/lp_bld_interp.c',
+    'gallivm/lp_bld_intr.c',
+    'gallivm/lp_bld_logic.c',
+    'gallivm/lp_bld_pack.c',
+    'gallivm/lp_bld_sample.c',
+    'gallivm/lp_bld_sample_soa.c',
+    'gallivm/lp_bld_struct.c',
+    'gallivm/lp_bld_swizzle.c',
+    'gallivm/lp_bld_tgsi_soa.c',
+    'gallivm/lp_bld_type.c',
     ]
 
 gallium = env.ConvenienceLibrary(

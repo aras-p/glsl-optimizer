@@ -36,8 +36,8 @@
 
 #include "util/u_cpu_detect.h"
 
-#include "lp_bld_const.h"
-#include "lp_bld_misc.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_misc.h"
 #include "lp_test.h"
 
 

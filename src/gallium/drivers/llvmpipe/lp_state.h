@@ -36,7 +36,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_jit.h"
-#include "lp_bld_sample.h" /* for struct lp_sampler_static_state */
+#include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
 
 
 #define LP_NEW_VIEWPORT      0x1

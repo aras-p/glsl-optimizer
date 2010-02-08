@@ -42,10 +42,10 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
-#include "lp_bld_debug.h"
-#include "lp_bld_type.h"
-#include "lp_bld_sample.h"
-#include "lp_bld_tgsi.h"
+#include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_sample.h"
+#include "gallivm/lp_bld_tgsi.h"
 #include "lp_jit.h"
 #include "lp_tex_sample.h"
 

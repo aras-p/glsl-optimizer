@@ -48,8 +48,6 @@
 
 
 struct pipe_context;
-struct gallivm_prog;
-struct gallivm_cpu_engine;
 struct draw_vertex_shader;
 struct draw_context;
 struct draw_stage;
@@ -192,10 +190,6 @@ struct draw_context
 
       uint num_samplers;
       struct tgsi_sampler **samplers;
-
-      /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
-       */
-      struct gallivm_cpu_engine *engine;   
 
       /* Here's another one:
        */

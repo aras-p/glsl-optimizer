@@ -130,39 +130,38 @@ C_SOURCES = \
 	vl/vl_shader_build.c
 
 GALLIVM_SOURCES = \
-	gallivm/gallivm.cpp  \
-	gallivm/gallivm_cpu.cpp \
-	gallivm/instructions.cpp  \
-	gallivm/loweringpass.cpp \
-	gallivm/tgsitollvm.cpp \
-	gallivm/storage.cpp \
-	gallivm/storagesoa.cpp \
-	gallivm/instructionssoa.cpp
+        gallivm/lp_bld_alpha.c \
+        gallivm/lp_bld_arit.c \
+        gallivm/lp_bld_blend_aos.c \
+        gallivm/lp_bld_blend_logicop.c \
+        gallivm/lp_bld_blend_soa.c \
+        gallivm/lp_bld_const.c \
+        gallivm/lp_bld_conv.c \
+        gallivm/lp_bld_debug.c \
+        gallivm/lp_bld_depth.c \
+        gallivm/lp_bld_flow.c \
+        gallivm/lp_bld_format_aos.c \
+        gallivm/lp_bld_format_query.c \
+        gallivm/lp_bld_format_soa.c \
+        gallivm/lp_bld_interp.c \
+        gallivm/lp_bld_intr.c \
+        gallivm/lp_bld_logic.c \
+        gallivm/lp_bld_pack.c \
+        gallivm/lp_bld_sample.c \
+        gallivm/lp_bld_sample_soa.c \
+        gallivm/lp_bld_struct.c \
+        gallivm/lp_bld_swizzle.c \
+        gallivm/lp_bld_tgsi_soa.c \
+        gallivm/lp_bld_type.c
 
-INC_SOURCES = \
-	gallivm/gallivm_builtins.cpp \
-	gallivm/gallivmsoabuiltins.cpp
 
-# XXX: gallivm doesn't build correctly so disable for now
-#ifeq ($(MESA_LLVM),1)
-#DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
-#CPP_SOURCES += \
-#	$(GALLIVM_SOURCES)
-#endif
+ifeq ($(MESA_LLVM),1)
+C_SOURCES += \
+	$(GALLIVM_SOURCES)
+endif
 
 
 include ../Makefile.template
-
-
-gallivm/gallivm_builtins.cpp: gallivm/llvm_builtins.c
-	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts > temp1.bin
-	(echo "static const unsigned char llvm_builtins_data[] = {"; od -txC temp1.bin | sed -e "s/^[0-9]*//" -e s"/ \([0-9a-f][0-9a-f]\)/0x\1,/g" -e"\$$d" | sed -e"\$$s/,$$/,0x00};/") >$@
-	rm temp1.bin
-
-gallivm/gallivmsoabuiltins.cpp: gallivm/soabuiltins.c
-	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts > temp2.bin
-	(echo "static const unsigned char soabuiltins_data[] = {"; od -txC temp2.bin | sed -e "s/^[0-9]*//" -e s"/ \([0-9a-f][0-9a-f]\)/0x\1,/g" -e"\$$d" | sed -e"\$$s/,$$/,0x00};/") >$@
-	rm temp2.bin
 
 
 indices/u_indices_gen.c: indices/u_indices_gen.py

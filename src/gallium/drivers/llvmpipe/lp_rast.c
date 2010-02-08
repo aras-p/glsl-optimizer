@@ -37,7 +37,7 @@
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
-#include "lp_bld_debug.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_scene.h"
 
 

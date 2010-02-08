@@ -36,7 +36,7 @@
 #define LP_JIT_H
 
 
-#include "lp_bld_struct.h"
+#include "gallivm/lp_bld_struct.h"
 
 #include "pipe/p_state.h"
 

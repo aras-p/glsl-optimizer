@@ -42,11 +42,8 @@
 
 #ifdef MESA_LLVM
 
-#include "gallivm/gallivm.h"
-
 struct draw_llvm_vertex_shader {
    struct draw_vertex_shader base;
-   struct gallivm_prog *llvm_prog;
    struct tgsi_exec_machine *machine;
 };
 
@@ -56,8 +53,6 @@ vs_llvm_prepare( struct draw_vertex_shader *base,
 		 struct draw_context *draw )
 {
 }
-
-
 
 
 static void
@@ -71,11 +66,6 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 {
    struct draw_llvm_vertex_shader *shader =
       (struct draw_llvm_vertex_shader *)base;
-
-   gallivm_cpu_vs_exec(shader->llvm_prog, shader->machine,
-                       input, base->info.num_inputs, output, base->info.num_outputs,
-                       (const float (*)[4])constants[0],
-                       count, input_stride, output_stride);
 }
 
 
@@ -121,27 +111,6 @@ draw_create_vs_llvm(struct draw_context *draw,
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
    vs->machine = draw->vs.machine;
-
-   {
-      struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
-      gallivm_ir_set_layout(ir, GALLIVM_SOA);
-      gallivm_ir_set_components(ir, 4);
-      gallivm_ir_fill_from_tgsi(ir, vs->base.state.tokens);
-      vs->llvm_prog = gallivm_ir_compile(ir);
-      gallivm_ir_delete(ir);
-   }
-
-   draw->vs.engine = gallivm_global_cpu_engine();
-
-   /* XXX: Why are there two versions of this?  Shouldn't creating the
-    *      engine be a separate operation to compiling a shader?
-    */
-   if (!draw->vs.engine) {
-      draw->vs.engine = gallivm_cpu_engine_create(vs->llvm_prog);
-   }
-   else {
-      gallivm_cpu_jit_compile(draw->vs.engine, vs->llvm_prog);
-   }
 
    return &vs->base;
 }
