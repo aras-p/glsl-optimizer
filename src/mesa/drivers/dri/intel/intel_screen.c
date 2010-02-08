@@ -388,6 +388,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    depth_bits[0] = 0;
    stencil_bits[0] = 0;
 
+   /* Generate a rich set of useful configs that do not include an
+    * accumulation buffer.
+    */
    for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
       __DRIconfig **new_configs;
       int depth_factor;
@@ -414,6 +417,31 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 				     ARRAY_SIZE(back_buffer_modes),
 				     msaa_samples_array,
 				     ARRAY_SIZE(msaa_samples_array),
+				     GL_FALSE);
+      if (configs == NULL)
+	 configs = new_configs;
+      else
+	 configs = driConcatConfigs(configs, new_configs);
+   }
+
+   /* Generate the minimum possible set of configs that include an
+    * accumulation buffer.
+    */
+   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+      __DRIconfig **new_configs;
+
+      if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
+	 depth_bits[0] = 16;
+	 stencil_bits[0] = 0;
+      } else {
+	 depth_bits[0] = 24;
+	 stencil_bits[0] = 8;
+      }
+
+      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+				     depth_bits, stencil_bits, 1,
+				     back_buffer_modes + 1, 1,
+				     msaa_samples_array, 1,
 				     GL_TRUE);
       if (configs == NULL)
 	 configs = new_configs;
