@@ -157,7 +157,8 @@ dri_fill_in_modes(struct dri_screen *screen,
 				 depth_bits_array, stencil_bits_array,
 				 depth_buffer_factor, back_buffer_modes,
 				 back_buffer_factor,
-				 msaa_samples_array, msaa_samples_factor);
+				 msaa_samples_array, msaa_samples_factor,
+				 GL_TRUE);
    } else {
       __DRIconfig **configs_a8r8g8b8 = NULL;
       __DRIconfig **configs_x8r8g8b8 = NULL;
@@ -170,7 +171,8 @@ dri_fill_in_modes(struct dri_screen *screen,
 					     back_buffer_modes,
 					     back_buffer_factor,
 					     msaa_samples_array,
-                                             msaa_samples_factor);
+                                             msaa_samples_factor,
+					     GL_TRUE);
       if (pf_x8r8g8b8)
 	 configs_x8r8g8b8 = driCreateConfigs(GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV,
 					     depth_bits_array,
@@ -179,7 +181,8 @@ dri_fill_in_modes(struct dri_screen *screen,
 					     back_buffer_modes,
 					     back_buffer_factor,
 					     msaa_samples_array,
-                                             msaa_samples_factor);
+                                             msaa_samples_factor,
+					     GL_TRUE);
 
       if (configs_a8r8g8b8 && configs_x8r8g8b8)
 	 configs = driConcatConfigs(configs_x8r8g8b8, configs_a8r8g8b8);

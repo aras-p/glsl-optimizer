@@ -413,7 +413,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 				     back_buffer_modes,
 				     ARRAY_SIZE(back_buffer_modes),
 				     msaa_samples_array,
-				     ARRAY_SIZE(msaa_samples_array));
+				     ARRAY_SIZE(msaa_samples_array),
+				     GL_TRUE);
       if (configs == NULL)
 	 configs = new_configs;
       else

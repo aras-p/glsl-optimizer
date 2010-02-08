@@ -424,7 +424,8 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
 		 const GLenum * db_modes, unsigned num_db_modes,
-		 const uint8_t * msaa_samples, unsigned num_msaa_modes)
+		 const uint8_t * msaa_samples, unsigned num_msaa_modes,
+		 GLboolean enable_accum)
 {
    static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
@@ -486,7 +487,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    __GLcontextModes *modes;
    unsigned i, j, k, h;
    unsigned num_modes;
-   unsigned num_accum_bits = 2;
+   unsigned num_accum_bits = (enable_accum) ? 2 : 1;
 
    switch ( fb_type ) {
       case GL_UNSIGNED_BYTE_3_3_2:
