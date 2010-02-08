@@ -399,16 +399,13 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
 	 depth_bits[1] = 16;
 	 stencil_bits[1] = 0;
-
-	 depth_factor = 2;
       } else {
 	 depth_bits[1] = 24;
-	 stencil_bits[1] = 0;
-	 depth_bits[2] = 24;
-	 stencil_bits[2] = 8;
-
-	 depth_factor = 3;
+	 stencil_bits[1] = 8;
       }
+
+      depth_factor = 2;
+
       new_configs = driCreateConfigs(fb_format[color], fb_type[color],
 				     depth_bits,
 				     stencil_bits,
