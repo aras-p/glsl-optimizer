@@ -166,10 +166,8 @@ dri_make_current(__DRIcontext * cPriv,
       if (__dri1_api_hooks) {
 	 dri1_update_drawables(ctx, draw, read);
       } else {
-	 if (driDrawPriv)
-	    dri_get_buffers(driDrawPriv);
-	 if (driDrawPriv != driReadPriv && driReadPriv)
-	    dri_get_buffers(driReadPriv);
+	 dri_update_buffer(ctx->pipe->screen,
+			   ctx->pipe->priv);
       }
    } else {
       st_make_current(NULL, NULL, NULL);

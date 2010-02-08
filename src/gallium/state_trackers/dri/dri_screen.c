@@ -61,6 +61,17 @@ static const __DRItexBufferExtension dri2TexBufferExtension = {
    dri2_set_tex_buffer2,
 };
 
+static void
+dri2_flush_drawable(__DRIdrawable *draw)
+{
+}
+
+static const __DRI2flushExtension dri2FlushExtension = {
+    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+    dri2_flush_drawable,
+    dri2InvalidateDrawable,
+};
+
    static const __DRIextension *dri_screen_extensions[] = {
       &driReadDrawableExtension,
       &driCopySubBufferExtension.base,
@@ -68,6 +79,7 @@ static const __DRItexBufferExtension dri2TexBufferExtension = {
       &driFrameTrackingExtension.base,
       &driMediaStreamCounterExtension.base,
       &dri2TexBufferExtension.base,
+      &dri2FlushExtension.base,
       NULL
    };
 

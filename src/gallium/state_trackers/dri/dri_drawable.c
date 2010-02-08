@@ -284,7 +284,20 @@ dri_update_buffer(struct pipe_screen *screen, void *context_private)
 {
    struct dri_context *ctx = (struct dri_context *)context_private;
 
+   if (ctx->d_stamp == *ctx->dPriv->pStamp &&
+       ctx->r_stamp == *ctx->rPriv->pStamp)
+      return;
+
+   ctx->d_stamp = *ctx->dPriv->pStamp;
+   ctx->r_stamp = *ctx->rPriv->pStamp;
+
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* Ask the X server for new renderbuffers. */
    dri_get_buffers(ctx->dPriv);
+   if (ctx->dPriv != ctx->rPriv)
+      dri_get_buffers(ctx->rPriv);
+
 }
 
 void

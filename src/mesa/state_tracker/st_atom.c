@@ -35,7 +35,8 @@
 #include "st_cb_bitmap.h"
 #include "st_program.h"
 
-       
+#include "pipe/p_context.h"
+
 
 /**
  * This is used to initialize st->atoms[].
@@ -134,6 +135,10 @@ void st_validate_state( struct st_context *st )
       st_flush_bitmap_cache(st);
 
    check_program_state( st );
+
+   if (st->pipe->screen->update_buffer)
+      st->pipe->screen->update_buffer(st->pipe->screen,
+				      st->pipe->priv);
 
    if (state->st == 0)
       return;
