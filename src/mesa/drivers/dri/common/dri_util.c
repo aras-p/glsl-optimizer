@@ -454,7 +454,6 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
     pdp->driScreenPriv = psp;
     pdp->driContextPriv = &psp->dummyContextPriv;
-    pdp->validBuffers = GL_FALSE;
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes,
 					renderType == GLX_PIXMAP_BIT)) {
@@ -487,6 +486,9 @@ dri2CreateNewDrawable(__DRIscreen *screen,
 
     pdraw->pClipRects = &pdraw->dri2.clipRect;
     pdraw->pBackClipRects = &pdraw->dri2.clipRect;
+
+    pdraw->pStamp = &pdraw->dri2.stamp;
+    *pdraw->pStamp = pdraw->lastStamp + 1;
 
     return pdraw;
 }
@@ -947,6 +949,12 @@ driCalculateSwapUsage( __DRIdrawable *dPriv, int64_t last_swap_ust,
    }
    
    return usage;
+}
+
+void
+dri2InvalidateDrawable(__DRIdrawable *drawable)
+{
+    drawable->dri2.stamp++;
 }
 
 /*@}*/

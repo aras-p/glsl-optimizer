@@ -123,22 +123,19 @@ intelDRI2Flush(__DRIdrawable *drawable)
 }
 
 static void
-intelDRI2FlushInvalidate(__DRIdrawable *drawable)
+intelDRI2Invalidate(__DRIdrawable *drawable)
 {
    struct intel_context *intel = drawable->driContextPriv->driverPrivate;
 
    intel->using_dri2_swapbuffers = GL_TRUE;
-
-   intelDRI2Flush(drawable);
-   drawable->validBuffers = GL_FALSE;
-
+   dri2InvalidateDrawable(drawable);
    intel_update_renderbuffers(intel->driContext, drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     intelDRI2Flush,
-    intelDRI2FlushInvalidate,
+    intelDRI2Invalidate,
 };
 
 static const __DRIextension *intelScreenExtensions[] = {

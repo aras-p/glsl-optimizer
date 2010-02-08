@@ -366,8 +366,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
    }
 
-   drawable->validBuffers = GL_TRUE;
    driUpdateFramebufferSize(&intel->ctx, drawable);
+   drawable->lastStamp = drawable->dri2.stamp;
 }
 
 void

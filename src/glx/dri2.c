@@ -81,7 +81,7 @@ static XEXT_GENERATE_FIND_DISPLAY (DRI2FindDisplay,
                                    dri2Info,
                                    dri2ExtensionName,
                                    &dri2ExtensionHooks,
-                                   1, NULL)
+                                   DRI2NumberEvents, NULL)
 
 static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
@@ -126,7 +126,15 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       return True;
    }
 #endif
+#ifdef DRI2_InvalidateBuffers
+   case DRI2_InvalidateBuffers:
+   {
+      xDRI2InvalidateBuffers *awire = (xDRI2InvalidateBuffers *)wire;
 
+      dri2InvalidateBuffers(dpy, awire->drawable);
+      return False;
+   }
+#endif
    default:
       /* client doesn't support server event */
       break;

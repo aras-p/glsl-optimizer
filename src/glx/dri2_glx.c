@@ -67,6 +67,7 @@ struct __GLXDRIdisplayPrivateRec
    int driMinor;
    int driPatch;
    int swapAvailable;
+   int invalidateAvailable;
 };
 
 struct __GLXDRIcontextPrivateRec
@@ -310,12 +311,18 @@ dri2WaitGL(__GLXDRIdrawable * pdraw)
    XFixesDestroyRegion(pdraw->psc->dpy, region);
 }
 
-
 static void
-dri2FlushFrontBuffer(__DRIdrawable * driDrawable, void *loaderPrivate)
+dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
-   (void) driDrawable;
-   dri2WaitGL((__GLXDRIdrawable *) loaderPrivate);
+   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+   __GLXdisplayPrivate *priv = __glXInitialize(pdraw->base.psc->dpy);
+   __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *)priv->dri2Display;
+
+   /* Old servers don't send invalidate events */
+   if (!pdp->invalidateAvailable)
+       dri2InvalidateBuffers(priv->dpy, pdraw->base.xDrawable);
+
+   dri2WaitGL(loaderPrivate);
 }
 
 
@@ -375,6 +382,10 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     	(*pdraw->psc->f->flush)(pdraw->driDrawable);
 #endif
 
+    /* Old servers don't send invalidate events */
+    if (!pdp->invalidateAvailable)
+       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->xDrawable);
+
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
        dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
@@ -384,11 +395,6 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 #ifdef X_DRI2SwapBuffers
     DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
 		    remainder, &ret);
-#endif
-
-#if __DRI2_FLUSH_VERSION >= 2
-    if (pdraw->psc->f)
-       (*pdraw->psc->f->flushInvalidate)(pdraw->driDrawable);
 #endif
 
     return ret;
@@ -484,6 +490,17 @@ static const __DRIextension *loader_extensions_old[] = {
    &systemTimeExtension.base,
    NULL
 };
+
+_X_HIDDEN void
+dri2InvalidateBuffers(Display *dpy, XID drawable)
+{
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+
+#if __DRI2_FLUSH_VERSION >= 3
+   if (pdraw && pdraw->psc->f)
+       pdraw->psc->f->invalidate(pdraw->driDrawable);
+#endif
+}
 
 static __GLXDRIscreen *
 dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
@@ -651,11 +668,8 @@ dri2CreateDisplay(Display * dpy)
    }
 
    pdp->driPatch = 0;
-   pdp->swapAvailable = 0;
-#ifdef X_DRI2SwapBuffers
-   if (pdp->driMinor >= 2)
-      pdp->swapAvailable = 1;
-#endif
+   pdp->swapAvailable = (pdp->driMinor >= 2);
+   pdp->invalidateAvailable = (pdp->driMinor >= 3);
 
    pdp->base.destroyDisplay = dri2DestroyDisplay;
    pdp->base.createScreen = dri2CreateScreen;

@@ -182,6 +182,8 @@ struct __GLXDRIdrawableRec
 extern __GLXDRIdisplay *driswCreateDisplay(Display * dpy);
 extern __GLXDRIdisplay *driCreateDisplay(Display * dpy);
 extern __GLXDRIdisplay *dri2CreateDisplay(Display * dpy);
+extern void dri2InvalidateBuffers(Display *dpy, XID drawable);
+
 
 extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
 
