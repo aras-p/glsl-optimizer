@@ -41,6 +41,7 @@
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <X11/extensions/dri2proto.h>
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 

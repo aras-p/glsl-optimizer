@@ -37,6 +37,7 @@
 #include <X11/extensions/Xdamage.h>
 #include "glapi.h"
 #include "glxclient.h"
+#include <X11/extensions/dri2proto.h>
 #include "xf86dri.h"
 #include <dlfcn.h>
 #include <fcntl.h>
