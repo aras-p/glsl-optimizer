@@ -132,6 +132,9 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
     if (is_r3xx(rwinsys->pci_id)) {
         radeon_setup_winsys(drmFB, rwinsys);
         return r300_create_screen(rwinsys);
+    } else {
+        FREE(rwinsys);
+        return NULL;
     }
 }
 
