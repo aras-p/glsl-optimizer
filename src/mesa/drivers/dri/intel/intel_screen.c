@@ -401,9 +401,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       __DRIconfig **new_configs;
       int depth_factor;
 
-      /* With DRI2 right now, GetBuffers always returns a depth/stencil buffer
-       * with the same cpp as the drawable.  So we can't support depth cpp !=
-       * color cpp currently.
+      /* Starting with DRI2 protocol version 1.1 we can request a depth/stencil
+       * buffer that has a diffferent number of bits per pixel than the color
+       * buffer.  This isn't yet supported here.
        */
       if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
 	 depth_bits[1] = 16;
