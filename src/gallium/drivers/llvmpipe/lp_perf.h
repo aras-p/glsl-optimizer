@@ -51,6 +51,10 @@ struct lp_counters
    unsigned nr_non_empty_4;
    unsigned nr_llvm_compiles;
    int64_t llvm_compile_time;  /**< total, in microseconds */
+
+   unsigned nr_color_tile_clear;
+   unsigned nr_color_tile_load;
+   unsigned nr_color_tile_store;
 };
 
 

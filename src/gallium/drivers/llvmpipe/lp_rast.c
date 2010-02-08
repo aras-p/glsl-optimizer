@@ -34,6 +34,7 @@
 #include "lp_scene_queue.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
+#include "lp_perf.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
@@ -215,6 +216,8 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
          assert(c - color_tile[i] == TILE_SIZE * TILE_SIZE * 4);
       }
    }
+
+   LP_COUNT(nr_color_tile_clear);
 }
 
 
@@ -273,6 +276,8 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 		       transfer->stride,
 		       x, y,
 		       w, h);
+
+      LP_COUNT(nr_color_tile_load);
    }
 }
 
@@ -546,6 +551,8 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 			transfer->stride,
 			x, y,
 			w, h);
+
+      LP_COUNT(nr_color_tile_store);
    }
 }
 
