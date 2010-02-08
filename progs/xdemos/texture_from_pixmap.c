@@ -86,7 +86,7 @@ ChoosePixmapFBConfig(Display *display)
 {
    int screen = DefaultScreen(display);
    GLXFBConfig *fbconfigs;
-   int i, nfbconfigs, value;
+   int i, nfbconfigs = 0, value;
 
    fbconfigs = glXGetFBConfigs(display, screen, &nfbconfigs);
    for (i = 0; i < nfbconfigs; i++) {
