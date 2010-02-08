@@ -492,16 +492,6 @@ ximage_display_create_pbuffer_surface(struct native_display *ndpy,
    return (xsurf) ? &xsurf->base : NULL;
 }
 
-static struct pipe_context *
-ximage_display_create_context(struct native_display *ndpy,
-                              void *context_private)
-{
-   struct pipe_context *pctx = softpipe_create(ndpy->screen);
-   if (pctx)
-      pctx->priv = context_private;
-   return pctx;
-}
-
 static enum pipe_format
 choose_format(const XVisualInfo *vinfo)
 {
@@ -686,7 +676,6 @@ x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
-   xdpy->base.create_context = ximage_display_create_context;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
    xdpy->base.create_pbuffer_surface = ximage_display_create_pbuffer_surface;

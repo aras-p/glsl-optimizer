@@ -469,31 +469,12 @@ fail:
 }
 
 
-static struct pipe_context *
-xlib_create_i965_context( struct pipe_screen *screen,
-                          void *context_private )
-{
-   struct pipe_context *pipe;
-   
-   pipe = brw_create_context(screen);
-   if (pipe == NULL)
-      goto fail;
-
-   pipe->priv = context_private;
-   return pipe;
-
-fail:
-   /* Free stuff here */
-   return NULL;
-}
-
 
 
 
 struct xm_driver xlib_i965_driver = 
 {
    .create_pipe_screen = xlib_create_i965_screen,
-   .create_pipe_context = xlib_create_i965_context,
    .display_surface = xlib_i965_display_surface
 };
 

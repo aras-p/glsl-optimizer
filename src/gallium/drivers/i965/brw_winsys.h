@@ -256,10 +256,6 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
  */
 struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws, unsigned pci_id);
 
-/**
- * Create a brw pipe_context.
- */
-struct pipe_context *brw_create_context(struct pipe_screen *screen);
 
 /**
  * Get the brw_winsys buffer backing the texture.

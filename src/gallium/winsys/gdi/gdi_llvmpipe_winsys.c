@@ -216,11 +216,6 @@ no_winsys:
 }
 
 
-static struct pipe_context *
-gdi_llvmpipe_context_create(struct pipe_screen *screen)
-{
-   return llvmpipe_create(screen);
-}
 
 
 static void
@@ -243,7 +238,6 @@ gdi_llvmpipe_present(struct pipe_screen *screen,
 
 static const struct stw_winsys stw_winsys = {
    &gdi_llvmpipe_screen_create,
-   &gdi_llvmpipe_context_create,
    &gdi_llvmpipe_present,
    NULL, /* get_adapter_luid */
    NULL, /* shared_surface_open */

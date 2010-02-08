@@ -183,7 +183,7 @@ static void i915_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-i915_create_context(struct pipe_screen *screen)
+i915_create_context(struct pipe_screen *screen, void *priv)
 {
    struct i915_context *i915;
 
@@ -194,6 +194,7 @@ i915_create_context(struct pipe_screen *screen)
    i915->iws = i915_screen(screen)->iws;
    i915->base.winsys = NULL;
    i915->base.screen = screen;
+   i915->base.priv = priv;
 
    i915->base.destroy = i915_destroy;
 

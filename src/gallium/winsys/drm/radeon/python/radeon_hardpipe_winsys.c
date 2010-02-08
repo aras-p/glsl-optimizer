@@ -124,17 +124,9 @@ error:
 }
 
 
-static struct pipe_context *
-radeon_hardpipe_context_create(struct pipe_screen *screen)
-{
-   /* FIXME: create a radon pipe_context from screen */
-
-   return NULL;
-}
 
 
 const struct st_winsys st_hardpipe_winsys = {
    &radeon_hardpipe_screen_create,
-   &radeon_hardpipe_context_create,
 };
 

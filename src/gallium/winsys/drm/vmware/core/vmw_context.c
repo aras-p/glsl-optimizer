@@ -380,8 +380,3 @@ vmw_svga_winsys_context_create(struct svga_winsys_screen *sws)
 }
 
 
-struct pipe_context *
-vmw_svga_context_create(struct pipe_screen *screen)
-{
-   return svga_context_create(screen);
-}

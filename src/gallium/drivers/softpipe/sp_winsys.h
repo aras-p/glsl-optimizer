@@ -47,7 +47,6 @@ struct pipe_texture;
 struct pipe_buffer;
 
 
-struct pipe_context *softpipe_create( struct pipe_screen * );
 
 /**
  * Create a softpipe screen that uses the

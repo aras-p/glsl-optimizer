@@ -104,7 +104,7 @@ llvmpipe_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 struct pipe_context *
-llvmpipe_create( struct pipe_screen *screen )
+llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 {
    struct llvmpipe_context *llvmpipe;
 
@@ -118,6 +118,7 @@ llvmpipe_create( struct pipe_screen *screen )
 
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
+   llvmpipe->pipe.priv = priv;
    llvmpipe->pipe.destroy = llvmpipe_destroy;
 
    /* state setters */

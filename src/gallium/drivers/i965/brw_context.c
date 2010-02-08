@@ -102,7 +102,8 @@ static void brw_destroy_context( struct pipe_context *pipe )
 }
 
 
-struct pipe_context *brw_create_context(struct pipe_screen *screen)
+struct pipe_context *brw_create_context(struct pipe_screen *screen,
+					void *priv)
 {
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
 
@@ -112,6 +113,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen)
    }
 
    brw->base.screen = screen;
+   brw->base.priv = priv;
    brw->base.destroy = brw_destroy_context;
    brw->sws = brw_screen(screen)->sws;
    brw->chipset = brw_screen(screen)->chipset;

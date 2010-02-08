@@ -32,6 +32,7 @@
 
 #include "id_public.h"
 #include "id_screen.h"
+#include "id_context.h"
 #include "id_objects.h"
 
 
@@ -101,6 +102,20 @@ identity_screen_is_format_supported(struct pipe_screen *_screen,
                                       target,
                                       tex_usage,
                                       geom_flags);
+}
+
+static struct pipe_context *
+identity_screen_context_create(struct pipe_screen *_screen,
+                               void *priv)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct pipe_screen *screen = id_screen->screen;
+   struct pipe_context *result;
+
+   result = screen->context_create(screen, priv);
+   if (result)
+      return identity_context_create(_screen, result);
+   return NULL;
 }
 
 static struct pipe_texture *
@@ -478,6 +493,7 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.get_param = identity_screen_get_param;
    id_screen->base.get_paramf = identity_screen_get_paramf;
    id_screen->base.is_format_supported = identity_screen_is_format_supported;
+   id_screen->base.context_create = identity_screen_context_create;
    id_screen->base.texture_create = identity_screen_texture_create;
    id_screen->base.texture_blanket = identity_screen_texture_blanket;
    id_screen->base.texture_destroy = identity_screen_texture_destroy;

@@ -33,6 +33,8 @@ struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
+    struct radeon_winsys* radeon_winsys;
+
     /* Chipset capabilities */
     struct r300_capabilities* caps;
 
@@ -59,9 +61,6 @@ r300_transfer(struct pipe_transfer* transfer)
 {
     return (struct r300_transfer*)transfer;
 }
-
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 /* Debug functionality. */
 

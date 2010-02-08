@@ -419,25 +419,6 @@ fail:
 }
 
 
-static struct pipe_context *
-xlib_create_llvmpipe_context( struct pipe_screen *screen,
-                              void *context_private )
-{
-   struct pipe_context *pipe;
-   
-   pipe = llvmpipe_create(screen);
-   if (pipe == NULL)
-      goto fail;
-
-   pipe->priv = context_private;
-   return pipe;
-
-fail:
-   /* Free stuff here */
-   return NULL;
-}
-
-
 static void
 xlib_llvmpipe_display_surface(struct xmesa_buffer *xm_buffer,
                               struct pipe_surface *surf)
@@ -453,7 +434,6 @@ xlib_llvmpipe_display_surface(struct xmesa_buffer *xm_buffer,
 struct xm_driver xlib_llvmpipe_driver = 
 {
    .create_pipe_screen = xlib_create_llvmpipe_screen,
-   .create_pipe_context = xlib_create_llvmpipe_context,
    .display_surface = xlib_llvmpipe_display_surface
 };
 

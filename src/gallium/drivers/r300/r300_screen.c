@@ -30,6 +30,7 @@
 #include "r300_texture.h"
 
 #include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -391,6 +392,7 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
+    r300screen->radeon_winsys = radeon_winsys;
     r300screen->screen.winsys = (struct pipe_winsys*)radeon_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
@@ -398,6 +400,7 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     r300screen->screen.get_param = r300_get_param;
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
+    r300screen->screen.context_create = r300_create_context;
     r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
     r300screen->screen.tex_transfer_destroy = r300_tex_transfer_destroy;
     r300screen->screen.transfer_map = r300_transfer_map;

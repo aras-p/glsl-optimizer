@@ -203,10 +203,6 @@ struct intel_winsys {
  */
 struct pipe_screen *i915_create_screen(struct intel_winsys *iws, unsigned pci_id);
 
-/**
- * Create a i915 pipe_context.
- */
-struct pipe_context *i915_create_context(struct pipe_screen *screen);
 
 /**
  * Get the intel_winsys buffer backing the texture.

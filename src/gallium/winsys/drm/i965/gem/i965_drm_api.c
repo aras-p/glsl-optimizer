@@ -212,11 +212,6 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD,
    return brw_create_screen(&idws->base, deviceID);
 }
 
-static struct pipe_context *
-i965_libdrm_create_context(struct drm_api *api, struct pipe_screen *screen)
-{
-   return brw_create_context(screen);
-}
 
 static void
 destroy(struct drm_api *api)
@@ -229,7 +224,6 @@ destroy(struct drm_api *api)
 struct drm_api i965_libdrm_api =
 {
    .name = "i965",
-   .create_context = i965_libdrm_create_context,
    .create_screen = i965_libdrm_create_screen,
    .texture_from_shared_handle = i965_libdrm_texture_from_shared_handle,
    .shared_handle_from_texture = i965_libdrm_shared_handle_from_texture,

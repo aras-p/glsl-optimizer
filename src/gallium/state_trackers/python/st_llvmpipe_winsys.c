@@ -135,14 +135,7 @@ no_winsys:
 }
 
 
-static struct pipe_context *
-st_llvmpipe_context_create(struct pipe_screen *screen)
-{
-   return llvmpipe_create(screen);
-}
-
 
 const struct st_winsys st_softpipe_winsys = {
-   &st_llvmpipe_screen_create,
-   &st_llvmpipe_context_create,
+   &st_llvmpipe_screen_create
 };

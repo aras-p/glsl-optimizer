@@ -131,10 +131,11 @@ static void r300_setup_atoms(struct r300_context* r300)
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct radeon_winsys* radeon_winsys)
+                                         void *priv)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
+    struct radeon_winsys* radeon_winsys = r300screen->radeon_winsys;
 
     if (!r300)
         return NULL;
@@ -143,6 +144,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
+    r300->context.priv = priv;
 
     r300->context.destroy = r300_destroy_context;
 

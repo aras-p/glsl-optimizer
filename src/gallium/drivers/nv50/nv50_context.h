@@ -145,7 +145,6 @@ struct nv50_context {
 	struct pipe_context pipe;
 
 	struct nv50_screen *screen;
-	unsigned pctx_id;
 
 	struct draw_context *draw;
 
@@ -249,5 +248,9 @@ nv50_upload_sifc(struct nv50_context *nv50,
 		 unsigned dst_format, int dst_w, int dst_h, int dst_pitch,
 		 void *src, unsigned src_format, int src_pitch,
 		 int x, int y, int w, int h, int cpp);
+
+/* nv50_context.c */
+struct pipe_context *
+nv50_create(struct pipe_screen *pscreen, void *priv);
 
 #endif

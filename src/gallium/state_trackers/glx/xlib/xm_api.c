@@ -760,7 +760,6 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
-   struct pipe_context *_pipe = NULL;
    struct pipe_context *pipe = NULL;
    XMesaContext c;
    GLcontext *mesaCtx;
@@ -788,11 +787,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (screen == NULL)
       goto fail;
 
-   _pipe = driver.create_pipe_context(_screen, (void *) c);
-   if (_pipe == NULL)
+   /* Trace screen knows how to properly wrap context creation in the
+    * wrapped screen, so nothing special to do here:
+    */
+   pipe = screen->context_create(screen, (void *) c);
+   if (pipe == NULL)
       goto fail;
-   pipe = trace_context_create(screen, _pipe);
-   pipe->priv = c;
 
    c->st = st_create_context(pipe, 
                              &v->mesa_visual,

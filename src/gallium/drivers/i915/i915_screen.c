@@ -294,6 +294,8 @@ i915_create_screen(struct intel_winsys *iws, uint pci_id)
    is->base.get_paramf = i915_get_paramf;
    is->base.is_format_supported = i915_is_format_supported;
 
+   is->base.context_create = i915_create_context;
+
    is->base.fence_reference = i915_fence_reference;
    is->base.fence_signalled = i915_fence_signalled;
    is->base.fence_finish = i915_fence_finish;

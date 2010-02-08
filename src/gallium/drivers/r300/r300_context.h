@@ -336,6 +336,10 @@ static INLINE struct r300_context* r300_context(struct pipe_context* context)
     return (struct r300_context*)context;
 }
 
+
+struct pipe_context* r300_create_context(struct pipe_screen* screen,
+                                         void *priv);
+
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);

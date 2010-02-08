@@ -29,7 +29,7 @@ extern "C" {
 
 /* The public interface header for the r300 pipe driver.
  * Any winsys hosting this pipe needs to implement r300_winsys and then
- * call r300_create_context to start things. */
+ * call r300_create_screen to start things. */
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -37,8 +37,9 @@ extern "C" {
 
 #include "radeon_winsys.h"
 
-struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct radeon_winsys* radeon_winsys);
+/* Creates a new r300 screen. */
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
+
 
 boolean r300_get_texture_buffer(struct pipe_screen* screen,
                                 struct pipe_texture* texture,

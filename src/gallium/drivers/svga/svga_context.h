@@ -426,6 +426,10 @@ void svga_context_flush( struct svga_context *svga,
 
 void svga_hwtnl_flush_retry( struct svga_context *svga );
 
+struct pipe_context *
+svga_context_create(struct pipe_screen *screen,
+		    void *priv);
+
 
 /***********************************************************************
  * Inline conversion functions.  These are better-typed than the

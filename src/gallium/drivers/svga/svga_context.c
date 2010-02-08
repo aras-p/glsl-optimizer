@@ -126,7 +126,8 @@ svga_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
-struct pipe_context *svga_context_create( struct pipe_screen *screen )
+struct pipe_context *svga_context_create( struct pipe_screen *screen,
+					  void *priv )
 {
    struct svga_screen *svgascreen = svga_screen(screen);
    struct svga_context *svga = NULL;
@@ -138,6 +139,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
 
    svga->pipe.winsys = screen->winsys;
    svga->pipe.screen = screen;
+   svga->pipe.priv = priv;
    svga->pipe.destroy = svga_destroy;
    svga->pipe.clear = svga_clear;
 

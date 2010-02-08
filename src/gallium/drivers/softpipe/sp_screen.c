@@ -35,6 +35,7 @@
 #include "sp_texture.h"
 #include "sp_winsys.h"
 #include "sp_screen.h"
+#include "sp_context.h"
 
 
 static const char *
@@ -204,6 +205,7 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->base.get_param = softpipe_get_param;
    screen->base.get_paramf = softpipe_get_paramf;
    screen->base.is_format_supported = softpipe_is_format_supported;
+   screen->base.context_create = softpipe_create_context;
 
    softpipe_init_screen_texture_funcs(&screen->base);
    u_simple_screen_init(&screen->base);

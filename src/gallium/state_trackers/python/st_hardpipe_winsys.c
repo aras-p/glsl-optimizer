@@ -217,21 +217,6 @@ st_hardpipe_screen_create(void)
 }
 
 
-static struct pipe_context *
-st_hardpipe_context_create(struct pipe_screen *screen)
-{
-   if(st_hardpipe_load()) {
-      if(screen == pfnGetGalliumScreenMESA())
-         return pfnCreateGalliumContextMESA();
-      else
-         return NULL;
-   }
-   else
-      return st_softpipe_winsys.context_create(screen);
-}
-
-
 const struct st_winsys st_hardpipe_winsys = {
-   &st_hardpipe_screen_create,
-   &st_hardpipe_context_create
+   &st_hardpipe_screen_create
 };

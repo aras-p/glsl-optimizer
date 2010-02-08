@@ -137,19 +137,6 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
     }
 }
 
-/* Create a pipe_context. */
-struct pipe_context* radeon_create_context(struct drm_api* api,
-                                           struct pipe_screen* screen)
-{
-    struct radeon_winsys* rwinsys = (struct radeon_winsys*)screen->winsys;
-
-    if (!is_r3xx(rwinsys->pci_id) ||
-        debug_get_bool_option("RADEON_SOFTPIPE", FALSE)) {
-        return softpipe_create(screen);
-    } else {
-        return r300_create_context(screen, rwinsys);
-    }
-}
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
                                    struct pipe_screen* screen,
@@ -272,7 +259,6 @@ struct drm_api drm_api_hooks = {
     .name = "radeon",
     .driver_name = "radeon",
     .create_screen = radeon_create_screen,
-    .create_context = radeon_create_context,
     .texture_from_shared_handle = radeon_texture_from_shared_handle,
     .shared_handle_from_texture = radeon_shared_handle_from_texture,
     .local_handle_from_texture = radeon_local_handle_from_texture,

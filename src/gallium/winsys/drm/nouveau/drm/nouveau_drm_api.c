@@ -61,7 +61,6 @@ nouveau_drm_destroy_winsys(struct pipe_winsys *s)
 	struct nouveau_winsys *nv_winsys = nouveau_winsys(s);
 	struct nouveau_screen *nv_screen= nouveau_screen(nv_winsys->pscreen);
 	nouveau_device_close(&nv_screen->device);
-	FREE(nv_winsys->pctx);
 	FREE(nv_winsys);
 }
 
@@ -143,49 +142,6 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	return nvws->pscreen;
 }
 
-static struct pipe_context *
-nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
-{
-	struct nouveau_winsys *nvws = nouveau_winsys_screen(pscreen);
-	struct pipe_context *(*init)(struct pipe_screen *, unsigned);
-	unsigned chipset = nouveau_screen(pscreen)->device->chipset;
-	int i;
-
-	switch (chipset & 0xf0) {
-	case 0x30:
-		init = nv30_create;
-		break;
-	case 0x40:
-	case 0x60:
-		init = nv40_create;
-		break;
-	case 0x50:
-	case 0x80:
-	case 0x90:
-	case 0xa0:
-		init = nv50_create;
-		break;
-	default:
-		debug_printf("%s: unknown chipset nv%02x\n", __func__, chipset);
-		return NULL;
-	}
-
-	/* Find a free slot for a pipe context, allocate a new one if needed */
-	for (i = 0; i < nvws->nr_pctx; i++) {
-		if (nvws->pctx[i] == NULL)
-			break;
-	}
-
-	if (i == nvws->nr_pctx) {
-		nvws->nr_pctx++;
-		nvws->pctx = realloc(nvws->pctx,
-				      sizeof(*nvws->pctx) * nvws->nr_pctx);
-	}
-
-	nvws->pctx[i] = init(pscreen, i);
-	return nvws->pctx[i];
-}
-
 static struct pipe_texture *
 nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
 			 struct pipe_texture *templ, const char *name,
@@ -251,7 +207,6 @@ struct drm_api drm_api_hooks = {
 	.name = "nouveau",
 	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
-	.create_context = nouveau_drm_create_context,
 	.texture_from_shared_handle = nouveau_drm_pt_from_name,
 	.shared_handle_from_texture = nouveau_drm_name_from_pt,
 	.local_handle_from_texture = nouveau_drm_handle_from_pt,

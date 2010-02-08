@@ -50,7 +50,6 @@ struct st_surface
 struct st_context {
    struct st_device *st_dev;
    
-   struct pipe_context *real_pipe;
    struct pipe_context *pipe;
    
    struct cso_context *cso;

@@ -69,13 +69,11 @@ dri_create_context(const __GLcontextModes * visual,
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
-   ctx->pipe = screen->api->create_context(screen->api, screen->pipe_screen);
+   ctx->pipe = screen->pipe_screen->create_context( screen->pipe_screen,
+						    ctx );
 
    if (ctx->pipe == NULL)
       goto fail;
-
-   /* used in dri_flush_frontbuffer */
-   ctx->pipe->priv = ctx;
 
    ctx->st = st_create_context(ctx->pipe, visual, st_share);
    if (ctx->st == NULL)

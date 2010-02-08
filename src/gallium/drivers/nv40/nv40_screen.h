@@ -9,7 +9,7 @@ struct nv40_screen {
 
 	struct nouveau_winsys *nvws;
 
-	unsigned cur_pctx;
+	struct nv40_context *cur_ctx;
 
 	/* HW graphics objects */
 	struct nv04_surface_2d *eng2d;

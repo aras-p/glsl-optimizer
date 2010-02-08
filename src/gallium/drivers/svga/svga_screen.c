@@ -366,6 +366,7 @@ svga_screen_create(struct svga_winsys_screen *sws)
    screen->get_param = svga_get_param;
    screen->get_paramf = svga_get_paramf;
    screen->is_format_supported = svga_is_format_supported;
+   screen->context_create = svga_context_create;
    screen->fence_reference = svga_fence_reference;
    screen->fence_signalled = svga_fence_signalled;
    screen->fence_finish = svga_fence_finish;

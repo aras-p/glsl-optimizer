@@ -383,35 +383,10 @@ fail:
 }
 
 
-static struct pipe_context *
-xlib_create_cell_context( struct pipe_screen *screen,
-                          void *priv )
-{
-   struct pipe_context *pipe;
-
-   
-   /* This takes a cell_winsys pointer, but probably that should be
-    * created and stored at screen creation, not context creation.
-    *
-    * The actual cell_winsys value isn't used for anything, so just
-    * passing NULL for now.
-    */
-   pipe = cell_create_context( screen, NULL);
-   if (pipe == NULL)
-      goto fail;
-
-   pipe->priv = priv;
-
-   return pipe;
-
-fail:
-   return NULL;
-}
 
 struct xm_driver xlib_cell_driver = 
 {
    .create_pipe_screen = xlib_create_cell_screen,
-   .create_pipe_context = xlib_create_cell_context,
    .display_surface = xlib_cell_display_surface,
 };
 
@@ -420,7 +395,6 @@ struct xm_driver xlib_cell_driver =
 struct xm_driver xlib_cell_driver = 
 {
    .create_pipe_screen = NULL,
-   .create_pipe_context = NULL,
    .display_surface = NULL,
 };
 

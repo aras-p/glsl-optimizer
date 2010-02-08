@@ -13,9 +13,6 @@ struct nouveau_winsys {
 
 	struct pipe_screen *pscreen;
 
-	unsigned nr_pctx;
-	struct pipe_context **pctx;
-
 	struct pipe_surface *front;
 };
 

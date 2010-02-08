@@ -182,12 +182,6 @@ intel_drm_create_screen(struct drm_api *api, int drmFD,
    return i915_create_screen(&idws->base, deviceID);
 }
 
-static struct pipe_context *
-intel_drm_create_context(struct drm_api *api, struct pipe_screen *screen)
-{
-   return i915_create_context(screen);
-}
-
 static void
 destroy(struct drm_api *api)
 {
@@ -198,7 +192,6 @@ struct drm_api intel_drm_api =
 {
    .name = "i915",
    .driver_name = "i915",
-   .create_context = intel_drm_create_context,
    .create_screen = intel_drm_create_screen,
    .texture_from_shared_handle = intel_drm_texture_from_shared_handle,
    .shared_handle_from_texture = intel_drm_shared_handle_from_texture,

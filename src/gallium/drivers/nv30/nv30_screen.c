@@ -20,9 +20,6 @@ struct nouveau_winsys {
 
 	struct pipe_screen *pscreen;
 
-	unsigned nr_pctx;
-	struct pipe_context **pctx;
-
 	struct pipe_surface *front;
 };
 
@@ -212,6 +209,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nv30_screen_get_param;
 	pscreen->get_paramf = nv30_screen_get_paramf;
 	pscreen->is_format_supported = nv30_screen_surface_format_supported;
+	pscreen->context_create = nv30_create;
 
 	nv30_screen_init_miptree_functions(pscreen);
 	nv30_screen_init_transfer_functions(pscreen);

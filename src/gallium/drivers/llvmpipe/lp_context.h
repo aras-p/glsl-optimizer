@@ -108,6 +108,10 @@ struct llvmpipe_context {
 };
 
 
+struct pipe_context *
+llvmpipe_create_context( struct pipe_screen *screen, void *priv );
+
+
 static INLINE struct llvmpipe_context *
 llvmpipe_context( struct pipe_context *pipe )
 {

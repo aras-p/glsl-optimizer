@@ -692,7 +692,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 
    id_pipe->base.winsys = NULL;
    id_pipe->base.screen = _screen;
-   id_pipe->base.priv = pipe->priv;
+   id_pipe->base.priv = pipe->priv; /* expose wrapped data */
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;

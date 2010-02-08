@@ -39,6 +39,10 @@ struct identity_context {
 };
 
 
+struct pipe_context *
+identity_context_create(struct pipe_screen *screen, struct pipe_context *pipe);
+
+
 static INLINE struct identity_context *
 identity_context(struct pipe_context *pipe)
 {

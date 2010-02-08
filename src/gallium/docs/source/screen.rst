@@ -190,6 +190,15 @@ Get a floating-point screen parameter.
 
 **param** is one of the :ref:`PIPE_CAP` names.
 
+context_create
+^^^^^^^^^^^^^^
+
+Create a pipe_context.
+
+**priv** is private data of the caller, which may be put to various
+unspecified uses, typically to do with implementing swapbuffers
+and/or front-buffer rendering.
+
 is_format_supported
 ^^^^^^^^^^^^^^^^^^^
 

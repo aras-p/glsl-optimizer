@@ -38,9 +38,6 @@ struct st_winsys
 {
    struct pipe_screen *
    (*screen_create)(void);
-
-   struct pipe_context *
-   (*context_create)(struct pipe_screen *screen);
 };
 
 

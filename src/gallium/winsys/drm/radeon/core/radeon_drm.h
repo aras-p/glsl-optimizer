@@ -52,8 +52,6 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
 					 struct drm_create_screen_arg *arg);
 
-struct pipe_context* radeon_create_context(struct drm_api* api,
-                                           struct pipe_screen* screen);
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
                                    struct pipe_screen* screen,

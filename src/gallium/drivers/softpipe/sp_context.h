@@ -166,5 +166,8 @@ softpipe_context( struct pipe_context *pipe )
 void
 softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
 
+struct pipe_context *
+softpipe_create_context( struct pipe_screen *, void *priv );
+
 
 #endif /* SP_CONTEXT_H */

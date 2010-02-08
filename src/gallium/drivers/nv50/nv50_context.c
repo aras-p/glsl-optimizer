@@ -95,7 +95,7 @@ nv50_destroy(struct pipe_context *pipe)
 
 
 struct pipe_context *
-nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
+nv50_create(struct pipe_screen *pscreen, void *priv)
 {
 	struct pipe_winsys *pipe_winsys = pscreen->winsys;
 	struct nv50_screen *screen = nv50_screen(pscreen);
@@ -105,10 +105,10 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	if (!nv50)
 		return NULL;
 	nv50->screen = screen;
-	nv50->pctx_id = pctx_id;
 
 	nv50->pipe.winsys = pipe_winsys;
 	nv50->pipe.screen = pscreen;
+	nv50->pipe.priv = priv;
 
 	nv50->pipe.destroy = nv50_destroy;
 

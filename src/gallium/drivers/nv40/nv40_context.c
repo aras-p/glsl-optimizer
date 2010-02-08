@@ -43,7 +43,7 @@ nv40_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
+nv40_create(struct pipe_screen *pscreen, void *priv)
 {
 	struct nv40_screen *screen = nv40_screen(pscreen);
 	struct pipe_winsys *ws = pscreen->winsys;
@@ -54,11 +54,11 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	if (!nv40)
 		return NULL;
 	nv40->screen = screen;
-	nv40->pctx_id = pctx_id;
 
 	nv40->nvws = nvws;
 
 	nv40->pipe.winsys = ws;
+	nv40->pipe.priv = priv;
 	nv40->pipe.screen = pscreen;
 	nv40->pipe.destroy = nv40_destroy;
 	nv40->pipe.draw_arrays = nv40_draw_arrays;

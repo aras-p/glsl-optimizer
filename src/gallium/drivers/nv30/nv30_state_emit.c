@@ -44,13 +44,15 @@ nv30_state_emit(struct nv30_context *nv30)
 	unsigned i;
 	uint64_t states;
 
-	if (nv30->pctx_id != screen->cur_pctx) {
+	/* XXX: racy!
+	 */
+	if (nv30 != screen->cur_ctx) {
 		for (i = 0; i < NV30_STATE_MAX; i++) {
 			if (state->hw[i] && screen->state[i] != state->hw[i])
 				state->dirty |= (1ULL << i);
 		}
 
-		screen->cur_pctx = nv30->pctx_id;
+		screen->cur_ctx = nv30;
 	}
 
 	for (i = 0, states = state->dirty; states; i++) {

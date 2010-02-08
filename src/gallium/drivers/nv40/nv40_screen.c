@@ -196,6 +196,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nv40_screen_get_param;
 	pscreen->get_paramf = nv40_screen_get_paramf;
 	pscreen->is_format_supported = nv40_screen_surface_format_supported;
+	pscreen->context_create = nv40_create;
 
 	nv40_screen_init_miptree_functions(pscreen);
 	nv40_screen_init_transfer_functions(pscreen);

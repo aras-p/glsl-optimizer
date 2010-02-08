@@ -194,7 +194,8 @@ softpipe_render_condition( struct pipe_context *pipe,
 
 
 struct pipe_context *
-softpipe_create( struct pipe_screen *screen )
+softpipe_create_context( struct pipe_screen *screen,
+			 void *priv )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
@@ -213,6 +214,7 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.winsys = screen->winsys;
    softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
+   softpipe->pipe.priv = priv;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;

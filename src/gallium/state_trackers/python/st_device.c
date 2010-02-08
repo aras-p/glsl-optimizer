@@ -80,8 +80,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
 {
    struct st_device *st_dev;
    
-   if(!st_ws->screen_create ||
-      !st_ws->context_create)
+   if(!st_ws->screen_create)
       return NULL;
    
    st_dev = CALLOC_STRUCT(st_device);
@@ -158,13 +157,7 @@ st_context_create(struct st_device *st_dev)
    
    st_device_reference(&st_ctx->st_dev, st_dev);
    
-   st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
-   if(!st_ctx->real_pipe) {
-      st_context_destroy(st_ctx);
-      return NULL;
-   }
-   
-   st_ctx->pipe = trace_context_create(st_dev->screen, st_ctx->real_pipe);
+   st_ctx->pipe = st_dev->screen->create_context(st_dev->screen, NULL);
    if(!st_ctx->pipe) {
       st_context_destroy(st_ctx);
       return NULL;

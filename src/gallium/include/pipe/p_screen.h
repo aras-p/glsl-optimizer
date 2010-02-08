@@ -86,6 +86,9 @@ struct pipe_screen {
     */
    float (*get_paramf)( struct pipe_screen *, int param );
 
+   struct pipe_context * (*context_create)( struct pipe_screen *,
+					    void *priv );
+   
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.

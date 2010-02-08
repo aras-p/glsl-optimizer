@@ -9,7 +9,6 @@ struct nv50_screen {
 
 	struct nouveau_winsys *nvws;
 
-	unsigned cur_pctx;
 	struct nv50_context *cur_ctx;
 
 	struct nouveau_grobj *tesla;

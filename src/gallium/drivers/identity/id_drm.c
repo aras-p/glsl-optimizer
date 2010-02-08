@@ -63,22 +63,6 @@ identity_drm_create_screen(struct drm_api *_api, int fd,
    return identity_screen_create(screen);
 }
 
-static struct pipe_context *
-identity_drm_create_context(struct drm_api *_api,
-                            struct pipe_screen *_screen)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_drm_api *id_api = identity_drm_api(_api);
-   struct pipe_screen *screen = id_screen->screen;
-   struct drm_api *api = id_api->api;
-   struct pipe_context *pipe;
-
-   pipe = api->create_context(api, screen);
-
-   pipe = identity_context_create(_screen, pipe);
-
-   return pipe;
-}
 
 static struct pipe_texture *
 identity_drm_texture_from_shared_handle(struct drm_api *_api,
@@ -159,7 +143,6 @@ identity_drm_create(struct drm_api *api)
       goto error;
 
    id_api->base.create_screen = identity_drm_create_screen;
-   id_api->base.create_context = identity_drm_create_context;
    id_api->base.texture_from_shared_handle = identity_drm_texture_from_shared_handle;
    id_api->base.shared_handle_from_texture = identity_drm_shared_handle_from_texture;
    id_api->base.local_handle_from_texture = identity_drm_local_handle_from_texture;

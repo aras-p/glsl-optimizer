@@ -167,11 +167,6 @@ struct native_display {
                                   EGLNativePixmapType pix,
                                   const struct native_config *nconf);
 
-   /**
-    * Create a pipe context.
-    */
-   struct pipe_context *(*create_context)(struct native_display *ndpy,
-                                          void *context_private);
 
    /**
     * Create a window surface.  Required unless no config has GLX_WINDOW_BIT

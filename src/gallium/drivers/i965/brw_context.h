@@ -837,6 +837,10 @@ int brw_upload_urb_fence(struct brw_context *brw);
  */
 int brw_upload_cs_urb_state(struct brw_context *brw);
 
+/* brw_context.c
+ */
+struct pipe_context *brw_create_context(struct pipe_screen *screen,
+					void *priv);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

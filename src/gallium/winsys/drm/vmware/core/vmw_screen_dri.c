@@ -333,12 +333,6 @@ vmw_drm_handle_from_texture(struct drm_api *drm_api,
     return TRUE;
 }
 
-static struct pipe_context*
-vmw_drm_create_context(struct drm_api *drm_api,
-                       struct pipe_screen *screen)
-{
-   return vmw_svga_context_create(screen);
-}
 
 static struct dri1_api dri1_api_hooks = {
    .front_srf_locked = NULL,
@@ -349,7 +343,6 @@ static struct drm_api vmw_drm_api_hooks = {
    .name = "vmwgfx",
    .driver_name = "vmwgfx",
    .create_screen = vmw_drm_create_screen,
-   .create_context = vmw_drm_create_context,
    .texture_from_shared_handle = vmw_drm_texture_from_handle,
    .shared_handle_from_texture = vmw_drm_handle_from_texture,
    .local_handle_from_texture = vmw_drm_handle_from_texture,

@@ -250,7 +250,7 @@ sp_mpeg12_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
    ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
 
-   ctx->pipe = softpipe_create(screen);
+   ctx->pipe = screen->context_create(screen, NULL);
    if (!ctx->pipe) {
       FREE(ctx);
       return NULL;

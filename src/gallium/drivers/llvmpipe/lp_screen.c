@@ -37,6 +37,7 @@
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
+#include "lp_context.h"
 #include "lp_debug.h"
 
 #ifdef DEBUG
@@ -310,6 +311,7 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
    screen->base.is_format_supported = llvmpipe_is_format_supported;
 
    screen->base.surface_buffer_create = llvmpipe_surface_buffer_create;
+   screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 
    llvmpipe_init_screen_texture_funcs(&screen->base);

@@ -1061,7 +1061,10 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    }
 
    exa->scrn = ms->screen;
-   exa->pipe = ms->api->create_context(ms->api, exa->scrn);
+   exa->pipe = exa->scrn->context_create(exa->scrn, NULL);
+   if (exa->pipe == NULL)
+      goto out_err;
+
    /* Share context with DRI */
    ms->ctx = exa->pipe;
 

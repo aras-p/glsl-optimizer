@@ -174,6 +174,7 @@ cell_create_screen(struct pipe_winsys *winsys)
    screen->get_param = cell_get_param;
    screen->get_paramf = cell_get_paramf;
    screen->is_format_supported = cell_is_format_supported;
+   screen->context_create = cell_create_context;
 
    cell_init_screen_texture_funcs(screen);
    u_simple_screen_init(screen);

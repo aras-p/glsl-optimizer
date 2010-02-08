@@ -645,8 +645,11 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    mode = &gconf->native->mode;
-   gctx->pipe =
-      gdpy->native->create_context(gdpy->native, (void *) &gctx->base);
+
+   gctx->pipe = gdpy->native->screen->create_context(
+      gdpy->native->screen,
+      (void *) &gctx->base);
+
    if (!gctx->pipe) {
       free(gctx);
       return NULL;

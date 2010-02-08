@@ -111,7 +111,6 @@ struct nv40_context {
 
 	struct nouveau_winsys *nvws;
 	struct nv40_screen *screen;
-	unsigned pctx_id;
 
 	struct draw_context *draw;
 
@@ -229,5 +228,9 @@ extern void nv40_draw_elements(struct pipe_context *pipe,
 /* nv40_clear.c */
 extern void nv40_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
+
+/* nv40_context.c */
+struct pipe_context *
+nv40_create(struct pipe_screen *pscreen, void *priv);
 
 #endif

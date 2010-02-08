@@ -41,8 +41,6 @@ struct drm_api
 	/*@{*/
 	struct pipe_screen*  (*create_screen)(struct drm_api *api, int drm_fd,
 	                                      struct drm_create_screen_arg *arg);
-	struct pipe_context* (*create_context)(struct drm_api *api,
-	                                       struct pipe_screen *screen);
 	/*@}*/
 
 	/**

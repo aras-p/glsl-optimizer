@@ -402,18 +402,6 @@ dri2_display_create_pbuffer_surface(struct native_display *ndpy,
    return (dri2surf) ? &dri2surf->base : NULL;
 }
 
-static struct pipe_context *
-dri2_display_create_context(struct native_display *ndpy, void *context_private)
-{
-   struct dri2_display *dri2dpy = dri2_display(ndpy);
-   struct pipe_context *pctx;
-
-   pctx = dri2dpy->api->create_context(dri2dpy->api, dri2dpy->base.screen);
-   if (pctx)
-      pctx->priv = context_private;
-   return pctx;
-}
-
 static int
 choose_color_format(const __GLcontextModes *mode, enum pipe_format formats[32])
 {
@@ -697,7 +685,6 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
    dri2dpy->base.destroy = dri2_display_destroy;
    dri2dpy->base.get_configs = dri2_display_get_configs;
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
-   dri2dpy->base.create_context = dri2_display_create_context;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
    dri2dpy->base.create_pixmap_surface = dri2_display_create_pixmap_surface;
    dri2dpy->base.create_pbuffer_surface = dri2_display_create_pbuffer_surface;

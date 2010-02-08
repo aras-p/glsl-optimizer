@@ -43,9 +43,6 @@ struct stw_winsys
    struct pipe_screen *
    (*create_screen)( void );
 
-   struct pipe_context *
-   (*create_context)( struct pipe_screen *screen );
-
    /**
     * Present the color buffer to the window associated with the device context.
     */

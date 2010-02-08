@@ -113,9 +113,6 @@ struct llvmpipe_winsys
 };
 
 
-struct pipe_context *
-llvmpipe_create( struct pipe_screen * );
-
 
 struct pipe_screen *
 llvmpipe_create_screen( struct llvmpipe_winsys * );

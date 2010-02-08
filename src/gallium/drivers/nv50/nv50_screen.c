@@ -251,6 +251,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nv50_screen_get_param;
 	pscreen->get_paramf = nv50_screen_get_paramf;
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
+	pscreen->context_create = nv50_create;
 	screen->base.pre_pipebuffer_map_callback = nv50_pre_pipebuffer_map;
 
 	nv50_screen_init_miptree_functions(pscreen);

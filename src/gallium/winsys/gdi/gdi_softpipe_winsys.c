@@ -249,13 +249,6 @@ gdi_softpipe_screen_create(void)
 }
 
 
-static struct pipe_context *
-gdi_softpipe_context_create(struct pipe_screen *screen)
-{
-   return softpipe_create(screen);
-}
-
-
 static void
 gdi_softpipe_present(struct pipe_screen *screen,
                      struct pipe_surface *surface,
@@ -291,7 +284,6 @@ gdi_softpipe_present(struct pipe_screen *screen,
 
 static const struct stw_winsys stw_winsys = {
    &gdi_softpipe_screen_create,
-   &gdi_softpipe_context_create,
    &gdi_softpipe_present,
    NULL, /* get_adapter_luid */
    NULL, /* shared_surface_open */

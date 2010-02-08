@@ -39,6 +39,5 @@
 #include "st_winsys.h"
 
 const struct st_winsys st_softpipe_winsys = {
-   &softpipe_create_screen_malloc,
-   &softpipe_create,
+   &softpipe_create_screen_malloc
 };

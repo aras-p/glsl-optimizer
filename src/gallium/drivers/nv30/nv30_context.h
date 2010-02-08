@@ -111,7 +111,6 @@ struct nv30_context {
 
 	struct nouveau_winsys *nvws;
 	struct nv30_screen *screen;
-	unsigned pctx_id;
 
 	struct draw_context *draw;
 
@@ -208,5 +207,9 @@ extern void nv30_draw_elements(struct pipe_context *pipe,
 /* nv30_clear.c */
 extern void nv30_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
+
+/* nv30_context.c */
+struct pipe_context *
+nv30_create(struct pipe_screen *pscreen, void *priv);
 
 #endif

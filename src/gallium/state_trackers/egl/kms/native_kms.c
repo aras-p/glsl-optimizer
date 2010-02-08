@@ -575,17 +575,6 @@ kms_display_create_pbuffer_surface(struct native_display *ndpy,
    return &ksurf->base;
 }
 
-static struct pipe_context *
-kms_display_create_context(struct native_display *ndpy, void *context_private)
-{
-   struct kms_display *kdpy = kms_display(ndpy);
-   struct pipe_context *pctx;
-
-   pctx = kdpy->api->create_context(kdpy->api, kdpy->base.screen);
-   if (pctx)
-      pctx->priv = context_private;
-   return pctx;
-}
 
 static boolean
 kms_display_is_format_supported(struct native_display *ndpy,
@@ -814,7 +803,6 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
 
    kdpy->base.destroy = kms_display_destroy;
    kdpy->base.get_configs = kms_display_get_configs;
-   kdpy->base.create_context = kms_display_create_context;
    kdpy->base.create_pbuffer_surface = kms_display_create_pbuffer_surface;
 
    kdpy->base.modeset = &kms_display_modeset;
