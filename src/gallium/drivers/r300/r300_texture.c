@@ -123,16 +123,38 @@ unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
  * Return the width (dim==TILE_WIDTH) or height (dim==TILE_HEIGHT) of one tile
  * of the given texture.
  */
-static unsigned r300_texture_get_tile_size(struct r300_texture* tex, int dim)
+static unsigned r300_texture_get_tile_size(struct r300_texture* tex,
+                                           int dim, boolean macrotile)
 {
     unsigned pixsize, tile_size;
 
     pixsize = util_format_get_blocksize(tex->tex.format);
-    tile_size = microblock_table[util_logbase2(pixsize)][tex->microtile][dim] *
-                (tex->macrotile == R300_BUFFER_TILED ? 8 : 1);
+    tile_size = microblock_table[util_logbase2(pixsize)][tex->microtile][dim];
+
+    if (macrotile) {
+        tile_size *= 8;
+    }
 
     assert(tile_size);
     return tile_size;
+}
+
+/* Return true if macrotiling should be enabled on the miplevel. */
+static boolean r300_texture_macro_switch(struct r300_texture *tex,
+                                         unsigned level,
+                                         boolean rv350_mode)
+{
+    unsigned tile_width, width;
+
+    tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH, TRUE);
+    width = u_minify(tex->tex.width0, level);
+
+    /* See TX_FILTER1_n.MACRO_SWITCH. */
+    if (rv350_mode) {
+        return width >= tile_width;
+    } else {
+        return width > tile_width;
+    }
 }
 
 /**
@@ -157,8 +179,10 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
     width = u_minify(tex->tex.width0, level);
 
     if (!util_format_is_compressed(tex->tex.format)) {
-        tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH);
+        tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH,
+                                                tex->mip_macrotile[level]);
         width = align(width, tile_width);
+
         return util_format_get_stride(tex->tex.format, width);
     } else {
         return align(util_format_get_stride(tex->tex.format, width), 32);
@@ -173,7 +197,8 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
     height = u_minify(tex->tex.height0, level);
 
     if (!util_format_is_compressed(tex->tex.format)) {
-        tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT);
+        tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT,
+                                                 tex->mip_macrotile[level]);
         height = align(height, tile_height);
     }
 
@@ -185,11 +210,17 @@ static void r300_setup_miptree(struct r300_screen* screen,
 {
     struct pipe_texture* base = &tex->tex;
     unsigned stride, size, layer_size, nblocksy, i;
+    boolean rv350_mode = screen->caps->family >= CHIP_FAMILY_RV350;
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Making miptree for texture, format %s\n",
                util_format_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
+        /* Let's see if this miplevel can be macrotiled. */
+        tex->mip_macrotile[i] = (tex->macrotile == R300_BUFFER_TILED &&
+                                 r300_texture_macro_switch(tex, i, rv350_mode)) ?
+                                 R300_BUFFER_TILED : R300_BUFFER_LINEAR;
+
         stride = r300_texture_get_stride(screen, tex, i);
         nblocksy = r300_texture_get_nblocksy(tex, i);
         layer_size = stride * nblocksy;
@@ -199,15 +230,16 @@ static void r300_setup_miptree(struct r300_screen* screen,
         else
             size = layer_size * u_minify(base->depth0, i);
 
-        tex->offset[i] = align(tex->size, 32);
+        tex->offset[i] = tex->size;
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
         tex->pitch[i] = stride / util_format_get_blocksize(base->format);
 
         SCREEN_DBG(screen, DBG_TEX, "r300: Texture miptree: Level %d "
-                "(%dx%dx%d px, pitch %d bytes) %d bytes total\n",
+                "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
                 i, u_minify(base->width0, i), u_minify(base->height0, i),
-                u_minify(base->depth0, i), stride, tex->size);
+                u_minify(base->depth0, i), stride, tex->size,
+                tex->mip_macrotile[i] ? "TRUE" : "FALSE");
     }
 }
 

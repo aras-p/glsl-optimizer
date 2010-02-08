@@ -207,6 +207,9 @@ struct r300_texture {
     /* Size of one zslice or face based on the texture target */
     unsigned layer_size[PIPE_MAX_TEXTURE_LEVELS];
 
+    /* Whether the mipmap level is macrotiled. */
+    enum r300_buffer_tiling mip_macrotile[PIPE_MAX_TEXTURE_LEVELS];
+
     /**
      * If non-zero, override the natural texture layout with
      * a custom stride (in bytes).
