@@ -17,7 +17,6 @@ struct intel_drm_winsys
 {
    struct intel_winsys base;
 
-   boolean softpipe;
    boolean dump_cmd;
 
    int fd; /**< Drm file discriptor */

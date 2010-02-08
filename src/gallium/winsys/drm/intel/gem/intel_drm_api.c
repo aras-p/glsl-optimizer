@@ -176,7 +176,6 @@ intel_drm_create_screen(struct drm_api *api, int drmFD,
    idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
    drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
 
-   idws->softpipe = FALSE;
    idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
 
    return i915_create_screen(&idws->base, deviceID);
