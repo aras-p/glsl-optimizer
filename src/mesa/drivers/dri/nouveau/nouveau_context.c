@@ -140,6 +140,8 @@ nouveau_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 	__DRIbuffer *buffers = NULL;
 	int i = 0, count, ret;
 
+	*stamp = *drawable->pStamp;
+
 	attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	if (fb->Visual.doubleBufferMode)
 		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
@@ -218,10 +220,11 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 		struct nouveau_context *nctx = dri_ctx->driverPrivate;
 		GLcontext *ctx = &nctx->base;
 
-		if (nctx->screen->context != nctx) {
-			nctx->screen->context = nctx;
-			BITSET_ONES(nctx->dirty);
-		}
+		if (nctx->screen->context == nctx)
+			return GL_TRUE;
+
+		nctx->screen->context = nctx;
+		BITSET_ONES(nctx->dirty);
 
 		/* Ask the X server for new renderbuffers. */
 		nouveau_update_renderbuffers(dri_ctx, dri_draw,
@@ -267,6 +270,28 @@ void
 nouveau_validate_framebuffer(GLcontext *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	__DRIcontext *dri_ctx = to_nouveau_context(ctx)->dri_context;
+	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;
+	__DRIdrawable *dri_read = dri_ctx->driReadablePriv;
+
+	if ((ctx->DrawBuffer->Name == 0 &&
+	     nctx->drawable.d_stamp != *dri_draw->pStamp) ||
+	    (dri_draw != dri_read &&
+	     ctx->ReadBuffer->Name == 0 &&
+	     nctx->drawable.r_stamp != *dri_read->pStamp)) {
+		if (nctx->drawable.dirty)
+			ctx->Driver.Flush(ctx);
+
+		/* Ask the X server for new renderbuffers. */
+		nouveau_update_renderbuffers(dri_ctx, dri_draw,
+					     &nctx->drawable.d_stamp);
+		if (dri_draw != dri_read)
+			nouveau_update_renderbuffers(dri_ctx, dri_read,
+						     &nctx->drawable.r_stamp);
+
+		if (nouveau_next_dirty_state(ctx) >= 0)
+			FIRE_RING(context_chan(ctx));
+	}
 
 	/* Someone's planning to draw something really soon. */
 	nctx->drawable.dirty = GL_TRUE;

@@ -247,7 +247,19 @@ nouveau_destroy_buffer(__DRIdrawable *drawable)
 		(struct gl_framebuffer **)&drawable->driverPrivate, NULL);
 }
 
+static void
+nouveau_drawable_flush(__DRIdrawable *draw)
+{
+}
+
+static const struct __DRI2flushExtensionRec nouveau_flush_extension = {
+    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+    nouveau_drawable_flush,
+    dri2InvalidateDrawable,
+};
+
 static const __DRIextension *nouveau_screen_extensions[] = {
+    &nouveau_flush_extension.base,
     NULL
 };
 
