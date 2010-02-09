@@ -11,9 +11,9 @@ they are all stored in one structure.
 
 During actual execution, the order of operations done on fragments is always:
 
+* Alpha
 * Stencil
 * Depth
-* Alpha
 
 Depth Members
 -------------
@@ -28,15 +28,18 @@ func
 Stencil Members
 ---------------
 
-XXX document valuemask, writemask
-
 enabled
     Whether the stencil test is enabled. For the second stencil, whether the
-    two-sided stencil is enabled.
+    two-sided stencil is enabled. If two-sided stencil is disabled, the other
+    fields for the second array member are not valid.
 func
     The stencil test function. One of PIPE_FUNC.
-ref_value
-    Stencil test reference value; used for certain functions.
+valuemask
+    Stencil test value mask; this is ANDed with the value in the stencil
+    buffer and the reference value before doing the stencil comparison test.
+writemask
+    Stencil test writemask; this controls which bits of the stencil buffer
+    are written.
 fail_op
     The operation to carry out if the stencil test fails. One of
     PIPE_STENCIL_OP.
