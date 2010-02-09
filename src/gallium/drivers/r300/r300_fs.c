@@ -49,12 +49,12 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
 
         switch (info->input_semantic_name[i]) {
             case TGSI_SEMANTIC_COLOR:
-                assert(index <= ATTR_COLOR_COUNT);
+                assert(index < ATTR_COLOR_COUNT);
                 fs_inputs->color[index] = i;
                 break;
 
             case TGSI_SEMANTIC_GENERIC:
-                assert(index <= ATTR_GENERIC_COUNT);
+                assert(index < ATTR_GENERIC_COUNT);
                 fs_inputs->generic[index] = i;
                 break;
 

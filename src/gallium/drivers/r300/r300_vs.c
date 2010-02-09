@@ -61,17 +61,17 @@ static void r300_shader_read_vs_outputs(
                 break;
 
             case TGSI_SEMANTIC_COLOR:
-                assert(index <= ATTR_COLOR_COUNT);
+                assert(index < ATTR_COLOR_COUNT);
                 vs_outputs->color[index] = i;
                 break;
 
             case TGSI_SEMANTIC_BCOLOR:
-                assert(index <= ATTR_COLOR_COUNT);
+                assert(index < ATTR_COLOR_COUNT);
                 vs_outputs->bcolor[index] = i;
                 break;
 
             case TGSI_SEMANTIC_GENERIC:
-                assert(index <= ATTR_GENERIC_COUNT);
+                assert(index < ATTR_GENERIC_COUNT);
                 vs_outputs->generic[index] = i;
                 break;
 
