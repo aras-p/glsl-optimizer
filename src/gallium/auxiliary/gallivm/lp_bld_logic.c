@@ -419,3 +419,15 @@ lp_build_select_aos(struct lp_build_context *bld,
 #endif
    }
 }
+
+LLVMValueRef
+lp_build_alloca(struct lp_build_context *bld)
+{
+   const struct lp_type type = bld->type;
+
+   if (type.length > 1) { /*vector*/
+      return LLVMBuildAlloca(bld->builder, lp_build_vec_type(type), "");
+   } else { /*scalar*/
+      return LLVMBuildAlloca(bld->builder, lp_build_elem_type(type), "");
+   }
+}

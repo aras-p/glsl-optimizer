@@ -468,20 +468,21 @@ generate_fs(struct llvmpipe_context *lp,
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(outputs[attrib][chan]) {
-            lp_build_name(outputs[attrib][chan], "output%u.%u.%c", i, attrib, "xyzw"[chan]);
+            LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+            lp_build_name(out, "output%u.%u.%c", i, attrib, "xyzw"[chan]);
 
             switch (shader->info.output_semantic_name[attrib]) {
             case TGSI_SEMANTIC_COLOR:
                {
                   unsigned cbuf = shader->info.output_semantic_index[attrib];
 
-                  lp_build_name(outputs[attrib][chan], "color%u.%u.%c", i, attrib, "rgba"[chan]);
+                  lp_build_name(out, "color%u.%u.%c", i, attrib, "rgba"[chan]);
 
                   /* Alpha test */
                   /* XXX: should the alpha reference value be passed separately? */
 		  /* XXX: should only test the final assignment to alpha */
                   if(cbuf == 0 && chan == 3) {
-                     LLVMValueRef alpha = outputs[attrib][chan];
+                     LLVMValueRef alpha = out;
                      LLVMValueRef alpha_ref_value;
                      alpha_ref_value = lp_jit_context_alpha_ref_value(builder, context_ptr);
                      alpha_ref_value = lp_build_broadcast(builder, vec_type, alpha_ref_value);
@@ -489,13 +490,13 @@ generate_fs(struct llvmpipe_context *lp,
                                          &mask, alpha, alpha_ref_value);
                   }
 
-		  color[cbuf][chan] = outputs[attrib][chan];
+		  color[cbuf][chan] = out;
                   break;
                }
 
             case TGSI_SEMANTIC_POSITION:
                if(chan == 2)
-                  z = outputs[attrib][chan];
+                  z = out;
                break;
             }
          }

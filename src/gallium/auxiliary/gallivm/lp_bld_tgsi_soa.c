@@ -185,7 +185,7 @@ emit_fetch(
          break;
 
       case TGSI_FILE_TEMPORARY:
-         res = bld->temps[reg->Register.Index][swizzle];
+         res = LLVMBuildLoad(bld->base.builder, bld->temps[reg->Register.Index][swizzle], "");
          if(!res)
             return bld->base.undef;
          break;
@@ -287,11 +287,13 @@ emit_store(
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      bld->outputs[reg->Register.Index][chan_index] = value;
+      LLVMBuildStore(bld->base.builder, value,
+                     bld->outputs[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_TEMPORARY:
-      bld->temps[reg->Register.Index][chan_index] = value;
+      LLVMBuildStore(bld->base.builder, value,
+                     bld->temps[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_ADDRESS:
@@ -438,6 +440,42 @@ indirect_temp_reference(const struct tgsi_full_instruction *inst)
    return FALSE;
 }
 
+static int
+emit_declaration(
+   struct lp_build_tgsi_soa_context *bld,
+   const struct tgsi_full_declaration *decl)
+{
+   unsigned first = decl->Range.First;
+   unsigned last = decl->Range.Last;
+   unsigned idx, i;
+
+   for (idx = first; idx <= last; ++idx) {
+      boolean ok;
+
+      switch (decl->Declaration.File) {
+      case TGSI_FILE_TEMPORARY:
+         for (i = 0; i < NUM_CHANNELS; i++)
+            bld->temps[idx][i] = lp_build_alloca(&bld->base);
+         ok = TRUE;
+         break;
+
+      case TGSI_FILE_OUTPUT:
+         for (i = 0; i < NUM_CHANNELS; i++)
+            bld->outputs[idx][i] = lp_build_alloca(&bld->base);
+         ok = TRUE;
+         break;
+
+      default:
+         /* don't need to declare other vars */
+         ok = TRUE;
+      }
+
+      if (!ok)
+         return FALSE;
+   }
+
+   return TRUE;
+}
 
 static int
 emit_instruction(
@@ -1429,6 +1467,10 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* Inputs already interpolated */
+         {
+            if (!emit_declaration( &bld, &parse.FullToken.FullDeclaration ))
+               _debug_printf("warning: failed to define LLVM variable\n");
+         }
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
