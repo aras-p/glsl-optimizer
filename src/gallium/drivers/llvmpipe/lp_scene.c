@@ -265,8 +265,8 @@ lp_scene_texture_reference( struct lp_scene *scene,
  * Does this scene have a reference to the given texture?
  */
 boolean
-lp_scene_is_textured_referenced( const struct lp_scene *scene,
-                                 const struct pipe_texture *texture )
+lp_scene_is_texture_referenced( const struct lp_scene *scene,
+                                const struct pipe_texture *texture )
 {
    const struct texture_ref *ref_list = &scene->textures;
    const struct texture_ref *ref;

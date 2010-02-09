@@ -163,8 +163,8 @@ unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y
 void lp_scene_texture_reference( struct lp_scene *scene,
                                  struct pipe_texture *texture );
 
-boolean lp_scene_is_textured_referenced( const struct lp_scene *scene,
-                                         const struct pipe_texture *texture );
+boolean lp_scene_is_texture_referenced( const struct lp_scene *scene,
+                                        const struct pipe_texture *texture );
 
 
 /**

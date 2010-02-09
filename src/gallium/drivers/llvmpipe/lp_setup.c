@@ -516,7 +516,7 @@ lp_setup_is_texture_referenced( const struct setup_context *setup,
 
    /* check textures referenced by the scene */
    for (i = 0; i < Elements(setup->scenes); i++) {
-      if (lp_scene_is_textured_referenced(setup->scenes[i], texture)) {
+      if (lp_scene_is_texture_referenced(setup->scenes[i], texture)) {
          return PIPE_REFERENCED_FOR_READ;
       }
    }
