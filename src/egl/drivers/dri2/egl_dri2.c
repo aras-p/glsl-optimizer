@@ -217,20 +217,19 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
 
    /* EGL_SWAP_BEHAVIOR_PRESERVED_BIT */
 
+   /* FIXME: Figure out how to get the visual ID and types */
    if (double_buffer) {
-      /* FIXME: Figure out how to get the visual ID and types */
-      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
+		       EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
       _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, 0x21);
       _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE,
 		       XCB_VISUAL_CLASS_TRUE_COLOR);
    } else {
-      _eglSetConfigKey(&conf->base,
-		       EGL_SURFACE_TYPE, EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
-      _eglSetConfigKey(&conf->base,
-		       EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-      _eglSetConfigKey(&conf->base,
-		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
+		       EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
    }
+   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
+   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
 
    /* EGL_OPENGL_ES_BIT, EGL_OPENVG_BIT, EGL_OPENGL_ES2_BIT */
    _eglSetConfigKey(&conf->base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
