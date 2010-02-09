@@ -924,6 +924,10 @@ if test "x$enable_egl" = xyes; then
             EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
         fi
     fi
+
+    if test "$with_demos" = yes; then
+        PROGRAM_DIRS="$PROGRAM_DIRS egl"
+    fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
 AC_SUBST([EGL_DRIVERS_DIRS])
