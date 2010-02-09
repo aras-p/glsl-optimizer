@@ -12,13 +12,13 @@ def glsl_compile_emitter(target, source, env):
 	return (target, source)
  
 bld_frag = Builder(
-	action = glsl_compile[0].abspath + ' fragment $SOURCE $TARGET',
+	action = Action(glsl_compile[0].abspath + ' fragment $SOURCE $TARGET', '$CODEGENCODESTR'),
 	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
 	
 bld_vert = Builder(
-	action = glsl_compile[0].abspath + ' vertex $SOURCE $TARGET',
+	action = Action(glsl_compile[0].abspath + ' vertex $SOURCE $TARGET', '$CODEGENCODESTR'),
 	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
