@@ -129,6 +129,10 @@ static void teximage_set_map_data(radeon_texture_image *image)
  */
 void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
 {
+	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+			"%s(img %p), write_enable %s.\n",
+			__func__, image,
+			write_enable ? "true": "false");
 	if (image->mt) {
 		assert(!image->base.Data);
 
@@ -140,6 +144,9 @@ void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
 
 void radeon_teximage_unmap(radeon_texture_image *image)
 {
+	radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
+			"%s(img %p)\n",
+			__func__, image);
 	if (image->mt) {
 		assert(image->base.Data);
 
@@ -274,6 +281,11 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 	GLuint face = _mesa_tex_target_to_face(target);
 	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
 	bo = !baseimage->mt ? baseimage->bo : baseimage->mt->bo;
+
+	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, target %s, tex %p)\n",
+		__func__, _mesa_lookup_enum_by_nr(target),
+		texObj);
 
 	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {
 		radeon_print(RADEON_TEXTURE, RADEON_NORMAL,

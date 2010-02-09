@@ -29,6 +29,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/enums.h"
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
@@ -56,6 +57,10 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(rb %p, rrb %p) \n",
+		__func__, rb, rrb);
+
   ASSERT(rrb);
 
   if (rrb && rrb->bo) {
@@ -68,6 +73,10 @@ static void *
 radeon_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb,
 		   GLint x, GLint y)
 {
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rb %p) \n",
+		__func__, ctx, rb);
+
   return NULL;
 }
 
@@ -84,6 +93,10 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
   GLboolean software_buffer = GL_FALSE;
   int cpp;
+
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rb %p) \n",
+		__func__, ctx, rb);
 
    ASSERT(rb->Name != 0);
   switch (internalFormat) {
@@ -200,6 +213,10 @@ radeon_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    rb->Width = width;
    rb->Height = height;
    rb->InternalFormat = internalFormat;
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rb %p) \n",
+		__func__, ctx, rb);
+
 
    return GL_TRUE;
 }
@@ -211,6 +228,10 @@ radeon_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 {
      struct radeon_framebuffer *radeon_fb = (struct radeon_framebuffer*)fb;
    int i;
+
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, fb %p) \n",
+		__func__, ctx, fb);
 
    _mesa_resize_framebuffer(ctx, fb, width, height);
 
@@ -252,6 +273,11 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
     struct radeon_renderbuffer *rrb;
 
     rrb = CALLOC_STRUCT(radeon_renderbuffer);
+
+    radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s( rrb %p ) \n",
+		__func__, rrb);
+
     if (!rrb)
 	return NULL;
 
@@ -331,6 +357,11 @@ radeon_new_renderbuffer(GLcontext * ctx, GLuint name)
   struct radeon_renderbuffer *rrb;
 
   rrb = CALLOC_STRUCT(radeon_renderbuffer);
+
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rrb %p) \n",
+		__func__, ctx, rrb);
+
   if (!rrb)
     return NULL;
 
@@ -348,6 +379,11 @@ static void
 radeon_bind_framebuffer(GLcontext * ctx, GLenum target,
                        struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, fb %p, target %s) \n",
+		__func__, ctx, fb,
+		_mesa_lookup_enum_by_nr(target));
+
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
       radeon_draw_buffer(ctx, fb);
    }
@@ -364,6 +400,10 @@ radeon_framebuffer_renderbuffer(GLcontext * ctx,
 
 	if (ctx->Driver.Flush)
 		ctx->Driver.Flush(ctx); /* +r6/r7 */
+
+	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, fb %p, rb %p) \n",
+		__func__, ctx, fb, rb);
 
    _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
    radeon_draw_buffer(ctx, fb);
@@ -382,6 +422,10 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 {
 	int retry = 0;
 	gl_format texFormat;
+
+	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rrb %p, texImage %p) \n",
+		__func__, ctx, rrb, texImage);
 
 restart:
 	if (texImage->TexFormat == _dri_texformat_argb8888) {
@@ -453,6 +497,11 @@ radeon_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 
    /* make an radeon_renderbuffer to wrap the texture image */
    rrb = CALLOC_STRUCT(radeon_renderbuffer);
+
+   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, rrb %p, texImage %p) \n",
+		__func__, ctx, rrb, texImage);
+
    if (!rrb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture");
       return NULL;
@@ -479,6 +528,10 @@ radeon_render_texture(GLcontext * ctx,
    struct radeon_renderbuffer *rrb = radeon_renderbuffer(att->Renderbuffer);
    radeon_texture_image *radeon_image;
    GLuint imageOffset;
+
+  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
+		"%s(%p, fb %p, rrb %p, att att)\n",
+		__func__, ctx, fb, rrb, att);
 
    (void) fb;
 

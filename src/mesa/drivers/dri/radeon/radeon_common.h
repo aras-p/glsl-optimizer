@@ -48,6 +48,9 @@ void radeon_check_front_buffer_rendering(GLcontext *ctx);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s(rb %p)\n",
+		__func__, rb);
 	if (rrb && rrb->base.ClassID == RADEON_RB_CLASS)
 		return rrb;
 	else
@@ -56,6 +59,10 @@ static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbu
 
 static inline struct radeon_renderbuffer *radeon_get_renderbuffer(struct gl_framebuffer *fb, int att_index)
 {
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s(fb %p, index %d)\n",
+		__func__, fb, att_index);
+
 	if (att_index >= 0)
 		return radeon_renderbuffer(fb->Attachment[att_index].Renderbuffer);
 	else

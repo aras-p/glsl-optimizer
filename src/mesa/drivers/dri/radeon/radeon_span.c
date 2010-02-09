@@ -810,6 +810,10 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 	if (rrb == NULL || !rrb->bo)
 		return;
 
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s( rb %p, flag %s )\n",
+		__func__, rb, flag ? "true":"false");
+
 	if (flag) {
 	        radeon_bo_wait(rrb->bo);
 		r = radeon_bo_map(rrb->bo, 1);
@@ -831,6 +835,10 @@ radeon_map_unmap_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 			     GLboolean map)
 {
 	GLuint i, j;
+
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s( %p , fb %p, map %s )\n",
+		__func__, ctx, fb, map ? "true":"false");
 
 	/* color draw buffers */
 	for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++)
