@@ -48,11 +48,6 @@ lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxil
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
 
 
-# to make a .s file to inspect assembly code
-.c.s:
-	$(CC) -S $(INCLUDES) $(DEFINES) $(CFLAGS) $(LIBRARY_DEFINES) $<
-
-
 testprogs := lp_test_format	\
 	     lp_test_blend	\
 	     lp_test_conv
