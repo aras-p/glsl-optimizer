@@ -80,7 +80,6 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
             state->format2 |= R500_TXHEIGHT_BIT11;
         }
     }
-    assert(is_r500 || (pt->width0 <= 2048 && pt->height0 <= 2048));
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Set texture state (%dx%d, %d levels)\n",
                pt->width0, pt->height0, pt->last_level);

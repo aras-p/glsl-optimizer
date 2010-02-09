@@ -493,6 +493,8 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
+    unsigned max_width, max_height;
     uint32_t zbuffer_bpp = 0;
 
     r300->fb_state.size = (10 * state->nr_cbufs) +
@@ -502,6 +504,20 @@ static void
     if (state->nr_cbufs > 4) {
         debug_printf("r300: Implementation error: Too many MRTs in %s, "
             "refusing to bind framebuffer state!\n", __FUNCTION__);
+        return;
+    }
+
+    if (r300screen->caps->is_r500) {
+        max_width = max_height = 4096;
+    } else if (r300screen->caps->is_r400) {
+        max_width = max_height = 4021;
+    } else {
+        max_width = max_height = 2560;
+    }
+
+    if (state->width > max_width || state->height > max_height) {
+        debug_printf("r300: Implementation error: Render targets are too "
+        "big in %s, refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
     }
 
@@ -607,6 +623,7 @@ static void r300_set_polygon_stipple(struct pipe_context* pipe,
 static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
 
     /* Copy rasterizer state for Draw. */
@@ -621,20 +638,28 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
      * Else, enable HW TCL and force Draw's TCL off. */
     if (state->bypass_vs_clip_and_viewport ||
-            !r300_screen(pipe->screen)->caps->has_tcl) {
+            !r300screen->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
     rs->point_size = pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
-        /* set hw limits - clamping done by state tracker in vs or point_size
-           XXX always need to emit this? */
-        rs->point_minmax =
-        ((int)(0.0 * 6.0) <<
-         R300_GA_POINT_MINMAX_MIN_SHIFT) |
-        ((int)(4096.0 * 6.0) <<
-         R300_GA_POINT_MINMAX_MAX_SHIFT);
+        /* Point minimum and maximum sizes. This register has to be emitted,
+         * and it'd be a step backwards to put it in invariant state. */
+        if (r300screen->caps->is_r500) {
+            rs->point_minmax =
+            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
+            ((int)(4096.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
+        } else if (r300screen->caps->is_r500) {
+            rs->point_minmax =
+            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
+            ((int)(4021.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
+        } else {
+            rs->point_minmax =
+            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
+            ((int)(2560.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
+        }
 
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;

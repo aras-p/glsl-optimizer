@@ -186,8 +186,10 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
              * rendering limits. 2048 pixels should be enough for anybody. */
             if (r300screen->caps->is_r500) {
                 return 4096.0f;
+            } else if (r300screen->caps->is_r400) {
+                return 4021.0f;
             } else {
-                return 2048.0f;
+                return 2560.0f;
             }
         case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
             return 16.0f;
