@@ -170,8 +170,11 @@ if dri:
 if drawllvm:
 	# See also http://www.scons.org/wiki/UsingPkgConfig
         # currently  --ldflags --libsdisabled since the driver will force the correct linkage
-	env.ParseConfig('llvm-config --cflags backend bitreader engine instrumentation interpreter ipo')
-	env.Append(CPPDEFINES = ['DRAW_LLVM'])
+        env.Tool('llvm')
+        if not env.has_key('LLVM_VERSION'):
+           drawllvm = False
+	else:
+           env.Append(CPPDEFINES = ['DRAW_LLVM'])
 
 # libGL
 if platform in ('linux', 'freebsd', 'darwin'):
