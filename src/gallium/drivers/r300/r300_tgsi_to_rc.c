@@ -29,6 +29,7 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
 
+#include "util/u_debug.h"
 
 static unsigned translate_opcode(unsigned opcode)
 {
@@ -144,7 +145,8 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
     }
 
-    fprintf(stderr, "Unknown opcode: %i\n", opcode);
+    debug_printf("r300: Unknown TGSI/RC opcode: %i\n", opcode);
+    assert(0);
     return RC_OPCODE_ILLEGAL_OPCODE;
 }
 
