@@ -759,6 +759,7 @@ void vbo_use_buffer_objects(GLcontext *ctx)
    }
 
    /* Allocate a real buffer object now */
+   _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
    exec->vtx.bufferobj = ctx->Driver.NewBufferObject(ctx, bufName, target);
    ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
 }
@@ -803,8 +804,19 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    
    {
       struct gl_client_array *arrays = exec->vtx.arrays;
+      unsigned i;
+
       memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
       memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+
+      for (i = 0; i < 16; ++i) {
+         arrays[i     ].BufferObj = NULL;
+         arrays[i + 16].BufferObj = NULL;
+         _mesa_reference_buffer_object(ctx, &arrays[i     ].BufferObj,
+                                       vbo->legacy_currval[i].BufferObj);
+         _mesa_reference_buffer_object(ctx, &arrays[i + 16].BufferObj,
+                                       vbo->generic_currval[i].BufferObj);
+      }
    }
 
    exec->vtx.vertex_size = 0;

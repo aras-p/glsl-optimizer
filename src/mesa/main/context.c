@@ -955,6 +955,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
    _mesa_free_attrib_data(ctx);
+   _mesa_free_buffer_objects(ctx);
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );
    _mesa_free_texture_data( ctx );
@@ -974,6 +975,7 @@ _mesa_free_context_data( GLcontext *ctx )
 #if FEATURE_ARB_pixel_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->DefaultPacking.BufferObj, NULL);
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object

@@ -60,6 +60,9 @@ extern void
 _mesa_init_buffer_objects( GLcontext *ctx );
 
 extern void
+_mesa_free_buffer_objects( GLcontext *ctx );
+
+extern void
 _mesa_update_default_objects_buffer_objects(GLcontext *ctx);
 
 

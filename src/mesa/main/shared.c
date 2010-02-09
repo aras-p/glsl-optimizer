@@ -95,12 +95,6 @@ _mesa_alloc_shared_state(GLcontext *ctx)
 
    /* Allocate the default buffer object */
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
-#ifndef DEBUG
-   /* Set refcount so high that it never gets deleted.
-    * XXX with recent/improved refcounting this should be no longer be needed.
-    */
-   shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
-#endif
 
    /* Create default texture objects */
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {

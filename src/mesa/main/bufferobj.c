@@ -556,6 +556,17 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 }
 
 
+void
+_mesa_free_buffer_objects( GLcontext *ctx )
+{
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
+
+   _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer, NULL);
+}
+
+
 /**
  * Bind the specified target to buffer for the specified context.
  * Called by glBindBuffer() and other functions.

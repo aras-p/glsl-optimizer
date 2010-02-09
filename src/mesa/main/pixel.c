@@ -150,13 +150,17 @@ validate_pbo_access(GLcontext *ctx, struct gl_pixelstore_attrib *pack,
    GLboolean ok;
 
    /* Note, need to use DefaultPacking and Unpack's buffer object */
-   ctx->DefaultPacking.BufferObj = pack->BufferObj;
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->DefaultPacking.BufferObj,
+                                 pack->BufferObj);
 
    ok = _mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                   format, type, ptr);
 
    /* restore */
-   ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->DefaultPacking.BufferObj,
+                                 ctx->Shared->NullBufferObj);
 
    if (!ok) {
       _mesa_error(ctx, GL_INVALID_OPERATION,

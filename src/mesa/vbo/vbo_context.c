@@ -249,17 +249,25 @@ void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
 
 void _vbo_DestroyContext( GLcontext *ctx )
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+
    if (ctx->aelt_context) {
       _ae_destroy_context( ctx );
       ctx->aelt_context = NULL;
    }
 
-   if (vbo_context(ctx)) {
+   if (vbo) {
+      GLuint i;
+
+      for (i = 0; i < VBO_ATTRIB_MAX; i++) {
+         _mesa_reference_buffer_object(ctx, &vbo->currval[i].BufferObj, NULL);
+      }
+
       vbo_exec_destroy(ctx);
 #if FEATURE_dlist
       vbo_save_destroy(ctx);
 #endif
-      FREE(vbo_context(ctx));
+      FREE(vbo);
       ctx->swtnl_im = NULL;
    }
 }

@@ -95,6 +95,10 @@ unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
 
    for (i = 0; i < Elements(obj->VertexAttrib); i++)
       _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj,NULL);
+
+#if FEATURE_point_size_array
+   _mesa_reference_buffer_object(ctx, &obj->PointSize.BufferObj, NULL);
+#endif
 }
 
 
