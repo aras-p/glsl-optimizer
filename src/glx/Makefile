@@ -1,4 +1,4 @@
-TOP = ../../..
+TOP = ../..
 include $(TOP)/configs/current
 
 EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT \
