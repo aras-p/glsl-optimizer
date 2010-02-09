@@ -58,15 +58,16 @@ struct dri2_egl_driver
 
 struct dri2_egl_display
 {
-   xcb_connection_t     *conn;
-   int                   dri2_major;
-   int                   dri2_minor;
-   __DRIscreen          *dri_screen;
-   void                 *driver;
-   __DRIcoreExtension   *core;
-   __DRIdri2Extension   *dri2;
-   __DRI2flushExtension *flush;
-   int                   fd;
+   xcb_connection_t         *conn;
+   int                       dri2_major;
+   int                       dri2_minor;
+   __DRIscreen              *dri_screen;
+   void                     *driver;
+   __DRIcoreExtension       *core;
+   __DRIdri2Extension       *dri2;
+   __DRI2flushExtension     *flush;
+   __DRItexBufferExtension  *tex_buffer;
+   int                       fd;
 
    __DRIdri2LoaderExtension  loader_extension;
    const __DRIextension     *extensions[2];
@@ -389,6 +390,7 @@ static struct dri2_extension_match dri2_driver_extensions[] = {
 
 static struct dri2_extension_match dri2_core_extensions[] = {
    { __DRI2_FLUSH, 1, offsetof(struct dri2_egl_display, flush) },
+   { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
    { NULL }
 };
 
@@ -964,6 +966,69 @@ dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
    return EGL_TRUE;
 }
 
+static EGLBoolean
+dri2_bind_tex_image(_EGLDriver *drv,
+		    _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+   struct dri2_egl_context *dri2_ctx;
+   _EGLContext *ctx;
+   GLint format, target;
+
+   ctx = _eglGetCurrentContext();
+   dri2_ctx = dri2_egl_context(ctx);
+
+   if (buffer != EGL_BACK_BUFFER) {
+      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   /* We allow binding pixmaps too... Not conformat, but we can do it
+    * for free and it's useful for X compositors.  Supposedly there's
+    * a EGL_NOKIA_texture_from_pixmap extension that allows that, but
+    * I couldn't find it at this time. */
+   if (dri2_surf->base.Type & (EGL_PBUFFER_BIT | EGL_PIXMAP_BIT) == 0) {
+      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   switch (dri2_surf->base.TextureFormat) {
+   case EGL_TEXTURE_RGB:
+      format = __DRI_TEXTURE_FORMAT_RGB;
+      break;
+   case EGL_TEXTURE_RGBA:
+      format = __DRI_TEXTURE_FORMAT_RGBA;
+      break;
+   default:
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   switch (dri2_surf->base.TextureTarget) {
+   case EGL_TEXTURE_2D:
+      target = GL_TEXTURE_2D;
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   (*dri2_dpy->tex_buffer->setTexBuffer2)(dri2_ctx->dri_context,
+					  target, format,
+					  dri2_surf->dri_drawable);
+
+   return dri2_surf->base.BoundToTexture = EGL_TRUE;
+}
+
+static EGLBoolean
+dri2_release_tex_image(_EGLDriver *drv,
+		       _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
+{
+   return EGL_TRUE;
+}
+
+
 /**
  * This is the main entrypoint into the driver, called by libEGL.
  * Create a new _EGLDriver object and init its dispatch table.
@@ -991,6 +1056,8 @@ _eglMain(const char *args)
    dri2_drv->base.API.WaitClient = dri2_wait_client;
    dri2_drv->base.API.WaitNative = dri2_wait_native;
    dri2_drv->base.API.CopyBuffers = dri2_copy_buffers;
+   dri2_drv->base.API.BindTexImage = dri2_bind_tex_image;
+   dri2_drv->base.API.ReleaseTexImage = dri2_release_tex_image;
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;
