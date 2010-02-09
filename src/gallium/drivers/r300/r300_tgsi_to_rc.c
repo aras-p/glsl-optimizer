@@ -146,7 +146,6 @@ static unsigned translate_opcode(unsigned opcode)
     }
 
     debug_printf("r300: Unknown TGSI/RC opcode: %i\n", opcode);
-    assert(0);
     return RC_OPCODE_ILLEGAL_OPCODE;
 }
 
