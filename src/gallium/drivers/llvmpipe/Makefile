@@ -37,7 +37,6 @@ C_SOURCES = \
 	lp_surface.c \
 	lp_tex_sample_llvm.c \
 	lp_texture.c \
-	lp_tile_surface.c \
 	lp_tile_soa.c
 
 CPP_SOURCES = \
