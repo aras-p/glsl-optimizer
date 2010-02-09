@@ -375,6 +375,56 @@ static const char dri_driver_format[] = "%.*s/%.*s_dri.so";
 
 static const char dri_driver_path[] = DEFAULT_DRIVER_DIR;
 
+struct dri2_extension_match {
+   const char *name;
+   int version;
+   int offset;
+};
+
+static struct dri2_extension_match dri2_driver_extensions[] = {
+   { __DRI_CORE, 1, offsetof(struct dri2_egl_display, core) },
+   { __DRI_DRI2, 1, offsetof(struct dri2_egl_display, dri2) },
+   { NULL }
+};
+
+static struct dri2_extension_match dri2_core_extensions[] = {
+   { __DRI2_FLUSH, 1, offsetof(struct dri2_egl_display, flush) },
+   { NULL }
+};
+
+static EGLBoolean
+dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
+		     struct dri2_extension_match *matches,
+		     const __DRIextension **extensions)
+{
+   int i, j, ret = EGL_TRUE;
+   void *field;
+
+   for (i = 0; extensions[i]; i++) {
+      _eglLog(_EGL_DEBUG, "DRI2: found extension `%s'", extensions[i]->name);
+      for (j = 0; matches[j].name; j++) {
+	 if (strcmp(extensions[i]->name, matches[j].name) == 0 &&
+	     extensions[i]->version >= matches[j].version) {
+	    field = ((char *) dri2_dpy + matches[j].offset);
+	    *(const __DRIextension **) field = extensions[i];
+	    _eglLog(_EGL_INFO, "DRI2: found extension %s version %d",
+		    extensions[i]->name, extensions[i]->version);
+	 }
+      }
+   }
+   
+   for (j = 0; matches[j].name; j++) {
+      field = ((char *) dri2_dpy + matches[j].offset);
+      if (*(const __DRIextension **) field == NULL) {
+	 _eglLog(_EGL_FATAL, "DRI2: did not find extension %s version %d",
+		 matches[j].name, matches[j].version);
+	 ret = EGL_FALSE;
+      }
+   }
+
+   return ret;
+}
+
 /**
  * Called via eglInitialize(), GLX_drv->API.Initialize().
  */
@@ -497,24 +547,8 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       goto cleanup_driver;
    }
 
-   for (i = 0; extensions[i]; i++) {
-      _eglLog(_EGL_DEBUG, "DRI2: found driver extension `%s'",
-	      extensions[i]->name);
-      if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
-	 dri2_dpy->core = (__DRIcoreExtension *) extensions[i];
-      if (strcmp(extensions[i]->name, __DRI_DRI2) == 0)
-	 dri2_dpy->dri2 = (__DRIdri2Extension *) extensions[i];
-   }
-
-   if (dri2_dpy->core == NULL) {
-      _eglLog(_EGL_FATAL, "DRI2: driver has no core extension");
+   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions))
       goto cleanup_driver;
-   }
-
-   if (dri2_dpy->dri2 == NULL) {
-      _eglLog(_EGL_FATAL, "DRI2: driver has no dri2 extension");
-      goto cleanup_driver;
-   }
 
    snprintf(path, sizeof path, "%.*s",
 	    xcb_dri2_connect_device_name_length (connect),
@@ -570,17 +604,8 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
-   for (i = 0; extensions[i]; i++) {
-      _eglLog(_EGL_DEBUG, "DRI2: found core extension `%s'",
-	      extensions[i]->name);
-      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0))
-	 dri2_dpy->flush = (__DRI2flushExtension *) extensions[i];
-   }
-
-   if (dri2_dpy->flush == NULL) {
-      _eglLog(_EGL_FATAL, "DRI2: driver doesn't support the flush extension");
+   if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
       goto cleanup_dri_screen;
-   }
 
    for (i = 0; driver_configs[i]; i++)
       dri2_add_config(disp, driver_configs[i], i + 1);
