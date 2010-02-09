@@ -445,6 +445,61 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[3] = (GLfloat)(ctx->Fog.Density * ONE_DIV_SQRT_LN2);
          return;
 
+      case STATE_POINT_SIZE_CLAMPED:
+         {
+           /* this includes implementation dependent limits, to avoid
+            * another potentially necessary clamp.
+            * Note: for sprites, point smooth (point AA) is ignored
+            * and we'll clamp to MinPointSizeAA and MaxPointSize, because we
+            * expect drivers will want to say their minimum for AA size is 0.0
+            * but for non-AA it's 1.0 (because normal points with size below 1.0
+            * need to get rounded up to 1.0, hence never disappear). GL does
+            * not specify max clamp size for sprites, other than it needs to be
+            * at least as large as max AA size, hence use non-AA size there.
+            */
+            GLfloat minImplSize;
+            GLfloat maxImplSize;
+            if (ctx->Point.PointSprite) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            else if (ctx->Point.SmoothFlag || ctx->Multisample._Enabled) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSizeAA;
+            }
+            else {
+               minImplSize = ctx->Const.MinPointSize;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            value[0] = ctx->Point.Size;
+            value[1] = ctx->Point.MinSize >= minImplSize ? ctx->Point.MinSize : minImplSize;
+            value[2] = ctx->Point.MaxSize <= maxImplSize ? ctx->Point.MaxSize : maxImplSize;
+            value[3] = ctx->Point.Threshold;
+         }
+         return;
+      case STATE_POINT_SIZE_IMPL_CLAMP:
+         {
+           /* for implementation clamp only in vs */
+            GLfloat minImplSize;
+            GLfloat maxImplSize;
+            if (ctx->Point.PointSprite) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            else if (ctx->Point.SmoothFlag || ctx->Multisample._Enabled) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSizeAA;
+            }
+            else {
+               minImplSize = ctx->Const.MinPointSize;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            value[0] = ctx->Point.Size;
+            value[1] = minImplSize;
+            value[2] = maxImplSize;
+            value[3] = ctx->Point.Threshold;
+         }
+         return;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
          {
             /* here, state[2] is the light number */
@@ -640,6 +695,9 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 	 return _NEW_TEXTURE;
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
+      case STATE_POINT_SIZE_CLAMPED:
+      case STATE_POINT_SIZE_IMPL_CLAMP:
+         return _NEW_POINT | _NEW_MULTISAMPLE;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       case STATE_LIGHT_POSITION:
       case STATE_LIGHT_POSITION_NORMALIZED:
@@ -830,6 +888,12 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_FOG_PARAMS_OPTIMIZED:
       append(dst, "fogParamsOptimized");
+      break;
+   case STATE_POINT_SIZE_CLAMPED:
+      append(dst, "pointSizeClamped");
+      break;
+   case STATE_POINT_SIZE_IMPL_CLAMP:
+      append(dst, "pointSizeImplClamp");
       break;
    case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       append(dst, "lightSpotDirNormalized");

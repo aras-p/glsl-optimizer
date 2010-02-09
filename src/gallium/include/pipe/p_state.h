@@ -102,7 +102,9 @@ struct pipe_rasterizer_state
    unsigned poly_smooth:1;
    unsigned poly_stipple_enable:1;
    unsigned point_smooth:1;
-   unsigned point_sprite:1;
+   unsigned sprite_coord_enable:PIPE_MAX_SHADER_OUTPUTS;
+   unsigned sprite_coord_mode:1;     /**< PIPE_SPRITE_COORD_ */
+   unsigned point_quad_rasterization:1; /** points rasterized as quads or points */
    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
    unsigned multisample:1;         /* XXX maybe more ms state in future */
    unsigned line_smooth:1;
@@ -142,11 +144,8 @@ struct pipe_rasterizer_state
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
-   float point_size_min;        /* XXX - temporary, will go away */
-   float point_size_max;        /* XXX - temporary, will go away */
    float offset_units;
    float offset_scale;
-   ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
 };
 
 

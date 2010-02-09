@@ -108,6 +108,8 @@ typedef enum gl_state_index_ {
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
    STATE_FOG_PARAMS_OPTIMIZED,  /* for faster fog calc */
+   STATE_POINT_SIZE_CLAMPED,    /* includes implementation dependent size clamp */
+   STATE_POINT_SIZE_IMPL_CLAMP, /* for implementation clamp only in vs */
    STATE_LIGHT_SPOT_DIR_NORMALIZED,   /* pre-normalized spot dir */
    STATE_LIGHT_POSITION,              /* object vs eye space */
    STATE_LIGHT_POSITION_NORMALIZED,   /* object vs eye space */

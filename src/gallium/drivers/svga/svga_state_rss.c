@@ -193,8 +193,9 @@ static int emit_rss( struct svga_context *svga,
       EMIT_RS( svga, curr->lastpixel, LASTPIXEL, fail );
       EMIT_RS( svga, curr->linepattern, LINEPATTERN, fail );
       EMIT_RS_FLOAT( svga, curr->pointsize, POINTSIZE, fail );
-      EMIT_RS_FLOAT( svga, curr->pointsize_min, POINTSIZEMIN, fail );
-      EMIT_RS_FLOAT( svga, curr->pointsize_max, POINTSIZEMAX, fail );
+      /* XXX still need to set this? */
+      EMIT_RS_FLOAT( svga, 0.0, POINTSIZEMIN, fail );
+      EMIT_RS_FLOAT( svga, SVGA_MAX_POINTSIZE, POINTSIZEMAX, fail );
    }
 
    if (dirty & (SVGA_NEW_RAST | SVGA_NEW_FRAME_BUFFER | SVGA_NEW_NEED_PIPELINE))

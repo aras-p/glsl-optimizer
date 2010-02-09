@@ -628,10 +628,12 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->point_size = pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
-    rs->point_minmax =
-        ((int)(state->point_size_min * 6.0) <<
+        /* set hw limits - clamping done by state tracker in vs or point_size
+           XXX always need to emit this? */
+        rs->point_minmax =
+        ((int)(0.0 * 6.0) <<
          R300_GA_POINT_MINMAX_MIN_SHIFT) |
-        ((int)(state->point_size_max * 6.0) <<
+        ((int)(4096.0 * 6.0) <<
          R300_GA_POINT_MINMAX_MAX_SHIFT);
 
     rs->line_control = pack_float_16_6x(state->line_width) |

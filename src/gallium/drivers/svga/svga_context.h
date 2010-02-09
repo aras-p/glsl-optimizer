@@ -37,6 +37,7 @@
 
 
 #define SVGA_TEX_UNITS 8
+#define SVGA_MAX_POINTSIZE 80.0
 
 struct draw_vertex_shader;
 struct svga_shader_result;
@@ -145,8 +146,6 @@ struct svga_rasterizer_state {
    float slopescaledepthbias;
    float depthbias;
    float pointsize;
-   float pointsize_min;
-   float pointsize_max;
    
    unsigned hw_unfilled:16;         /* PIPE_POLYGON_MODE_x */
    unsigned need_pipeline:16;    /* which prims do we need help for? */

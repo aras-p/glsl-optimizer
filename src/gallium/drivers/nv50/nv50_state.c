@@ -342,7 +342,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_data  (so, fui(cso->point_size));
 
 	so_method(so, tesla, NV50TCL_POINT_SPRITE_ENABLE, 1);
-	so_data  (so, cso->point_sprite);
+	so_data  (so, cso->point_quad_rasterization ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_POLYGON_MODE_FRONT, 3);
 	if (cso->front_winding == PIPE_WINDING_CCW) {

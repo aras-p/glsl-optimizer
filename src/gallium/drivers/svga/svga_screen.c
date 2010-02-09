@@ -101,7 +101,7 @@ svga_get_paramf(struct pipe_screen *screen, int param)
       /* Keep this to a reasonable size to avoid failures in
        * conform/pntaa.c:
        */
-      return 80.0;
+      return SVGA_MAX_POINTSIZE;
 
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
       return 4.0;
