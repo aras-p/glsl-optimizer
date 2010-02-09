@@ -905,7 +905,6 @@ generate_variant(struct llvmpipe_context *lp,
             if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
                debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
             debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
-            debug_printf("  .prefilter = %u\n", key->sampler[i].prefilter);
          }
       }
    }
