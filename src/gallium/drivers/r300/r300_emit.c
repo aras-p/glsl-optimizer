@@ -381,6 +381,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
 void r300_emit_fb_state(struct r300_context* r300, void* state)
 {
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_texture* tex;
     struct pipe_surface* surf;
     int i;
@@ -399,10 +400,16 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
 
     /* Set the number of colorbuffers. */
     if (fb->nr_cbufs > 1) {
-        OUT_CS_REG(R300_RB3D_CCTL,
-            R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
-            R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_ENABLE |
-            R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
+        if (r300screen->caps->is_r500) {
+            OUT_CS_REG(R300_RB3D_CCTL,
+                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
+                R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE |
+                R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_ENABLE);
+        } else {
+            OUT_CS_REG(R300_RB3D_CCTL,
+                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
+                R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
+        }
     } else {
         OUT_CS_REG(R300_RB3D_CCTL, 0x0);
     }
