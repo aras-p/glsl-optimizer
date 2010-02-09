@@ -728,7 +728,7 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
-		   GLint glx_texture_format,
+		   GLint texture_format,
 		   __DRIdrawable *dPriv)
 {
    struct gl_framebuffer *fb = dPriv->driverPrivate;
@@ -758,7 +758,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (rb->region == NULL)
       return;
 
-   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
       internalFormat = GL_RGB;
    else
       internalFormat = GL_RGBA;
@@ -788,7 +788,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
-   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
       texImage->TexFormat = MESA_FORMAT_XRGB8888;
    else
       texImage->TexFormat = MESA_FORMAT_ARGB8888;
@@ -808,7 +808,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    /* The old interface didn't have the format argument, so copy our
     * implementation's behavior at the time.
     */
-   intelSetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+   intelSetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
 
 

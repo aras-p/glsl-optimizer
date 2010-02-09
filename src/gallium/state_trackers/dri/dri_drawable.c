@@ -268,7 +268,7 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
                          __DRIdrawable *dPriv)
 {
-   dri2_set_tex_buffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+   dri2_set_tex_buffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
 
 void

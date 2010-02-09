@@ -230,6 +230,13 @@ struct __DRItexOffsetExtensionRec {
 };
 
 
+/* Valid values for format in the setTexBuffer2 function below.  These
+ * values match the GLX tokens for compatibility reasons, but we
+ * define them here since the DRI interface can't depend on GLX. */
+#define __DRI_TEXTURE_FORMAT_NONE        0x20D8
+#define __DRI_TEXTURE_FORMAT_RGB         0x20D9
+#define __DRI_TEXTURE_FORMAT_RGBA        0x20DA
+
 #define __DRI_TEX_BUFFER "DRI_TexBuffer"
 #define __DRI_TEX_BUFFER_VERSION 2
 struct __DRItexBufferExtensionRec {
