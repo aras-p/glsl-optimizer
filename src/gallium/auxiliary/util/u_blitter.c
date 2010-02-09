@@ -60,13 +60,12 @@ struct blitter_context_priv
    float vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
 
    /* Templates for various state objects. */
-   struct pipe_depth_stencil_alpha_state template_dsa;
    struct pipe_sampler_state template_sampler_state;
 
    /* Constant state objects. */
    /* Vertex shaders. */
    void *vs_col; /**< Vertex shader which passes {pos, color} to the output */
-   void *vs_tex; /**<Vertex shader which passes {pos, texcoord} to the output.*/
+   void *vs_tex; /**< Vertex shader which passes {pos, texcoord} to the output.*/
 
    /* Fragment shaders. */
    /* FS which outputs a color to multiple color buffers. */
@@ -85,7 +84,7 @@ struct blitter_context_priv
    void *blend_keep_color;    /**< blend state with writemask of 0 */
 
    /* Depth stencil alpha state. */
-   void *dsa_write_depth_stencil[0xff]; /**< indices are stencil clear values */
+   void *dsa_write_depth_stencil;
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
 
@@ -100,7 +99,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
    struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state *dsa;
+   struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_rasterizer_state rs_state;
    struct pipe_sampler_state *sampler_state;
    unsigned i;
@@ -129,23 +128,24 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */
-   dsa = &ctx->template_dsa;
    ctx->dsa_keep_depth_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, dsa);
+      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
-   dsa->depth.enabled = 1;
-   dsa->depth.writemask = 1;
-   dsa->depth.func = PIPE_FUNC_ALWAYS;
+   dsa.depth.enabled = 1;
+   dsa.depth.writemask = 1;
+   dsa.depth.func = PIPE_FUNC_ALWAYS;
    ctx->dsa_write_depth_keep_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, dsa);
+      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
-   dsa->stencil[0].enabled = 1;
-   dsa->stencil[0].func = PIPE_FUNC_ALWAYS;
-   dsa->stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
-   dsa->stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
-   dsa->stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
-   dsa->stencil[0].valuemask = 0xff;
-   dsa->stencil[0].writemask = 0xff;
+   dsa.stencil[0].enabled = 1;
+   dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
+   dsa.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].valuemask = 0xff;
+   dsa.stencil[0].writemask = 0xff;
+   ctx->dsa_write_depth_stencil =
+      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
    /* The DSA state objects which write depth and stencil are created
     * on-demand. */
 
@@ -210,12 +210,8 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe,
                                           ctx->dsa_write_depth_keep_stencil);
-
-   for (i = 0; i < 0xff; i++)
-      if (ctx->dsa_write_depth_stencil[i])
-         pipe->delete_depth_stencil_alpha_state(pipe,
-            ctx->dsa_write_depth_stencil[i]);
-
+   pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
+ 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
@@ -413,26 +409,6 @@ static void blitter_draw_quad(struct blitter_context_priv *ctx)
 }
 
 static INLINE
-void *blitter_get_state_write_depth_stencil(
-               struct blitter_context_priv *ctx,
-               unsigned stencil)
-{
-   struct pipe_context *pipe = ctx->pipe;
-
-   stencil &= 0xff;
-
-   /* Create the DSA state on-demand. */
-   if (!ctx->dsa_write_depth_stencil[stencil]) {
-      ctx->template_dsa.stencil[0].ref_value = stencil;
-
-      ctx->dsa_write_depth_stencil[stencil] =
-         pipe->create_depth_stencil_alpha_state(pipe, &ctx->template_dsa);
-   }
-
-   return ctx->dsa_write_depth_stencil[stencil];
-}
-
-static INLINE
 void **blitter_get_sampler_state(struct blitter_context_priv *ctx,
                                  int miplevel)
 {
@@ -559,9 +535,13 @@ void util_blitter_clear(struct blitter_context *blitter,
    else
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
 
-   if (clear_buffers & PIPE_CLEAR_DEPTHSTENCIL)
-      pipe->bind_depth_stencil_alpha_state(pipe,
-         blitter_get_state_write_depth_stencil(ctx, stencil));
+   if (clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      struct pipe_stencil_ref sr;
+      memset (&sr, 0, sizeof(sr));
+      sr.ref_value[0] = stencil & 0xff;
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
+      pipe->set_stencil_ref(pipe, &sr);
+   }
    else
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
@@ -573,6 +553,7 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter_set_rectangle(ctx, 0, 0, width, height, depth);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
+   /* XXX driver's responsibility to restore stencil refs? */
 }
 
 static boolean

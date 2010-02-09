@@ -94,9 +94,11 @@ static void
 update_depth_stencil_alpha(struct st_context *st)
 {
    struct pipe_depth_stencil_alpha_state *dsa = &st->state.depth_stencil;
+   struct pipe_stencil_ref sr;
    GLcontext *ctx = st->ctx;
 
    memset(dsa, 0, sizeof(*dsa));
+   memset(&sr, 0, sizeof(sr));
 
    if (ctx->Depth.Test && ctx->DrawBuffer->Visual.depthBits > 0) {
       dsa->depth.enabled = 1;
@@ -110,9 +112,9 @@ update_depth_stencil_alpha(struct st_context *st)
       dsa->stencil[0].fail_op = gl_stencil_op_to_pipe(ctx->Stencil.FailFunc[0]);
       dsa->stencil[0].zfail_op = gl_stencil_op_to_pipe(ctx->Stencil.ZFailFunc[0]);
       dsa->stencil[0].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[0]);
-      dsa->stencil[0].ref_value = ctx->Stencil.Ref[0] & 0xff;
       dsa->stencil[0].valuemask = ctx->Stencil.ValueMask[0] & 0xff;
       dsa->stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
+      sr.ref_value[0] = ctx->Stencil.Ref[0] & 0xff;
 
       if (ctx->Stencil._TestTwoSide) {
          const GLuint back = ctx->Stencil._BackFace;
@@ -124,10 +126,15 @@ update_depth_stencil_alpha(struct st_context *st)
          dsa->stencil[1].ref_value = ctx->Stencil.Ref[back] & 0xff;
          dsa->stencil[1].valuemask = ctx->Stencil.ValueMask[back] & 0xff;
          dsa->stencil[1].writemask = ctx->Stencil.WriteMask[back] & 0xff;
+         sr.ref_value[1] = ctx->Stencil.Ref[back] & 0xff;
       }
       else {
+         /* This should be unnecessary. Drivers must not expect this to
+          * contain valid data, except the enabled bit
+          */
          dsa->stencil[1] = dsa->stencil[0];
          dsa->stencil[1].enabled = 0;
+         sr.ref_value[1] = sr.ref_value[0];
       }
    }
 
@@ -138,6 +145,7 @@ update_depth_stencil_alpha(struct st_context *st)
    }
 
    cso_set_depth_stencil_alpha(st->cso_context, dsa);
+   cso_set_stencil_ref(st->cso_context, &sr);
 }
 
 

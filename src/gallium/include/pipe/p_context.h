@@ -186,8 +186,11 @@ struct pipe_context {
    void (*set_blend_color)( struct pipe_context *,
                             const struct pipe_blend_color * );
 
+   void (*set_stencil_ref)( struct pipe_context *,
+                            const struct pipe_stencil_ref * );
+
    void (*set_clip_state)( struct pipe_context *,
-			   const struct pipe_clip_state * );
+                            const struct pipe_clip_state * );
 
    void (*set_constant_buffer)( struct pipe_context *,
                                 uint shader, uint index,

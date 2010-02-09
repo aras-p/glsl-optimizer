@@ -199,7 +199,6 @@ struct pipe_stencil_state
    unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
    unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
    unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
-   ubyte ref_value;
    ubyte valuemask;
    ubyte writemask;
 };
@@ -251,6 +250,10 @@ struct pipe_blend_color
    float color[4];
 };
 
+struct pipe_stencil_ref
+{
+   ubyte ref_value[2];
+};
 
 struct pipe_framebuffer_state
 {
