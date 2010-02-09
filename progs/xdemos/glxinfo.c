@@ -963,7 +963,7 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 static void
 print_fbconfig_info(Display *dpy, int scrnum, InfoMode mode)
 {
-   int numFBConfigs;
+   int numFBConfigs = 0;
    struct visual_attribs attribs;
    GLXFBConfig *fbconfigs;
    int i;
