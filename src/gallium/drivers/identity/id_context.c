@@ -29,7 +29,6 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
-#include "id_public.h"
 #include "id_context.h"
 #include "id_objects.h"
 
