@@ -16,7 +16,7 @@ DEFINES =  -D_DARWIN_C_SOURCE -DPTHREADS -D_GNU_SOURCE \
 	   -DGLX_ALIAS_UNSUPPORTED -DGLX_INDIRECT_RENDERING
 
 # -D_GNU_SOURCE          - for src/mesa/main ...
-# -DGLX_DIRECT_RENDERING - pulls in libdrm stuff in glx/x11
+# -DGLX_DIRECT_RENDERING - pulls in libdrm stuff in glx
 # -DGLX_USE_APPLEGL      - supposed to be used with GLX_DIRECT_RENDERING to use AGL rather than DRM, but doesn't compile
 # -DIN_DRI_DRIVER
 
@@ -49,7 +49,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXmu -lXt -lXi -lm
 
 # omit glw lib for now:
-SRC_DIRS = glsl glx/x11 mesa gallium glu glut/glx glew
+SRC_DIRS = glsl glx mesa gallium glu glut/glx glew
 GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri

@@ -32,7 +32,7 @@
  *
  * \note
  * This file is also used to build the client-side libGL that loads DRI-based
- * device drivers.  At build-time it is symlinked to src/glx/x11.
+ * device drivers.  At build-time it is symlinked to src/glx.
  *
  * \author Brian Paul <brian@precisioninsight.com>
  */

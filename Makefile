@@ -361,8 +361,8 @@ DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/internal/sarea.h			\
 	$(DIRECTORY)/src/glx/Makefile					\
-	$(DIRECTORY)/src/glx/x11/Makefile				\
-	$(DIRECTORY)/src/glx/x11/*.[ch]					\
+	$(DIRECTORY)/src/glx/Makefile					\
+	$(DIRECTORY)/src/glx/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
@@ -488,7 +488,7 @@ GLUT_FILES = \
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
-	$(TOP)/src/glx/x11/depend	\
+	$(TOP)/src/glx/depend		\
 	$(TOP)/src/glw/depend		\
 	$(TOP)/src/glut/glx/depend	\
 	$(TOP)/src/glu/sgi/depend

@@ -13,11 +13,11 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h glapidispatch.h \
 	../x86/glapi_x86.S \
 	../x86-64/glapi_x86-64.S \
 	../sparc/glapi_sparc.S \
-	../../glx/x11/indirect.c \
-	../../glx/x11/indirect.h \
-	../../glx/x11/indirect_init.c \
-	../../glx/x11/indirect_size.h \
-	../../glx/x11/indirect_size.c
+	../../glx/indirect.c \
+	../../glx/indirect.h \
+	../../glx/indirect_init.c \
+	../../glx/indirect_size.h \
+	../../glx/indirect_size.c
 
 
 GLX_DIR = $(XORG_BASE)/glx
@@ -110,20 +110,20 @@ glapidispatch.h $(GLX_DIR)/glapidispatch.h: gl_table.py $(COMMON)
 ../sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../../glx/x11/indirect.c: glX_proto_send.py $(COMMON_GLX)
+../../glx/indirect.c: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m proto | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/x11/indirect.h: glX_proto_send.py $(COMMON_GLX)
+../../glx/indirect.h: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_h > $@
 
-../../glx/x11/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
+../../glx/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_c > $@
 
-../../glx/x11/indirect_size.h $(GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
+../../glx/indirect_size.h $(GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-set -h _INDIRECT_SIZE_H_ \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/x11/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
+../../glx/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_c --only-set \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 

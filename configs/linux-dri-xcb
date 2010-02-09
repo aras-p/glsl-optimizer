@@ -47,7 +47,7 @@ DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
                 $(LIBDRM_LIB) $(shell pkg-config --libs xcb) $(shell pkg-config --libs x11-xcb) $(shell pkg-config --libs xcb-glx)
 
-SRC_DIRS = glx/x11 gallium mesa glu glut/glx glew glw
+SRC_DIRS = glx gallium mesa glu glut/glx glew glw
 PROGRAM_DIRS = xdemos
 
 DRIVER_DIRS = dri

@@ -445,7 +445,7 @@ xlib)
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
     ;;
 dri)
-    SRC_DIRS="$SRC_DIRS glx/x11"
+    SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"

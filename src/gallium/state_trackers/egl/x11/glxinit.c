@@ -1,6 +1,6 @@
 /**
  * GLX initialization.  Code based on glxext.c, glx_query.c, and
- * glcontextmodes.c under src/glx/x11/.  The major difference is that DRI
+ * glcontextmodes.c under src/glx/.  The major difference is that DRI
  * related code is stripped out.
  *
  * If the maintenance of this file takes too much time, we should consider
