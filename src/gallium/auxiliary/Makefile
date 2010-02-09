@@ -154,10 +154,15 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_tgsi_soa.c \
         gallivm/lp_bld_type.c
 
+GALLIVM_CPP_SOURCES = \
+        gallivm/lp_bld_misc.cpp
+
 
 ifeq ($(MESA_LLVM),1)
 C_SOURCES += \
 	$(GALLIVM_SOURCES)
+CPP_SOURCES += \
+	$(GALLIVM_CPP_SOURCES)
 endif
 
 
