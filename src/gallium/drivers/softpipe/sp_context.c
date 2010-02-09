@@ -44,7 +44,6 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_tile_cache.h"
-#include "sp_winsys.h"
 #include "sp_query.h"
 
 
