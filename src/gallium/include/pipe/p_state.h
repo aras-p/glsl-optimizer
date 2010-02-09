@@ -199,8 +199,8 @@ struct pipe_stencil_state
    unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
    unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
    unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
-   ubyte valuemask;
-   ubyte writemask;
+   unsigned valuemask:8;
+   unsigned writemask:8;
 };
 
 
