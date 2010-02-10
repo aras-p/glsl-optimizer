@@ -61,6 +61,7 @@ struct llvmpipe_context {
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    struct pipe_buffer *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
