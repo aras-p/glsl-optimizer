@@ -87,7 +87,6 @@ struct dri2_egl_surface
    __DRIbuffer          buffers[5];
    int                  buffer_count;
    xcb_xfixes_region_t  region;
-   int                  have_back;
    int                  have_fake_front;
    int                  swap_interval;
 };
@@ -153,7 +152,8 @@ EGLint dri2_to_egl_attribute_map[] = {
 };
 
 static void
-dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
+dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
+		int depth, xcb_visualtype_t *visual)
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
@@ -215,21 +215,39 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id)
       }
    }
 
+   /* In EGL, double buffer or not isn't a config attribute.  Pixmaps
+    * surfaces are always single buffered, pbuffer surfaces are always
+    * back buffers and windows can be either, selected by passing an
+    * attribute at window surface construction time.  To support this
+    * we ignore all double buffer configs and manipulate the buffer we
+    * return in the getBuffer callback to get the behaviour we want. */
+
+   if (double_buffer) {
+      free(conf);
+      return;
+   }
+
    /* EGL_SWAP_BEHAVIOR_PRESERVED_BIT */
 
-   /* FIXME: Figure out how to get the visual ID and types */
-   if (double_buffer) {
+   if (visual != NULL) {
+      if (depth != _eglGetConfigKey(&conf->base, EGL_BUFFER_SIZE)) {
+	 free(conf);
+	 return;
+      }
+
       _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
 		       EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
-      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, 0x21);
-      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE,
-		       XCB_VISUAL_CLASS_TRUE_COLOR);
+      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, visual->visual_id);
+      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE, visual->_class);
    } else {
       _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
 		       EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
    }
+
    _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+   if (_eglGetConfigKey(&conf->base, EGL_ALPHA_SIZE) > 0)
+      _eglSetConfigKey(&conf->base,
+		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
 
    /* EGL_OPENGL_ES_BIT, EGL_OPENVG_BIT, EGL_OPENGL_ES2_BIT */
    _eglSetConfigKey(&conf->base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
@@ -261,7 +279,6 @@ dri2_process_buffers(struct dri2_egl_surface *dri2_surf,
 
    dri2_surf->buffer_count = count;
    dri2_surf->have_fake_front = 0;
-   dri2_surf->have_back = 0;
 
    /* This assumes the DRI2 buffer attachment tokens matches the
     * __DRIbuffer tokens. */
@@ -271,10 +288,14 @@ dri2_process_buffers(struct dri2_egl_surface *dri2_surf,
       dri2_surf->buffers[i].pitch = buffers[i].pitch;
       dri2_surf->buffers[i].cpp = buffers[i].cpp;
       dri2_surf->buffers[i].flags = buffers[i].flags;
+
+      /* We only use the DRI drivers single buffer configs.  This
+       * means that if we try to render to a window, DRI2 will give us
+       * the fake front buffer, which we'll use as a back buffer.
+       * Note that EGL doesn't require that several clients rendering
+       * to the same window must see the same aux buffers. */
       if (dri2_surf->buffers[i].attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)
          dri2_surf->have_fake_front = 1;
-      if (dri2_surf->buffers[i].attachment == __DRI_BUFFER_BACK_LEFT)
-         dri2_surf->have_back = 1;
    }
 
    if (dri2_surf->region != XCB_NONE)
@@ -448,7 +469,9 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    xcb_generic_error_t *error;
    drm_magic_t magic;
    xcb_screen_iterator_t s;
-   int i;
+   xcb_depth_iterator_t d;
+   xcb_visualtype_t *visuals;
+   int i, j, id;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -608,8 +631,27 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
       goto cleanup_dri_screen;
 
-   for (i = 0; driver_configs[i]; i++)
-      dri2_add_config(disp, driver_configs[i], i + 1);
+   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
+   d = xcb_screen_allowed_depths_iterator(s.data);
+   id = 1;
+   while (d.rem > 0) {
+      EGLBoolean class_added[6] = { 0, };
+
+      visuals = xcb_depth_visuals(d.data);
+      for (i = 0; i < xcb_depth_visuals_length(d.data); i++) {
+	 if (class_added[visuals[i]._class])
+	    continue;
+
+	 class_added[visuals[i]._class] = EGL_TRUE;
+	 for (j = 0; driver_configs[j]; j++)
+	    dri2_add_config(disp, driver_configs[j],
+			    id++, d.data->depth, &visuals[i]);
+
+      }
+
+      xcb_depth_next(&d);      
+   }
+
    if (!disp->NumConfigs) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
       goto cleanup_configs;
@@ -885,14 +927,14 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 #endif
 #endif
 
-   if (!dri2_surf->have_back)
+   if (!dri2_surf->have_fake_front)
       return EGL_TRUE;
 
    cookie = xcb_dri2_copy_region_unchecked(dri2_dpy->conn,
 					   dri2_surf->drawable,
 					   dri2_surf->region,
 					   XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT,
-					   XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT);
+					   XCB_DRI2_ATTACHMENT_BUFFER_FAKE_FRONT_LEFT);
    free(xcb_dri2_copy_region_reply(dri2_dpy->conn, cookie, NULL));
 
    return EGL_TRUE;
