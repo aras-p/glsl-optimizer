@@ -172,10 +172,6 @@ begin_binning( struct setup_context *setup )
          lp_scene_bin_everywhere( scene, 
 				  lp_rast_clear_zstencil, 
 				  setup->clear.zstencil );
-      else
-         lp_scene_bin_everywhere( scene,
-				  lp_rast_load_zstencil,
-				  lp_rast_arg_null() );
    }
 
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);

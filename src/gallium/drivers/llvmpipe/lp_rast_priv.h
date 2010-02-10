@@ -29,6 +29,8 @@
 #define LP_RAST_PRIV_H
 
 #include "os/os_thread.h"
+#include "util/u_format.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_rast.h"
 #include "lp_tile_soa.h"
 
@@ -48,8 +50,6 @@ struct lp_rasterizer;
 struct lp_rast_tile
 {
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
-
-   uint32_t *depth;
 };
 
 
@@ -91,7 +91,7 @@ struct lp_rasterizer
    struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
    struct pipe_transfer *zsbuf_transfer;
    void *cbuf_map[PIPE_MAX_COLOR_BUFS];
-   void *zsbuf_map;
+   uint8_t *zsbuf_map;
 
    struct {
       struct pipe_framebuffer_state fb;
@@ -129,6 +129,28 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
 
 
 /**
+ * Get the pointer to the depth buffer for a block.
+ * \param x, y location of 4x4 block in window coords
+ */
+static INLINE void *
+lp_rast_depth_pointer( struct lp_rasterizer *rast,
+                       unsigned x, unsigned y )
+{
+   void * depth;
+   assert((x % TILE_VECTOR_WIDTH) == 0);
+   assert((y % TILE_VECTOR_HEIGHT) == 0);
+   depth = rast->zsbuf_map +
+           y*rast->zsbuf_transfer->stride +
+           TILE_VECTOR_HEIGHT*x*util_format_get_blocksize(rast->zsbuf_transfer->texture->format);
+#ifdef DEBUG
+   assert(lp_check_alignment(depth, 16));
+#endif
+   return depth;
+}
+
+
+
+/**
  * Shade all pixels in a 4x4 block.  The fragment code omits the
  * triangle in/out tests.
  * \param x, y location of 4x4 block in window coords
@@ -153,8 +175,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer *rast,
    for (i = 0; i < rast->state.fb.nr_cbufs; i++)
       color[i] = tile->color[i] + 4 * block_offset;
 
-   /* depth buffer */
-   depth = tile->depth + block_offset;
+   depth = lp_rast_depth_pointer(rast, x, y);
 
    /* run shader */
    state->jit_function[0]( &state->jit_context,

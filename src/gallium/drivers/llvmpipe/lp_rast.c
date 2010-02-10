@@ -229,13 +229,58 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
                              unsigned thread_index,
                              const union lp_rast_cmd_arg arg)
 {
-   unsigned i;
-   uint32_t *depth_tile = rast->tasks[thread_index].tile.depth;
-   
+   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   const unsigned tile_x = task->x;
+   const unsigned tile_y = task->y;
+   const unsigned height = TILE_SIZE/TILE_VECTOR_HEIGHT;
+   const unsigned width = TILE_SIZE*TILE_VECTOR_HEIGHT;
+   unsigned block_size = util_format_get_blocksize(rast->zsbuf_transfer->texture->format);
+   uint8_t *dst;
+   unsigned dst_stride = rast->zsbuf_transfer->stride*TILE_VECTOR_HEIGHT;
+   unsigned i, j;
+
    LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
-   for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
-      depth_tile[i] = arg.clear_zstencil;
+   assert(rast->zsbuf_map);
+   if (!rast->zsbuf_map)
+      return;
+
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+
+   /*
+    * Clear the aera of the swizzled depth/depth buffer matching this tile, in
+    * stripes of TILE_VECTOR_HEIGHT x TILE_SIZE at a time.
+    *
+    * The swizzled depth format is such that the depths for
+    * TILE_VECTOR_HEIGHT x TILE_VECTOR_WIDTH pixels have consecutive offsets.
+    */
+
+   dst = lp_rast_depth_pointer(rast, tile_x, tile_y);
+
+   switch (block_size) {
+   case 1:
+      memset(dst, (uint8_t) arg.clear_zstencil, height * width);
+      break;
+   case 2:
+      for (i = 0; i < height; i++) {
+         uint16_t *row = (uint16_t *)dst;
+         for (j = 0; j < width; j++)
+            *row++ = (uint16_t) arg.clear_zstencil;
+         dst += dst_stride;
+      }
+      break;
+   case 4:
+      for (i = 0; i < height; i++) {
+         uint32_t *row = (uint32_t *)dst;
+         for (j = 0; j < width; j++)
+            *row++ = arg.clear_zstencil;
+         dst += dst_stride;
+      }
+      break;
+   default:
+         assert(0);
+         break;
+   }
 }
 
 
@@ -279,53 +324,6 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 
       LP_COUNT(nr_color_tile_load);
    }
-}
-
-
-static void
-lp_tile_read_z32(uint32_t *tile,
-                 const uint8_t *map,
-                 unsigned map_stride,
-                 unsigned x0, unsigned y0, unsigned w, unsigned h)
-{
-   unsigned x, y;
-   const uint8_t *map_row = map + y0*map_stride;
-   for (y = 0; y < h; ++y) {
-      const uint32_t *map_pixel = (uint32_t *)(map_row + x0*4);
-      for (x = 0; x < w; ++x) {
-         *tile++ = *map_pixel++;
-      }
-      map_row += map_stride;
-   }
-}
-
-/**
- * Load tile z/stencil from the framebuffer surface.
- * This is a bin command called during bin processing.
- */
-void lp_rast_load_zstencil( struct lp_rasterizer *rast,
-                            unsigned thread_index,
-                            const union lp_rast_cmd_arg arg )
-{
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
-   const unsigned x = task->x;
-   const unsigned y = task->y;
-   unsigned w = TILE_SIZE;
-   unsigned h = TILE_SIZE;
-
-   if (x + w > rast->state.fb.width)
-      w -= x + w - rast->state.fb.width;
-
-   if (y + h > rast->state.fb.height)
-      h -= y + h - rast->state.fb.height;
-
-   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
-
-   assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
-   lp_tile_read_z32(task->tile.depth,
-                    rast->zsbuf_map, 
-                    rast->zsbuf_transfer->stride,
-                    x, y, w, h);
 }
 
 
@@ -377,7 +375,7 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
             color[i] = tile->color[i] + 4 * block_offset;
 
          /* depth buffer */
-         depth = tile->depth + block_offset;
+         depth = lp_rast_depth_pointer(rast, tile_x + x, tile_y + y);
 
          /* run shader */
          state->jit_function[0]( &state->jit_context,
@@ -435,12 +433,11 @@ void lp_rast_shade_quads( struct lp_rasterizer *rast,
       color[i] = tile->color[i] + 4 * block_offset;
 
    /* depth buffer */
-   depth = tile->depth + block_offset;
+   depth = lp_rast_depth_pointer(rast, x, y);
 
 
 
 #ifdef DEBUG
-   assert(lp_check_alignment(tile->depth, 16));
    assert(lp_check_alignment(tile->color[0], 16));
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
@@ -557,49 +554,6 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 }
 
 
-static void
-lp_tile_write_z32(const uint32_t *src, uint8_t *dst, unsigned dst_stride,
-                  unsigned x0, unsigned y0, unsigned w, unsigned h)
-{
-   unsigned x, y;
-   uint8_t *dst_row = dst + y0*dst_stride;
-   for (y = 0; y < h; ++y) {
-      uint32_t *dst_pixel = (uint32_t *)(dst_row + x0*4);
-      for (x = 0; x < w; ++x) {
-         *dst_pixel++ = *src++;
-      }
-      dst_row += dst_stride;
-   }
-}
-
-/**
- * Write the rasterizer's z/stencil tile to the framebuffer.
- */
-static void lp_rast_store_zstencil( struct lp_rasterizer *rast,
-                                    unsigned thread_index )
-{
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
-   const unsigned x = task->x;
-   const unsigned y = task->y;
-   unsigned w = TILE_SIZE;
-   unsigned h = TILE_SIZE;
-
-   if (x + w > rast->state.fb.width)
-      w -= x + w - rast->state.fb.width;
-
-   if (y + h > rast->state.fb.height)
-      h -= y + h - rast->state.fb.height;
-
-   LP_DBG(DEBUG_RAST, "%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
-
-   assert(rast->zsbuf_transfer->texture->format == PIPE_FORMAT_Z32_UNORM);
-   lp_tile_write_z32(task->tile.depth,
-                     rast->zsbuf_map, 
-                     rast->zsbuf_transfer->stride,
-                     x, y, w, h);
-}
-
-
 /**
  * Write the rasterizer's tiles to the framebuffer.
  */
@@ -611,9 +565,6 @@ lp_rast_end_tile( struct lp_rasterizer *rast,
 
    if (rast->state.write_color)
       lp_rast_store_color(rast, thread_index);
-
-   if (rast->state.write_zstencil)
-      lp_rast_store_zstencil(rast, thread_index);
 }
 
 
@@ -694,7 +645,6 @@ static struct {
 } cmd_names[] = 
 {
    RAST(load_color),
-   RAST(load_zstencil),
    RAST(clear_color),
    RAST(clear_zstencil),
    RAST(triangle),
@@ -753,7 +703,6 @@ is_empty_bin( const struct cmd_bin *bin )
 
    for (i = 0; i < head->count; i++)
       if (head->cmd[i] != lp_rast_load_color &&
-          head->cmd[i] != lp_rast_load_zstencil &&
           head->cmd[i] != lp_rast_set_state) {
          return FALSE;
       }
@@ -993,7 +942,6 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
       for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
 	 task->tile.color[cbuf] = align_malloc(TILE_SIZE * TILE_SIZE * 4, 16);
 
-      task->tile.depth = align_malloc(TILE_SIZE * TILE_SIZE * 4, 16);
       task->rast = rast;
       task->thread_index = i;
    }
@@ -1016,7 +964,6 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
    util_unreference_framebuffer_state(&rast->state.fb);
 
    for (i = 0; i < Elements(rast->tasks); i++) {
-      align_free(rast->tasks[i].tile.depth);
       for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
 	 align_free(rast->tasks[i].tile.color[cbuf]);
    }
