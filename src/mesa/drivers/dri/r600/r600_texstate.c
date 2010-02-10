@@ -1116,5 +1116,5 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 
 void r600SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
-        r600SetTexBuffer2(pDRICtx, target, __DRM_TEXTURE_FORMAT_RGBA, dPriv);
+        r600SetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
