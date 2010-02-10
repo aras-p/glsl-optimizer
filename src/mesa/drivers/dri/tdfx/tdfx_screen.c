@@ -383,7 +383,8 @@ tdfxFillInModes(__DRIscreen *psp,
 			    stencil_bits_array,
 			    deep ? 2 : 4,
 			    db_modes, 2,
-			    msaa_samples_array, 1);
+			    msaa_samples_array, 1,
+			    GL_TRUE);
 }
 
 /**

@@ -45,6 +45,8 @@
 #include "lp_fence.h"
 #include "lp_rast.h"
 #include "lp_setup_context.h"
+#include "lp_screen.h"
+#include "lp_winsys.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
@@ -472,11 +474,20 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          jit_tex->width = tex->width0;
          jit_tex->height = tex->height0;
          jit_tex->stride = lp_tex->stride[0];
-         if(!lp_tex->dt)
+         if(!lp_tex->dt) {
             jit_tex->data = lp_tex->data;
-         else
-            /* FIXME: map the rendertarget */
-            assert(0);
+         }
+         else {
+            /*
+             * XXX: Where should this be unmapped?
+             */
+
+            struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
+            struct llvmpipe_winsys *winsys = screen->winsys;
+            jit_tex->data = winsys->displaytarget_map(winsys, lp_tex->dt,
+                                                      PIPE_BUFFER_USAGE_CPU_READ);
+            assert(jit_tex->data);
+         }
 
          /* the scene references this texture */
          {

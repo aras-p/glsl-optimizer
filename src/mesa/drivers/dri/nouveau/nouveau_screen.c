@@ -83,7 +83,8 @@ nouveau_get_configs(void)
 					  back_buffer_modes,
 					  Elements(back_buffer_modes),
 					  msaa_samples,
-					  Elements(msaa_samples));
+					  Elements(msaa_samples),
+					  GL_TRUE);
 		assert(config);
 
 		configs = configs ? driConcatConfigs(configs, config)
