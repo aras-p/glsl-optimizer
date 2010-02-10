@@ -47,6 +47,7 @@ Uarray::Uarray( void )
 {
     uarray = 0;
     size = 0;
+    ulines = 0;
 }
 
 Uarray::~Uarray( void )
