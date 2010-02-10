@@ -37,6 +37,10 @@
 #define MAX_MODES 1000
 #define MAX_SCREENS 10
 
+/* These are X visual types, so if you're running eglinfo under
+ * something not X, they probably don't make sense. */
+static const char *vnames[] = { "SG", "GS", "SC", "PC", "TC", "DC" };
+
 /**
  * Print table of all available configurations.
  */
@@ -49,15 +53,15 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv colorbuffer dp st  ms    vis cav bi  renderable  supported\n");
-   printf("  id sz  l  r  g  b  a th cl ns b    id eat nd gl es es2 vg surfaces \n");
+   printf("     bf lv colorbuffer dp st  ms    vis   cav bi  renderable  supported\n");
+   printf("  id sz  l  r  g  b  a th cl ns b    id   eat nd gl es es2 vg surfaces \n");
    printf("---------------------------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
       EGLint red, green, blue, alpha;
       EGLint depth, stencil;
       EGLint renderable, surfaces;
-      EGLint vid, caveat, bindRgb, bindRgba;
+      EGLint vid, vtype, caveat, bindRgb, bindRgba;
       EGLint samples, sampleBuffers;
       char surfString[100] = "";
 
@@ -72,6 +76,7 @@ PrintConfigs(EGLDisplay d)
       eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
       eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
       eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_TYPE, &vtype);
 
       eglGetConfigAttrib(d, configs[i], EGL_CONFIG_CAVEAT, &caveat);
       eglGetConfigAttrib(d, configs[i], EGL_BIND_TO_TEXTURE_RGB, &bindRgb);
@@ -95,11 +100,11 @@ PrintConfigs(EGLDisplay d)
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
-      printf("0x%02x %2d %2d %2d %2d %2d %2d %2d %2d %2d%2d 0x%03x ",
+      printf("0x%02x %2d %2d %2d %2d %2d %2d %2d %2d %2d%2d 0x%02x%s ",
              id, size, level,
              red, green, blue, alpha,
              depth, stencil,
-             samples, sampleBuffers, vid);
+             samples, sampleBuffers, vid, vtype < 6 ? vnames[vtype] : "--");
       printf("  %c  %c  %c  %c  %c   %c %s\n",
              (caveat != EGL_NONE) ? 'y' : ' ',
              (bindRgba) ? 'a' : (bindRgb) ? 'y' : ' ',
