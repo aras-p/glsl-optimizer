@@ -65,7 +65,7 @@ struct pb_cache_buffer
    struct pb_cache_manager *mgr;
 
    /** Caching time interval */
-   struct util_time start, end;
+   int64_t start, end;
 
    struct list_head head;
 };
@@ -126,16 +126,16 @@ _pb_cache_buffer_list_check_free(struct pb_cache_manager *mgr)
 {
    struct list_head *curr, *next;
    struct pb_cache_buffer *buf;
-   struct util_time now;
+   int64_t now;
    
-   util_time_get(&now);
+   now = os_time_get();
    
    curr = mgr->delayed.next;
    next = curr->next;
    while(curr != &mgr->delayed) {
       buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
 
-      if(!util_time_timeout(&buf->start, &buf->end, &now))
+      if(!os_time_timeout(buf->start, buf->end, now))
 	 break;
 	 
       _pb_cache_buffer_destroy(buf);
@@ -157,8 +157,8 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    
    _pb_cache_buffer_list_check_free(mgr);
    
-   util_time_get(&buf->start);
-   util_time_add(&buf->start, mgr->usecs, &buf->end);
+   buf->start = os_time_get();
+   buf->end = buf->start + mgr->usecs;
    LIST_ADDTAIL(&buf->head, &mgr->delayed);
    ++mgr->numDelayed;
    pipe_mutex_unlock(mgr->mutex);
@@ -253,7 +253,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_cache_buffer *buf;
    struct pb_cache_buffer *curr_buf;
    struct list_head *curr, *next;
-   struct util_time now;
+   int64_t now;
    
    pipe_mutex_lock(mgr->mutex);
 
@@ -262,12 +262,12 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    next = curr->next;
    
    /* search in the expired buffers, freeing them in the process */
-   util_time_get(&now);
+   now = os_time_get();
    while(curr != &mgr->delayed) {
       curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
       if(!buf && pb_cache_is_buffer_compat(curr_buf, size, desc))
 	 buf = curr_buf;
-      else if(util_time_timeout(&curr_buf->start, &curr_buf->end, &now))
+      else if(os_time_timeout(curr_buf->start, curr_buf->end, now))
 	 _pb_cache_buffer_destroy(curr_buf);
       else
          /* This buffer (and all hereafter) are still hot in cache */
