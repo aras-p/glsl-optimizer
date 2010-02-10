@@ -192,6 +192,7 @@ clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
+   struct pipe_stencil_ref stencil_ref;
    const GLfloat x0 = (GLfloat) ctx->DrawBuffer->_Xmin;
    const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax;
    GLfloat y0, y1;
@@ -247,6 +248,7 @@ clear_with_quad(GLcontext *ctx,
    {
       struct pipe_depth_stencil_alpha_state depth_stencil;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
+      memset(&stencil_ref, 0, sizeof(stencil_ref));
       if (depth) {
          depth_stencil.depth.enabled = 1;
          depth_stencil.depth.writemask = 1;
@@ -259,9 +261,10 @@ clear_with_quad(GLcontext *ctx,
          depth_stencil.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
-         depth_stencil.stencil[0].ref_value = ctx->Stencil.Clear;
          depth_stencil.stencil[0].valuemask = 0xff;
          depth_stencil.stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
+         stencil_ref.ref_value[0] = ctx->Stencil.Clear;
+         cso_set_stencil_ref(st->cso_context, &stencil_ref);
       }
 
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
@@ -281,6 +284,22 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_rasterizer(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
+
+   /* cannot restore stencil ref. Try to reconstruct? */
+   if (stencil) {
+      if (ctx->Stencil.Enabled && ctx->DrawBuffer->Visual.stencilBits > 0) {
+         stencil_ref.ref_value[0] = ctx->Stencil.Ref[0] & 0xff;
+         if (ctx->Stencil._TestTwoSide) {
+            const GLuint back = ctx->Stencil._BackFace;
+            stencil_ref.ref_value[1] = ctx->Stencil.Ref[back] & 0xff;
+         }
+         else {
+            stencil_ref.ref_value[1] = stencil_ref.ref_value[0];
+         }
+      }
+      cso_set_stencil_ref(st->cso_context, &stencil_ref);
+   }
+
 }
 
 

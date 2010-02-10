@@ -123,7 +123,6 @@ update_depth_stencil_alpha(struct st_context *st)
          dsa->stencil[1].fail_op = gl_stencil_op_to_pipe(ctx->Stencil.FailFunc[back]);
          dsa->stencil[1].zfail_op = gl_stencil_op_to_pipe(ctx->Stencil.ZFailFunc[back]);
          dsa->stencil[1].zpass_op = gl_stencil_op_to_pipe(ctx->Stencil.ZPassFunc[back]);
-         dsa->stencil[1].ref_value = ctx->Stencil.Ref[back] & 0xff;
          dsa->stencil[1].valuemask = ctx->Stencil.ValueMask[back] & 0xff;
          dsa->stencil[1].writemask = ctx->Stencil.WriteMask[back] & 0xff;
          sr.ref_value[1] = ctx->Stencil.Ref[back] & 0xff;
