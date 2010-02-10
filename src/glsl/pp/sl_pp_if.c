@@ -40,7 +40,7 @@ _macro_is_defined(struct sl_pp_context *context,
 
    for (i = 0; i < context->num_extensions; i++) {
       if (macro_name == context->extensions[i].name) {
-         return 1;
+         return context->extensions[i].enabled;
       }
    }
 
