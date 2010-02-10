@@ -40,7 +40,6 @@
 #include "lp_debug.h"
 #include "lp_screen.h"
 #include "gallivm/lp_bld_intr.h"
-#include "gallivm/lp_bld_misc.h"
 #include "lp_jit.h"
 
 

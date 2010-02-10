@@ -42,8 +42,6 @@
 #include "lp_perf.h"
 #include "lp_state.h"
 #include "lp_surface.h"
-#include "lp_texture.h"
-#include "lp_winsys.h"
 #include "lp_query.h"
 #include "lp_setup.h"
 
