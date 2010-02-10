@@ -293,18 +293,18 @@ radeonFillInModes( __DRIscreen *psp,
 					  depth_bits_array, stencil_bits_array,
 					  depth_buffer_factor, back_buffer_modes,
 					  back_buffer_factor, msaa_samples_array,
-					  1, TRUE);
+					  1, GL_TRUE);
 	configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 					    depth_bits_array, stencil_bits_array,
 					    1, back_buffer_modes, 1,
-					    msaa_samples_array, 1, TRUE);
+					    msaa_samples_array, 1, GL_TRUE);
 	configs = driConcatConfigs(configs_r5g6b5, configs_a8r8g8b8);
    } else
 	configs = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 				   depth_bits_array, stencil_bits_array,
 				   depth_buffer_factor,
 				   back_buffer_modes, back_buffer_factor,
-				   msaa_samples_array, 1, TRUE);
+				   msaa_samples_array, 1, GL_TRUE);
 
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
