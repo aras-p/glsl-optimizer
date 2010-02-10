@@ -139,6 +139,9 @@ lp_rast_depth_pointer( struct lp_rasterizer *rast,
    void * depth;
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
+   if(!rast->zsbuf_map)
+      return NULL;
+   assert(rast->zsbuf_transfer);
    depth = rast->zsbuf_map +
            y*rast->zsbuf_transfer->stride +
            TILE_VECTOR_HEIGHT*x*util_format_get_blocksize(rast->zsbuf_transfer->texture->format);
