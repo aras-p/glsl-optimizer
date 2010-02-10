@@ -32,7 +32,7 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "util/u_network.h"
-#include "util/u_time.h"
+#include "os/os_time.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -798,7 +798,7 @@ PIPE_THREAD_ROUTINE(trace_rbug_thread, void_tr_rbug)
    debug_printf("trace_rbug - remote debugging listening on port %u\n", --port);
 
    while(tr_rbug->running) {
-      util_time_sleep(1);
+      os_time_sleep(1);
 
       c = u_socket_accept(s);
       if (c < 0)
