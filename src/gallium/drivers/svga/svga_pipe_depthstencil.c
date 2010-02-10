@@ -89,7 +89,6 @@ svga_create_depth_stencil_state(struct pipe_context *pipe,
       /* SVGA3D has one ref/mask/writemask triple shared between front &
        * back face stencil.  We really need two:
        */
-      ds->stencil_ref       = templ->stencil[0].ref_value & 0xff;
       ds->stencil_mask      = templ->stencil[0].valuemask & 0xff;
       ds->stencil_writemask = templ->stencil[0].writemask & 0xff;
    }
@@ -102,7 +101,6 @@ svga_create_depth_stencil_state(struct pipe_context *pipe,
       ds->stencil[1].zfail  = svga_translate_stencil_op(templ->stencil[1].zfail_op);
       ds->stencil[1].pass   = svga_translate_stencil_op(templ->stencil[1].zpass_op);
 
-      ds->stencil_ref       = templ->stencil[1].ref_value & 0xff;
       ds->stencil_mask      = templ->stencil[1].valuemask & 0xff;
       ds->stencil_writemask = templ->stencil[1].writemask & 0xff;
    }
@@ -139,12 +137,24 @@ static void svga_delete_depth_stencil_state(struct pipe_context *pipe,
 }
 
 
+static void svga_set_stencil_ref( struct pipe_context *pipe,
+                                  const struct pipe_stencil_ref *stencil_ref )
+{
+   struct svga_context *svga = svga_context(pipe);
+
+   svga->curr.stencil_ref = *stencil_ref;
+
+   svga->dirty |= SVGA_NEW_STENCIL_REF;
+}
+
 
 void svga_init_depth_stencil_functions( struct svga_context *svga )
 {
    svga->pipe.create_depth_stencil_alpha_state = svga_create_depth_stencil_state;
    svga->pipe.bind_depth_stencil_alpha_state = svga_bind_depth_stencil_state;
    svga->pipe.delete_depth_stencil_alpha_state = svga_delete_depth_stencil_state;
+
+   svga->pipe.set_stencil_ref = svga_set_stencil_ref;
 }
 
 

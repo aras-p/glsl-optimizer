@@ -116,7 +116,6 @@ struct svga_depth_stencil_state {
    /* SVGA3D has one ref/mask/writemask triple shared between front &
     * back face stencil.  We really need two:
     */
-   unsigned stencil_ref:8;
    unsigned stencil_mask:8;
    unsigned stencil_writemask:8;
 
@@ -199,6 +198,7 @@ struct svga_state
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    struct pipe_viewport_state viewport;
 
@@ -376,6 +376,7 @@ struct svga_context
 #define SVGA_NEW_VS_RESULT           0x1000000
 #define SVGA_NEW_ZERO_STRIDE         0x2000000
 #define SVGA_NEW_TEXTURE_FLAGS       0x4000000
+#define SVGA_NEW_STENCIL_REF         0x8000000
 
 
 

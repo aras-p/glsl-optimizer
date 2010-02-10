@@ -26,6 +26,9 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
+#if 0
+#include "util/u_pack_color.h"
+#endif
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -100,6 +103,23 @@ static int emit_rss( struct svga_context *svga,
       }
    }
 
+#if 0
+   /* FIXME: shouldn't we emit blend color here */
+   if (dirty & SVGA_NEW_BLEND_COLOR) {
+      union util_color uc;
+      ubyte r = float_to_ubyte(svga->curr.blend_color.color[0]);
+      ubyte g = float_to_ubyte(svga->curr.blend_color.color[1]);
+      ubyte b = float_to_ubyte(svga->curr.blend_color.color[2]);
+      ubyte a = float_to_ubyte(svga->curr.blend_color.color[3]);
+
+      util_pack_color_ub( r, g, b, a,
+                          PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+
+      EMIT_RS( svga, uc.ui, BLENDCOLOR, fail );
+   }
+#endif
+
+
 
    if (dirty & (SVGA_NEW_DEPTH_STENCIL | SVGA_NEW_RAST)) {
       const struct svga_depth_stencil_state *curr = svga->curr.depth; 
@@ -123,8 +143,7 @@ static int emit_rss( struct svga_context *svga,
          EMIT_RS( svga, curr->stencil[0].fail,  STENCILFAIL, fail );
          EMIT_RS( svga, curr->stencil[0].zfail, STENCILZFAIL, fail );
          EMIT_RS( svga, curr->stencil[0].pass,  STENCILPASS, fail );
-         
-         EMIT_RS( svga, curr->stencil_ref, STENCILREF, fail );
+
          EMIT_RS( svga, curr->stencil_mask, STENCILMASK, fail );
          EMIT_RS( svga, curr->stencil_writemask, STENCILWRITEMASK, fail );
       }
@@ -160,7 +179,6 @@ static int emit_rss( struct svga_context *svga,
          EMIT_RS( svga, curr->stencil[ccw].zfail, CCWSTENCILZFAIL, fail );
          EMIT_RS( svga, curr->stencil[ccw].pass,  CCWSTENCILPASS, fail );
 
-         EMIT_RS( svga, curr->stencil_ref, STENCILREF, fail );
          EMIT_RS( svga, curr->stencil_mask, STENCILMASK, fail );
          EMIT_RS( svga, curr->stencil_writemask, STENCILWRITEMASK, fail );
       }
@@ -178,6 +196,9 @@ static int emit_rss( struct svga_context *svga,
       }
    }
 
+   if (dirty & SVGA_NEW_STENCIL_REF) {
+      EMIT_RS( svga, svga->curr.stencil_ref.ref_value[0], STENCILREF, fail );
+   }
 
    if (dirty & SVGA_NEW_RAST)
    {
@@ -257,7 +278,11 @@ struct svga_tracked_state svga_hw_rss =
    "hw rss state",
 
    (SVGA_NEW_BLEND |
+#if 0
+    SVGA_NEW_BLEND_COLOR |
+#endif
     SVGA_NEW_DEPTH_STENCIL |
+    SVGA_NEW_STENCIL_REF |
     SVGA_NEW_RAST |
     SVGA_NEW_FRAME_BUFFER |
     SVGA_NEW_NEED_PIPELINE),
