@@ -107,7 +107,7 @@ EGLint dri2_to_egl_attribute_map[] = {
    EGL_RED_SIZE,		/* __DRI_ATTRIB_RED_SIZE */
    EGL_GREEN_SIZE,		/* __DRI_ATTRIB_GREEN_SIZE */
    EGL_BLUE_SIZE,		/* __DRI_ATTRIB_BLUE_SIZE */
-   0,				/* __DRI_ATTRIB_LUMINANCE_SIZE */
+   EGL_LUMINANCE_SIZE,		/* __DRI_ATTRIB_LUMINANCE_SIZE */
    EGL_ALPHA_SIZE,		/* __DRI_ATTRIB_ALPHA_SIZE */
    0,				/* __DRI_ATTRIB_ALPHA_MASK_SIZE */
    EGL_DEPTH_SIZE,		/* __DRI_ATTRIB_DEPTH_SIZE */
@@ -157,24 +157,17 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
+   _EGLConfig base;
    unsigned int attrib, value, double_buffer;
    EGLint key, bind_to_texture_rgb, bind_to_texture_rgba;
    int i;
 
    dri2_dpy = disp->DriverData;
-   conf = malloc(sizeof *conf);
-   if (conf == NULL)
-      return;
-
-   conf->dri_config = dri_config;
-   _eglInitConfig(&conf->base, disp, id);
+   _eglInitConfig(&base, disp, id);
    
    i = 0;
    while (dri2_dpy->core->indexConfigAttrib(dri_config, i++, &attrib, &value)) {
       switch (attrib) {
-      case 0:
-	 break;
-	 
       case __DRI_ATTRIB_RENDER_TYPE:
 	 if (value & __DRI_ATTRIB_RGBA_BIT)
 	    value = EGL_RGB_BUFFER;
@@ -182,7 +175,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 	    value = EGL_LUMINANCE_BUFFER;
 	 else
 	    /* not valid */;
-	 _eglSetConfigKey(&conf->base, EGL_COLOR_BUFFER_TYPE, value);
+	 _eglSetConfigKey(&base, EGL_COLOR_BUFFER_TYPE, value);
 	 break;	 
 
       case __DRI_ATTRIB_CONFIG_CAVEAT:
@@ -192,7 +185,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
             value = EGL_SLOW_CONFIG;
 	 else
 	    value = EGL_NONE;
-	 _eglSetConfigKey(&conf->base, EGL_CONFIG_CAVEAT, value);
+	 _eglSetConfigKey(&base, EGL_CONFIG_CAVEAT, value);
          break;
 
       case __DRI_ATTRIB_BIND_TO_TEXTURE_RGB:
@@ -210,7 +203,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       default:
 	 key = dri2_to_egl_attribute_map[attrib];
 	 if (key != 0)
-	    _eglSetConfigKey(&conf->base, key, value);
+	    _eglSetConfigKey(&base, key, value);
 	 break;
       }
    }
@@ -222,44 +215,45 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
     * we ignore all double buffer configs and manipulate the buffer we
     * return in the getBuffer callback to get the behaviour we want. */
 
-   if (double_buffer) {
-      free(conf);
+   if (double_buffer)
       return;
-   }
-
-   /* EGL_SWAP_BEHAVIOR_PRESERVED_BIT */
 
    if (visual != NULL) {
-      if (depth != _eglGetConfigKey(&conf->base, EGL_BUFFER_SIZE)) {
-	 free(conf);
+      if (depth != _eglGetConfigKey(&base, EGL_BUFFER_SIZE))
 	 return;
-      }
 
-      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
-		       EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
-      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_ID, visual->visual_id);
-      _eglSetConfigKey(&conf->base, EGL_NATIVE_VISUAL_TYPE, visual->_class);
+      _eglSetConfigKey(&base, EGL_SURFACE_TYPE,
+		       EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT |
+		       EGL_SWAP_BEHAVIOR_PRESERVED_BIT);
+
+      _eglSetConfigKey(&base, EGL_NATIVE_VISUAL_ID, visual->visual_id);
+      _eglSetConfigKey(&base, EGL_NATIVE_VISUAL_TYPE, visual->_class);
    } else {
-      _eglSetConfigKey(&conf->base, EGL_SURFACE_TYPE,
+      _eglSetConfigKey(&base, EGL_SURFACE_TYPE,
 		       EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
    }
 
-   _eglSetConfigKey(&conf->base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-   if (_eglGetConfigKey(&conf->base, EGL_ALPHA_SIZE) > 0)
-      _eglSetConfigKey(&conf->base,
+   _eglSetConfigKey(&base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   _eglSetConfigKey(&base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
+   if (_eglGetConfigKey(&base, EGL_ALPHA_SIZE) > 0)
+      _eglSetConfigKey(&base,
 		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
 
    /* EGL_OPENGL_ES_BIT, EGL_OPENVG_BIT, EGL_OPENGL_ES2_BIT */
-   _eglSetConfigKey(&conf->base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
-   _eglSetConfigKey(&conf->base, EGL_CONFORMANT, EGL_OPENGL_BIT);
+   _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
+   _eglSetConfigKey(&base, EGL_CONFORMANT, EGL_OPENGL_BIT);
 
-   if (!_eglValidateConfig(&conf->base, EGL_FALSE)) {
+   if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
-      free(conf);
       return;
    }
 
-   _eglAddConfig(disp, &conf->base);
+   conf = malloc(sizeof *conf);
+   if (conf != NULL) {
+      memcpy(&conf->base, &base, sizeof base);
+      conf->dri_config = dri_config;
+      _eglAddConfig(disp, &conf->base);
+   }
 }
 
 /**
@@ -920,7 +914,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 #if 0
    /* FIXME: Add support for dri swapbuffers, that'll give us swap
     * interval and page flipping (at least for fullscreen windows) as
-    * well as the page flip event. */
+    * well as the page flip event.  Unless surface->SwapBehavior is
+    * EGL_BUFFER_PRESERVED. */
 #if __DRI2_FLUSH_VERSION >= 2
    if (pdraw->psc->f)
       (*pdraw->psc->f->flushInvalidate)(pdraw->driDrawable);
@@ -1029,7 +1024,7 @@ dri2_bind_tex_image(_EGLDriver *drv,
     * for free and it's useful for X compositors.  Supposedly there's
     * a EGL_NOKIA_texture_from_pixmap extension that allows that, but
     * I couldn't find it at this time. */
-   if (dri2_surf->base.Type & (EGL_PBUFFER_BIT | EGL_PIXMAP_BIT) == 0) {
+   if ((dri2_surf->base.Type & (EGL_PBUFFER_BIT | EGL_PIXMAP_BIT)) == 0) {
       _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
       return EGL_FALSE;
    }
