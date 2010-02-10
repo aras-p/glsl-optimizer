@@ -83,6 +83,11 @@ machine = env['machine']
 platform = env['platform']
 drawllvm = 'llvmpipe' in env['drivers']
 
+# LLVM support in the Draw module
+if drawllvm:
+        env.Tool('llvm')
+        if not env.has_key('LLVM_VERSION'):
+           drawllvm = False
 
 # derived options
 x86 = machine == 'x86'
@@ -168,13 +173,7 @@ if dri:
 
 # LLVM support in the Draw module
 if drawllvm:
-	# See also http://www.scons.org/wiki/UsingPkgConfig
-        # currently  --ldflags --libsdisabled since the driver will force the correct linkage
-        env.Tool('llvm')
-        if not env.has_key('LLVM_VERSION'):
-           drawllvm = False
-	else:
-           env.Append(CPPDEFINES = ['DRAW_LLVM'])
+    env.Append(CPPDEFINES = ['DRAW_LLVM'])
 
 # libGL
 if platform in ('linux', 'freebsd', 'darwin'):
