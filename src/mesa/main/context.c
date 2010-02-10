@@ -495,12 +495,6 @@ _mesa_init_constants(GLcontext *ctx)
 {
    assert(ctx);
 
-   assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
-   assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
-
-   /* Max texture size should be <= max viewport size (render to texture) */
-   assert((1 << (MAX_TEXTURE_LEVELS - 1)) <= MAX_WIDTH);
-
    /* Constants, may be overriden (usually only reduced) by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
@@ -571,26 +565,6 @@ _mesa_init_constants(GLcontext *ctx)
 
    /* GL_EXT_provoking_vertex */
    ctx->Const.QuadsFollowProvokingVertexConvention = GL_TRUE;
-
-   /* sanity checks */
-   ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
-                                             ctx->Const.MaxTextureCoordUnits));
-   ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
-   ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
-   ASSERT(ctx->Const.MaxCombinedTextureImageUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-   ASSERT(ctx->Const.MaxTextureCoordUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-   ASSERT(MAX_COMBINED_TEXTURE_IMAGE_UNITS <= 32); /* GLbitfield size limit */
-
-   ASSERT(MAX_NV_FRAGMENT_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
-   ASSERT(MAX_NV_VERTEX_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
-   ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
-   ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
-
-   /* check that we don't exceed the size of various bitfields */
-   ASSERT(VERT_RESULT_MAX <=
-	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
-   ASSERT(FRAG_ATTRIB_MAX <=
-	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 }
 
 
@@ -601,17 +575,36 @@ _mesa_init_constants(GLcontext *ctx)
 static void
 check_context_limits(GLcontext *ctx)
 {
-   /* Many context limits/constants are limited by the size of
-    * internal arrays.
-    */
+   /* check that we don't exceed the size of various bitfields */
+   assert(VERT_RESULT_MAX <=
+	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
+   assert(FRAG_ATTRIB_MAX <=
+	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
+
+   assert(MAX_COMBINED_TEXTURE_IMAGE_UNITS <= 8 * sizeof(GLbitfield));
+
+   /* shader-related checks */
+   assert(ctx->Const.FragmentProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
+   assert(ctx->Const.VertexProgram.MaxLocalParams <= MAX_PROGRAM_LOCAL_PARAMS);
+
+   assert(MAX_NV_FRAGMENT_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
+   assert(MAX_NV_VERTEX_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
+   assert(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
+   assert(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
+
+   /* Texture unit checks */
    assert(ctx->Const.MaxTextureImageUnits <= MAX_TEXTURE_IMAGE_UNITS);
    assert(ctx->Const.MaxTextureCoordUnits <= MAX_TEXTURE_COORD_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_IMAGE_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_COORD_UNITS);
-
+   assert(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
+                                             ctx->Const.MaxTextureCoordUnits));
+   assert(ctx->Const.MaxCombinedTextureImageUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+   assert(ctx->Const.MaxTextureCoordUnits <= MAX_COMBINED_TEXTURE_IMAGE_UNITS);
    /* number of coord units cannot be greater than number of image units */
    assert(ctx->Const.MaxTextureCoordUnits <= ctx->Const.MaxTextureImageUnits);
 
+   /* Texture size checks */
    assert(ctx->Const.MaxTextureLevels <= MAX_TEXTURE_LEVELS);
    assert(ctx->Const.Max3DTextureLevels <= MAX_3D_TEXTURE_LEVELS);
    assert(ctx->Const.MaxCubeTextureLevels <= MAX_CUBE_TEXTURE_LEVELS);
@@ -621,6 +614,13 @@ check_context_limits(GLcontext *ctx)
    assert((1 << (ctx->Const.MaxTextureLevels - 1)) <= MAX_WIDTH);
    assert((1 << (ctx->Const.MaxCubeTextureLevels - 1)) <= MAX_WIDTH);
    assert((1 << (ctx->Const.Max3DTextureLevels - 1)) <= MAX_WIDTH);
+
+   /* Texture level checks */
+   assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
+   assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
+
+   /* Max texture size should be <= max viewport size (render to texture) */
+   assert((1 << (MAX_TEXTURE_LEVELS - 1)) <= MAX_WIDTH);
 
    assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
    assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
