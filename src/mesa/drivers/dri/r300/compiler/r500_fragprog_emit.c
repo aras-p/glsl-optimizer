@@ -121,8 +121,19 @@ static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c,
 
 static unsigned int fix_hw_swizzle(unsigned int swz)
 {
-	if (swz == 5) swz = 6;
-	if (swz == RC_SWIZZLE_UNUSED) swz = 4;
+    switch (swz) {
+        case RC_SWIZZLE_ZERO:
+        case RC_SWIZZLE_UNUSED:
+            swz = 4;
+            break;
+        case RC_SWIZZLE_HALF:
+            swz = 5;
+            break;
+        case RC_SWIZZLE_ONE:
+            swz = 6;
+            break;
+    }
+
 	return swz;
 }
 
