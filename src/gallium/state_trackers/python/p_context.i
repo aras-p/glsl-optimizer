@@ -130,9 +130,13 @@ struct st_context {
    /*
     * Parameter-like state (or properties)
     */
-   
+
    void set_blend_color(const struct pipe_blend_color *state ) {
       cso_set_blend_color($self->cso, state);
+   }
+
+   void set_stencil_ref(const struct pipe_stencil_ref *state ) {
+      cso_set_stencil_ref($self->cso, state);
    }
 
    void set_clip(const struct pipe_clip_state *state ) {
