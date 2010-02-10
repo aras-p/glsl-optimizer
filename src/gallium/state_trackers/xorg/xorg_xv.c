@@ -388,6 +388,9 @@ draw_yuv(struct xorg_xv_port_priv *port,
 {
    struct pipe_texture **textures = port->yuv[port->current_set];
 
+   /*debug_printf("  draw_yuv([%d, %d, %d ,%d], [%d, %d, %d, %d])\n",
+                src_x, src_y, src_w, src_h,
+                dst_x, dst_y, dst_w, dst_h);*/
    renderer_draw_yuv(port->r,
                      src_x, src_y, src_w, src_h,
                      dst_x, dst_y, dst_w, dst_h,
@@ -489,6 +492,9 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    exaMoveInPixmap(pPixmap);
    dst = exaGetPixmapDriverPrivate(pPixmap);
 
+   /*debug_printf("display_video([%d, %d, %d, %d], [%d, %d, %d, %d])\n",
+     src_x, src_y, src_w, src_h, dstX, dstY, dst_w, dst_h);*/
+
    if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
 	pScrn->pScreen->ModifyPixmapHeader(pPixmap, 0, 0, 0, 0, 0, NULL);
@@ -539,8 +545,9 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       offset_w = dst_w - w;
       offset_h = dst_h - h;
 
-      draw_yuv(pPriv, src_x + offset_x*diff_x, src_y + offset_y*diff_y,
-               src_w - offset_w*diff_x, src_h - offset_h*diff_x,
+      draw_yuv(pPriv,
+               src_x + offset_x*diff_x, src_y + offset_y*diff_y,
+               src_w - offset_w*diff_x, src_h - offset_h*diff_y,
                x, y, w, h);
 
       pbox++;
