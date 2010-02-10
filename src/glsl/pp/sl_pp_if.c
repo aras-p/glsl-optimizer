@@ -32,15 +32,35 @@
 
 
 static int
+_macro_is_defined(struct sl_pp_context *context,
+                  int macro_name)
+{
+   unsigned int i;
+   struct sl_pp_macro *macro;
+
+   for (i = 0; i < context->num_extensions; i++) {
+      if (macro_name == context->extensions[i].name) {
+         return 1;
+      }
+   }
+
+   for (macro = context->macro; macro; macro = macro->next) {
+      if (macro_name == macro->name) {
+         return 1;
+      }
+   }
+
+   return 0;
+}
+
+static int
 _parse_defined(struct sl_pp_context *context,
                struct sl_pp_token_buffer *buffer,
                struct sl_pp_process_state *state)
 {
    struct sl_pp_token_info input;
    int parens = 0;
-   int macro_name;
-   struct sl_pp_macro *macro;
-   int defined = 0;
+   int defined;
    struct sl_pp_token_info result;
 
    if (sl_pp_token_buffer_skip_white(buffer, &input)) {
@@ -59,13 +79,7 @@ _parse_defined(struct sl_pp_context *context,
       return -1;
    }
 
-   macro_name = input.data.identifier;
-   for (macro = context->macro; macro; macro = macro->next) {
-      if (macro->name == macro_name) {
-         defined = 1;
-         break;
-      }
-   }
+   defined = _macro_is_defined(context, input.data.identifier);
 
    if (parens) {
       if (sl_pp_token_buffer_skip_white(buffer, &input)) {
@@ -218,22 +232,9 @@ sl_pp_process_ifdef(struct sl_pp_context *context,
    for (i = first; i < last; i++) {
       switch (input[i].token) {
       case SL_PP_IDENTIFIER:
-         {
-            struct sl_pp_macro *macro;
-            int macro_name = input[i].data.identifier;
-            int defined = 0;
-
-            for (macro = context->macro; macro; macro = macro->next) {
-               if (macro->name == macro_name) {
-                  defined = 1;
-                  break;
-               }
-            }
-
-            context->if_ptr--;
-            context->if_stack[context->if_ptr] = defined ? 1 : 0;
-            context->if_value = _evaluate_if_stack(context);
-         }
+         context->if_ptr--;
+         context->if_stack[context->if_ptr] = _macro_is_defined(context, input[i].data.identifier);
+         context->if_value = _evaluate_if_stack(context);
          return 0;
 
       case SL_PP_WHITESPACE:
@@ -265,22 +266,9 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
    for (i = first; i < last; i++) {
       switch (input[i].token) {
       case SL_PP_IDENTIFIER:
-         {
-            struct sl_pp_macro *macro;
-            int macro_name = input[i].data.identifier;
-            int defined = 0;
-
-            for (macro = context->macro; macro; macro = macro->next) {
-               if (macro->name == macro_name) {
-                  defined = 1;
-                  break;
-               }
-            }
-
-            context->if_ptr--;
-            context->if_stack[context->if_ptr] = defined ? 0 : 1;
-            context->if_value = _evaluate_if_stack(context);
-         }
+         context->if_ptr--;
+         context->if_stack[context->if_ptr] = !_macro_is_defined(context, input[i].data.identifier);
+         context->if_value = _evaluate_if_stack(context);
          return 0;
 
       case SL_PP_WHITESPACE:
