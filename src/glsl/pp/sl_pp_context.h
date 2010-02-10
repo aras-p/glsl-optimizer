@@ -45,6 +45,7 @@
 
 struct sl_pp_extension {
    int name;   /*< GL_VENDOR_extension_name */
+   int enabled;
 };
 
 struct sl_pp_predefined {

@@ -32,6 +32,12 @@
 #include "sl_pp_public.h"
 
 
+/**
+ * Declare an extension to the preprocessor.  This tells the preprocessor
+ * which extensions are supported by Mesa.
+ * The shader still needs to have a "#extension name: behavior" line to enable
+ * the extension.
+ */
 int
 sl_pp_context_add_extension(struct sl_pp_context *context,
                             const char *name)
@@ -47,10 +53,18 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
       return -1;
    }
 
+   ext.enabled = 0;
+
    context->extensions[context->num_extensions++] = ext;
+
+   assert(context->num_extensions <= sizeof(context->extensions));
+
    return 0;
 }
 
+/**
+ * Process a "#extension name: behavior" directive.
+ */
 int
 sl_pp_process_extension(struct sl_pp_context *context,
                         const struct sl_pp_token_info *input,
@@ -61,6 +75,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
    int extension_name = -1;
    int behavior = -1;
    struct sl_pp_token_info out;
+   struct sl_pp_extension *extension = NULL;
 
    /* Grab the extension name. */
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
@@ -82,6 +97,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
       for (i = 0; i < context->num_extensions; i++) {
          if (extension_name == context->extensions[i].name) {
             out.data.extension = extension_name;
+            extension = &context->extensions[i];
             break;
          }
       }
@@ -121,6 +137,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_REQUIRE;
+      extension->enabled = 1;
    } else if (behavior == context->dict.enable) {
       if (out.data.extension == -1) {
          /* Warning: the extension cannot be enabled. */
@@ -131,18 +148,21 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_ENABLE;
+      extension->enabled = 1;
    } else if (behavior == context->dict.warn) {
       if (out.data.extension == -1) {
          /* Warning: the extension is not supported. */
          return 0;
       }
       out.token = SL_PP_EXTENSION_WARN;
+      extension->enabled = 0;
    } else if (behavior == context->dict.disable) {
       if (out.data.extension == -1) {
          /* Warning: the extension is not supported. */
          return 0;
       }
       out.token = SL_PP_EXTENSION_DISABLE;
+      extension->enabled = 0;
    } else {
       strcpy(context->error_msg, "unrecognised behavior name");
       return -1;
