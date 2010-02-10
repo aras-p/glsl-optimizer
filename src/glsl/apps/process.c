@@ -106,8 +106,8 @@ main(int argc,
       return -1;
    }
 
-   if (sl_pp_context_add_extension(context, "ARB_draw_buffers", "GL_ARB_draw_buffers") ||
-       sl_pp_context_add_extension(context, "ARB_texture_rectangle", "GL_ARB_texture_rectangle")) {
+   if (sl_pp_context_add_extension(context, "GL_ARB_draw_buffers") ||
+       sl_pp_context_add_extension(context, "GL_ARB_texture_rectangle")) {
       fprintf(out, "$ERROR: `%s'\n", sl_pp_context_error_message(context));
 
       printf("Error: %s\n", sl_pp_context_error_message(context));

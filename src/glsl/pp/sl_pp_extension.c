@@ -34,8 +34,7 @@
 
 int
 sl_pp_context_add_extension(struct sl_pp_context *context,
-                            const char *name,
-                            const char *name_string)
+                            const char *name)
 {
    struct sl_pp_extension ext;
 
@@ -45,11 +44,6 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
 
    ext.name = sl_pp_context_add_unique_str(context, name);
    if (ext.name == -1) {
-      return -1;
-   }
-
-   ext.name_string = sl_pp_context_add_unique_str(context, name_string);
-   if (ext.name_string == -1) {
       return -1;
    }
 
@@ -86,7 +80,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
       out.data.extension = -1;
       for (i = 0; i < context->num_extensions; i++) {
-         if (extension_name == context->extensions[i].name_string) {
+         if (extension_name == context->extensions[i].name) {
             out.data.extension = extension_name;
             break;
          }

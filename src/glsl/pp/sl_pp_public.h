@@ -53,8 +53,7 @@ sl_pp_context_error_position(const struct sl_pp_context *context,
 
 int
 sl_pp_context_add_extension(struct sl_pp_context *context,
-                            const char *name,
-                            const char *name_string);
+                            const char *name);
 
 int
 sl_pp_context_add_predefined(struct sl_pp_context *context,

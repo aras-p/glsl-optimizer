@@ -44,8 +44,7 @@
 #define SL_PP_MAX_PREDEFINED  16
 
 struct sl_pp_extension {
-   int name;         /*< VENDOR_extension_name */
-   int name_string;  /*< GL_VENDOR_extension_name */
+   int name;   /*< GL_VENDOR_extension_name */
 };
 
 struct sl_pp_predefined {
