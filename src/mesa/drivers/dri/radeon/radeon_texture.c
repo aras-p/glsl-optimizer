@@ -284,7 +284,7 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 
 	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 		"%s(%p, target %s, tex %p)\n",
-		__func__, _mesa_lookup_enum_by_nr(target),
+		__func__, ctx, _mesa_lookup_enum_by_nr(target),
 		texObj);
 
 	if (bo && radeon_bo_is_referenced_by_cs(bo, rmesa->cmdbuf.cs)) {

@@ -530,7 +530,7 @@ radeon_render_texture(GLcontext * ctx,
    GLuint imageOffset;
 
   radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-		"%s(%p, fb %p, rrb %p, att att)\n",
+		"%s(%p, fb %p, rrb %p, att %p)\n",
 		__func__, ctx, fb, rrb, att);
 
    (void) fb;
