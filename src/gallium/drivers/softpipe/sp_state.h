@@ -132,13 +132,16 @@ void softpipe_bind_rasterizer_state(struct pipe_context *, void *);
 void softpipe_delete_rasterizer_state(struct pipe_context *, void *);
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
-			     const struct pipe_framebuffer_state * );
+                                     const struct pipe_framebuffer_state * );
 
 void softpipe_set_blend_color( struct pipe_context *pipe,
                                const struct pipe_blend_color *blend_color );
 
+void softpipe_set_stencil_ref( struct pipe_context *pipe,
+                               const struct pipe_stencil_ref *stencil_ref );
+
 void softpipe_set_clip_state( struct pipe_context *,
-			     const struct pipe_clip_state * );
+                              const struct pipe_clip_state * );
 
 void softpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
