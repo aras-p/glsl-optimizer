@@ -345,11 +345,13 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 		ctx->Const.MaxTextureLevels = 13;
 		ctx->Const.MaxCubeTextureLevels = 13;
 		ctx->Const.MaxTextureRectSize = 4096;
+		ctx->Const.MaxRenderbufferSize = 4096;
 	}
 	else {
 		ctx->Const.MaxTextureLevels = 12;
 		ctx->Const.MaxCubeTextureLevels = 12;
 		ctx->Const.MaxTextureRectSize = 2048;
+		ctx->Const.MaxRenderbufferSize = 2048;
 	}
 
 	ctx->Const.MinPointSize = 1.0;
@@ -363,6 +365,7 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 
 	ctx->Const.MaxDrawBuffers = 1;
+	ctx->Const.MaxColorAttachments = 1;
 
 	/* currently bogus data */
 	if (r300->options.hw_tcl_enabled) {

@@ -270,6 +270,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxLineWidthAA = 0xffff / 8.0;
 
 	ctx->Const.MaxDrawBuffers = 1; /* hw supports 8 */
+	ctx->Const.MaxColorAttachments = 1;
+	ctx->Const.MaxRenderbufferSize = 4096;
 
 	/* 256 for reg-based consts, inline consts also supported */
 	ctx->Const.VertexProgram.MaxInstructions = 8192; /* in theory no limit */

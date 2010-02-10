@@ -317,6 +317,8 @@ r100CreateContext( const __GLcontextModes *glVisual,
    rmesa->boxes = 0;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.MaxColorAttachments = 1;
+   ctx->Const.MaxRenderbufferSize = 2048;
 
    _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
