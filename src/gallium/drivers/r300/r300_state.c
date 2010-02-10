@@ -651,7 +651,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
             rs->point_minmax =
             ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
             ((int)(4096.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
-        } else if (r300screen->caps->is_r500) {
+        } else if (r300screen->caps->is_r400) {
             rs->point_minmax =
             ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
             ((int)(4021.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
