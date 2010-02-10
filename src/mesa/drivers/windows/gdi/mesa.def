@@ -869,6 +869,7 @@ EXPORTS
 	_mesa_add_renderbuffer
 	_mesa_bzero
 	_mesa_calloc
+	_mesa_check_conditional_render
 	_mesa_choose_tex_format
 	_mesa_create_framebuffer
 	_mesa_create_visual
