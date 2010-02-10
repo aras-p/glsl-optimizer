@@ -65,7 +65,10 @@ failover_state_emit( struct failover_context *failover )
 
    if (failover->dirty & FO_NEW_DEPTH_STENCIL)
       failover->sw->bind_depth_stencil_alpha_state( failover->sw,
-						    failover->depth_stencil->sw_state );
+                                                    failover->depth_stencil->sw_state );
+
+   if (failover->dirty & FO_NEW_STENCIL_REF)
+      failover->sw->set_stencil_ref( failover->sw, &failover->stencil_ref );
 
    if (failover->dirty & FO_NEW_FRAMEBUFFER)
       failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );
