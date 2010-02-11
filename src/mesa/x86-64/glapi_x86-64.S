@@ -30414,6 +30414,80 @@ GL_PREFIX(_dispatch_stub_802):
 #endif /* defined(GLX_USE_TLS) */
 	.size	GL_PREFIX(_dispatch_stub_802), .-GL_PREFIX(_dispatch_stub_802)
 
+	.p2align	4,,15
+	.globl	GL_PREFIX(EGLImageTargetRenderbufferStorageOES)
+	.type	GL_PREFIX(EGLImageTargetRenderbufferStorageOES), @function
+GL_PREFIX(EGLImageTargetRenderbufferStorageOES):
+#if defined(GLX_USE_TLS)
+	call	_x86_64_get_dispatch@PLT
+	movq	6424(%rax), %r11
+	jmp	*%r11
+#elif defined(PTHREADS)
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rbp
+	call	_x86_64_get_dispatch@PLT
+	popq	%rbp
+	popq	%rsi
+	popq	%rdi
+	movq	6424(%rax), %r11
+	jmp	*%r11
+#else
+	movq	_glapi_Dispatch(%rip), %rax
+	testq	%rax, %rax
+	je	1f
+	movq	6424(%rax), %r11
+	jmp	*%r11
+1:
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rbp
+	call	_glapi_get_dispatch
+	popq	%rbp
+	popq	%rsi
+	popq	%rdi
+	movq	6424(%rax), %r11
+	jmp	*%r11
+#endif /* defined(GLX_USE_TLS) */
+	.size	GL_PREFIX(EGLImageTargetRenderbufferStorageOES), .-GL_PREFIX(EGLImageTargetRenderbufferStorageOES)
+
+	.p2align	4,,15
+	.globl	GL_PREFIX(EGLImageTargetTexture2DOES)
+	.type	GL_PREFIX(EGLImageTargetTexture2DOES), @function
+GL_PREFIX(EGLImageTargetTexture2DOES):
+#if defined(GLX_USE_TLS)
+	call	_x86_64_get_dispatch@PLT
+	movq	6432(%rax), %r11
+	jmp	*%r11
+#elif defined(PTHREADS)
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rbp
+	call	_x86_64_get_dispatch@PLT
+	popq	%rbp
+	popq	%rsi
+	popq	%rdi
+	movq	6432(%rax), %r11
+	jmp	*%r11
+#else
+	movq	_glapi_Dispatch(%rip), %rax
+	testq	%rax, %rax
+	je	1f
+	movq	6432(%rax), %r11
+	jmp	*%r11
+1:
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rbp
+	call	_glapi_get_dispatch
+	popq	%rbp
+	popq	%rsi
+	popq	%rdi
+	movq	6432(%rax), %r11
+	jmp	*%r11
+#endif /* defined(GLX_USE_TLS) */
+	.size	GL_PREFIX(EGLImageTargetTexture2DOES), .-GL_PREFIX(EGLImageTargetTexture2DOES)
+
 	.globl GL_PREFIX(ArrayElementEXT) ; .set GL_PREFIX(ArrayElementEXT), GL_PREFIX(ArrayElement)
 	.globl GL_PREFIX(BindTextureEXT) ; .set GL_PREFIX(BindTextureEXT), GL_PREFIX(BindTexture)
 	.globl GL_PREFIX(DrawArraysEXT) ; .set GL_PREFIX(DrawArraysEXT), GL_PREFIX(DrawArrays)

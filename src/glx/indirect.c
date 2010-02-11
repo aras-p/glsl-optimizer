@@ -30,8 +30,7 @@
 #include "indirect.h"
 #include "glxclient.h"
 #include "indirect_size.h"
-#include "glapitable.h"
-#include "glapidispatch.h"
+#include "dispatch.h"
 #include "glapi.h"
 #include "glthread.h"
 #include <GL/glxproto.h>

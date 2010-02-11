@@ -1037,6 +1037,8 @@ gl_dispatch_functions_start:
 	HIDDEN(gl_dispatch_stub_801)
 	GL_STUB(gl_dispatch_stub_802, _gloffset_GetQueryObjectui64vEXT)
 	HIDDEN(gl_dispatch_stub_802)
+	GL_STUB(glEGLImageTargetRenderbufferStorageOES, _gloffset_EGLImageTargetRenderbufferStorageOES)
+	GL_STUB(glEGLImageTargetTexture2DOES, _gloffset_EGLImageTargetTexture2DOES)
 	GL_STUB_ALIAS(glArrayElementEXT, glArrayElement)
 	GL_STUB_ALIAS(glBindTextureEXT, glBindTexture)
 	GL_STUB_ALIAS(glDrawArraysEXT, glDrawArrays)

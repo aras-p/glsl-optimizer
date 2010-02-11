@@ -2470,10 +2470,16 @@
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
 #define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
 #define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) (*((disp)->EGLImageTargetRenderbufferStorageOES)) parameters
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) ((disp)->EGLImageTargetRenderbufferStorageOES)
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) ((disp)->EGLImageTargetRenderbufferStorageOES = fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) (*((disp)->EGLImageTargetTexture2DOES)) parameters
+#define GET_EGLImageTargetTexture2DOES(disp) ((disp)->EGLImageTargetTexture2DOES)
+#define SET_EGLImageTargetTexture2DOES(disp, fn) ((disp)->EGLImageTargetTexture2DOES = fn)
 
 #else
 
-#define driDispatchRemapTable_size 395
+#define driDispatchRemapTable_size 397
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2871,6 +2877,8 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define ProgramLocalParameters4fvEXT_remap_index 392
 #define GetQueryObjecti64vEXT_remap_index 393
 #define GetQueryObjectui64vEXT_remap_index 394
+#define EGLImageTargetRenderbufferStorageOES_remap_index 395
+#define EGLImageTargetTexture2DOES_remap_index 396
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4057,6 +4065,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
 #define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], parameters)
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index])
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], parameters)
+#define GET_EGLImageTargetTexture2DOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index])
+#define SET_EGLImageTargetTexture2DOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], fn)
 
 #endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 

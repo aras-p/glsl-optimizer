@@ -5612,6 +5612,16 @@ KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLuint id, GLenum pname, GLu
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(EGLImageTargetRenderbufferStorageOES)(GLenum target, GLvoid * writeOffset)
+{
+   DISPATCH(EGLImageTargetRenderbufferStorageOES, (target, writeOffset), (F, "glEGLImageTargetRenderbufferStorageOES(0x%x, %p);\n", target, (const void *) writeOffset));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EGLImageTargetTexture2DOES)(GLenum target, GLvoid * writeOffset)
+{
+   DISPATCH(EGLImageTargetTexture2DOES, (target, writeOffset), (F, "glEGLImageTargetTexture2DOES(0x%x, %p);\n", target, (const void *) writeOffset));
+}
+
 
 #endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */
 
@@ -6568,6 +6578,8 @@ _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(_dispatch_stub_800),
    TABLE_ENTRY(_dispatch_stub_801),
    TABLE_ENTRY(_dispatch_stub_802),
+   TABLE_ENTRY(EGLImageTargetRenderbufferStorageOES),
+   TABLE_ENTRY(EGLImageTargetTexture2DOES),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

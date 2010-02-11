@@ -837,7 +837,9 @@
 #define _gloffset_ProgramLocalParameters4fvEXT 800
 #define _gloffset_GetQueryObjecti64vEXT 801
 #define _gloffset_GetQueryObjectui64vEXT 802
-#define _gloffset_FIRST_DYNAMIC 803
+#define _gloffset_EGLImageTargetRenderbufferStorageOES 803
+#define _gloffset_EGLImageTargetTexture2DOES 804
+#define _gloffset_FIRST_DYNAMIC 805
 
 #else
 
@@ -1236,6 +1238,8 @@
 #define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]
 #define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]
 #define _gloffset_GetQueryObjectui64vEXT driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index]
+#define _gloffset_EGLImageTargetRenderbufferStorageOES driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index]
+#define _gloffset_EGLImageTargetTexture2DOES driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index]
 
 #endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 

@@ -991,6 +991,8 @@ GLNAME(gl_dispatch_functions_start):
 	HIDDEN(GL_PREFIX(_dispatch_stub_801, _dispatch_stub_801@12))
 	GL_STUB(_dispatch_stub_802, _gloffset_GetQueryObjectui64vEXT, _dispatch_stub_802@12)
 	HIDDEN(GL_PREFIX(_dispatch_stub_802, _dispatch_stub_802@12))
+	GL_STUB(EGLImageTargetRenderbufferStorageOES, _gloffset_EGLImageTargetRenderbufferStorageOES, EGLImageTargetRenderbufferStorageOES@8)
+	GL_STUB(EGLImageTargetTexture2DOES, _gloffset_EGLImageTargetTexture2DOES, EGLImageTargetTexture2DOES@8)
 	GL_STUB_ALIAS(ArrayElementEXT, _gloffset_ArrayElement, ArrayElementEXT@4, ArrayElement, ArrayElement@4)
 	GL_STUB_ALIAS(BindTextureEXT, _gloffset_BindTexture, BindTextureEXT@8, BindTexture, BindTexture@8)
 	GL_STUB_ALIAS(DrawArraysEXT, _gloffset_DrawArrays, DrawArraysEXT@12, DrawArrays, DrawArrays@12)
