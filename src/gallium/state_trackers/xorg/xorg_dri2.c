@@ -103,14 +103,26 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
         else {
 	    struct pipe_texture template;
+            unsigned depthBits = (format != 0) ? format : pDraw->depth;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    if (buffer->attachment == DRI2BufferDepth)
-		template.format = ms->ds_depth_bits_last ?
-		    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
-	    else
-		template.format = ms->ds_depth_bits_last ?
-		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+	    if (buffer->attachment == DRI2BufferDepth) {
+               switch(depthBits) {
+               case 16:
+                  template.format = PIPE_FORMAT_Z16_UNORM;
+                  break;
+               case 32:
+                  template.format = PIPE_FORMAT_Z32_UNORM;
+                  break;
+               default:
+                  template.format = ms->ds_depth_bits_last ?
+                                    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
+                  break;
+               }
+            } else {
+               template.format = ms->ds_depth_bits_last ?
+                                 PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+            }
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;
