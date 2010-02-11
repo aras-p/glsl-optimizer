@@ -332,9 +332,9 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & NV50_NEW_STENCIL_REF) {
 		so = so_new(2, 2, 0);
 		so_method(so, tesla, NV50TCL_STENCIL_FRONT_FUNC_REF, 1);
-		so_data  (so, nv50->stencil_ref.ref_value[0];
+		so_data  (so, nv50->stencil_ref.ref_value[0]);
 		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 1);
-		so_data  (so, nv50->stencil_ref.ref_value[1];
+		so_data  (so, nv50->stencil_ref.ref_value[1]);
 		so_ref(so, &nv50->state.stencil_ref);
 		so_ref(NULL, &so);
 	}
