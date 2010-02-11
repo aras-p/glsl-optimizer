@@ -4,17 +4,18 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
-drivers = [
+env.Prepend(LIBS = [
     st_dri,
     inteldrm,
-    softpipe,
     i915,
     trace,
-]
+    mesa,
+    glsl,
+    gallium
+])
 
 env.LoadableModule(
     target ='i915_dri.so',
     source = COMMON_GALLIUM_SOURCES,
-    LIBS = drivers + mesa + gallium + env['LIBS'],
     SHLIBPREFIX = '',
 )
