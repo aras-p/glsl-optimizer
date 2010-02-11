@@ -153,7 +153,6 @@ struct brw_blend_state {
    struct brw_surf_ss0 ss0;
 };
 
-
 struct brw_rasterizer_state;
 
 struct brw_immediate_data {
@@ -560,12 +559,14 @@ struct brw_context
 
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
+      struct pipe_stencil_ref stencil_ref;
       struct pipe_framebuffer_state fb;
       struct pipe_clip_state ucp;
       struct pipe_buffer *vertex_constants;
       struct pipe_buffer *fragment_constants;
 
       struct brw_blend_constant_color bcc;
+      struct brw_cc1 cc1_stencil_ref;
       struct brw_polygon_stipple bps;
       struct brw_cc_viewport ccv;
 

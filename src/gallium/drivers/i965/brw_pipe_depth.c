@@ -72,7 +72,6 @@ static void create_bcc_state( struct brw_depth_stencil_state *zstencil,
 	 translate_stencil_op(templ->stencil[0].zfail_op);
       zstencil->cc0.stencil_pass_depth_pass_op =
 	 translate_stencil_op(templ->stencil[0].zpass_op);
-      zstencil->cc1.stencil_ref = templ->stencil[0].ref_value;
       zstencil->cc1.stencil_write_mask = templ->stencil[0].writemask;
       zstencil->cc1.stencil_test_mask = templ->stencil[0].valuemask;
 
@@ -86,7 +85,6 @@ static void create_bcc_state( struct brw_depth_stencil_state *zstencil,
 	    translate_stencil_op(templ->stencil[1].zfail_op);
 	 zstencil->cc0.bf_stencil_pass_depth_pass_op =
 	    translate_stencil_op(templ->stencil[1].zpass_op);
-	 zstencil->cc1.bf_stencil_ref = templ->stencil[1].ref_value;
 	 zstencil->cc2.bf_stencil_write_mask = templ->stencil[1].writemask;
 	 zstencil->cc2.bf_stencil_test_mask = templ->stencil[1].valuemask;
       }
@@ -159,9 +157,19 @@ static void brw_delete_depth_stencil_state(struct pipe_context *pipe,
    FREE(cso);
 }
 
+static void brw_set_stencil_ref(struct pipe_context *pipe,
+                                const struct pipe_stencil_ref *stencil_ref)
+{
+   struct brw_context *brw = brw_context(pipe);
+   brw->curr.cc1_stencil_ref.stencil_ref = stencil_ref->ref_value[0];
+   brw->curr.cc1_stencil_ref.bf_stencil_ref = stencil_ref->ref_value[1];
+
+   brw->state.dirty.mesa |= PIPE_NEW_DEPTH_STENCIL_ALPHA;
+}
 
 void brw_pipe_depth_stencil_init( struct brw_context *brw )
 {
+   brw->base.set_stencil_ref = brw_set_stencil_ref;
    brw->base.create_depth_stencil_alpha_state = brw_create_depth_stencil_state;
    brw->base.bind_depth_stencil_alpha_state = brw_bind_depth_stencil_state;
    brw->base.delete_depth_stencil_alpha_state = brw_delete_depth_stencil_state;
