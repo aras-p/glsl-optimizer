@@ -368,7 +368,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_init_bufmgr(intelScreen))
        return GL_FALSE;
 
-   intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;
 
    msaa_samples_array[0] = 0;

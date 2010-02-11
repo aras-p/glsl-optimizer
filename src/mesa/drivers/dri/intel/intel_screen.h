@@ -42,8 +42,6 @@ struct intel_screen
 
    __DRIscreen *driScrnPriv;
 
-   int irq_active;
-
    GLboolean no_hw;
 
    GLboolean no_vbo;
