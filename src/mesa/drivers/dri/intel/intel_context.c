@@ -324,11 +324,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        if (rb == NULL)
 	  continue;
 
-       if (rb->region) {
-	  dri_bo_flink(rb->region->buffer, &name);
-	  if (name == buffers[i].name)
+       if (rb->region && rb->region->name == buffers[i].name)
 	     continue;
-       }
 
        if (INTEL_DEBUG & DEBUG_DRI)
 	  fprintf(stderr,
@@ -360,11 +357,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	  if (rb != NULL) {
 	     struct intel_region *stencil_region = NULL;
 
-	     if (rb->region) {
-		dri_bo_flink(rb->region->buffer, &name);
-		if (name == buffers[i].name)
+	     if (rb->region && rb->region->name == buffers[i].name)
 		   continue;
-	     }
 
 	     intel_region_reference(&stencil_region, region);
 	     intel_renderbuffer_set_region(rb, stencil_region);
