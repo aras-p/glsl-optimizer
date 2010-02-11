@@ -360,8 +360,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->driScrnPriv = psp;
    psp->private = (void *) intelScreen;
 
-   intelScreen->drmMinor = psp->drm_version.minor;
-
    /* Determine chipset ID */
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))

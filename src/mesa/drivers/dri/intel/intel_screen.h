@@ -37,17 +37,10 @@
 struct intel_screen
 {
    int deviceID;
-   int width;
-   int height;
-   int pitch;                   /* common row stride, in pixels */
 
    int logTextureGranularity;
 
    __DRIscreen *driScrnPriv;
-
-   volatile drm_i915_sarea_t *sarea;
-
-   int drmMinor;
 
    int irq_active;
 
