@@ -287,11 +287,6 @@ intel_region_release(struct intel_region **region_handle)
       region->pbo = NULL;
       dri_bo_unreference(region->buffer);
 
-      if (region->classic_map != NULL) {
-	 drmUnmap(region->classic_map,
-			region->pitch * region->cpp * region->height);
-      }
-
       free(region);
    }
    *region_handle = NULL;

@@ -52,7 +52,7 @@ struct intel_buffer_object;
  */
 struct intel_region
 {
-   dri_bo *buffer;  /**< buffer manager's buffer */
+   drm_intel_bo *buffer;  /**< buffer manager's buffer */
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
    GLuint width;    /**< in pixels */
@@ -66,7 +66,6 @@ struct intel_region
 
    uint32_t tiling; /**< Which tiling mode the region is in */
    uint32_t bit_6_swizzle; /**< GEM flag for address swizzling requirement */
-   drmAddress classic_map; /**< drmMap of the region when not in GEM mode */
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 };
 
