@@ -37,6 +37,7 @@
 #include "main/context.h"
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
+#include "main/macros.h"
 #include "main/renderbuffer.h"
 
 #include "pipe/p_context.h"
@@ -340,11 +341,16 @@ st_render_texture(GLcontext *ctx,
    struct gl_renderbuffer *rb;
    struct pipe_texture *pt = st_get_texobj_texture(att->Texture);
    struct st_texture_object *stObj;
-   const struct gl_texture_image *texImage =
-      att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   const struct gl_texture_image *texImage;
+   GLint pt_level;
 
+   /* When would this fail?  Perhaps assert? */
    if (!pt) 
       return;
+
+   /* The first gallium texture level = Mesa BaseLevel */
+   pt_level = MAX2(0, (GLint) att->TextureLevel - att->Texture->BaseLevel);
+   texImage = att->Texture->Image[att->CubeMapFace][pt_level];
 
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
@@ -365,7 +371,7 @@ st_render_texture(GLcontext *ctx,
 
    /* point renderbuffer at texobject */
    strb->rtt = stObj;
-   strb->rtt_level = att->TextureLevel;
+   strb->rtt_level = pt_level;
    strb->rtt_face = att->CubeMapFace;
    strb->rtt_slice = att->Zoffset;
 
@@ -379,6 +385,8 @@ st_render_texture(GLcontext *ctx,
    pipe_texture_reference( &strb->texture, pt );
 
    pipe_surface_reference(&strb->surface, NULL);
+
+   assert(strb->rtt_level <= strb->texture->last_level);
 
    /* new surface for rendering into the texture */
    strb->surface = screen->get_tex_surface(screen,
