@@ -3,6 +3,8 @@
 #include "brw_pipe_rast.h"
 
 
+#if 0
+
 static GLboolean need_swtnl( struct brw_context *brw )
 {
    const struct pipe_rasterizer_state *rast = &brw->curr.rast->templ;
@@ -90,6 +92,4 @@ static GLboolean need_swtnl( struct brw_context *brw )
    return FALSE;
 }
 
-
-
-
+#endif

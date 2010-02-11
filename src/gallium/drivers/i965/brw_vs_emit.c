@@ -908,6 +908,7 @@ get_constant(struct brw_vs_compile *c,
 }
 
 
+#if 0
 
 /* TODO: relative addressing!
  */
@@ -935,6 +936,8 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
       return brw_null_reg();
    }
 }
+
+#endif
 
 
 /**
