@@ -297,13 +297,13 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
    switch (fdwReason) {
    case DLL_PROCESS_ATTACH:
-      if (!stw_init(&stw_winsys)) {
-         return FALSE;
-      }
-      return stw_init_thread();
+      stw_init(&stw_winsys);
+      stw_init_thread();
+      break;
 
    case DLL_THREAD_ATTACH:
-      return stw_init_thread();
+      stw_init_thread();
+      break;
 
    case DLL_THREAD_DETACH:
       stw_cleanup_thread();
