@@ -442,8 +442,11 @@ do_triangle_ccw(struct setup_context *setup,
    maxx = maxx / TILE_SIZE;
    maxy = maxy / TILE_SIZE;
 
-   /* Clamp maxx, maxy to framebuffer size
+   /*
+    * Clamp to framebuffer size
     */
+   minx = MAX2(minx, 0);
+   miny = MAX2(miny, 0);
    maxx = MIN2(maxx, scene->tiles_x - 1);
    maxy = MIN2(maxy, scene->tiles_y - 1);
 
