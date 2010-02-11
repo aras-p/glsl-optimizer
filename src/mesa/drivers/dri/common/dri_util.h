@@ -544,6 +544,7 @@ struct __DRIscreenRec {
 	 * fields will not be valid or initializaed in that case. */
 	int enabled;
 	__DRIdri2LoaderExtension *loader;
+	__DRIimageLookupExtension *image;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */

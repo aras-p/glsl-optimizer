@@ -41,6 +41,7 @@
 #include "intel_fbo.h"
 #include "intel_screen.h"
 #include "intel_tex.h"
+#include "intel_regions.h"
 
 #include "i915_drm.h"
 
@@ -137,11 +138,103 @@ static const struct __DRI2flushExtensionRec intelFlushExtension = {
     intelDRI2Invalidate,
 };
 
+static __DRIimage *
+intel_create_image_from_name(__DRIcontext *context,
+			     int width, int height, int format,
+			     int name, int pitch, void *loaderPrivate)
+{
+    __DRIimage *image;
+    struct intel_context *intel = context->driverPrivate;
+    int cpp;
+
+    image = CALLOC(sizeof *image);
+    if (image == NULL)
+	return NULL;
+
+    switch (format) {
+    case __DRI_IMAGE_FORMAT_RGB565:
+       image->format = MESA_FORMAT_RGB565;
+       image->internal_format = GL_RGB;
+       image->data_type = GL_UNSIGNED_BYTE;
+       break;
+    case __DRI_IMAGE_FORMAT_XRGB8888:
+       image->format = MESA_FORMAT_XRGB8888;
+       image->internal_format = GL_RGB;
+       image->data_type = GL_UNSIGNED_BYTE;
+       break;
+    case __DRI_IMAGE_FORMAT_ARGB8888:
+       image->format = MESA_FORMAT_ARGB8888;
+       image->internal_format = GL_RGBA;
+       image->data_type = GL_UNSIGNED_BYTE;
+       break;
+    default:
+       free(image);
+       return NULL;
+    }
+
+    image->data = loaderPrivate;
+    cpp = _mesa_get_format_bytes(image->format);
+
+    image->region = intel_region_alloc_for_handle(intel, cpp, width, height,
+						  pitch, name, "image");
+    if (image->region == NULL) {
+       FREE(image);
+       return NULL;
+    }
+
+    return image;	
+}
+
+static __DRIimage *
+intel_create_image_from_renderbuffer(__DRIcontext *context,
+				     int renderbuffer, void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_context *intel = context->driverPrivate;
+   struct gl_renderbuffer *rb;
+   struct intel_renderbuffer *irb;
+
+   rb = intel->ctx.CurrentRenderbuffer;
+   if (!rb) {
+      _mesa_error(&intel->ctx,
+		  GL_INVALID_OPERATION, "glRenderbufferExternalMESA");
+      return NULL;
+   }
+
+   irb = intel_renderbuffer(rb);
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   image->internal_format = rb->InternalFormat;
+   image->format = rb->Format;
+   image->data_type = rb->DataType;
+   image->data = loaderPrivate;
+   intel_region_reference(&image->region, irb->region);
+
+   return image;
+}
+
+static void
+intel_destroy_image(__DRIimage *image)
+{
+    intel_region_release(&image->region);
+    FREE(image);
+}
+
+static struct __DRIimageExtensionRec intelImageExtension = {
+    { __DRI_IMAGE, __DRI_IMAGE_VERSION },
+    intel_create_image_from_name,
+    intel_create_image_from_renderbuffer,
+    intel_destroy_image,
+};
+
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
     &intelTexOffsetExtension.base,
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
+    &intelImageExtension.base,
     NULL
 };
 
