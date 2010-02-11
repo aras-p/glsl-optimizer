@@ -413,6 +413,11 @@ struct __DRIcontextRec {
      * Pointer to screen on which this context was created.
      */
     __DRIscreen *driScreenPriv;
+
+    /**
+     * The loaders's private context data.  This structure is opaque.
+     */
+    void *loaderPrivate;
 };
 
 /**
