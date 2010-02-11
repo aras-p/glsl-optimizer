@@ -111,6 +111,8 @@ svga_get_paramf(struct pipe_screen *screen, int param)
 
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return 16;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return 16;
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
