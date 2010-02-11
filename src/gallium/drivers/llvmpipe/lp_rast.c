@@ -603,6 +603,9 @@ release_scene( struct lp_rasterizer *rast,
    util_unreference_framebuffer_state( &scene->fb );
 
    lp_scene_reset( scene );
+
+   assert(lp_scene_is_empty(scene));
+
    lp_scene_enqueue( rast->empty_scenes, scene );
    rast->curr_scene = NULL;
 }

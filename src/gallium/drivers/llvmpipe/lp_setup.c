@@ -64,6 +64,8 @@ lp_setup_get_current_scene(struct setup_context *setup)
        */
       setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
 
+      assert(lp_scene_is_empty(setup->scene));
+
       if(0)lp_scene_reset( setup->scene ); /* XXX temporary? */
 
       lp_scene_set_framebuffer_size(setup->scene,
