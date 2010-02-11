@@ -282,6 +282,7 @@ emit_stencil_op(struct spe_function *f,
  */
 static int
 emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
+                  struct pipe_stencil_ref *sr,
                   unsigned face,
                   struct spe_function *f,
                   int mask,
@@ -296,7 +297,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
    int stencil_pass = spe_allocate_available_register(f);
    int face_stencil = spe_allocate_available_register(f);
    int stencil_src = stencil;
-   const unsigned ref = (dsa->stencil[face].ref_value
+   const unsigned ref = (sr->ref_value[face]
                          & dsa->stencil[face].valuemask);
    boolean complement = FALSE;
    int stored;
@@ -406,7 +407,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
 
          emit_stencil_op(f, face_stencil, stencil_src, stencil_fail,
                          dsa->stencil[face].fail_op,
-                         dsa->stencil[face].ref_value);
+                         sr->ref_value[face]);
 
          stencil_src = face_stencil;
       }
@@ -421,7 +422,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
 
          emit_stencil_op(f, face_stencil, stencil_src, depth_fail,
                          dsa->stencil[face].zfail_op,
-                         dsa->stencil[face].ref_value);
+                         sr->ref_value[face]);
          stencil_src = face_stencil;
       }
 
@@ -429,7 +430,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
           && (dsa->stencil[face].zpass_op != PIPE_STENCIL_OP_KEEP)) {
          emit_stencil_op(f, face_stencil, stencil_src, depth_pass,
                          dsa->stencil[face].zpass_op,
-                         dsa->stencil[face].ref_value);
+                         sr->ref_value[face]);
          stencil_src = face_stencil;
       }
    }
@@ -463,7 +464,8 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
 
 
 void
-cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
+cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa,
+                                 struct pipe_stencil_ref *sr)
 {
    struct pipe_depth_stencil_alpha_state *const dsa = &cdsa->base;
    struct spe_function *const f = &cdsa->code;
@@ -499,13 +501,13 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
 
    if (dsa->stencil[0].enabled) {
       const int front_depth_pass = spe_allocate_available_register(f);
-      int front_stencil = emit_stencil_test(dsa, 0, f, mask,
+      int front_stencil = emit_stencil_test(dsa, sr, 0, f, mask,
                                             depth_mask, depth_complement,
                                             stencil, front_depth_pass);
 
       if (dsa->stencil[1].enabled) {
          const int back_depth_pass = spe_allocate_available_register(f);
-         int back_stencil = emit_stencil_test(dsa, 1, f, mask,
+         int back_stencil = emit_stencil_test(dsa, sr, 1, f, mask,
                                               depth_mask,  depth_complement,
                                               stencil, back_depth_pass);
 
@@ -579,7 +581,7 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
                 dsa->stencil[i].zfail_op,
                 dsa->stencil[i].zpass_op);
          printf("#    ref value / value mask / write mask: %02x %02x %02x\n",
-                dsa->stencil[i].ref_value,
+                sr->ref_value[i],
                 dsa->stencil[i].valuemask,
                 dsa->stencil[i].writemask);
       }

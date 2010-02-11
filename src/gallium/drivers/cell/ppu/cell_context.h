@@ -114,6 +114,7 @@ struct cell_context
    struct spe_function logic_op;
 
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    struct pipe_buffer *constants[2];
    struct pipe_framebuffer_state framebuffer;
