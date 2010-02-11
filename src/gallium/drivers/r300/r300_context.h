@@ -318,6 +318,8 @@ struct r300_context {
     struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
     int vertex_element_count;
 
+    struct pipe_stencil_ref stencil_ref;
+
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */

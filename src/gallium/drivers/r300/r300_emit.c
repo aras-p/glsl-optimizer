@@ -114,6 +114,7 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct pipe_stencil_ref stencil_ref = r300->stencil_ref;
     CS_LOCALS(r300);
 
     BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
@@ -128,10 +129,10 @@ void r300_emit_dsa_state(struct r300_context* r300, void* state)
         OUT_CS(0);
     }
 
-    OUT_CS(dsa->stencil_ref_mask);
+    OUT_CS(dsa->stencil_ref_mask | stencil_ref.ref_value[0]);
 
     if (r300screen->caps->is_r500) {
-        OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
+        OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf | stencil_ref.ref_value[1]);
     }
     END_CS;
 }

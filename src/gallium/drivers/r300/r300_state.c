@@ -425,7 +425,7 @@ static void*
             (r300_translate_stencil_op(state->stencil[0].zfail_op) <<
                 R300_S_FRONT_ZFAIL_OP_SHIFT);
 
-        dsa->stencil_ref_mask = (state->stencil[0].ref_value) |
+        dsa->stencil_ref_mask =
                 (state->stencil[0].valuemask << R300_STENCILMASK_SHIFT) |
                 (state->stencil[0].writemask << R300_STENCILWRITEMASK_SHIFT);
 
@@ -444,7 +444,7 @@ static void*
             if (caps->is_r500)
             {
                 dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
-                dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
+                dsa->stencil_ref_bf =
                     (state->stencil[1].valuemask <<
                     R300_STENCILMASK_SHIFT) |
                     (state->stencil[1].writemask <<
@@ -486,6 +486,14 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
                                   void* state)
 {
     FREE(state);
+}
+
+static void r300_set_stencil_ref(struct pipe_context* pipe,
+                                 const struct pipe_stencil_ref* sr)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    r300->stencil_ref = *sr;
+    r300->dsa_state.dirty = TRUE;
 }
 
 static void
@@ -1086,6 +1094,8 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
+
+    r300->context.set_stencil_ref = r300_set_stencil_ref;
 
     r300->context.set_framebuffer_state = r300_set_framebuffer_state;
 
