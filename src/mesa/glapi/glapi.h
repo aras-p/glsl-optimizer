@@ -46,8 +46,6 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "GL/gl.h"
-#include "GL/glext.h"
 #include "glthread.h"
 
 
@@ -136,7 +134,7 @@ struct _glapi_table *
 _glapi_get_override_dispatch(int layer);
 
 
-extern GLuint
+extern unsigned int
 _glapi_get_dispatch_table_size(void);
 
 
@@ -148,7 +146,7 @@ extern int
 _glapi_add_dispatch( const char * const * function_names,
 		     const char * parameter_signature );
 
-extern GLint
+extern int
 _glapi_get_proc_offset(const char *funcName);
 
 
@@ -157,7 +155,7 @@ _glapi_get_proc_address(const char *funcName);
 
 
 extern const char *
-_glapi_get_proc_name(GLuint offset);
+_glapi_get_proc_name(unsigned int offset);
 
 
 #endif
