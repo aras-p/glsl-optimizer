@@ -302,6 +302,9 @@ DrvDescribePixelFormat(
 
    (void) hdc;
 
+   if (!stw_dev)
+      return 0;
+
    count = stw_pixelformat_get_extended_count();
    index = (uint) iPixelFormat - 1;
 

@@ -75,6 +75,9 @@ DrvCopyContext(
    struct stw_context *dst;
    BOOL ret = FALSE;
 
+   if (!stw_dev)
+      return FALSE;
+
    pipe_mutex_lock( stw_dev->ctx_mutex );
    
    src = stw_lookup_context_locked( dhrcSource );
@@ -101,6 +104,9 @@ DrvShareLists(
    struct stw_context *ctx1;
    struct stw_context *ctx2;
    BOOL ret = FALSE;
+
+   if (!stw_dev)
+      return FALSE;
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
    

@@ -179,7 +179,7 @@ stw_call_window_proc(
    if(!tls_data)
       return 0;
    
-   if (nCode < 0)
+   if (nCode < 0 || !stw_dev)
        return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 
    if (pParams->message == WM_WINDOWPOSCHANGED) {
@@ -332,6 +332,9 @@ stw_framebuffer_cleanup( void )
    struct stw_framebuffer *fb;
    struct stw_framebuffer *next;
 
+   if (!stw_dev)
+      return;
+
    pipe_mutex_lock( stw_dev->fb_mutex );
 
    fb = stw_dev->fb_head;
@@ -387,6 +390,9 @@ stw_framebuffer_from_hdc(
 {
    struct stw_framebuffer *fb;
 
+   if (!stw_dev)
+      return NULL;
+
    pipe_mutex_lock( stw_dev->fb_mutex );
    fb = stw_framebuffer_from_hdc_locked(hdc);
    pipe_mutex_unlock( stw_dev->fb_mutex );
@@ -420,6 +426,9 @@ DrvSetPixelFormat(
    uint count;
    uint index;
    struct stw_framebuffer *fb;
+
+   if (!stw_dev)
+      return FALSE;
 
    index = (uint) iPixelFormat - 1;
    count = stw_pixelformat_get_extended_count();
@@ -474,6 +483,9 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
    struct stw_framebuffer *fb;
    struct pipe_screen *screen;
    struct pipe_surface *surface;
+
+   if (!stw_dev)
+      return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -575,6 +587,9 @@ DrvSwapBuffers(
 {
    struct stw_framebuffer *fb;
    struct pipe_surface *surface = NULL;
+
+   if (!stw_dev)
+      return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
