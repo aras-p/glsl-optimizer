@@ -40,7 +40,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLfloat offset, oz0, oz1, oz2;
    GLenum mode = GL_FILL;
    GLuint facing = 0;
-   GLchan saved_color[3][4];
+   GLchan saved_color[3][4] = { { 0 } };
    GLfloat saved_col0[3][4] = { { 0 } };
    GLfloat saved_spec[3][4] = { { 0 } };
    GLfloat saved_index[3] = { 0 };
