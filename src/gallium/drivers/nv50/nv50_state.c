@@ -447,7 +447,7 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_zsa_stateobj *zsa = CALLOC_STRUCT(nv50_zsa_stateobj);
-	struct nouveau_stateobj *so = so_new(8, 22, 0);
+	struct nouveau_stateobj *so = so_new(9, 21, 0);
 
 	so_method(so, tesla, NV50TCL_DEPTH_WRITE_ENABLE, 1);
 	so_data  (so, cso->depth.writemask ? 1 : 0);
@@ -462,13 +462,13 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	}
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, tesla, NV50TCL_STENCIL_FRONT_ENABLE, 8);
+		so_method(so, tesla, NV50TCL_STENCIL_FRONT_ENABLE, 5);
 		so_data  (so, 1);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
-		so_data  (so, cso->stencil[0].ref_value);
+		so_method(so, tesla, NV50TCL_STENCIL_FRONT_MASK, 2);
 		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, cso->stencil[0].valuemask);
 	} else {
@@ -483,8 +483,7 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 3);
-		so_data  (so, cso->stencil[1].ref_value);
+		so_method(so, tesla, NV50TCL_STENCIL_BACK_MASK, 2);
 		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, cso->stencil[1].valuemask);
 	} else {
@@ -633,6 +632,16 @@ nv50_set_blend_color(struct pipe_context *pipe,
 	nv50->dirty |= NV50_NEW_BLEND_COLOUR;
 }
 
+ static void
+nv50_set_stencil_ref(struct pipe_context *pipe,
+		     const struct pipe_stencil_ref *sr)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->stencil_ref = *sr;
+	nv50->dirty |= NV50_NEW_STENCIL_REF;
+}
+
 static void
 nv50_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
@@ -761,6 +770,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_gs_state = nv50_gp_state_delete;
 
 	nv50->pipe.set_blend_color = nv50_set_blend_color;
+        nv50->pipe.set_stencil_ref = nv50_set_stencil_ref;
 	nv50->pipe.set_clip_state = nv50_set_clip_state;
 	nv50->pipe.set_constant_buffer = nv50_set_constant_buffer;
 	nv50->pipe.set_framebuffer_state = nv50_set_framebuffer_state;
