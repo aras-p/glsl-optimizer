@@ -12502,4 +12502,6 @@
     </function>
 </category>
 
+<xi:include href="OES_EGL_image.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 </OpenGLAPI>

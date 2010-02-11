@@ -87,7 +87,8 @@ API_XML = \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
 	EXT_texture_array.xml \
-	NV_conditional_render.xml
+	NV_conditional_render.xml \
+	OES_EGL_image.xml
 
 COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py
 
