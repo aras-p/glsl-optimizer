@@ -47,6 +47,7 @@ struct intel_screen
    GLboolean no_vbo;
    dri_bufmgr *bufmgr;
    GLboolean kernel_exec_fencing;
+   struct _mesa_HashTable *named_regions;
 
    /**
    * Configuration cache with default values for all contexts

@@ -29,6 +29,7 @@
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/hash.h"
 
 #include "utils.h"
 #include "xmlpool.h"
@@ -167,12 +168,23 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
 }
 
 static void
+nop_callback(GLuint key, void *data, void *userData)
+{
+}
+
+static void
 intelDestroyScreen(__DRIscreen * sPriv)
 {
    struct intel_screen *intelScreen = sPriv->private;
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    driDestroyOptionInfo(&intelScreen->optionCache);
+
+   /* Some regions may still have references to them at this point, so
+    * flush the hash table to prevent _mesa_DeleteHashTable() from
+    * complaining about the hash not being empty; */
+   _mesa_HashDeleteAll(intelScreen->named_regions, nop_callback, NULL);
+   _mesa_DeleteHashTable(intelScreen->named_regions);
 
    FREE(intelScreen);
    sPriv->private = NULL;
@@ -323,6 +335,8 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
       intelScreen->kernel_exec_fencing = !!num_fences;
    else
       intelScreen->kernel_exec_fencing = GL_FALSE;
+
+   intelScreen->named_regions = _mesa_NewHashTable();
 
    return GL_TRUE;
 }

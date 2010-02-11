@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
+#include <main/hash.h>
 #include "intel_context.h"
 #include "intel_regions.h"
 #include "intel_blit.h"
@@ -228,9 +229,23 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 			      GLuint width, GLuint height, GLuint pitch,
 			      GLuint handle, const char *name)
 {
-   struct intel_region *region;
+   struct intel_region *region, *dummy;
    dri_bo *buffer;
    int ret;
+
+   region = _mesa_HashLookup(intel->intelScreen->named_regions, handle);
+   if (region != NULL) {
+      dummy = NULL;
+      if (region->width != width || region->height != height ||
+	  region->cpp != cpp || region->pitch != pitch) {
+	 fprintf(stderr,
+		 "Region for name %d already exists but is not compatible\n",
+		 handle);
+	 return NULL;
+      }
+      intel_region_reference(&dummy, region);
+      return dummy;
+   }
 
    buffer = intel_bo_gem_create_from_name(intel->bufmgr, name, handle);
 
@@ -247,6 +262,10 @@ intel_region_alloc_for_handle(struct intel_context *intel,
       intel_region_release(&region);
       return NULL;
    }
+
+   region->name = handle;
+   region->screen = intel->intelScreen;
+   _mesa_HashInsert(intel->intelScreen->named_regions, handle, region);
 
    return region;
 }
@@ -286,6 +305,9 @@ intel_region_release(struct intel_region **region_handle)
 	 region->pbo->region = NULL;
       region->pbo = NULL;
       dri_bo_unreference(region->buffer);
+
+      if (region->name > 0)
+	 _mesa_HashRemove(region->screen->named_regions, region->name);
 
       free(region);
    }
