@@ -227,6 +227,9 @@ lp_scene_putback_data( struct lp_scene *scene, unsigned size)
 static INLINE struct cmd_bin *
 lp_scene_get_bin(struct lp_scene *scene, unsigned x, unsigned y)
 {
+   assert(x < scene->tiles_x);
+   assert(y < scene->tiles_y);
+
    return &scene->tile[x][y];
 }
 
@@ -246,9 +249,6 @@ lp_scene_bin_command( struct lp_scene *scene,
 {
    struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
    struct cmd_block_list *list = &bin->commands;
-
-   assert(x < scene->tiles_x);
-   assert(y < scene->tiles_y);
 
    if (list->tail->count == CMD_BLOCK_MAX) {
       lp_bin_new_cmd_block( list );
