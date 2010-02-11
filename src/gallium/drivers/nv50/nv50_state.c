@@ -202,18 +202,18 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 		break;
 	}
 
-	if (cso->max_anisotropy >= 16.0)
+	if (cso->max_anisotropy >= 16)
 		tsc[0] |= (7 << 20);
 	else
-	if (cso->max_anisotropy >= 12.0)
+	if (cso->max_anisotropy >= 12)
 		tsc[0] |= (6 << 20);
 	else {
-		tsc[0] |= (int)(cso->max_anisotropy * 0.5f) << 20;
+		tsc[0] |= (cso->max_anisotropy >> 1) << 20;
 
-		if (cso->max_anisotropy >= 4.0)
+		if (cso->max_anisotropy >= 4)
 			tsc[1] |= NV50TSC_1_1_UNKN_ANISO_35;
 		else
-		if (cso->max_anisotropy >= 2.0)
+		if (cso->max_anisotropy >= 2)
 			tsc[1] |= NV50TSC_1_1_UNKN_ANISO_15;
 	}
 

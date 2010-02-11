@@ -132,26 +132,26 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 		    (wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_R_SHIFT));
 
 	ps->en = 0;
-	if (cso->max_anisotropy >= 2.0) {
+	if (cso->max_anisotropy >= 2) {
 		/* no idea, binary driver sets it, works without it.. meh.. */
 		ps->wrap |= (1 << 5);
 
-		if (cso->max_anisotropy >= 16.0) {
+		if (cso->max_anisotropy >= 16) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_16X;
 		} else
-		if (cso->max_anisotropy >= 12.0) {
+		if (cso->max_anisotropy >= 12) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_12X;
 		} else
-		if (cso->max_anisotropy >= 10.0) {
+		if (cso->max_anisotropy >= 10) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_10X;
 		} else
-		if (cso->max_anisotropy >= 8.0) {
+		if (cso->max_anisotropy >= 8) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_8X;
 		} else
-		if (cso->max_anisotropy >= 6.0) {
+		if (cso->max_anisotropy >= 6) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_6X;
 		} else
-		if (cso->max_anisotropy >= 4.0) {
+		if (cso->max_anisotropy >= 4) {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_4X;
 		} else {
 			ps->en |= NV40TCL_TEX_ENABLE_ANISO_2X;

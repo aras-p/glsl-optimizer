@@ -777,7 +777,7 @@ static void*
     sampler->filter0 |= r300_translate_tex_filters(state->min_img_filter,
                                                    state->mag_img_filter,
                                                    state->min_mip_filter,
-                                                   state->max_anisotropy > 1.0);
+                                                   state->max_anisotropy > 0);
 
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
     /* We must pass these to the emit function to clamp them properly. */

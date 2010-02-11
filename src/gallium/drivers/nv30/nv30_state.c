@@ -139,13 +139,13 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 
 	ps->en = 0;
 
-	if (cso->max_anisotropy >= 8.0) {
+	if (cso->max_anisotropy >= 8) {
 		ps->en |= NV34TCL_TX_ENABLE_ANISO_8X;
 	} else
-	if (cso->max_anisotropy >= 4.0) {
+	if (cso->max_anisotropy >= 4) {
 		ps->en |= NV34TCL_TX_ENABLE_ANISO_4X;
 	} else
-	if (cso->max_anisotropy >= 2.0) {
+	if (cso->max_anisotropy >= 2) {
 		ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
 	}
 

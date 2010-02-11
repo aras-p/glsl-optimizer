@@ -435,11 +435,11 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
    trace_dump_member(uint, state, compare_mode);
    trace_dump_member(uint, state, compare_func);
    trace_dump_member(bool, state, normalized_coords);
+   trace_dump_member(uint, state, max_anisotropy);
    trace_dump_member(float, state, lod_bias);
    trace_dump_member(float, state, min_lod);
    trace_dump_member(float, state, max_lod);
    trace_dump_member_array(float, state, border_color);
-   trace_dump_member(float, state, max_anisotropy);
 
    trace_dump_struct_end();
 }

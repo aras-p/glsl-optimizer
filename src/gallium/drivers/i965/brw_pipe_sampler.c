@@ -114,14 +114,12 @@ brw_create_sampler_state( struct pipe_context *pipe,
 
    /* XXX: anisotropy logic slightly changed: 
     */
-   if (template->max_anisotropy > 1.0) {
+   if (template->max_anisotropy > 1) {
       sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC; 
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
 
-      if (template->max_anisotropy > 2.0) {
-	 sampler->ss3.max_aniso = MIN2((template->max_anisotropy - 2) / 2,
-				       BRW_ANISORATIO_16);
-      }
+      sampler->ss3.max_aniso = MIN2((template->max_anisotropy - 2) / 2,
+                                    BRW_ANISORATIO_16);
    }
 
    sampler->ss1.r_wrap_mode = translate_wrap_mode(template->wrap_r);
