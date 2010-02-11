@@ -637,7 +637,7 @@ accum_bitmap(struct st_context *st,
              const GLubyte *bitmap )
 {
    struct bitmap_cache *cache = st->bitmap.cache;
-   int px = -999, py;
+   int px = -999, py = -999;
    const GLfloat z = st->ctx->Current.RasterPos[2];
 
    if (width > BITMAP_CACHE_WIDTH ||
@@ -671,6 +671,7 @@ accum_bitmap(struct st_context *st,
    }
 
    assert(px != -999);
+   assert(py != -999);
 
    if (x < cache->xmin)
       cache->xmin = x;
