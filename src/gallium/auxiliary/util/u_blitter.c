@@ -262,6 +262,8 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    ctx->blitter.saved_fs = INVALID_PTR;
    ctx->blitter.saved_vs = INVALID_PTR;
 
+   pipe->set_stencil_ref(pipe, &ctx->blitter.saved_stencil_ref);
+
    /* restore the state objects which are required to be saved before copy/fill
     */
    if (ctx->blitter.saved_fb_state.nr_cbufs != ~0) {
