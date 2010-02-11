@@ -93,7 +93,7 @@ struct cso_context {
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
-   struct pipe_stencil_ref stencil_ref;
+   struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
 
 
@@ -746,6 +746,7 @@ void cso_save_depth_stencil_alpha(struct cso_context *ctx)
 {
    assert(!ctx->depth_stencil_saved);
    ctx->depth_stencil_saved = ctx->depth_stencil;
+   ctx->stencil_ref_saved = ctx->stencil_ref;
 }
 
 void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
@@ -755,6 +756,10 @@ void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
       ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, ctx->depth_stencil_saved);
    }
    ctx->depth_stencil_saved = NULL;
+   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved, sizeof(ctx->stencil_ref))) {
+      ctx->stencil_ref = ctx->stencil_ref_saved;
+      ctx->pipe->set_stencil_ref(ctx->pipe, &ctx->stencil_ref);
+   }
 }
 
 
@@ -1056,8 +1061,6 @@ void cso_restore_viewport(struct cso_context *ctx)
       ctx->pipe->set_viewport_state(ctx->pipe, &ctx->vp);
    }
 }
-
-
 
 
 enum pipe_error cso_set_blend_color(struct cso_context *ctx,
