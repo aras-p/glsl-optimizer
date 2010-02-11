@@ -340,6 +340,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     /* Translate TGSI to our internal representation */
     ttr.compiler = &compiler.Base;
     ttr.info = &vs->info;
+    ttr.use_half_swizzles = FALSE;
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
 

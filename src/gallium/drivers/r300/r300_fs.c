@@ -179,6 +179,7 @@ static void r300_translate_fragment_shader(
     /* Translate TGSI to our internal representation */
     ttr.compiler = &compiler.Base;
     ttr.info = &fs->info;
+    ttr.use_half_swizzles = TRUE;
 
     r300_tgsi_to_rc(&ttr, fs->state.tokens);
 

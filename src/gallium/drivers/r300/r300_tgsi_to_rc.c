@@ -307,7 +307,7 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
     for (i = 0; i < 4; i++) {
         if (imm->u[i].Float == 0.0f) {
             swizzle |= RC_SWIZZLE_ZERO << (i * 3);
-        } else if (imm->u[i].Float == 0.5f) {
+        } else if (imm->u[i].Float == 0.5f && ttr->use_half_swizzles) {
             swizzle |= RC_SWIZZLE_HALF << (i * 3);
         } else if (imm->u[i].Float == 1.0f) {
             swizzle |= RC_SWIZZLE_ONE << (i * 3);
@@ -330,7 +330,8 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
     }
 }
 
-void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens)
+void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
+                     const struct tgsi_token * tokens)
 {
     struct tgsi_parse_context parser;
     unsigned imm_index = 0;
