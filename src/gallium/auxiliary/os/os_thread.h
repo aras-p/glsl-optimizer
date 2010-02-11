@@ -116,25 +116,6 @@ typedef pthread_cond_t pipe_condvar;
   pthread_cond_broadcast(&(cond))
 
 
-/* pipe_barrier
- */
-typedef pthread_barrier_t pipe_barrier;
-
-static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
-{
-   pthread_barrier_init(barrier, NULL, count);
-}
-
-static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
-{
-   pthread_barrier_destroy(barrier);
-}
-
-static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
-{
-   pthread_barrier_wait(barrier);
-}
-
 
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
@@ -208,26 +189,6 @@ typedef unsigned pipe_condvar;
    (void) cond
 
 
-/* pipe_barrier (XXX FIX THIS)
- */
-typedef unsigned pipe_barrier;
-
-static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
-{
-   /* XXX we could implement barriers with a mutex and condition var */
-}
-
-static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
-{
-}
-
-static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
-{
-   assert(0);
-}
-
-
-
 #else
 
 /** Dummy definitions */
@@ -254,7 +215,6 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 
 typedef unsigned pipe_mutex;
 typedef unsigned pipe_condvar;
-typedef unsigned pipe_barrier;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -290,6 +250,57 @@ typedef unsigned pipe_barrier;
    (void) condvar
 
 
+#endif  /* PIPE_OS_? */
+
+
+/*
+ * pipe_barrier
+ */
+
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU)
+
+typedef pthread_barrier_t pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   pthread_barrier_init(barrier, NULL, count);
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+   pthread_barrier_destroy(barrier);
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   pthread_barrier_wait(barrier);
+}
+
+
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+
+/* XXX FIX THIS */
+typedef unsigned pipe_barrier;
+
+static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
+{
+   /* XXX we could implement barriers with a mutex and condition var */
+}
+
+static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
+{
+}
+
+static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
+{
+   assert(0);
+}
+
+
+#else
+
+typedef unsigned pipe_barrier;
+
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
 {
    /* XXX we could implement barriers with a mutex and condition var */
@@ -307,8 +318,7 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 }
 
 
-
-#endif  /* PIPE_OS_? */
+#endif
 
 
 /*
