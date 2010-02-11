@@ -253,7 +253,9 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
          assert(index_bias >= 0);
          assert(min_index <= max_index);
          assert(offset + index_bias*stride < size);
-         assert(offset + (index_bias + min_index)*stride < size);
+         if (min_index != ~0) {
+            assert(offset + (index_bias + min_index) * stride < size);
+         }
 
          switch (hwtnl->cmd.vdecl[i].identity.type) {
          case SVGA3D_DECLTYPE_FLOAT1:
@@ -314,7 +316,9 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
          }
 
          assert(!stride || width <= stride);
-         assert(offset + (index_bias + max_index)*stride + width <= size);
+         if (max_index != ~0) {
+            assert(offset + (index_bias + max_index) * stride + width <= size);
+         }
       }
 
       assert(range->indexWidth == range->indexArray.stride);
