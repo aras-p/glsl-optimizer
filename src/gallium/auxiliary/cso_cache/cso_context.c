@@ -746,7 +746,6 @@ void cso_save_depth_stencil_alpha(struct cso_context *ctx)
 {
    assert(!ctx->depth_stencil_saved);
    ctx->depth_stencil_saved = ctx->depth_stencil;
-   ctx->stencil_ref_saved = ctx->stencil_ref;
 }
 
 void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
@@ -756,10 +755,6 @@ void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
       ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, ctx->depth_stencil_saved);
    }
    ctx->depth_stencil_saved = NULL;
-   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved, sizeof(ctx->stencil_ref))) {
-      ctx->stencil_ref = ctx->stencil_ref_saved;
-      ctx->pipe->set_stencil_ref(ctx->pipe, &ctx->stencil_ref);
-   }
 }
 
 
@@ -1081,6 +1076,20 @@ enum pipe_error cso_set_stencil_ref(struct cso_context *ctx,
       ctx->pipe->set_stencil_ref(ctx->pipe, sr);
    }
    return PIPE_OK;
+}
+
+void cso_save_stencil_ref(struct cso_context *ctx)
+{
+   ctx->stencil_ref_saved = ctx->stencil_ref;
+}
+
+
+void cso_restore_stencil_ref(struct cso_context *ctx)
+{
+   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved, sizeof(ctx->stencil_ref))) {
+      ctx->stencil_ref = ctx->stencil_ref_saved;
+      ctx->pipe->set_stencil_ref(ctx->pipe, &ctx->stencil_ref);
+   }
 }
 
 enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,

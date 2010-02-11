@@ -176,6 +176,8 @@ enum pipe_error cso_set_blend_color(struct cso_context *cso,
 
 enum pipe_error cso_set_stencil_ref(struct cso_context *cso,
                                     const struct pipe_stencil_ref *sr);
+void cso_save_stencil_ref(struct cso_context *cso);
+void cso_restore_stencil_ref(struct cso_context *cso);
 
 
 #ifdef	__cplusplus

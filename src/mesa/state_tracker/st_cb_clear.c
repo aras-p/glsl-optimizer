@@ -215,6 +215,7 @@ clear_with_quad(GLcontext *ctx,
    */
 
    cso_save_blend(st->cso_context);
+   cso_save_stencil_ref(st->cso_context);
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
@@ -280,6 +281,7 @@ clear_with_quad(GLcontext *ctx,
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);
+   cso_restore_stencil_ref(st->cso_context);
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
