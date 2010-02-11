@@ -100,6 +100,9 @@ lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
    struct cmd_block *block;
    struct cmd_block *tmp;
 
+   assert(x < TILES_X);
+   assert(y < TILES_Y);
+
    for (block = list->head; block != list->tail; block = tmp) {
       tmp = block->next;
       FREE(block);
