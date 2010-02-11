@@ -2678,7 +2678,7 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 {
-   const GLfloat depthScale = (GLfloat) 0xffffff;
+   const GLuint depthScale = 0xffffff;
    const GLint srcRowStride
       = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
       / sizeof(GLuint);
@@ -2752,7 +2752,7 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
             _mesa_unpack_depth_span(ctx, srcWidth,
                                     GL_UNSIGNED_INT_24_8_EXT, /* dst type */
                                     dstRow, /* dst addr */
-                                    (GLuint) depthScale,
+                                    depthScale,
                                     srcType, src, srcPacking);
             /* get the 8-bit stencil values */
             _mesa_unpack_stencil_span(ctx, srcWidth,
