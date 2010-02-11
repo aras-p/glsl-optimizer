@@ -40,102 +40,139 @@
 
 struct dump_info
 {
-   SVGA3dShaderVersion version;
+   uint32 version;
    boolean is_ps;
+   int indent;
 };
+
+#define DUMP_MAX_OP_SRC 4
+
+struct dump_op
+{
+   struct sh_op op;
+   struct sh_dstreg dst;
+   struct sh_srcreg dstind;
+   struct sh_srcreg src[DUMP_MAX_OP_SRC];
+   struct sh_srcreg srcind[DUMP_MAX_OP_SRC];
+   struct sh_srcreg p0;
+};
+
+static void
+dump_indent(int indent)
+{
+   int i;
+
+   for (i = 0; i < indent; ++i) {
+      _debug_printf("  ");
+   }
+}
 
 static void dump_op( struct sh_op op, const char *mnemonic )
 {
-   assert( op.predicated == 0 );
    assert( op.is_reg == 0 );
 
+   if (op.predicated) {
+      _debug_printf("(p0) ");
+   }
    if (op.coissue)
       _debug_printf( "+" );
    _debug_printf( "%s", mnemonic );
-   switch (op.control) {
-   case 0:
+
+   switch (op.opcode) {
+   case SVGA3DOP_TEX:
+      switch (op.control) {
+      case 0:
+         break;
+      case 1 /* PROJECT */:
+         _debug_printf("p");
+         break;
+      case 2 /* BIAS */:
+         _debug_printf("b");
+         break;
+      default:
+         assert(0);
+      }
       break;
-   case SVGA3DOPCONT_PROJECT:
-      _debug_printf( "p" );
+
+   case SVGA3DOP_IFC:
+   case SVGA3DOP_BREAKC:
+   case SVGA3DOP_SETP:
+      switch (op.control) {
+      case SVGA3DOPCOMP_GT:
+         _debug_printf("_gt");
+         break;
+      case SVGA3DOPCOMP_EQ:
+         _debug_printf("_eq");
+         break;
+      case SVGA3DOPCOMP_GE:
+         _debug_printf("_ge");
+         break;
+      case SVGA3DOPCOMP_LT:
+         _debug_printf("_lt");
+         break;
+      case SVGA3DOPCOMPC_NE:
+         _debug_printf("_ne");
+         break;
+      case SVGA3DOPCOMP_LE:
+         _debug_printf("_le");
+         break;
+      default:
+         assert(0);
+      }
       break;
-   case SVGA3DOPCONT_BIAS:
-      _debug_printf( "b" );
-      break;
+
    default:
-      assert( 0 );
+      assert(op.control == 0);
    }
 }
 
-
-static void dump_comp_op( struct sh_op op, const char *mnemonic )
+static void
+format_reg(const char *name,
+           const struct sh_reg reg,
+           const struct sh_srcreg *indreg)
 {
-   assert( op.is_reg == 0 );
+   if (reg.relative) {
+      assert(indreg);
 
-   if (op.coissue)
-      _debug_printf( "+" );
-   _debug_printf( "%s", mnemonic );
-   switch (op.control) {
-   case SVGA3DOPCOMP_RESERVED0:
-      break;
-   case SVGA3DOPCOMP_GT:
-      _debug_printf("_gt");
-      break;
-   case SVGA3DOPCOMP_EQ:
-      _debug_printf("_eq");
-      break;
-   case SVGA3DOPCOMP_GE:
-      _debug_printf("_ge");
-      break;
-   case SVGA3DOPCOMP_LT:
-      _debug_printf("_lt");
-      break;
-   case SVGA3DOPCOMPC_NE:
-      _debug_printf("_ne");
-      break;
-   case SVGA3DOPCOMP_LE:
-      _debug_printf("_le");
-      break;
-   case SVGA3DOPCOMP_RESERVED1:
-   default:
-      assert( 0 );
+      if (sh_srcreg_type(*indreg) == SVGA3DREG_LOOP) {
+         _debug_printf("%s[aL+%u]", name, reg.number);
+      } else {
+         _debug_printf("%s[a%u.x+%u]", name, indreg->number, reg.number);
+      }
+   } else {
+      _debug_printf("%s%u", name, reg.number);
    }
 }
-
 
 static void dump_reg( struct sh_reg reg, struct sh_srcreg *indreg, const struct dump_info *di )
 {
-   assert( sh_reg_type( reg ) == SVGA3DREG_CONST || reg.relative == 0 );
    assert( reg.is_reg == 1 );
 
    switch (sh_reg_type( reg )) {
    case SVGA3DREG_TEMP:
-      _debug_printf( "r%u", reg.number );
+      format_reg("r", reg, NULL);
       break;
 
    case SVGA3DREG_INPUT:
-      _debug_printf( "v%u", reg.number );
+      format_reg("v", reg, indreg);
       break;
 
    case SVGA3DREG_CONST:
-      if (reg.relative) {
-         if (sh_srcreg_type( *indreg ) == SVGA3DREG_LOOP)
-            _debug_printf( "c[aL+%u]", reg.number );
-         else
-            _debug_printf( "c[a%u.x+%u]", indreg->number, reg.number );
-      }
-      else
-         _debug_printf( "c%u", reg.number );
+      format_reg("c", reg, indreg);
       break;
 
    case SVGA3DREG_ADDR:    /* VS */
    /* SVGA3DREG_TEXTURE */ /* PS */
-      if (di->is_ps)
-         _debug_printf( "t%u", reg.number );
-      else
-         _debug_printf( "a%u", reg.number );
+      assert(!reg.relative);
+      if (di->is_ps) {
+         format_reg("t", reg, NULL);
+      } else {
+         format_reg("a", reg, NULL);
+      }
       break;
 
    case SVGA3DREG_RASTOUT:
+      assert(!reg.relative);
       switch (reg.number) {
       case 0 /*POSITION*/:
          _debug_printf( "oPos" );
@@ -154,63 +191,68 @@ static void dump_reg( struct sh_reg reg, struct sh_srcreg *indreg, const struct 
 
    case SVGA3DREG_ATTROUT:
       assert( reg.number < 2 );
-      _debug_printf( "oD%u", reg.number );
+      format_reg("oD", reg, NULL);
       break;
 
-   case SVGA3DREG_TEXCRDOUT:
-   /* SVGA3DREG_OUTPUT */
-      _debug_printf( "oT%u", reg.number );
+   case SVGA3DREG_TEXCRDOUT:  /* VS */
+   /* SVGA3DREG_OUTPUT */     /* VS3.0+ */
+      if (!di->is_ps && di->version >= SVGA3D_VS_30) {
+         format_reg("o", reg, indreg);
+      } else {
+         format_reg("oT", reg, NULL);
+      }
       break;
 
    case SVGA3DREG_COLOROUT:
-      _debug_printf( "oC%u", reg.number );
+      format_reg("oC", reg, NULL);
       break;
 
    case SVGA3DREG_DEPTHOUT:
-      _debug_printf( "oD%u", reg.number );
+      assert(!reg.relative);
+      assert(reg.number == 0);
+      _debug_printf("oDepth");
       break;
 
    case SVGA3DREG_SAMPLER:
-      _debug_printf( "s%u", reg.number );
+      format_reg("s", reg, NULL);
       break;
 
    case SVGA3DREG_CONSTBOOL:
-      assert( !reg.relative );
-      _debug_printf( "b%u", reg.number );
+      format_reg("b", reg, NULL);
       break;
 
    case SVGA3DREG_CONSTINT:
-      assert( !reg.relative );
-      _debug_printf( "i%u", reg.number );
+      format_reg("i", reg, NULL);
       break;
 
    case SVGA3DREG_LOOP:
+      assert(!reg.relative);
       assert( reg.number == 0 );
       _debug_printf( "aL" );
       break;
 
    case SVGA3DREG_MISCTYPE:
+      assert(!reg.relative);
       switch (reg.number) {
       case SVGA3DMISCREG_POSITION:
-         _debug_printf( "vPos" );
+         _debug_printf("vPos");
          break;
       case SVGA3DMISCREG_FACE:
-         _debug_printf( "vFace" );
+         _debug_printf("vFace");
          break;
       default:
          assert(0);
-         break;
+         _debug_printf("???");
       }
       break;
 
    case SVGA3DREG_LABEL:
-      _debug_printf( "l%u", reg.number );
+      format_reg("l", reg, NULL);
       break;
 
    case SVGA3DREG_PREDICATE:
-      _debug_printf( "p%u", reg.number );
+      format_reg("p", reg, NULL);
       break;
-
 
    default:
       assert( 0 );
@@ -233,8 +275,11 @@ static void dump_bdata( boolean bdata )
    _debug_printf( bdata ? "TRUE" : "FALSE" );
 }
 
-static void dump_sampleinfo( struct ps_sampleinfo sampleinfo )
+static void
+dump_sampleinfo(struct sh_sampleinfo sampleinfo)
 {
+   assert( sampleinfo.is_reg == 1 );
+
    switch (sampleinfo.texture_type) {
    case SVGA3DSAMP_2D:
       _debug_printf( "_2d" );
@@ -250,63 +295,67 @@ static void dump_sampleinfo( struct ps_sampleinfo sampleinfo )
    }
 }
 
-
-static void dump_usageinfo( struct vs_semantic semantic )
+static void
+dump_semantic(uint usage,
+              uint usage_index)
 {
-   switch (semantic.usage) {
+   switch (usage) {
    case SVGA3D_DECLUSAGE_POSITION:
-      _debug_printf("_position" );
+      _debug_printf("_position");
       break;
    case SVGA3D_DECLUSAGE_BLENDWEIGHT:
-      _debug_printf("_blendweight" );
+      _debug_printf("_blendweight");
       break;
    case SVGA3D_DECLUSAGE_BLENDINDICES:
-      _debug_printf("_blendindices" );
+      _debug_printf("_blendindices");
       break;
    case SVGA3D_DECLUSAGE_NORMAL:
-      _debug_printf("_normal" );
+      _debug_printf("_normal");
       break;
    case SVGA3D_DECLUSAGE_PSIZE:
-      _debug_printf("_psize" );
+      _debug_printf("_psize");
       break;
    case SVGA3D_DECLUSAGE_TEXCOORD:
       _debug_printf("_texcoord");
       break;
    case SVGA3D_DECLUSAGE_TANGENT:
-      _debug_printf("_tangent" );
+      _debug_printf("_tangent");
       break;
    case SVGA3D_DECLUSAGE_BINORMAL:
-      _debug_printf("_binormal" );
+      _debug_printf("_binormal");
       break;
    case SVGA3D_DECLUSAGE_TESSFACTOR:
-      _debug_printf("_tessfactor" );
+      _debug_printf("_tessfactor");
       break;
    case SVGA3D_DECLUSAGE_POSITIONT:
-      _debug_printf("_positiont" );
+      _debug_printf("_positiont");
       break;
    case SVGA3D_DECLUSAGE_COLOR:
-      _debug_printf("_color" );
+      _debug_printf("_color");
       break;
    case SVGA3D_DECLUSAGE_FOG:
-      _debug_printf("_fog" );
+      _debug_printf("_fog");
       break;
    case SVGA3D_DECLUSAGE_DEPTH:
-      _debug_printf("_depth" );
+      _debug_printf("_depth");
       break;
    case SVGA3D_DECLUSAGE_SAMPLE:
       _debug_printf("_sample");
       break;
    default:
-      assert( 0 );
-      return;
+      assert(!"Unknown usage");
+      _debug_printf("_???");
    }
 
-   if (semantic.usage_index != 0) {
-      _debug_printf("%d", semantic.usage_index );
+   if (usage_index) {
+      _debug_printf("%u", usage_index);
    }
 }
 
-static void dump_dstreg( struct sh_dstreg dstreg, const struct dump_info *di )
+static void
+dump_dstreg(struct sh_dstreg dstreg,
+            struct sh_srcreg *indreg,
+            const struct dump_info *di)
 {
    union {
       struct sh_reg reg;
@@ -346,7 +395,7 @@ static void dump_dstreg( struct sh_dstreg dstreg, const struct dump_info *di )
    _debug_printf( " " );
 
    u.dstreg = dstreg;
-   dump_reg( u.reg, NULL, di );
+   dump_reg( u.reg, indreg, di);
    if (dstreg.write_mask != SVGA3DWRITEMASK_ALL) {
       _debug_printf( "." );
       if (dstreg.write_mask & SVGA3DWRITEMASK_0)
@@ -362,23 +411,13 @@ static void dump_dstreg( struct sh_dstreg dstreg, const struct dump_info *di )
 
 static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, const struct dump_info *di )
 {
-   union {
-      struct sh_reg reg;
-      struct sh_srcreg srcreg;
-   } u;
-
    switch (srcreg.modifier) {
    case SVGA3DSRCMOD_NEG:
    case SVGA3DSRCMOD_BIASNEG:
    case SVGA3DSRCMOD_SIGNNEG:
    case SVGA3DSRCMOD_X2NEG:
-      _debug_printf( "-" );
-      break;
-   case SVGA3DSRCMOD_ABS:
-      _debug_printf( "|" );
-      break;
    case SVGA3DSRCMOD_ABSNEG:
-      _debug_printf( "-|" );
+      _debug_printf( "-" );
       break;
    case SVGA3DSRCMOD_COMP:
       _debug_printf( "1-" );
@@ -386,18 +425,12 @@ static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, cons
    case SVGA3DSRCMOD_NOT:
       _debug_printf( "!" );
    }
-
-   u.srcreg = srcreg;
-   dump_reg( u.reg, indreg, di );
+   dump_reg( *(struct sh_reg *) &srcreg, indreg, di );
    switch (srcreg.modifier) {
    case SVGA3DSRCMOD_NONE:
    case SVGA3DSRCMOD_NEG:
    case SVGA3DSRCMOD_COMP:
    case SVGA3DSRCMOD_NOT:
-      break;
-   case SVGA3DSRCMOD_ABS:
-   case SVGA3DSRCMOD_ABSNEG:
-      _debug_printf( "|" );
       break;
    case SVGA3DSRCMOD_BIAS:
    case SVGA3DSRCMOD_BIASNEG:
@@ -417,6 +450,10 @@ static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, cons
    case SVGA3DSRCMOD_DW:
       _debug_printf( "_dw" );
       break;
+   case SVGA3DSRCMOD_ABS:
+   case SVGA3DSRCMOD_ABSNEG:
+      _debug_printf("_abs");
+      break;
    default:
       assert( 0 );
    }
@@ -434,41 +471,106 @@ static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, cons
    }
 }
 
+static void
+parse_op(struct dump_info *di,
+         const uint **token,
+         struct dump_op *op,
+         uint num_dst,
+         uint num_src)
+{
+   uint i;
+
+   assert(num_dst <= 1);
+   assert(num_src <= DUMP_MAX_OP_SRC);
+
+   op->op = *(struct sh_op *)*token;
+   *token += sizeof(struct sh_op) / sizeof(uint);
+
+   if (num_dst >= 1) {
+      op->dst = *(struct sh_dstreg *)*token;
+      *token += sizeof(struct sh_dstreg) / sizeof(uint);
+      if (op->dst.relative &&
+          (!di->is_ps && di->version >= SVGA3D_VS_30)) {
+         op->dstind = *(struct sh_srcreg *)*token;
+         *token += sizeof(struct sh_srcreg) / sizeof(uint);
+      }
+   }
+
+   if (op->op.predicated) {
+      op->p0 = *(struct sh_srcreg *)*token;
+      *token += sizeof(struct sh_srcreg) / sizeof(uint);
+   }
+
+   for (i = 0; i < num_src; ++i) {
+      op->src[i] = *(struct sh_srcreg *)*token;
+      *token += sizeof(struct sh_srcreg) / sizeof(uint);
+      if (op->src[i].relative &&
+          ((!di->is_ps && di->version >= SVGA3D_VS_20) ||
+          (di->is_ps && di->version >= SVGA3D_PS_30))) {
+         op->srcind[i] = *(struct sh_srcreg *)*token;
+         *token += sizeof(struct sh_srcreg) / sizeof(uint);
+      }
+   }
+}
+
+static void
+dump_inst(struct dump_info *di,
+          const unsigned **assem,
+          struct sh_op op,
+          const struct sh_opcode_info *info)
+{
+   struct dump_op dop;
+   boolean not_first_arg = FALSE;
+   uint i;
+
+   assert(info->num_dst <= 1);
+
+   di->indent -= info->pre_dedent;
+   dump_indent(di->indent);
+   di->indent += info->post_indent;
+
+   dump_op(op, info->mnemonic);
+
+   parse_op(di, assem, &dop, info->num_dst, info->num_src);
+   if (info->num_dst > 0) {
+      dump_dstreg(dop.dst, &dop.dstind, di);
+      not_first_arg = TRUE;
+   }
+
+   for (i = 0; i < info->num_src; i++) {
+      if (not_first_arg) {
+         _debug_printf(", ");
+      } else {
+         _debug_printf(" ");
+      }
+      dump_srcreg(dop.src[i], &dop.srcind[i], di);
+      not_first_arg = TRUE;
+   }
+
+   _debug_printf("\n");
+}
+
 void
 svga_shader_dump(
    const unsigned *assem,
    unsigned dwords,
    unsigned do_binary )
 {
-   const unsigned *start = assem;
    boolean finished = FALSE;
    struct dump_info di;
-   unsigned i;
 
-   if (do_binary) {
-      for (i = 0; i < dwords; i++) 
-         _debug_printf("  0x%08x,\n", assem[i]);
-      
-      _debug_printf("\n\n");
-   }
-
-   di.version.value = *assem++;
-   di.is_ps = (di.version.type == SVGA3D_PS_TYPE);
+   di.version = *assem++;
+   di.is_ps = (di.version & 0xFFFF0000) == 0xFFFF0000;
+   di.indent = 0;
 
    _debug_printf(
       "%s_%u_%u\n",
       di.is_ps ? "ps" : "vs",
-      di.version.major,
-      di.version.minor );
+      (di.version >> 8) & 0xff,
+      di.version & 0xff );
 
    while (!finished) {
       struct sh_op op = *(struct sh_op *) assem;
-
-      if (assem - start >= dwords) {
-         _debug_printf("... ran off end of buffer\n");
-         assert(0);
-         return;
-      }
 
       switch (op.opcode) {
       case SVGA3DOP_DCL:
@@ -476,16 +578,25 @@ svga_shader_dump(
             struct sh_dcl dcl = *(struct sh_dcl *) assem;
 
             _debug_printf( "dcl" );
-            if (sh_dstreg_type( dcl.reg ) == SVGA3DREG_SAMPLER)
-               dump_sampleinfo( dcl.u.ps.sampleinfo );
-            else if (di.is_ps) {
-               if (di.version.major == 3 && 
-                   sh_dstreg_type( dcl.reg ) != SVGA3DREG_MISCTYPE)
-                  dump_usageinfo( dcl.u.vs.semantic );
+            switch (sh_dstreg_type(dcl.reg)) {
+            case SVGA3DREG_INPUT:
+               if ((di.is_ps && di.version >= SVGA3D_PS_30) ||
+                   (!di.is_ps && di.version >= SVGA3D_VS_30)) {
+                  dump_semantic(dcl.u.semantic.usage,
+                                dcl.u.semantic.usage_index);
+               }
+               break;
+            case SVGA3DREG_TEXCRDOUT:
+               if (!di.is_ps && di.version >= SVGA3D_VS_30) {
+                  dump_semantic(dcl.u.semantic.usage,
+                                dcl.u.semantic.usage_index);
+               }
+               break;
+            case SVGA3DREG_SAMPLER:
+               dump_sampleinfo( dcl.u.sampleinfo );
+               break;
             }
-            else
-               dump_usageinfo( dcl.u.vs.semantic );
-            dump_dstreg( dcl.reg, &di );
+            dump_dstreg(dcl.reg, NULL, &di);
             _debug_printf( "\n" );
             assem += sizeof( struct sh_dcl ) / sizeof( unsigned );
          }
@@ -518,54 +629,38 @@ svga_shader_dump(
          break;
 
       case SVGA3DOP_TEXCOORD:
-         assert( di.is_ps );
-         dump_op( op, "texcoord" );
-         if (0) {
-            struct sh_dstop dstop = *(struct sh_dstop *) assem;
-            dump_dstreg( dstop.dst, &di );
-            assem += sizeof( struct sh_dstop ) / sizeof( unsigned );
+         {
+            struct sh_opcode_info info = *svga_opcode_info(op.opcode);
+
+            assert(di.is_ps);
+            if (di.version > SVGA3D_PS_13) {
+               assert(info.num_src == 0);
+
+               info.num_src = 1;
+            }
+
+            dump_inst(&di, &assem, op, &info);
          }
-         else {
-            struct sh_unaryop unaryop = *(struct sh_unaryop *) assem;
-            dump_dstreg( unaryop.dst, &di );
-            _debug_printf( ", " );
-            dump_srcreg( unaryop.src, NULL, &di );
-            assem += sizeof( struct sh_unaryop ) / sizeof( unsigned );
-         }
-         _debug_printf( "\n" );
          break;
 
       case SVGA3DOP_TEX:
-         assert( di.is_ps );
-         if (0) {
-            dump_op( op, "tex" );
-            if (0) {
-               struct sh_dstop dstop = *(struct sh_dstop *) assem;
+         {
+            struct sh_opcode_info info = *svga_opcode_info(op.opcode);
 
-               dump_dstreg( dstop.dst, &di );
-               assem += sizeof( struct sh_dstop ) / sizeof( unsigned );
+            assert(di.is_ps);
+            if (di.version > SVGA3D_PS_13) {
+               assert(info.num_src == 0);
+
+               if (di.version > SVGA3D_PS_14) {
+                  info.num_src = 2;
+                  info.mnemonic = "texld";
+               } else {
+                  info.num_src = 1;
+               }
             }
-            else {
-               struct sh_unaryop unaryop = *(struct sh_unaryop *) assem;
 
-               dump_dstreg( unaryop.dst, &di );
-               _debug_printf( ", " );
-               dump_srcreg( unaryop.src, NULL, &di );
-               assem += sizeof( struct sh_unaryop ) / sizeof( unsigned );
-            }
+            dump_inst(&di, &assem, op, &info);
          }
-         else {
-            struct sh_binaryop binaryop = *(struct sh_binaryop *) assem;
-
-            dump_op( op, "texld" );
-            dump_dstreg( binaryop.dst, &di );
-            _debug_printf( ", " );
-            dump_srcreg( binaryop.src0, NULL, &di );
-            _debug_printf( ", " );
-            dump_srcreg( binaryop.src1, NULL, &di );
-            assem += sizeof( struct sh_binaryop ) / sizeof( unsigned );
-         }
-         _debug_printf( "\n" );
          break;
 
       case SVGA3DOP_DEF:
@@ -578,6 +673,21 @@ svga_shader_dump(
             dump_cdata( def.cdata );
             _debug_printf( "\n" );
             assem += sizeof( struct sh_def ) / sizeof( unsigned );
+         }
+         break;
+
+      case SVGA3DOP_SINCOS:
+         {
+            struct sh_opcode_info info = *svga_opcode_info(op.opcode);
+
+            if ((di.is_ps && di.version >= SVGA3D_PS_30) ||
+                (!di.is_ps && di.version >= SVGA3D_VS_30)) {
+               assert(info.num_src == 3);
+
+               info.num_src = 1;
+            }
+
+            dump_inst(&di, &assem, op, &info);
          }
          break;
 
@@ -595,59 +705,15 @@ svga_shader_dump(
          }
          break;
 
-      case SVGA3DOP_RET:
-         _debug_printf( "ret\n" );
-         assem += sizeof( struct sh_op ) / sizeof( unsigned );
-         break;
-
       case SVGA3DOP_END:
-         _debug_printf( "end\n" );
          finished = TRUE;
          break;
 
       default:
          {
-            const struct sh_opcode_info *info = svga_opcode_info( op.opcode );
-            uint i;
-            uint num_src = info->num_src + op.predicated;
-            boolean not_first_arg = FALSE;
+            const struct sh_opcode_info *info = svga_opcode_info(op.opcode);
 
-            assert( info->num_dst <= 1 );
-
-            if (op.opcode == SVGA3DOP_SINCOS && di.version.major < 3)
-               num_src += 2;
-
-            dump_comp_op( op, info->mnemonic );
-            assem += sizeof( struct sh_op ) / sizeof( unsigned );
-
-            if (info->num_dst > 0) {
-               struct sh_dstreg dstreg = *(struct sh_dstreg *) assem;
-
-               dump_dstreg( dstreg, &di );
-               assem += sizeof( struct sh_dstreg ) / sizeof( unsigned );
-               not_first_arg = TRUE;
-            }
-
-            for (i = 0; i < num_src; i++) {
-               struct sh_srcreg srcreg;
-               struct sh_srcreg indreg;
-
-               srcreg = *(struct sh_srcreg *) assem;
-               assem += sizeof( struct sh_srcreg ) / sizeof( unsigned );
-               if (srcreg.relative && !di.is_ps && di.version.major >= 2) {
-                  indreg = *(struct sh_srcreg *) assem;
-                  assem += sizeof( struct sh_srcreg ) / sizeof( unsigned );
-               }
-
-               if (not_first_arg)
-                  _debug_printf( ", " );
-               else
-                  _debug_printf( " " );
-               dump_srcreg( srcreg, &indreg, &di );
-               not_first_arg = TRUE;
-            }
-
-            _debug_printf( "\n" );
+            dump_inst(&di, &assem, op, info);
          }
       }
    }
