@@ -376,6 +376,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+      case TGSI_TOKEN_TYPE_PROPERTY:
          break;
 
       default:

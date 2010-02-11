@@ -1498,6 +1498,9 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          }
          break;
 
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         break;
+
       default:
          assert( 0 );
       }
