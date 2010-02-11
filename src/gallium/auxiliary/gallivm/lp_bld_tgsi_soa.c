@@ -1403,8 +1403,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CONT:
-      /* deprecated? */
-      assert(0);
+      /* FIXME */
       return 0;
       break;
 
