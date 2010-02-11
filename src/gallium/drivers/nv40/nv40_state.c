@@ -445,7 +445,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
-	struct nouveau_stateobj *so = so_new(4, 21, 0);
+	struct nouveau_stateobj *so = so_new(6, 20, 0);
 	struct nouveau_grobj *curie = nv40->screen->curie;
 
 	so_method(so, curie, NV40TCL_DEPTH_FUNC, 3);
@@ -459,11 +459,11 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	so_data  (so, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
+		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 3);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
-		so_data  (so, cso->stencil[0].ref_value);
+		so_method(so, curie, NV40TCL_STENCIL_FRONT_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[0].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
@@ -474,11 +474,11 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
+		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 3);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_data  (so, cso->stencil[1].ref_value);
+		so_method(so, curie, NV40TCL_STENCIL_BACK_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[1].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
@@ -590,6 +590,16 @@ nv40_set_blend_color(struct pipe_context *pipe,
 
 	nv40->blend_colour = *bcol;
 	nv40->dirty |= NV40_NEW_BCOL;
+}
+
+ static void
+nv40_set_stencil_ref(struct pipe_context *pipe,
+		     const struct pipe_stencil_ref *sr)
+{
+	struct nv40_context *nv40 = nv40_context(pipe);
+
+	nv40->stencil_ref = *sr;
+	nv40->dirty |= NV40_NEW_SR;
 }
 
 static void
@@ -719,6 +729,7 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.delete_fs_state = nv40_fp_state_delete;
 
 	nv40->pipe.set_blend_color = nv40_set_blend_color;
+        nv40->pipe.set_stencil_ref = nv40_set_stencil_ref;
 	nv40->pipe.set_clip_state = nv40_set_clip_state;
 	nv40->pipe.set_constant_buffer = nv40_set_constant_buffer;
 	nv40->pipe.set_framebuffer_state = nv40_set_framebuffer_state;
