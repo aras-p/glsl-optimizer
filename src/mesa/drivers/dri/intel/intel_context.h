@@ -246,7 +246,7 @@ struct intel_context
    __DRIdrawable *driDrawable;
    __DRIdrawable *driReadDrawable;
    __DRIscreen *driScreen;
-   intelScreenPrivate *intelScreen;
+   struct intel_screen *intelScreen;
 
    /**
     * Configuration cache

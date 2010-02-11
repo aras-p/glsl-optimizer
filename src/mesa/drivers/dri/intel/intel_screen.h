@@ -34,7 +34,7 @@
 #include "i915_drm.h"
 #include "xmlconfig.h"
 
-typedef struct
+struct intel_screen
 {
    int deviceID;
    int width;
@@ -61,13 +61,9 @@ typedef struct
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
-} intelScreenPrivate;
-
-
+};
 
 extern GLboolean intelMapScreenRegions(__DRIscreen * sPriv);
-
-extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
 extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
@@ -77,7 +73,5 @@ extern GLboolean
 intelMakeCurrent(__DRIcontext * driContextPriv,
                  __DRIdrawable * driDrawPriv,
                  __DRIdrawable * driReadPriv);
-
-extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 
 #endif

@@ -581,7 +581,7 @@ intelInitContext(struct intel_context *intel,
    GLcontext *ctx = &intel->ctx;
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,

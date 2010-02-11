@@ -169,7 +169,7 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
 static void
 intelDestroyScreen(__DRIscreen * sPriv)
 {
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = sPriv->private;
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    driDestroyOptionInfo(&intelScreen->optionCache);
@@ -283,7 +283,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
                    void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = sPriv->private;
 
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
@@ -304,7 +304,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 }
 
 static GLboolean
-intel_init_bufmgr(intelScreenPrivate *intelScreen)
+intel_init_bufmgr(struct intel_screen *intelScreen)
 {
    __DRIscreen *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
@@ -336,7 +336,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 static const
 __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 {
-   intelScreenPrivate *intelScreen;
+   struct intel_screen *intelScreen;
    GLenum fb_format[3];
    GLenum fb_type[3];
 
@@ -348,7 +348,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    __DRIconfig **configs = NULL;
 
    /* Allocate the private area */
-   intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));
+   intelScreen = CALLOC(sizeof *intelScreen);
    if (!intelScreen) {
       fprintf(stderr, "\nERROR!  Allocating private area failed\n");
       return GL_FALSE;
