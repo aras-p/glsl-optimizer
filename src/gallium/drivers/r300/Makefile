@@ -14,6 +14,7 @@ C_SOURCES = \
 	r300_query.c \
 	r300_render.c \
 	r300_screen.c \
+	r300_screen_buffer.c \
 	r300_state.c \
 	r300_state_derived.c \
 	r300_state_invariant.c \

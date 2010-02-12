@@ -36,7 +36,7 @@ struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    struct radeon_winsys* radeon_winsys;
+    struct r300_winsys_screen *rws;
 
     /* Chipset capabilities */
     struct r300_capabilities* caps;
@@ -50,9 +50,6 @@ struct r300_screen {
 static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
 }
-
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 /* Debug functionality. */
 

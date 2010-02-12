@@ -25,6 +25,6 @@
 
 #include "radeon_winsys.h"
 
-void radeon_setup_winsys(int fd, struct radeon_winsys* winsys);
+boolean radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* winsys);
 
 #endif /* RADEON_R300_H */
