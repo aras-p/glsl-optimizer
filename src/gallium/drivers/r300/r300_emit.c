@@ -408,8 +408,7 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
                 R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_ENABLE);
         } else {
             OUT_CS_REG(R300_RB3D_CCTL,
-                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
-                R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
+                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs));
         }
     } else {
         OUT_CS_REG(R300_RB3D_CCTL, 0x0);
