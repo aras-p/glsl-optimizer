@@ -33,6 +33,7 @@
 #include "pipe/p_screen.h"
 
 #include "cell/common.h"
+#include "cell_context.h"
 #include "cell_screen.h"
 #include "cell_texture.h"
 #include "cell_winsys.h"
