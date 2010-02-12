@@ -1148,14 +1148,15 @@ void r300_emit_dirty_state(struct r300_context* r300)
         for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
   	    if (r300->dirty_state &
 		((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
-		if (r300->textures[i]) 
+		if (r300->textures[i]) {
 		    r300_emit_texture(r300,
 				      r300->sampler_states[i],
 				      r300->textures[i],
 				      i);
+                    dirty_tex |= r300->dirty_state & (R300_NEW_TEXTURE << i);
+                }
                 r300->dirty_state &=
                     ~((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i));
-                dirty_tex++;
             }
         }
         r300->dirty_state &= ~(R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES);
