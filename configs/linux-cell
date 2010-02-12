@@ -25,7 +25,7 @@ OPT_FLAGS = -O3
 SDK = /opt/cell/sdk/usr
 
 
-CFLAGS = $(OPT_FLAGS) -mcpu=cell -Wall -Winline -Wmissing-prototypes \
+CFLAGS = $(OPT_FLAGS) -Wall -Winline -Wmissing-prototypes \
 	-fPIC -m32 -std=c99 -mabi=altivec -maltivec \
 	-I. -I$(SDK)/include \
 	-DGALLIUM_CELL $(DEFINES)
