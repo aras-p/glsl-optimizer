@@ -152,24 +152,26 @@ stw_cleanup_thread(void)
 void
 stw_cleanup(void)
 {
-   unsigned i;
+   DHGLRC dhglrc;
 
    debug_printf("%s\n", __FUNCTION__);
 
    if (!stw_dev)
       return;
    
+   /*
+    * Abort cleanup if there are still active contexts. In some situations
+    * this DLL may be unloaded before the DLL that is using GL contexts is.
+    */
    pipe_mutex_lock( stw_dev->ctx_mutex );
-   {
-      /* Ensure all contexts are destroyed */
-      i = handle_table_get_first_handle(stw_dev->ctx_table);
-      while (i) {
-         DrvDeleteContext(i);
-         i = handle_table_get_next_handle(stw_dev->ctx_table, i);
-      }
-      handle_table_destroy(stw_dev->ctx_table);
-   }
+   dhglrc = handle_table_get_first_handle(stw_dev->ctx_table);
    pipe_mutex_unlock( stw_dev->ctx_mutex );
+   if (dhglrc) {
+      debug_printf("%s: contexts still active -- cleanup aborted\n", __FUNCTION__);
+      return;
+   }
+
+   handle_table_destroy(stw_dev->ctx_table);
 
    stw_framebuffer_cleanup();
    
