@@ -42,7 +42,6 @@
 #include <X11/Xlib-xcb.h>
 
 #include <glapi/glapi.h>
-#include "eglconfigutil.h"
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -50,6 +49,7 @@
 #include "eglcurrent.h"
 #include "egllog.h"
 #include "eglsurface.h"
+#include "eglimage.h"
 
 struct dri2_egl_driver
 {
@@ -67,10 +67,12 @@ struct dri2_egl_display
    __DRIdri2Extension       *dri2;
    __DRI2flushExtension     *flush;
    __DRItexBufferExtension  *tex_buffer;
+   __DRIimageExtension      *image;
    int                       fd;
 
    __DRIdri2LoaderExtension  loader_extension;
-   const __DRIextension     *extensions[2];
+   __DRIimageLookupExtension image_lookup_extension;
+   const __DRIextension     *extensions[3];
 };
 
 struct dri2_egl_context
@@ -93,12 +95,25 @@ struct dri2_egl_surface
 
 struct dri2_egl_config
 {
-   _EGLConfig base;
+   _EGLConfig         base;
    const __DRIconfig *dri_config;
+};
+
+struct dri2_egl_image
+{
+   _EGLImage   base;
+   __DRIimage *dri_image;
+   int         width;
+   int         height;
+   int         name;
+   int         pitch;
+   int         cpp;
+   int         format;
 };
 
 /* standard typecasts */
 _EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
+_EGL_DRIVER_TYPECAST(dri2_egl_image, _EGLImage, obj)
 
 EGLint dri2_to_egl_attribute_map[] = {
    0,
@@ -346,6 +361,25 @@ dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 #endif
 }
 
+static __DRIimage *
+dri2_lookup_egl_image(__DRIcontext *context, void *image, void *data)
+{
+   struct dri2_egl_context *dri2_ctx = data;
+   _EGLDisplay *disp = dri2_ctx->base.Resource.Display;
+   struct dri2_egl_image *dri2_img;
+   _EGLImage *img;
+
+   img = _eglLookupImage(image, disp);
+   if (img == NULL) {
+      _eglError(EGL_BAD_PARAMETER, "dri2_lookup_egl_image");
+      return NULL;
+   }
+
+   dri2_img = dri2_egl_image(image);
+
+   return dri2_img->dri_image;
+}
+
 static __DRIbuffer *
 dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 			     int *width, int *height,
@@ -405,6 +439,7 @@ static struct dri2_extension_match dri2_driver_extensions[] = {
 static struct dri2_extension_match dri2_core_extensions[] = {
    { __DRI2_FLUSH, 1, offsetof(struct dri2_egl_display, flush) },
    { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
+   { __DRI_IMAGE, 1, offsetof(struct dri2_egl_display, image) },
    { NULL }
 };
 
@@ -609,8 +644,13 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       dri2_dpy->loader_extension.getBuffersWithFormat = NULL;
    }
       
+   dri2_dpy->image_lookup_extension.base.name = __DRI_IMAGE_LOOKUP;
+   dri2_dpy->image_lookup_extension.base.version = 1;
+   dri2_dpy->image_lookup_extension.lookupEGLImage = dri2_lookup_egl_image;
+
    dri2_dpy->extensions[0] = &dri2_dpy->loader_extension.base;
-   dri2_dpy->extensions[1] = NULL;
+   dri2_dpy->extensions[1] = &dri2_dpy->image_lookup_extension.base;
+   dri2_dpy->extensions[2] = NULL;
 
    dri2_dpy->dri_screen =
       dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
@@ -652,6 +692,8 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    disp->ClientAPIsMask = EGL_OPENGL_BIT;
+   disp->Extensions.KHR_image_base = EGL_TRUE;
+   disp->Extensions.KHR_image_pixmap = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
@@ -1064,6 +1106,107 @@ dri2_release_tex_image(_EGLDriver *drv,
    return EGL_TRUE;
 }
 
+static _EGLImage *
+dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
+		      _EGLContext *ctx, EGLenum target,
+		      EGLClientBuffer buffer, const EGLint *attr_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   struct dri2_egl_image *dri2_img;
+   unsigned int attachments[1];
+   xcb_drawable_t drawable;
+   xcb_dri2_get_buffers_cookie_t buffers_cookie;
+   xcb_dri2_get_buffers_reply_t *buffers_reply;
+   xcb_dri2_dri2_buffer_t *buffers;
+   xcb_get_geometry_cookie_t geometry_cookie;
+   xcb_get_geometry_reply_t *geometry_reply;
+   xcb_generic_error_t *error;
+
+   dri2_img = malloc(sizeof *dri2_img);
+   if (!dri2_img) {
+      _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   if (!_eglInitImage(&dri2_img->base, disp, attr_list))
+      return EGL_NO_IMAGE_KHR;
+
+   switch (target) {
+   case EGL_NATIVE_PIXMAP_KHR:
+      drawable = (xcb_drawable_t) buffer;
+      xcb_dri2_create_drawable (dri2_dpy->conn, drawable);
+      attachments[0] = XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT;
+      buffers_cookie =
+	 xcb_dri2_get_buffers_unchecked (dri2_dpy->conn,
+					 drawable, 1, 1, attachments);
+      geometry_cookie = xcb_get_geometry (dri2_dpy->conn, drawable);
+      buffers_reply = xcb_dri2_get_buffers_reply (dri2_dpy->conn,
+						  buffers_cookie, NULL);
+      buffers = xcb_dri2_get_buffers_buffers (buffers_reply);
+      if (buffers == NULL) {
+	 free(dri2_img);
+	 return NULL;
+      }
+
+      geometry_reply = xcb_get_geometry_reply (dri2_dpy->conn,
+					       geometry_cookie, &error);
+      if (geometry_reply == NULL || error != NULL) {
+	 _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
+	 free(error);
+	 free(dri2_img);
+	 free(buffers_reply);
+      }
+
+      dri2_img->width = buffers_reply->width;
+      dri2_img->height = buffers_reply->height;
+      dri2_img->name = buffers[0].name;
+      dri2_img->pitch = buffers[0].pitch / buffers[0].cpp;
+      dri2_img->cpp = buffers[0].cpp;
+      switch (geometry_reply->depth) {
+      case 16:
+	 dri2_img->format = __DRI_IMAGE_FORMAT_RGB565;
+	 break;
+      case 24:
+	 dri2_img->format = __DRI_IMAGE_FORMAT_XRGB8888;
+	 break;
+      case 32:
+	 dri2_img->format = __DRI_IMAGE_FORMAT_ARGB8888;
+	 break;
+      }
+      free(buffers_reply);
+      free(geometry_reply);
+      break;
+
+   default:
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
+      free(dri2_img);
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   dri2_img->dri_image =
+      dri2_dpy->image->createImageFromName(dri2_ctx->dri_context,
+					   dri2_img->width,
+					   dri2_img->height,
+					   dri2_img->format,
+					   dri2_img->name,
+					   dri2_img->pitch,
+					   dri2_img);
+
+   return &dri2_img->base;
+}
+
+static EGLBoolean
+dri2_destroy_image_khr(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *image)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_image *dri2_img = dri2_egl_image(image);
+
+   dri2_dpy->image->destroyImage(dri2_img->dri_image);
+   free(dri2_img);
+
+   return EGL_TRUE;
+}
 
 /**
  * This is the main entrypoint into the driver, called by libEGL.
@@ -1094,6 +1237,8 @@ _eglMain(const char *args)
    dri2_drv->base.API.CopyBuffers = dri2_copy_buffers;
    dri2_drv->base.API.BindTexImage = dri2_bind_tex_image;
    dri2_drv->base.API.ReleaseTexImage = dri2_release_tex_image;
+   dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
+   dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;
