@@ -144,6 +144,12 @@ int main( int argc, char *argv[] )
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
+
+   if (!glutExtensionSupported("GL_NV_vertex_program")) {
+      printf("Sorry, this program requires GL_NV_vertex_program\n");
+      exit(1);
+   }
+
    Test1();
    Test2();
    Test3();

@@ -93,6 +93,11 @@ static void Init( void )
 #endif
       "END\n";
 
+   if (!glutExtensionSupported("GL_NV_vertex_program")) {
+      printf("Sorry, this program requires GL_NV_vertex_program\n");
+      exit(1);
+   }
+
    glLoadProgramNV(GL_VERTEX_PROGRAM_NV, 1,
                    strlen(prog1),
                    (const GLubyte *) prog1);

@@ -145,6 +145,11 @@ myinit(int argc, char *argv[])
 
     printf("Using vertex program attribs? %s\n", program ? "yes" : "no");
 
+    if (program && !glutExtensionSupported("GL_NV_vertex_program")) {
+       printf("Sorry, this requires GL_NV_vertex_program\n");
+       exit(1);
+    }
+
     if (!program) {
         glMap2f(GL_MAP2_VERTEX_4,
                 0.0, 1.0, 4, 4,
