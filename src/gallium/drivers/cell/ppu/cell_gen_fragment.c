@@ -1545,7 +1545,6 @@ gen_stencil_depth_test(struct spe_function *f,
    boolean need_to_writemask_stencil_values;
 
    struct pipe_stencil_state *stencil;
-   unsigned stencil_ref_value;
 
    /* Registers.  We may or may not actually allocate these, depending
     * on whether the state values indicate that we need them.
