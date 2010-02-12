@@ -505,9 +505,6 @@ static void
     unsigned max_width, max_height;
     uint32_t zbuffer_bpp = 0;
 
-    r300->fb_state.size = (10 * state->nr_cbufs) +
-        (2 * (4 - state->nr_cbufs)) +
-        (state->zsbuf ? 10 : 0) + 6;
 
     if (state->nr_cbufs > 4) {
         debug_printf("r300: Implementation error: Too many MRTs in %s, "
@@ -535,7 +532,8 @@ static void
 
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
-    /* Don't rely on the order of states being set for the first time. */
+    r300->fb_state.size = (10 * state->nr_cbufs) + (state->zsbuf ? 10 : 0) + 6;
+
     /* XXX wait what */
     r300->blend_state.dirty = TRUE;
     r300->dsa_state.dirty = TRUE;
