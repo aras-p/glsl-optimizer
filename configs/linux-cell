@@ -25,12 +25,16 @@ OPT_FLAGS = -O3
 SDK = /opt/cell/sdk/usr
 
 
-CFLAGS = $(OPT_FLAGS) -Wall -Winline -Wmissing-prototypes \
-	-fPIC -m32 -std=c99 -mabi=altivec -maltivec \
+
+COMMON_C_CPP_FLAGS = $(OPT_FLAGS) -Wall -Winline \
+	-fPIC -m32 -mabi=altivec -maltivec \
 	-I. -I$(SDK)/include \
 	-DGALLIUM_CELL $(DEFINES)
 
-CXXFLAGS = $(CFLAGS)
+CFLAGS = $(COMMON_C_CPP_FLAGS) -Wmissing-prototypes -std=c99
+
+CXXFLAGS = $(COMMON_C_CPP_FLAGS)
+
 
 # Omitting glw here:
 SRC_DIRS = glsl mesa gallium gallium/winsys glu glut/glx glew
