@@ -195,7 +195,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    __DRIscreen *screen;
    int i, count;
    unsigned int attachments[10];
-   uint32_t name;
    const char *region_name;
 
    if (INTEL_DEBUG & DEBUG_DRI)
