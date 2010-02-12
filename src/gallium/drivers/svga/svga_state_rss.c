@@ -26,7 +26,6 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#include "util/u_pack_color.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -102,16 +101,15 @@ static int emit_rss( struct svga_context *svga,
    }
 
    if (dirty & SVGA_NEW_BLEND_COLOR) {
-      union util_color uc;
-      ubyte r = float_to_ubyte(svga->curr.blend_color.color[0]);
-      ubyte g = float_to_ubyte(svga->curr.blend_color.color[1]);
-      ubyte b = float_to_ubyte(svga->curr.blend_color.color[2]);
-      ubyte a = float_to_ubyte(svga->curr.blend_color.color[3]);
+      uint32 color;
+      uint32 r = float_to_ubyte(svga->curr.blend_color.color[0]);
+      uint32 g = float_to_ubyte(svga->curr.blend_color.color[1]);
+      uint32 b = float_to_ubyte(svga->curr.blend_color.color[2]);
+      uint32 a = float_to_ubyte(svga->curr.blend_color.color[3]);
 
-      util_pack_color_ub( r, g, b, a,
-                          PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+      color = (a << 24) | (r << 16) | (g << 8) | b;
 
-      EMIT_RS( svga, uc.ui, BLENDCOLOR, fail );
+      EMIT_RS( svga, color, BLENDCOLOR, fail );
    }
 
    if (dirty & (SVGA_NEW_DEPTH_STENCIL | SVGA_NEW_RAST)) {

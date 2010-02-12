@@ -228,7 +228,7 @@ static void svga_set_blend_color( struct pipe_context *pipe,
 
    svga->curr.blend_color = *blend_color;
 
-   svga->dirty |= SVGA_NEW_BLEND;
+   svga->dirty |= SVGA_NEW_BLEND_COLOR;
 }
 
 
