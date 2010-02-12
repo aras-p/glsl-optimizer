@@ -767,7 +767,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_fragment_program *stfp;
    void *driver_vp;
    struct st_context *st = st_context(ctx);
-   struct pipe_surface *ps;
    const GLfloat *color;
 
    if (format == GL_STENCIL_INDEX ||
@@ -783,13 +782,11 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
-      ps = st->state.framebuffer.zsbuf;
       stfp = make_fragment_shader_z(st);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
-      ps = st->state.framebuffer.cbufs[0];
       stfp = combined_drawpix_fragment_program(ctx);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
