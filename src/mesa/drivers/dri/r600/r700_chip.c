@@ -200,7 +200,8 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     }
     else
     {
-        nVBsize = paos->count * pStreamDesc->stride;
+        nVBsize = (paos->count - 1) * pStreamDesc->stride
+                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
     }
 
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
