@@ -230,6 +230,7 @@ struct cell_command_rasterizer
 {
    opcode_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
    struct pipe_rasterizer_state rasterizer;
+   uint32_t pad[1];
 };
 
 
@@ -326,7 +327,7 @@ struct cell_command_sampler
    opcode_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
    uint unit;
    struct pipe_sampler_state state;
-   uint32_t pad_[2];
+   uint32_t pad_[3];
 };
 
 
