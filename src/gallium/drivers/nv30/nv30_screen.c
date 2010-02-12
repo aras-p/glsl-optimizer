@@ -28,7 +28,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-		return 16;
+		return 8;
 	case PIPE_CAP_NPOT_TEXTURES:
 		return 0;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -65,7 +65,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 	case NOUVEAU_CAP_HW_IDXBUF:
 		return 1;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 4;
+		return 16;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 		return 0;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
