@@ -645,20 +645,18 @@ st_draw_vbo(GLcontext *ctx,
       }
 
       /* draw */
-      if (nr_prims == 1 && pipe->draw_range_elements != NULL) {
-         i = 0;
-
+      if (pipe->draw_range_elements && min_index != ~0 && max_index != ~0) {
          /* XXX: exercise temporary path to pass min/max directly
           * through to driver & draw module.  These interfaces still
           * need a bit of work...
           */
-         prim = translate_prim( ctx, prims[i].mode );
+         for (i = 0; i < nr_prims; i++) {
+            prim = translate_prim( ctx, prims[i].mode );
 
-         pipe->draw_range_elements(pipe, indexBuf, indexSize,
-                                   min_index,
-                                   max_index,
-                                   prim,
-                                   prims[i].start + indexOffset, prims[i].count);
+            pipe->draw_range_elements(pipe, indexBuf, indexSize,
+                                      min_index, max_index, prim,
+                                      prims[i].start + indexOffset, prims[i].count);
+         }
       }
       else {
          for (i = 0; i < nr_prims; i++) {
