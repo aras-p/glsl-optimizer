@@ -148,9 +148,9 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
             stfp->driver_shader = NULL;
          }
          
-         if (stfp->state.tokens) {
-            st_free_tokens(stfp->state.tokens);
-            stfp->state.tokens = NULL;
+         if (stfp->tgsi.tokens) {
+            st_free_tokens(stfp->tgsi.tokens);
+            stfp->tgsi.tokens = NULL;
          }
 
          if (stfp->bitmap_program) {
@@ -193,9 +193,9 @@ static GLboolean st_program_string_notify( GLcontext *ctx,
          stfp->driver_shader = NULL;
       }
 
-      if (stfp->state.tokens) {
-         st_free_tokens(stfp->state.tokens);
-         stfp->state.tokens = NULL;
+      if (stfp->tgsi.tokens) {
+         st_free_tokens(stfp->tgsi.tokens);
+         stfp->tgsi.tokens = NULL;
       }
 
       if (st->fp == stfp)

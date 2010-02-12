@@ -119,7 +119,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &st->vp_varient->state;
+   vs = &st->vp_varient->tgsi;
 
    if (!st->vp_varient->draw_shader) {
       st->vp_varient->draw_shader = draw_create_vertex_shader(draw, vs);

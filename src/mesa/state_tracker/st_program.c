@@ -68,8 +68,8 @@ st_vp_release_varients( struct st_context *st,
       if (vpv->draw_shader)
          draw_delete_vertex_shader( st->draw, vpv->draw_shader );
       
-      if (vpv->state.tokens)
-         st_free_tokens(vpv->state.tokens);
+      if (vpv->tgsi.tokens)
+         st_free_tokens(vpv->tgsi.tokens);
       
       FREE( vpv );
 
@@ -236,13 +236,13 @@ st_translate_vertex_program(struct st_context *st,
    if (error)
       goto fail;
 
-   vpv->state.tokens = ureg_get_tokens( ureg, NULL );
-   if (!vpv->state.tokens)
+   vpv->tgsi.tokens = ureg_get_tokens( ureg, NULL );
+   if (!vpv->tgsi.tokens)
       goto fail;
 
    ureg_destroy( ureg );
 
-   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
+   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stvp->Base.Base);
@@ -250,7 +250,7 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( vpv->state.tokens, 0 );
+      tgsi_dump( vpv->tgsi.tokens, 0 );
       debug_printf("\n");
    }
 
@@ -437,9 +437,9 @@ st_translate_fragment_program(struct st_context *st,
                                 fs_output_semantic_name,
                                 fs_output_semantic_index, FALSE );
 
-   stfp->state.tokens = ureg_get_tokens( ureg, NULL );
+   stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
-   stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
+   stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stfp->Base.Base);
@@ -447,7 +447,7 @@ st_translate_fragment_program(struct st_context *st,
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( stfp->state.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
    }
 }

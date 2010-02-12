@@ -59,7 +59,7 @@ static void
 translate_fp(struct st_context *st,
              struct st_fragment_program *stfp)
 {
-   if (!stfp->state.tokens) {
+   if (!stfp->tgsi.tokens) {
       assert(stfp->Base.Base.NumInstructions > 0);
 
       st_translate_fragment_program(st, stfp);

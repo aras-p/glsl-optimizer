@@ -55,7 +55,7 @@ struct st_fragment_program
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
 
-   struct pipe_shader_state state;
+   struct pipe_shader_state tgsi;
    void *driver_shader;
 
    /** Program prefixed with glBitmap prologue */
@@ -82,9 +82,11 @@ struct st_vp_varient
     */
    struct st_vp_varient_key key;
 
-   /** TGSI tokens -- why?
+   /**
+    * TGSI tokens (to later generate a 'draw' module shader for
+    * selection/feedback/rasterpos)
     */
-   struct pipe_shader_state state;
+   struct pipe_shader_state tgsi;
 
    /** Driver's compiled shader */
    void *driver_shader;
