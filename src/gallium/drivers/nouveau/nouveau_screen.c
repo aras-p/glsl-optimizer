@@ -55,7 +55,7 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 {
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nouveau_bo *bo = NULL;
-	uint32_t flags = NOUVEAU_BO_MAP;
+	uint32_t flags = NOUVEAU_BO_MAP, tile_mode = 0, tile_flags = 0;
 	int ret;
 
 	if (usage & NOUVEAU_BUFFER_USAGE_TRANSFER)
@@ -77,13 +77,15 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 			flags |= NOUVEAU_BO_VRAM;
 
 		if (dev->chipset == 0x50 || dev->chipset >= 0x80) {
-			flags |= NOUVEAU_BO_TILED;
 			if (usage & NOUVEAU_BUFFER_USAGE_ZETA)
-				flags |= NOUVEAU_BO_ZTILE;
+				tile_flags = 0x2800;
+			else
+				tile_flags = 0x7000;
 		}
 	}
 
-	ret = nouveau_bo_new(dev, flags, alignment, size, &bo);
+	ret = nouveau_bo_new_tile(dev, flags, alignment, size,
+				  tile_mode, tile_flags, &bo);
 	if (ret)
 		return NULL;
 
