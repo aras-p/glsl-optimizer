@@ -180,8 +180,6 @@ def generate(env):
             # http://msdn.microsoft.com/en-us/library/aa383745.aspx
             ('_WIN32_WINNT', '0x0601'),
             ('WINVER', '0x0601'),
-            # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
-            'WIN32_LEAN_AND_MEAN',
         ]
         if msvc and env['toolchain'] != 'winddk':
             cppdefines += [
