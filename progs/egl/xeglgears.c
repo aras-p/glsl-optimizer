@@ -42,6 +42,9 @@
 #include <GL/gl.h>
 #include <EGL/egl.h>
 
+#define EGL_EGLEXT_PROTOTYPES
+#include <EGL/eglext.h>
+
 
 #define BENCHMARK
 
@@ -335,6 +338,7 @@ struct egl_manager {
    EGLSurface win;
    EGLSurface pix;
    EGLSurface pbuf;
+   EGLImageKHR image;
 
    EGLBoolean verbose;
    EGLint major, minor;
@@ -528,17 +532,26 @@ egl_manager_destroy(struct egl_manager *eman)
    free(eman);
 }
 
-enum { GEARS_WINDOW, GEARS_PIXMAP, GEARS_PBUFFER_COPY, GEARS_PBUFFER_TEXTURE };
+enum {
+   GEARS_WINDOW,
+   GEARS_PIXMAP,
+   GEARS_PIXMAP_TEXTURE,
+   GEARS_PBUFFER,
+   GEARS_PBUFFER_TEXTURE
+};
+
+typedef void* GLeglImageOES;
+GLAPI void GLAPIENTRY glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image);
+GLAPI void GLAPIENTRY glEGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image);
 
 static void
-texture_gears(struct egl_manager *eman)
+texture_gears(struct egl_manager *eman, int surface_type)
 {
    static const GLint verts[12] =
       { -5, -6, -10,  5, -6, -10,  -5, 4, 10,  5, 4, 10 };
    static const GLint tex_coords[8] = { 0, 0,  1, 0,  0, 1,  1, 1 };
-   static const GLuint indices[4] = { 0, 1, 2, 3 };
 
-   eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
+   eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
 
    glClearColor(0, 0, 0, 0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -554,15 +567,19 @@ texture_gears(struct egl_manager *eman)
    glVertexPointer(3, GL_INT, 0, verts);
    glTexCoordPointer(2, GL_INT, 0, tex_coords);
 
-   eglBindTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
+   if (surface_type == GEARS_PBUFFER_TEXTURE)
+      eglBindTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
 
-   glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, indices);
+   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
    glDisableClientState(GL_VERTEX_ARRAY);
    glDisableClientState(GL_COLOR_ARRAY);
    glDisable(GL_TEXTURE_2D);
 
-   eglReleaseTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
+   if (surface_type == GEARS_PBUFFER_TEXTURE)
+      eglReleaseTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
+
+   eglSwapBuffers(eman->dpy, eman->win); 
 }
 
 static void
@@ -633,8 +650,17 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          if (angle > 3600.0)
              angle -= 3600.0;
 
-	 if (surface_type == GEARS_PBUFFER_TEXTURE)
+         switch (surface_type) {
+	 case GEARS_PBUFFER:
+	 case GEARS_PBUFFER_TEXTURE:
             eglMakeCurrent(eman->dpy, eman->pbuf, eman->pbuf, eman->ctx);
+	    break;
+
+	 case GEARS_PIXMAP:
+	 case GEARS_PIXMAP_TEXTURE:
+            eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
+	    break;
+	 }
 
          draw();
          switch (surface_type) {
@@ -642,13 +668,12 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
             eglSwapBuffers(eman->dpy, eman->win);
             break;
          case GEARS_PBUFFER_TEXTURE:
-         case GEARS_PBUFFER_COPY:
-	    if (surface_type == GEARS_PBUFFER_TEXTURE) {
-	       texture_gears(eman);
-	    } else {
-	       if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
-		  break;
-	    }
+	 case GEARS_PIXMAP_TEXTURE:
+	    texture_gears(eman, surface_type);
+	    break;
+         case GEARS_PBUFFER:
+	    if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
+	       break;
 	    eglWaitClient();
             /* fall through */
          case GEARS_PIXMAP:
@@ -693,6 +718,9 @@ usage(void)
    printf("  -pbuffer-texture        use pbuffer surface and eglBindTexImage\n");
 }
  
+static const char *names[] = {
+   "window", "pixmap", "pixmap_texture", "pbuffer", "pbuffer_texture"
+};
 
 int
 main(int argc, char *argv[])
@@ -715,6 +743,7 @@ main(int argc, char *argv[])
    GLboolean printInfo = GL_FALSE;
    GLboolean fullscreen = GL_FALSE;
    EGLBoolean ret;
+   GLuint texture;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -732,8 +761,12 @@ main(int argc, char *argv[])
          surface_type = GEARS_PIXMAP;
 	 attribs[1] = EGL_PIXMAP_BIT;
       }
-      else if (strcmp(argv[i], "-pbuffer-copy") == 0) {
-         surface_type = GEARS_PBUFFER_COPY;
+      else if (strcmp(argv[i], "-pixmap-texture") == 0) {
+         surface_type = GEARS_PIXMAP_TEXTURE;
+	 attribs[1] = EGL_PIXMAP_BIT;
+      }
+      else if (strcmp(argv[i], "-pbuffer") == 0) {
+         surface_type = GEARS_PBUFFER;
 	 attribs[1] = EGL_PBUFFER_BIT;
       }
       else if (strcmp(argv[i], "-pbuffer-texture") == 0) {
@@ -761,9 +794,8 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   snprintf(win_title, sizeof(win_title), "xeglgears (%s)",
-            (surface_type == GEARS_WINDOW) ? "window" :
-            (surface_type == GEARS_PIXMAP) ? "pixmap" : "pbuffer");
+   snprintf(win_title, sizeof(win_title),
+	    "xeglgears (%s)", names[surface_type]);
 
    /* create surface(s) */
    switch (surface_type) {
@@ -774,15 +806,20 @@ main(int argc, char *argv[])
          ret = eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
       break;
    case GEARS_PIXMAP:
+   case GEARS_PIXMAP_TEXTURE:
       ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
-                                       EGL_FALSE, fullscreen, NULL) &&
+                                       EGL_TRUE, fullscreen, NULL) &&
              egl_manager_create_pixmap(eman, eman->xwin,
                                        EGL_TRUE, NULL));
+      if (surface_type == GEARS_PIXMAP_TEXTURE)
+	 eman->image = eglCreateImageKHR (eman->dpy, eman->ctx,
+					  EGL_NATIVE_PIXMAP_KHR,
+					  (EGLClientBuffer) eman->xpix, NULL);
       if (ret)
          ret = eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
       break;
+   case GEARS_PBUFFER:
    case GEARS_PBUFFER_TEXTURE:
-   case GEARS_PBUFFER_COPY:
       {
          EGLint pbuf_attribs[] = {
             EGL_WIDTH, winWidth,
@@ -792,7 +829,7 @@ main(int argc, char *argv[])
             EGL_NONE
          };
          ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
-					  EGL_FALSE, fullscreen, NULL) &&
+					  EGL_TRUE, fullscreen, NULL) &&
                 egl_manager_create_pixmap(eman, eman->xwin,
 					  EGL_TRUE, NULL) &&
                 egl_manager_create_pbuffer(eman, pbuf_attribs));
@@ -803,6 +840,18 @@ main(int argc, char *argv[])
    default:
       ret = EGL_FALSE;
       break;
+   }
+
+   switch (surface_type) {
+   case GEARS_PIXMAP_TEXTURE:
+	   glGenTextures(1, &texture);
+   	   glBindTexture(GL_TEXTURE_2D, texture);
+	   glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, eman->image);
+	   break;
+   case GEARS_PBUFFER_TEXTURE:
+	   glGenTextures(1, &texture);
+   	   glBindTexture(GL_TEXTURE_2D, texture);
+	   break;
    }
 
    if (!ret) {
