@@ -232,6 +232,7 @@ struct i915_context
    struct i915_fragment_shader *fs;
 
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    /* XXX unneded */
    struct pipe_buffer *constants[PIPE_SHADER_TYPES];

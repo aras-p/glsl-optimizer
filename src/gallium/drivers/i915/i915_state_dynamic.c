@@ -94,9 +94,16 @@ const struct i915_tracked_state i915_upload_MODES4 = {
 
 static void upload_BFO( struct i915_context *i915 )
 {
+   unsigned bfo[2];
+   bfo[0] = i915->depth_stencil->bfo[0];
+   bfo[1] = i915->depth_stencil->bfo[1];
+   /* I don't get it only allowed to set a ref mask when the enable bit is set? */
+   if (bfo[0] & BFO_ENABLE_STENCIL_REF) {
+      bfo[0] |= i915->stencil_ref.ref_value[1] << BFO_STENCIL_REF_SHIFT;
+   }
    set_dynamic_indirect( i915,
 			 I915_DYNAMIC_BFO_0,
-			 &(i915->depth_stencil->bfo[0]),
+			 &(bfo[0]),
 			 2 );
 }
 

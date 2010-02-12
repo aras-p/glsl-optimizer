@@ -13,6 +13,7 @@ static struct nv40_state_entry *render_states[] = {
 	&nv40_state_blend,
 	&nv40_state_blend_colour,
 	&nv40_state_zsa,
+	&nv40_state_sr,
 	&nv40_state_viewport,
 	&nv40_state_vbo,
 	NULL
@@ -29,6 +30,7 @@ static struct nv40_state_entry *swtnl_states[] = {
 	&nv40_state_blend,
 	&nv40_state_blend_colour,
 	&nv40_state_zsa,
+	&nv40_state_sr,
 	&nv40_state_viewport,
 	&nv40_state_vtxfmt,
 	NULL

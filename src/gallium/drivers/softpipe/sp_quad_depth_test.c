@@ -519,7 +519,7 @@ depth_stencil_test_quad(struct quad_stage *qs,
    failOp  = softpipe->depth_stencil->stencil[face].fail_op;
    zFailOp = softpipe->depth_stencil->stencil[face].zfail_op;
    zPassOp = softpipe->depth_stencil->stencil[face].zpass_op;
-   ref     = softpipe->depth_stencil->stencil[face].ref_value;
+   ref     = softpipe->stencil_ref.ref_value[face];
    wrtMask = softpipe->depth_stencil->stencil[face].writemask;
    valMask = softpipe->depth_stencil->stencil[face].valuemask;
 

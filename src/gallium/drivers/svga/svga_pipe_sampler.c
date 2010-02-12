@@ -102,8 +102,8 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->mipfilter = translate_mip_filter(sampler->min_mip_filter);
    cso->magfilter = translate_img_filter( sampler->mag_img_filter );
    cso->minfilter = translate_img_filter( sampler->min_img_filter );
-   cso->aniso_level = MAX2( (unsigned) sampler->max_anisotropy, 1 );
-   if(cso->aniso_level != 1)
+   cso->aniso_level = MAX2( sampler->max_anisotropy, 1 );
+   if(sampler->max_anisotropy)
       cso->magfilter = cso->minfilter = SVGA3D_TEX_FILTER_ANISOTROPIC;
    cso->lod_bias = sampler->lod_bias;
    cso->addressu = translate_wrap_mode(sampler->wrap_s);

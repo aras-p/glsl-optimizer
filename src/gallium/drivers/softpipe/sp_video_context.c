@@ -209,7 +209,6 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
       dsa.stencil[i].fail_op = PIPE_STENCIL_OP_KEEP;
       dsa.stencil[i].zpass_op = PIPE_STENCIL_OP_KEEP;
       dsa.stencil[i].zfail_op = PIPE_STENCIL_OP_KEEP;
-      dsa.stencil[i].ref_value = 0;
       dsa.stencil[i].valuemask = 0;
       dsa.stencil[i].writemask = 0;
    }

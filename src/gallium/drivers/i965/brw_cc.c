@@ -65,14 +65,33 @@ combine_cc3( struct brw_cc3 a, struct brw_cc3 b )
    return ca.cc3;
 }
 
+static INLINE struct brw_cc1
+combine_cc1( struct brw_cc1 a, struct brw_cc1 b )
+{
+   union { struct brw_cc1 cc1; unsigned i; } ca, cb;
+   ca.cc1 = a;
+   cb.cc1 = b;
+   ca.i |= cb.i;
+   return ca.cc1;
+}
+
+static INLINE struct brw_cc2
+combine_cc2( struct brw_cc2 a, struct brw_cc2 b )
+{
+   union { struct brw_cc2 cc2; unsigned i; } ca, cb;
+   ca.cc2 = a;
+   cb.cc2 = b;
+   ca.i |= cb.i;
+   return ca.cc2;
+}
 
 static int prepare_cc_unit( struct brw_context *brw )
 {
    brw->cc.cc.cc0 = brw->curr.zstencil->cc0;
-   brw->cc.cc.cc1 = brw->curr.zstencil->cc1;
-   brw->cc.cc.cc2 = brw->curr.zstencil->cc2;
+   brw->cc.cc.cc1 = combine_cc1( brw->curr.zstencil->cc1, brw->curr.cc1_stencil_ref );
+   brw->cc.cc.cc2 = combine_cc2( brw->curr.zstencil->cc2, brw->curr.blend->cc2 );
    brw->cc.cc.cc3 = combine_cc3( brw->curr.zstencil->cc3, brw->curr.blend->cc3 );
-   
+
    brw->cc.cc.cc5 = brw->curr.blend->cc5;
    brw->cc.cc.cc6 = brw->curr.blend->cc6;
    brw->cc.cc.cc7 = brw->curr.zstencil->cc7;

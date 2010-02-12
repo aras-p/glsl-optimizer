@@ -93,6 +93,7 @@ struct cso_context {
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
 
 
@@ -1057,8 +1058,6 @@ void cso_restore_viewport(struct cso_context *ctx)
 }
 
 
-
-
 enum pipe_error cso_set_blend_color(struct cso_context *ctx,
                                     const struct pipe_blend_color *bc)
 {
@@ -1067,6 +1066,30 @@ enum pipe_error cso_set_blend_color(struct cso_context *ctx,
       ctx->pipe->set_blend_color(ctx->pipe, bc);
    }
    return PIPE_OK;
+}
+
+enum pipe_error cso_set_stencil_ref(struct cso_context *ctx,
+                                    const struct pipe_stencil_ref *sr)
+{
+   if (memcmp(&ctx->stencil_ref, sr, sizeof(ctx->stencil_ref))) {
+      ctx->stencil_ref = *sr;
+      ctx->pipe->set_stencil_ref(ctx->pipe, sr);
+   }
+   return PIPE_OK;
+}
+
+void cso_save_stencil_ref(struct cso_context *ctx)
+{
+   ctx->stencil_ref_saved = ctx->stencil_ref;
+}
+
+
+void cso_restore_stencil_ref(struct cso_context *ctx)
+{
+   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved, sizeof(ctx->stencil_ref))) {
+      ctx->stencil_ref = ctx->stencil_ref_saved;
+      ctx->pipe->set_stencil_ref(ctx->pipe, &ctx->stencil_ref);
+   }
 }
 
 enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,

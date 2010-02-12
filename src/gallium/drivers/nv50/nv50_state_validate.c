@@ -205,6 +205,8 @@ nv50_state_emit(struct nv50_context *nv50)
 			nv50->state.dirty |= NV50_NEW_RASTERIZER;
 		if (nv50->state.blend_colour)
 			nv50->state.dirty |= NV50_NEW_BLEND_COLOUR;
+		if (nv50->state.stencil_ref)
+			nv50->state.dirty |= NV50_NEW_STENCIL_REF;
 		if (nv50->state.stipple)
 			nv50->state.dirty |= NV50_NEW_STIPPLE;
 		if (nv50->state.scissor)
@@ -242,6 +244,8 @@ nv50_state_emit(struct nv50_context *nv50)
 		so_emit(chan, nv50->state.rast);
 	if (nv50->state.dirty & NV50_NEW_BLEND_COLOUR)
 		so_emit(chan, nv50->state.blend_colour);
+	if (nv50->state.dirty & NV50_NEW_STENCIL_REF)
+		so_emit(chan, nv50->state.stencil_ref);
 	if (nv50->state.dirty & NV50_NEW_STIPPLE)
 		so_emit(chan, nv50->state.stipple);
 	if (nv50->state.dirty & NV50_NEW_SCISSOR)
@@ -322,6 +326,16 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_data  (so, fui(nv50->blend_colour.color[2]));
 		so_data  (so, fui(nv50->blend_colour.color[3]));
 		so_ref(so, &nv50->state.blend_colour);
+		so_ref(NULL, &so);
+	}
+
+	if (nv50->dirty & NV50_NEW_STENCIL_REF) {
+		so = so_new(2, 2, 0);
+		so_method(so, tesla, NV50TCL_STENCIL_FRONT_FUNC_REF, 1);
+		so_data  (so, nv50->stencil_ref.ref_value[0]);
+		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 1);
+		so_data  (so, nv50->stencil_ref.ref_value[1]);
+		so_ref(so, &nv50->state.stencil_ref);
 		so_ref(NULL, &so);
 	}
 

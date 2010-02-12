@@ -59,6 +59,8 @@ void trace_dump_blend_state(const struct pipe_blend_state *state);
 
 void trace_dump_blend_color(const struct pipe_blend_color *state);
 
+void trace_dump_stencil_ref(const struct pipe_stencil_ref *state);
+
 void trace_dump_framebuffer_state(const struct pipe_framebuffer_state *state);
 
 void trace_dump_sampler_state(const struct pipe_sampler_state *state);

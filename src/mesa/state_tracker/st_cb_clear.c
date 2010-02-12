@@ -215,6 +215,7 @@ clear_with_quad(GLcontext *ctx,
    */
 
    cso_save_blend(st->cso_context);
+   cso_save_stencil_ref(st->cso_context);
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
@@ -254,14 +255,17 @@ clear_with_quad(GLcontext *ctx,
       }
 
       if (stencil) {
+         struct pipe_stencil_ref stencil_ref;
+         memset(&stencil_ref, 0, sizeof(stencil_ref));
          depth_stencil.stencil[0].enabled = 1;
          depth_stencil.stencil[0].func = PIPE_FUNC_ALWAYS;
          depth_stencil.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
-         depth_stencil.stencil[0].ref_value = ctx->Stencil.Clear;
          depth_stencil.stencil[0].valuemask = 0xff;
          depth_stencil.stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
+         stencil_ref.ref_value[0] = ctx->Stencil.Clear;
+         cso_set_stencil_ref(st->cso_context, &stencil_ref);
       }
 
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
@@ -277,10 +281,12 @@ clear_with_quad(GLcontext *ctx,
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);
+   cso_restore_stencil_ref(st->cso_context);
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
+
 }
 
 

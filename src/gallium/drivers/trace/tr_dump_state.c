@@ -301,7 +301,6 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
       trace_dump_member(uint, &state->stencil[i], fail_op);
       trace_dump_member(uint, &state->stencil[i], zpass_op);
       trace_dump_member(uint, &state->stencil[i], zfail_op);
-      trace_dump_member(uint, &state->stencil[i], ref_value);
       trace_dump_member(uint, &state->stencil[i], valuemask);
       trace_dump_member(uint, &state->stencil[i], writemask);
       trace_dump_struct_end();
@@ -381,6 +380,22 @@ void trace_dump_blend_color(const struct pipe_blend_color *state)
    trace_dump_struct_end();
 }
 
+void trace_dump_stencil_ref(const struct pipe_stencil_ref *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_stencil_ref");
+
+   trace_dump_member_array(uint, state, ref_value);
+
+   trace_dump_struct_end();
+}
 
 void trace_dump_framebuffer_state(const struct pipe_framebuffer_state *state)
 {
@@ -420,11 +435,11 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
    trace_dump_member(uint, state, compare_mode);
    trace_dump_member(uint, state, compare_func);
    trace_dump_member(bool, state, normalized_coords);
+   trace_dump_member(uint, state, max_anisotropy);
    trace_dump_member(float, state, lod_bias);
    trace_dump_member(float, state, min_lod);
    trace_dump_member(float, state, max_lod);
    trace_dump_member_array(float, state, border_color);
-   trace_dump_member(float, state, max_anisotropy);
 
    trace_dump_struct_end();
 }

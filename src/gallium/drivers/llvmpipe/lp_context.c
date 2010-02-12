@@ -146,6 +146,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
 
    llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
+   llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;

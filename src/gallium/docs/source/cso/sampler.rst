@@ -45,4 +45,6 @@ border_color
     RGBA color used for out-of-bounds coordinates.
 max_anisotropy
     Maximum filtering to apply anisotropically to textures. Setting this to
-    1.0 effectively disables anisotropic filtering.
+    0 disables anisotropic filtering. Any other setting enables anisotropic
+    filtering, however it's not unexpected some drivers only will change their
+    filtering with a setting of 2 and higher.

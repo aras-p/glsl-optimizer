@@ -312,15 +312,15 @@ static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
     return retval;
 }
 
-static INLINE uint32_t r300_anisotropy(float max_aniso)
+static INLINE uint32_t r300_anisotropy(unsigned max_aniso)
 {
-    if (max_aniso >= 16.0f) {
+    if (max_aniso >= 16) {
         return R300_TX_MAX_ANISO_16_TO_1;
-    } else if (max_aniso >= 8.0f) {
+    } else if (max_aniso >= 8) {
         return R300_TX_MAX_ANISO_8_TO_1;
-    } else if (max_aniso >= 4.0f) {
+    } else if (max_aniso >= 4) {
         return R300_TX_MAX_ANISO_4_TO_1;
-    } else if (max_aniso >= 2.0f) {
+    } else if (max_aniso >= 2) {
         return R300_TX_MAX_ANISO_2_TO_1;
     } else {
         return R300_TX_MAX_ANISO_1_TO_1;

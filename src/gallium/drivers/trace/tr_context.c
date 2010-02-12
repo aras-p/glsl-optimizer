@@ -792,6 +792,24 @@ trace_context_set_blend_color(struct pipe_context *_pipe,
 
 
 static INLINE void
+trace_context_set_stencil_ref(struct pipe_context *_pipe,
+                              const struct pipe_stencil_ref *state)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "set_stencil_ref");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(stencil_ref, state);
+
+   pipe->set_stencil_ref(pipe, state);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
 trace_context_set_clip_state(struct pipe_context *_pipe,
                              const struct pipe_clip_state *state)
 {
@@ -1291,6 +1309,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.bind_vs_state = trace_context_bind_vs_state;
    tr_ctx->base.delete_vs_state = trace_context_delete_vs_state;
    tr_ctx->base.set_blend_color = trace_context_set_blend_color;
+   tr_ctx->base.set_stencil_ref = trace_context_set_stencil_ref;
    tr_ctx->base.set_clip_state = trace_context_set_clip_state;
    tr_ctx->base.set_constant_buffer = trace_context_set_constant_buffer;
    tr_ctx->base.set_framebuffer_state = trace_context_set_framebuffer_state;

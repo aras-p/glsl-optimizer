@@ -50,6 +50,7 @@
 #define NV50_NEW_ARRAYS		(1 << 14)
 #define NV50_NEW_SAMPLER	(1 << 15)
 #define NV50_NEW_TEXTURE	(1 << 16)
+#define NV50_NEW_STENCIL_REF	(1 << 17)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -120,6 +121,7 @@ struct nv50_state {
 	struct nouveau_stateobj *blend;
 	struct nouveau_stateobj *blend_colour;
 	struct nouveau_stateobj *zsa;
+	struct nouveau_stateobj *stencil_ref;
 	struct nouveau_stateobj *rast;
 	struct nouveau_stateobj *stipple;
 	struct nouveau_stateobj *scissor;
@@ -155,6 +157,7 @@ struct nv50_context {
 	struct nv50_zsa_stateobj *zsa;
 	struct nv50_rasterizer_stateobj *rasterizer;
 	struct pipe_blend_color blend_colour;
+	struct pipe_stencil_ref stencil_ref;
 	struct pipe_poly_stipple stipple;
 	struct pipe_scissor_state scissor;
 	struct pipe_viewport_state viewport;

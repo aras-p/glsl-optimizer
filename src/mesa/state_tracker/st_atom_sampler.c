@@ -211,7 +211,7 @@ update_samplers(struct st_context *st)
                             teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 
-	 sampler->max_anisotropy = texobj->MaxAnisotropy;
+	 sampler->max_anisotropy = (texobj->MaxAnisotropy == 1.0 ? 0 : (GLuint)texobj->MaxAnisotropy);
 
          /* only care about ARB_shadow, not SGI shadow */
          if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {

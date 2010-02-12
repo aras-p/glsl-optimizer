@@ -47,6 +47,7 @@ struct blitter_context
    void *saved_fs, *saved_vs; /**< fragment shader, vertex shader */
 
    struct pipe_framebuffer_state saved_fb_state;  /**< framebuffer state */
+   struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
 
    int saved_num_sampler_states;
    void *saved_sampler_states[32];
@@ -167,6 +168,13 @@ void util_blitter_save_depth_stencil_alpha(struct blitter_context *blitter,
                                            void *state)
 {
    blitter->saved_dsa_state = state;
+}
+
+static INLINE
+void util_blitter_save_stencil_ref(struct blitter_context *blitter,
+                                   const struct pipe_stencil_ref *state)
+{
+   blitter->saved_stencil_ref = *state;
 }
 
 static INLINE

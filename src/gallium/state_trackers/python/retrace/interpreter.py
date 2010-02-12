@@ -430,11 +430,14 @@ class Context(Object):
 
     def delete_fs_state(self, state):
         pass
-    
+
     delete_vs_state = delete_fs_state
-    
+
     def set_blend_color(self, state):
         self.real.set_blend_color(state)
+
+    def set_stencil_ref(self, state):
+        self.real.set_stencil_ref(state)
 
     def set_clip_state(self, state):
         _state = gallium.Clip()
