@@ -32,6 +32,8 @@
 #include "r300_emit.h"
 #include "r300_fs.h"
 #include "r300_screen.h"
+#include "r300_screen_buffer.h"
+#include "r300_state_inlines.h"
 #include "r300_vs.h"
 
 void r300_emit_blend_state(struct r300_context* r300, void* state)
@@ -418,10 +420,10 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_TEX_RELOC(tex, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(tex->buffer, tex->fb_state.colorpitch[surf->level],
+        OUT_CS_TEX_RELOC(tex, tex->fb_state.colorpitch[surf->level],
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), tex->fb_state.us_out_fmt);
@@ -434,12 +436,12 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_TEX_RELOC(tex, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_ZB_FORMAT, tex->fb_state.zb_format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(tex->buffer, tex->fb_state.depthpitch[surf->level],
+        OUT_CS_TEX_RELOC(tex, tex->fb_state.depthpitch[surf->level],
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
@@ -489,13 +491,13 @@ static void r300_emit_query_finish(struct r300_context *r300,
             /* pipe 3 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 3),
+            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 3),
                     0, RADEON_GEM_DOMAIN_GTT, 0);
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 2),
+            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 2),
                     0, RADEON_GEM_DOMAIN_GTT, 0);
         case 2:
             /* pipe 1 only */
@@ -503,13 +505,13 @@ static void r300_emit_query_finish(struct r300_context *r300,
             OUT_CS_REG(R300_SU_REG_DEST,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 1),
+            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 1),
                     0, RADEON_GEM_DOMAIN_GTT, 0);
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
+            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
                     0, RADEON_GEM_DOMAIN_GTT, 0);
             break;
         default:
@@ -531,7 +533,7 @@ static void rv530_emit_query_single(struct r300_context *r300,
     BEGIN_CS(8);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -544,10 +546,10 @@ static void rv530_emit_query_double(struct r300_context *r300,
     BEGIN_CS(14);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, RADEON_GEM_DOMAIN_GTT, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -759,7 +761,7 @@ void r300_emit_texture(struct r300_context* r300,
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
     OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);
-    OUT_CS_RELOC(tex->buffer,
+    OUT_CS_TEX_RELOC(tex,
                  R300_TXO_MACRO_TILE(tex->macrotile) |
                  R300_TXO_MICRO_TILE(tex->microtile),
                  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
@@ -800,7 +802,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     }
 
     for (i = 0; i < aos_count; i++) {
-        OUT_CS_RELOC_NO_OFFSET(vbuf[velem[i].vertex_buffer_index].buffer,
+        OUT_CS_BUF_RELOC_NO_OFFSET(vbuf[velem[i].vertex_buffer_index].buffer,
                                RADEON_GEM_DOMAIN_GTT, 0, 0);
     }
     END_CS;
@@ -1012,15 +1014,15 @@ void r300_emit_buffer_validate(struct r300_context *r300)
     boolean invalid = FALSE;
 
     /* Clean out BOs. */
-    r300->winsys->reset_bos(r300->winsys);
+    r300->rws->reset_bos(r300->rws);
 
 validate:
     /* Color buffers... */
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                    0, RADEON_GEM_DOMAIN_VRAM)) {
+        if (!r300_add_texture(r300->rws, tex,
+			      0, RADEON_GEM_DOMAIN_VRAM)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1029,8 +1031,8 @@ validate:
     if (fb->zsbuf) {
         tex = (struct r300_texture*)fb->zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                    0, RADEON_GEM_DOMAIN_VRAM)) {
+        if (!r300_add_texture(r300->rws, tex,
+			      0, RADEON_GEM_DOMAIN_VRAM)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1040,31 +1042,31 @@ validate:
         tex = r300->textures[i];
         if (!tex)
             continue;
-        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                    RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
+        if (!r300_add_texture(r300->rws, tex,
+			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
     }
     /* ...occlusion query buffer... */
     if (r300->dirty_state & R300_NEW_QUERY) {
-        if (!r300->winsys->add_buffer(r300->winsys, r300->oqbo,
-                    0, RADEON_GEM_DOMAIN_GTT)) {
+        if (!r300_add_buffer(r300->rws, r300->oqbo,
+			     0, RADEON_GEM_DOMAIN_GTT)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {
-        if (!r300->winsys->add_buffer(r300->winsys, r300->vbo,
-                    RADEON_GEM_DOMAIN_GTT, 0)) {
+        if (!r300_add_buffer(r300->rws, r300->vbo,
+			     RADEON_GEM_DOMAIN_GTT, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
     } else {
         /* debug_printf("No VBO while emitting dirty state!\n"); */
     }
-    if (!r300->winsys->validate(r300->winsys)) {
+    if (!r300->rws->validate(r300->rws)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
             /* Well, hell. */
@@ -1096,7 +1098,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     /* Make sure we have at least 2*1024 spare dwords. */
     /* XXX It would be nice to know the number of dwords we really need to
      * XXX emit. */
-    while (!r300->winsys->check_cs(r300->winsys, dwords)) {
+    while (!r300->rws->check_cs(r300->rws, dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
     }
 

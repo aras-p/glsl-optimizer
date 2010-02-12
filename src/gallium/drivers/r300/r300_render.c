@@ -30,10 +30,12 @@
 
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 #include "util/u_prim.h"
 
 #include "r300_cs.h"
 #include "r300_context.h"
+#include "r300_screen_buffer.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_render.h"
@@ -297,7 +299,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
-    OUT_CS_RELOC(indexBuffer, count_dwords,
+    OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
         RADEON_GEM_DOMAIN_GTT, 0, 0);
 
     END_CS;
@@ -308,21 +310,28 @@ static boolean r300_setup_vertex_buffers(struct r300_context *r300)
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
     struct pipe_buffer *pbuf;
+    int ret;
+    
+    /* upload buffers first */
+    if (r300->any_user_vbs) {
+        ret = r300_upload_user_buffers(r300);
+        r300->any_user_vbs = false;
+    }
 
 validate:
     for (int i = 0; i < r300->vertex_element_count; i++) {
         pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
 
-        if (!r300->winsys->add_buffer(r300->winsys, pbuf,
-                                      RADEON_GEM_DOMAIN_GTT, 0)) {
+        if (!r300_add_buffer(r300->rws, pbuf,
+			     RADEON_GEM_DOMAIN_GTT, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
     }
 
-    if (!r300->winsys->validate(r300->winsys)) {
+    if (!r300->rws->validate(r300->rws)) {
         r300->context.flush(&r300->context, 0, NULL);
-        return r300->winsys->validate(r300->winsys);
+        return r300->rws->validate(r300->rws);
     }
 
     return TRUE;
@@ -396,15 +405,20 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         indexSize = 2;
     }
 
-    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
-                                  RADEON_GEM_DOMAIN_GTT, 0)) {
+    r300_upload_index_buffer(r300, &indexBuffer,
+			     indexSize, start, count);
+    
+    if (!r300_add_buffer(r300->rws, indexBuffer,
+			 RADEON_GEM_DOMAIN_GTT, 0)) {
         goto cleanup;
     }
 
-    if (!r300->winsys->validate(r300->winsys)) {
+    if (!r300->rws->validate(r300->rws)) {
         goto cleanup;
     }
 
+    u_upload_flush(r300->upload_vb);
+    u_upload_flush(r300->upload_ib);
     r300_emit_dirty_state(r300);
 
     r300_emit_aos(r300, 0);
@@ -425,7 +439,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
 cleanup:
     if (indexBuffer != orgIndexBuffer) {
-        pipe->screen->buffer_destroy(indexBuffer);
+        pipe_buffer_reference( &indexBuffer, NULL );
     }
 }
 
@@ -466,6 +480,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
             return;
         }
 
+    	u_upload_flush(r300->upload_vb);
         r300_emit_dirty_state(r300);
 
         if (alt_num_verts || count <= 65535) {

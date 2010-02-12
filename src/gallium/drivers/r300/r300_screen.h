@@ -33,7 +33,7 @@ struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    struct radeon_winsys* radeon_winsys;
+    struct r300_winsys_screen *rws;
 
     /* Chipset capabilities */
     struct r300_capabilities* caps;

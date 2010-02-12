@@ -731,7 +731,7 @@ static struct pipe_texture*
 {
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);
-    struct radeon_winsys* winsys = (struct radeon_winsys*)screen->winsys;
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
 
     if (!tex) {
         return NULL;
@@ -745,13 +745,13 @@ static struct pipe_texture*
     r300_setup_miptree(rscreen, tex);
     r300_setup_texture_state(rscreen, tex);
 
-    tex->buffer = screen->buffer_create(screen, 2048,
-                                        PIPE_BUFFER_USAGE_PIXEL,
-                                        tex->size);
-    winsys->buffer_set_tiling(winsys, tex->buffer,
-                              tex->pitch[0],
-                              tex->microtile != R300_BUFFER_LINEAR,
-                              tex->macrotile != R300_BUFFER_LINEAR);
+    tex->buffer = rws->buffer_create(rws, 2048,
+				     PIPE_BUFFER_USAGE_PIXEL,
+				     tex->size);
+    rws->buffer_set_tiling(rws, tex->buffer,
+			   tex->pitch[0],
+			   tex->microtile != R300_BUFFER_LINEAR,
+			   tex->macrotile != R300_BUFFER_LINEAR);
 
     if (!tex->buffer) {
         FREE(tex);
@@ -764,9 +764,9 @@ static struct pipe_texture*
 static void r300_texture_destroy(struct pipe_texture* texture)
 {
     struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
 
-    pipe_buffer_reference(&tex->buffer, NULL);
-
+    rws->buffer_reference(rws, &tex->buffer, NULL);
     FREE(tex);
 }
 
@@ -806,14 +806,14 @@ static void r300_tex_surface_destroy(struct pipe_surface* s)
     FREE(s);
 }
 
-static struct pipe_texture*
-    r300_texture_blanket(struct pipe_screen* screen,
-                         const struct pipe_texture* base,
-                         const unsigned* stride,
-                         struct pipe_buffer* buffer)
+struct pipe_texture *r300_texture_blanket_winsys_buffer(struct pipe_screen *screen,
+							const struct pipe_texture *base,
+							const unsigned *stride,
+							struct r300_winsys_buffer *buffer)
 {
     struct r300_texture* tex;
     struct r300_screen* rscreen = r300_screen(screen);
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
 
     /* Support only 2D textures without mipmaps */
     if (base->target != PIPE_TEXTURE_2D ||
@@ -837,7 +837,7 @@ static struct pipe_texture*
     r300_setup_flags(tex);
     r300_setup_texture_state(rscreen, tex);
 
-    pipe_buffer_reference(&tex->buffer, buffer);
+    rws->buffer_reference(rws, &tex->buffer, buffer);
 
     return (struct pipe_texture*)tex;
 }
@@ -896,7 +896,6 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen)
     screen->texture_destroy = r300_texture_destroy;
     screen->get_tex_surface = r300_get_tex_surface;
     screen->tex_surface_destroy = r300_tex_surface_destroy;
-    screen->texture_blanket = r300_texture_blanket;
 
     screen->video_surface_create = r300_video_surface_create;
     screen->video_surface_destroy= r300_video_surface_destroy;
@@ -904,19 +903,23 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen)
 
 boolean r300_get_texture_buffer(struct pipe_screen* screen,
                                 struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
+                                struct r300_winsys_buffer** buffer,
                                 unsigned* stride)
 {
     struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
+    struct r300_winsys_buffer *buf;
+
     if (!tex) {
         return FALSE;
     }
 
-    pipe_buffer_reference(buffer, tex->buffer);
+    rws->buffer_reference(rws, &buf, tex->buffer);
 
     if (stride) {
         *stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
     }
 
+    *buffer = buf;
     return TRUE;
 }

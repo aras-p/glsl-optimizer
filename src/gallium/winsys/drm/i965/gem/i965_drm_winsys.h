@@ -32,8 +32,6 @@ i965_libdrm_winsys(struct brw_winsys_screen *iws)
    return (struct i965_libdrm_winsys *)iws;
 }
 
-struct i965_libdrm_winsys *i965_libdrm_winsys_create(int fd, unsigned pci_id);
-
 void i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws);
 
 
