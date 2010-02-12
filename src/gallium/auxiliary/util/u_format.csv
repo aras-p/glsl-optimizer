@@ -25,8 +25,8 @@ PIPE_FORMAT_R64_FLOAT             , array , 1, 1, f64 ,     ,     ,     , x001, 
 PIPE_FORMAT_R64G64_FLOAT          , array , 1, 1, f64 , f64 ,     ,     , xy01, rgb
 PIPE_FORMAT_R64G64B64_FLOAT       , array , 1, 1, f64 , f64 , f64 ,     , xyz1, rgb
 PIPE_FORMAT_R64G64B64A64_FLOAT    , array , 1, 1, f64 , f64 , f64 , f64 , xyzw, rgb
-PIPE_FORMAT_R32_FLOAT             , array , 1, 1, f32 ,     ,     ,     , x111, rgb
-PIPE_FORMAT_R32G32_FLOAT          , array , 1, 1, f32 , f32 ,     ,     , xy11, rgb
+PIPE_FORMAT_R32_FLOAT             , array , 1, 1, f32 ,     ,     ,     , x001, rgb
+PIPE_FORMAT_R32G32_FLOAT          , array , 1, 1, f32 , f32 ,     ,     , xy01, rgb
 PIPE_FORMAT_R32G32B32_FLOAT       , array , 1, 1, f32 , f32 , f32 ,     , xyz1, rgb
 PIPE_FORMAT_R32G32B32A32_FLOAT    , array , 1, 1, f32 , f32 , f32 , f32 , xyzw, rgb
 PIPE_FORMAT_R32_UNORM             , array , 1, 1, un32,     ,     ,     , x001, rgb
