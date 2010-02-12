@@ -156,7 +156,12 @@ svga_get_paramf(struct pipe_screen *screen, int param)
       return MIN2(util_logbase2(result.u) + 1, SVGA_MAX_TEXTURE_LEVELS);
 
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12 /* 2048x2048 */;
+      /*
+       * No mechanism to query the host, and at least limited to 2048x2048 on
+       * certain hardware.
+       */
+      return MIN2(screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
+                  12.0 /* 2048x2048 */);
 
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT: /* req. for GL 1.4 */
       return 1;
