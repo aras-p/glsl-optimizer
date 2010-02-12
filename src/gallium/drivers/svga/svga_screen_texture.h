@@ -39,7 +39,7 @@ struct svga_winsys_surface;
 enum SVGA3dSurfaceFormat;
 
 
-#define SVGA_MAX_TEXTURE_LEVELS 12 /* 2048x2048 */
+#define SVGA_MAX_TEXTURE_LEVELS 16
 
 
 /**

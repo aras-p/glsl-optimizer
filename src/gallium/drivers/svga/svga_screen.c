@@ -104,7 +104,9 @@ svga_get_paramf(struct pipe_screen *screen, int param)
       return SVGA_MAX_POINTSIZE;
 
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 4.0;
+      if(!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_TEXTURE_ANISOTROPY, &result))
+         return 4.0;
+      return result.u;
 
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0;
@@ -133,12 +135,28 @@ svga_get_paramf(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
+
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return SVGA_MAX_TEXTURE_LEVELS;
+      {
+         unsigned levels = SVGA_MAX_TEXTURE_LEVELS;
+         if (sws->get_cap(sws, SVGA3D_DEVCAP_MAX_TEXTURE_WIDTH, &result))
+            levels = MIN2(util_logbase2(result.u) + 1, levels);
+         else
+            levels = 12 /* 2048x2048 */;
+         if (sws->get_cap(sws, SVGA3D_DEVCAP_MAX_TEXTURE_HEIGHT, &result))
+            levels = MIN2(util_logbase2(result.u) + 1, levels);
+         else
+            levels = 12 /* 2048x2048 */;
+         return levels;
+      }
+
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VOLUME_EXTENT, &result))
+         return 8;  /* max 128x128x128 */
+      return MIN2(util_logbase2(result.u) + 1, SVGA_MAX_TEXTURE_LEVELS);
+
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return SVGA_MAX_TEXTURE_LEVELS;
+      return 12 /* 2048x2048 */;
 
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT: /* req. for GL 1.4 */
       return 1;
