@@ -185,7 +185,7 @@ nv30_draw_arrays(struct pipe_context *pipe,
 
 		nv30_state_emit(nv30);
 
-		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
+		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
 			FIRE_RING(chan);
@@ -239,7 +239,7 @@ nv30_draw_elements_u08(struct nv30_context *nv30, void *ib,
 
 		nv30_state_emit(nv30);
 
-		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 2,
+		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -290,7 +290,7 @@ nv30_draw_elements_u16(struct nv30_context *nv30, void *ib,
 
 		nv30_state_emit(nv30);
 
-		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 2,
+		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -341,7 +341,7 @@ nv30_draw_elements_u32(struct nv30_context *nv30, void *ib,
 
 		nv30_state_emit(nv30);
 
-		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 5, 1,
+		vc = nouveau_vbuf_split(AVAIL_RING(chan), 5, 1,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -417,7 +417,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 
 		nv30_state_emit(nv30);
 
-		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
+		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
 			FIRE_RING(chan);

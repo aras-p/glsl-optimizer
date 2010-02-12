@@ -313,7 +313,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 		while (count) {
 			unsigned nr = MIN2(count, 1792);
 
-			if (chan->pushbuf->remaining <= nr) {
+			if (AVAIL_RING(chan) <= nr) {
 				FIRE_RING (chan);
 
 				BEGIN_RING(chan, eng2d,
@@ -321,7 +321,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 				OUT_RELOCh(chan, bo, dst_offset, reloc);
 				OUT_RELOCl(chan, bo, dst_offset, reloc);
 			}
-			assert(chan->pushbuf->remaining > nr);
+			assert(AVAIL_RING(chan) > nr);
 
 			BEGIN_RING(chan, eng2d,
 				   NV50_2D_SIFC_DATA | (2 << 29), nr);

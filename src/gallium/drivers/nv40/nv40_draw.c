@@ -88,12 +88,11 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_pushbuf *pb = chan->pushbuf;
 	struct nouveau_grobj *curie = screen->curie;
 	unsigned i;
 
 	/* Ensure there's room for 4xfloat32 + potentially 3 begin/end */
-	if (pb->remaining < ((count * 20) + 6)) {
+	if (AVAIL_RING(chan) < ((count * 20) + 6)) {
 		if (rs->prim != NV40TCL_BEGIN_END_STOP) {
 			NOUVEAU_ERR("AIII, missed flush\n");
 			assert(0);
@@ -121,7 +120,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	/* If it's likely we'll need to empty the push buffer soon, finish
 	 * off the primitive now.
 	 */
-	if (pb->remaining < ((count * 20) + 6)) {
+	if (AVAIL_RING(chan) < ((count * 20) + 6)) {
 		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
 		OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		rs->prim = NV40TCL_BEGIN_END_STOP;
