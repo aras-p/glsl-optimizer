@@ -168,6 +168,7 @@ stw_cleanup(void)
    pipe_mutex_unlock( stw_dev->ctx_mutex );
    if (dhglrc) {
       debug_printf("%s: contexts still active -- cleanup aborted\n", __FUNCTION__);
+      stw_dev = NULL;
       return;
    }
 
