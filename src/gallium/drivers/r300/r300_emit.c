@@ -629,17 +629,19 @@ void r300_emit_rs_block_state(struct r300_context* r300, void* state)
     struct r300_rs_block* rs = (struct r300_rs_block*)state;
     unsigned i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    /* It's the same for both INST and IP tables */
+    unsigned count = (rs->inst_count & R300_RS_INST_COUNT_MASK) + 1;
     CS_LOCALS(r300);
 
     DBG(r300, DBG_DRAW, "r300: RS emit:\n");
 
-    BEGIN_CS(21);
+    BEGIN_CS(5 + count*2);
     if (r300screen->caps->is_r500) {
-        OUT_CS_REG_SEQ(R500_RS_IP_0, 8);
+        OUT_CS_REG_SEQ(R500_RS_IP_0, count);
     } else {
-        OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
+        OUT_CS_REG_SEQ(R300_RS_IP_0, count);
     }
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < count; i++) {
         OUT_CS(rs->ip[i]);
         DBG(r300, DBG_DRAW, "    : ip %d: 0x%08x\n", i, rs->ip[i]);
     }
@@ -649,11 +651,11 @@ void r300_emit_rs_block_state(struct r300_context* r300, void* state)
     OUT_CS(rs->inst_count);
 
     if (r300screen->caps->is_r500) {
-        OUT_CS_REG_SEQ(R500_RS_INST_0, 8);
+        OUT_CS_REG_SEQ(R500_RS_INST_0, count);
     } else {
-        OUT_CS_REG_SEQ(R300_RS_INST_0, 8);
+        OUT_CS_REG_SEQ(R300_RS_INST_0, count);
     }
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < count; i++) {
         OUT_CS(rs->inst[i]);
         DBG(r300, DBG_DRAW, "    : inst %d: 0x%08x\n", i, rs->inst[i]);
     }

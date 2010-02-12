@@ -306,7 +306,7 @@ static void r300_update_rs_block(struct r300_context* r300,
                                  struct r300_shader_semantics* fs_inputs)
 {
     struct r300_rs_block rs = { { 0 } };
-    int i, col_count = 0, tex_count = 0, fp_offset = 0;
+    int i, col_count = 0, tex_count = 0, fp_offset = 0, count;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, boolean);
@@ -410,11 +410,13 @@ static void r300_update_rs_block(struct r300_context* r300,
     rs.count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
-    rs.inst_count = MAX3(col_count - 1, tex_count - 1, 0);
+    count = MAX3(col_count, tex_count, 1);
+    rs.inst_count = count - 1;
 
     /* Now, after all that, see if we actually need to update the state. */
     if (memcmp(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block))) {
         memcpy(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block));
+        r300->rs_block_state.size = 5 + count;
         r300->rs_block_state.dirty = TRUE;
     }
 }
