@@ -205,7 +205,7 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     }
 
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
-    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize - 1;
+    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize - paos->offset - 1;
 
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 0, BASE_ADDRESS_HI_shift, BASE_ADDRESS_HI_mask); /* TODO */
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, pStreamDesc->stride, SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift,
