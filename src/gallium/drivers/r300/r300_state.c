@@ -38,6 +38,8 @@
 #include "r300_fs.h"
 #include "r300_vs.h"
 
+#include "radeon_winsys.h"
+
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
 
@@ -496,6 +498,69 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
     r300->dsa_state.dirty = TRUE;
 }
 
+/* This switcheroo is needed just because of goddamned MACRO_SWITCH. */
+static void r300_fb_update_tiling_flags(struct r300_context *r300,
+                               const struct pipe_framebuffer_state *old_state,
+                               const struct pipe_framebuffer_state *new_state)
+{
+    struct r300_texture *tex;
+    unsigned i, j, level;
+
+    /* Reset tiling flags for old surfaces to default values. */
+    for (i = 0; i < old_state->nr_cbufs; i++) {
+        for (j = 0; j < new_state->nr_cbufs; j++) {
+            if (old_state->cbufs[i]->texture == new_state->cbufs[j]->texture) {
+                break;
+            }
+        }
+        /* If not binding the surface again... */
+        if (j != new_state->nr_cbufs) {
+            continue;
+        }
+
+        tex = (struct r300_texture*)old_state->cbufs[i]->texture;
+
+        if (tex) {
+            r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+                                            tex->pitch[0],
+                                            tex->microtile != 0,
+                                            tex->macrotile != 0);
+        }
+    }
+    if (old_state->zsbuf &&
+        (!new_state->zsbuf ||
+         old_state->zsbuf->texture != new_state->zsbuf->texture)) {
+        tex = (struct r300_texture*)old_state->zsbuf->texture;
+
+        if (tex) {
+            r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+                                            tex->pitch[0],
+                                            tex->microtile != 0,
+                                            tex->macrotile != 0);
+        }
+    }
+
+    /* Set tiling flags for new surfaces. */
+    for (i = 0; i < new_state->nr_cbufs; i++) {
+        tex = (struct r300_texture*)new_state->cbufs[i]->texture;
+        level = new_state->cbufs[i]->level;
+
+        r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+                                        tex->pitch[level],
+                                        tex->microtile != 0,
+                                        tex->mip_macrotile[level] != 0);
+    }
+    if (new_state->zsbuf) {
+        tex = (struct r300_texture*)new_state->zsbuf->texture;
+        level = new_state->zsbuf->level;
+
+        r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+                                        tex->pitch[level],
+                                        tex->microtile != 0,
+                                        tex->mip_macrotile[level] != 0);
+    }
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
@@ -526,6 +591,7 @@ static void
         return;
     }
 
+
     if (r300->draw) {
         draw_flush(r300->draw);
     }
@@ -533,6 +599,8 @@ static void
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size = (10 * state->nr_cbufs) + (state->zsbuf ? 10 : 0) + 6;
+
+    r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
 
     /* XXX wait what */
     r300->blend_state.dirty = TRUE;
