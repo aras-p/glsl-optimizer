@@ -1555,6 +1555,7 @@ gen_stencil_depth_test(struct spe_function *f,
    int stencil_writemask_reg;
    int zmask_reg;
    int newS_reg;
+   unsigned stencil_value;
 
    /* Stenciling is quite complex: up to six different configurable stencil 
     * operations/calculations can be required (three each for front-facing
