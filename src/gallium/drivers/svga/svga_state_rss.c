@@ -26,9 +26,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#if 0
 #include "util/u_pack_color.h"
-#endif
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -103,8 +101,6 @@ static int emit_rss( struct svga_context *svga,
       }
    }
 
-#if 0
-   /* FIXME: shouldn't we emit blend color here */
    if (dirty & SVGA_NEW_BLEND_COLOR) {
       union util_color uc;
       ubyte r = float_to_ubyte(svga->curr.blend_color.color[0]);
@@ -117,9 +113,6 @@ static int emit_rss( struct svga_context *svga,
 
       EMIT_RS( svga, uc.ui, BLENDCOLOR, fail );
    }
-#endif
-
-
 
    if (dirty & (SVGA_NEW_DEPTH_STENCIL | SVGA_NEW_RAST)) {
       const struct svga_depth_stencil_state *curr = svga->curr.depth; 
@@ -252,12 +245,9 @@ static int emit_rss( struct svga_context *svga,
       memcpy( rs,
               queue.rs,
               queue.rs_count * sizeof queue.rs[0]);
-      
+
       SVGA_FIFOCommitAll( svga->swc );
    }
-
-   /* Also blend color:
-    */
 
    return 0;
 
@@ -278,9 +268,7 @@ struct svga_tracked_state svga_hw_rss =
    "hw rss state",
 
    (SVGA_NEW_BLEND |
-#if 0
     SVGA_NEW_BLEND_COLOR |
-#endif
     SVGA_NEW_DEPTH_STENCIL |
     SVGA_NEW_STENCIL_REF |
     SVGA_NEW_RAST |
