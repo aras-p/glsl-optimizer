@@ -155,7 +155,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return 0;
       }
       out.token = SL_PP_EXTENSION_WARN;
-      extension->enabled = 0;
+      extension->enabled = 1;
    } else if (behavior == context->dict.disable) {
       if (out.data.extension == -1) {
          /* Warning: the extension is not supported. */
