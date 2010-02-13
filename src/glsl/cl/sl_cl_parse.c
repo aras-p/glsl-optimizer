@@ -120,6 +120,11 @@
 #define TYPE_CENTER                                95
 #define TYPE_CENTROID                              96
 
+/* layout qualifiers */
+#define LAYOUT_QUALIFIER_NONE                      0
+#define LAYOUT_QUALIFIER_UPPER_LEFT                1
+#define LAYOUT_QUALIFIER_PIXEL_CENTER_INTEGER      2
+
 /* type specifier */
 #define TYPE_SPECIFIER_VOID                        0
 #define TYPE_SPECIFIER_BOOL                        1
@@ -297,6 +302,10 @@ struct parse_dict {
    int out;
    int inout;
 
+   int layout;
+   int origin_upper_left;
+   int pixel_center_integer;
+
    int _struct;
 
    int __constructor;
@@ -462,6 +471,10 @@ _fetch_token(struct parse_context *ctx,
 }
 
 
+/**
+ * Try to parse/match a particular token.
+ * \return 0 for success, -1 for error.
+ */
 static int
 _parse_token(struct parse_context *ctx,
              enum sl_pp_token token,
@@ -477,6 +490,10 @@ _parse_token(struct parse_context *ctx,
 }
 
 
+/**
+ * Try to parse an identifer.
+ * \return 0 for success, -1 for error
+ */
 static int
 _parse_id(struct parse_context *ctx,
           int id,
@@ -707,8 +724,52 @@ _parse_centroid_qualifier(struct parse_context *ctx,
 
 
 static int
-_parse_type_qualifier(struct parse_context *ctx,
-                      struct parse_state *ps)
+_parse_layout_qualifier(struct parse_context *ctx,
+                        struct parse_state *ps)
+{
+   if (_parse_id(ctx, ctx->dict.layout, ps) == 0) {
+      /* start of a parenthesised list of layout qualifiers */
+
+      if (_parse_token(ctx, SL_PP_LPAREN, ps)) {
+         _error(ctx, "expected `('");
+         return -1;
+      }
+
+      /* parse comma-separated ID list */
+      while (1) {
+         if (_parse_id(ctx, ctx->dict.origin_upper_left, ps) == 0) {
+            _emit(ctx, &ps->out, LAYOUT_QUALIFIER_UPPER_LEFT);
+         }
+         else if (_parse_id(ctx, ctx->dict.pixel_center_integer, ps) == 0) {
+            _emit(ctx, &ps->out, LAYOUT_QUALIFIER_PIXEL_CENTER_INTEGER);
+         }
+         else {
+            _error(ctx, "expected a layout qualifier");
+            return -1;
+         }
+
+         if (_parse_token(ctx, SL_PP_RPAREN, ps) == 0) {
+            /* all done */
+            break;
+         }
+         else if (_parse_token(ctx, SL_PP_COMMA, ps) == 0) {
+            /* another layout qualifier is coming */
+         }
+         else {
+            _error(ctx, "expected `,' or `)'");
+            return -1;
+         }
+      }
+
+   }
+
+   return -1;
+}
+
+
+static int
+_parse_storage_qualifier(struct parse_context *ctx,
+                         struct parse_state *ps)
 {
    struct parse_state p = *ps;
    const struct sl_pp_token_info *input = _fetch_token(ctx, p.in);
@@ -1006,13 +1067,18 @@ _parse_fully_specified_type(struct parse_context *ctx,
 {
    struct parse_state p = *ps;
 
+   if (_parse_layout_qualifier(ctx, &p)) {
+      _emit(ctx, &p.out, LAYOUT_QUALIFIER_NONE);
+   }
+
    if (_parse_invariant_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_VARIANT);
    }
+
    if (_parse_centroid_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_CENTER);
    }
-   if (_parse_type_qualifier(ctx, &p)) {
+   if (_parse_storage_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_QUALIFIER_NONE);
    }
    if (_parse_precision(ctx, &p)) {
@@ -1698,7 +1764,7 @@ _parse_parameter_declaration(struct parse_context *ctx,
 
    (void) e;
 
-   if (_parse_type_qualifier(ctx, &p)) {
+   if (_parse_storage_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_QUALIFIER_NONE);
    }
    _parse_parameter_qualifier(ctx, &p);
@@ -2771,6 +2837,10 @@ sl_cl_compile(struct sl_pp_context *context,
    ADD_NAME(ctx, in);
    ADD_NAME(ctx, out);
    ADD_NAME(ctx, inout);
+
+   ADD_NAME(ctx, layout);
+   ADD_NAME(ctx, origin_upper_left);
+   ADD_NAME(ctx, pixel_center_integer);
 
    ADD_NAME_STR(ctx, _struct, "struct");
 
