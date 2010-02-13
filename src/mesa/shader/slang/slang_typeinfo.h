@@ -68,6 +68,18 @@ typedef enum slang_type_centroid_
 } slang_type_centroid;
 
 
+/**
+ * These only apply to gl_FragCoord, but other layout qualifiers may
+ * appear in the future.
+ */
+typedef enum slang_layout_qualifier_
+{
+   SLANG_LAYOUT_NONE                      = 0x0,
+   SLANG_LAYOUT_UPPER_LEFT_BIT            = 0x1,
+   SLANG_LAYOUT_PIXEL_CENTER_INTEGER_BIT  = 0x2
+} slang_layout_qualifier;
+
+
 typedef enum slang_type_qualifier_
 {
    SLANG_QUAL_NONE,
@@ -170,8 +182,8 @@ slang_type_specifier_equal(const slang_type_specifier *,
 
 
 extern GLboolean
-slang_type_specifier_compatible(const slang_type_specifier * x,
-                                const slang_type_specifier * y);
+slang_type_specifier_compatible(const slang_type_specifier *x,
+                                const slang_type_specifier *y);
 
 
 typedef struct slang_fully_specified_type_
@@ -181,6 +193,7 @@ typedef struct slang_fully_specified_type_
    slang_type_precision precision;
    slang_type_variant variant;
    slang_type_centroid centroid;
+   slang_layout_qualifier layout;
    GLint array_len;           /**< -1 if not an array type */
 } slang_fully_specified_type;
 
@@ -194,6 +207,9 @@ extern int
 slang_fully_specified_type_copy(slang_fully_specified_type *,
 				const slang_fully_specified_type *);
 
+GLboolean
+slang_fully_specified_types_compatible(const slang_fully_specified_type * x,
+                                       const slang_fully_specified_type * y);
 
 
 typedef struct slang_typeinfo_

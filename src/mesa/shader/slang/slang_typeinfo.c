@@ -258,6 +258,7 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    z.precision = y->precision;
    z.variant = y->variant;
    z.centroid = y->centroid;
+   z.layout = y->layout;
    z.array_len = y->array_len;
    if (!slang_type_specifier_copy(&z.specifier, &y->specifier)) {
       slang_fully_specified_type_destruct(&z);
@@ -268,6 +269,32 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    return 1;
 }
 
+
+/**
+ * Test if two fully specified types are compatible.  This is a bit
+ * looser than testing for equality.  We don't check the precision,
+ * variant, centroid, etc. information.
+ * XXX this may need some tweaking.
+ */
+GLboolean
+slang_fully_specified_types_compatible(const slang_fully_specified_type * x,
+                                       const slang_fully_specified_type * y)
+{
+   if (!slang_type_specifier_equal(&x->specifier, &y->specifier))
+      return GL_FALSE;
+
+   if (x->qualifier == SLANG_QUAL_FIXEDINPUT &&
+       y->qualifier == SLANG_QUAL_VARYING)
+      ; /* ok */
+   else if (x->qualifier != y->qualifier)
+      return GL_FALSE;
+
+   /* Note: don't compare precision, variant, centroid */
+
+   /* XXX array length? */
+
+   return GL_TRUE;
+}
 
 
 GLvoid
