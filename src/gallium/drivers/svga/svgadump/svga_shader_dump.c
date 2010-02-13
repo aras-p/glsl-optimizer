@@ -360,7 +360,7 @@ dump_dstreg(struct sh_dstreg dstreg,
    union {
       struct sh_reg reg;
       struct sh_dstreg dstreg;
-   } u;
+   } u = { { 0 } };
 
    assert( (dstreg.modifier & (SVGA3DDSTMOD_SATURATE | SVGA3DDSTMOD_PARTIALPRECISION)) == dstreg.modifier );
 
