@@ -133,6 +133,7 @@ static const struct {
    { ON,  "GL_EXT_texture",                    F(EXT_texture) },
    { ON,  "GL_EXT_texture3D",                  F(EXT_texture3D) },
    { OFF, "GL_EXT_texture_compression_s3tc",   F(EXT_texture_compression_s3tc) },
+   { OFF, "GL_EXT_texture_cube_map",           F(ARB_texture_cube_map) },
    { ON,  "GL_EXT_texture_edge_clamp",         F(SGIS_texture_edge_clamp) },
    { OFF, "GL_EXT_texture_env_add",            F(EXT_texture_env_add) },
    { OFF, "GL_EXT_texture_env_combine",        F(EXT_texture_env_combine) },
