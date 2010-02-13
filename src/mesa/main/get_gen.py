@@ -1225,7 +1225,6 @@ def EmitHeader():
 #include "context.h"
 #include "enable.h"
 #include "extensions.h"
-#include "fbobject.h"
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"
