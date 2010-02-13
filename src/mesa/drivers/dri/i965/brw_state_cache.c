@@ -59,15 +59,7 @@
 #include "main/imports.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
-
-/* XXX: Fixme - have to include these to get the sizes of the prog_key
- * structs:
- */
 #include "brw_wm.h"
-#include "brw_vs.h"
-#include "brw_clip.h"
-#include "brw_sf.h"
-#include "brw_gs.h"
 
 
 static GLuint
