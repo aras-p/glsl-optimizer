@@ -56,7 +56,6 @@
 #include "main/stencil.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"

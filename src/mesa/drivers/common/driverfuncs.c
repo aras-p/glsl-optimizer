@@ -26,7 +26,6 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/arrayobj.h"
-#include "main/buffers.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/mipmap.h"
@@ -50,7 +49,6 @@
 #endif
 
 #include "shader/program.h"
-#include "shader/prog_execute.h"
 #include "shader/shader_api.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
