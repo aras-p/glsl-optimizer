@@ -39,13 +39,6 @@
 #include "dri_util.h"
 #include "xmlconfig.h"
 
-/*
- * OS dependent ways of getting the name of the running program
- */
-#if (defined(__unix__) || defined(unix)) && !defined(USG)
-#include <sys/param.h>
-#endif
-
 #undef GET_PROGRAM_NAME
 
 #if (defined(__GNU_LIBRARY__) || defined(__GLIBC__)) && !defined(__UCLIBC__)

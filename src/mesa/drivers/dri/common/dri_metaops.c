@@ -27,17 +27,9 @@
  **************************************************************************/
 
 #include "main/arrayobj.h"
-#include "main/attrib.h"
-#include "main/blend.h"
 #include "main/bufferobj.h"
-#include "main/buffers.h"
-#include "main/depth.h"
 #include "main/enable.h"
 #include "main/matrix.h"
-#include "main/macros.h"
-#include "main/polygon.h"
-#include "main/shaders.h"
-#include "main/stencil.h"
 #include "main/texstate.h"
 #include "main/varray.h"
 #include "main/viewport.h"
