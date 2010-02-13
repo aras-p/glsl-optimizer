@@ -27,7 +27,6 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_pack_color.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
@@ -97,7 +96,6 @@ svga_create_sampler_state(struct pipe_context *pipe,
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_sampler_state *cso = CALLOC_STRUCT( svga_sampler_state );
-   union util_color uc;
    
    cso->mipfilter = translate_mip_filter(sampler->min_mip_filter);
    cso->magfilter = translate_img_filter( sampler->mag_img_filter );
@@ -114,14 +112,12 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->compare_func = sampler->compare_func;
 
    {
-      ubyte r = float_to_ubyte(sampler->border_color[0]);
-      ubyte g = float_to_ubyte(sampler->border_color[1]);
-      ubyte b = float_to_ubyte(sampler->border_color[2]);
-      ubyte a = float_to_ubyte(sampler->border_color[3]);
+      uint32 r = float_to_ubyte(sampler->border_color[0]);
+      uint32 g = float_to_ubyte(sampler->border_color[1]);
+      uint32 b = float_to_ubyte(sampler->border_color[2]);
+      uint32 a = float_to_ubyte(sampler->border_color[3]);
 
-      util_pack_color_ub( r, g, b, a,
-                          PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-      cso->bordercolor = uc.ui;
+      cso->bordercolor = (a << 24) | (r << 16) | (g << 8) | b;
    }
 
    /* No SVGA3D support for:
