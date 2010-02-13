@@ -27,6 +27,7 @@
 
 
 import string
+import sys
 
 
 GLint = 1
@@ -1134,7 +1135,7 @@ def EmitGetFunction(stateVars, returnType, indexed):
 		elif returnType == GLint64:
 			function = "GetInteger64v"
 		else:
-			abort()
+			sys.exit(1)
 
 	if returnType == GLint64:
 		print "#if FEATURE_ARB_sync"
