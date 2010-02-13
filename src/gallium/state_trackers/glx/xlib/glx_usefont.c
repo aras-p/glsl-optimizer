@@ -33,7 +33,6 @@
 #include "main/context.h"
 #include "main/imports.h"
 #include <GL/glx.h>
-#include "pipe/p_compiler.h"
 
 
 /* Some debugging info.  */
