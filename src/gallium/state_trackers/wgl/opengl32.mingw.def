@@ -362,7 +362,7 @@ EXPORTS
 	wglShareLists = wglShareLists@8
 	wglSwapBuffers = wglSwapBuffers@4
 	wglSwapLayerBuffers = wglSwapLayerBuffers@8
-;	wglSwapMultipleBuffers = wglSwapMultipleBuffers@8
+	wglSwapMultipleBuffers = wglSwapMultipleBuffers@8
 	wglUseFontBitmapsA = wglUseFontBitmapsA@16
 	wglUseFontBitmapsW = wglUseFontBitmapsW@16
 	wglUseFontOutlinesA = wglUseFontOutlinesA@32
