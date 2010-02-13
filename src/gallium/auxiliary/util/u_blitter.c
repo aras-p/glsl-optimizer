@@ -98,9 +98,9 @@ struct blitter_context_priv
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
-   struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state dsa;
-   struct pipe_rasterizer_state rs_state;
+   struct pipe_blend_state blend = { 0 };
+   struct pipe_depth_stencil_alpha_state dsa = { { 0 } };
+   struct pipe_rasterizer_state rs_state = { 0 };
    struct pipe_sampler_state *sampler_state;
    unsigned i;
 
@@ -121,7 +121,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_num_sampler_states = ~0;
 
    /* blend state objects */
-   memset(&blend, 0, sizeof(blend));
    ctx->blend_keep_color = pipe->create_blend_state(pipe, &blend);
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
@@ -211,7 +210,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_depth_stencil_alpha_state(pipe,
                                           ctx->dsa_write_depth_keep_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
- 
+
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
@@ -526,6 +525,7 @@ void util_blitter_clear(struct blitter_context *blitter,
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
+   struct pipe_stencil_ref sr = { { 0 } };
 
    assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
@@ -538,8 +538,6 @@ void util_blitter_clear(struct blitter_context *blitter,
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
 
    if (clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) {
-      struct pipe_stencil_ref sr;
-      memset (&sr, 0, sizeof(sr));
       sr.ref_value[0] = stencil & 0xff;
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
       pipe->set_stencil_ref(pipe, &sr);
@@ -555,7 +553,6 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter_set_rectangle(ctx, 0, 0, width, height, depth);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
-   /* XXX driver's responsibility to restore stencil refs? */
 }
 
 static boolean
