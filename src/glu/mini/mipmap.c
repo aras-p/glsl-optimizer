@@ -287,7 +287,11 @@ gluScaleImage(GLenum format,
       }
       break;
    default:
-      return GLU_INVALID_ENUM;
+      {
+         free(tempin);
+         free(tempout);
+         return GLU_INVALID_ENUM;
+      }
    }
 
 
