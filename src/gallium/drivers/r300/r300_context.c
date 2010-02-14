@@ -159,6 +159,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
+    r300screen->ctx = (struct pipe_context*)r300;
+
     r300->winsys = radeon_winsys;
 
     r300->context.winsys = (struct pipe_winsys*)radeon_winsys;

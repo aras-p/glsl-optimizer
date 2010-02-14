@@ -725,9 +725,8 @@ static void r300_setup_flags(struct r300_texture* tex)
 }
 
 /* Create a new texture. */
-static struct pipe_texture*
-    r300_texture_create(struct pipe_screen* screen,
-                        const struct pipe_texture* template)
+static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
+                                         const struct pipe_texture* template)
 {
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);

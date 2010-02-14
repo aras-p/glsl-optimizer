@@ -25,36 +25,7 @@
 #define R300_TRANSFER
 
 #include "pipe/p_screen.h"
-#include "pipe/p_state.h"
-
-struct r300_texture;
-struct r300_screen;
-
-struct r300_transfer {
-    /* Parent class */
-    struct pipe_transfer transfer;
-
-    /* Parameters of get_tex_transfer. */
-    unsigned x, y, level, zslice, face;
-
-    /* Offset from start of buffer. */
-    unsigned offset;
-
-    /* Untiled texture. */
-    struct r300_texture *untiled_texture;
-
-    /* Transfer and format flags. */
-    unsigned buffer_usage, render_target_usage;
-};
-
-/* Convenience cast wrapper. */
-static INLINE struct r300_transfer*
-r300_transfer(struct pipe_transfer* transfer)
-{
-    return (struct r300_transfer*)transfer;
-}
 
 void r300_init_screen_transfer_functions(struct pipe_screen *screen);
 
 #endif
-

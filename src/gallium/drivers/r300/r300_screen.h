@@ -28,6 +28,8 @@
 
 #include "r300_chipset.h"
 
+#define R300_TEXTURE_USAGE_TRANSFER PIPE_TEXTURE_USAGE_CUSTOM
+
 struct radeon_winsys;
 
 struct r300_screen {
@@ -35,6 +37,10 @@ struct r300_screen {
     struct pipe_screen screen;
 
     struct radeon_winsys* radeon_winsys;
+
+    /* XXX This hack will be removed once texture transfers become part of
+     * pipe_context. */
+    struct pipe_context* ctx;
 
     /* Chipset capabilities */
     struct r300_capabilities* caps;
