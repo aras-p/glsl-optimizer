@@ -45,6 +45,7 @@
 #include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_debug.h"
+#include "util/u_format.h"
 
 #define DEBUG_PRINT 0
 #define ROUND_UP_TEXTURES 1
@@ -360,7 +361,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
-	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("format %s", util_format_name(priv->tex->format));
     }
 
     return xorg_solid_bind_state(exa, priv, fg);
@@ -441,12 +442,12 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-	XORG_FALLBACK("pDst format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("pDst format %s", util_format_name(priv->tex->format));
 
     if (!exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
                                         src_priv->tex->target,
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0))
-	XORG_FALLBACK("pSrc format %s", pf_name(src_priv->tex->format));
+	XORG_FALLBACK("pSrc format %s", util_format_name(src_priv->tex->format));
 
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
@@ -652,7 +653,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                        priv->tex->target,
                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-      XORG_FALLBACK("pDst format: %s", pf_name(priv->tex->format));
+      XORG_FALLBACK("pDst format: %s", util_format_name(priv->tex->format));
 
    if (priv->picture_format != pDstPicture->format)
       XORG_FALLBACK("pDst pic_format: %s != %s",
@@ -667,7 +668,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("pSrc format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pSrc format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pSrcPicture))
          XORG_FALLBACK("pSrc pic_format: %s != %s",
@@ -684,7 +685,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pMask format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pMaskPicture))
          XORG_FALLBACK("pMask pic_format: %s != %s",
