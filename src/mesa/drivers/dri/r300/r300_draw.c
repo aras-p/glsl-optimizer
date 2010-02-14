@@ -332,7 +332,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-	struct vertex_attribute r300_attr;
+	struct vertex_attribute r300_attr = { 0 };
 	GLenum type;
 	GLuint stride;
 
