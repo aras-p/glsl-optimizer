@@ -1327,6 +1327,11 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
 }
 
 
+/**
+ * Compute nearest mipmap level from texcoords.
+ * Then sample the texture level for four elements of a quad.
+ * \param c0  the LOD bias factors, or absolute LODs (depending on control)
+ */
 static void
 mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
                    const float s[QUAD_SIZE],
@@ -1563,8 +1568,8 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
 
 
 /**
- * Compute which cube face is referenced by each texcoord and put that
- * info into the sampler faces[] array.  Then sample the cube faces
+ * Use 3D texcoords to choose a cube face, then sample the 2D cube faces.
+ * Put face info into the sampler faces[] array.
  */
 static void
 sample_cube(struct tgsi_sampler *tgsi_sampler,
@@ -1578,11 +1583,12 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned j;
    float ssss[4], tttt[4];
+   unsigned face;
 
    /*
      major axis
-     direction     target                             sc     tc    ma
-     ----------    -------------------------------    ---    ---   ---
+     direction    target                             sc     tc    ma
+     ----------   -------------------------------    ---    ---   ---
      +rx          TEXTURE_CUBE_MAP_POSITIVE_X_EXT    -rz    -ry   rx
      -rx          TEXTURE_CUBE_MAP_NEGATIVE_X_EXT    +rz    -ry   rx
      +ry          TEXTURE_CUBE_MAP_POSITIVE_Y_EXT    +rx    +rz   ry
@@ -1590,55 +1596,92 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
      +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
      -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      float rx = s[j];
-      float ry = t[j];
-      float rz = p[j];
+
+   /* First choose the cube face.
+    * Use the same cube face for all four pixels in the quad.
+    *
+    * This isn't ideal, but if we want to use a different cube face
+    * per pixel in the quad, we'd have to also compute the per-face
+    * LOD here too.  That's because the four post-face-selection
+    * texcoords are no longer related to each other (they're
+    * per-face!)  so we can't use subtraction to compute the partial
+    * deriviates to compute the LOD.  Doing so (near cube edges
+    * anyway) gives us pretty much random values.
+    */
+   {
+      /* use the average of the four pixel's texcoords to choose the face */
+      const float rx = 0.25 * (s[0] + s[1] + s[2] + s[3]);
+      const float ry = 0.25 * (t[0] + t[1] + t[2] + t[3]);
+      const float rz = 0.25 * (p[0] + p[1] + p[2] + p[3]);
       const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
-      unsigned face;
-      float sc, tc, ma;
 
       if (arx >= ary && arx >= arz) {
          if (rx >= 0.0F) {
             face = PIPE_TEX_FACE_POS_X;
-            sc = -rz;
-            tc = -ry;
-            ma = arx;
          }
          else {
             face = PIPE_TEX_FACE_NEG_X;
-            sc = rz;
-            tc = -ry;
-            ma = arx;
          }
       }
       else if (ary >= arx && ary >= arz) {
          if (ry >= 0.0F) {
             face = PIPE_TEX_FACE_POS_Y;
-            sc = rx;
-            tc = rz;
-            ma = ary;
          }
          else {
             face = PIPE_TEX_FACE_NEG_Y;
-            sc = rx;
-            tc = -rz;
-            ma = ary;
          }
       }
       else {
          if (rz > 0.0F) {
             face = PIPE_TEX_FACE_POS_Z;
-            sc = rx;
-            tc = -ry;
-            ma = arz;
          }
          else {
             face = PIPE_TEX_FACE_NEG_Z;
-            sc = -rx;
-            tc = -ry;
-            ma = arz;
          }
+      }
+   }
+
+   /* Now compute the 2D _face_ texture coords from the
+    * 3D _cube_ texture coords.
+    */
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float rx = s[j], ry = t[j], rz = p[j];
+      const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
+      float sc, tc, ma;
+
+      switch (face) {
+      case PIPE_TEX_FACE_POS_X:
+         sc = -rz;
+         tc = -ry;
+         ma = arx;
+         break;
+      case PIPE_TEX_FACE_NEG_X:
+         sc = rz;
+         tc = -ry;
+         ma = arx;
+         break;
+      case PIPE_TEX_FACE_POS_Y:
+         sc = rx;
+         tc = rz;
+         ma = ary;
+         break;
+      case PIPE_TEX_FACE_NEG_Y:
+         sc = rx;
+         tc = -rz;
+         ma = ary;
+         break;
+      case PIPE_TEX_FACE_POS_Z:
+         sc = rx;
+         tc = -ry;
+         ma = arz;
+         break;
+      case PIPE_TEX_FACE_NEG_Z:
+         sc = -rx;
+         tc = -ry;
+         ma = arz;
+         break;
+      default:
+         assert(0 && "bad cube face");
       }
 
       {
