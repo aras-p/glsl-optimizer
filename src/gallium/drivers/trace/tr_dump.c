@@ -250,7 +250,7 @@ boolean trace_dump_trace_begin()
 
    if(!stream) {
 
-      stream = os_stream_create(filename, 0);
+      stream = os_file_stream_create(filename);
       if(!stream)
          return FALSE;
 
