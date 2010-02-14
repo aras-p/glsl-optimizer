@@ -49,6 +49,7 @@ enum r300_value_id {
     R300_VID_PCI_ID,
     R300_VID_GB_PIPES,
     R300_VID_Z_PIPES,
+    R300_VID_SQUARE_TILING_SUPPORT
 };
 
 struct r300_winsys_screen {

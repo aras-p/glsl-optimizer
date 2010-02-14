@@ -57,6 +57,9 @@ struct radeon_libdrm_winsys {
     /* VRAM size. */
     uint32_t vram_size;
 
+    /* Square tiling support. */
+    boolean squaretiling;
+
     /* DRM FD */
     int fd;
 

@@ -715,6 +715,7 @@ static void r300_setup_flags(struct r300_texture* tex)
 static void r300_setup_tiling(struct pipe_screen *screen,
                               struct r300_texture *tex)
 {
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     enum pipe_format format = tex->tex.format;
     boolean rv350_mode = r300_screen(screen)->caps->family >= CHIP_FAMILY_RV350;
 
@@ -734,12 +735,12 @@ static void r300_setup_tiling(struct pipe_screen *screen,
             tex->microtile = R300_BUFFER_TILED;
             break;
 
-        /* XXX Square-tiling doesn't work with kernel older than 2.6.34,
-         * XXX need to check the DRM version */
-        /*case 2:
+        case 2:
         case 8:
-            tex->microtile = R300_BUFFER_SQUARETILED;
-            break;*/
+            if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT)) {
+                tex->microtile = R300_BUFFER_SQUARETILED;
+            }
+            break;
     }
 
     /* Set macrotiling. */

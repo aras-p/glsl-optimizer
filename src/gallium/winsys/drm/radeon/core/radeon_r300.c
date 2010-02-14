@@ -253,6 +253,8 @@ static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
 	return ws->gb_pipes;
     case R300_VID_Z_PIPES:
 	return ws->z_pipes;
+    case R300_VID_SQUARE_TILING_SUPPORT:
+        return ws->squaretiling;
     }
     return 0;
 }
