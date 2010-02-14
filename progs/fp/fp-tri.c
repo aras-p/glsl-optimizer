@@ -188,6 +188,7 @@ static void Init( void )
    }
 
    glClearColor(.1, .3, .5, 0);
+   fclose(f);
 }
 
 static void Reshape(int width, int height)
