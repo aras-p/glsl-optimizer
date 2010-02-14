@@ -590,7 +590,7 @@ debug_dump_float_rgba_bmp(const char *filename,
    bmih.biClrUsed = 0;
    bmih.biClrImportant = 0;
 
-   stream = os_stream_create(filename, bmfh.bfSize);
+   stream = os_file_stream_create(filename);
    if(!stream)
       goto error1;
 
