@@ -244,6 +244,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DATA_TYPE_SHORT_4                   7
 #       define R300_DATA_TYPE_VECTOR_3_TTT              8
 #       define R300_DATA_TYPE_VECTOR_3_EET              9
+#       define R300_DATA_TYPE_FLOAT_8                   10
+#       define R300_DATA_TYPE_FLT16_2                   11
+#       define R300_DATA_TYPE_FLT16_4                   12
 #       define R300_SKIP_DWORDS_SHIFT                   4
 #       define R300_DST_VEC_LOC_SHIFT                   8
 #       define R300_LAST_VEC                            (1 << 13)

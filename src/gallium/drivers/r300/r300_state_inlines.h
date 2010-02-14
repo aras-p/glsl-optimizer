@@ -507,6 +507,14 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         /* Half-floats, floats, doubles */
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
+                case 16:
+                    /* XXX Supported only on RV350 and later. */
+                    if (components > 2) {
+                        result = R300_DATA_TYPE_FLT16_4;
+                    } else {
+                        result = R300_DATA_TYPE_FLT16_2;
+                    }
+                    break;
                 case 32:
                     result = R300_DATA_TYPE_FLOAT_1 + (components - 1);
                     break;
