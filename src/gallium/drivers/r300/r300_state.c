@@ -1150,7 +1150,9 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      struct pipe_buffer *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_screen *r300screen = r300_screen(pipe->screen);
     void *mapped;
+    int max_size = 0;
 
     if (buf == NULL || buf->size == 0 ||
         (mapped = pipe_buffer_map(pipe->screen, buf, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
@@ -1160,6 +1162,33 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     }
 
     assert((buf->size % 4 * sizeof(float)) == 0);
+
+    /* Check the size of the constant buffer. */
+    switch (shader) {
+        case PIPE_SHADER_VERTEX:
+            max_size = 256;
+            break;
+        case PIPE_SHADER_FRAGMENT:
+            if (r300screen->caps->is_r500) {
+                max_size = 256;
+            /* XXX Implement emission of r400's extended constant buffer. */
+            /*} else if (r300screen->caps->is_r400) {
+                max_size = 64;*/
+            } else {
+                max_size = 32;
+            }
+            break;
+        default:
+            assert(0);
+    }
+
+    /* XXX Subtract immediates and RC_STATE_* variables. */
+    if (buf->size > (sizeof(float) * 4 * max_size)) {
+        debug_printf("r300: Max size of the constant buffer is "
+                      "%i*4 floats.\n", max_size);
+        abort();
+    }
+
     memcpy(r300->shader_constants[shader].constants, mapped, buf->size);
     r300->shader_constants[shader].count = buf->size / (4 * sizeof(float));
     pipe_buffer_unmap(pipe->screen, buf);

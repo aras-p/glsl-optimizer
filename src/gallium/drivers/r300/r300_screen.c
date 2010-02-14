@@ -152,6 +152,10 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
+        case PIPE_CAP_MAX_CONST_BUFFERS:
+            return 1;
+        case PIPE_CAP_MAX_CONST_BUFFER_SIZE:
+            return 256;
         case PIPE_CAP_INDEP_BLEND_ENABLE:
             return 0;
         case PIPE_CAP_INDEP_BLEND_FUNC:

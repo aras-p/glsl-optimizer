@@ -155,8 +155,7 @@ struct r300_ztop_state {
 
 struct r300_constant_buffer {
     /* Buffer of constants */
-    /* XXX first number should be raised */
-    float constants[32][4];
+    float constants[256][4];
     /* Total number of constants */
     unsigned count;
 };
