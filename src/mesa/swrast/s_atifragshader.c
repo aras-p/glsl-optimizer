@@ -86,7 +86,7 @@ apply_swizzle(GLfloat values[4], GLuint swizzle)
          q = 0.000000001F;
       values[0] = s / q;
       values[1] = t / q;
-      values[2] = 1.0 / q;
+      values[2] = 1.0F / q;
       break;
    }
    values[3] = 0.0;
@@ -138,7 +138,7 @@ apply_src_mod(GLint optype, GLuint mod, GLfloat * val)
 	 val[i] = 1 - val[i];
 
       if (mod & GL_BIAS_BIT_ATI)
-	 val[i] = val[i] - 0.5;
+	 val[i] = val[i] - 0.5F;
 
       if (mod & GL_2X_BIT_ATI)
 	 val[i] = 2 * val[i];

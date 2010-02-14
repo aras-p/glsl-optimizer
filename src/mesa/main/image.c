@@ -5662,7 +5662,7 @@ clip_right_or_top(GLint *srcX0, GLint *srcX1,
       /* chop off [t, 1] part */
       ASSERT(t >= 0.0 && t <= 1.0);
       *dstX1 = maxValue;
-      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5;
+      bias = (*srcX0 < *srcX1) ? 0.5F : -0.5F;
       *srcX1 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
    }
    else if (*dstX0 > maxValue) {
@@ -5672,7 +5672,7 @@ clip_right_or_top(GLint *srcX0, GLint *srcX1,
       /* chop off [t, 1] part */
       ASSERT(t >= 0.0 && t <= 1.0);
       *dstX0 = maxValue;
-      bias = (*srcX0 < *srcX1) ? -0.5 : 0.5;
+      bias = (*srcX0 < *srcX1) ? -0.5F : 0.5F;
       *srcX0 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
    }
 }
@@ -5695,7 +5695,7 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
       /* chop off [0, t] part */
       ASSERT(t >= 0.0 && t <= 1.0);
       *dstX0 = minValue;
-      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5; /* flipped??? */
+      bias = (*srcX0 < *srcX1) ? 0.5F : -0.5F; /* flipped??? */
       *srcX0 = *srcX0 + (GLint) (t * (*srcX1 - *srcX0) + bias);
    }
    else if (*dstX1 < minValue) {
@@ -5705,7 +5705,7 @@ clip_left_or_bottom(GLint *srcX0, GLint *srcX1,
       /* chop off [0, t] part */
       ASSERT(t >= 0.0 && t <= 1.0);
       *dstX1 = minValue;
-      bias = (*srcX0 < *srcX1) ? 0.5 : -0.5;
+      bias = (*srcX0 < *srcX1) ? 0.5F : -0.5F;
       *srcX1 = *srcX1 + (GLint) (t * (*srcX0 - *srcX1) + bias);
    }
 }

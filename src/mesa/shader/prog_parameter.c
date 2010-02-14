@@ -209,7 +209,7 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
 {
    /* first check if this is a duplicate constant */
    GLint pos;
-   for (pos = 0; pos < paramList->NumParameters; pos++) {
+   for (pos = 0; pos < (GLint)paramList->NumParameters; pos++) {
       const GLfloat *pvals = paramList->ParameterValues[pos];
       if (pvals[0] == values[0] &&
           pvals[1] == values[1] &&

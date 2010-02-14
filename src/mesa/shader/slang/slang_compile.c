@@ -239,7 +239,7 @@ parse_general_number(slang_parse_ctx *ctx, float *number)
    }
 
    parse_identifier_str(ctx, &flt);
-   flt = strdup(flt);
+   flt = _mesa_strdup(flt);
    if (!flt) {
       return 0;
    }

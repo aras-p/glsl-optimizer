@@ -236,7 +236,7 @@ make_color_buffer_mask(GLcontext *ctx, GLint drawbuffer)
          mask |= BUFFER_BIT_BACK_RIGHT;
       break;
    default:
-      if (drawbuffer < 0 || drawbuffer >= ctx->Const.MaxDrawBuffers) {
+      if (drawbuffer < 0 || drawbuffer >= (GLint)ctx->Const.MaxDrawBuffers) {
          mask = INVALID_MASK;
       }
       else if (att[BUFFER_COLOR0 + drawbuffer].Renderbuffer) {
@@ -306,11 +306,11 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
              * floating point state var.  This will not always work.  We'll
              * need a new ctx->Driver.ClearBuffer() hook....
              */
-            GLfloat clearSave[4];
+            GLclampf clearSave[4];
             /* save color */
             COPY_4V(clearSave, ctx->Color.ClearColor);
             /* set color */
-            COPY_4V(ctx->Color.ClearColor, value);
+            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
@@ -365,11 +365,11 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
              * floating point state var.  This will not always work.  We'll
              * need a new ctx->Driver.ClearBuffer() hook....
              */
-            GLfloat clearSave[4];
+            GLclampf clearSave[4];
             /* save color */
             COPY_4V(clearSave, ctx->Color.ClearColor);
             /* set color */
-            COPY_4V(ctx->Color.ClearColor, value);
+            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
@@ -423,7 +423,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
           * XXX in the future we may have a new ctx->Driver.ClearBuffer()
           * hook instead.
           */
-         const GLfloat clearSave = ctx->Depth.Clear;
+         const GLclampd clearSave = ctx->Depth.Clear;
          ctx->Depth.Clear = *value;
          if (ctx->Driver.ClearDepth)
             ctx->Driver.ClearDepth(ctx, *value);
@@ -443,11 +443,11 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
             return;
          }
          else if (mask) {
-            GLfloat clearSave[4];
+            GLclampf clearSave[4];
             /* save color */
             COPY_4V(clearSave, ctx->Color.ClearColor);
             /* set color */
-            COPY_4V(ctx->Color.ClearColor, value);
+            COPY_4V_CAST(ctx->Color.ClearColor, value, GLclampf);
             if (ctx->Driver.ClearColor)
                ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
@@ -503,7 +503,7 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
 
    {
       /* save current clear values */
-      const GLfloat clearDepthSave = ctx->Depth.Clear;
+      const GLclampd clearDepthSave = ctx->Depth.Clear;
       const GLuint clearStencilSave = ctx->Stencil.Clear;
 
       /* set new clear values */

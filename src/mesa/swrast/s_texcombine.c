@@ -368,7 +368,7 @@ texture_combine( GLcontext *ctx, GLuint unit, GLuint n,
                            (arg0[i][GCOMP] - 0.5F) * (arg1[i][GCOMP] - 0.5F) +
                            (arg0[i][BCOMP] - 0.5F) * (arg1[i][BCOMP] - 0.5F))
                * 4.0F * scaleRGB;
-            dot = CLAMP(dot, 0.0, 1.0F);
+            dot = CLAMP(dot, 0.0F, 1.0F);
             rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = dot;
          }
          break;

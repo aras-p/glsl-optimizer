@@ -3117,7 +3117,7 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    if (start >= end)
       return GL_FALSE; /* degenerate case */
 
-   if (end - start > MAX_FOR_LOOP_UNROLL_ITERATIONS) {
+   if ((GLuint)(end - start) > MAX_FOR_LOOP_UNROLL_ITERATIONS) {
       slang_info_log_print(A->log,
                            "Note: 'for (%s=%d; %s<%d; ++%s)' is too"
                            " many iterations to unroll",

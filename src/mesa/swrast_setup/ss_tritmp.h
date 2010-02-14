@@ -132,9 +132,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  saved_index[1] = v[1]->attrib[FRAG_ATTRIB_CI][0];
 		  saved_index[2] = v[2]->attrib[FRAG_ATTRIB_CI][0];
 		  
-		  SS_IND(v[0]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e0]);
-		  SS_IND(v[1]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e1]);
-		  SS_IND(v[2]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e2]);
+		  SS_IND(v[0]->attrib[FRAG_ATTRIB_CI][0], vbindex[e0]);
+		  SS_IND(v[1]->attrib[FRAG_ATTRIB_CI][0], vbindex[e1]);
+		  SS_IND(v[2]->attrib[FRAG_ATTRIB_CI][0], vbindex[e2]);
 	       }
 	    }
 	 }
@@ -159,9 +159,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    offset += MAX2(dzdx, dzdy) * ctx->Polygon.OffsetFactor;
 	 }
          /* new Z values */
-         oz0 = CLAMP(v[0]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
-         oz1 = CLAMP(v[1]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
-         oz2 = CLAMP(v[2]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
+         oz0 = CLAMP(v[0]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
+         oz1 = CLAMP(v[1]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
+         oz2 = CLAMP(v[2]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
       }
    }
 

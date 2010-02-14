@@ -590,7 +590,7 @@ getteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
+   const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLenum baseFormat;
 
    if (maxLevels == 0) {
@@ -776,7 +776,7 @@ getcompressedteximage_error_check(GLcontext *ctx, GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   const GLuint maxLevels = _mesa_max_texture_levels(ctx, target);
+   const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
 
    if (maxLevels == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImage(target=0x%x)",

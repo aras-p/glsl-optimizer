@@ -599,13 +599,13 @@ store_vector4ui(const struct prog_instruction *inst,
 
    if (inst->CondUpdate) {
       if (writeMask & WRITEMASK_X)
-         machine->CondCodes[0] = generate_cc(value[0]);
+         machine->CondCodes[0] = generate_cc((float)value[0]);
       if (writeMask & WRITEMASK_Y)
-         machine->CondCodes[1] = generate_cc(value[1]);
+         machine->CondCodes[1] = generate_cc((float)value[1]);
       if (writeMask & WRITEMASK_Z)
-         machine->CondCodes[2] = generate_cc(value[2]);
+         machine->CondCodes[2] = generate_cc((float)value[2]);
       if (writeMask & WRITEMASK_W)
-         machine->CondCodes[3] = generate_cc(value[3]);
+         machine->CondCodes[3] = generate_cc((float)value[3]);
 #if DEBUG_PROG
       printf("CondCodes=(%s,%s,%s,%s) for:\n",
              _mesa_condcode_string(machine->CondCodes[0]),
@@ -1000,7 +1000,7 @@ _mesa_execute_program(GLcontext * ctx,
                val = -FLT_MAX;
             }
             else {
-               val = log(a[0]) * 1.442695F;
+               val = (float)(log(a[0]) * 1.442695F);
             }
             result[0] = result[1] = result[2] = result[3] = val;
             store_vector4(inst, machine, result);
@@ -1065,7 +1065,7 @@ _mesa_execute_program(GLcontext * ctx,
 		  /* The fast LOG2 macro doesn't meet the precision
 		   * requirements.
 		   */
-                  q[2] = (log(t[0]) * 1.442695F);
+                  q[2] = (float)(log(t[0]) * 1.442695F);
                }
             }
             else {

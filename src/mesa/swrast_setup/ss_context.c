@@ -122,7 +122,7 @@ setup_vertex_format(GLcontext *ctx)
                            swsetup->last_index_bitset)) {
       DECLARE_RENDERINPUTS(index_bitset);
       struct tnl_attr_map map[_TNL_ATTRIB_MAX];
-      int i, e = 0;
+      unsigned int i, e = 0;
 
       swsetup->intColors = intColors;
 

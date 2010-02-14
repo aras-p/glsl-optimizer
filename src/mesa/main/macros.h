@@ -83,14 +83,14 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 
 
 /** Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
-#define UINT_TO_FLOAT(U)    ((GLfloat) (U) * (1.0F / 4294967295.0))
+#define UINT_TO_FLOAT(U)    ((GLfloat) ((U) * (1.0F / 4294967295.0)))
 
 /** Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
 #define FLOAT_TO_UINT(X)    ((GLuint) ((X) * 4294967295.0))
 
 
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
-#define INT_TO_FLOAT(I)     ((2.0F * (I) + 1.0F) * (1.0F/4294967294.0))
+#define INT_TO_FLOAT(I)     ((GLfloat) ((2.0F * (I) + 1.0F) * (1.0F/4294967294.0)))
 
 /** Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
 /* causes overflow:

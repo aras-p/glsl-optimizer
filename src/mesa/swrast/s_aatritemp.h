@@ -328,11 +328,11 @@
          
 #if defined(DO_ATTRIBS)
          /* compute attributes at left-most fragment */
-         span.attrStart[FRAG_ATTRIB_WPOS][3] = solve_plane(ix + 1.5, iy + 0.5F, wPlane);
+         span.attrStart[FRAG_ATTRIB_WPOS][3] = solve_plane(ix + 1.5F, iy + 0.5F, wPlane);
          ATTRIB_LOOP_BEGIN
             GLuint c;
             for (c = 0; c < 4; c++) {
-               span.attrStart[attr][c] = solve_plane(ix + 1.5, iy + 0.5F, attrPlane[attr][c]);
+               span.attrStart[attr][c] = solve_plane(ix + 1.5F, iy + 0.5F, attrPlane[attr][c]);
             }
          ATTRIB_LOOP_END
 #endif

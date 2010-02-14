@@ -570,15 +570,15 @@ _mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program)
 					inst->DstReg.Index + 1);
       }
       if (inst->SrcReg[0].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[0].Index + 1);
       }
       if (inst->SrcReg[1].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[1].Index + 1);
       }
       if (inst->SrcReg[2].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[2].Index + 1);
       }
    }
