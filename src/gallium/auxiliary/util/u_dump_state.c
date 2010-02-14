@@ -450,8 +450,10 @@ util_dump_depth_stencil_alpha_state(struct os_stream *stream, const struct pipe_
    util_dump_member_begin(stream, "depth");
    util_dump_struct_begin(stream, "pipe_depth_state");
    util_dump_member(stream, bool, &state->depth, enabled);
-   util_dump_member(stream, bool, &state->depth, writemask);
-   util_dump_member(stream, uint, &state->depth, func);
+   if (state->depth.enabled) {
+      util_dump_member(stream, bool, &state->depth, writemask);
+      util_dump_member(stream, enum_func, &state->depth, func);
+   }
    util_dump_struct_end(stream);
    util_dump_member_end(stream);
 
@@ -461,12 +463,14 @@ util_dump_depth_stencil_alpha_state(struct os_stream *stream, const struct pipe_
       util_dump_elem_begin(stream);
       util_dump_struct_begin(stream, "pipe_stencil_state");
       util_dump_member(stream, bool, &state->stencil[i], enabled);
-      util_dump_member(stream, enum_func, &state->stencil[i], func);
-      util_dump_member(stream, uint, &state->stencil[i], fail_op);
-      util_dump_member(stream, uint, &state->stencil[i], zpass_op);
-      util_dump_member(stream, uint, &state->stencil[i], zfail_op);
-      util_dump_member(stream, uint, &state->stencil[i], valuemask);
-      util_dump_member(stream, uint, &state->stencil[i], writemask);
+      if (state->stencil[i].enabled) {
+         util_dump_member(stream, enum_func, &state->stencil[i], func);
+         util_dump_member(stream, uint, &state->stencil[i], fail_op);
+         util_dump_member(stream, uint, &state->stencil[i], zpass_op);
+         util_dump_member(stream, uint, &state->stencil[i], zfail_op);
+         util_dump_member(stream, uint, &state->stencil[i], valuemask);
+         util_dump_member(stream, uint, &state->stencil[i], writemask);
+      }
       util_dump_struct_end(stream);
       util_dump_elem_end(stream);
    }
@@ -476,8 +480,10 @@ util_dump_depth_stencil_alpha_state(struct os_stream *stream, const struct pipe_
    util_dump_member_begin(stream, "alpha");
    util_dump_struct_begin(stream, "pipe_alpha_state");
    util_dump_member(stream, bool, &state->alpha, enabled);
-   util_dump_member(stream, enum_func, &state->alpha, func);
-   util_dump_member(stream, float, &state->alpha, ref_value);
+   if (state->alpha.enabled) {
+      util_dump_member(stream, enum_func, &state->alpha, func);
+      util_dump_member(stream, float, &state->alpha, ref_value);
+   }
    util_dump_struct_end(stream);
    util_dump_member_end(stream);
 
@@ -490,14 +496,15 @@ util_dump_rt_blend_state(struct os_stream *stream, const struct pipe_rt_blend_st
    util_dump_struct_begin(stream, "pipe_rt_blend_state");
 
    util_dump_member(stream, uint, state, blend_enable);
+   if (state->blend_enable) {
+      util_dump_member(stream, enum_blend_func, state, rgb_func);
+      util_dump_member(stream, enum_blend_factor, state, rgb_src_factor);
+      util_dump_member(stream, enum_blend_factor, state, rgb_dst_factor);
 
-   util_dump_member(stream, enum_blend_func, state, rgb_func);
-   util_dump_member(stream, enum_blend_factor, state, rgb_src_factor);
-   util_dump_member(stream, enum_blend_factor, state, rgb_dst_factor);
-
-   util_dump_member(stream, enum_blend_func, state, alpha_func);
-   util_dump_member(stream, enum_blend_factor, state, alpha_src_factor);
-   util_dump_member(stream, enum_blend_factor, state, alpha_dst_factor);
+      util_dump_member(stream, enum_blend_func, state, alpha_func);
+      util_dump_member(stream, enum_blend_factor, state, alpha_src_factor);
+      util_dump_member(stream, enum_blend_factor, state, alpha_dst_factor);
+   }
 
    util_dump_member(stream, uint, state, colormask);
 
@@ -519,15 +526,18 @@ util_dump_blend_state(struct os_stream *stream, const struct pipe_blend_state *s
    util_dump_member(stream, bool, state, dither);
 
    util_dump_member(stream, bool, state, logicop_enable);
-   util_dump_member(stream, enum_func, state, logicop_func);
+   if (state->logicop_enable) {
+      util_dump_member(stream, enum_func, state, logicop_func);
+   }
+   else {
+      util_dump_member(stream, bool, state, independent_blend_enable);
 
-   util_dump_member(stream, bool, state, independent_blend_enable);
-
-   util_dump_member_begin(stream, "rt");
-   if (state->independent_blend_enable)
-      valid_entries = PIPE_MAX_COLOR_BUFS;
-   util_dump_struct_array(stream, rt_blend_state, state->rt, valid_entries);
-   util_dump_member_end(stream);
+      util_dump_member_begin(stream, "rt");
+      if (state->independent_blend_enable)
+         valid_entries = PIPE_MAX_COLOR_BUFS;
+      util_dump_struct_array(stream, rt_blend_state, state->rt, valid_entries);
+      util_dump_member_end(stream);
+   }
 
    util_dump_struct_end(stream);
 }
@@ -595,7 +605,7 @@ util_dump_sampler_state(struct os_stream *stream, const struct pipe_sampler_stat
    util_dump_member(stream, uint, state, min_mip_filter);
    util_dump_member(stream, uint, state, mag_img_filter);
    util_dump_member(stream, uint, state, compare_mode);
-   util_dump_member(stream, uint, state, compare_func);
+   util_dump_member(stream, enum_func, state, compare_func);
    util_dump_member(stream, bool, state, normalized_coords);
    util_dump_member(stream, uint, state, max_anisotropy);
    util_dump_member(stream, float, state, lod_bias);

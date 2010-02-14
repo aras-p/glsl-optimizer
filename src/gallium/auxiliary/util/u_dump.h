@@ -51,6 +51,11 @@ extern "C" {
 struct os_stream;
 
 
+/* Duplicated here for convenience */
+extern struct os_stream *
+os_log_stream;
+
+
 /*
  * p_defines.h
  *
