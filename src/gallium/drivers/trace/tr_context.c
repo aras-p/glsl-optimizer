@@ -843,7 +843,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, shader);
    trace_dump_arg(uint, index);
-   trace_dump_arg(constant_buffer, buffer);
+   trace_dump_arg(ptr, buffer);
 
    /* XXX hmm? */
    if (buffer) {

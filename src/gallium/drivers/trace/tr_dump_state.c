@@ -227,24 +227,6 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
 }
 
 
-void trace_dump_constant_buffer(const struct pipe_buffer *state)
-{
-   if (!trace_dumping_enabled_locked())
-      return;
-
-   if(!state) {
-      trace_dump_null();
-      return;
-   }
-
-   trace_dump_struct_begin("pipe_constant_buffer");
-
-   trace_dump_reference(&state->reference);
-
-   trace_dump_struct_end();
-}
-
-
 void trace_dump_shader_state(const struct pipe_shader_state *state)
 {
    static char str[8192];
@@ -322,6 +304,10 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
 
 static void trace_dump_rt_blend_state(const struct pipe_rt_blend_state *state)
 {
+   trace_dump_struct_begin("pipe_rt_blend_state");
+
+   trace_dump_member(uint, state, blend_enable);
+
    trace_dump_member(uint, state, rgb_func);
    trace_dump_member(uint, state, rgb_src_factor);
    trace_dump_member(uint, state, rgb_dst_factor);
@@ -332,11 +318,13 @@ static void trace_dump_rt_blend_state(const struct pipe_rt_blend_state *state)
 
    trace_dump_member(uint, state, colormask);
 
+   trace_dump_struct_end();
 }
 
 void trace_dump_blend_state(const struct pipe_blend_state *state)
 {
    unsigned valid_entries = 1;
+
    if (!trace_dumping_enabled_locked())
       return;
 
@@ -354,10 +342,11 @@ void trace_dump_blend_state(const struct pipe_blend_state *state)
 
    trace_dump_member(bool, state, independent_blend_enable);
 
+   trace_dump_member_begin("rt");
    if (state->independent_blend_enable)
       valid_entries = PIPE_MAX_COLOR_BUFS;
-
    trace_dump_struct_array(rt_blend_state, state->rt, valid_entries);
+   trace_dump_member_end();
 
    trace_dump_struct_end();
 }
