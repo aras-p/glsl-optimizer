@@ -60,9 +60,6 @@ os_stdc_stream_close(struct os_stream *_stream)
 {
    struct os_stdc_stream *stream = os_stdc_stream(_stream);
 
-   if(!stream)
-      return;
-   
    fclose(stream->file);
 
    free(stream);
@@ -74,9 +71,6 @@ os_stdc_stream_write(struct os_stream *_stream, const void *data, size_t size)
 {
    struct os_stdc_stream *stream = os_stdc_stream(_stream);
 
-   if(!stream)
-      return FALSE;
-   
    return fwrite(data, size, 1, stream->file) == size ? TRUE : FALSE;
 }
 
@@ -86,9 +80,6 @@ os_stdc_stream_flush(struct os_stream *_stream)
 {
    struct os_stdc_stream *stream = os_stdc_stream(_stream);
 
-   if(!stream)
-      return;
-   
    fflush(stream->file);
 }
 
@@ -98,7 +89,7 @@ os_file_stream_create(const char *filename)
 {
    struct os_stdc_stream *stream;
 
-   stream = (struct os_stdc_stream *)calloc(1, sizeof(struct os_stream));
+   stream = (struct os_stdc_stream *)calloc(1, sizeof(*stream));
    if(!stream)
       goto no_stream;
 
