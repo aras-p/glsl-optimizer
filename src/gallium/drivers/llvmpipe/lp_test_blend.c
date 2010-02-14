@@ -109,12 +109,12 @@ write_tsv_row(FILE *fp,
 
    fprintf(fp,
            "%s\t%s\t%s\t%s\t%s\t%s\n",
-           debug_dump_blend_func(blend->rt[0].rgb_func, TRUE),
-           debug_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
-           debug_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
-           debug_dump_blend_func(blend->rt[0].alpha_func, TRUE),
-           debug_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
-           debug_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
+           util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
+           util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
+           util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fflush(fp);
 }
@@ -136,12 +136,12 @@ dump_blend_type(FILE *fp,
 
    fprintf(fp,
            " %s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-           "rgb_func",         debug_dump_blend_func(blend->rt[0].rgb_func, TRUE),
-           "rgb_src_factor",   debug_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
-           "rgb_dst_factor",   debug_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
-           "alpha_func",       debug_dump_blend_func(blend->rt[0].alpha_func, TRUE),
-           "alpha_src_factor", debug_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
-           "alpha_dst_factor", debug_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
+           "rgb_func",         util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
+           "rgb_src_factor",   util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           "rgb_dst_factor",   util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           "alpha_func",       util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
+           "alpha_src_factor", util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           "alpha_dst_factor", util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fprintf(fp, " ...\n");
    fflush(fp);

@@ -33,7 +33,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "util/u_debug_dump.h"
+#include "util/u_dump.h"
 #include "draw/draw_context.h"
 #include "lp_screen.h"
 #include "lp_context.h"

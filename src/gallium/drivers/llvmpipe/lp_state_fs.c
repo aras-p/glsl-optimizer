@@ -65,7 +65,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
-#include "util/u_debug_dump.h"
+#include "util/u_dump.h"
 #include "os/os_time.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
@@ -862,23 +862,23 @@ generate_variant(struct llvmpipe_context *lp,
       tgsi_dump(shader->base.tokens, 0);
       if(key->depth.enabled) {
          debug_printf("depth.format = %s\n", util_format_name(key->zsbuf_format));
-         debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
+         debug_printf("depth.func = %s\n", util_dump_func(key->depth.func, TRUE));
          debug_printf("depth.writemask = %u\n", key->depth.writemask);
       }
       if(key->alpha.enabled) {
-         debug_printf("alpha.func = %s\n", debug_dump_func(key->alpha.func, TRUE));
+         debug_printf("alpha.func = %s\n", util_dump_func(key->alpha.func, TRUE));
          debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
       }
       if(key->blend.logicop_enable) {
          debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
       }
       else if(key->blend.rt[0].blend_enable) {
-         debug_printf("blend.rgb_func = %s\n",   debug_dump_blend_func  (key->blend.rt[0].rgb_func, TRUE));
-         debug_printf("rgb_src_factor = %s\n",   debug_dump_blend_factor(key->blend.rt[0].rgb_src_factor, TRUE));
-         debug_printf("rgb_dst_factor = %s\n",   debug_dump_blend_factor(key->blend.rt[0].rgb_dst_factor, TRUE));
-         debug_printf("alpha_func = %s\n",       debug_dump_blend_func  (key->blend.rt[0].alpha_func, TRUE));
-         debug_printf("alpha_src_factor = %s\n", debug_dump_blend_factor(key->blend.rt[0].alpha_src_factor, TRUE));
-         debug_printf("alpha_dst_factor = %s\n", debug_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
+         debug_printf("blend.rgb_func = %s\n",   util_dump_blend_func  (key->blend.rt[0].rgb_func, TRUE));
+         debug_printf("rgb_src_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_src_factor, TRUE));
+         debug_printf("rgb_dst_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_dst_factor, TRUE));
+         debug_printf("alpha_func = %s\n",       util_dump_blend_func  (key->blend.rt[0].alpha_func, TRUE));
+         debug_printf("alpha_src_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_src_factor, TRUE));
+         debug_printf("alpha_dst_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
       }
       debug_printf("blend.colormask = 0x%x\n", key->blend.rt[0].colormask);
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
@@ -887,23 +887,23 @@ generate_variant(struct llvmpipe_context *lp,
             debug_printf("  .format = %s\n",
                          util_format_name(key->sampler[i].format));
             debug_printf("  .target = %s\n",
-                         debug_dump_tex_target(key->sampler[i].target, TRUE));
+                         util_dump_tex_target(key->sampler[i].target, TRUE));
             debug_printf("  .pot = %u %u %u\n",
                          key->sampler[i].pot_width,
                          key->sampler[i].pot_height,
                          key->sampler[i].pot_depth);
             debug_printf("  .wrap = %s %s %s\n",
-                         debug_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
-                         debug_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
-                         debug_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
+                         util_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
+                         util_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
+                         util_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
             debug_printf("  .min_img_filter = %s\n",
-                         debug_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
+                         util_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
             debug_printf("  .min_mip_filter = %s\n",
-                         debug_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
+                         util_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
             debug_printf("  .mag_img_filter = %s\n",
-                         debug_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
+                         util_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
             if(key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
-               debug_printf("  .compare_func = %s\n", debug_dump_func(key->sampler[i].compare_func, TRUE));
+               debug_printf("  .compare_func = %s\n", util_dump_func(key->sampler[i].compare_func, TRUE));
             debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
          }
       }
