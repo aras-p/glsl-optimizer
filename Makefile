@@ -173,11 +173,14 @@ sunos5-v9 \
 sunos5-v9-static \
 sunos5-v9-cc-g++ \
 ultrix-gcc:
-	@ if test -f configs/current || test -L configs/current ; then \
-		echo "Please run 'make realclean' before changing configs" ; \
-		exit 1 ; \
+	@ if test -f configs/current -o -L configs/current; then \
+		if ! cmp configs/$@ configs/current > /dev/null; then \
+			echo "Please run 'make realclean' before changing configs" ; \
+			exit 1 ; \
+		fi ; \
+	else \
+		cd configs && rm -f current && ln -s $@ current ; \
 	fi
-	(cd configs && rm -f current && ln -s $@ current)
 	$(MAKE) default
 
 
