@@ -412,13 +412,19 @@ _mesa_is_pow_two(int x)
  * Source for the fallback implementation is
  * Sean Eron Anderson's webpage "Bit Twiddling Hacks"
  * http://graphics.stanford.edu/~seander/bithacks.html
+ *
+ * When using builtin function have to do some work
+ * for case when passed values 1 to prevent hiting
+ * undefined result from __builtin_clz. Undefined
+ * results would be different depending on optimization
+ * level used for build.
  */
 static INLINE int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
 #ifdef __GNUC__
-	x--;
-	return 1 << ((__builtin_clz(x) ^ 31) + 1);
+	uint32_t y = (x != 1);
+	return (1 + y) << ((__builtin_clz(x - y) ^ 31) );
 #else
 	x--;
 	x |= x >> 1;
@@ -435,11 +441,11 @@ static INLINE int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
 #ifdef __GNUC__
-	x--;
+	uint64_t y = (x != 1);
 	if (sizeof(x) == sizeof(long))
-		return 1 << ((__builtin_clzl(x) ^ 63) + 1);
+		return (1 + y) << ((__builtin_clzl(x - y) ^ 63));
 	else
-		return 1 << ((__builtin_clzll(x) ^ 63) + 1);
+		return (1 + y) << ((__builtin_clzll(x - y) ^ 63));
 #else
 	x--;
 	x |= x >> 1;
