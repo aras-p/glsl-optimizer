@@ -99,6 +99,17 @@ struct os_stream *
 os_null_stream_create(void);
 
 
+struct os_stream *
+os_str_stream_create(size_t initial_size);
+
+
+const char *
+os_str_stream_get(struct os_stream *stream);
+
+char *
+os_str_stream_get_and_close(struct os_stream *stream);
+
+
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #define os_file_stream_create(_filename) os_null_stream_create()
 #endif
