@@ -2260,7 +2260,7 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 {
-    R700ALUInstruction            * alu_instruction_ptr;
+    R700ALUInstruction            * alu_instruction_ptr = NULL;
     R700ALUInstructionHalfLiteral * alu_instruction_ptr_hl;
     R700ALUInstructionFullLiteral * alu_instruction_ptr_fl;
 
