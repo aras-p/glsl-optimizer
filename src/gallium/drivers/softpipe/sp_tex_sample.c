@@ -1682,6 +1682,9 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
          break;
       default:
          assert(0 && "bad cube face");
+         sc = 0.0F;
+         tc = 0.0F;
+         ma = 0.0F;
       }
 
       {
