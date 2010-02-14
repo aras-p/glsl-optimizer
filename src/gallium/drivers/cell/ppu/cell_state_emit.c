@@ -28,6 +28,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "cell_context.h"
 #include "cell_gen_fragment.h"
 #include "cell_state.h"
@@ -207,8 +208,8 @@ cell_emit_state(struct cell_context *cell)
       fb->width = cell->framebuffer.width;
       fb->height = cell->framebuffer.height;
 #if 0
-      printf("EMIT color format %s\n", pf_name(fb->color_format));
-      printf("EMIT depth format %s\n", pf_name(fb->depth_format));
+      printf("EMIT color format %s\n", util_format_name(fb->color_format));
+      printf("EMIT depth format %s\n", util_format_name(fb->depth_format));
 #endif
    }
 
