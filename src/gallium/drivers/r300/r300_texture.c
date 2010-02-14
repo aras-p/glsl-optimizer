@@ -724,6 +724,42 @@ static void r300_setup_flags(struct r300_texture* tex)
                    !util_is_power_of_two(tex->tex.height0);
 }
 
+static void r300_setup_tiling(struct pipe_screen *screen,
+                              struct r300_texture *tex)
+{
+    enum pipe_format format = tex->tex.format;
+    boolean rv350_mode = r300_screen(screen)->caps->family >= CHIP_FAMILY_RV350;
+
+    if (util_format_is_compressed(format)) {
+        return;
+    }
+
+    if (tex->tex.width0 == 1 ||
+        tex->tex.height0 == 1) {
+        return;
+    }
+
+    /* Set microtiling. */
+    switch (util_format_get_blocksize(format)) {
+        case 1:
+        case 4:
+            tex->microtile = R300_BUFFER_TILED;
+            break;
+
+        /* XXX Square-tiling doesn't work with kernel older than 2.6.34,
+         * XXX need to check the DRM version */
+        /*case 2:
+        case 8:
+            tex->microtile = R300_BUFFER_SQUARETILED;
+            break;*/
+    }
+
+    /* Set macrotiling. */
+    if (r300_texture_macro_switch(tex, 0, rv350_mode)) {
+        tex->macrotile = R300_BUFFER_TILED;
+    }
+}
+
 /* Create a new texture. */
 static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
                                          const struct pipe_texture* template)
@@ -741,6 +777,9 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
     tex->tex.screen = screen;
 
     r300_setup_flags(tex);
+    if (!(template->tex_usage & R300_TEXTURE_USAGE_TRANSFER)) {
+        r300_setup_tiling(screen, tex);
+    }
     r300_setup_miptree(rscreen, tex);
     r300_setup_texture_state(rscreen, tex);
 
