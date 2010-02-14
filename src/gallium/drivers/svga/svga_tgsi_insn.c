@@ -525,6 +525,7 @@ static boolean emit_def_const( struct svga_shader_emitter *emit,
       break;
    default:
       assert(0);
+      opcode = inst_token( SVGA3DOP_NOP );
       break;
    }
 
