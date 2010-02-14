@@ -22,6 +22,9 @@
 
 #include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_texture.h"
+
+#include "util/u_format.h"
 
 static void r300_blitter_save_states(struct r300_context* r300)
 {
@@ -86,13 +89,13 @@ void r300_clear(struct pipe_context* pipe,
                        buffers, rgba, depth, stencil);
 }
 
-/* Copy a block of pixels from one surface to another. */
-void r300_surface_copy(struct pipe_context* pipe,
-                       struct pipe_surface* dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface* src,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height)
+/* Copy a block of pixels from one surface to another using HW. */
+static void r300_hw_copy(struct pipe_context* pipe,
+                         struct pipe_surface* dst,
+                         unsigned dstx, unsigned dsty,
+                         struct pipe_surface* src,
+                         unsigned srcx, unsigned srcy,
+                         unsigned width, unsigned height)
 {
     struct r300_context* r300 = r300_context(pipe);
 
@@ -112,6 +115,63 @@ void r300_surface_copy(struct pipe_context* pipe,
     /* Do a copy */
     util_blitter_copy(r300->blitter,
                       dst, dstx, dsty, src, srcx, srcy, width, height, TRUE);
+}
+
+/* Copy a block of pixels from one surface to another. */
+void r300_surface_copy(struct pipe_context* pipe,
+                       struct pipe_surface* dst,
+                       unsigned dstx, unsigned dsty,
+                       struct pipe_surface* src,
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height)
+{
+    enum pipe_format old_format = dst->texture->format;
+    enum pipe_format new_format = old_format;
+
+    assert(dst->texture->format == src->texture->format);
+
+    if (!pipe->screen->is_format_supported(pipe->screen,
+                                           old_format, src->texture->target,
+                                           PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                           PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+        switch (util_format_get_blocksize(old_format)) {
+            case 1:
+                new_format = PIPE_FORMAT_I8_UNORM;
+                break;
+            case 2:
+                new_format = PIPE_FORMAT_A4R4G4B4_UNORM;
+                break;
+            case 4:
+                new_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+                break;
+            default:
+                debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"
+                             "r300: surface_copy: Software fallback doesn't work for tiled textures.\n",
+                             util_format_name(old_format));
+        }
+    }
+
+    if (old_format != new_format) {
+        dst->format = new_format;
+        src->format = new_format;
+
+        r300_texture_reinterpret_format(pipe->screen,
+                                        dst->texture, new_format);
+        r300_texture_reinterpret_format(pipe->screen,
+                                        src->texture, new_format);
+    }
+
+    r300_hw_copy(pipe, dst, dstx, dsty, src, srcx, srcy, width, height);
+
+    if (old_format != new_format) {
+        dst->format = old_format;
+        src->format = old_format;
+
+        r300_texture_reinterpret_format(pipe->screen,
+                                        dst->texture, old_format);
+        r300_texture_reinterpret_format(pipe->screen,
+                                        src->texture, old_format);
+    }
 }
 
 /* Fill a region of a surface with a constant value. */

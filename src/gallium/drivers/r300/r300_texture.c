@@ -85,6 +85,20 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
                pt->width0, pt->height0, pt->last_level);
 }
 
+void r300_texture_reinterpret_format(struct pipe_screen *screen,
+                                     struct pipe_texture *tex,
+                                     enum pipe_format new_format)
+{
+    struct r300_screen *r300screen = r300_screen(screen);
+
+    SCREEN_DBG(r300screen, DBG_TEX, "r300: Reinterpreting format: %s -> %s\n",
+               util_format_name(tex->format), util_format_name(new_format));
+
+    tex->format = new_format;
+
+    r300_setup_texture_state(r300_screen(screen), (struct r300_texture*)tex);
+}
+
 unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
                                  unsigned zslice, unsigned face)
 {

@@ -38,6 +38,10 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
 unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
                                  unsigned zslice, unsigned face);
 
+void r300_texture_reinterpret_format(struct pipe_screen *screen,
+                                     struct pipe_texture *tex,
+                                     enum pipe_format new_format);
+
 /* Translate a pipe_format into a useful texture format for sampling.
  *
  * R300_EASY_TX_FORMAT swizzles the texture.
