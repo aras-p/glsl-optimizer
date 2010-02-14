@@ -157,7 +157,7 @@ st_context_create(struct st_device *st_dev)
    
    st_device_reference(&st_ctx->st_dev, st_dev);
    
-   st_ctx->pipe = st_dev->screen->create_context(st_dev->screen, NULL);
+   st_ctx->pipe = st_dev->screen->context_create(st_dev->screen, NULL);
    if(!st_ctx->pipe) {
       st_context_destroy(st_ctx);
       return NULL;
