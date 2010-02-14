@@ -44,17 +44,6 @@ void trace_dump_format(enum pipe_format format)
 }
 
 
-static void trace_dump_reference(const struct pipe_reference *reference)
-{
-   if (!trace_dumping_enabled_locked())
-      return;
-
-   trace_dump_struct_begin("pipe_reference");
-   trace_dump_member(int, reference, count);
-   trace_dump_struct_end();
-}
-
-
 void trace_dump_template(const struct pipe_texture *templat)
 {
    if (!trace_dumping_enabled_locked())
@@ -446,8 +435,6 @@ void trace_dump_surface(const struct pipe_surface *state)
    }
 
    trace_dump_struct_begin("pipe_surface");
-
-   trace_dump_reference(&state->reference);
 
    trace_dump_member(format, state, format);
    trace_dump_member(uint, state, width);
