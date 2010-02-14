@@ -28,15 +28,12 @@
 
 #include "util/u_memory.h"
 #include "util/u_debug.h" 
-#include "util/u_debug_dump.h" 
-
-
-#define DEBUG_DUMP_INVALID_NAME "<invalid>"
+#include "util/u_dump.h"
 
 
 #if 0
 static const char *
-debug_dump_strip_prefix(const char *name,
+util_dump_strip_prefix(const char *name,
                         const char *prefix) 
 {
    const char *stripped;
@@ -55,30 +52,30 @@ debug_dump_strip_prefix(const char *name,
 #endif
 
 static const char *
-debug_dump_enum_continuous(unsigned value, 
+util_dump_enum_continuous(unsigned value,
                            unsigned num_names,
                            const char **names)
 {
    if (value >= num_names)
-      return DEBUG_DUMP_INVALID_NAME;
+      return UTIL_DUMP_INVALID_NAME;
    return names[value];
 }
 
 
-#define DEFINE_DEBUG_DUMP_CONTINUOUS(_name) \
+#define DEFINE_UTIL_DUMP_CONTINUOUS(_name) \
    const char * \
-   debug_dump_##_name(unsigned value, boolean shortened) \
+   util_dump_##_name(unsigned value, boolean shortened) \
    { \
       if(shortened) \
-         return debug_dump_enum_continuous(value, Elements(debug_dump_##_name##_short_names), debug_dump_##_name##_short_names); \
+         return util_dump_enum_continuous(value, Elements(util_dump_##_name##_short_names), util_dump_##_name##_short_names); \
       else \
-         return debug_dump_enum_continuous(value, Elements(debug_dump_##_name##_names), debug_dump_##_name##_names); \
+         return util_dump_enum_continuous(value, Elements(util_dump_##_name##_names), util_dump_##_name##_names); \
    }
 
 
 static const char *
-debug_dump_blend_factor_names[] = {
-   DEBUG_DUMP_INVALID_NAME, /* 0x0 */
+util_dump_blend_factor_names[] = {
+   UTIL_DUMP_INVALID_NAME, /* 0x0 */
    "PIPE_BLENDFACTOR_ONE",
    "PIPE_BLENDFACTOR_SRC_COLOR",
    "PIPE_BLENDFACTOR_SRC_ALPHA",
@@ -89,18 +86,18 @@ debug_dump_blend_factor_names[] = {
    "PIPE_BLENDFACTOR_CONST_ALPHA",
    "PIPE_BLENDFACTOR_SRC1_COLOR",
    "PIPE_BLENDFACTOR_SRC1_ALPHA",
-   DEBUG_DUMP_INVALID_NAME, /* 0x0b */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0c */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0d */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0e */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0f */
-   DEBUG_DUMP_INVALID_NAME, /* 0x10 */
+   UTIL_DUMP_INVALID_NAME, /* 0x0b */
+   UTIL_DUMP_INVALID_NAME, /* 0x0c */
+   UTIL_DUMP_INVALID_NAME, /* 0x0d */
+   UTIL_DUMP_INVALID_NAME, /* 0x0e */
+   UTIL_DUMP_INVALID_NAME, /* 0x0f */
+   UTIL_DUMP_INVALID_NAME, /* 0x10 */
    "PIPE_BLENDFACTOR_ZERO",
    "PIPE_BLENDFACTOR_INV_SRC_COLOR",
    "PIPE_BLENDFACTOR_INV_SRC_ALPHA",
    "PIPE_BLENDFACTOR_INV_DST_ALPHA",
    "PIPE_BLENDFACTOR_INV_DST_COLOR",
-   DEBUG_DUMP_INVALID_NAME, /* 0x16 */
+   UTIL_DUMP_INVALID_NAME, /* 0x16 */
    "PIPE_BLENDFACTOR_INV_CONST_COLOR",
    "PIPE_BLENDFACTOR_INV_CONST_ALPHA",
    "PIPE_BLENDFACTOR_INV_SRC1_COLOR",
@@ -108,8 +105,8 @@ debug_dump_blend_factor_names[] = {
 };
 
 static const char *
-debug_dump_blend_factor_short_names[] = {
-   DEBUG_DUMP_INVALID_NAME, /* 0x0 */
+util_dump_blend_factor_short_names[] = {
+   UTIL_DUMP_INVALID_NAME, /* 0x0 */
    "one",
    "src_color",
    "src_alpha",
@@ -120,29 +117,29 @@ debug_dump_blend_factor_short_names[] = {
    "const_alpha",
    "src1_color",
    "src1_alpha",
-   DEBUG_DUMP_INVALID_NAME, /* 0x0b */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0c */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0d */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0e */
-   DEBUG_DUMP_INVALID_NAME, /* 0x0f */
-   DEBUG_DUMP_INVALID_NAME, /* 0x10 */
+   UTIL_DUMP_INVALID_NAME, /* 0x0b */
+   UTIL_DUMP_INVALID_NAME, /* 0x0c */
+   UTIL_DUMP_INVALID_NAME, /* 0x0d */
+   UTIL_DUMP_INVALID_NAME, /* 0x0e */
+   UTIL_DUMP_INVALID_NAME, /* 0x0f */
+   UTIL_DUMP_INVALID_NAME, /* 0x10 */
    "zero",
    "inv_src_color",
    "inv_src_alpha",
    "inv_dst_alpha",
    "inv_dst_color",
-   DEBUG_DUMP_INVALID_NAME, /* 0x16 */
+   UTIL_DUMP_INVALID_NAME, /* 0x16 */
    "inv_const_color",
    "inv_const_alpha",
    "inv_src1_color",
    "inv_src1_alpha"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(blend_factor)
+DEFINE_UTIL_DUMP_CONTINUOUS(blend_factor)
 
 
 static const char *
-debug_dump_blend_func_names[] = {
+util_dump_blend_func_names[] = {
    "PIPE_BLEND_ADD",
    "PIPE_BLEND_SUBTRACT",
    "PIPE_BLEND_REVERSE_SUBTRACT",
@@ -151,7 +148,7 @@ debug_dump_blend_func_names[] = {
 };
 
 static const char *
-debug_dump_blend_func_short_names[] = {
+util_dump_blend_func_short_names[] = {
    "add",
    "sub",
    "rev_sub",
@@ -159,11 +156,11 @@ debug_dump_blend_func_short_names[] = {
    "max"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(blend_func)
+DEFINE_UTIL_DUMP_CONTINUOUS(blend_func)
 
 
 static const char *
-debug_dump_func_names[] = {
+util_dump_func_names[] = {
    "PIPE_FUNC_NEVER",
    "PIPE_FUNC_LESS",
    "PIPE_FUNC_EQUAL",
@@ -175,7 +172,7 @@ debug_dump_func_names[] = {
 };
 
 static const char *
-debug_dump_func_short_names[] = {
+util_dump_func_short_names[] = {
    "never",
    "less",
    "equal",
@@ -186,11 +183,11 @@ debug_dump_func_short_names[] = {
    "always"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(func)
+DEFINE_UTIL_DUMP_CONTINUOUS(func)
 
 
 static const char *
-debug_dump_tex_target_names[] = {
+util_dump_tex_target_names[] = {
    "PIPE_TEXTURE_1D",
    "PIPE_TEXTURE_2D",
    "PIPE_TEXTURE_3D",
@@ -198,18 +195,18 @@ debug_dump_tex_target_names[] = {
 };
 
 static const char *
-debug_dump_tex_target_short_names[] = {
+util_dump_tex_target_short_names[] = {
    "1d",
    "2d",
    "3d",
    "cube"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(tex_target)
+DEFINE_UTIL_DUMP_CONTINUOUS(tex_target)
 
 
 static const char *
-debug_dump_tex_wrap_names[] = {
+util_dump_tex_wrap_names[] = {
    "PIPE_TEX_WRAP_REPEAT",
    "PIPE_TEX_WRAP_CLAMP",
    "PIPE_TEX_WRAP_CLAMP_TO_EDGE",
@@ -221,7 +218,7 @@ debug_dump_tex_wrap_names[] = {
 };
 
 static const char *
-debug_dump_tex_wrap_short_names[] = {
+util_dump_tex_wrap_short_names[] = {
    "repeat",
    "clamp",
    "clamp_to_edge",
@@ -232,36 +229,36 @@ debug_dump_tex_wrap_short_names[] = {
    "mirror_clamp_to_border"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(tex_wrap)
+DEFINE_UTIL_DUMP_CONTINUOUS(tex_wrap)
 
 
 static const char *
-debug_dump_tex_mipfilter_names[] = {
+util_dump_tex_mipfilter_names[] = {
    "PIPE_TEX_MIPFILTER_NEAREST",
    "PIPE_TEX_MIPFILTER_LINEAR",
    "PIPE_TEX_MIPFILTER_NONE"
 };
 
 static const char *
-debug_dump_tex_mipfilter_short_names[] = {
+util_dump_tex_mipfilter_short_names[] = {
    "nearest",
    "linear",
    "none"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(tex_mipfilter)
+DEFINE_UTIL_DUMP_CONTINUOUS(tex_mipfilter)
 
 
 static const char *
-debug_dump_tex_filter_names[] = {
+util_dump_tex_filter_names[] = {
    "PIPE_TEX_FILTER_NEAREST",
    "PIPE_TEX_FILTER_LINEAR"
 };
 
 static const char *
-debug_dump_tex_filter_short_names[] = {
+util_dump_tex_filter_short_names[] = {
    "nearest",
    "linear"
 };
 
-DEFINE_DEBUG_DUMP_CONTINUOUS(tex_filter)
+DEFINE_UTIL_DUMP_CONTINUOUS(tex_filter)
