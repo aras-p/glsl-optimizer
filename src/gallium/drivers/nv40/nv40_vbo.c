@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_format.h"
 
 #include "nv40_context.h"
 #include "nv40_state.h"
@@ -34,7 +35,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 		*fmt = NV40TCL_VTXFMT_TYPE_USHORT;
 		break;
 	default:
-		NOUVEAU_ERR("Unknown format %s\n", pf_name(pipe));
+		NOUVEAU_ERR("Unknown format %s\n", util_format_name(pipe));
 		return 1;
 	}
 
@@ -60,7 +61,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 		*ncomp = 4;
 		break;
 	default:
-		NOUVEAU_ERR("Unknown format %s\n", pf_name(pipe));
+		NOUVEAU_ERR("Unknown format %s\n", util_format_name(pipe));
 		return 1;
 	}
 

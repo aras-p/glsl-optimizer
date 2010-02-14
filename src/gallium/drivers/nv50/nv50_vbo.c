@@ -23,7 +23,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
-
 #include "util/u_format.h"
 
 #include "nv50_context.h"
@@ -151,7 +150,7 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 	hw_size = nv50_vbo_size_to_hw(size, ve->nr_components);
 
 	if (!hw_type || !hw_size) {
-		NOUVEAU_ERR("unsupported vbo format: %s\n", pf_name(pf));
+		NOUVEAU_ERR("unsupported vbo format: %s\n", util_format_name(pf));
 		abort();
 		return 0x24e80000;
 	}

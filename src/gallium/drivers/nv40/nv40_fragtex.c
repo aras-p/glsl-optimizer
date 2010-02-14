@@ -1,3 +1,5 @@
+#include "util/u_format.h"
+
 #include "nv40_context.h"
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w,sx,sy,sz,sw)            \
@@ -53,7 +55,7 @@ nv40_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
-	NOUVEAU_ERR("unknown texture format %s\n", pf_name(pipe_format));
+	NOUVEAU_ERR("unknown texture format %s\n", util_format_name(pipe_format));
 	return NULL;
 }
 

@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include "util/u_format.h"
+
 #include "nv50_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
@@ -79,7 +81,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		NV50_CBUF_FORMAT_CASE(R16G16_UNORM);
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
-				    pf_name(fb->cbufs[i]->format));
+			            util_format_name(fb->cbufs[i]->format));
 			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
 			break;
 		}
@@ -116,7 +118,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		NV50_ZETA_FORMAT_CASE(Z32_FLOAT);
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
-				    pf_name(fb->zsbuf->format));
+			            util_format_name(fb->zsbuf->format));
 			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
 			break;
 		}

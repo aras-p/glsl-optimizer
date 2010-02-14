@@ -1,3 +1,5 @@
+#include "util/u_format.h"
+
 #include "nv30_context.h"
 #include "nouveau/nouveau_util.h"
 
@@ -50,7 +52,7 @@ nv30_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
-	NOUVEAU_ERR("unknown texture format %s\n", pf_name(pipe_format));
+	NOUVEAU_ERR("unknown texture format %s\n", util_format_name(pipe_format));
 	return NULL;
 }
 
