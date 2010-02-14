@@ -44,6 +44,20 @@
 %array_class(struct pipe_stencil_state, StencilArray);
 
 
+%extend pipe_rt_blend_state
+{
+   struct pipe_rt_blend_state *
+   __getitem__(int index) 
+   {
+      if(index < 0 || index >= PIPE_MAX_COLOR_BUFS)
+         SWIG_exception(SWIG_ValueError, "index out of bounds");
+      return $self + index;
+   fail:
+      return NULL;
+   };
+};
+
+
 %extend pipe_framebuffer_state {
    
    pipe_framebuffer_state(void) {
