@@ -272,6 +272,10 @@ class Screen(Object):
     def get_paramf(self, param):
         pass
     
+    def context_create(self):
+        context = self.real.context_create()
+        return Context(self.interpreter, context)
+    
     def is_format_supported(self, format, target, tex_usage, geom_flags):
         return self.real.is_format_supported(format, target, tex_usage, geom_flags)
     
