@@ -92,6 +92,8 @@ lp_scene_dequeue(struct lp_scene_queue *queue, boolean wait)
    struct scene_packet packet;
    enum pipe_error ret;
 
+   packet.scene = NULL;
+
    ret = util_ringbuffer_dequeue(queue->ring,
                                  &packet.header,
                                  sizeof packet / 4,
