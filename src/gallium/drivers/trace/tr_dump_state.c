@@ -28,6 +28,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "tgsi/tgsi_dump.h"
 
 #include "tr_dump.h"
@@ -39,7 +40,7 @@ void trace_dump_format(enum pipe_format format)
    if (!trace_dumping_enabled_locked())
       return;
 
-   trace_dump_enum(pf_name(format) );
+   trace_dump_enum(util_format_name(format) );
 }
 
 
