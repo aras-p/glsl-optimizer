@@ -30,7 +30,7 @@ or (in Windows)
 
 and then try running
 
-  python src/gallium/state_trackers/python/samples/tri.py
+  python progs/gallium/python/samples/tri.py
 
 which should show a triangle.
 

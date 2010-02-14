@@ -12,4 +12,4 @@ Run as:
 
   export PYTHONPATH=$PWD/build/linux-x86-debug/gallium/winsys/drm/radeon/python:$PWD/build/linux-x86-debug/gallium/state_trackers/python 
  
-  python src/gallium/state_trackers/python/samples/tri.py
+  python progs/gallium/python/samples/tri.py
