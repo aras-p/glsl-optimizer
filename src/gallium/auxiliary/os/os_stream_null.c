@@ -27,64 +27,46 @@
 
 /**
  * @file
- * Cross-platform sequential access stream abstraction.
+ * Stream implementation for the Windows Display driver.
  */
 
-#ifndef _OS_STREAM_H_
-#define _OS_STREAM_H_
+#include "os_memory.h"
+#include "os_stream.h"
 
 
-#include "pipe/p_compiler.h"
-
-
-/**
- * OS stream (FILE, socket, etc) abstraction.
- */
-struct os_stream
+static void
+os_null_stream_close(struct os_stream *stream)
 {
-   void
-   (*close)(struct os_stream *stream);
+   (void)stream;
+}
 
-   boolean
-   (*write)(struct os_stream *stream, const void *data, size_t size);
 
-   void
-   (*flush)(struct os_stream *stream);
+static boolean
+os_null_stream_write(struct os_stream *stream, const void *data, size_t size)
+{
+   (void)data;
+   (void)size;
+   return TRUE;
+}
+
+
+static void
+os_null_stream_flush(struct os_stream *stream)
+{
+   (void)stream;
+}
+
+
+static struct os_stream
+os_null_stream = {
+   &os_null_stream_close,
+   &os_null_stream_write,
+   &os_null_stream_flush
 };
 
 
-static INLINE void
-os_stream_close(struct os_stream *stream)
-{
-   stream->close(stream);
-}
-
-
-static INLINE boolean
-os_stream_write(struct os_stream *stream, const void *data, size_t size)
-{
-   return stream->write(stream, data, size);
-}
-
-
-static INLINE void
-os_stream_flush(struct os_stream *stream)
-{
-   stream->flush(stream);
-}
-
-
 struct os_stream *
-os_file_stream_create(const char *filename);
-
-
-struct os_stream *
-os_null_stream_create(void);
-
-
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-#define os_file_stream_create(_filename) os_null_stream_create()
-#endif
-
-
-#endif /* _OS_STREAM_H_ */
+os_null_stream_create()
+{
+   return &os_null_stream;
+}

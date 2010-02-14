@@ -40,39 +40,40 @@
 #include "os_stream.h"
 
 
-struct os_stream 
+struct os_stdc_stream
 {
+   struct os_stream base;
+
    FILE *file;
 };
 
 
-struct os_stream *
-os_stream_create(const char *filename, size_t max_size)
+static INLINE struct os_stdc_stream *
+os_stdc_stream(struct os_stream *stream)
 {
-   struct os_stream *stream;
-   
-   (void)max_size;
-   
-   stream = (struct os_stream *)calloc(1, sizeof(struct os_stream));
-   if(!stream)
-      goto no_stream;
-   
-   stream->file = fopen(filename, "w");
-   if(!stream->file)
-      goto no_file;
-   
-   return stream;
-   
-no_file:
-   free(stream);
-no_stream:
-   return NULL;
+   return (struct os_stdc_stream *)stream;
 }
 
 
-boolean
-os_stream_write(struct os_stream *stream, const void *data, size_t size)
+static void
+os_stdc_stream_close(struct os_stream *_stream)
 {
+   struct os_stdc_stream *stream = os_stdc_stream(_stream);
+
+   if(!stream)
+      return;
+   
+   fclose(stream->file);
+
+   free(stream);
+}
+
+
+static boolean
+os_stdc_stream_write(struct os_stream *_stream, const void *data, size_t size)
+{
+   struct os_stdc_stream *stream = os_stdc_stream(_stream);
+
    if(!stream)
       return FALSE;
    
@@ -80,9 +81,11 @@ os_stream_write(struct os_stream *stream, const void *data, size_t size)
 }
 
 
-void
-os_stream_flush(struct os_stream *stream) 
+static void
+os_stdc_stream_flush(struct os_stream *_stream)
 {
+   struct os_stdc_stream *stream = os_stdc_stream(_stream);
+
    if(!stream)
       return;
    
@@ -90,15 +93,29 @@ os_stream_flush(struct os_stream *stream)
 }
 
 
-void
-os_stream_close(struct os_stream *stream) 
+struct os_stream *
+os_file_stream_create(const char *filename)
 {
-   if(!stream)
-      return;
-   
-   fclose(stream->file);
+   struct os_stdc_stream *stream;
 
+   stream = (struct os_stdc_stream *)calloc(1, sizeof(struct os_stream));
+   if(!stream)
+      goto no_stream;
+
+   stream->base.close = &os_stdc_stream_close;
+   stream->base.write = &os_stdc_stream_write;
+   stream->base.flush = &os_stdc_stream_flush;
+
+   stream->file = fopen(filename, "w");
+   if(!stream->file)
+      goto no_file;
+
+   return &stream->base;
+
+no_file:
    free(stream);
+no_stream:
+   return NULL;
 }
 
 
