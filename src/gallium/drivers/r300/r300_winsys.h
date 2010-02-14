@@ -33,9 +33,8 @@ extern "C" {
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "util/u_simple_screen.h"
 
-#include "radeon_winsys.h"
+struct radeon_winsys;
 
 /* Creates a new r300 screen. */
 struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
