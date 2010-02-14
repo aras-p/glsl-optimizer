@@ -388,6 +388,7 @@ glutEstablishOverlay(void)
   if (!overlay->vis) {
     __glutFatalError("lacks overlay support.");
   }
+  overlay->ctx = NULL;
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_fbconfig)
   if (fbc) {
     window->ctx = __glut_glXCreateContextWithConfigSGIX(__glutDisplay, fbc,
