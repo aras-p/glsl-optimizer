@@ -93,7 +93,7 @@
 
 %include "p_compiler.i"
 %include "p_defines.h";
-%include "p_format.i"
+%include "p_format.h"
 
 %include "p_device.i"
 %include "p_context.i"
