@@ -861,7 +861,7 @@ generate_variant(struct llvmpipe_context *lp,
 
       tgsi_dump(shader->base.tokens, 0);
       if(key->depth.enabled) {
-         debug_printf("depth.format = %s\n", pf_name(key->zsbuf_format));
+         debug_printf("depth.format = %s\n", util_format_name(key->zsbuf_format));
          debug_printf("depth.func = %s\n", debug_dump_func(key->depth.func, TRUE));
          debug_printf("depth.writemask = %u\n", key->depth.writemask);
       }
@@ -885,7 +885,7 @@ generate_variant(struct llvmpipe_context *lp,
          if(key->sampler[i].format) {
             debug_printf("sampler[%u] = \n", i);
             debug_printf("  .format = %s\n",
-                         pf_name(key->sampler[i].format));
+                         util_format_name(key->sampler[i].format));
             debug_printf("  .target = %s\n",
                          debug_dump_tex_target(key->sampler[i].target, TRUE));
             debug_printf("  .pot = %u %u %u\n",
