@@ -156,6 +156,19 @@ util_format_description(enum pipe_format format);
  * Format query functions.
  */
 
+static INLINE const char *
+util_format_name(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(format);
+   if (!format) {
+      return "???";
+   }
+
+   return desc->name;
+}
+
 static INLINE boolean 
 util_format_is_compressed(enum pipe_format format)
 {
