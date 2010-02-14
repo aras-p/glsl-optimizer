@@ -287,7 +287,11 @@ gluScaleImage(GLenum format,
       }
       break;
    default:
-      return GLU_INVALID_ENUM;
+      {
+         free(tempin);
+         free(tempout);
+         return GLU_INVALID_ENUM;
+      }
    }
 
 
@@ -670,6 +674,7 @@ gluBuild1DMipmaps(GLenum target, GLint components,
 	 break;
       default:
 	 /* Not implemented */
+	 free(texture);
 	 return GLU_ERROR;
       }
    }
