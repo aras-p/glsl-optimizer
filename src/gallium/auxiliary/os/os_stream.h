@@ -99,6 +99,10 @@ struct os_stream *
 os_null_stream_create(void);
 
 
+extern struct os_stream *
+os_log_stream;
+
+
 struct os_stream *
 os_str_stream_create(size_t initial_size);
 

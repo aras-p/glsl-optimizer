@@ -27,46 +27,55 @@
 
 /**
  * @file
- * Null stream implementation.
+ * Debug logging stream implementation.
  */
 
 #include "os_memory.h"
+#include "os_misc.h"
 #include "os_stream.h"
 
 
 static void
-os_null_stream_close(struct os_stream *stream)
+os_log_stream_close(struct os_stream *stream)
 {
    (void)stream;
 }
 
 
 static boolean
-os_null_stream_write(struct os_stream *stream, const void *data, size_t size)
+os_log_stream_write(struct os_stream *stream, const void *data, size_t size)
 {
-   (void)data;
-   (void)size;
+   char *str;
+
+   str = os_malloc(size + 1);
+   if (!str)
+      return FALSE;
+
+   memcpy(str, data, size);
+   str[size] = 0;
+
+   os_log_message(str);
+
+   os_free(str);
+
    return TRUE;
 }
 
 
 static void
-os_null_stream_flush(struct os_stream *stream)
+os_log_stream_flush(struct os_stream *stream)
 {
    (void)stream;
 }
 
 
 static struct os_stream
-os_null_stream = {
-   &os_null_stream_close,
-   &os_null_stream_write,
-   &os_null_stream_flush
+os_log_stream_struct = {
+   &os_log_stream_close,
+   &os_log_stream_write,
+   &os_log_stream_flush
 };
 
 
 struct os_stream *
-os_null_stream_create()
-{
-   return &os_null_stream;
-}
+os_log_stream = &os_log_stream_struct;

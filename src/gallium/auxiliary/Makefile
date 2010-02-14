@@ -49,6 +49,7 @@ C_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	os/os_misc.c \
+	os/os_stream_log.c \
 	os/os_stream_stdc.c \
 	os/os_stream_str.c \
 	os/os_stream_null.c \

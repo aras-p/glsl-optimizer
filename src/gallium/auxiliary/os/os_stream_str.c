@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Stream implementation based on the Standard C Library.
+ * Malloc string stream implementation.
  */
 
 #include "pipe/p_config.h"
