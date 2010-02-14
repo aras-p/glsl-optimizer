@@ -348,7 +348,7 @@ __glutEstablishColormapsProperty(GLUTwindow * window)
   Window *winlist;
   Colormap *cmaplist;
   Status status;
-  int maxcmaps, num;
+  int maxcmaps, num, i;
 
   assert(!window->parent);
   maxcmaps = MaxCmapsOfScreen(ScreenOfDisplay(__glutDisplay,
@@ -357,6 +357,9 @@ __glutEstablishColormapsProperty(GLUTwindow * window)
      and cmaplist, but we could. */
   winlist = (Window *) malloc(maxcmaps * sizeof(Window));
   cmaplist = (Colormap *) malloc(maxcmaps * sizeof(Colormap));
+  for (i = 0; i < maxcmaps; i++) {
+    cmaplist[i] = 0;
+  }
   num = findColormaps(window, winlist, cmaplist, 0, maxcmaps);
   if (num < 2) {
     /* Property no longer needed; remove it. */
