@@ -58,6 +58,22 @@
 };
 
 
+%extend pipe_blend_state
+{
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, os_free(*$1));
+   void __str__(char **STRING, int *LENGTH)
+   {
+      struct os_stream *stream;
+
+      stream = os_str_stream_create(1);
+      util_dump_blend_state(stream, $self);
+
+      *STRING = os_str_stream_get_and_close(stream);
+      *LENGTH = strlen(*STRING);
+   }
+};
+
+
 %extend pipe_framebuffer_state {
    
    pipe_framebuffer_state(void) {
