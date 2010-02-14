@@ -56,6 +56,9 @@ struct os_stream
 static INLINE void
 os_stream_close(struct os_stream *stream)
 {
+   if (!stream)
+      return;
+
    stream->close(stream);
 }
 
@@ -63,7 +66,21 @@ os_stream_close(struct os_stream *stream)
 static INLINE boolean
 os_stream_write(struct os_stream *stream, const void *data, size_t size)
 {
+   if (!stream)
+      return FALSE;
    return stream->write(stream, data, size);
+}
+
+
+static INLINE boolean
+os_stream_write_str(struct os_stream *stream, const char *str)
+{
+   size_t size;
+   if (!stream)
+      return FALSE;
+   for(size = 0; str[size]; ++size)
+      ;
+   return stream->write(stream, str, size);
 }
 
 
