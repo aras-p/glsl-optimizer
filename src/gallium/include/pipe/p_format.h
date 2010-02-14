@@ -165,11 +165,6 @@ enum pipe_format {
    PIPE_FORMAT_COUNT
 };
 
-/**
- * Builds pipe format name from format token.
- */
-extern const char *pf_name( enum pipe_format format );
-
 
 enum pipe_video_chroma_format
 {
