@@ -85,7 +85,7 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
    if (desc->layout == UTIL_FORMAT_LAYOUT_ARITH ||
        desc->layout == UTIL_FORMAT_LAYOUT_ARRAY) {
 #if 0
-      printf("%s\n", pf_name( format ) );
+      printf("%s\n", util_format_name( format ) );
 #endif
 
       /* Data type */

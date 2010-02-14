@@ -596,7 +596,7 @@ st_draw_vbo(GLcontext *ctx,
          printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
          printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
          printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
-         printf("vlements[%d].format = %s\n", i, pf_name(velements[i].src_format));
+         printf("vlements[%d].format = %s\n", i, util_format_name(velements[i].src_format));
       }
    }
 #endif
