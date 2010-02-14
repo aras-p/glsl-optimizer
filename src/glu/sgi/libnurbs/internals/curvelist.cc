@@ -53,6 +53,8 @@ Curvelist::Curvelist( Quilt *quilts, REAL pta, REAL ptb )
     range[0] = pta;
     range[1] = ptb;
     range[2] = ptb - pta;
+    needsSubdivision = 0;
+    stepsize = 0;
 }
 
 Curvelist::Curvelist( Curvelist &upper, REAL value )
