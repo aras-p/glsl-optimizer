@@ -83,6 +83,7 @@ struct r300_fragment_program_compiler {
 	struct rX00_fragment_program_code *code;
 	struct r300_fragment_program_external_state state;
 	unsigned is_r500;
+	unsigned max_temp_regs;
     /* Register corresponding to the depthbuffer. */
 	unsigned OutputDepth;
     /* Registers corresponding to the four colorbuffers. */

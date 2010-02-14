@@ -156,10 +156,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		fflush(stderr);
 	}
 
-	if (c->is_r500)
-		rc_pair_regalloc(c, 128);
-	else
-		rc_pair_regalloc(c, R300_PFS_NUM_TEMP_REGS);
+	rc_pair_regalloc(c, c->max_temp_regs);
 
 	if (c->Base.Error)
 		return;
