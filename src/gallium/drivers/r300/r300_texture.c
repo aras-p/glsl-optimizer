@@ -173,7 +173,7 @@ static void r300_setup_miptree(struct r300_screen* screen,
     unsigned stride, size, layer_size, nblocksy, i;
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Making miptree for texture, format %s\n",
-               pf_name(base->format));
+               util_format_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
         stride = r300_texture_get_stride(screen, tex, i);

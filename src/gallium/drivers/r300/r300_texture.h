@@ -24,6 +24,7 @@
 #define R300_TEXTURE_H
 
 #include "pipe/p_video_state.h"
+#include "util/u_format.h"
 
 #include "r300_reg.h"
 
@@ -109,7 +110,7 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported texture format %s in %s\n",
-                pf_name(format), __FUNCTION__);
+                util_format_name(format), __FUNCTION__);
             assert(0);
             break;
     }

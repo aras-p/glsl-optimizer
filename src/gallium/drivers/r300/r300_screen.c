@@ -277,7 +277,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         case PIPE_FORMAT_X8Z24_UNORM:
             SCREEN_DBG(r300_screen(screen), DBG_TEX,
                        "r300: Note: Got unsupported format: %s in %s\n",
-                       pf_name(format), __FUNCTION__);
+                       util_format_name(format), __FUNCTION__);
             return FALSE;
 
         /* XXX Add all remaining gallium-supported formats,
@@ -286,7 +286,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         default:
             /* Unknown format... */
             debug_printf("r300: Warning: Got unknown format: %s in %s\n",
-                pf_name(format), __FUNCTION__);
+                util_format_name(format), __FUNCTION__);
             break;
     }
 

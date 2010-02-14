@@ -367,7 +367,7 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported color format %s in %s\n",
-                pf_name(format), __FUNCTION__);
+                util_format_name(format), __FUNCTION__);
             assert(0);
             break;
     }
@@ -389,7 +389,7 @@ static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported ZS format %s in %s\n",
-                pf_name(format), __FUNCTION__);
+                util_format_name(format), __FUNCTION__);
             assert(0);
             break;
     }
@@ -428,7 +428,7 @@ static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported output format %s in %s\n",
-                pf_name(format), __FUNCTION__);
+                util_format_name(format), __FUNCTION__);
             assert(0);
             return R300_US_OUT_FMT_UNUSED;
     }
@@ -494,7 +494,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
         desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
-        debug_printf("r300: Bad format %s in %s:%d\n", pf_name(format),
+        debug_printf("r300: Bad format %s in %s:%d\n", util_format_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
     }
@@ -508,7 +508,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     break;
                 default:
                     debug_printf("r300: Bad format %s in %s:%d\n",
-                        pf_name(format), __FUNCTION__, __LINE__);
+                        util_format_name(format), __FUNCTION__, __LINE__);
                     assert(0);
             }
             break;
@@ -529,7 +529,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     break;
                 default:
                     debug_printf("r300: Bad format %s in %s:%d\n",
-                        pf_name(format), __FUNCTION__, __LINE__);
+                        util_format_name(format), __FUNCTION__, __LINE__);
                     debug_printf("r300: util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) == %d\n",
                         util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0));
                     assert(0);
@@ -537,7 +537,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
             break;
         default:
             debug_printf("r300: Bad format %s in %s:%d\n",
-                pf_name(format), __FUNCTION__, __LINE__);
+                util_format_name(format), __FUNCTION__, __LINE__);
             assert(0);
     }
 
@@ -561,7 +561,7 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
     if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
         desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
         debug_printf("r300: Bad format %s in %s:%d\n",
-            pf_name(format), __FUNCTION__, __LINE__);
+            util_format_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 
