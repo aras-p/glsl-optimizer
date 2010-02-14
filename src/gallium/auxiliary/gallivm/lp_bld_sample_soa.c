@@ -35,7 +35,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
-#include "util/u_debug_dump.h"
+#include "util/u_dump.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_format.h"
@@ -173,7 +173,7 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       /* FIXME */
       _debug_printf("llvmpipe: failed to translate texture wrap mode %s\n",
-                    debug_dump_tex_wrap(wrap_mode, TRUE));
+                    util_dump_tex_wrap(wrap_mode, TRUE));
       coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
       coord = lp_build_min(int_coord_bld, coord, length_minus_one);
       break;
