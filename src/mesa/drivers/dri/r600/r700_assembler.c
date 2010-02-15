@@ -830,6 +830,8 @@ GLboolean assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
 	if(GL_TRUE == pFetchMethod->bEnableMini) //More conditions here
 	{
 		//TODO : mini fetch
+		mega_fetch_count = 0;
+		is_mega_fetch_flag = 0;
 	}
 	else
 	{
@@ -922,6 +924,8 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
 	if(GL_TRUE == pFetchMethod->bEnableMini) //More conditions here
 	{
 		//TODO : mini fetch
+		mega_fetch_count = 0;
+		is_mega_fetch_flag = 0;
 	}
 	else
 	{
