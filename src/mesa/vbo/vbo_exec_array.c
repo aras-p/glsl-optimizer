@@ -935,12 +935,12 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       vbo->draw_prims(ctx, exec->array.inputs, prim, primcount, &ib,
 		      GL_FALSE, ~0, ~0);
    } else {
+      /* render one prim at a time */
       for (i = 0; i < primcount; i++) {
 	 ib.count = count[i];
 	 ib.type = type;
 	 ib.obj = ctx->Array.ElementArrayBufferObj;
 	 ib.ptr = indices[i];
-
 
 	 prim[0].begin = 1;
 	 prim[0].end = 1;
@@ -954,11 +954,12 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 	    prim[0].basevertex = basevertex[i];
 	 else
 	    prim[0].basevertex = 0;
-      }
 
-      vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
-		      GL_FALSE, ~0, ~0);
+         vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
+                         GL_FALSE, ~0, ~0);
+      }
    }
+
    _mesa_free(prim);
 }
 
