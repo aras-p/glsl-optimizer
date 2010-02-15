@@ -264,6 +264,7 @@ monoChain* directedLineLoopToMonoChainLoop(directedLine* loop)
 	  prevCusp = temp;	  
 	}
     }
+  assert(ret);
   ret->insert(new monoChain(prevCusp, firstCusp));
 
   return ret;
