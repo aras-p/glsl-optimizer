@@ -113,7 +113,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
        */
       if (is_passthrough_program(&st->fp->Base)) {
          stfp = (struct st_fragment_program *)
-            _mesa_clone_program(ctx, &st->pixel_xfer.program->Base.Base);
+            _mesa_clone_fragment_program(ctx, &st->pixel_xfer.program->Base);
       }
       else {
 #if 0
