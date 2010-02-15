@@ -155,7 +155,7 @@ drv_get_rec(ScrnInfoPtr pScrn)
     if (pScrn->driverPrivate)
 	return TRUE;
 
-    pScrn->driverPrivate = xnfcalloc(sizeof(modesettingRec), 1);
+    pScrn->driverPrivate = xnfcalloc(1, sizeof(modesettingRec));
 
     return TRUE;
 }

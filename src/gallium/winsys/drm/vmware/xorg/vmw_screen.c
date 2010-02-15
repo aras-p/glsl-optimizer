@@ -87,7 +87,7 @@ vmw_screen_init(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     struct vmw_driver *vmw;
 
-    vmw = xnfcalloc(sizeof(*vmw), 1);
+    vmw = xnfcalloc(1, sizeof(*vmw));
     if (!vmw)
 	return FALSE;
 
