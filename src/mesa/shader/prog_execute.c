@@ -1780,15 +1780,10 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_PRINT:
          {
-            if (inst->SrcReg[0].File != -1) {
-               GLfloat a[4];
-               fetch_vector4(&inst->SrcReg[0], machine, a);
-               _mesa_printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
-                            a[0], a[1], a[2], a[3]);
-            }
-            else {
-               _mesa_printf("%s\n", (const char *) inst->Data);
-            }
+            GLfloat a[4];
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            _mesa_printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
+                         a[0], a[1], a[2], a[3]);
          }
          break;
       case OPCODE_END:
