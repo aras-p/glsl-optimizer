@@ -108,7 +108,7 @@ _evaluate_if_stack(struct sl_pp_context *context)
    unsigned int i;
 
    for (i = context->if_ptr; i < SL_PP_MAX_IF_NESTING; i++) {
-      if (!(context->if_stack[i] & 1)) {
+      if (!context->if_stack[i].u.condition) {
          return 0;
       }
    }
@@ -182,7 +182,8 @@ _parse_if(struct sl_pp_context *context,
    free(state.out);
 
    context->if_ptr--;
-   context->if_stack[context->if_ptr] = result ? 1 : 0;
+   context->if_stack[context->if_ptr].value = 0;
+   context->if_stack[context->if_ptr].u.condition = result ? 1 : 0;
    context->if_value = _evaluate_if_stack(context);
 
    return 0;
@@ -191,19 +192,24 @@ _parse_if(struct sl_pp_context *context,
 static int
 _parse_else(struct sl_pp_context *context)
 {
+   union sl_pp_if_state *state = &context->if_stack[context->if_ptr];
+
    if (context->if_ptr == SL_PP_MAX_IF_NESTING) {
       strcpy(context->error_msg, "no matching `#if'");
       return -1;
    }
 
-   /* Bit b1 indicates we already went through #else. */
-   if (context->if_stack[context->if_ptr] & 2) {
+   if (state->u.went_thru_else) {
       strcpy(context->error_msg, "no matching `#if'");
       return -1;
    }
 
-   /* Invert current condition value and mark that we are in the #else block. */
-   context->if_stack[context->if_ptr] = (1 - (context->if_stack[context->if_ptr] & 1)) | 2;
+   /* Once we had a true condition, the subsequent #elifs should always be false. */
+   state->u.had_true_cond |= state->u.condition;
+
+   /* Update current condition value and mark that we are in the #else block. */
+   state->u.condition = !(state->u.had_true_cond | state->u.condition);
+   state->u.went_thru_else = 1;
    context->if_value = _evaluate_if_stack(context);
 
    return 0;
@@ -233,7 +239,8 @@ sl_pp_process_ifdef(struct sl_pp_context *context,
       switch (input[i].token) {
       case SL_PP_IDENTIFIER:
          context->if_ptr--;
-         context->if_stack[context->if_ptr] = _macro_is_defined(context, input[i].data.identifier);
+         context->if_stack[context->if_ptr].value = 0;
+         context->if_stack[context->if_ptr].u.condition = _macro_is_defined(context, input[i].data.identifier);
          context->if_value = _evaluate_if_stack(context);
          return 0;
 
@@ -267,7 +274,8 @@ sl_pp_process_ifndef(struct sl_pp_context *context,
       switch (input[i].token) {
       case SL_PP_IDENTIFIER:
          context->if_ptr--;
-         context->if_stack[context->if_ptr] = !_macro_is_defined(context, input[i].data.identifier);
+         context->if_stack[context->if_ptr].value = 0;
+         context->if_stack[context->if_ptr].u.condition = !_macro_is_defined(context, input[i].data.identifier);
          context->if_value = _evaluate_if_stack(context);
          return 0;
 
@@ -292,7 +300,7 @@ sl_pp_process_elif(struct sl_pp_context *context,
       return -1;
    }
 
-   if (context->if_stack[context->if_ptr] & 1) {
+   if (context->if_stack[context->if_ptr].u.condition) {
       context->if_ptr++;
       if (_parse_if(context, buffer)) {
          return -1;
@@ -300,7 +308,7 @@ sl_pp_process_elif(struct sl_pp_context *context,
    }
 
    /* We are still in the #if block. */
-   context->if_stack[context->if_ptr] = context->if_stack[context->if_ptr] & ~2;
+   context->if_stack[context->if_ptr].u.went_thru_else = 0;
 
    return 0;
 }
