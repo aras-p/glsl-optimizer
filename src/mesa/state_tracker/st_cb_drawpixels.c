@@ -235,8 +235,8 @@ make_fragment_shader_z(struct st_context *st)
  * vertex position and texcoord (and optionally, color).
  */
 static void *
-st_make_passthrough_vertex_shader(struct st_context *st, 
-                                  GLboolean passColor)
+make_passthrough_vertex_shader(struct st_context *st, 
+                               GLboolean passColor)
 {
    if (!st->drawpix.vert_shaders[passColor]) {
       struct ureg_program *ureg = 
@@ -272,8 +272,12 @@ st_make_passthrough_vertex_shader(struct st_context *st,
 }
 
 
+/**
+ * Return a texture internalFormat for drawing/copying an image
+ * of the given type.
+ */
 static GLenum
-_mesa_base_format(GLenum format)
+base_format(GLenum format)
 {
    switch (format) {
    case GL_DEPTH_COMPONENT:
@@ -308,7 +312,7 @@ make_texture(struct st_context *st,
    GLenum baseFormat;
    int ptw, pth;
 
-   baseFormat = _mesa_base_format(format);
+   baseFormat = base_format(format);
 
    mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
    assert(mformat);
@@ -784,12 +788,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    if (format == GL_DEPTH_COMPONENT) {
       driver_fp = make_fragment_shader_z(st);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
       driver_fp = combined_drawpix_fragment_program(ctx);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
    }
 
@@ -968,14 +972,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       driver_fp = combined_drawpix_fragment_program(ctx);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
       driver_fp = make_fragment_shader_z(st);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
    srcFormat = rbRead->texture->format;
