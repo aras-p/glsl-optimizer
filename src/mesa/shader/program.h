@@ -108,6 +108,22 @@ _mesa_reference_fragprog(GLcontext *ctx,
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
+static INLINE struct gl_vertex_program *
+_mesa_clone_vertex_program(GLcontext *ctx,
+                           const struct gl_vertex_program *prog)
+{
+   return (struct gl_vertex_program *) _mesa_clone_program(ctx, &prog->Base);
+}
+
+
+static INLINE struct gl_fragment_program *
+_mesa_clone_fragment_program(GLcontext *ctx,
+                             const struct gl_fragment_program *prog)
+{
+   return (struct gl_fragment_program *) _mesa_clone_program(ctx, &prog->Base);
+}
+
+
 extern  GLboolean
 _mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count);
 
