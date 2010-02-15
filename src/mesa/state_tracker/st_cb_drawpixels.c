@@ -93,8 +93,9 @@ is_passthrough_program(const struct gl_fragment_program *prog)
 /**
  * Make fragment shader for glDraw/CopyPixels.  This shader is made
  * by combining the pixel transfer shader with the user-defined shader.
+ * \return pointer to Gallium driver fragment shader
  */
-static struct st_fragment_program *
+static void *
 combined_drawpix_fragment_program(GLcontext *ctx)
 {
    struct st_context *st = st_context(ctx);
@@ -156,7 +157,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
     */
    st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
 
-   return stfp;
+   return stfp->driver_shader;
 }
 
 
@@ -164,8 +165,9 @@ combined_drawpix_fragment_program(GLcontext *ctx)
  * Create fragment shader that does a TEX() instruction to get a Z
  * value, then writes to FRAG_RESULT_DEPTH.
  * Pass fragment color through as-is.
+ * \return pointer to the Gallium driver fragment shader
  */
-static struct st_fragment_program *
+static void *
 make_fragment_shader_z(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
@@ -173,7 +175,7 @@ make_fragment_shader_z(struct st_context *st)
    GLuint ic = 0;
 
    if (st->drawpix.z_shader) {
-      return st->drawpix.z_shader;
+      return st->drawpix.z_shader->driver_shader;
    }
 
    /*
@@ -223,7 +225,7 @@ make_fragment_shader_z(struct st_context *st)
    st->drawpix.z_shader = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, st->drawpix.z_shader);
 
-   return st->drawpix.z_shader;
+   return st->drawpix.z_shader->driver_shader;
 }
 
 
@@ -764,8 +766,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
-   struct st_fragment_program *stfp;
-   void *driver_vp;
+   void *driver_vp, *driver_fp;
    struct st_context *st = st_context(ctx);
    const GLfloat *color;
 
@@ -782,12 +783,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
-      stfp = make_fragment_shader_z(st);
+      driver_fp = make_fragment_shader_z(st);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
-      stfp = combined_drawpix_fragment_program(ctx);
+      driver_fp = combined_drawpix_fragment_program(ctx);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
    }
@@ -801,7 +802,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                             pt, 
                             driver_vp, 
-                            stfp->driver_shader,
+                            driver_fp,
                             color, GL_FALSE);
          pipe_texture_reference(&pt, NULL);
       }
@@ -919,8 +920,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
-   void *driver_vp;
-   struct st_fragment_program *stfp;
+   void *driver_vp, *driver_fp;
    struct pipe_texture *pt;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
@@ -967,14 +967,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (type == GL_COLOR) {
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
-      stfp = combined_drawpix_fragment_program(ctx);
+      driver_fp = combined_drawpix_fragment_program(ctx);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-      stfp = make_fragment_shader_z(st);
+      driver_fp = make_fragment_shader_z(st);
       driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
@@ -1109,7 +1109,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       pt, 
                       driver_vp, 
-                      stfp->driver_shader,
+                      driver_fp,
                       color, GL_TRUE);
 
    pipe_texture_reference(&pt, NULL);
