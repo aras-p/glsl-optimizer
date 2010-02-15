@@ -835,8 +835,10 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   if (buffer)
+   if (buffer) {
       trace_screen_user_buffer_update(_pipe->screen, buffer);
+      buffer = trace_buffer_unwrap(tr_ctx, buffer);
+   }
 
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
 
@@ -845,14 +847,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(uint, index);
    trace_dump_arg(ptr, buffer);
 
-   /* XXX hmm? */
-   if (buffer) {
-      struct pipe_buffer *_buffer;
-      _buffer = trace_buffer_unwrap(tr_ctx, buffer);
-      pipe->set_constant_buffer(pipe, shader, index, _buffer);
-   } else {
-      pipe->set_constant_buffer(pipe, shader, index, buffer);
-   }
+   pipe->set_constant_buffer(pipe, shader, index, buffer);
 
    trace_dump_call_end();
 }
