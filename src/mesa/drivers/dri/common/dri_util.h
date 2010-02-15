@@ -378,6 +378,10 @@ struct __DRIdrawableRec {
     unsigned int swap_interval;
 
     GLboolean validBuffers;
+
+    struct {
+	drm_clip_rect_t clipRect;
+    } dri2;
 };
 
 /**

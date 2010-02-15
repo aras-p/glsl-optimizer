@@ -485,8 +485,8 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     if (!pdraw)
     	return NULL;
 
-    pdraw->pClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
-    pdraw->pBackClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
+    pdraw->pClipRects = &pdraw->dri2.clipRect;
+    pdraw->pBackClipRects = &pdraw->dri2.clipRect;
 
     return pdraw;
 }
@@ -507,11 +507,11 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
-	if (pdp->pClipRects) {
+	if (pdp->pClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
 	    _mesa_free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;
 	}
-	if (pdp->pBackClipRects) {
+	if (pdp->pBackClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
 	    _mesa_free(pdp->pBackClipRects);
 	    pdp->pBackClipRects = NULL;
 	}
