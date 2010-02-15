@@ -85,6 +85,14 @@ Curve::Curve( Quilt_ptr geo, REAL pta, REAL ptb, Curve *c )
     if( range[1] != ptb ) {
 	Curve lower( *this, ptb, 0 );
     }
+
+    for( int i = 0; i < MAXORDER * MAXCOORDS; i++ ) {
+        cpts[i] = 0;
+        spts[i] = 0;
+    }
+
+    stepsize = 0;
+    minstepsize = 0;
 }
 
 /*--------------------------------------------------------------------------
