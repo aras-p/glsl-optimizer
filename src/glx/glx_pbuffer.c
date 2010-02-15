@@ -186,10 +186,6 @@ DestroyPbuffer(Display * dpy, GLXDrawable drawable)
 
 
 #ifdef GLX_DIRECT_RENDERING
-extern __GLXDRIdrawable *GetGLXDRIDrawable(Display * dpy,
-                                           GLXDrawable drawable,
-                                           int *const scrn_num);
-
 static GLenum
 determineTextureTarget(const int *attribs, int numAttribs)
 {

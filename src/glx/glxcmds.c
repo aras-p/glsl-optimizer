@@ -105,10 +105,6 @@ GarbageCollectDRIDrawables(Display * dpy, __GLXscreenConfigs * sc)
    XSetErrorHandler(oldXErrorHandler);
 }
 
-extern __GLXDRIdrawable *GetGLXDRIDrawable(Display * dpy,
-                                           GLXDrawable drawable,
-                                           int *const scrn_num);
-
 /**
  * Get the __DRIdrawable for the drawable associated with a GLXContext
  *

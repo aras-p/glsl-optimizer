@@ -798,6 +798,10 @@ __driGetMscRateOML(__DRIdrawable * draw,
 /* So that dri2.c:DRI2WireToEvent() can access
  * glx_info->codes->first_event */
 XExtDisplayInfo *__glXFindDisplay (Display *dpy);
+
+extern __GLXDRIdrawable *
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int *const scrn_num);
+
 #endif
 
 #endif /* !__GLX_client_h__ */
