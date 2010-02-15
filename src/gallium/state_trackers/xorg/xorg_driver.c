@@ -989,8 +989,9 @@ static Bool
 drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned handle, stride, fb_id;
     struct pipe_texture *tex;
+    struct winsys_handle whandle;
+    unsigned fb_id;
     int ret;
 
     ms->noEvict = TRUE;
@@ -1001,10 +1002,10 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
     if (!tex)
 	return FALSE;
 
-    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
-					    tex,
-					    &stride,
-					    &handle))
+    memset(&whandle, 0, sizeof(whandle));
+    whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+    if (!ms->screen->texture_get_handle(ms->screen, tex, &whandle))
 	goto err_destroy;
 
     ret = drmModeAddFB(ms->fd,
@@ -1012,8 +1013,8 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 		       pScrn->virtualY,
 		       pScrn->depth,
 		       pScrn->bitsPerPixel,
-		       stride,
-		       handle,
+		       whandle.stride,
+		       whandle.handle,
 		       &fb_id);
     if (ret) {
 	debug_printf("%s: failed to create framebuffer (%i, %s)\n",

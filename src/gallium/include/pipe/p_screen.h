@@ -50,6 +50,8 @@ extern "C" {
 
 
 /** Opaque type */
+struct winsys_handle;
+/** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_buffer;
@@ -106,6 +108,24 @@ struct pipe_screen {
     */
    struct pipe_texture * (*texture_create)(struct pipe_screen *,
                                            const struct pipe_texture *templat);
+
+   /**
+    * Create a texture from a winsys_handle. The handle is often created in
+    * another process by first creating a pipe texture and then calling
+    * texture_get_handle.
+    */
+   struct pipe_texture * (*texture_from_handle)(struct pipe_screen *,
+                                                const struct pipe_texture *templat,
+                                                struct winsys_handle *handle);
+
+   /**
+    * Get a winsys_handle from a texture. Some platforms/winsys requires
+    * that the texture is created with a special usage flag like
+    * DISPLAYTARGET or PRIMARY.
+    */
+   boolean (*texture_get_handle)(struct pipe_screen *,
+                                 struct pipe_texture *tex,
+                                 struct winsys_handle *handle);
 
    /**
     * Create a new texture object, using the given template info, but on top of

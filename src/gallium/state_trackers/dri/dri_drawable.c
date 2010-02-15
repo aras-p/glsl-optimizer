@@ -58,6 +58,7 @@ dri_surface_from_handle(struct drm_api *api,
    struct pipe_surface *surface = NULL;
    struct pipe_texture *texture = NULL;
    struct pipe_texture templat;
+   struct winsys_handle whandle;
 
    memset(&templat, 0, sizeof(templat));
    templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
@@ -68,8 +69,11 @@ dri_surface_from_handle(struct drm_api *api,
    templat.width0 = width;
    templat.height0 = height;
 
-   texture = api->texture_from_shared_handle(api, screen, &templat,
-                                             "dri2 buffer", pitch, handle);
+   memset(&whandle, 0, sizeof(whandle));
+   whandle.handle = handle;
+   whandle.stride = pitch;
+
+   texture = screen->texture_from_handle(screen, &templat, &whandle);
 
    if (!texture) {
       debug_printf("%s: Failed to blanket the buffer with a texture\n", __func__);

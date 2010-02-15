@@ -67,13 +67,14 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     struct exa_pixmap_priv *exa_priv;
     BufferPrivatePtr private = buffer->driverPrivate;
     PixmapPtr pPixmap;
-    unsigned stride, handle;
+    struct winsys_handle whandle;
 
     if (pDraw->type == DRAWABLE_PIXMAP)
 	pPixmap = (PixmapPtr) pDraw;
     else
 	pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr) pDraw);
     exa_priv = exaGetPixmapDriverPrivate(pPixmap);
+
 
     switch (buffer->attachment) {
     default:
@@ -153,10 +154,13 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     if (!tex)
 	FatalError("NO TEXTURE IN DRI2\n");
 
-    ms->api->shared_handle_from_texture(ms->api, ms->screen, tex, &stride, &handle);
+    memset(&whandle, 0, sizeof(whandle));
+    whandle.type = DRM_API_HANDLE_TYPE_SHARED;
 
-    buffer->name = handle;
-    buffer->pitch = stride;
+    ms->screen->texture_get_handle(ms->screen, tex, &whandle);
+
+    buffer->name = whandle.handle;
+    buffer->pitch = whandle.stride;
     buffer->cpp = 4;
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
