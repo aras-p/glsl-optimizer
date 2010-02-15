@@ -376,6 +376,9 @@ class Context(Object):
         pass
     
     def create_blend_state(self, state):
+        if isinstance(state, str):
+            state = gallium.Blend(state)
+            sys.stdout.write('\t%s\n' % state)
         return state
 
     def bind_blend_state(self, state):
