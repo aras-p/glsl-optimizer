@@ -308,7 +308,7 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 	unsigned int i;
 
 	vp = _mesa_calloc(sizeof(*vp));
-	vp->mesa_program = (struct gl_vertex_program *)_mesa_clone_program(ctx, &mesa_vp->Base);
+	vp->mesa_program = _mesa_clone_vertex_program(ctx, mesa_vp);
 
 	if (mesa_vp->IsPositionInvariant)
 	{
