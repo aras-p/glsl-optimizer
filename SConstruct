@@ -225,9 +225,10 @@ SConscript(
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
 
-if 'progs' in COMMAND_LINE_TARGETS:
-    SConscript(
-        'progs/SConscript',
-        variant_dir = os.path.join('progs', env['build']),
-        duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-    )
+env.Default('src')
+
+SConscript(
+    'progs/SConscript',
+    variant_dir = os.path.join('progs', env['build']),
+    duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)
