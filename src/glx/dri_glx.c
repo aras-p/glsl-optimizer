@@ -323,6 +323,7 @@ CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
 
    framebuffer.base = MAP_FAILED;
    framebuffer.dev_priv = NULL;
+   framebuffer.size = 0;
 
    if (!XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
       ErrorMessageF("XF86DRIOpenConnection failed\n");
