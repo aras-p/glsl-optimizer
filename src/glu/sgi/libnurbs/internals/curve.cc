@@ -60,6 +60,12 @@ Curve::Curve( Quilt_ptr geo, REAL pta, REAL ptb, Curve *c )
     cullval = mapdesc->isCulling() ? CULL_ACCEPT : CULL_TRIVIAL_ACCEPT;
     order = geo->qspec[0].order;
     stride = MAXCOORDS;
+    for( int i = 0; i < MAXORDER * MAXCOORDS; i++ ) {
+        cpts[i] = 0;
+        spts[i] = 0;
+    }
+    stepsize = 0;
+    minstepsize = 0;
 
     REAL *ps  = geo->cpts; 
     Quiltspec_ptr qs = geo->qspec;
@@ -85,14 +91,6 @@ Curve::Curve( Quilt_ptr geo, REAL pta, REAL ptb, Curve *c )
     if( range[1] != ptb ) {
 	Curve lower( *this, ptb, 0 );
     }
-
-    for( int i = 0; i < MAXORDER * MAXCOORDS; i++ ) {
-        cpts[i] = 0;
-        spts[i] = 0;
-    }
-
-    stepsize = 0;
-    minstepsize = 0;
 }
 
 /*--------------------------------------------------------------------------
