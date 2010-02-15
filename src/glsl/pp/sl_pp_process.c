@@ -87,6 +87,7 @@ sl_pp_process_get(struct sl_pp_context *context,
       int found_eof = 0;
 
       if (context->process_state.out_len) {
+         assert(context->process_state.out);
          *output = context->process_state.out[0];
 
          if (context->process_state.out_len > 1) {

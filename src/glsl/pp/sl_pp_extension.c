@@ -137,6 +137,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_REQUIRE;
+      assert(extension);
       extension->enabled = 1;
    } else if (behavior == context->dict.enable) {
       if (out.data.extension == -1) {
@@ -148,6 +149,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_ENABLE;
+      assert(extension);
       extension->enabled = 1;
    } else if (behavior == context->dict.warn) {
       if (out.data.extension == -1) {
@@ -155,6 +157,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return 0;
       }
       out.token = SL_PP_EXTENSION_WARN;
+      assert(extension);
       extension->enabled = 1;
    } else if (behavior == context->dict.disable) {
       if (out.data.extension == -1) {
@@ -162,6 +165,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return 0;
       }
       out.token = SL_PP_EXTENSION_DISABLE;
+      assert(extension);
       extension->enabled = 0;
    } else {
       strcpy(context->error_msg, "unrecognised behavior name");
