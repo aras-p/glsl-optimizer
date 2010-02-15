@@ -229,7 +229,6 @@ so_bo_is_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo)
 static INLINE void
 so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned nr, i;
 	int ret = 0;
 
@@ -260,7 +259,7 @@ so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		if ((ret = nouveau_pushbuf_emit_reloc(chan, pb->cur - nr +
+		if ((ret = nouveau_pushbuf_emit_reloc(chan, chan->cur - nr +
 						r->push_offset, r->bo, r->data,
 						0, r->flags, r->vor, r->tor))) {
 			debug_printf("so_emit failed reloc with error %d\n", ret);
@@ -272,7 +271,6 @@ so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 static INLINE void
 so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = chan->pushbuf;
 	struct nouveau_grobj *gr = NULL;
 	unsigned i;
 	int ret = 0;
@@ -318,8 +316,6 @@ so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 			debug_printf("OUT_RELOC failed %d\n", ret);
 			assert(0);
 		}
-
-		pb->remaining -= 2;
 	}
 }
 
