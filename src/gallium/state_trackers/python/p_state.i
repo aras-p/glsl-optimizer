@@ -60,6 +60,23 @@
 
 %extend pipe_blend_state
 {
+   pipe_blend_state(void)
+   {
+      return CALLOC_STRUCT(pipe_blend_state);
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   pipe_blend_state(const char *STRING, unsigned LENGTH)
+   {
+      struct pipe_blend_state *state;
+      state = CALLOC_STRUCT(pipe_framebuffer_state);
+      if (state) {
+         LENGTH = MIN2(sizeof *state, LENGTH);
+         memcpy(state, STRING, LENGTH);
+      }
+      return state;
+   }
+
    %cstring_output_allocate_size(char **STRING, int *LENGTH, os_free(*$1));
    void __str__(char **STRING, int *LENGTH)
    {
