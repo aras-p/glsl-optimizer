@@ -40,8 +40,11 @@
 
 struct vmw_dma_buffer;
 
-struct vmw_driver
+struct vmw_customizer
 {
+    CustomizerRec base;
+    ScrnInfoPtr pScrn;
+
     int fd;
 
     void *cursor_priv;
@@ -50,11 +53,10 @@ struct vmw_driver
     void *video_priv;
 };
 
-static INLINE struct vmw_driver *
-vmw_driver(ScrnInfoPtr pScrn)
+static INLINE struct vmw_customizer *
+vmw_customizer(CustomizerPtr cust)
 {
-    modesettingPtr ms = modesettingPTR(pScrn);
-    return ms ? (struct vmw_driver *)ms->winsys_priv : NULL;
+    return cust ? (struct vmw_customizer *) cust : NULL;
 }
 
 
@@ -62,40 +64,40 @@ vmw_driver(ScrnInfoPtr pScrn)
  * vmw_video.c
  */
 
-Bool vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+Bool vmw_video_init(struct vmw_customizer *vmw);
 
-Bool vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+Bool vmw_video_close(struct vmw_customizer *vmw);
 
-void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+void vmw_video_stop_all(struct vmw_customizer *vmw);
 
 
 /***********************************************************************
  * vmw_ioctl.c
  */
 
-int vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot);
+int vmw_ioctl_cursor_bypass(struct vmw_customizer *vmw, int xhot, int yhot);
 
-struct vmw_dma_buffer * vmw_ioctl_buffer_create(struct vmw_driver *vmw,
+struct vmw_dma_buffer * vmw_ioctl_buffer_create(struct vmw_customizer *vmw,
 						uint32_t size,
 						unsigned *handle);
 
-void * vmw_ioctl_buffer_map(struct vmw_driver *vmw,
+void * vmw_ioctl_buffer_map(struct vmw_customizer *vmw,
 			    struct vmw_dma_buffer *buf);
 
-void vmw_ioctl_buffer_unmap(struct vmw_driver *vmw,
+void vmw_ioctl_buffer_unmap(struct vmw_customizer *vmw,
 			    struct vmw_dma_buffer *buf);
 
-void vmw_ioctl_buffer_destroy(struct vmw_driver *vmw,
+void vmw_ioctl_buffer_destroy(struct vmw_customizer *vmw,
 			      struct vmw_dma_buffer *buf);
 
-int vmw_ioctl_supports_streams(struct vmw_driver *vmw);
+int vmw_ioctl_supports_streams(struct vmw_customizer *vmw);
 
-int vmw_ioctl_num_streams(struct vmw_driver *vmw,
+int vmw_ioctl_num_streams(struct vmw_customizer *vmw,
 			  uint32_t *ntot, uint32_t *nfree);
 
-int vmw_ioctl_unref_stream(struct vmw_driver *vmw, uint32_t stream_id);
+int vmw_ioctl_unref_stream(struct vmw_customizer *vmw, uint32_t stream_id);
 
-int vmw_ioctl_claim_stream(struct vmw_driver *vmw, uint32_t *out);
+int vmw_ioctl_claim_stream(struct vmw_customizer *vmw, uint32_t *out);
 
 
 #endif

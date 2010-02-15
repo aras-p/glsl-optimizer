@@ -41,7 +41,8 @@ xf86CrtcFuncsRec vmw_screen_crtc_funcs;
 static void
 vmw_screen_cursor_load_argb(xf86CrtcPtr crtc, CARD32 *image)
 {
-    struct vmw_driver *vmw = modesettingPTR(crtc->scrn)->winsys_priv;
+    struct vmw_customizer *vmw =
+	vmw_customizer(xorg_customizer(crtc->scrn));
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     xf86CrtcFuncsPtr funcs = vmw->cursor_priv;
     CursorPtr c = config->cursor;
@@ -53,8 +54,9 @@ vmw_screen_cursor_load_argb(xf86CrtcPtr crtc, CARD32 *image)
 }
 
 static void
-vmw_screen_cursor_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+vmw_screen_cursor_init(struct vmw_customizer *vmw)
 {
+    ScrnInfoPtr pScrn = vmw->pScrn;
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
     int i;
 
@@ -70,9 +72,9 @@ vmw_screen_cursor_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 }
 
 static void
-vmw_screen_cursor_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+vmw_screen_cursor_close(struct vmw_customizer *vmw)
 {
-    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(vmw->pScrn);
     int i;
 
     vmw_ioctl_cursor_bypass(vmw, 0, 0);
@@ -82,50 +84,39 @@ vmw_screen_cursor_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
 }
 
 static Bool
-vmw_screen_init(ScrnInfoPtr pScrn)
+vmw_screen_init(CustomizerPtr cust, int fd)
 {
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct vmw_driver *vmw;
+    struct vmw_customizer *vmw = vmw_customizer(cust);
 
-    vmw = xnfcalloc(1, sizeof(*vmw));
-    if (!vmw)
-	return FALSE;
-
-    vmw->fd = ms->fd;
-    ms->winsys_priv = vmw;
-
-    vmw_screen_cursor_init(pScrn, vmw);
+    vmw->fd = fd;
+    vmw_screen_cursor_init(vmw);
 
     /* if gallium is used then we don't need to do anything more. */
-    if (ms->screen)
+    if (xorg_has_gallium(vmw->pScrn))
 	return TRUE;
 
-    vmw_video_init(pScrn, vmw);
+    vmw_video_init(vmw);
 
     return TRUE;
 }
 
 static Bool
-vmw_screen_close(ScrnInfoPtr pScrn)
+vmw_screen_close(CustomizerPtr cust)
 {
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(cust);
 
     if (!vmw)
 	return TRUE;
 
-    vmw_screen_cursor_close(pScrn, vmw);
+    vmw_screen_cursor_close(vmw);
 
-    vmw_video_close(pScrn, vmw);
-
-    ms->winsys_priv = NULL;
-    xfree(vmw);
+    vmw_video_close(vmw);
 
     return TRUE;
 }
 
 static Bool
-vmw_screen_enter_vt(ScrnInfoPtr pScrn)
+vmw_screen_enter_vt(CustomizerPtr cust)
 {
     debug_printf("%s: enter\n", __func__);
 
@@ -133,13 +124,13 @@ vmw_screen_enter_vt(ScrnInfoPtr pScrn)
 }
 
 static Bool
-vmw_screen_leave_vt(ScrnInfoPtr pScrn)
+vmw_screen_leave_vt(CustomizerPtr cust)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(cust);
 
     debug_printf("%s: enter\n", __func__);
 
-    vmw_video_stop_all(pScrn, vmw);
+    vmw_video_stop_all(vmw);
 
     return TRUE;
 }
@@ -153,17 +144,26 @@ static Bool (*vmw_screen_pre_init_saved)(ScrnInfoPtr pScrn, int flags) = NULL;
 static Bool
 vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
 {
-    modesettingPtr ms;
+    struct vmw_customizer *vmw;
+    CustomizerPtr cust;
+
+    vmw = xnfcalloc(1, sizeof(*vmw));
+    if (!vmw)
+	return FALSE;
+
+    cust = &vmw->base;
+
+    cust->winsys_screen_init = vmw_screen_init;
+    cust->winsys_screen_close = vmw_screen_close;
+    cust->winsys_enter_vt = vmw_screen_enter_vt;
+    cust->winsys_leave_vt = vmw_screen_leave_vt;
+    vmw->pScrn = pScrn;
+
+    pScrn->driverPrivate = cust;
 
     pScrn->PreInit = vmw_screen_pre_init_saved;
     if (!pScrn->PreInit(pScrn, flags))
 	return FALSE;
-
-    ms = modesettingPTR(pScrn);
-    ms->winsys_screen_init = vmw_screen_init;
-    ms->winsys_screen_close = vmw_screen_close;
-    ms->winsys_enter_vt = vmw_screen_enter_vt;
-    ms->winsys_leave_vt = vmw_screen_leave_vt;
 
     return TRUE;
 }

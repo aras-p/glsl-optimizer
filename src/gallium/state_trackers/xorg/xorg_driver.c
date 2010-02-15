@@ -333,6 +333,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     EntityInfoPtr pEnt;
     EntPtr msEnt = NULL;
     int max_width, max_height;
+    CustomizerPtr cust;
 
     if (pScrn->numEntities != 1)
 	return FALSE;
@@ -344,6 +345,9 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return TRUE;
     }
 
+    cust = (CustomizerPtr) pScrn->driverPrivate;
+    pScrn->driverPrivate = NULL;
+
     /* Allocate driverPrivate */
     if (!drv_get_rec(pScrn))
 	return FALSE;
@@ -351,6 +355,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     ms = modesettingPTR(pScrn);
     ms->SaveGeneration = -1;
     ms->pEnt = pEnt;
+    ms->cust = cust;
 
     pScrn->displayWidth = 640;	       /* default it */
 
@@ -608,6 +613,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     VisualPtr visual;
+    CustomizerPtr cust = ms->cust;
 
     if (!drv_init_drm(pScrn)) {
 	FatalError("Could not init DRM");
@@ -731,8 +737,8 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 
-    if (ms->winsys_screen_init)
-	ms->winsys_screen_init(pScrn);
+    if (cust && cust->winsys_screen_init)
+	cust->winsys_screen_init(cust, ms->fd);
 
     return drv_enter_vt(scrnIndex, 1);
 }
@@ -765,10 +771,11 @@ drv_leave_vt(int scrnIndex, int flags)
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     modesettingPtr ms = modesettingPTR(pScrn);
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+    CustomizerPtr cust = ms->cust;
     int o;
 
-    if (ms->winsys_leave_vt)
-	ms->winsys_leave_vt(pScrn);
+    if (cust && cust->winsys_leave_vt)
+	cust->winsys_leave_vt(cust);
 
     for (o = 0; o < config->num_crtc; o++) {
 	xf86CrtcPtr crtc = config->crtc[o];
@@ -802,6 +809,7 @@ drv_enter_vt(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     modesettingPtr ms = modesettingPTR(pScrn);
+    CustomizerPtr cust = ms->cust;
 
     if (drmSetMaster(ms->fd)) {
 	if (errno == EINVAL) {
@@ -832,8 +840,8 @@ drv_enter_vt(int scrnIndex, int flags)
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
 
-    if (ms->winsys_enter_vt)
-	ms->winsys_enter_vt(pScrn);
+    if (cust && cust->winsys_enter_vt)
+	cust->winsys_enter_vt(cust);
 
     return TRUE;
 }
@@ -851,13 +859,14 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     modesettingPtr ms = modesettingPTR(pScrn);
+    CustomizerPtr cust = ms->cust;
 
     if (pScrn->vtSema) {
 	drv_leave_vt(scrnIndex, 0);
     }
 
-    if (ms->winsys_screen_close)
-	ms->winsys_screen_close(pScrn);
+    if (cust && cust->winsys_screen_close)
+	cust->winsys_screen_close(cust);
 
 #ifdef DRI2
     if (ms->screen)
@@ -1117,6 +1126,16 @@ static Bool drv_init_front_buffer_functions(ScrnInfoPtr pScrn)
 	return FALSE;
 
     return TRUE;
+}
+
+CustomizerPtr xorg_customizer(ScrnInfoPtr pScrn)
+{
+    return modesettingPTR(pScrn)->cust;
+}
+
+Bool xorg_has_gallium(ScrnInfoPtr pScrn)
+{
+    return modesettingPTR(pScrn)->screen != NULL;
 }
 
 /* vim: set sw=4 ts=8 sts=4: */

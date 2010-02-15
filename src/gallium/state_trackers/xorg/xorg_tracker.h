@@ -67,6 +67,14 @@ typedef struct
 
 #define XORG_NR_FENCES 3
 
+typedef struct _CustomizerRec
+{
+    Bool (*winsys_screen_init)(struct _CustomizerRec *cust, int fd);
+    Bool (*winsys_screen_close)(struct _CustomizerRec *cust);
+    Bool (*winsys_enter_vt)(struct _CustomizerRec *cust);
+    Bool (*winsys_leave_vt)(struct _CustomizerRec *cust);
+} CustomizerRec, *CustomizerPtr;
+
 typedef struct _modesettingRec
 {
     /* drm */
@@ -117,12 +125,7 @@ typedef struct _modesettingRec
     Bool accelerate_2d;
     Bool debug_fallback;
 
-    /* winsys hocks */
-    Bool (*winsys_screen_init)(ScrnInfoPtr pScr);
-    Bool (*winsys_screen_close)(ScrnInfoPtr pScr);
-    Bool (*winsys_enter_vt)(ScrnInfoPtr pScr);
-    Bool (*winsys_leave_vt)(ScrnInfoPtr pScr);
-    void *winsys_priv;
+    CustomizerPtr cust;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
@@ -131,6 +134,9 @@ typedef struct _modesettingRec
 
 #define modesettingPTR(p) ((modesettingPtr)((p)->driverPrivate))
 
+CustomizerPtr xorg_customizer(ScrnInfoPtr pScrn);
+
+Bool xorg_has_gallium(ScrnInfoPtr pScrn);
 
 /***********************************************************************
  * xorg_exa.c
