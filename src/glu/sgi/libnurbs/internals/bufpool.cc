@@ -60,6 +60,9 @@ Pool::Pool( int _buffersize, int initpoolsize, const char *n )
     curblock	= 0;
     freelist	= 0;
     nextfree	= 0;
+    for (int i = 0; i < NBLOCKS; i++) {
+        blocklist[i] = 0;
+    }
 }
 
 /*-----------------------------------------------------------------------------
