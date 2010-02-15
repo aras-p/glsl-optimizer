@@ -52,9 +52,6 @@ struct st_fragment_program
    struct gl_fragment_program Base;
    GLuint serialNo;
 
-   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-
    struct pipe_shader_state tgsi;
    void *driver_shader;
 

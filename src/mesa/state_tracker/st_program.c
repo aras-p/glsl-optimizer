@@ -278,12 +278,14 @@ st_translate_fragment_program(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    GLuint outputMapping[FRAG_RESULT_MAX];
    GLuint inputMapping[FRAG_ATTRIB_MAX];
-   GLuint interpMode[16];  /* XXX size? */
+   GLuint interpMode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
    GLuint attr;
    enum pipe_error error;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
    struct ureg_program *ureg;
 
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    uint fs_num_inputs = 0;
 
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
@@ -301,28 +303,28 @@ st_translate_fragment_program(struct st_context *st,
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL0:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL1:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            stfp->input_semantic_index[slot] = 1;
+            input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            input_semantic_index[slot] = 1;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_FOGC:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_FACE:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
          case FRAG_ATTRIB_PNTC:
@@ -331,8 +333,8 @@ st_translate_fragment_program(struct st_context *st,
              * shader input is the point coord attribute so that it can set
              * up the right vertex attribute values.
              */
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
 
@@ -365,8 +367,8 @@ st_translate_fragment_program(struct st_context *st,
              * readability of the generated TGSI.
              */
             assert(attr >= FRAG_ATTRIB_TEX0);
-            stfp->input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
+            input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          }
@@ -428,8 +430,8 @@ st_translate_fragment_program(struct st_context *st,
                                 /* inputs */
                                 fs_num_inputs,
                                 inputMapping,
-                                stfp->input_semantic_name,
-                                stfp->input_semantic_index,
+                                input_semantic_name,
+                                input_semantic_index,
                                 interpMode,
                                 /* outputs */
                                 fs_num_outputs,
