@@ -61,6 +61,7 @@ draw_vs_set_constants(struct draw_context *draw,
          }
          draw->vs.aligned_constant_storage[slot] = align_malloc(size, 16);
       }
+      assert(constants);
       memcpy((void *)draw->vs.aligned_constant_storage[slot],
              constants,
              size);
