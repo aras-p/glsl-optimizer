@@ -310,7 +310,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
-	struct nouveau_stateobj *so = so_new(8, 18, 0);
+	struct nouveau_stateobj *so = so_new(9, 19, 0);
 	struct nouveau_grobj *curie = nv40->screen->curie;
 
 	/*XXX: ignored:
