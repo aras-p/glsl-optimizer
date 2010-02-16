@@ -43,9 +43,16 @@
 
 #define SL_PP_MAX_PREDEFINED  16
 
+enum sl_pp_extension_state {
+   SL_PP_EXTENSION_STATE_ENABLED,
+   SL_PP_EXTENSION_STATE_DISABLED,
+   SL_PP_EXTENSION_STATE_WARN,
+   SL_PP_EXTENSION_STATE_REQUIRE
+};
+
 struct sl_pp_extension {
    int name;   /*< GL_VENDOR_extension_name */
-   int enabled;
+   enum sl_pp_extension_state state;
 };
 
 struct sl_pp_predefined {

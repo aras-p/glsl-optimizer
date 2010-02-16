@@ -53,7 +53,7 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
       return -1;
    }
 
-   ext.enabled = 0;
+   ext.state = SL_PP_EXTENSION_STATE_DISABLED;
 
    context->extensions[context->num_extensions++] = ext;
 
@@ -61,6 +61,24 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
 
    return 0;
 }
+
+
+enum sl_pp_extension_state
+sl_pp_get_extension_state(const struct sl_pp_context *context,
+                          int extension_name)
+{
+   unsigned i;
+
+   for (i = 0; i < context->num_extensions; i++) {
+      if (extension_name == context->extensions[i].name) {
+         return context->extensions[i].state;
+      }
+   }
+
+   assert(0 && "unknown extension");
+   return SL_PP_EXTENSION_STATE_DISABLED;
+}
+
 
 /**
  * Process a "#extension name: behavior" directive.
@@ -140,7 +158,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
       if (extension_name != context->dict.all) {
          assert(extension);
-         extension->enabled = 1;
+         extension->state = SL_PP_EXTENSION_STATE_REQUIRE;
       }
    } else if (behavior == context->dict.enable) {
       if (out.data.extension == -1) {
@@ -155,7 +173,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
       if (extension_name != context->dict.all) {
          assert(extension);
-         extension->enabled = 1;
+         extension->state = SL_PP_EXTENSION_STATE_ENABLED;
       }
    } else if (behavior == context->dict.warn) {
       if (out.data.extension == -1) {
@@ -166,7 +184,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
       if (extension_name != context->dict.all) {
          assert(extension);
-         extension->enabled = 1;
+         extension->state = SL_PP_EXTENSION_STATE_WARN;
       }
    } else if (behavior == context->dict.disable) {
       if (out.data.extension == -1) {
@@ -177,7 +195,7 @@ sl_pp_process_extension(struct sl_pp_context *context,
 
       if (extension_name != context->dict.all) {
          assert(extension);
-         extension->enabled = 0;
+         extension->state = SL_PP_EXTENSION_STATE_DISABLED;
       }
    } else {
       strcpy(context->error_msg, "unrecognised behavior name");
