@@ -135,11 +135,6 @@ struct svga_buffer
     */
    struct svga_winsys_surface *handle;
    
-   /**
-    * Whether the host has been ever written.
-    */
-   boolean host_written;
-
    struct {
       unsigned count;
       boolean writing;

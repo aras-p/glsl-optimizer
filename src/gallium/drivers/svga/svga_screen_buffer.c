@@ -288,8 +288,6 @@ svga_buffer_upload_flush(struct svga_context *svga,
    sbuf->hw.svga = NULL;
    sbuf->hw.boxes = NULL;
 
-   sbuf->host_written = TRUE;
-
    /* Decrement reference count */
    pipe_reference(&(sbuf->base.reference), NULL);
    sbuf = NULL;
@@ -420,44 +418,6 @@ svga_buffer_map_range( struct pipe_screen *screen,
       if(!sbuf->hw.buf) {
          if(svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK)
             return NULL;
-         
-         /* Populate the hardware storage if the host surface pre-existed */
-         if(sbuf->host_written) {
-            SVGA3dSurfaceDMAFlags flags;
-            enum pipe_error ret;
-            struct pipe_fence_handle *fence = NULL;
-            
-            assert(sbuf->handle);
-
-            SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "dma from sid %p (buffer), bytes %u - %u\n", 
-                     sbuf->handle, 0, sbuf->base.size);
-
-            memset(&flags, 0, sizeof flags);
-            
-            ret = SVGA3D_BufferDMA(ss->swc,
-                                   sbuf->hw.buf,
-                                   sbuf->handle,
-                                   SVGA3D_READ_HOST_VRAM,
-                                   sbuf->base.size,
-                                   0,
-                                   flags);
-            if(ret != PIPE_OK) {
-               ss->swc->flush(ss->swc, NULL);
-               
-               ret = SVGA3D_BufferDMA(ss->swc,
-                                      sbuf->hw.buf,
-                                      sbuf->handle,
-                                      SVGA3D_READ_HOST_VRAM,
-                                      sbuf->base.size,
-                                      0,
-                                      flags);
-               assert(ret == PIPE_OK);
-            }
-            
-            ss->swc->flush(ss->swc, &fence);
-            sws->fence_finish(sws, fence, 0);
-            sws->fence_reference(sws, &fence, NULL);
-         }
       }
          
       map = sws->buffer_map(sws, sbuf->hw.buf, usage);
