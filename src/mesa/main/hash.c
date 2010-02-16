@@ -191,10 +191,12 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 
    /* alloc and insert new table entry */
    entry = MALLOC_STRUCT(HashEntry);
-   entry->Key = key;
-   entry->Data = data;
-   entry->Next = table->Table[pos];
-   table->Table[pos] = entry;
+   if (entry) {
+      entry->Key = key;
+      entry->Data = data;
+      entry->Next = table->Table[pos];
+      table->Table[pos] = entry;
+   }
 
    _glthread_UNLOCK_MUTEX(table->Mutex);
 }
