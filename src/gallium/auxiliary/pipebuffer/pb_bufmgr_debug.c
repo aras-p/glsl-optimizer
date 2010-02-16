@@ -179,7 +179,9 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
 {
    uint8_t *map;
    
-   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+   map = pb_map(buf->buffer,
+                PIPE_BUFFER_USAGE_CPU_READ |
+                PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
    assert(map);
    if(map) {
       boolean underflow, overflow;
