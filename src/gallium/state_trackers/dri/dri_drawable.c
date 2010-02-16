@@ -288,10 +288,10 @@ dri_update_buffer(struct pipe_screen *screen, void *context_private)
        ctx->r_stamp == *ctx->rPriv->pStamp)
       return;
 
+   st_flush(ctx->st, PIPE_FLUSH_FRAME, NULL);
+
    ctx->d_stamp = *ctx->dPriv->pStamp;
    ctx->r_stamp = *ctx->rPriv->pStamp;
-
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* Ask the X server for new renderbuffers. */
    dri_get_buffers(ctx->dPriv);
