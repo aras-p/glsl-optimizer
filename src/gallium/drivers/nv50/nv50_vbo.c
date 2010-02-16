@@ -673,8 +673,6 @@ nv50_draw_elements(struct pipe_context *pipe,
 	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 	
-	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
-
 	nv50_state_validate(nv50);
 
 	BEGIN_RING(chan, tesla, 0x142c, 1);
@@ -685,14 +683,35 @@ nv50_draw_elements(struct pipe_context *pipe,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
 
-	nv50_draw_elements_inline(nv50, map, indexSize, start, count);
+	if (!nv50->vbo_fifo && indexSize == 4) {
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x30000, 0);
+		OUT_RING  (chan, count);
+		nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+				       start << 2, count << 2);
+	} else
+	if (!nv50->vbo_fifo && indexSize == 2) {
+		unsigned vb_start = (start & ~1);
+		unsigned vb_end = (start + count + 1) & ~1;
+		unsigned dwords = (vb_end - vb_start) >> 1;
+
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
+		OUT_RING  (chan, ((start & 1) << 31) | count);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x30000, 0);
+		OUT_RING  (chan, dwords);
+		nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+				       vb_start << 1, dwords << 2);
+		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
+		OUT_RING  (chan, 0);
+	} else {
+		map = pipe_buffer_map(pscreen, indexBuffer,
+				      PIPE_BUFFER_USAGE_CPU_READ);
+		nv50_draw_elements_inline(nv50, map, indexSize, start, count);
+		nv50_unmap_vbufs(nv50);
+		pipe_buffer_unmap(pscreen, indexBuffer);
+	}
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
-
-	nv50_unmap_vbufs(nv50);
-
-	pipe_buffer_unmap(pscreen, indexBuffer);
 }
 
 static INLINE boolean

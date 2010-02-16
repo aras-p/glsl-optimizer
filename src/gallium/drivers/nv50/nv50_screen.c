@@ -134,7 +134,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case NOUVEAU_CAP_HW_VTXBUF:
 		return 1;
 	case NOUVEAU_CAP_HW_IDXBUF:
-		return 0;
+		return 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
