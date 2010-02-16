@@ -81,7 +81,7 @@ static XEXT_GENERATE_FIND_DISPLAY (DRI2FindDisplay,
                                    dri2Info,
                                    dri2ExtensionName,
                                    &dri2ExtensionHooks,
-                                   DRI2NumberEvents, NULL)
+                                   0, NULL)
 
 static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
@@ -182,6 +182,7 @@ DRI2QueryVersion(Display * dpy, int *major, int *minor)
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
    xDRI2QueryVersionReply rep;
    xDRI2QueryVersionReq *req;
+   int i, nevents;
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -200,6 +201,24 @@ DRI2QueryVersion(Display * dpy, int *major, int *minor)
    *minor = rep.minorVersion;
    UnlockDisplay(dpy);
    SyncHandle();
+
+   switch (rep.minorVersion) {
+   case 1:
+	   nevents = 0;
+	   break;
+   case 2:
+	   nevents = 1;
+	   break;
+   case 3:
+   default:
+	   nevents = 2;
+	   break;
+   }
+	
+   for (i = 0; i < nevents; i++) {
+       XESetWireToEvent (dpy, info->codes->first_event + i, DRI2WireToEvent);
+       XESetEventToWire (dpy, info->codes->first_event + i, DRI2EventToWire);
+   }
 
    return True;
 }
