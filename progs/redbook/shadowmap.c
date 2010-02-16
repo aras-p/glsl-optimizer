@@ -40,11 +40,10 @@
  * OpenGL(R) is a registered trademark of Silicon Graphics, Inc.
  */
 
-#define GL_GLEXT_PROTOTYPES
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 /*#include "helpers.h"*/
 
@@ -338,6 +337,7 @@ main( int argc, char** argv )
     glutInitWindowSize( 512, 512 );
     glutInitWindowPosition( 100, 100 );
     glutCreateWindow( argv[0] );
+    glewInit();
 
     init();
 

@@ -45,6 +45,7 @@
  *  Determine the minimum and maximum values of a group of pixels.
  *  This demonstrates use of the glMinmax() call.
  */
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -108,6 +109,11 @@ readImage( const char* filename, GLsizei* width, GLsizei *height )
 
 static void init(void)
 {
+   if (!glutExtensionSupported("GL_ARB_imaging")) {
+      fprintf(stderr, "Sorry, this program requires GL_ARB_imaging.\n");
+      exit(1);
+   }
+
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glClearColor(0.0, 0.0, 0.0, 0.0);
 
@@ -160,6 +166,7 @@ int main(int argc, char** argv)
    glutInitWindowSize(width, height);
    glutInitWindowPosition(100, 100);
    glutCreateWindow(argv[0]);
+   glewInit();
    init();
    glutReshapeFunc(reshape);
    glutKeyboardFunc(keyboard);

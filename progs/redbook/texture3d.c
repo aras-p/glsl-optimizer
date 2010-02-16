@@ -46,6 +46,7 @@
  *  with different texture coordinates to obtain different
  *  "slices" of the 3D texture.
  */
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -142,6 +143,7 @@ int main(int argc, char** argv)
    glutInitWindowSize(250, 250);
    glutInitWindowPosition(100, 100);
    glutCreateWindow(argv[0]);
+   glewInit();
    init();
    glutReshapeFunc(reshape);
    glutDisplayFunc(display);

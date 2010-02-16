@@ -46,8 +46,7 @@
  *  specifically the OpenGL routine glMultiDrawElements().
  */
 
-#define GL_GLEXT_PROTOTYPES
-
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -118,6 +117,7 @@ int main(int argc, char** argv)
    glutInitWindowSize (350, 350); 
    glutInitWindowPosition (100, 100);
    glutCreateWindow (argv[0]);
+   glewInit();
    init ();
    glutDisplayFunc(display); 
    glutReshapeFunc(reshape);

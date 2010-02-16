@@ -58,6 +58,7 @@
  *  scaling factor and reversing the order of subtraction
  *  for a combination function.
  */
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -368,6 +369,7 @@ int main(int argc, char** argv)
    glutInitWindowSize(400, 400);
    glutInitWindowPosition(100, 100);
    glutCreateWindow(argv[0]);
+   glewInit();
    init();
    glutDisplayFunc(display);
    glutReshapeFunc(reshape);

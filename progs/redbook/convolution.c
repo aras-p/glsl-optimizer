@@ -45,6 +45,7 @@
  *  Use various 2D convolutions filters to find edges in an image.
  *  
  */
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <assert.h>
 #include <stdio.h>
@@ -131,6 +132,11 @@ GLfloat  laplacian[3][3] = {
 
 static void init(void)
 {
+   if (!glutExtensionSupported("GL_ARB_imaging")) {
+      fprintf(stderr, "Sorry, this program requires GL_ARB_imaging.\n");
+      exit(1);
+   }
+
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glClearColor(0.0, 0.0, 0.0, 0.0);
 
@@ -197,6 +203,7 @@ int main(int argc, char** argv)
    glutInitWindowSize(width, height);
    glutInitWindowPosition(100, 100);
    glutCreateWindow(argv[0]);
+   glewInit();
    init();
    glutReshapeFunc(reshape);
    glutKeyboardFunc(keyboard);
