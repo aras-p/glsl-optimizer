@@ -146,41 +146,55 @@ static void
 do_block_16( struct lp_rasterizer_task *rast_task,
              const struct lp_rast_triangle *tri,
              int x, int y,
+             int c0,
              int c1,
-             int c2,
-             int c3 )
+             int c2 )
 {
-   const int eo1 = tri->eo1 * 4;
-   const int eo2 = tri->eo2 * 4;
-   const int eo3 = tri->eo3 * 4;
-   const int *step0 = tri->inputs.step[0];
-   const int *step1 = tri->inputs.step[1];
-   const int *step2 = tri->inputs.step[2];
-   int i;
+   unsigned mask = 0;
+   int eo[3];
+   int c[3];
+   int i, j;
 
    assert(x % 16 == 0);
    assert(y % 16 == 0);
 
-   for (i = 0; i < 16; i++) {
-      int cx1 = c1 + step0[i] * 4;
-      int cx2 = c2 + step1[i] * 4;
-      int cx3 = c3 + step2[i] * 4;
+   eo[0] = tri->eo1 * 4;
+   eo[1] = tri->eo2 * 4;
+   eo[2] = tri->eo3 * 4;
 
-      if (cx1 + eo1 < 0 ||
-          cx2 + eo2 < 0 ||
-          cx3 + eo3 < 0) {
-         /* the block is completely outside the triangle - nop */
-         LP_COUNT(nr_empty_4);
+   c[0] = c0;
+   c[1] = c1;
+   c[2] = c2;
+
+   for (j = 0; j < 3; j++) {
+      const int *step = tri->inputs.step[j];
+      int cx = c[j];
+      int eox = eo[j];
+
+      /* Mask has bits set whenever we are outside any of the edges.
+       */
+      for (i = 0; i < 16; i++) {
+         int out = cx + step[i] * 4 + eox;
+         mask |= (out >> 31) & (1 << i);
       }
-      else {
-         int px = x + pos_table4[i][0];
-         int py = y + pos_table4[i][1];
-         /* Don't bother testing if the 4x4 block is entirely in/out of
-          * the triangle.  It's a little faster to do it in the jit code.
-          */
-         LP_COUNT(nr_non_empty_4);
-         do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
-      }
+   }
+
+   mask = ~mask & 0xffff;
+   while (mask) {
+      int i = ffs(mask) - 1;
+      int px = x + pos_table4[i][0];
+      int py = y + pos_table4[i][1];
+      int cx1 = c0 + tri->inputs.step[0][i] * 4;
+      int cx2 = c1 + tri->inputs.step[1][i] * 4;
+      int cx3 = c2 + tri->inputs.step[2][i] * 4;
+
+      mask &= ~(1 << i);
+
+      /* Don't bother testing if the 4x4 block is entirely in/out of
+       * the triangle.  It's a little faster to do it in the jit code.
+       */
+      LP_COUNT(nr_non_empty_4);
+      do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
    }
 }
 
