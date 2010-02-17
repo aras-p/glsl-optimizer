@@ -1,5 +1,6 @@
 screen/gears
 screen/tri
+xegl/bindtex
 xegl/drawtex
 xegl/es1_info
 xegl/msaa
