@@ -248,19 +248,20 @@ _eglGetCurrentContext(void)
 
 
 /**
- * Record EGL error code.
+ * Record EGL error code and return EGL_FALSE.
  */
 EGLBoolean
 _eglError(EGLint errCode, const char *msg)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   const char *s;
 
    if (t == &dummy_thread)
       return EGL_FALSE;
 
-   if (t->LastError == EGL_SUCCESS) {
-      t->LastError = errCode;
+   t->LastError = errCode;
+
+   if (errCode != EGL_SUCCESS) {
+      const char *s;
 
       switch (errCode) {
       case EGL_BAD_ACCESS:
