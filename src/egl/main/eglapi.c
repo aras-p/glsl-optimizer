@@ -79,6 +79,9 @@
          _eglError(err, __FUNCTION__);          \
       ret;                                      \
    })
+#define _EGL_SUCCESS(disp, ret)  _EGL_ERROR(disp, EGL_SUCCESS, ret)
+/* record EGL_SUCCESS only when ret evaluates to true */
+#define _EGL_EVAL(disp, ret)  _EGL_ERROR(disp, (ret) ? EGL_SUCCESS : 0, ret)
 
 
 /**
@@ -232,7 +235,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
    EGLint major_int, minor_int;
 
    if (!disp)
-      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+      return _EGL_ERROR(NULL, EGL_BAD_DISPLAY, EGL_FALSE);
 
    if (!disp->Initialized) {
       _EGLDriver *drv = disp->Driver;
@@ -241,12 +244,12 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
          _eglPreloadDrivers();
          drv = _eglMatchDriver(disp);
          if (!drv)
-            return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
+            return _EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
       }
 
       /* Initialize the particular display now */
       if (!drv->API.Initialize(drv, disp, &major_int, &minor_int))
-         return _eglError(EGL_NOT_INITIALIZED, __FUNCTION__);
+         return _EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
       disp->APImajor = major_int;
       disp->APIminor = minor_int;
@@ -269,7 +272,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       *minor = minor_int;
    }
 
-   return EGL_TRUE;
+   return _EGL_SUCCESS(disp, EGL_TRUE);
 }
 
 
@@ -279,7 +282,7 @@ eglTerminate(EGLDisplay dpy)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
 
    if (!disp)
-      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+      return _EGL_ERROR(NULL, EGL_BAD_DISPLAY, EGL_FALSE);
 
    if (disp->Initialized) {
       _EGLDriver *drv = disp->Driver;
@@ -289,7 +292,7 @@ eglTerminate(EGLDisplay dpy)
       disp->Initialized = EGL_FALSE;
    }
 
-   return EGL_TRUE;
+   return _EGL_SUCCESS(disp, EGL_TRUE);
 }
 
 
@@ -298,9 +301,12 @@ eglQueryString(EGLDisplay dpy, EGLint name)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLDriver *drv;
+   const char *ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, NULL);
-   return drv->API.QueryString(drv, disp, name);
+   ret = drv->API.QueryString(drv, disp, name);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -310,9 +316,12 @@ eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_FALSE);
-   return drv->API.GetConfigs(drv, disp, configs, config_size, num_config);
+   ret = drv->API.GetConfigs(drv, disp, configs, config_size, num_config);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -322,10 +331,13 @@ eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs,
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_FALSE);
-   return drv->API.ChooseConfig(drv, disp, attrib_list, configs,
+   ret = drv->API.ChooseConfig(drv, disp, attrib_list, configs,
                                 config_size, num_config);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -336,9 +348,12 @@ eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_FALSE);
-   return drv->API.GetConfigAttrib(drv, disp, conf, attribute, value);
+   ret = drv->API.GetConfigAttrib(drv, disp, conf, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -351,18 +366,16 @@ eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
    _EGLContext *share = _eglLookupContext(share_list, disp);
    _EGLDriver *drv;
    _EGLContext *context;
+   EGLContext ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_CONTEXT);
-   if (!share && share_list != EGL_NO_CONTEXT) {
-      _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
-      return EGL_NO_CONTEXT;
-   }
+   if (!share && share_list != EGL_NO_CONTEXT)
+      return _EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_NO_CONTEXT);
 
    context = drv->API.CreateContext(drv, disp, conf, share, attrib_list);
-   if (context)
-      return _eglLinkContext(context, disp);
-   else
-      return EGL_NO_CONTEXT;
+   ret = (context) ? _eglLinkContext(context, disp) : EGL_NO_CONTEXT;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -372,10 +385,13 @@ eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLContext *context = _eglLookupContext(ctx, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_CONTEXT(disp, context, EGL_FALSE);
    _eglUnlinkContext(context);
-   return drv->API.DestroyContext(drv, disp, context);
+   ret = drv->API.DestroyContext(drv, disp, context);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -388,27 +404,30 @@ eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read,
    _EGLSurface *draw_surf = _eglLookupSurface(draw, disp);
    _EGLSurface *read_surf = _eglLookupSurface(read, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    if (!disp)
-      return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_DISPLAY, EGL_FALSE);
    drv = disp->Driver;
 
    /* display is allowed to be uninitialized under certain condition */
    if (!disp->Initialized) {
       if (draw != EGL_NO_SURFACE || read != EGL_NO_SURFACE ||
           ctx != EGL_NO_CONTEXT)
-         return _eglError(EGL_BAD_DISPLAY, __FUNCTION__);
+         return _EGL_ERROR(disp, EGL_BAD_DISPLAY, EGL_FALSE);
    }
    if (!drv)
-      return EGL_TRUE;
+      return _EGL_SUCCESS(disp, EGL_TRUE);
 
    if (!context && ctx != EGL_NO_CONTEXT)
-      return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
    if ((!draw_surf && draw != EGL_NO_SURFACE) ||
        (!read_surf && read != EGL_NO_SURFACE))
-      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
-   return drv->API.MakeCurrent(drv, disp, draw_surf, read_surf, context);
+   ret = drv->API.MakeCurrent(drv, disp, draw_surf, read_surf, context);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -419,9 +438,12 @@ eglQueryContext(EGLDisplay dpy, EGLContext ctx,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLContext *context = _eglLookupContext(ctx, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_CONTEXT(disp, context, EGL_FALSE);
-   return drv->API.QueryContext(drv, disp, context, attribute, value);
+   ret = drv->API.QueryContext(drv, disp, context, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -433,14 +455,14 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE);
 
    surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
-   if (surf)
-      return _eglLinkSurface(surf, disp);
-   else
-      return EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -452,14 +474,14 @@ eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
-   if (surf)
-      return _eglLinkSurface(surf, disp);
-   else
-      return EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -471,14 +493,14 @@ eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePbufferSurface(drv, disp, conf, attrib_list);
-   if (surf)
-      return _eglLinkSurface(surf, disp);
-   else
-      return EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -488,10 +510,13 @@ eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
    _eglUnlinkSurface(surf);
-   return drv->API.DestroySurface(drv, disp, surf);
+   ret = drv->API.DestroySurface(drv, disp, surf);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 EGLBoolean EGLAPIENTRY
@@ -501,9 +526,12 @@ eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
-   return drv->API.QuerySurface(drv, disp, surf, attribute, value);
+   ret = drv->API.QuerySurface(drv, disp, surf, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 EGLBoolean EGLAPIENTRY
@@ -513,9 +541,12 @@ eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
-   return drv->API.SurfaceAttrib(drv, disp, surf, attribute, value);
+   ret = drv->API.SurfaceAttrib(drv, disp, surf, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -525,9 +556,12 @@ eglBindTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
-   return drv->API.BindTexImage(drv, disp, surf, buffer);
+   ret = drv->API.BindTexImage(drv, disp, surf, buffer);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -537,9 +571,12 @@ eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
-   return drv->API.ReleaseTexImage(drv, disp, surf, buffer);
+   ret = drv->API.ReleaseTexImage(drv, disp, surf, buffer);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -550,17 +587,20 @@ eglSwapInterval(EGLDisplay dpy, EGLint interval)
    _EGLContext *ctx = _eglGetCurrentContext();
    _EGLSurface *surf;
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_FALSE);
 
    if (!ctx || !_eglIsContextLinked(ctx) || ctx->Resource.Display != disp)
-      return _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
 
    surf = ctx->DrawSurface;
    if (!_eglIsSurfaceLinked(surf))
-      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
-   return drv->API.SwapInterval(drv, disp, surf, interval);
+   ret = drv->API.SwapInterval(drv, disp, surf, interval);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -571,14 +611,17 @@ eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
 
    /* surface must be bound to current context in EGL 1.4 */
    if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
-      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
-   return drv->API.SwapBuffers(drv, disp, surf);
+   ret = drv->API.SwapBuffers(drv, disp, surf);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -588,9 +631,12 @@ eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE);
-   return drv->API.CopyBuffers(drv, disp, surf, target);
+   ret = drv->API.CopyBuffers(drv, disp, surf, target);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -600,19 +646,22 @@ eglWaitClient(void)
    _EGLContext *ctx = _eglGetCurrentContext();
    _EGLDisplay *disp;
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    if (!ctx)
-      return EGL_TRUE;
+      return _EGL_SUCCESS(NULL, EGL_TRUE);
    /* let bad current context imply bad current surface */
    if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
-      return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(NULL, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
+
+   disp = ctx->Resource.Display;
 
    /* a valid current context implies an initialized current display */
-   disp = ctx->Resource.Display;
    assert(disp->Initialized);
    drv = disp->Driver;
+   ret = drv->API.WaitClient(drv, disp, ctx);
 
-   return drv->API.WaitClient(drv, disp, ctx);
+   return _EGL_EVAL(NULL, ret);
 }
 
 
@@ -626,7 +675,7 @@ eglWaitGL(void)
    EGLBoolean ret;
 
    if (api_index != es_index && _eglIsCurrentThreadDummy())
-      return _eglError(EGL_BAD_ALLOC, "eglWaitGL");
+      return _EGL_ERROR(NULL, EGL_BAD_ALLOC, EGL_FALSE);
 
    t->CurrentAPIIndex = es_index;
    ret = eglWaitClient();
@@ -644,19 +693,23 @@ eglWaitNative(EGLint engine)
    _EGLContext *ctx = _eglGetCurrentContext();
    _EGLDisplay *disp;
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    if (!ctx)
-      return EGL_TRUE;
+      return _EGL_SUCCESS(NULL, EGL_TRUE);
+
    /* let bad current context imply bad current surface */
    if (!_eglIsContextLinked(ctx) || !_eglIsSurfaceLinked(ctx->DrawSurface))
-      return _eglError(EGL_BAD_CURRENT_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(NULL, EGL_BAD_CURRENT_SURFACE, EGL_FALSE);
+
+   disp = ctx->Resource.Display;
 
    /* a valid current context implies an initialized current display */
-   disp = ctx->Resource.Display;
    assert(disp->Initialized);
    drv = disp->Driver;
+   ret = drv->API.WaitNative(drv, disp, engine);
 
-   return drv->API.WaitNative(drv, disp, engine);
+   return _EGL_EVAL(NULL, ret);
 }
 
 
@@ -664,7 +717,11 @@ EGLDisplay EGLAPIENTRY
 eglGetCurrentDisplay(void)
 {
    _EGLContext *ctx = _eglGetCurrentContext();
-   return (ctx) ? _eglGetDisplayHandle(ctx->Resource.Display) : EGL_NO_DISPLAY;
+   EGLDisplay ret;
+
+   ret = (ctx) ? _eglGetDisplayHandle(ctx->Resource.Display) : EGL_NO_DISPLAY;
+
+   return _EGL_SUCCESS(NULL, ret);
 }
 
 
@@ -672,7 +729,11 @@ EGLContext EGLAPIENTRY
 eglGetCurrentContext(void)
 {
    _EGLContext *ctx = _eglGetCurrentContext();
-   return _eglGetContextHandle(ctx);
+   EGLContext ret;
+
+   ret = _eglGetContextHandle(ctx);
+
+   return _EGL_SUCCESS(NULL, ret);
 }
 
 
@@ -680,10 +741,12 @@ EGLSurface EGLAPIENTRY
 eglGetCurrentSurface(EGLint readdraw)
 {
    _EGLContext *ctx = _eglGetCurrentContext();
+   EGLint err = EGL_SUCCESS;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    if (!ctx)
-      return EGL_NO_SURFACE;
+      return _EGL_SUCCESS(NULL, EGL_NO_SURFACE);
 
    switch (readdraw) {
    case EGL_DRAW:
@@ -693,12 +756,14 @@ eglGetCurrentSurface(EGLint readdraw)
       surf = ctx->ReadSurface;
       break;
    default:
-      _eglError(EGL_BAD_PARAMETER, __FUNCTION__);
       surf = NULL;
+      err = EGL_BAD_PARAMETER;
       break;
    }
 
-   return _eglGetSurfaceHandle(surf);
+   ret = _eglGetSurfaceHandle(surf);
+
+   return _EGL_ERROR(NULL, err, ret);
 }
 
 
@@ -742,27 +807,34 @@ eglGetProcAddress(const char *procname)
       { NULL, NULL }
    };
    EGLint i;
+   _EGLProc ret;
 
    if (!procname)
-      return NULL;
+      return _EGL_SUCCESS(NULL, NULL);
+
+   ret = NULL;
    if (strncmp(procname, "egl", 3) == 0) {
       for (i = 0; egl_functions[i].name; i++) {
-         if (strcmp(egl_functions[i].name, procname) == 0)
-            return egl_functions[i].function;
+         if (strcmp(egl_functions[i].name, procname) == 0) {
+            ret = egl_functions[i].function;
+            break;
+         }
       }
    }
+   if (ret)
+      return _EGL_SUCCESS(NULL, ret);
 
    _eglPreloadDrivers();
 
    /* now loop over drivers to query their procs */
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
       _EGLDriver *drv = _eglGlobal.Drivers[i];
-      _EGLProc p = drv->API.GetProcAddress(drv, procname);
-      if (p)
-         return p;
+      ret = drv->API.GetProcAddress(drv, procname);
+      if (ret)
+         break;
    }
 
-   return NULL;
+   return _EGL_SUCCESS(NULL, ret);
 }
 
 
@@ -781,10 +853,13 @@ eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLScreen *scrn = _eglLookupScreen(screen, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-   return drv->API.ChooseModeMESA(drv, disp, scrn, attrib_list,
-                                  modes, modes_size, num_modes);
+   ret = drv->API.ChooseModeMESA(drv, disp, scrn, attrib_list,
+         modes, modes_size, num_modes);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -795,9 +870,12 @@ eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLScreen *scrn = _eglLookupScreen(screen, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-   return drv->API.GetModesMESA(drv, disp, scrn, modes, mode_size, num_mode);
+   ret = drv->API.GetModesMESA(drv, disp, scrn, modes, mode_size, num_mode);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -808,9 +886,12 @@ eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLMode *m = _eglLookupMode(mode, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_MODE(disp, m, EGL_FALSE);
-   return drv->API.GetModeAttribMESA(drv, disp, m, attribute, value);
+   ret = drv->API.GetModeAttribMESA(drv, disp, m, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -822,15 +903,16 @@ eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest,
    _EGLContext *source_context = _eglLookupContext(source, disp);
    _EGLContext *dest_context = _eglLookupContext(dest, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_CONTEXT(disp, source_context, EGL_FALSE);
-   if (!dest_context) {
-      _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
-      return EGL_FALSE;
-   }
+   if (!dest_context)
+      return _EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
 
-   return drv->API.CopyContextMESA(drv, disp, source_context, dest_context,
-                                   mask);
+   ret = drv->API.CopyContextMESA(drv, disp,
+         source_context, dest_context, mask);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -840,10 +922,12 @@ eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_FALSE);
-   return drv->API.GetScreensMESA(drv, disp, screens,
-                                  max_screens, num_screens);
+   ret = drv->API.GetScreensMESA(drv, disp, screens, max_screens, num_screens);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -855,14 +939,14 @@ eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE);
 
    surf = drv->API.CreateScreenSurfaceMESA(drv, disp, conf, attrib_list);
-   if (surf)
-      return _eglLinkSurface(surf, disp);
-   else
-      return EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -875,14 +959,17 @@ eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLMode *m = _eglLookupMode(mode, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
    if (!surf && surface != EGL_NO_SURFACE)
-      return _eglError(EGL_BAD_SURFACE, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
    if (!m && mode != EGL_NO_MODE_MESA)
-      return _eglError(EGL_BAD_MODE_MESA, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_MODE_MESA, EGL_FALSE);
 
-   return drv->API.ShowScreenSurfaceMESA(drv, disp, scrn, surf, m);
+   ret = drv->API.ShowScreenSurfaceMESA(drv, disp, scrn, surf, m);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -892,9 +979,12 @@ eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLScreen *scrn = _eglLookupScreen(screen, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-   return drv->API.ScreenPositionMESA(drv, disp, scrn, x, y);
+   ret = drv->API.ScreenPositionMESA(drv, disp, scrn, x, y);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -905,9 +995,12 @@ eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLScreen *scrn = _eglLookupScreen(screen, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-   return drv->API.QueryScreenMESA(drv, disp, scrn, attribute, value);
+   ret = drv->API.QueryScreenMESA(drv, disp, scrn, attribute, value);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -919,14 +1012,14 @@ eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
    _EGLScreen *scrn = _eglLookupScreen((EGLScreenMESA) screen, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-
-   if (drv->API.QueryScreenSurfaceMESA(drv, disp, scrn, &surf) != EGL_TRUE)
-      surf = NULL;
-   if (surface)
+   ret = drv->API.QueryScreenSurfaceMESA(drv, disp, scrn, &surf);
+   if (ret && surface)
       *surface = _eglGetSurfaceHandle(surf);
-   return (surf != NULL);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -937,15 +1030,14 @@ eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
    _EGLScreen *scrn = _eglLookupScreen((EGLScreenMESA) screen, disp);
    _EGLDriver *drv;
    _EGLMode *m;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_SCREEN(disp, scrn, EGL_FALSE);
-
-   if (drv->API.QueryScreenModeMESA(drv, disp, scrn, &m) != EGL_TRUE)
-      m = NULL;
-   if (mode)
+   ret = drv->API.QueryScreenModeMESA(drv, disp, scrn, &m);
+   if (ret && mode)
       *mode = m->Handle;
 
-   return (m != NULL);
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -955,9 +1047,12 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLMode *m = _eglLookupMode(mode, disp);
    _EGLDriver *drv;
+   const char *ret;
 
    drv = _EGL_CHECK_MODE(disp, m, NULL);
-   return drv->API.QueryModeStringMESA(drv, disp, m);
+   ret = drv->API.QueryModeStringMESA(drv, disp, m);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -988,13 +1083,14 @@ eglBindAPI(EGLenum api)
    _EGLThreadInfo *t = _eglGetCurrentThread();
 
    if (_eglIsCurrentThreadDummy())
-      return _eglError(EGL_BAD_ALLOC, "eglBindAPI");
+      return _EGL_ERROR(NULL, EGL_BAD_ALLOC, EGL_FALSE);
 
    if (!_eglIsApiValid(api))
-      return _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+      return _EGL_ERROR(NULL, EGL_BAD_PARAMETER, EGL_FALSE);
 
    t->CurrentAPIIndex = _eglConvertApiToIndex(api);
-   return EGL_TRUE;
+
+   return _EGL_SUCCESS(NULL, EGL_TRUE);
 }
 
 
@@ -1004,9 +1100,13 @@ eglBindAPI(EGLenum api)
 EGLenum
 eglQueryAPI(void)
 {
-   /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   return _eglConvertApiFromIndex(t->CurrentAPIIndex);
+   EGLenum ret;
+
+   /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
+   ret = _eglConvertApiFromIndex(t->CurrentAPIIndex);
+
+   return _EGL_SUCCESS(NULL, ret);
 }
 
 
@@ -1019,15 +1119,15 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
    _EGLConfig *conf = _eglLookupConfig(config, disp);
    _EGLDriver *drv;
    _EGLSurface *surf;
+   EGLSurface ret;
 
    drv = _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePbufferFromClientBuffer(drv, disp, buftype, buffer,
                                                  conf, attrib_list);
-   if (surf)
-      return _eglLinkSurface(surf, disp);
-   else
-      return EGL_NO_SURFACE;
+   ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
@@ -1054,7 +1154,8 @@ eglReleaseThread(void)
    }
 
    _eglDestroyCurrentThread();
-   return EGL_TRUE;
+
+   return _EGL_SUCCESS(NULL, EGL_TRUE);
 }
 
 
@@ -1072,34 +1173,36 @@ eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
    _EGLContext *context = _eglLookupContext(ctx, disp);
    _EGLDriver *drv;
    _EGLImage *img;
+   EGLImageKHR ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_NO_IMAGE_KHR);
-   if (!context && ctx != EGL_NO_CONTEXT) {
-      _eglError(EGL_BAD_CONTEXT, __FUNCTION__);
-      return EGL_NO_IMAGE_KHR;
-   }
+   if (!context && ctx != EGL_NO_CONTEXT)
+      return _EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_NO_IMAGE_KHR);
 
    img = drv->API.CreateImageKHR(drv,
          disp, context, target, buffer, attr_list);
-   if (img)
-      return _eglLinkImage(img, disp);
-   else
-      return EGL_NO_IMAGE_KHR;
+   ret = (img) ? _eglLinkImage(img, disp) : EGL_NO_IMAGE_KHR;
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
-EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
+EGLBoolean
+eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    _EGLImage *img = _eglLookupImage(image, disp);
    _EGLDriver *drv;
+   EGLBoolean ret;
 
    drv = _EGL_CHECK_DISPLAY(disp, EGL_FALSE);
    if (!img)
-      return _eglError(EGL_BAD_PARAMETER, __FUNCTION__);
+      return _EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
 
    _eglUnlinkImage(img);
-   return drv->API.DestroyImageKHR(drv, disp, img);
+   ret = drv->API.DestroyImageKHR(drv, disp, img);
+
+   return _EGL_EVAL(disp, ret);
 }
 
 
