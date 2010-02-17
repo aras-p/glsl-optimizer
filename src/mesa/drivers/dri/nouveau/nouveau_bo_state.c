@@ -32,7 +32,6 @@ nouveau_bo_marker_emit(GLcontext *ctx, struct nouveau_bo_marker *m,
 		       uint32_t flags)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_pushbuf *push = chan->pushbuf;
 	uint32_t packet;
 
 	if (m->gr->bound == NOUVEAU_GROBJ_UNBOUND)
@@ -41,11 +40,10 @@ nouveau_bo_marker_emit(GLcontext *ctx, struct nouveau_bo_marker *m,
 	if (MARK_RING(chan, 2, 2))
 		return GL_FALSE;
 
-	push->remaining -= 2;
 	packet = (m->gr->subc << 13) | (1 << 18) | m->mthd;
 
 	if (flags) {
-		if (nouveau_pushbuf_emit_reloc(chan, push->cur++, m->bo,
+		if (nouveau_pushbuf_emit_reloc(chan, chan->cur++, m->bo,
 					       packet, 0, flags |
 					       (m->flags & (NOUVEAU_BO_VRAM |
 							    NOUVEAU_BO_GART |
@@ -53,10 +51,10 @@ nouveau_bo_marker_emit(GLcontext *ctx, struct nouveau_bo_marker *m,
 					       0, 0))
 			goto fail;
 	} else {
-		*(push->cur++) = packet;
+		*(chan->cur++) = packet;
 	}
 
-	if (nouveau_pushbuf_emit_reloc(chan, push->cur++, m->bo, m->data,
+	if (nouveau_pushbuf_emit_reloc(chan, chan->cur++, m->bo, m->data,
 				       m->data2, flags | m->flags,
 				       m->vor, m->tor))
 		goto fail;

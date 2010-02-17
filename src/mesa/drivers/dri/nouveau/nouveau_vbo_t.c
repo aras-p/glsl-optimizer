@@ -319,7 +319,7 @@ vbo_draw_vbo(GLcontext *ctx, const struct gl_client_array **arrays,
 					  min_index, max_index);
 		}
 
-		if (count > get_max_vertices(ctx, ib, chan->pushbuf->remaining))
+		if (count > get_max_vertices(ctx, ib, AVAIL_RING(chan)))
 			WAIT_RING(chan, PUSHBUF_DWORDS);
 
 		BATCH_BEGIN(nvgl_primitive(prims[i].mode));
@@ -355,7 +355,7 @@ vbo_draw_imm(GLcontext *ctx, const struct gl_client_array **arrays,
 			end = start + prims[i].count;
 
 		if (prims[i].count > get_max_vertices(ctx, ib,
-						      chan->pushbuf->remaining))
+						      AVAIL_RING(chan)))
 			WAIT_RING(chan, PUSHBUF_DWORDS);
 
 		BATCH_BEGIN(nvgl_primitive(prims[i].mode));

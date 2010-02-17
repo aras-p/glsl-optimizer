@@ -210,7 +210,7 @@ swtnl_flush_vertices(GLcontext *ctx)
 	swtnl_bind_vertices(ctx);
 
 	while (count) {
-		push = get_max_vertices(ctx, NULL, chan->pushbuf->remaining);
+		push = get_max_vertices(ctx, NULL, AVAIL_RING(chan));
 		push = MIN2(push / 12 * 12, count);
 		count -= push;
 
