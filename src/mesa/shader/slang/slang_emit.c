@@ -1122,6 +1122,8 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
          return inst;
       }
    }
+#else
+   (void) inst;
 #endif
 
    if (!alloc_node_storage(emitInfo, n, n->Children[0]->Store->Size))
