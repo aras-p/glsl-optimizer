@@ -168,13 +168,12 @@ do_block_16( struct lp_rasterizer_task *rast_task,
 
    for (j = 0; j < 3; j++) {
       const int *step = tri->inputs.step[j];
-      int cx = c[j];
-      int eox = eo[j];
+      const int cx = c[j] + eo[j];
 
       /* Mask has bits set whenever we are outside any of the edges.
        */
       for (i = 0; i < 16; i++) {
-         int out = cx + step[i] * 4 + eox;
+         int out = cx + step[i] * 4;
          mask |= (out >> 31) & (1 << i);
       }
    }
@@ -213,53 +212,79 @@ lp_rast_triangle( struct lp_rasterizer *rast,
 
    int x = rast_task->x;
    int y = rast_task->y;
-   unsigned i;
+   int ei[3], eo[3], c[3];
+   unsigned outmask, inmask, partial_mask;
+   unsigned i, j;
 
-   int c1 = tri->c1 + tri->dx12 * y - tri->dy12 * x;
-   int c2 = tri->c2 + tri->dx23 * y - tri->dy23 * x;
-   int c3 = tri->c3 + tri->dx31 * y - tri->dy31 * x;
+   c[0] = tri->c1 + tri->dx12 * y - tri->dy12 * x;
+   c[1] = tri->c2 + tri->dx23 * y - tri->dy23 * x;
+   c[2] = tri->c3 + tri->dx31 * y - tri->dy31 * x;
 
-   int ei1 = tri->ei1 * 16;
-   int ei2 = tri->ei2 * 16;
-   int ei3 = tri->ei3 * 16;
+   eo[0] = tri->eo1 * 16;
+   eo[1] = tri->eo2 * 16;
+   eo[2] = tri->eo3 * 16;
 
-   int eo1 = tri->eo1 * 16;
-   int eo2 = tri->eo2 * 16;
-   int eo3 = tri->eo3 * 16;
+   ei[0] = tri->ei1 * 16;
+   ei[1] = tri->ei2 * 16;
+   ei[2] = tri->ei3 * 16;
 
-   LP_DBG(DEBUG_RAST, "lp_rast_triangle\n");
+   outmask = 0;
+   inmask = 0xffff;
 
-   /* Walk over the tile to build a list of 4x4 pixel blocks which will
-    * be filled/shaded.  We do this at two granularities: 16x16 blocks
-    * and then 4x4 blocks.
+   for (j = 0; j < 3; j++) {
+      const int *step = tri->inputs.step[j];
+      const int cox = c[j] + eo[j];
+      const int cio = ei[j]- eo[j];
+
+      /* Outmask has bits set whenever we are outside any of the
+       * edges.
+       */
+      /* Inmask has bits set whenever we are inside all of the edges.
+       */
+      for (i = 0; i < 16; i++) {
+         int out = cox + step[i] * 16;
+         int in = out + cio;
+         outmask |= (out >> 31) & (1 << i);
+         inmask &= ~((in >> 31) & (1 << i));
+      }
+   }
+
+   assert((outmask & inmask) == 0);
+
+   if (outmask == 0xffff)
+      return;
+
+   /* Invert mask, so that bits are set whenever we are at least
+    * partially inside all of the edges:
     */
-   for (i = 0; i < 16; i++) {
-      int cx1 = c1 + (tri->inputs.step[0][i] * 16);
-      int cx2 = c2 + (tri->inputs.step[1][i] * 16);
-      int cx3 = c3 + (tri->inputs.step[2][i] * 16);
+   partial_mask = ~inmask & ~outmask & 0xffff;
 
-      if (cx1 + eo1 < 0 ||
-          cx2 + eo2 < 0 ||
-          cx3 + eo3 < 0) {
-         /* the block is completely outside the triangle - nop */
-         LP_COUNT(nr_empty_16);
-      }
-      else {
-         int px = x + pos_table16[i][0];
-         int py = y + pos_table16[i][1];
+   /* Iterate over partials:
+    */
+   while (partial_mask) {
+      int i = ffs(partial_mask) - 1;
+      int px = x + pos_table16[i][0];
+      int py = y + pos_table16[i][1];
+      int cx1 = c[0] + tri->inputs.step[0][i] * 16;
+      int cx2 = c[1] + tri->inputs.step[1][i] * 16;
+      int cx3 = c[2] + tri->inputs.step[2][i] * 16;
 
-         if (cx1 + ei1 > 0 &&
-             cx2 + ei2 > 0 &&
-             cx3 + ei3 > 0) {
-            /* the block is completely inside the triangle */
-            LP_COUNT(nr_fully_covered_16);
-            block_full_16(rast_task, tri, px, py);
-         }
-         else {
-            /* the block is partially in/out of the triangle */
-            LP_COUNT(nr_partially_covered_16);
-            do_block_16(rast_task, tri, px, py, cx1, cx2, cx3);
-         }
-      }
+      partial_mask &= ~(1 << i);
+
+      LP_COUNT(nr_partially_covered_16);
+      do_block_16(rast_task, tri, px, py, cx1, cx2, cx3);
+   }
+
+   /* Iterate over fulls: 
+    */
+   while (inmask) {
+      int i = ffs(inmask) - 1;
+      int px = x + pos_table16[i][0];
+      int py = y + pos_table16[i][1];
+
+      inmask &= ~(1 << i);
+
+      LP_COUNT(nr_fully_covered_16);
+      block_full_16(rast_task, tri, px, py);
    }
 }
