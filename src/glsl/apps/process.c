@@ -47,6 +47,7 @@ main(int argc,
    unsigned int i;
 
    if (argc != 3) {
+      printf("Usage: process infile outfile\n");
       return 1;
    }
 

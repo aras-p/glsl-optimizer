@@ -45,6 +45,7 @@ main(int argc,
    FILE *out;
 
    if (argc != 3) {
+      printf("Usage: purify infile outfile\n");
       return 1;
    }
 

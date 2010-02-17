@@ -46,6 +46,7 @@ main(int argc,
    unsigned int i;
 
    if (argc != 3) {
+      printf("Usage: tokenize infile outfile\n");
       return 1;
    }
 

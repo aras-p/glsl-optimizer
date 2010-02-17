@@ -45,6 +45,7 @@ main(int argc,
    FILE *out;
 
    if (argc != 3) {
+      printf("Usage: version infile outfile\n");
       return 1;
    }
 
