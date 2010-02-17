@@ -42,6 +42,9 @@
 #include <sys/time.h>
 #include <X11/extensions/xf86vmode.h>
 #include "xf86dri.h"
+#define GC_IS_DIRECT(gc) ((gc)->driContext != NULL)
+#else
+#define GC_IS_DIRECT(gc) (0)
 #endif
 
 #if defined(USE_XCB)
@@ -62,6 +65,8 @@ static Bool windowExistsFlag;
 static int
 windowExistsErrorHandler(Display * dpy, XErrorEvent * xerr)
 {
+   (void) dpy;
+
    if (xerr->error_code == BadWindow) {
       windowExistsFlag = GL_FALSE;
    }
@@ -353,137 +358,105 @@ AllocateGLXContext(Display * dpy)
  */
 
 static GLXContext
-CreateContext(Display * dpy, XVisualInfo * vis,
+CreateContext(Display * dpy, int generic_id,
               const __GLcontextModes * const fbconfig,
               GLXContext shareList,
-              Bool allowDirect, GLXContextID contextID,
-              Bool use_glx_1_3, int renderType)
+              Bool allowDirect,
+	      unsigned code, int renderType, int screen)
 {
    GLXContext gc;
 #ifdef GLX_DIRECT_RENDERING
-   int screen = (fbconfig == NULL) ? vis->screen : fbconfig->screen;
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 #endif
 
    if (dpy == NULL)
       return NULL;
 
+   if (generic_id == None)
+      return NULL;
+
    gc = AllocateGLXContext(dpy);
    if (!gc)
       return NULL;
 
-   if (None == contextID) {
-      if ((vis == NULL) && (fbconfig == NULL))
-         return NULL;
-
 #ifdef GLX_DIRECT_RENDERING
-      if (allowDirect && psc->driScreen) {
-         const __GLcontextModes *mode;
-
-         if (fbconfig == NULL) {
-            mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
-            if (mode == NULL) {
-               xError error;
-
-               error.errorCode = BadValue;
-               error.resourceID = vis->visualid;
-               error.sequenceNumber = dpy->request;
-               error.type = X_Error;
-               error.majorCode = gc->majorOpcode;
-               error.minorCode = X_GLXCreateContext;
-               _XError(dpy, &error);
-               return None;
-            }
-            if (renderType == 0) {
-               /* Initialize renderType now */
-               renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
-            }
-         }
-         else {
-            mode = fbconfig;
-         }
-
-         gc->driContext = psc->driScreen->createContext(psc, mode, gc,
-                                                        shareList,
-                                                        renderType);
-         if (gc->driContext != NULL) {
-            gc->screen = mode->screen;
-            gc->psc = psc;
-            gc->mode = mode;
-            gc->isDirect = GL_TRUE;
-         }
+   if (allowDirect && psc->driScreen) {
+      gc->driContext = psc->driScreen->createContext(psc, fbconfig, gc,
+						     shareList, renderType);
+      if (gc->driContext != NULL) {
+	 gc->screen = screen;
+	 gc->psc = psc;
+	 gc->mode = fbconfig;
+	 gc->isDirect = GL_TRUE;
       }
-#endif
-
-      LockDisplay(dpy);
-      if (fbconfig == NULL) {
-         xGLXCreateContextReq *req;
-
-         /* Send the glXCreateContext request */
-         GetReq(GLXCreateContext, req);
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXCreateContext;
-         req->context = gc->xid = XAllocID(dpy);
-         req->visual = vis->visualid;
-         req->screen = vis->screen;
-         req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
-      }
-      else if (use_glx_1_3) {
-         xGLXCreateNewContextReq *req;
-
-         /* Send the glXCreateNewContext request */
-         GetReq(GLXCreateNewContext, req);
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXCreateNewContext;
-         req->context = gc->xid = XAllocID(dpy);
-         req->fbconfig = fbconfig->fbconfigID;
-         req->screen = fbconfig->screen;
-         req->renderType = renderType;
-         req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
-      }
-      else {
-         xGLXVendorPrivateWithReplyReq *vpreq;
-         xGLXCreateContextWithConfigSGIXReq *req;
-
-         /* Send the glXCreateNewContext request */
-         GetReqExtra(GLXVendorPrivateWithReply,
-                     sz_xGLXCreateContextWithConfigSGIXReq -
-                     sz_xGLXVendorPrivateWithReplyReq, vpreq);
-         req = (xGLXCreateContextWithConfigSGIXReq *) vpreq;
-         req->reqType = gc->majorOpcode;
-         req->glxCode = X_GLXVendorPrivateWithReply;
-         req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
-         req->context = gc->xid = XAllocID(dpy);
-         req->fbconfig = fbconfig->fbconfigID;
-         req->screen = fbconfig->screen;
-         req->renderType = renderType;
-         req->shareList = shareList ? shareList->xid : None;
-#ifdef GLX_DIRECT_RENDERING
-         req->isDirect = gc->driContext != NULL;
-#else
-         req->isDirect = 0;
-#endif
-      }
-
-      UnlockDisplay(dpy);
-      SyncHandle();
-      gc->imported = GL_FALSE;
    }
-   else {
-      gc->xid = contextID;
-      gc->imported = GL_TRUE;
+#endif
+
+   LockDisplay(dpy);
+   switch (code) {
+   case X_GLXCreateContext: {
+      xGLXCreateContextReq *req;
+
+      /* Send the glXCreateContext request */
+      GetReq(GLXCreateContext, req);
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXCreateContext;
+      req->context = gc->xid = XAllocID(dpy);
+      req->visual = generic_id;
+      req->screen = screen;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
    }
 
+   case X_GLXCreateNewContext: {
+      xGLXCreateNewContextReq *req;
+
+      /* Send the glXCreateNewContext request */
+      GetReq(GLXCreateNewContext, req);
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXCreateNewContext;
+      req->context = gc->xid = XAllocID(dpy);
+      req->fbconfig = generic_id;
+      req->screen = screen;
+      req->renderType = renderType;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
+   }
+
+   case X_GLXvop_CreateContextWithConfigSGIX: {
+      xGLXVendorPrivateWithReplyReq *vpreq;
+      xGLXCreateContextWithConfigSGIXReq *req;
+
+      /* Send the glXCreateNewContext request */
+      GetReqExtra(GLXVendorPrivateWithReply,
+		  sz_xGLXCreateContextWithConfigSGIXReq -
+		  sz_xGLXVendorPrivateWithReplyReq, vpreq);
+      req = (xGLXCreateContextWithConfigSGIXReq *) vpreq;
+      req->reqType = gc->majorOpcode;
+      req->glxCode = X_GLXVendorPrivateWithReply;
+      req->vendorCode = X_GLXvop_CreateContextWithConfigSGIX;
+      req->context = gc->xid = XAllocID(dpy);
+      req->fbconfig = generic_id;
+      req->screen = screen;
+      req->renderType = renderType;
+      req->shareList = shareList ? shareList->xid : None;
+      req->isDirect = GC_IS_DIRECT(gc);
+      break;
+   }
+
+   default:
+      /* What to do here?  This case is the sign of an internal error.  It
+       * should never be reachable.
+       */
+      break;
+   }
+
+   UnlockDisplay(dpy);
+   SyncHandle();
+
+   gc->imported = GL_FALSE;
    gc->renderType = renderType;
 
    return gc;
@@ -493,8 +466,31 @@ PUBLIC GLXContext
 glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
-   return CreateContext(dpy, vis, NULL, shareList, allowDirect, None,
-                        False, 0);
+   const __GLcontextModes *mode = NULL;
+   int renderType = 0;
+
+#ifdef GLX_DIRECT_RENDERING
+   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, vis->screen);
+
+   mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+   if (mode == NULL) {
+      xError error;
+
+      error.errorCode = BadValue;
+      error.resourceID = vis->visualid;
+      error.sequenceNumber = dpy->request;
+      error.type = X_Error;
+      error.majorCode = __glXSetupForCommand(dpy);
+      error.minorCode = X_GLXCreateContext;
+      _XError(dpy, &error);
+      return None;
+   }
+
+   renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+#endif
+
+   return CreateContext(dpy, vis->visualid, mode, shareList, allowDirect,
+                        X_GLXCreateContext, renderType, vis->screen);
 }
 
 _X_HIDDEN void
@@ -860,11 +856,9 @@ glXIsDirect(Display * dpy, GLXContext gc)
 {
    if (!gc) {
       return GL_FALSE;
-#ifdef GLX_DIRECT_RENDERING
    }
-   else if (gc->driContext) {
+   else if (GC_IS_DIRECT(gc)) {
       return GL_TRUE;
-#endif
    }
    return __glXIsDirect(dpy, gc->xid);
 }
@@ -1095,7 +1089,7 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
 
 #define MATCH_DONT_CARE( param )        \
   do {                                  \
-    if ( (a-> param != GLX_DONT_CARE)   \
+    if ( ((int) a-> param != (int) GLX_DONT_CARE)   \
          && (a-> param != b-> param) ) {        \
       return False;                             \
     }                                           \
@@ -1103,7 +1097,7 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
 
 #define MATCH_MINIMUM( param )                  \
   do {                                          \
-    if ( (a-> param != GLX_DONT_CARE)           \
+    if ( ((int) a-> param != (int) GLX_DONT_CARE)	\
          && (a-> param > b-> param) ) {         \
       return False;                             \
     }                                           \
@@ -1170,7 +1164,7 @@ fbconfigs_compatible(const __GLcontextModes * const a,
     * the (broken) drivers.
     */
 
-   if (a->transparentPixel != GLX_DONT_CARE && a->transparentPixel != 0) {
+   if (a->transparentPixel != (int) GLX_DONT_CARE && a->transparentPixel != 0) {
       if (a->transparentPixel == GLX_NONE) {
          if (b->transparentPixel != GLX_NONE && b->transparentPixel != 0)
             return False;
@@ -1478,6 +1472,8 @@ glXQueryExtensionsString(Display * dpy, int screen)
 PUBLIC const char *
 glXGetClientString(Display * dpy, int name)
 {
+   (void) dpy;
+
    switch (name) {
    case GLX_VENDOR:
       return (__glXGLXClientVendorName);
@@ -1639,7 +1635,6 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
    else {
       int *propList, *pProp;
       int nPropListBytes;
-      int i;
 
       nPropListBytes = numValues << 3;
       propList = (int *) Xmalloc(nPropListBytes);
@@ -1647,6 +1642,8 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
          retval = 0;
       }
       else {
+	 unsigned i;
+
          _XRead(dpy, (char *) propList, nPropListBytes);
          pProp = propList;
          for (i = 0; i < numValues; i++) {
@@ -1742,10 +1739,14 @@ glXImportContextEXT(Display * dpy, GLXContextID contextID)
       return NULL;
    }
 
-   ctx = CreateContext(dpy, NULL, NULL, NULL, False, contextID, False, 0);
+   ctx = AllocateGLXContext(dpy);
    if (NULL != ctx) {
+      ctx->xid = contextID;
+      ctx->imported = GL_TRUE;
+
       if (Success != __glXQueryContextInfo(dpy, ctx)) {
-         return NULL;
+	 __glXFreeContext(ctx);
+	 ctx = NULL;
       }
    }
    return ctx;
@@ -1791,8 +1792,12 @@ PUBLIC GLXContext
 glXCreateNewContext(Display * dpy, GLXFBConfig config,
                     int renderType, GLXContext shareList, Bool allowDirect)
 {
-   return CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
-                        allowDirect, None, True, renderType);
+   const __GLcontextModes *const fbconfig =
+      (const __GLcontextModes *const) config;
+
+   return CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
+                        allowDirect, X_GLXCreateNewContext, renderType,
+			fbconfig->screen);
 }
 
 
@@ -1815,14 +1820,15 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
    if (priv && (priv->screenConfigs != NULL)
        && (screen >= 0) && (screen <= ScreenCount(dpy))
        && (priv->screenConfigs[screen].configs != NULL)
-       && (priv->screenConfigs[screen].configs->fbconfigID != GLX_DONT_CARE)) {
+       && (priv->screenConfigs[screen].configs->fbconfigID
+	   != (int) GLX_DONT_CARE)) {
       unsigned num_configs = 0;
       __GLcontextModes *modes;
 
 
       for (modes = priv->screenConfigs[screen].configs; modes != NULL;
            modes = modes->next) {
-         if (modes->fbconfigID != GLX_DONT_CARE) {
+         if (modes->fbconfigID != (int) GLX_DONT_CARE) {
             num_configs++;
          }
       }
@@ -1834,7 +1840,7 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
          i = 0;
          for (modes = priv->screenConfigs[screen].configs; modes != NULL;
               modes = modes->next) {
-            if (modes->fbconfigID != GLX_DONT_CARE) {
+            if (modes->fbconfigID != (int) GLX_DONT_CARE) {
                config[i] = modes;
                i++;
             }
@@ -1951,10 +1957,6 @@ static int
 __glXSwapIntervalMESA(unsigned int interval)
 {
    GLXContext gc = __glXGetCurrentContext();
-
-   if (interval < 0) {
-      return GLX_BAD_VALUE;
-   }
 
 #ifdef __DRI_SWAP_CONTROL
    if (gc != NULL && gc->driContext) {
@@ -2282,8 +2284,10 @@ glXCreateContextWithConfigSGIX(Display * dpy,
    psc = GetGLXScreenConfigs(dpy, fbconfig->screen);
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
-      gc = CreateContext(dpy, NULL, (__GLcontextModes *) config, shareList,
-                         allowDirect, None, False, renderType);
+      gc = CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
+                         allowDirect,
+			 X_GLXvop_CreateContextWithConfigSGIX, renderType,
+			 fbconfig->screen);
    }
 
    return gc;
@@ -2298,7 +2302,7 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
 
    if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
-       && (psc->configs->fbconfigID != GLX_DONT_CARE)) {
+       && (psc->configs->fbconfigID != (int) GLX_DONT_CARE)) {
       return (GLXFBConfigSGIX) _gl_context_modes_find_visual(psc->configs,
                                                              vis->visualid);
    }
@@ -2386,6 +2390,8 @@ __driGetMscRateOML(__DRIdrawable * draw,
    int i;
    __GLXDRIdrawable *glxDraw = private;
 
+   (void) draw;
+
    psc = glxDraw->psc;
    if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
        XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line)) {
@@ -2432,6 +2438,11 @@ __driGetMscRateOML(__DRIdrawable * draw,
    else
       return False;
 #else
+   (void) draw;
+   (void) numerator;
+   (void) denominator;
+   (void) private;
+
    return False;
 #endif
 }
@@ -2870,13 +2881,8 @@ __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
    INT32 *buffer_ptr;
    CARD8 opcode;
 
-   if (gc == NULL)
+   if ((gc == NULL) || GC_IS_DIRECT(gc))
       return;
-
-#ifdef GLX_DIRECT_RENDERING
-   if (gc->driContext)
-      return;
-#endif
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
