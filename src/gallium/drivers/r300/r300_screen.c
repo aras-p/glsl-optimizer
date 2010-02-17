@@ -210,6 +210,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 {
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
+    boolean is_z24 = format == PIPE_FORMAT_Z24X8_UNORM ||
+                     format == PIPE_FORMAT_Z24S8_UNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
         debug_printf("r300: Implementation error: Received bogus texture "
@@ -217,32 +219,18 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         return FALSE;
     }
 
+    /* Check sampler format support. */
+    if ((usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
+        (is_r500 || !is_z24) && /* Z24 cannot be sampled from on non-r5xx. */
+        r300_translate_texformat(format) != ~0) {
+        retval |= PIPE_TEXTURE_USAGE_SAMPLER;
+    }
+
     switch (format) {
         /* Supported formats. */
         /* Colorbuffer */
         case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
-            retval = usage &
-                (PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                 PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                 PIPE_TEXTURE_USAGE_PRIMARY);
-            break;
-
-        /* Texture */
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
-        case PIPE_FORMAT_R8G8B8A8_SRGB:
-        case PIPE_FORMAT_DXT1_RGB:
-        case PIPE_FORMAT_DXT1_RGBA:
-        case PIPE_FORMAT_DXT3_RGBA:
-        case PIPE_FORMAT_DXT5_RGBA:
-        case PIPE_FORMAT_YCBCR:
-        case PIPE_FORMAT_L8_SRGB:
-        case PIPE_FORMAT_A8L8_SRGB:
-        case PIPE_FORMAT_A8L8_UNORM:
-            retval = usage & PIPE_TEXTURE_USAGE_SAMPLER;
-            break;
-
-        /* Colorbuffer or texture */
         case PIPE_FORMAT_R5G6B5_UNORM:
         case PIPE_FORMAT_A1R5G5B5_UNORM:
         case PIPE_FORMAT_A4R4G4B4_UNORM:
@@ -251,47 +239,23 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
-            retval = usage &
+            retval |= usage &
                 (PIPE_TEXTURE_USAGE_RENDER_TARGET |
                  PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                 PIPE_TEXTURE_USAGE_PRIMARY |
-                 PIPE_TEXTURE_USAGE_SAMPLER);
+                 PIPE_TEXTURE_USAGE_PRIMARY);
             break;
 
-        /* Z buffer or texture */
+        /* ZS buffer */
         case PIPE_FORMAT_Z16_UNORM:
-            retval = usage &
-                (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-                 PIPE_TEXTURE_USAGE_SAMPLER);
-            break;
-
-        /* 24bit Z buffer can only be used as a texture on R500. */
         case PIPE_FORMAT_Z24X8_UNORM:
-        /* Z buffer with stencil or texture */
         case PIPE_FORMAT_Z24S8_UNORM:
-            retval = usage &
-                (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-                 (is_r500 ? PIPE_TEXTURE_USAGE_SAMPLER : 0));
+            retval = usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
             break;
-
-        /* Definitely unsupported formats. */
-        /* Non-usable Z buffer/stencil formats. */
-        case PIPE_FORMAT_Z32_UNORM:
-        case PIPE_FORMAT_S8Z24_UNORM:
-        case PIPE_FORMAT_X8Z24_UNORM:
-            SCREEN_DBG(r300_screen(screen), DBG_TEX,
-                       "r300: Note: Got unsupported format: %s in %s\n",
-                       util_format_name(format), __FUNCTION__);
-            return FALSE;
 
         /* XXX Add all remaining gallium-supported formats,
          * see util/u_format.csv. */
 
-        default:
-            /* Unknown format... */
-            debug_printf("r300: Warning: Got unknown format: %s in %s\n",
-                util_format_name(format), __FUNCTION__);
-            break;
+        default:;
     }
 
     /* If usage was a mask that contained multiple bits, and not all of them

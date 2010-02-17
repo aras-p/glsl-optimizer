@@ -52,81 +52,228 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
 {
-    switch (format) {
-        /* X8 */
-        case PIPE_FORMAT_A8_UNORM:
-            return R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8);
-        case PIPE_FORMAT_I8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, X, X8);
-        case PIPE_FORMAT_L8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
-        case PIPE_FORMAT_L8_SRGB:
-            return R300_EASY_TX_FORMAT(X, X, X, ONE, X8) |
-                R300_TX_FORMAT_GAMMA;
-        /* X16 */
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4);
-        case PIPE_FORMAT_R16_UNORM:
-        case PIPE_FORMAT_Z16_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, X, X16);
-        case PIPE_FORMAT_R16_SNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, X, X16) |
-                R300_TX_FORMAT_SIGNED;
-        /* Z5Y6X5 */
-        case PIPE_FORMAT_R5G6B5_UNORM:
-            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
-        /* W1Z5Y5X5*/
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5);
-        /* Y8X8 */
-        case PIPE_FORMAT_A8L8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
-        case PIPE_FORMAT_A8L8_SRGB:
-            return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) |
-                R300_TX_FORMAT_GAMMA;
-        /* W8Z8Y8X8 */
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
-        case PIPE_FORMAT_R8G8B8A8_UNORM:
-            return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-        case PIPE_FORMAT_R8G8B8X8_UNORM:
-            return R300_EASY_TX_FORMAT(Y, Z, ONE, X, W8Z8Y8X8);
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8) |
-                R300_TX_FORMAT_GAMMA;
-        case PIPE_FORMAT_R8G8B8A8_SRGB:
-            return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) |
-                R300_TX_FORMAT_GAMMA;
-        /* DXT1 */
-        case PIPE_FORMAT_DXT1_RGB:
-            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1);
-        case PIPE_FORMAT_DXT1_RGBA:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1);
-        /* DXT3 */
-        case PIPE_FORMAT_DXT3_RGBA:
-            return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3);
-        /* DXT5 */
-        case PIPE_FORMAT_DXT5_RGBA:
-            return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5);
-        /* YVYU422 */
-        case PIPE_FORMAT_YCBCR:
-            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, YVYU422) |
-                R300_TX_FORMAT_YUV_TO_RGB;
-        /* W24_FP */
-        case PIPE_FORMAT_Z24S8_UNORM:
-        case PIPE_FORMAT_Z24X8_UNORM:
-            return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
+    uint32_t result = 0;
+    const struct util_format_description *desc;
+    unsigned components = 0, i;
+    boolean uniform = TRUE;
+    const uint32_t swizzle_shift[4] = {
+        R300_TX_FORMAT_R_SHIFT,
+        R300_TX_FORMAT_G_SHIFT,
+        R300_TX_FORMAT_B_SHIFT,
+        R300_TX_FORMAT_A_SHIFT
+    };
+    const uint32_t sign_bit[4] = {
+        R300_TX_FORMAT_SIGNED_X,
+        R300_TX_FORMAT_SIGNED_Y,
+        R300_TX_FORMAT_SIGNED_Z,
+        R300_TX_FORMAT_SIGNED_W,
+    };
 
-        default:
-            debug_printf("r300: Implementation error: "
-                "Got unsupported texture format %s in %s\n",
-                util_format_name(format), __FUNCTION__);
-            assert(0);
+    desc = util_format_description(format);
+
+    /* Colorspace (return non-RGB formats directly). */
+    switch (desc->colorspace) {
+        /* Depth stencil formats. */
+        case UTIL_FORMAT_COLORSPACE_ZS:
+            switch (format) {
+                case PIPE_FORMAT_Z16_UNORM:
+                    return R300_EASY_TX_FORMAT(X, X, X, X, X16);
+                case PIPE_FORMAT_Z24X8_UNORM:
+                case PIPE_FORMAT_Z24S8_UNORM:
+                    return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
+                default:
+                    return ~0; /* Unsupported. */
+            }
+
+        /* YUV formats. */
+        case UTIL_FORMAT_COLORSPACE_YUV:
+            result |= R300_TX_FORMAT_YUV_TO_RGB;
+
+            switch (format) {
+                case PIPE_FORMAT_YCBCR:
+                    return R300_EASY_TX_FORMAT(X, Y, Z, ONE, YVYU422) | result;
+                case PIPE_FORMAT_YCBCR_REV:
+                    return R300_EASY_TX_FORMAT(X, Y, Z, ONE, VYUY422) | result;
+                default:
+                    return ~0; /* Unsupported/unknown. */
+            }
+
+        /* Add gamma correction. */
+        case UTIL_FORMAT_COLORSPACE_SRGB:
+            result |= R300_TX_FORMAT_GAMMA;
             break;
+
+        default:;
     }
-    return 0;
+
+    /* Add swizzle. */
+    for (i = 0; i < 4; i++) {
+        switch (desc->swizzle[i]) {
+            case UTIL_FORMAT_SWIZZLE_X:
+            case UTIL_FORMAT_SWIZZLE_NONE:
+                result |= R300_TX_FORMAT_X << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Y:
+                result |= R300_TX_FORMAT_Y << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Z:
+                result |= R300_TX_FORMAT_Z << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_W:
+                result |= R300_TX_FORMAT_W << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_0:
+                result |= R300_TX_FORMAT_ZERO << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_1:
+                result |= R300_TX_FORMAT_ONE << swizzle_shift[i];
+                break;
+            default:
+                return ~0; /* Unsupported. */
+        }
+    }
+
+    /* Compressed formats. */
+    if (desc->layout == UTIL_FORMAT_LAYOUT_DXT) {
+        switch (format) {
+            case PIPE_FORMAT_DXT1_RGB:
+            case PIPE_FORMAT_DXT1_RGBA:
+            case PIPE_FORMAT_DXT1_SRGB:
+            case PIPE_FORMAT_DXT1_SRGBA:
+                return R300_TX_FORMAT_DXT1 | result;
+            case PIPE_FORMAT_DXT3_RGBA:
+            case PIPE_FORMAT_DXT3_SRGBA:
+                return R300_TX_FORMAT_DXT3 | result;
+            case PIPE_FORMAT_DXT5_RGBA:
+            case PIPE_FORMAT_DXT5_SRGBA:
+                return R300_TX_FORMAT_DXT5 | result;
+            default:
+                return ~0; /* Unsupported/unknown. */
+        }
+    }
+
+    /* Get the number of components. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+            ++components;
+        }
+    }
+
+    /* Add sign. */
+    for (i = 0; i < components; i++) {
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+            result |= sign_bit[i];
+        }
+    }
+
+    /* See whether the components are of the same size. */
+    for (i = 1; i < components; i++) {
+        uniform = uniform && desc->channel[0].size == desc->channel[i].size;
+    }
+
+    /* Non-uniform formats. */
+    if (!uniform) {
+        switch (components) {
+            case 3:
+                if (desc->channel[0].size == 5 &&
+                    desc->channel[1].size == 6 &&
+                    desc->channel[2].size == 5) {
+                    return R300_TX_FORMAT_Z5Y6X5 | result;
+                }
+                if (desc->channel[0].size == 5 &&
+                    desc->channel[1].size == 5 &&
+                    desc->channel[2].size == 6) {
+                    return R300_TX_FORMAT_Z6Y5X5 | result;
+                }
+                return ~0; /* Unsupported/unknown. */
+
+            case 4:
+                if (desc->channel[0].size == 5 &&
+                    desc->channel[1].size == 5 &&
+                    desc->channel[2].size == 5 &&
+                    desc->channel[3].size == 1) {
+                    return R300_TX_FORMAT_W1Z5Y5X5 | result;
+                }
+                if (desc->channel[0].size == 10 &&
+                    desc->channel[1].size == 10 &&
+                    desc->channel[2].size == 10 &&
+                    desc->channel[3].size == 2) {
+                    return R300_TX_FORMAT_W2Z10Y10X10 | result;
+                }
+        }
+        return ~0; /* Unsupported/unknown. */
+    }
+
+    /* And finally, uniform formats. */
+    switch (desc->channel[0].type) {
+        case UTIL_FORMAT_TYPE_UNSIGNED:
+        case UTIL_FORMAT_TYPE_SIGNED:
+            if (!desc->channel[0].normalized) {
+                return ~0;
+            }
+
+            switch (desc->channel[0].size) {
+                case 4:
+                    switch (components) {
+                        case 2:
+                            return R300_TX_FORMAT_Y4X4 | result;
+                        case 4:
+                            return R300_TX_FORMAT_W4Z4Y4X4 | result;
+                    }
+                    return ~0;
+
+                case 8:
+                    switch (components) {
+                        case 1:
+                            return R300_TX_FORMAT_X8 | result;
+                        case 2:
+                            return R300_TX_FORMAT_Y8X8 | result;
+                        case 4:
+                            return R300_TX_FORMAT_W8Z8Y8X8 | result;
+                    }
+                    return ~0;
+
+                case 16:
+                    switch (components) {
+                        case 1:
+                            return R300_TX_FORMAT_X16 | result;
+                        case 2:
+                            return R300_TX_FORMAT_Y16X16 | result;
+                        case 4:
+                            return R300_TX_FORMAT_W16Z16Y16X16 | result;
+                    }
+            }
+            return ~0;
+
+/* XXX Enable float textures here. */
+#if 0
+        case UTIL_FORMAT_TYPE_FLOAT:
+            switch (desc->channel[0].size) {
+                case 16:
+                    switch (components) {
+                        case 1:
+                            return R300_TX_FORMAT_16F | result;
+                        case 2:
+                            return R300_TX_FORMAT_16F_16F | result;
+                        case 4:
+                            return R300_TX_FORMAT_16F_16F_16F_16F | result;
+                    }
+                    return ~0;
+
+                case 32:
+                    switch (components) {
+                        case 1:
+                            return R300_TX_FORMAT_32F | result;
+                        case 2:
+                            return R300_TX_FORMAT_32F_32F | result;
+                        case 4:
+                            return R300_TX_FORMAT_32F_32F_32F_32F | result;
+                    }
+            }
+#endif
+    }
+
+    return ~0; /* Unsupported/unknown. */
 }
 
 struct r300_video_surface

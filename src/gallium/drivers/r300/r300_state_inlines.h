@@ -338,7 +338,6 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
-        /* case PIPE_FORMAT_S8_UNORM: ??? */
             return R300_COLOR_FORMAT_I8;
         /* 16-bit buffers */
         case PIPE_FORMAT_R5G6B5_UNORM:
