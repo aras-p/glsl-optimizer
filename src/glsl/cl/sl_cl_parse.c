@@ -325,6 +325,9 @@ struct parse_dict {
 
    int _false;
    int _true;
+
+   int all;
+   int _GL_ARB_fragment_coord_conventions;
 };
 
 
@@ -342,6 +345,8 @@ struct parse_context {
 
    unsigned int shader_type;
    unsigned int parsing_builtin;
+
+   unsigned int fragment_coord_conventions:1;
 
    char error[256];
    int process_error;
@@ -460,6 +465,10 @@ _fetch_token(struct parse_context *ctx,
       case SL_PP_IDENTIFIER:
       case SL_PP_UINT:
       case SL_PP_FLOAT:
+      case SL_PP_EXTENSION_REQUIRE:
+      case SL_PP_EXTENSION_ENABLE:
+      case SL_PP_EXTENSION_WARN:
+      case SL_PP_EXTENSION_DISABLE:
       case SL_PP_EOF:
          ctx->tokens_read++;
          break;
@@ -728,6 +737,20 @@ _parse_layout_qualifier(struct parse_context *ctx,
                         struct parse_state *ps)
 {
    if (_parse_id(ctx, ctx->dict.layout, ps) == 0) {
+      if (!ctx->fragment_coord_conventions) {
+         _error(ctx, "GL_ARB_fragment_coord_conventions extension must be enabled "
+                     "in order to use a layout qualifier");
+         return -1;
+      }
+
+      /* Layout qualifiers are only defined for fragment shaders,
+       * so do an early check.
+       */
+      if (ctx->shader_type != 1) {
+         _error(ctx, "layout qualifiers are only valid for fragment shaders");
+         return -1;
+      }
+
       /* start of a parenthesised list of layout qualifiers */
 
       if (_parse_token(ctx, SL_PP_LPAREN, ps)) {
@@ -744,7 +767,7 @@ _parse_layout_qualifier(struct parse_context *ctx,
             _emit(ctx, &ps->out, LAYOUT_QUALIFIER_PIXEL_CENTER_INTEGER);
          }
          else {
-            _error(ctx, "expected a layout qualifier");
+            _error(ctx, "expected a layout qualifier name");
             return -1;
          }
 
@@ -2745,14 +2768,59 @@ _parse_external_declaration(struct parse_context *ctx,
 
 
 static int
+_parse_extensions(struct parse_context *ctx,
+                  struct parse_state *ps)
+{
+   for (;;) {
+      const struct sl_pp_token_info *input = _fetch_token(ctx, ps->in);
+      unsigned int enable;
+
+      if (!input) {
+         return -1;
+      }
+
+      switch (input->token) {
+      case SL_PP_EXTENSION_REQUIRE:
+      case SL_PP_EXTENSION_ENABLE:
+      case SL_PP_EXTENSION_WARN:
+         enable = 1;
+         break;
+      case SL_PP_EXTENSION_DISABLE:
+         enable = 0;
+         break;
+      default:
+         return 0;
+      }
+
+      ps->in++;
+      if (input->data.extension == ctx->dict.all) {
+         ctx->fragment_coord_conventions = enable;
+      }
+      else if (input->data.extension == ctx->dict._GL_ARB_fragment_coord_conventions) {
+         ctx->fragment_coord_conventions = enable;
+      }
+   }
+}
+
+
+static int
 _parse_translation_unit(struct parse_context *ctx,
                         struct parse_state *ps)
 {
    _emit(ctx, &ps->out, REVISION);
+   if (_parse_extensions(ctx, ps)) {
+      return -1;
+   }
    if (_parse_external_declaration(ctx, ps)) {
       return -1;
    }
-   while (_parse_external_declaration(ctx, ps) == 0) {
+   for (;;) {
+      if (_parse_extensions(ctx, ps)) {
+         return -1;
+      }
+      if (_parse_external_declaration(ctx, ps)) {
+         break;
+      }
    }
    _emit(ctx, &ps->out, EXTERNAL_NULL);
    if (_parse_token(ctx, SL_PP_EOF, ps)) {
@@ -2862,11 +2930,16 @@ sl_cl_compile(struct sl_pp_context *context,
    ADD_NAME_STR(ctx, _false, "false");
    ADD_NAME_STR(ctx, _true, "true");
 
+   ADD_NAME(ctx, all);
+   ADD_NAME_STR(ctx, _GL_ARB_fragment_coord_conventions, "GL_ARB_fragment_coord_conventions");
+
    ctx.out_buf = NULL;
    ctx.out_cap = 0;
 
    ctx.shader_type = shader_type;
    ctx.parsing_builtin = 1;
+
+   ctx.fragment_coord_conventions = 0;
 
    ctx.error[0] = '\0';
    ctx.process_error = 0;
