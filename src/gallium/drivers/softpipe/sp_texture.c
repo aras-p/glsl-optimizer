@@ -123,7 +123,8 @@ softpipe_texture_create(struct pipe_screen *screen,
                util_is_power_of_two(template->depth0));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }

@@ -231,8 +231,8 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
       goto fail;
 
    
-   if (templ->tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                           PIPE_TEXTURE_USAGE_PRIMARY)) {
+   if (templ->tex_usage & (PIPE_TEXTURE_USAGE_SCANOUT |
+                           PIPE_TEXTURE_USAGE_SHARED)) {
       buffer_type = BRW_BUFFER_TYPE_SCANOUT;
    }
    else {

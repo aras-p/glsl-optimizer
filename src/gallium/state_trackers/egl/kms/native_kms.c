@@ -55,7 +55,7 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.format = ksurf->color_format;
       templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
       if (ksurf->type == KMS_SURFACE_TYPE_SCANOUT)
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+         templ.tex_usage |= PIPE_TEXTURE_SCANOUT;
    }
 
    /* create textures */

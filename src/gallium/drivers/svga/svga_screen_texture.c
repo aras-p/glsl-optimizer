@@ -315,7 +315,11 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.cachable = 0;
    }
 
-   if(templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) {
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_SHARED) {
+      tex->key.cachable = 0;
+   }
+
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT) {
       tex->key.flags |= SVGA3D_SURFACE_HINT_SCANOUT;
       tex->key.cachable = 0;
    }

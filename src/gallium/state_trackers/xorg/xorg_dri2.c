@@ -129,7 +129,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    template.depth0 = 1;
 	    template.last_level = 0;
 	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-		PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+		PIPE_TEXTURE_USAGE_SHARED;
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	    pipe_texture_reference(&exa_priv->depth_stencil_tex, tex);
 	}

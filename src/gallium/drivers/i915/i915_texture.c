@@ -219,12 +219,12 @@ i915_miptree_layout_2d(struct i915_texture *tex)
    unsigned nblocksy = util_format_get_nblocksy(pt->format, pt->width0);
 
    /* used for scanouts that need special layouts */
-   if (pt->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+   if (pt->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT)
       if (i915_scanout_layout(tex))
          return;
 
-   /* for shared buffers we use something very like scanout */
-   if (pt->tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+   /* shared buffers needs to be compatible with X servers */
+   if (pt->tex_usage & PIPE_TEXTURE_USAGE_SHARED)
       if (i915_display_target_layout(tex))
          return;
 
@@ -369,12 +369,12 @@ i945_miptree_layout_2d(struct i915_texture *tex)
    unsigned nblocksy = util_format_get_nblocksy(pt->format, pt->height0);
 
    /* used for scanouts that need special layouts */
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_PRIMARY)
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_SCANOUT)
       if (i915_scanout_layout(tex))
          return;
 
-   /* for shared buffers we use some very like scanout */
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+   /* shared buffers needs to be compatible with X servers */
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_SHARED)
       if (i915_display_target_layout(tex))
          return;
 
@@ -642,7 +642,7 @@ i915_texture_create(struct pipe_screen *screen,
 
 
    /* for scanouts and cursors, cursors arn't scanouts */
-   if (templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY && templat->width0 != 64)
+   if (templat->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT && templat->width0 != 64)
       buf_usage = INTEL_NEW_SCANOUT;
    else
       buf_usage = INTEL_NEW_TEXTURE;
