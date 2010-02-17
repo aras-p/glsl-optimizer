@@ -302,10 +302,18 @@ pbuffer surfaces.  Therefore, the driver is responsible to guarantee that the
 client API renders to the specified render buffer for pixmap and pbuffer
 surfaces.</p>
 
+<h3><code>EGLDisplay</code> Mutex</h3>
+
+The <code>EGLDisplay</code> will be locked before calling any of the dispatch
+functions (well, except for GetProcAddress which does not take an
+<code>EGLDisplay</code>).  This guarantees that the same dispatch function will
+not be called with the sample display at the same time.  If a driver has access
+to an <code>EGLDisplay</code> without going through the EGL APIs, the driver
+should as well lock the display before using it.
+
 <h3>TODOs</h3>
 
 <ul>
-<li>Thread safety</li>
 <li>Pass the conformance tests</li>
 <li>Better automatic driver selection: <code>EGL_DISPLAY</code> loads all
 drivers and might eat too much memory.</li>
