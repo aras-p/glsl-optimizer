@@ -53,30 +53,11 @@ sl_pp_context_add_extension(struct sl_pp_context *context,
       return -1;
    }
 
-   ext.state = SL_PP_EXTENSION_STATE_DISABLED;
-
    context->extensions[context->num_extensions++] = ext;
 
    assert(context->num_extensions <= sizeof(context->extensions));
 
    return 0;
-}
-
-
-enum sl_pp_extension_state
-sl_pp_get_extension_state(const struct sl_pp_context *context,
-                          int extension_name)
-{
-   unsigned i;
-
-   for (i = 0; i < context->num_extensions; i++) {
-      if (extension_name == context->extensions[i].name) {
-         return context->extensions[i].state;
-      }
-   }
-
-   assert(0 && "unknown extension");
-   return SL_PP_EXTENSION_STATE_DISABLED;
 }
 
 
@@ -93,7 +74,6 @@ sl_pp_process_extension(struct sl_pp_context *context,
    int extension_name = -1;
    int behavior = -1;
    struct sl_pp_token_info out;
-   struct sl_pp_extension *extension = NULL;
 
    /* Grab the extension name. */
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
@@ -115,7 +95,6 @@ sl_pp_process_extension(struct sl_pp_context *context,
       for (i = 0; i < context->num_extensions; i++) {
          if (extension_name == context->extensions[i].name) {
             out.data.extension = extension_name;
-            extension = &context->extensions[i];
             break;
          }
       }
@@ -155,11 +134,6 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_REQUIRE;
-
-      if (extension_name != context->dict.all) {
-         assert(extension);
-         extension->state = SL_PP_EXTENSION_STATE_REQUIRE;
-      }
    } else if (behavior == context->dict.enable) {
       if (out.data.extension == -1) {
          /* Warning: the extension cannot be enabled. */
@@ -170,33 +144,18 @@ sl_pp_process_extension(struct sl_pp_context *context,
          return -1;
       }
       out.token = SL_PP_EXTENSION_ENABLE;
-
-      if (extension_name != context->dict.all) {
-         assert(extension);
-         extension->state = SL_PP_EXTENSION_STATE_ENABLED;
-      }
    } else if (behavior == context->dict.warn) {
       if (out.data.extension == -1) {
          /* Warning: the extension is not supported. */
          return 0;
       }
       out.token = SL_PP_EXTENSION_WARN;
-
-      if (extension_name != context->dict.all) {
-         assert(extension);
-         extension->state = SL_PP_EXTENSION_STATE_WARN;
-      }
    } else if (behavior == context->dict.disable) {
       if (out.data.extension == -1) {
          /* Warning: the extension is not supported. */
          return 0;
       }
       out.token = SL_PP_EXTENSION_DISABLE;
-
-      if (extension_name != context->dict.all) {
-         assert(extension);
-         extension->state = SL_PP_EXTENSION_STATE_DISABLED;
-      }
    } else {
       strcpy(context->error_msg, "unrecognised behavior name");
       return -1;

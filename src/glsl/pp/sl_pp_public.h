@@ -55,10 +55,6 @@ int
 sl_pp_context_add_extension(struct sl_pp_context *context,
                             const char *name);
 
-enum sl_pp_extension_state
-sl_pp_get_extension_state(const struct sl_pp_context *context,
-                          int extension_name);
-
 int
 sl_pp_context_add_predefined(struct sl_pp_context *context,
                              const char *name,
