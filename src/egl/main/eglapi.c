@@ -70,6 +70,140 @@
 
 
 /**
+ * Macros to help return an API entrypoint.
+ */
+#define _EGL_ERROR(disp, err, ret)              \
+   ({                                           \
+      /* EGL error codes are non-zero */        \
+      if (err)                                  \
+         _eglError(err, __FUNCTION__);          \
+      ret;                                      \
+   })
+
+
+/**
+ * A bunch of macros and checks to simplify error checking.
+ */
+#define _EGL_CHECK_DISPLAY(disp, ret)                                   \
+   ({                                                                   \
+      _EGLDriver *__drv = _eglCheckDisplay(disp, __FUNCTION__);         \
+      if (!__drv)                                                       \
+         return _EGL_ERROR(disp, 0, ret);                               \
+      __drv;                                                            \
+   })
+
+
+#define _EGL_CHECK_OBJECT(disp, type, obj, ret)                         \
+   ({                                                                   \
+      _EGLDriver *__drv = _eglCheck ## type(disp, obj, __FUNCTION__);   \
+      if (!__drv)                                                       \
+         return _EGL_ERROR(disp, 0, ret);                               \
+      __drv;                                                            \
+   })
+#define _EGL_CHECK_SURFACE(disp, surf, ret)      \
+   _EGL_CHECK_OBJECT(disp, Surface, surf, ret)
+#define _EGL_CHECK_CONTEXT(disp, context, ret)   \
+   _EGL_CHECK_OBJECT(disp, Context, context, ret)
+#define _EGL_CHECK_CONFIG(disp, conf, ret)       \
+   _EGL_CHECK_OBJECT(disp, Config, conf, ret)
+#define _EGL_CHECK_SCREEN(disp, scrn, ret)       \
+   _EGL_CHECK_OBJECT(disp, Screen, scrn, ret)
+#define _EGL_CHECK_MODE(disp, m, ret)            \
+   _EGL_CHECK_OBJECT(disp, Mode, m, ret)
+
+
+static INLINE _EGLDriver *
+_eglCheckDisplay(_EGLDisplay *disp, const char *msg)
+{
+   if (!disp) {
+      _eglError(EGL_BAD_DISPLAY, msg);
+      return NULL;
+   }
+   if (!disp->Initialized) {
+      _eglError(EGL_NOT_INITIALIZED, msg);
+      return NULL;
+   }
+   return disp->Driver;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckSurface(_EGLDisplay *disp, _EGLSurface *surf, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!surf) {
+      _eglError(EGL_BAD_SURFACE, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckContext(_EGLDisplay *disp, _EGLContext *context, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!context) {
+      _eglError(EGL_BAD_CONTEXT, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckConfig(_EGLDisplay *disp, _EGLConfig *conf, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+#ifdef EGL_MESA_screen_surface
+
+
+static INLINE _EGLDriver *
+_eglCheckScreen(_EGLDisplay *disp, _EGLScreen *scrn, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!scrn) {
+      _eglError(EGL_BAD_SCREEN_MESA, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+static INLINE _EGLDriver *
+_eglCheckMode(_EGLDisplay *disp, _EGLMode *m, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!m) {
+      _eglError(EGL_BAD_MODE_MESA, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+#endif /* EGL_MESA_screen_surface */
+
+
+/**
  * This is typically the first EGL function that an application calls.
  * We initialize our global vars and create a private _EGLDisplay object.
  */
@@ -159,66 +293,6 @@ eglTerminate(EGLDisplay dpy)
 }
 
 
-/**
- * A bunch of check functions and declare macros to simply error checking.
- */
-static INLINE _EGLDriver *
-_eglCheckDisplay(_EGLDisplay *disp, const char *msg)
-{
-   if (!disp) {
-      _eglError(EGL_BAD_DISPLAY, msg);
-      return NULL;
-   }
-   if (!disp->Initialized) {
-      _eglError(EGL_NOT_INITIALIZED, msg);
-      return NULL;
-   }
-   return disp->Driver;
-}
-
-
-static INLINE _EGLDriver *
-_eglCheckSurface(_EGLDisplay *disp, _EGLSurface *surf, const char *msg)
-{
-   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
-   if (!drv)
-      return NULL;
-   if (!surf) {
-      _eglError(EGL_BAD_SURFACE, msg);
-      return NULL;
-   }
-   return drv;
-}
-
-
-static INLINE _EGLDriver *
-_eglCheckContext(_EGLDisplay *disp, _EGLContext *context, const char *msg)
-{
-   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
-   if (!drv)
-      return NULL;
-   if (!context) {
-      _eglError(EGL_BAD_CONTEXT, msg);
-      return NULL;
-   }
-   return drv;
-}
-
-
-static INLINE _EGLDriver *
-_eglCheckConfig(_EGLDisplay *disp, _EGLConfig *conf, const char *msg)
-{
-   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
-   if (!drv)
-      return NULL;
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, msg);
-      return NULL;
-   }
-   return drv;
-}
-
-
 #define _EGL_DECLARE_DD(dpy)                                   \
    _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
    _EGLDriver *drv;                                            \
@@ -251,37 +325,6 @@ _eglCheckConfig(_EGLDisplay *disp, _EGLConfig *conf, const char *msg)
    } while (0)
 
 
-#ifdef EGL_MESA_screen_surface
-
-
-static INLINE _EGLDriver *
-_eglCheckScreen(_EGLDisplay *disp, _EGLScreen *scrn, const char *msg)
-{
-   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
-   if (!drv)
-      return NULL;
-   if (!scrn) {
-      _eglError(EGL_BAD_SCREEN_MESA, msg);
-      return NULL;
-   }
-   return drv;
-}
-
-
-static INLINE _EGLDriver *
-_eglCheckMode(_EGLDisplay *disp, _EGLMode *m, const char *msg)
-{
-   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
-   if (!drv)
-      return NULL;
-   if (!m) {
-      _eglError(EGL_BAD_MODE_MESA, msg);
-      return NULL;
-   }
-   return drv;
-}
-
-
 #define _EGL_DECLARE_DD_AND_SCREEN(dpy, screen)                \
    _EGLDisplay *disp = _eglLookupDisplay(dpy);                 \
    _EGLScreen *scrn = _eglLookupScreen((screen), disp);        \
@@ -302,9 +345,6 @@ _eglCheckMode(_EGLDisplay *disp, _EGLMode *m, const char *msg)
       if (!drv)                                                \
          return EGL_FALSE;                                     \
    } while (0)
-
-
-#endif /* EGL_MESA_screen_surface */
 
 
 const char * EGLAPIENTRY
