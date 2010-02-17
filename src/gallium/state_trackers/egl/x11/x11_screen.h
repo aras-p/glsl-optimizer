@@ -48,6 +48,10 @@ struct x11_drawable_buffer {
 
 struct x11_screen;
 
+typedef void (*x11_drawable_invalidate_buffers)(struct x11_screen *xscr,
+                                                Drawable drawable,
+                                                void *user_data);
+
 struct x11_screen *
 x11_screen_create(Display *dpy, int screen);
 
@@ -71,10 +75,12 @@ const __GLcontextModes *
 x11_screen_get_glx_visuals(struct x11_screen *xscr);
 
 const char *
-x11_screen_probe_dri2(struct x11_screen *xscr);
+x11_screen_probe_dri2(struct x11_screen *xscr, int *major, int *minor);
 
 int
-x11_screen_enable_dri2(struct x11_screen *xscr, const char *driver);
+x11_screen_enable_dri2(struct x11_screen *xscr,
+                       x11_drawable_invalidate_buffers invalidate_buffers,
+                       void *user_data);
 
 __GLcontextModes *
 x11_context_modes_create(unsigned count);

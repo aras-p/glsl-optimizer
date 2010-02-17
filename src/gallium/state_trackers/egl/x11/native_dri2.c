@@ -50,6 +50,8 @@ struct dri2_display {
    struct drm_api *api;
    struct x11_screen *xscr;
    int xscr_number;
+   const char *dri_driver;
+   int dri_major, dri_minor;
 
    struct dri2_config *configs;
    int num_configs;
@@ -681,7 +683,16 @@ dri2_display_init_screen(struct native_display *ndpy)
       return FALSE;
    }
 
-   fd = x11_screen_enable_dri2(dri2dpy->xscr, driver);
+   dri2dpy->dri_driver = x11_screen_probe_dri2(dri2dpy->xscr,
+         &dri2dpy->dri_major, &dri2dpy->dri_minor);
+   if (!dri2dpy->dri_driver || !driver ||
+       strcmp(dri2dpy->dri_driver, driver) != 0) {
+      _eglLog(_EGL_WARNING, "Driver mismatch: %s != %s",
+            dri2dpy->dri_driver, dri2dpy->api->name);
+      return FALSE;
+   }
+
+   fd = x11_screen_enable_dri2(dri2dpy->xscr, NULL, NULL);
    if (fd < 0)
       return FALSE;
 
