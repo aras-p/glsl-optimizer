@@ -45,73 +45,8 @@ _eglFiniDisplay(void)
 
 
 /**
- * Allocate a new _EGLDisplay object for the given nativeDisplay handle.
- * We'll also try to determine the device driver name at this time.
- *
- * Note that nativeDisplay may be an X Display ptr, or a string.
- */
-_EGLDisplay *
-_eglNewDisplay(EGLNativeDisplayType nativeDisplay)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
-   if (dpy) {
-      _eglInitMutex(&dpy->Mutex);
-      dpy->NativeDisplay = nativeDisplay;
-   }
-   return dpy;
-}
-
-
-/**
- * Link a display to itself and return the handle of the link.
- * The handle can be passed to client directly.
- */
-EGLDisplay
-_eglLinkDisplay(_EGLDisplay *dpy)
-{
-   _eglLockMutex(_eglGlobal.Mutex);
-
-   dpy->Next = _eglGlobal.DisplayList;
-   _eglGlobal.DisplayList = dpy;
-
-   _eglUnlockMutex(_eglGlobal.Mutex);
-
-   return (EGLDisplay) dpy;
-}
-
-
-/**
- * Unlink a linked display from itself.
- * Accessing an unlinked display should generate EGL_BAD_DISPLAY error.
- */
-void
-_eglUnlinkDisplay(_EGLDisplay *dpy)
-{
-   _EGLDisplay *prev;
-
-   _eglLockMutex(_eglGlobal.Mutex);
-
-   prev = _eglGlobal.DisplayList;
-   if (prev != dpy) {
-      while (prev) {
-         if (prev->Next == dpy)
-            break;
-         prev = prev->Next;
-      }
-      assert(prev);
-      prev->Next = dpy->Next;
-   }
-   else {
-      _eglGlobal.DisplayList = dpy->Next;
-   }
-
-   _eglUnlockMutex(_eglGlobal.Mutex);
-}
-
-
-/**
- * Find the display corresponding to the specified native display id in all
- * linked displays.
+ * Find the display corresponding to the specified native display, or create a
+ * new one.
  */
 _EGLDisplay *
 _eglFindDisplay(EGLNativeDisplayType nativeDisplay)
@@ -120,18 +55,30 @@ _eglFindDisplay(EGLNativeDisplayType nativeDisplay)
 
    _eglLockMutex(_eglGlobal.Mutex);
 
+   /* search the display list first */
    dpy = _eglGlobal.DisplayList;
    while (dpy) {
-      if (dpy->NativeDisplay == nativeDisplay) {
-         _eglUnlockMutex(_eglGlobal.Mutex);
-         return dpy;
-      }
+      if (dpy->NativeDisplay == nativeDisplay)
+         break;
       dpy = dpy->Next;
+   }
+
+   /* create a new display */
+   if (!dpy) {
+      dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
+      if (dpy) {
+         _eglInitMutex(&dpy->Mutex);
+         dpy->NativeDisplay = nativeDisplay;
+
+         /* add to the display list */ 
+         dpy->Next = _eglGlobal.DisplayList;
+         _eglGlobal.DisplayList = dpy;
+      }
    }
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 
-   return NULL;
+   return dpy;
 }
 
 

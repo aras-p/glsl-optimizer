@@ -208,18 +208,12 @@ _eglCheckMode(_EGLDisplay *disp, _EGLMode *m, const char *msg)
 
 /**
  * This is typically the first EGL function that an application calls.
- * We initialize our global vars and create a private _EGLDisplay object.
+ * It associates a private _EGLDisplay object to the native display.
  */
 EGLDisplay EGLAPIENTRY
 eglGetDisplay(EGLNativeDisplayType nativeDisplay)
 {
-   _EGLDisplay *dpy;
-   dpy = _eglFindDisplay(nativeDisplay);
-   if (!dpy) {
-      dpy = _eglNewDisplay(nativeDisplay);
-      if (dpy)
-         _eglLinkDisplay(dpy);
-   }
+   _EGLDisplay *dpy = _eglFindDisplay(nativeDisplay);
    return _eglGetDisplayHandle(dpy);
 }
 

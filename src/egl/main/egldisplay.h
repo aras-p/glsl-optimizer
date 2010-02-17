@@ -88,19 +88,7 @@ _eglFiniDisplay(void);
 
 
 extern _EGLDisplay *
-_eglNewDisplay(EGLNativeDisplayType displayName);
-
-
-extern EGLDisplay
-_eglLinkDisplay(_EGLDisplay *dpy);
-
-
-extern void
-_eglUnlinkDisplay(_EGLDisplay *dpy);
-
-
-extern _EGLDisplay *
-_eglFindDisplay(EGLNativeDisplayType nativeDisplay);
+_eglFindDisplay(EGLNativeDisplayType displayName);
 
 
 PUBLIC void
@@ -164,16 +152,6 @@ static INLINE EGLDisplay
 _eglGetDisplayHandle(_EGLDisplay *dpy)
 {
    return (EGLDisplay) ((dpy) ? dpy : EGL_NO_DISPLAY);
-}
-
-
-/**
- * Return true if the display is linked.
- */
-static INLINE EGLBoolean
-_eglIsDisplayLinked(_EGLDisplay *dpy)
-{
-   return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
 }
 
 
