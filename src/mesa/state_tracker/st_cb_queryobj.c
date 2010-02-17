@@ -130,13 +130,8 @@ st_CheckQuery(GLcontext *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_query_object *stq = st_query_object(q);
-
-   if (!q->Ready) {
-      q->Ready = pipe->get_query_result(pipe, 
-					stq->pq,
-					FALSE,
-					&q->Result);
-   }
+   assert(!q->Ready);   /* we should not get called if Ready is TRUE */
+   q->Ready = pipe->get_query_result(pipe, stq->pq, FALSE, &q->Result);
 }
 
 
