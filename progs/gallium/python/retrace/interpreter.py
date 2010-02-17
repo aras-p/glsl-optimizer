@@ -551,7 +551,6 @@ class Context(Object):
                 data = vbuf.buffer.read()
                 values = unpack_from(format, data, offset)
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
-                assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
         sys.stdout.flush()
 

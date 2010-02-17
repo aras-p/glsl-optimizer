@@ -317,7 +317,6 @@ init_buffers(struct vl_compositor *c)
    c->vertex_elems[0].src_offset = 0;
    c->vertex_elems[0].instance_divisor = 0;
    c->vertex_elems[0].vertex_buffer_index = 0;
-   c->vertex_elems[0].nr_components = 2;
    c->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /*
@@ -347,7 +346,6 @@ init_buffers(struct vl_compositor *c)
    c->vertex_elems[1].src_offset = 0;
    c->vertex_elems[1].instance_divisor = 0;
    c->vertex_elems[1].vertex_buffer_index = 1;
-   c->vertex_elems[1].nr_components = 2;
    c->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /*

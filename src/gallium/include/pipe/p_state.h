@@ -383,7 +383,6 @@ struct pipe_vertex_element
     * this attribute live in?
     */
    unsigned vertex_buffer_index:8;
-   unsigned nr_components:8;
  
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };

@@ -64,7 +64,6 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
       velements[i].instance_divisor = 0;
       velements[i].vertex_buffer_index = 0;
       velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velements[i].nr_components = 4;
    }
    pipe->set_vertex_elements(pipe, num_attribs, velements);
 

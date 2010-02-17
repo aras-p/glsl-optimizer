@@ -139,15 +139,16 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 	uint32_t hw_type, hw_size;
 	enum pipe_format pf = ve->src_format;
 	const struct util_format_description *desc;
-	unsigned size;
+	unsigned size, nr_components;
 
 	desc = util_format_description(pf);
 	assert(desc);
 
 	size = util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0);
+	nr_components = util_format_get_nr_components(pf);
 
 	hw_type = nv50_vbo_type_to_hw(pf);
-	hw_size = nv50_vbo_size_to_hw(size, ve->nr_components);
+	hw_size = nv50_vbo_size_to_hw(size, nr_components);
 
 	if (!hw_type || !hw_size) {
 		NOUVEAU_ERR("unsupported vbo format: %s\n", util_format_name(pf));
@@ -222,11 +223,13 @@ nv50_set_static_vtxattr(struct nv50_context *nv50, unsigned i, void *data)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_channel *chan = tesla->channel;
 	float v[4];
+	unsigned nr_components = util_format_get_nr_components(nv50->vtxelt[i].src_format);
+	
 
 	util_format_read_4f(nv50->vtxelt[i].src_format,
 			    v, 0, data, 0, 0, 0, 1, 1);
 
-	switch (nv50->vtxelt[i].nr_components) {
+	switch (nr_components) {
 	case 4:
 		BEGIN_RING(chan, tesla, NV50TCL_VTX_ATTR_4F_X(i), 4);
 		OUT_RINGf (chan, v[0]);
@@ -726,6 +729,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 	struct nouveau_bo *bo = nouveau_bo(vb->buffer);
 	float v[4];
 	int ret;
+	unsigned nr_components = util_format_get_nr_components(ve->src_format);
 
 	ret = nouveau_bo_map(bo, NOUVEAU_BO_RD);
 	if (ret)
@@ -738,7 +742,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 	if (!so)
 		*pso = so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 4, 0);
 
-	switch (ve->nr_components) {
+	switch (nr_components) {
 	case 4:
 		so_method(so, tesla, NV50TCL_VTX_ATTR_4F_X(attrib), 4);
 		so_data  (so, fui(v[0]));
@@ -1019,7 +1023,7 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 	for (i = 0; i < nv50->vtxelt_nr; ++i) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
-		unsigned n, size;
+		unsigned n, size, nr_components;
 		const struct util_format_description *desc;
 
 		ve = &nv50->vtxelt[i];
@@ -1038,8 +1042,9 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 
 		size = util_format_get_component_bits(
 			ve->src_format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+		nr_components = util_format_get_nr_components(ve->src_format);
 
-		assert(ve->nr_components > 0 && ve->nr_components <= 4);
+		assert(nr_components > 0 && nr_components <= 4);
 
 		/* It shouldn't be necessary to push the implicit 1s
 		 * for case 3 and size 8 cases 1, 2, 3.
@@ -1049,25 +1054,25 @@ emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
 			NOUVEAU_ERR("unsupported vtxelt size: %u\n", size);
 			return FALSE;
 		case 32:
-			switch (ve->nr_components) {
+			switch (nr_components) {
 			case 1: emit->push[n] = emit_b32_1; break;
 			case 2: emit->push[n] = emit_b32_2; break;
 			case 3: emit->push[n] = emit_b32_3; break;
 			case 4: emit->push[n] = emit_b32_4; break;
 			}
-			emit->vtx_dwords += ve->nr_components;
+			emit->vtx_dwords += nr_components;
 			break;
 		case 16:
-			switch (ve->nr_components) {
+			switch (nr_components) {
 			case 1: emit->push[n] = emit_b16_1; break;
 			case 2: emit->push[n] = emit_b32_1; break;
 			case 3: emit->push[n] = emit_b16_3; break;
 			case 4: emit->push[n] = emit_b32_2; break;
 			}
-			emit->vtx_dwords += (ve->nr_components + 1) >> 1;
+			emit->vtx_dwords += (nr_components + 1) >> 1;
 			break;
 		case 8:
-			switch (ve->nr_components) {
+			switch (nr_components) {
 			case 1: emit->push[n] = emit_b08_1; break;
 			case 2: emit->push[n] = emit_b16_1; break;
 			case 3: emit->push[n] = emit_b08_3; break;

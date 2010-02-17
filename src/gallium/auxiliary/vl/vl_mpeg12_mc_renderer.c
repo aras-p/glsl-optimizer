@@ -892,56 +892,48 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->vertex_elems[0].src_offset = 0;
    r->vertex_elems[0].instance_divisor = 0;
    r->vertex_elems[0].vertex_buffer_index = 0;
-   r->vertex_elems[0].nr_components = 2;
    r->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Luma, texcoord element */
    r->vertex_elems[1].src_offset = sizeof(struct vertex2f);
    r->vertex_elems[1].instance_divisor = 0;
    r->vertex_elems[1].vertex_buffer_index = 0;
-   r->vertex_elems[1].nr_components = 2;
    r->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cr texcoord element */
    r->vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
    r->vertex_elems[2].instance_divisor = 0;
    r->vertex_elems[2].vertex_buffer_index = 0;
-   r->vertex_elems[2].nr_components = 2;
    r->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cb texcoord element */
    r->vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
    r->vertex_elems[3].instance_divisor = 0;
    r->vertex_elems[3].vertex_buffer_index = 0;
-   r->vertex_elems[3].nr_components = 2;
    r->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface top field texcoord element */
    r->vertex_elems[4].src_offset = 0;
    r->vertex_elems[4].instance_divisor = 0;
    r->vertex_elems[4].vertex_buffer_index = 1;
-   r->vertex_elems[4].nr_components = 2;
    r->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
    r->vertex_elems[5].src_offset = sizeof(struct vertex2f);
    r->vertex_elems[5].instance_divisor = 0;
    r->vertex_elems[5].vertex_buffer_index = 1;
-   r->vertex_elems[5].nr_components = 2;
    r->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
    r->vertex_elems[6].src_offset = 0;
    r->vertex_elems[6].instance_divisor = 0;
    r->vertex_elems[6].vertex_buffer_index = 2;
-   r->vertex_elems[6].nr_components = 2;
    r->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
    r->vertex_elems[7].src_offset = sizeof(struct vertex2f);
    r->vertex_elems[7].instance_divisor = 0;
    r->vertex_elems[7].vertex_buffer_index = 2;
-   r->vertex_elems[7].nr_components = 2;
    r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    r->vs_const_buf = pipe_buffer_create

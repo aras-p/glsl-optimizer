@@ -30,6 +30,7 @@
 
 #include "util/u_upload_mgr.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -352,13 +353,15 @@ static int brw_emit_vertex_elements(struct brw_context *brw)
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr * 2) - 2));
    for (i = 0; i < nr; i++) {
       const struct pipe_vertex_element *input = &brw->curr.vertex_element[i];
+      unsigned nr_components = util_format_get_nr_components(input->src_format);
+
       uint32_t format = brw_translate_surface_format( input->src_format );
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp3 = BRW_VE1_COMPONENT_STORE_SRC;
 
-      switch (input->nr_components) {
+      switch (nr_components) {
       case 0: comp0 = BRW_VE1_COMPONENT_STORE_0;
       case 1: comp1 = BRW_VE1_COMPONENT_STORE_0;
       case 2: comp2 = BRW_VE1_COMPONENT_STORE_0;

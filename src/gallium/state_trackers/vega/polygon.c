@@ -296,7 +296,6 @@ static void draw_polygon(struct vg_context *ctx,
    velement.instance_divisor = 0;
    velement.vertex_buffer_index = 0;
    velement.src_format = PIPE_FORMAT_R32G32_FLOAT;
-   velement.nr_components = COMPONENTS;
    pipe->set_vertex_elements(pipe, 1, &velement);
 
    /* draw */
