@@ -102,6 +102,7 @@ readImage( const char* filename, GLsizei* width, GLsizei *height )
     pixels = (GLubyte *) malloc( n * sizeof( GLubyte ));
     if ( !pixels ) {
 	fprintf( stderr, "Unable to malloc() bytes for pixels\n" );
+	fclose( infile );
 	return NULL;
     }
 
