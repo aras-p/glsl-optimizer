@@ -22,17 +22,22 @@
 #include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
+#include "eglmutex.h"
 
 
 /**
  * Return a new screen handle/ID.
  * NOTE: we never reuse these!
  */
-EGLScreenMESA
+static EGLScreenMESA
 _eglAllocScreenHandle(void)
 {
-   EGLScreenMESA s = _eglGlobal.FreeScreenHandle;
-   _eglGlobal.FreeScreenHandle++;
+   EGLScreenMESA s;
+   
+   _eglLockMutex(_eglGlobal.Mutex);
+   s = _eglGlobal.FreeScreenHandle++;
+   _eglUnlockMutex(_eglGlobal.Mutex);
+
    return s;
 }
 

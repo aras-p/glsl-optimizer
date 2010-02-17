@@ -237,6 +237,10 @@ _eglMatchDriver(_EGLDisplay *dpy)
    _EGLDriver *best_drv = NULL;
    EGLint best_score = -1, i;
 
+   /*
+    * this function is called after preloading and the drivers never change
+    * after preloading.
+    */
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
       _EGLDriver *drv = _eglGlobal.Drivers[i];
       EGLint score;
@@ -529,13 +533,20 @@ _eglPreloadDrivers(void)
 {
    EGLBoolean loaded;
 
+   /* protect the preloading process */
+   _eglLockMutex(_eglGlobal.Mutex);
+
    /* already preloaded */
-   if (_eglGlobal.NumDrivers)
+   if (_eglGlobal.NumDrivers) {
+      _eglUnlockMutex(_eglGlobal.Mutex);
       return EGL_TRUE;
+   }
 
    loaded = (_eglPreloadUserDriver() ||
              _eglPreloadDisplayDrivers() ||
              _eglPreloadDefaultDriver());
+
+   _eglUnlockMutex(_eglGlobal.Mutex);
 
    return loaded;
 }
@@ -548,6 +559,8 @@ void
 _eglUnloadDrivers(void)
 {
    EGLint i;
+
+   /* this is called at atexit time */
    for (i = 0; i < _eglGlobal.NumDrivers; i++) {
       _EGLDriver *drv = _eglGlobal.Drivers[i];
       lib_handle handle = drv->LibHandle;

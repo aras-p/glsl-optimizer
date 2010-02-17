@@ -29,10 +29,6 @@ struct _egl_screen
 };
 
 
-extern EGLScreenMESA
-_eglAllocScreenHandle(void);
-
-
 PUBLIC void
 _eglInitScreen(_EGLScreen *screen);
 

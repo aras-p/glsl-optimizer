@@ -18,6 +18,7 @@ struct _egl_global
 
    EGLScreenMESA FreeScreenHandle;
 
+   /* these never change after preloading */
    EGLint NumDrivers;
    _EGLDriver *Drivers[10];
 
