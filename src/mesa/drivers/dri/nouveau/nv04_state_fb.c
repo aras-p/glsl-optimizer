@@ -50,8 +50,8 @@ void
 nv04_emit_framebuffer(GLcontext *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_screen *screen = to_nouveau_context(ctx)->screen;
-	struct nouveau_grobj *surf3d = screen->surf3d;
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_grobj *surf3d = hw->surf3d;
 	struct nouveau_bo_context *bctx = context_bctx(ctx, FRAMEBUFFER);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_surface *s;
@@ -100,8 +100,8 @@ void
 nv04_emit_scissor(GLcontext *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_screen *screen = to_nouveau_context(ctx)->screen;
-	struct nouveau_grobj *surf3d = screen->surf3d;
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_grobj *surf3d = hw->surf3d;
 	int x, y, w, h;
 
 	get_scissors(ctx->DrawBuffer, &x, &y, &w, &h);

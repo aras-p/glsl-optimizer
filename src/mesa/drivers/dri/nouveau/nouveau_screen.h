@@ -31,24 +31,8 @@ struct nouveau_context;
 
 struct nouveau_screen {
 	__DRIscreen *dri_screen;
-
 	struct nouveau_device *device;
-	struct nouveau_channel *chan;
-
-	struct nouveau_notifier *ntfy;
-	struct nouveau_grobj *eng3d;
-	struct nouveau_grobj *eng3dm;
-	struct nouveau_grobj *surf3d;
-	struct nouveau_grobj *m2mf;
-	struct nouveau_grobj *surf2d;
-	struct nouveau_grobj *rop;
-	struct nouveau_grobj *patt;
-	struct nouveau_grobj *rect;
-	struct nouveau_grobj *swzsurf;
-	struct nouveau_grobj *sifm;
-
 	const struct nouveau_driver *driver;
-	struct nouveau_context *context;
 };
 
 #endif

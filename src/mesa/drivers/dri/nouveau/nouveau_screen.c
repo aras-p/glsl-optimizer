@@ -40,16 +40,6 @@ static const __DRIextension *nouveau_screen_extensions[];
 static void
 nouveau_destroy_screen(__DRIscreen *dri_screen);
 
-static void
-nouveau_channel_flush_notify(struct nouveau_channel *chan)
-{
-	struct nouveau_screen *screen = chan->user_private;
-	struct nouveau_context *nctx = screen->context;
-
-	if (nctx && nctx->fallback < SWRAST)
-		nouveau_state_emit(&nctx->base);
-}
-
 static const __DRIconfig **
 nouveau_get_configs(void)
 {
@@ -118,39 +108,24 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 		goto fail;
 	}
 
-	ret = nouveau_channel_alloc(screen->device, 0xbeef0201, 0xbeef0202,
-				    &screen->chan);
-	if (ret) {
-		nouveau_error("Error initializing the FIFO.\n");
-		goto fail;
-	}
-	screen->chan->flush_notify = nouveau_channel_flush_notify;
-	screen->chan->user_private = screen;
-
-	/* Do the card specific initialization */
+	/* Choose the card specific function pointers. */
 	switch (screen->device->chipset & 0xf0) {
 	case 0x00:
-		ret = nv04_screen_init(screen);
+		screen->driver = &nv04_driver;
 		break;
 	case 0x10:
-		ret = nv10_screen_init(screen);
+		screen->driver = &nv10_driver;
 		break;
 	case 0x20:
-		ret = nv20_screen_init(screen);
+		screen->driver = &nv20_driver;
 		break;
 	default:
 		assert(0);
 	}
-	if (!ret) {
-		nouveau_error("Error initializing the hardware.\n");
-		goto fail;
-	}
 
 	configs = nouveau_get_configs();
-	if (!configs) {
-		nouveau_error("Error creating the framebuffer configs.\n");
+	if (!configs)
 		goto fail;
-	}
 
 	return configs;
 fail:
@@ -166,13 +141,6 @@ nouveau_destroy_screen(__DRIscreen *dri_screen)
 
 	if (!screen)
 		return;
-
-	screen->driver->screen_destroy(screen);
-
-	if (screen->chan) {
-		screen->chan->flush_notify = NULL;
-		nouveau_channel_free(&screen->chan);
-	}
 
 	if (screen->device)
 		nouveau_device_close(&screen->device);

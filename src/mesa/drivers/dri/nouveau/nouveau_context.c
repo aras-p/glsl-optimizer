@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Francisco Jerez.
+ * Copyright (C) 2009-2010 Francisco Jerez.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -36,8 +36,10 @@
 #include "drivers/common/meta.h"
 #include "drivers/common/driverfuncs.h"
 #include "swrast/swrast.h"
+#include "swrast/s_context.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
+#include "tnl/t_context.h"
 
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_fog_coord
@@ -55,6 +57,16 @@ static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
 	{ NULL,				NULL }
 };
+
+static void
+nouveau_channel_flush_notify(struct nouveau_channel *chan)
+{
+	struct nouveau_context *nctx = chan->user_private;
+	GLcontext *ctx = &nctx->base;
+
+	if (nctx->fallback < SWRAST && ctx->DrawBuffer)
+		nouveau_state_emit(&nctx->base);
+}
 
 GLboolean
 nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,
@@ -82,18 +94,19 @@ nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct dd_function_table functions;
+	int ret;
 
 	nctx->screen = screen;
 	nctx->fallback = HWTNL;
 
-	/* Initialize the function pointers */
+	/* Initialize the function pointers. */
 	_mesa_init_driver_functions(&functions);
 	nouveau_driver_functions_init(&functions);
 	nouveau_bufferobj_functions_init(&functions);
 	nouveau_texture_functions_init(&functions);
 	nouveau_fbo_functions_init(&functions);
 
-	/* Initialize the mesa context */
+	/* Initialize the mesa context. */
 	_mesa_initialize_context(ctx, visual, share_ctx, &functions, NULL);
 
 	nouveau_state_init(ctx);
@@ -105,10 +118,45 @@ nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
 	nouveau_span_functions_init(ctx);
 	_mesa_allow_light_in_model(ctx, GL_FALSE);
 
-	/* Enable any supported extensions */
+	/* Allocate a hardware channel. */
+	ret = nouveau_channel_alloc(context_dev(ctx), 0xbeef0201, 0xbeef0202,
+				    &nctx->hw.chan);
+	if (ret) {
+		nouveau_error("Error initializing the FIFO.\n");
+		return GL_FALSE;
+	}
+
+	nctx->hw.chan->flush_notify = nouveau_channel_flush_notify;
+	nctx->hw.chan->user_private = nctx;
+
+	/* Enable any supported extensions. */
 	driInitExtensions(ctx, nouveau_extensions, GL_TRUE);
 
 	return GL_TRUE;
+}
+
+void
+nouveau_context_deinit(GLcontext *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+
+	if (TNL_CONTEXT(ctx))
+		_tnl_DestroyContext(ctx);
+
+	if (vbo_context(ctx))
+		_vbo_DestroyContext(ctx);
+
+	if (SWRAST_CONTEXT(ctx))
+		_swrast_DestroyContext(ctx);
+
+	if (ctx->Meta)
+		_mesa_meta_free(ctx);
+
+	if (nctx->hw.chan)
+		nouveau_channel_free(&nctx->hw.chan);
+
+	nouveau_bo_state_destroy(ctx);
+	_mesa_free_context_data(ctx);
 }
 
 void
@@ -117,14 +165,6 @@ nouveau_context_destroy(__DRIcontext *dri_ctx)
 	struct nouveau_context *nctx = dri_ctx->driverPrivate;
 	GLcontext *ctx = &nctx->base;
 
-	if (nctx->screen->context == nctx)
-		nctx->screen->context = NULL;
-
-	_tnl_DestroyContext(ctx);
-	_vbo_DestroyContext(ctx);
-	_swrast_DestroyContext(ctx);
-	_mesa_meta_free(ctx);
-	nouveau_bo_state_destroy(ctx);
 	context_drv(ctx)->context_destroy(ctx);
 }
 
@@ -220,11 +260,9 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 		struct nouveau_context *nctx = dri_ctx->driverPrivate;
 		GLcontext *ctx = &nctx->base;
 
-		if (nctx->screen->context == nctx)
+		if (dri_draw->driverPrivate == ctx->WinSysDrawBuffer &&
+		    dri_read->driverPrivate == ctx->WinSysReadBuffer)
 			return GL_TRUE;
-
-		nctx->screen->context = nctx;
-		BITSET_ONES(nctx->dirty);
 
 		/* Ask the X server for new renderbuffers. */
 		nouveau_update_renderbuffers(dri_ctx, dri_draw,

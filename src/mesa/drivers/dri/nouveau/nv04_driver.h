@@ -37,10 +37,6 @@ enum {
 
 #define NV04_TEXTURE_UNITS 2
 
-/* nv04_screen.c */
-GLboolean
-nv04_screen_init(struct nouveau_screen *screen);
-
 /* nv04_render.c */
 void
 nv04_render_init(GLcontext *ctx);
@@ -50,10 +46,10 @@ nv04_render_destroy(GLcontext *ctx);
 
 /* nv04_surface.c */
 GLboolean
-nv04_surface_init(struct nouveau_screen *screen);
+nv04_surface_init(GLcontext *ctx);
 
 void
-nv04_surface_takedown(struct nouveau_screen *screen);
+nv04_surface_takedown(GLcontext *ctx);
 
 void
 nv04_surface_copy(GLcontext *ctx,

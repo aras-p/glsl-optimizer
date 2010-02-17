@@ -51,8 +51,6 @@
 #define DRIVER_AUTHOR	"Nouveau"
 
 struct nouveau_driver {
-	void (*screen_destroy)(struct nouveau_screen *screen);
-
 	GLcontext *(*context_create)(struct nouveau_screen *screen,
 				     const GLvisual *visual,
 				     GLcontext *share_ctx);

@@ -198,9 +198,9 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 			  int w, int h)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_screen *screen = to_nouveau_context(ctx)->screen;
-	struct nouveau_grobj *swzsurf = screen->swzsurf;
-	struct nouveau_grobj *sifm = screen->sifm;
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_grobj *swzsurf = hw->swzsurf;
+	struct nouveau_grobj *sifm = hw->sifm;
 	struct nouveau_bo_context *bctx = context_bctx(ctx, SURFACE);
 	const unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
 	/* Max width & height may not be the same on all HW, but must be POT */
@@ -283,8 +283,8 @@ nv04_surface_copy_m2mf(GLcontext *ctx,
 			  int w, int h)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_screen *screen = to_nouveau_context(ctx)->screen;
-	struct nouveau_grobj *m2mf = screen->m2mf;
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_grobj *m2mf = hw->m2mf;
 	struct nouveau_bo_context *bctx = context_bctx(ctx, SURFACE);
 	const unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
 	unsigned dst_offset = dst->offset + dy * dst->pitch + dx * dst->cpp;
@@ -349,10 +349,10 @@ nv04_surface_fill(GLcontext *ctx,
 		  int dx, int dy, int w, int h)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_screen *screen = to_nouveau_context(ctx)->screen;
-	struct nouveau_grobj *surf2d = screen->surf2d;
-	struct nouveau_grobj *patt = screen->patt;
-	struct nouveau_grobj *rect = screen->rect;
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_grobj *surf2d = hw->surf2d;
+	struct nouveau_grobj *patt = hw->patt;
+	struct nouveau_grobj *rect = hw->rect;
 	unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
 
 	MARK_RING (chan, 19, 4);
@@ -385,80 +385,78 @@ nv04_surface_fill(GLcontext *ctx,
 }
 
 void
-nv04_surface_takedown(struct nouveau_screen *screen)
+nv04_surface_takedown(GLcontext *ctx)
 {
-	nouveau_grobj_free(&screen->swzsurf);
-	nouveau_grobj_free(&screen->sifm);
-	nouveau_grobj_free(&screen->rect);
-	nouveau_grobj_free(&screen->rop);
-	nouveau_grobj_free(&screen->patt);
-	nouveau_grobj_free(&screen->surf2d);
-	nouveau_grobj_free(&screen->m2mf);
-	nouveau_notifier_free(&screen->ntfy);
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+
+	nouveau_grobj_free(&hw->swzsurf);
+	nouveau_grobj_free(&hw->sifm);
+	nouveau_grobj_free(&hw->rect);
+	nouveau_grobj_free(&hw->rop);
+	nouveau_grobj_free(&hw->patt);
+	nouveau_grobj_free(&hw->surf2d);
+	nouveau_grobj_free(&hw->m2mf);
+	nouveau_notifier_free(&hw->ntfy);
 }
 
 GLboolean
-nv04_surface_init(struct nouveau_screen *screen)
+nv04_surface_init(GLcontext *ctx)
 {
-	struct nouveau_channel *chan = screen->chan;
-	const unsigned chipset = screen->device->chipset;
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
 	unsigned handle = 0x88000000, class;
 	int ret;
 
 	/* Notifier object. */
-	ret = nouveau_notifier_alloc(chan, handle++, 1, &screen->ntfy);
+	ret = nouveau_notifier_alloc(chan, handle++, 1, &hw->ntfy);
 	if (ret)
 		goto fail;
 
 	/* Memory to memory format. */
 	ret = nouveau_grobj_alloc(chan, handle++, NV04_MEMORY_TO_MEMORY_FORMAT,
-				  &screen->m2mf);
+				  &hw->m2mf);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, screen->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
-	OUT_RING  (chan, screen->ntfy->handle);
+	BEGIN_RING(chan, hw->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
+	OUT_RING  (chan, hw->ntfy->handle);
 
 	/* Context surfaces 2D. */
-	if (chan->device->chipset < 0x10)
+	if (context_chipset(ctx) < 0x10)
 		class = NV04_CONTEXT_SURFACES_2D;
 	else
 		class = NV10_CONTEXT_SURFACES_2D;
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &screen->surf2d);
+	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->surf2d);
 	if (ret)
 		goto fail;
 
 	/* Raster op. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV03_CONTEXT_ROP,
-				  &screen->rop);
+	ret = nouveau_grobj_alloc(chan, handle++, NV03_CONTEXT_ROP, &hw->rop);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, screen->rop, NV03_CONTEXT_ROP_DMA_NOTIFY, 1);
-	OUT_RING  (chan, screen->ntfy->handle);
+	BEGIN_RING(chan, hw->rop, NV03_CONTEXT_ROP_DMA_NOTIFY, 1);
+	OUT_RING  (chan, hw->ntfy->handle);
 
-	BEGIN_RING(chan, screen->rop, NV03_CONTEXT_ROP_ROP, 1);
+	BEGIN_RING(chan, hw->rop, NV03_CONTEXT_ROP_ROP, 1);
 	OUT_RING  (chan, 0xca); /* DPSDxax in the GDI speech. */
 
 	/* Image pattern. */
 	ret = nouveau_grobj_alloc(chan, handle++, NV04_IMAGE_PATTERN,
-				  &screen->patt);
+				  &hw->patt);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, screen->patt,
-		   NV04_IMAGE_PATTERN_DMA_NOTIFY, 1);
-	OUT_RING  (chan, screen->ntfy->handle);
+	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_DMA_NOTIFY, 1);
+	OUT_RING  (chan, hw->ntfy->handle);
 
-	BEGIN_RING(chan, screen->patt,
-		   NV04_IMAGE_PATTERN_MONOCHROME_FORMAT, 3);
+	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_MONOCHROME_FORMAT, 3);
 	OUT_RING  (chan, NV04_IMAGE_PATTERN_MONOCHROME_FORMAT_LE);
 	OUT_RING  (chan, NV04_IMAGE_PATTERN_MONOCHROME_SHAPE_8X8);
 	OUT_RING  (chan, NV04_IMAGE_PATTERN_PATTERN_SELECT_MONO);
 
-	BEGIN_RING(chan, screen->patt,
-		   NV04_IMAGE_PATTERN_MONOCHROME_COLOR0, 4);
+	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_MONOCHROME_COLOR0, 4);
 	OUT_RING  (chan, 0);
 	OUT_RING  (chan, 0);
 	OUT_RING  (chan, ~0);
@@ -466,27 +464,27 @@ nv04_surface_init(struct nouveau_screen *screen)
 
 	/* GDI rectangle text. */
 	ret = nouveau_grobj_alloc(chan, handle++, NV04_GDI_RECTANGLE_TEXT,
-				  &screen->rect);
+				  &hw->rect);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, screen->rect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
-	OUT_RING  (chan, screen->ntfy->handle);
-	BEGIN_RING(chan, screen->rect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
-	OUT_RING  (chan, screen->surf2d->handle);
-	BEGIN_RING(chan, screen->rect, NV04_GDI_RECTANGLE_TEXT_ROP, 1);
-	OUT_RING  (chan, screen->rop->handle);
-	BEGIN_RING(chan, screen->rect, NV04_GDI_RECTANGLE_TEXT_PATTERN, 1);
-	OUT_RING  (chan, screen->patt->handle);
+	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
+	OUT_RING  (chan, hw->ntfy->handle);
+	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
+	OUT_RING  (chan, hw->surf2d->handle);
+	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_ROP, 1);
+	OUT_RING  (chan, hw->rop->handle);
+	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_PATTERN, 1);
+	OUT_RING  (chan, hw->patt->handle);
 
-	BEGIN_RING(chan, screen->rect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
+	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_OPERATION_ROP_AND);
-	BEGIN_RING(chan, screen->rect,
+	BEGIN_RING(chan, hw->rect,
 		   NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
 	/* Swizzled surface. */
-	switch (chan->device->chipset & 0xf0) {
+	switch (context_chipset(ctx) & 0xf0) {
 	case 0x00:
 	case 0x10:
 		class = NV04_SWIZZLED_SURFACE;
@@ -494,47 +492,33 @@ nv04_surface_init(struct nouveau_screen *screen)
 	case 0x20:
 		class = NV20_SWIZZLED_SURFACE;
 		break;
-	case 0x30:
-		class = NV30_SWIZZLED_SURFACE;
-		break;
-	case 0x40:
-	case 0x60:
-		class = NV40_SWIZZLED_SURFACE;
-		break;
 	default:
 		/* Famous last words: this really can't happen.. */
 		assert(0);
 		break;
 	}
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &screen->swzsurf);
+	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->swzsurf);
 	if (ret)
 		goto fail;
 
 	/* Scaled image from memory. */
-	switch (chan->device->chipset & 0xf0) {
+	switch (context_chipset(ctx) & 0xf0) {
+	case 0x00:
+		class = NV04_SCALED_IMAGE_FROM_MEMORY;
+		break;
 	case 0x10:
 	case 0x20:
 		class = NV10_SCALED_IMAGE_FROM_MEMORY;
 		break;
-	case 0x30:
-		class = NV30_SCALED_IMAGE_FROM_MEMORY;
-		break;
-	case 0x40:
-	case 0x60:
-		class = NV40_SCALED_IMAGE_FROM_MEMORY;
-		break;
-	default:
-		class = NV04_SCALED_IMAGE_FROM_MEMORY;
-		break;
 	}
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &screen->sifm);
+	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->sifm);
 	if (ret)
 		goto fail;
 
-	if (chipset >= 0x10) {
-		BEGIN_RING(chan, screen->sifm,
+	if (context_chipset(ctx) >= 0x10) {
+		BEGIN_RING(chan, hw->sifm,
 			   NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 1);
 		OUT_RING(chan, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	}
@@ -542,6 +526,6 @@ nv04_surface_init(struct nouveau_screen *screen)
 	return GL_TRUE;
 
 fail:
-	nv04_surface_takedown(screen);
+	nv04_surface_takedown(ctx);
 	return GL_FALSE;
 }

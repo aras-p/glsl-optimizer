@@ -29,17 +29,8 @@
 
 #define NV10_TEXTURE_UNITS 2
 
-/* nv10_screen.c */
-GLboolean
-nv10_screen_init(struct nouveau_screen *screen);
-
 /* nv10_context.c */
-GLcontext *
-nv10_context_create(struct nouveau_screen *screen, const GLvisual *visual,
-		    GLcontext *share_ctx);
-
-void
-nv10_context_destroy(GLcontext *ctx);
+extern const struct nouveau_driver nv10_driver;
 
 /* nv10_render.c */
 void

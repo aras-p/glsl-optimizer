@@ -42,11 +42,6 @@ struct nv04_context {
 struct nouveau_grobj *
 nv04_context_engine(GLcontext *ctx);
 
-GLcontext *
-nv04_context_create(struct nouveau_screen *screen, const GLvisual *visual,
-		    GLcontext *share_ctx);
-
-void
-nv04_context_destroy(GLcontext *ctx);
+extern const struct nouveau_driver nv04_driver;
 
 #endif

@@ -34,17 +34,8 @@ enum {
 
 #define NV20_TEXTURE_UNITS 4
 
-/* nv20_screen.c */
-GLboolean
-nv20_screen_init(struct nouveau_screen *screen);
-
 /* nv20_context.c */
-GLcontext *
-nv20_context_create(struct nouveau_screen *screen, const GLvisual *visual,
-		    GLcontext *share_ctx);
-
-void
-nv20_context_destroy(GLcontext *ctx);
+extern const struct nouveau_driver nv20_driver;
 
 /* nv20_render.c */
 void
