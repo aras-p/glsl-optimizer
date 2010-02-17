@@ -760,10 +760,9 @@ _parse_layout_qualifier(struct parse_context *ctx,
             return -1;
          }
       }
-
    }
 
-   return -1;
+   return 0;
 }
 
 
@@ -1068,8 +1067,9 @@ _parse_fully_specified_type(struct parse_context *ctx,
    struct parse_state p = *ps;
 
    if (_parse_layout_qualifier(ctx, &p)) {
-      _emit(ctx, &p.out, LAYOUT_QUALIFIER_NONE);
+      return -1;
    }
+   _emit(ctx, &p.out, LAYOUT_QUALIFIER_NONE);
 
    if (_parse_invariant_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_VARIANT);
