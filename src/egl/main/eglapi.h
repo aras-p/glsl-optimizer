@@ -45,6 +45,7 @@ typedef const char *(*QueryString_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint n
 typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
 typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine);
 
+/* this function may be called from multiple threads at the same time */
 typedef _EGLProc (*GetProcAddress_t)(_EGLDriver *drv, const char *procname);
 
 
