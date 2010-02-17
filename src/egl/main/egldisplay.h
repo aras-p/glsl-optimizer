@@ -4,6 +4,7 @@
 
 #include "egltypedefs.h"
 #include "egldefines.h"
+#include "eglmutex.h"
 
 
 enum _egl_resource_type {
@@ -52,6 +53,8 @@ struct _egl_display
 {
    /* used to link displays */
    _EGLDisplay *Next;
+
+   _EGLMutex Mutex;
 
    EGLNativeDisplayType NativeDisplay;
 

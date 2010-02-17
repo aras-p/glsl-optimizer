@@ -55,6 +55,7 @@ _eglNewDisplay(EGLNativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
+      _eglInitMutex(&dpy->Mutex);
       dpy->NativeDisplay = nativeDisplay;
    }
    return dpy;
