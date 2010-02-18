@@ -24,6 +24,12 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# propagate any errors
+function errtrap {
+    es=$?
+    exit $es
+}
+trap errtrap ERR
 
 # Given a list of files, look for .a archives and unpack them.
 # Return the original list of files minus the .a files plus the unpacked files.
