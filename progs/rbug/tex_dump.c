@@ -29,6 +29,7 @@
 #include "util/u_debug.h"
 #include "util/u_format.h"
 #include "util/u_network.h"
+#include "util/u_string.h"
 #include "util/u_tile.h"
 #include "rbug/rbug.h"
 

@@ -32,6 +32,7 @@
 #include "util/u_debug.h"
 #include "util/u_format.h"
 #include "util/u_network.h"
+#include "util/u_string.h"
 #include "util/u_tile.h"
 
 static uint8_t* rbug_read(const char *filename, unsigned size);
