@@ -24,6 +24,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 # propagate any errors
 function errtrap {
     es=$?
@@ -31,8 +32,11 @@ function errtrap {
 }
 trap errtrap ERR
 
+
 # Given a list of files, look for .a archives and unpack them.
 # Return the original list of files minus the .a files plus the unpacked files.
+# first param:  name of a temp directory (to be deleted when finished)
+# remaining params:  list of .o and .a files
 expand_archives() {
     DIR=$1
     shift
@@ -62,27 +66,6 @@ expand_archives() {
         esac
     done
     cd "$ORIG_DIR"
-    echo $NEWFILES
-}
-
-
-# Given a list of files, look for .a archives and return a list of all objects
-# in the .a archives.
-contents_of_archives() {
-    FILES=$@
-    NEWFILES=""
-    for FILE in $FILES ; do
-        case $FILE in
-            *.a)
-                # get list of members in this .a archive
-                MEMBERS=`ar t $FILE`
-                NEWFILES="$NEWFILES $MEMBERS"
-                ;;
-            *)
-                # skip other file types
-                ;;
-        esac
-    done
     echo $NEWFILES
 }
 
