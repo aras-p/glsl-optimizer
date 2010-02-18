@@ -74,7 +74,7 @@ static void dump(unsigned width, unsigned height,
       rgba = MALLOC(dst_size);
    }
 
-   util_snprintf(filename, 512, "%s.bmp", pf_name(src_format));
+   util_snprintf(filename, 512, "%s.bmp", util_format_name(src_format));
 
    if (util_format_is_compressed(src_format)) {
       debug_printf("skipping: %s\n", filename);

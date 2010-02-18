@@ -24,6 +24,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_debug.h"
 #include "util/u_network.h"
@@ -60,7 +61,7 @@ static void talk()
       info = (struct rbug_proto_texture_info_reply *)header;
 
       debug_printf("%llu %s %u x %u x %u, block(%ux%u %u), last_level: %u, nr_samples: %u, usage: %u\n",
-                   (unsigned long long)list->textures[i], pf_name(info->format),
+                   (unsigned long long)list->textures[i], util_format_name(info->format),
                    info->width[0], info->height[0], info->depth[0],
                    info->blockw, info->blockh, info->blocksize,
                    info->last_level, info->nr_samples, info->tex_usage);
