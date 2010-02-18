@@ -22,6 +22,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdio.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
