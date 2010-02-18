@@ -684,6 +684,11 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
     }
 
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "# Usefull debugging info follows #\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using %s backend\n",
+	       ms->screen ? "Gallium3D" : "libkms");
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "2D Acceleration is %s\n",
 	       ms->screen && ms->accelerate_2d ? "enabled" : "disabled");
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Fallback debugging is %s\n",
@@ -694,6 +699,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #else
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is disabled\n");
 #endif
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
