@@ -92,6 +92,9 @@ linux*|*-gnu*|gnu*)
 solaris*)
     DEFINES="$DEFINES -DPTHREADS -DSVR4"
     ;;
+cygwin*)
+    DEFINES="$DEFINES -DPTHREADS"
+    ;;
 esac
 
 dnl Add flags for gcc and g++
