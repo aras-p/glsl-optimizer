@@ -312,7 +312,6 @@ svga_buffer_add_range(struct svga_buffer *sbuf,
    unsigned nearest_range;
    unsigned nearest_dist;
 
-   assert(sbuf->hwbuf);
    assert(end > start);
    
    if (sbuf->map.num_ranges < SVGA_BUFFER_MAX_RANGES) {
@@ -466,8 +465,7 @@ svga_buffer_flush_mapped_range( struct pipe_screen *screen,
    assert(sbuf->map.writing);
    if(sbuf->map.writing) {
       assert(sbuf->map.flush_explicit);
-      if(sbuf->hwbuf)
-         svga_buffer_add_range(sbuf, offset, offset + length);
+      svga_buffer_add_range(sbuf, offset, offset + length);
    }
    pipe_mutex_unlock(ss->swc_mutex);
 }
@@ -494,8 +492,7 @@ svga_buffer_unmap( struct pipe_screen *screen,
          /* No mapped range was flushed -- flush the whole buffer */
          SVGA_DBG(DEBUG_DMA, "flushing the whole buffer\n");
    
-         if(sbuf->hwbuf)
-            svga_buffer_add_range(sbuf, 0, sbuf->base.size);
+         svga_buffer_add_range(sbuf, 0, sbuf->base.size);
       }
       
       sbuf->map.writing = FALSE;
