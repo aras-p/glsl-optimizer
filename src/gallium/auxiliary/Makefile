@@ -54,6 +54,7 @@ C_SOURCES = \
 	os/os_stream_str.c \
 	os/os_stream_null.c \
 	os/os_time.c \
+	pipebuffer/pb_buffer_fenced.c \
 	pipebuffer/pb_buffer_malloc.c \
 	pipebuffer/pb_bufmgr_alt.c \
 	pipebuffer/pb_bufmgr_cache.c \
