@@ -177,6 +177,12 @@ struct pipe_context {
    void   (*bind_gs_state)(struct pipe_context *, void *);
    void   (*delete_gs_state)(struct pipe_context *, void *);
 
+   void * (*create_vertex_elements_state)(struct pipe_context *,
+                                          unsigned num_elements,
+                                          const struct pipe_vertex_element *);
+   void   (*bind_vertex_elements_state)(struct pipe_context *, void *);
+   void   (*delete_vertex_elements_state)(struct pipe_context *, void *);
+
    /*@}*/
 
    /**
@@ -220,9 +226,6 @@ struct pipe_context {
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
 
-   void (*set_vertex_elements)( struct pipe_context *,
-                                unsigned num_elements,
-                                const struct pipe_vertex_element * );
    /*@}*/
 
 

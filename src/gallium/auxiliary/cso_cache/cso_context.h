@@ -122,6 +122,12 @@ void
 cso_restore_vertex_sampler_textures(struct cso_context *cso);
 
 
+enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
+                                        unsigned count,
+                                        const struct pipe_vertex_element *states);
+void cso_save_vertex_elements(struct cso_context *ctx);
+void cso_restore_vertex_elements(struct cso_context *ctx);
+
 
 /* These aren't really sensible -- most of the time the api provides
  * object semantics for shaders anyway, and the cases where it doesn't
@@ -155,7 +161,6 @@ enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,
 void cso_delete_geometry_shader(struct cso_context *ctx, void *handle);
 void cso_save_geometry_shader(struct cso_context *cso);
 void cso_restore_geometry_shader(struct cso_context *cso);
-
 
 
 enum pipe_error cso_set_framebuffer(struct cso_context *cso,
