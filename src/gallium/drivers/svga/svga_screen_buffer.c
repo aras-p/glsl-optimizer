@@ -612,7 +612,7 @@ svga_screen_init_buffer_functions(struct pipe_screen *screen)
 }
 
 
-/** 
+/**
  * Copy the contents of the user buffer / malloc buffer to a hardware buffer.
  */
 static INLINE enum pipe_error
@@ -670,64 +670,67 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
                              struct svga_buffer *sbuf)
 {
    struct svga_winsys_screen *sws = ss->sws;
-   const unsigned alignment = sbuf->base.alignment;
+   const unsigned alignment = sizeof(void *);
    const unsigned usage = 0;
-   unsigned size = sbuf->base.size;
-   unsigned offset = 0;
+   unsigned i;
+
+   assert(sbuf->map.num_ranges);
+   assert(!sbuf->dma.pending);
 
    SVGA_DBG(DEBUG_DMA, "dma to sid %p\n", sbuf->handle);
 
-   /*
-    * TODO: upload only the modified ranges
-    */
+   for (i = 0; i < sbuf->map.num_ranges; ++i) {
+      struct svga_buffer_range *range = &sbuf->map.ranges[i];
+      unsigned offset = range->start;
+      unsigned size = range->end - range->start;
 
-   offset = 0;
-   while (offset < sbuf->base.size) {
-      struct svga_winsys_buffer *hwbuf;
-      uint8_t *map;
-      enum pipe_error ret;
+      while (offset < range->end) {
+         struct svga_winsys_buffer *hwbuf;
+         uint8_t *map;
+         enum pipe_error ret;
 
-      if (offset + size > sbuf->base.size)
-         size = sbuf->base.size - offset;
+         if (offset + size > range->end)
+            size = range->end - offset;
 
-      hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
-      while (!hwbuf) {
-         size /= 2;
-         if (!size)
-            return PIPE_ERROR_OUT_OF_MEMORY;
          hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+         while (!hwbuf) {
+            size /= 2;
+            if (!size)
+               return PIPE_ERROR_OUT_OF_MEMORY;
+            hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+         }
+
+         SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
+                  offset, offset + size);
+
+         map = sws->buffer_map(sws, hwbuf,
+                               PIPE_BUFFER_USAGE_CPU_WRITE |
+                               PIPE_BUFFER_USAGE_DISCARD);
+         assert(map);
+         if (map) {
+            memcpy(map, sbuf->swbuf, size);
+            sws->buffer_unmap(sws, hwbuf);
+         }
+
+         ret = SVGA3D_BufferDMA(svga->swc,
+                                hwbuf, sbuf->handle,
+                                SVGA3D_WRITE_HOST_VRAM,
+                                size, offset, sbuf->dma.flags);
+         if(ret != PIPE_OK) {
+            svga_context_flush(svga, NULL);
+            ret =  SVGA3D_BufferDMA(svga->swc,
+                                    hwbuf, sbuf->handle,
+                                    SVGA3D_WRITE_HOST_VRAM,
+                                    size, offset, sbuf->dma.flags);
+            assert(ret == PIPE_OK);
+         }
+
+         sbuf->dma.flags.discard = FALSE;
+
+         sws->buffer_destroy(sws, hwbuf);
+
+         offset += size;
       }
-
-      SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
-               offset, offset + size);
-
-      map = sws->buffer_map(sws, hwbuf,
-                            PIPE_BUFFER_USAGE_CPU_WRITE |
-                            PIPE_BUFFER_USAGE_DISCARD);
-      assert(map);
-      if (map) {
-         memcpy(map, sbuf->swbuf, size);
-         sws->buffer_unmap(sws, hwbuf);
-      }
-
-      ret = SVGA3D_BufferDMA(svga->swc,
-                             hwbuf, sbuf->handle,
-                             SVGA3D_WRITE_HOST_VRAM,
-                             size, offset, sbuf->dma.flags);
-      if(ret != PIPE_OK) {
-         svga_context_flush(svga, NULL);
-         ret =  SVGA3D_BufferDMA(svga->swc,
-                                 hwbuf, sbuf->handle,
-                                 SVGA3D_WRITE_HOST_VRAM,
-                                 size, offset, sbuf->dma.flags);
-         assert(ret == PIPE_OK);
-      }
-
-      sbuf->dma.flags.discard = FALSE;
-
-      sws->buffer_destroy(sws, hwbuf);
-
-      offset += size;
    }
 
    sbuf->map.num_ranges = 0;
