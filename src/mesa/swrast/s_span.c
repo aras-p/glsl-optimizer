@@ -784,13 +784,46 @@ clip_span( GLcontext *ctx, SWspan *span )
           * For arrays of values, shift them left.
           */
          for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
-            if (span->arrayAttribs & (1 << i)) {
-               /* shift array elements left by 'leftClip' */
-               _mesa_memcpy(span->array->attribs[i],
-                            span->array->attribs[i] + leftClip,
-                            (n - leftClip) * 4 * sizeof(GLfloat));
+            if (span->interpMask & (1 << i)) {
+               GLuint j;
+               for (j = 0; j < 4; j++) {
+                  span->attrStart[i][j] += leftClip * span->attrStepX[i][j];
+               }
             }
          }
+
+         span->red += leftClip * span->redStep;
+         span->green += leftClip * span->greenStep;
+         span->blue += leftClip * span->blueStep;
+         span->alpha += leftClip * span->alphaStep;
+         span->index += leftClip * span->indexStep;
+         span->z += leftClip * span->zStep;
+         span->intTex[0] += leftClip * span->intTexStep[0];
+         span->intTex[1] += leftClip * span->intTexStep[1];
+
+#define SHIFT_ARRAY(ARRAY, SHIFT, LEN) \
+         memcpy(ARRAY, ARRAY + (SHIFT), (LEN) * sizeof(ARRAY[0]))
+
+         for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+            if (span->arrayAttribs & (1 << i)) {
+               /* shift array elements left by 'leftClip' */
+               SHIFT_ARRAY(span->array->attribs[i], leftClip, n - leftClip);
+            }
+         }
+
+         SHIFT_ARRAY(span->array->mask, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->rgba8, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->rgba16, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->x, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->y, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->z, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->index, leftClip, n - leftClip);
+         for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+            SHIFT_ARRAY(span->array->lambda[i], leftClip, n - leftClip);
+         }
+         SHIFT_ARRAY(span->array->coverage, leftClip, n - leftClip);
+
+#undef SHIFT_ARRAY
 
          span->leftClip = leftClip;
          span->x = xmin;
