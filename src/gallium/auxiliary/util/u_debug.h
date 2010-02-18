@@ -337,7 +337,7 @@ void debug_dump_float_rgba_bmp(const char *filename,
 #define debug_dump_surface(prefix, surface) ((void)0)
 #define debug_dump_surface_bmp(filename, surface) ((void)0)
 #define debug_dump_transfer_bmp(filename, transfer) ((void)0)
-#define debug_dump_rgba_float_bmp(filename, width, height, rgba, stride) ((void)0)
+#define debug_dump_float_rgba_bmp(filename, width, height, rgba, stride) ((void)0)
 #endif
 
 
