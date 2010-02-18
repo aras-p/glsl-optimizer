@@ -132,6 +132,8 @@ do_blit_readpixels(GLcontext * ctx,
       return GL_TRUE;
    }
 
+   intel_prepare_render(intel);
+
    all = (width * height * src->cpp == dst->Base.Size &&
 	  x == 0 && dst_offset == 0);
 
@@ -172,6 +174,7 @@ intelReadPixels(GLcontext * ctx,
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    intelFlush(ctx);
+   intel_prepare_render(intel_context(ctx));
 
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))

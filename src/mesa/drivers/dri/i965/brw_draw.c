@@ -337,6 +337,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * so can't access it earlier.
     */
 
+   intel_prepare_render(intel);
+
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
 

@@ -138,6 +138,8 @@ do_blit_copypixels(GLcontext * ctx,
 
    intelFlush(&intel->ctx);
 
+   intel_prepare_render(intel);
+
    /* XXX: We fail to handle different inversion between read and draw framebuffer. */
 
    /* Clip to destination buffer. */

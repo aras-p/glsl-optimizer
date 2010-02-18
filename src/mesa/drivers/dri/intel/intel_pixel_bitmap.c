@@ -234,6 +234,8 @@ do_blit_bitmap( GLcontext *ctx,
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
 
+   intel_prepare_render(intel);
+
    /* Clip to buffer bounds and scissor. */
    if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
 			     fb->_Xmax, fb->_Ymax,

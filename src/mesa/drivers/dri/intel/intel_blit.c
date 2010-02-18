@@ -115,6 +115,8 @@ intelEmitCopyBlit(struct intel_context *intel,
            break;
    } while (pass < 2);
 
+   intel_prepare_render(intel);
+
    if (pass >= 2) {
        dri_bo_map(dst_buffer, GL_TRUE);
        dri_bo_map(src_buffer, GL_FALSE);
@@ -240,6 +242,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 
    GLuint buf;
    all = (cw == fb->Width && ch == fb->Height);
+
+   intel_prepare_render(intel);
 
    /* Loop over all renderbuffers */
    for (buf = 0; buf < BUFFER_COUNT && mask; buf++) {

@@ -197,6 +197,15 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    unsigned int attachments[10];
    const char *region_name;
 
+   /* If we're rendering to the fake front buffer, make sure all the
+    * pending drawing has landed on the real front buffer.  Otherwise
+    * when we eventually get to DRI2GetBuffersWithFormat the stale
+    * real front buffer contents will get copied to the new fake front
+    * buffer.
+    */
+   if (intel->is_front_buffer_rendering)
+      intel_flush(&intel->ctx, GL_FALSE);
+
    if (INTEL_DEBUG & DEBUG_DRI)
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
@@ -371,35 +380,39 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 }
 
 void
+intel_prepare_render(struct intel_context *intel)
+{
+   __DRIcontext *driContext = intel->driContext;
+   __DRIdrawable *drawable;
+
+   drawable = intel->driDrawable;
+   if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
+      if (drawable->lastStamp != drawable->dri2.stamp)
+	 intel_update_renderbuffers(driContext, drawable);
+      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      driContext->dri2.draw_stamp = drawable->dri2.stamp;
+   }
+
+   drawable = intel->driReadDrawable;
+   if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
+      if (drawable->lastStamp != drawable->dri2.stamp)
+	 intel_update_renderbuffers(driContext, drawable);
+      driContext->dri2.read_stamp = drawable->dri2.stamp;
+   }
+}
+
+void
 intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
-    void (*old_viewport)(GLcontext *ctx, GLint x, GLint y,
-			 GLsizei w, GLsizei h);
 
-    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
-       /* If we're rendering to the fake front buffer, make sure all the pending
-	* drawing has landed on the real front buffer.  Otherwise when we
-	* eventually get to DRI2GetBuffersWithFormat the stale real front
-	* buffer contents will get copied to the new fake front buffer.
-	*/
-       if (intel->is_front_buffer_rendering) {
-	  intel_flush(ctx, GL_FALSE);
-       }
-
-       intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
-       if (driContext->driDrawablePriv != driContext->driReadablePriv)
-	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
+    if (!intel->using_dri2_swapbuffers &&
+	!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+       dri2InvalidateDrawable(driContext->driDrawablePriv);
+       dri2InvalidateDrawable(driContext->driReadablePriv);
     }
-
-    old_viewport = ctx->Driver.Viewport;
-    ctx->Driver.Viewport = NULL;
-    intel->driDrawable = driContext->driDrawablePriv;
-    intel_draw_buffer(ctx, intel->ctx.DrawBuffer);
-    ctx->Driver.Viewport = old_viewport;
 }
-
 
 static const struct dri_debug_control debug_control[] = {
    { "tex",   DEBUG_TEXTURE},
@@ -860,22 +873,12 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
    if (driContextPriv) {
       struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
       struct gl_framebuffer *readFb = driReadPriv->driverPrivate;
- 
-      intel_update_renderbuffers(driContextPriv, driDrawPriv);
-      if (driDrawPriv != driReadPriv)
-	 intel_update_renderbuffers(driContextPriv, driReadPriv);
-
-      /* set GLframebuffer size to match window, if needed */
-      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
-
-      if (driReadPriv != driDrawPriv) {
-	 driUpdateFramebufferSize(&intel->ctx, driReadPriv);
-      }
 
       _mesa_make_current(&intel->ctx, fb, readFb);
       intel->driReadDrawable = driReadPriv;
       intel->driDrawable = driDrawPriv;
-      intel_draw_buffer(&intel->ctx, fb);
+      driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
+      driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

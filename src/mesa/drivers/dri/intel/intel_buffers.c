@@ -271,13 +271,12 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
       intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
 	|| (mode == GL_FRONT);
 
-      /* If we weren't front-buffer rendering before but we are now, make sure
-       * that the front-buffer has actually been allocated.
+      /* If we weren't front-buffer rendering before but we are now,
+       * invalidate our DRI drawable so we'll ask for new buffers
+       * (including the fake front) before we start rendering again.
        */
-      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering) {
-	 intel_update_renderbuffers(intel->driContext,
-				    intel->driContext->driDrawablePriv);
-      }
+      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering)
+	 dri2InvalidateDrawable(intel->driContext->driDrawablePriv);
    }
 
    intel_draw_buffer(ctx, ctx->DrawBuffer);
@@ -295,13 +294,12 @@ intelReadBuffer(GLcontext * ctx, GLenum mode)
       intel->is_front_buffer_reading = (mode == GL_FRONT_LEFT)
 	|| (mode == GL_FRONT);
 
-      /* If we weren't front-buffer reading before but we are now, make sure
-       * that the front-buffer has actually been allocated.
+      /* If we weren't front-buffer reading before but we are now,
+       * invalidate our DRI drawable so we'll ask for new buffers
+       * (including the fake front) before we start reading again.
        */
-      if (!was_front_buffer_reading && intel->is_front_buffer_reading) {
-	 intel_update_renderbuffers(intel->driContext,
-				    intel->driContext->driDrawablePriv);
-      }
+      if (!was_front_buffer_reading && intel->is_front_buffer_reading)
+	 dri2InvalidateDrawable(intel->driContext->driReadablePriv);
    }
 
    if (ctx->ReadBuffer == ctx->DrawBuffer) {

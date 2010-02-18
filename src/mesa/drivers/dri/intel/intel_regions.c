@@ -378,6 +378,8 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
+   intel_prepare_render(intel);
+
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
                    dst->pitch,
@@ -500,6 +502,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    /* Now blit from the texture buffer to the new buffer: 
     */
 
+   intel_prepare_render(intel);
    ok = intelEmitCopyBlit(intel,
                           region->cpp,
                           region->pitch, pbo->buffer, 0, region->tiling,

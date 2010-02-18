@@ -240,6 +240,7 @@ try_pbo_upload(struct intel_context *intel,
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
+   intel_prepare_render(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
@@ -471,6 +472,8 @@ intelTexImage(GLcontext * ctx,
 					   format, type,
 					   pixels, unpack, "glTexImage");
    }
+
+   intel_prepare_render(intel);
 
    if (intelImage->mt) {
       if (pixels != NULL) {
@@ -748,7 +751,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   if (dPriv->lastStamp != *dPriv->pStamp)
+   if (dPriv->lastStamp != dPriv->dri2.stamp)
       intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);

@@ -109,6 +109,7 @@ do_copy_texsubimage(struct intel_context *intel,
    }
 
    /* intelFlush(ctx); */
+   intel_prepare_render(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,

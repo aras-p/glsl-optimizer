@@ -72,6 +72,8 @@ intelTexSubimage(GLcontext * ctx,
    if (!pixels)
       return;
 
+   intel_prepare_render(intel);
+
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */

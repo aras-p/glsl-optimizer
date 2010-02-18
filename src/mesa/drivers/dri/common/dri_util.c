@@ -585,6 +585,8 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     pcp->driDrawablePriv = NULL;
     pcp->loaderPrivate = data;
     
+    pcp->dri2.draw_stamp = 0;
+    pcp->dri2.read_stamp = 0;
     /* When the first context is created for a screen, initialize a "dummy"
      * context.
      */

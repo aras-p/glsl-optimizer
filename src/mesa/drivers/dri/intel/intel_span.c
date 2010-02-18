@@ -498,6 +498,7 @@ intelSpanRenderStart(GLcontext * ctx)
    GLuint i;
 
    intelFlush(&intel->ctx);
+   intel_prepare_render(intel);
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {

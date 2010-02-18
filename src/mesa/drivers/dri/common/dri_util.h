@@ -422,6 +422,11 @@ struct __DRIcontextRec {
      * The loaders's private context data.  This structure is opaque.
      */
     void *loaderPrivate;
+
+    struct {
+	int draw_stamp;
+	int read_stamp;
+    } dri2;
 };
 
 /**

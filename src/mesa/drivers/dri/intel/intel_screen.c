@@ -129,7 +129,6 @@ intelDRI2Invalidate(__DRIdrawable *drawable)
 
    intel->using_dri2_swapbuffers = GL_TRUE;
    dri2InvalidateDrawable(drawable);
-   intel_update_renderbuffers(intel->driContext, drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
