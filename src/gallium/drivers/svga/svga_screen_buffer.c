@@ -410,17 +410,30 @@ svga_buffer_map_range( struct pipe_screen *screen,
    struct svga_buffer *sbuf = svga_buffer( buf );
    void *map;
 
-   if(sbuf->swbuf) {
+   if (!sbuf->swbuf && !sbuf->hw.buf) {
+      if (svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK) {
+         /*
+          * We can't create a hardware buffer big enough, so create a malloc
+          * buffer instead.
+          */
+
+         debug_printf("%s: failed to allocate %u KB of DMA, splitting DMA transfers\n",
+                      __FUNCTION__,
+                      (sbuf->base.size + 1023)/1024);
+
+         sbuf->swbuf = align_malloc(sbuf->base.size, sbuf->base.alignment);
+      }
+   }
+
+   if (sbuf->swbuf) {
       /* User/malloc buffer */
       map = sbuf->swbuf;
    }
-   else {
-      if(!sbuf->hw.buf) {
-         if(svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK)
-            return NULL;
-      }
-         
+   else if (sbuf->hw.buf) {
       map = sws->buffer_map(sws, sbuf->hw.buf, usage);
+   }
+   else {
+      map = NULL;
    }
 
    if(map) {
