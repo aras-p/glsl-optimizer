@@ -51,7 +51,7 @@ static void shader_info(struct rbug_connection *con, rbug_context_t ctx)
       assert(header->opcode == RBUG_OP_SHADER_INFO_REPLY);
       info = (struct rbug_proto_shader_info_reply *)header;
 
-      debug_printf("% 15llu |% 15llu |% 15u |\n",
+      debug_printf("%15llu | %15llu | %15u |\n",
                    (unsigned long long)ctx,
                    (unsigned long long)list->shaders[i],
                    (unsigned)info->disabled);
