@@ -102,10 +102,6 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
    util_gen_mipmap_flush(st->gen_mipmap);
 
    st->pipe->flush( st->pipe, pipeFlushFlags, fence );
-
-   if ((pipeFlushFlags & PIPE_FLUSH_FRAME) &&
-       is_front_buffer_dirty(st))
-      display_front_buffer(st);
 }
 
 
@@ -139,6 +135,10 @@ static void st_glFlush(GLcontext *ctx)
     * problems that need to be fixed elsewhere.
     */
    st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
+
+   if (is_front_buffer_dirty(st)) {
+      display_front_buffer(st);
+   }
 }
 
 
@@ -150,6 +150,10 @@ static void st_glFinish(GLcontext *ctx)
    struct st_context *st = ctx->st;
 
    st_finish(st);
+
+   if (is_front_buffer_dirty(st)) {
+      display_front_buffer(st);
+   }
 }
 
 
