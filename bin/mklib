@@ -25,14 +25,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-# propagate any errors
-function errtrap {
-    es=$?
-    exit $es
-}
-trap errtrap ERR
-
-
 # Given a list of files, look for .a archives and unpack them.
 # Return the original list of files minus the .a files plus the unpacked files.
 # first param:  name of a temp directory (to be deleted when finished)
