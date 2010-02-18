@@ -249,7 +249,7 @@ static void display(void)
    glCallList(1);
    glPopMatrix();
 
-   constColor[4] = 0.8;
+   constColor[3] = 0.8;
    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constColor);
    glPushMatrix();
    glTranslatef(4.0, 3.0, 0.0);
