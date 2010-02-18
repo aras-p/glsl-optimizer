@@ -977,6 +977,11 @@ case $ARCH in
 
             # make lib
             ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
+            # make build fail if link failed
+            es=$?
+            if [ "$es" -ne "0" ]; then
+                exit $es
+            fi
             # make usual symlinks
             ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
             # finish up
