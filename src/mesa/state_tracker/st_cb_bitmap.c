@@ -536,8 +536,28 @@ reset_cache(struct st_context *st)
                                       st->bitmap.tex_format, 0,
                                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                                       1, PIPE_TEXTURE_USAGE_SAMPLER);
-
 }
+
+
+/** Print bitmap image to stdout (debug) */
+static void
+print_cache(const struct bitmap_cache *cache)
+{
+   int i, j, k;
+
+   for (i = 0; i < BITMAP_CACHE_HEIGHT; i++) {
+      k = BITMAP_CACHE_WIDTH * (BITMAP_CACHE_HEIGHT - i - 1);
+      for (j = 0; j < BITMAP_CACHE_WIDTH; j++) {
+         if (cache->buffer[k])
+            printf("X");
+         else
+            printf(" ");
+         k++;
+      }
+      printf("\n");
+   }
+}
+
 
 static void
 create_cache_trans(struct st_context *st)
@@ -588,6 +608,8 @@ st_flush_bitmap_cache(struct st_context *st)
           * So unmap and release the texture transfer before drawing.
           */
          if (cache->trans) {
+            if (0)
+               print_cache(cache);
             screen->transfer_unmap(screen, cache->trans);
             cache->buffer = NULL;
 
