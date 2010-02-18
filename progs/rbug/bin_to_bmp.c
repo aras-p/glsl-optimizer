@@ -32,7 +32,7 @@
 #include "util/u_network.h"
 #include "util/u_tile.h"
 
-static uint8_t* read(const char *filename, unsigned size);
+static uint8_t* rbug_read(const char *filename, unsigned size);
 static void dump(unsigned src_width, unsigned src_height,
                  unsigned src_stride, enum pipe_format src_format,
                  uint8_t *data, unsigned src_size);
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
    const char *filename = "mybin.bin";
    enum pipe_format format = PIPE_FORMAT_A8R8G8B8_UNORM;
 
-   dump(width, height, stride, format, read(filename, size), size);
+   dump(width, height, stride, format, rbug_read(filename, size), size);
 
    return 0;
 }
@@ -92,7 +92,7 @@ static void dump(unsigned width, unsigned height,
    FREE(rgba);
 }
 
-static uint8_t* read(const char *filename, unsigned size)
+static uint8_t* rbug_read(const char *filename, unsigned size)
 {
    uint8_t *data;
    FILE *file = fopen(filename, "rb");
