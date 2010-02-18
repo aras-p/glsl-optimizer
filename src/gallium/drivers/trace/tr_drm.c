@@ -155,6 +155,7 @@ trace_drm_create(struct drm_api *api)
    if (!tr_api)
       goto error;
 
+   tr_api->base.name = api->name;
    tr_api->base.driver_name = api->driver_name;
    tr_api->base.create_screen = trace_drm_create_screen;
    tr_api->base.texture_from_shared_handle = trace_drm_texture_from_shared_handle;
