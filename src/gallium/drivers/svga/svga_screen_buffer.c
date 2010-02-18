@@ -178,7 +178,6 @@ svga_buffer_upload_command(struct svga_context *svga,
    struct svga_winsys_buffer *guest = sbuf->hwbuf;
    struct svga_winsys_surface *host = sbuf->handle;
    SVGA3dTransferType transfer = SVGA3D_WRITE_HOST_VRAM;
-   SVGA3dSurfaceDMAFlags flags = sbuf->dma.flags;
    SVGA3dCmdSurfaceDMA *cmd;
    uint32 numBoxes = sbuf->map.num_ranges;
    SVGA3dCopyBox *boxes;
@@ -228,9 +227,11 @@ svga_buffer_upload_command(struct svga_context *svga,
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + numBoxes * sizeof *boxes);
    pSuffix->suffixSize = sizeof *pSuffix;
    pSuffix->maximumOffset = sbuf->base.size;
-   pSuffix->flags = flags;
+   pSuffix->flags = sbuf->dma.flags;
 
-   swc->commit(swc);
+   SVGA_FIFOCommitAll(swc);
+
+   sbuf->dma.flags.discard = FALSE;
 
    return PIPE_OK;
 }
@@ -276,7 +277,6 @@ svga_buffer_upload_flush(struct svga_context *svga,
    }
 
    sbuf->map.num_ranges = 0;
-   memset(&sbuf->dma.flags, 0, sizeof sbuf->dma.flags);
 
    assert(sbuf->head.prev && sbuf->head.next);
    LIST_DEL(&sbuf->head);
@@ -627,7 +627,6 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
          return PIPE_ERROR;
       
       ret = svga_buffer_create_hw_storage(ss, sbuf);
-      assert(ret == PIPE_OK);
       if(ret != PIPE_OK)
          return ret;
 
@@ -636,7 +635,8 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
       assert(map);
       if(!map) {
 	 pipe_mutex_unlock(ss->swc_mutex);
-         return PIPE_ERROR_OUT_OF_MEMORY;
+         svga_buffer_destroy_hw_storage(ss, sbuf);
+         return PIPE_ERROR;
       }
 
       memcpy(map, sbuf->swbuf, sbuf->base.size);
@@ -652,10 +652,86 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
          sbuf->swbuf = NULL;
       }
       
-      svga_buffer_add_range(sbuf, 0, sbuf->base.size);
+      pipe_mutex_unlock(ss->swc_mutex);
    }
    
-   pipe_mutex_unlock(ss->swc_mutex);
+   return PIPE_OK;
+}
+
+
+/**
+ * Upload the buffer to the host in a piecewise fashion.
+ *
+ * Used when the buffer is too big to fit in the GMR aperture.
+ */
+static INLINE enum pipe_error
+svga_buffer_upload_piecewise(struct svga_screen *ss,
+                             struct svga_context *svga,
+                             struct svga_buffer *sbuf)
+{
+   struct svga_winsys_screen *sws = ss->sws;
+   const unsigned alignment = sbuf->base.alignment;
+   const unsigned usage = 0;
+   unsigned size = sbuf->base.size;
+   unsigned offset = 0;
+
+   SVGA_DBG(DEBUG_DMA, "dma to sid %p\n", sbuf->handle);
+
+   /*
+    * TODO: upload only the modified ranges
+    */
+
+   offset = 0;
+   while (offset < sbuf->base.size) {
+      struct svga_winsys_buffer *hwbuf;
+      uint8_t *map;
+      enum pipe_error ret;
+
+      if (offset + size > sbuf->base.size)
+         size = sbuf->base.size - offset;
+
+      hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+      while (!hwbuf) {
+         size /= 2;
+         if (!size)
+            return PIPE_ERROR_OUT_OF_MEMORY;
+         hwbuf = svga_winsys_buffer_create(ss, alignment, usage, size);
+      }
+
+      SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
+               offset, offset + size);
+
+      map = sws->buffer_map(sws, hwbuf,
+                            PIPE_BUFFER_USAGE_CPU_WRITE |
+                            PIPE_BUFFER_USAGE_DISCARD);
+      assert(map);
+      if (map) {
+         memcpy(map, sbuf->swbuf, size);
+         sws->buffer_unmap(sws, hwbuf);
+      }
+
+      ret = SVGA3D_BufferDMA(svga->swc,
+                             hwbuf, sbuf->handle,
+                             SVGA3D_WRITE_HOST_VRAM,
+                             size, offset, sbuf->dma.flags);
+      if(ret != PIPE_OK) {
+         svga_context_flush(svga, NULL);
+         ret =  SVGA3D_BufferDMA(svga->swc,
+                                 hwbuf, sbuf->handle,
+                                 SVGA3D_WRITE_HOST_VRAM,
+                                 size, offset, sbuf->dma.flags);
+         assert(ret == PIPE_OK);
+      }
+
+      sbuf->dma.flags.discard = FALSE;
+
+      sws->buffer_destroy(sws, hwbuf);
+
+      offset += size;
+   }
+
+   sbuf->map.num_ranges = 0;
+
    return PIPE_OK;
 }
 
@@ -680,28 +756,67 @@ svga_buffer_handle(struct svga_context *svga,
       ret = svga_buffer_create_host_surface(ss, sbuf);
       if(ret != PIPE_OK)
 	 return NULL;
-
-      ret = svga_buffer_update_hw(ss, sbuf);
-      if(ret != PIPE_OK)
-	 return NULL;
    }
 
-   if(!sbuf->dma.pending && sbuf->map.num_ranges) {
-      /* Queue the buffer for flushing */
-      ret = svga_buffer_upload_command(svga, sbuf);
-      if(ret != PIPE_OK)
-         /* XXX: Should probably have a richer return value */
-         return NULL;
+   assert(sbuf->handle);
 
-      assert(sbuf->dma.svga == svga);
+   if (sbuf->map.num_ranges) {
+      if (!sbuf->dma.pending) {
+         /*
+          * No pending DMA upload yet, so insert a DMA upload command now.
+          */
 
-      sbuf->dma.pending = TRUE;
-      assert(!sbuf->head.prev && !sbuf->head.next);
-      LIST_ADDTAIL(&sbuf->head, &svga->dirty_buffers);
+         /*
+          * Migrate the data from swbuf -> hwbuf if necessary.
+          */
+         ret = svga_buffer_update_hw(ss, sbuf);
+         if (ret == PIPE_OK) {
+            /*
+             * Queue a dma command.
+             */
+
+            ret = svga_buffer_upload_command(svga, sbuf);
+            if (ret == PIPE_ERROR_OUT_OF_MEMORY) {
+               svga_context_flush(svga, NULL);
+               ret = svga_buffer_upload_command(svga, sbuf);
+               assert(ret == PIPE_OK);
+            }
+            if (ret == PIPE_OK) {
+               sbuf->dma.pending = TRUE;
+               assert(!sbuf->head.prev && !sbuf->head.next);
+               LIST_ADDTAIL(&sbuf->head, &svga->dirty_buffers);
+            }
+         }
+         else if (ret == PIPE_ERROR_OUT_OF_MEMORY) {
+            /*
+             * The buffer is too big to fit in the GMR aperture, so break it in
+             * smaller pieces.
+             */
+            ret = svga_buffer_upload_piecewise(ss, svga, sbuf);
+         }
+
+         if (ret != PIPE_OK) {
+            /*
+             * Something unexpected happened above. There is very little that
+             * we can do other than proceeding while ignoring the dirty ranges.
+             */
+            assert(0);
+            sbuf->map.num_ranges = 0;
+         }
+      }
+      else {
+         /*
+          * There a pending dma already. Make sure it is from this context.
+          */
+         assert(sbuf->dma.svga == svga);
+      }
    }
+
+   assert(!sbuf->map.num_ranges || sbuf->dma.pending);
 
    return sbuf->handle;
 }
+
 
 struct pipe_buffer *
 svga_screen_buffer_wrap_surface(struct pipe_screen *screen,

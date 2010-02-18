@@ -201,6 +201,16 @@ svga_buffer_is_user_buffer( struct pipe_buffer *buffer )
 void
 svga_screen_init_buffer_functions(struct pipe_screen *screen);
 
+
+/**
+ * Get the host surface handle for this buffer.
+ *
+ * This will ensure the host surface is updated, issuing DMAs as needed.
+ *
+ * NOTE: This may insert new commands in the context, so it *must* be called
+ * before reserving command buffer space. And, in order to insert commands
+ * it may need to call svga_context_flush().
+ */
 struct svga_winsys_surface *
 svga_buffer_handle(struct svga_context *svga,
                    struct pipe_buffer *buf);
