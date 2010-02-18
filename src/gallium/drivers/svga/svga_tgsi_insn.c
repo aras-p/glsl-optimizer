@@ -1811,6 +1811,8 @@ static boolean emit_exp(struct svga_shader_emitter *emit,
       fraction = dst;
    else if (dst.mask & TGSI_WRITEMASK_X)
       fraction = get_temp( emit );
+   else
+      fraction.value = 0;
 
    /* If y is being written, fill it with src0 - floor(src0).
     */
@@ -2005,10 +2007,14 @@ static boolean emit_log(struct svga_shader_emitter *emit,
    struct src_register abs_src0;
    SVGA3dShaderDestToken log2_abs;
 
+   abs_tmp.value = 0;
+
    if (dst.mask & TGSI_WRITEMASK_Z)
       log2_abs = dst;
    else if (dst.mask & TGSI_WRITEMASK_XY)
       log2_abs = get_temp( emit );
+   else
+      log2_abs.value = 0;
 
    /* If z is being written, fill it with log2( abs( src0 ) ).
     */
