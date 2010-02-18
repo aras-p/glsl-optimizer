@@ -461,6 +461,10 @@ enum tgsi_exec_datatype {
 static const union tgsi_exec_channel ZeroVec =
    { { 0.0, 0.0, 0.0, 0.0 } };
 
+static const union tgsi_exec_channel OneVec = {
+   {1.0f, 1.0f, 1.0f, 1.0f}
+};
+
 
 /**
  * Assert that none of the float values in 'chan' are infinite or NaN.
@@ -2030,6 +2034,70 @@ exec_dp2(struct tgsi_exec_machine *mach,
 }
 
 static void
+exec_nrm4(struct tgsi_exec_machine *mach,
+          const struct tgsi_full_instruction *inst)
+{
+   unsigned int chan;
+   union tgsi_exec_channel arg[4];
+   union tgsi_exec_channel scale;
+
+   fetch_source(mach, &arg[0], &inst->Src[0], CHAN_X, TGSI_EXEC_DATA_FLOAT);
+   micro_mul(&scale, &arg[0], &arg[0]);
+
+   for (chan = CHAN_Y; chan <= CHAN_W; chan++) {
+      union tgsi_exec_channel product;
+
+      fetch_source(mach, &arg[chan], &inst->Src[0], chan, TGSI_EXEC_DATA_FLOAT);
+      micro_mul(&product, &arg[chan], &arg[chan]);
+      micro_add(&scale, &scale, &product);
+   }
+
+   micro_rsq(&scale, &scale);
+
+   for (chan = CHAN_X; chan <= CHAN_W; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         micro_mul(&arg[chan], &arg[chan], &scale);
+         store_dest(mach, &arg[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+      }
+   }
+}
+
+static void
+exec_nrm3(struct tgsi_exec_machine *mach,
+          const struct tgsi_full_instruction *inst)
+{
+   if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_XYZ) {
+      unsigned int chan;
+      union tgsi_exec_channel arg[3];
+      union tgsi_exec_channel scale;
+
+      fetch_source(mach, &arg[0], &inst->Src[0], CHAN_X, TGSI_EXEC_DATA_FLOAT);
+      micro_mul(&scale, &arg[0], &arg[0]);
+
+      for (chan = CHAN_Y; chan <= CHAN_Z; chan++) {
+         union tgsi_exec_channel product;
+
+         fetch_source(mach, &arg[chan], &inst->Src[0], chan, TGSI_EXEC_DATA_FLOAT);
+         micro_mul(&product, &arg[chan], &arg[chan]);
+         micro_add(&scale, &scale, &product);
+      }
+
+      micro_rsq(&scale, &scale);
+
+      for (chan = CHAN_X; chan <= CHAN_Z; chan++) {
+         if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+            micro_mul(&arg[chan], &arg[chan], &scale);
+            store_dest(mach, &arg[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+         }
+      }
+   }
+
+   if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_W) {
+      store_dest(mach, &OneVec, &inst->Dst[0], inst, CHAN_W, TGSI_EXEC_DATA_FLOAT);
+   }
+}
+
+static void
 exec_break(struct tgsi_exec_machine *mach)
 {
    if (mach->BreakType == TGSI_EXEC_BREAK_INSIDE_LOOP) {
@@ -3052,70 +3120,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_NRM:
-      /* 3-component vector normalize */
-      if(IS_CHANNEL_ENABLED(*inst, CHAN_X) ||
-         IS_CHANNEL_ENABLED(*inst, CHAN_Y) ||
-         IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-         /* r3 = sqrt(dp3(src0, src0)) */
-         FETCH(&r[0], 0, CHAN_X);
-         micro_mul(&r[3], &r[0], &r[0]);
-         FETCH(&r[1], 0, CHAN_Y);
-         micro_mul(&r[4], &r[1], &r[1]);
-         micro_add(&r[3], &r[3], &r[4]);
-         FETCH(&r[2], 0, CHAN_Z);
-         micro_mul(&r[4], &r[2], &r[2]);
-         micro_add(&r[3], &r[3], &r[4]);
-         micro_sqrt(&r[3], &r[3]);
-
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
-            micro_div(&r[0], &r[0], &r[3]);
-            STORE(&r[0], 0, CHAN_X);
-         }
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-            micro_div(&r[1], &r[1], &r[3]);
-            STORE(&r[1], 0, CHAN_Y);
-         }
-         if (IS_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-            micro_div(&r[2], &r[2], &r[3]);
-            STORE(&r[2], 0, CHAN_Z);
-         }
-      }
-      if (IS_CHANNEL_ENABLED(*inst, CHAN_W)) {
-         STORE(&mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W);
-      }
+      exec_nrm3(mach, inst);
       break;
 
    case TGSI_OPCODE_NRM4:
-      /* 4-component vector normalize */
-      {
-         union tgsi_exec_channel tmp, dot;
-
-         /* tmp = dp4(src0, src0): */
-         FETCH( &r[0], 0, CHAN_X );
-         micro_mul( &tmp, &r[0], &r[0] );
-
-         FETCH( &r[1], 0, CHAN_Y );
-         micro_mul( &dot, &r[1], &r[1] );
-         micro_add( &tmp, &tmp, &dot );
-
-         FETCH( &r[2], 0, CHAN_Z );
-         micro_mul( &dot, &r[2], &r[2] );
-         micro_add( &tmp, &tmp, &dot );
-
-         FETCH( &r[3], 0, CHAN_W );
-         micro_mul( &dot, &r[3], &r[3] );
-         micro_add( &tmp, &tmp, &dot );
-
-         /* tmp = 1 / sqrt(tmp) */
-         micro_sqrt( &tmp, &tmp );
-         micro_div( &tmp, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &tmp );
-
-         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-            /* chan = chan * tmp */
-            micro_mul( &r[chan_index], &tmp, &r[chan_index] );
-            STORE( &r[chan_index], 0, chan_index );
-         }
-      }
+      exec_nrm4(mach, inst);
       break;
 
    case TGSI_OPCODE_DIV:
