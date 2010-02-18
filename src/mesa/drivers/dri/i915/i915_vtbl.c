@@ -55,6 +55,7 @@ i915_render_prevalidate(struct intel_context *intel)
 static void
 i915_render_start(struct intel_context *intel)
 {
+   intel_prepare_render(intel);
 }
 
 
