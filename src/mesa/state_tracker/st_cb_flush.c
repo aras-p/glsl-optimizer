@@ -91,8 +91,7 @@ display_front_buffer(struct st_context *st)
 void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence )
 {
-   if (pipeFlushFlags & PIPE_FLUSH_RENDER_CACHE)
-      FLUSH_CURRENT(st->ctx, 0);
+   FLUSH_CURRENT(st->ctx, 0);
 
    /* Release any vertex buffers that might potentially be accessed in
     * successive frames:
