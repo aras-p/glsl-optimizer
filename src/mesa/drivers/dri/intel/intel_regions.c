@@ -42,7 +42,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#include <main/hash.h>
+#include "main/hash.h"
 #include "intel_context.h"
 #include "intel_regions.h"
 #include "intel_blit.h"
