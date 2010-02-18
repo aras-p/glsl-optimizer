@@ -673,7 +673,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86SetBlackWhitePixels(pScreen);
 
     ms->accelerate_2d = xf86ReturnOptValBool(ms->Options, OPTION_2D_ACCEL, FALSE);
-    ms->debug_fallback = xf86ReturnOptValBool(ms->Options, OPTION_DEBUG_FALLBACK, TRUE);
+    ms->debug_fallback = xf86ReturnOptValBool(ms->Options, OPTION_DEBUG_FALLBACK, ms->accelerate_2d);
 
     if (ms->screen) {
 	ms->exa = xorg_exa_init(pScrn, ms->accelerate_2d);
