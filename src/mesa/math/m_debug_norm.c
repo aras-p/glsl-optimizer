@@ -208,7 +208,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
 
    (void) cycles;
 
-   mat->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   mat->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    mat->inv = m = mat->m;
 
    init_matrix( m );
@@ -327,7 +327,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
       }
    }
 
-   ALIGN_FREE( mat->m );
+   _mesa_align_free( mat->m );
    return 1;
 }
 

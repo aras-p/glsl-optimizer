@@ -1484,7 +1484,7 @@ _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 void
 _math_matrix_ctr( GLmatrix *m )
 {
-   m->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   m->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    if (m->m)
       memcpy( m->m, Identity, sizeof(Identity) );
    m->inv = NULL;
@@ -1503,11 +1503,11 @@ void
 _math_matrix_dtr( GLmatrix *m )
 {
    if (m->m) {
-      ALIGN_FREE( m->m );
+      _mesa_align_free( m->m );
       m->m = NULL;
    }
    if (m->inv) {
-      ALIGN_FREE( m->inv );
+      _mesa_align_free( m->inv );
       m->inv = NULL;
    }
 }
@@ -1523,7 +1523,7 @@ void
 _math_matrix_alloc_inv( GLmatrix *m )
 {
    if (!m->inv) {
-      m->inv = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+      m->inv = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
       if (m->inv)
          memcpy( m->inv, Identity, 16 * sizeof(GLfloat) );
    }

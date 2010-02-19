@@ -185,7 +185,7 @@ void ffbInitVB( GLcontext *ctx )
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-	fmesa->verts = (ffb_vertex *)ALIGN_MALLOC(size * sizeof(ffb_vertex), 32);
+	fmesa->verts = (ffb_vertex *)_mesa_align_malloc(size * sizeof(ffb_vertex), 32);
 
 	{
 		static int firsttime = 1;
@@ -201,7 +201,7 @@ void ffbFreeVB( GLcontext *ctx )
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	if (fmesa->verts) {
-		ALIGN_FREE(fmesa->verts);
+		_mesa_align_free(fmesa->verts);
 		fmesa->verts = 0;
 	}
 }

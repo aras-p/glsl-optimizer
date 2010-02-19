@@ -514,7 +514,7 @@ init_vp(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
    /* a few other misc allocations */
    _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
-   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
+   store->clipmask = (GLubyte *) _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
 
    return GL_TRUE;
 }
@@ -537,7 +537,7 @@ dtr(struct tnl_pipeline_stage *stage)
 
       /* free misc arrays */
       _mesa_vector4f_free( &store->ndcCoords );
-      ALIGN_FREE( store->clipmask );
+      _mesa_align_free( store->clipmask );
 
       FREE( store );
       stage->privatePtr = NULL;

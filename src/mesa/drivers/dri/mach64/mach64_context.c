@@ -211,7 +211,7 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
    /* Allocate the vertex buffer
     */
-   mmesa->vert_buf = ALIGN_MALLOC(MACH64_BUFFER_SIZE, 32);
+   mmesa->vert_buf = _mesa_align_malloc(MACH64_BUFFER_SIZE, 32);
    if ( !mmesa->vert_buf )
       return GL_FALSE;
    mmesa->vert_used = 0;
@@ -291,7 +291,7 @@ void mach64DestroyContext( __DRIcontext *driContextPriv  )
 
       /* Free the vertex buffer */
       if ( mmesa->vert_buf )
-	 ALIGN_FREE( mmesa->vert_buf );
+	 _mesa_align_free( mmesa->vert_buf );
       
       /* free the Mesa context */
       mmesa->glCtx->DriverCtx = NULL;

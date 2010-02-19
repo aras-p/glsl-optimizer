@@ -808,7 +808,7 @@ void fxAllocVB( GLcontext *ctx )
       firsttime = 0;
    }
 
-   fxMesa->verts = (GrVertex *)ALIGN_MALLOC(size * sizeof(GrVertex), 32);
+   fxMesa->verts = (GrVertex *)_mesa_align_malloc(size * sizeof(GrVertex), 32);
    fxMesa->SetupIndex = SETUP_XYZW|SETUP_RGBA;
 }
 
@@ -817,7 +817,7 @@ void fxFreeVB( GLcontext *ctx )
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    if (fxMesa->verts) {
-      ALIGN_FREE(fxMesa->verts);
+      _mesa_align_free(fxMesa->verts);
       fxMesa->verts = 0;
    }
 }

@@ -183,7 +183,7 @@ static int test_transform_function( transform_func func, int psize,
       return 0;
    }
 
-   mat->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   mat->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    mat->type = mtypes[mtype];
 
    m = mat->m;
@@ -273,7 +273,7 @@ static int test_transform_function( transform_func func, int psize,
       }
    }
 
-   ALIGN_FREE( mat->m );
+   _mesa_align_free( mat->m );
    return 1;
 }
 

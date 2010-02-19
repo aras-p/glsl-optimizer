@@ -338,7 +338,7 @@ void gammaInitVB( GLcontext *ctx )
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   gmesa->verts = (GLubyte *)ALIGN_MALLOC(size * 4 * 16, 32);
+   gmesa->verts = (GLubyte *)_mesa_align_malloc(size * 4 * 16, 32);
 
    {
       static int firsttime = 1;
@@ -355,7 +355,7 @@ void gammaFreeVB( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
    if (gmesa->verts) {
-      ALIGN_FREE(gmesa->verts);
+      _mesa_align_free(gmesa->verts);
       gmesa->verts = 0;
    }
 }

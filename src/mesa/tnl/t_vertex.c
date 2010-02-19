@@ -494,7 +494,7 @@ void _tnl_init_vertices( GLcontext *ctx,
    if (max_vertex_size > vtx->max_vertex_size) {
       _tnl_free_vertices( ctx );
       vtx->max_vertex_size = max_vertex_size;
-      vtx->vertex_buf = (GLubyte *)ALIGN_CALLOC(vb_size * max_vertex_size, 32 );
+      vtx->vertex_buf = (GLubyte *)_mesa_align_calloc(vb_size * max_vertex_size, 32 );
       invalidate_funcs(vtx);
    }
 
@@ -541,7 +541,7 @@ void _tnl_free_vertices( GLcontext *ctx )
       struct tnl_clipspace_fastpath *fp, *tmp;
 
       if (vtx->vertex_buf) {
-         ALIGN_FREE(vtx->vertex_buf);
+         _mesa_align_free(vtx->vertex_buf);
          vtx->vertex_buf = NULL;
       }
 

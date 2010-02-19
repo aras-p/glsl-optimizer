@@ -131,12 +131,12 @@ static drmBufMapPtr i810_create_empty_buffers(void)
 {
    drmBufMapPtr retval;
 
-   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap), 32);
+   retval = (drmBufMapPtr)_mesa_align_malloc(sizeof(drmBufMap), 32);
    if(retval == NULL) return NULL;
    memset(retval, 0, sizeof(drmBufMap));
-   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I810_DMA_BUF_NR, 32);
+   retval->list = (drmBufPtr)_mesa_align_malloc(sizeof(drmBuf) * I810_DMA_BUF_NR, 32);
    if(retval->list == NULL) {
-      ALIGN_FREE(retval);
+      _mesa_align_free(retval);
       return NULL;
    }
    memset(retval->list, 0, sizeof(drmBuf) * I810_DMA_BUF_NR);
