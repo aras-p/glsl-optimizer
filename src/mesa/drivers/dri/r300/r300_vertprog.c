@@ -316,8 +316,7 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
 
 	for (vp = vpc->progs; vp; vp = vp->next) {
-		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
-		    == 0) {
+		if (memcmp(&vp->key, &wanted_key, sizeof(wanted_key)) == 0) {
 			return r300->selected_vp = vp;
 		}
 	}

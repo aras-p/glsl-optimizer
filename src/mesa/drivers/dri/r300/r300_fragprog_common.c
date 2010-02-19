@@ -271,7 +271,7 @@ struct r300_fragment_program *r300SelectAndTranslateFragmentShader(GLcontext *ct
 
 	fp = fp_list->progs;
 	while (fp) {
-		if (_mesa_memcmp(&fp->state, &state, sizeof(state)) == 0) {
+		if (memcmp(&fp->state, &state, sizeof(state)) == 0) {
 			return r300->selected_fp = fp;
 		}
 		fp = fp->next;

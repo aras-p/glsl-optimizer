@@ -268,17 +268,6 @@ _mesa_bzero( void *dst, size_t n )
 #endif
 }
 
-/** Wrapper around memcmp() */
-int
-_mesa_memcmp( const void *s1, const void *s2, size_t n )
-{
-#if defined(SUNOS4)
-   return memcmp( (char *) s1, (char *) s2, (int) n );
-#else
-   return memcmp(s1, s2, n);
-#endif
-}
-
 /*@}*/
 
 

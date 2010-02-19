@@ -1095,7 +1095,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       emit_arith( p, OPCODE_MAD, tmp0, WRITEMASK_XYZW, 0, 
 		  two, src[0], neg1);
 
-      if (_mesa_memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
+      if (memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
 	 tmp1 = tmp0;
       else
 	 emit_arith( p, OPCODE_MAD, tmp1, WRITEMASK_XYZW, 0, 
@@ -1494,7 +1494,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       emit_arith( &p, OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
       emit_arith( &p, OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
    }
-   else if (_mesa_memcmp(&cf, &out, sizeof(cf)) != 0) {
+   else if (memcmp(&cf, &out, sizeof(cf)) != 0) {
       /* Will wind up in here if no texture enabled or a couple of
        * other scenarios (GL_REPLACE for instance).
        */
