@@ -9711,7 +9711,7 @@ _mesa_init_display_list(GLcontext *ctx)
 
    /* zero-out the instruction size table, just once */
    if (!tableInitialized) {
-      _mesa_bzero(InstSize, sizeof(InstSize));
+      memset(InstSize, 0, sizeof(InstSize));
       tableInitialized = GL_TRUE;
    }
 

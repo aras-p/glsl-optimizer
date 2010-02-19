@@ -72,7 +72,7 @@ static void build_state(
 {
 	int unit;
 
-	_mesa_bzero(state, sizeof(*state));
+	memset(state, 0, sizeof(*state));
 
 	for(unit = 0; unit < 16; ++unit) {
 		if (fp->Base.ShadowSamplers & (1 << unit)) {

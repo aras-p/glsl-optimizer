@@ -40,7 +40,7 @@ _mesa_init_instructions(struct prog_instruction *inst, GLuint count)
 {
    GLuint i;
 
-   _mesa_bzero(inst, count * sizeof(struct prog_instruction));
+   memset(inst, 0, count * sizeof(struct prog_instruction));
 
    for (i = 0; i < count; i++) {
       inst[i].SrcReg[0].File = PROGRAM_UNDEFINED;

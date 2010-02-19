@@ -127,7 +127,7 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
    assert(fb);
    assert(visual);
 
-   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+   memset(fb, 0, sizeof(struct gl_framebuffer));
 
    _glthread_INIT_MUTEX(fb->Mutex);
 
@@ -169,7 +169,7 @@ _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
    assert(fb);
    assert(name);
 
-   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+   memset(fb, 0, sizeof(struct gl_framebuffer));
 
    fb->Name = name;
    fb->RefCount = 1;
@@ -526,7 +526,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 {
    GLuint i;
 
-   _mesa_bzero(&fb->Visual, sizeof(fb->Visual));
+   memset(&fb->Visual, 0, sizeof(fb->Visual));
    fb->Visual.rgbMode = GL_TRUE; /* assume this */
 
 #if 0 /* this _might_ be needed */

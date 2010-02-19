@@ -257,17 +257,6 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
       *dst++ = val;
 }
 
-/** Wrapper around either memset() or bzero() */
-void
-_mesa_bzero( void *dst, size_t n )
-{
-#if defined(__FreeBSD__)
-   bzero( dst, n );
-#else
-   memset( dst, 0, n );
-#endif
-}
-
 /*@}*/
 
 

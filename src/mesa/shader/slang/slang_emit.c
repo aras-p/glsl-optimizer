@@ -241,7 +241,7 @@ alloc_local_temp(slang_emit_info *emitInfo, slang_ir_storage *temp, GLint size)
 {
    assert(size >= 1);
    assert(size <= 4);
-   _mesa_bzero(temp, sizeof(*temp));
+   memset(temp, 0, sizeof(*temp));
    temp->Size = size;
    temp->File = PROGRAM_TEMPORARY;
    temp->Index = -1;
@@ -1136,7 +1136,7 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
     * dest for this clamp() is an output reg, we can't use that reg for
     * the intermediate result.  Use a temp register instead.
     */
-   _mesa_bzero(&tmpNode, sizeof(tmpNode));
+   memset(&tmpNode, 0, sizeof(tmpNode));
    if (!alloc_node_storage(emitInfo, &tmpNode, n->Store->Size)) {
       return NULL;
    }

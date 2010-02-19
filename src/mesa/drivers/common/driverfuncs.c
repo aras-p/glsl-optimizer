@@ -70,7 +70,7 @@
 void
 _mesa_init_driver_functions(struct dd_function_table *driver)
 {
-   _mesa_bzero(driver, sizeof(*driver));
+   memset(driver, 0, sizeof(*driver));
 
    driver->GetString = NULL;  /* REQUIRED! */
    driver->UpdateState = NULL;  /* REQUIRED! */

@@ -106,7 +106,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
           target == GL_TEXTURE_1D_ARRAY_EXT ||
           target == GL_TEXTURE_2D_ARRAY_EXT);
 
-   _mesa_bzero(obj, sizeof(*obj));
+   memset(obj, 0, sizeof(*obj));
    /* init the non-zero fields */
    _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;

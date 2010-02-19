@@ -295,7 +295,7 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 {
    (void) target;
 
-   _mesa_bzero(obj, sizeof(struct gl_buffer_object));
+   memset(obj, 0, sizeof(struct gl_buffer_object));
    _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
    obj->Name = name;
