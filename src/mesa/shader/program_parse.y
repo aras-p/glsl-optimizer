@@ -2609,7 +2609,7 @@ make_error_string(const char *fmt, ...)
 
    str = malloc(length);
    if (str) {
-      v_mesa_snprintf(str, length, fmt, args);
+      vsnprintf(str, length, fmt, args);
    }
 
    va_end(args);

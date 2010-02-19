@@ -5559,18 +5559,18 @@ make_error_string(const char *fmt, ...)
 
    va_start(args, fmt);
 
-   /* Call v_mesa_snprintf once to determine how large the final string is.  Call it
+   /* Call vsnprintf once to determine how large the final string is.  Call it
     * again to do the actual formatting.  from the v_mesa_snprintf manual page:
     *
     *    Upon successful return, these functions return the number of
     *    characters printed  (not including the trailing '\0' used to end
     *    output to strings).
     */
-   length = 1 + v_mesa_snprintf(NULL, 0, fmt, args);
+   length = 1 + vsnprintf(NULL, 0, fmt, args);
 
    str = malloc(length);
    if (str) {
-      v_mesa_snprintf(str, length, fmt, args);
+      vsnprintf(str, length, fmt, args);
    }
 
    va_end(args);
