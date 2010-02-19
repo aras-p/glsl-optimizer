@@ -206,6 +206,11 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (intel->is_front_buffer_rendering)
       intel_flush(&intel->ctx, GL_FALSE);
 
+   /* Set this up front, so that in case our buffers get invalidated
+    * while we're getting new buffers, we don't clobber the stamp and
+    * thus ignore the invalidate. */
+   drawable->lastStamp = drawable->dri2.stamp;
+
    if (INTEL_DEBUG & DEBUG_DRI)
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
@@ -376,7 +381,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    }
 
    driUpdateFramebufferSize(&intel->ctx, drawable);
-   drawable->lastStamp = drawable->dri2.stamp;
 }
 
 void
