@@ -612,9 +612,6 @@ extern char *
 _mesa_getenv( const char *var );
 
 extern char *
-_mesa_strstr( const char *haystack, const char *needle );
-
-extern char *
 _mesa_strncat( char *dest, const char *src, size_t n );
 
 extern char *

@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strstr() */
-char *
-_mesa_strstr( const char *haystack, const char *needle )
-{
-   return strstr(haystack, needle);
-}
-
 /** Wrapper around strncat() */
 char *
 _mesa_strncat( char *dest, const char *src, size_t n )
@@ -1177,7 +1170,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
       const char *debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-      if (debugEnv && _mesa_strstr(debugEnv, "silent"))
+      if (debugEnv && strstr(debugEnv, "silent"))
          debug = GL_FALSE;
       else
          debug = GL_TRUE;

@@ -206,17 +206,17 @@ static void add_debug_flags( const char *debug )
 
    MESA_VERBOSE = 0x0;
    for (i = 0; i < Elements(debug_opt); i++) {
-      if (_mesa_strstr(debug, debug_opt[i].name))
+      if (strstr(debug, debug_opt[i].name))
          MESA_VERBOSE |= debug_opt[i].flag;
    }
 
    /* Debug flag:
     */
-   if (_mesa_strstr(debug, "flush")) 
+   if (strstr(debug, "flush"))
       MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
 
 #if defined(_FPU_GETCW) && defined(_FPU_SETCW)
-   if (_mesa_strstr(debug, "fpexceptions")) {
+   if (strstr(debug, "fpexceptions")) {
       /* raise FP exceptions */
       fpu_control_t mask;
       _FPU_GETCW(mask);

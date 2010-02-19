@@ -374,21 +374,21 @@ get_shader_flags(void)
    const char *env = _mesa_getenv("MESA_GLSL");
 
    if (env) {
-      if (_mesa_strstr(env, "dump"))
+      if (strstr(env, "dump"))
          flags |= GLSL_DUMP;
-      if (_mesa_strstr(env, "log"))
+      if (strstr(env, "log"))
          flags |= GLSL_LOG;
-      if (_mesa_strstr(env, "nopvert"))
+      if (strstr(env, "nopvert"))
          flags |= GLSL_NOP_VERT;
-      if (_mesa_strstr(env, "nopfrag"))
+      if (strstr(env, "nopfrag"))
          flags |= GLSL_NOP_FRAG;
-      if (_mesa_strstr(env, "nopt"))
+      if (strstr(env, "nopt"))
          flags |= GLSL_NO_OPT;
-      else if (_mesa_strstr(env, "opt"))
+      else if (strstr(env, "opt"))
          flags |= GLSL_OPT;
-      if (_mesa_strstr(env, "uniform"))
+      if (strstr(env, "uniform"))
          flags |= GLSL_UNIFORMS;
-      if (_mesa_strstr(env, "useprog"))
+      if (strstr(env, "useprog"))
          flags |= GLSL_USE_PROG;
    }
 

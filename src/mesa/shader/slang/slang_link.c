@@ -563,7 +563,7 @@ remove_extra_version_directives(GLchar *source)
 {
    GLuint verCount = 0;
    while (1) {
-      char *ver = _mesa_strstr(source, "#version");
+      char *ver = strstr(source, "#version");
       if (ver) {
          verCount++;
          if (verCount > 1) {
