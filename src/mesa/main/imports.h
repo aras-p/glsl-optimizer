@@ -611,9 +611,6 @@ _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size,
 extern char *
 _mesa_getenv( const char *var );
 
-extern char *
-_mesa_strncpy( char *dest, const char *src, size_t n );
-
 extern size_t
 _mesa_strlen( const char *s );
 

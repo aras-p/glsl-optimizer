@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strncpy() */
-char *
-_mesa_strncpy( char *dest, const char *src, size_t n )
-{
-   return strncpy(dest, src, n);
-}
-
 /** Wrapper around strlen() */
 size_t
 _mesa_strlen( const char *s )
