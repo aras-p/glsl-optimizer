@@ -79,11 +79,12 @@ struct ximage_surface {
    XVisualInfo visual;
    struct ximage_display *xdpy;
 
-   int width, height;
    GC gc;
 
-   struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
    unsigned int sequence_number;
+   int width, height;
+   struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
+   uint valid_mask;
 };
 
 struct ximage_config {
@@ -195,6 +196,92 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
    return (xbuf->texture != NULL);
 }
 
+/**
+ * Update the geometry of the surface.  Return TRUE if the geometry has changed
+ * since last call.
+ */
+static boolean
+ximage_surface_update_geometry(struct native_surface *nsurf)
+{
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   Status ok;
+   Window root;
+   int x, y;
+   unsigned int w, h, border, depth;
+   boolean updated = FALSE;
+
+   /* pbuffer has fixed geometry */
+   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
+      return FALSE;
+
+   ok = XGetGeometry(xsurf->xdpy->dpy, xsurf->drawable,
+         &root, &x, &y, &w, &h, &border, &depth);
+   if (!ok) {
+      w = xsurf->width;
+      h = xsurf->height;
+   }
+
+   /* all buffers become invalid */
+   if (xsurf->width != w || xsurf->height != h) {
+      xsurf->width = w;
+      xsurf->height = h;
+      xsurf->valid_mask = 0x0;
+
+      xsurf->sequence_number++;
+      updated = TRUE;
+   }
+
+   return updated;
+}
+
+/**
+ * Update the buffers of the surface.  It is a slow function due to the
+ * round-trip to the server.
+ */
+static boolean
+ximage_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
+{
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   boolean updated;
+   uint new_valid;
+   int att;
+
+   updated = ximage_surface_update_geometry(&xsurf->base);
+   buffer_mask &= ~xsurf->valid_mask;
+   /* all requested buffers are valid */
+   if (!buffer_mask)
+      return TRUE;
+
+   new_valid = 0x0;
+   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+      if (native_attachment_mask_test(buffer_mask, att)) {
+         struct ximage_buffer *xbuf = &xsurf->buffers[att];
+
+         /* reallocate the texture */
+         if (!ximage_surface_alloc_buffer(&xsurf->base, att))
+            break;
+
+         /* update ximage */
+         if (xbuf->ximage) {
+            xbuf->ximage->width = xsurf->width;
+            xbuf->ximage->height = xsurf->height;
+         }
+
+         new_valid |= (1 << att);
+         if (buffer_mask == new_valid)
+            break;
+      }
+   }
+
+   if (new_valid) {
+      xsurf->valid_mask |= new_valid;
+      if (updated)
+         xsurf->sequence_number++;
+   }
+
+   return (new_valid == buffer_mask);
+}
+
 static boolean
 ximage_surface_draw_buffer(struct native_surface *nsurf,
                            enum native_attachment which)
@@ -254,44 +341,24 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xfront, *xback, xtmp;
+   boolean ret;
+
+   /* display the back buffer first */
+   ret = ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_BACK_LEFT);
 
    xfront = &xsurf->buffers[NATIVE_ATTACHMENT_FRONT_LEFT];
    xback = &xsurf->buffers[NATIVE_ATTACHMENT_BACK_LEFT];
 
-   /* draw the back buffer directly if there is no front buffer */
+   /* skip swapping so that the front buffer is allocated only when needed */
    if (!xfront->texture)
-      return ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_BACK_LEFT);
+      return ret;
 
-   /* swap the buffers */
    xtmp = *xfront;
    *xfront = *xback;
    *xback = xtmp;
-
-   /* the front/back textures are swapped */
    xsurf->sequence_number++;
 
-   return ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
-}
-
-static void
-ximage_surface_update_geometry(struct native_surface *nsurf)
-{
-   struct ximage_surface *xsurf = ximage_surface(nsurf);
-   Status ok;
-   Window root;
-   int x, y;
-   unsigned int w, h, border, depth;
-
-   /* pbuffer has fixed geometry */
-   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
-      return;
-
-   ok = XGetGeometry(xsurf->xdpy->dpy, xsurf->drawable,
-         &root, &x, &y, &w, &h, &border, &depth);
-   if (ok) {
-      xsurf->width = w;
-      xsurf->height = h;
-   }
+   return ret;
 }
 
 static boolean
@@ -300,44 +367,25 @@ ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                         int *width, int *height)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
-   boolean new_buffers = FALSE;
-   int att;
 
-   ximage_surface_update_geometry(&xsurf->base);
-
-   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
-      struct ximage_buffer *xbuf = &xsurf->buffers[att];
-
-      /* delay the allocation */
-      if (!native_attachment_mask_test(attachment_mask, att))
-         continue;
-
-      /* reallocate the texture */
-      if (!xbuf->texture ||
-          xsurf->width != xbuf->texture->width0 ||
-          xsurf->height != xbuf->texture->height0) {
-         new_buffers = TRUE;
-         if (ximage_surface_alloc_buffer(&xsurf->base, att)) {
-            /* update ximage */
-            if (xbuf->ximage) {
-               xbuf->ximage->width = xsurf->width;
-               xbuf->ximage->height = xsurf->height;
-            }
-         }
-      }
-
-      if (textures) {
-         textures[att] = NULL;
-         pipe_texture_reference(&textures[att], xbuf->texture);
-      }
-   }
-
-   /* increase the sequence number so that caller knows */
-   if (new_buffers)
-      xsurf->sequence_number++;
+   if (!ximage_surface_update_buffers(&xsurf->base, attachment_mask))
+      return FALSE;
 
    if (seq_num)
       *seq_num = xsurf->sequence_number;
+
+   if (textures) {
+      int att;
+      for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
+         if (native_attachment_mask_test(attachment_mask, att)) {
+            struct ximage_buffer *xbuf = &xsurf->buffers[att];
+
+            textures[att] = NULL;
+            pipe_texture_reference(&textures[att], xbuf->texture);
+         }
+      }
+   }
+
    if (width)
       *width = xsurf->width;
    if (height)
