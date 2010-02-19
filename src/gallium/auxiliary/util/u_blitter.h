@@ -50,10 +50,10 @@ struct blitter_context
    struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
 
    int saved_num_sampler_states;
-   void *saved_sampler_states[32];
+   void *saved_sampler_states[PIPE_MAX_SAMPLERS];
 
-   int saved_num_textures;
-   struct pipe_texture *saved_textures[32]; /* is 32 enough? */
+   int saved_num_sampler_views;
+   struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
 };
 
 /**
@@ -218,17 +218,17 @@ void util_blitter_save_fragment_sampler_states(
           num_sampler_states * sizeof(void *));
 }
 
-static INLINE
-void util_blitter_save_fragment_sampler_textures(
-                  struct blitter_context *blitter,
-                  int num_textures,
-                  struct pipe_texture **textures)
+static INLINE void
+util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
+                                         int num_views,
+                                         struct pipe_sampler_view **views)
 {
-   assert(num_textures <= Elements(blitter->saved_textures));
+   assert(num_views <= Elements(blitter->saved_sampler_views));
 
-   blitter->saved_num_textures = num_textures;
-   memcpy(blitter->saved_textures, textures,
-          num_textures * sizeof(struct pipe_texture *));
+   blitter->saved_num_sampler_views = num_views;
+   memcpy(blitter->saved_sampler_views,
+          views,
+          num_views * sizeof(struct pipe_sampler_view *));
 }
 
 #ifdef __cplusplus

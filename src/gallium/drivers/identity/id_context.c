@@ -492,53 +492,49 @@ identity_set_viewport_state(struct pipe_context *_pipe,
 }
 
 static void
-identity_set_fragment_sampler_textures(struct pipe_context *_pipe,
-                                       unsigned num_textures,
-                                       struct pipe_texture **_textures)
+identity_set_fragment_sampler_views(struct pipe_context *_pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **_views)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_texture *unwrapped_textures[PIPE_MAX_SAMPLERS];
-   struct pipe_texture **textures = NULL;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_textures) {
-      for (i = 0; i < num_textures; i++)
-         unwrapped_textures[i] = identity_texture_unwrap(_textures[i]);
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
       for (; i < PIPE_MAX_SAMPLERS; i++)
-         unwrapped_textures[i] = NULL;
+         unwrapped_views[i] = NULL;
 
-      textures = unwrapped_textures;
+      views = unwrapped_views;
    }
 
-   pipe->set_fragment_sampler_textures(pipe,
-                                       num_textures,
-                                       textures);
+   pipe->set_fragment_sampler_views(pipe, num, views);
 }
 
 static void
-identity_set_vertex_sampler_textures(struct pipe_context *_pipe,
-                                     unsigned num_textures,
-                                     struct pipe_texture **_textures)
+identity_set_vertex_sampler_views(struct pipe_context *_pipe,
+                                  unsigned num,
+                                  struct pipe_sampler_view **_views)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_texture *unwrapped_textures[PIPE_MAX_VERTEX_SAMPLERS];
-   struct pipe_texture **textures = NULL;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_textures) {
-      for (i = 0; i < num_textures; i++)
-         unwrapped_textures[i] = identity_texture_unwrap(_textures[i]);
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
       for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
-         unwrapped_textures[i] = NULL;
+         unwrapped_views[i] = NULL;
 
-      textures = unwrapped_textures;
+      views = unwrapped_views;
    }
 
-   pipe->set_vertex_sampler_textures(pipe,
-                                     num_textures,
-                                     textures);
+   pipe->set_vertex_sampler_views(pipe, num, views);
 }
 
 static void
@@ -741,8 +737,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_state = identity_set_scissor_state;
    id_pipe->base.set_viewport_state = identity_set_viewport_state;
-   id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
-   id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
+   id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
+   id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.set_vertex_elements = identity_set_vertex_elements;
    id_pipe->base.surface_copy = identity_surface_copy;

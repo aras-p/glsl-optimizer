@@ -313,12 +313,12 @@ trace_rbug_context_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    for (i = 0; i < tr_ctx->curr.nr_cbufs; i++)
       cbufs[i] = VOID2U64(tr_ctx->curr.cbufs[i]);
 
-   for (i = 0; i < tr_ctx->curr.num_texs; i++)
-      texs[i] = VOID2U64(tr_ctx->curr.tex[i]);
+   for (i = 0; i < tr_ctx->curr.num_sampler_views; i++)
+      texs[i] = VOID2U64(tr_ctx->curr.sampler_views[i]);
 
    rbug_send_context_info_reply(tr_rbug->con, serial,
                                 VOID2U64(tr_ctx->curr.vs), VOID2U64(tr_ctx->curr.fs),
-                                texs, tr_ctx->curr.num_texs,
+                                texs, tr_ctx->curr.num_sampler_views,
                                 cbufs, tr_ctx->curr.nr_cbufs,
                                 VOID2U64(tr_ctx->curr.zsbuf),
                                 tr_ctx->draw_blocker, tr_ctx->draw_blocked, NULL);
@@ -444,7 +444,7 @@ trace_rbug_context_draw_rule(struct trace_rbug *tr_rbug, struct rbug_header *hea
    pipe_mutex_lock(tr_ctx->draw_mutex);
    tr_ctx->draw_rule.vs = U642VOID(rule->vertex);
    tr_ctx->draw_rule.fs = U642VOID(rule->fragment);
-   tr_ctx->draw_rule.tex = U642VOID(rule->texture);
+   tr_ctx->draw_rule.sampler_view = U642VOID(rule->texture);
    tr_ctx->draw_rule.surf = U642VOID(rule->surface);
    tr_ctx->draw_rule.blocker = rule->block;
    tr_ctx->draw_blocker |= RBUG_BLOCK_RULE;

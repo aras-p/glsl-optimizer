@@ -55,6 +55,16 @@ struct trace_surface
 };
 
 
+struct trace_sampler_view
+{
+   struct pipe_sampler_view base;
+
+   struct pipe_sampler_view *sampler_view;
+
+   struct tr_list list;
+};
+
+
 struct trace_transfer
 {
    struct pipe_transfer base;
@@ -84,6 +94,15 @@ trace_surface(struct pipe_surface *surface)
       return NULL;
    (void)trace_texture(surface->texture);
    return (struct trace_surface *)surface;
+}
+
+
+static INLINE struct trace_sampler_view *
+trace_sampler_view(struct pipe_sampler_view *sampler_view)
+{
+   if (!sampler_view)
+      return NULL;
+   return (struct trace_sampler_view *)sampler_view;
 }
 
 

@@ -85,8 +85,8 @@ struct failover_context {
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
@@ -103,8 +103,8 @@ struct failover_context {
 
    unsigned num_samplers;
    unsigned num_vertex_samplers;
-   unsigned num_textures;
-   unsigned num_vertex_textures;
+   unsigned num_sampler_views;
+   unsigned num_vertex_sampler_views;
 
    unsigned mode;
    struct pipe_context *hw;

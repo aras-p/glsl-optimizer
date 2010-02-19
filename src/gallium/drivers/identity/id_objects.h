@@ -52,6 +52,14 @@ struct identity_texture
 };
 
 
+struct identity_sampler_view
+{
+   struct pipe_sampler_view base;
+
+   struct pipe_sampler_view *sampler_view;
+};
+
+
 struct identity_surface
 {
    struct pipe_surface base;
@@ -92,6 +100,15 @@ identity_texture(struct pipe_texture *_texture)
       return NULL;
    (void)identity_screen(_texture->screen);
    return (struct identity_texture *)_texture;
+}
+
+static INLINE struct identity_sampler_view *
+identity_sampler_view(struct pipe_sampler_view *_sampler_view)
+{
+   if (!_sampler_view) {
+      return NULL;
+   }
+   return (struct identity_sampler_view *)_sampler_view;
 }
 
 static INLINE struct identity_surface *
@@ -136,6 +153,15 @@ identity_texture_unwrap(struct pipe_texture *_texture)
    if(!_texture)
       return NULL;
    return identity_texture(_texture)->texture;
+}
+
+static INLINE struct pipe_sampler_view *
+identity_sampler_view_unwrap(struct pipe_sampler_view *_sampler_view)
+{
+   if (!_sampler_view) {
+      return NULL;
+   }
+   return identity_sampler_view(_sampler_view)->sampler_view;
 }
 
 static INLINE struct pipe_surface *

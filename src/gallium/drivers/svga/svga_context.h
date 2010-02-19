@@ -179,7 +179,7 @@ struct svga_state
    const struct svga_rasterizer_state *rast;
    const struct svga_sampler_state *sampler[PIPE_MAX_SAMPLERS];
 
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS]; /* or texture ID's? */
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS]; /* or texture ID's? */
    struct svga_fragment_shader *fs;
    struct svga_vertex_shader *vs;
 
@@ -203,7 +203,7 @@ struct svga_state
    struct pipe_viewport_state viewport;
 
    unsigned num_samplers;
-   unsigned num_textures;
+   unsigned num_sampler_views;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
    unsigned reduced_prim;
