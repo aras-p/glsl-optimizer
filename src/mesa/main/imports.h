@@ -612,9 +612,6 @@ extern char *
 _mesa_getenv( const char *var );
 
 extern char *
-_mesa_strcpy( char *dest, const char *src );
-
-extern char *
 _mesa_strncpy( char *dest, const char *src, size_t n );
 
 extern size_t

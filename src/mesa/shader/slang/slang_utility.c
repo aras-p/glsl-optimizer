@@ -35,7 +35,7 @@
 char *
 slang_string_concat (char *dst, const char *src)
 {
-   return _mesa_strcpy (dst + _mesa_strlen (dst), src);
+   return strcpy (dst + _mesa_strlen (dst), src);
 }
 
 

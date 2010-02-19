@@ -215,7 +215,7 @@ _slang_strdup(const char *s)
       size_t l = _mesa_strlen(s);
       char *s2 = (char *) _slang_alloc(l + 1);
       if (s2)
-         _mesa_strcpy(s2, s);
+         strcpy(s2, s);
       return s2;
    }
    else {

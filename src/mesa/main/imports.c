@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strcpy() */
-char *
-_mesa_strcpy( char *dest, const char *src )
-{
-   return strcpy(dest, src);
-}
-
 /** Wrapper around strncpy() */
 char *
 _mesa_strncpy( char *dest, const char *src, size_t n )
@@ -877,7 +870,7 @@ _mesa_strncmp( const char *s1, const char *s2, size_t n )
 }
 
 /**
- * Implemented using _mesa_malloc() and _mesa_strcpy.
+ * Implemented using _mesa_malloc() and strcpy.
  * Note that NULL is handled accordingly.
  */
 char *
@@ -887,7 +880,7 @@ _mesa_strdup( const char *s )
       size_t l = _mesa_strlen(s);
       char *s2 = (char *) _mesa_malloc(l + 1);
       if (s2)
-         _mesa_strcpy(s2, s);
+         strcpy(s2, s);
       return s2;
    }
    else {

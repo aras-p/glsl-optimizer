@@ -33,7 +33,7 @@
 
 
 #define slang_string_compare(str1, str2) _mesa_strcmp (str1, str2)
-#define slang_string_copy(dst, src) _mesa_strcpy (dst, src)
+#define slang_string_copy(dst, src) strcpy (dst, src)
 #define slang_string_length(str) _mesa_strlen (str)
 
 char *slang_string_concat (char *, const char *);
