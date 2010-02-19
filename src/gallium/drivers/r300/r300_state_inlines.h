@@ -422,11 +422,11 @@ static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 8-bit outputs */
         case PIPE_FORMAT_A8_UNORM:
             return R300_US_OUT_FMT_C4_8 |
-                R300_C0_SEL_A;
+                R300_C2_SEL_A;
         case PIPE_FORMAT_I8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
             return R300_US_OUT_FMT_C4_8 |
-                R300_C0_SEL_R;
+                R300_C2_SEL_R;
  /* R300_OUT_SIGN(x) */
         default:
             debug_printf("r300: Implementation error: "
