@@ -362,7 +362,7 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _glthread_DESTROY_MUTEX(shared->Mutex);
    _glthread_DESTROY_MUTEX(shared->TexMutex);
 
-   _mesa_free(shared);
+   free(shared);
 }
 
 

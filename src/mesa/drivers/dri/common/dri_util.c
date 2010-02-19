@@ -242,12 +242,12 @@ __driUtilUpdateDrawableInfo(__DRIdrawable *pdp)
     }
 
     if (pdp->pClipRects) {
-	_mesa_free(pdp->pClipRects); 
+	free(pdp->pClipRects); 
 	pdp->pClipRects = NULL;
     }
 
     if (pdp->pBackClipRects) {
-	_mesa_free(pdp->pBackClipRects); 
+	free(pdp->pBackClipRects); 
 	pdp->pBackClipRects = NULL;
     }
 
@@ -324,7 +324,7 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     if (!dPriv->numClipRects)
         return;
 
-    rects = _mesa_malloc(sizeof(*rects) * dPriv->numClipRects);
+    rects = malloc(sizeof(*rects) * dPriv->numClipRects);
 
     if (!rects)
         return;
@@ -337,7 +337,7 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     }
 
     driReportDamage(dPriv, rects, dPriv->numClipRects);
-    _mesa_free(rects);
+    free(rects);
 }
 
 static int driDrawableGetMSC( __DRIscreen *sPriv, __DRIdrawable *dPriv,
@@ -430,7 +430,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
      */
     (void) attrs;
 
-    pdp = _mesa_malloc(sizeof *pdp);
+    pdp = malloc(sizeof *pdp);
     if (!pdp) {
 	return NULL;
     }
@@ -457,7 +457,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes,
 					renderType == GLX_PIXMAP_BIT)) {
-       _mesa_free(pdp);
+       free(pdp);
        return NULL;
     }
 
@@ -510,14 +510,14 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if (pdp->pClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
-	    _mesa_free(pdp->pClipRects);
+	    free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;
 	}
 	if (pdp->pBackClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
-	    _mesa_free(pdp->pBackClipRects);
+	    free(pdp->pBackClipRects);
 	    pdp->pBackClipRects = NULL;
 	}
-	_mesa_free(pdp);
+	free(pdp);
     }
 }
 
@@ -547,7 +547,7 @@ driDestroyContext(__DRIcontext *pcp)
 {
     if (pcp) {
 	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
-	_mesa_free(pcp);
+	free(pcp);
     }
 }
 
@@ -577,7 +577,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     __DRIcontext *pcp;
     void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
 
-    pcp = _mesa_malloc(sizeof *pcp);
+    pcp = malloc(sizeof *pcp);
     if (!pcp)
 	return NULL;
 
@@ -602,7 +602,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     pcp->hHWContext = hwContext;
 
     if ( !(*psp->DriverAPI.CreateContext)(&config->modes, pcp, shareCtx) ) {
-        _mesa_free(pcp);
+        free(pcp);
         return NULL;
     }
 
@@ -656,7 +656,7 @@ static void driDestroyScreen(__DRIscreen *psp)
 	   (void)drmCloseOnce(psp->fd);
 	}
 
-	_mesa_free(psp);
+	free(psp);
     }
 }
 
@@ -718,7 +718,7 @@ driCreateNewScreen(int scrn,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
 
-    psp = _mesa_calloc(sizeof *psp);
+    psp = calloc(1, sizeof *psp);
     if (!psp)
 	return NULL;
 
@@ -763,7 +763,7 @@ driCreateNewScreen(int scrn,
 
     *driver_modes = driDriverAPI.InitScreen(psp);
     if (*driver_modes == NULL) {
-	_mesa_free(psp);
+	free(psp);
 	return NULL;
     }
 
@@ -785,7 +785,7 @@ dri2CreateNewScreen(int scrn, int fd,
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
 
-    psp = _mesa_calloc(sizeof(*psp));
+    psp = calloc(1, sizeof(*psp));
     if (!psp)
 	return NULL;
 
@@ -807,7 +807,7 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->DriverAPI = driDriverAPI;
     *driver_configs = driDriverAPI.InitScreen2(psp);
     if (*driver_configs == NULL) {
-	_mesa_free(psp);
+	free(psp);
 	return NULL;
     }
 

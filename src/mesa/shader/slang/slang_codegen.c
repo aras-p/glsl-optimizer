@@ -3639,7 +3639,7 @@ make_constant_array(slang_assemble_ctx *A,
    assert(initializer->type == SLANG_OPER_CALL);
    assert(initializer->array_constructor);
 
-   values = (GLfloat *) _mesa_malloc(numElements * 4 * sizeof(GLfloat));
+   values = (GLfloat *) malloc(numElements * 4 * sizeof(GLfloat));
 
    /* convert constructor params into ordinary floats */
    for (i = 0; i < numElements; i++) {
@@ -3670,7 +3670,7 @@ make_constant_array(slang_assemble_ctx *A,
    }
    assert(var->store->Size == size);
 
-   _mesa_free(values);
+   free(values);
 
    return GL_TRUE;
 }
@@ -5321,7 +5321,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    /* free codegen context */
    /*
-   _mesa_free(A->codegen);
+   free(A->codegen);
    */
 
    return success;

@@ -466,7 +466,7 @@ replay_init( struct copy_context *copy )
 
    switch (copy->ib->type) {
    case GL_UNSIGNED_BYTE:
-      copy->translated_elt_buf = _mesa_malloc(sizeof(GLuint) * copy->ib->count);
+      copy->translated_elt_buf = malloc(sizeof(GLuint) * copy->ib->count);
       copy->srcelt = copy->translated_elt_buf;
 
       for (i = 0; i < copy->ib->count; i++)
@@ -474,7 +474,7 @@ replay_init( struct copy_context *copy )
       break;
 
    case GL_UNSIGNED_SHORT:
-      copy->translated_elt_buf = _mesa_malloc(sizeof(GLuint) * copy->ib->count);
+      copy->translated_elt_buf = malloc(sizeof(GLuint) * copy->ib->count);
       copy->srcelt = copy->translated_elt_buf;
 
       for (i = 0; i < copy->ib->count; i++)
@@ -500,7 +500,7 @@ replay_init( struct copy_context *copy )
     *
     * XXX:  This should be a VBO!
     */
-   copy->dstbuf = _mesa_malloc(copy->dstbuf_size * copy->vertex_size);   
+   copy->dstbuf = malloc(copy->dstbuf_size * copy->vertex_size);   
    copy->dstptr = copy->dstbuf;
 
    /* Setup new vertex arrays to point into the output buffer: 
@@ -529,7 +529,7 @@ replay_init( struct copy_context *copy )
 			    copy->ib->count * 2 + 3);
    copy->dstelt_size = MIN2(copy->dstelt_size,
 			    copy->limits->max_indices);
-   copy->dstelt = _mesa_malloc(sizeof(GLuint) * copy->dstelt_size);
+   copy->dstelt = malloc(sizeof(GLuint) * copy->dstelt_size);
    copy->dstelt_nr = 0;
 
    /* Setup the new index buffer to point to the allocated element
@@ -553,9 +553,9 @@ replay_finish( struct copy_context *copy )
 
    /* Free our vertex and index buffers: 
     */
-   _mesa_free(copy->translated_elt_buf);
-   _mesa_free(copy->dstbuf);
-   _mesa_free(copy->dstelt);
+   free(copy->translated_elt_buf);
+   free(copy->dstbuf);
+   free(copy->dstelt);
 
    /* Unmap VBO's 
     */

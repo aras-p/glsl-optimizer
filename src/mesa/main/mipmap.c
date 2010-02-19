@@ -1537,15 +1537,15 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
          * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
       /* 20 extra bytes, just be safe when calling last FetchTexel */
-      srcData = (GLubyte *) _mesa_malloc(size);
+      srcData = (GLubyte *) malloc(size);
       if (!srcData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
          return;
       }
-      dstData = (GLubyte *) _mesa_malloc(size / 2);  /* 1/4 would probably be OK */
+      dstData = (GLubyte *) malloc(size / 2);  /* 1/4 would probably be OK */
       if (!dstData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-         _mesa_free((void *) srcData);
+         free((void *) srcData);
          return;
       }
 
@@ -1590,8 +1590,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       if (!nextLevel) {
          /* all done */
          if (_mesa_is_format_compressed(srcImage->TexFormat)) {
-            _mesa_free((void *) srcData);
-            _mesa_free(dstData);
+            free((void *) srcData);
+            free(dstData);
          }
          return;
       }

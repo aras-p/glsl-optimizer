@@ -192,7 +192,7 @@ _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
       _mesa_free_framebuffer_data(fb);
-      _mesa_free(fb);
+      free(fb);
    }
 }
 

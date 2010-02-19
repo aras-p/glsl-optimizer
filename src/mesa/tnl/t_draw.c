@@ -41,7 +41,7 @@
 static GLubyte *get_space(GLcontext *ctx, GLuint bytes)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLubyte *space = _mesa_malloc(bytes);
+   GLubyte *space = malloc(bytes);
    
    tnl->block[tnl->nr_blocks++] = space;
    return space;
@@ -53,7 +53,7 @@ static void free_space(GLcontext *ctx)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
    for (i = 0; i < tnl->nr_blocks; i++)
-      _mesa_free(tnl->block[i]);
+      free(tnl->block[i]);
    tnl->nr_blocks = 0;
 }
 

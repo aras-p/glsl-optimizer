@@ -115,12 +115,12 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    shProg->NumShaders = 0;
 
    if (shProg->Shaders) {
-      _mesa_free(shProg->Shaders);
+      free(shProg->Shaders);
       shProg->Shaders = NULL;
    }
 
    if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
+      free(shProg->InfoLog);
       shProg->InfoLog = NULL;
    }
 }
@@ -134,7 +134,7 @@ _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
 
-   _mesa_free(shProg);
+   free(shProg);
 }
 
 
@@ -262,11 +262,11 @@ void
 _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    if (sh->Source)
-      _mesa_free((void *) sh->Source);
+      free((void *) sh->Source);
    if (sh->InfoLog)
-      _mesa_free(sh->InfoLog);
+      free(sh->InfoLog);
    _mesa_reference_program(ctx, &sh->Program, NULL);
-   _mesa_free(sh);
+   free(sh);
 }
 
 
@@ -709,7 +709,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
-            _mesa_malloc((n - 1) * sizeof(struct gl_shader *));
+            malloc((n - 1) * sizeof(struct gl_shader *));
          if (!newList) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDetachShader");
             return;
@@ -719,7 +719,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          }
          while (++i < n)
             newList[j++] = shProg->Shaders[i];
-         _mesa_free(shProg->Shaders);
+         free(shProg->Shaders);
 
          shProg->Shaders = newList;
          shProg->NumShaders = n - 1;
@@ -1377,7 +1377,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
       if (c) {
          /* truncate name at [ */
          const GLint len = c - name;
-         GLchar *newName = _mesa_malloc(len + 1);
+         GLchar *newName = malloc(len + 1);
          if (!newName)
             return -1; /* out of mem */
          memcpy(newName, name, len);
@@ -1400,7 +1400,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
             }
          }
 
-         _mesa_free(newName);
+         free(newName);
       }
    }
 
@@ -1431,7 +1431,7 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 
    /* free old shader source string and install new one */
    if (sh->Source) {
-      _mesa_free((void *) sh->Source);
+      free((void *) sh->Source);
    }
    sh->Source = source;
    sh->CompileStatus = GL_FALSE;
@@ -2155,7 +2155,7 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         _mesa_free(shProg->InfoLog);
+         free(shProg->InfoLog);
       }
       shProg->InfoLog = _mesa_strdup(errMsg);
    }

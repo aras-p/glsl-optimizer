@@ -854,7 +854,7 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       return;
    }
 
-   prim = _mesa_calloc(primcount * sizeof(*prim));
+   prim = calloc(1, primcount * sizeof(*prim));
    if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
       return;
@@ -960,7 +960,7 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       }
    }
 
-   _mesa_free(prim);
+   free(prim);
 }
 
 

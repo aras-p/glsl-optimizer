@@ -56,12 +56,12 @@ struct slang_mempool_
 slang_mempool *
 _slang_new_mempool(GLuint initialSize)
 {
-   slang_mempool *pool = (slang_mempool *) _mesa_calloc(sizeof(slang_mempool));
+   slang_mempool *pool = (slang_mempool *) calloc(1, sizeof(slang_mempool));
    if (pool) {
-      pool->Data = (char *) _mesa_calloc(initialSize);
+      pool->Data = (char *) calloc(1, initialSize);
       /*printf("ALLOC MEMPOOL %d at %p\n", initialSize, pool->Data);*/
       if (!pool->Data) {
-         _mesa_free(pool);
+         free(pool);
          return NULL;
       }
       pool->Size = initialSize;
@@ -82,8 +82,8 @@ _slang_delete_mempool(slang_mempool *pool)
              pool->Used, pool->Size, pool->Count, pool->Largest);
       */
       total += pool->Used;
-      _mesa_free(pool->Data);
-      _mesa_free(pool);
+      free(pool->Data);
+      free(pool);
       pool = next;
    }
    /*printf("TOTAL ALLOCATED: %u\n", total);*/
@@ -125,7 +125,7 @@ void *
 _slang_alloc(GLuint bytes)
 {
 #if USE_MALLOC_FREE
-   return _mesa_calloc(bytes);
+   return calloc(1, bytes);
 #else
    slang_mempool *pool;
    GET_CURRENT_CONTEXT(ctx);
@@ -231,7 +231,7 @@ void
 _slang_free(void *addr)
 {
 #if USE_MALLOC_FREE
-   _mesa_free(addr);
+   free(addr);
 #else
    if (addr) {
       GET_CURRENT_CONTEXT(ctx);

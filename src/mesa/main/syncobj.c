@@ -78,7 +78,7 @@ static void
 _mesa_delete_sync_object(GLcontext *ctx, struct gl_sync_object *syncObj)
 {
    (void) ctx;
-   _mesa_free(syncObj);
+   free(syncObj);
 }
 
 

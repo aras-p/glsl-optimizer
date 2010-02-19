@@ -71,13 +71,13 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    ASSERT(irb);
 
    if (irb->span_cache != NULL)
-      _mesa_free(irb->span_cache);
+      free(irb->span_cache);
 
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
 
-   _mesa_free(irb);
+   free(irb);
 }
 
 
@@ -316,7 +316,7 @@ intel_create_renderbuffer(gl_format format)
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
-      _mesa_free(irb);
+      free(irb);
       return NULL;
    }
 
@@ -468,7 +468,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
    irb->Base.ClassID = INTEL_RB_CLASS;
 
    if (!intel_update_wrapper(ctx, irb, texImage)) {
-      _mesa_free(irb);
+      free(irb);
       return NULL;
    }
 

@@ -340,7 +340,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
    assert(driContextPriv);
 
    /* Allocate the Fb context */
-   fbmesa = (fbContextPtr) _mesa_calloc( sizeof(*fbmesa) );
+   fbmesa = (fbContextPtr) calloc(1,  sizeof(*fbmesa) );
    if ( !fbmesa )
       return GL_FALSE;
 
@@ -358,7 +358,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
    ctx = fbmesa->glCtx = _mesa_create_context(glVisual, shareCtx, 
 					      &functions, (void *) fbmesa);
    if (!fbmesa->glCtx) {
-      _mesa_free(fbmesa);
+      free(fbmesa);
       return GL_FALSE;
    }
    driContextPriv->driverPrivate = fbmesa;
@@ -406,7 +406,7 @@ fbDestroyContext( __DRIcontext *driContextPriv )
       fbmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context( fbmesa->glCtx );
 
-      _mesa_free( fbmesa );
+      free( fbmesa );
    }
 }
 
@@ -449,7 +449,7 @@ fbCreateBuffer( __DRIscreen *driScrnPriv,
       }
       if (mesaVis->doubleBufferMode) {
          /* XXX what are the correct origin/stride values? */
-         GLvoid *backBuf = _mesa_malloc(driScrnPriv->fbStride
+         GLvoid *backBuf = malloc(driScrnPriv->fbStride
                                         * driScrnPriv->fbHeight);
          driRenderbuffer *drb = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                                    backBuf,
@@ -503,7 +503,7 @@ fbSwapBuffers( __DRIdrawable *dPriv )
       if (ctx->Visual.doubleBufferMode) {
 	 int i;
 	 int offset = 0;
-         char *tmp = _mesa_malloc(currentPitch);
+         char *tmp = malloc(currentPitch);
 
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
 
@@ -516,7 +516,7 @@ fbSwapBuffers( __DRIdrawable *dPriv )
             offset += currentPitch;
 	 }
 	    
-	 _mesa_free(tmp);
+	 free(tmp);
       }
    }
    else {

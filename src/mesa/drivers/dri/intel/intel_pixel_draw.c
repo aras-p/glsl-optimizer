@@ -147,7 +147,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
 
    /* Unpack the supplied stencil values into a ubyte buffer. */
    assert(sizeof(GLstencil) == sizeof(GLubyte));
-   stencil_pixels = _mesa_malloc(width * height * sizeof(GLstencil));
+   stencil_pixels = malloc(width * height * sizeof(GLstencil));
    for (row = 0; row < height; row++) {
       GLvoid *source = _mesa_image_address2d(unpack, pixels,
 					     width, height,
@@ -201,7 +201,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_INTENSITY, width, height, 0,
 		    GL_RED, GL_UNSIGNED_BYTE, stencil_pixels);
    ctx->Unpack = old_unpack;
-   _mesa_free(stencil_pixels);
+   free(stencil_pixels);
 
    meta_set_passthrough_transform(&intel->meta);
 

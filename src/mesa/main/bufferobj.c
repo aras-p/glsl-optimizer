@@ -208,14 +208,14 @@ _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
    (void) ctx;
 
    if (bufObj->Data)
-      _mesa_free(bufObj->Data);
+      free(bufObj->Data);
 
    /* assign strange values here to help w/ debugging */
    bufObj->RefCount = -1000;
    bufObj->Name = ~0;
 
    _glthread_DESTROY_MUTEX(bufObj->Mutex);
-   _mesa_free(bufObj);
+   free(bufObj);
 }
 
 

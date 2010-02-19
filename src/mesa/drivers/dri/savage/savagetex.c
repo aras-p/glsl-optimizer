@@ -603,7 +603,7 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -643,7 +643,7 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }

@@ -114,7 +114,7 @@ _mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
 static void
 _mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   _mesa_free(q);
+   free(q);
 }
 
 

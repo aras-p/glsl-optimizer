@@ -303,7 +303,7 @@ write_texture_image(struct gl_texture_object *texObj,
       GLubyte *buffer;
       char s[100];
 
-      buffer = (GLubyte *) _mesa_malloc(img->Width * img->Height
+      buffer = (GLubyte *) malloc(img->Width * img->Height
                                         * img->Depth * 4);
 
       store = ctx->Pack; /* save */
@@ -321,7 +321,7 @@ write_texture_image(struct gl_texture_object *texObj,
 
       ctx->Pack = store; /* restore */
 
-      _mesa_free(buffer);
+      free(buffer);
    }
 }
 
@@ -350,7 +350,7 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
       return;
    }
 
-   buffer = (GLubyte *) _mesa_malloc(rb->Width * rb->Height * 4);
+   buffer = (GLubyte *) malloc(rb->Width * rb->Height * 4);
 
    ctx->Driver.ReadPixels(ctx, 0, 0, rb->Width, rb->Height,
                           format, type, &ctx->DefaultPacking, buffer);
@@ -361,7 +361,7 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
    _mesa_printf("  Writing renderbuffer image to %s\n", s);
    write_ppm(s, buffer, rb->Width, rb->Height, 4, 0, 1, 2, GL_TRUE);
 
-   _mesa_free(buffer);
+   free(buffer);
 }
 
 
@@ -481,7 +481,7 @@ _mesa_dump_color_buffer(const char *filename)
    const GLuint h = ctx->DrawBuffer->Height;
    GLubyte *buf;
 
-   buf = (GLubyte *) _mesa_malloc(w * h * 4);
+   buf = (GLubyte *) malloc(w * h * 4);
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -499,7 +499,7 @@ _mesa_dump_color_buffer(const char *filename)
 
    _mesa_PopClientAttrib();
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -513,8 +513,8 @@ _mesa_dump_depth_buffer(const char *filename)
    GLubyte *buf2;
    GLuint i;
 
-   buf = (GLuint *) _mesa_malloc(w * h * 4);  /* 4 bpp */
-   buf2 = (GLubyte *) _mesa_malloc(w * h * 3); /* 3 bpp */
+   buf = (GLuint *) malloc(w * h * 4);  /* 4 bpp */
+   buf2 = (GLubyte *) malloc(w * h * 3); /* 3 bpp */
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -534,8 +534,8 @@ _mesa_dump_depth_buffer(const char *filename)
 
    _mesa_PopClientAttrib();
 
-   _mesa_free(buf);
-   _mesa_free(buf2);
+   free(buf);
+   free(buf2);
 }
 
 
@@ -549,8 +549,8 @@ _mesa_dump_stencil_buffer(const char *filename)
    GLubyte *buf2;
    GLuint i;
 
-   buf = (GLubyte *) _mesa_malloc(w * h);  /* 1 bpp */
-   buf2 = (GLubyte *) _mesa_malloc(w * h * 3); /* 3 bpp */
+   buf = (GLubyte *) malloc(w * h);  /* 1 bpp */
+   buf2 = (GLubyte *) malloc(w * h * 3); /* 3 bpp */
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -569,8 +569,8 @@ _mesa_dump_stencil_buffer(const char *filename)
 
    _mesa_PopClientAttrib();
 
-   _mesa_free(buf);
-   _mesa_free(buf2);
+   free(buf);
+   free(buf2);
 }
 
 

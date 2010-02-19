@@ -309,7 +309,7 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
                = prog->Parameters->Parameters + index;
             char *state = _mesa_program_state_string(param->StateIndexes);
             _mesa_sprintf(str, state);
-            _mesa_free(state);
+            free(state);
          }
          break;
       case PROGRAM_ADDRESS:

@@ -32,8 +32,6 @@ EXPORTS
 	_mesa_buffer_data
 	_mesa_buffer_map
 	_mesa_buffer_subdata
-	_mesa_bzero
-	_mesa_calloc
 	_mesa_choose_tex_format
 	_mesa_compressed_texture_size
 	_mesa_create_framebuffer
@@ -47,7 +45,6 @@ EXPORTS
 	_mesa_enable_1_5_extensions
 	_mesa_enable_sw_extensions
 	_mesa_error
-	_mesa_free
 	_mesa_free_context_data
 	_mesa_get_current_context
 	_mesa_init_default_imports

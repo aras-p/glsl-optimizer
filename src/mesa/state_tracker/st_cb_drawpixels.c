@@ -828,7 +828,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    ubyte *buffer;
    int i;
 
-   buffer = _mesa_malloc(width * height * sizeof(ubyte));
+   buffer = malloc(width * height * sizeof(ubyte));
    if (!buffer) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
       return;
@@ -907,7 +907,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   _mesa_free(buffer);
+   free(buffer);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, ptDraw);
@@ -1089,19 +1089,19 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
-         GLfloat *buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+         GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
          pipe_get_tile_rgba(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_rgba(ptTex, 0, 0, width, height, buf);
 
-         _mesa_free(buf);
+         free(buf);
       }
       else {
          /* GL_DEPTH */
-         GLuint *buf = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+         GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
          pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
-         _mesa_free(buf);
+         free(buf);
       }
 
       screen->tex_transfer_destroy(ptRead);

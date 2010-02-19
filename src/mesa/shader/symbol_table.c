@@ -354,7 +354,7 @@ _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 
    for (hdr = table->hdr; hdr != NULL; hdr = next) {
        next = hdr->next;
-       _mesa_free(hdr);
+       free(hdr);
    }
 
    hash_table_dtor(table->ht);

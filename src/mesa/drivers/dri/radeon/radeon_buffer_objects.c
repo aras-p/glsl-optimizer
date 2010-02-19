@@ -70,7 +70,7 @@ radeonDeleteBufferObject(GLcontext * ctx,
         radeon_bo_unref(radeon_obj->bo);
     }
 
-    _mesa_free(radeon_obj);
+    free(radeon_obj);
 }
 
 

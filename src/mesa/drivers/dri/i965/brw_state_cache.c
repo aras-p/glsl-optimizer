@@ -150,7 +150,7 @@ rehash(struct brw_cache *cache)
    GLuint size, i;
 
    size = cache->size * 3;
-   items = (struct brw_cache_item**) _mesa_calloc(size * sizeof(*items));
+   items = (struct brw_cache_item**) calloc(1, size * sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
       for (c = cache->items[i]; c; c = next) {
@@ -237,7 +237,7 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
 
 
    /* Set up the memory containing the key, aux_data, and reloc_bufs */
-   tmp = _mesa_malloc(key_size + aux_size + relocs_size);
+   tmp = malloc(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
    memcpy(tmp + key_size, aux, aux_size);
@@ -366,7 +366,7 @@ brw_init_non_surface_cache(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      calloc(1, cache->size * sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache, "CC_VP", BRW_CC_VP);
    brw_init_cache_id(cache, "CC_UNIT", BRW_CC_UNIT);
@@ -403,7 +403,7 @@ brw_init_surface_cache(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      calloc(1, cache->size * sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache, "SS_SURFACE", BRW_SS_SURFACE);
    brw_init_cache_id(cache, "SS_SURF_BIND", BRW_SS_SURF_BIND);
@@ -444,7 +444,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    cache->n_items = 0;
 
    if (brw->curbe.last_buf) {
-      _mesa_free(brw->curbe.last_buf);
+      free(brw->curbe.last_buf);
       brw->curbe.last_buf = NULL;
    }
 

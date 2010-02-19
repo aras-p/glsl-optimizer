@@ -140,14 +140,14 @@ _mesa_exec_free(void *addr)
 void *
 _mesa_exec_malloc(GLuint size)
 {
-   return _mesa_malloc( size );
+   return malloc( size );
 }
 
  
 void 
 _mesa_exec_free(void *addr)
 {
-   _mesa_free(addr);
+   free(addr);
 }
 
 

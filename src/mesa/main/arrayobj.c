@@ -130,7 +130,7 @@ _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
    _glthread_DESTROY_MUTEX(obj->Mutex);
-   _mesa_free(obj);
+   free(obj);
 }
 
 

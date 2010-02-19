@@ -80,7 +80,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    if (st_obj->buffer) 
       pipe_buffer_reference(&st_obj->buffer, NULL);
 
-   _mesa_free(st_obj);
+   free(st_obj);
 }
 
 

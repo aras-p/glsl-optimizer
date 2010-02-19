@@ -53,7 +53,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *c
 		Clean_Up_Shader(&(vp->r700Shader));
 		
 		_mesa_reference_vertprog(ctx, &vp->mesa_program, NULL);
-		_mesa_free(vp);
+		free(vp);
 		vp = tmp;
 	}
 }

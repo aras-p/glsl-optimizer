@@ -167,7 +167,7 @@ compute_es_extensions(void)
       unsigned int len;
 
       len = make_extension_string(ctx, NULL);
-      s = (char *) _mesa_malloc(len + 1);
+      s = (char *) malloc(len + 1);
       if (!s)
          return NULL;
       make_extension_string(ctx, s);

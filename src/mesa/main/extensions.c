@@ -576,7 +576,7 @@ append(const char *a, const char *b)
 {
    const GLuint aLen = a ? strlen(a) : 0;
    const GLuint bLen = b ? strlen(b) : 0;
-   char *s = _mesa_calloc(aLen + bLen + 1);
+   char *s = calloc(1, aLen + bLen + 1);
    if (s) {
       if (a)
          memcpy(s, a, aLen);
@@ -585,7 +585,7 @@ append(const char *a, const char *b)
       s[aLen + bLen] = '\0';
    }
    if (a)
-      _mesa_free((void *) a);
+      free((void *) a);
    return s;
 }
 
@@ -685,7 +685,7 @@ _mesa_make_extension_string( GLcontext *ctx )
       extStrLen += strlen(extraExt) + 1; /* +1 for space */
 
    /* allocate the extension string */
-   s = (char *) _mesa_malloc(extStrLen);
+   s = (char *) malloc(extStrLen);
    if (!s)
       return NULL;
 

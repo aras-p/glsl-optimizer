@@ -222,7 +222,7 @@ static void st_destroy_context_priv( struct st_context *st )
       st->default_texture = NULL;
    }
 
-   _mesa_free( st );
+   free( st );
 }
 
  
@@ -257,7 +257,7 @@ void st_destroy_context( struct st_context *st )
 
    pipe->destroy( pipe );
 
-   _mesa_free(ctx);
+   free(ctx);
 }
 
 

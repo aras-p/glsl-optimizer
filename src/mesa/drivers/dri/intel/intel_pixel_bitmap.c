@@ -395,7 +395,7 @@ intel_texture_bitmap(GLcontext * ctx,
    }
 
    /* Convert the A1 bitmap to an A8 format suitable for glTexImage */
-   a8_bitmap = _mesa_calloc(width * height);
+   a8_bitmap = calloc(1, width * height);
    _mesa_expand_bitmap(width, height, unpack, bitmap, a8_bitmap, width, 0xff);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
@@ -430,7 +430,7 @@ intel_texture_bitmap(GLcontext * ctx,
    _mesa_PixelStorei(GL_UNPACK_ALIGNMENT, 1);
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0,
 		    GL_ALPHA, GL_UNSIGNED_BYTE, a8_bitmap);
-   _mesa_free(a8_bitmap);
+   free(a8_bitmap);
 
    meta_set_fragment_program(&intel->meta, &intel->meta.bitmap_fp, fp);
    _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,

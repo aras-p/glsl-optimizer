@@ -812,7 +812,7 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
         return GL_FALSE;
     }
 
-    cliprect = (drm_clip_rect_t*) _mesa_malloc(sizeof(drm_clip_rect_t));
+    cliprect = (drm_clip_rect_t*) malloc(sizeof(drm_clip_rect_t));
     cliprect->x1 = drawable->x;
     cliprect->y1 = drawable->y;
     cliprect->x2 = drawable->x + drawable->w;

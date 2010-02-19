@@ -1559,8 +1559,8 @@ _mesa_free_attrib_data(GLcontext *ctx)
          }
 
          next = attr->next;
-         _mesa_free(attr->data);
-         _mesa_free(attr);
+         free(attr->data);
+         free(attr);
          attr = next;
       }
    }

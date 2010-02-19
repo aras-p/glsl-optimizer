@@ -358,14 +358,14 @@ read_rgba_pixels( GLcontext *ctx,
       GLfloat *dest, *src, *tmpImage, *convImage;
       GLint row;
 
-      tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+      tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
-      convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+      convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
-         _mesa_free(tmpImage);
+         free(tmpImage);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
@@ -399,7 +399,7 @@ read_rgba_pixels( GLcontext *ctx,
          ASSERT(ctx->Pixel.Separable2DEnabled);
          _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
       }
-      _mesa_free(tmpImage);
+      free(tmpImage);
 
       /* finish transfer ops and pack the resulting image */
       src = convImage;
@@ -412,7 +412,7 @@ read_rgba_pixels( GLcontext *ctx,
                                     transferOps & IMAGE_POST_CONVOLUTION_BITS);
          src += width * 4;
       }
-      _mesa_free(convImage);
+      free(convImage);
    }
    else {
       /* no convolution */

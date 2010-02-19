@@ -488,8 +488,8 @@ _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
 
    ASSERT(texImage->Data == NULL);
    if (texImage->ImageOffsets)
-      _mesa_free(texImage->ImageOffsets);
-   _mesa_free(texImage);
+      free(texImage->ImageOffsets);
+   free(texImage);
 }
 
 
@@ -843,7 +843,7 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Depth = 0;
    img->RowStride = 0;
    if (img->ImageOffsets) {
-      _mesa_free(img->ImageOffsets);
+      free(img->ImageOffsets);
       img->ImageOffsets = NULL;
    }
    img->Width2 = 0;
@@ -932,8 +932,8 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
     * case code in the texstore routines.
     */
    if (img->ImageOffsets)
-      _mesa_free(img->ImageOffsets);
-   img->ImageOffsets = (GLuint *) _mesa_malloc(depth * sizeof(GLuint));
+      free(img->ImageOffsets);
+   img->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
    for (i = 0; i < depth; i++) {
       img->ImageOffsets[i] = i * width * height;
    }

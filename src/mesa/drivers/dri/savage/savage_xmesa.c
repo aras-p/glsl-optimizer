@@ -179,7 +179,7 @@ savageInitDriver(__DRIscreen *sPriv)
    }
 
    /* Allocate the private area */
-   savageScreen = (savageScreenPrivate *)_mesa_malloc(sizeof(savageScreenPrivate));
+   savageScreen = (savageScreenPrivate *)malloc(sizeof(savageScreenPrivate));
    if (!savageScreen)
       return GL_FALSE;
 
@@ -226,7 +226,7 @@ savageInitDriver(__DRIscreen *sPriv)
 		  savageScreen->agpTextures.handle,
 		  savageScreen->agpTextures.size,
 		  (drmAddress *)&(savageScreen->agpTextures.map)) != 0) {
-	   _mesa_free(savageScreen);
+	   free(savageScreen);
 	   sPriv->private = NULL;
 	   return GL_FALSE;
        }
@@ -246,7 +246,7 @@ savageInitDriver(__DRIscreen *sPriv)
 	      savageScreen->aperture.size, 
 	      (drmAddress *)&savageScreen->aperture.map) != 0) 
    {
-      _mesa_free(savageScreen);
+      free(savageScreen);
       sPriv->private = NULL;
       return GL_FALSE;
    }
@@ -282,7 +282,7 @@ savageDestroyScreen(__DRIscreen *sPriv)
    /* free all option information */
    driDestroyOptionInfo (&savageScreen->optionCache);
 
-   _mesa_free(savageScreen);
+   free(savageScreen);
    sPriv->private = NULL;
 }
 
@@ -300,7 +300,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 						 savageScreen->sarea_priv_offset);
    int textureSize[SAVAGE_NR_TEX_HEAPS];
    int i;
-   imesa = (savageContextPtr)_mesa_calloc(sizeof(savageContext));
+   imesa = (savageContextPtr)calloc(1, sizeof(savageContext));
    if (!imesa) {
       return GL_FALSE;
    }
@@ -317,7 +317,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
       shareCtx = NULL;
    ctx = _mesa_create_context(mesaVis, shareCtx, &functions, imesa);
    if (!ctx) {
-      _mesa_free(imesa);
+      free(imesa);
       return GL_FALSE;
    }
    driContextPriv->driverPrivate = imesa;
@@ -436,7 +436,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
        __driUtilMessage("Not enough texture memory. "
 			"Falling back to indirect rendering.");
-       _mesa_free(imesa);
+       free(imesa);
        return GL_FALSE;
    }
 
@@ -574,7 +574,7 @@ savageDestroyContext(__DRIcontext *driContextPriv)
       _mesa_destroy_context(imesa->glCtx);
 
       /* no longer use vertex_dma_buf*/
-      _mesa_free(imesa);
+      free(imesa);
    }
 }
 

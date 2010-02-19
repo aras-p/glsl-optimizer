@@ -108,7 +108,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
    cpu = _mesa_get_cpu_string();
    if (cpu) {
       offset += sprintf(buffer + offset, " %s", cpu);
-      _mesa_free(cpu);
+      free(cpu);
    }
 
    return offset;
@@ -559,7 +559,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    }
 
    num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
-   configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
+   configs = calloc(1, (num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
 
@@ -568,7 +568,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
 	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
 	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		    *c = _mesa_malloc (sizeof **c);
+		    *c = malloc (sizeof **c);
 		    modes = &(*c)->modes;
 		    c++;
 
@@ -653,7 +653,7 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
     while (b[j] != NULL)
 	j++;
    
-    all = _mesa_malloc((i + j + 1) * sizeof *all);
+    all = malloc((i + j + 1) * sizeof *all);
     index = 0;
     for (i = 0; a[i] != NULL; i++)
 	all[index++] = a[i];
@@ -661,8 +661,8 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
 	all[index++] = b[j];
     all[index++] = NULL;
 
-    _mesa_free(a);
-    _mesa_free(b);
+    free(a);
+    free(b);
 
     return all;
 }

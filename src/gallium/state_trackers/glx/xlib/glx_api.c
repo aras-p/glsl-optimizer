@@ -1018,7 +1018,7 @@ glXChooseVisual( Display *dpy, int screen, int *list )
    xmvis = choose_visual(dpy, screen, list, GL_FALSE);
    if (xmvis) {
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -1055,7 +1055,7 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       xmvis = create_glx_visual( dpy, visinfo );
       if (!xmvis) {
          /* unusable visual */
-         _mesa_free(glxCtx);
+         free(glxCtx);
          return NULL;
       }
    }
@@ -1063,7 +1063,7 @@ glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 
@@ -1336,7 +1336,7 @@ glXDestroyContext( Display *dpy, GLXContext ctx )
    MakeCurrent_PrevReadBuffer = 0;
    XMesaDestroyContext( glxCtx->xmesaContext );
    XMesaGarbageCollect();
-   _mesa_free(glxCtx);
+   free(glxCtx);
 }
 
 
@@ -1755,7 +1755,7 @@ glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
       XMesaVisual *results;
-      results = (XMesaVisual *) _mesa_malloc(*nelements * sizeof(XMesaVisual));
+      results = (XMesaVisual *) malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;
@@ -1782,7 +1782,7 @@ glXChooseFBConfig( Display *dpy, int screen,
 
    xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
    if (xmvis) {
-      GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = (GLXFBConfig *) malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -1807,7 +1807,7 @@ glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -2112,7 +2112,7 @@ glXCreateNewContext( Display *dpy, GLXFBConfig config,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 
@@ -2332,7 +2332,7 @@ glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 

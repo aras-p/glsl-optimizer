@@ -233,7 +233,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	struct r300_vertex_program *vp;
 	struct r300_vertex_program_compiler compiler;
 
-	vp = _mesa_calloc(sizeof(*vp));
+	vp = calloc(1, sizeof(*vp));
 	vp->Base = _mesa_clone_vertex_program(ctx, mesa_vp);
 	memcpy(&vp->key, wanted_key, sizeof(vp->key));
 

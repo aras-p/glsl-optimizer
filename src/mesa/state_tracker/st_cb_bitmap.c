@@ -837,7 +837,7 @@ st_destroy_bitmap(struct st_context *st)
          screen->tex_transfer_destroy(cache->trans);
       }
       pipe_texture_reference(&st->bitmap.cache->texture, NULL);
-      _mesa_free(st->bitmap.cache);
+      free(st->bitmap.cache);
       st->bitmap.cache = NULL;
    }
 }

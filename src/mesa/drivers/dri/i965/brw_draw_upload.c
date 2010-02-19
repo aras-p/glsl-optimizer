@@ -320,7 +320,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
       } else {
 	 void *data;
 
-	 data = _mesa_malloc(dst_stride * element->count);
+	 data = malloc(dst_stride * element->count);
 	 dest = data;
 	 for (i = 0; i < element->count; i++) {
 	    memcpy(dest, src, dst_stride);
@@ -333,7 +333,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
 			size,
 			data);
 
-	 _mesa_free(data);
+	 free(data);
       }
    }
 }

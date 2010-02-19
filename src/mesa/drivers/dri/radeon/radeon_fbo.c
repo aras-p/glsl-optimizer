@@ -66,7 +66,7 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
   if (rrb && rrb->bo) {
     radeon_bo_unref(rrb->bo);
   }
-  _mesa_free(rrb);
+  free(rrb);
 }
 
 static void *
@@ -511,7 +511,7 @@ radeon_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
    rrb->base.ClassID = RADEON_RB_CLASS;
 
    if (!radeon_update_wrapper(ctx, rrb, texImage)) {
-      _mesa_free(rrb);
+      free(rrb);
       return NULL;
    }
 

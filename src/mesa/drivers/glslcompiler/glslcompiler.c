@@ -119,7 +119,7 @@ CreateContext(void)
                              0, 0, 0, 0, 1);  /* accum */
    buf = _mesa_create_framebuffer(vis);
 
-   cc = _mesa_calloc(sizeof(*cc));
+   cc = calloc(1, sizeof(*cc));
    if (!vis || !buf || !cc) {
       if (vis)
          _mesa_destroy_visual(vis);
@@ -143,7 +143,7 @@ CreateContext(void)
        !_swsetup_CreateContext( ctx )) {
       _mesa_destroy_visual(vis);
       _mesa_free_context_data(ctx);
-      _mesa_free(cc);
+      free(cc);
       return GL_FALSE;
    }
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;

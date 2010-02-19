@@ -637,7 +637,7 @@ static GLuint * allocate_image_offsets(GLcontext *ctx,
 	int i;
 	GLuint *offsets;
 
-	offsets = _mesa_malloc(depth * sizeof(GLuint)) ;
+	offsets = malloc(depth * sizeof(GLuint)) ;
 	if (!offsets) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTex[Sub]Image");
 		return NULL;
@@ -736,7 +736,7 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 	}
 
 	if (dims == 3) {
-		_mesa_free(dstImageOffsets);
+		free(dstImageOffsets);
 	}
 
 	radeon_teximage_unmap(image);

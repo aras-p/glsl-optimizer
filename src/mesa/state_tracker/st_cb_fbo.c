@@ -102,14 +102,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if(strb->software) {
       size_t size;
       
-      _mesa_free(strb->data);
+      free(strb->data);
 
       assert(strb->format != PIPE_FORMAT_NONE);
       
       strb->stride = util_format_get_stride(strb->format, width);
       size = util_format_get_2d_size(strb->format, strb->stride, height);
       
-      strb->data = _mesa_malloc(size);
+      strb->data = malloc(size);
       
       return strb->data != NULL;
    }
@@ -181,8 +181,8 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_texture_reference(&strb->texture, NULL);
-   _mesa_free(strb->data);
-   _mesa_free(strb);
+   free(strb->data);
+   free(strb);
 }
 
 
@@ -286,7 +286,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    default:
       _mesa_problem(NULL,
 		    "Unexpected format in st_new_renderbuffer_fb");
-      _mesa_free(strb);
+      free(strb);
       return NULL;
    }
 

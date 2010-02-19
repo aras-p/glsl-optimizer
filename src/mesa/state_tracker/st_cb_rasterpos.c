@@ -101,7 +101,7 @@ rastpos_line( struct draw_stage *stage, struct prim_header *prim )
 static void
 rastpos_destroy(struct draw_stage *stage)
 {
-   _mesa_free(stage);
+   free(stage);
 }
 
 

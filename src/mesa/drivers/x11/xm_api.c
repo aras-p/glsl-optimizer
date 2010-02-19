@@ -253,7 +253,7 @@ bits_per_pixel( XMesaVisual xmv )
    /* grab the bits/pixel value */
    bitsPerPixel = img->bits_per_pixel;
    /* free the XImage */
-   _mesa_free( img->data );
+   free( img->data );
    img->data = NULL;
    XMesaDestroyImage( img );
    return bitsPerPixel;
@@ -383,7 +383,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
     */
    b->frontxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
    if (!b->frontxrb) {
-      _mesa_free(b);
+      free(b);
       return NULL;
    }
    b->frontxrb->Parent = b;
@@ -399,7 +399,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->backxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_TRUE);
       if (!b->backxrb) {
          /* XXX free front xrb too */
-         _mesa_free(b);
+         free(b);
          return NULL;
       }
       b->backxrb->Parent = b;
@@ -596,7 +596,7 @@ noFaultXAllocColor( int client,
        || prevCmapSize != cmapSize || !ctable) {
       /* free previously cached color table */
       if (ctable)
-         _mesa_free(ctable);
+         free(ctable);
       /* Get the color table from X */
       ctable = (XMesaColor *) MALLOC(cmapSize * sizeof(XMesaColor));
       assert(ctable);
@@ -652,8 +652,8 @@ noFaultXAllocColor( int client,
       *alloced = 0;
    }
 #ifdef XFree86Server
-   _mesa_free(ppixIn);
-   _mesa_free(ctable);
+   free(ppixIn);
+   free(ctable);
 #else
    /* don't free table, save it for next time */
 #endif
@@ -1366,14 +1366,14 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 
    v->display = display;
 
-   /* Save a copy of the XVisualInfo struct because the user may X_mesa_free()
+   /* Save a copy of the XVisualInfo struct because the user may Xfree()
     * the struct but we may need some of the information contained in it
     * at a later time.
     */
 #ifndef XFree86Server
    v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
    if(!v->visinfo) {
-      _mesa_free(v);
+      free(v);
       return NULL;
    }
    memcpy(v->visinfo, visinfo, sizeof(*visinfo));
@@ -1473,9 +1473,9 @@ PUBLIC
 void XMesaDestroyVisual( XMesaVisual v )
 {
 #ifndef XFree86Server
-   _mesa_free(v->visinfo);
+   free(v->visinfo);
 #endif
-   _mesa_free(v);
+   free(v);
 }
 
 
@@ -1514,7 +1514,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (GLcontext *) NULL,
                       &functions, (void *) c)) {
-      _mesa_free(c);
+      free(c);
       return NULL;
    }
 
@@ -1564,7 +1564,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
        !_tnl_CreateContext( mesaCtx ) ||
        !_swsetup_CreateContext( mesaCtx )) {
       _mesa_free_context_data(&c->mesa);
-      _mesa_free(c);
+      free(c);
       return NULL;
    }
 
@@ -1598,7 +1598,7 @@ void XMesaDestroyContext( XMesaContext c )
    _tnl_DestroyContext( mesaCtx );
    _vbo_DestroyContext( mesaCtx );
    _mesa_free_context_data( mesaCtx );
-   _mesa_free( c );
+   free( c );
 }
 
 

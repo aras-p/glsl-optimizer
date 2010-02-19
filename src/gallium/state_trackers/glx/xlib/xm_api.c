@@ -175,7 +175,7 @@ bits_per_pixel( XMesaVisual xmv )
    /* grab the bits/pixel value */
    bitsPerPixel = img->bits_per_pixel;
    /* free the XImage */
-   _mesa_free( img->data );
+   free( img->data );
    img->data = NULL;
    XDestroyImage( img );
    return bitsPerPixel;
@@ -669,13 +669,13 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
    v->display = display;
 
-   /* Save a copy of the XVisualInfo struct because the user may X_mesa_free()
+   /* Save a copy of the XVisualInfo struct because the user may Xfree()
     * the struct but we may need some of the information contained in it
     * at a later time.
     */
    v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
    if (!v->visinfo) {
-      _mesa_free(v);
+      free(v);
       return NULL;
    }
    memcpy(v->visinfo, visinfo, sizeof(*visinfo));
@@ -743,8 +743,8 @@ XMesaVisual XMesaCreateVisual( Display *display,
 PUBLIC
 void XMesaDestroyVisual( XMesaVisual v )
 {
-   _mesa_free(v->visinfo);
-   _mesa_free(v);
+   free(v->visinfo);
+   free(v);
 }
 
 
@@ -811,7 +811,7 @@ fail:
    else if (pipe)
       pipe->destroy(pipe);
 
-   _mesa_free(c);
+   free(c);
    return NULL;
 }
 
@@ -828,7 +828,7 @@ void XMesaDestroyContext( XMesaContext c )
    screen->destroy(screen);
    */
 
-   _mesa_free(c);
+   free(c);
 }
 
 

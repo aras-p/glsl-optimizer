@@ -34,7 +34,7 @@ _slang_label_new_unique(const char *name)
    if (l) {
       l->Name = (char *) _slang_alloc(strlen(name) + 10);
       if (!l->Name) {
-         _mesa_free(l);
+         free(l);
          return NULL;
       }
       _mesa_sprintf(l->Name, "%s_%d", name, id);

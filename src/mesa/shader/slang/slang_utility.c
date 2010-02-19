@@ -54,7 +54,7 @@ GLvoid
 slang_string_free (slang_string *self)
 {
    if (self->data != NULL)
-      _mesa_free (self->data);
+      free(self->data);
 }
 
 GLvoid

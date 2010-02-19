@@ -68,7 +68,7 @@ static void
 link_error(struct gl_shader_program *shProg, const char *msg)
 {
    if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
+      free(shProg->InfoLog);
    }
    shProg->InfoLog = _mesa_strdup(msg);
    shProg->LinkStatus = GL_FALSE;
@@ -103,7 +103,7 @@ link_varying_vars(GLcontext *ctx,
    GLuint *map, i, firstVarying, newFile;
    GLbitfield *inOutFlags;
 
-   map = (GLuint *) _mesa_malloc(prog->Varying->NumParameters * sizeof(GLuint));
+   map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
       return GL_FALSE;
 
@@ -134,7 +134,7 @@ link_varying_vars(GLcontext *ctx,
             &shProg->Varying->Parameters[j];
          if (var->Size != v->Size) {
             link_error(shProg, "mismatched varying variable types");
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
@@ -142,7 +142,7 @@ link_varying_vars(GLcontext *ctx,
             _mesa_snprintf(msg, sizeof(msg),
                            "centroid modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
@@ -150,7 +150,7 @@ link_varying_vars(GLcontext *ctx,
             _mesa_snprintf(msg, sizeof(msg),
                            "invariant modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
       }
@@ -162,7 +162,7 @@ link_varying_vars(GLcontext *ctx,
 
       if (shProg->Varying->NumParameters > ctx->Const.MaxVarying) {
          link_error(shProg, "Too many varying variables");
-         _mesa_free(map);
+         free(map);
          return GL_FALSE;
       }
 
@@ -202,7 +202,7 @@ link_varying_vars(GLcontext *ctx,
       }
    }
 
-   _mesa_free(map);
+   free(map);
 
    /* these will get recomputed before linking is completed */
    prog->InputsRead = 0x0;
@@ -594,7 +594,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    GLuint totalLen = 0, len = 0;
    GLuint i;
 
-   shaderLengths = (GLuint *)_mesa_malloc(shProg->NumShaders * sizeof(GLuint));
+   shaderLengths = (GLuint *)malloc(shProg->NumShaders * sizeof(GLuint));
    if (!shaderLengths) {
       return NULL;
    }
@@ -611,13 +611,13 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    }
 
    if (totalLen == 0) {
-      _mesa_free(shaderLengths);
+      free(shaderLengths);
       return NULL;
    }
 
-   source = (GLchar *) _mesa_malloc(totalLen + 1);
+   source = (GLchar *) malloc(totalLen + 1);
    if (!source) {
-      _mesa_free(shaderLengths);
+      free(shaderLengths);
       return NULL;
    }
 
@@ -634,13 +634,13 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
    */
 
-   _mesa_free(shaderLengths);
+   free(shaderLengths);
 
    remove_extra_version_directives(source);
 
    newShader = CALLOC_STRUCT(gl_shader);
    if (!newShader) {
-      _mesa_free(source);
+      free(source);
       return NULL;
    }
 

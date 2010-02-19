@@ -277,7 +277,7 @@ struct r300_fragment_program *r300SelectAndTranslateFragmentShader(GLcontext *ct
 		fp = fp->next;
 	}
 
-	fp = _mesa_calloc(sizeof(struct r300_fragment_program));
+	fp = calloc(1, sizeof(struct r300_fragment_program));
 
 	fp->state = state;
 

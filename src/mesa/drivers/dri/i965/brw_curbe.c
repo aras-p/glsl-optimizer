@@ -199,7 +199,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       return;
    }
 
-   buf = (GLfloat *) _mesa_calloc(bufsz);
+   buf = (GLfloat *) calloc(1, bufsz);
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
@@ -294,12 +294,12 @@ static void prepare_constant_buffer(struct brw_context *brw)
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       /* constants have not changed */
-      _mesa_free(buf);
+      free(buf);
    } 
    else {
       /* constants have changed */
       if (brw->curbe.last_buf)
-	 _mesa_free(brw->curbe.last_buf);
+	 free(brw->curbe.last_buf);
 
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;

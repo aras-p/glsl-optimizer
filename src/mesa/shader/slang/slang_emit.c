@@ -2528,7 +2528,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
    GLuint *subroutineLoc, i, total;
 
    subroutineLoc
-      = (GLuint *) _mesa_malloc(emitInfo->NumSubroutines * sizeof(GLuint));
+      = (GLuint *) malloc(emitInfo->NumSubroutines * sizeof(GLuint));
 
    /* total number of instructions */
    total = mainP->NumInstructions;
@@ -2566,7 +2566,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
    /* free subroutine list */
    if (emitInfo->Subroutines) {
-      _mesa_free(emitInfo->Subroutines);
+      free(emitInfo->Subroutines);
       emitInfo->Subroutines = NULL;
    }
    emitInfo->NumSubroutines = 0;
@@ -2585,7 +2585,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
       }
    }
 
-   _mesa_free(subroutineLoc);
+   free(subroutineLoc);
 }
 
 

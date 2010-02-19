@@ -60,13 +60,13 @@ mmInit(unsigned ofs, unsigned size)
    if (!size) 
       return NULL;
 
-   heap = (struct mem_block *) _mesa_calloc(sizeof(struct mem_block));
+   heap = (struct mem_block *) calloc(1, sizeof(struct mem_block));
    if (!heap) 
       return NULL;
    
-   block = (struct mem_block *) _mesa_calloc(sizeof(struct mem_block));
+   block = (struct mem_block *) calloc(1, sizeof(struct mem_block));
    if (!block) {
-      _mesa_free(heap);
+      free(heap);
       return NULL;
    }
 
@@ -98,7 +98,7 @@ SliceBlock(struct mem_block *p,
 
    /* break left  [p, newblock, p->next], then p = newblock */
    if (startofs > p->ofs) {
-      newblock = (struct mem_block*) _mesa_calloc(sizeof(struct mem_block));
+      newblock = (struct mem_block*) calloc(1, sizeof(struct mem_block));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs;
@@ -122,7 +122,7 @@ SliceBlock(struct mem_block *p,
 
    /* break right, also [p, newblock, p->next] */
    if (size < p->size) {
-      newblock = (struct mem_block*) _mesa_calloc(sizeof(struct mem_block));
+      newblock = (struct mem_block*) calloc(1, sizeof(struct mem_block));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs + size;
@@ -225,7 +225,7 @@ Join2Blocks(struct mem_block *p)
       q->next_free->prev_free = q->prev_free; 
       q->prev_free->next_free = q->next_free;
      
-      _mesa_free(q);
+      free(q);
       return 1;
    }
    return 0;
@@ -270,9 +270,9 @@ mmDestroy(struct mem_block *heap)
 
    for (p = heap->next; p != heap; ) {
       struct mem_block *next = p->next;
-      _mesa_free(p);
+      free(p);
       p = next;
    }
 
-   _mesa_free(heap);
+   free(heap);
 }

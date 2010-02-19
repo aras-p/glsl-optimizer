@@ -414,7 +414,7 @@ static void
 delete_texture_wrapper(struct gl_renderbuffer *rb)
 {
    ASSERT(rb->RefCount == 0);
-   _mesa_free(rb);
+   free(rb);
 }
 
 

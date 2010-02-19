@@ -81,7 +81,7 @@ static struct gl_query_object * radeonNewQueryObject(GLcontext *ctx, GLuint id)
 {
 	struct radeon_query_object *query;
 
-	query = _mesa_calloc(sizeof(struct radeon_query_object));
+	query = calloc(1, sizeof(struct radeon_query_object));
 
 	query->Base.Id = id;
 	query->Base.Result = 0;
@@ -103,7 +103,7 @@ static void radeonDeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 		radeon_bo_unref(query->bo);
 	}
 
-	_mesa_free(query);
+	free(query);
 }
 
 static void radeonWaitQuery(GLcontext *ctx, struct gl_query_object *q)

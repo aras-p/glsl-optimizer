@@ -1628,7 +1628,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
              if (ctx->Extensions.String == NULL) {
                 GLubyte *ext = _mesa_make_extension_string(ctx);
                 if (ext != NULL) {
-                   ctx->Extensions.String = _mesa_malloc(strlen((char *)ext) + 256);
+                   ctx->Extensions.String = malloc(strlen((char *)ext) + 256);
                    if (ctx->Extensions.String != NULL) {
                       strcpy((char *)ctx->Extensions.String, (char *)ext);
                       /* put any additional extension names here */
@@ -1641,7 +1641,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
                       strcat((char *)ctx->Extensions.String, " WGL_EXT_extensions_string WGL_ARB_extensions_string");
 #endif
                       /* put any additional extension names here */
-                      _mesa_free(ext);
+                      free(ext);
                    } else {
                       ctx->Extensions.String = ext;
                    }

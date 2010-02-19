@@ -86,7 +86,7 @@ void vf_register_fastpath( struct vertex_fetch *vf,
    fastpath->match_strides = match_strides;
    fastpath->func = vf->emit;
    fastpath->attr = (struct vf_attr_type *)
-      _mesa_malloc(vf->attr_count * sizeof(fastpath->attr[0]));
+      malloc(vf->attr_count * sizeof(fastpath->attr[0]));
 
    for (i = 0; i < vf->attr_count; i++) {
       fastpath->attr[i].format = vf->attr[i].format;

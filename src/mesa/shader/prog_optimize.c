@@ -237,7 +237,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
    }
 
    removeInst = (GLboolean *)
-      _mesa_calloc(prog->NumInstructions * sizeof(GLboolean));
+      calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /* Determine which temps are read and written */
    for (i = 0; i < prog->NumInstructions; i++) {
@@ -347,7 +347,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
    }
 
 done:
-   _mesa_free(removeInst);
+   free(removeInst);
 }
 
 
@@ -538,7 +538,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
    }
 
    removeInst = (GLboolean *)
-      _mesa_calloc(prog->NumInstructions * sizeof(GLboolean));
+      calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /*
     * Look for sequences such as this:
@@ -621,7 +621,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
    /* now remove the instructions which aren't needed */
    rem = remove_instructions(prog, removeInst);
 
-   _mesa_free(removeInst);
+   free(removeInst);
 
    if (dbg) {
       _mesa_printf("Optimize: End remove extra moves.  %u instructions removed\n", rem);

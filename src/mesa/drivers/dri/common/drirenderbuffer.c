@@ -32,7 +32,7 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
    /* don't free rb->Data  Chances are it's a memory mapped region for
     * the dri drivers.
     */
-   _mesa_free(rb);
+   free(rb);
 }
 
 
@@ -70,7 +70,7 @@ driNewRenderbuffer(gl_format format, GLvoid *addr,
    assert(cpp > 0);
    assert(pitch > 0);
 
-   drb = _mesa_calloc(sizeof(driRenderbuffer));
+   drb = calloc(1, sizeof(driRenderbuffer));
    if (drb) {
       const GLuint name = 0;
 

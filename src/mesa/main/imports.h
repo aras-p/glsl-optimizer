@@ -50,15 +50,15 @@ extern "C" {
 /*@{*/
 
 /** Allocate \p BYTES bytes */
-#define MALLOC(BYTES)      _mesa_malloc(BYTES)
+#define MALLOC(BYTES)      malloc(BYTES)
 /** Allocate and zero \p BYTES bytes */
-#define CALLOC(BYTES)      _mesa_calloc(BYTES)
+#define CALLOC(BYTES)      calloc(1, BYTES)
 /** Allocate a structure of type \p T */
-#define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
+#define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
 /** Allocate and zero a structure of type \p T */
-#define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+#define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 /** Free memory */
-#define FREE(PTR)          _mesa_free(PTR)
+#define FREE(PTR)          free(PTR)
 
 /** Allocate \p BYTES aligned at \p N bytes */
 #define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)
@@ -506,15 +506,6 @@ _mesa_little_endian(void)
 /**********************************************************************
  * Functions
  */
-
-extern void *
-_mesa_malloc( size_t bytes );
-
-extern void *
-_mesa_calloc( size_t bytes );
-
-extern void
-_mesa_free( void *ptr );
 
 extern void *
 _mesa_align_malloc( size_t bytes, unsigned long alignment );

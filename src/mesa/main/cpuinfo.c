@@ -43,7 +43,7 @@ _mesa_get_cpu_features(void)
 /**
  * Return a string describing the CPU architexture and extensions that
  * Mesa is using (such as SSE or Altivec).
- * \return information string, free it with _mesa_free()
+ * \return information string, free it with free()
  */
 char *
 _mesa_get_cpu_string(void)
@@ -51,7 +51,7 @@ _mesa_get_cpu_string(void)
 #define MAX_STRING 50
    char *buffer;
 
-   buffer = (char *) _mesa_malloc(MAX_STRING);
+   buffer = (char *) malloc(MAX_STRING);
    if (!buffer)
       return NULL;
 
