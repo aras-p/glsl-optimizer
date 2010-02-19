@@ -12,7 +12,7 @@
 
 #include "swrast/swrast.h"
 
-#include "gammacontext.h"
+#include "gamma_context.h"
 
 
 /*

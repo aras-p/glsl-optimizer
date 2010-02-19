@@ -23,7 +23,7 @@
  *
  */
 
-#include "gammacontext.h"
+#include "gamma_context.h"
 #include "gamma_vb.h"
 #include "gamma_lock.h"
 #if defined(USE_X86_ASM)

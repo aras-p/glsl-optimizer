@@ -24,7 +24,7 @@
  * 3DLabs Gamma driver.
  *
  */
-#include "gammacontext.h"
+#include "gamma_context.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

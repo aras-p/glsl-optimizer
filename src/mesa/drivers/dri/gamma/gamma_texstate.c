@@ -9,7 +9,7 @@
 #include "main/enums.h"
 
 #include "main/mm.h"
-#include "gammacontext.h"
+#include "gamma_context.h"
 
 static void gammaSetTexImages( gammaContextPtr gmesa, 
 			      struct gl_texture_object *tObj )

@@ -1,5 +1,5 @@
 
-#include "gammacontext.h"
+#include "gamma_context.h"
 #include "gamma_lock.h"
 #include "colormac.h"
 

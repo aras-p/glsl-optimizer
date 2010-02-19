@@ -25,7 +25,7 @@
  * 3DLabs Gamma driver.
  */
 
-#include "gammacontext.h"
+#include "gamma_context.h"
 #include "gamma_vb.h"
 #include "gamma_tris.h"
 

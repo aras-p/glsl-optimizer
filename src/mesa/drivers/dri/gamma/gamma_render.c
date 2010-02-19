@@ -33,7 +33,7 @@
 
 #include "tnl/tcontext.h"
 
-#include "gammacontext.h"
+#include "gamma_context.h"
 #include "gamma_tris.h"
 #include "gamma_vb.h"
 
