@@ -103,7 +103,7 @@ _mesa_get_cpu_string(void)
 
 #endif
 
-   assert(_mesa_strlen(buffer) < MAX_STRING);
+   assert(strlen(buffer) < MAX_STRING);
 
    return buffer;
 }

@@ -115,7 +115,7 @@ create_dst_mod_str(GLuint mod)
    if (mod & GL_SATURATE_BIT_ATI)
       strncat(ret_str, "|SAT", 1024);
 
-   if (_mesa_strlen(ret_str) == 0)
+   if (strlen(ret_str) == 0)
       strncat(ret_str, "NONE", 1024);
    return ret_str;
 }

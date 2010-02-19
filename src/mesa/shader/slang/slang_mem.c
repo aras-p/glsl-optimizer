@@ -212,7 +212,7 @@ char *
 _slang_strdup(const char *s)
 {
    if (s) {
-      size_t l = _mesa_strlen(s);
+      size_t l = strlen(s);
       char *s2 = (char *) _slang_alloc(l + 1);
       if (s2)
          strcpy(s2, s);

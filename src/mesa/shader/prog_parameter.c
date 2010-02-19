@@ -538,7 +538,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Name &&
 	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
+             && strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return i;
       }
    }
@@ -723,7 +723,7 @@ _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
       return 0;
    for (i = 0; i < list->NumParameters; i++) {
       if (list->Parameters[i].Type == type) {
-         GLuint len = _mesa_strlen(list->Parameters[i].Name);
+         GLuint len = strlen(list->Parameters[i].Name);
          if (len > maxLen)
             maxLen = len;
       }

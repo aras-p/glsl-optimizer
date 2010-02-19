@@ -754,7 +754,7 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
    s = (char *) malloc(len);
    sprintf(s, "%s = %s %s %s %s", dstAnnot,
            srcAnnot0, operator, srcAnnot1, srcAnnot2);
-   assert(_mesa_strlen(s) < len);
+   assert(strlen(s) < len);
 
    free(dstAnnot);
    free(srcAnnot0);

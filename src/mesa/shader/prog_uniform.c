@@ -142,7 +142,7 @@ _mesa_longest_uniform_name(const struct gl_uniform_list *list)
    GLint max = 0;
    GLuint i;
    for (i = 0; list && i < list->NumUniforms; i++) {
-      GLint len = (GLint)_mesa_strlen(list->Uniforms[i].Name);
+      GLint len = (GLint) strlen(list->Uniforms[i].Name);
       if (len > max)
          max = len;
    }

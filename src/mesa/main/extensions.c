@@ -574,8 +574,8 @@ _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
 static char *
 append(const char *a, const char *b)
 {
-   const GLuint aLen = a ? _mesa_strlen(a) : 0;
-   const GLuint bLen = b ? _mesa_strlen(b) : 0;
+   const GLuint aLen = a ? strlen(a) : 0;
+   const GLuint bLen = b ? strlen(b) : 0;
    char *s = _mesa_calloc(aLen + bLen + 1);
    if (s) {
       if (a)
@@ -677,12 +677,12 @@ _mesa_make_extension_string( GLcontext *ctx )
    /* first, compute length of the extension string */
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (extension_enabled(ctx, i)) {
-         extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
+         extStrLen += (GLuint) strlen(default_extensions[i].name) + 1;
       }
    }
 
    if (extraExt)
-      extStrLen += _mesa_strlen(extraExt) + 1; /* +1 for space */
+      extStrLen += strlen(extraExt) + 1; /* +1 for space */
 
    /* allocate the extension string */
    s = (char *) _mesa_malloc(extStrLen);
@@ -693,7 +693,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    extStrLen = 0;
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (extension_enabled(ctx, i)) {
-         GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
+         GLuint len = (GLuint) strlen(default_extensions[i].name);
          _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
          s[extStrLen] = ' ';

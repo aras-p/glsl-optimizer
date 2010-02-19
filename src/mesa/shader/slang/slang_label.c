@@ -32,7 +32,7 @@ _slang_label_new_unique(const char *name)
    static int id = 1;
    slang_label *l = (slang_label *) _slang_alloc(sizeof(slang_label));
    if (l) {
-      l->Name = (char *) _slang_alloc(_mesa_strlen(name) + 10);
+      l->Name = (char *) _slang_alloc(strlen(name) + 10);
       if (!l->Name) {
          _mesa_free(l);
          return NULL;

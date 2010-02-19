@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strlen() */
-size_t
-_mesa_strlen( const char *s )
-{
-   return strlen(s);
-}
-
 /** Wrapper around strcmp() */
 int
 _mesa_strcmp( const char *s1, const char *s2 )
@@ -870,7 +863,7 @@ char *
 _mesa_strdup( const char *s )
 {
    if (s) {
-      size_t l = _mesa_strlen(s);
+      size_t l = strlen(s);
       char *s2 = (char *) _mesa_malloc(l + 1);
       if (s2)
          strcpy(s2, s);

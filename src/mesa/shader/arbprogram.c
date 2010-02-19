@@ -910,7 +910,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    switch (pname) {
       case GL_PROGRAM_LENGTH_ARB:
          *params
-            = prog->String ? (GLint) _mesa_strlen((char *) prog->String) : 0;
+            = prog->String ? (GLint) strlen((char *) prog->String) : 0;
          return;
       case GL_PROGRAM_FORMAT_ARB:
          *params = prog->Format;
@@ -1091,7 +1091,7 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    }
 
    if (prog->String)
-      _mesa_memcpy(dst, prog->String, _mesa_strlen((char *) prog->String));
+      _mesa_memcpy(dst, prog->String, strlen((char *) prog->String));
    else
       *dst = '\0';
 }

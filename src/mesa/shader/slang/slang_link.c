@@ -603,7 +603,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    for (i = 0; i < shProg->NumShaders; i++) {
       const struct gl_shader *shader = shProg->Shaders[i];
       if (shader->Type == shaderType) {
-         shaderLengths[i] = _mesa_strlen(shader->Source);
+         shaderLengths[i] = strlen(shader->Source);
          totalLen += shaderLengths[i];
          if (!firstShader)
             firstShader = shader;
