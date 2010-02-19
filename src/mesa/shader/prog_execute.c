@@ -356,20 +356,7 @@ fetch_vector1ui(const struct prog_src_register *source,
                 const struct gl_program_machine *machine)
 {
    const GLuint *src = (GLuint *) get_src_register_pointer(source, machine);
-   GLuint result;
-
-   ASSERT(src);
-
-   result = src[GET_SWZ(source->Swizzle, 0)];
-
-   if (source->Abs) {
-      result = FABSF(result);
-   }
-   if (source->Negate) {
-      result = -result;
-   }
-
-   return result;
+   return src[GET_SWZ(source->Swizzle, 0)];
 }
 
 
