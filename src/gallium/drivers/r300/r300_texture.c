@@ -617,18 +617,23 @@ static unsigned r300_texture_get_tile_size(struct r300_texture* tex,
 /* Return true if macrotiling should be enabled on the miplevel. */
 static boolean r300_texture_macro_switch(struct r300_texture *tex,
                                          unsigned level,
-                                         boolean rv350_mode)
+                                         boolean rv350_mode,
+                                         int dim)
 {
-    unsigned tile_width, width;
+    unsigned tile, texdim;
 
-    tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH, TRUE);
-    width = u_minify(tex->tex.width0, level);
+    tile = r300_texture_get_tile_size(tex, dim, TRUE);
+    if (dim == TILE_WIDTH) {
+        texdim = u_minify(tex->tex.width0, level);
+    } else {
+        texdim = u_minify(tex->tex.height0, level);
+    }
 
     /* See TX_FILTER1_n.MACRO_SWITCH. */
     if (rv350_mode) {
-        return width >= tile_width;
+        return texdim >= tile;
     } else {
-        return width > tile_width;
+        return texdim > tile;
     }
 }
 
@@ -692,9 +697,10 @@ static void r300_setup_miptree(struct r300_screen* screen,
 
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
-        tex->mip_macrotile[i] = (tex->macrotile == R300_BUFFER_TILED &&
-                                 r300_texture_macro_switch(tex, i, rv350_mode)) ?
-                                 R300_BUFFER_TILED : R300_BUFFER_LINEAR;
+        tex->mip_macrotile[i] =
+            (tex->macrotile == R300_BUFFER_TILED &&
+             r300_texture_macro_switch(tex, i, rv350_mode, TILE_WIDTH)) ?
+             R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
         stride = r300_texture_get_stride(screen, tex, i);
         nblocksy = r300_texture_get_nblocksy(tex, i);
@@ -755,7 +761,8 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     }
 
     /* Set macrotiling. */
-    if (r300_texture_macro_switch(tex, 0, rv350_mode)) {
+    if (r300_texture_macro_switch(tex, 0, rv350_mode, TILE_WIDTH) &&
+        r300_texture_macro_switch(tex, 0, rv350_mode, TILE_HEIGHT)) {
         tex->macrotile = R300_BUFFER_TILED;
     }
 }
