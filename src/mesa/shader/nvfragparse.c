@@ -580,7 +580,7 @@ Parse_TextureImageId(struct parse_state *parseState,
        imageSrc[2] != 'X') {
       RETURN_ERROR1("Expected TEX# source");
    }
-   unit = _mesa_atoi((const char *) imageSrc + 3);
+   unit = atoi((const char *) imageSrc + 3);
    if ((unit < 0 || unit > MAX_TEXTURE_IMAGE_UNITS) ||
        (unit == 0 && (imageSrc[3] != '0' || imageSrc[4] != 0))) {
       RETURN_ERROR1("Invalied TEX# source index");
@@ -717,7 +717,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR1("Expected R## or H##");
 
    if (IsDigit(token[1])) {
-      GLint reg = _mesa_atoi((const char *) (token + 1));
+      GLint reg = atoi((const char *) (token + 1));
       if (token[0] == 'H')
          reg += 32;
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_TEMPS)
@@ -768,7 +768,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 
    if (IsDigit(token[0])) {
       /* a numbered program parameter register */
-      GLint reg = _mesa_atoi((const char *) token);
+      GLint reg = atoi((const char *) token);
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_PARAMS)
          RETURN_ERROR1("Invalid constant program number");
       *regNum = reg;

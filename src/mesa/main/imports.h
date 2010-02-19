@@ -614,9 +614,6 @@ _mesa_getenv( const char *var );
 extern char *
 _mesa_strdup( const char *s );
 
-extern int
-_mesa_atoi( const char *s );
-
 extern double
 _mesa_strtod( const char *s, char **end );
 

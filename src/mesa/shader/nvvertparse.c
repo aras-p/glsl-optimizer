@@ -309,7 +309,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR1("Expected R##");
 
    if (IsDigit(token[1])) {
-      GLint reg = _mesa_atoi((char *) (token + 1));
+      GLint reg = atoi((char *) (token + 1));
       if (reg >= MAX_NV_VERTEX_PROGRAM_TEMPS)
          RETURN_ERROR1("Bad temporary register name");
       *tempRegNum = reg;
@@ -363,7 +363,7 @@ Parse_AbsParamReg(struct parse_state *parseState, GLint *regNum)
 
    if (IsDigit(token[0])) {
       /* a numbered program parameter register */
-      GLint reg = _mesa_atoi((char *) token);
+      GLint reg = atoi((char *) token);
       if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
          RETURN_ERROR1("Bad program parameter number");
       *regNum = reg;
@@ -397,7 +397,7 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
       /* a numbered program parameter register */
       GLint reg;
       (void) Parse_Token(parseState, token);
-      reg = _mesa_atoi((char *) token);
+      reg = atoi((char *) token);
       if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
          RETURN_ERROR1("Bad program parameter number");
       srcReg->File = PROGRAM_ENV_PARAM;
@@ -423,7 +423,7 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
             RETURN_ERROR;
 
          if (IsDigit(token[0])) {
-            const GLint k = _mesa_atoi((char *) token);
+            const GLint k = atoi((char *) token);
             if (sign == '-') {
                if (k > 64)
                   RETURN_ERROR1("Bad address offset");
@@ -480,7 +480,7 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR1("Only v[0] accessible in vertex state programs");
 
    if (IsDigit(token[0])) {
-      GLint reg = _mesa_atoi((char *) token);
+      GLint reg = atoi((char *) token);
       if (reg >= MAX_NV_VERTEX_PROGRAM_INPUTS)
          RETURN_ERROR1("Bad vertex attribute register name");
       *tempRegNum = reg;

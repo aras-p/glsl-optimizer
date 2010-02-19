@@ -280,7 +280,7 @@ default_depth_bits(void)
    int zBits;
    const char *zEnv = _mesa_getenv("MESA_GLX_DEPTH_BITS");
    if (zEnv)
-      zBits = _mesa_atoi(zEnv);
+      zBits = atoi(zEnv);
    else
       zBits = DEFAULT_SOFTWARE_DEPTH_BITS;
    return zBits;
@@ -292,7 +292,7 @@ default_alpha_bits(void)
    int aBits;
    const char *aEnv = _mesa_getenv("MESA_GLX_ALPHA_BITS");
    if (aEnv)
-      aBits = _mesa_atoi(aEnv);
+      aBits = atoi(aEnv);
    else
       aBits = 0;
    return aBits;

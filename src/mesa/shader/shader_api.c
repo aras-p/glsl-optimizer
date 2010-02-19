@@ -1385,7 +1385,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 
          location = _mesa_lookup_uniform(shProg->Uniforms, newName);
          if (location >= 0) {
-            const GLint element = _mesa_atoi(c + 1);
+            const GLint element = atoi(c + 1);
             if (element > 0) {
                /* get type of the uniform array element */
                struct gl_program_parameter *p;

@@ -860,13 +860,6 @@ _mesa_strdup( const char *s )
    }
 }
 
-/** Wrapper around atoi() */
-int
-_mesa_atoi(const char *s)
-{
-   return atoi(s);
-}
-
 /** Wrapper around strtod() */
 double
 _mesa_strtod( const char *s, char **end )
@@ -982,7 +975,7 @@ output_if_debug(const char *prefixString, const char *outputString,
        * set *to any value*.
        */
 #ifdef DEBUG
-      debug = (env != NULL && _mesa_atoi(env) == 0) ? 0 : 1;
+      debug = (env != NULL && atoi(env) == 0) ? 0 : 1;
 #else
       debug = (env != NULL) ? 1 : 0;
 #endif
