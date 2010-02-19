@@ -8,8 +8,6 @@
 
 #include "eglcompiler.h"
 
-typedef enum _egl_resource_type _EGLResourceType;
-
 typedef struct _egl_api _EGLAPI;
 
 typedef struct _egl_config _EGLConfig;

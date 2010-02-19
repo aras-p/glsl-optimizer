@@ -14,6 +14,8 @@ enum _egl_resource_type {
 
    _EGL_NUM_RESOURCES
 };
+/* this cannot and need not go into egltypedefs.h */
+typedef enum _egl_resource_type _EGLResourceType;
 
 
 /**
