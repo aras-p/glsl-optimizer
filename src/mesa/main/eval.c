@@ -894,7 +894,7 @@ void _mesa_init_eval( GLcontext *ctx )
    ctx->Eval.Map1TextureCoord4 = GL_FALSE;
    ctx->Eval.Map1Vertex3 = GL_FALSE;
    ctx->Eval.Map1Vertex4 = GL_FALSE;
-   MEMSET(ctx->Eval.Map1Attrib, 0, sizeof(ctx->Eval.Map1Attrib));
+   memset(ctx->Eval.Map1Attrib, 0, sizeof(ctx->Eval.Map1Attrib));
    ctx->Eval.Map2Color4 = GL_FALSE;
    ctx->Eval.Map2Index = GL_FALSE;
    ctx->Eval.Map2Normal = GL_FALSE;
@@ -904,7 +904,7 @@ void _mesa_init_eval( GLcontext *ctx )
    ctx->Eval.Map2TextureCoord4 = GL_FALSE;
    ctx->Eval.Map2Vertex3 = GL_FALSE;
    ctx->Eval.Map2Vertex4 = GL_FALSE;
-   MEMSET(ctx->Eval.Map2Attrib, 0, sizeof(ctx->Eval.Map2Attrib));
+   memset(ctx->Eval.Map2Attrib, 0, sizeof(ctx->Eval.Map2Attrib));
    ctx->Eval.AutoNormal = GL_FALSE;
    ctx->Eval.MapGrid1un = 1;
    ctx->Eval.MapGrid1u1 = 0.0;

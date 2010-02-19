@@ -71,9 +71,6 @@ extern "C" {
 /** Free aligned memory */
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
 
-/** Set \p N bytes in \p DST to \p VAL */
-#define MEMSET( DST, VAL, N )      memset(DST, VAL, N)
-
 /*@}*/
 
 
