@@ -1313,18 +1313,18 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
    _mesa_set_program_error(ctx, -1, NULL);
 
    /* check the program header */
-   if (_mesa_strncmp((const char *) programString, "!!VP1.0", 7) == 0) {
+   if (strncmp((const char *) programString, "!!VP1.0", 7) == 0) {
       target = GL_VERTEX_PROGRAM_NV;
       parseState.pos = programString + 7;
       parseState.isStateProgram = GL_FALSE;
    }
-   else if (_mesa_strncmp((const char *) programString, "!!VP1.1", 7) == 0) {
+   else if (strncmp((const char *) programString, "!!VP1.1", 7) == 0) {
       target = GL_VERTEX_PROGRAM_NV;
       parseState.pos = programString + 7;
       parseState.isStateProgram = GL_FALSE;
       parseState.isVersion1_1 = GL_TRUE;
    }
-   else if (_mesa_strncmp((const char *) programString, "!!VSP1.0", 8) == 0) {
+   else if (strncmp((const char *) programString, "!!VSP1.0", 8) == 0) {
       target = GL_VERTEX_STATE_PROGRAM_NV;
       parseState.pos = programString + 8;
       parseState.isStateProgram = GL_TRUE;

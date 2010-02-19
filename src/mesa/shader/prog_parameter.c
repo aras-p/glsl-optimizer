@@ -537,7 +537,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Name &&
-	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
+	     strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
              && strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return i;
       }

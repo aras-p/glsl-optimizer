@@ -65,7 +65,7 @@ static GLboolean
 legal_identifier(slang_atom name)
 {
    /* "gl_" is a reserved prefix */
-   if (_mesa_strncmp((char *) name, "gl_", 3) == 0) {
+   if (strncmp((char *) name, "gl_", 3) == 0) {
       return GL_FALSE;
    }
    return GL_TRUE;

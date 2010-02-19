@@ -224,7 +224,7 @@ MatchInstruction(const GLubyte *token)
    result.suffixes = 0;
 
    for (inst = Instructions; inst->name; inst++) {
-      if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
+      if (strncmp((const char *) token, inst->name, 3) == 0) {
          /* matched! */
          int i = 3;
          result = *inst;
@@ -1495,11 +1495,11 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
    _mesa_set_program_error(ctx, -1, NULL);
 
    /* check the program header */
-   if (_mesa_strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
+   if (strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
       target = GL_FRAGMENT_PROGRAM_NV;
       parseState.pos = programString + 7;
    }
-   else if (_mesa_strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
+   else if (strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
       /* fragment / register combiner program - not supported */
       _mesa_set_program_error(ctx, 0, "Invalid fragment program header");
       _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");

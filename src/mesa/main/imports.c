@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strncmp() */
-int
-_mesa_strncmp( const char *s1, const char *s2, size_t n )
-{
-   return strncmp(s1, s2, n);
-}
-
 /**
  * Implemented using _mesa_malloc() and strcpy.
  * Note that NULL is handled accordingly.
