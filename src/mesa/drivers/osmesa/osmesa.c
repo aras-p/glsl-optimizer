@@ -1579,7 +1579,7 @@ OSMesaGetProcAddress( const char *funcName )
 {
    int i;
    for (i = 0; functions[i].Name; i++) {
-      if (_mesa_strcmp(functions[i].Name, funcName) == 0)
+      if (strcmp(functions[i].Name, funcName) == 0)
          return functions[i].Function;
    }
    return _glapi_get_proc_address(funcName);

@@ -926,7 +926,6 @@ EXPORTS
 	_mesa_store_texsubimage1d
 	_mesa_store_texsubimage2d
 	_mesa_store_texsubimage3d
-	_mesa_strcmp
 	_mesa_test_proxy_teximage
 	_mesa_reference_framebuffer
 	_mesa_update_framebuffer_visual

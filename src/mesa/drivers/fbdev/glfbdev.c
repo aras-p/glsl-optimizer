@@ -330,7 +330,7 @@ glFBDevGetProcAddress( const char *procName )
    };
    const struct name_address *entry;
    for (entry = functions; entry->name; entry++) {
-      if (_mesa_strcmp(entry->name, procName) == 0) {
+      if (strcmp(entry->name, procName) == 0) {
          return entry->func;
       }
    }

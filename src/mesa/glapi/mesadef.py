@@ -152,7 +152,6 @@ def PrintTail():
 	print '\t_mesa_store_texsubimage1d'
 	print '\t_mesa_store_texsubimage2d'
 	print '\t_mesa_store_texsubimage3d'
-	print '\t_mesa_strcmp'
 	print '\t_mesa_test_proxy_teximage'
 	print '\t_mesa_Viewport'
 	print '\t_mesa_meta_CopyColorSubTable'

@@ -32,7 +32,7 @@
 #define static_assert(expr) do { int _array[(expr) ? 1 : -1]; (void) _array[0]; } while (0)
 
 
-#define slang_string_compare(str1, str2) _mesa_strcmp (str1, str2)
+#define slang_string_compare(str1, str2) strcmp (str1, str2)
 #define slang_string_copy(dst, src) strcpy (dst, src)
 #define slang_string_length(str) strlen (str)
 

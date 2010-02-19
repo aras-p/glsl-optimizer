@@ -128,7 +128,7 @@ _mesa_lookup_uniform(const struct gl_uniform_list *list, const char *name)
 {
    GLuint i;
    for (i = 0; list && i < list->NumUniforms; i++) {
-      if (!_mesa_strcmp(list->Uniforms[i].Name, name)) {
+      if (!strcmp(list->Uniforms[i].Name, name)) {
          return i;
       }
    }

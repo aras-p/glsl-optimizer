@@ -612,9 +612,6 @@ extern char *
 _mesa_getenv( const char *var );
 
 extern int
-_mesa_strcmp( const char *s1, const char *s2 );
-
-extern int
 _mesa_strncmp( const char *s1, const char *s2, size_t n );
 
 extern char *

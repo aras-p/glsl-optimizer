@@ -2563,8 +2563,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
          {
             slang_function *func;
             success = parse_function(C, &o, 1, &func);
-            if (success &&
-                _mesa_strcmp((char *) func->header.a_name, "main") == 0) {
+            if (success && strcmp((char *) func->header.a_name, "main") == 0) {
                /* found main() */
                mainFunc = func;
             }

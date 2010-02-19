@@ -403,7 +403,7 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
       srcReg->File = PROGRAM_ENV_PARAM;
       srcReg->Index = reg;
    }
-   else if (_mesa_strcmp((const char *) token, "A0") == 0) {
+   else if (strcmp((const char *) token, "A0") == 0) {
       /* address register "A0.x" */
       if (!Parse_AddrReg(parseState))
          RETURN_ERROR;
@@ -487,7 +487,7 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
    }
    else {
       for (j = 0; InputRegisters[j]; j++) {
-         if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
+         if (strcmp((const char *) token, InputRegisters[j]) == 0) {
             *tempRegNum = j;
             break;
          }
@@ -531,7 +531,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 
    /* try to match an output register name */
    for (j = start; OutputRegisters[j]; j++) {
-      if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
+      if (strcmp((const char *) token, OutputRegisters[j]) == 0) {
          *outputRegNum = j;
          break;
       }

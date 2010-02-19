@@ -841,13 +841,6 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strcmp() */
-int
-_mesa_strcmp( const char *s1, const char *s2 )
-{
-   return strcmp(s1, s2);
-}
-
 /** Wrapper around strncmp() */
 int
 _mesa_strncmp( const char *s1, const char *s2, size_t n )

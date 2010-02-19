@@ -215,7 +215,7 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
           pvals[1] == values[1] &&
           pvals[2] == values[2] &&
           pvals[3] == values[3] &&
-          _mesa_strcmp(paramList->Parameters[pos].Name, name) == 0) {
+          strcmp(paramList->Parameters[pos].Name, name) == 0) {
          /* Same name and value is already in the param list - reuse it */
          return pos;
       }
@@ -325,7 +325,7 @@ _mesa_use_uniform(struct gl_program_parameter_list *paramList,
    for (i = 0; i < paramList->NumParameters; i++) {
       struct gl_program_parameter *p = paramList->Parameters + i;
       if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) &&
-          _mesa_strcmp(p->Name, name) == 0) {
+          strcmp(p->Name, name) == 0) {
          p->Used = GL_TRUE;
          /* Note that large uniforms may occupy several slots so we're
           * not done searching yet.
@@ -529,7 +529,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
       /* name is null-terminated */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Name &&
-	     _mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
+	     strcmp(paramList->Parameters[i].Name, name) == 0)
             return i;
       }
    }

@@ -802,7 +802,7 @@ Parse_FragReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR;
    }
    for (j = 0; InputRegisters[j]; j++) {
-      if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
+      if (strcmp((const char *) token, InputRegisters[j]) == 0) {
          *tempRegNum = j;
          parseState->inputsRead |= (1 << j);
          break;
@@ -835,13 +835,13 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
       RETURN_ERROR;
 
    /* try to match an output register name */
-   if (_mesa_strcmp((char *) token, "COLR") == 0 ||
-       _mesa_strcmp((char *) token, "COLH") == 0) {
+   if (strcmp((char *) token, "COLR") == 0 ||
+       strcmp((char *) token, "COLH") == 0) {
       /* note that we don't distinguish between COLR and COLH */
       *outputRegNum = FRAG_RESULT_COLOR;
       parseState->outputsWritten |= (1 << FRAG_RESULT_COLOR);
    }
-   else if (_mesa_strcmp((char *) token, "DEPR") == 0) {
+   else if (strcmp((char *) token, "DEPR") == 0) {
       *outputRegNum = FRAG_RESULT_DEPTH;
       parseState->outputsWritten |= (1 << FRAG_RESULT_DEPTH);
    }
@@ -868,8 +868,8 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
 
-   if (_mesa_strcmp((const char *) token, "RC") == 0 ||
-       _mesa_strcmp((const char *) token, "HC") == 0) {
+   if (strcmp((const char *) token, "RC") == 0 ||
+       strcmp((const char *) token, "HC") == 0) {
       /* a write-only register */
       dstReg->File = PROGRAM_WRITE_ONLY;
       if (!Parse_DummyReg(parseState, &idx))

@@ -1020,7 +1020,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
-            if (_mesa_strcmp((char *) oper->a_id, "__notRetFlag"))
+            if (strcmp((char *) oper->a_id, "__notRetFlag"))
                _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
             return;
 	 }
@@ -1658,7 +1658,7 @@ slang_find_asm_info(const char *name)
 {
    GLuint i;
    for (i = 0; AsmInfo[i].Name; i++) {
-      if (_mesa_strcmp(AsmInfo[i].Name, name) == 0) {
+      if (strcmp(AsmInfo[i].Name, name) == 0) {
          return AsmInfo + i;
       }
    }
@@ -2317,7 +2317,7 @@ _slang_is_vec_mat_type(const char *name)
    };
    int i;
    for (i = 0; vecmat_types[i]; i++)
-      if (_mesa_strcmp(name, vecmat_types[i]) == 0)
+      if (strcmp(name, vecmat_types[i]) == 0)
          return GL_TRUE;
    return GL_FALSE;
 }
@@ -5224,7 +5224,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    slang_ir_node *n;
    GLboolean success = GL_TRUE;
 
-   if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
+   if (strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
        * inlined or codegen'd upon an actual call.
        */

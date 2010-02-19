@@ -70,7 +70,7 @@ typedef int (*cfunc)(const void *, const void *);
  */
 static int compar_name( const char *a, const enum_elt *b )
 {
-   return _mesa_strcmp( a, & enum_string_table[ b->offset ] );
+   return strcmp( a, & enum_string_table[ b->offset ] );
 }
 
 /**

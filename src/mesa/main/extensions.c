@@ -498,7 +498,7 @@ set_extension( GLcontext *ctx, const char *name, GLboolean state )
    }
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+      if (strcmp(default_extensions[i].name, name) == 0) {
          if (default_extensions[i].flag_offset) {
             GLboolean *enabled = base + default_extensions[i].flag_offset;
             *enabled = state;
@@ -560,7 +560,7 @@ _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
    GLuint i;
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+      if (strcmp(default_extensions[i].name, name) == 0) {
          return extension_enabled(ctx, i);
       }
    }
