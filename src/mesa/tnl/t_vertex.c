@@ -236,7 +236,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
       dest[0] = ctx->Point.Size;
    }
    else {
-      _mesa_memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
+      memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
    }
 }
 

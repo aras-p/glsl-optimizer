@@ -296,7 +296,7 @@ void vf_get_attr( struct vertex_fetch *vf,
 
    /* Else return the value from ctx->Current.
     */
-   _mesa_memcpy( dest, dflt, 4*sizeof(GLfloat));
+   memcpy( dest, dflt, 4*sizeof(GLfloat));
 }
 
 

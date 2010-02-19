@@ -87,7 +87,7 @@ get_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLubyte *src = (const GLubyte *) rb->Data + y * rb->Width + x;
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   _mesa_memcpy(values, src, count * sizeof(GLubyte));
+   memcpy(values, src, count * sizeof(GLubyte));
 }
 
 
@@ -121,7 +121,7 @@ put_row_ubyte(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, values, count * sizeof(GLubyte));
+      memcpy(dst, values, count * sizeof(GLubyte));
    }
 }
 
@@ -207,7 +207,7 @@ get_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const void *src = rb->GetPointer(ctx, rb, x, y);
    ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
-   _mesa_memcpy(values, src, count * sizeof(GLushort));
+   memcpy(values, src, count * sizeof(GLushort));
 }
 
 
@@ -241,7 +241,7 @@ put_row_ushort(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, src, count * sizeof(GLushort));
+      memcpy(dst, src, count * sizeof(GLushort));
    }
 }
 
@@ -337,7 +337,7 @@ get_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    const void *src = rb->GetPointer(ctx, rb, x, y);
    ASSERT(rb->DataType == GL_UNSIGNED_INT ||
           rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
-   _mesa_memcpy(values, src, count * sizeof(GLuint));
+   memcpy(values, src, count * sizeof(GLuint));
 }
 
 
@@ -373,7 +373,7 @@ put_row_uint(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, src, count * sizeof(GLuint));
+      memcpy(dst, src, count * sizeof(GLuint));
    }
 }
 
@@ -631,7 +631,7 @@ get_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    const GLubyte *src = (const GLubyte *) rb->Data + 4 * (y * rb->Width + x);
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
    ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
-   _mesa_memcpy(values, src, 4 * count * sizeof(GLubyte));
+   memcpy(values, src, 4 * count * sizeof(GLubyte));
 }
 
 
@@ -669,7 +669,7 @@ put_row_ubyte4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, src, 4 * count * sizeof(GLubyte));
+      memcpy(dst, src, 4 * count * sizeof(GLubyte));
    }
 }
 
@@ -788,7 +788,7 @@ get_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
 {
    const GLshort *src = (const GLshort *) rb->Data + 4 * (y * rb->Width + x);
    ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
-   _mesa_memcpy(values, src, 4 * count * sizeof(GLshort));
+   memcpy(values, src, 4 * count * sizeof(GLshort));
 }
 
 
@@ -826,7 +826,7 @@ put_row_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, src, 4 * count * sizeof(GLushort));
+      memcpy(dst, src, 4 * count * sizeof(GLushort));
    }
 }
 
@@ -851,7 +851,7 @@ put_row_rgb_ushort4(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       }
    }
    else {
-      _mesa_memcpy(dst, src, 4 * count * sizeof(GLushort));
+      memcpy(dst, src, 4 * count * sizeof(GLushort));
    }
 }
 
@@ -1374,7 +1374,7 @@ copy_buffer_alpha8(struct gl_renderbuffer* dst, struct gl_renderbuffer* src)
    ASSERT(dst->Width == src->Width);
    ASSERT(dst->Height == src->Height);
 
-   _mesa_memcpy(dst->Data, src->Data, dst->Width * dst->Height * sizeof(GLubyte));
+   memcpy(dst->Data, src->Data, dst->Width * dst->Height * sizeof(GLubyte));
 }
 
 

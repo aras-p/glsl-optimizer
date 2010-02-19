@@ -120,7 +120,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->FreeTexImageData = _mesa_free_texture_image_data; 
    driver->MapTexture = NULL;
    driver->UnmapTexture = NULL;
-   driver->TextureMemCpy = _mesa_memcpy; 
+   driver->TextureMemCpy = memcpy;
    driver->IsTextureResident = NULL;
    driver->UpdateTexturePalette = NULL;
 

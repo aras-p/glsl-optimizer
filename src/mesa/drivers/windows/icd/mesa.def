@@ -54,7 +54,6 @@ EXPORTS
 	_mesa_init_driver_functions
 	_mesa_initialize_context
 	_mesa_make_current
-	_mesa_memcpy
 	_mesa_memset
 	_mesa_new_buffer_object
 	_mesa_new_texture_object

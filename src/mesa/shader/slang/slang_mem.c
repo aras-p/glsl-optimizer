@@ -197,7 +197,7 @@ _slang_realloc(void *oldBuffer, GLuint oldSize, GLuint newSize)
          ASSERT(is_valid_address(pool, oldBuffer));
 
       if (newBuffer && oldBuffer && copySize > 0)
-         _mesa_memcpy(newBuffer, oldBuffer, copySize);
+         memcpy(newBuffer, oldBuffer, copySize);
 
       return newBuffer;
    }

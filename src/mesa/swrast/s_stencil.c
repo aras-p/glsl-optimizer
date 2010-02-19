@@ -475,7 +475,7 @@ stencil_and_ztest_span(GLcontext *ctx, SWspan *span, GLuint face)
       GLubyte passMask[MAX_WIDTH], failMask[MAX_WIDTH], origMask[MAX_WIDTH];
 
       /* save the current mask bits */
-      _mesa_memcpy(origMask, mask, n * sizeof(GLubyte));
+      memcpy(origMask, mask, n * sizeof(GLubyte));
 
       /* apply the depth test */
       _swrast_depth_test_span(ctx, span);
@@ -918,7 +918,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
       ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
       _swrast_get_values(ctx, rb, n, x, y, stencil, sizeof(GLubyte));
 
-      _mesa_memcpy(origMask, mask, n * sizeof(GLubyte));          
+      memcpy(origMask, mask, n * sizeof(GLubyte));          
 
       (void) do_stencil_test(ctx, face, n, stencil, mask);
 
@@ -928,7 +928,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
       }
       else {
          GLubyte tmpMask[MAX_WIDTH]; 
-         _mesa_memcpy(tmpMask, mask, n * sizeof(GLubyte));
+         memcpy(tmpMask, mask, n * sizeof(GLubyte));
 
          _swrast_depth_test_span(ctx, span);
 
@@ -962,7 +962,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
                                     ctx->Stencil.ZPassFunc[face], face, mask);
       }
       else {
-         _mesa_memcpy(origMask, mask, n * sizeof(GLubyte));
+         memcpy(origMask, mask, n * sizeof(GLubyte));
 
          _swrast_depth_test_span(ctx, span);
 

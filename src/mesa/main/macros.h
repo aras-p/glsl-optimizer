@@ -207,7 +207,7 @@ do {                                \
  */
 #define COPY_4FV( DST, SRC )                  \
 do {                                          \
-   _mesa_memcpy(DST, SRC, sizeof(GLfloat) * 4);       \
+   memcpy(DST, SRC, sizeof(GLfloat) * 4);     \
 } while (0)
 
 /** Copy \p SZ elements into a 4-element vector */

@@ -493,12 +493,12 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_TRANSFORM) {
       GLuint activeTexture = ctx->Texture.CurrentUnit;
-      _mesa_memcpy(save->ModelviewMatrix, ctx->ModelviewMatrixStack.Top->m,
-                   16 * sizeof(GLfloat));
-      _mesa_memcpy(save->ProjectionMatrix, ctx->ProjectionMatrixStack.Top->m,
-                   16 * sizeof(GLfloat));
-      _mesa_memcpy(save->TextureMatrix, ctx->TextureMatrixStack[0].Top->m,
-                   16 * sizeof(GLfloat));
+      memcpy(save->ModelviewMatrix, ctx->ModelviewMatrixStack.Top->m,
+             16 * sizeof(GLfloat));
+      memcpy(save->ProjectionMatrix, ctx->ProjectionMatrixStack.Top->m,
+             16 * sizeof(GLfloat));
+      memcpy(save->TextureMatrix, ctx->TextureMatrixStack[0].Top->m,
+             16 * sizeof(GLfloat));
       save->MatrixMode = ctx->Transform.MatrixMode;
       /* set 1:1 vertex:pixel coordinate transform */
       _mesa_ActiveTextureARB(GL_TEXTURE0);

@@ -89,7 +89,7 @@ blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
    else
       bytes = 4 * n * sizeof(GLfloat);
 
-   _mesa_memcpy(src, dst, bytes);
+   memcpy(src, dst, bytes);
 }
 
 

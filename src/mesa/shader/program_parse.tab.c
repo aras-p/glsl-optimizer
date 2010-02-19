@@ -5623,7 +5623,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return GL_FALSE;
    }
-   _mesa_memcpy (strz, str, len);
+   memcpy (strz, str, len);
    strz[len] = '\0';
 
    state->prog->String = strz;

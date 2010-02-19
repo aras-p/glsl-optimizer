@@ -1050,7 +1050,7 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
    parseState->pos += len + 1;
    msg = (GLubyte*) _mesa_malloc(len + 1);
 
-   _mesa_memcpy(msg, str, len);
+   memcpy(msg, str, len);
    msg[len] = 0;
    inst->Data = msg;
 

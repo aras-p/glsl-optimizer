@@ -469,8 +469,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
    for (i = 0; i < count; i++) {
       GLint start = (i > 0) ? offsets[i - 1] : 0;
-      _mesa_memcpy(source + start, string[i],
-                   (offsets[i] - start) * sizeof(GLcharARB));
+      memcpy(source + start, string[i],
+             (offsets[i] - start) * sizeof(GLcharARB));
    }
    source[totalLength - 1] = '\0';
    source[totalLength - 2] = '\0';

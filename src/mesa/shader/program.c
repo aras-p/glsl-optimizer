@@ -223,7 +223,7 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
       p++;
    len = p - lineStart;
    s = (GLubyte *) _mesa_malloc(len + 1);
-   _mesa_memcpy(s, lineStart, len);
+   memcpy(s, lineStart, len);
    s[len] = 0;
 
    return s;

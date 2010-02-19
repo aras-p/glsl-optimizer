@@ -235,7 +235,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 
 	vp = _mesa_calloc(sizeof(*vp));
 	vp->Base = _mesa_clone_vertex_program(ctx, mesa_vp);
-	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
+	memcpy(&vp->key, wanted_key, sizeof(vp->key));
 
 	rc_init(&compiler.Base);
 	compiler.Base.Debug = (RADEON_DEBUG & RADEON_VERTS) ? GL_TRUE : GL_FALSE;

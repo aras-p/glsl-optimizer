@@ -1383,7 +1383,7 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       /* create a new vishandle - the cached one may be stale */
       xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
-         _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
+         memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
       return xmvis->vishandle;
 #endif
@@ -2162,7 +2162,7 @@ Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       /* create a new vishandle - the cached one may be stale */
       xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
-         _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
+         memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
       return xmvis->vishandle;
 #endif

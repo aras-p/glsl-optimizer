@@ -177,7 +177,7 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		radeon_bo_map(r300->ind_buf.bo, 1);
 		assert(r300->ind_buf.bo->ptr != NULL);
 		dst_ptr = ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
-		_mesa_memcpy(dst_ptr, src_ptr, size);
+		memcpy(dst_ptr, src_ptr, size);
 
 		radeon_bo_unmap(r300->ind_buf.bo);
 		r300->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
@@ -314,7 +314,7 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 		int i;
 
 		for (i = 0; i < count; ++i) {
-			_mesa_memcpy(dst_ptr, src_ptr, input->StrideB);
+			memcpy(dst_ptr, src_ptr, input->StrideB);
 			src_ptr += input->StrideB;
 			dst_ptr += dst_stride;
 		}

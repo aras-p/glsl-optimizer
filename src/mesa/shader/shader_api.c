@@ -1380,7 +1380,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
          GLchar *newName = _mesa_malloc(len + 1);
          if (!newName)
             return -1; /* out of mem */
-         _mesa_memcpy(newName, name, len);
+         memcpy(newName, name, len);
          newName[len] = 0;
 
          location = _mesa_lookup_uniform(shProg->Uniforms, newName);

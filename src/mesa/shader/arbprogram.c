@@ -1091,7 +1091,7 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    }
 
    if (prog->String)
-      _mesa_memcpy(dst, prog->String, strlen((char *) prog->String));
+      memcpy(dst, prog->String, strlen((char *) prog->String));
    else
       *dst = '\0';
 }

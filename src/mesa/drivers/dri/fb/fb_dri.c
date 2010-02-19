@@ -511,10 +511,8 @@ fbSwapBuffers( __DRIdrawable *dPriv )
          ASSERT(backBuffer);
 
 	 for (i = 0; i < dPriv->h; i++) {
-            _mesa_memcpy(tmp, (char *) backBuffer + offset,
-                         currentPitch);
-            _mesa_memcpy((char *) frontBuffer + offset, tmp,
-                          currentPitch);
+            memcpy(tmp, (char *) backBuffer + offset, currentPitch);
+            memcpy((char *) frontBuffer + offset, tmp, currentPitch);
             offset += currentPitch;
 	 }
 	    

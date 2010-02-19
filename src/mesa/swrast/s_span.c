@@ -993,8 +993,8 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
 
          if (numBuffers > 1) {
             /* save indexes for second, third renderbuffer writes */
-            _mesa_memcpy(indexSave, span->array->index,
-                         span->end * sizeof(indexSave[0]));
+            memcpy(indexSave, span->array->index,
+                   span->end * sizeof(indexSave[0]));
          }
 
          if (ctx->Color.IndexLogicOpEnabled) {
@@ -1073,8 +1073,8 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
 
          if (buf + 1 < numBuffers) {
             /* restore original span values */
-            _mesa_memcpy(span->array->index, indexSave,
-                         span->end * sizeof(indexSave[0]));
+            memcpy(span->array->index, indexSave,
+                   span->end * sizeof(indexSave[0]));
          }
       } /* for buf */
    }
@@ -1510,8 +1510,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
             if (!multiFragOutputs && numBuffers > 1) {
                /* save colors for second, third renderbuffer writes */
-               _mesa_memcpy(rgbaSave, span->array->rgba,
-                            4 * span->end * sizeof(GLchan));
+               memcpy(rgbaSave, span->array->rgba,
+                      4 * span->end * sizeof(GLchan));
             }
 
             ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
@@ -1544,8 +1544,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
             if (!multiFragOutputs && numBuffers > 1) {
                /* restore original span values */
-               _mesa_memcpy(span->array->rgba, rgbaSave,
-                            4 * span->end * sizeof(GLchan));
+               memcpy(span->array->rgba, rgbaSave,
+                      4 * span->end * sizeof(GLchan));
             }
 
          } /* if rb */

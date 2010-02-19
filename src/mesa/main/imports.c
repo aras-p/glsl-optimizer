@@ -221,7 +221,7 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
    const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
    void *newBuf = _mesa_align_malloc(newSize, alignment);
    if (newBuf && oldBuffer && copySize > 0) {
-      _mesa_memcpy(newBuf, oldBuffer, copySize);
+      memcpy(newBuf, oldBuffer, copySize);
    }
    if (oldBuffer)
       _mesa_align_free(oldBuffer);
@@ -238,21 +238,10 @@ _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
    const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
    void *newBuffer = _mesa_malloc(newSize);
    if (newBuffer && oldBuffer && copySize > 0)
-      _mesa_memcpy(newBuffer, oldBuffer, copySize);
+      memcpy(newBuffer, oldBuffer, copySize);
    if (oldBuffer)
       _mesa_free(oldBuffer);
    return newBuffer;
-}
-
-/** memcpy wrapper */
-void *
-_mesa_memcpy(void *dest, const void *src, size_t n)
-{
-#if defined(SUNOS4)
-   return memcpy((char *) dest, (char *) src, (int) n);
-#else
-   return memcpy(dest, src, n);
-#endif
 }
 
 /** Wrapper around memset() */

@@ -134,7 +134,6 @@ def PrintTail():
 	print '\t_mesa_init_default_imports'
 	print '\t_mesa_initialize_context'
 	print '\t_mesa_make_current'
-	print '\t_mesa_memcpy'
 	print '\t_mesa_memset'
 	print '\t_mesa_new_buffer_object'
 	print '\t_mesa_new_texture_object'

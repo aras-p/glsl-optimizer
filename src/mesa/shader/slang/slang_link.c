@@ -625,7 +625,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    for (i = 0; i < shProg->NumShaders; i++) {
       const struct gl_shader *shader = shProg->Shaders[i];
       if (shader->Type == shaderType) {
-         _mesa_memcpy(source + len, shader->Source, shaderLengths[i]);
+         memcpy(source + len, shader->Source, shaderLengths[i]);
          len += shaderLengths[i];
       }
    }

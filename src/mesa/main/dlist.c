@@ -4793,7 +4793,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;
       }
-      _mesa_memcpy(programCopy, program, len);
+      memcpy(programCopy, program, len);
       n[1].e = target;
       n[2].ui = id;
       n[3].i = len;
@@ -4820,7 +4820,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
          return;
       }
-      _mesa_memcpy(idCopy, ids, num * sizeof(GLuint));
+      memcpy(idCopy, ids, num * sizeof(GLuint));
       n[1].i = num;
       n[2].data = idCopy;
    }
@@ -4991,7 +4991,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
          return;
       }
-      _mesa_memcpy(nameCopy, name, len);
+      memcpy(nameCopy, name, len);
       n[1].ui = id;
       n[2].i = len;
       n[3].data = nameCopy;
@@ -5090,7 +5090,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
          return;
       }
-      _mesa_memcpy(programCopy, string, len);
+      memcpy(programCopy, string, len);
       n[1].e = target;
       n[2].e = format;
       n[3].i = len;
@@ -6201,7 +6201,7 @@ memdup(const void *src, GLsizei bytes)
 {
    void *b = bytes >= 0 ? _mesa_malloc(bytes) : NULL;
    if (b)
-      _mesa_memcpy(b, src, bytes);
+      memcpy(b, src, bytes);
    return b;
 }
 

@@ -684,7 +684,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       }
       break;
    case GL_RGBA:
-      _mesa_memcpy(rgba, table->TableF, 4 * table->Size * sizeof(GLfloat));
+      memcpy(rgba, table->TableF, 4 * table->Size * sizeof(GLfloat));
       break;
    default:
       _mesa_problem(ctx, "bad table format in glGetColorTable");

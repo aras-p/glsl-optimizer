@@ -2919,7 +2919,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            _mesa_memcpy(dstRow, srcRow, bytesPerRow);
+            memcpy(dstRow, srcRow, bytesPerRow);
             dstRow += dstRowStride;
             srcRow += srcWidth * components;
          }

@@ -432,7 +432,7 @@ _mesa_PushAttrib(GLbitfield mask)
       _mesa_lock_context_textures(ctx);
 
       /* copy/save the bulk of texture state here */
-      _mesa_memcpy(&texstate->Texture, &ctx->Texture, sizeof(ctx->Texture));
+      memcpy(&texstate->Texture, &ctx->Texture, sizeof(ctx->Texture));
 
       /* Save references to the currently bound texture objects so they don't
        * accidentally get deleted while referenced in the attribute stack.

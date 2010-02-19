@@ -594,7 +594,7 @@ static void r700AlignDataToDword(GLcontext *ctx,
 
         for (i = 0; i < count; ++i) 
         {
-            _mesa_memcpy(dst_ptr, src_ptr, input->StrideB);
+            memcpy(dst_ptr, src_ptr, input->StrideB);
             src_ptr += input->StrideB;
             dst_ptr += dst_stride;
         }
@@ -855,7 +855,7 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 	assert(context->ind_buf.bo->ptr != NULL);
 	dst_ptr = ADD_POINTERS(context->ind_buf.bo->ptr, context->ind_buf.bo_offset);
 
-        _mesa_memcpy(dst_ptr, src_ptr, size);
+        memcpy(dst_ptr, src_ptr, size);
 
 	radeon_bo_unmap(context->ind_buf.bo);
         context->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);

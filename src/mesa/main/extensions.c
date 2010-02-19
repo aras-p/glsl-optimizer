@@ -579,9 +579,9 @@ append(const char *a, const char *b)
    char *s = _mesa_calloc(aLen + bLen + 1);
    if (s) {
       if (a)
-         _mesa_memcpy(s, a, aLen);
+         memcpy(s, a, aLen);
       if (b)
-         _mesa_memcpy(s + aLen, b, bLen);
+         memcpy(s + aLen, b, bLen);
       s[aLen + bLen] = '\0';
    }
    if (a)
@@ -694,7 +694,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (extension_enabled(ctx, i)) {
          GLuint len = (GLuint) strlen(default_extensions[i].name);
-         _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
+         memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
          s[extStrLen] = ' ';
          extStrLen++;

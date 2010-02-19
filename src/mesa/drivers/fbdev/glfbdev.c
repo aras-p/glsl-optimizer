@@ -742,7 +742,7 @@ glFBDevSwapBuffers( GLFBDevBufferPtr buffer )
 
    ASSERT(frontrb->Base.Data);
    ASSERT(backrb->Base.Data);
-   _mesa_memcpy(frontrb->Base.Data, backrb->Base.Data, buffer->size);
+   memcpy(frontrb->Base.Data, backrb->Base.Data, buffer->size);
 }
 
 
