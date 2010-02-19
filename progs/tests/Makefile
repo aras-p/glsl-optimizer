@@ -120,6 +120,7 @@ SOURCES = \
 	vpwarpmesh.c \
 	yuvrect.c \
 	yuvsquare.c \
+	zbitmap.c \
 	zcomp.c \
 	zdrawpix.c \
 	zreaddraw.c

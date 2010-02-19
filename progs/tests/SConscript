@@ -118,6 +118,7 @@ progs = [
     'vpwarpmesh',
     'yuvrect',
     'yuvsquare',
+    'zbitmap',
     'zcomp',
     'zdrawpix',
     'zreaddraw',
