@@ -936,7 +936,14 @@ case $ARCH in
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${OBJECTS}`
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
         else
 	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
