@@ -98,25 +98,25 @@ create_dst_mod_str(GLuint mod)
 
    _mesa_memset(ret_str, 0, 1024);
    if (mod & GL_2X_BIT_ATI)
-      _mesa_strncat(ret_str, "|2X", 1024);
+      strncat(ret_str, "|2X", 1024);
 
    if (mod & GL_4X_BIT_ATI)
-      _mesa_strncat(ret_str, "|4X", 1024);
+      strncat(ret_str, "|4X", 1024);
 
    if (mod & GL_8X_BIT_ATI)
-      _mesa_strncat(ret_str, "|8X", 1024);
+      strncat(ret_str, "|8X", 1024);
    if (mod & GL_HALF_BIT_ATI)
-      _mesa_strncat(ret_str, "|HA", 1024);
+      strncat(ret_str, "|HA", 1024);
    if (mod & GL_QUARTER_BIT_ATI)
-      _mesa_strncat(ret_str, "|QU", 1024);
+      strncat(ret_str, "|QU", 1024);
    if (mod & GL_EIGHTH_BIT_ATI)
-      _mesa_strncat(ret_str, "|EI", 1024);
+      strncat(ret_str, "|EI", 1024);
 
    if (mod & GL_SATURATE_BIT_ATI)
-      _mesa_strncat(ret_str, "|SAT", 1024);
+      strncat(ret_str, "|SAT", 1024);
 
    if (_mesa_strlen(ret_str) == 0)
-      _mesa_strncat(ret_str, "NONE", 1024);
+      strncat(ret_str, "NONE", 1024);
    return ret_str;
 }
 
