@@ -2364,7 +2364,7 @@ __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
    psc = &priv->screenConfigs[i];
 
 #if defined(__DRI_SWAP_BUFFER_COUNTER) && defined(__DRI_MEDIA_STREAM_COUNTER)
-   if (pdraw && psc->sbc && psc->sbc)
+   if (pdraw && psc->sbc && psc->msc)
       return ( (pdraw && psc->sbc && psc->msc)
 	       && ((*psc->msc->getMSC)(psc->driScreen, msc) == 0)
 	       && ((*psc->sbc->getSBC)(pdraw->driDrawable, sbc) == 0)
@@ -2494,7 +2494,7 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if (!pdraw || !gc->driContext) /* no GLX for this */
+   if (!pdraw || !gc || !gc->driContext) /* no GLX for this */
       return -1;
 
    /* The OML_sync_control spec says these should "generate a GLX_BAD_VALUE
@@ -2594,7 +2594,7 @@ __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
       return ((ret == 0) && (__glXGetUST(ust) == 0));
    }
 #endif
-   if (pdraw && psc->driScreen && psc->driScreen->waitForMSC) {
+   if (pdraw && psc->driScreen && psc->driScreen->waitForSBC) {
       ret = psc->driScreen->waitForSBC(pdraw, target_sbc, ust, msc, sbc);
       return ret;
    }
