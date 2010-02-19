@@ -1560,7 +1560,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
    if (DISASSEM) {
       _mesa_print_program(&p.program->Base);
-      _mesa_printf("\n");
+      printf("\n");
    }
 }
 

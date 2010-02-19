@@ -80,7 +80,7 @@ do_blit_readpixels(GLcontext * ctx,
    GLint dst_x, dst_y;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    if (!src)
       return GL_FALSE;
@@ -89,7 +89,7 @@ do_blit_readpixels(GLcontext * ctx,
       /* PBO only for now:
        */
       if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s - not PBO\n", __FUNCTION__);
+         printf("%s - not PBO\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -97,13 +97,13 @@ do_blit_readpixels(GLcontext * ctx,
    if (ctx->_ImageTransferState ||
        !intel_check_blit_format(src, format, type)) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s - bad format for blit\n", __FUNCTION__);
+         printf("%s - bad format for blit\n", __FUNCTION__);
       return GL_FALSE;
    }
 
    if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s: bad packing params\n", __FUNCTION__);
+         printf("%s: bad packing params\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -114,7 +114,7 @@ do_blit_readpixels(GLcontext * ctx,
 
    if (pack->Invert) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
+         printf("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
       return GL_FALSE;
    }
    else {
@@ -159,7 +159,7 @@ do_blit_readpixels(GLcontext * ctx,
    }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s - DONE\n", __FUNCTION__);
+      printf("%s - DONE\n", __FUNCTION__);
 
    return GL_TRUE;
 }
@@ -181,7 +181,7 @@ intelReadPixels(GLcontext * ctx,
       return;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
+      printf("%s: fallback to swrast\n", __FUNCTION__);
 
    /* Update Mesa state before calling down into _swrast_ReadPixels, as
     * the spans code requires the computed buffer states to be up to date,

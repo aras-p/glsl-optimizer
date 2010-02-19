@@ -314,9 +314,9 @@ write_texture_image(struct gl_texture_object *texObj,
                               buffer, texObj, img);
 
       /* make filename */
-      _mesa_sprintf(s, "/tmp/tex%u.l%u.f%u.ppm", texObj->Name, level, face);
+      sprintf(s, "/tmp/tex%u.l%u.f%u.ppm", texObj->Name, level, face);
 
-      _mesa_printf("  Writing image level %u to %s\n", level, s);
+      printf("  Writing image level %u to %s\n", level, s);
       write_ppm(s, buffer, img->Width, img->Height, 4, 0, 1, 2, GL_FALSE);
 
       ctx->Pack = store; /* restore */
@@ -356,9 +356,9 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
                           format, type, &ctx->DefaultPacking, buffer);
 
    /* make filename */
-   _mesa_sprintf(s, "/tmp/renderbuffer%u.ppm", rb->Name);
+   sprintf(s, "/tmp/renderbuffer%u.ppm", rb->Name);
 
-   _mesa_printf("  Writing renderbuffer image to %s\n", s);
+   printf("  Writing renderbuffer image to %s\n", s);
    write_ppm(s, buffer, rb->Width, rb->Height, 4, 0, 1, 2, GL_TRUE);
 
    free(buffer);
@@ -380,17 +380,17 @@ dump_texture(struct gl_texture_object *texObj, GLuint writeImages)
    GLboolean written = GL_FALSE;
    GLuint i, j;
 
-   _mesa_printf("Texture %u\n", texObj->Name);
-   _mesa_printf("  Target %s\n", tex_target_name(texObj->Target));
+   printf("Texture %u\n", texObj->Name);
+   printf("  Target %s\n", tex_target_name(texObj->Target));
    for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
       for (j = 0; j < numFaces; j++) {
          struct gl_texture_image *texImg = texObj->Image[j][i];
          if (texImg) {
-            _mesa_printf("  Face %u level %u: %d x %d x %d, format %s at %p\n",
-                         j, i,
-                         texImg->Width, texImg->Height, texImg->Depth,
-                         _mesa_get_format_name(texImg->TexFormat),
-                         texImg->Data);
+            printf("  Face %u level %u: %d x %d x %d, format %s at %p\n",
+		   j, i,
+		   texImg->Width, texImg->Height, texImg->Depth,
+		   _mesa_get_format_name(texImg->TexFormat),
+		   texImg->Data);
             if (writeImages == WRITE_ALL ||
                 (writeImages == WRITE_ONE && !written)) {
                write_texture_image(texObj, j, i);
@@ -441,9 +441,9 @@ _mesa_dump_textures(GLuint writeImages)
 static void
 dump_renderbuffer(const struct gl_renderbuffer *rb, GLboolean writeImage)
 {
-   _mesa_printf("Renderbuffer %u: %u x %u  IntFormat = %s\n",
-                rb->Name, rb->Width, rb->Height,
-                _mesa_lookup_enum_by_nr(rb->InternalFormat));
+   printf("Renderbuffer %u: %u x %u  IntFormat = %s\n",
+	  rb->Name, rb->Width, rb->Height,
+	  _mesa_lookup_enum_by_nr(rb->InternalFormat));
    if (writeImage) {
       write_renderbuffer_image(rb);
    }
@@ -489,12 +489,12 @@ _mesa_dump_color_buffer(const char *filename)
 
    _mesa_ReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
-   _mesa_printf("ReadBuffer %p 0x%x  DrawBuffer %p 0x%x\n",
-                ctx->ReadBuffer->_ColorReadBuffer,
-                ctx->ReadBuffer->ColorReadBuffer,
-                ctx->DrawBuffer->_ColorDrawBuffers[0],
-                ctx->DrawBuffer->ColorDrawBuffer[0]);
-   _mesa_printf("Writing %d x %d color buffer to %s\n", w, h, filename);
+   printf("ReadBuffer %p 0x%x  DrawBuffer %p 0x%x\n",
+	  ctx->ReadBuffer->_ColorReadBuffer,
+	  ctx->ReadBuffer->ColorReadBuffer,
+	  ctx->DrawBuffer->_ColorDrawBuffers[0],
+	  ctx->DrawBuffer->ColorDrawBuffer[0]);
+   printf("Writing %d x %d color buffer to %s\n", w, h, filename);
    write_ppm(filename, buf, w, h, 4, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
@@ -529,7 +529,7 @@ _mesa_dump_depth_buffer(const char *filename)
       buf2[i*3+2] = (buf[i] >>  8) & 0xff;
    }
 
-   _mesa_printf("Writing %d x %d depth buffer to %s\n", w, h, filename);
+   printf("Writing %d x %d depth buffer to %s\n", w, h, filename);
    write_ppm(filename, buf2, w, h, 3, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
@@ -564,7 +564,7 @@ _mesa_dump_stencil_buffer(const char *filename)
       buf2[i*3+2] = (buf[i] - 128) * 2;
    }
 
-   _mesa_printf("Writing %d x %d stencil buffer to %s\n", w, h, filename);
+   printf("Writing %d x %d stencil buffer to %s\n", w, h, filename);
    write_ppm(filename, buf2, w, h, 3, 0, 1, 2, GL_TRUE);
 
    _mesa_PopClientAttrib();
@@ -587,7 +587,7 @@ _mesa_print_texture(GLcontext *ctx, const struct gl_texture_image *img)
    const GLubyte *data = (const GLubyte *) img->Data;
 
    if (!data) {
-      _mesa_printf("No texture data\n");
+      printf("No texture data\n");
       return;
    }
 
@@ -619,17 +619,17 @@ _mesa_print_texture(GLcontext *ctx, const struct gl_texture_image *img)
    for (i = 0; i < img->Height; i++) {
       for (j = 0; j < img->Width; j++) {
          if (c==1)
-            _mesa_printf("%02x  ", data[0]);
+            printf("%02x  ", data[0]);
          else if (c==2)
-            _mesa_printf("%02x%02x  ", data[0], data[1]);
+            printf("%02x%02x  ", data[0], data[1]);
          else if (c==3)
-            _mesa_printf("%02x%02x%02x  ", data[0], data[1], data[2]);
+            printf("%02x%02x%02x  ", data[0], data[1], data[2]);
          else if (c==4)
-            _mesa_printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
+            printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
          data += (img->RowStride - img->Width) * c;
       }
       /* XXX use img->ImageStride here */
-      _mesa_printf("\n");
+      printf("\n");
    }
 #endif
 }

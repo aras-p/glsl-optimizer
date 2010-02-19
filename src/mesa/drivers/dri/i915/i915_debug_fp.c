@@ -31,8 +31,6 @@
 #include "i915_debug.h"
 #include "main/imports.h"
 
-#define PRINTF( ... ) _mesa_printf( __VA_ARGS__ )
-
 static const char *opcodes[0x20] = {
    "NOP",
    "ADD",
@@ -123,27 +121,27 @@ print_reg_type_nr(GLuint type, GLuint nr)
    case REG_TYPE_T:
       switch (nr) {
       case T_DIFFUSE:
-         PRINTF("T_DIFFUSE");
+         printf("T_DIFFUSE");
          return;
       case T_SPECULAR:
-         PRINTF("T_SPECULAR");
+         printf("T_SPECULAR");
          return;
       case T_FOG_W:
-         PRINTF("T_FOG_W");
+         printf("T_FOG_W");
          return;
       default:
-         PRINTF("T_TEX%d", nr);
+         printf("T_TEX%d", nr);
          return;
       }
    case REG_TYPE_OC:
       if (nr == 0) {
-         PRINTF("oC");
+         printf("oC");
          return;
       }
       break;
    case REG_TYPE_OD:
       if (nr == 0) {
-         PRINTF("oD");
+         printf("oD");
          return;
       }
       break;
@@ -151,7 +149,7 @@ print_reg_type_nr(GLuint type, GLuint nr)
       break;
    }
 
-   PRINTF("%s[%d]", regname[type], nr);
+   printf("%s[%d]", regname[type], nr);
 }
 
 #define REG_SWIZZLE_MASK 0x7777
@@ -172,33 +170,33 @@ print_reg_neg_swizzle(GLuint reg)
        (reg & REG_NEGATE_MASK) == 0)
       return;
 
-   PRINTF(".");
+   printf(".");
 
    for (i = 3; i >= 0; i--) {
       if (reg & (1 << ((i * 4) + 3)))
-         PRINTF("-");
+         printf("-");
 
       switch ((reg >> (i * 4)) & 0x7) {
       case 0:
-         PRINTF("x");
+         printf("x");
          break;
       case 1:
-         PRINTF("y");
+         printf("y");
          break;
       case 2:
-         PRINTF("z");
+         printf("z");
          break;
       case 3:
-         PRINTF("w");
+         printf("w");
          break;
       case 4:
-         PRINTF("0");
+         printf("0");
          break;
       case 5:
-         PRINTF("1");
+         printf("1");
          break;
       default:
-         PRINTF("?");
+         printf("?");
          break;
       }
    }
@@ -223,15 +221,15 @@ print_dest_reg(GLuint dword)
    print_reg_type_nr(type, nr);
    if ((dword & A0_DEST_CHANNEL_ALL) == A0_DEST_CHANNEL_ALL)
       return;
-   PRINTF(".");
+   printf(".");
    if (dword & A0_DEST_CHANNEL_X)
-      PRINTF("x");
+      printf("x");
    if (dword & A0_DEST_CHANNEL_Y)
-      PRINTF("y");
+      printf("y");
    if (dword & A0_DEST_CHANNEL_Z)
-      PRINTF("z");
+      printf("z");
    if (dword & A0_DEST_CHANNEL_W)
-      PRINTF("w");
+      printf("w");
 }
 
 
@@ -246,29 +244,29 @@ print_arith_op(GLuint opcode, const GLuint * program)
    if (opcode != A0_NOP) {
       print_dest_reg(program[0]);
       if (program[0] & A0_DEST_SATURATE)
-         PRINTF(" = SATURATE ");
+         printf(" = SATURATE ");
       else
-         PRINTF(" = ");
+         printf(" = ");
    }
 
-   PRINTF("%s ", opcodes[opcode]);
+   printf("%s ", opcodes[opcode]);
 
    print_src_reg(GET_SRC0_REG(program[0], program[1]));
    if (args[opcode] == 1) {
-      PRINTF("\n");
+      printf("\n");
       return;
    }
 
-   PRINTF(", ");
+   printf(", ");
    print_src_reg(GET_SRC1_REG(program[1], program[2]));
    if (args[opcode] == 2) {
-      PRINTF("\n");
+      printf("\n");
       return;
    }
 
-   PRINTF(", ");
+   printf(", ");
    print_src_reg(GET_SRC2_REG(program[2]));
-   PRINTF("\n");
+   printf("\n");
    return;
 }
 
@@ -277,24 +275,24 @@ static void
 print_tex_op(GLuint opcode, const GLuint * program)
 {
    print_dest_reg(program[0] | A0_DEST_CHANNEL_ALL);
-   PRINTF(" = ");
+   printf(" = ");
 
-   PRINTF("%s ", opcodes[opcode]);
+   printf("%s ", opcodes[opcode]);
 
-   PRINTF("S[%d],", program[0] & T0_SAMPLER_NR_MASK);
+   printf("S[%d],", program[0] & T0_SAMPLER_NR_MASK);
 
    print_reg_type_nr((program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
                      REG_TYPE_MASK,
                      (program[1] >> T1_ADDRESS_REG_NR_SHIFT) & REG_NR_MASK);
-   PRINTF("\n");
+   printf("\n");
 }
 
 static void
 print_dcl_op(GLuint opcode, const GLuint * program)
 {
-   PRINTF("%s ", opcodes[opcode]);
+   printf("%s ", opcodes[opcode]);
    print_dest_reg(program[0] | A0_DEST_CHANNEL_ALL);
-   PRINTF("\n");
+   printf("\n");
 }
 
 
@@ -304,7 +302,7 @@ i915_disassemble_program(const GLuint * program, GLuint sz)
    GLuint size = program[0] & 0x1ff;
    GLint i;
 
-   PRINTF("\t\tBEGIN\n");
+   printf("\t\tBEGIN\n");
 
    assert(size + 2 == sz);
 
@@ -312,7 +310,7 @@ i915_disassemble_program(const GLuint * program, GLuint sz)
    for (i = 1; i < sz; i += 3, program += 3) {
       GLuint opcode = program[0] & (0x1f << 24);
 
-      PRINTF("\t\t");
+      printf("\t\t");
 
       if ((GLint) opcode >= A0_NOP && opcode <= A0_SLT)
          print_arith_op(opcode >> 24, program);
@@ -321,10 +319,10 @@ i915_disassemble_program(const GLuint * program, GLuint sz)
       else if (opcode == D0_DCL)
          print_dcl_op(opcode >> 24, program);
       else
-         PRINTF("Unknown opcode 0x%x\n", opcode);
+         printf("Unknown opcode 0x%x\n", opcode);
    }
 
-   PRINTF("\t\tEND\n\n");
+   printf("\t\tEND\n\n");
 }
 
 

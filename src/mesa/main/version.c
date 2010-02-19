@@ -124,7 +124,7 @@ _mesa_compute_version(GLcontext *ctx)
    
    ctx->VersionString = (char *) malloc(max);
    if (ctx->VersionString) {
-      _mesa_snprintf(ctx->VersionString, max, "%u.%u Mesa " MESA_VERSION_STRING,
-                     ctx->VersionMajor, ctx->VersionMinor);
+      snprintf(ctx->VersionString, max, "%u.%u Mesa " MESA_VERSION_STRING,
+	       ctx->VersionMajor, ctx->VersionMinor);
    }
 }

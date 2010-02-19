@@ -307,8 +307,8 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
       const GLuint format = map[i].format;
       if (format == EMIT_PAD) {
 	 if (DBG)
-	    _mesa_printf("%d: pad %d, offset %d\n", i,  
-			 map[i].offset, offset);  
+	    printf("%d: pad %d, offset %d\n", i,  
+		   map[i].offset, offset);  
 
 	 offset += map[i].offset;
 
@@ -338,9 +338,9 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 
 	 
 	 if (DBG)
-	    _mesa_printf("%d: %s, vp %p, offset %d\n", i,  
-			 _tnl_format_info[format].name, (void *)vp,
-			 vtx->attr[j].vertoffset);   
+	    printf("%d: %s, vp %p, offset %d\n", i,  
+		   _tnl_format_info[format].name, (void *)vp,
+		   vtx->attr[j].vertoffset);   
 
 	 offset += _tnl_format_info[format].attrsize;
 	 j++;

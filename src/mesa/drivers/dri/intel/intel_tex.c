@@ -146,7 +146,7 @@ timed_memcpy(void *dest, const void *src, size_t n)
    double rate;
 
    if ((((unsigned) src) & 63) || (((unsigned) dest) & 63))
-      _mesa_printf("Warning - non-aligned texture copy!\n");
+      printf("Warning - non-aligned texture copy!\n");
 
    t1 = fastrdtsc();
    ret = do_memcpy(dest, src, n);
@@ -154,7 +154,7 @@ timed_memcpy(void *dest, const void *src, size_t n)
 
    rate = time_diff(t1, t2);
    rate /= (double) n;
-   _mesa_printf("timed_memcpy: %u %u --> %f clocks/byte\n", t1, t2, rate);
+   printf("timed_memcpy: %u %u --> %f clocks/byte\n", t1, t2, rate);
    return ret;
 }
 #endif /* DO_DEBUG */

@@ -54,9 +54,9 @@ void brw_print_reg( struct brw_reg hwreg )
       "f"
    };
 
-   _mesa_printf("%s%s", 
-		hwreg.abs ? "abs/" : "",
-		hwreg.negate ? "-" : "");
+   printf("%s%s", 
+	  hwreg.abs ? "abs/" : "",
+	  hwreg.negate ? "-" : "");
      
    if (hwreg.file == BRW_GENERAL_REGISTER_FILE &&
        hwreg.nr % 2 == 0 &&
@@ -66,7 +66,7 @@ void brw_print_reg( struct brw_reg hwreg )
        hwreg.hstride == BRW_HORIZONTAL_STRIDE_1 &&
        hwreg.type == BRW_REGISTER_TYPE_F) {
       /* vector register */
-      _mesa_printf("vec%d", hwreg.nr);
+      printf("vec%d", hwreg.nr);
    }
    else if (hwreg.file == BRW_GENERAL_REGISTER_FILE &&
 	    hwreg.vstride == BRW_VERTICAL_STRIDE_0 &&
@@ -74,13 +74,13 @@ void brw_print_reg( struct brw_reg hwreg )
 	    hwreg.hstride == BRW_HORIZONTAL_STRIDE_0 &&
 	    hwreg.type == BRW_REGISTER_TYPE_F) {      
       /* "scalar" register */
-      _mesa_printf("scl%d.%d", hwreg.nr, hwreg.subnr / 4);
+      printf("scl%d.%d", hwreg.nr, hwreg.subnr / 4);
    }
    else if (hwreg.file == BRW_IMMEDIATE_VALUE) {
-      _mesa_printf("imm %f", hwreg.dw1.f);
+      printf("imm %f", hwreg.dw1.f);
    }
    else {
-      _mesa_printf("%s%d.%d<%d;%d,%d>:%s", 
+      printf("%s%d.%d<%d;%d,%d>:%s", 
 		   file[hwreg.file],
 		   hwreg.nr,
 		   hwreg.subnr / type_sz(hwreg.type),

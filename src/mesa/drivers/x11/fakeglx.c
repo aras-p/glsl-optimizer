@@ -53,7 +53,7 @@
 #include "xmesaP.h"
 
 #ifdef __VMS
-#define _mesa_sprintf sprintf
+#define sprintf sprintf
 #endif
 
 /* This indicates the client-side GLX API and GLX encoder version. */
@@ -2032,8 +2032,8 @@ static const char *
 Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s",
-                 SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s",
+	   SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
    (void) screen;
@@ -2057,8 +2057,8 @@ static const char *
 Fake_glXGetClientString( Display *dpy, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
-                 CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
+	   CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
 

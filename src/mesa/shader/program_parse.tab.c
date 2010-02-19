@@ -2984,7 +2984,7 @@ yyreduce:
     {
 	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 63)) {
               char s[100];
-              _mesa_snprintf(s, sizeof(s),
+              snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
 	      yyerror(& (yylsp[(1) - (1)]), state, s);
 	      YYERROR;
@@ -3001,7 +3001,7 @@ yyreduce:
     {
 	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 64)) {
               char s[100];
-              _mesa_snprintf(s, sizeof(s),
+              snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
 	      yyerror(& (yylsp[(1) - (1)]), state, s);
 	      YYERROR;
@@ -4915,7 +4915,7 @@ yyreduce:
 
 	   if (exist != NULL) {
 	      char m[1000];
-	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", (yyvsp[(2) - (4)].string));
+	      snprintf(m, sizeof(m), "redeclared identifier: %s", (yyvsp[(2) - (4)].string));
 	      free((yyvsp[(2) - (4)].string));
 	      yyerror(& (yylsp[(2) - (4)]), state, m);
 	      YYERROR;

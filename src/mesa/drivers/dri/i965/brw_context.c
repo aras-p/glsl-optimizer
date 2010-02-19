@@ -78,7 +78,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    GLcontext *ctx = &intel->ctx;
 
    if (!brw) {
-      _mesa_printf("%s: failed to alloc context\n", __FUNCTION__);
+      printf("%s: failed to alloc context\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -87,7 +87,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    if (!intelInitContext( intel, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
-      _mesa_printf("%s: failed to init intel context\n", __FUNCTION__);
+      printf("%s: failed to init intel context\n", __FUNCTION__);
       FREE(brw);
       return GL_FALSE;
    }

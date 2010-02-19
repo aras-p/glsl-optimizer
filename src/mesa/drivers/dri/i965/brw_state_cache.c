@@ -266,7 +266,7 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
    }
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("upload %s: %d bytes to cache id %d\n",
+      printf("upload %s: %d bytes to cache id %d\n",
 		   cache->name[cache_id],
 		   data_size, cache_id);
 
@@ -425,7 +425,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
@@ -465,7 +465,7 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (prev = &cache->items[i]; *prev;) {
@@ -493,7 +493,7 @@ void
 brw_state_cache_check_size(struct brw_context *brw)
 {
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
+      printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
 
    /* un-tuned guess.  We've got around 20 state objects for a total of around
     * 32k, so 1000 of them is around 1.5MB.
@@ -512,7 +512,7 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {

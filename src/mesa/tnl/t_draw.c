@@ -413,12 +413,12 @@ void _tnl_draw_prims( GLcontext *ctx,
 
    if (0)
    {
-      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
       for (i = 0; i < nr_prims; i++)
-	 _mesa_printf("prim %d: %s start %d count %d\n", i, 
-		      _mesa_lookup_enum_by_nr(prim[i].mode),
-		      prim[i].start,
-		      prim[i].count);
+	 printf("prim %d: %s start %d count %d\n", i, 
+		_mesa_lookup_enum_by_nr(prim[i].mode),
+		prim[i].start,
+		prim[i].count);
    }
 
    if (min_index) {

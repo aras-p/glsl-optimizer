@@ -105,7 +105,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
    GLuint i = c->prog_data.nr_params++;
    
    if (i >= BRW_WM_MAX_PARAM) {
-      _mesa_printf("%s: out of params\n", __FUNCTION__);
+      printf("%s: out of params\n", __FUNCTION__);
       c->prog_data.error = 1;
       return NULL;
    }
@@ -154,7 +154,7 @@ static const struct brw_wm_ref *get_const_ref( struct brw_wm_compile *c,
       return c->constref[i].ref;
    }
    else {
-      _mesa_printf("%s: out of constrefs\n", __FUNCTION__);
+      printf("%s: out of constrefs\n", __FUNCTION__);
       c->prog_data.error = 1;
       return NULL;
    }

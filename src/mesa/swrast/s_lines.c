@@ -233,7 +233,7 @@ static const char *lineFuncName = NULL;
 #define USE(lineFunc)                   \
 do {                                    \
     lineFuncName = #lineFunc;           \
-    /*_mesa_printf("%s\n", lineFuncName);*/   \
+    /*printf("%s\n", lineFuncName);*/   \
     swrast->Line = lineFunc;            \
 } while (0)
 

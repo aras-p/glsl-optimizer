@@ -1155,7 +1155,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
-   _mesa_printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
+   printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
                 bufObj->Name, size, data, usage);
 #endif
 
@@ -1272,8 +1272,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
-   _mesa_printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
-                bufObj->Name, bufObj->Size, access);
+   printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
+	  bufObj->Name, bufObj->Size, access);
    if (access == GL_WRITE_ONLY_ARB) {
       GLuint i;
       GLubyte *b = (GLubyte *) bufObj->Pointer;
@@ -1349,7 +1349,7 @@ _mesa_UnmapBufferARB(GLenum target)
          }
       }
       if (unchanged) {
-         _mesa_printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
+         printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
                       bufObj->Name, unchanged, bufObj->Size, pos);
       }
    }

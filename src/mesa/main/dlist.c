@@ -7685,7 +7685,7 @@ execute_list(GLcontext *ctx, GLuint list)
          default:
             {
                char msg[1000];
-               _mesa_sprintf(msg, "Error in execute_list: opcode=%d",
+               sprintf(msg, "Error in execute_list: opcode=%d",
                              (int) opcode);
                _mesa_problem(ctx, msg);
             }
@@ -9320,7 +9320,7 @@ print_list(GLcontext *ctx, GLuint list)
    GLboolean done;
 
    if (!islist(ctx, list)) {
-      _mesa_printf("%u is not a display list ID\n", list);
+      printf("%u is not a display list ID\n", list);
       return;
    }
 
@@ -9330,7 +9330,7 @@ print_list(GLcontext *ctx, GLuint list)
 
    n = dlist->Head;
 
-   _mesa_printf("START-LIST %u, address %p\n", list, (void *) n);
+   printf("START-LIST %u, address %p\n", list, (void *) n);
 
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
@@ -9342,196 +9342,196 @@ print_list(GLcontext *ctx, GLuint list)
       else {
          switch (opcode) {
          case OPCODE_ACCUM:
-            _mesa_printf("Accum %s %g\n", enum_string(n[1].e), n[2].f);
+            printf("Accum %s %g\n", enum_string(n[1].e), n[2].f);
             break;
          case OPCODE_BITMAP:
-            _mesa_printf("Bitmap %d %d %g %g %g %g %p\n", n[1].i, n[2].i,
+            printf("Bitmap %d %d %g %g %g %g %p\n", n[1].i, n[2].i,
                          n[3].f, n[4].f, n[5].f, n[6].f, (void *) n[7].data);
             break;
          case OPCODE_CALL_LIST:
-            _mesa_printf("CallList %d\n", (int) n[1].ui);
+            printf("CallList %d\n", (int) n[1].ui);
             break;
          case OPCODE_CALL_LIST_OFFSET:
-            _mesa_printf("CallList %d + offset %u = %u\n", (int) n[1].ui,
+            printf("CallList %d + offset %u = %u\n", (int) n[1].ui,
                          ctx->List.ListBase, ctx->List.ListBase + n[1].ui);
             break;
          case OPCODE_COLOR_TABLE_PARAMETER_FV:
-            _mesa_printf("ColorTableParameterfv %s %s %f %f %f %f\n",
+            printf("ColorTableParameterfv %s %s %f %f %f %f\n",
                          enum_string(n[1].e), enum_string(n[2].e),
                          n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_COLOR_TABLE_PARAMETER_IV:
-            _mesa_printf("ColorTableParameteriv %s %s %d %d %d %d\n",
+            printf("ColorTableParameteriv %s %s %d %d %d %d\n",
                          enum_string(n[1].e), enum_string(n[2].e),
                          n[3].i, n[4].i, n[5].i, n[6].i);
             break;
          case OPCODE_DISABLE:
-            _mesa_printf("Disable %s\n", enum_string(n[1].e));
+            printf("Disable %s\n", enum_string(n[1].e));
             break;
          case OPCODE_ENABLE:
-            _mesa_printf("Enable %s\n", enum_string(n[1].e));
+            printf("Enable %s\n", enum_string(n[1].e));
             break;
          case OPCODE_FRUSTUM:
-            _mesa_printf("Frustum %g %g %g %g %g %g\n",
+            printf("Frustum %g %g %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_LINE_STIPPLE:
-            _mesa_printf("LineStipple %d %x\n", n[1].i, (int) n[2].us);
+            printf("LineStipple %d %x\n", n[1].i, (int) n[2].us);
             break;
          case OPCODE_LOAD_IDENTITY:
-            _mesa_printf("LoadIdentity\n");
+            printf("LoadIdentity\n");
             break;
          case OPCODE_LOAD_MATRIX:
-            _mesa_printf("LoadMatrix\n");
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("LoadMatrix\n");
+            printf("  %8f %8f %8f %8f\n",
                          n[1].f, n[5].f, n[9].f, n[13].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[2].f, n[6].f, n[10].f, n[14].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[3].f, n[7].f, n[11].f, n[15].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[4].f, n[8].f, n[12].f, n[16].f);
             break;
          case OPCODE_MULT_MATRIX:
-            _mesa_printf("MultMatrix (or Rotate)\n");
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("MultMatrix (or Rotate)\n");
+            printf("  %8f %8f %8f %8f\n",
                          n[1].f, n[5].f, n[9].f, n[13].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[2].f, n[6].f, n[10].f, n[14].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[3].f, n[7].f, n[11].f, n[15].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[4].f, n[8].f, n[12].f, n[16].f);
             break;
          case OPCODE_ORTHO:
-            _mesa_printf("Ortho %g %g %g %g %g %g\n",
+            printf("Ortho %g %g %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_POP_ATTRIB:
-            _mesa_printf("PopAttrib\n");
+            printf("PopAttrib\n");
             break;
          case OPCODE_POP_MATRIX:
-            _mesa_printf("PopMatrix\n");
+            printf("PopMatrix\n");
             break;
          case OPCODE_POP_NAME:
-            _mesa_printf("PopName\n");
+            printf("PopName\n");
             break;
          case OPCODE_PUSH_ATTRIB:
-            _mesa_printf("PushAttrib %x\n", n[1].bf);
+            printf("PushAttrib %x\n", n[1].bf);
             break;
          case OPCODE_PUSH_MATRIX:
-            _mesa_printf("PushMatrix\n");
+            printf("PushMatrix\n");
             break;
          case OPCODE_PUSH_NAME:
-            _mesa_printf("PushName %d\n", (int) n[1].ui);
+            printf("PushName %d\n", (int) n[1].ui);
             break;
          case OPCODE_RASTER_POS:
-            _mesa_printf("RasterPos %g %g %g %g\n",
+            printf("RasterPos %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ROTATE:
-            _mesa_printf("Rotate %g %g %g %g\n",
+            printf("Rotate %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_SCALE:
-            _mesa_printf("Scale %g %g %g\n", n[1].f, n[2].f, n[3].f);
+            printf("Scale %g %g %g\n", n[1].f, n[2].f, n[3].f);
             break;
          case OPCODE_TRANSLATE:
-            _mesa_printf("Translate %g %g %g\n", n[1].f, n[2].f, n[3].f);
+            printf("Translate %g %g %g\n", n[1].f, n[2].f, n[3].f);
             break;
          case OPCODE_BIND_TEXTURE:
-            _mesa_printf("BindTexture %s %d\n",
+            printf("BindTexture %s %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui), n[2].ui);
             break;
          case OPCODE_SHADE_MODEL:
-            _mesa_printf("ShadeModel %s\n", _mesa_lookup_enum_by_nr(n[1].ui));
+            printf("ShadeModel %s\n", _mesa_lookup_enum_by_nr(n[1].ui));
             break;
          case OPCODE_MAP1:
-            _mesa_printf("Map1 %s %.3f %.3f %d %d\n",
+            printf("Map1 %s %.3f %.3f %d %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui),
                          n[2].f, n[3].f, n[4].i, n[5].i);
             break;
          case OPCODE_MAP2:
-            _mesa_printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n",
+            printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui),
                          n[2].f, n[3].f, n[4].f, n[5].f,
                          n[6].i, n[7].i, n[8].i, n[9].i);
             break;
          case OPCODE_MAPGRID1:
-            _mesa_printf("MapGrid1 %d %.3f %.3f\n", n[1].i, n[2].f, n[3].f);
+            printf("MapGrid1 %d %.3f %.3f\n", n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_MAPGRID2:
-            _mesa_printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n",
+            printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n",
                          n[1].i, n[2].f, n[3].f, n[4].i, n[5].f, n[6].f);
             break;
          case OPCODE_EVALMESH1:
-            _mesa_printf("EvalMesh1 %d %d\n", n[1].i, n[2].i);
+            printf("EvalMesh1 %d %d\n", n[1].i, n[2].i);
             break;
          case OPCODE_EVALMESH2:
-            _mesa_printf("EvalMesh2 %d %d %d %d\n",
+            printf("EvalMesh2 %d %d %d %d\n",
                          n[1].i, n[2].i, n[3].i, n[4].i);
             break;
 
          case OPCODE_ATTR_1F_NV:
-            _mesa_printf("ATTR_1F_NV attr %d: %f\n", n[1].i, n[2].f);
+            printf("ATTR_1F_NV attr %d: %f\n", n[1].i, n[2].f);
             break;
          case OPCODE_ATTR_2F_NV:
-            _mesa_printf("ATTR_2F_NV attr %d: %f %f\n",
+            printf("ATTR_2F_NV attr %d: %f %f\n",
                          n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_ATTR_3F_NV:
-            _mesa_printf("ATTR_3F_NV attr %d: %f %f %f\n",
+            printf("ATTR_3F_NV attr %d: %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ATTR_4F_NV:
-            _mesa_printf("ATTR_4F_NV attr %d: %f %f %f %f\n",
+            printf("ATTR_4F_NV attr %d: %f %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
             break;
          case OPCODE_ATTR_1F_ARB:
-            _mesa_printf("ATTR_1F_ARB attr %d: %f\n", n[1].i, n[2].f);
+            printf("ATTR_1F_ARB attr %d: %f\n", n[1].i, n[2].f);
             break;
          case OPCODE_ATTR_2F_ARB:
-            _mesa_printf("ATTR_2F_ARB attr %d: %f %f\n",
+            printf("ATTR_2F_ARB attr %d: %f %f\n",
                          n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_ATTR_3F_ARB:
-            _mesa_printf("ATTR_3F_ARB attr %d: %f %f %f\n",
+            printf("ATTR_3F_ARB attr %d: %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ATTR_4F_ARB:
-            _mesa_printf("ATTR_4F_ARB attr %d: %f %f %f %f\n",
+            printf("ATTR_4F_ARB attr %d: %f %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
             break;
 
          case OPCODE_MATERIAL:
-            _mesa_printf("MATERIAL %x %x: %f %f %f %f\n",
+            printf("MATERIAL %x %x: %f %f %f %f\n",
                          n[1].i, n[2].i, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_BEGIN:
-            _mesa_printf("BEGIN %x\n", n[1].i);
+            printf("BEGIN %x\n", n[1].i);
             break;
          case OPCODE_END:
-            _mesa_printf("END\n");
+            printf("END\n");
             break;
          case OPCODE_RECTF:
-            _mesa_printf("RECTF %f %f %f %f\n", n[1].f, n[2].f, n[3].f,
+            printf("RECTF %f %f %f %f\n", n[1].f, n[2].f, n[3].f,
                          n[4].f);
             break;
          case OPCODE_EVAL_C1:
-            _mesa_printf("EVAL_C1 %f\n", n[1].f);
+            printf("EVAL_C1 %f\n", n[1].f);
             break;
          case OPCODE_EVAL_C2:
-            _mesa_printf("EVAL_C2 %f %f\n", n[1].f, n[2].f);
+            printf("EVAL_C2 %f %f\n", n[1].f, n[2].f);
             break;
          case OPCODE_EVAL_P1:
-            _mesa_printf("EVAL_P1 %d\n", n[1].i);
+            printf("EVAL_P1 %d\n", n[1].i);
             break;
          case OPCODE_EVAL_P2:
-            _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
+            printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
             break;
 
          case OPCODE_PROVOKING_VERTEX:
-            _mesa_printf("ProvokingVertex %s\n",
+            printf("ProvokingVertex %s\n",
                          _mesa_lookup_enum_by_nr(n[1].ui));
             break;
 
@@ -9539,26 +9539,26 @@ print_list(GLcontext *ctx, GLuint list)
              * meta opcodes/commands
              */
          case OPCODE_ERROR:
-            _mesa_printf("Error: %s %s\n",
+            printf("Error: %s %s\n",
                          enum_string(n[1].e), (const char *) n[2].data);
             break;
          case OPCODE_CONTINUE:
-            _mesa_printf("DISPLAY-LIST-CONTINUE\n");
+            printf("DISPLAY-LIST-CONTINUE\n");
             n = (Node *) n[1].next;
             break;
          case OPCODE_END_OF_LIST:
-            _mesa_printf("END-LIST %u\n", list);
+            printf("END-LIST %u\n", list);
             done = GL_TRUE;
             break;
          default:
             if (opcode < 0 || opcode > OPCODE_END_OF_LIST) {
-               _mesa_printf
+               printf
                   ("ERROR IN DISPLAY LIST: opcode = %d, address = %p\n",
                    opcode, (void *) n);
                return;
             }
             else {
-               _mesa_printf("command %d, %u operands\n", opcode,
+               printf("command %d, %u operands\n", opcode,
                             InstSize[opcode]);
             }
          }

@@ -1483,12 +1483,12 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
    if (0) {
       GLuint i;
 
-      _mesa_printf("Link %u shaders in program %u: %s\n",
+      printf("Link %u shaders in program %u: %s\n",
                    shProg->NumShaders, shProg->Name,
                    shProg->LinkStatus ? "Success" : "Failed");
 
       for (i = 0; i < shProg->NumShaders; i++) {
-         _mesa_printf(" shader %u, type 0x%x\n",
+         printf(" shader %u, type 0x%x\n",
                       shProg->Shaders[i]->Name,
                       shProg->Shaders[i]->Type);
       }
@@ -1504,7 +1504,7 @@ print_shader_info(const struct gl_shader_program *shProg)
 {
    GLuint i;
 
-   _mesa_printf("Mesa: glUseProgram(%u)\n", shProg->Name);
+   printf("Mesa: glUseProgram(%u)\n", shProg->Name);
    for (i = 0; i < shProg->NumShaders; i++) {
       const char *s;
       switch (shProg->Shaders[i]->Type) {
@@ -1520,14 +1520,14 @@ print_shader_info(const struct gl_shader_program *shProg)
       default:
          s = "";
       }
-      _mesa_printf("  %s shader %u, checksum %u\n", s, 
-                   shProg->Shaders[i]->Name,
-                   shProg->Shaders[i]->SourceChecksum);
+      printf("  %s shader %u, checksum %u\n", s, 
+	     shProg->Shaders[i]->Name,
+	     shProg->Shaders[i]->SourceChecksum);
    }
    if (shProg->VertexProgram)
-      _mesa_printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
+      printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
    if (shProg->FragmentProgram)
-      _mesa_printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+      printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
 }
 
 
@@ -1697,8 +1697,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* This maps a sampler to a texture unit: */
          if (sampler < MAX_SAMPLERS) {
 #if 0
-            _mesa_printf("Set program %p sampler %d '%s' to unit %u\n",
-                         program, sampler, param->Name, texUnit);
+            printf("Set program %p sampler %d '%s' to unit %u\n",
+		   program, sampler, param->Name, texUnit);
 #endif
             if (program->SamplerUnits[sampler] != texUnit) {
                program->SamplerUnits[sampler] = texUnit;
@@ -1861,21 +1861,21 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    if (ctx->Shader.Flags & GLSL_UNIFORMS) {
       GLint i;
-      _mesa_printf("Mesa: set program %u uniform %s (loc %d) to: ",
-                   shProg->Name, uniform->Name, location);
+      printf("Mesa: set program %u uniform %s (loc %d) to: ",
+	     shProg->Name, uniform->Name, location);
       if (basicType == GL_INT) {
          const GLint *v = (const GLint *) values;
          for (i = 0; i < count * elems; i++) {
-            _mesa_printf("%d ", v[i]);
+            printf("%d ", v[i]);
          }
       }
       else {
          const GLfloat *v = (const GLfloat *) values;
          for (i = 0; i < count * elems; i++) {
-            _mesa_printf("%g ", v[i]);
+            printf("%g ", v[i]);
          }
       }
-      _mesa_printf("\n");
+      printf("\n");
    }
 
    /* A uniform var may be used by both a vertex shader and a fragment
@@ -2076,9 +2076,9 @@ validate_samplers(GLcontext *ctx, const struct gl_program *prog, char *errMsg)
       unit = prog->SamplerUnits[sampler];
       target = prog->SamplerTargets[sampler];
       if (targetUsed[unit] != -1 && targetUsed[unit] != target) {
-         _mesa_snprintf(errMsg, 100,
-                       "Texture unit %d is accessed both as %s and %s",
-                       unit, targetName[targetUsed[unit]], targetName[target]);
+         snprintf(errMsg, 100,
+		  "Texture unit %d is accessed both as %s and %s",
+		  unit, targetName[targetUsed[unit]], targetName[target]);
          return GL_FALSE;
       }
       targetUsed[unit] = target;

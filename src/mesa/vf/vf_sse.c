@@ -482,7 +482,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    update_src_ptr(p, srcECX, vfESI, a);
 	 }
 	 else {
-	    _mesa_printf("Can't emit 1ub %x %x %d\n", a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
+	    printf("Can't emit 1ub %x %x %d\n", a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
 	    return GL_FALSE;
 	 }
 	 break;
@@ -527,7 +527,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    j++;		/* NOTE: two attrs consumed */
 	 }
 	 else {
-	    _mesa_printf("Can't emit 3ub\n");
+	    printf("Can't emit 3ub\n");
 	 }
 	 return GL_FALSE;	/* add this later */
 	 break;
@@ -575,12 +575,12 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    break;
 	 case GL_UNSIGNED_SHORT:
 	 default:
-	    _mesa_printf("unknown CHAN_TYPE %s\n", _mesa_lookup_enum_by_nr(CHAN_TYPE));
+	    printf("unknown CHAN_TYPE %s\n", _mesa_lookup_enum_by_nr(CHAN_TYPE));
 	    return GL_FALSE;
 	 }
 	 break;
       default:
-	 _mesa_printf("unknown a[%d].format %d\n", j, a->format);
+	 printf("unknown a[%d].format %d\n", j, a->format);
 	 return GL_FALSE;	/* catch any new opcodes */
       }
       

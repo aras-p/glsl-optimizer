@@ -41,21 +41,21 @@ void brw_wm_print_value( struct brw_wm_compile *c,
    if (c->state >= PASS2_DONE) 
       brw_print_reg(value->hw_reg);
    else if( value == &c->undef_value )
-      _mesa_printf("undef");
+      printf("undef");
    else if( value - c->vreg >= 0 &&
 	    value - c->vreg < BRW_WM_MAX_VREG)
-      _mesa_printf("r%d", value - c->vreg);
+      printf("r%d", value - c->vreg);
    else if (value - c->creg >= 0 &&
 	    value - c->creg < BRW_WM_MAX_PARAM)
-      _mesa_printf("c%d", value - c->creg);
+      printf("c%d", value - c->creg);
    else if (value - c->payload.input_interp >= 0 &&
 	    value - c->payload.input_interp < FRAG_ATTRIB_MAX)
-      _mesa_printf("i%d", value - c->payload.input_interp);
+      printf("i%d", value - c->payload.input_interp);
    else if (value - c->payload.depth >= 0 &&
 	    value - c->payload.depth < FRAG_ATTRIB_MAX)
-      _mesa_printf("d%d", value - c->payload.depth);
+      printf("d%d", value - c->payload.depth);
    else 
-      _mesa_printf("?");
+      printf("?");
 }
 
 void brw_wm_print_ref( struct brw_wm_compile *c,
@@ -64,16 +64,16 @@ void brw_wm_print_ref( struct brw_wm_compile *c,
    struct brw_reg hw_reg = ref->hw_reg;
 
    if (ref->unspill_reg)
-      _mesa_printf("UNSPILL(%x)/", ref->value->spill_slot);
+      printf("UNSPILL(%x)/", ref->value->spill_slot);
 
    if (c->state >= PASS2_DONE)
       brw_print_reg(ref->hw_reg);
    else {
-      _mesa_printf("%s", hw_reg.negate ? "-" : "");
-      _mesa_printf("%s", hw_reg.abs ? "abs/" : "");
+      printf("%s", hw_reg.negate ? "-" : "");
+      printf("%s", hw_reg.abs ? "abs/" : "");
       brw_wm_print_value(c, ref->value);
       if ((hw_reg.nr&1) || hw_reg.subnr) {
-	 _mesa_printf("->%d.%d", (hw_reg.nr&1), hw_reg.subnr);
+	 printf("->%d.%d", (hw_reg.nr&1), hw_reg.subnr);
       }
    }
 }
@@ -84,22 +84,22 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
    GLuint i, arg;
    GLuint nr_args = brw_wm_nr_args(inst->opcode);
 
-   _mesa_printf("[");
+   printf("[");
    for (i = 0; i < 4; i++) {
       if (inst->dst[i]) {
 	 brw_wm_print_value(c, inst->dst[i]);
 	 if (inst->dst[i]->spill_slot)
-	    _mesa_printf("/SPILL(%x)",inst->dst[i]->spill_slot);
+	    printf("/SPILL(%x)",inst->dst[i]->spill_slot);
       }
       else
-	 _mesa_printf("#");
+	 printf("#");
       if (i < 3)      
-	 _mesa_printf(",");
+	 printf(",");
    }
-   _mesa_printf("]");
+   printf("]");
 
    if (inst->writemask != WRITEMASK_XYZW)
-      _mesa_printf(".%s%s%s%s", 
+      printf(".%s%s%s%s", 
 		   GET_BIT(inst->writemask, 0) ? "x" : "",
 		   GET_BIT(inst->writemask, 1) ? "y" : "",
 		   GET_BIT(inst->writemask, 2) ? "z" : "",
@@ -107,58 +107,58 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 
    switch (inst->opcode) {
    case WM_PIXELXY:
-      _mesa_printf(" = PIXELXY");
+      printf(" = PIXELXY");
       break;
    case WM_DELTAXY:
-      _mesa_printf(" = DELTAXY");
+      printf(" = DELTAXY");
       break;
    case WM_PIXELW:
-      _mesa_printf(" = PIXELW");
+      printf(" = PIXELW");
       break;
    case WM_WPOSXY:
-      _mesa_printf(" = WPOSXY");
+      printf(" = WPOSXY");
       break;
    case WM_PINTERP:
-      _mesa_printf(" = PINTERP");
+      printf(" = PINTERP");
       break;
    case WM_LINTERP:
-      _mesa_printf(" = LINTERP");
+      printf(" = LINTERP");
       break;
    case WM_CINTERP:
-      _mesa_printf(" = CINTERP");
+      printf(" = CINTERP");
       break;
    case WM_FB_WRITE:
-      _mesa_printf(" = FB_WRITE");
+      printf(" = FB_WRITE");
       break;
    case WM_FRONTFACING:
-      _mesa_printf(" = FRONTFACING");
+      printf(" = FRONTFACING");
       break;
    default:
-      _mesa_printf(" = %s", _mesa_opcode_string(inst->opcode));
+      printf(" = %s", _mesa_opcode_string(inst->opcode));
       break;
    }
 
    if (inst->saturate)
-      _mesa_printf("_SAT");
+      printf("_SAT");
 
    for (arg = 0; arg < nr_args; arg++) {
 
-      _mesa_printf(" [");
+      printf(" [");
 
       for (i = 0; i < 4; i++) {
 	 if (inst->src[arg][i]) {
 	    brw_wm_print_ref(c, inst->src[arg][i]);
 	 }
 	 else
-	    _mesa_printf("%%");
+	    printf("%%");
 
 	 if (i < 3) 
-	    _mesa_printf(",");
+	    printf(",");
 	 else
-	    _mesa_printf("]");
+	    printf("]");
       }
    }
-   _mesa_printf("\n");
+   printf("\n");
 }
 
 void brw_wm_print_program( struct brw_wm_compile *c,
@@ -166,9 +166,9 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 {
    GLuint insn;
 
-   _mesa_printf("%s:\n", stage);
+   printf("%s:\n", stage);
    for (insn = 0; insn < c->nr_insns; insn++)
       brw_wm_print_insn(c, &c->instruction[insn]);
-   _mesa_printf("\n");
+   printf("\n");
 }
 

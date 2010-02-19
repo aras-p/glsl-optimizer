@@ -1110,12 +1110,12 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
     * reports bugs.
     */
    if (_mesa_getenv("MESA_INFO")) {
-      _mesa_printf("X/Mesa visual = %p\n", (void *) v);
-      _mesa_printf("X/Mesa dithered pf = %u\n", v->dithered_pf);
-      _mesa_printf("X/Mesa undithered pf = %u\n", v->undithered_pf);
-      _mesa_printf("X/Mesa level = %d\n", v->mesa_visual.level);
-      _mesa_printf("X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
-      _mesa_printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
+      printf("X/Mesa visual = %p\n", (void *) v);
+      printf("X/Mesa dithered pf = %u\n", v->dithered_pf);
+      printf("X/Mesa undithered pf = %u\n", v->undithered_pf);
+      printf("X/Mesa level = %d\n", v->mesa_visual.level);
+      printf("X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
+      printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
    }
 
    if (b && window) {

@@ -114,13 +114,13 @@ static void calculate_curbe_offsets( struct brw_context *brw )
       brw->curbe.total_size = reg;
 
       if (0)
-	 _mesa_printf("curbe wm %d+%d clip %d+%d vs %d+%d\n",
-		      brw->curbe.wm_start,
-		      brw->curbe.wm_size,
-		      brw->curbe.clip_start,
-		      brw->curbe.clip_size,
-		      brw->curbe.vs_start,
-		      brw->curbe.vs_size );
+	 printf("curbe wm %d+%d clip %d+%d vs %d+%d\n",
+		brw->curbe.wm_start,
+		brw->curbe.wm_size,
+		brw->curbe.clip_start,
+		brw->curbe.clip_size,
+		brw->curbe.vs_start,
+		brw->curbe.vs_size );
 
       brw->state.dirty.brw |= BRW_NEW_CURBE_OFFSETS;
    }
@@ -280,13 +280,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
    if (0) {
       for (i = 0; i < sz*16; i+=4) 
-	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
-		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
+	 printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
+		buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 
-      _mesa_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
-		   brw->curbe.last_buf, buf,
-		   bufsz, brw->curbe.last_bufsz,
-		   brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
+      printf("last_buf %p buf %p sz %d/%d cmp %d\n",
+	     brw->curbe.last_buf, buf,
+	     bufsz, brw->curbe.last_bufsz,
+	     brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
    }
 
    if (brw->curbe.curbe_bo != NULL &&

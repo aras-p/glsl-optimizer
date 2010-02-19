@@ -2303,8 +2303,8 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
          /* error */
          char s[100];
          /* XXX isn't this really an out of memory/resources error? */
-         _mesa_snprintf(s, sizeof(s), "Undefined variable '%s'",
-                        (char *) n->Var->a_name);
+         snprintf(s, sizeof(s), "Undefined variable '%s'",
+		  (char *) n->Var->a_name);
          slang_info_log_error(emitInfo->log, s);
          return NULL;
       }

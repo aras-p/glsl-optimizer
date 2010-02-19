@@ -43,13 +43,13 @@
 #define DEBUG_SPAN	0
 
 #if DEBUG_CORE
-#define TRACE _mesa_printf("--> %s\n", __FUNCTION__)
+#define TRACE printf("--> %s\n", __FUNCTION__)
 #else
 #define TRACE
 #endif
 
 #if DEBUG_SPAN
-#define TRACE_SPAN _mesa_printf("--> %s\n", __FUNCTION__)
+#define TRACE_SPAN printf("--> %s\n", __FUNCTION__)
 #else
 #define TRACE_SPAN
 #endif

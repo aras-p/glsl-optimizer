@@ -186,17 +186,17 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	     * entries and the values for minimum nr of entries
 	     * provided above.
 	     */
-	    _mesa_printf("couldn't calculate URB layout!\n");
+	    printf("couldn't calculate URB layout!\n");
 	    exit(1);
 	 }
 	 
 	 if (INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS))
-	    _mesa_printf("URB CONSTRAINED\n");
+	    printf("URB CONSTRAINED\n");
       }
 
 done:
       if (INTEL_DEBUG & DEBUG_URB)
-	 _mesa_printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
+	 printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
 		      brw->urb.vs_start,
 		      brw->urb.gs_start,
 		      brw->urb.clip_start,

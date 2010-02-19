@@ -124,7 +124,7 @@ void vbo_rebase_prims( GLcontext *ctx,
    assert(min_index != 0);
 
    if (0)
-      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
 
    /* XXX this path is disabled for now.

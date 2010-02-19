@@ -43,22 +43,22 @@ vbo_exec_debug_verts( struct vbo_exec_context *exec )
    GLuint count = exec->vtx.vert_count;
    GLuint i;
 
-   _mesa_printf("%s: %u vertices %d primitives, %d vertsize\n",
-		__FUNCTION__,
-		count,
-		exec->vtx.prim_count,
-		exec->vtx.vertex_size);
+   printf("%s: %u vertices %d primitives, %d vertsize\n",
+	  __FUNCTION__,
+	  count,
+	  exec->vtx.prim_count,
+	  exec->vtx.vertex_size);
 
    for (i = 0 ; i < exec->vtx.prim_count ; i++) {
       struct _mesa_prim *prim = &exec->vtx.prim[i];
-      _mesa_printf("   prim %d: %s%s %d..%d %s %s\n",
-		   i, 
-		   _mesa_lookup_prim_by_nr(prim->mode),
-		   prim->weak ? " (weak)" : "",
-		   prim->start, 
-		   prim->start + prim->count,
-		   prim->begin ? "BEGIN" : "(wrap)",
-		   prim->end ? "END" : "(wrap)");
+      printf("   prim %d: %s%s %d..%d %s %s\n",
+	     i, 
+	     _mesa_lookup_prim_by_nr(prim->mode),
+	     prim->weak ? " (weak)" : "",
+	     prim->start, 
+	     prim->start + prim->count,
+	     prim->begin ? "BEGIN" : "(wrap)",
+	     prim->end ? "END" : "(wrap)");
    }
 }
 
@@ -343,7 +343,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
    }
 
    if (0)
-      _mesa_printf("map %d..\n", exec->vtx.buffer_used);
+      printf("map %d..\n", exec->vtx.buffer_used);
 }
 
 
@@ -378,8 +378,8 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
          }
 
          if (0)
-            _mesa_printf("%s %d %d\n", __FUNCTION__, exec->vtx.prim_count,
-                         exec->vtx.vert_count);
+            printf("%s %d %d\n", __FUNCTION__, exec->vtx.prim_count,
+		   exec->vtx.vert_count);
 
 	 vbo_context(ctx)->draw_prims( ctx, 
 				       exec->vtx.inputs, 

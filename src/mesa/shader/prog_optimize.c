@@ -159,7 +159,7 @@ _mesa_consolidate_registers(struct gl_program *prog)
    GLuint tempMax = 0, i;
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin register consolidation\n");
+      printf("Optimize: Begin register consolidation\n");
    }
 
    memset(tempUsed, 0, sizeof(tempUsed));
@@ -196,7 +196,7 @@ _mesa_consolidate_registers(struct gl_program *prog)
       for (i = 0; i <= tempMax; i++) {
          if (tempUsed[i]) {
             tempMap[i] = freeTemp++;
-            /*_mesa_printf("replace %u with %u\n", i, tempMap[i]);*/
+            /*printf("replace %u with %u\n", i, tempMap[i]);*/
          }
       }
       if (freeTemp == tempMax + 1) {
@@ -204,14 +204,14 @@ _mesa_consolidate_registers(struct gl_program *prog)
          return;
       }         
       if (dbg) {
-         _mesa_printf("Replace regs 0..%u with 0..%u\n", tempMax, freeTemp-1);
+         printf("Replace regs 0..%u with 0..%u\n", tempMax, freeTemp-1);
       }
    }
 
    replace_regs(prog, PROGRAM_TEMPORARY, tempMap);
 
    if (dbg) {
-      _mesa_printf("Optimize: End register consolidation\n");
+      printf("Optimize: End register consolidation\n");
    }
 }
 
@@ -232,7 +232,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
    memset(tempRead, 0, sizeof(tempRead));
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin dead code removal\n");
+      printf("Optimize: Begin dead code removal\n");
       /*_mesa_print_program(prog);*/
    }
 
@@ -255,7 +255,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
 
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
-                  _mesa_printf("abort remove dead code (indirect temp)\n");
+                  printf("abort remove dead code (indirect temp)\n");
                goto done;
             }
 
@@ -290,7 +290,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
 
          if (inst->DstReg.RelAddr) {
             if (dbg)
-               _mesa_printf("abort remove dead code (indirect temp)\n");
+               printf("abort remove dead code (indirect temp)\n");
             goto done;
          }
 
@@ -319,7 +319,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
 	    if (!tempRead[index][chan] &&
 		inst->DstReg.WriteMask & (1 << chan)) {
 	       if (dbg) {
-		  _mesa_printf("Remove writemask on %u.%c\n", i,
+		  printf("Remove writemask on %u.%c\n", i,
 			       chan == 3 ? 'w' : 'x' + chan);
 	       }
 	       inst->DstReg.WriteMask &= ~(1 << chan);
@@ -330,7 +330,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
 	 if (inst->DstReg.WriteMask == 0) {
 	    /* If we cleared all writes, the instruction can be removed. */
 	    if (dbg)
-	       _mesa_printf("Remove instruction %u: \n", i);
+	       printf("Remove instruction %u: \n", i);
 	    removeInst[i] = GL_TRUE;
 	 }
       }
@@ -340,9 +340,9 @@ _mesa_remove_dead_code(struct gl_program *prog)
    rem = remove_instructions(prog, removeInst);
 
    if (dbg) {
-      _mesa_printf("Optimize: End dead code removal.\n");
-      _mesa_printf("  %u channel writes removed\n", rem);
-      _mesa_printf("  %u instructions removed\n", rem);
+      printf("Optimize: End dead code removal.\n");
+      printf("  %u channel writes removed\n", rem);
+      printf("  %u instructions removed\n", rem);
       /*_mesa_print_program(prog);*/
    }
 
@@ -427,7 +427,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
    GLuint i, j;
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin remove extra move use\n");
+      printf("Optimize: Begin remove extra move use\n");
       _mesa_print_program(prog);
    }
 
@@ -518,7 +518,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
    }
 
    if (dbg) {
-      _mesa_printf("Optimize: End remove extra move use.\n");
+      printf("Optimize: End remove extra move use.\n");
       /*_mesa_print_program(prog);*/
    }
 }
@@ -533,7 +533,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
    GLuint i, rem, loopNesting = 0, subroutineNesting = 0;
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin remove extra moves\n");
+      printf("Optimize: Begin remove extra moves\n");
       _mesa_print_program(prog);
    }
 
@@ -605,8 +605,8 @@ _mesa_remove_extra_moves(struct gl_program *prog)
                   removeInst[i] = GL_TRUE;
 
                   if (dbg) {
-                     _mesa_printf("Remove MOV at %u\n", i);
-                     _mesa_printf("new prev inst %u: ", prevI);
+                     printf("Remove MOV at %u\n", i);
+                     printf("new prev inst %u: ", prevI);
                      _mesa_print_instruction(prevInst);
                   }
                }
@@ -624,7 +624,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
    free(removeInst);
 
    if (dbg) {
-      _mesa_printf("Optimize: End remove extra moves.  %u instructions removed\n", rem);
+      printf("Optimize: End remove extra moves.  %u instructions removed\n", rem);
       /*_mesa_print_program(prog);*/
    }
 }
@@ -837,7 +837,7 @@ find_live_intervals(struct gl_program *prog,
     */
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin find intervals\n");
+      printf("Optimize: Begin find intervals\n");
    }
 
    /* build intermediate arrays */
@@ -864,16 +864,16 @@ find_live_intervals(struct gl_program *prog,
       /* print interval info */
       for (i = 0; i < liveIntervals->Num; i++) {
          const struct interval *inv = liveIntervals->Intervals + i;
-         _mesa_printf("Reg[%d] live [%d, %d]:",
+         printf("Reg[%d] live [%d, %d]:",
                       inv->Reg, inv->Start, inv->End);
          if (1) {
             GLuint j;
             for (j = 0; j < inv->Start; j++)
-               _mesa_printf(" ");
+               printf(" ");
             for (j = inv->Start; j <= inv->End; j++)
-               _mesa_printf("x");
+               printf("x");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
    }
 
@@ -914,7 +914,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
    GLint maxTemp = -1;
 
    if (dbg) {
-      _mesa_printf("Optimize: Begin live-interval register reallocation\n");
+      printf("Optimize: Begin live-interval register reallocation\n");
       _mesa_print_program(prog);
    }
 
@@ -925,7 +925,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
 
    if (!find_live_intervals(prog, &liveIntervals)) {
       if (dbg)
-         _mesa_printf("Aborting register reallocation\n");
+         printf("Aborting register reallocation\n");
       return;
    }
 
@@ -938,7 +938,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
          const struct interval *live = liveIntervals.Intervals + i;
 
          if (dbg)
-            _mesa_printf("Consider register %u\n", live->Reg);
+            printf("Consider register %u\n", live->Reg);
 
          /* Expire old intervals.  Intervals which have ended with respect
           * to the live interval can have their remapped registers freed.
@@ -959,7 +959,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
                   ASSERT(regNew >= 0);
 
                   if (dbg)
-                     _mesa_printf("  expire interval for reg %u\n", inv->Reg);
+                     printf("  expire interval for reg %u\n", inv->Reg);
 
                   /* remove interval j from active list */
                   remove_interval(&activeIntervals, inv);
@@ -967,7 +967,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
 
                   /* return register regNew to the free pool */
                   if (dbg)
-                     _mesa_printf("  free reg %d\n", regNew);
+                     printf("  free reg %d\n", regNew);
                   ASSERT(usedRegs[regNew] == GL_TRUE);
                   usedRegs[regNew] = GL_FALSE;
                }
@@ -984,7 +984,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
             registerMap[live->Reg] = k;
             maxTemp = MAX2(maxTemp, k);
             if (dbg)
-               _mesa_printf("  remap register %u -> %d\n", live->Reg, k);
+               printf("  remap register %u -> %d\n", live->Reg, k);
          }
 
          /* Insert this live interval into the active list which is sorted
@@ -1005,8 +1005,8 @@ _mesa_reallocate_registers(struct gl_program *prog)
    }
 
    if (dbg) {
-      _mesa_printf("Optimize: End live-interval register reallocation\n");
-      _mesa_printf("Num temp regs before: %u  after: %u\n",
+      printf("Optimize: End live-interval register reallocation\n");
+      printf("Num temp regs before: %u  after: %u\n",
                    liveIntervals.Num, maxTemp + 1);
       _mesa_print_program(prog);
    }

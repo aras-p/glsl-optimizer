@@ -169,7 +169,7 @@ static GLuint get_surface_type( GLenum type, GLuint size,
                                 GLenum format, GLboolean normalized )
 {
    if (INTEL_DEBUG & DEBUG_VERTS)
-      _mesa_printf("type %s size %d normalized %d\n", 
+      printf("type %s size %d normalized %d\n", 
 		   _mesa_lookup_enum_by_nr(type), size, normalized);
 
    if (normalized) {
@@ -355,7 +355,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    /* First build an array of pointers to ve's in vb.inputs_read
     */
    if (0)
-      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
    /* Accumulate the list of enabled arrays. */
    brw->vb.nr_enabled = 0;

@@ -106,7 +106,7 @@ _mesa_exec_malloc(GLuint size)
    if (block)
       addr = exec_mem + block->ofs;
    else 
-      _mesa_printf("_mesa_exec_malloc failed\n");
+      printf("_mesa_exec_malloc failed\n");
 
 bail:
    _glthread_UNLOCK_MUTEX(exec_mutex);

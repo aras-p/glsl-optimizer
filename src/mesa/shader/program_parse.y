@@ -936,7 +936,7 @@ addrRegPosOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 63)) {
               char s[100];
-              _mesa_snprintf(s, sizeof(s),
+              snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
 	      yyerror(& @1, state, s);
 	      YYERROR;
@@ -950,7 +950,7 @@ addrRegNegOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 64)) {
               char s[100];
-              _mesa_snprintf(s, sizeof(s),
+              snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
 	      yyerror(& @1, state, s);
 	      YYERROR;
@@ -2173,7 +2173,7 @@ ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 
 	   if (exist != NULL) {
 	      char m[1000];
-	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
+	      snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
 	      free($2);
 	      yyerror(& @2, state, m);
 	      YYERROR;

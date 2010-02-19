@@ -139,16 +139,16 @@ link_varying_vars(GLcontext *ctx,
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
             char msg[100];
-            _mesa_snprintf(msg, sizeof(msg),
-                           "centroid modifier mismatch for '%s'", var->Name);
+            snprintf(msg, sizeof(msg),
+		     "centroid modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             free(map);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
             char msg[100];
-            _mesa_snprintf(msg, sizeof(msg),
-                           "invariant modifier mismatch for '%s'", var->Name);
+            snprintf(msg, sizeof(msg),
+		     "invariant modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             free(map);
             return GL_FALSE;
@@ -269,8 +269,8 @@ link_uniform_vars(GLcontext *ctx,
          GLuint newSampNum = *numSamplers;
          if (newSampNum >= ctx->Const.MaxTextureImageUnits) {
             char s[100];
-            _mesa_sprintf(s, "Too many texture samplers (%u, max is %u)",
-                          newSampNum, ctx->Const.MaxTextureImageUnits);
+            sprintf(s, "Too many texture samplers (%u, max is %u)",
+		    newSampNum, ctx->Const.MaxTextureImageUnits);
             link_error(shProg, s);
             return GL_FALSE;
          }
@@ -631,7 +631,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    }
    source[len] = '\0';
    /*
-   _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
+   printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
    */
 
    free(shaderLengths);
@@ -875,11 +875,11 @@ _slang_link(GLcontext *ctx,
       vertNotify = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  &shProg->FragmentProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa pre-link fragment program:\n");
+         printf("Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         _mesa_printf("Mesa post-link fragment program:\n");
+         printf("Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -893,11 +893,11 @@ _slang_link(GLcontext *ctx,
       fragNotify = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                                    &shProg->VertexProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa pre-link vertex program:\n");
+         printf("Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         _mesa_printf("Mesa post-link vertex program:\n");
+         printf("Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
       }
@@ -912,10 +912,10 @@ _slang_link(GLcontext *ctx,
    }
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      _mesa_printf("Varying vars:\n");
+      printf("Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
       if (shProg->InfoLog) {
-         _mesa_printf("Info Log: %s\n", shProg->InfoLog);
+         printf("Info Log: %s\n", shProg->InfoLog);
       }
    }
 

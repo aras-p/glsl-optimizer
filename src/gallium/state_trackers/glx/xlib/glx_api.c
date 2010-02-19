@@ -1679,8 +1679,8 @@ PUBLIC const char *
 glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s",
-                 SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s",
+	   SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
    (void) screen;
@@ -1704,8 +1704,8 @@ PUBLIC const char *
 glXGetClientString( Display *dpy, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
-                 CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
+	   CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
 

@@ -123,7 +123,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLuint count = 0;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
+      printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
 		   __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
@@ -516,7 +516,7 @@ intelBitmap(GLcontext * ctx,
       return;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
+      printf("%s: fallback to swrast\n", __FUNCTION__);
 
    _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }

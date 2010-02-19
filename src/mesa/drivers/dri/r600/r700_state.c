@@ -65,7 +65,7 @@ void r700UpdateShaders(GLcontext * ctx)
     /* should only happenen once, just after context is created */
     /* TODO: shouldn't we fallback to sw here? */
     if (!ctx->FragmentProgram._Current) {
-	    _mesa_fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+	    fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
 	    return;
     }
 

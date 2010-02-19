@@ -345,7 +345,7 @@ extern int INTEL_DEBUG;
 
 #define DBG(...) do {						\
 	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\
-		_mesa_printf(__VA_ARGS__);			\
+		printf(__VA_ARGS__);			\
 } while(0)
 
 #define PCI_CHIP_845_G			0x2562

@@ -1185,10 +1185,10 @@ static void vbo_print_vertex_list( GLcontext *ctx, void *data )
    GLuint i;
    (void) ctx;
 
-   _mesa_printf("VBO-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
-		node->count,
-		node->prim_count,
-		node->vertex_size);
+   printf("VBO-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
+	  node->count,
+	  node->prim_count,
+	  node->vertex_size);
 
    for (i = 0 ; i < node->prim_count ; i++) {
       struct _mesa_prim *prim = &node->prim[i];

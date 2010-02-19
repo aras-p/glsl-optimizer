@@ -857,7 +857,7 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 void vbo_exec_BeginVertices( GLcontext *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   if (0) _mesa_printf("%s\n", __FUNCTION__);
+   if (0) printf("%s\n", __FUNCTION__);
    vbo_exec_vtx_map( exec );
 
    assert((exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
@@ -892,10 +892,10 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
    assert(exec->flush_call_depth == 1);
 #endif
 
-   if (0) _mesa_printf("%s\n", __FUNCTION__);
+   if (0) printf("%s\n", __FUNCTION__);
 
    if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
-      if (0) _mesa_printf("%s - inside begin/end\n", __FUNCTION__);
+      if (0) printf("%s - inside begin/end\n", __FUNCTION__);
 #ifdef DEBUG
       exec->flush_call_depth--;
       assert(exec->flush_call_depth == 0);

@@ -1047,7 +1047,7 @@ init_blit_depth_pixels(GLcontext *ctx)
       texTarget = "RECT";
    else
       texTarget = "2D";
-   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+   snprintf(program2, sizeof(program2), program, texTarget);
 
    _mesa_GenPrograms(1, &blit->DepthFP);
    _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
@@ -1670,7 +1670,7 @@ init_draw_stencil_pixels(GLcontext *ctx)
       texTarget = "RECT";
    else
       texTarget = "2D";
-   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+   snprintf(program2, sizeof(program2), program, texTarget);
 
    _mesa_GenPrograms(1, &drawpix->StencilFP);
    _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
@@ -1704,7 +1704,7 @@ init_draw_depth_pixels(GLcontext *ctx)
       texTarget = "RECT";
    else
       texTarget = "2D";
-   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
+   snprintf(program2, sizeof(program2), program, texTarget);
 
    _mesa_GenPrograms(1, &drawpix->DepthFP);
    _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->DepthFP);

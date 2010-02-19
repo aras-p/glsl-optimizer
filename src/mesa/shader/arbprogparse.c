@@ -148,7 +148,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    }
 
 #if DEBUG_FP
-   _mesa_printf("____________Fragment program %u ________\n", program->Base.Id);
+   printf("____________Fragment program %u ________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }
@@ -211,7 +211,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.Parameters = prog.Parameters; 
 
 #if DEBUG_VP
-   _mesa_printf("____________Vertex program %u __________\n", program->Base.Id);
+   printf("____________Vertex program %u __________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }

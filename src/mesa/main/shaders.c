@@ -489,7 +489,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
       newSource = _mesa_read_shader(filename);
       if (newSource) {
-         _mesa_fprintf(stderr, "Mesa: Replacing shader %u chksum=%d with %s\n",
+         fprintf(stderr, "Mesa: Replacing shader %u chksum=%d with %s\n",
                        shaderObj, checksum, filename);
          free(source);
          source = newSource;

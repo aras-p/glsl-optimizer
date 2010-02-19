@@ -1069,7 +1069,7 @@ reduce_3d(enum pipe_format pformat,
     */
 
    /*
-   _mesa_printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
+   printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
           srcWidth, srcHeight, srcDepth, dstWidth, dstHeight, dstDepth);
    */
 

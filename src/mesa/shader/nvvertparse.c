@@ -111,7 +111,7 @@ do {									\
 #define RETURN_ERROR2(msg1, msg2)					\
 do {									\
    char err[1000];							\
-   _mesa_sprintf(err, "%s %s", msg1, msg2);				\
+   sprintf(err, "%s %s", msg1, msg2);				\
    record_error(parseState, err, __LINE__);				\
    return GL_FALSE;							\
 } while(0)
@@ -1397,9 +1397,9 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->IsNVProgram = GL_TRUE;
 
 #ifdef DEBUG_foo
-      _mesa_printf("--- glLoadProgramNV result ---\n");
+      printf("--- glLoadProgramNV result ---\n");
       _mesa_fprint_program_opt(stdout, &program->Base, PROG_PRINT_NV, 0);
-      _mesa_printf("------------------------------\n");
+      printf("------------------------------\n");
 #endif
 
       if (program->Base.Parameters)

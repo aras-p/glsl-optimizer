@@ -227,7 +227,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	if (compiler.Base.Debug) {
 		fflush(stderr);
-		_mesa_printf("Fragment Program: Initial program:\n");
+		printf("Fragment Program: Initial program:\n");
 		_mesa_print_program(&cont->Base.Base);
 		fflush(stderr);
 	}

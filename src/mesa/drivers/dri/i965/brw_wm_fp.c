@@ -159,7 +159,7 @@ static struct prog_dst_register get_temp( struct brw_wm_compile *c )
    int bit = _mesa_ffs( ~c->fp_temp );
 
    if (!bit) {
-      _mesa_printf("%s: out of temporaries\n", __FILE__);
+      printf("%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
@@ -1034,7 +1034,7 @@ static void print_insns( const struct prog_instruction *insn,
 {
    GLuint i;
    for (i = 0; i < nr; i++, insn++) {
-      _mesa_printf("%3d: ", i);
+      printf("%3d: ", i);
       if (insn->Opcode < MAX_OPCODE)
 	 _mesa_print_instruction(insn);
       else if (insn->Opcode < MAX_WM_OPCODE) {
@@ -1045,7 +1045,7 @@ static void print_insns( const struct prog_instruction *insn,
 				     3);
       }
       else 
-	 _mesa_printf("965 Opcode %d\n", insn->Opcode);
+	 printf("965 Opcode %d\n", insn->Opcode);
    }
 }
 
@@ -1060,9 +1060,9 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    GLuint insn;
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("pre-fp:\n");
+      printf("pre-fp:\n");
       _mesa_print_program(&fp->program.Base); 
-      _mesa_printf("\n");
+      printf("\n");
    }
 
    c->pixel_xy = src_undef();
@@ -1168,9 +1168,9 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    }
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("pass_fp:\n");
+      printf("pass_fp:\n");
       print_insns( c->prog_instructions, c->nr_fp_insns );
-      _mesa_printf("\n");
+      printf("\n");
    }
 }
 

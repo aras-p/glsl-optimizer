@@ -162,8 +162,8 @@ GLuint vf_set_vertex_attributes( struct vertex_fetch *vf,
       const GLuint format = map[i].format;
       if (format == EMIT_PAD) {
 	 if (DBG)
-	    _mesa_printf("%d: pad %d, offset %d\n", i,  
-			 map[i].offset, offset);  
+	    printf("%d: pad %d, offset %d\n", i,  
+		   map[i].offset, offset);  
 
 	 offset += map[i].offset;
 
@@ -180,9 +180,9 @@ GLuint vf_set_vertex_attributes( struct vertex_fetch *vf,
 	 vf->attr[j].vertoffset = offset;
 	 
 	 if (DBG)
-	    _mesa_printf("%d: %s, offset %d\n", i,  
-			 vf_format_info[format].name,
-			 vf->attr[j].vertoffset);   
+	    printf("%d: %s, offset %d\n", i,  
+		   vf_format_info[format].name,
+		   vf->attr[j].vertoffset);   
 
 	 offset += vf_format_info[format].attrsize;
 	 j++;

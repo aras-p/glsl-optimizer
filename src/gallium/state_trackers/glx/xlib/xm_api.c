@@ -550,10 +550,10 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
     * reports bugs.
     */
    if (_mesa_getenv("MESA_INFO")) {
-      _mesa_printf("X/Mesa visual = %p\n", (void *) v);
-      _mesa_printf("X/Mesa level = %d\n", v->mesa_visual.level);
-      _mesa_printf("X/Mesa depth = %d\n", v->visinfo->depth);
-      _mesa_printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
+      printf("X/Mesa visual = %p\n", (void *) v);
+      printf("X/Mesa level = %d\n", v->mesa_visual.level);
+      printf("X/Mesa depth = %d\n", v->visinfo->depth);
+      printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
    }
 
    if (b && window) {

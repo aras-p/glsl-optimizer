@@ -43,7 +43,7 @@
 #define FILE_DEBUG_FLAG RADEON_TEXTURE
 #define DBG(...) do {                                           \
         if (RADEON_DEBUG & FILE_DEBUG_FLAG)                      \
-                _mesa_printf(__VA_ARGS__);                      \
+                printf(__VA_ARGS__);                      \
 } while(0)
 
 static struct gl_framebuffer *
