@@ -728,9 +728,14 @@ depth_test_quads_fallback(struct quad_stage *qs,
       qs->next->run(qs->next, quads, nr);
 }
 
-/* XXX: this function assumes setup function actually emits linear
- * spans of quads.  It seems a lot more natural to do (early)
- * depth-testing on spans rather than quads.
+
+/**
+ * Special-case Z testing for 16-bit Zbuffer, PIPE_FUNC_LESS and
+ * Z buffer writes enabled.
+ *
+ * NOTE: there's no guarantee that the quads are sequentially side by
+ * side.  The fragment shader may have culled some quads, etc.  Sliver
+ * triangles may generate non-sequential quads.
  */
 static void
 depth_interp_z16_less_write(struct quad_stage *qs, 
@@ -747,25 +752,33 @@ depth_interp_z16_less_write(struct quad_stage *qs,
    const float z0 = quads[0]->posCoef->a0[2] + dzdx * fx + dzdy * fy;
    struct softpipe_cached_tile *tile;
    ushort (*depth16)[TILE_SIZE];
-   ushort idepth[4], depth_step;
+   ushort init_idepth[4], idepth[4], depth_step;
    const float scale = 65535.0;
 
-   idepth[0] = (ushort)((z0) * scale);
-   idepth[1] = (ushort)((z0 + dzdx) * scale);
-   idepth[2] = (ushort)((z0 + dzdy) * scale);
-   idepth[3] = (ushort)((z0 + dzdx + dzdy) * scale);
+   /* compute scaled depth of the four pixels in first quad */
+   init_idepth[0] = (ushort)((z0) * scale);
+   init_idepth[1] = (ushort)((z0 + dzdx) * scale);
+   init_idepth[2] = (ushort)((z0 + dzdy) * scale);
+   init_idepth[3] = (ushort)((z0 + dzdx + dzdy) * scale);
 
-   depth_step = (ushort)(dzdx * 2 * scale);
+   depth_step = (ushort)(dzdx * scale);
 
    tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, ix, iy);
 
-   depth16 = (ushort (*)[TILE_SIZE])
-      &tile->data.depth16[iy % TILE_SIZE][ix % TILE_SIZE];
-
    for (i = 0; i < nr; i++) {
-      unsigned outmask = quads[i]->inout.mask;
+      const unsigned outmask = quads[i]->inout.mask;
+      const int dx = quads[i]->input.x0 - ix;
       unsigned mask = 0;
-      
+
+      /* compute depth for this quad */
+      idepth[0] = init_idepth[0] + dx * depth_step;
+      idepth[1] = init_idepth[1] + dx * depth_step;
+      idepth[2] = init_idepth[2] + dx * depth_step;
+      idepth[3] = init_idepth[3] + dx * depth_step;
+
+      depth16 = (ushort (*)[TILE_SIZE])
+         &tile->data.depth16[iy % TILE_SIZE][(ix + dx)% TILE_SIZE];
+
       if ((outmask & 1) && idepth[0] < depth16[0][0]) {
          depth16[0][0] = idepth[0];
          mask |= (1 << 0);
@@ -786,13 +799,6 @@ depth_interp_z16_less_write(struct quad_stage *qs,
          mask |= (1 << 3);
       }
 
-      idepth[0] += depth_step;
-      idepth[1] += depth_step;
-      idepth[2] += depth_step;
-      idepth[3] += depth_step;
-
-      depth16 = (ushort (*)[TILE_SIZE]) &depth16[0][2];
-
       quads[i]->inout.mask = mask;
       if (quads[i]->inout.mask)
          quads[pass++] = quads[i];
@@ -804,6 +810,14 @@ depth_interp_z16_less_write(struct quad_stage *qs,
 }
 
 
+/**
+ * Special-case Z testing for 16-bit Zbuffer, PIPE_FUNC_LEQUAL and
+ * Z buffer writes enabled.
+ *
+ * NOTE: there's no guarantee that the quads are sequentially side by
+ * side.  The fragment shader may have culled some quads, etc.  Sliver
+ * triangles may generate non-sequential quads.
+ */
 static void
 depth_interp_z16_lequal_write(struct quad_stage *qs, 
                             struct quad_header *quads[],
@@ -819,25 +833,33 @@ depth_interp_z16_lequal_write(struct quad_stage *qs,
    const float z0 = quads[0]->posCoef->a0[2] + dzdx * fx + dzdy * fy;
    struct softpipe_cached_tile *tile;
    ushort (*depth16)[TILE_SIZE];
-   ushort idepth[4], depth_step;
+   ushort init_idepth[4], idepth[4], depth_step;
    const float scale = 65535.0;
 
-   idepth[0] = (ushort)((z0) * scale);
-   idepth[1] = (ushort)((z0 + dzdx) * scale);
-   idepth[2] = (ushort)((z0 + dzdy) * scale);
-   idepth[3] = (ushort)((z0 + dzdx + dzdy) * scale);
+   /* compute scaled depth of the four pixels in first quad */
+   init_idepth[0] = (ushort)((z0) * scale);
+   init_idepth[1] = (ushort)((z0 + dzdx) * scale);
+   init_idepth[2] = (ushort)((z0 + dzdy) * scale);
+   init_idepth[3] = (ushort)((z0 + dzdx + dzdy) * scale);
 
-   depth_step = (ushort)(dzdx * 2 * scale);
+   depth_step = (ushort)(dzdx * scale);
 
    tile = sp_get_cached_tile(qs->softpipe->zsbuf_cache, ix, iy);
 
-   depth16 = (ushort (*)[TILE_SIZE])
-      &tile->data.depth16[iy % TILE_SIZE][ix % TILE_SIZE];
-
    for (i = 0; i < nr; i++) {
-      unsigned outmask = quads[i]->inout.mask;
+      const unsigned outmask = quads[i]->inout.mask;
+      const int dx = quads[i]->input.x0 - ix;
       unsigned mask = 0;
       
+      /* compute depth for this quad */
+      idepth[0] = init_idepth[0] + dx * depth_step;
+      idepth[1] = init_idepth[1] + dx * depth_step;
+      idepth[2] = init_idepth[2] + dx * depth_step;
+      idepth[3] = init_idepth[3] + dx * depth_step;
+
+      depth16 = (ushort (*)[TILE_SIZE])
+         &tile->data.depth16[iy % TILE_SIZE][(ix + dx)% TILE_SIZE];
+
       if ((outmask & 1) && idepth[0] <= depth16[0][0]) {
          depth16[0][0] = idepth[0];
          mask |= (1 << 0);
@@ -857,11 +879,6 @@ depth_interp_z16_lequal_write(struct quad_stage *qs,
          depth16[1][1] = idepth[3];
          mask |= (1 << 3);
       }
-
-      idepth[0] += depth_step;
-      idepth[1] += depth_step;
-      idepth[2] += depth_step;
-      idepth[3] += depth_step;
 
       depth16 = (ushort (*)[TILE_SIZE]) &depth16[0][2];
 
