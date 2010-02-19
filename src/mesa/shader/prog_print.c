@@ -603,7 +603,7 @@ _mesa_fprint_instruction_opt(FILE *f,
 
    switch (inst->Opcode) {
    case OPCODE_PRINT:
-      fprintf(f, "PRINT '%s'", inst->Data);
+      fprintf(f, "PRINT '%s'", (char *) inst->Data);
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          fprintf(f, ", ");
          fprintf(f, "%s[%d]%s",

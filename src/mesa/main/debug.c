@@ -490,9 +490,9 @@ _mesa_dump_color_buffer(const char *filename)
    _mesa_ReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
    printf("ReadBuffer %p 0x%x  DrawBuffer %p 0x%x\n",
-	  ctx->ReadBuffer->_ColorReadBuffer,
+	  (void *) ctx->ReadBuffer->_ColorReadBuffer,
 	  ctx->ReadBuffer->ColorReadBuffer,
-	  ctx->DrawBuffer->_ColorDrawBuffers[0],
+	  (void *) ctx->DrawBuffer->_ColorDrawBuffers[0],
 	  ctx->DrawBuffer->ColorDrawBuffer[0]);
    printf("Writing %d x %d color buffer to %s\n", w, h, filename);
    write_ppm(filename, buf, w, h, 4, 0, 1, 2, GL_TRUE);
