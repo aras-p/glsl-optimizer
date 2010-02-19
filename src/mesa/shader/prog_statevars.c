@@ -1117,7 +1117,7 @@ static void
 load_transpose_matrix(GLfloat registers[][4], GLuint pos,
                       const GLfloat mat[16])
 {
-   MEMCPY(registers[pos], mat, 16 * sizeof(GLfloat));
+   memcpy(registers[pos], mat, 16 * sizeof(GLfloat));
 }
 
 

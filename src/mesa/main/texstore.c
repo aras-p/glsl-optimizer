@@ -3716,7 +3716,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
 
    /* copy the data */
-   MEMCPY(texImage->Data, data, imageSize);
+   memcpy(texImage->Data, data, imageSize);
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
 }
@@ -3823,7 +3823,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
 
    /* copy rows of blocks */
    for (i = 0; i < rows; i++) {
-      MEMCPY(dest, src, bytesPerRow);
+      memcpy(dest, src, bytesPerRow);
       dest += destRowStride;
       src += srcRowStride;
    }

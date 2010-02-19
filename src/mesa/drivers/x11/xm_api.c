@@ -511,12 +511,12 @@ xmesa_free_buffer(XMesaBuffer buffer)
 static void
 copy_colortable_info(XMesaBuffer dst, const XMesaBuffer src)
 {
-   MEMCPY(dst->color_table, src->color_table, sizeof(src->color_table));
-   MEMCPY(dst->pixel_to_r, src->pixel_to_r, sizeof(src->pixel_to_r));
-   MEMCPY(dst->pixel_to_g, src->pixel_to_g, sizeof(src->pixel_to_g));
-   MEMCPY(dst->pixel_to_b, src->pixel_to_b, sizeof(src->pixel_to_b));
+   memcpy(dst->color_table, src->color_table, sizeof(src->color_table));
+   memcpy(dst->pixel_to_r, src->pixel_to_r, sizeof(src->pixel_to_r));
+   memcpy(dst->pixel_to_g, src->pixel_to_g, sizeof(src->pixel_to_g));
+   memcpy(dst->pixel_to_b, src->pixel_to_b, sizeof(src->pixel_to_b));
    dst->num_alloced = src->num_alloced;
-   MEMCPY(dst->alloced_colors, src->alloced_colors,
+   memcpy(dst->alloced_colors, src->alloced_colors,
           sizeof(src->alloced_colors));
 }
 
@@ -1376,7 +1376,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
       _mesa_free(v);
       return NULL;
    }
-   MEMCPY(v->visinfo, visinfo, sizeof(*visinfo));
+   memcpy(v->visinfo, visinfo, sizeof(*visinfo));
 #endif
 
    /* check for MESA_GAMMA environment variable */

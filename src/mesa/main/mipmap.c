@@ -979,9 +979,9 @@ make_1d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
    if (border) {
       /* copy left-most pixel from source */
-      MEMCPY(dstPtr, srcPtr, bpt);
+      memcpy(dstPtr, srcPtr, bpt);
       /* copy right-most pixel from source */
-      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+      memcpy(dstPtr + (dstWidth - 1) * bpt,
              srcPtr + (srcWidth - 1) * bpt,
              bpt);
    }
@@ -1025,15 +1025,15 @@ make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
    if (border > 0) {
       /* fill in dest border */
       /* lower-left border pixel */
-      MEMCPY(dstPtr, srcPtr, bpt);
+      memcpy(dstPtr, srcPtr, bpt);
       /* lower-right border pixel */
-      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+      memcpy(dstPtr + (dstWidth - 1) * bpt,
              srcPtr + (srcWidth - 1) * bpt, bpt);
       /* upper-left border pixel */
-      MEMCPY(dstPtr + dstWidth * (dstHeight - 1) * bpt,
+      memcpy(dstPtr + dstWidth * (dstHeight - 1) * bpt,
              srcPtr + srcWidth * (srcHeight - 1) * bpt, bpt);
       /* upper-right border pixel */
-      MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
+      memcpy(dstPtr + (dstWidth * dstHeight - 1) * bpt,
              srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
       /* lower border */
       do_row(datatype, comps, srcWidthNB,
@@ -1050,9 +1050,9 @@ make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
       if (srcHeight == dstHeight) {
          /* copy border pixel from src to dst */
          for (row = 1; row < srcHeight; row++) {
-            MEMCPY(dstPtr + dstWidth * row * bpt,
+            memcpy(dstPtr + dstWidth * row * bpt,
                    srcPtr + srcWidth * row * bpt, bpt);
-            MEMCPY(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
+            memcpy(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
                    srcPtr + (srcWidth * row + srcWidth - 1) * bpt, bpt);
          }
       }
@@ -1174,28 +1174,28 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
             /* do border along [img][row=0][col=0] */
             src = srcPtr + (img + 1) * bytesPerSrcImage;
             dst = dstPtr + (img + 1) * bytesPerDstImage;
-            MEMCPY(dst, src, bpt);
+            memcpy(dst, src, bpt);
 
             /* do border along [img][row=dstHeight-1][col=0] */
             src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
                          + (srcHeight - 1) * bytesPerSrcRow;
             dst = dstPtr + (img + 1) * bytesPerDstImage
                          + (dstHeight - 1) * bytesPerDstRow;
-            MEMCPY(dst, src, bpt);
+            memcpy(dst, src, bpt);
 
             /* do border along [img][row=0][col=dstWidth-1] */
             src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
                          + (srcWidth - 1) * bpt;
             dst = dstPtr + (img + 1) * bytesPerDstImage
                          + (dstWidth - 1) * bpt;
-            MEMCPY(dst, src, bpt);
+            memcpy(dst, src, bpt);
 
             /* do border along [img][row=dstHeight-1][col=dstWidth-1] */
             src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
                          + (bytesPerSrcImage - bpt);
             dst = dstPtr + (img + 1) * bytesPerDstImage
                          + (bytesPerDstImage - bpt);
-            MEMCPY(dst, src, bpt);
+            memcpy(dst, src, bpt);
          }
       }
       else {
@@ -1265,9 +1265,9 @@ make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 
    if (border) {
       /* copy left-most pixel from source */
-      MEMCPY(dstPtr, srcPtr, bpt);
+      memcpy(dstPtr, srcPtr, bpt);
       /* copy right-most pixel from source */
-      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+      memcpy(dstPtr + (dstWidth - 1) * bpt,
              srcPtr + (srcWidth - 1) * bpt,
              bpt);
    }
@@ -1319,15 +1319,15 @@ make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
       if (border > 0) {
          /* fill in dest border */
          /* lower-left border pixel */
-         MEMCPY(dstPtr, srcPtr, bpt);
+         memcpy(dstPtr, srcPtr, bpt);
          /* lower-right border pixel */
-         MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+         memcpy(dstPtr + (dstWidth - 1) * bpt,
                 srcPtr + (srcWidth - 1) * bpt, bpt);
          /* upper-left border pixel */
-         MEMCPY(dstPtr + dstWidth * (dstHeight - 1) * bpt,
+         memcpy(dstPtr + dstWidth * (dstHeight - 1) * bpt,
                 srcPtr + srcWidth * (srcHeight - 1) * bpt, bpt);
          /* upper-right border pixel */
-         MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
+         memcpy(dstPtr + (dstWidth * dstHeight - 1) * bpt,
                 srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
          /* lower border */
          do_row(datatype, comps, srcWidthNB,
@@ -1344,9 +1344,9 @@ make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
          if (srcHeight == dstHeight) {
             /* copy border pixel from src to dst */
             for (row = 1; row < srcHeight; row++) {
-               MEMCPY(dstPtr + dstWidth * row * bpt,
+               memcpy(dstPtr + dstWidth * row * bpt,
                       srcPtr + srcWidth * row * bpt, bpt);
-               MEMCPY(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
+               memcpy(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
                       srcPtr + (srcWidth * row + srcWidth - 1) * bpt, bpt);
             }
          }

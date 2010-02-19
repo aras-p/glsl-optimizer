@@ -221,7 +221,7 @@ static void
 init_machine(GLcontext *ctx, struct gl_program_machine *machine)
 {
    /* Input registers get initialized from the current vertex attribs */
-   MEMCPY(machine->VertAttribs, ctx->Current.Attrib,
+   memcpy(machine->VertAttribs, ctx->Current.Attrib,
           MAX_VERTEX_GENERIC_ATTRIBS * 4 * sizeof(GLfloat));
 
    if (ctx->VertexProgram._Current->IsNVProgram) {

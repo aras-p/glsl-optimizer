@@ -600,7 +600,7 @@ mgaTryDrawPixels( GLcontext *ctx,
 	    }
 	 }
 #else
-	 MEMCPY( address, pixels, rows*bufferpitch );
+	 memcpy( address, pixels, rows*bufferpitch );
 #endif
 
 	 do_draw_pix( ctx, x, y, width, rows,

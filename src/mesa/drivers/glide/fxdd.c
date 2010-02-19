@@ -840,7 +840,7 @@ fxDDReadPixels565 (GLcontext * ctx,
 	    const GLint widthInBytes = width * 2;
 	    GLint row;
 	    for (row = 0; row < height; row++) {
-	       MEMCPY(dst, src, widthInBytes);
+	       memcpy(dst, src, widthInBytes);
 	       dst += dstStride;
 	       src -= srcStride;
 	    }
@@ -953,7 +953,7 @@ fxDDReadPixels555 (GLcontext * ctx,
 	    const GLint widthInBytes = width * 2;
 	    GLint row;
 	    for (row = 0; row < height; row++) {
-	       MEMCPY(dst, src, widthInBytes);
+	       memcpy(dst, src, widthInBytes);
 	       dst += dstStride;
 	       src -= srcStride;
 	    }
@@ -1572,7 +1572,7 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
          for (row = 0; row < height; row++) {
 	     GLubyte *src = (GLubyte *) _mesa_image_address2d(finalUnpack,
                                   pixels, width, height, format, type, row, 0);
-             MEMCPY(dst, src, widthInBytes);
+             memcpy(dst, src, widthInBytes);
              dst += dstStride;
          }
       }

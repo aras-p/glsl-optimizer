@@ -678,7 +678,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
       _mesa_free(v);
       return NULL;
    }
-   MEMCPY(v->visinfo, visinfo, sizeof(*visinfo));
+   memcpy(v->visinfo, visinfo, sizeof(*visinfo));
 
    v->ximage_flag = ximage_flag;
 

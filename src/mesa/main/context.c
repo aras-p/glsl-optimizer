@@ -1108,7 +1108,7 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
       dst->Polygon = src->Polygon;
    }
    if (mask & GL_POLYGON_STIPPLE_BIT) {
-      /* Use loop instead of MEMCPY due to problem with Portland Group's
+      /* Use loop instead of memcpy due to problem with Portland Group's
        * C compiler.  Reported by John Stone.
        */
       GLuint i;

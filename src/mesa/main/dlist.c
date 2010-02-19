@@ -2913,7 +2913,7 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
       n[1].e = map;
       n[2].i = mapsize;
       n[3].data = (void *) _mesa_malloc(mapsize * sizeof(GLfloat));
-      MEMCPY(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
+      memcpy(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
    }
    if (ctx->ExecuteFlag) {
       CALL_PixelMapfv(ctx->Exec, (map, mapsize, values));
@@ -4365,7 +4365,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7);
       if (n) {
          n[1].e = target;
@@ -4411,7 +4411,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8);
       if (n) {
          n[1].e = target;
@@ -4458,7 +4458,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9);
       if (n) {
          n[1].e = target;
@@ -4501,7 +4501,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7);
    if (n) {
       n[1].e = target;
@@ -4541,7 +4541,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9);
    if (n) {
       n[1].e = target;
@@ -4583,7 +4583,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11);
    if (n) {
       n[1].e = target;

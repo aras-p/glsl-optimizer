@@ -297,7 +297,7 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
    }
 
    if (prog->String) {
-      MEMCPY(program, prog->String, strlen((char *) prog->String));
+      memcpy(program, prog->String, strlen((char *) prog->String));
    }
    else {
       program[0] = 0;

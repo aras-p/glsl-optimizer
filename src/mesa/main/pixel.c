@@ -362,7 +362,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
       }
    }
    else {
-      MEMCPY(values, pm->Map, mapsize * sizeof(GLfloat));
+      memcpy(values, pm->Map, mapsize * sizeof(GLfloat));
    }
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
@@ -401,7 +401,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 
    if (map == GL_PIXEL_MAP_S_TO_S) {
       /* special case */
-      MEMCPY(values, ctx->PixelMaps.StoS.Map, mapsize * sizeof(GLint));
+      memcpy(values, ctx->PixelMaps.StoS.Map, mapsize * sizeof(GLint));
    }
    else {
       for (i = 0; i < mapsize; i++) {
