@@ -230,7 +230,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         /* Supported formats. */
         /* Colorbuffer */
         case PIPE_FORMAT_A8_UNORM:
-        case PIPE_FORMAT_L8_UNORM:
         case PIPE_FORMAT_R5G6B5_UNORM:
         case PIPE_FORMAT_A1R5G5B5_UNORM:
         case PIPE_FORMAT_A4R4G4B4_UNORM:
