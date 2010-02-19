@@ -29,7 +29,7 @@
 #include "dri_util.h"
 #include "drm.h"
 #include "drm_sarea.h"
-#include "colormac.h"
+#include "main/colormac.h"
 #include "gamma_regs.h"
 #include "gamma_main/macros.h"
 #include "gamma_screen.h"

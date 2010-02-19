@@ -1,7 +1,7 @@
 
 #include "gamma_context.h"
 #include "gamma_lock.h"
-#include "colormac.h"
+#include "main/colormac.h"
 
 #include "swrast/swrast.h"
 

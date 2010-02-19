@@ -29,7 +29,7 @@
 #include "buffers.h"
 #include "main/macros.h"
 #include "glint_dri.h"
-#include "colormac.h"
+#include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"

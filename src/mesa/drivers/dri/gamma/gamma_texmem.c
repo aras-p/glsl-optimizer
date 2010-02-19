@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "main/glheader.h"
-#include "colormac.h"
+#include "main/colormac.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/simple_list.h"

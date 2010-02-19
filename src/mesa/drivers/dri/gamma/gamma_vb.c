@@ -29,7 +29,7 @@
 #include "main/mtypes.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "colormac.h"
+#include "main/colormac.h"
 
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tcontext.h"
