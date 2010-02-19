@@ -8,10 +8,12 @@ progs = [
     'clearspd',
     'copypix',
     'cubemap',
+    'dinoshade',
     'dissolve',
     'drawpix',
     'engine',
     'fbo_firecube',
+    'fbotexture',
     'fire',
     'fogcoord',
     'fplight',
@@ -30,6 +32,7 @@ progs = [
     'multiarb',
     'paltex',
     'pointblast',
+    'projtex',
     'ray',
     'readpix',
     'reflect',
@@ -50,9 +53,6 @@ progs = [
     'tunnel2',
     'vao_demo',
     'winpos',
-    'dinoshade',
-    'fbotexture',
-    'projtex',
 ]
 
 for prog in progs:
