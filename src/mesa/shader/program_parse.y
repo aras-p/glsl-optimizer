@@ -936,7 +936,7 @@ addrRegPosOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 63)) {
               char s[100];
-              snprintf(s, sizeof(s),
+              _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
 	      yyerror(& @1, state, s);
 	      YYERROR;
@@ -950,7 +950,7 @@ addrRegNegOffset: INTEGER
 	{
 	   if (($1 < 0) || ($1 > 64)) {
               char s[100];
-              snprintf(s, sizeof(s),
+              _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
 	      yyerror(& @1, state, s);
 	      YYERROR;
@@ -2173,7 +2173,7 @@ ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 
 	   if (exist != NULL) {
 	      char m[1000];
-	      snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
+	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
 	      free($2);
 	      yyerror(& @2, state, m);
 	      YYERROR;
@@ -2599,7 +2599,7 @@ make_error_string(const char *fmt, ...)
    va_start(args, fmt);
 
    /* Call vsnprintf once to determine how large the final string is.  Call it
-    * again to do the actual formatting.  from the vsnprintf manual page:
+    * again to do the actual formatting.  from the v_mesa_snprintf manual page:
     *
     *    Upon successful return, these functions return the number of
     *    characters printed  (not including the trailing '\0' used to end
@@ -2609,7 +2609,7 @@ make_error_string(const char *fmt, ...)
 
    str = malloc(length);
    if (str) {
-      vsnprintf(str, length, fmt, args);
+      v_mesa_snprintf(str, length, fmt, args);
    }
 
    va_end(args);

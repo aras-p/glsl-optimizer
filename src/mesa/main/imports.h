@@ -583,6 +583,9 @@ _mesa_strtod( const char *s, char **end );
 extern unsigned int
 _mesa_str_checksum(const char *str);
 
+extern int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... );
+
 extern void
 _mesa_warning( __GLcontext *gc, const char *fmtString, ... );
 

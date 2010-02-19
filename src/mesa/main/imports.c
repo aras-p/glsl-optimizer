@@ -827,6 +827,19 @@ _mesa_str_checksum(const char *str)
 /*@}*/
 
 
+/** Wrapper around vsnprintf() */
+int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... )
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vsnprintf( str, size, fmt, args );
+   va_end( args );
+   return r;
+}
+
+
 /**********************************************************************/
 /** \name Diagnostics */
 /*@{*/
@@ -866,7 +879,7 @@ output_if_debug(const char *prefixString, const char *outputString,
        * visible, so communicate with the debugger instead */ 
       {
          char buf[4096];
-         snprintf(buf, sizeof(buf), "%s: %s%s", prefixString, outputString, newline ? "\n" : "");
+         _mesa_snprintf(buf, sizeof(buf), "%s: %s%s", prefixString, outputString, newline ? "\n" : "");
          OutputDebugStringA(buf);
       }
 #endif
@@ -915,7 +928,7 @@ flush_delayed_errors( GLcontext *ctx )
    char s[MAXSTRING];
 
    if (ctx->ErrorDebugCount) {
-      snprintf(s, MAXSTRING, "%d similar %s errors", 
+      _mesa_snprintf(s, MAXSTRING, "%d similar %s errors", 
                      ctx->ErrorDebugCount,
                      error_string(ctx->ErrorValue));
 
@@ -1022,7 +1035,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
          vsnprintf(s, MAXSTRING, fmtString, args);
          va_end(args);
 
-         snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
+         _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
          output_if_debug("Mesa: User error", s2, GL_TRUE);
          
          ctx->ErrorDebugFmtString = fmtString;

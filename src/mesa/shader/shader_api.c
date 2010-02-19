@@ -2076,7 +2076,7 @@ validate_samplers(GLcontext *ctx, const struct gl_program *prog, char *errMsg)
       unit = prog->SamplerUnits[sampler];
       target = prog->SamplerTargets[sampler];
       if (targetUsed[unit] != -1 && targetUsed[unit] != target) {
-         snprintf(errMsg, 100,
+         _mesa_snprintf(errMsg, 100,
 		  "Texture unit %d is accessed both as %s and %s",
 		  unit, targetName[targetUsed[unit]], targetName[target]);
          return GL_FALSE;

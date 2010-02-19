@@ -77,7 +77,7 @@ file_string(gl_register_file f, gl_prog_print_mode mode)
    default:
       {
          static char s[20];
-         snprintf(s, sizeof(s), "FILE%u", f);
+         _mesa_snprintf(s, sizeof(s), "FILE%u", f);
          return s;
       }
    }
@@ -997,7 +997,7 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
    else
       type = "vert";
 
-   snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
+   _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "w");
    if (!f) {
       fprintf(stderr, "Unable to open %s for writing\n", filename);
@@ -1047,7 +1047,7 @@ _mesa_append_uniforms_to_file(const struct gl_shader *shader,
    else
       type = "vert";
 
-   snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
+   _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "a"); /* append */
    if (!f) {
       fprintf(stderr, "Unable to open %s for appending\n", filename);

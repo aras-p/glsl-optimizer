@@ -139,7 +139,7 @@ link_varying_vars(GLcontext *ctx,
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
             char msg[100];
-            snprintf(msg, sizeof(msg),
+            _mesa_snprintf(msg, sizeof(msg),
 		     "centroid modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             free(map);
@@ -147,7 +147,7 @@ link_varying_vars(GLcontext *ctx,
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
             char msg[100];
-            snprintf(msg, sizeof(msg),
+            _mesa_snprintf(msg, sizeof(msg),
 		     "invariant modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             free(map);

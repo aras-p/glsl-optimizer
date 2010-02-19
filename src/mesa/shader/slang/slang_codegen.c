@@ -1643,7 +1643,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    if (A->pragmas->Debug) {
       char s[1000];
-      snprintf(s, sizeof(s), "Call/inline %s()", (char *) fun->header.a_name);
+      _mesa_snprintf(s, sizeof(s), "Call/inline %s()", (char *) fun->header.a_name);
       n->Comment = _slang_strdup(s);
    }
 
@@ -2190,7 +2190,7 @@ _slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
          */
          slang_variable *p = slang_variable_scope_grow(fun->parameters);
          char name[10];
-         snprintf(name, sizeof(name), "p%d", i);
+         _mesa_snprintf(name, sizeof(name), "p%d", i);
          p->a_name = slang_atom_pool_atom(A->atoms, name);
          p->type.qualifier = SLANG_QUAL_CONST;
          p->type.specifier.type = baseType;

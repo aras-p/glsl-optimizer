@@ -2984,7 +2984,7 @@ yyreduce:
     {
 	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 63)) {
               char s[100];
-              snprintf(s, sizeof(s),
+              _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
 	      yyerror(& (yylsp[(1) - (1)]), state, s);
 	      YYERROR;
@@ -3001,7 +3001,7 @@ yyreduce:
     {
 	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 64)) {
               char s[100];
-              snprintf(s, sizeof(s),
+              _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
 	      yyerror(& (yylsp[(1) - (1)]), state, s);
 	      YYERROR;
@@ -4915,7 +4915,7 @@ yyreduce:
 
 	   if (exist != NULL) {
 	      char m[1000];
-	      snprintf(m, sizeof(m), "redeclared identifier: %s", (yyvsp[(2) - (4)].string));
+	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", (yyvsp[(2) - (4)].string));
 	      free((yyvsp[(2) - (4)].string));
 	      yyerror(& (yylsp[(2) - (4)]), state, m);
 	      YYERROR;
@@ -5559,18 +5559,18 @@ make_error_string(const char *fmt, ...)
 
    va_start(args, fmt);
 
-   /* Call vsnprintf once to determine how large the final string is.  Call it
-    * again to do the actual formatting.  from the vsnprintf manual page:
+   /* Call v_mesa_snprintf once to determine how large the final string is.  Call it
+    * again to do the actual formatting.  from the v_mesa_snprintf manual page:
     *
     *    Upon successful return, these functions return the number of
     *    characters printed  (not including the trailing '\0' used to end
     *    output to strings).
     */
-   length = 1 + vsnprintf(NULL, 0, fmt, args);
+   length = 1 + v_mesa_snprintf(NULL, 0, fmt, args);
 
    str = malloc(length);
    if (str) {
-      vsnprintf(str, length, fmt, args);
+      v_mesa_snprintf(str, length, fmt, args);
    }
 
    va_end(args);
