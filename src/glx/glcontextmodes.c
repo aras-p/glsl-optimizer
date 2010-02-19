@@ -48,17 +48,14 @@
 # include <string.h>
 # define _mesa_malloc(b) malloc(b)
 # define _mesa_free(m) free(m)
-# define _mesa_memset  memset
 #else
 # ifdef XFree86Server
 # include <os.h>
 # include <string.h>
 #  define _mesa_malloc(b) xalloc(b)
 #  define _mesa_free(m)   xfree(m)
-#  define _mesa_memset   memset
 # else
 #  include <X11/Xlibint.h>
-#  define _mesa_memset memset
 #  define _mesa_malloc(b) Xmalloc(b)
 #  define _mesa_free(m) Xfree(m)
 # endif /* XFree86Server */
@@ -133,7 +130,7 @@ _gl_copy_visual_to_context_mode(__GLcontextModes * mode,
 {
    __GLcontextModes *const next = mode->next;
 
-   (void) _mesa_memset(mode, 0, sizeof(__GLcontextModes));
+   (void) memset(mode, 0, sizeof(__GLcontextModes));
    mode->next = next;
 
    mode->visualID = config->vid;
@@ -402,7 +399,7 @@ _gl_context_modes_create(unsigned count, size_t minimum_size)
          break;
       }
 
-      (void) _mesa_memset(*next, 0, size);
+      (void) memset(*next, 0, size);
       (*next)->visualID = GLX_DONT_CARE;
       (*next)->visualType = GLX_DONT_CARE;
       (*next)->visualRating = GLX_NONE;

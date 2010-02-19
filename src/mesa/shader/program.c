@@ -809,7 +809,7 @@ _mesa_find_used_registers(const struct gl_program *prog,
 {
    GLuint i, j;
 
-   _mesa_memset(used, 0, usedSize);
+   memset(used, 0, usedSize);
 
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;

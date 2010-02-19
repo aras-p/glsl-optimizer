@@ -1181,7 +1181,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
             /* Note: bottom-to-top raster assumed! */
             GLubyte *stencil = (GLubyte *) rb->GetPointer(ctx, rb, x, y);
             GLuint len = width * height * sizeof(GLubyte);
-            _mesa_memset(stencil, clearVal, len);
+            memset(stencil, clearVal, len);
          }
          else {
             /* general case */
@@ -1189,7 +1189,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
             for (i = 0; i < height; i++) {
                GLvoid *stencil = rb->GetPointer(ctx, rb, x, y + i);
                if (rb->DataType == GL_UNSIGNED_BYTE) {
-                  _mesa_memset(stencil, clearVal, width);
+                  memset(stencil, clearVal, width);
                }
                else {
                   _mesa_memset16((short unsigned int*) stencil, clearVal, width);

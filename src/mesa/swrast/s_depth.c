@@ -1438,7 +1438,7 @@ _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
             /* optimized case */
             GLushort *dst = (GLushort *) rb->GetPointer(ctx, rb, x, y);
             GLuint len = width * height * sizeof(GLushort);
-            _mesa_memset(dst, (clearValue & 0xff), len);
+            memset(dst, (clearValue & 0xff), len);
          }
          else {
             /* general case */

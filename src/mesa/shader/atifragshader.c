@@ -96,7 +96,7 @@ create_dst_mod_str(GLuint mod)
 {
    static char ret_str[1024];
 
-   _mesa_memset(ret_str, 0, 1024);
+   memset(ret_str, 0, 1024);
    if (mod & GL_2X_BIT_ATI)
       strncat(ret_str, "|2X", 1024);
 

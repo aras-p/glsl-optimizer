@@ -629,7 +629,7 @@ void vf_generate_sse_emit( struct vertex_fetch *vf )
       return;
    }
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
 
    p.vf = vf;
    p.inputs_safe = 0;		/* for now */

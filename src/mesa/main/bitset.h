@@ -49,8 +49,8 @@
  */
 #define BITSET_COPY(x, y) memcpy( (x), (y), sizeof (x) )
 #define BITSET_EQUAL(x, y) (_mesa_memcmp( (x), (y), sizeof (x) ) == 0)
-#define BITSET_ZERO(x) _mesa_memset( (x), 0, sizeof (x) )
-#define BITSET_ONES(x) _mesa_memset( (x), 0xff, sizeof (x) )
+#define BITSET_ZERO(x) memset( (x), 0, sizeof (x) )
+#define BITSET_ONES(x) memset( (x), 0xff, sizeof (x) )
 
 #define BITSET_BITWORD(b) ((b) / BITSET_WORDBITS)
 #define BITSET_BIT(b) (1 << ((b) % BITSET_WORDBITS))

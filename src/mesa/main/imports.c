@@ -244,17 +244,6 @@ _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
    return newBuffer;
 }
 
-/** Wrapper around memset() */
-void
-_mesa_memset( void *dst, int val, size_t n )
-{
-#if defined(SUNOS4)
-   memset( (char *) dst, (int) val, (int) n );
-#else
-   memset(dst, val, n);
-#endif
-}
-
 /**
  * Fill memory with a constant 16bit word.
  * \param dst destination pointer.

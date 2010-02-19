@@ -1590,7 +1590,7 @@ create_new_program( const struct state_key *key,
 {
    struct tnl_program p;
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
    p.state = key;
    p.program = program;
    p.eye_position = undef;

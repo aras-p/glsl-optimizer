@@ -349,7 +349,7 @@ void brw_upload_state(struct brw_context *brw)
        * state atoms are ordered correctly in the list.
        */
       struct brw_state_flags examined, prev;      
-      _mesa_memset(&examined, 0, sizeof(examined));
+      memset(&examined, 0, sizeof(examined));
       prev = *state;
 
       for (i = 0; i < Elements(atoms); i++) {	 

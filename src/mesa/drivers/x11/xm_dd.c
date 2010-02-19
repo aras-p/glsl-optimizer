@@ -336,7 +336,7 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
          /* common case */
-         _mesa_memset(ptr4, pixel, 4 * n);
+         memset(ptr4, pixel, 4 * n);
       }
       else {
          GLuint i;

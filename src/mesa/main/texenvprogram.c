@@ -1416,7 +1416,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    GLuint unit;
    struct ureg cf, out;
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
    p.state = key;
    p.program = program;
 

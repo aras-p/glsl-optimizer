@@ -105,7 +105,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
 				     dri_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
-   _mesa_memset(sampler, 0, sizeof(*sampler));
+   memset(sampler, 0, sizeof(*sampler));
 
    switch (key->minfilter) {
    case GL_NEAREST:

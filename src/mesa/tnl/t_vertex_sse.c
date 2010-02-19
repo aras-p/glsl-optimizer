@@ -648,7 +648,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
       return;
    }
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
 
    p.ctx = ctx;
    p.inputs_safe = 0;		/* for now */
