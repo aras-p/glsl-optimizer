@@ -47,6 +47,7 @@
  */
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -78,6 +79,7 @@ readImage( const char* filename, GLsizei* width, GLsizei *height )
 {
     int       n;
     GLubyte*  pixels;
+    size_t    num_read;
 
     FILE* infile = fopen( filename, "rb" );
 
@@ -86,8 +88,10 @@ readImage( const char* filename, GLsizei* width, GLsizei *height )
 	return NULL;
     }
 
-    fread( width, sizeof( GLsizei ), 1, infile );
-    fread( height, sizeof( GLsizei ), 1, infile );
+    num_read = fread( width, sizeof( GLsizei ), 1, infile );
+    assert(num_read == 1);
+    num_read = fread( height, sizeof( GLsizei ), 1, infile );
+    assert(num_read == 1);
 
     *width = bswap(*width);
     *height = bswap(*height);
@@ -101,7 +105,8 @@ readImage( const char* filename, GLsizei* width, GLsizei *height )
 	return NULL;
     }
 
-    fread( pixels, sizeof( GLubyte ), n, infile );
+    num_read = fread( pixels, sizeof( GLubyte ), n, infile );
+    assert(num_read == n);
     
     fclose( infile );
 
