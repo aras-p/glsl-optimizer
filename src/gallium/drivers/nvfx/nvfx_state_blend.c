@@ -1,14 +1,14 @@
-#include "nv40_context.h"
+#include "nvfx_context.h"
 
 static boolean
-nv40_state_blend_validate(struct nvfx_context *nvfx)
+nvfx_state_blend_validate(struct nvfx_context *nvfx)
 {
 	so_ref(nvfx->blend->so, &nvfx->state.hw[NVFX_STATE_BLEND]);
 	return TRUE;
 }
 
-struct nvfx_state_entry nv40_state_blend = {
-	.validate = nv40_state_blend_validate,
+struct nvfx_state_entry nvfx_state_blend = {
+	.validate = nvfx_state_blend_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_BLEND,
 		.hw = NVFX_STATE_BLEND
@@ -16,7 +16,7 @@ struct nvfx_state_entry nv40_state_blend = {
 };
 
 static boolean
-nv40_state_blend_colour_validate(struct nvfx_context *nvfx)
+nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *so = so_new(1, 1, 0);
 	struct pipe_blend_color *bcol = &nvfx->blend_colour;
@@ -32,8 +32,8 @@ nv40_state_blend_colour_validate(struct nvfx_context *nvfx)
 	return TRUE;
 }
 
-struct nvfx_state_entry nv40_state_blend_colour = {
-	.validate = nv40_state_blend_colour_validate,
+struct nvfx_state_entry nvfx_state_blend_colour = {
+	.validate = nvfx_state_blend_colour_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_BCOL,
 		.hw = NVFX_STATE_BCOL

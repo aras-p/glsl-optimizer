@@ -33,8 +33,6 @@ extern struct nvfx_state_entry nv40_state_scissor;
 extern struct nvfx_state_entry nv40_state_stipple;
 extern struct nvfx_state_entry nv40_state_fragprog;
 extern struct nvfx_state_entry nv40_state_vertprog;
-extern struct nvfx_state_entry nv40_state_blend;
-extern struct nvfx_state_entry nv40_state_blend_colour;
 extern struct nvfx_state_entry nv40_state_zsa;
 extern struct nvfx_state_entry nv40_state_viewport;
 extern struct nvfx_state_entry nv40_state_framebuffer;

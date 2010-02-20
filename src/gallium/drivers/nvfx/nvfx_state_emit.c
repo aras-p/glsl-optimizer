@@ -12,8 +12,8 @@ static struct nvfx_state_entry *name##_render_states[] = { \
 	&nvxx##_state_fragprog, \
 	&nvxx##_state_fragtex, \
 	&nvxx##_state_vertprog, \
-	&nvxx##_state_blend, \
-	&nvxx##_state_blend_colour, \
+	&nvfx_state_blend, \
+	&nvfx_state_blend_colour, \
 	&nvxx##_state_zsa, \
 	&nvxx##_state_sr, \
 	&nvxx##_state_viewport, \

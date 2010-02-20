@@ -181,6 +181,9 @@ struct nvfx_state_entry {
 	} dirty;
 };
 
+extern struct nvfx_state_entry nvfx_state_blend;
+extern struct nvfx_state_entry nvfx_state_blend_colour;
+
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
