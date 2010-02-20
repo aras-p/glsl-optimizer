@@ -11,7 +11,7 @@ nv30_state_viewport_validate(struct nv30_context *nv30)
 		return FALSE;
 
 	so = so_new(3, 10, 0);
-	so_method(so, nv30->screen->rankine,
+	so_method(so, nv30->screen->eng3d,
 		  NV34TCL_VIEWPORT_TRANSLATE_X, 8);
 	so_data  (so, fui(vpt->translate[0]));
 	so_data  (so, fui(vpt->translate[1]));
@@ -21,11 +21,11 @@ nv30_state_viewport_validate(struct nv30_context *nv30)
 	so_data  (so, fui(vpt->scale[1]));
 	so_data  (so, fui(vpt->scale[2]));
 	so_data  (so, fui(vpt->scale[3]));
-/*	so_method(so, nv30->screen->rankine, 0x1d78, 1);
+/*	so_method(so, nv30->screen->eng3d, 0x1d78, 1);
 	so_data  (so, 1);
 */
 	/* TODO/FIXME: never saw value 0x0110 in renouveau dumps, only 0x0001 */
-	so_method(so, nv30->screen->rankine, 0x1d78, 1);
+	so_method(so, nv30->screen->eng3d, 0x1d78, 1);
 	so_data  (so, 1);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_VIEWPORT]);

@@ -11,12 +11,12 @@ nv30_flush(struct pipe_context *pipe, unsigned flags,
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_screen *screen = nv30->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *rankine = screen->rankine;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		BEGIN_RING(chan, rankine, 0x1fd8, 1);
+		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING  (chan, 2);
-		BEGIN_RING(chan, rankine, 0x1fd8, 1);
+		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING  (chan, 1);
 	}
 

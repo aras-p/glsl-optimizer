@@ -22,9 +22,9 @@ nv30_state_sr_validate(struct nv30_context *nv30)
 	struct nouveau_stateobj *so = so_new(2, 2, 0);
 	struct pipe_stencil_ref *sr = &nv30->stencil_ref;
 
-	so_method(so, nv30->screen->rankine, NV34TCL_STENCIL_FRONT_FUNC_REF, 1);
+	so_method(so, nv30->screen->eng3d, NV34TCL_STENCIL_FRONT_FUNC_REF, 1);
 	so_data  (so, sr->ref_value[0]);
-	so_method(so, nv30->screen->rankine, NV34TCL_STENCIL_BACK_FUNC_REF, 1);
+	so_method(so, nv30->screen->eng3d, NV34TCL_STENCIL_BACK_FUNC_REF, 1);
 	so_data  (so, sr->ref_value[1]);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_SR]);

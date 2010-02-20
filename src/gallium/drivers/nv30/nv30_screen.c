@@ -177,7 +177,7 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_resource_destroy(&screen->query_heap);
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
-	nouveau_grobj_free(&screen->rankine);
+	nouveau_grobj_free(&screen->eng3d);
 	nv04_surface_2d_takedown(&screen->eng2d);
 
 	nouveau_screen_fini(&screen->base);
@@ -192,7 +192,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
-	unsigned rankine_class = 0;
+	unsigned eng3d_class = 0;
 	int ret, i;
 
 	if (!screen)
@@ -219,25 +219,25 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	switch (dev->chipset & 0xf0) {
 	case 0x30:
 		if (NV30TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			rankine_class = 0x0397;
+			eng3d_class = 0x0397;
 		else
 		if (NV34TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			rankine_class = 0x0697;
+			eng3d_class = 0x0697;
 		else
 		if (NV35TCL_CHIPSET_3X_MASK & (1 << (dev->chipset & 0x0f)))
-			rankine_class = 0x0497;
+			eng3d_class = 0x0497;
 		break;
 	default:
 		break;
 	}
 
-	if (!rankine_class) {
+	if (!eng3d_class) {
 		NOUVEAU_ERR("Unknown nv3x chipset: nv%02x\n", dev->chipset);
 		return NULL;
 	}
 
-	ret = nouveau_grobj_alloc(chan, 0xbeef3097, rankine_class,
-				  &screen->rankine);
+	ret = nouveau_grobj_alloc(chan, 0xbeef3097, eng3d_class,
+				  &screen->eng3d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
@@ -277,80 +277,80 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	/* Static rankine initialisation */
+	/* Static eng3d initialisation */
 	so = so_new(36, 60, 0);
-	so_method(so, screen->rankine, NV34TCL_DMA_NOTIFY, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
-	so_method(so, screen->rankine, NV34TCL_DMA_TEXTURE0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_TEXTURE0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-	so_method(so, screen->rankine, NV34TCL_DMA_COLOR1, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_COLOR1, 1);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->rankine, NV34TCL_DMA_COLOR0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_COLOR0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->rankine, NV34TCL_DMA_VTXBUF0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_VTXBUF0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-/*	so_method(so, screen->rankine, NV34TCL_DMA_FENCE, 2);
+/*	so_method(so, screen->eng3d, NV34TCL_DMA_FENCE, 2);
 	so_data  (so, 0);
 	so_data  (so, screen->query->handle);*/
-	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY7, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_IN_MEMORY7, 1);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY8, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_IN_MEMORY8, 1);
 	so_data  (so, chan->vram->handle);
 
 	for (i=1; i<8; i++) {
-		so_method(so, screen->rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(i), 1);
+		so_method(so, screen->eng3d, NV34TCL_VIEWPORT_CLIP_HORIZ(i), 1);
 		so_data  (so, 0);
-		so_method(so, screen->rankine, NV34TCL_VIEWPORT_CLIP_VERT(i), 1);
+		so_method(so, screen->eng3d, NV34TCL_VIEWPORT_CLIP_VERT(i), 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, screen->rankine, 0x220, 1);
+	so_method(so, screen->eng3d, 0x220, 1);
 	so_data  (so, 1);
 
-	so_method(so, screen->rankine, 0x03b0, 1);
+	so_method(so, screen->eng3d, 0x03b0, 1);
 	so_data  (so, 0x00100000);
-	so_method(so, screen->rankine, 0x1454, 1);
+	so_method(so, screen->eng3d, 0x1454, 1);
 	so_data  (so, 0);
-	so_method(so, screen->rankine, 0x1d80, 1);
+	so_method(so, screen->eng3d, 0x1d80, 1);
 	so_data  (so, 3);
-	so_method(so, screen->rankine, 0x1450, 1);
+	so_method(so, screen->eng3d, 0x1450, 1);
 	so_data  (so, 0x00030004);
 
 	/* NEW */
-	so_method(so, screen->rankine, 0x1e98, 1);
+	so_method(so, screen->eng3d, 0x1e98, 1);
 	so_data  (so, 0);
-	so_method(so, screen->rankine, 0x17e0, 3);
+	so_method(so, screen->eng3d, 0x17e0, 3);
 	so_data  (so, fui(0.0));
 	so_data  (so, fui(0.0));
 	so_data  (so, fui(1.0));
-	so_method(so, screen->rankine, 0x1f80, 16);
+	so_method(so, screen->eng3d, 0x1f80, 16);
 	for (i=0; i<16; i++) {
 		so_data  (so, (i==8) ? 0x0000ffff : 0);
 	}
 
-	so_method(so, screen->rankine, 0x120, 3);
+	so_method(so, screen->eng3d, 0x120, 3);
 	so_data  (so, 0);
 	so_data  (so, 1);
 	so_data  (so, 2);
 
-	so_method(so, screen->rankine, 0x1d88, 1);
+	so_method(so, screen->eng3d, 0x1d88, 1);
 	so_data  (so, 0x00001200);
 
-	so_method(so, screen->rankine, NV34TCL_RC_ENABLE, 1);
+	so_method(so, screen->eng3d, NV34TCL_RC_ENABLE, 1);
 	so_data  (so, 0);
 
-	so_method(so, screen->rankine, NV34TCL_DEPTH_RANGE_NEAR, 2);
+	so_method(so, screen->eng3d, NV34TCL_DEPTH_RANGE_NEAR, 2);
 	so_data  (so, fui(0.0));
 	so_data  (so, fui(1.0));
 
-	so_method(so, screen->rankine, NV34TCL_MULTISAMPLE_CONTROL, 1);
+	so_method(so, screen->eng3d, NV34TCL_MULTISAMPLE_CONTROL, 1);
 	so_data  (so, 0xffff0000);
 
 	/* enables use of vp rather than fixed-function somehow */
-	so_method(so, screen->rankine, 0x1e94, 1);
+	so_method(so, screen->eng3d, 0x1e94, 1);
 	so_data  (so, 0x13);
 
 	so_emit(chan, so);

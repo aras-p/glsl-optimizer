@@ -14,7 +14,7 @@ struct nv30_screen {
 
 	/* HW graphics objects */
 	struct nv04_surface_2d *eng2d;
-	struct nouveau_grobj *rankine;
+	struct nouveau_grobj *eng3d;
 	struct nouveau_notifier *sync;
 
 	/* Query object resources */

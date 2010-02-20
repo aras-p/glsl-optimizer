@@ -49,7 +49,7 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 	case NOUVEAU_CAP_HW_VTXBUF:
 		return 1;
 	case NOUVEAU_CAP_HW_IDXBUF:
-		if (screen->curie->grclass == NV40TCL)
+		if (screen->eng3d->grclass == NV40TCL)
 			return 1;
 		return 0;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -164,7 +164,7 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_resource_destroy(&screen->query_heap);
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
-	nouveau_grobj_free(&screen->curie);
+	nouveau_grobj_free(&screen->eng3d);
 	nv04_surface_2d_takedown(&screen->eng2d);
 
 	nouveau_screen_fini(&screen->base);
@@ -179,7 +179,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
-	unsigned curie_class = 0;
+	unsigned eng3d_class = 0;
 	int ret;
 
 	if (!screen)
@@ -206,23 +206,23 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	switch (dev->chipset & 0xf0) {
 	case 0x40:
 		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			curie_class = NV40TCL;
+			eng3d_class = NV40TCL;
 		else
 		if (NV4X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			curie_class = NV44TCL;
+			eng3d_class = NV44TCL;
 		break;
 	case 0x60:
 		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
-			curie_class = NV44TCL;
+			eng3d_class = NV44TCL;
 		break;
 	}
 
-	if (!curie_class) {
+	if (!eng3d_class) {
 		NOUVEAU_ERR("Unknown nv4x chipset: nv%02x\n", dev->chipset);
 		return NULL;
 	}
 
-	ret = nouveau_grobj_alloc(chan, 0xbeef3097, curie_class, &screen->curie);
+	ret = nouveau_grobj_alloc(chan, 0xbeef3097, eng3d_class, &screen->eng3d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
@@ -262,52 +262,52 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
-	/* Static curie initialisation */
+	/* Static eng3d initialisation */
 	so = so_new(16, 25, 0);
-	so_method(so, screen->curie, NV34TCL_DMA_NOTIFY, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_TEXTURE0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_TEXTURE0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_COLOR1, 1);
+	so_method(so, screen->eng3d, NV34TCL_DMA_COLOR1, 1);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_COLOR0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_COLOR0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_VTXBUF0, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_VTXBUF0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_FENCE, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_FENCE, 2);
 	so_data  (so, 0);
 	so_data  (so, screen->query->handle);
-	so_method(so, screen->curie, NV34TCL_DMA_IN_MEMORY7, 2);
+	so_method(so, screen->eng3d, NV34TCL_DMA_IN_MEMORY7, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_COLOR2, 2);
+	so_method(so, screen->eng3d, NV40TCL_DMA_COLOR2, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
 
-	so_method(so, screen->curie, 0x1ea4, 3);
+	so_method(so, screen->eng3d, 0x1ea4, 3);
 	so_data  (so, 0x00000010);
 	so_data  (so, 0x01000100);
 	so_data  (so, 0xff800006);
 
 	/* vtxprog output routing */
-	so_method(so, screen->curie, 0x1fc4, 1);
+	so_method(so, screen->eng3d, 0x1fc4, 1);
 	so_data  (so, 0x06144321);
-	so_method(so, screen->curie, 0x1fc8, 2);
+	so_method(so, screen->eng3d, 0x1fc8, 2);
 	so_data  (so, 0xedcba987);
 	so_data  (so, 0x00000021);
-	so_method(so, screen->curie, 0x1fd0, 1);
+	so_method(so, screen->eng3d, 0x1fd0, 1);
 	so_data  (so, 0x00171615);
-	so_method(so, screen->curie, 0x1fd4, 1);
+	so_method(so, screen->eng3d, 0x1fd4, 1);
 	so_data  (so, 0x001b1a19);
 
-	so_method(so, screen->curie, 0x1ef8, 1);
+	so_method(so, screen->eng3d, 0x1ef8, 1);
 	so_data  (so, 0x0020ffff);
-	so_method(so, screen->curie, 0x1d64, 1);
+	so_method(so, screen->eng3d, 0x1d64, 1);
 	so_data  (so, 0x00d30000);
-	so_method(so, screen->curie, 0x1e94, 1);
+	so_method(so, screen->eng3d, 0x1e94, 1);
 	so_data  (so, 0x00000001);
 
 	so_emit(chan, so);

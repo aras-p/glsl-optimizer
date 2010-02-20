@@ -14,41 +14,41 @@ nv40_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
 	struct nv40_blend_state *bso = CALLOC(1, sizeof(*bso));
 	struct nouveau_stateobj *so = so_new(5, 8, 0);
 
 	if (cso->rt[0].blend_enable) {
-		so_method(so, curie, NV34TCL_BLEND_FUNC_ENABLE, 3);
+		so_method(so, eng3d, NV34TCL_BLEND_FUNC_ENABLE, 3);
 		so_data  (so, 1);
 		so_data  (so, (nvgl_blend_func(cso->rt[0].alpha_src_factor) << 16) |
 			       nvgl_blend_func(cso->rt[0].rgb_src_factor));
 		so_data  (so, nvgl_blend_func(cso->rt[0].alpha_dst_factor) << 16 |
 			      nvgl_blend_func(cso->rt[0].rgb_dst_factor));
-		so_method(so, curie, NV40TCL_BLEND_EQUATION, 1);
+		so_method(so, eng3d, NV40TCL_BLEND_EQUATION, 1);
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func) << 16 |
 			      nvgl_blend_eqn(cso->rt[0].rgb_func));
 	} else {
-		so_method(so, curie, NV34TCL_BLEND_FUNC_ENABLE, 1);
+		so_method(so, eng3d, NV34TCL_BLEND_FUNC_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, curie, NV34TCL_COLOR_MASK, 1);
+	so_method(so, eng3d, NV34TCL_COLOR_MASK, 1);
 	so_data  (so, (((cso->rt[0].colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
 
 	if (cso->logicop_enable) {
-		so_method(so, curie, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		so_method(so, eng3d, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
 		so_data  (so, 1);
 		so_data  (so, nvgl_logicop_func(cso->logicop_func));
 	} else {
-		so_method(so, curie, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		so_method(so, eng3d, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, curie, NV34TCL_DITHER_ENABLE, 1);
+	so_method(so, eng3d, NV34TCL_DITHER_ENABLE, 1);
 	so_data  (so, cso->dither ? 1 : 0);
 
 	so_ref(so, &bso->so);
@@ -311,7 +311,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
 	struct nouveau_stateobj *so = so_new(9, 19, 0);
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
 
 	/*XXX: ignored:
 	 * 	light_twoside
@@ -319,22 +319,22 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 */
 
-	so_method(so, curie, NV34TCL_SHADE_MODEL, 1);
+	so_method(so, eng3d, NV34TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
 				       NV34TCL_SHADE_MODEL_SMOOTH);
 
-	so_method(so, curie, NV34TCL_LINE_WIDTH, 2);
+	so_method(so, eng3d, NV34TCL_LINE_WIDTH, 2);
 	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
 	so_data  (so, cso->line_smooth ? 1 : 0);
-	so_method(so, curie, NV34TCL_LINE_STIPPLE_ENABLE, 2);
+	so_method(so, eng3d, NV34TCL_LINE_STIPPLE_ENABLE, 2);
 	so_data  (so, cso->line_stipple_enable ? 1 : 0);
 	so_data  (so, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	so_method(so, curie, NV34TCL_POINT_SIZE, 1);
+	so_method(so, eng3d, NV34TCL_POINT_SIZE, 1);
 	so_data  (so, fui(cso->point_size));
 
-	so_method(so, curie, NV34TCL_POLYGON_MODE_FRONT, 6);
+	so_method(so, eng3d, NV34TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
 		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
 		so_data(so, nvgl_polygon_mode(cso->fill_cw));
@@ -375,10 +375,10 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	so_data(so, cso->poly_smooth ? 1 : 0);
 	so_data(so, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
 
-	so_method(so, curie, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_method(so, eng3d, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, curie, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
+	so_method(so, eng3d, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
 		so_data(so, 1);
@@ -395,12 +395,12 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	else
 		so_data(so, 0);
 	if (cso->offset_cw || cso->offset_ccw) {
-		so_method(so, curie, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
+		so_method(so, eng3d, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
 		so_data  (so, fui(cso->offset_scale));
 		so_data  (so, fui(cso->offset_units * 2));
 	}
 
-	so_method(so, curie, NV34TCL_POINT_SPRITE, 1);
+	so_method(so, eng3d, NV34TCL_POINT_SPRITE, 1);
 	if (cso->point_quad_rasterization) {
 		unsigned psctl = (1 << 0), i;
 
@@ -446,45 +446,45 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_stateobj *so = so_new(6, 20, 0);
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
 
-	so_method(so, curie, NV34TCL_DEPTH_FUNC, 3);
+	so_method(so, eng3d, NV34TCL_DEPTH_FUNC, 3);
 	so_data  (so, nvgl_comparison_op(cso->depth.func));
 	so_data  (so, cso->depth.writemask ? 1 : 0);
 	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, curie, NV34TCL_ALPHA_FUNC_ENABLE, 3);
+	so_method(so, eng3d, NV34TCL_ALPHA_FUNC_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	so_data  (so, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, curie, NV34TCL_STENCIL_FRONT_ENABLE, 3);
+		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_ENABLE, 3);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
-		so_method(so, curie, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
+		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[0].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, curie, NV34TCL_STENCIL_FRONT_ENABLE, 1);
+		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, curie, NV34TCL_STENCIL_BACK_ENABLE, 3);
+		so_method(so, eng3d, NV34TCL_STENCIL_BACK_ENABLE, 3);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_method(so, curie, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
+		so_method(so, eng3d, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[1].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, curie, NV34TCL_STENCIL_BACK_ENABLE, 1);
+		so_method(so, eng3d, NV34TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 

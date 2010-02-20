@@ -13,7 +13,7 @@ nv30_state_scissor_validate(struct nv30_context *nv30)
 	nv30->state.scissor_enabled = rast->scissor;
 
 	so = so_new(1, 2, 0);
-	so_method(so, nv30->screen->rankine, NV34TCL_SCISSOR_HORIZ, 2);
+	so_method(so, nv30->screen->eng3d, NV34TCL_SCISSOR_HORIZ, 2);
 	if (nv30->state.scissor_enabled) {
 		so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 		so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);

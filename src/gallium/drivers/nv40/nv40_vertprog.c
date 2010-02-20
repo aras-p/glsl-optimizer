@@ -836,7 +836,7 @@ nv40_vertprog_validate(struct nv40_context *nv40)
 	struct pipe_screen *pscreen = nv40->pipe.screen;
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nv40_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -887,12 +887,12 @@ check_gpu_resources:
 		}
 
 		so = so_new(3, 4, 0);
-		so_method(so, curie, NV34TCL_VP_START_FROM_ID, 1);
+		so_method(so, eng3d, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
-		so_method(so, curie, NV40TCL_VP_ATTRIB_EN, 2);
+		so_method(so, eng3d, NV40TCL_VP_ATTRIB_EN, 2);
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);
-		so_method(so, curie,  NV34TCL_VP_CLIP_PLANES_ENABLE, 1);
+		so_method(so, eng3d,  NV34TCL_VP_CLIP_PLANES_ENABLE, 1);
 		so_data  (so, vp->clip_ctrl);
 		so_ref(so, &vp->so);
 		so_ref(NULL, &so);
@@ -976,7 +976,7 @@ check_gpu_resources:
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (chan, i + vp->data->start);
 			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
@@ -995,10 +995,10 @@ check_gpu_resources:
 			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_FROM_ID, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_INST(0), 4);
+			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}

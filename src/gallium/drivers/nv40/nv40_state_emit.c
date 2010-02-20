@@ -59,7 +59,7 @@ nv40_state_emit(struct nv40_context *nv40)
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned i;
 	uint64_t states;
 
@@ -85,9 +85,9 @@ nv40_state_emit(struct nv40_context *nv40)
 
 	if (state->dirty & ((1ULL << NV40_STATE_FRAGPROG) |
 			    (1ULL << NV40_STATE_FRAGTEX0))) {
-		BEGIN_RING(chan, curie, NV40TCL_TEX_CACHE_CTL, 1);
+		BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
 		OUT_RING  (chan, 2);
-		BEGIN_RING(chan, curie, NV40TCL_TEX_CACHE_CTL, 1);
+		BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
 		OUT_RING  (chan, 1);
 	}
 

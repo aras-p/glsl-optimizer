@@ -13,7 +13,7 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 	nv40->state.scissor_enabled = rast->scissor;
 
 	so = so_new(1, 2, 0);
-	so_method(so, nv40->screen->curie, NV34TCL_SCISSOR_HORIZ, 2);
+	so_method(so, nv40->screen->eng3d, NV34TCL_SCISSOR_HORIZ, 2);
 	if (nv40->state.scissor_enabled) {
 		so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 		so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);

@@ -652,7 +652,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 	struct pipe_screen *pscreen = nv30->pipe.screen;
 	struct nv30_screen *screen = nv30->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *rankine = screen->rankine;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nv30_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -687,7 +687,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		}
 
 		so = so_new(1, 1, 0);
-		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
+		so_method(so, eng3d, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_ref(so, &vp->so);
 		so_ref(NULL, &so);
@@ -772,7 +772,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (chan, i + vp->data->start);
 			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
@@ -790,10 +790,10 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				vp->insns[i].data[2], vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
+			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}

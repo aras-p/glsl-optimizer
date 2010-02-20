@@ -111,7 +111,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	txs = tf->swizzle;
 
 	so = so_new(2, 9, 2);
-	so_method(so, nv40->screen->curie, NV34TCL_TX_OFFSET(unit), 8);
+	so_method(so, nv40->screen->eng3d, NV34TCL_TX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
 		      NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
@@ -122,7 +122,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_data  (so, (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
 		       pt->height0);
 	so_data  (so, ps->bcol);
-	so_method(so, nv40->screen->curie, NV40TCL_TEX_SIZE1(unit), 1);
+	so_method(so, nv40->screen->eng3d, NV40TCL_TEX_SIZE1(unit), 1);
 	so_data  (so, (pt->depth0 << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
 
 	return so;
@@ -142,7 +142,7 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		samplers &= ~(1 << unit);
 
 		so = so_new(1, 1, 0);
-		so_method(so, nv40->screen->curie, NV34TCL_TX_ENABLE(unit), 1);
+		so_method(so, nv40->screen->eng3d, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
 		state->dirty |= (1ULL << (NV40_STATE_FRAGTEX0 + unit));

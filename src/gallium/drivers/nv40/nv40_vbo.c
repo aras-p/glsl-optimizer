@@ -111,7 +111,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 		       struct pipe_vertex_buffer *vb)
 {
 	struct pipe_screen *pscreen = nv40->pipe.screen;
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
 	unsigned type, ncomp;
 	void *map;
 
@@ -128,25 +128,25 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 
 		switch (ncomp) {
 		case 4:
-			so_method(so, curie, NV34TCL_VTX_ATTR_4F_X(attrib), 4);
+			so_method(so, eng3d, NV34TCL_VTX_ATTR_4F_X(attrib), 4);
 			so_data  (so, fui(v[0]));
 			so_data  (so, fui(v[1]));
 			so_data  (so, fui(v[2]));
 			so_data  (so, fui(v[3]));
 			break;
 		case 3:
-			so_method(so, curie, NV34TCL_VTX_ATTR_3F_X(attrib), 3);
+			so_method(so, eng3d, NV34TCL_VTX_ATTR_3F_X(attrib), 3);
 			so_data  (so, fui(v[0]));
 			so_data  (so, fui(v[1]));
 			so_data  (so, fui(v[2]));
 			break;
 		case 2:
-			so_method(so, curie, NV34TCL_VTX_ATTR_2F_X(attrib), 2);
+			so_method(so, eng3d, NV34TCL_VTX_ATTR_2F_X(attrib), 2);
 			so_data  (so, fui(v[0]));
 			so_data  (so, fui(v[1]));
 			break;
 		case 1:
-			so_method(so, curie, NV34TCL_VTX_ATTR_1F(attrib), 1);
+			so_method(so, eng3d, NV34TCL_VTX_ATTR_1F(attrib), 1);
 			so_data  (so, fui(v[0]));
 			break;
 		default:
@@ -172,7 +172,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart;
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
@@ -194,12 +194,12 @@ nv40_draw_arrays(struct pipe_context *pipe,
 			continue;
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(chan, curie, NV34TCL_VB_VERTEX_BATCH, 1);
+			BEGIN_RING(chan, eng3d, NV34TCL_VB_VERTEX_BATCH, 1);
 			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
@@ -210,14 +210,14 @@ nv40_draw_arrays(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(chan, curie, NV34TCL_VB_VERTEX_BATCH, push);
+			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_VERTEX_BATCH, push);
 			while (push--) {
 				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, 0);
 
 		count -= vc;
@@ -233,7 +233,7 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 {
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -249,11 +249,11 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(chan, curie, NV34TCL_VB_ELEMENT_U32, 1);
+			BEGIN_RING(chan, eng3d, NV34TCL_VB_ELEMENT_U32, 1);
 			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
@@ -263,7 +263,7 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(chan, curie, NV34TCL_VB_ELEMENT_U16, push >> 1);
+			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U16, push >> 1);
 			for (i = 0; i < push; i+=2)
 				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
@@ -271,7 +271,7 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 			elts += push;
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -284,7 +284,7 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 {
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -300,11 +300,11 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(chan, curie, NV34TCL_VB_ELEMENT_U32, 1);
+			BEGIN_RING(chan, eng3d, NV34TCL_VB_ELEMENT_U32, 1);
 			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
@@ -314,7 +314,7 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(chan, curie, NV34TCL_VB_ELEMENT_U16, push >> 1);
+			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U16, push >> 1);
 			for (i = 0; i < push; i+=2)
 				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
@@ -322,7 +322,7 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 			elts += push;
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -335,7 +335,7 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 {
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -351,20 +351,20 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		while (vc) {
 			push = MIN2(vc, 2047);
 
-			BEGIN_RING_NI(chan, curie, NV34TCL_VB_ELEMENT_U32, push);
+			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U32, push);
 			OUT_RINGp    (chan, elts, push);
 
 			vc -= push;
 			elts += push;
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -411,7 +411,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_screen *screen = nv40->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *curie = screen->curie;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart;
 
 	while (count) {
@@ -426,12 +426,12 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 			continue;
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(chan, curie, NV34TCL_VB_INDEX_BATCH, 1);
+			BEGIN_RING(chan, eng3d, NV34TCL_VB_INDEX_BATCH, 1);
 			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
@@ -442,14 +442,14 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(chan, curie, NV34TCL_VB_INDEX_BATCH, push);
+			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_INDEX_BATCH, push);
 			while (push--) {
 				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(chan, curie, NV34TCL_VERTEX_BEGIN_END, 1);
+		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, 0);
 
 		count -= vc;
@@ -486,16 +486,16 @@ static boolean
 nv40_vbo_validate(struct nv40_context *nv40)
 {
 	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
-	struct nouveau_grobj *curie = nv40->screen->curie;
+	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
 	struct pipe_buffer *ib = nv40->idxbuf;
 	unsigned ib_format = nv40->idxbuf_format;
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
 	vtxbuf = so_new(3, 17, 18);
-	so_method(vtxbuf, curie, NV34TCL_VTXBUF_ADDRESS(0), nv40->vtxelt->num_elements);
+	so_method(vtxbuf, eng3d, NV34TCL_VTXBUF_ADDRESS(0), nv40->vtxelt->num_elements);
 	vtxfmt = so_new(1, 16, 0);
-	so_method(vtxfmt, curie, NV34TCL_VTXFMT(0), nv40->vtxelt->num_elements);
+	so_method(vtxfmt, eng3d, NV34TCL_VTXFMT(0), nv40->vtxelt->num_elements);
 
 	for (hw = 0; hw < nv40->vtxelt->num_elements; hw++) {
 		struct pipe_vertex_element *ve;
@@ -534,13 +534,13 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	if (ib) {
 		struct nouveau_bo *bo = nouveau_bo(ib);
 
-		so_method(vtxbuf, curie, NV34TCL_IDXBUF_ADDRESS, 2);
+		so_method(vtxbuf, eng3d, NV34TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_reloc (vtxbuf, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
 			  0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 
-	so_method(vtxbuf, curie, 0x1710, 1);
+	so_method(vtxbuf, eng3d, 0x1710, 1);
 	so_data  (vtxbuf, 0);
 
 	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);

@@ -920,12 +920,12 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	nv40_fragprog_upload(nv40, fp);
 
 	so = so_new(2, 2, 1);
-	so_method(so, nv40->screen->curie, NV34TCL_FP_ACTIVE_PROGRAM, 1);
+	so_method(so, nv40->screen->eng3d, NV34TCL_FP_ACTIVE_PROGRAM, 1);
 	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
 		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
 		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
-	so_method(so, nv40->screen->curie, NV34TCL_FP_CONTROL, 1);
+	so_method(so, nv40->screen->eng3d, NV34TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_ref(so, &fp->so);
 	so_ref(NULL, &so);

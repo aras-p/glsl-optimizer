@@ -11,7 +11,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 		return FALSE;
 
 	so = so_new(2, 9, 0);
-	so_method(so, nv40->screen->curie,
+	so_method(so, nv40->screen->eng3d,
 		  NV34TCL_VIEWPORT_TRANSLATE_X, 8);
 	so_data  (so, fui(vpt->translate[0]));
 	so_data  (so, fui(vpt->translate[1]));
@@ -21,7 +21,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 	so_data  (so, fui(vpt->scale[1]));
 	so_data  (so, fui(vpt->scale[2]));
 	so_data  (so, fui(vpt->scale[3]));
-	so_method(so, nv40->screen->curie, 0x1d78, 1);
+	so_method(so, nv40->screen->eng3d, 0x1d78, 1);
 	so_data  (so, 1);
 
 	so_ref(so, &nv40->state.hw[NV40_STATE_VIEWPORT]);

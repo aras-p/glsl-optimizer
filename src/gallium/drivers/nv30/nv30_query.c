@@ -43,7 +43,7 @@ nv30_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nv30_query *q = nv30_query(pq);
 	struct nv30_screen *screen = nv30->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *rankine = screen->rankine;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
@@ -60,9 +60,9 @@ nv30_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 		assert(0);
 	nouveau_notifier_reset(nv30->screen->query, q->object->start);
 
-	BEGIN_RING(chan, rankine, NV34TCL_QUERY_RESET, 1);
+	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_RESET, 1);
 	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, rankine, NV34TCL_QUERY_UNK17CC, 1);
+	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_UNK17CC, 1);
 	OUT_RING  (chan, 1);
 
 	q->ready = FALSE;
@@ -74,10 +74,10 @@ nv30_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_screen *screen = nv30->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *rankine = screen->rankine;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nv30_query *q = nv30_query(pq);
 
-	BEGIN_RING(chan, rankine, NV34TCL_QUERY_GET, 1);
+	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_GET, 1);
 	OUT_RING  (chan, (0x01 << NV34TCL_QUERY_GET_UNK24_SHIFT) |
 		   ((q->object->start * 32) << NV34TCL_QUERY_GET_OFFSET_SHIFT));
 	FIRE_RING(chan);
