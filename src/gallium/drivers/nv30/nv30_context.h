@@ -24,7 +24,6 @@ extern void nv30_fragprog_destroy(struct nvfx_context *,
 extern void nv30_fragtex_bind(struct nvfx_context *);
 
 /* nv30_state.c and friends */
-extern struct nvfx_state_entry nv30_state_rasterizer;
 extern struct nvfx_state_entry nv30_state_scissor;
 extern struct nvfx_state_entry nv30_state_stipple;
 extern struct nvfx_state_entry nv30_state_fragprog;

@@ -13,7 +13,6 @@ C_SOURCES = \
 	nv40_screen.c \
 	nv40_state.c \
 	nv40_state_fb.c \
-	nv40_state_rasterizer.c \
 	nv40_state_scissor.c \
 	nv40_state_stipple.c \
 	nv40_state_viewport.c \
