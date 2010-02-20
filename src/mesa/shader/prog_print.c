@@ -308,7 +308,7 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
             struct gl_program_parameter *param
                = prog->Parameters->Parameters + index;
             char *state = _mesa_program_state_string(param->StateIndexes);
-            sprintf(str, state);
+            sprintf(str, "%s", state);
             free(state);
          }
          break;
