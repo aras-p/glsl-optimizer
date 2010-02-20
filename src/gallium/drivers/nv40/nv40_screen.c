@@ -203,7 +203,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->is_format_supported = nv40_screen_surface_format_supported;
 	pscreen->context_create = nv40_create;
 
-	nv40_screen_init_miptree_functions(pscreen);
+	nvfx_screen_init_miptree_functions(pscreen);
 
 	/* 3D object */
 	switch (dev->chipset & 0xf0) {

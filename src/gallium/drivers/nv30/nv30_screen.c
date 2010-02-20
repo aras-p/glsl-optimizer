@@ -213,7 +213,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->is_format_supported = nv30_screen_surface_format_supported;
 	pscreen->context_create = nv30_create;
 
-	nv30_screen_init_miptree_functions(pscreen);
+	nvfx_screen_init_miptree_functions(pscreen);
 
 	/* 3D object */
 	switch (dev->chipset & 0xf0) {

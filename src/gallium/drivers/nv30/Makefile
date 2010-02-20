@@ -8,7 +8,6 @@ C_SOURCES = \
 	nv30_draw.c \
 	nv30_fragprog.c \
 	nv30_fragtex.c \
-	nv30_miptree.c \
 	nv30_query.c \
 	nv30_screen.c \
 	nv30_state.c \

@@ -8,7 +8,6 @@ C_SOURCES = \
 	nv40_draw.c \
 	nv40_fragprog.c \
 	nv40_fragtex.c \
-	nv40_miptree.c \
 	nv40_query.c \
 	nv40_screen.c \
 	nv40_state.c \

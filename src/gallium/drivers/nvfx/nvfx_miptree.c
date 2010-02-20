@@ -4,13 +4,15 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 
-#include "nv30_context.h"
+#include "nvfx_context.h"
 #include "../nouveau/nv04_surface_2d.h"
 
+
+
 static void
-nv30_miptree_layout(struct nvfx_miptree *nv30mt)
+nvfx_miptree_layout(struct nvfx_miptree *mt)
 {
-	struct pipe_texture *pt = &nv30mt->base;
+	struct pipe_texture *pt = &mt->base;
 	uint width = pt->width0;
 	uint offset = 0;
 	int nr_faces, l, f;
@@ -31,11 +33,11 @@ nv30_miptree_layout(struct nvfx_miptree *nv30mt)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			nv30mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
+			mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
 		else
-			nv30mt->level[l].pitch = util_format_get_stride(pt->format, width);
+			mt->level[l].pitch = util_format_get_stride(pt->format, width);
 
-		nv30mt->level[l].image_offset =
+		mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = u_minify(width, 1);
@@ -43,24 +45,24 @@ nv30_miptree_layout(struct nvfx_miptree *nv30mt)
 
 	for (f = 0; f < nr_faces; f++) {
 		for (l = 0; l < pt->last_level; l++) {
-			nv30mt->level[l].image_offset[f] = offset;
+			mt->level[l].image_offset[f] = offset;
 
 			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR) &&
 			    u_minify(pt->width0, l + 1) > 1 && u_minify(pt->height0, l + 1) > 1)
-				offset += align(nv30mt->level[l].pitch * u_minify(pt->height0, l), 64);
+				offset += align(mt->level[l].pitch * u_minify(pt->height0, l), 64);
 			else
-				offset += nv30mt->level[l].pitch * u_minify(pt->height0, l);
+				offset += mt->level[l].pitch * u_minify(pt->height0, l);
 		}
 
-		nv30mt->level[l].image_offset[f] = offset;
-		offset += nv30mt->level[l].pitch * u_minify(pt->height0, l);
+		mt->level[l].image_offset[f] = offset;
+		offset += mt->level[l].pitch * u_minify(pt->height0, l);
 	}
 
-	nv30mt->total_size = offset;
+	mt->total_size = offset;
 }
 
 static struct pipe_texture *
-nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
+nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct nvfx_miptree *mt;
 	unsigned buf_usage = PIPE_BUFFER_USAGE_PIXEL |
@@ -87,19 +89,26 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else {
 		switch (pt->format) {
-		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_R16_SNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
 		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
+			/* TODO: we can actually swizzle these formats on nv40, we
+				are just preserving the pre-unification behavior.
+				The whole 2D code is going to be rewritten anyway. */
+			if(nvfx_screen(pscreen)->is_nv4x) {
+				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+				break;
+			}
+		/* TODO: Figure out which formats can be swizzled */
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
+		case PIPE_FORMAT_R16_SNORM:
 		{
 			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
 				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
- 			break;
+			break;
 		}
 		default:
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
@@ -115,21 +124,19 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET && util_format_get_stride(pt->format, pt->width0) < 64)
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 
-	nv30_miptree_layout(mt);
+	nvfx_miptree_layout(mt);
 
-	mt->buffer = pscreen->buffer_create(pscreen, 256, buf_usage,
-				       mt->total_size);
+	mt->buffer = pscreen->buffer_create(pscreen, 256, buf_usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
 	}
 	mt->bo = nouveau_bo(mt->buffer);
-
 	return &mt->base;
 }
 
 static struct pipe_texture *
-nv30_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
+nvfx_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 		     const unsigned *stride, struct pipe_buffer *pb)
 {
 	struct nvfx_miptree *mt;
@@ -158,7 +165,7 @@ nv30_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 }
 
 static void
-nv30_miptree_destroy(struct pipe_texture *pt)
+nvfx_miptree_destroy(struct pipe_texture *pt)
 {
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	int l;
@@ -173,11 +180,11 @@ nv30_miptree_destroy(struct pipe_texture *pt)
 }
 
 static struct pipe_surface *
-nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
+nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct nvfx_miptree *nv30mt = (struct nvfx_miptree *)pt;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	struct nv04_surface *ns;
 
 	ns = CALLOC_STRUCT(nv04_surface);
@@ -192,15 +199,15 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ns->base.face = face;
 	ns->base.level = level;
 	ns->base.zslice = zslice;
-	ns->pitch = nv30mt->level[level].pitch;
+	ns->pitch = mt->level[level].pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ns->base.offset = nv30mt->level[level].image_offset[face];
+		ns->base.offset = mt->level[level].image_offset[face];
 	} else
 	if (pt->target == PIPE_TEXTURE_3D) {
-		ns->base.offset = nv30mt->level[level].image_offset[zslice];
+		ns->base.offset = mt->level[level].image_offset[zslice];
 	} else {
-		ns->base.offset = nv30mt->level[level].image_offset[0];
+		ns->base.offset = mt->level[level].image_offset[0];
 	}
 
 	/* create a linear temporary that we can render into if necessary.
@@ -213,7 +220,7 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv30_miptree_surface_del(struct pipe_surface *ps)
+nvfx_miptree_surface_del(struct pipe_surface *ps)
 {
 	struct nv04_surface* ns = (struct nv04_surface*)ps;
 	if(ns->backing)
@@ -221,7 +228,7 @@ nv30_miptree_surface_del(struct pipe_surface *ps)
 		struct nvfx_screen* screen = (struct nvfx_screen*)ps->texture->screen;
 		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
 			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
-		nv30_miptree_surface_del(&ns->backing->base);
+		nvfx_miptree_surface_del(&ns->backing->base);
 	}
 
 	pipe_texture_reference(&ps->texture, NULL);
@@ -229,12 +236,12 @@ nv30_miptree_surface_del(struct pipe_surface *ps)
 }
 
 void
-nv30_screen_init_miptree_functions(struct pipe_screen *pscreen)
+nvfx_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
-	pscreen->texture_create = nv30_miptree_create;
-	pscreen->texture_destroy = nv30_miptree_destroy;
-	pscreen->get_tex_surface = nv30_miptree_surface_new;
-	pscreen->tex_surface_destroy = nv30_miptree_surface_del;
+	pscreen->texture_create = nvfx_miptree_create;
+	pscreen->texture_destroy = nvfx_miptree_destroy;
+	pscreen->get_tex_surface = nvfx_miptree_surface_new;
+	pscreen->tex_surface_destroy = nvfx_miptree_surface_del;
 
-	nouveau_screen(pscreen)->texture_blanket = nv30_miptree_blanket;
+	nouveau_screen(pscreen)->texture_blanket = nvfx_miptree_blanket;
 }

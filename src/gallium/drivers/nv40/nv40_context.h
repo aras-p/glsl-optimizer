@@ -7,8 +7,6 @@ extern void nv40_init_state_functions(struct nvfx_context *nvfx);
 extern void nv40_init_surface_functions(struct nvfx_context *nvfx);
 extern void nv40_init_query_functions(struct nvfx_context *nvfx);
 
-extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
-
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nvfx_context *nvfx);
 extern void nv40_draw_elements_swtnl(struct pipe_context *pipe,
