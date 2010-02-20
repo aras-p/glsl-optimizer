@@ -208,7 +208,8 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
     switch (desc->channel[0].type) {
         case UTIL_FORMAT_TYPE_UNSIGNED:
         case UTIL_FORMAT_TYPE_SIGNED:
-            if (!desc->channel[0].normalized) {
+            if (!desc->channel[0].normalized &&
+                desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
                 return ~0;
             }
 
