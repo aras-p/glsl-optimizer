@@ -31,7 +31,6 @@
 #include "drm_sarea.h"
 #include "main/colormac.h"
 #include "gamma_regs.h"
-#include "gamma_main/macros.h"
 #include "gamma_screen.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
