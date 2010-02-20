@@ -528,12 +528,6 @@ static void
 egl_g3d_update_buffer(struct pipe_screen *screen, void *context_private)
 {
    struct egl_g3d_context *gctx = egl_g3d_context(context_private);
-
-   /**
-    * It is likely that the surface has changed when this function is called.
-    * Set force_validate to skip an unnecessary check.
-    */
-   gctx->force_validate = EGL_TRUE;
    egl_g3d_validate_context(gctx->base.Resource.Display, &gctx->base);
 }
 
