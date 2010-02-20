@@ -222,7 +222,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     /* Check sampler format support. */
     if ((usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
         (is_r500 || !is_z24) && /* Z24 cannot be sampled from on non-r5xx. */
-        r300_translate_texformat(format) != ~0) {
+        r300_is_sampler_format_supported(format)) {
         retval |= PIPE_TEXTURE_USAGE_SAMPLER;
     }
 
