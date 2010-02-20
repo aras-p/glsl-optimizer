@@ -6,7 +6,6 @@
 extern void nv40_init_state_functions(struct nvfx_context *nvfx);
 extern void nv40_init_surface_functions(struct nvfx_context *nvfx);
 extern void nv40_init_query_functions(struct nvfx_context *nvfx);
-extern void nv40_init_transfer_functions(struct nvfx_context *nvfx);
 
 extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
 

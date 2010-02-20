@@ -185,4 +185,7 @@ struct nvfx_state_entry {
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
 
+/* nvfx_transfer.c */
+extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
+
 #endif
