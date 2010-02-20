@@ -15,14 +15,14 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 		unsigned i;
 
 		so = so_new(2, 33, 0);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+		so_method(so, curie, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 		so_data  (so, 1);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
+		so_method(so, curie, NV34TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
 			so_data(so, nv40->stipple[i]);
 	} else {
 		so = so_new(1, 1, 0);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+		so_method(so, curie, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 		so_data  (so, 0);
 	}
 

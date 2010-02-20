@@ -21,7 +21,7 @@ nv40_state_blend_colour_validate(struct nv40_context *nv40)
 	struct nouveau_stateobj *so = so_new(1, 1, 0);
 	struct pipe_blend_color *bcol = &nv40->blend_colour;
 
-	so_method(so, nv40->screen->curie, NV40TCL_BLEND_COLOR, 1);
+	so_method(so, nv40->screen->curie, NV34TCL_BLEND_COLOR, 1);
 	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |

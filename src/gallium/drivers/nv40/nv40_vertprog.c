@@ -207,32 +207,32 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 		case NV40_VP_INST_DEST_TC(7): vp->or |= (1 << 21); break;
 		case NV40_VP_INST_DEST_CLIP(0):
 			vp->or |= (1 << 6);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE0;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0;
 			dst.index = NV40_VP_INST_DEST_FOGC;
 			break;
 		case NV40_VP_INST_DEST_CLIP(1):
 			vp->or |= (1 << 7);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE1;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1;
 			dst.index = NV40_VP_INST_DEST_FOGC;
 			break;
 		case NV40_VP_INST_DEST_CLIP(2):
 			vp->or |= (1 << 8);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE2;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2;
 			dst.index = NV40_VP_INST_DEST_FOGC;
 			break;
 		case NV40_VP_INST_DEST_CLIP(3):
 			vp->or |= (1 << 9);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE3;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3;
 			dst.index = NV40_VP_INST_DEST_PSZ;
 			break;
 		case NV40_VP_INST_DEST_CLIP(4):
 			vp->or |= (1 << 10);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE4;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4;
 			dst.index = NV40_VP_INST_DEST_PSZ;
 			break;
 		case NV40_VP_INST_DEST_CLIP(5):
 			vp->or |= (1 << 11);
-			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE5;
+			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE5;
 			dst.index = NV40_VP_INST_DEST_PSZ;
 			break;
 		default:
@@ -887,12 +887,12 @@ check_gpu_resources:
 		}
 
 		so = so_new(3, 4, 0);
-		so_method(so, curie, NV40TCL_VP_START_FROM_ID, 1);
+		so_method(so, curie, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_method(so, curie, NV40TCL_VP_ATTRIB_EN, 2);
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);
-		so_method(so, curie,  NV40TCL_CLIP_PLANE_ENABLE, 1);
+		so_method(so, curie,  NV34TCL_VP_CLIP_PLANES_ENABLE, 1);
 		so_data  (so, vp->clip_ctrl);
 		so_ref(so, &vp->so);
 		so_ref(NULL, &so);
@@ -976,7 +976,7 @@ check_gpu_resources:
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_CONST_ID, 5);
+			BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (chan, i + vp->data->start);
 			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
@@ -995,10 +995,10 @@ check_gpu_resources:
 			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_FROM_ID, 1);
+		BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(chan, curie, NV40TCL_VP_UPLOAD_INST(0), 4);
+			BEGIN_RING(chan, curie, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}

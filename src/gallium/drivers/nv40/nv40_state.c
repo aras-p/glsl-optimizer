@@ -19,7 +19,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(5, 8, 0);
 
 	if (cso->rt[0].blend_enable) {
-		so_method(so, curie, NV40TCL_BLEND_ENABLE, 3);
+		so_method(so, curie, NV34TCL_BLEND_FUNC_ENABLE, 3);
 		so_data  (so, 1);
 		so_data  (so, (nvgl_blend_func(cso->rt[0].alpha_src_factor) << 16) |
 			       nvgl_blend_func(cso->rt[0].rgb_src_factor));
@@ -29,26 +29,26 @@ nv40_blend_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func) << 16 |
 			      nvgl_blend_eqn(cso->rt[0].rgb_func));
 	} else {
-		so_method(so, curie, NV40TCL_BLEND_ENABLE, 1);
+		so_method(so, curie, NV34TCL_BLEND_FUNC_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, curie, NV40TCL_COLOR_MASK, 1);
+	so_method(so, curie, NV34TCL_COLOR_MASK, 1);
 	so_data  (so, (((cso->rt[0].colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
 		       ((cso->rt[0].colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
 
 	if (cso->logicop_enable) {
-		so_method(so, curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		so_method(so, curie, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
 		so_data  (so, 1);
 		so_data  (so, nvgl_logicop_func(cso->logicop_func));
 	} else {
-		so_method(so, curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		so_method(so, curie, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, curie, NV40TCL_DITHER_ENABLE, 1);
+	so_method(so, curie, NV34TCL_DITHER_ENABLE, 1);
 	so_data  (so, cso->dither ? 1 : 0);
 
 	so_ref(so, &bso->so);
@@ -82,19 +82,19 @@ wrap_mode(unsigned wrap) {
 
 	switch (wrap) {
 	case PIPE_TEX_WRAP_REPEAT:
-		ret = NV40TCL_TEX_WRAP_S_REPEAT;
+		ret = NV34TCL_TX_WRAP_S_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
-		ret = NV40TCL_TEX_WRAP_S_MIRRORED_REPEAT;
+		ret = NV34TCL_TX_WRAP_S_MIRRORED_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-		ret = NV40TCL_TEX_WRAP_S_CLAMP_TO_EDGE;
+		ret = NV34TCL_TX_WRAP_S_CLAMP_TO_EDGE;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-		ret = NV40TCL_TEX_WRAP_S_CLAMP_TO_BORDER;
+		ret = NV34TCL_TX_WRAP_S_CLAMP_TO_BORDER;
 		break;
 	case PIPE_TEX_WRAP_CLAMP:
-		ret = NV40TCL_TEX_WRAP_S_CLAMP;
+		ret = NV34TCL_TX_WRAP_S_CLAMP;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
 		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP_TO_EDGE;
@@ -107,11 +107,11 @@ wrap_mode(unsigned wrap) {
 		break;
 	default:
 		NOUVEAU_ERR("unknown wrap mode: %d\n", wrap);
-		ret = NV40TCL_TEX_WRAP_S_REPEAT;
+		ret = NV34TCL_TX_WRAP_S_REPEAT;
 		break;
 	}
 
-	return ret >> NV40TCL_TEX_WRAP_S_SHIFT;
+	return ret >> NV34TCL_TX_WRAP_S_SHIFT;
 }
 
 static void *
@@ -127,9 +127,9 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	if (!cso->normalized_coords)
 		ps->fmt |= NV40TCL_TEX_FORMAT_RECT;
 
-	ps->wrap = ((wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_S_SHIFT) |
-		    (wrap_mode(cso->wrap_t) << NV40TCL_TEX_WRAP_T_SHIFT) |
-		    (wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_R_SHIFT));
+	ps->wrap = ((wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
+		    (wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
+		    (wrap_mode(cso->wrap_r) << NV34TCL_TX_WRAP_R_SHIFT));
 
 	ps->en = 0;
 	if (cso->max_anisotropy >= 2) {
@@ -160,11 +160,11 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 
 	switch (cso->mag_img_filter) {
 	case PIPE_TEX_FILTER_LINEAR:
-		filter |= NV40TCL_TEX_FILTER_MAG_LINEAR;
+		filter |= NV34TCL_TX_FILTER_MAGNIFY_LINEAR;
 		break;
 	case PIPE_TEX_FILTER_NEAREST:
 	default:
-		filter |= NV40TCL_TEX_FILTER_MAG_NEAREST;
+		filter |= NV34TCL_TX_FILTER_MAGNIFY_NEAREST;
 		break;
 	}
 
@@ -172,14 +172,14 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	case PIPE_TEX_FILTER_LINEAR:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR_MIPMAP_NEAREST;
+			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
 			break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR_MIPMAP_LINEAR;
+			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR;
+			filter |= NV34TCL_TX_FILTER_MINIFY_LINEAR;
 			break;
 		}
 		break;
@@ -187,14 +187,14 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	default:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST_MIPMAP_NEAREST;
+			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
 		break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST_MIPMAP_LINEAR;
+			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST;
+			filter |= NV34TCL_TX_FILTER_MINIFY_NEAREST;
 			break;
 		}
 		break;
@@ -219,28 +219,28 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		switch (cso->compare_func) {
 		case PIPE_FUNC_NEVER:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_NEVER;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_NEVER;
 			break;
 		case PIPE_FUNC_GREATER:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_GREATER;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_GREATER;
 			break;
 		case PIPE_FUNC_EQUAL:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_EQUAL;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_EQUAL;
 			break;
 		case PIPE_FUNC_GEQUAL:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_GEQUAL;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_GEQUAL;
 			break;
 		case PIPE_FUNC_LESS:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_LESS;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_LESS;
 			break;
 		case PIPE_FUNC_NOTEQUAL:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_NOTEQUAL;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_NOTEQUAL;
 			break;
 		case PIPE_FUNC_LEQUAL:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_LEQUAL;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_LEQUAL;
 			break;
 		case PIPE_FUNC_ALWAYS:
-			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_ALWAYS;
+			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_ALWAYS;
 			break;
 		default:
 			break;
@@ -319,66 +319,66 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 */
 
-	so_method(so, curie, NV40TCL_SHADE_MODEL, 1);
-	so_data  (so, cso->flatshade ? NV40TCL_SHADE_MODEL_FLAT :
-				       NV40TCL_SHADE_MODEL_SMOOTH);
+	so_method(so, curie, NV34TCL_SHADE_MODEL, 1);
+	so_data  (so, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
+				       NV34TCL_SHADE_MODEL_SMOOTH);
 
-	so_method(so, curie, NV40TCL_LINE_WIDTH, 2);
+	so_method(so, curie, NV34TCL_LINE_WIDTH, 2);
 	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
 	so_data  (so, cso->line_smooth ? 1 : 0);
-	so_method(so, curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
+	so_method(so, curie, NV34TCL_LINE_STIPPLE_ENABLE, 2);
 	so_data  (so, cso->line_stipple_enable ? 1 : 0);
 	so_data  (so, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	so_method(so, curie, NV40TCL_POINT_SIZE, 1);
+	so_method(so, curie, NV34TCL_POINT_SIZE, 1);
 	so_data  (so, fui(cso->point_size));
 
-	so_method(so, curie, NV40TCL_POLYGON_MODE_FRONT, 6);
+	so_method(so, curie, NV34TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
 		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
 		so_data(so, nvgl_polygon_mode(cso->fill_cw));
 		switch (cso->cull_mode) {
 		case PIPE_WINDING_CCW:
-			so_data(so, NV40TCL_CULL_FACE_FRONT);
+			so_data(so, NV34TCL_CULL_FACE_FRONT);
 			break;
 		case PIPE_WINDING_CW:
-			so_data(so, NV40TCL_CULL_FACE_BACK);
+			so_data(so, NV34TCL_CULL_FACE_BACK);
 			break;
 		case PIPE_WINDING_BOTH:
-			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
+			so_data(so, NV34TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, NV40TCL_CULL_FACE_BACK);
+			so_data(so, NV34TCL_CULL_FACE_BACK);
 			break;
 		}
-		so_data(so, NV40TCL_FRONT_FACE_CCW);
+		so_data(so, NV34TCL_FRONT_FACE_CCW);
 	} else {
 		so_data(so, nvgl_polygon_mode(cso->fill_cw));
 		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
 		switch (cso->cull_mode) {
 		case PIPE_WINDING_CCW:
-			so_data(so, NV40TCL_CULL_FACE_BACK);
+			so_data(so, NV34TCL_CULL_FACE_BACK);
 			break;
 		case PIPE_WINDING_CW:
-			so_data(so, NV40TCL_CULL_FACE_FRONT);
+			so_data(so, NV34TCL_CULL_FACE_FRONT);
 			break;
 		case PIPE_WINDING_BOTH:
-			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
+			so_data(so, NV34TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, NV40TCL_CULL_FACE_BACK);
+			so_data(so, NV34TCL_CULL_FACE_BACK);
 			break;
 		}
-		so_data(so, NV40TCL_FRONT_FACE_CW);
+		so_data(so, NV34TCL_FRONT_FACE_CW);
 	}
 	so_data(so, cso->poly_smooth ? 1 : 0);
 	so_data(so, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
 
-	so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_method(so, curie, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, curie, NV40TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
+	so_method(so, curie, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
 		so_data(so, 1);
@@ -395,12 +395,12 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	else
 		so_data(so, 0);
 	if (cso->offset_cw || cso->offset_ccw) {
-		so_method(so, curie, NV40TCL_POLYGON_OFFSET_FACTOR, 2);
+		so_method(so, curie, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
 		so_data  (so, fui(cso->offset_scale));
 		so_data  (so, fui(cso->offset_units * 2));
 	}
 
-	so_method(so, curie, NV40TCL_POINT_SPRITE, 1);
+	so_method(so, curie, NV34TCL_POINT_SPRITE, 1);
 	if (cso->point_quad_rasterization) {
 		unsigned psctl = (1 << 0), i;
 
@@ -448,43 +448,43 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(6, 20, 0);
 	struct nouveau_grobj *curie = nv40->screen->curie;
 
-	so_method(so, curie, NV40TCL_DEPTH_FUNC, 3);
+	so_method(so, curie, NV34TCL_DEPTH_FUNC, 3);
 	so_data  (so, nvgl_comparison_op(cso->depth.func));
 	so_data  (so, cso->depth.writemask ? 1 : 0);
 	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	so_method(so, curie, NV34TCL_ALPHA_FUNC_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	so_data  (so, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 3);
+		so_method(so, curie, NV34TCL_STENCIL_FRONT_ENABLE, 3);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
-		so_method(so, curie, NV40TCL_STENCIL_FRONT_FUNC_MASK, 4);
+		so_method(so, curie, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[0].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
+		so_method(so, curie, NV34TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 3);
+		so_method(so, curie, NV34TCL_STENCIL_BACK_ENABLE, 3);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_method(so, curie, NV40TCL_STENCIL_BACK_FUNC_MASK, 4);
+		so_method(so, curie, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
 		so_data  (so, cso->stencil[1].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
+		so_method(so, curie, NV34TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 

@@ -60,9 +60,9 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 		assert(0);
 	nouveau_notifier_reset(nv40->screen->query, q->object->start);
 
-	BEGIN_RING(chan, curie, NV40TCL_QUERY_RESET, 1);
+	BEGIN_RING(chan, curie, NV34TCL_QUERY_RESET, 1);
 	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, curie, NV40TCL_QUERY_UNK17CC, 1);
+	BEGIN_RING(chan, curie, NV34TCL_QUERY_UNK17CC, 1);
 	OUT_RING  (chan, 1);
 
 	q->ready = FALSE;
@@ -77,9 +77,9 @@ nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *curie = screen->curie;
 
-	BEGIN_RING(chan, curie, NV40TCL_QUERY_GET, 1);
-	OUT_RING  (chan, (0x01 << NV40TCL_QUERY_GET_UNK24_SHIFT) |
-		   ((q->object->start * 32) << NV40TCL_QUERY_GET_OFFSET_SHIFT));
+	BEGIN_RING(chan, curie, NV34TCL_QUERY_GET, 1);
+	OUT_RING  (chan, (0x01 << NV34TCL_QUERY_GET_UNK24_SHIFT) |
+		   ((q->object->start * 32) << NV34TCL_QUERY_GET_OFFSET_SHIFT));
 	FIRE_RING(chan);
 }
 

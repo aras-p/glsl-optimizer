@@ -7,12 +7,12 @@
   TRUE,                                                                        \
   PIPE_FORMAT_##m,                                                             \
   NV40TCL_TEX_FORMAT_FORMAT_##tf,                                              \
-  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0x | NV40TCL_TEX_SWIZZLE_S0_Y_##ts0y |         \
-   NV40TCL_TEX_SWIZZLE_S0_Z_##ts0z | NV40TCL_TEX_SWIZZLE_S0_W_##ts0w |         \
-   NV40TCL_TEX_SWIZZLE_S1_X_##ts1x | NV40TCL_TEX_SWIZZLE_S1_Y_##ts1y |         \
-   NV40TCL_TEX_SWIZZLE_S1_Z_##ts1z | NV40TCL_TEX_SWIZZLE_S1_W_##ts1w),         \
-  ((NV40TCL_TEX_FILTER_SIGNED_RED*sx) | (NV40TCL_TEX_FILTER_SIGNED_GREEN*sy) |       \
-   (NV40TCL_TEX_FILTER_SIGNED_BLUE*sz) | (NV40TCL_TEX_FILTER_SIGNED_ALPHA*sw))       \
+  (NV34TCL_TX_SWIZZLE_S0_X_##ts0x | NV34TCL_TX_SWIZZLE_S0_Y_##ts0y |         \
+   NV34TCL_TX_SWIZZLE_S0_Z_##ts0z | NV34TCL_TX_SWIZZLE_S0_W_##ts0w |         \
+   NV34TCL_TX_SWIZZLE_S1_X_##ts1x | NV34TCL_TX_SWIZZLE_S1_Y_##ts1y |         \
+   NV34TCL_TX_SWIZZLE_S1_Z_##ts1z | NV34TCL_TX_SWIZZLE_S1_W_##ts1w),         \
+  ((NV34TCL_TX_FILTER_SIGNED_RED*sx) | (NV34TCL_TX_FILTER_SIGNED_GREEN*sy) |       \
+   (NV34TCL_TX_FILTER_SIGNED_BLUE*sz) | (NV34TCL_TX_FILTER_SIGNED_ALPHA*sw))       \
 }
 
 struct nv40_texture_format {
@@ -81,20 +81,20 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	txf |= ((pt->last_level + 1) << NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
 
 	if (1) /* XXX */
-		txf |= NV40TCL_TEX_FORMAT_NO_BORDER;
+		txf |= NV34TCL_TX_FORMAT_NO_BORDER;
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_CUBE:
-		txf |= NV40TCL_TEX_FORMAT_CUBIC;
+		txf |= NV34TCL_TX_FORMAT_CUBIC;
 		/* fall-through */
 	case PIPE_TEXTURE_2D:
-		txf |= NV40TCL_TEX_FORMAT_DIMS_2D;
+		txf |= NV34TCL_TX_FORMAT_DIMS_2D;
 		break;
 	case PIPE_TEXTURE_3D:
-		txf |= NV40TCL_TEX_FORMAT_DIMS_3D;
+		txf |= NV34TCL_TX_FORMAT_DIMS_3D;
 		break;
 	case PIPE_TEXTURE_1D:
-		txf |= NV40TCL_TEX_FORMAT_DIMS_1D;
+		txf |= NV34TCL_TX_FORMAT_DIMS_1D;
 		break;
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
@@ -111,15 +111,15 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	txs = tf->swizzle;
 
 	so = so_new(2, 9, 2);
-	so_method(so, nv40->screen->curie, NV40TCL_TEX_OFFSET(unit), 8);
+	so_method(so, nv40->screen->curie, NV34TCL_TX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
-		      NV40TCL_TEX_FORMAT_DMA0, NV40TCL_TEX_FORMAT_DMA1);
+		      NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
 	so_data  (so, ps->wrap);
 	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
 	so_data  (so, ps->filt | tf->sign | 0x2000 /*voodoo*/);
-	so_data  (so, (pt->width0 << NV40TCL_TEX_SIZE0_W_SHIFT) |
+	so_data  (so, (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
 		       pt->height0);
 	so_data  (so, ps->bcol);
 	so_method(so, nv40->screen->curie, NV40TCL_TEX_SIZE1(unit), 1);
@@ -142,7 +142,7 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		samplers &= ~(1 << unit);
 
 		so = so_new(1, 1, 0);
-		so_method(so, nv40->screen->curie, NV40TCL_TEX_ENABLE(unit), 1);
+		so_method(so, nv40->screen->curie, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
 		state->dirty |= (1ULL << (NV40_STATE_FRAGTEX0 + unit));

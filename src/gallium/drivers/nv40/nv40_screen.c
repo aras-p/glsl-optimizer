@@ -264,23 +264,23 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Static curie initialisation */
 	so = so_new(16, 25, 0);
-	so_method(so, screen->curie, NV40TCL_DMA_NOTIFY, 1);
+	so_method(so, screen->curie, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_TEXTURE0, 2);
+	so_method(so, screen->curie, NV34TCL_DMA_TEXTURE0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_COLOR1, 1);
+	so_method(so, screen->curie, NV34TCL_DMA_COLOR1, 1);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_COLOR0, 2);
+	so_method(so, screen->curie, NV34TCL_DMA_COLOR0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_VTXBUF0, 2);
+	so_method(so, screen->curie, NV34TCL_DMA_VTXBUF0, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->gart->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_FENCE, 2);
+	so_method(so, screen->curie, NV34TCL_DMA_FENCE, 2);
 	so_data  (so, 0);
 	so_data  (so, screen->query->handle);
-	so_method(so, screen->curie, NV40TCL_DMA_UNK01AC, 2);
+	so_method(so, screen->curie, NV34TCL_DMA_IN_MEMORY7, 2);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_COLOR2, 2);
