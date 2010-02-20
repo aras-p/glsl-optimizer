@@ -3,10 +3,10 @@
 #include "pipe/p_state.h"
 #include "util/u_clear.h"
 
-#include "nv40_context.h"
+#include "nvfx_context.h"
 
 void
-nv40_clear(struct pipe_context *pipe, unsigned buffers,
+nvfx_clear(struct pipe_context *pipe, unsigned buffers,
            const float *rgba, double depth, unsigned stencil)
 {
 	util_clear(pipe, &nvfx_context(pipe)->framebuffer, buffers, rgba, depth,

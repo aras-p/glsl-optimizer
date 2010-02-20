@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = nv40
 
 C_SOURCES = \
-	nv40_clear.c \
 	nv40_context.c \
 	nv40_draw.c \
 	nv40_fragprog.c \

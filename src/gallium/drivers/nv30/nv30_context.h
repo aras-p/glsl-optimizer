@@ -51,10 +51,6 @@ extern void nv30_draw_elements(struct pipe_context *pipe,
 				  unsigned mode, unsigned start,
 				  unsigned count);
 
-/* nv30_clear.c */
-extern void nv30_clear(struct pipe_context *pipe, unsigned buffers,
-		       const float *rgba, double depth, unsigned stencil);
-
 /* nvfx_context.c */
 struct pipe_context *
 nv30_create(struct pipe_screen *pscreen, void *priv);

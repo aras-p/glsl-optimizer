@@ -62,7 +62,7 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.destroy = nv40_destroy;
 	nvfx->pipe.draw_arrays = nv40_draw_arrays;
 	nvfx->pipe.draw_elements = nv40_draw_elements;
-	nvfx->pipe.clear = nv40_clear;
+	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nv40_flush;
 
 	nvfx->pipe.is_texture_referenced = nouveau_is_texture_referenced;
