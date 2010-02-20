@@ -27,12 +27,10 @@ extern void nv30_fragtex_bind(struct nvfx_context *);
 extern struct nvfx_state_entry nv30_state_stipple;
 extern struct nvfx_state_entry nv30_state_fragprog;
 extern struct nvfx_state_entry nv30_state_vertprog;
-extern struct nvfx_state_entry nv30_state_zsa;
 extern struct nvfx_state_entry nv30_state_viewport;
 extern struct nvfx_state_entry nv30_state_framebuffer;
 extern struct nvfx_state_entry nv30_state_fragtex;
 extern struct nvfx_state_entry nv30_state_vbo;
-extern struct nvfx_state_entry nv30_state_sr;
 
 /* nv30_vbo.c */
 extern void nv30_draw_arrays(struct pipe_context *, unsigned mode,

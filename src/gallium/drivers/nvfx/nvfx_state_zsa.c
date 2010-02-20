@@ -1,15 +1,15 @@
-#include "nv40_context.h"
+#include "nvfx_context.h"
 
 static boolean
-nv40_state_zsa_validate(struct nvfx_context *nvfx)
+nvfx_state_zsa_validate(struct nvfx_context *nvfx)
 {
 	so_ref(nvfx->zsa->so,
 	       &nvfx->state.hw[NVFX_STATE_ZSA]);
 	return TRUE;
 }
 
-struct nvfx_state_entry nv40_state_zsa = {
-	.validate = nv40_state_zsa_validate,
+struct nvfx_state_entry nvfx_state_zsa = {
+	.validate = nvfx_state_zsa_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_ZSA,
 		.hw = NVFX_STATE_ZSA
@@ -17,7 +17,7 @@ struct nvfx_state_entry nv40_state_zsa = {
 };
 
 static boolean
-nv40_state_sr_validate(struct nvfx_context *nvfx)
+nvfx_state_sr_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *so = so_new(2, 2, 0);
 	struct pipe_stencil_ref *sr = &nvfx->stencil_ref;
@@ -32,8 +32,8 @@ nv40_state_sr_validate(struct nvfx_context *nvfx)
 	return TRUE;
 }
 
-struct nvfx_state_entry nv40_state_sr = {
-	.validate = nv40_state_sr_validate,
+struct nvfx_state_entry nvfx_state_sr = {
+	.validate = nvfx_state_sr_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_SR,
 		.hw = NVFX_STATE_SR

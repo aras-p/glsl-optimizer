@@ -15,7 +15,6 @@ C_SOURCES = \
 	nv30_state_fb.c \
 	nv30_state_stipple.c \
 	nv30_state_viewport.c \
-	nv30_state_zsa.c \
 	nv30_surface.c \
 	nv30_vbo.c \
 	nv30_vertprog.c

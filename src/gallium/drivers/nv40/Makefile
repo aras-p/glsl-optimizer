@@ -15,7 +15,6 @@ C_SOURCES = \
 	nv40_state_fb.c \
 	nv40_state_stipple.c \
 	nv40_state_viewport.c \
-	nv40_state_zsa.c \
 	nv40_surface.c \
 	nv40_vbo.c \
 	nv40_vertprog.c
