@@ -422,14 +422,10 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
         OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level] |
-                     r300_translate_colorformat(tex->tex.format) |
-                     R300_COLOR_TILE(tex->mip_macrotile[surf->level]) |
-                     R300_COLOR_MICROTILE(tex->microtile),
+        OUT_CS_RELOC(tex->buffer, tex->fb_state.colorpitch[surf->level],
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
 
-        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
-            r300_translate_out_fmt(surf->format));
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), tex->fb_state.us_out_fmt);
     }
 
     /* Set up a zbuffer. */
@@ -441,12 +437,10 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, surf->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
-        OUT_CS_REG(R300_ZB_FORMAT, r300_translate_zsformat(tex->tex.format));
+        OUT_CS_REG(R300_ZB_FORMAT, tex->fb_state.zb_format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(tex->buffer, tex->pitch[surf->level] |
-                     R300_DEPTHMACROTILE(tex->mip_macrotile[surf->level]) |
-                     R300_DEPTHMICROTILE(tex->microtile),
+        OUT_CS_RELOC(tex->buffer, tex->fb_state.depthpitch[surf->level],
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
 

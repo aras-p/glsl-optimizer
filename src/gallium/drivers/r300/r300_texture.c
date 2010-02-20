@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +30,7 @@
 #include "r300_context.h"
 #include "r300_texture.h"
 #include "r300_screen.h"
+#include "r300_state_inlines.h"
 
 #include "radeon_winsys.h"
 
@@ -283,6 +285,213 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     return ~0; /* Unsupported/unknown. */
 }
 
+/* Buffer formats. */
+
+/* Colorbuffer formats. This is the unswizzled format of the RB3D block's
+ * output. For the swizzling of the targets, check the shader's format. */
+static uint32_t r300_translate_colorformat(enum pipe_format format)
+{
+    switch (format) {
+        /* 8-bit buffers. */
+        case PIPE_FORMAT_A8_UNORM:
+        case PIPE_FORMAT_I8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_L8_SRGB:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
+            return R300_COLOR_FORMAT_I8;
+
+        /* 16-bit buffers. */
+        case PIPE_FORMAT_R5G6B5_UNORM:
+            return R300_COLOR_FORMAT_RGB565;
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
+            return R300_COLOR_FORMAT_ARGB1555;
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+            return R300_COLOR_FORMAT_ARGB4444;
+
+        /* 32-bit buffers. */
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_SNORM:
+        case PIPE_FORMAT_A8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
+            return R300_COLOR_FORMAT_ARGB8888;
+        case PIPE_FORMAT_A2B10G10R10_UNORM:
+            return R500_COLOR_FORMAT_ARGB2101010;  /* R5xx-only? */
+
+        /* 64-bit buffers. */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+            return R300_COLOR_FORMAT_ARGB16161616;
+
+/* XXX Enable float textures here. */
+#if 0
+        /* 128-bit buffers. */
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            return R300_COLOR_FORMAT_ARGB32323232;
+#endif
+
+        /* YUV buffers. */
+        case PIPE_FORMAT_YCBCR:
+            return R300_COLOR_FORMAT_YVYU;
+        case PIPE_FORMAT_YCBCR_REV:
+            return R300_COLOR_FORMAT_VYUY;
+        default:
+            return ~0; /* Unsupported. */
+    }
+}
+
+/* Depthbuffer and stencilbuffer. Thankfully, we only support two flavors. */
+static uint32_t r300_translate_zsformat(enum pipe_format format)
+{
+    switch (format) {
+        /* 16-bit depth, no stencil */
+        case PIPE_FORMAT_Z16_UNORM:
+            return R300_DEPTHFORMAT_16BIT_INT_Z;
+        /* 24-bit depth, ignored stencil */
+        case PIPE_FORMAT_Z24X8_UNORM:
+        /* 24-bit depth, 8-bit stencil */
+        case PIPE_FORMAT_Z24S8_UNORM:
+            return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
+        default:
+            return ~0; /* Unsupported. */
+    }
+}
+
+/* Shader output formats. This is essentially the swizzle from the shader
+ * to the RB3D block.
+ *
+ * Note that formats are stored from C3 to C0. */
+static uint32_t r300_translate_out_fmt(enum pipe_format format)
+{
+    uint32_t modifier = 0;
+    unsigned i;
+    const struct util_format_description *desc;
+    static const uint32_t sign_bit[4] = {
+        R300_OUT_SIGN(0x1),
+        R300_OUT_SIGN(0x2),
+        R300_OUT_SIGN(0x4),
+        R300_OUT_SIGN(0x8),
+    };
+
+    desc = util_format_description(format);
+
+    /* Specifies how the shader output is written to the fog unit. */
+    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+        /* The gamma correction causes precision loss so we need
+         * higher precision to maintain reasonable quality.
+         * It has nothing to do with the colorbuffer format. */
+        modifier |= R300_US_OUT_FMT_C4_10_GAMMA;
+    } else if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
+        if (desc->channel[0].size == 32) {
+            modifier |= R300_US_OUT_FMT_C4_32_FP;
+        } else {
+            modifier |= R300_US_OUT_FMT_C4_16_FP;
+        }
+    } else {
+        if (desc->channel[0].size == 16) {
+            modifier |= R300_US_OUT_FMT_C4_16;
+        } else {
+            /* C4_8 seems to be used for the formats whose pixel size
+             * is <= 32 bits. */
+            modifier |= R300_US_OUT_FMT_C4_8;
+        }
+    }
+
+    /* Add sign. */
+    for (i = 0; i < 4; i++)
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+            modifier |= sign_bit[i];
+        }
+
+    /* Add swizzles and return. */
+    switch (format) {
+        /* 8-bit outputs.
+         * COLORFORMAT_I8 stores the C2 component. */
+        case PIPE_FORMAT_A8_UNORM:
+            return modifier | R300_C2_SEL_A;
+        case PIPE_FORMAT_I8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_L8_SRGB:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
+            return modifier | R300_C2_SEL_R;
+
+        /* ARGB 32-bit outputs. */
+        case PIPE_FORMAT_R5G6B5_UNORM:
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+            return modifier |
+                R300_C0_SEL_B | R300_C1_SEL_G |
+                R300_C2_SEL_R | R300_C3_SEL_A;
+
+        /* BGRA 32-bit outputs. */
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
+            return modifier |
+                R300_C0_SEL_A | R300_C1_SEL_R |
+                R300_C2_SEL_G | R300_C3_SEL_B;
+
+        /* RGBA 32-bit outputs. */
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_SNORM:
+            return modifier |
+                R300_C0_SEL_A | R300_C1_SEL_B |
+                R300_C2_SEL_G | R300_C3_SEL_R;
+
+        /* ABGR 32-bit outputs. */
+        case PIPE_FORMAT_A8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
+        case PIPE_FORMAT_A2B10G10R10_UNORM:
+        /* RGBA high precision outputs (same swizzles as ABGR low precision) */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            return modifier |
+                R300_C0_SEL_R | R300_C1_SEL_G |
+                R300_C2_SEL_B | R300_C3_SEL_A;
+
+        default:
+            return ~0; /* Unsupported. */
+    }
+}
+
+boolean r300_is_colorbuffer_format_supported(enum pipe_format format)
+{
+    return r300_translate_colorformat(format) != ~0 &&
+           r300_translate_out_fmt(format) != ~0;
+}
+
+boolean r300_is_zs_format_supported(enum pipe_format format)
+{
+    return r300_translate_zsformat(format) != ~0;
+}
+
 boolean r300_is_sampler_format_supported(enum pipe_format format)
 {
     return r300_translate_texformat(format) != ~0;
@@ -292,8 +501,10 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
 {
     struct r300_texture_state* state = &tex->state;
     struct pipe_texture *pt = &tex->tex;
+    unsigned i;
     boolean is_r500 = screen->caps->is_r500;
 
+    /* Set sampler state. */
     state->format0 = R300_TX_WIDTH((pt->width0 - 1) & 0x7ff) |
                      R300_TX_HEIGHT((pt->height0 - 1) & 0x7ff);
 
@@ -327,6 +538,26 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Set texture state (%dx%d, %d levels)\n",
                pt->width0, pt->height0, pt->last_level);
+
+    /* Set framebuffer state. */
+    if (util_format_is_depth_or_stencil(tex->tex.format)) {
+        for (i = 0; i <= tex->tex.last_level; i++) {
+            tex->fb_state.depthpitch[i] =
+                tex->pitch[i] |
+                R300_DEPTHMACROTILE(tex->mip_macrotile[i]) |
+                R300_DEPTHMICROTILE(tex->microtile);
+        }
+        tex->fb_state.zb_format = r300_translate_zsformat(tex->tex.format);
+    } else {
+        for (i = 0; i <= tex->tex.last_level; i++) {
+            tex->fb_state.colorpitch[i] =
+                tex->pitch[i] |
+                r300_translate_colorformat(tex->tex.format) |
+                R300_COLOR_TILE(tex->mip_macrotile[i]) |
+                R300_COLOR_MICROTILE(tex->microtile);
+        }
+        tex->fb_state.us_out_fmt = r300_translate_out_fmt(tex->tex.format);
+    }
 }
 
 void r300_texture_reinterpret_format(struct pipe_screen *screen,

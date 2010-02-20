@@ -125,6 +125,16 @@ struct r300_texture_state {
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
+struct r300_texture_fb_state {
+    /* Colorbuffer. */
+    uint32_t colorpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
+    uint32_t us_out_fmt; /* R300_US_OUT_FMT[0-3] */
+
+    /* Zbuffer. */
+    uint32_t depthpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
+    uint32_t zb_format; /* R300_ZB_FORMAT */
+};
+
 struct r300_viewport_state {
     float xscale;         /* R300_VAP_VPORT_XSCALE:  0x2098 */
     float xoffset;        /* R300_VAP_VPORT_XOFFSET: 0x209c */
@@ -232,6 +242,7 @@ struct r300_texture {
 
     /* Registers carrying texture format data. */
     struct r300_texture_state state;
+    struct r300_texture_fb_state fb_state;
 
     /* Buffer tiling */
     enum r300_buffer_tiling microtile, macrotile;

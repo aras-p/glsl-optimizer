@@ -42,6 +42,10 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
                                      struct pipe_texture *tex,
                                      enum pipe_format new_format);
 
+boolean r300_is_colorbuffer_format_supported(enum pipe_format format);
+
+boolean r300_is_zs_format_supported(enum pipe_format format);
+
 boolean r300_is_sampler_format_supported(enum pipe_format format);
 
 struct r300_video_surface
