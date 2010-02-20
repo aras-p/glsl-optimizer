@@ -323,7 +323,7 @@ do {								\
 
 #define LOCAL_VARS(n)					\
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);	\
-   GLuint color[n];				\
+   GLuint color[n] = { 0 };			\
    (void) color;
 
 
