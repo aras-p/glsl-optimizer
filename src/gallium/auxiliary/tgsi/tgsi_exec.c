@@ -960,6 +960,7 @@ micro_pow(
 #endif
 }
 
+#if 0
 static void
 micro_sqrt( union tgsi_exec_channel *dst,
             const union tgsi_exec_channel *src )
@@ -969,6 +970,7 @@ micro_sqrt( union tgsi_exec_channel *dst,
    dst->f[2] = sqrtf( src->f[2] );
    dst->f[3] = sqrtf( src->f[3] );
 }
+#endif
 
 static void
 micro_sub(union tgsi_exec_channel *dst,
