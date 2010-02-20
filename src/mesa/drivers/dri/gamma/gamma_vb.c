@@ -32,7 +32,7 @@
 #include "main/colormac.h"
 
 #include "swrast_setup/swrast_setup.h"
-#include "tnl/tcontext.h"
+#include "tnl/t_context.h"
 #include "tnl/tnl.h"
 
 #include "gamma_context.h"

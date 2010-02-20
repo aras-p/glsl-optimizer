@@ -13,6 +13,7 @@
 #include "glint_dri.h"
 #include "gamma_context.h"
 #include "gamma_lock.h"
+#include "gamma_macros.h"
 
 void gammaDestroyTexObj(gammaContextPtr gmesa, gammaTextureObjectPtr t)
 {

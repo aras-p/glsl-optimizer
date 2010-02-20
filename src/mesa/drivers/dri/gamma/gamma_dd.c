@@ -26,6 +26,7 @@
 #include "gamma_context.h"
 #include "gamma_vb.h"
 #include "gamma_lock.h"
+#include "gamma_macros.h"
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
 #endif

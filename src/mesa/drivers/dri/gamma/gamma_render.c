@@ -31,9 +31,10 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 
-#include "tnl/tcontext.h"
+#include "tnl/t_context.h"
 
 #include "gamma_context.h"
+#include "gamma_macros.h"
 #include "gamma_tris.h"
 #include "gamma_vb.h"
 

@@ -49,6 +49,7 @@
 
 #include "gamma_vb.h"
 #include "gamma_tris.h"
+#include "gamma_macros.h"
 
 extern const struct tnl_pipeline_stage _gamma_render_stage;
 

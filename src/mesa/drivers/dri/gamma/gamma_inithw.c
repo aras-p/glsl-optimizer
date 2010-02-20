@@ -25,6 +25,7 @@
  */
 
 #include "gamma_context.h"
+#include "gamma_macros.h"
 #include "glint_dri.h"
 
 void gammaInitHW( gammaContextPtr gmesa )

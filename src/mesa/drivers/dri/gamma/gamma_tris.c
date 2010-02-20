@@ -26,6 +26,7 @@
  */
 
 #include "gamma_context.h"
+#include "gamma_macros.h"
 #include "gamma_vb.h"
 #include "gamma_tris.h"
 
@@ -37,7 +38,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "tnl/tcontext.h"
+#include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
 

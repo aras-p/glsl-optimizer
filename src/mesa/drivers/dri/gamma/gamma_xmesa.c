@@ -25,6 +25,7 @@
  */
 
 #include "gamma_context.h"
+#include "gamma_macros.h"
 #include "gamma_vb.h"
 #include "main/context.h"
 #include "main/matrix.h"
