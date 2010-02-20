@@ -27,6 +27,7 @@
 
 #include "r300_context.h"
 #include "r300_screen.h"
+#include "r300_state_inlines.h"
 #include "r300_texture.h"
 
 #include "radeon_winsys.h"
@@ -212,6 +213,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
     boolean is_z24 = format == PIPE_FORMAT_Z24X8_UNORM ||
                      format == PIPE_FORMAT_Z24S8_UNORM;
+    boolean is_color2101010 = format == PIPE_FORMAT_A2B10G10R10_UNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
         debug_printf("r300: Implementation error: Received bogus texture "
@@ -221,50 +223,32 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 
     /* Check sampler format support. */
     if ((usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
-        (is_r500 || !is_z24) && /* Z24 cannot be sampled from on non-r5xx. */
+        /* Z24 cannot be sampled from on non-r5xx. */
+        (is_r500 || !is_z24) &&
         r300_is_sampler_format_supported(format)) {
         retval |= PIPE_TEXTURE_USAGE_SAMPLER;
     }
 
-    switch (format) {
-        /* Supported formats. */
-        /* Colorbuffer */
-        case PIPE_FORMAT_A8_UNORM:
-        case PIPE_FORMAT_L8_UNORM:
-        case PIPE_FORMAT_R5G6B5_UNORM:
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-        case PIPE_FORMAT_R8G8B8A8_UNORM:
-        case PIPE_FORMAT_R8G8B8X8_UNORM:
-        case PIPE_FORMAT_I8_UNORM:
-            retval |= usage &
-                (PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                 PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                 PIPE_TEXTURE_USAGE_PRIMARY);
-            break;
-
-        /* ZS buffer */
-        case PIPE_FORMAT_Z16_UNORM:
-        case PIPE_FORMAT_Z24X8_UNORM:
-        case PIPE_FORMAT_Z24S8_UNORM:
-            retval = usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
-            break;
-
-        /* XXX Add all remaining gallium-supported formats,
-         * see util/u_format.csv. */
-
-        default:;
+    /* Check colorbuffer format support. */
+    if ((usage & (PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                  PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                  PIPE_TEXTURE_USAGE_PRIMARY)) &&
+        /* 2101010 cannot be rendered to on non-r5xx. */
+        (is_r500 || !is_color2101010) &&
+        r300_is_colorbuffer_format_supported(format)) {
+        retval |= usage &
+            (PIPE_TEXTURE_USAGE_RENDER_TARGET |
+             PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+             PIPE_TEXTURE_USAGE_PRIMARY);
     }
 
-    /* If usage was a mask that contained multiple bits, and not all of them
-     * are supported, this will catch that and return FALSE.
-     * e.g. usage = 2 | 4; retval = 4; (retval >= usage) == FALSE
-     *
-     * This also returns FALSE for any unknown formats.
-     */
-    return (retval >= usage);
+    /* Check depth-stencil format support. */
+    if (usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL &&
+        r300_is_zs_format_supported(format)) {
+        retval |= PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+    }
+
+    return retval == usage;
 }
 
 static struct pipe_transfer*

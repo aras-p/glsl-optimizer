@@ -334,43 +334,66 @@ static INLINE uint32_t r300_anisotropy(unsigned max_aniso)
 static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
 {
     switch (format) {
-        /* 8-bit buffers */
+        /* 8-bit buffers. */
         case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_L8_SRGB:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
             return R300_COLOR_FORMAT_I8;
-        /* 16-bit buffers */
+
+        /* 16-bit buffers. */
         case PIPE_FORMAT_R5G6B5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
         case PIPE_FORMAT_A1R5G5B5_UNORM:
             return R300_COLOR_FORMAT_ARGB1555;
         case PIPE_FORMAT_A4R4G4B4_UNORM:
             return R300_COLOR_FORMAT_ARGB4444;
-        /* 32-bit buffers */
+
+        /* 32-bit buffers. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
         case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_SNORM:
+        case PIPE_FORMAT_A8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
-        /* XXX Not in pipe_format
-        case PIPE_FORMAT_A32R32G32B32:
-            return R300_COLOR_FORMAT_ARGB32323232;
-        case PIPE_FORMAT_A16R16G16B16:
+        case PIPE_FORMAT_A2B10G10R10_UNORM:
+            return R500_COLOR_FORMAT_ARGB2101010;  /* R5xx-only? */
+
+        /* 64-bit buffers. */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
             return R300_COLOR_FORMAT_ARGB16161616;
-        case PIPE_FORMAT_A10R10G10B10_UNORM:
-            return R500_COLOR_FORMAT_ARGB10101010;
-        case PIPE_FORMAT_A2R10G10B10_UNORM:
-            return R500_COLOR_FORMAT_ARGB2101010;
-        case PIPE_FORMAT_I10_UNORM:
-            return R500_COLOR_FORMAT_I10; */
+
+/* XXX Enable float textures here. */
+#if 0
+        /* 128-bit buffers. */
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            return R300_COLOR_FORMAT_ARGB32323232;
+#endif
+
+        /* YUV buffers. */
+        case PIPE_FORMAT_YCBCR:
+            return R300_COLOR_FORMAT_YVYU;
+        case PIPE_FORMAT_YCBCR_REV:
+            return R300_COLOR_FORMAT_VYUY;
         default:
-            debug_printf("r300: Implementation error: "
-                "Got unsupported color format %s in %s\n",
-                util_format_name(format), __FUNCTION__);
-            assert(0);
-            break;
+            return ~0; /* Unsupported. */
     }
-    return 0;
 }
 
 /* Depthbuffer and stencilbuffer. Thankfully, we only support two flavors. */
@@ -386,13 +409,8 @@ static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
-            debug_printf("r300: Implementation error: "
-                "Got unsupported ZS format %s in %s\n",
-                util_format_name(format), __FUNCTION__);
-            assert(0);
-            break;
+            return ~0; /* Unsupported. */
     }
-    return 0;
 }
 
 /* Shader output formats. This is essentially the swizzle from the shader
@@ -401,41 +419,121 @@ static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
  * Note that formats are stored from C3 to C0. */
 static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
 {
+    uint32_t modifier = 0;
+    unsigned i;
+    const struct util_format_description *desc;
+    static const uint32_t sign_bit[4] = {
+        R300_OUT_SIGN(0x1),
+        R300_OUT_SIGN(0x2),
+        R300_OUT_SIGN(0x4),
+        R300_OUT_SIGN(0x8),
+    };
+
+    desc = util_format_description(format);
+
+    /* Specifies how the shader output is written to the fog unit. */
+    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+        /* The gamma correction causes precision loss so we need
+         * higher precision to maintain reasonable quality.
+         * It has nothing to do with the colorbuffer format. */
+        modifier |= R300_US_OUT_FMT_C4_10_GAMMA;
+    } else if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
+        if (desc->channel[0].size == 32) {
+            modifier |= R300_US_OUT_FMT_C4_32_FP;
+        } else {
+            modifier |= R300_US_OUT_FMT_C4_16_FP;
+        }
+    } else {
+        if (desc->channel[0].size == 16) {
+            modifier |= R300_US_OUT_FMT_C4_16;
+        } else {
+            /* C4_8 seems to be used for the formats whose pixel size
+             * is <= 32 bits. */
+            modifier |= R300_US_OUT_FMT_C4_8;
+        }
+    }
+
+    /* Add sign. */
+    for (i = 0; i < 4; i++)
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+            modifier |= sign_bit[i];
+        }
+
+    /* Add swizzles and return. */
     switch (format) {
+        /* 8-bit outputs.
+         * COLORFORMAT_I8 stores the C2 component. */
+        case PIPE_FORMAT_A8_UNORM:
+            return modifier | R300_C2_SEL_A;
+        case PIPE_FORMAT_I8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_L8_SRGB:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
+            return modifier | R300_C2_SEL_R;
+
+        /* ARGB 32-bit outputs. */
         case PIPE_FORMAT_R5G6B5_UNORM:
-            /* C_5_6_5 is missing in US_OUT_FMT, but C4_8 works just fine. */
         case PIPE_FORMAT_A1R5G5B5_UNORM:
-            /* C_1_5_5_5 is missing in US_OUT_FMT, but C4_8 works just fine. */
         case PIPE_FORMAT_A4R4G4B4_UNORM:
-            /* C4_4 is missing in US_OUT_FMT, but C4_8 works just fine. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
-            return R300_US_OUT_FMT_C4_8 |
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+            return modifier |
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
+
+        /* BGRA 32-bit outputs. */
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
+            return modifier |
+                R300_C0_SEL_A | R300_C1_SEL_R |
+                R300_C2_SEL_G | R300_C3_SEL_B;
+
+        /* RGBA 32-bit outputs. */
         case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
-            return R300_US_OUT_FMT_C4_8 |
+        case PIPE_FORMAT_R8G8B8X8_SRGB:
+        case PIPE_FORMAT_R8G8B8X8_SNORM:
+            return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
-        /* 8-bit outputs */
-        case PIPE_FORMAT_A8_UNORM:
-            return R300_US_OUT_FMT_C4_8 |
-                R300_C2_SEL_A;
-        case PIPE_FORMAT_I8_UNORM:
-        case PIPE_FORMAT_L8_UNORM:
-            return R300_US_OUT_FMT_C4_8 |
-                R300_C2_SEL_R;
- /* R300_OUT_SIGN(x) */
+        /* ABGR 32-bit outputs. */
+        case PIPE_FORMAT_A8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8B8G8R8_SNORM:
+        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
+        case PIPE_FORMAT_A2B10G10R10_UNORM:
+        /* RGBA high precision outputs (same swizzles as ABGR low precision) */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            return modifier |
+                R300_C0_SEL_R | R300_C1_SEL_G |
+                R300_C2_SEL_B | R300_C3_SEL_A;
+
         default:
-            debug_printf("r300: Implementation error: "
-                "Got unsupported output format %s in %s\n",
-                util_format_name(format), __FUNCTION__);
-            assert(0);
-            return R300_US_OUT_FMT_UNUSED;
+            return ~0; /* Unsupported. */
     }
-    return 0;
+}
+
+static INLINE
+boolean r300_is_zs_format_supported(enum pipe_format format)
+{
+    return r300_translate_zsformat(format) != ~0;
+}
+
+static INLINE
+boolean r300_is_colorbuffer_format_supported(enum pipe_format format)
+{
+    return r300_translate_colorformat(format) != ~0 &&
+           r300_translate_out_fmt(format) != ~0;
 }
 
 /* Non-CSO state. (For now.) */
