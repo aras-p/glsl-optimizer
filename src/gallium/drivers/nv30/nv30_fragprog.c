@@ -759,7 +759,6 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	}
 
 	fp->fp_control |= (fpc->num_regs-1)/2;
-	fp->fp_reg_control = (1<<16)|0x4;
 
 	/* Terminate final instruction */
 	fp->insn[fpc->inst_offset] |= 0x00000001;
@@ -773,7 +772,6 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	fp->insn[fpc->inst_offset + 3] = 0x00000000;
 
 	fp->translated = TRUE;
-	fp->on_hw = FALSE;
 out_err:
 	tgsi_parse_free(&parse);
 	FREE(fpc);
@@ -846,7 +844,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_REG_CONTROL, 1);
-	so_data  (so, fp->fp_reg_control);
+	so_data  (so, (1<<16)|0x4);
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_UNITS_ENABLE, 1);
 	so_data  (so, fp->samplers);
 	so_ref(so, &fp->so);

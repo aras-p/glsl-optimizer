@@ -54,7 +54,6 @@ struct nv30_fragment_program {
 	struct tgsi_shader_info info;
 
 	boolean translated;
-	boolean on_hw;
 	unsigned samplers;
 
 	uint32_t *insn;
@@ -66,7 +65,6 @@ struct nv30_fragment_program {
 	struct pipe_buffer *buffer;
 
 	uint32_t fp_control;
-	uint32_t fp_reg_control;
 	struct nouveau_stateobj *so;
 };
 
