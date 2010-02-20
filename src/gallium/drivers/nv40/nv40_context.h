@@ -28,7 +28,6 @@ extern void nv40_fragprog_destroy(struct nvfx_context *,
 extern void nv40_fragtex_bind(struct nvfx_context *);
 
 /* nv40_state.c and friends */
-extern struct nvfx_state_entry nv40_state_scissor;
 extern struct nvfx_state_entry nv40_state_stipple;
 extern struct nvfx_state_entry nv40_state_fragprog;
 extern struct nvfx_state_entry nv40_state_vertprog;

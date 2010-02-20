@@ -13,7 +13,6 @@ C_SOURCES = \
 	nv30_screen.c \
 	nv30_state.c \
 	nv30_state_fb.c \
-	nv30_state_scissor.c \
 	nv30_state_stipple.c \
 	nv30_state_viewport.c \
 	nv30_state_zsa.c \

@@ -1,7 +1,7 @@
-#include "nv40_context.h"
+#include "nvfx_context.h"
 
 static boolean
-nv40_state_scissor_validate(struct nvfx_context *nvfx)
+nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_rasterizer_state *rast = &nvfx->rasterizer->pipe;
 	struct pipe_scissor_state *s = &nvfx->scissor;
@@ -27,8 +27,8 @@ nv40_state_scissor_validate(struct nvfx_context *nvfx)
 	return TRUE;
 }
 
-struct nvfx_state_entry nv40_state_scissor = {
-	.validate = nv40_state_scissor_validate,
+struct nvfx_state_entry nvfx_state_scissor = {
+	.validate = nvfx_state_scissor_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_SCISSOR | NVFX_NEW_RAST,
 		.hw = NVFX_STATE_SCISSOR

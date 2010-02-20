@@ -184,6 +184,7 @@ struct nvfx_state_entry {
 extern struct nvfx_state_entry nvfx_state_blend;
 extern struct nvfx_state_entry nvfx_state_blend_colour;
 extern struct nvfx_state_entry nvfx_state_rasterizer;
+extern struct nvfx_state_entry nvfx_state_scissor;
 
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,

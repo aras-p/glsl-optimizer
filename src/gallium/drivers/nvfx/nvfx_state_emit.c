@@ -7,7 +7,7 @@
 static struct nvfx_state_entry *name##_render_states[] = { \
 	&nvxx##_state_framebuffer, \
 	&nvfx_state_rasterizer, \
-	&nvxx##_state_scissor, \
+	&nvfx_state_scissor, \
 	&nvxx##_state_stipple, \
 	&nvxx##_state_fragprog, \
 	&nvxx##_state_fragtex, \
