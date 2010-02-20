@@ -5,7 +5,7 @@
 
 #define RENDER_STATES(name, nvxx, vbo) \
 static struct nvfx_state_entry *name##_render_states[] = { \
-	&nvxx##_state_framebuffer, \
+	&nvfx_state_framebuffer, \
 	&nvfx_state_rasterizer, \
 	&nvfx_state_scissor, \
 	&nvfx_state_stipple, \

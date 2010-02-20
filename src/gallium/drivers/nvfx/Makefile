@@ -9,6 +9,7 @@ C_SOURCES = \
 	nvfx_miptree.c \
 	nvfx_query.c \
 	nvfx_state_blend.c \
+	nvfx_state_fb.c \
 	nvfx_state_rasterizer.c \
 	nvfx_state_scissor.c \
         nvfx_state_stipple.c \
