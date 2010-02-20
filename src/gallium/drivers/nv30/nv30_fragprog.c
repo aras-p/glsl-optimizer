@@ -31,7 +31,7 @@
 #define MAX_CONSTS 128
 #define MAX_IMM 32
 struct nv30_fpc {
-	struct nv30_fragment_program *fp;
+	struct nvfx_fragment_program *fp;
 
 	uint attrib_map[PIPE_MAX_SHADER_INPUTS];
 
@@ -89,7 +89,7 @@ constant(struct nv30_fpc *fpc, int pipe, float vals[4])
 static void
 grow_insns(struct nv30_fpc *fpc, int size)
 {
-	struct nv30_fragment_program *fp = fpc->fp;
+	struct nvfx_fragment_program *fp = fpc->fp;
 
 	fp->insn_len += size;
 	fp->insn = realloc(fp->insn, sizeof(uint32_t) * fp->insn_len);
@@ -98,7 +98,7 @@ grow_insns(struct nv30_fpc *fpc, int size)
 static void
 emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
 {
-	struct nv30_fragment_program *fp = fpc->fp;
+	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 	uint32_t sr = 0;
 
@@ -118,7 +118,7 @@ emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
 		grow_insns(fpc, 4);
 		hw = &fp->insn[fpc->inst_offset];
 		if (fpc->consts[src.index].pipe >= 0) {
-			struct nv30_fragment_program_data *fpd;
+			struct nvfx_fragment_program_data *fpd;
 
 			fp->consts = realloc(fp->consts, ++fp->nr_consts *
 					     sizeof(*fpd));
@@ -158,7 +158,7 @@ emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
 static void
 emit_dst(struct nv30_fpc *fpc, struct nv30_sreg dst)
 {
-	struct nv30_fragment_program *fp = fpc->fp;
+	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 
 	switch (dst.type) {
@@ -188,7 +188,7 @@ nv30_fp_arith(struct nv30_fpc *fpc, int sat, int op,
 	      struct nv30_sreg dst, int mask,
 	      struct nv30_sreg s0, struct nv30_sreg s1, struct nv30_sreg s2)
 {
-	struct nv30_fragment_program *fp = fpc->fp;
+	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw;
 
 	fpc->inst_offset = fp->insn_len;
@@ -224,7 +224,7 @@ nv30_fp_tex(struct nv30_fpc *fpc, int sat, int op, int unit,
 	    struct nv30_sreg dst, int mask,
 	    struct nv30_sreg s0, struct nv30_sreg s1, struct nv30_sreg s2)
 {
-	struct nv30_fragment_program *fp = fpc->fp;
+	struct nvfx_fragment_program *fp = fpc->fp;
 
 	nv30_fp_arith(fpc, sat, op, dst, mask, s0, s1, s2);
 
@@ -718,8 +718,8 @@ out_err:
 }
 
 static void
-nv30_fragprog_translate(struct nv30_context *nv30,
-			struct nv30_fragment_program *fp)
+nv30_fragprog_translate(struct nvfx_context *nvfx,
+			struct nvfx_fragment_program *fp)
 {
 	struct tgsi_parse_context parse;
 	struct nv30_fpc *fpc = NULL;
@@ -778,10 +778,10 @@ out_err:
 }
 
 static void
-nv30_fragprog_upload(struct nv30_context *nv30,
-		     struct nv30_fragment_program *fp)
+nv30_fragprog_upload(struct nvfx_context *nvfx,
+		     struct nvfx_fragment_program *fp)
 {
-	struct pipe_screen *pscreen = nv30->pipe.screen;
+	struct pipe_screen *pscreen = nvfx->pipe.screen;
 	const uint32_t le = 1;
 	uint32_t *map;
 	int i;
@@ -812,12 +812,12 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 }
 
 static boolean
-nv30_fragprog_validate(struct nv30_context *nv30)
+nv30_fragprog_validate(struct nvfx_context *nvfx)
 {
-	struct nv30_fragment_program *fp = nv30->fragprog;
+	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	struct pipe_buffer *constbuf =
-		nv30->constbuf[PIPE_SHADER_FRAGMENT];
-	struct pipe_screen *pscreen = nv30->pipe.screen;
+		nvfx->constbuf[PIPE_SHADER_FRAGMENT];
+	struct pipe_screen *pscreen = nvfx->pipe.screen;
 	struct nouveau_stateobj *so;
 	boolean new_consts = FALSE;
 	int i;
@@ -825,27 +825,27 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	if (fp->translated)
 		goto update_constants;
 
-	/*nv30->fallback_swrast &= ~NV30_NEW_FRAGPROG;*/
-	nv30_fragprog_translate(nv30, fp);
+	/*nvfx->fallback_swrast &= ~NVFX_NEW_FRAGPROG;*/
+	nv30_fragprog_translate(nvfx, fp);
 	if (!fp->translated) {
-		/*nv30->fallback_swrast |= NV30_NEW_FRAGPROG;*/
+		/*nvfx->fallback_swrast |= NVFX_NEW_FRAGPROG;*/
 		return FALSE;
 	}
 
 	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
-	nv30_fragprog_upload(nv30, fp);
+	nv30_fragprog_upload(nvfx, fp);
 
 	so = so_new(4, 4, 1);
-	so_method(so, nv30->screen->eng3d, NV34TCL_FP_ACTIVE_PROGRAM, 1);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_ACTIVE_PROGRAM, 1);
 	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
 		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
 		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
-	so_method(so, nv30->screen->eng3d, NV34TCL_FP_CONTROL, 1);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
-	so_method(so, nv30->screen->eng3d, NV34TCL_FP_REG_CONTROL, 1);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_REG_CONTROL, 1);
 	so_data  (so, (1<<16)|0x4);
-	so_method(so, nv30->screen->eng3d, NV34TCL_TX_UNITS_ENABLE, 1);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_TX_UNITS_ENABLE, 1);
 	so_data  (so, fp->samplers);
 	so_ref(so, &fp->so);
 	so_ref(NULL, &so);
@@ -857,7 +857,7 @@ update_constants:
 		map = pipe_buffer_map(pscreen, constbuf,
 				      PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
-			struct nv30_fragment_program_data *fpd = &fp->consts[i];
+			struct nvfx_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
 			uint32_t *cb = (uint32_t *)&map[fpd->index * 4];
 
@@ -869,11 +869,11 @@ update_constants:
 		pipe_buffer_unmap(pscreen, constbuf);
 
 		if (new_consts)
-			nv30_fragprog_upload(nv30, fp);
+			nv30_fragprog_upload(nvfx, fp);
 	}
 
-	if (new_consts || fp->so != nv30->state.hw[NV30_STATE_FRAGPROG]) {
-		so_ref(fp->so, &nv30->state.hw[NV30_STATE_FRAGPROG]);
+	if (new_consts || fp->so != nvfx->state.hw[NVFX_STATE_FRAGPROG]) {
+		so_ref(fp->so, &nvfx->state.hw[NVFX_STATE_FRAGPROG]);
 		return TRUE;
 	}
 
@@ -881,8 +881,8 @@ update_constants:
 }
 
 void
-nv30_fragprog_destroy(struct nv30_context *nv30,
-		      struct nv30_fragment_program *fp)
+nv30_fragprog_destroy(struct nvfx_context *nvfx,
+		      struct nvfx_fragment_program *fp)
 {
 	if (fp->buffer)
 		pipe_buffer_reference(&fp->buffer, NULL);
@@ -894,10 +894,10 @@ nv30_fragprog_destroy(struct nv30_context *nv30,
 		FREE(fp->insn);
 }
 
-struct nv30_state_entry nv30_state_fragprog = {
+struct nvfx_state_entry nv30_state_fragprog = {
 	.validate = nv30_fragprog_validate,
 	.dirty = {
-		.pipe = NV30_NEW_FRAGPROG,
-		.hw = NV30_STATE_FRAGPROG
+		.pipe = NVFX_NEW_FRAGPROG,
+		.hw = NVFX_STATE_FRAGPROG
 	}
 };

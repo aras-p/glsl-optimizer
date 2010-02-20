@@ -4,7 +4,7 @@
 #include "util/u_format.h"
 
 #include "nv40_context.h"
-#include "nv40_state.h"
+#include "nvfx_state.h"
 
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
@@ -69,15 +69,15 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 }
 
 static boolean
-nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
+nv40_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_buffer *ib,
 		    unsigned ib_size)
 {
-	struct pipe_screen *pscreen = &nv40->screen->base.base;
+	struct pipe_screen *pscreen = &nvfx->screen->base.base;
 	unsigned type;
 
 	if (!ib) {
-		nv40->idxbuf = NULL;
-		nv40->idxbuf_format = 0xdeadbeef;
+		nvfx->idxbuf = NULL;
+		nvfx->idxbuf_format = 0xdeadbeef;
 		return FALSE;
 	}
 
@@ -95,23 +95,23 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 		return FALSE;
 	}
 
-	if (ib != nv40->idxbuf ||
-	    type != nv40->idxbuf_format) {
-		nv40->dirty |= NV40_NEW_ARRAYS;
-		nv40->idxbuf = ib;
-		nv40->idxbuf_format = type;
+	if (ib != nvfx->idxbuf ||
+	    type != nvfx->idxbuf_format) {
+		nvfx->dirty |= NVFX_NEW_ARRAYS;
+		nvfx->idxbuf = ib;
+		nvfx->idxbuf_format = type;
 	}
 
 	return TRUE;
 }
 
 static boolean
-nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
+nv40_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
-	struct pipe_screen *pscreen = nv40->pipe.screen;
-	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
+	struct pipe_screen *pscreen = nvfx->pipe.screen;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned type, ncomp;
 	void *map;
 
@@ -169,14 +169,14 @@ void
 nv40_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart;
 
-	nv40_vbo_set_idxbuf(nv40, NULL, 0);
-	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
+	nv40_vbo_set_idxbuf(nvfx, NULL, 0);
+	if (FORCE_SWTNL || !nv40_state_validate(nvfx)) {
 		nv40_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;
@@ -185,7 +185,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 	while (count) {
 		unsigned vc, nr;
 
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -228,10 +228,10 @@ nv40_draw_arrays(struct pipe_context *pipe,
 }
 
 static INLINE void
-nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
+nv40_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -239,7 +239,7 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 		uint8_t *elts = (uint8_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -279,10 +279,10 @@ nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 }
 
 static INLINE void
-nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
+nv40_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -290,7 +290,7 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 		uint16_t *elts = (uint16_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -330,10 +330,10 @@ nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 }
 
 static INLINE void
-nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
+nv40_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -341,7 +341,7 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 		uint32_t *elts = (uint32_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 5, 1,
 					mode, start, count, &restart);
@@ -376,7 +376,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 
@@ -388,13 +388,13 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 
 	switch (ib_size) {
 	case 1:
-		nv40_draw_elements_u08(nv40, map, mode, start, count);
+		nv40_draw_elements_u08(nvfx, map, mode, start, count);
 		break;
 	case 2:
-		nv40_draw_elements_u16(nv40, map, mode, start, count);
+		nv40_draw_elements_u16(nvfx, map, mode, start, count);
 		break;
 	case 4:
-		nv40_draw_elements_u32(nv40, map, mode, start, count);
+		nv40_draw_elements_u32(nvfx, map, mode, start, count);
 		break;
 	default:
 		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
@@ -408,8 +408,8 @@ static void
 nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart;
@@ -417,7 +417,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 	while (count) {
 		unsigned nr, vc;
 
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -462,11 +462,11 @@ nv40_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	boolean idxbuf;
 
-	idxbuf = nv40_vbo_set_idxbuf(nv40, indexBuffer, indexSize);
-	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
+	idxbuf = nv40_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
+	if (FORCE_SWTNL || !nv40_state_validate(nvfx)) {
 		nv40_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;
@@ -483,33 +483,33 @@ nv40_draw_elements(struct pipe_context *pipe,
 }
 
 static boolean
-nv40_vbo_validate(struct nv40_context *nv40)
+nv40_vbo_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
-	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
-	struct pipe_buffer *ib = nv40->idxbuf;
-	unsigned ib_format = nv40->idxbuf_format;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct pipe_buffer *ib = nvfx->idxbuf;
+	unsigned ib_format = nvfx->idxbuf_format;
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
 	vtxbuf = so_new(3, 17, 18);
-	so_method(vtxbuf, eng3d, NV34TCL_VTXBUF_ADDRESS(0), nv40->vtxelt->num_elements);
+	so_method(vtxbuf, eng3d, NV34TCL_VTXBUF_ADDRESS(0), nvfx->vtxelt->num_elements);
 	vtxfmt = so_new(1, 16, 0);
-	so_method(vtxfmt, eng3d, NV34TCL_VTXFMT(0), nv40->vtxelt->num_elements);
+	so_method(vtxfmt, eng3d, NV34TCL_VTXFMT(0), nvfx->vtxelt->num_elements);
 
-	for (hw = 0; hw < nv40->vtxelt->num_elements; hw++) {
+	for (hw = 0; hw < nvfx->vtxelt->num_elements; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 		unsigned type, ncomp;
 
-		ve = &nv40->vtxelt->pipe[hw];
-		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
+		ve = &nvfx->vtxelt->pipe[hw];
+		vb = &nvfx->vtxbuf[ve->vertex_buffer_index];
 
 		if (!vb->stride) {
 			if (!sattr)
 				sattr = so_new(16, 16 * 4, 0);
 
-			if (nv40_vbo_static_attrib(nv40, sattr, hw, ve, vb)) {
+			if (nv40_vbo_static_attrib(nvfx, sattr, hw, ve, vb)) {
 				so_data(vtxbuf, 0);
 				so_data(vtxfmt, NV34TCL_VTXFMT_TYPE_FLOAT);
 				continue;
@@ -517,7 +517,7 @@ nv40_vbo_validate(struct nv40_context *nv40)
 		}
 
 		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
-			nv40->fallback_swtnl |= NV40_NEW_ARRAYS;
+			nvfx->fallback_swtnl |= NVFX_NEW_ARRAYS;
 			so_ref(NULL, &vtxbuf);
 			so_ref(NULL, &vtxfmt);
 			return FALSE;
@@ -543,22 +543,22 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	so_method(vtxbuf, eng3d, 0x1710, 1);
 	so_data  (vtxbuf, 0);
 
-	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);
+	so_ref(vtxbuf, &nvfx->state.hw[NVFX_STATE_VTXBUF]);
 	so_ref(NULL, &vtxbuf);
-	nv40->state.dirty |= (1ULL << NV40_STATE_VTXBUF);
-	so_ref(vtxfmt, &nv40->state.hw[NV40_STATE_VTXFMT]);
+	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXBUF);
+	so_ref(vtxfmt, &nvfx->state.hw[NVFX_STATE_VTXFMT]);
 	so_ref(NULL, &vtxfmt);
-	nv40->state.dirty |= (1ULL << NV40_STATE_VTXFMT);
-	so_ref(sattr, &nv40->state.hw[NV40_STATE_VTXATTR]);
+	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXFMT);
+	so_ref(sattr, &nvfx->state.hw[NVFX_STATE_VTXATTR]);
 	so_ref(NULL, &sattr);
-	nv40->state.dirty |= (1ULL << NV40_STATE_VTXATTR);
+	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXATTR);
 	return FALSE;
 }
 
-struct nv40_state_entry nv40_state_vbo = {
+struct nvfx_state_entry nv40_state_vbo = {
 	.validate = nv40_vbo_validate,
 	.dirty = {
-		.pipe = NV40_NEW_ARRAYS,
+		.pipe = NVFX_NEW_ARRAYS,
 		.hw = 0,
 	}
 };

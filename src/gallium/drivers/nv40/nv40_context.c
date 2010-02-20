@@ -2,14 +2,14 @@
 #include "pipe/p_defines.h"
 
 #include "nv40_context.h"
-#include "nv40_screen.h"
+#include "nvfx_screen.h"
 
 static void
 nv40_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -28,61 +28,61 @@ nv40_flush(struct pipe_context *pipe, unsigned flags,
 static void
 nv40_destroy(struct pipe_context *pipe)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	unsigned i;
 
-	for (i = 0; i < NV40_STATE_MAX; i++) {
-		if (nv40->state.hw[i])
-			so_ref(NULL, &nv40->state.hw[i]);
+	for (i = 0; i < NVFX_STATE_MAX; i++) {
+		if (nvfx->state.hw[i])
+			so_ref(NULL, &nvfx->state.hw[i]);
 	}
 
-	if (nv40->draw)
-		draw_destroy(nv40->draw);
-	FREE(nv40);
+	if (nvfx->draw)
+		draw_destroy(nvfx->draw);
+	FREE(nvfx);
 }
 
 struct pipe_context *
 nv40_create(struct pipe_screen *pscreen, void *priv)
 {
-	struct nv40_screen *screen = nv40_screen(pscreen);
+	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	struct pipe_winsys *ws = pscreen->winsys;
-	struct nv40_context *nv40;
+	struct nvfx_context *nvfx;
 	struct nouveau_winsys *nvws = screen->nvws;
 
-	nv40 = CALLOC(1, sizeof(struct nv40_context));
-	if (!nv40)
+	nvfx = CALLOC(1, sizeof(struct nvfx_context));
+	if (!nvfx)
 		return NULL;
-	nv40->screen = screen;
+	nvfx->screen = screen;
 
-	nv40->nvws = nvws;
+	nvfx->nvws = nvws;
 
-	nv40->pipe.winsys = ws;
-	nv40->pipe.priv = priv;
-	nv40->pipe.screen = pscreen;
-	nv40->pipe.destroy = nv40_destroy;
-	nv40->pipe.draw_arrays = nv40_draw_arrays;
-	nv40->pipe.draw_elements = nv40_draw_elements;
-	nv40->pipe.clear = nv40_clear;
-	nv40->pipe.flush = nv40_flush;
+	nvfx->pipe.winsys = ws;
+	nvfx->pipe.priv = priv;
+	nvfx->pipe.screen = pscreen;
+	nvfx->pipe.destroy = nv40_destroy;
+	nvfx->pipe.draw_arrays = nv40_draw_arrays;
+	nvfx->pipe.draw_elements = nv40_draw_elements;
+	nvfx->pipe.clear = nv40_clear;
+	nvfx->pipe.flush = nv40_flush;
 
-	nv40->pipe.is_texture_referenced = nouveau_is_texture_referenced;
-	nv40->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
+	nvfx->pipe.is_texture_referenced = nouveau_is_texture_referenced;
+	nvfx->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
-	screen->base.channel->user_private = nv40;
+	screen->base.channel->user_private = nvfx;
 	screen->base.channel->flush_notify = nv40_state_flush_notify;
 
-	nv40_init_query_functions(nv40);
-	nv40_init_surface_functions(nv40);
-	nv40_init_state_functions(nv40);
-	nv40_init_transfer_functions(nv40);
+	nv40_init_query_functions(nvfx);
+	nv40_init_surface_functions(nvfx);
+	nv40_init_state_functions(nvfx);
+	nv40_init_transfer_functions(nvfx);
 
 	/* Create, configure, and install fallback swtnl path */
-	nv40->draw = draw_create();
-	draw_wide_point_threshold(nv40->draw, 9999999.0);
-	draw_wide_line_threshold(nv40->draw, 9999999.0);
-	draw_enable_line_stipple(nv40->draw, FALSE);
-	draw_enable_point_sprites(nv40->draw, FALSE);
-	draw_set_rasterize_stage(nv40->draw, nv40_draw_render_stage(nv40));
+	nvfx->draw = draw_create();
+	draw_wide_point_threshold(nvfx->draw, 9999999.0);
+	draw_wide_line_threshold(nvfx->draw, 9999999.0);
+	draw_enable_line_stipple(nvfx->draw, FALSE);
+	draw_enable_point_sprites(nvfx->draw, FALSE);
+	draw_set_rasterize_stage(nvfx->draw, nv40_draw_render_stage(nvfx));
 
-	return &nv40->pipe;
+	return &nvfx->pipe;
 }

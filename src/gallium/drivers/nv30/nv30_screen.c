@@ -4,7 +4,7 @@
 #include "nouveau/nouveau_screen.h"
 
 #include "nv30_context.h"
-#include "nv30_screen.h"
+#include "nvfx_screen.h"
 
 #define NV30TCL_CHIPSET_3X_MASK 0x00000003
 #define NV34TCL_CHIPSET_3X_MASK 0x00000010
@@ -156,7 +156,7 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 static struct pipe_buffer *
 nv30_surface_buffer(struct pipe_surface *surf)
 {
-	struct nv30_miptree *mt = (struct nv30_miptree *)surf->texture;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)surf->texture;
 
 	return mt->buffer;
 }
@@ -164,10 +164,10 @@ nv30_surface_buffer(struct pipe_surface *surf)
 static void
 nv30_screen_destroy(struct pipe_screen *pscreen)
 {
-	struct nv30_screen *screen = nv30_screen(pscreen);
+	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	unsigned i;
 
-	for (i = 0; i < NV30_STATE_MAX; i++) {
+	for (i = 0; i < NVFX_STATE_MAX; i++) {
 		if (screen->state[i])
 			so_ref(NULL, &screen->state[i]);
 	}
@@ -188,7 +188,7 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 struct pipe_screen *
 nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
-	struct nv30_screen *screen = CALLOC_STRUCT(nv30_screen);
+	struct nvfx_screen *screen = CALLOC_STRUCT(nvfx_screen);
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;

@@ -6,8 +6,8 @@
 #include "util/u_math.h"
 #include "nouveau/nouveau_winsys.h"
 #include "nv40_context.h"
-#include "nv40_screen.h"
-#include "nv40_state.h"
+#include "nvfx_screen.h"
+#include "nvfx_state.h"
 
 struct nv40_transfer {
 	struct pipe_transfer base;
@@ -39,7 +39,7 @@ nv40_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 		  unsigned x, unsigned y, unsigned w, unsigned h)
 {
         struct pipe_screen *pscreen = pcontext->screen;
-	struct nv40_miptree *mt = (struct nv40_miptree *)pt;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	struct nv40_transfer *tx;
 	struct pipe_texture tx_tex_template, *tx_tex;
 
@@ -81,7 +81,7 @@ nv40_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 		return NULL;
 	}
 
-	tx->base.stride = ((struct nv40_miptree*)tx_tex)->level[0].pitch;
+	tx->base.stride = ((struct nvfx_miptree*)tx_tex)->level[0].pitch;
 
 	tx->surface = pscreen->get_tex_surface(pscreen, tx_tex,
 	                                       0, 0, 0,
@@ -97,7 +97,7 @@ nv40_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 	}
 
 	if (usage & PIPE_TRANSFER_READ) {
-		struct nv40_screen *nvscreen = nv40_screen(pscreen);
+		struct nvfx_screen *nvscreen = nvfx_screen(pscreen);
 		struct pipe_surface *src;
 
 		src = pscreen->get_tex_surface(pscreen, pt,
@@ -124,7 +124,7 @@ nv40_transfer_del(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 
 	if (!tx->direct && (ptx->usage & PIPE_TRANSFER_WRITE)) {
 		struct pipe_screen *pscreen = pcontext->screen;
-		struct nv40_screen *nvscreen = nv40_screen(pscreen);
+		struct nvfx_screen *nvscreen = nvfx_screen(pscreen);
 		struct pipe_surface *dst;
 
 		dst = pscreen->get_tex_surface(pscreen, ptx->texture,
@@ -151,7 +151,7 @@ nv40_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
         struct pipe_screen *pscreen = pcontext->screen;
 	struct nv40_transfer *tx = (struct nv40_transfer *)ptx;
 	struct nv04_surface *ns = (struct nv04_surface *)tx->surface;
-	struct nv40_miptree *mt = (struct nv40_miptree *)tx->surface->texture;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)tx->surface->texture;
 	void *map = pipe_buffer_map(pscreen, mt->buffer,
 	                            pipe_transfer_buffer_flags(ptx));
 
@@ -166,16 +166,16 @@ nv40_transfer_unmap(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
         struct pipe_screen *pscreen = pcontext->screen;
 	struct nv40_transfer *tx = (struct nv40_transfer *)ptx;
-	struct nv40_miptree *mt = (struct nv40_miptree *)tx->surface->texture;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)tx->surface->texture;
 
 	pipe_buffer_unmap(pscreen, mt->buffer);
 }
 
 void
-nv40_init_transfer_functions(struct nv40_context *nv40)
+nv40_init_transfer_functions(struct nvfx_context *nvfx)
 {
-	nv40->pipe.get_tex_transfer = nv40_transfer_new;
-	nv40->pipe.tex_transfer_destroy = nv40_transfer_del;
-	nv40->pipe.transfer_map = nv40_transfer_map;
-	nv40->pipe.transfer_unmap = nv40_transfer_unmap;
+	nvfx->pipe.get_tex_transfer = nv40_transfer_new;
+	nvfx->pipe.tex_transfer_destroy = nv40_transfer_del;
+	nvfx->pipe.transfer_map = nv40_transfer_map;
+	nvfx->pipe.transfer_unmap = nv40_transfer_unmap;
 }

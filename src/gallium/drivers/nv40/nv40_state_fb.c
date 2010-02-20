@@ -4,18 +4,18 @@
 static struct pipe_buffer *
 nv40_do_surface_buffer(struct pipe_surface *surface)
 {
-	struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)surface->texture;
 	return mt->buffer;
 }
 
 #define nv40_surface_buffer(ps) nouveau_bo(nv40_do_surface_buffer(ps))
 
 static boolean
-nv40_state_framebuffer_validate(struct nv40_context *nv40)
+nv40_state_framebuffer_validate(struct nvfx_context *nvfx)
 {
-	struct nouveau_channel *chan = nv40->screen->base.channel;
-	struct nouveau_grobj *eng3d = nv40->screen->eng3d;
-	struct pipe_framebuffer_state *fb = &nv40->framebuffer;
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
 	struct nv04_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
@@ -161,15 +161,15 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	so_method(so, eng3d, 0x1d88, 1);
 	so_data  (so, (1 << 12) | h);
 
-	so_ref(so, &nv40->state.hw[NV40_STATE_FB]);
+	so_ref(so, &nvfx->state.hw[NVFX_STATE_FB]);
 	so_ref(NULL, &so);
 	return TRUE;
 }
 
-struct nv40_state_entry nv40_state_framebuffer = {
+struct nvfx_state_entry nv40_state_framebuffer = {
 	.validate = nv40_state_framebuffer_validate,
 	.dirty = {
-		.pipe = NV40_NEW_FB,
-		.hw = NV40_STATE_FB
+		.pipe = NVFX_NEW_FB,
+		.hw = NVFX_STATE_FB
 	}
 };

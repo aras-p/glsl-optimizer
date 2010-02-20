@@ -8,7 +8,7 @@
 #include "../nouveau/nv04_surface_2d.h"
 
 static void
-nv30_miptree_layout(struct nv30_miptree *nv30mt)
+nv30_miptree_layout(struct nvfx_miptree *nv30mt)
 {
 	struct pipe_texture *pt = &nv30mt->base;
 	uint width = pt->width0;
@@ -62,11 +62,11 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 static struct pipe_texture *
 nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
-	struct nv30_miptree *mt;
+	struct nvfx_miptree *mt;
 	unsigned buf_usage = PIPE_BUFFER_USAGE_PIXEL |
 	                     NOUVEAU_BUFFER_USAGE_TEXTURE;
 
-	mt = MALLOC(sizeof(struct nv30_miptree));
+	mt = MALLOC(sizeof(struct nvfx_miptree));
 	if (!mt)
 		return NULL;
 	mt->base = *pt;
@@ -132,14 +132,14 @@ static struct pipe_texture *
 nv30_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 		     const unsigned *stride, struct pipe_buffer *pb)
 {
-	struct nv30_miptree *mt;
+	struct nvfx_miptree *mt;
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
 	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
 	    pt->depth0 != 1)
 		return NULL;
 
-	mt = CALLOC_STRUCT(nv30_miptree);
+	mt = CALLOC_STRUCT(nvfx_miptree);
 	if (!mt)
 		return NULL;
 
@@ -160,7 +160,7 @@ nv30_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 static void
 nv30_miptree_destroy(struct pipe_texture *pt)
 {
-	struct nv30_miptree *mt = (struct nv30_miptree *)pt;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	int l;
 
 	pipe_buffer_reference(&mt->buffer, NULL);
@@ -177,7 +177,7 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct nv30_miptree *nv30mt = (struct nv30_miptree *)pt;
+	struct nvfx_miptree *nv30mt = (struct nvfx_miptree *)pt;
 	struct nv04_surface *ns;
 
 	ns = CALLOC_STRUCT(nv04_surface);
@@ -207,7 +207,7 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	 * Note that ns->pitch is always a multiple of 64 for linear surfaces and swizzled surfaces are POT, so
 	 * ns->pitch & 63 is equivalent to (ns->pitch < 64 && swizzled)*/
 	if((ns->pitch & 63) && (ns->base.usage & (PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER)) == PIPE_BUFFER_USAGE_GPU_WRITE)
-		return &nv04_surface_wrap_for_render(pscreen, ((struct nv30_screen*)pscreen)->eng2d, ns)->base;
+		return &nv04_surface_wrap_for_render(pscreen, ((struct nvfx_screen*)pscreen)->eng2d, ns)->base;
 
 	return &ns->base;
 }
@@ -218,7 +218,7 @@ nv30_miptree_surface_del(struct pipe_surface *ps)
 	struct nv04_surface* ns = (struct nv04_surface*)ps;
 	if(ns->backing)
 	{
-		struct nv30_screen* screen = (struct nv30_screen*)ps->texture->screen;
+		struct nvfx_screen* screen = (struct nvfx_screen*)ps->texture->screen;
 		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
 			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
 		nv30_miptree_surface_del(&ns->backing->base);

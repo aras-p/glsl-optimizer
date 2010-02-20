@@ -18,7 +18,7 @@
 
 struct nv40_render_stage {
 	struct draw_stage stage;
-	struct nv40_context *nv40;
+	struct nvfx_context *nvfx;
 	unsigned prim;
 };
 
@@ -29,18 +29,18 @@ nv40_render_stage(struct draw_stage *stage)
 }
 
 static INLINE void
-nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
+nv40_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 {
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned i;
 
-	for (i = 0; i < nv40->swtnl.nr_attribs; i++) {
-		unsigned idx = nv40->swtnl.draw[i];
-		unsigned hw = nv40->swtnl.hw[i];
+	for (i = 0; i < nvfx->swtnl.nr_attribs; i++) {
+		unsigned idx = nvfx->swtnl.draw[i];
+		unsigned hw = nvfx->swtnl.hw[i];
 
-		switch (nv40->swtnl.emit[i]) {
+		switch (nvfx->swtnl.emit[i]) {
 		case EMIT_OMIT:
 			break;
 		case EMIT_1F:
@@ -84,9 +84,9 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	       unsigned mode, unsigned count)
 {
 	struct nv40_render_stage *rs = nv40_render_stage(stage);
-	struct nv40_context *nv40 = rs->nv40;
+	struct nvfx_context *nvfx = rs->nvfx;
 
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned i;
@@ -98,7 +98,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			assert(0);
 		}
 		FIRE_RING(chan);
-		nv40_state_emit(nv40);
+		nv40_state_emit(nvfx);
 	}
 
 	/* Switch primitive modes if necessary */
@@ -115,7 +115,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 
 	/* Emit vertex data */
 	for (i = 0; i < count; i++)
-		nv40_render_vertex(nv40, prim->v[i]);
+		nv40_render_vertex(nvfx, prim->v[i]);
 
 	/* If it's likely we'll need to empty the push buffer soon, finish
 	 * off the primitive now.
@@ -149,8 +149,8 @@ static void
 nv40_render_flush(struct draw_stage *draw, unsigned flags)
 {
 	struct nv40_render_stage *rs = nv40_render_stage(draw);
-	struct nv40_context *nv40 = rs->nv40;
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_context *nvfx = rs->nvfx;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -173,13 +173,13 @@ nv40_render_destroy(struct draw_stage *draw)
 }
 
 static INLINE void
-emit_mov(struct nv40_vertex_program *vp,
+emit_mov(struct nvfx_vertex_program *vp,
 	 unsigned dst, unsigned src, unsigned vor, unsigned mask)
 {
-	struct nv40_vertex_program_exec *inst;
+	struct nvfx_vertex_program_exec *inst;
 
 	vp->insns = realloc(vp->insns,
-			    sizeof(struct nv40_vertex_program_exec) *
+			    sizeof(struct nvfx_vertex_program_exec) *
 			    ++vp->nr_insns);
 	inst = &vp->insns[vp->nr_insns - 1];
 
@@ -195,10 +195,10 @@ emit_mov(struct nv40_vertex_program *vp,
 		vp->or |= (1 << vor);
 }
 
-static struct nv40_vertex_program *
-create_drawvp(struct nv40_context *nv40)
+static struct nvfx_vertex_program *
+create_drawvp(struct nvfx_context *nvfx)
 {
-	struct nv40_vertex_program *vp = CALLOC_STRUCT(nv40_vertex_program);
+	struct nvfx_vertex_program *vp = CALLOC_STRUCT(nvfx_vertex_program);
 	unsigned i;
 
 	emit_mov(vp, NV40_VP_INST_DEST_POS, 0, ~0, 0xf);
@@ -216,15 +216,15 @@ create_drawvp(struct nv40_context *nv40)
 }
 
 struct draw_stage *
-nv40_draw_render_stage(struct nv40_context *nv40)
+nv40_draw_render_stage(struct nvfx_context *nvfx)
 {
 	struct nv40_render_stage *render = CALLOC_STRUCT(nv40_render_stage);
 
-	if (!nv40->swtnl.vertprog)
-		nv40->swtnl.vertprog = create_drawvp(nv40);
+	if (!nvfx->swtnl.vertprog)
+		nvfx->swtnl.vertprog = create_drawvp(nvfx);
 
-	render->nv40 = nv40;
-	render->stage.draw = nv40->draw;
+	render->nvfx = nvfx;
+	render->stage.draw = nvfx->draw;
 	render->stage.point = nv40_render_point;
 	render->stage.line = nv40_render_line;
 	render->stage.tri = nv40_render_tri;
@@ -240,71 +240,71 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 			 struct pipe_buffer *idxbuf, unsigned idxbuf_size,
 			 unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct pipe_screen *pscreen = pipe->screen;
 	unsigned i;
 	void *map;
 
-	if (!nv40_state_validate_swtnl(nv40))
+	if (!nv40_state_validate_swtnl(nvfx))
 		return;
-	nv40->state.dirty &= ~(1ULL << NV40_STATE_VTXBUF);
-	nv40_state_emit(nv40);
+	nvfx->state.dirty &= ~(1ULL << NVFX_STATE_VTXBUF);
+	nv40_state_emit(nvfx);
 
-	for (i = 0; i < nv40->vtxbuf_nr; i++) {
-		map = pipe_buffer_map(pscreen, nv40->vtxbuf[i].buffer,
+	for (i = 0; i < nvfx->vtxbuf_nr; i++) {
+		map = pipe_buffer_map(pscreen, nvfx->vtxbuf[i].buffer,
                                       PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_vertex_buffer(nv40->draw, i, map);
+		draw_set_mapped_vertex_buffer(nvfx->draw, i, map);
 	}
 
 	if (idxbuf) {
 		map = pipe_buffer_map(pscreen, idxbuf,
 				      PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_element_buffer(nv40->draw, idxbuf_size, map);
+		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, map);
 	} else {
-		draw_set_mapped_element_buffer(nv40->draw, 0, NULL);
+		draw_set_mapped_element_buffer(nvfx->draw, 0, NULL);
 	}
 
-	if (nv40->constbuf[PIPE_SHADER_VERTEX]) {
-		const unsigned nr = nv40->constbuf_nr[PIPE_SHADER_VERTEX];
+	if (nvfx->constbuf[PIPE_SHADER_VERTEX]) {
+		const unsigned nr = nvfx->constbuf_nr[PIPE_SHADER_VERTEX];
 
 		map = pipe_buffer_map(pscreen,
-				      nv40->constbuf[PIPE_SHADER_VERTEX],
+				      nvfx->constbuf[PIPE_SHADER_VERTEX],
 				      PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_constant_buffer(nv40->draw, PIPE_SHADER_VERTEX, 0,
+		draw_set_mapped_constant_buffer(nvfx->draw, PIPE_SHADER_VERTEX, 0,
                                                 map, nr);
 	}
 
-	draw_arrays(nv40->draw, mode, start, count);
+	draw_arrays(nvfx->draw, mode, start, count);
 
-	for (i = 0; i < nv40->vtxbuf_nr; i++)
-		pipe_buffer_unmap(pscreen, nv40->vtxbuf[i].buffer);
+	for (i = 0; i < nvfx->vtxbuf_nr; i++)
+		pipe_buffer_unmap(pscreen, nvfx->vtxbuf[i].buffer);
 
 	if (idxbuf)
 		pipe_buffer_unmap(pscreen, idxbuf);
 
-	if (nv40->constbuf[PIPE_SHADER_VERTEX])
-		pipe_buffer_unmap(pscreen, nv40->constbuf[PIPE_SHADER_VERTEX]);
+	if (nvfx->constbuf[PIPE_SHADER_VERTEX])
+		pipe_buffer_unmap(pscreen, nvfx->constbuf[PIPE_SHADER_VERTEX]);
 
-	draw_flush(nv40->draw);
+	draw_flush(nvfx->draw);
 	pipe->flush(pipe, 0, NULL);
 }
 
 static INLINE void
-emit_attrib(struct nv40_context *nv40, unsigned hw, unsigned emit,
+emit_attrib(struct nvfx_context *nvfx, unsigned hw, unsigned emit,
 	    unsigned semantic, unsigned index)
 {
-	unsigned draw_out = draw_find_shader_output(nv40->draw, semantic, index);
-	unsigned a = nv40->swtnl.nr_attribs++;
+	unsigned draw_out = draw_find_shader_output(nvfx->draw, semantic, index);
+	unsigned a = nvfx->swtnl.nr_attribs++;
 
-	nv40->swtnl.hw[a] = hw;
-	nv40->swtnl.emit[a] = emit;
-	nv40->swtnl.draw[a] = draw_out;
+	nvfx->swtnl.hw[a] = hw;
+	nvfx->swtnl.emit[a] = emit;
+	nvfx->swtnl.draw[a] = draw_out;
 }
 
 static boolean
-nv40_state_vtxfmt_validate(struct nv40_context *nv40)
+nv40_state_vtxfmt_validate(struct nvfx_context *nvfx)
 {
-	struct nv40_fragment_program *fp = nv40->fragprog;
+	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	unsigned colour = 0, texcoords = 0, fog = 0, i;
 
 	/* Determine needed fragprog inputs */
@@ -326,34 +326,34 @@ nv40_state_vtxfmt_validate(struct nv40_context *nv40)
 		}
 	}
 
-	nv40->swtnl.nr_attribs = 0;
+	nvfx->swtnl.nr_attribs = 0;
 
 	/* Map draw vtxprog output to hw attribute IDs */
 	for (i = 0; i < 2; i++) {
 		if (!(colour & (1 << i)))
 			continue;
-		emit_attrib(nv40, 3 + i, EMIT_4UB, TGSI_SEMANTIC_COLOR, i);
+		emit_attrib(nvfx, 3 + i, EMIT_4UB, TGSI_SEMANTIC_COLOR, i);
 	}
 
 	for (i = 0; i < 8; i++) {
 		if (!(texcoords & (1 << i)))
 			continue;
-		emit_attrib(nv40, 8 + i, EMIT_4F, TGSI_SEMANTIC_GENERIC, i);
+		emit_attrib(nvfx, 8 + i, EMIT_4F, TGSI_SEMANTIC_GENERIC, i);
 	}
 
 	if (fog) {
-		emit_attrib(nv40, 5, EMIT_1F, TGSI_SEMANTIC_FOG, 0);
+		emit_attrib(nvfx, 5, EMIT_1F, TGSI_SEMANTIC_FOG, 0);
 	}
 
-	emit_attrib(nv40, 0, EMIT_3F, TGSI_SEMANTIC_POSITION, 0);
+	emit_attrib(nvfx, 0, EMIT_3F, TGSI_SEMANTIC_POSITION, 0);
 
 	return FALSE;
 }
 
-struct nv40_state_entry nv40_state_vtxfmt = {
+struct nvfx_state_entry nv40_state_vtxfmt = {
 	.validate = nv40_state_vtxfmt_validate,
 	.dirty = {
-		.pipe = NV40_NEW_ARRAYS | NV40_NEW_FRAGPROG,
+		.pipe = NVFX_NEW_ARRAYS | NVFX_NEW_FRAGPROG,
 		.hw = 0
 	}
 };

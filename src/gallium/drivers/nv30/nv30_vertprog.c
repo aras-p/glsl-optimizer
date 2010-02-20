@@ -8,7 +8,7 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "nv30_context.h"
-#include "nv30_state.h"
+#include "nvfx_state.h"
 
 /* TODO (at least...):
  *  1. Indexed consts  + ARL
@@ -40,9 +40,9 @@
 #define abs(s) nv30_sr_abs((s))
 
 struct nv30_vpc {
-	struct nv30_vertex_program *vp;
+	struct nvfx_vertex_program *vp;
 
-	struct nv30_vertex_program_exec *vpi;
+	struct nvfx_vertex_program_exec *vpi;
 
 	unsigned output_map[PIPE_MAX_SHADER_OUTPUTS];
 
@@ -66,8 +66,8 @@ temp(struct nv30_vpc *vpc)
 static struct nv30_sreg
 constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
-	struct nv30_vertex_program_data *vpd;
+	struct nvfx_vertex_program *vp = vpc->vp;
+	struct nvfx_vertex_program_data *vpd;
 	int idx;
 
 	if (pipe >= 0) {
@@ -95,7 +95,7 @@ constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 static void
 emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nvfx_vertex_program *vp = vpc->vp;
 	uint32_t sr = 0;
 
 	switch (src.type) {
@@ -166,7 +166,7 @@ emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
 static void
 emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nvfx_vertex_program *vp = vpc->vp;
 
 	switch (dst.type) {
 	case NV30SR_TEMP:
@@ -211,7 +211,7 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 	      struct nv30_sreg s0, struct nv30_sreg s1,
 	      struct nv30_sreg s2)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nvfx_vertex_program *vp = vpc->vp;
 	uint32_t *hw;
 
 	vp->insns = realloc(vp->insns, ++vp->nr_insns * sizeof(*vpc->vpi));
@@ -572,8 +572,8 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 }
 
 static void
-nv30_vertprog_translate(struct nv30_context *nv30,
-			struct nv30_vertex_program *vp)
+nv30_vertprog_translate(struct nvfx_context *nvfx,
+			struct nvfx_vertex_program *vp)
 {
 	struct tgsi_parse_context parse;
 	struct nv30_vpc *vpc = NULL;
@@ -647,36 +647,36 @@ out_err:
 }
 
 static boolean
-nv30_vertprog_validate(struct nv30_context *nv30)
+nv30_vertprog_validate(struct nvfx_context *nvfx)
 { 
-	struct pipe_screen *pscreen = nv30->pipe.screen;
-	struct nv30_screen *screen = nv30->screen;
+	struct pipe_screen *pscreen = nvfx->pipe.screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
-	struct nv30_vertex_program *vp;
+	struct nvfx_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
-	vp = nv30->vertprog;
-	constbuf = nv30->constbuf[PIPE_SHADER_VERTEX];
+	vp = nvfx->vertprog;
+	constbuf = nvfx->constbuf[PIPE_SHADER_VERTEX];
 
 	/* Translate TGSI shader into hw bytecode */
 	if (!vp->translated) {
-		nv30_vertprog_translate(nv30, vp);
+		nv30_vertprog_translate(nvfx, vp);
 		if (!vp->translated)
 			return FALSE;
 	}
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
-		struct nouveau_resource *heap = nv30->screen->vp_exec_heap;
+		struct nouveau_resource *heap = nvfx->screen->vp_exec_heap;
 		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
 		if (nouveau_resource_alloc(heap, vplen, vp, &vp->exec)) {
 			while (heap->next && heap->size < vplen) {
-				struct nv30_vertex_program *evict;
+				struct nvfx_vertex_program *evict;
 				
 				evict = heap->next->priv;
 				nouveau_resource_free(&evict->exec);
@@ -697,11 +697,11 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 
 	/* Allocate hw vtxprog const slots */
 	if (vp->nr_consts && !vp->data) {
-		struct nouveau_resource *heap = nv30->screen->vp_data_heap;
+		struct nouveau_resource *heap = nvfx->screen->vp_data_heap;
 
 		if (nouveau_resource_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {
-				struct nv30_vertex_program *evict;
+				struct nvfx_vertex_program *evict;
 				
 				evict = heap->next->priv;
 				nouveau_resource_free(&evict->data);
@@ -725,7 +725,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 	 */
 	if (vp->exec_start != vp->exec->start) {
 		for (i = 0; i < vp->nr_insns; i++) {
-			struct nv30_vertex_program_exec *vpi = &vp->insns[i];
+			struct nvfx_vertex_program_exec *vpi = &vp->insns[i];
 
 			if (vpi->has_branch_offset) {
 				assert(0);
@@ -737,7 +737,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 
 	if (vp->nr_consts && vp->data_start != vp->data->start) {
 		for (i = 0; i < vp->nr_insns; i++) {
-			struct nv30_vertex_program_exec *vpi = &vp->insns[i];
+			struct nvfx_vertex_program_exec *vpi = &vp->insns[i];
 
 			if (vpi->const_index >= 0) {
 				vpi->data[1] &= ~NV30_VP_INST_CONST_SRC_MASK;
@@ -761,7 +761,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {
-			struct nv30_vertex_program_data *vpd = &vp->consts[i];
+			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
 
 			if (vpd->index >= 0) {
 				if (!upload_data &&
@@ -798,8 +798,8 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		}
 	}
 
-	if (vp->so != nv30->state.hw[NV30_STATE_VERTPROG]) {
-		so_ref(vp->so, &nv30->state.hw[NV30_STATE_VERTPROG]);
+	if (vp->so != nvfx->state.hw[NVFX_STATE_VERTPROG]) {
+		so_ref(vp->so, &nvfx->state.hw[NVFX_STATE_VERTPROG]);
 		return TRUE;
 	}
 
@@ -807,7 +807,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 }
 
 void
-nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
+nv30_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 {
 	vp->translated = FALSE;
 
@@ -833,10 +833,10 @@ nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	so_ref(NULL, &vp->so);
 }
 
-struct nv30_state_entry nv30_state_vertprog = {
+struct nvfx_state_entry nv30_state_vertprog = {
 	.validate = nv30_vertprog_validate,
 	.dirty = {
-		.pipe = NV30_NEW_VERTPROG /*| NV30_NEW_UCP*/,
-		.hw = NV30_STATE_VERTPROG,
+		.pipe = NVFX_NEW_VERTPROG /*| NVFX_NEW_UCP*/,
+		.hw = NVFX_STATE_VERTPROG,
 	}
 };

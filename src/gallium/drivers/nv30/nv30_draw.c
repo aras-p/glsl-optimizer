@@ -4,7 +4,7 @@
 
 struct nv30_draw_stage {
 	struct draw_stage draw;
-	struct nv30_context *nv30;
+	struct nvfx_context *nvfx;
 };
 
 static void
@@ -43,12 +43,12 @@ nv30_draw_destroy(struct draw_stage *draw)
 }
 
 struct draw_stage *
-nv30_draw_render_stage(struct nv30_context *nv30)
+nv30_draw_render_stage(struct nvfx_context *nvfx)
 {
 	struct nv30_draw_stage *nv30draw = CALLOC_STRUCT(nv30_draw_stage);
 
-	nv30draw->nv30 = nv30;
-	nv30draw->draw.draw = nv30->draw;
+	nv30draw->nvfx = nvfx;
+	nv30draw->draw.draw = nvfx->draw;
 	nv30draw->draw.point = nv30_draw_point;
 	nv30draw->draw.line = nv30_draw_line;
 	nv30draw->draw.tri = nv30_draw_tri;

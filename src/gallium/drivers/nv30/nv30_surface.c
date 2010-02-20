@@ -37,8 +37,8 @@ nv30_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
-	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv04_surface_2d *eng2d = nv30->screen->eng2d;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
 
 	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
 }
@@ -48,15 +48,15 @@ nv30_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
-	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv04_surface_2d *eng2d = nv30->screen->eng2d;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
 
 	eng2d->fill(eng2d, dest, destx, desty, width, height, value);
 }
 
 void
-nv30_init_surface_functions(struct nv30_context *nv30)
+nv30_init_surface_functions(struct nvfx_context *nvfx)
 {
-	nv30->pipe.surface_copy = nv30_surface_copy;
-	nv30->pipe.surface_fill = nv30_surface_fill;
+	nvfx->pipe.surface_copy = nv30_surface_copy;
+	nvfx->pipe.surface_fill = nv30_surface_fill;
 }

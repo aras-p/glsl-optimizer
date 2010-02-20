@@ -1,7 +1,7 @@
 #include "pipe/p_screen.h"
 
 #include "nv40_context.h"
-#include "nv40_screen.h"
+#include "nvfx_screen.h"
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
@@ -10,7 +10,7 @@
 static int
 nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 {
-	struct nv40_screen *screen = nv40_screen(pscreen);
+	struct nvfx_screen *screen = nvfx_screen(pscreen);
 
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -143,7 +143,7 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 static struct pipe_buffer *
 nv40_surface_buffer(struct pipe_surface *surf)
 {
-	struct nv40_miptree *mt = (struct nv40_miptree *)surf->texture;
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)surf->texture;
 
 	return mt->buffer;
 }
@@ -151,10 +151,10 @@ nv40_surface_buffer(struct pipe_surface *surf)
 static void
 nv40_screen_destroy(struct pipe_screen *pscreen)
 {
-	struct nv40_screen *screen = nv40_screen(pscreen);
+	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	unsigned i;
 
-	for (i = 0; i < NV40_STATE_MAX; i++) {
+	for (i = 0; i < NVFX_STATE_MAX; i++) {
 		if (screen->state[i])
 			so_ref(NULL, &screen->state[i]);
 	}
@@ -175,7 +175,7 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 struct pipe_screen *
 nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
-	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
+	struct nvfx_screen *screen = CALLOC_STRUCT(nvfx_screen);
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;

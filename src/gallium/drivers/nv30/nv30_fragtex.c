@@ -58,10 +58,10 @@ nv30_fragtex_format(uint pipe_format)
 
 
 static struct nouveau_stateobj *
-nv30_fragtex_build(struct nv30_context *nv30, int unit)
+nv30_fragtex_build(struct nvfx_context *nvfx, int unit)
 {
-	struct nv30_sampler_state *ps = nv30->tex_sampler[unit];
-	struct nv30_miptree *nv30mt = nv30->tex_miptree[unit];
+	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
+	struct nvfx_miptree *nv30mt = nvfx->tex_miptree[unit];
 	struct pipe_texture *pt = &nv30mt->base;
 	struct nouveau_bo *bo = nouveau_bo(nv30mt->buffer);
 	struct nv30_texture_format *tf;
@@ -101,7 +101,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	txs = tf->swizzle;
 
 	so = so_new(1, 8, 2);
-	so_method(so, nv30->screen->eng3d, NV34TCL_TX_OFFSET(unit), 8);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_TX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
 		      NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
@@ -117,10 +117,10 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 }
 
 static boolean
-nv30_fragtex_validate(struct nv30_context *nv30)
+nv30_fragtex_validate(struct nvfx_context *nvfx)
 {
-	struct nv30_fragment_program *fp = nv30->fragprog;
-	struct nv30_state *state = &nv30->state;
+	struct nvfx_fragment_program *fp = nvfx->fragprog;
+	struct nvfx_state *state = &nvfx->state;
 	struct nouveau_stateobj *so;
 	unsigned samplers, unit;
 
@@ -130,32 +130,32 @@ nv30_fragtex_validate(struct nv30_context *nv30)
 		samplers &= ~(1 << unit);
 
 		so = so_new(1, 1, 0);
-		so_method(so, nv30->screen->eng3d, NV34TCL_TX_ENABLE(unit), 1);
+		so_method(so, nvfx->screen->eng3d, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
-		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		so_ref(so, &nvfx->state.hw[NVFX_STATE_FRAGTEX0 + unit]);
 		so_ref(NULL, &so);
-		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
+		state->dirty |= (1ULL << (NVFX_STATE_FRAGTEX0 + unit));
 	}
 
-	samplers = nv30->dirty_samplers & fp->samplers;
+	samplers = nvfx->dirty_samplers & fp->samplers;
 	while (samplers) {
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		so = nv30_fragtex_build(nv30, unit);
-		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		so = nv30_fragtex_build(nvfx, unit);
+		so_ref(so, &nvfx->state.hw[NVFX_STATE_FRAGTEX0 + unit]);
 		so_ref(NULL, &so);
-		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
+		state->dirty |= (1ULL << (NVFX_STATE_FRAGTEX0 + unit));
 	}
 
-	nv30->state.fp_samplers = fp->samplers;
+	nvfx->state.fp_samplers = fp->samplers;
 	return FALSE;
 }
 
-struct nv30_state_entry nv30_state_fragtex = {
+struct nvfx_state_entry nv30_state_fragtex = {
 	.validate = nv30_fragtex_validate,
 	.dirty = {
-		.pipe = NV30_NEW_SAMPLER | NV30_NEW_FRAGPROG,
+		.pipe = NVFX_NEW_SAMPLER | NVFX_NEW_FRAGPROG,
 		.hw = 0
 	}
 };

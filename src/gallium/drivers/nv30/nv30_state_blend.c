@@ -1,41 +1,41 @@
 #include "nv30_context.h"
 
 static boolean
-nv30_state_blend_validate(struct nv30_context *nv30)
+nv30_state_blend_validate(struct nvfx_context *nvfx)
 {
-	so_ref(nv30->blend->so, &nv30->state.hw[NV30_STATE_BLEND]);
+	so_ref(nvfx->blend->so, &nvfx->state.hw[NVFX_STATE_BLEND]);
 	return TRUE;
 }
 
-struct nv30_state_entry nv30_state_blend = {
+struct nvfx_state_entry nv30_state_blend = {
 	.validate = nv30_state_blend_validate,
 	.dirty = {
-		.pipe = NV30_NEW_BLEND,
-		.hw = NV30_STATE_BLEND
+		.pipe = NVFX_NEW_BLEND,
+		.hw = NVFX_STATE_BLEND
 	}
 };
 
 static boolean
-nv30_state_blend_colour_validate(struct nv30_context *nv30)
+nv30_state_blend_colour_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *so = so_new(1, 1, 0);
-	struct pipe_blend_color *bcol = &nv30->blend_colour;
+	struct pipe_blend_color *bcol = &nvfx->blend_colour;
 
-	so_method(so, nv30->screen->eng3d, NV34TCL_BLEND_COLOR, 1);
+	so_method(so, nvfx->screen->eng3d, NV34TCL_BLEND_COLOR, 1);
 	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
 		       (float_to_ubyte(bcol->color[2]) <<  0)));
 
-	so_ref(so, &nv30->state.hw[NV30_STATE_BCOL]);
+	so_ref(so, &nvfx->state.hw[NVFX_STATE_BCOL]);
 	so_ref(NULL, &so);
 	return TRUE;
 }
 
-struct nv30_state_entry nv30_state_blend_colour = {
+struct nvfx_state_entry nv30_state_blend_colour = {
 	.validate = nv30_state_blend_colour_validate,
 	.dirty = {
-		.pipe = NV30_NEW_BCOL,
-		.hw = NV30_STATE_BCOL
+		.pipe = NVFX_NEW_BCOL,
+		.hw = NVFX_STATE_BCOL
 	}
 };

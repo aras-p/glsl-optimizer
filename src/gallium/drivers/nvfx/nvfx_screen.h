@@ -1,16 +1,15 @@
-#ifndef __NV30_SCREEN_H__
-#define __NV30_SCREEN_H__
+#ifndef __NVFX_SCREEN_H__
+#define __NVFX_SCREEN_H__
 
 #include "nouveau/nouveau_screen.h"
-
 #include "nouveau/nv04_surface_2d.h"
 
-struct nv30_screen {
+struct nvfx_screen {
 	struct nouveau_screen base;
 
 	struct nouveau_winsys *nvws;
 
-	struct nv30_context *cur_ctx;
+	struct nvfx_context *cur_ctx;
 
 	/* HW graphics objects */
 	struct nv04_surface_2d *eng2d;
@@ -26,13 +25,13 @@ struct nv30_screen {
 	struct nouveau_resource *vp_data_heap;
 
 	/* Current 3D state of channel */
-	struct nouveau_stateobj *state[NV30_STATE_MAX];
+	struct nouveau_stateobj *state[NVFX_STATE_MAX];
 };
 
-static INLINE struct nv30_screen *
-nv30_screen(struct pipe_screen *screen)
+static INLINE struct nvfx_screen *
+nvfx_screen(struct pipe_screen *screen)
 {
-	return (struct nv30_screen *)screen;
+	return (struct nvfx_screen *)screen;
 }
 
 #endif

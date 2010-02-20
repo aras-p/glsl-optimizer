@@ -26,4 +26,6 @@ C_SOURCES = \
 	nv30_vbo.c \
 	nv30_vertprog.c
 
+LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/nvfx
+
 include ../../Makefile.template

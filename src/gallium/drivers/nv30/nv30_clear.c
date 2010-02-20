@@ -9,6 +9,6 @@ void
 nv30_clear(struct pipe_context *pipe, unsigned buffers,
            const float *rgba, double depth, unsigned stencil)
 {
-	util_clear(pipe, &nv30_context(pipe)->framebuffer, buffers, rgba, depth,
+	util_clear(pipe, &nvfx_context(pipe)->framebuffer, buffers, rgba, depth,
 		   stencil);
 }

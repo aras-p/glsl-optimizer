@@ -2,11 +2,11 @@
 #include "nouveau/nouveau_util.h"
 
 static boolean
-nv30_state_framebuffer_validate(struct nv30_context *nv30)
+nv30_state_framebuffer_validate(struct nvfx_context *nvfx)
 {
-	struct pipe_framebuffer_state *fb = &nv30->framebuffer;
-	struct nouveau_channel *chan = nv30->screen->base.channel;
-	struct nouveau_grobj *eng3d = nv30->screen->eng3d;
+	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct nv04_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable = 0, rt_format = 0;
 	int i, colour_format = 0, zeta_format = 0, depth_only = 0;
@@ -14,7 +14,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;
-	struct nv30_miptree *nv30mt;
+	struct nvfx_miptree *nv30mt;
 	int colour_bits = 32, zeta_bits = 32;
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
@@ -109,7 +109,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 			pitch |= (pitch << 16);
 		}
 
-		nv30mt = (struct nv30_miptree *) rt0->base.texture;
+		nv30mt = (struct nvfx_miptree *) rt0->base.texture;
 		so_method(so, eng3d, NV34TCL_DMA_COLOR0, 1);
 		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
@@ -120,7 +120,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
-		nv30mt = (struct nv30_miptree *)rt[1]->base.texture;
+		nv30mt = (struct nvfx_miptree *)rt[1]->base.texture;
 		so_method(so, eng3d, NV34TCL_DMA_COLOR1, 1);
 		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
@@ -131,7 +131,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	}
 
 	if (zeta_format) {
-		nv30mt = (struct nv30_miptree *)zeta->base.texture;
+		nv30mt = (struct nvfx_miptree *)zeta->base.texture;
 		so_method(so, eng3d, NV34TCL_DMA_ZETA, 1);
 		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
@@ -159,15 +159,15 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	so_method(so, eng3d, NV34TCL_VIEWPORT_TX_ORIGIN, 1);
 	so_data  (so, 0);
 
-	so_ref(so, &nv30->state.hw[NV30_STATE_FB]);
+	so_ref(so, &nvfx->state.hw[NVFX_STATE_FB]);
 	so_ref(NULL, &so);
 	return TRUE;
 }
 
-struct nv30_state_entry nv30_state_framebuffer = {
+struct nvfx_state_entry nv30_state_framebuffer = {
 	.validate = nv30_state_framebuffer_validate,
 	.dirty = {
-		.pipe = NV30_NEW_FB,
-		.hw = NV30_STATE_FB
+		.pipe = NVFX_NEW_FB,
+		.hw = NVFX_STATE_FB
 	}
 };

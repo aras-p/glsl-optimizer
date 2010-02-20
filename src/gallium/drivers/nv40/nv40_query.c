@@ -39,9 +39,9 @@ nv40_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 static void
 nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv40_query *q = nv40_query(pq);
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -56,9 +56,9 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 		pipe->get_query_result(pipe, pq, 1, &tmp);
 	}
 
-	if (nouveau_resource_alloc(nv40->screen->query_heap, 1, NULL, &q->object))
+	if (nouveau_resource_alloc(nvfx->screen->query_heap, 1, NULL, &q->object))
 		assert(0);
-	nouveau_notifier_reset(nv40->screen->query, q->object->start);
+	nouveau_notifier_reset(nvfx->screen->query, q->object->start);
 
 	BEGIN_RING(chan, eng3d, NV34TCL_QUERY_RESET, 1);
 	OUT_RING  (chan, 1);
@@ -71,9 +71,9 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 static void
 nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv40_query *q = nv40_query(pq);
-	struct nv40_screen *screen = nv40->screen;
+	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
@@ -87,7 +87,7 @@ static boolean
 nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 		  boolean wait, uint64_t *result)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv40_query *q = nv40_query(pq);
 
 	assert(q->object && q->type == PIPE_QUERY_OCCLUSION_COUNTER);
@@ -95,18 +95,18 @@ nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	if (!q->ready) {
 		unsigned status;
 
-		status = nouveau_notifier_status(nv40->screen->query,
+		status = nouveau_notifier_status(nvfx->screen->query,
 						 q->object->start);
 		if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
 			if (wait == FALSE)
 				return FALSE;
-			nouveau_notifier_wait_status(nv40->screen->query,
+			nouveau_notifier_wait_status(nvfx->screen->query,
 					      q->object->start,
 					      NV_NOTIFY_STATE_STATUS_COMPLETED,
 					      0);
 		}
 
-		q->result = nouveau_notifier_return_val(nv40->screen->query,
+		q->result = nouveau_notifier_return_val(nvfx->screen->query,
 							q->object->start);
 		q->ready = TRUE;
 		nouveau_resource_free(&q->object);
@@ -117,11 +117,11 @@ nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 }
 
 void
-nv40_init_query_functions(struct nv40_context *nv40)
+nv40_init_query_functions(struct nvfx_context *nvfx)
 {
-	nv40->pipe.create_query = nv40_query_create;
-	nv40->pipe.destroy_query = nv40_query_destroy;
-	nv40->pipe.begin_query = nv40_query_begin;
-	nv40->pipe.end_query = nv40_query_end;
-	nv40->pipe.get_query_result = nv40_query_result;
+	nvfx->pipe.create_query = nv40_query_create;
+	nvfx->pipe.destroy_query = nv40_query_destroy;
+	nvfx->pipe.begin_query = nv40_query_begin;
+	nvfx->pipe.end_query = nv40_query_end;
+	nvfx->pipe.get_query_result = nv40_query_result;
 }
