@@ -187,6 +187,7 @@ extern struct nvfx_state_entry nvfx_state_rasterizer;
 extern struct nvfx_state_entry nvfx_state_scissor;
 extern struct nvfx_state_entry nvfx_state_sr;
 extern struct nvfx_state_entry nvfx_state_stipple;
+extern struct nvfx_state_entry nvfx_state_viewport;
 extern struct nvfx_state_entry nvfx_state_zsa;
 
 extern void nvfx_init_query_functions(struct nvfx_context *nvfx);

@@ -1,7 +1,7 @@
-#include "nv30_context.h"
+#include "nvfx_context.h"
 
 static boolean
-nv30_state_viewport_validate(struct nvfx_context *nvfx)
+nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_viewport_state *vpt = &nvfx->viewport;
 	struct nouveau_stateobj *so;
@@ -10,7 +10,7 @@ nv30_state_viewport_validate(struct nvfx_context *nvfx)
 	    !(nvfx->dirty & NVFX_NEW_VIEWPORT))
 		return FALSE;
 
-	so = so_new(3, 10, 0);
+	so = so_new(2, 9, 0);
 	so_method(so, nvfx->screen->eng3d,
 		  NV34TCL_VIEWPORT_TRANSLATE_X, 8);
 	so_data  (so, fui(vpt->translate[0]));
@@ -21,10 +21,6 @@ nv30_state_viewport_validate(struct nvfx_context *nvfx)
 	so_data  (so, fui(vpt->scale[1]));
 	so_data  (so, fui(vpt->scale[2]));
 	so_data  (so, fui(vpt->scale[3]));
-/*	so_method(so, nvfx->screen->eng3d, 0x1d78, 1);
-	so_data  (so, 1);
-*/
-	/* TODO/FIXME: never saw value 0x0110 in renouveau dumps, only 0x0001 */
 	so_method(so, nvfx->screen->eng3d, 0x1d78, 1);
 	so_data  (so, 1);
 
@@ -33,8 +29,8 @@ nv30_state_viewport_validate(struct nvfx_context *nvfx)
 	return TRUE;
 }
 
-struct nvfx_state_entry nv30_state_viewport = {
-	.validate = nv30_state_viewport_validate,
+struct nvfx_state_entry nvfx_state_viewport = {
+	.validate = nvfx_state_viewport_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_VIEWPORT | NVFX_NEW_RAST,
 		.hw = NVFX_STATE_VIEWPORT
