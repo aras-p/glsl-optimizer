@@ -15,11 +15,18 @@ INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/egl/main
 
+# hideous hack
+-Wl,--start-group:
+-Wl,--end-group:
+
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
 	$(TOP)/src/gallium/winsys/drm/nouveau/drm/libnouveaudrm.a \
+	--Wl,--start-group \
 	$(TOP)/src/gallium/drivers/nv30/libnv30.a \
 	$(TOP)/src/gallium/drivers/nv40/libnv40.a \
+	$(TOP)/src/gallium/drivers/nv40/libnvfx.a \
+	--Wl,--end-group \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \
 	$(GALLIUM_AUXILIARIES)
