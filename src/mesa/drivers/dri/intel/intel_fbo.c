@@ -525,7 +525,7 @@ intel_render_texture(GLcontext * ctx,
        return;
    }
 
-   DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
+   DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
        irb->Base.RefCount);

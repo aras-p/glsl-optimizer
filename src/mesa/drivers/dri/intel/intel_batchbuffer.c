@@ -209,7 +209,7 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    int ret;
 
    if (batch->ptr - batch->map > batch->buf->size)
-    printf ("bad relocation ptr %p map %p offset %d size %d\n",
+    printf ("bad relocation ptr %p map %p offset %d size %lu\n",
 	    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
    ret = dri_bo_emit_reloc(batch->buf, read_domains, write_domain,
 			   delta, batch->ptr - batch->map, buffer);
