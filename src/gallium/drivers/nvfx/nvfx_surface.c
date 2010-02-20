@@ -1,9 +1,9 @@
 
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -23,18 +23,16 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
+#include "nvfx_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-
 #include "util/u_tile.h"
 
-#include "nv40_context.h"
-
 static void
-nv40_surface_copy(struct pipe_context *pipe,
+nvfx_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
@@ -46,7 +44,7 @@ nv40_surface_copy(struct pipe_context *pipe,
 }
 
 static void
-nv40_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
+nvfx_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
@@ -57,8 +55,8 @@ nv40_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 }
 
 void
-nv40_init_surface_functions(struct nvfx_context *nvfx)
+nvfx_init_surface_functions(struct nvfx_context *nvfx)
 {
-	nvfx->pipe.surface_copy = nv40_surface_copy;
-	nvfx->pipe.surface_fill = nv40_surface_fill;
+	nvfx->pipe.surface_copy = nvfx_surface_copy;
+	nvfx->pipe.surface_fill = nvfx_surface_fill;
 }

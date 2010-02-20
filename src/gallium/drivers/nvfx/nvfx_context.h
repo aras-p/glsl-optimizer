@@ -189,6 +189,9 @@ extern struct nvfx_state_entry nvfx_state_sr;
 extern struct nvfx_state_entry nvfx_state_stipple;
 extern struct nvfx_state_entry nvfx_state_zsa;
 
+extern void nvfx_init_query_functions(struct nvfx_context *nvfx);
+extern void nvfx_init_surface_functions(struct nvfx_context *nvfx);
+
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);

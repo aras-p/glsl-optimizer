@@ -4,8 +4,6 @@
 #include "nvfx_context.h"
 
 extern void nv40_init_state_functions(struct nvfx_context *nvfx);
-extern void nv40_init_surface_functions(struct nvfx_context *nvfx);
-extern void nv40_init_query_functions(struct nvfx_context *nvfx);
 
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nvfx_context *nvfx);
