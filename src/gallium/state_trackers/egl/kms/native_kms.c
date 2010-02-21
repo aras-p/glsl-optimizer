@@ -201,6 +201,8 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
 
    /* the front/back textures are swapped */
    ksurf->sequence_number++;
+   kdpy->event_handler->invalid_surface(&kdpy->base,
+         &ksurf->base, ksurf->sequence_number);
 
    return TRUE;
 }
@@ -762,13 +764,17 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
+kms_create_display(EGLNativeDisplayType dpy,
+                   struct native_event_handler *event_handler,
+                   struct drm_api *api)
 {
    struct kms_display *kdpy;
 
    kdpy = CALLOC_STRUCT(kms_display);
    if (!kdpy)
       return NULL;
+
+   kdpy->event_handler = event_handler;
 
    kdpy->api = api;
    if (!kdpy->api) {
@@ -845,7 +851,8 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
 
@@ -853,7 +860,7 @@ native_create_display(EGLNativeDisplayType dpy)
       drm_api = drm_api_create();
 
    if (drm_api)
-      ndpy = kms_create_display(dpy, drm_api);
+      ndpy = kms_create_display(dpy, event_handler, drm_api);
 
    return ndpy;
 }

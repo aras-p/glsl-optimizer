@@ -531,6 +531,24 @@ egl_g3d_update_buffer(struct pipe_screen *screen, void *context_private)
    egl_g3d_validate_context(gctx->base.Resource.Display, &gctx->base);
 }
 
+static void
+egl_g3d_invalid_surface(struct native_display *ndpy,
+                        struct native_surface *nsurf,
+                        unsigned int seq_num)
+{
+   /* XXX not thread safe? */
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
+   struct egl_g3d_context *gctx = egl_g3d_context(gsurf->base.CurrentContext);
+
+   /* set force_validate to skip an unnecessary check */
+   if (gctx)
+      gctx->force_validate = TRUE;
+}
+
+static struct native_event_handler egl_g3d_native_event_handler = {
+   .invalid_surface = egl_g3d_invalid_surface
+};
+
 static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
@@ -575,12 +593,14 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    dpy->DriverData = gdpy;
 
-   gdpy->native = native_create_display(dpy->NativeDisplay);
+   gdpy->native = native_create_display(dpy->NativeDisplay,
+         &egl_g3d_native_event_handler);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;
    }
 
+   gdpy->native->user_data = (void *) dpy;
    gdpy->native->screen->flush_frontbuffer = egl_g3d_flush_frontbuffer;
    gdpy->native->screen->update_buffer = egl_g3d_update_buffer;
 
@@ -776,6 +796,7 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
+   nsurf->user_data = &gsurf->base;
    gsurf->native = nsurf;
 
    gsurf->render_att = (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER) ?

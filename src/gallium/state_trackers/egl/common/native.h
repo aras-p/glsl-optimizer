@@ -69,6 +69,11 @@ struct native_probe {
 };
 
 struct native_surface {
+   /**
+    * Available for caller's use.
+    */
+   void *user_data;
+
    void (*destroy)(struct native_surface *nsurf);
 
    /**
@@ -142,6 +147,11 @@ struct native_display {
     * overridden.
     */
    struct pipe_screen *screen;
+
+   /**
+    * Available for caller's use.
+    */
+   void *user_data;
 
    void (*destroy)(struct native_display *ndpy);
 
@@ -239,6 +249,20 @@ struct native_display_modeset {
 };
 
 /**
+ * The handler for events that a native display may generate.  The events are
+ * generated asynchronously and the handler may be called by any thread at any
+ * time.
+ */
+struct native_event_handler {
+   /**
+    * This function is called when a surface needs to be validated.
+    */
+   void (*invalid_surface)(struct native_display *ndpy,
+                           struct native_surface *nsurf,
+                           unsigned int seq_num);
+};
+
+/**
  * Test whether an attachment is set in the mask.
  */
 static INLINE boolean
@@ -267,6 +291,7 @@ const char *
 native_get_name(void);
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy);
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *handler);
 
 #endif /* _NATIVE_H_ */

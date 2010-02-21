@@ -126,7 +126,8 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
@@ -136,7 +137,7 @@ native_create_display(EGLNativeDisplayType dpy)
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
    if (api && !force_sw) {
-      ndpy = x11_create_dri2_display(dpy, api);
+      ndpy = x11_create_dri2_display(dpy, event_handler, api);
    }
 
    if (!ndpy) {
@@ -150,7 +151,7 @@ native_create_display(EGLNativeDisplayType dpy)
        */
       use_shm = FALSE;
       _eglLog(level, "use software%s fallback", (use_shm) ? " (SHM)" : "");
-      ndpy = x11_create_ximage_display(dpy, use_shm);
+      ndpy = x11_create_ximage_display(dpy, event_handler, use_shm);
    }
 
    return ndpy;

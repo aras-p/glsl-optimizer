@@ -56,6 +56,8 @@ struct ximage_display {
    struct x11_screen *xscr;
    int xscr_number;
 
+   struct native_event_handler *event_handler;
+
    boolean use_xshm;
 
    struct pipe_winsys *winsys;
@@ -228,6 +230,16 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
    return updated;
 }
 
+static void
+ximage_surface_notify_invalid(struct native_surface *nsurf)
+{
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   struct ximage_display *xdpy = xsurf->xdpy;
+
+   xdpy->event_handler->invalid_surface(&xdpy->base,
+         &xsurf->base, xsurf->server_stamp);
+}
+
 /**
  * Update the buffers of the surface.  It is a slow function due to the
  * round-trip to the server.
@@ -339,6 +351,7 @@ ximage_surface_flush_frontbuffer(struct native_surface *nsurf)
          NATIVE_ATTACHMENT_FRONT_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    return ret;
 }
@@ -354,6 +367,7 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
    ret = ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_BACK_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    xfront = &xsurf->buffers[NATIVE_ATTACHMENT_FRONT_LEFT];
    xback = &xsurf->buffers[NATIVE_ATTACHMENT_BACK_LEFT];
@@ -703,7 +717,9 @@ ximage_display_destroy(struct native_display *ndpy)
 }
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
+x11_create_ximage_display(EGLNativeDisplayType dpy,
+                          struct native_event_handler *event_handler,
+                          boolean use_xshm)
 {
    struct ximage_display *xdpy;
 
@@ -727,6 +743,8 @@ x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
       free(xdpy);
       return NULL;
    }
+
+   xdpy->event_handler = event_handler;
 
    xdpy->use_xshm =
       (use_xshm && x11_screen_support(xdpy->xscr, X11_SCREEN_EXTENSION_XSHM));
