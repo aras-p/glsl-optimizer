@@ -118,6 +118,8 @@ struct nvfx_context {
 	struct nouveau_winsys *nvws;
 	struct nvfx_screen *screen;
 
+	unsigned is_nv4x; /* either 0 or ~0 */
+
 	struct draw_context *draw;
 
 	/* HW state derived from pipe states */

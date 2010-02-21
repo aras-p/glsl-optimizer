@@ -184,6 +184,9 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	if (!screen)
 		return NULL;
+
+	screen->is_nv4x = ~0;
+
 	pscreen = &screen->base.base;
 
 	ret = nouveau_screen_init(&screen->base, dev);

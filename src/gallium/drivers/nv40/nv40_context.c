@@ -71,6 +71,8 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	screen->base.channel->user_private = nvfx;
 	screen->base.channel->flush_notify = nv40_state_flush_notify;
 
+	nvfx->is_nv4x = screen->is_nv4x;
+
 	nv40_init_query_functions(nvfx);
 	nv40_init_surface_functions(nvfx);
 	nv40_init_state_functions(nvfx);
