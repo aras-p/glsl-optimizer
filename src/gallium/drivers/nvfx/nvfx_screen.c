@@ -208,7 +208,6 @@ nvfx_screen_destroy(struct pipe_screen *pscreen)
 
 static void nv30_screen_init(struct nvfx_screen *screen, struct nouveau_stateobj* so)
 {
-	screen->base.base.context_create = nv30_create;
 	int i;
 
 	/* TODO: perhaps we should do some of this on nv40 too? */
@@ -268,8 +267,6 @@ static void nv30_screen_init(struct nvfx_screen *screen, struct nouveau_stateobj
 
 static void nv40_screen_init(struct nvfx_screen *screen, struct nouveau_stateobj* so)
 {
-	screen->base.base.context_create = nv40_create;
-
 	so_method(so, screen->eng3d, NV40TCL_DMA_COLOR2, 2);
 	so_data  (so, screen->base.channel->vram->handle);
 	so_data  (so, screen->base.channel->vram->handle);
@@ -325,6 +322,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nvfx_screen_get_param;
 	pscreen->get_paramf = nvfx_screen_get_paramf;
 	pscreen->is_format_supported = nvfx_screen_surface_format_supported;
+	pscreen->context_create = nvfx_create;
 
 	switch (dev->chipset & 0xf0) {
 	case 0x30:

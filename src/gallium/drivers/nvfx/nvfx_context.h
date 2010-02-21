@@ -198,13 +198,9 @@ extern struct nvfx_state_entry nvfx_state_zsa;
 extern void nvfx_init_query_functions(struct nvfx_context *nvfx);
 extern void nvfx_init_surface_functions(struct nvfx_context *nvfx);
 
-/* nv30_context.c */
+/* nvfx_context.c */
 struct pipe_context *
-nv30_create(struct pipe_screen *pscreen, void *priv);
-
-/* nv40_context.c */
-struct pipe_context *
-nv40_create(struct pipe_screen *pscreen, void *priv);
+nvfx_create(struct pipe_screen *pscreen, void *priv);
 
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,

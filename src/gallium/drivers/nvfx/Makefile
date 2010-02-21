@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = nvfx
 
 C_SOURCES = \
+	nvfx_context.c \
 	nvfx_clear.c \
 	nvfx_draw.c \
 	nvfx_fragprog.c \

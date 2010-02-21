@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = nv40
 
 C_SOURCES = \
-	nv40_context.c \
 	nv40_fragtex.c \
 	nv40_state.c
 

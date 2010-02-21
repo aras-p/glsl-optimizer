@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = nv30
 
 C_SOURCES = \
-	nv30_context.c \
 	nv30_fragtex.c \
 	nv30_state.c
 

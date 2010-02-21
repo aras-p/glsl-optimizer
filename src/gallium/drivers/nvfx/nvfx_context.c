@@ -5,7 +5,7 @@
 #include "nvfx_screen.h"
 
 static void
-nv40_flush(struct pipe_context *pipe, unsigned flags,
+nvfx_flush(struct pipe_context *pipe, unsigned flags,
 	   struct pipe_fence_handle **fence)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -26,7 +26,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags,
 }
 
 static void
-nv40_destroy(struct pipe_context *pipe)
+nvfx_destroy(struct pipe_context *pipe)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	unsigned i;
@@ -42,7 +42,7 @@ nv40_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-nv40_create(struct pipe_screen *pscreen, void *priv)
+nvfx_create(struct pipe_screen *pscreen, void *priv)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	struct pipe_winsys *ws = pscreen->winsys;
@@ -57,13 +57,13 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->nvws = nvws;
 
 	nvfx->pipe.winsys = ws;
-	nvfx->pipe.priv = priv;
 	nvfx->pipe.screen = pscreen;
-	nvfx->pipe.destroy = nv40_destroy;
+	nvfx->pipe.priv = priv;
+	nvfx->pipe.destroy = nvfx_destroy;
 	nvfx->pipe.draw_arrays = nvfx_draw_arrays;
 	nvfx->pipe.draw_elements = nvfx_draw_elements;
 	nvfx->pipe.clear = nvfx_clear;
-	nvfx->pipe.flush = nv40_flush;
+	nvfx->pipe.flush = nvfx_flush;
 
 	nvfx->pipe.is_texture_referenced = nouveau_is_texture_referenced;
 	nvfx->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
