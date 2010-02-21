@@ -42,6 +42,9 @@
 /* r300_render: Vertex and index buffer primitive emission. */
 #define R300_MAX_VBO_SIZE  (1024 * 1024)
 
+/* XXX The DRM rejects VAP_ALT_NUM_VERTICES.. */
+//#define ENABLE_ALT_NUM_VERTS
+
 uint32_t r300_translate_primitive(unsigned prim)
 {
     switch (prim) {
@@ -210,16 +213,28 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
                                   unsigned mode,
                                   unsigned count)
 {
+#if defined(ENABLE_ALT_NUM_VERTS)
+    boolean alt_num_verts = count > 65535;
+#else
+    boolean alt_num_verts = FALSE;
+#endif
     CS_LOCALS(r300);
 
-    BEGIN_CS(8);
+    if (alt_num_verts) {
+        assert(count < (1 << 24));
+        BEGIN_CS(10);
+        OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
+    } else {
+        BEGIN_CS(8);
+    }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
-           r300_translate_primitive(mode));
+           r300_translate_primitive(mode) |
+           (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
     END_CS;
 }
 
@@ -234,14 +249,27 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 {
     uint32_t count_dwords;
     uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
+#if defined(ENABLE_ALT_NUM_VERTS)
+    boolean alt_num_verts = count > 65535;
+#else
+    boolean alt_num_verts = FALSE;
+#endif
     CS_LOCALS(r300);
 
-    /* XXX most of these are stupid */
-    assert(indexSize == 4 || indexSize == 2);
     assert((start * indexSize)  % 4 == 0);
-    assert(offset_dwords == 0);
 
-    BEGIN_CS(14);
+    /* XXX Non-zero offset locks up. */
+    if (offset_dwords != 0) {
+        return;
+    }
+
+    if (alt_num_verts) {
+        assert(count < (1 << 24));
+        BEGIN_CS(16);
+        OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
+    } else {
+        BEGIN_CS(14);
+    }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
@@ -251,24 +279,24 @@ static void r300_emit_draw_elements(struct r300_context *r300,
         count_dwords = count + start;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
-               r300_translate_primitive(mode));
+               r300_translate_primitive(mode) |
+               (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
     } else {
         count_dwords = (count + start + 1) / 2;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
-               r300_translate_primitive(mode));
+               r300_translate_primitive(mode) |
+               (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
     }
 
     /* INDX_BUFFER is a truly special packet3.
      * Unlike most other packet3, where the offset is after the count,
      * the order is reversed, so the relocation ends up carrying the
      * size of the indexbuf instead of the offset.
-     *
-     * XXX Fix offset
      */
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
-    OUT_CS(offset_dwords);
+    OUT_CS(offset_dwords << 2);
     OUT_CS_RELOC(indexBuffer, count_dwords,
         RADEON_GEM_DOMAIN_GTT, 0, 0);
 
@@ -343,15 +371,15 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_buffer* orgIndexBuffer = indexBuffer;
+#if defined(ENABLE_ALT_NUM_VERTS)
+    boolean alt_num_verts = r300_screen(pipe->screen)->caps->is_r500 &&
+                            count > 65536;
+#else
+    boolean alt_num_verts = FALSE;
+#endif
+    unsigned short_count;
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    if (count > 65535) {
-       /* XXX: use aux/indices functions to split this into smaller
-        * primitives.
-        */
         return;
     }
 
@@ -381,8 +409,19 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_emit_aos(r300, 0);
 
-    r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex, maxIndex,
-                            mode, start, count);
+    if (alt_num_verts || count <= 65535) {
+        r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
+                                maxIndex, mode, start, count);
+    } else {
+        do {
+            short_count = MIN2(count, 65534);
+            r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
+                                    maxIndex, mode, start, short_count);
+
+            start += short_count;
+            count -= short_count;
+        } while (count);
+    }
 
 cleanup:
     if (indexBuffer != orgIndexBuffer) {
@@ -404,15 +443,15 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                       unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
+#if defined(ENABLE_ALT_NUM_VERTS)
+    boolean alt_num_verts = r300_screen(pipe->screen)->caps->is_r500 &&
+                            count > 65536;
+#else
+    boolean alt_num_verts = FALSE;
+#endif
+    unsigned short_count;
 
     if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    if (count > 65535) {
-        /* XXX: driver needs to handle this -- use the functions in
-         * aux/indices to split this into several smaller primitives.
-         */
         return;
     }
 
@@ -428,8 +467,20 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         }
 
         r300_emit_dirty_state(r300);
-        r300_emit_aos(r300, start);
-        r300_emit_draw_arrays(r300, mode, count);
+
+        if (alt_num_verts || count <= 65535) {
+            r300_emit_aos(r300, start);
+            r300_emit_draw_arrays(r300, mode, count);
+        } else {
+            do {
+                short_count = MIN2(count, 65535);
+                r300_emit_aos(r300, start);
+                r300_emit_draw_arrays(r300, mode, short_count);
+
+                start += short_count;
+                count -= short_count;
+            } while (count);
+        }
     }
 }
 
