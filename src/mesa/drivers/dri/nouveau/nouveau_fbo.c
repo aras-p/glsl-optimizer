@@ -70,7 +70,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_DEPTH_COMPONENT24:
 	case GL_STENCIL_INDEX8_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
-		rb->_BaseFormat  = GL_DEPTH_COMPONENT;
+		rb->_BaseFormat  = GL_DEPTH_STENCIL;
 		rb->Format = MESA_FORMAT_Z24_S8;
 		rb->DataType = GL_UNSIGNED_INT;
 		s->cpp = 4;
