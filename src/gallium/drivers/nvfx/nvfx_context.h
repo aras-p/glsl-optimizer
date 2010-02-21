@@ -190,6 +190,7 @@ extern struct nvfx_state_entry nvfx_state_scissor;
 extern struct nvfx_state_entry nvfx_state_sr;
 extern struct nvfx_state_entry nvfx_state_stipple;
 extern struct nvfx_state_entry nvfx_state_vbo;
+extern struct nvfx_state_entry nvfx_state_vertprog;
 extern struct nvfx_state_entry nvfx_state_viewport;
 extern struct nvfx_state_entry nvfx_state_vtxfmt;
 extern struct nvfx_state_entry nvfx_state_zsa;
@@ -234,8 +235,7 @@ extern void nvfx_draw_elements(struct pipe_context *pipe,
 				  unsigned count);
 
 /* nvfx_vertprog.c */
-extern void nv30_vertprog_destroy(struct nvfx_context *,
+extern void nvfx_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
-extern void nv40_vertprog_destroy(struct nvfx_context *,
-				  struct nvfx_vertex_program *);
+
 #endif

@@ -20,6 +20,7 @@ C_SOURCES = \
 	nvfx_state_zsa.c \
 	nvfx_surface.c \
 	nvfx_transfer.c \
-	nvfx_vbo.c
+	nvfx_vbo.c \
+	nvfx_vertprog.c
 
 include ../../Makefile.template

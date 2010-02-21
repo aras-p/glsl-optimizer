@@ -7,8 +7,7 @@ C_SOURCES = \
 	nv40_context.c \
 	nv40_fragtex.c \
 	nv40_screen.c \
-	nv40_state.c \
-	nv40_vertprog.c
+	nv40_state.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/nvfx
 

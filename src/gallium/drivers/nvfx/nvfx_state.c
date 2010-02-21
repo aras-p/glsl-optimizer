@@ -370,10 +370,7 @@ nvfx_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nvfx_vertex_program *vp = hwcso;
 
 	draw_delete_vertex_shader(nvfx->draw, vp->draw);
-	if(!nvfx->is_nv4x)
-		nv30_vertprog_destroy(nvfx, vp);
-	else
-		nv40_vertprog_destroy(nvfx, vp);
+	nvfx_vertprog_destroy(nvfx, vp);
 	FREE((void*)vp->pipe.tokens);
 	FREE(vp);
 }
