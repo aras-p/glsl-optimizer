@@ -142,7 +142,6 @@ nouveau_renderbuffer_dri_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 	rb->Width = width;
 	rb->Height = height;
 
-	context_dirty(ctx, FRAMEBUFFER);
 	return GL_TRUE;
 }
 

@@ -56,12 +56,6 @@ struct nouveau_hw_state {
 	struct nouveau_grobj *sifm;
 };
 
-struct nouveau_drawable_state {
-	GLboolean dirty;
-	unsigned int d_stamp;
-	unsigned int r_stamp;
-};
-
 struct nouveau_context {
 	GLcontext base;
 	__DRIcontext *dri_context;
@@ -73,7 +67,6 @@ struct nouveau_context {
 	struct nouveau_hw_state hw;
 	struct nouveau_bo_state bo;
 	struct nouveau_render_state render;
-	struct nouveau_drawable_state drawable;
 };
 
 #define to_nouveau_context(ctx)	((struct nouveau_context *)(ctx))
@@ -107,9 +100,11 @@ nouveau_context_deinit(GLcontext *ctx);
 void
 nouveau_context_destroy(__DRIcontext *dri_ctx);
 
+void
+nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw);
+
 GLboolean
-nouveau_context_make_current(__DRIcontext *dri_ctx,
-			     __DRIdrawable *ddraw,
+nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *ddraw,
 			     __DRIdrawable *rdraw);
 
 GLboolean

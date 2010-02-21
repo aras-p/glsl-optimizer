@@ -168,19 +168,19 @@ nouveau_context_destroy(__DRIcontext *dri_ctx)
 	context_drv(ctx)->context_destroy(ctx);
 }
 
-static void
-nouveau_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
-			     unsigned int *stamp)
+void
+nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 {
-	struct nouveau_context *nctx = context->driverPrivate;
-	GLcontext *ctx = &nctx->base;
-	__DRIscreen *screen = context->driScreenPriv;
-	struct gl_framebuffer *fb = drawable->driverPrivate;
+	GLcontext *ctx = dri_ctx->driverPrivate;
+	__DRIscreen *screen = dri_ctx->driScreenPriv;
+	struct gl_framebuffer *fb = draw->driverPrivate;
 	unsigned int attachments[10];
 	__DRIbuffer *buffers = NULL;
 	int i = 0, count, ret;
 
-	*stamp = *drawable->pStamp;
+	if (draw->lastStamp == *draw->pStamp)
+		return;
+	draw->lastStamp = *draw->pStamp;
 
 	attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	if (fb->Visual.doubleBufferMode)
@@ -192,10 +192,9 @@ nouveau_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 	else if (fb->Visual.haveStencilBuffer)
 		attachments[i++] = __DRI_BUFFER_STENCIL;
 
-	buffers = (*screen->dri2.loader->getBuffers)(drawable,
-						     &drawable->w, &drawable->h,
+	buffers = (*screen->dri2.loader->getBuffers)(draw, &draw->w, &draw->h,
 						     attachments, i, &count,
-						     drawable->loaderPrivate);
+						     draw->loaderPrivate);
 	if (buffers == NULL)
 		return;
 
@@ -227,8 +226,8 @@ nouveau_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 		rb = fb->Attachment[index].Renderbuffer;
 		s = &to_nouveau_renderbuffer(rb)->surface;
 
-		s->width = drawable->w;
-		s->height = drawable->h;
+		s->width = draw->w;
+		s->height = draw->h;
 		s->pitch = buffers[i].pitch;
 		s->cpp = buffers[i].cpp;
 
@@ -244,12 +243,25 @@ nouveau_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			ret = nouveau_bo_handle_ref(context_dev(ctx),
 						    buffers[i].name, &s->bo);
 			assert(!ret);
-
-			context_dirty(ctx, FRAMEBUFFER);
 		}
 	}
 
-	_mesa_resize_framebuffer(ctx, fb, drawable->w, drawable->h);
+	_mesa_resize_framebuffer(NULL, fb, draw->w, draw->h);
+}
+
+static void
+update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
+		   int *stamp)
+{
+	GLcontext *ctx = dri_ctx->driverPrivate;
+	struct gl_framebuffer *fb = draw->driverPrivate;
+
+	*stamp = *draw->pStamp;
+
+	nouveau_update_renderbuffers(dri_ctx, draw);
+	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
+
+	context_dirty(ctx, FRAMEBUFFER);
 }
 
 GLboolean
@@ -260,16 +272,15 @@ nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
 		struct nouveau_context *nctx = dri_ctx->driverPrivate;
 		GLcontext *ctx = &nctx->base;
 
-		if (dri_draw->driverPrivate == ctx->WinSysDrawBuffer &&
-		    dri_read->driverPrivate == ctx->WinSysReadBuffer)
-			return GL_TRUE;
-
 		/* Ask the X server for new renderbuffers. */
-		nouveau_update_renderbuffers(dri_ctx, dri_draw,
-					     &nctx->drawable.d_stamp);
-		if (dri_draw != dri_read)
-			nouveau_update_renderbuffers(dri_ctx, dri_read,
-						     &nctx->drawable.r_stamp);
+		if (dri_draw->driverPrivate != ctx->WinSysDrawBuffer)
+			update_framebuffer(dri_ctx, dri_draw,
+					   &dri_ctx->dri2.draw_stamp);
+
+		if (dri_draw != dri_read &&
+		    dri_read->driverPrivate != ctx->WinSysReadBuffer)
+			update_framebuffer(dri_ctx, dri_read,
+					   &dri_ctx->dri2.read_stamp);
 
 		/* Pass it down to mesa. */
 		_mesa_make_current(ctx, dri_draw->driverPrivate,
@@ -307,30 +318,20 @@ nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode)
 void
 nouveau_validate_framebuffer(GLcontext *ctx)
 {
-	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	__DRIcontext *dri_ctx = to_nouveau_context(ctx)->dri_context;
 	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;
 	__DRIdrawable *dri_read = dri_ctx->driReadablePriv;
 
-	if ((ctx->DrawBuffer->Name == 0 &&
-	     nctx->drawable.d_stamp != *dri_draw->pStamp) ||
-	    (dri_draw != dri_read &&
-	     ctx->ReadBuffer->Name == 0 &&
-	     nctx->drawable.r_stamp != *dri_read->pStamp)) {
-		if (nctx->drawable.dirty)
-			ctx->Driver.Flush(ctx);
+	if (ctx->DrawBuffer->Name == 0 &&
+	    dri_ctx->dri2.draw_stamp != *dri_draw->pStamp)
+		update_framebuffer(dri_ctx, dri_draw,
+				   &dri_ctx->dri2.draw_stamp);
 
-		/* Ask the X server for new renderbuffers. */
-		nouveau_update_renderbuffers(dri_ctx, dri_draw,
-					     &nctx->drawable.d_stamp);
-		if (dri_draw != dri_read)
-			nouveau_update_renderbuffers(dri_ctx, dri_read,
-						     &nctx->drawable.r_stamp);
+	if (ctx->ReadBuffer->Name == 0 && dri_draw != dri_read &&
+	    dri_ctx->dri2.read_stamp != *dri_read->pStamp)
+		update_framebuffer(dri_ctx, dri_read,
+				   &dri_ctx->dri2.read_stamp);
 
-		if (nouveau_next_dirty_state(ctx) >= 0)
-			FIRE_RING(context_chan(ctx));
-	}
-
-	/* Someone's planning to draw something really soon. */
-	nctx->drawable.dirty = GL_TRUE;
+	if (nouveau_next_dirty_state(ctx) >= 0)
+		FIRE_RING(context_chan(ctx));
 }

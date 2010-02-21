@@ -67,8 +67,6 @@ nouveau_flush(GLcontext *ctx)
 
 		dri2->flushFrontBuffer(drawable, drawable->loaderPrivate);
 	}
-
-	nctx->drawable.dirty = GL_FALSE;
 }
 
 static void

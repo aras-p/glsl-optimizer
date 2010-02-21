@@ -27,6 +27,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
+#include "nouveau_texture.h"
 #include "nouveau_drmif.h"
 #include "nv04_driver.h"
 #include "nv10_driver.h"
@@ -226,8 +227,15 @@ static const struct __DRI2flushExtensionRec nouveau_flush_extension = {
     dri2InvalidateDrawable,
 };
 
+static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+    NULL,
+    nouveau_set_texbuffer,
+};
+
 static const __DRIextension *nouveau_screen_extensions[] = {
     &nouveau_flush_extension.base,
+    &nouveau_texbuffer_extension.base,
     NULL
 };
 

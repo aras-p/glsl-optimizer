@@ -27,6 +27,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_texture.h"
+#include "nouveau_fbo.h"
 #include "nouveau_util.h"
 
 #include "main/texobj.h"
@@ -36,6 +37,7 @@
 #include "main/texgetimage.h"
 #include "main/mipmap.h"
 #include "main/texfetch.h"
+#include "main/teximage.h"
 
 static struct gl_texture_object *
 nouveau_texture_new(GLcontext *ctx, GLuint name, GLenum target)
@@ -487,6 +489,57 @@ nouveau_bind_texture(GLcontext *ctx, GLenum target,
 {
 	context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 	context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
+}
+
+static gl_format
+get_texbuffer_format(struct gl_renderbuffer *rb, GLint format)
+{
+	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
+
+	if (s->cpp < 4)
+		return s->format;
+	else if (format == __DRI_TEXTURE_FORMAT_RGBA)
+		return MESA_FORMAT_ARGB8888;
+	else
+		return MESA_FORMAT_XRGB8888;
+}
+
+void
+nouveau_set_texbuffer(__DRIcontext *dri_ctx,
+		      GLint target, GLint format,
+		      __DRIdrawable *draw)
+{
+	struct nouveau_context *nctx = dri_ctx->driverPrivate;
+	GLcontext *ctx = &nctx->base;
+	struct gl_framebuffer *fb = draw->driverPrivate;
+	struct gl_renderbuffer *rb =
+		fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	struct gl_texture_object *t = _mesa_get_current_tex_object(ctx, target);
+	struct gl_texture_image *ti;
+	struct nouveau_surface *s;
+
+	_mesa_lock_texture(ctx, t);
+	ti = _mesa_get_tex_image(ctx, t, target, 0);
+	s = &to_nouveau_teximage(ti)->surface;
+
+	/* Update the texture surface with the given drawable. */
+	nouveau_update_renderbuffers(dri_ctx, draw);
+	nouveau_surface_ref(&to_nouveau_renderbuffer(rb)->surface, s);
+
+	/* Update the image fields. */
+	_mesa_init_teximage_fields(ctx, target, ti, s->width, s->height,
+				   1, 0, s->cpp);
+	ti->RowStride = s->pitch / s->cpp;
+	ti->TexFormat = s->format = get_texbuffer_format(rb, format);
+
+	/* Try to validate it. */
+	if (!validate_teximage(ctx, t, 0, 0, 0, 0, s->width, s->height, 1))
+		nouveau_texture_reallocate(ctx, t);
+
+	context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+	context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
+
+	_mesa_unlock_texture(ctx, t);
 }
 
 static void
