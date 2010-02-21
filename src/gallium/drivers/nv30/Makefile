@@ -8,7 +8,6 @@ C_SOURCES = \
 	nv30_fragtex.c \
 	nv30_screen.c \
 	nv30_state.c \
-	nv30_vbo.c \
 	nv30_vertprog.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/nvfx

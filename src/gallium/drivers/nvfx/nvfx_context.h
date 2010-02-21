@@ -189,6 +189,7 @@ extern struct nvfx_state_entry nvfx_state_rasterizer;
 extern struct nvfx_state_entry nvfx_state_scissor;
 extern struct nvfx_state_entry nvfx_state_sr;
 extern struct nvfx_state_entry nvfx_state_stipple;
+extern struct nvfx_state_entry nvfx_state_vbo;
 extern struct nvfx_state_entry nvfx_state_viewport;
 extern struct nvfx_state_entry nvfx_state_vtxfmt;
 extern struct nvfx_state_entry nvfx_state_zsa;
@@ -219,5 +220,14 @@ extern void nvfx_state_emit(struct nvfx_context *nvfx);
 
 /* nvfx_transfer.c */
 extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
+
+/* nvfx_vbo.c */
+extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
+				unsigned start, unsigned count);
+extern void nvfx_draw_elements(struct pipe_context *pipe,
+				  struct pipe_buffer *indexBuffer,
+				  unsigned indexSize,
+				  unsigned mode, unsigned start,
+				  unsigned count);
 
 #endif

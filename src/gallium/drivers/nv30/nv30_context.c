@@ -60,8 +60,8 @@ nv30_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.screen = pscreen;
 	nvfx->pipe.priv = priv;
 	nvfx->pipe.destroy = nv30_destroy;
-	nvfx->pipe.draw_arrays = nv30_draw_arrays;
-	nvfx->pipe.draw_elements = nv30_draw_elements;
+	nvfx->pipe.draw_arrays = nvfx_draw_arrays;
+	nvfx->pipe.draw_elements = nvfx_draw_elements;
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nv30_flush;
 

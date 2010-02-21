@@ -3,10 +3,6 @@
 #include "nvfx_state.h"
 #include "draw/draw_context.h"
 
-/* temporary, will be removed in next patch */
-#define nv30_state_vtxfmt nvfx_state_vtxfmt
-#define nv40_state_vtxfmt nvfx_state_vtxfmt
-
 #define RENDER_STATES(name, nvxx, vbo) \
 static struct nvfx_state_entry *name##_render_states[] = { \
 	&nvfx_state_framebuffer, \
@@ -21,7 +17,7 @@ static struct nvfx_state_entry *name##_render_states[] = { \
 	&nvfx_state_zsa, \
 	&nvfx_state_sr, \
 	&nvfx_state_viewport, \
-	&nvxx##_state_##vbo, \
+	&nvfx_state_##vbo, \
 	NULL \
 }
 

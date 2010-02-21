@@ -3,7 +3,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 
-#include "nv40_context.h"
+#include "nvfx_context.h"
 #include "nvfx_state.h"
 
 #include "nouveau/nouveau_channel.h"
@@ -13,7 +13,7 @@
 #define FORCE_SWTNL 0
 
 static INLINE int
-nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
+nvfx_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 {
 	switch (pipe) {
 	case PIPE_FORMAT_R32_FLOAT:
@@ -69,7 +69,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 }
 
 static boolean
-nv40_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_buffer *ib,
+nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_buffer *ib,
 		    unsigned ib_size)
 {
 	struct pipe_screen *pscreen = &nvfx->screen->base.base;
@@ -106,7 +106,7 @@ nv40_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_buffer *ib,
 }
 
 static boolean
-nv40_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
+nvfx_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
@@ -115,7 +115,7 @@ nv40_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 	unsigned type, ncomp;
 	void *map;
 
-	if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp))
+	if (nvfx_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
 	map  = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
@@ -161,24 +161,23 @@ nv40_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 	}
 
 	pipe_buffer_unmap(pscreen, vb->buffer);
-
 	return TRUE;
 }
 
 void
-nv40_draw_arrays(struct pipe_context *pipe,
+nvfx_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
-	unsigned restart;
+	unsigned restart = 0;
 
-	nv40_vbo_set_idxbuf(nvfx, NULL, 0);
+	nvfx_vbo_set_idxbuf(nvfx, NULL, 0);
 	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		nvfx_draw_elements_swtnl(pipe, NULL, 0,
-                                         mode, start, count);
+                                           mode, start, count);
                 return;
 	}
 
@@ -228,7 +227,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 }
 
 static INLINE void
-nv40_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
+nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_screen *screen = nvfx->screen;
@@ -237,7 +236,7 @@ nv40_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
-		unsigned vc, push, restart;
+		unsigned vc, push, restart = 0;
 
 		nvfx_state_emit(nvfx);
 
@@ -279,7 +278,7 @@ nv40_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 }
 
 static INLINE void
-nv40_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
+nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_screen *screen = nvfx->screen;
@@ -288,7 +287,7 @@ nv40_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
-		unsigned vc, push, restart;
+		unsigned vc, push, restart = 0;
 
 		nvfx_state_emit(nvfx);
 
@@ -330,7 +329,7 @@ nv40_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 }
 
 static INLINE void
-nv40_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
+nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_screen *screen = nvfx->screen;
@@ -339,7 +338,7 @@ nv40_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
-		unsigned vc, push, restart;
+		unsigned vc, push, restart = 0;
 
 		nvfx_state_emit(nvfx);
 
@@ -372,7 +371,7 @@ nv40_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 }
 
 static void
-nv40_draw_elements_inline(struct pipe_context *pipe,
+nvfx_draw_elements_inline(struct pipe_context *pipe,
 			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
@@ -388,13 +387,13 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 
 	switch (ib_size) {
 	case 1:
-		nv40_draw_elements_u08(nvfx, map, mode, start, count);
+		nvfx_draw_elements_u08(nvfx, map, mode, start, count);
 		break;
 	case 2:
-		nv40_draw_elements_u16(nvfx, map, mode, start, count);
+		nvfx_draw_elements_u16(nvfx, map, mode, start, count);
 		break;
 	case 4:
-		nv40_draw_elements_u32(nvfx, map, mode, start, count);
+		nvfx_draw_elements_u32(nvfx, map, mode, start, count);
 		break;
 	default:
 		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
@@ -405,14 +404,14 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 }
 
 static void
-nv40_draw_elements_vbo(struct pipe_context *pipe,
+nvfx_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
-	unsigned restart;
+	unsigned restart = 0;
 
 	while (count) {
 		unsigned nr, vc;
@@ -458,24 +457,24 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 }
 
 void
-nv40_draw_elements(struct pipe_context *pipe,
+nvfx_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	boolean idxbuf;
 
-	idxbuf = nv40_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
+	idxbuf = nvfx_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
 	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		nvfx_draw_elements_swtnl(pipe, NULL, 0,
-                                         mode, start, count);
-                return;
+                                           mode, start, count);
+		return;
 	}
 
 	if (idxbuf) {
-		nv40_draw_elements_vbo(pipe, mode, start, count);
+		nvfx_draw_elements_vbo(pipe, mode, start, count);
 	} else {
-		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
+		nvfx_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
 	}
 
@@ -483,7 +482,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 }
 
 static boolean
-nv40_vbo_validate(struct nvfx_context *nvfx)
+nvfx_vbo_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
@@ -509,14 +508,14 @@ nv40_vbo_validate(struct nvfx_context *nvfx)
 			if (!sattr)
 				sattr = so_new(16, 16 * 4, 0);
 
-			if (nv40_vbo_static_attrib(nvfx, sattr, hw, ve, vb)) {
+			if (nvfx_vbo_static_attrib(nvfx, sattr, hw, ve, vb)) {
 				so_data(vtxbuf, 0);
 				so_data(vtxfmt, NV34TCL_VTXFMT_TYPE_FLOAT);
 				continue;
 			}
 		}
 
-		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
+		if (nvfx_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
 			nvfx->fallback_swtnl |= NVFX_NEW_ARRAYS;
 			so_ref(NULL, &vtxbuf);
 			so_ref(NULL, &vtxfmt);
@@ -537,7 +536,7 @@ nv40_vbo_validate(struct nvfx_context *nvfx)
 		so_method(vtxbuf, eng3d, NV34TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_reloc (vtxbuf, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
-			  0, NV34TCL_IDXBUF_FORMAT_DMA1);
+				  0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 
 	so_method(vtxbuf, eng3d, 0x1710, 1);
@@ -555,11 +554,10 @@ nv40_vbo_validate(struct nvfx_context *nvfx)
 	return FALSE;
 }
 
-struct nvfx_state_entry nv40_state_vbo = {
-	.validate = nv40_vbo_validate,
+struct nvfx_state_entry nvfx_state_vbo = {
+	.validate = nvfx_vbo_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_ARRAYS,
 		.hw = 0,
 	}
 };
-
