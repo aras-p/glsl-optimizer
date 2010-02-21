@@ -184,6 +184,7 @@ struct nvfx_state_entry {
 extern struct nvfx_state_entry nvfx_state_blend;
 extern struct nvfx_state_entry nvfx_state_blend_colour;
 extern struct nvfx_state_entry nvfx_state_fragprog;
+extern struct nvfx_state_entry nvfx_state_fragtex;
 extern struct nvfx_state_entry nvfx_state_framebuffer;
 extern struct nvfx_state_entry nvfx_state_rasterizer;
 extern struct nvfx_state_entry nvfx_state_scissor;
@@ -220,12 +221,14 @@ extern void nvfx_fragprog_destroy(struct nvfx_context *,
 /* nv30_fragtex.c */
 extern void nv30_init_sampler_functions(struct nvfx_context *nvfx);
 extern void nv30_fragtex_bind(struct nvfx_context *);
-extern struct nvfx_state_entry nv30_state_fragtex;
+extern struct nouveau_stateobj *
+nv30_fragtex_build(struct nvfx_context *nvfx, int unit);
 
 /* nv40_fragtex.c */
 extern void nv40_init_sampler_functions(struct nvfx_context *nvfx);
 extern void nv40_fragtex_bind(struct nvfx_context *);
-extern struct nvfx_state_entry nv40_state_fragtex;
+extern struct nouveau_stateobj *
+nv40_fragtex_build(struct nvfx_context *nvfx, int unit);
 
 /* nvfx_state.c */
 extern void nvfx_init_state_functions(struct nvfx_context *nvfx);

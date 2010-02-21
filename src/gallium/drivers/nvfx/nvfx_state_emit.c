@@ -2,14 +2,14 @@
 #include "nvfx_state.h"
 #include "draw/draw_context.h"
 
-#define RENDER_STATES(name, nvxx, vbo) \
-static struct nvfx_state_entry *name##_render_states[] = { \
+#define RENDER_STATES(name, vbo) \
+static struct nvfx_state_entry *name##render_states[] = { \
 	&nvfx_state_framebuffer, \
 	&nvfx_state_rasterizer, \
 	&nvfx_state_scissor, \
 	&nvfx_state_stipple, \
 	&nvfx_state_fragprog, \
-	&nvxx##_state_fragtex, \
+	&nvfx_state_fragtex, \
 	&nvfx_state_vertprog, \
 	&nvfx_state_blend, \
 	&nvfx_state_blend_colour, \
@@ -20,10 +20,8 @@ static struct nvfx_state_entry *name##_render_states[] = { \
 	NULL \
 }
 
-RENDER_STATES(nv30, nv30, vbo);
-RENDER_STATES(nv30_swtnl, nv30, vtxfmt);
-RENDER_STATES(nv40, nv40, vbo);
-RENDER_STATES(nv40_swtnl, nv40, vtxfmt);
+RENDER_STATES(, vbo);
+RENDER_STATES(swtnl_, vtxfmt);
 
 static void
 nvfx_state_do_validate(struct nvfx_context *nvfx,
@@ -126,10 +124,7 @@ nvfx_state_validate(struct nvfx_context *nvfx)
 		nvfx->render_mode = HW;
 	}
 
-	if(!nvfx->is_nv4x)
-		nvfx_state_do_validate(nvfx, nv30_render_states);
-	else
-		nvfx_state_do_validate(nvfx, nv40_render_states);
+	nvfx_state_do_validate(nvfx, render_states);
 
 	if (nvfx->fallback_swtnl || nvfx->fallback_swrast)
 		return FALSE;
@@ -172,10 +167,7 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 		draw_set_vertex_elements(draw, nvfx->vtxelt->num_elements, nvfx->vtxelt->pipe);
 	}
 
-	if(!nvfx->is_nv4x)
-		nvfx_state_do_validate(nvfx, nv30_swtnl_render_states);
-	else
-		nvfx_state_do_validate(nvfx, nv40_swtnl_render_states);
+	nvfx_state_do_validate(nvfx, swtnl_render_states);
 
 	if (nvfx->fallback_swrast) {
 		NOUVEAU_ERR("swtnl->swrast 0x%08x\n", nvfx->fallback_swrast);
