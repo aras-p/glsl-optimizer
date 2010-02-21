@@ -130,15 +130,14 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
       const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       const float *bc;
-
+      float bordercolor[4] = {
+         sampler->border_color[0],
+         sampler->border_color[0],
+         sampler->border_color[0],
+         sampler->border_color[0]
+      };
+      
       if (util_format_is_depth_or_stencil(tex->base.format)) {
-	 float bordercolor[4] = {
-	    sampler->border_color[0],
-	    sampler->border_color[0],
-	    sampler->border_color[0],
-	    sampler->border_color[0]
-	 };
-         
          bc = bordercolor;
       }
       else {
