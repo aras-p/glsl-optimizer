@@ -369,7 +369,7 @@ nv04_surface_fill(GLcontext *ctx,
 	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_COLOR_FORMAT, 1);
 	OUT_RING  (chan, rect_format(dst->format));
 	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_MONOCHROME_COLOR1, 1);
-	OUT_RING  (chan, mask | ~0 << (8 * dst->cpp));
+	OUT_RING  (chan, mask | ~0ll << (8 * dst->cpp));
 
 	BEGIN_RING(chan, rect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);
 	OUT_RING  (chan, rect_format(dst->format));
