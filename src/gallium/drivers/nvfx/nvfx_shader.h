@@ -9,15 +9,6 @@
 #define NVFX_VP_INST_SLOT_VEC 0
 #define NVFX_VP_INST_SLOT_SCA 1
 
-#define NVFX_VP_INST_COND_FL  0 /* guess */
-#define NVFX_VP_INST_COND_LT  1
-#define NVFX_VP_INST_COND_EQ  2
-#define NVFX_VP_INST_COND_LE  3
-#define NVFX_VP_INST_COND_GT  4
-#define NVFX_VP_INST_COND_NE  5
-#define NVFX_VP_INST_COND_GE  6
-#define NVFX_VP_INST_COND_TR  7 /* guess */
-
 #define NVFX_VP_INST_IN_POS  0    /* These seem to match the bindings specified in */
 #define NVFX_VP_INST_IN_WEIGHT  1    /* the ARB_v_p spec (2.14.3.1) */
 #define NVFX_VP_INST_IN_NORMAL  2
@@ -327,12 +318,44 @@
 #  define NVFX_FP_SWIZZLE_W  3
 #define NVFX_FP_REG_NEGATE          (1 << 17)
 
-#ifndef NVFX_SHADER_NO_FUCKEDNESS
 #define NVFXSR_NONE	0
 #define NVFXSR_OUTPUT	1
 #define NVFXSR_INPUT	2
 #define NVFXSR_TEMP	3
 #define NVFXSR_CONST	4
+
+#define NVFX_COND_FL  0
+#define NVFX_COND_LT  1
+#define NVFX_COND_EQ  2
+#define NVFX_COND_LE  3
+#define NVFX_COND_GT  4
+#define NVFX_COND_NE  5
+#define NVFX_COND_GE  6
+#define NVFX_COND_TR  7
+
+/* Yes, this are ordered differently... */
+
+#define NVFX_VP_MASK_X 8
+#define NVFX_VP_MASK_Y 4
+#define NVFX_VP_MASK_Z 2
+#define NVFX_VP_MASK_W 1
+#define NVFX_VP_MASK_ALL 0xf
+
+#define NVFX_FP_MASK_X 1
+#define NVFX_FP_MASK_Y 2
+#define NVFX_FP_MASK_Z 4
+#define NVFX_FP_MASK_W 8
+#define NVFX_FP_MASK_ALL 0xf
+
+#define NVFX_SWZ_X 0
+#define NVFX_SWZ_Y 1
+#define NVFX_SWZ_Z 2
+#define NVFX_SWZ_W 3
+
+#define swz(s,x,y,z,w) nvfx_sr_swz((s), NVFX_SWZ_##x, NVFX_SWZ_##y, NVFX_SWZ_##z, NVFX_SWZ_##w)
+#define neg(s) nvfx_sr_neg((s))
+#define abs(s) nvfx_sr_abs((s))
+#define scale(s,v) nvfx_sr_scale((s), NVFX_FP_OP_DST_SCALE_##v)
 
 struct nvfx_sreg {
 	int type;
@@ -357,13 +380,13 @@ nvfx_sr(int type, int index)
 	struct nvfx_sreg temp = {
 		.type = type,
 		.index = index,
-		.dst_scale = DEF_SCALE,
+		.dst_scale = 0,
 		.abs = 0,
 		.negate = 0,
 		.swz = { 0, 1, 2, 3 },
 		.cc_update = 0,
 		.cc_update_reg = 0,
-		.cc_test = DEF_CTEST,
+		.cc_test = NVFX_COND_TR,
 		.cc_test_reg = 0,
 		.cc_swz = { 0, 1, 2, 3 },
 	};
@@ -375,10 +398,10 @@ nvfx_sr_swz(struct nvfx_sreg src, int x, int y, int z, int w)
 {
 	struct nvfx_sreg dst = src;
 
-	dst.swz[SWZ_X] = src.swz[x];
-	dst.swz[SWZ_Y] = src.swz[y];
-	dst.swz[SWZ_Z] = src.swz[z];
-	dst.swz[SWZ_W] = src.swz[w];
+	dst.swz[NVFX_SWZ_X] = src.swz[x];
+	dst.swz[NVFX_SWZ_Y] = src.swz[y];
+	dst.swz[NVFX_SWZ_Z] = src.swz[z];
+	dst.swz[NVFX_SWZ_W] = src.swz[w];
 	return dst;
 }
 
@@ -402,6 +425,5 @@ nvfx_sr_scale(struct nvfx_sreg src, int scale)
 	src.dst_scale = scale;
 	return src;
 }
-#endif
 
 #endif

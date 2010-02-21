@@ -8,24 +8,7 @@
 #include "tgsi/tgsi_util.h"
 
 #include "nvfx_context.h"
-
-#define SWZ_X 0
-#define SWZ_Y 1
-#define SWZ_Z 2
-#define SWZ_W 3
-#define MASK_X 1
-#define MASK_Y 2
-#define MASK_Z 4
-#define MASK_W 8
-#define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
-#define DEF_SCALE NVFX_FP_OP_DST_SCALE_1X
-#define DEF_CTEST NVFX_FP_OP_COND_TR
 #include "nvfx_shader.h"
-
-#define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nvfx_sr_neg((s))
-#define abs(s) nvfx_sr_abs((s))
-#define scale(s,v) nvfx_sr_scale((s), NVFX_FP_OP_DST_SCALE_##v)
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32
@@ -308,10 +291,10 @@ tgsi_mask(uint tgsi)
 {
 	int mask = 0;
 
-	if (tgsi & TGSI_WRITEMASK_X) mask |= MASK_X;
-	if (tgsi & TGSI_WRITEMASK_Y) mask |= MASK_Y;
-	if (tgsi & TGSI_WRITEMASK_Z) mask |= MASK_Z;
-	if (tgsi & TGSI_WRITEMASK_W) mask |= MASK_W;
+	if (tgsi & TGSI_WRITEMASK_X) mask |= NVFX_FP_MASK_X;
+	if (tgsi & TGSI_WRITEMASK_Y) mask |= NVFX_FP_MASK_Y;
+	if (tgsi & TGSI_WRITEMASK_Z) mask |= NVFX_FP_MASK_Z;
+	if (tgsi & TGSI_WRITEMASK_W) mask |= NVFX_FP_MASK_W;
 	return mask;
 }
 
@@ -337,7 +320,7 @@ src_native_swz(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc,
 		}
 	}
 
-	if (mask == MASK_ALL)
+	if (mask == NVFX_FP_MASK_ALL)
 		return TRUE;
 
 	*src = temp(fpc);
@@ -393,7 +376,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
-				arith(fpc, 0, MOV, src[i], MASK_ALL,
+				arith(fpc, 0, MOV, src[i], NVFX_FP_MASK_ALL,
 				      tgsi_src(fpc, fsrc), none, none);
 			}
 			break;
@@ -404,7 +387,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
-				arith(fpc, 0, MOV, src[i], MASK_ALL,
+				arith(fpc, 0, MOV, src[i], NVFX_FP_MASK_ALL,
 				      tgsi_src(fpc, fsrc), none, none);
 			}
 			break;
@@ -415,7 +398,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
-				arith(fpc, 0, MOV, src[i], MASK_ALL,
+				arith(fpc, 0, MOV, src[i], NVFX_FP_MASK_ALL,
 				      tgsi_src(fpc, fsrc), none, none);
 			}
 			break;
@@ -448,22 +431,22 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		tmp = nvfx_sr(NVFXSR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
-		dst.cc_test = NVFX_VP_INST_COND_GE;
+		dst.cc_test = NVFX_COND_GE;
 		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
-		dst.cc_test = NVFX_VP_INST_COND_LT;
+		dst.cc_test = NVFX_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
 	case TGSI_OPCODE_COS:
 		arith(fpc, sat, COS, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_DDX:
-		if (mask & (MASK_Z | MASK_W)) {
+		if (mask & (NVFX_FP_MASK_Z | NVFX_FP_MASK_W)) {
 			tmp = temp(fpc);
-			arith(fpc, sat, DDX, tmp, MASK_X | MASK_Y,
+			arith(fpc, sat, DDX, tmp, NVFX_FP_MASK_X | NVFX_FP_MASK_Y,
 			      swz(src[0], Z, W, Z, W), none, none);
-			arith(fpc, 0, MOV, tmp, MASK_Z | MASK_W,
+			arith(fpc, 0, MOV, tmp, NVFX_FP_MASK_Z | NVFX_FP_MASK_W,
 			      swz(tmp, X, Y, X, Y), none, none);
-			arith(fpc, sat, DDX, tmp, MASK_X | MASK_Y, src[0],
+			arith(fpc, sat, DDX, tmp, NVFX_FP_MASK_X | NVFX_FP_MASK_Y, src[0],
 			      none, none);
 			arith(fpc, 0, MOV, dst, mask, tmp, none, none);
 		} else {
@@ -471,13 +454,13 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		}
 		break;
 	case TGSI_OPCODE_DDY:
-		if (mask & (MASK_Z | MASK_W)) {
+		if (mask & (NVFX_FP_MASK_Z | NVFX_FP_MASK_W)) {
 			tmp = temp(fpc);
-			arith(fpc, sat, DDY, tmp, MASK_X | MASK_Y,
+			arith(fpc, sat, DDY, tmp, NVFX_FP_MASK_X | NVFX_FP_MASK_Y,
 			      swz(src[0], Z, W, Z, W), none, none);
-			arith(fpc, 0, MOV, tmp, MASK_Z | MASK_W,
+			arith(fpc, 0, MOV, tmp, NVFX_FP_MASK_Z | NVFX_FP_MASK_W,
 			      swz(tmp, X, Y, X, Y), none, none);
-			arith(fpc, sat, DDY, tmp, MASK_X | MASK_Y, src[0],
+			arith(fpc, sat, DDY, tmp, NVFX_FP_MASK_X | NVFX_FP_MASK_Y, src[0],
 			      none, none);
 			arith(fpc, 0, MOV, dst, mask, tmp, none, none);
 		} else {
@@ -492,7 +475,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		break;
 	case TGSI_OPCODE_DPH:
 		tmp = temp(fpc);
-		arith(fpc, 0, DP3, tmp, MASK_X, src[0], src[1], none);
+		arith(fpc, 0, DP3, tmp, NVFX_FP_MASK_X, src[0], src[1], none);
 		arith(fpc, sat, ADD, dst, mask, swz(tmp, X, X, X, X),
 		      swz(src[1], W, W, W, W), none);
 		break;
@@ -514,8 +497,8 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_KIL:
 		dst = nvfx_sr(NVFXSR_NONE, 0);
 		dst.cc_update = 1;
-		arith(fpc, 0, MOV, dst, MASK_ALL, src[0], none, none);
-		dst.cc_update = 0; dst.cc_test = NVFX_FP_OP_COND_LT;
+		arith(fpc, 0, MOV, dst, NVFX_FP_MASK_ALL, src[0], none, none);
+		dst.cc_update = 0; dst.cc_test = NVFX_COND_LT;
 		arith(fpc, 0, KIL, dst, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_LG2:
@@ -551,9 +534,9 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 			arith(fpc, sat, POW_NV30, dst, mask, src[0], src[1], none);
 		else {
 			tmp = temp(fpc);
-			arith(fpc, 0, LG2, tmp, MASK_X,
+			arith(fpc, 0, LG2, tmp, NVFX_FP_MASK_X,
 			      swz(src[0], X, X, X, X), none, none);
-			arith(fpc, 0, MUL, tmp, MASK_X, swz(tmp, X, X, X, X),
+			arith(fpc, 0, MUL, tmp, NVFX_FP_MASK_X, swz(tmp, X, X, X, X),
 			      swz(src[1], X, X, X, X), none);
 			arith(fpc, sat, EX2, dst, mask,
 			      swz(tmp, X, X, X, X), none, none);
@@ -570,9 +553,9 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 			arith(fpc, 0, RFL_NV30, dst, mask, src[0], src[1], none);
 		else {
 			tmp = temp(fpc);
-			arith(fpc, 0, DP3, tmp, MASK_X, src[0], src[0], none);
-			arith(fpc, 0, DP3, tmp, MASK_Y, src[0], src[1], none);
-			arith(fpc, 0, DIV, scale(tmp, 2X), MASK_Z,
+			arith(fpc, 0, DP3, tmp, NVFX_FP_MASK_X, src[0], src[0], none);
+			arith(fpc, 0, DP3, tmp, NVFX_FP_MASK_Y, src[0], src[1], none);
+			arith(fpc, 0, DIV, scale(tmp, 2X), NVFX_FP_MASK_Z,
 			      swz(tmp, Y, Y, Y, Y), swz(tmp, X, X, X, X), none);
 			arith(fpc, sat, MAD, dst, mask,
 			      swz(tmp, Z, Z, Z, Z), src[0], neg(src[1]));
@@ -583,7 +566,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 			arith(fpc, sat, RSQ_NV30, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
 		else {
 			tmp = temp(fpc);
-			arith(fpc, 0, LG2, scale(tmp, INV_2X), MASK_X,
+			arith(fpc, 0, LG2, scale(tmp, INV_2X), NVFX_FP_MASK_X,
 			      abs(swz(src[0], X, X, X, X)), none, none);
 			arith(fpc, sat, EX2, dst, mask,
 			      neg(swz(tmp, X, X, X, X)), none, none);
@@ -591,25 +574,25 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		break;
 	case TGSI_OPCODE_SCS:
 		/* avoid overwriting the source */
-		if(src[0].swz[SWZ_X] != SWZ_X)
+		if(src[0].swz[NVFX_SWZ_X] != NVFX_SWZ_X)
 		{
-			if (mask & MASK_X) {
-				arith(fpc, sat, COS, dst, MASK_X,
+			if (mask & NVFX_FP_MASK_X) {
+				arith(fpc, sat, COS, dst, NVFX_FP_MASK_X,
 				      swz(src[0], X, X, X, X), none, none);
 			}
-			if (mask & MASK_Y) {
-				arith(fpc, sat, SIN, dst, MASK_Y,
+			if (mask & NVFX_FP_MASK_Y) {
+				arith(fpc, sat, SIN, dst, NVFX_FP_MASK_Y,
 				      swz(src[0], X, X, X, X), none, none);
 			}
 		}
 		else
 		{
-			if (mask & MASK_Y) {
-				arith(fpc, sat, SIN, dst, MASK_Y,
+			if (mask & NVFX_FP_MASK_Y) {
+				arith(fpc, sat, SIN, dst, NVFX_FP_MASK_Y,
 				      swz(src[0], X, X, X, X), none, none);
 			}
-			if (mask & MASK_X) {
-				arith(fpc, sat, COS, dst, MASK_X,
+			if (mask & NVFX_FP_MASK_X) {
+				arith(fpc, sat, COS, dst, NVFX_FP_MASK_X,
 				      swz(src[0], X, X, X, X), none, none);
 			}
 		}
@@ -657,7 +640,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		tmp = temp(fpc);
 		arith(fpc, 0, MUL, tmp, mask,
 		      swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none);
-		arith(fpc, sat, MAD, dst, (mask & ~MASK_W),
+		arith(fpc, sat, MAD, dst, (mask & ~NVFX_FP_MASK_W),
 		      swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y),
 		      neg(tmp));
 		break;

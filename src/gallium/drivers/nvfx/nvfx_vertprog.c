@@ -22,23 +22,8 @@
  *  4. bugs
  */
 
-#define SWZ_X 0
-#define SWZ_Y 1
-#define SWZ_Z 2
-#define SWZ_W 3
-#define MASK_X 8
-#define MASK_Y 4
-#define MASK_Z 2
-#define MASK_W 1
-#define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
-#define DEF_SCALE 0
-#define DEF_CTEST 0
 #include "nv30_vertprog.h"
 #include "nv40_vertprog.h"
-
-#define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nvfx_sr_neg((s))
-#define abs(s) nvfx_sr_abs((s))
 
 #define NVFX_VP_INST_DEST_CLIP(n) ((~0 - 6) + (n))
 
@@ -307,7 +292,7 @@ nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
 
 	hw = vpc->vpi->data;
 
-	hw[0] |= (NVFX_VP_INST_COND_TR << NVFX_VP(INST_COND_SHIFT));
+	hw[0] |= (NVFX_COND_TR << NVFX_VP(INST_COND_SHIFT));
 	hw[0] |= ((0 << NVFX_VP(INST_COND_SWZ_X_SHIFT)) |
 		  (1 << NVFX_VP(INST_COND_SWZ_Y_SHIFT)) |
 		  (2 << NVFX_VP(INST_COND_SWZ_Z_SHIFT)) |
@@ -405,10 +390,10 @@ tgsi_mask(uint tgsi)
 {
 	int mask = 0;
 
-	if (tgsi & TGSI_WRITEMASK_X) mask |= MASK_X;
-	if (tgsi & TGSI_WRITEMASK_Y) mask |= MASK_Y;
-	if (tgsi & TGSI_WRITEMASK_Z) mask |= MASK_Z;
-	if (tgsi & TGSI_WRITEMASK_W) mask |= MASK_W;
+	if (tgsi & TGSI_WRITEMASK_X) mask |= NVFX_VP_MASK_X;
+	if (tgsi & TGSI_WRITEMASK_Y) mask |= NVFX_VP_MASK_Y;
+	if (tgsi & TGSI_WRITEMASK_Z) mask |= NVFX_VP_MASK_Z;
+	if (tgsi & TGSI_WRITEMASK_W) mask |= NVFX_VP_MASK_W;
 	return mask;
 }
 
@@ -434,7 +419,7 @@ src_native_swz(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, const struct tgs
 		}
 	}
 
-	if (mask == MASK_ALL)
+	if (mask == NVFX_VP_MASK_ALL)
 		return TRUE;
 
 	*src = temp(vpc);
@@ -490,7 +475,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], MASK_ALL,
+				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
@@ -501,7 +486,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], MASK_ALL,
+				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
@@ -512,7 +497,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], MASK_ALL,
+				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
@@ -588,9 +573,9 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		break;
 	case TGSI_OPCODE_POW:
 		tmp = temp(vpc);
-		arith(vpc, SCA, LG2, tmp, MASK_X, none, none,
+		arith(vpc, SCA, LG2, tmp, NVFX_VP_MASK_X, none, none,
 		      swz(src[0], X, X, X, X));
-		arith(vpc, VEC, MUL, tmp, MASK_X, swz(tmp, X, X, X, X),
+		arith(vpc, VEC, MUL, tmp, NVFX_VP_MASK_X, swz(tmp, X, X, X, X),
 		      swz(src[1], X, X, X, X), none);
 		arith(vpc, SCA, EX2, dst, mask, none, none,
 		      swz(tmp, X, X, X, X));
@@ -619,7 +604,7 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		tmp = temp(vpc);
 		arith(vpc, VEC, MUL, tmp, mask,
 		      swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none);
-		arith(vpc, VEC, MAD, dst, (mask & ~MASK_W),
+		arith(vpc, VEC, MAD, dst, (mask & ~NVFX_VP_MASK_W),
 		      swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y),
 		      neg(tmp));
 		break;
@@ -849,7 +834,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 						NVFX_VP(INST_DEST_POS));
 		struct nvfx_sreg htmp = vpc->r_result[vpc->hpos_idx];
 
-		arith(vpc, VEC, MOV, hpos, MASK_ALL, htmp, none, none);
+		arith(vpc, VEC, MOV, hpos, NVFX_VP_MASK_ALL, htmp, none, none);
 	}
 
 	/* Insert code to handle user clip planes */
@@ -865,9 +850,9 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		unsigned mask;
 
 		switch (i) {
-		case 0: case 3: mask = MASK_Y; break;
-		case 1: case 4: mask = MASK_Z; break;
-		case 2: case 5: mask = MASK_W; break;
+		case 0: case 3: mask = NVFX_VP_MASK_Y; break;
+		case 1: case 4: mask = NVFX_VP_MASK_Z; break;
+		case 2: case 5: mask = NVFX_VP_MASK_W; break;
 		default:
 			NOUVEAU_ERR("invalid clip dist #%d\n", i);
 			goto out_err;

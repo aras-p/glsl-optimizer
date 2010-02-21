@@ -9,7 +9,6 @@
 #include "draw/draw_pipe.h"
 
 #include "nvfx_context.h"
-#define NVFX_SHADER_NO_FUCKEDNESS
 #include "nv30_vertprog.h"
 #include "nv40_vertprog.h"
 
