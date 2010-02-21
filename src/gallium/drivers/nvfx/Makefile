@@ -9,6 +9,7 @@ C_SOURCES = \
 	nvfx_fragprog.c \
 	nvfx_miptree.c \
 	nvfx_query.c \
+	nvfx_screen.c \
 	nvfx_state.c \
 	nvfx_state_blend.c \
         nvfx_state_emit.c \
