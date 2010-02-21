@@ -213,7 +213,7 @@ brw_upload_cache( struct brw_cache *cache,
 		  void *aux_return,
                   struct brw_winsys_buffer **bo_out)
 {
-   struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
+   struct brw_cache_item *item;
    GLuint hash = hash_key(key, key_size, relocs, nr_relocs);
    GLuint relocs_size = nr_relocs * sizeof relocs[0];
    GLuint aux_size = cache->aux_size[cache_id];
@@ -233,6 +233,7 @@ brw_upload_cache( struct brw_cache *cache,
    if (ret)
       return ret;
 
+   item = CALLOC_STRUCT(brw_cache_item);
 
    /* Set up the memory containing the key, aux_data, and relocs */
    tmp = MALLOC(key_size + aux_size + relocs_size);
