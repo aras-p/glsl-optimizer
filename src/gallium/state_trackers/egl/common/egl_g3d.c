@@ -587,18 +587,18 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    egl_g3d_init_st(&gdrv->base);
    dpy->ClientAPIsMask = gdrv->api_mask;
 
-   if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
-      _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
-      goto fail;
-   }
-
 #ifdef EGL_MESA_screen_surface
-   /* enable MESA_screen_surface */
+   /* enable MESA_screen_surface before adding (and validating) configs */
    if (gdpy->native->modeset) {
       dpy->Extensions.MESA_screen_surface = EGL_TRUE;
       egl_g3d_add_screens(drv, dpy);
    }
 #endif
+
+   if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
+      _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
+      goto fail;
+   }
 
    *major = 1;
    *minor = 4;
