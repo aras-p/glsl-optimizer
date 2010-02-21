@@ -387,7 +387,8 @@ _error(struct parse_context *ctx,
        const char *msg)
 {
    if (ctx->error[0] == '\0') {
-      strcpy(ctx->error, msg);
+      strncpy(ctx->error, msg, sizeof(ctx->error) - 1);
+      ctx->error[sizeof(ctx->error) - 1] = '\0';
    }
 }
 
