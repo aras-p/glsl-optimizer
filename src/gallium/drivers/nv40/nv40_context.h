@@ -3,12 +3,6 @@
 
 #include "nvfx_context.h"
 
-extern void nv40_init_state_functions(struct nvfx_context *nvfx);
-
-/* nv40_vertprog.c */
-extern void nv40_vertprog_destroy(struct nvfx_context *,
-				  struct nvfx_vertex_program *);
-
 /* nv40_fragtex.c */
 extern void nv40_fragtex_bind(struct nvfx_context *);
 

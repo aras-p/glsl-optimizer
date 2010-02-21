@@ -212,6 +212,9 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
 
+/* nvfx_state.c */
+extern void nvfx_init_state_functions(struct nvfx_context *nvfx);
+
 /* nvfx_state_emit.c */
 extern void nvfx_state_flush_notify(struct nouveau_channel *chan);
 extern boolean nvfx_state_validate(struct nvfx_context *nvfx);
@@ -230,4 +233,9 @@ extern void nvfx_draw_elements(struct pipe_context *pipe,
 				  unsigned mode, unsigned start,
 				  unsigned count);
 
+/* nvfx_vertprog.c */
+extern void nv30_vertprog_destroy(struct nvfx_context *,
+				  struct nvfx_vertex_program *);
+extern void nv40_vertprog_destroy(struct nvfx_context *,
+				  struct nvfx_vertex_program *);
 #endif
