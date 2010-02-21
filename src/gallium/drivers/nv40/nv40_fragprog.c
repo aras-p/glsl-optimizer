@@ -18,14 +18,14 @@
 #define MASK_Z 4
 #define MASK_W 8
 #define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
-#define DEF_SCALE NV40_FP_OP_DST_SCALE_1X
-#define DEF_CTEST NV40_FP_OP_COND_TR
-#include "nv40_shader.h"
+#define DEF_SCALE NVFX_FP_OP_DST_SCALE_1X
+#define DEF_CTEST NVFX_FP_OP_COND_TR
+#include "nvfx_shader.h"
 
-#define swz(s,x,y,z,w) nv40_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nv40_sr_neg((s))
-#define abs(s) nv40_sr_abs((s))
-#define scale(s,v) nv40_sr_scale((s), NV40_FP_OP_DST_SCALE_##v)
+#define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
+#define neg(s) nvfx_sr_neg((s))
+#define abs(s) nvfx_sr_abs((s))
+#define scale(s,v) nvfx_sr_scale((s), NVFX_FP_OP_DST_SCALE_##v)
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32
@@ -36,8 +36,8 @@ struct nv40_fpc {
 
 	unsigned r_temps;
 	unsigned r_temps_discard;
-	struct nv40_sreg r_result[PIPE_MAX_SHADER_OUTPUTS];
-	struct nv40_sreg *r_temp;
+	struct nvfx_sreg r_result[PIPE_MAX_SHADER_OUTPUTS];
+	struct nvfx_sreg *r_temp;
 
 	int num_regs;
 
@@ -50,11 +50,11 @@ struct nv40_fpc {
 	} consts[MAX_CONSTS];
 	int nr_consts;
 
-	struct nv40_sreg imm[MAX_IMM];
+	struct nvfx_sreg imm[MAX_IMM];
 	unsigned nr_imm;
 };
 
-static INLINE struct nv40_sreg
+static INLINE struct nvfx_sreg
 temp(struct nv40_fpc *fpc)
 {
 	int idx = ffs(~fpc->r_temps) - 1;
@@ -62,12 +62,12 @@ temp(struct nv40_fpc *fpc)
 	if (idx < 0) {
 		NOUVEAU_ERR("out of temps!!\n");
 		assert(0);
-		return nv40_sr(NV40SR_TEMP, 0);
+		return nvfx_sr(NVFXSR_TEMP, 0);
 	}
 
 	fpc->r_temps |= (1 << idx);
 	fpc->r_temps_discard |= (1 << idx);
-	return nv40_sr(NV40SR_TEMP, idx);
+	return nvfx_sr(NVFXSR_TEMP, idx);
 }
 
 static INLINE void
@@ -77,7 +77,7 @@ release_temps(struct nv40_fpc *fpc)
 	fpc->r_temps_discard = 0;
 }
 
-static INLINE struct nv40_sreg
+static INLINE struct nvfx_sreg
 constant(struct nv40_fpc *fpc, int pipe, float vals[4])
 {
 	int idx;
@@ -89,14 +89,14 @@ constant(struct nv40_fpc *fpc, int pipe, float vals[4])
 	fpc->consts[idx].pipe = pipe;
 	if (pipe == -1)
 		memcpy(fpc->consts[idx].vals, vals, 4 * sizeof(float));
-	return nv40_sr(NV40SR_CONST, idx);
+	return nvfx_sr(NVFXSR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
-	nv40_fp_arith((cc), (s), NV40_FP_OP_OPCODE_##o, \
+	nv40_fp_arith((cc), (s), NVFX_FP_OP_OPCODE_##o, \
 			(d), (m), (s0), (s1), (s2))
 #define tex(cc,s,o,u,d,m,s0,s1,s2) \
-	nv40_fp_tex((cc), (s), NV40_FP_OP_OPCODE_##o, (u), \
+	nv40_fp_tex((cc), (s), NVFX_FP_OP_OPCODE_##o, (u), \
 		    (d), (m), (s0), none, none)
 
 static void
@@ -109,25 +109,25 @@ grow_insns(struct nv40_fpc *fpc, int size)
 }
 
 static void
-emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
+emit_src(struct nv40_fpc *fpc, int pos, struct nvfx_sreg src)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 	uint32_t sr = 0;
 
 	switch (src.type) {
-	case NV40SR_INPUT:
-		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
-		hw[0] |= (src.index << NV40_FP_OP_INPUT_SRC_SHIFT);
+	case NVFXSR_INPUT:
+		sr |= (NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT);
+		hw[0] |= (src.index << NVFX_FP_OP_INPUT_SRC_SHIFT);
 		break;
-	case NV40SR_OUTPUT:
-		sr |= NV40_FP_REG_SRC_HALF;
+	case NVFXSR_OUTPUT:
+		sr |= NVFX_FP_REG_SRC_HALF;
 		/* fall-through */
-	case NV40SR_TEMP:
-		sr |= (NV40_FP_REG_TYPE_TEMP << NV40_FP_REG_TYPE_SHIFT);
-		sr |= (src.index << NV40_FP_REG_SRC_SHIFT);
+	case NVFXSR_TEMP:
+		sr |= (NVFX_FP_REG_TYPE_TEMP << NVFX_FP_REG_TYPE_SHIFT);
+		sr |= (src.index << NVFX_FP_REG_SRC_SHIFT);
 		break;
-	case NV40SR_CONST:
+	case NVFXSR_CONST:
 		if (!fpc->have_const) {
 			grow_insns(fpc, 4);
 			fpc->have_const = 1;
@@ -149,61 +149,61 @@ emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 				sizeof(uint32_t) * 4);
 		}
 
-		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);
+		sr |= (NVFX_FP_REG_TYPE_CONST << NVFX_FP_REG_TYPE_SHIFT);
 		break;
-	case NV40SR_NONE:
-		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
+	case NVFXSR_NONE:
+		sr |= (NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT);
 		break;
 	default:
 		assert(0);
 	}
 
 	if (src.negate)
-		sr |= NV40_FP_REG_NEGATE;
+		sr |= NVFX_FP_REG_NEGATE;
 
 	if (src.abs)
 		hw[1] |= (1 << (29 + pos));
 
-	sr |= ((src.swz[0] << NV40_FP_REG_SWZ_X_SHIFT) |
-	       (src.swz[1] << NV40_FP_REG_SWZ_Y_SHIFT) |
-	       (src.swz[2] << NV40_FP_REG_SWZ_Z_SHIFT) |
-	       (src.swz[3] << NV40_FP_REG_SWZ_W_SHIFT));
+	sr |= ((src.swz[0] << NVFX_FP_REG_SWZ_X_SHIFT) |
+	       (src.swz[1] << NVFX_FP_REG_SWZ_Y_SHIFT) |
+	       (src.swz[2] << NVFX_FP_REG_SWZ_Z_SHIFT) |
+	       (src.swz[3] << NVFX_FP_REG_SWZ_W_SHIFT));
 
 	hw[pos + 1] |= sr;
 }
 
 static void
-emit_dst(struct nv40_fpc *fpc, struct nv40_sreg dst)
+emit_dst(struct nv40_fpc *fpc, struct nvfx_sreg dst)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 
 	switch (dst.type) {
-	case NV40SR_TEMP:
+	case NVFXSR_TEMP:
 		if (fpc->num_regs < (dst.index + 1))
 			fpc->num_regs = dst.index + 1;
 		break;
-	case NV40SR_OUTPUT:
+	case NVFXSR_OUTPUT:
 		if (dst.index == 1) {
 			fp->fp_control |= 0xe;
 		} else {
-			hw[0] |= NV40_FP_OP_OUT_REG_HALF;
+			hw[0] |= NVFX_FP_OP_OUT_REG_HALF;
 		}
 		break;
-	case NV40SR_NONE:
+	case NVFXSR_NONE:
 		hw[0] |= (1 << 30);
 		break;
 	default:
 		assert(0);
 	}
 
-	hw[0] |= (dst.index << NV40_FP_OP_OUT_REG_SHIFT);
+	hw[0] |= (dst.index << NVFX_FP_OP_OUT_REG_SHIFT);
 }
 
 static void
 nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
-	      struct nv40_sreg dst, int mask,
-	      struct nv40_sreg s0, struct nv40_sreg s1, struct nv40_sreg s2)
+	      struct nvfx_sreg dst, int mask,
+	      struct nvfx_sreg s0, struct nvfx_sreg s1, struct nvfx_sreg s2)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw;
@@ -214,22 +214,22 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	hw = &fp->insn[fpc->inst_offset];
 	memset(hw, 0, sizeof(uint32_t) * 4);
 
-	if (op == NV40_FP_OP_OPCODE_KIL)
+	if (op == NVFX_FP_OP_OPCODE_KIL)
 		fp->fp_control |= NV40TCL_FP_CONTROL_KIL;
-	hw[0] |= (op << NV40_FP_OP_OPCODE_SHIFT);
-	hw[0] |= (mask << NV40_FP_OP_OUTMASK_SHIFT);
-	hw[2] |= (dst.dst_scale << NV40_FP_OP_DST_SCALE_SHIFT);
+	hw[0] |= (op << NVFX_FP_OP_OPCODE_SHIFT);
+	hw[0] |= (mask << NVFX_FP_OP_OUTMASK_SHIFT);
+	hw[2] |= (dst.dst_scale << NVFX_FP_OP_DST_SCALE_SHIFT);
 
 	if (sat)
-		hw[0] |= NV40_FP_OP_OUT_SAT;
+		hw[0] |= NVFX_FP_OP_OUT_SAT;
 
 	if (dst.cc_update)
-		hw[0] |= NV40_FP_OP_COND_WRITE_ENABLE;
-	hw[1] |= (dst.cc_test << NV40_FP_OP_COND_SHIFT);
-	hw[1] |= ((dst.cc_swz[0] << NV40_FP_OP_COND_SWZ_X_SHIFT) |
-		  (dst.cc_swz[1] << NV40_FP_OP_COND_SWZ_Y_SHIFT) |
-		  (dst.cc_swz[2] << NV40_FP_OP_COND_SWZ_Z_SHIFT) |
-		  (dst.cc_swz[3] << NV40_FP_OP_COND_SWZ_W_SHIFT));
+		hw[0] |= NVFX_FP_OP_COND_WRITE_ENABLE;
+	hw[1] |= (dst.cc_test << NVFX_FP_OP_COND_SHIFT);
+	hw[1] |= ((dst.cc_swz[0] << NVFX_FP_OP_COND_SWZ_X_SHIFT) |
+		  (dst.cc_swz[1] << NVFX_FP_OP_COND_SWZ_Y_SHIFT) |
+		  (dst.cc_swz[2] << NVFX_FP_OP_COND_SWZ_Z_SHIFT) |
+		  (dst.cc_swz[3] << NVFX_FP_OP_COND_SWZ_W_SHIFT));
 
 	emit_dst(fpc, dst);
 	emit_src(fpc, 0, s0);
@@ -239,25 +239,25 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 
 static void
 nv40_fp_tex(struct nv40_fpc *fpc, int sat, int op, int unit,
-	    struct nv40_sreg dst, int mask,
-	    struct nv40_sreg s0, struct nv40_sreg s1, struct nv40_sreg s2)
+	    struct nvfx_sreg dst, int mask,
+	    struct nvfx_sreg s0, struct nvfx_sreg s1, struct nvfx_sreg s2)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 
 	nv40_fp_arith(fpc, sat, op, dst, mask, s0, s1, s2);
 
-	fp->insn[fpc->inst_offset] |= (unit << NV40_FP_OP_TEX_UNIT_SHIFT);
+	fp->insn[fpc->inst_offset] |= (unit << NVFX_FP_OP_TEX_UNIT_SHIFT);
 	fp->samplers |= (1 << unit);
 }
 
-static INLINE struct nv40_sreg
+static INLINE struct nvfx_sreg
 tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 {
-	struct nv40_sreg src;
+	struct nvfx_sreg src;
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nv40_sr(NV40SR_INPUT,
+		src = nvfx_sr(NVFXSR_INPUT,
 			      fpc->attrib_map[fsrc->Register.Index]);
 		break;
 	case TGSI_FILE_CONSTANT:
@@ -288,7 +288,7 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 	return src;
 }
 
-static INLINE struct nv40_sreg
+static INLINE struct nvfx_sreg
 tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
 	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
@@ -296,10 +296,10 @@ tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
 	case TGSI_FILE_TEMPORARY:
 		return fpc->r_temp[fdst->Register.Index];
 	case TGSI_FILE_NULL:
-		return nv40_sr(NV40SR_NONE, 0);
+		return nvfx_sr(NVFXSR_NONE, 0);
 	default:
 		NOUVEAU_ERR("bad dst file %d\n", fdst->Register.File);
-		return nv40_sr(NV40SR_NONE, 0);
+		return nvfx_sr(NVFXSR_NONE, 0);
 	}
 }
 
@@ -317,10 +317,10 @@ tgsi_mask(uint tgsi)
 
 static boolean
 src_native_swz(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc,
-	       struct nv40_sreg *src)
+	       struct nvfx_sreg *src)
 {
-	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
-	struct nv40_sreg tgsi = tgsi_src(fpc, fsrc);
+	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_sreg tgsi = tgsi_src(fpc, fsrc);
 	uint mask = 0;
 	uint c;
 
@@ -352,8 +352,8 @@ static boolean
 nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 				const struct tgsi_full_instruction *finst)
 {
-	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
-	struct nv40_sreg src[3], dst, tmp;
+	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_sreg src[3], dst, tmp;
 	int mask, sat, unit;
 	int ai = -1, ci = -1, ii = -1;
 	int i;
@@ -445,12 +445,12 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_CMP:
-		tmp = nv40_sr(NV40SR_NONE, 0);
+		tmp = nvfx_sr(NVFXSR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
-		dst.cc_test = NV40_VP_INST_COND_GE;
+		dst.cc_test = NVFX_VP_INST_COND_GE;
 		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
-		dst.cc_test = NV40_VP_INST_COND_LT;
+		dst.cc_test = NVFX_VP_INST_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
 	case TGSI_OPCODE_COS:
@@ -512,10 +512,10 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		arith(fpc, 0, KIL, none, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_KIL:
-		dst = nv40_sr(NV40SR_NONE, 0);
+		dst = nvfx_sr(NVFXSR_NONE, 0);
 		dst.cc_update = 1;
 		arith(fpc, 0, MOV, dst, MASK_ALL, src[0], none, none);
-		dst.cc_update = 0; dst.cc_test = NV40_FP_OP_COND_LT;
+		dst.cc_update = 0; dst.cc_test = NVFX_FP_OP_COND_LT;
 		arith(fpc, 0, KIL, dst, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_LG2:
@@ -662,25 +662,25 @@ nv40_fragprog_parse_decl_attrib(struct nv40_fpc *fpc,
 
 	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
-		hw = NV40_FP_OP_INPUT_SRC_POSITION;
+		hw = NVFX_FP_OP_INPUT_SRC_POSITION;
 		break;
 	case TGSI_SEMANTIC_COLOR:
 		if (fdec->Semantic.Index == 0) {
-			hw = NV40_FP_OP_INPUT_SRC_COL0;
+			hw = NVFX_FP_OP_INPUT_SRC_COL0;
 		} else
 		if (fdec->Semantic.Index == 1) {
-			hw = NV40_FP_OP_INPUT_SRC_COL1;
+			hw = NVFX_FP_OP_INPUT_SRC_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
 			return FALSE;
 		}
 		break;
 	case TGSI_SEMANTIC_FOG:
-		hw = NV40_FP_OP_INPUT_SRC_FOGC;
+		hw = NVFX_FP_OP_INPUT_SRC_FOGC;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
 		if (fdec->Semantic.Index <= 7) {
-			hw = NV40_FP_OP_INPUT_SRC_TC(fdec->Semantic.
+			hw = NVFX_FP_OP_INPUT_SRC_TC(fdec->Semantic.
 						     Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
@@ -723,7 +723,7 @@ nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 		return FALSE;
 	}
 
-	fpc->r_result[idx] = nv40_sr(NV40SR_OUTPUT, hw);
+	fpc->r_result[idx] = nvfx_sr(NVFXSR_OUTPUT, hw);
 	fpc->r_temps |= (1 << hw);
 	return TRUE;
 }
@@ -787,7 +787,7 @@ nv40_fragprog_prepare(struct nv40_fpc *fpc)
 	tgsi_parse_free(&p);
 
 	if (++high_temp) {
-		fpc->r_temp = CALLOC(high_temp, sizeof(struct nv40_sreg));
+		fpc->r_temp = CALLOC(high_temp, sizeof(struct nvfx_sreg));
 		for (i = 0; i < high_temp; i++)
 			fpc->r_temp[i] = temp(fpc);
 		fpc->r_temps_discard = 0;

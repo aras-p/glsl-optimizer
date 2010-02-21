@@ -19,14 +19,14 @@
 #define MASK_Z 4
 #define MASK_W 8
 #define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
-#define DEF_SCALE NV30_FP_OP_DST_SCALE_1X
-#define DEF_CTEST NV30_FP_OP_COND_TR
-#include "nv30_shader.h"
+#define DEF_SCALE NVFX_FP_OP_DST_SCALE_1X
+#define DEF_CTEST NVFX_FP_OP_COND_TR
+#include "nvfx_shader.h"
 
-#define swz(s,x,y,z,w) nv30_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nv30_sr_neg((s))
-#define abs(s) nv30_sr_abs((s))
-#define scale(s,v) nv30_sr_scale((s), NV30_FP_OP_DST_SCALE_##v)
+#define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
+#define neg(s) nvfx_sr_neg((s))
+#define abs(s) nvfx_sr_abs((s))
+#define scale(s,v) nvfx_sr_scale((s), NVFX_FP_OP_DST_SCALE_##v)
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32
@@ -50,21 +50,21 @@ struct nv30_fpc {
 	} consts[MAX_CONSTS];
 	int nr_consts;
 
-	struct nv30_sreg imm[MAX_IMM];
+	struct nvfx_sreg imm[MAX_IMM];
 	unsigned nr_imm;
 };
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 temp(struct nv30_fpc *fpc)
 {
 	int idx;
 
 	idx  = fpc->temp_temp_count++;
 	idx += fpc->high_temp + 1;
-	return nv30_sr(NV30SR_TEMP, idx);
+	return nvfx_sr(NVFXSR_TEMP, idx);
 }
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 constant(struct nv30_fpc *fpc, int pipe, float vals[4])
 {
 	int idx;
@@ -76,14 +76,14 @@ constant(struct nv30_fpc *fpc, int pipe, float vals[4])
 	fpc->consts[idx].pipe = pipe;
 	if (pipe == -1)
 		memcpy(fpc->consts[idx].vals, vals, 4 * sizeof(float));
-	return nv30_sr(NV30SR_CONST, idx);
+	return nvfx_sr(NVFXSR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
-	nv30_fp_arith((cc), (s), NV30_FP_OP_OPCODE_##o, \
+	nv30_fp_arith((cc), (s), NVFX_FP_OP_OPCODE_##o, \
 			(d), (m), (s0), (s1), (s2))
 #define tex(cc,s,o,u,d,m,s0,s1,s2) \
-	nv30_fp_tex((cc), (s), NV30_FP_OP_OPCODE_##o, (u), \
+	nv30_fp_tex((cc), (s), NVFX_FP_OP_OPCODE_##o, (u), \
 		    (d), (m), (s0), none, none)
 
 static void
@@ -96,25 +96,25 @@ grow_insns(struct nv30_fpc *fpc, int size)
 }
 
 static void
-emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
+emit_src(struct nv30_fpc *fpc, int pos, struct nvfx_sreg src)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 	uint32_t sr = 0;
 
 	switch (src.type) {
-	case NV30SR_INPUT:
-		sr |= (NV30_FP_REG_TYPE_INPUT << NV30_FP_REG_TYPE_SHIFT);
-		hw[0] |= (src.index << NV30_FP_OP_INPUT_SRC_SHIFT);
+	case NVFXSR_INPUT:
+		sr |= (NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT);
+		hw[0] |= (src.index << NVFX_FP_OP_INPUT_SRC_SHIFT);
 		break;
-	case NV30SR_OUTPUT:
-		sr |= NV30_FP_REG_SRC_HALF;
+	case NVFXSR_OUTPUT:
+		sr |= NVFX_FP_REG_SRC_HALF;
 		/* fall-through */
-	case NV30SR_TEMP:
-		sr |= (NV30_FP_REG_TYPE_TEMP << NV30_FP_REG_TYPE_SHIFT);
-		sr |= (src.index << NV30_FP_REG_SRC_SHIFT);
+	case NVFXSR_TEMP:
+		sr |= (NVFX_FP_REG_TYPE_TEMP << NVFX_FP_REG_TYPE_SHIFT);
+		sr |= (src.index << NVFX_FP_REG_SRC_SHIFT);
 		break;
-	case NV30SR_CONST:
+	case NVFXSR_CONST:
 		grow_insns(fpc, 4);
 		hw = &fp->insn[fpc->inst_offset];
 		if (fpc->consts[src.index].pipe >= 0) {
@@ -132,61 +132,61 @@ emit_src(struct nv30_fpc *fpc, int pos, struct nv30_sreg src)
 				sizeof(uint32_t) * 4);
 		}
 
-		sr |= (NV30_FP_REG_TYPE_CONST << NV30_FP_REG_TYPE_SHIFT);
+		sr |= (NVFX_FP_REG_TYPE_CONST << NVFX_FP_REG_TYPE_SHIFT);
 		break;
-	case NV30SR_NONE:
-		sr |= (NV30_FP_REG_TYPE_INPUT << NV30_FP_REG_TYPE_SHIFT);
+	case NVFXSR_NONE:
+		sr |= (NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT);
 		break;
 	default:
 		assert(0);
 	}
 
 	if (src.negate)
-		sr |= NV30_FP_REG_NEGATE;
+		sr |= NVFX_FP_REG_NEGATE;
 
 	if (src.abs)
 		hw[1] |= (1 << (29 + pos));
 
-	sr |= ((src.swz[0] << NV30_FP_REG_SWZ_X_SHIFT) |
-	       (src.swz[1] << NV30_FP_REG_SWZ_Y_SHIFT) |
-	       (src.swz[2] << NV30_FP_REG_SWZ_Z_SHIFT) |
-	       (src.swz[3] << NV30_FP_REG_SWZ_W_SHIFT));
+	sr |= ((src.swz[0] << NVFX_FP_REG_SWZ_X_SHIFT) |
+	       (src.swz[1] << NVFX_FP_REG_SWZ_Y_SHIFT) |
+	       (src.swz[2] << NVFX_FP_REG_SWZ_Z_SHIFT) |
+	       (src.swz[3] << NVFX_FP_REG_SWZ_W_SHIFT));
 
 	hw[pos + 1] |= sr;
 }
 
 static void
-emit_dst(struct nv30_fpc *fpc, struct nv30_sreg dst)
+emit_dst(struct nv30_fpc *fpc, struct nvfx_sreg dst)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw = &fp->insn[fpc->inst_offset];
 
 	switch (dst.type) {
-	case NV30SR_TEMP:
+	case NVFXSR_TEMP:
 		if (fpc->num_regs < (dst.index + 1))
 			fpc->num_regs = dst.index + 1;
 		break;
-	case NV30SR_OUTPUT:
+	case NVFXSR_OUTPUT:
 		if (dst.index == 1) {
 			fp->fp_control |= 0xe;
 		} else {
-			hw[0] |= NV30_FP_OP_OUT_REG_HALF;
+			hw[0] |= NVFX_FP_OP_OUT_REG_HALF;
 		}
 		break;
-	case NV30SR_NONE:
+	case NVFXSR_NONE:
 		hw[0] |= (1 << 30);
 		break;
 	default:
 		assert(0);
 	}
 
-	hw[0] |= (dst.index << NV30_FP_OP_OUT_REG_SHIFT);
+	hw[0] |= (dst.index << NVFX_FP_OP_OUT_REG_SHIFT);
 }
 
 static void
 nv30_fp_arith(struct nv30_fpc *fpc, int sat, int op,
-	      struct nv30_sreg dst, int mask,
-	      struct nv30_sreg s0, struct nv30_sreg s1, struct nv30_sreg s2)
+	      struct nvfx_sreg dst, int mask,
+	      struct nvfx_sreg s0, struct nvfx_sreg s1, struct nvfx_sreg s2)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 	uint32_t *hw;
@@ -196,22 +196,22 @@ nv30_fp_arith(struct nv30_fpc *fpc, int sat, int op,
 	hw = &fp->insn[fpc->inst_offset];
 	memset(hw, 0, sizeof(uint32_t) * 4);
 
-	if (op == NV30_FP_OP_OPCODE_KIL)
+	if (op == NVFX_FP_OP_OPCODE_KIL)
 		fp->fp_control |= NV34TCL_FP_CONTROL_USES_KIL;
-	hw[0] |= (op << NV30_FP_OP_OPCODE_SHIFT);
-	hw[0] |= (mask << NV30_FP_OP_OUTMASK_SHIFT);
-	hw[2] |= (dst.dst_scale << NV30_FP_OP_DST_SCALE_SHIFT);
+	hw[0] |= (op << NVFX_FP_OP_OPCODE_SHIFT);
+	hw[0] |= (mask << NVFX_FP_OP_OUTMASK_SHIFT);
+	hw[2] |= (dst.dst_scale << NVFX_FP_OP_DST_SCALE_SHIFT);
 
 	if (sat)
-		hw[0] |= NV30_FP_OP_OUT_SAT;
+		hw[0] |= NVFX_FP_OP_OUT_SAT;
 
 	if (dst.cc_update)
-		hw[0] |= NV30_FP_OP_COND_WRITE_ENABLE;
-	hw[1] |= (dst.cc_test << NV30_FP_OP_COND_SHIFT);
-	hw[1] |= ((dst.cc_swz[0] << NV30_FP_OP_COND_SWZ_X_SHIFT) |
-		  (dst.cc_swz[1] << NV30_FP_OP_COND_SWZ_Y_SHIFT) |
-		  (dst.cc_swz[2] << NV30_FP_OP_COND_SWZ_Z_SHIFT) |
-		  (dst.cc_swz[3] << NV30_FP_OP_COND_SWZ_W_SHIFT));
+		hw[0] |= NVFX_FP_OP_COND_WRITE_ENABLE;
+	hw[1] |= (dst.cc_test << NVFX_FP_OP_COND_SHIFT);
+	hw[1] |= ((dst.cc_swz[0] << NVFX_FP_OP_COND_SWZ_X_SHIFT) |
+		  (dst.cc_swz[1] << NVFX_FP_OP_COND_SWZ_Y_SHIFT) |
+		  (dst.cc_swz[2] << NVFX_FP_OP_COND_SWZ_Z_SHIFT) |
+		  (dst.cc_swz[3] << NVFX_FP_OP_COND_SWZ_W_SHIFT));
 
 	emit_dst(fpc, dst);
 	emit_src(fpc, 0, s0);
@@ -221,25 +221,25 @@ nv30_fp_arith(struct nv30_fpc *fpc, int sat, int op,
 
 static void
 nv30_fp_tex(struct nv30_fpc *fpc, int sat, int op, int unit,
-	    struct nv30_sreg dst, int mask,
-	    struct nv30_sreg s0, struct nv30_sreg s1, struct nv30_sreg s2)
+	    struct nvfx_sreg dst, int mask,
+	    struct nvfx_sreg s0, struct nvfx_sreg s1, struct nvfx_sreg s2)
 {
 	struct nvfx_fragment_program *fp = fpc->fp;
 
 	nv30_fp_arith(fpc, sat, op, dst, mask, s0, s1, s2);
 
-	fp->insn[fpc->inst_offset] |= (unit << NV30_FP_OP_TEX_UNIT_SHIFT);
+	fp->insn[fpc->inst_offset] |= (unit << NVFX_FP_OP_TEX_UNIT_SHIFT);
 	fp->samplers |= (1 << unit);
 }
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 tgsi_src(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 {
-	struct nv30_sreg src;
+	struct nvfx_sreg src;
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nv30_sr(NV30SR_INPUT,
+		src = nvfx_sr(NVFXSR_INPUT,
 			      fpc->attrib_map[fsrc->Register.Index]);
 		break;
 	case TGSI_FILE_CONSTANT:
@@ -250,7 +250,7 @@ tgsi_src(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 		src = fpc->imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		src = nv30_sr(NV30SR_TEMP, fsrc->Register.Index + 1);
+		src = nvfx_sr(NVFXSR_TEMP, fsrc->Register.Index + 1);
 		if (fpc->high_temp < src.index)
 			fpc->high_temp = src.index;
 		break;
@@ -259,9 +259,9 @@ tgsi_src(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 	 */
 	case TGSI_FILE_OUTPUT:
 		if (fsrc->Register.Index == fpc->colour_id)
-			return nv30_sr(NV30SR_OUTPUT, 0);
+			return nvfx_sr(NVFXSR_OUTPUT, 0);
 		else
-			return nv30_sr(NV30SR_OUTPUT, 1);
+			return nvfx_sr(NVFXSR_OUTPUT, 1);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -277,27 +277,27 @@ tgsi_src(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 	return src;
 }
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 tgsi_dst(struct nv30_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
 	int idx;
 
 	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
 		if (fdst->Register.Index == fpc->colour_id)
-			return nv30_sr(NV30SR_OUTPUT, 0);
+			return nvfx_sr(NVFXSR_OUTPUT, 0);
 		else
-			return nv30_sr(NV30SR_OUTPUT, 1);
+			return nvfx_sr(NVFXSR_OUTPUT, 1);
 		break;
 	case TGSI_FILE_TEMPORARY:
 		idx = fdst->Register.Index + 1;
 		if (fpc->high_temp < idx)
 			fpc->high_temp = idx;
-		return nv30_sr(NV30SR_TEMP, idx);
+		return nvfx_sr(NVFXSR_TEMP, idx);
 	case TGSI_FILE_NULL:
-		return nv30_sr(NV30SR_NONE, 0);
+		return nvfx_sr(NVFXSR_NONE, 0);
 	default:
 		NOUVEAU_ERR("bad dst file %d\n", fdst->Register.File);
-		return nv30_sr(NV30SR_NONE, 0);
+		return nvfx_sr(NVFXSR_NONE, 0);
 	}
 }
 
@@ -315,10 +315,10 @@ tgsi_mask(uint tgsi)
 
 static boolean
 src_native_swz(struct nv30_fpc *fpc, const struct tgsi_full_src_register *fsrc,
-	       struct nv30_sreg *src)
+	       struct nvfx_sreg *src)
 {
-	const struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
-	struct nv30_sreg tgsi = tgsi_src(fpc, fsrc);
+	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_sreg tgsi = tgsi_src(fpc, fsrc);
 	uint mask = 0;
 	uint c;
 
@@ -350,8 +350,8 @@ static boolean
 nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 				const struct tgsi_full_instruction *finst)
 {
-	const struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
-	struct nv30_sreg src[3], dst, tmp;
+	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_sreg src[3], dst, tmp;
 	int mask, sat, unit = 0;
 	int ai = -1, ci = -1;
 	int i;
@@ -435,12 +435,12 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_CMP:
-		tmp = nv30_sr(NV30SR_NONE, 0);
+		tmp = nvfx_sr(NVFXSR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
-		dst.cc_test = NV30_VP_INST_COND_GE;
+		dst.cc_test = NVFX_VP_INST_COND_GE;
 		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
-		dst.cc_test = NV30_VP_INST_COND_LT;
+		dst.cc_test = NVFX_VP_INST_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
 	case TGSI_OPCODE_COS:
@@ -474,10 +474,10 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, 0, KIL, none, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_KIL:
-		dst = nv30_sr(NV30SR_NONE, 0);
+		dst = nvfx_sr(NVFXSR_NONE, 0);
 		dst.cc_update = 1;
 		arith(fpc, 0, MOV, dst, MASK_ALL, src[0], none, none);
-		dst.cc_update = 0; dst.cc_test = NV30_FP_OP_COND_LT;
+		dst.cc_update = 0; dst.cc_test = NVFX_FP_OP_COND_LT;
 		arith(fpc, 0, KIL, dst, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_LG2:
@@ -485,7 +485,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		break;
 //	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_LRP:
-		arith(fpc, sat, LRP, dst, mask, src[0], src[1], src[2]);
+		arith(fpc, sat, LRP_NV30, dst, mask, src[0], src[1], src[2]);
 		break;
 	case TGSI_OPCODE_MAD:
 		arith(fpc, sat, MAD, dst, mask, src[0], src[1], src[2]);
@@ -503,7 +503,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, MUL, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_POW:
-		arith(fpc, sat, POW, dst, mask, src[0], src[1], none);
+		arith(fpc, sat, POW_NV30, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_RCP:
 		arith(fpc, sat, RCP, dst, mask, src[0], none, none);
@@ -512,10 +512,10 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		assert(0);
 		break;
 	case TGSI_OPCODE_RFL:
-		arith(fpc, 0, RFL, dst, mask, src[0], src[1], none);
+		arith(fpc, 0, RFL_NV30, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_RSQ:
-		arith(fpc, sat, RSQ, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
+		arith(fpc, sat, RSQ_NV30, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
 		break;
 	case TGSI_OPCODE_SCS:
 		/* avoid overwriting the source */
@@ -590,25 +590,25 @@ nv30_fragprog_parse_decl_attrib(struct nv30_fpc *fpc,
 
 	switch (fdec->Semantic.Name) {
 	case TGSI_SEMANTIC_POSITION:
-		hw = NV30_FP_OP_INPUT_SRC_POSITION;
+		hw = NVFX_FP_OP_INPUT_SRC_POSITION;
 		break;
 	case TGSI_SEMANTIC_COLOR:
 		if (fdec->Semantic.Index == 0) {
-			hw = NV30_FP_OP_INPUT_SRC_COL0;
+			hw = NVFX_FP_OP_INPUT_SRC_COL0;
 		} else
 		if (fdec->Semantic.Index == 1) {
-			hw = NV30_FP_OP_INPUT_SRC_COL1;
+			hw = NVFX_FP_OP_INPUT_SRC_COL1;
 		} else {
 			NOUVEAU_ERR("bad colour semantic index\n");
 			return FALSE;
 		}
 		break;
 	case TGSI_SEMANTIC_FOG:
-		hw = NV30_FP_OP_INPUT_SRC_FOGC;
+		hw = NVFX_FP_OP_INPUT_SRC_FOGC;
 		break;
 	case TGSI_SEMANTIC_GENERIC:
 		if (fdec->Semantic.Index <= 7) {
-			hw = NV30_FP_OP_INPUT_SRC_TC(fdec->Semantic.
+			hw = NVFX_FP_OP_INPUT_SRC_TC(fdec->Semantic.
 						     Index);
 		} else {
 			NOUVEAU_ERR("bad generic semantic index\n");
@@ -702,7 +702,7 @@ nv30_fragprog_prepare(struct nv30_fpc *fpc)
 	tgsi_parse_free(&p);
 
 	/*if (++high_temp) {
-		fpc->r_temp = CALLOC(high_temp, sizeof(struct nv30_sreg));
+		fpc->r_temp = CALLOC(high_temp, sizeof(struct nvfx_sreg));
 		for (i = 0; i < high_temp; i++)
 			fpc->r_temp[i] = temp(fpc);
 		fpc->r_temps_discard = 0;

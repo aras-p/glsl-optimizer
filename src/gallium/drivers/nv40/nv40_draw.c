@@ -8,7 +8,7 @@
 #include "draw/draw_pipe.h"
 
 #include "nv40_context.h"
-#define NV40_SHADER_NO_FUCKEDNESS
+#define NVFX_SHADER_NO_FUCKEDNESS
 #include "nv40_shader.h"
 
 /* Simple, but crappy, swtnl path, hopefully we wont need to hit this very

@@ -35,9 +35,9 @@
 #define DEF_CTEST 0
 #include "nv30_shader.h"
 
-#define swz(s,x,y,z,w) nv30_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nv30_sr_neg((s))
-#define abs(s) nv30_sr_abs((s))
+#define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
+#define neg(s) nvfx_sr_neg((s))
+#define abs(s) nvfx_sr_abs((s))
 
 struct nv30_vpc {
 	struct nvfx_vertex_program *vp;
@@ -49,21 +49,21 @@ struct nv30_vpc {
 	int high_temp;
 	int temp_temp_count;
 
-	struct nv30_sreg *imm;
+	struct nvfx_sreg *imm;
 	unsigned nr_imm;
 };
 
-static struct nv30_sreg
+static struct nvfx_sreg
 temp(struct nv30_vpc *vpc)
 {
 	int idx;
 
 	idx  = vpc->temp_temp_count++;
 	idx += vpc->high_temp + 1;
-	return nv30_sr(NV30SR_TEMP, idx);
+	return nvfx_sr(NVFXSR_TEMP, idx);
 }
 
-static struct nv30_sreg
+static struct nvfx_sreg
 constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
@@ -73,7 +73,7 @@ constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 	if (pipe >= 0) {
 		for (idx = 0; idx < vp->nr_consts; idx++) {
 			if (vp->consts[idx].index == pipe)
-				return nv30_sr(NV30SR_CONST, idx);
+				return nvfx_sr(NVFXSR_CONST, idx);
 		}
 	}
 
@@ -86,37 +86,37 @@ constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 	vpd->value[1] = y;
 	vpd->value[2] = z;
 	vpd->value[3] = w;
-	return nv30_sr(NV30SR_CONST, idx);
+	return nvfx_sr(NVFXSR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
-	nv30_vp_arith((cc), (s), NV30_VP_INST_##o, (d), (m), (s0), (s1), (s2))
+	nv30_vp_arith((cc), NVFX_VP_INST_SLOT_##s, NVFX_VP_INST_##s##_OP_##o, (d), (m), (s0), (s1), (s2))
 
 static void
-emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
+emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nvfx_sreg src)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
 	uint32_t sr = 0;
 
 	switch (src.type) {
-	case NV30SR_TEMP:
+	case NVFXSR_TEMP:
 		sr |= (NV30_VP_SRC_REG_TYPE_TEMP << NV30_VP_SRC_REG_TYPE_SHIFT);
 		sr |= (src.index << NV30_VP_SRC_TEMP_SRC_SHIFT);
 		break;
-	case NV30SR_INPUT:
+	case NVFXSR_INPUT:
 		sr |= (NV30_VP_SRC_REG_TYPE_INPUT <<
 		       NV30_VP_SRC_REG_TYPE_SHIFT);
 		vp->ir |= (1 << src.index);
 		hw[1] |= (src.index << NV30_VP_INST_INPUT_SRC_SHIFT);
 		break;
-	case NV30SR_CONST:
+	case NVFXSR_CONST:
 		sr |= (NV30_VP_SRC_REG_TYPE_CONST <<
 		       NV30_VP_SRC_REG_TYPE_SHIFT);
 		assert(vpc->vpi->const_index == -1 ||
 		       vpc->vpi->const_index == src.index);
 		vpc->vpi->const_index = src.index;
 		break;
-	case NV30SR_NONE:
+	case NVFXSR_NONE:
 		sr |= (NV30_VP_SRC_REG_TYPE_INPUT <<
 		       NV30_VP_SRC_REG_TYPE_SHIFT);
 		break;
@@ -164,15 +164,15 @@ emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
 }
 
 static void
-emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
+emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nvfx_sreg dst)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
 
 	switch (dst.type) {
-	case NV30SR_TEMP:
+	case NVFXSR_TEMP:
 		hw[0] |= (dst.index << NV30_VP_INST_DEST_TEMP_ID_SHIFT);
 		break;
-	case NV30SR_OUTPUT:
+	case NVFXSR_OUTPUT:
 		switch (dst.index) {
 		case NV30_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
 		case NV30_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
@@ -207,9 +207,9 @@ emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
 
 static void
 nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
-	      struct nv30_sreg dst, int mask,
-	      struct nv30_sreg s0, struct nv30_sreg s1,
-	      struct nv30_sreg s2)
+	      struct nvfx_sreg dst, int mask,
+	      struct nvfx_sreg s0, struct nvfx_sreg s1,
+	      struct nvfx_sreg s2)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
 	uint32_t *hw;
@@ -221,7 +221,7 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 
 	hw = vpc->vpi->data;
 
-	hw[0] |= (NV30_VP_INST_COND_TR << NV30_VP_INST_COND_SHIFT);
+	hw[0] |= (NVFX_VP_INST_COND_TR << NV30_VP_INST_COND_SHIFT);
 	hw[0] |= ((0 << NV30_VP_INST_COND_SWZ_X_SHIFT) |
 		  (1 << NV30_VP_INST_COND_SWZ_Y_SHIFT) |
 		  (2 << NV30_VP_INST_COND_SWZ_Z_SHIFT) |
@@ -231,7 +231,7 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 //	hw[3] |= NV30_VP_INST_SCA_DEST_TEMP_MASK;
 //	hw[3] |= (mask << NV30_VP_INST_VEC_WRITEMASK_SHIFT);
 
-	if (dst.type == NV30SR_OUTPUT) {
+	if (dst.type == NVFXSR_OUTPUT) {
 		if (slot)
 			hw[3] |= (mask << NV30_VP_INST_SDEST_WRITEMASK_SHIFT);
 		else
@@ -249,13 +249,13 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 	emit_src(vpc, hw, 2, s2);
 }
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
-	struct nv30_sreg src;
+	struct nvfx_sreg src;
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nv30_sr(NV30SR_INPUT, fsrc->Register.Index);
+		src = nvfx_sr(NVFXSR_INPUT, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
 		src = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
@@ -266,7 +266,7 @@ tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	case TGSI_FILE_TEMPORARY:
 		if (vpc->high_temp < fsrc->Register.Index)
 			vpc->high_temp = fsrc->Register.Index;
-		src = nv30_sr(NV30SR_TEMP, fsrc->Register.Index);
+		src = nvfx_sr(NVFXSR_TEMP, fsrc->Register.Index);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -282,18 +282,18 @@ tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	return src;
 }
 
-static INLINE struct nv30_sreg
+static INLINE struct nvfx_sreg
 tgsi_dst(struct nv30_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
-	struct nv30_sreg dst;
+	struct nvfx_sreg dst;
 
 	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
-		dst = nv30_sr(NV30SR_OUTPUT,
+		dst = nvfx_sr(NVFXSR_OUTPUT,
 			      vpc->output_map[fdst->Register.Index]);
 
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = nv30_sr(NV30SR_TEMP, fdst->Register.Index);
+		dst = nvfx_sr(NVFXSR_TEMP, fdst->Register.Index);
 		if (vpc->high_temp < dst.index)
 			vpc->high_temp = dst.index;
 		break;
@@ -321,8 +321,8 @@ static boolean
 nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
-	struct nv30_sreg src[3], dst, tmp;
-	struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
+	struct nvfx_sreg src[3], dst, tmp;
+	struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
 	int mask;
 	int ai = -1, ci = -1;
 	int i;
@@ -351,7 +351,7 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
-				arith(vpc, 0, OP_MOV, src[i], MASK_ALL,
+				arith(vpc, VEC, MOV, src[i], MASK_ALL,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
@@ -365,7 +365,7 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
-				arith(vpc, 0, OP_MOV, src[i], MASK_ALL,
+				arith(vpc, VEC, MOV, src[i], MASK_ALL,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
@@ -383,96 +383,96 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
-		arith(vpc, 0, OP_MOV, dst, mask, abs(src[0]), none, none);
+		arith(vpc, VEC, MOV, dst, mask, abs(src[0]), none, none);
 		break;
 	case TGSI_OPCODE_ADD:
-		arith(vpc, 0, OP_ADD, dst, mask, src[0], none, src[1]);
+		arith(vpc, VEC, ADD, dst, mask, src[0], none, src[1]);
 		break;
 	case TGSI_OPCODE_ARL:
-		arith(vpc, 0, OP_ARL, dst, mask, src[0], none, none);
+		arith(vpc, VEC, ARL, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_DP3:
-		arith(vpc, 0, OP_DP3, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, DP3, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_DP4:
-		arith(vpc, 0, OP_DP4, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, DP4, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_DPH:
-		arith(vpc, 0, OP_DPH, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, DPH, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_DST:
-		arith(vpc, 0, OP_DST, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, DST, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_EX2:
-		arith(vpc, 1, OP_EX2, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, EX2, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_EXP:
-		arith(vpc, 1, OP_EXP, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, EXP, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_FLR:
-		arith(vpc, 0, OP_FLR, dst, mask, src[0], none, none);
+		arith(vpc, VEC, FLR, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_FRC:
-		arith(vpc, 0, OP_FRC, dst, mask, src[0], none, none);
+		arith(vpc, VEC, FRC, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_LG2:
-		arith(vpc, 1, OP_LG2, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, LG2, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_LIT:
-		arith(vpc, 1, OP_LIT, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, LIT, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_LOG:
-		arith(vpc, 1, OP_LOG, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, LOG, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_MAD:
-		arith(vpc, 0, OP_MAD, dst, mask, src[0], src[1], src[2]);
+		arith(vpc, VEC, MAD, dst, mask, src[0], src[1], src[2]);
 		break;
 	case TGSI_OPCODE_MAX:
-		arith(vpc, 0, OP_MAX, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, MAX, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_MIN:
-		arith(vpc, 0, OP_MIN, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, MIN, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_MOV:
-		arith(vpc, 0, OP_MOV, dst, mask, src[0], none, none);
+		arith(vpc, VEC, MOV, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_MUL:
-		arith(vpc, 0, OP_MUL, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, MUL, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_POW:
 		tmp = temp(vpc);
-		arith(vpc, 1, OP_LG2, tmp, MASK_X, none, none,
+		arith(vpc, SCA, LG2, tmp, MASK_X, none, none,
 		      swz(src[0], X, X, X, X));
-		arith(vpc, 0, OP_MUL, tmp, MASK_X, swz(tmp, X, X, X, X),
+		arith(vpc, VEC, MUL, tmp, MASK_X, swz(tmp, X, X, X, X),
 		      swz(src[1], X, X, X, X), none);
-		arith(vpc, 1, OP_EX2, dst, mask, none, none,
+		arith(vpc, SCA, EX2, dst, mask, none, none,
 		      swz(tmp, X, X, X, X));
 		break;
 	case TGSI_OPCODE_RCP:
-		arith(vpc, 1, OP_RCP, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, RCP, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_RET:
 		break;
 	case TGSI_OPCODE_RSQ:
-		arith(vpc, 1, OP_RSQ, dst, mask, none, none, src[0]);
+		arith(vpc, SCA, RSQ, dst, mask, none, none, src[0]);
 		break;
 	case TGSI_OPCODE_SGE:
-		arith(vpc, 0, OP_SGE, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, SGE, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SGT:
-		arith(vpc, 0, OP_SGT, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, SGT, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SLT:
-		arith(vpc, 0, OP_SLT, dst, mask, src[0], src[1], none);
+		arith(vpc, VEC, SLT, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SUB:
-		arith(vpc, 0, OP_ADD, dst, mask, src[0], none, neg(src[1]));
+		arith(vpc, VEC, ADD, dst, mask, src[0], none, neg(src[1]));
 		break;
 	case TGSI_OPCODE_XPD:
 		tmp = temp(vpc);
-		arith(vpc, 0, OP_MUL, tmp, mask,
+		arith(vpc, VEC, MUL, tmp, mask,
 		      swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none);
-		arith(vpc, 0, OP_MAD, dst, (mask & ~MASK_W),
+		arith(vpc, VEC, MAD, dst, (mask & ~MASK_W),
 		      swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y),
 		      neg(tmp));
 		break;
@@ -564,7 +564,7 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 	tgsi_parse_free(&p);
 
 	if (nr_imm) {
-		vpc->imm = CALLOC(nr_imm, sizeof(struct nv30_sreg));
+		vpc->imm = CALLOC(nr_imm, sizeof(struct nvfx_sreg));
 		assert(vpc->imm);
 	}
 
@@ -639,7 +639,7 @@ nv30_vertprog_translate(struct nvfx_context *nvfx,
 		}
 	}
 
-	vp->insns[vp->nr_insns - 1].data[3] |= NV30_VP_INST_LAST;
+	vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
