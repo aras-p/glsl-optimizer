@@ -231,8 +231,6 @@ static struct pipe_surface *brw_get_tex_surface(struct pipe_screen *screen,
    case BRW_VIEW_IN_PLACE:
       surface = create_in_place_view( bscreen, tex, id, usage );
       break;
-   default:
-      return NULL;
    }
 
    insert_at_head( &tex->views[type], surface );
