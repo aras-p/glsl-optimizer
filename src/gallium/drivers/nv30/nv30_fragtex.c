@@ -1,6 +1,6 @@
 #include "util/u_format.h"
 
-#include "nv30_context.h"
+#include "nvfx_context.h"
 #include "nouveau/nouveau_util.h"
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \

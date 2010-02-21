@@ -1,5 +1,4 @@
-#include "nv30/nv30_context.h"
-#include "nv40/nv40_context.h"
+#include "nvfx_context.h"
 #include "nvfx_state.h"
 #include "draw/draw_context.h"
 

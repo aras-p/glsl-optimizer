@@ -198,6 +198,14 @@ extern struct nvfx_state_entry nvfx_state_zsa;
 extern void nvfx_init_query_functions(struct nvfx_context *nvfx);
 extern void nvfx_init_surface_functions(struct nvfx_context *nvfx);
 
+/* nv30_context.c */
+struct pipe_context *
+nv30_create(struct pipe_screen *pscreen, void *priv);
+
+/* nv40_context.c */
+struct pipe_context *
+nv40_create(struct pipe_screen *pscreen, void *priv);
+
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
@@ -212,6 +220,16 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 /* nvfx_fragprog.c */
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
+
+/* nv30_fragtex.c */
+extern void nv30_init_sampler_functions(struct nvfx_context *nvfx);
+extern void nv30_fragtex_bind(struct nvfx_context *);
+extern struct nvfx_state_entry nv30_state_fragtex;
+
+/* nv40_fragtex.c */
+extern void nv40_init_sampler_functions(struct nvfx_context *nvfx);
+extern void nv40_fragtex_bind(struct nvfx_context *);
+extern struct nvfx_state_entry nv40_state_fragtex;
 
 /* nvfx_state.c */
 extern void nvfx_init_state_functions(struct nvfx_context *nvfx);

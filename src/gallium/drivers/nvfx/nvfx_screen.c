@@ -3,8 +3,7 @@
 
 #include "nouveau/nouveau_screen.h"
 
-#include "nv30/nv30_context.h"
-#include "nv40/nv40_context.h"
+#include "nvfx_context.h"
 #include "nvfx_screen.h"
 
 #define NV30TCL_CHIPSET_3X_MASK 0x00000003

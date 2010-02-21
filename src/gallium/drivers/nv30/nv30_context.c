@@ -1,7 +1,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 
-#include "nv30_context.h"
+#include "nvfx_context.h"
 #include "nvfx_screen.h"
 
 static void
