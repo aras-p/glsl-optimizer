@@ -2949,7 +2949,8 @@ sl_cl_compile(struct sl_pp_context *context,
    ctx.tokens_read = 0;
    ctx.tokens = malloc(ctx.tokens_cap * sizeof(struct sl_pp_token_info));
    if (!ctx.tokens) {
-      strncpy(error, "out of memory", cberror);
+      strncpy(error, "out of memory", cberror - 1);
+      error[cberror - 1] = '\0';
       return -1;
    }
 
