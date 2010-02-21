@@ -25,6 +25,10 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+# Clear CDPATH as the 'cd' command will echo stuff
+# to stdout if it is set
+unset CDPATH
+
 # Given a list of files, look for .a archives and unpack them.
 # Return the original list of files minus the .a files plus the unpacked files.
 # first param:  name of a temp directory (to be deleted when finished)
