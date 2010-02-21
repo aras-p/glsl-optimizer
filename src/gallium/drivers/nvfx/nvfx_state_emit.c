@@ -1,43 +1,33 @@
-#include "nv40_context.h"
+#include "nv30/nv30_context.h"
+#include "nv40/nv40_context.h"
 #include "nvfx_state.h"
 #include "draw/draw_context.h"
 
-static struct nvfx_state_entry *render_states[] = {
-	&nv40_state_framebuffer,
-	&nv40_state_rasterizer,
-	&nv40_state_scissor,
-	&nv40_state_stipple,
-	&nv40_state_fragprog,
-	&nv40_state_fragtex,
-	&nv40_state_vertprog,
-	&nv40_state_blend,
-	&nv40_state_blend_colour,
-	&nv40_state_zsa,
-	&nv40_state_sr,
-	&nv40_state_viewport,
-	&nv40_state_vbo,
-	NULL
-};
+#define RENDER_STATES(name, nvxx, vbo) \
+static struct nvfx_state_entry *name##_render_states[] = { \
+	&nvxx##_state_framebuffer, \
+	&nvxx##_state_rasterizer, \
+	&nvxx##_state_scissor, \
+	&nvxx##_state_stipple, \
+	&nvxx##_state_fragprog, \
+	&nvxx##_state_fragtex, \
+	&nvxx##_state_vertprog, \
+	&nvxx##_state_blend, \
+	&nvxx##_state_blend_colour, \
+	&nvxx##_state_zsa, \
+	&nvxx##_state_sr, \
+	&nvxx##_state_viewport, \
+	&nvxx##_state_##vbo, \
+	NULL \
+}
 
-static struct nvfx_state_entry *swtnl_states[] = {
-	&nv40_state_framebuffer,
-	&nv40_state_rasterizer,
-	&nv40_state_scissor,
-	&nv40_state_stipple,
-	&nv40_state_fragprog,
-	&nv40_state_fragtex,
-	&nv40_state_vertprog,
-	&nv40_state_blend,
-	&nv40_state_blend_colour,
-	&nv40_state_zsa,
-	&nv40_state_sr,
-	&nv40_state_viewport,
-	&nv40_state_vtxfmt,
-	NULL
-};
+RENDER_STATES(nv30, nv30, vbo);
+RENDER_STATES(nv30_swtnl, nv30, vbo); /* TODO: replace with vtxfmt once draw is unified */
+RENDER_STATES(nv40, nv40, vbo);
+RENDER_STATES(nv40_swtnl, nv40, vtxfmt);
 
 static void
-nv40_state_do_validate(struct nvfx_context *nvfx,
+nvfx_state_do_validate(struct nvfx_context *nvfx,
 		       struct nvfx_state_entry **states)
 {
 	while (*states) {
@@ -54,7 +44,7 @@ nv40_state_do_validate(struct nvfx_context *nvfx,
 }
 
 void
-nv40_state_emit(struct nvfx_context *nvfx)
+nvfx_state_emit(struct nvfx_context *nvfx)
 {
 	struct nvfx_state *state = &nvfx->state;
 	struct nvfx_screen *screen = nvfx->screen;
@@ -83,19 +73,21 @@ nv40_state_emit(struct nvfx_context *nvfx)
 		states &= ~(1ULL << i);
 	}
 
-	if (state->dirty & ((1ULL << NVFX_STATE_FRAGPROG) |
-			    (1ULL << NVFX_STATE_FRAGTEX0))) {
-		BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (chan, 2);
-		BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (chan, 1);
+	/* TODO: could nv30 need this or something similar too? */
+	if(nvfx->is_nv4x) {
+		if (state->dirty & ((1ULL << NVFX_STATE_FRAGPROG) |
+				    (1ULL << NVFX_STATE_FRAGTEX0))) {
+			BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
+			OUT_RING  (chan, 2);
+			BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
+			OUT_RING  (chan, 1);
+		}
 	}
-
 	state->dirty = 0;
 }
 
 void
-nv40_state_flush_notify(struct nouveau_channel *chan)
+nvfx_state_flush_notify(struct nouveau_channel *chan)
 {
 	struct nvfx_context *nvfx = chan->user_private;
 	struct nvfx_state *state = &nvfx->state;
@@ -115,7 +107,7 @@ nv40_state_flush_notify(struct nouveau_channel *chan)
 }
 
 boolean
-nv40_state_validate(struct nvfx_context *nvfx)
+nvfx_state_validate(struct nvfx_context *nvfx)
 {
 	boolean was_sw = nvfx->fallback_swtnl ? TRUE : FALSE;
 
@@ -135,10 +127,14 @@ nv40_state_validate(struct nvfx_context *nvfx)
 		nvfx->render_mode = HW;
 	}
 
-	nv40_state_do_validate(nvfx, render_states);
+	if(!nvfx->is_nv4x)
+		nvfx_state_do_validate(nvfx, nv30_render_states);
+	else
+		nvfx_state_do_validate(nvfx, nv40_render_states);
+
 	if (nvfx->fallback_swtnl || nvfx->fallback_swrast)
 		return FALSE;
-	
+
 	if (was_sw)
 		NOUVEAU_ERR("swtnl->hw\n");
 
@@ -146,7 +142,7 @@ nv40_state_validate(struct nvfx_context *nvfx)
 }
 
 boolean
-nv40_state_validate_swtnl(struct nvfx_context *nvfx)
+nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 {
 	struct draw_context *draw = nvfx->draw;
 
@@ -177,7 +173,11 @@ nv40_state_validate_swtnl(struct nvfx_context *nvfx)
 		draw_set_vertex_elements(draw, nvfx->vtxelt->num_elements, nvfx->vtxelt->pipe);
 	}
 
-	nv40_state_do_validate(nvfx, swtnl_states);
+	if(!nvfx->is_nv4x)
+		nvfx_state_do_validate(nvfx, nv30_swtnl_render_states);
+	else
+		nvfx_state_do_validate(nvfx, nv40_swtnl_render_states);
+
 	if (nvfx->fallback_swrast) {
 		NOUVEAU_ERR("swtnl->swrast 0x%08x\n", nvfx->fallback_swrast);
 		return FALSE;
@@ -186,4 +186,3 @@ nv40_state_validate_swtnl(struct nvfx_context *nvfx)
 	nvfx->draw_dirty = 0;
 	return TRUE;
 }
-

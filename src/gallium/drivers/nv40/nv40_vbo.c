@@ -176,7 +176,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 	unsigned restart;
 
 	nv40_vbo_set_idxbuf(nvfx, NULL, 0);
-	if (FORCE_SWTNL || !nv40_state_validate(nvfx)) {
+	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		nv40_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;
@@ -185,7 +185,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 	while (count) {
 		unsigned vc, nr;
 
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -239,7 +239,7 @@ nv40_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 		uint8_t *elts = (uint8_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -290,7 +290,7 @@ nv40_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 		uint16_t *elts = (uint16_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -341,7 +341,7 @@ nv40_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 		uint32_t *elts = (uint32_t *)ib + start;
 		unsigned vc, push, restart;
 
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 5, 1,
 					mode, start, count, &restart);
@@ -417,7 +417,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 	while (count) {
 		unsigned nr, vc;
 
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -466,7 +466,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 	boolean idxbuf;
 
 	idxbuf = nv40_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
-	if (FORCE_SWTNL || !nv40_state_validate(nvfx)) {
+	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		nv40_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;

@@ -185,6 +185,12 @@ struct nvfx_state_entry {
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
 
+/* nvfx_state_emit.c */
+extern void nvfx_state_flush_notify(struct nouveau_channel *chan);
+extern boolean nvfx_state_validate(struct nvfx_context *nvfx);
+extern boolean nvfx_state_validate_swtnl(struct nvfx_context *nvfx);
+extern void nvfx_state_emit(struct nvfx_context *nvfx);
+
 /* nvfx_transfer.c */
 extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
 

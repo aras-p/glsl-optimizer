@@ -28,10 +28,6 @@ extern void nv40_fragprog_destroy(struct nvfx_context *,
 extern void nv40_fragtex_bind(struct nvfx_context *);
 
 /* nv40_state.c and friends */
-extern boolean nv40_state_validate(struct nvfx_context *nvfx);
-extern boolean nv40_state_validate_swtnl(struct nvfx_context *nvfx);
-extern void nv40_state_emit(struct nvfx_context *nvfx);
-extern void nv40_state_flush_notify(struct nouveau_channel *chan);
 extern struct nvfx_state_entry nv40_state_rasterizer;
 extern struct nvfx_state_entry nv40_state_scissor;
 extern struct nvfx_state_entry nv40_state_stipple;

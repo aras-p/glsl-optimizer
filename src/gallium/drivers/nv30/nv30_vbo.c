@@ -175,7 +175,7 @@ nv30_draw_arrays(struct pipe_context *pipe,
 	unsigned restart = 0;
 
 	nv30_vbo_set_idxbuf(nvfx, NULL, 0);
-	if (FORCE_SWTNL || !nv30_state_validate(nvfx)) {
+	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		/*return nv30_draw_elements_swtnl(pipe, NULL, 0,
 						mode, start, count);*/
 		return;
@@ -184,7 +184,7 @@ nv30_draw_arrays(struct pipe_context *pipe,
 	while (count) {
 		unsigned vc, nr;
 
-		nv30_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -238,7 +238,7 @@ nv30_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 		uint8_t *elts = (uint8_t *)ib + start;
 		unsigned vc, push, restart = 0;
 
-		nv30_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -289,7 +289,7 @@ nv30_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 		uint16_t *elts = (uint16_t *)ib + start;
 		unsigned vc, push, restart = 0;
 
-		nv30_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
 					mode, start, count, &restart);
@@ -340,7 +340,7 @@ nv30_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 		uint32_t *elts = (uint32_t *)ib + start;
 		unsigned vc, push, restart = 0;
 
-		nv30_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 5, 1,
 					mode, start, count, &restart);
@@ -416,7 +416,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 	while (count) {
 		unsigned nr, vc;
 
-		nv30_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 
 		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
 					mode, start, count, &restart);
@@ -465,7 +465,7 @@ nv30_draw_elements(struct pipe_context *pipe,
 	boolean idxbuf;
 
 	idxbuf = nv30_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
-	if (FORCE_SWTNL || !nv30_state_validate(nvfx)) {
+	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
 		/*return nv30_draw_elements_swtnl(pipe, NULL, 0,
 						mode, start, count);*/
 		return;

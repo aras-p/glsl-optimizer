@@ -69,7 +69,7 @@ nv30_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	screen->base.channel->user_private = nvfx;
-	screen->base.channel->flush_notify = nv30_state_flush_notify;
+	screen->base.channel->flush_notify = nvfx_state_flush_notify;
 
 	nvfx->is_nv4x = screen->is_nv4x;
 

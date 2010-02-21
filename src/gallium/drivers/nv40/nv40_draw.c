@@ -98,7 +98,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			assert(0);
 		}
 		FIRE_RING(chan);
-		nv40_state_emit(nvfx);
+		nvfx_state_emit(nvfx);
 	}
 
 	/* Switch primitive modes if necessary */
@@ -245,10 +245,10 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	unsigned i;
 	void *map;
 
-	if (!nv40_state_validate_swtnl(nvfx))
+	if (!nvfx_state_validate_swtnl(nvfx))
 		return;
 	nvfx->state.dirty &= ~(1ULL << NVFX_STATE_VTXBUF);
-	nv40_state_emit(nvfx);
+	nvfx_state_emit(nvfx);
 
 	for (i = 0; i < nvfx->vtxbuf_nr; i++) {
 		map = pipe_buffer_map(pscreen, nvfx->vtxbuf[i].buffer,

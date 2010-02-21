@@ -24,9 +24,6 @@ extern void nv30_fragprog_destroy(struct nvfx_context *,
 extern void nv30_fragtex_bind(struct nvfx_context *);
 
 /* nv30_state.c and friends */
-extern boolean nv30_state_validate(struct nvfx_context *nvfx);
-extern void nv30_state_emit(struct nvfx_context *nvfx);
-extern void nv30_state_flush_notify(struct nouveau_channel *chan);
 extern struct nvfx_state_entry nv30_state_rasterizer;
 extern struct nvfx_state_entry nv30_state_scissor;
 extern struct nvfx_state_entry nv30_state_stipple;
