@@ -33,8 +33,8 @@
 #define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
 #define DEF_SCALE 0
 #define DEF_CTEST 0
-#include "nv30/nv30_shader.h"
-#include "nv40/nv40_shader.h"
+#include "nv30_vertprog.h"
+#include "nv40_vertprog.h"
 
 #define swz(s,x,y,z,w) nvfx_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
 #define neg(s) nvfx_sr_neg((s))

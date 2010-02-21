@@ -9,6 +9,8 @@ C_SOURCES = \
 	nvfx_draw.c \
 	nvfx_fragprog.c \
 	nvfx_fragtex.c \
+	nv30_fragtex.c \
+	nv40_fragtex.c \
 	nvfx_miptree.c \
 	nvfx_query.c \
 	nvfx_screen.c \

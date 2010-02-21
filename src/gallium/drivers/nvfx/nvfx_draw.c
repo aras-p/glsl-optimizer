@@ -9,8 +9,8 @@
 
 #include "nvfx_context.h"
 #define NVFX_SHADER_NO_FUCKEDNESS
-#include "nv30/nv30_shader.h"
-#include "nv40/nv40_shader.h"
+#include "nv30_vertprog.h"
+#include "nv40_vertprog.h"
 
 /* Simple, but crappy, swtnl path, hopefully we wont need to hit this very
  * often at all.  Uses "quadro style" vertex submission + a fixed vertex

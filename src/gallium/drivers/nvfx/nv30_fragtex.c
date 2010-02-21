@@ -145,4 +145,3 @@ nv30_fragtex_build(struct nvfx_context *nvfx, int unit)
 
 	return so;
 }
-
