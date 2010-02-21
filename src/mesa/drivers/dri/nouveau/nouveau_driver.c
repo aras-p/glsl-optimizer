@@ -112,8 +112,8 @@ nouveau_clear(GLcontext *ctx, GLbitfield buffers)
 			mask = pack_zs_i(s->format,
 					 (buffers & BUFFER_BIT_DEPTH &&
 					  ctx->Depth.Mask) ? ~0 : 0,
-					 (buffers & BUFFER_BIT_STENCIL &&
-					  ctx->Stencil.WriteMask[0]) ? ~0 : 0);
+					 (buffers & BUFFER_BIT_STENCIL ?
+					  ctx->Stencil.WriteMask[0] : 0));
 			value = pack_zs_f(s->format,
 					  ctx->Depth.Clear,
 					  ctx->Stencil.Clear);
