@@ -183,6 +183,7 @@ struct nvfx_state_entry {
 
 extern struct nvfx_state_entry nvfx_state_blend;
 extern struct nvfx_state_entry nvfx_state_blend_colour;
+extern struct nvfx_state_entry nvfx_state_fragprog;
 extern struct nvfx_state_entry nvfx_state_framebuffer;
 extern struct nvfx_state_entry nvfx_state_rasterizer;
 extern struct nvfx_state_entry nvfx_state_scissor;
@@ -197,6 +198,10 @@ extern void nvfx_init_surface_functions(struct nvfx_context *nvfx);
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
+
+/* nvfx_fragprog.c */
+extern void nvfx_fragprog_destroy(struct nvfx_context *,
+				    struct nvfx_fragment_program *);
 
 /* nvfx_state_emit.c */
 extern void nvfx_state_flush_notify(struct nouveau_channel *chan);

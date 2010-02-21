@@ -16,15 +16,10 @@ extern void nv40_draw_elements_swtnl(struct pipe_context *pipe,
 extern void nv40_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
 
-/* nv40_fragprog.c */
-extern void nv40_fragprog_destroy(struct nvfx_context *,
-				  struct nvfx_fragment_program *);
-
 /* nv40_fragtex.c */
 extern void nv40_fragtex_bind(struct nvfx_context *);
 
 /* nv40_state.c and friends */
-extern struct nvfx_state_entry nv40_state_fragprog;
 extern struct nvfx_state_entry nv40_state_vertprog;
 extern struct nvfx_state_entry nv40_state_fragtex;
 extern struct nvfx_state_entry nv40_state_vbo;

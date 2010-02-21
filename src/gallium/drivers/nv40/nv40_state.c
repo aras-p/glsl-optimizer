@@ -577,7 +577,7 @@ nv40_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_fragment_program *fp = hwcso;
 
-	nv40_fragprog_destroy(nvfx, fp);
+	nvfx_fragprog_destroy(nvfx, fp);
 	FREE((void*)fp->pipe.tokens);
 	FREE(fp);
 }

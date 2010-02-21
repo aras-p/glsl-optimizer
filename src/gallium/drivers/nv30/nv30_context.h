@@ -12,15 +12,10 @@ extern struct draw_stage *nv30_draw_render_stage(struct nvfx_context *nvfx);
 extern void nv30_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
 
-/* nv30_fragprog.c */
-extern void nv30_fragprog_destroy(struct nvfx_context *,
-				  struct nvfx_fragment_program *);
-
 /* nv30_fragtex.c */
 extern void nv30_fragtex_bind(struct nvfx_context *);
 
 /* nv30_state.c and friends */
-extern struct nvfx_state_entry nv30_state_fragprog;
 extern struct nvfx_state_entry nv30_state_vertprog;
 extern struct nvfx_state_entry nv30_state_fragtex;
 extern struct nvfx_state_entry nv30_state_vbo;
