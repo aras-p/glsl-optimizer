@@ -499,7 +499,10 @@ kms_display_get_modes(struct native_display *ndpy,
       kmode->base.desc = kmode->mode.name;
       kmode->base.width = kmode->mode.hdisplay;
       kmode->base.height = kmode->mode.vdisplay;
-      kmode->base.refresh_rate = kmode->mode.vrefresh / 1000;
+      kmode->base.refresh_rate = kmode->mode.vrefresh;
+      /* not all kernels have vrefresh = refresh_rate * 1000 */
+      if (kmode->base.refresh_rate > 1000)
+         kmode->base.refresh_rate = (kmode->base.refresh_rate + 500) / 1000;
    }
 
    nmodes_return = malloc(count * sizeof(*nmodes_return));
