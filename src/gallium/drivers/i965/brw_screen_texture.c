@@ -191,6 +191,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    struct brw_texture *tex;
    enum brw_buffer_type buffer_type;
    enum pipe_error ret;
+   GLuint format;
    
    tex = CALLOC_STRUCT(brw_texture);
    if (tex == NULL)
@@ -248,8 +249,10 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
-   tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
-   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
+
+   format = translate_tex_target(tex->base.format);
+   assert(format != BRW_SURFACEFORMAT_INVALID);
+   tex->ss.ss0.surface_format = format;
 
    /* This is ok for all textures with channel width 8bit or less:
     */
@@ -474,6 +477,7 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 {
    struct brw_screen *bscreen = brw_screen(screen);
    struct brw_texture *tex;
+   GLuint format;
 
    if (templ->target != PIPE_TEXTURE_2D ||
        templ->last_level != 0 ||
@@ -518,8 +522,10 @@ brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
-   tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
-   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
+
+   format = translate_tex_format(tex->base.format);
+   assert(format != BRW_SURFACEFORMAT_INVALID);
+   tex->ss.ss0.surface_format = format;
 
    /* This is ok for all textures with channel width 8bit or less:
     */
