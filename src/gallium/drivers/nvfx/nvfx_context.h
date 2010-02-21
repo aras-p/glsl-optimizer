@@ -190,6 +190,7 @@ extern struct nvfx_state_entry nvfx_state_scissor;
 extern struct nvfx_state_entry nvfx_state_sr;
 extern struct nvfx_state_entry nvfx_state_stipple;
 extern struct nvfx_state_entry nvfx_state_viewport;
+extern struct nvfx_state_entry nvfx_state_vtxfmt;
 extern struct nvfx_state_entry nvfx_state_zsa;
 
 extern void nvfx_init_query_functions(struct nvfx_context *nvfx);
@@ -198,6 +199,13 @@ extern void nvfx_init_surface_functions(struct nvfx_context *nvfx);
 /* nvfx_clear.c */
 extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
+
+/* nvfx_draw.c */
+extern struct draw_stage *nvfx_draw_render_stage(struct nvfx_context *nvfx);
+extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
+					struct pipe_buffer *idxbuf,
+					unsigned ib_size, unsigned mode,
+					unsigned start, unsigned count);
 
 /* nvfx_fragprog.c */
 extern void nvfx_fragprog_destroy(struct nvfx_context *,

@@ -84,7 +84,7 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	draw_wide_line_threshold(nvfx->draw, 9999999.0);
 	draw_enable_line_stipple(nvfx->draw, FALSE);
 	draw_enable_point_sprites(nvfx->draw, FALSE);
-	draw_set_rasterize_stage(nvfx->draw, nv40_draw_render_stage(nvfx));
+	draw_set_rasterize_stage(nvfx->draw, nvfx_draw_render_stage(nvfx));
 
 	return &nvfx->pipe;
 }

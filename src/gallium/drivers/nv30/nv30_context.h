@@ -5,9 +5,6 @@
 
 extern void nv30_init_state_functions(struct nvfx_context *nvfx);
 
-/* nv30_draw.c */
-extern struct draw_stage *nv30_draw_render_stage(struct nvfx_context *nvfx);
-
 /* nv30_vertprog.c */
 extern void nv30_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);

@@ -5,6 +5,7 @@ LIBNAME = nvfx
 
 C_SOURCES = \
 	nvfx_clear.c \
+	nvfx_draw.c \
 	nvfx_fragprog.c \
 	nvfx_miptree.c \
 	nvfx_query.c \

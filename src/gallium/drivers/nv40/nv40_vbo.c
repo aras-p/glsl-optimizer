@@ -177,7 +177,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 
 	nv40_vbo_set_idxbuf(nvfx, NULL, 0);
 	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
-		nv40_draw_elements_swtnl(pipe, NULL, 0,
+		nvfx_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;
 	}
@@ -467,7 +467,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 
 	idxbuf = nv40_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
 	if (FORCE_SWTNL || !nvfx_state_validate(nvfx)) {
-		nv40_draw_elements_swtnl(pipe, NULL, 0,
+		nvfx_draw_elements_swtnl(pipe, NULL, 0,
                                          mode, start, count);
                 return;
 	}

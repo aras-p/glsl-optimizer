@@ -7,29 +7,30 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pipe.h"
 
-#include "nv40_context.h"
+#include "nvfx_context.h"
 #define NVFX_SHADER_NO_FUCKEDNESS
-#include "nv40_shader.h"
+#include "nv30/nv30_shader.h"
+#include "nv40/nv40_shader.h"
 
 /* Simple, but crappy, swtnl path, hopefully we wont need to hit this very
  * often at all.  Uses "quadro style" vertex submission + a fixed vertex
  * layout to avoid the need to generate a vertex program or vtxfmt.
  */
 
-struct nv40_render_stage {
+struct nvfx_render_stage {
 	struct draw_stage stage;
 	struct nvfx_context *nvfx;
 	unsigned prim;
 };
 
-static INLINE struct nv40_render_stage *
-nv40_render_stage(struct draw_stage *stage)
+static INLINE struct nvfx_render_stage *
+nvfx_render_stage(struct draw_stage *stage)
 {
-	return (struct nv40_render_stage *)stage;
+	return (struct nvfx_render_stage *)stage;
 }
 
 static INLINE void
-nv40_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
+nvfx_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
@@ -80,10 +81,10 @@ nv40_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 }
 
 static INLINE void
-nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
+nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	       unsigned mode, unsigned count)
 {
-	struct nv40_render_stage *rs = nv40_render_stage(stage);
+	struct nvfx_render_stage *rs = nvfx_render_stage(stage);
 	struct nvfx_context *nvfx = rs->nvfx;
 
 	struct nvfx_screen *screen = nvfx->screen;
@@ -115,7 +116,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 
 	/* Emit vertex data */
 	for (i = 0; i < count; i++)
-		nv40_render_vertex(nvfx, prim->v[i]);
+		nvfx_render_vertex(nvfx, prim->v[i]);
 
 	/* If it's likely we'll need to empty the push buffer soon, finish
 	 * off the primitive now.
@@ -128,27 +129,27 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 }
 
 static void
-nv40_render_point(struct draw_stage *draw, struct prim_header *prim)
+nvfx_render_point(struct draw_stage *draw, struct prim_header *prim)
 {
-	nv40_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_POINTS, 1);
+	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_POINTS, 1);
 }
 
 static void
-nv40_render_line(struct draw_stage *draw, struct prim_header *prim)
+nvfx_render_line(struct draw_stage *draw, struct prim_header *prim)
 {
-	nv40_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_LINES, 2);
+	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_LINES, 2);
 }
 
 static void
-nv40_render_tri(struct draw_stage *draw, struct prim_header *prim)
+nvfx_render_tri(struct draw_stage *draw, struct prim_header *prim)
 {
-	nv40_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_TRIANGLES, 3);
+	nvfx_render_prim(draw, prim, NV34TCL_VERTEX_BEGIN_END_TRIANGLES, 3);
 }
 
 static void
-nv40_render_flush(struct draw_stage *draw, unsigned flags)
+nvfx_render_flush(struct draw_stage *draw, unsigned flags)
 {
-	struct nv40_render_stage *rs = nv40_render_stage(draw);
+	struct nvfx_render_stage *rs = nvfx_render_stage(draw);
 	struct nvfx_context *nvfx = rs->nvfx;
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
@@ -162,12 +163,12 @@ nv40_render_flush(struct draw_stage *draw, unsigned flags)
 }
 
 static void
-nv40_render_reset_stipple_counter(struct draw_stage *draw)
+nvfx_render_reset_stipple_counter(struct draw_stage *draw)
 {
 }
 
 static void
-nv40_render_destroy(struct draw_stage *draw)
+nvfx_render_destroy(struct draw_stage *draw)
 {
 	FREE(draw);
 }
@@ -201,14 +202,17 @@ create_drawvp(struct nvfx_context *nvfx)
 	struct nvfx_vertex_program *vp = CALLOC_STRUCT(nvfx_vertex_program);
 	unsigned i;
 
-	emit_mov(vp, NV40_VP_INST_DEST_POS, 0, ~0, 0xf);
-	emit_mov(vp, NV40_VP_INST_DEST_COL0, 3, 0, 0xf);
-	emit_mov(vp, NV40_VP_INST_DEST_COL1, 4, 1, 0xf);
-	emit_mov(vp, NV40_VP_INST_DEST_BFC0, 3, 2, 0xf);
-	emit_mov(vp, NV40_VP_INST_DEST_BFC1, 4, 3, 0xf);
-	emit_mov(vp, NV40_VP_INST_DEST_FOGC, 5, 4, 0x8);
+	// nv30 support comes in a later patch
+	assert(nvfx->is_nv4x);
+
+	emit_mov(vp, NVFX_VP(INST_DEST_POS), 0, ~0, 0xf);
+	emit_mov(vp, NVFX_VP(INST_DEST_COL0), 3, 0, 0xf);
+	emit_mov(vp, NVFX_VP(INST_DEST_COL1), 4, 1, 0xf);
+	emit_mov(vp, NVFX_VP(INST_DEST_BFC0), 3, 2, 0xf);
+	emit_mov(vp, NVFX_VP(INST_DEST_BFC1), 4, 3, 0xf);
+	emit_mov(vp, NVFX_VP(INST_DEST_FOGC), 5, 4, 0x8);
 	for (i = 0; i < 8; i++)
-		emit_mov(vp, NV40_VP_INST_DEST_TC(i), 8 + i, 14 + i, 0xf);
+		emit_mov(vp, NVFX_VP(INST_DEST_TC(i)), 8 + i, 14 + i, 0xf);
 
 	vp->insns[vp->nr_insns - 1].data[3] |= 1;
 	vp->translated = TRUE;
@@ -216,27 +220,27 @@ create_drawvp(struct nvfx_context *nvfx)
 }
 
 struct draw_stage *
-nv40_draw_render_stage(struct nvfx_context *nvfx)
+nvfx_draw_render_stage(struct nvfx_context *nvfx)
 {
-	struct nv40_render_stage *render = CALLOC_STRUCT(nv40_render_stage);
+	struct nvfx_render_stage *render = CALLOC_STRUCT(nvfx_render_stage);
 
 	if (!nvfx->swtnl.vertprog)
 		nvfx->swtnl.vertprog = create_drawvp(nvfx);
 
 	render->nvfx = nvfx;
 	render->stage.draw = nvfx->draw;
-	render->stage.point = nv40_render_point;
-	render->stage.line = nv40_render_line;
-	render->stage.tri = nv40_render_tri;
-	render->stage.flush = nv40_render_flush;
-	render->stage.reset_stipple_counter = nv40_render_reset_stipple_counter;
-	render->stage.destroy = nv40_render_destroy;
+	render->stage.point = nvfx_render_point;
+	render->stage.line = nvfx_render_line;
+	render->stage.tri = nvfx_render_tri;
+	render->stage.flush = nvfx_render_flush;
+	render->stage.reset_stipple_counter = nvfx_render_reset_stipple_counter;
+	render->stage.destroy = nvfx_render_destroy;
 
 	return &render->stage;
 }
 
 void
-nv40_draw_elements_swtnl(struct pipe_context *pipe,
+nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 			 struct pipe_buffer *idxbuf, unsigned idxbuf_size,
 			 unsigned mode, unsigned start, unsigned count)
 {
@@ -302,7 +306,7 @@ emit_attrib(struct nvfx_context *nvfx, unsigned hw, unsigned emit,
 }
 
 static boolean
-nv40_state_vtxfmt_validate(struct nvfx_context *nvfx)
+nvfx_state_vtxfmt_validate(struct nvfx_context *nvfx)
 {
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	unsigned colour = 0, texcoords = 0, fog = 0, i;
@@ -350,11 +354,10 @@ nv40_state_vtxfmt_validate(struct nvfx_context *nvfx)
 	return FALSE;
 }
 
-struct nvfx_state_entry nv40_state_vtxfmt = {
-	.validate = nv40_state_vtxfmt_validate,
+struct nvfx_state_entry nvfx_state_vtxfmt = {
+	.validate = nvfx_state_vtxfmt_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_ARRAYS | NVFX_NEW_FRAGPROG,
 		.hw = 0
 	}
 };
-
