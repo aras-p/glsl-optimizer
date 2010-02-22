@@ -151,6 +151,8 @@ static INLINE enum pipe_error
 svga_buffer_create_hw_storage(struct svga_screen *ss,
                               struct svga_buffer *sbuf)
 {
+   assert(!sbuf->user);
+
    if(!sbuf->hwbuf) {
       unsigned alignment = sbuf->base.alignment;
       unsigned usage = 0;
@@ -515,6 +517,9 @@ svga_buffer_destroy( struct pipe_buffer *buf )
    if(sbuf->handle)
       svga_buffer_destroy_host_surface(ss, sbuf);
    
+   if(sbuf->uploaded.buffer)
+      pipe_buffer_reference(&sbuf->uploaded.buffer, NULL);
+
    if(sbuf->hwbuf)
       svga_buffer_destroy_hw_storage(ss, sbuf);
    
@@ -613,11 +618,12 @@ svga_screen_init_buffer_functions(struct pipe_screen *screen)
 
 
 /**
- * Copy the contents of the user buffer / malloc buffer to a hardware buffer.
+ * Copy the contents of the malloc buffer to a hardware buffer.
  */
 static INLINE enum pipe_error
 svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
 {
+   assert(!sbuf->user);
    if(!sbuf->hwbuf) {
       enum pipe_error ret;
       void *map;
@@ -754,6 +760,7 @@ svga_buffer_handle(struct svga_context *svga,
    sbuf = svga_buffer(buf);
    
    assert(!sbuf->map.count);
+   assert(!sbuf->user);
    
    if(!sbuf->handle) {
       ret = svga_buffer_create_host_surface(ss, sbuf);

@@ -135,6 +135,19 @@ struct svga_buffer
    } map;
 
    /**
+    * Information about uploaded version of user buffers.
+    */
+   struct {
+      struct pipe_buffer *buffer;
+
+      /**
+       * We combine multiple user buffers into the same hardware buffer. This
+       * is the relative offset within that buffer.
+       */
+      unsigned offset;
+   } uploaded;
+
+   /**
     * DMA'ble memory.
     *
     * A piece of GMR memory, with the same size of the buffer. It is created

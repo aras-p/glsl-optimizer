@@ -49,7 +49,7 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
    /* Adjust refcounts */
    for (i = 0; i < count; i++) {
       pipe_buffer_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
-      if (svga_buffer(buffers[i].buffer)->user)
+      if (svga_buffer_is_user_buffer(buffers[i].buffer))
          any_user_buffer = TRUE;
    }
 
