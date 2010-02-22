@@ -324,7 +324,7 @@ nvfx_state_vtxfmt_validate(struct nvfx_context *nvfx)
 	for (i = 0; i < 2; i++) {
 		if (!(colour & (1 << i)))
 			continue;
-		emit_attrib(nvfx, 3 + i, EMIT_4UB, TGSI_SEMANTIC_COLOR, i);
+		emit_attrib(nvfx, 3 + i, EMIT_4F, TGSI_SEMANTIC_COLOR, i);
 	}
 
 	for (i = 0; i < 8; i++) {
