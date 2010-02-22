@@ -171,7 +171,7 @@ print_program_limits(GLenum target)
       GLenum token;
       const char *name;
    };
-   static const struct token_name limits[] = {
+   static const struct token_name common_limits[] = {
       { GL_MAX_PROGRAM_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEMPORARIES_ARB, "GL_MAX_PROGRAM_TEMPORARIES_ARB" },
@@ -184,6 +184,9 @@ print_program_limits(GLenum target)
       { GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB, "GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" },
       { GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, "GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB" },
       { GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, "GL_MAX_PROGRAM_ENV_PARAMETERS_ARB" },
+      { (GLenum) 0, NULL }
+   };
+   static const struct token_name fragment_limits[] = {
       { GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB" },
@@ -192,8 +195,10 @@ print_program_limits(GLenum target)
       { GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB" },
       { (GLenum) 0, NULL }
    };
+
    PFNGLGETPROGRAMIVARBPROC GetProgramivARB_func = (PFNGLGETPROGRAMIVARBPROC)
       glXGetProcAddressARB((GLubyte *) "glGetProgramivARB");
+
    GLint max[1];
    int i;
 
@@ -207,10 +212,18 @@ print_program_limits(GLenum target)
       return; /* something's wrong */
    }
 
-   for (i = 0; limits[i].token; i++) {
-      GetProgramivARB_func(target, limits[i].token, max);
+   for (i = 0; common_limits[i].token; i++) {
+      GetProgramivARB_func(target, common_limits[i].token, max);
       if (glGetError() == GL_NO_ERROR) {
-         printf("        %s = %d\n", limits[i].name, max[0]);
+         printf("        %s = %d\n", common_limits[i].name, max[0]);
+      }
+   }
+   if (target == GL_FRAGMENT_PROGRAM_ARB) {
+      for (i = 0; fragment_limits[i].token; i++) {
+         GetProgramivARB_func(target, fragment_limits[i].token, max);
+         if (glGetError() == GL_NO_ERROR) {
+            printf("        %s = %d\n", fragment_limits[i].name, max[0]);
+         }
       }
    }
 #endif /* GL_ARB_vertex_program / GL_ARB_fragment_program */
