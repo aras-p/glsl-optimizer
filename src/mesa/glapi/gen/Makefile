@@ -4,49 +4,75 @@
 # up to him/her to re-run this makefile and check in the newly generated files.
 
 
-TOP = ../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
-OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h glapidispatch.h \
-	../main/enums.c \
-	../main/remap_helper.h \
-	../x86/glapi_x86.S \
-	../x86-64/glapi_x86-64.S \
-	../sparc/glapi_sparc.S \
-	../../glx/indirect.c \
-	../../glx/indirect.h \
-	../../glx/indirect_init.c \
-	../../glx/indirect_size.h \
-	../../glx/indirect_size.c
+MESA_DIR = $(TOP)/src/mesa
+MESA_GLAPI_DIR = $(TOP)/src/mesa/glapi
+MESA_GLX_DIR = $(TOP)/src/glx
 
+MESA_GLAPI_OUTPUTS = \
+	$(MESA_GLAPI_DIR)/glprocs.h \
+	$(MESA_GLAPI_DIR)/glapitemp.h \
+	$(MESA_GLAPI_DIR)/glapioffsets.h \
+	$(MESA_GLAPI_DIR)/glapitable.h \
+	$(MESA_GLAPI_DIR)/glapidispatch.h
 
-GLX_DIR = $(XORG_BASE)/glx
+MESA_GLAPI_ASM_OUTPUTS = \
+	$(MESA_DIR)/x86/glapi_x86.S \
+	$(MESA_DIR)/x86-64/glapi_x86-64.S \
+	$(MESA_DIR)/sparc/glapi_sparc.S
 
-SERVER_GLAPI_FILES = \
-	$(GLX_DIR)/glapi.h \
-	$(GLX_DIR)/glapi.c \
-	$(GLX_DIR)/glapi_nop.c \
-	$(GLX_DIR)/glthread.c \
-	$(GLX_DIR)/glthread.h
+MESA_OUTPUTS = \
+	$(MESA_GLAPI_OUTPUTS) \
+	$(MESA_GLAPI_ASM_OUTPUTS) \
+	$(MESA_DIR)/main/enums.c \
+	$(MESA_DIR)/main/remap_helper.h \
+	$(MESA_GLX_DIR)/indirect.c \
+	$(MESA_GLX_DIR)/indirect.h \
+	$(MESA_GLX_DIR)/indirect_init.c \
+	$(MESA_GLX_DIR)/indirect_size.h \
+	$(MESA_GLX_DIR)/indirect_size.c
 
-SERVER_OUTPUTS = \
-	$(GLX_DIR)/indirect_dispatch.c \
-	$(GLX_DIR)/indirect_dispatch_swap.c \
-	$(GLX_DIR)/indirect_dispatch.h \
-	$(GLX_DIR)/indirect_reqsize.c \
-	$(GLX_DIR)/indirect_reqsize.h \
-	$(GLX_DIR)/indirect_size.h \
-	$(GLX_DIR)/indirect_size_get.c \
-	$(GLX_DIR)/indirect_size_get.h \
-	$(GLX_DIR)/indirect_table.c \
-	$(GLX_DIR)/glapitemp.h \
-	$(GLX_DIR)/glapitable.h \
-	$(GLX_DIR)/glapioffsets.h \
-	$(GLX_DIR)/glapidispatch.h \
-	$(GLX_DIR)/glprocs.h \
-	$(SERVER_GLAPI_FILES)
+######################################################################
 
-API_XML = gl_API.xml \
+XORG_GLX_DIR = $(XORG_BASE)/glx
+
+XORG_GLAPI_FILES = \
+	$(XORG_GLX_DIR)/glapi.h \
+	$(XORG_GLX_DIR)/glapi.c \
+	$(XORG_GLX_DIR)/glapi_getproc.c \
+	$(XORG_GLX_DIR)/glapi_nop.c \
+	$(XORG_GLX_DIR)/glthread.c \
+	$(XORG_GLX_DIR)/glthread.h
+
+XORG_GLAPI_OUTPUTS = \
+	$(XORG_GLX_DIR)/glprocs.h \
+	$(XORG_GLX_DIR)/glapitemp.h \
+	$(XORG_GLX_DIR)/glapioffsets.h \
+	$(XORG_GLX_DIR)/glapitable.h \
+	$(XORG_GLX_DIR)/glapidispatch.h
+
+# XXX sync mesa and xorg glapi, generate in mesa only and just copy in glx/glapi
+#
+#	$(XORG_GLAPI_FILES) \
+#	$(XORG_GLAPI_OUTPUTS) \
+
+XORG_OUTPUTS = \
+	$(XORG_GLX_DIR)/indirect_dispatch.c \
+	$(XORG_GLX_DIR)/indirect_dispatch_swap.c \
+	$(XORG_GLX_DIR)/indirect_dispatch.h \
+	$(XORG_GLX_DIR)/indirect_reqsize.c \
+	$(XORG_GLX_DIR)/indirect_reqsize.h \
+	$(XORG_GLX_DIR)/indirect_size.h \
+	$(XORG_GLX_DIR)/indirect_size_get.c \
+	$(XORG_GLX_DIR)/indirect_size_get.h \
+	$(XORG_GLX_DIR)/indirect_table.c
+
+######################################################################
+
+API_XML = \
+	gl_API.xml \
 	ARB_copy_buffer.xml \
 	ARB_depth_clamp.xml \
 	ARB_draw_elements_base_vertex.xml \
@@ -63,96 +89,115 @@ API_XML = gl_API.xml \
 	EXT_texture_array.xml \
 	NV_conditional_render.xml
 
-COMMON = gl_XML.py glX_XML.py license.py $(API_XML) typeexpr.py
+COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py
+
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
-all: check-xorg-source $(OUTPUTS) $(SERVER_OUTPUTS)
+######################################################################
+
+all: mesa xorg
+
+mesa: $(MESA_OUTPUTS)
+
+xorg: check-xorg-source $(XORG_OUTPUTS)
 
 check-xorg-source:
-	@if ! test -d $(GLX_DIR); then \
+	@if ! test -d $(XORG_GLX_DIR); then \
 		echo "ERROR: Must specify path to xserver checkout; set XORG_BASE."; \
 		exit 1; \
 	fi
 
-$(GLX_DIR)/%.c: %.c
+clean:
+	-rm -f *~ *.pyo
+	-rm -f $(MESA_OUTPUTS)
+
+######################################################################
+
+$(XORG_GLX_DIR)/%.c: %.c
 	cp $< $@
 
-$(GLX_DIR)/%.h: %.h
+$(XORG_GLX_DIR)/%.h: %.h
 	cp $< $@
 
-glprocs.h $(GLX_DIR)/glprocs.h: gl_procs.py $(COMMON)
+######################################################################
+
+$(MESA_GLAPI_DIR)/glprocs.h $(XORG_GLX_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitemp.h $(GLX_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapitemp.h $(XORG_GLX_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapioffsets.h $(GLX_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapioffsets.h $(XORG_GLX_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitable.h $(GLX_DIR)/glapitable.h: gl_table.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapitable.h $(XORG_GLX_DIR)/glapitable.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapidispatch.h $(GLX_DIR)/glapidispatch.h: gl_table.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapidispatch.h $(XORG_GLX_DIR)/glapidispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
-../main/enums.c: gl_enums.py $(COMMON)
+######################################################################
+
+$(MESA_DIR)/x86/glapi_x86.S: gl_x86_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../main/remap_helper.h: remap_helper.py $(COMMON)
+$(MESA_DIR)/x86-64/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../x86/glapi_x86.S: gl_x86_asm.py $(COMMON)
+$(MESA_DIR)/sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../x86-64/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
+######################################################################
+
+$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
+$(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../../glx/indirect.c: glX_proto_send.py $(COMMON_GLX)
+######################################################################
+
+$(MESA_GLX_DIR)/indirect.c: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m proto | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/indirect.h: glX_proto_send.py $(COMMON_GLX)
+$(MESA_GLX_DIR)/indirect.h: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_h > $@
 
-../../glx/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
+$(MESA_GLX_DIR)/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_c > $@
 
-../../glx/indirect_size.h $(GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
+$(MESA_GLX_DIR)/indirect_size.h $(XORG_GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-set -h _INDIRECT_SIZE_H_ \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
+$(MESA_GLX_DIR)/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_c --only-set \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_dispatch.c: glX_proto_recv.py $(COMMON_GLX)
+######################################################################
+
+$(XORG_GLX_DIR)/indirect_dispatch.c: glX_proto_recv.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_c > $@
 
-$(GLX_DIR)/indirect_dispatch_swap.c: glX_proto_recv.py $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_dispatch_swap.c: glX_proto_recv.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_c -s > $@
 
-$(GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py gl_and_glX_API.xml $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py gl_and_glX_API.xml $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_h -f gl_and_glX_API.xml -s > $@
 
-$(GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_c | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' \
 	  | $(INDENT) $(INDENT_FLAGS) -l200 > $@
 
-$(GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m reqsize_c | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_table.c: glX_server_table.py gl_and_glX_API.xml $(COMMON_GLX)
+$(XORG_GLX_DIR)/indirect_table.c: glX_server_table.py gl_and_glX_API.xml $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_and_glX_API.xml > $@
-
-clean:
-	-rm -f *~ *.pyo
-	-rm -f $(OUTPUTS)
