@@ -108,7 +108,7 @@ ast_node::print(void) const
 
 ast_node::ast_node(void)
 {
-//   make_empty_list(& ast->node);
+   make_empty_list(this);
 }
 
 void
