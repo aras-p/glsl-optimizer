@@ -158,9 +158,10 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    }
 
    /* Mark the end of the buffer. */
-   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END; /* noop */
+   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END;
    batch->ptr += 4;
    used = batch->ptr - batch->map;
+   assert (used <= batch->buf->size);
 
    /* Workaround for recursive batchbuffer flushing: If the window is
     * moved, we can get into a case where we try to flush during a
