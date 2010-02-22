@@ -473,7 +473,7 @@ nvfx_draw_elements(struct pipe_context *pipe,
 
 	idxbuf = nvfx_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
 	if (nvfx_force_swtnl(nvfx) || !nvfx_state_validate(nvfx)) {
-		nvfx_draw_elements_swtnl(pipe, NULL, 0,
+		nvfx_draw_elements_swtnl(pipe, indexBuffer, indexSize,
                                            mode, start, count);
 		return;
 	}
