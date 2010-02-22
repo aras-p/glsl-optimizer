@@ -217,7 +217,7 @@ void intel_flush_prim(struct intel_context *intel)
    intel->prim.count = 0;
    offset = intel->prim.start_offset;
    intel->prim.start_offset = intel->prim.current_offset;
-   if (!intel->gen >= 3)
+   if (intel->gen < 3)
       intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.flush = NULL;
 
