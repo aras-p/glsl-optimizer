@@ -321,6 +321,9 @@ iter_instruction(
          reg,
          "destination",
          FALSE );
+      if (!inst->Dst[i].Register.WriteMask) {
+         report_error(ctx, "Destination register has empty writemask");
+      }
    }
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       scan_register *reg = create_scan_register_src(&inst->Src[i]);
