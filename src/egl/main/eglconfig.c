@@ -76,9 +76,6 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 }
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
@@ -94,9 +91,6 @@ _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
    }
    return (i < num_configs);
 }
-
-
-#endif /* _EGL_SKIP_HANDLE_CHECK */
 
 
 enum {
