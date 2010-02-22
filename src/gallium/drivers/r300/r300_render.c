@@ -258,11 +258,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
     assert((start * indexSize)  % 4 == 0);
 
-    /* XXX Non-zero offset locks up. */
-    if (offset_dwords != 0) {
-        return;
-    }
-
     if (alt_num_verts) {
         assert(count < (1 << 24));
         BEGIN_CS(16);
@@ -276,13 +271,13 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
-        count_dwords = count + start;
+        count_dwords = count;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
                r300_translate_primitive(mode) |
                (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
     } else {
-        count_dwords = (count + start + 1) / 2;
+        count_dwords = (count + 1) / 2;
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                r300_translate_primitive(mode) |
                (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
