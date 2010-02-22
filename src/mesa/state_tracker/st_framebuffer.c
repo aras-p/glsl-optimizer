@@ -160,6 +160,7 @@ void st_unreference_framebuffer( struct st_framebuffer *stfb )
  * Set/replace a framebuffer surface.
  * The user of the state tracker can use this instead of
  * st_resize_framebuffer() to provide new surfaces when a window is resized.
+ * \param surfIndex  an ST_SURFACE_x index
  */
 void
 st_set_framebuffer_surface(struct st_framebuffer *stfb,
@@ -169,6 +170,13 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
    static const GLuint invalid_size = 9999999;
    struct st_renderbuffer *strb;
    GLuint width, height, i;
+
+   /* sanity checks */
+   assert(ST_SURFACE_FRONT_LEFT == BUFFER_FRONT_LEFT);
+   assert(ST_SURFACE_BACK_LEFT == BUFFER_BACK_LEFT);
+   assert(ST_SURFACE_FRONT_RIGHT == BUFFER_FRONT_RIGHT);
+   assert(ST_SURFACE_BACK_RIGHT == BUFFER_BACK_RIGHT);
+   assert(ST_SURFACE_DEPTH == BUFFER_DEPTH);
 
    assert(surfIndex < BUFFER_COUNT);
 
