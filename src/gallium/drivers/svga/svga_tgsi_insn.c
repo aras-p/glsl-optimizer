@@ -1417,21 +1417,21 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
 
          /* Divide texcoord R by Q */
          if (!submit_op1( emit, inst_token( SVGA3DOP_RCP ),
-                          src0_zdivw,
+                          writemask(src0_zdivw, TGSI_WRITEMASK_X),
                           scalar(src0, TGSI_SWIZZLE_W) ))
             return FALSE;
 
          if (!submit_op2( emit, inst_token( SVGA3DOP_MUL ),
-                          src0_zdivw,
+                          writemask(src0_zdivw, TGSI_WRITEMASK_X),
                           scalar(src0, TGSI_SWIZZLE_Z),
-                          src(src0_zdivw) ))
+                          scalar(src(src0_zdivw), TGSI_SWIZZLE_X) ))
             return FALSE;
 
          if (!emit_select(
                 emit,
                 emit->key.fkey.tex[src1.base.num].compare_func,
                 writemask( dst, TGSI_WRITEMASK_XYZ ),
-                src(src0_zdivw),
+                scalar(src(src0_zdivw), TGSI_SWIZZLE_X),
                 tex_src_x))
             return FALSE;
       }
