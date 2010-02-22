@@ -59,6 +59,11 @@ boolean radeon_buffer_from_texture(struct drm_api* api,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride);
 
+struct pipe_buffer* radeon_buffer_from_handle(struct drm_api* api,
+                                              struct pipe_screen* screen,
+                                              const char* name,
+                                              unsigned handle);
+
 boolean radeon_handle_from_buffer(struct drm_api* api,
                                   struct pipe_screen* screen,
                                   struct pipe_buffer* buffer,

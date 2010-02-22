@@ -23,6 +23,10 @@
 #ifndef R300_WINSYS_H
 #define R300_WINSYS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The public interface header for the r300 pipe driver.
  * Any winsys hosting this pipe needs to implement r300_winsys and then
  * call r300_create_screen to start things. */
@@ -30,128 +34,19 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
-struct r300_winsys_screen;
+struct radeon_winsys;
 
 /* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws);
-
-struct r300_winsys_buffer;
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 
 boolean r300_get_texture_buffer(struct pipe_screen* screen,
                                 struct pipe_texture* texture,
-                                struct r300_winsys_buffer** buffer,
-                                unsigned *stride);
+                                struct pipe_buffer** buffer,
+                                unsigned* stride);
 
-enum r300_value_id {
-    R300_VID_PCI_ID,
-    R300_VID_GB_PIPES,
-    R300_VID_Z_PIPES,
-};
+#ifdef __cplusplus
+}
+#endif
 
-struct r300_winsys_screen {
-    void (*destroy)(struct r300_winsys_screen *ws);
-    
-    /**
-     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
-     *
-     * Remember that gallium gets to choose the interface it needs, and the
-     * window systems must then implement that interface (rather than the
-     * other way around...).
-     *
-     * usage is a bitmask of R300_WINSYS_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
-     * usage argument is only an optimization hint, not a guarantee, therefore
-     * proper behavior must be observed in all circumstances.
-     *
-     * alignment indicates the client's alignment requirements, eg for
-     * SSE instructions.
-     */
-    struct r300_winsys_buffer *(*buffer_create)(struct r300_winsys_screen *ws,
-						unsigned alignment,
-						unsigned usage,
-						unsigned size);
-    
-    /**
-     * Map the entire data store of a buffer object into the client's address.
-     * flags is bitmask of R300_WINSYS_BUFFER_USAGE_CPU_READ/WRITE flags.
-     */
-    void *(*buffer_map)( struct r300_winsys_screen *ws,
-			 struct r300_winsys_buffer *buf,
-			 unsigned usage );
-
-    void (*buffer_unmap)( struct r300_winsys_screen *ws,
-			  struct r300_winsys_buffer *buf );
-
-    void (*buffer_destroy)( struct r300_winsys_buffer *buf );
-
-
-    void (*buffer_reference)(struct r300_winsys_screen *rws,
-			     struct r300_winsys_buffer **pdst,
-			     struct r300_winsys_buffer *src);
-
-    boolean (*buffer_references)(struct r300_winsys_buffer *a,
-				 struct r300_winsys_buffer *b);
-
-    /* Add a pipe_buffer to the list of buffer objects to validate. */
-    boolean (*add_buffer)(struct r300_winsys_screen *winsys,
-                          struct r300_winsys_buffer *buf,
-                          uint32_t rd,
-                          uint32_t wd);
-
-    /* Revalidate all currently setup pipe_buffers.
-     * Returns TRUE if a flush is required. */
-    boolean (*validate)(struct r300_winsys_screen* winsys);
-
-    /* Check to see if there's room for commands. */
-    boolean (*check_cs)(struct r300_winsys_screen* winsys, int size);
-
-    /* Start a command emit. */
-    void (*begin_cs)(struct r300_winsys_screen* winsys,
-                     int size,
-                     const char* file,
-                     const char* function,
-                     int line);
-
-    /* Write a dword to the command buffer. */
-    void (*write_cs_dword)(struct r300_winsys_screen* winsys, uint32_t dword);
-
-    /* Write a relocated dword to the command buffer. */
-    void (*write_cs_reloc)(struct r300_winsys_screen *winsys,
-                           struct r300_winsys_buffer *buf,
-                           uint32_t rd,
-                           uint32_t wd,
-                           uint32_t flags);
-
-    /* Finish a command emit. */
-    void (*end_cs)(struct r300_winsys_screen* winsys,
-                   const char* file,
-                   const char* function,
-                   int line);
-
-    /* Flush the CS. */
-    void (*flush_cs)(struct r300_winsys_screen* winsys);
-
-    /* winsys flush - callback from winsys when flush required */
-    void (*set_flush_cb)(struct r300_winsys_screen *winsys,
-			 void (*flush_cb)(void *), void *data);
-
-    void (*reset_bos)(struct r300_winsys_screen *winsys);
-
-    void (*buffer_set_tiling)(struct r300_winsys_screen *winsys,
-                              struct r300_winsys_buffer *buffer,
-                              uint32_t pitch,
-                              boolean microtiled,
-                              boolean macrotiled);
-
-    uint32_t (*get_value)(struct r300_winsys_screen *winsys,
-			  enum r300_value_id vid);
-};
-
-struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen);
-
-struct pipe_texture *r300_texture_blanket_winsys_buffer(struct pipe_screen *screen,
-							const struct pipe_texture *base,
-							const unsigned *stride,
-							struct r300_winsys_buffer *buffer);
 #endif /* R300_WINSYS_H */

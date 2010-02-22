@@ -23,6 +23,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 
 #include "r300_context.h"
 #include "r300_screen.h"
@@ -30,8 +31,6 @@
 
 #include "radeon_winsys.h"
 #include "r300_winsys.h"
-
-#include "r300_screen_buffer.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -293,11 +292,10 @@ static void* r300_transfer_map(struct pipe_screen* screen,
                               struct pipe_transfer* transfer)
 {
     struct r300_texture* tex = (struct r300_texture*)transfer->texture;
-    struct r300_winsys_screen *rws = r300_winsys_screen(screen);
     char* map;
     enum pipe_format format = tex->tex.format;
 
-    map = rws->buffer_map(rws, tex->buffer,
+    map = pipe_buffer_map(screen, tex->buffer,
                           pipe_transfer_buffer_flags(transfer));
 
     if (!map) {
@@ -313,26 +311,21 @@ static void r300_transfer_unmap(struct pipe_screen* screen,
                                 struct pipe_transfer* transfer)
 {
     struct r300_texture* tex = (struct r300_texture*)transfer->texture;
-    struct r300_winsys_screen *rws = r300_winsys_screen(screen);
-    rws->buffer_unmap(rws, tex->buffer);
+    pipe_buffer_unmap(screen, tex->buffer);
 }
 
 static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
-    struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
-
-    if (rws)
-      rws->destroy(rws);
 
     FREE(r300screen->caps);
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
+struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
 {
-    struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
-    struct r300_capabilities *caps = CALLOC_STRUCT(r300_capabilities);
+    struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
+    struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
 
     if (!r300screen || !caps) {
         FREE(r300screen);
@@ -340,16 +333,16 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
         return NULL;
     }
 
-    caps->pci_id = rws->get_value(rws, R300_VID_PCI_ID);
-    caps->num_frag_pipes = rws->get_value(rws, R300_VID_GB_PIPES);
-    caps->num_z_pipes = rws->get_value(rws, R300_VID_Z_PIPES);
+    caps->pci_id = radeon_winsys->pci_id;
+    caps->num_frag_pipes = radeon_winsys->gb_pipes;
+    caps->num_z_pipes = radeon_winsys->z_pipes;
 
     r300_init_debug(r300screen);
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->rws = rws;
-    r300screen->screen.winsys = (struct pipe_winsys*)rws;
+    r300screen->radeon_winsys = radeon_winsys;
+    r300screen->screen.winsys = (struct pipe_winsys*)radeon_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;
@@ -363,12 +356,7 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
     r300screen->screen.transfer_unmap = r300_transfer_unmap;
 
     r300_init_screen_texture_functions(&r300screen->screen);
-    r300_screen_init_buffer_functions(r300screen);
-    return &r300screen->screen;
-}
+    u_simple_screen_init(&r300screen->screen);
 
-struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen)
-{
-    return r300_screen(screen)->rws;
+    return &r300screen->screen;
 }

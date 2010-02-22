@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 LIBNAME = radeonwinsys
 
 C_SOURCES = \
-	radeon_drm_buffer.c \
+	radeon_buffer.c \
 	radeon_drm.c \
 	radeon_r300.c
 

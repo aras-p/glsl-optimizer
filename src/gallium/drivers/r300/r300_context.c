@@ -24,7 +24,6 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
-#include "util/u_upload_mgr.h"
 
 #include "r300_blit.h"
 #include "r300_context.h"
@@ -55,9 +54,6 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(query);
     }
 
-    u_upload_destroy(r300->upload_vb);
-    u_upload_destroy(r300->upload_ib);
-
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
@@ -74,7 +70,11 @@ r300_is_texture_referenced(struct pipe_context *pipe,
                            struct pipe_texture *texture,
                            unsigned face, unsigned level)
 {
-    return 0;
+    struct pipe_buffer* buf = 0;
+
+    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
+
+    return pipe->is_buffer_referenced(pipe, buf);
 }
 
 static unsigned int
@@ -136,14 +136,14 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
-    struct r300_winsys_screen *rws = r300screen->rws;
+    struct radeon_winsys* radeon_winsys = r300screen->radeon_winsys;
 
     if (!r300)
         return NULL;
 
-    r300->rws = rws;
+    r300->winsys = radeon_winsys;
 
-    r300->context.winsys = (struct pipe_winsys*)rws;
+    r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
     r300->context.priv = priv;
 
@@ -201,31 +201,11 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->invariant_state.dirty = TRUE;
 
-    rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
+    r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
 
     r300->blitter = util_blitter_create(&r300->context);
 
-    r300->upload_ib = u_upload_create(screen,
-				      32 * 1024, 16,
-				      PIPE_BUFFER_USAGE_INDEX);
-
-    if (r300->upload_ib == NULL)
-        goto no_upload_ib;
-
-    r300->upload_vb = u_upload_create(screen,
-				      128 * 1024, 16,
-				      PIPE_BUFFER_USAGE_VERTEX);
-    if (r300->upload_vb == NULL)
-        goto no_upload_vb;
-
     return &r300->context;
-
-    //    u_upload_destroy(r300->upload_vb);
- no_upload_ib:
-    u_upload_destroy(r300->upload_ib);
- no_upload_vb:
-    FREE(r300);
-    return NULL;
 }

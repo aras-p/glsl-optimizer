@@ -51,7 +51,7 @@
 
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
-    struct r300_winsys_screen *cs_winsys = cs_context_copy->rws; \
+    struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
     int cs_count = 0; (void) cs_count;
 
 #define CHECK_CS(size) \
@@ -105,34 +105,22 @@
     cs_count--; \
 } while (0)
 
-#define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
+#define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, offset %d, " \
             "domains (%d, %d, %d)\n", \
         bo, offset, rd, wd, flags); \
     assert(bo); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
-    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 3; \
 } while (0)
 
-
-#define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
-    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for texture %p, offset %d, " \
-            "domains (%d, %d, %d)\n", \
-        tex, offset, rd, wd, flags); \
-    assert(tex); \
-    cs_winsys->write_cs_dword(cs_winsys, offset); \
-    r300_texture_write_reloc(cs_winsys, tex, rd, wd, flags);	\
-    cs_count -= 3; \
-} while (0)
-
-
-#define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
             "domains (%d, %d, %d)\n", \
         bo, rd, wd, flags); \
     assert(bo); \
-    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 2; \
 } while (0)
 
