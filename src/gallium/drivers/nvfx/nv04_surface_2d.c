@@ -543,4 +543,3 @@ nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d
 
 	return temp_ns;
 }
-

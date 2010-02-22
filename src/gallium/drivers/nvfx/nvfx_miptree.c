@@ -5,7 +5,7 @@
 #include "util/u_math.h"
 
 #include "nvfx_context.h"
-#include "../nouveau/nv04_surface_2d.h"
+#include "nv04_surface_2d.h"
 
 
 

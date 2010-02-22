@@ -2,7 +2,7 @@
 #define __NVFX_SCREEN_H__
 
 #include "nouveau/nouveau_screen.h"
-#include "nouveau/nv04_surface_2d.h"
+#include "nv04_surface_2d.h"
 
 struct nvfx_screen {
 	struct nouveau_screen base;
