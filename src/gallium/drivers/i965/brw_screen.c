@@ -153,6 +153,10 @@ brw_get_param(struct pipe_screen *screen, int param)
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return 8;
+   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+      return 8;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return 16; /* XXX correct? */
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
