@@ -33,7 +33,7 @@ nouveau_vbuf_split(unsigned remaining, unsigned overhead, unsigned vpp,
 		max = max - (max % 3);
 		break;
 	case PIPE_PRIM_QUADS:
-		max = max & 3;
+		max = max & ~3;
 		break;
 	case PIPE_PRIM_LINE_LOOP:
 	case PIPE_PRIM_LINE_STRIP:
