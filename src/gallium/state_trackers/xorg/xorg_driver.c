@@ -428,8 +428,8 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
     xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 
-    max_width = 8192;
-    max_height = 8192;
+    max_width = 2048;  /* A very low default */
+    max_height = 2048; /* see screen_init */
     xf86CrtcSetSizeRange(pScrn, 320, 200, max_width, max_height);
 
     if (xf86ReturnOptValBool(ms->Options, OPTION_SW_CURSOR, FALSE)) {
@@ -612,6 +612,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
+    unsigned max_width, max_height;
     VisualPtr visual;
     CustomizerPtr cust = ms->cust;
 
@@ -629,6 +630,26 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	FatalError("Could not init front buffer manager");
 	return FALSE;
     }
+
+    /* get max width and height */
+    {
+	drmModeResPtr res;
+	res = drmModeGetResources(ms->fd);
+	max_width = res->max_width;
+	max_height = res->max_height;
+	drmModeFreeResources(res);
+    }
+
+    if (ms->screen) {
+	float maxf;
+	int max;
+	maxf = ms->screen->get_paramf(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+	max = (1 << (int)(maxf - 1.0f));
+	max_width = max < max_width ? max : max_width;
+	max_height = max < max_height ? max : max_height;
+    }
+
+    xf86CrtcSetSizeRange(pScrn, 1, 1, max_width, max_height);
 
     pScrn->pScreen = pScreen;
 
