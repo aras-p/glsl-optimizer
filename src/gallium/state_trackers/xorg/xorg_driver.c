@@ -184,30 +184,47 @@ static Bool
 drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    PixmapPtr rootPixmap;
     ScreenPtr pScreen = pScrn->pScreen;
+    int old_width, old_height;
+    PixmapPtr rootPixmap;
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;
 
+    old_width = pScrn->virtualX;
+    old_height = pScrn->virtualY;
     pScrn->virtualX = width;
     pScrn->virtualY = height;
 
-    /*
-     * Remove the old framebuffer & texture.
-     */
-    drmModeRmFB(ms->fd, ms->fb_id);
-    if (!ms->destroy_front_buffer(pScrn))
-	FatalError("failed to destroy front buffer\n");
+    /* ms->create_front_buffer will remove the old front buffer */
 
     rootPixmap = pScreen->GetScreenPixmap(pScreen);
     if (!pScreen->ModifyPixmapHeader(rootPixmap, width, height, -1, -1, -1, NULL))
-	return FALSE;
+	goto error_modify;
 
     pScrn->displayWidth = rootPixmap->devKind / (rootPixmap->drawable.bitsPerPixel / 8);
 
-    /* now create new frontbuffer */
-    return ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn);
+    if (ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn))
+	return TRUE;
+
+    /*
+     * This is the error recovery path.
+     */
+
+    if (!pScreen->ModifyPixmapHeader(rootPixmap, old_width, old_height, -1, -1, -1, NULL))
+	FatalError("failed to resize rootPixmap error path\n");
+
+    pScrn->displayWidth = rootPixmap->devKind / (rootPixmap->drawable.bitsPerPixel / 8);
+
+error_modify:
+    pScrn->virtualX = old_width;
+    pScrn->virtualY = old_height;
+
+    if (ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn))
+	return FALSE;
+
+    FatalError("failed to setup old framebuffer\n");
+    return FALSE;
 }
 
 static const xf86CrtcConfigFuncsRec crtc_config_funcs = {
@@ -812,6 +829,7 @@ drv_leave_vt(int scrnIndex, int flags)
     }
 
     drmModeRmFB(ms->fd, ms->fb_id);
+    ms->fb_id = -1;
 
     drv_restore_hw_state(pScrn);
 
@@ -936,6 +954,15 @@ static Bool
 drv_destroy_front_buffer_ga3d(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (!ms->root_bo)
+	return TRUE;
+
+    if (ms->fb_id != -1) {
+	drmModeRmFB(ms->fd, ms->fb_id);
+	ms->fb_id = -1;
+    }
+
     pipe_texture_reference(&ms->root_texture, NULL);
     return TRUE;
 }
@@ -944,7 +971,7 @@ static Bool
 drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned handle, stride;
+    unsigned handle, stride, fb_id;
     struct pipe_texture *tex;
     int ret;
 
@@ -969,12 +996,15 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 		       pScrn->bitsPerPixel,
 		       stride,
 		       handle,
-		       &ms->fb_id);
+		       &fb_id);
     if (ret) {
-	debug_printf("%s: failed to create framebuffer (%i, %s)",
+	debug_printf("%s: failed to create framebuffer (%i, %s)\n",
 		     __func__, ret, strerror(-ret));
 	goto err_destroy;
     }
+
+    if (!drv_destroy_front_buffer_ga3d(pScrn))
+	FatalError("%s: failed to take down old framebuffer\n", __func__);
 
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
@@ -982,6 +1012,7 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 
     pipe_texture_reference(&ms->root_texture, tex);
     pipe_texture_reference(&tex, NULL);
+    ms->fb_id = fb_id;
 
     return TRUE;
 
@@ -1029,6 +1060,11 @@ drv_destroy_front_buffer_kms(ScrnInfoPtr pScrn)
     if (!ms->root_bo)
 	return TRUE;
 
+    if (ms->fb_id != -1) {
+	drmModeRmFB(ms->fd, ms->fb_id);
+	ms->fb_id = -1;
+    }
+
     kms_bo_unmap(ms->root_bo);
     kms_bo_destroy(&ms->root_bo);
     return TRUE;
@@ -1041,6 +1077,7 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
     unsigned handle, stride;
     struct kms_bo *bo;
     unsigned attr[8];
+    unsigned fb_id;
     int ret;
 
     attr[0] = KMS_BO_TYPE;
@@ -1071,17 +1108,21 @@ drv_create_front_buffer_kms(ScrnInfoPtr pScrn)
 		       pScrn->bitsPerPixel,
 		       stride,
 		       handle,
-		       &ms->fb_id);
+		       &fb_id);
     if (ret) {
 	debug_printf("%s: failed to create framebuffer (%i, %s)",
 		     __func__, ret, strerror(-ret));
 	goto err_destroy;
     }
 
+    if (!drv_destroy_front_buffer_kms(pScrn))
+	FatalError("%s: could not takedown old bo", __func__);
+
     pScrn->frameX0 = 0;
     pScrn->frameY0 = 0;
     drv_adjust_frame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
     ms->root_bo = bo;
+    ms->fb_id = fb_id;
 
     return TRUE;
 
