@@ -321,6 +321,82 @@ nv04_surface_copy_m2mf(GLcontext *ctx,
 		FIRE_RING(chan);
 }
 
+typedef unsigned (*get_offset_t)(struct nouveau_surface *s,
+				 unsigned x, unsigned y);
+
+static unsigned
+get_linear_offset(struct nouveau_surface *s, unsigned x, unsigned y)
+{
+	return x * s->cpp + y * s->pitch;
+}
+
+static unsigned
+get_swizzled_offset(struct nouveau_surface *s, unsigned x, unsigned y)
+{
+	unsigned k = log2i(MIN2(s->width, s->height));
+
+	unsigned u = (x & 0x001) << 0 |
+		(x & 0x002) << 1 |
+		(x & 0x004) << 2 |
+		(x & 0x008) << 3 |
+		(x & 0x010) << 4 |
+		(x & 0x020) << 5 |
+		(x & 0x040) << 6 |
+		(x & 0x080) << 7 |
+		(x & 0x100) << 8 |
+		(x & 0x200) << 9 |
+		(x & 0x400) << 10 |
+		(x & 0x800) << 11;
+
+	unsigned v = (y & 0x001) << 1 |
+		(y & 0x002) << 2 |
+		(y & 0x004) << 3 |
+		(y & 0x008) << 4 |
+		(y & 0x010) << 5 |
+		(y & 0x020) << 6 |
+		(y & 0x040) << 7 |
+		(y & 0x080) << 8 |
+		(y & 0x100) << 9 |
+		(y & 0x200) << 10 |
+		(y & 0x400) << 11 |
+		(y & 0x800) << 12;
+
+	return s->cpp * (((u | v) & ~(~0 << 2*k)) |
+			 (x & (~0 << k)) << k |
+			 (y & (~0 << k)) << k);
+}
+
+static void
+nv04_surface_copy_cpu(GLcontext *ctx,
+		      struct nouveau_surface *dst,
+		      struct nouveau_surface *src,
+		      int dx, int dy, int sx, int sy,
+		      int w, int h)
+{
+	int x, y;
+	get_offset_t get_dst = (dst->layout == SWIZZLED ?
+				get_swizzled_offset : get_linear_offset);
+	get_offset_t get_src = (src->layout == SWIZZLED ?
+				get_swizzled_offset : get_linear_offset);
+	void *dp, *sp;
+
+	nouveau_bo_map(dst->bo, NOUVEAU_BO_WR);
+	nouveau_bo_map(src->bo, NOUVEAU_BO_RD);
+
+	dp = dst->bo->map + dst->offset;
+	sp = src->bo->map + src->offset;
+
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			memcpy(dp + get_dst(dst, dx + x, dy + y),
+			       sp + get_src(src, sx + x, sy + y), dst->cpp);
+		}
+	}
+
+	nouveau_bo_unmap(src->bo);
+	nouveau_bo_unmap(dst->bo);
+}
+
 void
 nv04_surface_copy(GLcontext *ctx,
 		  struct nouveau_surface *dst,
@@ -328,16 +404,22 @@ nv04_surface_copy(GLcontext *ctx,
 		  int dx, int dy, int sx, int sy,
 		  int w, int h)
 {
-	/* Setup transfer to swizzle the texture to vram if needed */
-        if (src->layout != SWIZZLED &&
-	    dst->layout == SWIZZLED &&
-	    dst->width > 2 && dst->height > 1) {
-		nv04_surface_copy_swizzle(ctx, dst, src,
-					  dx, dy, sx, sy, w, h);
+	/* Linear texture copy. */
+	if ((src->layout == LINEAR && dst->layout == LINEAR) ||
+	    dst->width <= 2 || dst->height <= 1) {
+		nv04_surface_copy_m2mf(ctx, dst, src, dx, dy, sx, sy, w, h);
 		return;
 	}
 
-	nv04_surface_copy_m2mf(ctx, dst, src, dx, dy, sx, sy, w, h);
+	/* Swizzle using sifm+swzsurf. */
+        if (src->layout == LINEAR && dst->layout == SWIZZLED &&
+	    dst->cpp != 1 && !(dst->offset & 63)) {
+		nv04_surface_copy_swizzle(ctx, dst, src, dx, dy, sx, sy, w, h);
+		return;
+	}
+
+	/* Fallback to CPU copy. */
+	nv04_surface_copy_cpu(ctx, dst, src, dx, dy, sx, sy, w, h);
 }
 
 void
