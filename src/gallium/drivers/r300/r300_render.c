@@ -118,6 +118,18 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
+/* Check if the requested number of dwords is available in the CS and
+ * if not, flush. Return TRUE if the flush occured. */
+static boolean r300_reserve_cs_space(struct r300_context *r300,
+                                     unsigned dwords)
+{
+    while (!r300->winsys->check_cs(r300->winsys, dwords)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static boolean immd_is_good_idea(struct r300_context *r300,
                                       unsigned count)
 {
@@ -132,7 +144,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     struct pipe_vertex_element* velem;
     struct pipe_vertex_buffer* vbuf;
     unsigned vertex_element_count = r300->vertex_element_count;
-    unsigned i, v, vbi, dw, elem_offset;
+    unsigned i, v, vbi, dw, elem_offset, dwords;
 
     /* Size of the vertex, in dwords. */
     unsigned vertex_size = 0;
@@ -171,9 +183,12 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         }
     }
 
+    dwords = 10 + count * vertex_size;
+
+    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
     r300_emit_dirty_state(r300);
 
-    BEGIN_CS(10 + count * vertex_size);
+    BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
@@ -400,8 +415,9 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         goto cleanup;
     }
 
+    /* 128 dwords for emit_aos and emit_draw_elements */
+    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
     r300_emit_dirty_state(r300);
-
     r300_emit_aos(r300, 0);
 
     if (alt_num_verts || count <= 65535) {
@@ -415,6 +431,12 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
             start += short_count;
             count -= short_count;
+
+            /* 16 spare dwords are enough for emit_draw_elements. */
+            if (count && r300_reserve_cs_space(r300, 16)) {
+                r300_emit_dirty_state(r300);
+                r300_emit_aos(r300, 0);
+            }
         } while (count);
     }
 
@@ -461,6 +483,9 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
             return;
         }
 
+        /* Make sure there are at least 128 spare dwords in the command buffer.
+         * (most of it being consumed by emit_aos) */
+        r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
         r300_emit_dirty_state(r300);
 
         if (alt_num_verts || count <= 65535) {
@@ -474,6 +499,12 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
                 start += short_count;
                 count -= short_count;
+
+                /* Again, we emit both AOS and draw_arrays so there should be
+                 * at least 128 spare dwords. */
+                if (count && r300_reserve_cs_space(r300, 128)) {
+                    r300_emit_dirty_state(r300);
+                }
             } while (count);
         }
     }
@@ -690,6 +721,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
+    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 2);
     r300_emit_dirty_state(r300);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
@@ -708,12 +740,14 @@ static void r300_render_draw(struct vbuf_render* render,
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     int i;
+    unsigned dwords = 2 + (count+1)/2;
 
     CS_LOCALS(r300);
 
+    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
     r300_emit_dirty_state(r300);
 
-    BEGIN_CS(2 + (count+1)/2);
+    BEGIN_CS(dwords);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);

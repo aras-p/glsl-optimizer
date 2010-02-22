@@ -90,6 +90,8 @@ void r300_emit_ztop_state(struct r300_context* r300, void* state);
 
 void r300_flush_textures(struct r300_context* r300);
 
+unsigned r300_get_num_dirty_dwords(struct r300_context *r300);
+
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300);
 

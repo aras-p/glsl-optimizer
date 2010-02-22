@@ -1076,16 +1076,10 @@ validate:
     }
 }
 
-/* Emit all dirty state. */
-void r300_emit_dirty_state(struct r300_context* r300)
+unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_atom* atom;
-    unsigned i, dwords = 1024;
-    int dirty_tex = 0;
-
-    /* Check the required number of dwords against the space remaining in the
-     * current CS object. If we need more, then flush. */
+    unsigned dwords = 0;
 
     foreach(atom, &r300->atom_list) {
         if (atom->dirty || atom->always_dirty) {
@@ -1093,12 +1087,19 @@ void r300_emit_dirty_state(struct r300_context* r300)
         }
     }
 
-    /* Make sure we have at least 2*1024 spare dwords. */
-    /* XXX It would be nice to know the number of dwords we really need to
-     * XXX emit. */
-    while (!r300->winsys->check_cs(r300->winsys, dwords)) {
-        r300->context.flush(&r300->context, 0, NULL);
-    }
+    /* XXX This is the compensation for the non-atomized states. */
+    dwords += 2048;
+
+    return dwords;
+}
+
+/* Emit all dirty state. */
+void r300_emit_dirty_state(struct r300_context* r300)
+{
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_atom* atom;
+    unsigned i;
+    int dirty_tex = 0;
 
     if (r300->dirty_state & R300_NEW_QUERY) {
         r300_emit_query_start(r300);
