@@ -396,7 +396,6 @@ nouveau_tex_parameter(GLcontext *ctx, GLenum target,
 		      const GLfloat *params)
 {
 	switch (pname) {
-	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_WRAP_S:
 	case GL_TEXTURE_WRAP_T:
@@ -408,9 +407,10 @@ nouveau_tex_parameter(GLcontext *ctx, GLenum target,
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 		break;
 
+	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_BASE_LEVEL:
 	case GL_TEXTURE_MAX_LEVEL:
-		texture_dirty(t);
+		nouveau_texture_reallocate(ctx, t);
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 		break;
 	}

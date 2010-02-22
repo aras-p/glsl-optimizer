@@ -87,7 +87,8 @@ nv20_emit_tex_obj(GLcontext *ctx, int emit)
 	s = &to_nouveau_texture(t)->surfaces[t->BaseLevel];
 	ti = t->Image[0][t->BaseLevel];
 
-	nouveau_texture_validate(ctx, t);
+	if (!nouveau_texture_validate(ctx, t))
+		return;
 
 	/* Recompute the texturing registers. */
 	tx_format = ti->DepthLog2 << 28

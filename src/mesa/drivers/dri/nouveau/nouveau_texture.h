@@ -43,7 +43,10 @@ struct nouveau_texture {
 #define texture_dirty(t) \
 	to_nouveau_texture(t)->dirty = GL_TRUE;
 
-void
+GLboolean
 nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t);
+
+void
+nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t);
 
 #endif

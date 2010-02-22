@@ -89,7 +89,9 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 		struct gl_texture_image *ti = t->Image[0][t->BaseLevel];
 		int lod_max = 1, lod_bias = 0;
 
-		nouveau_texture_validate(ctx, t);
+		if (!nouveau_texture_validate(ctx, t))
+			return;
+
 		s = &to_nouveau_texture(t)->surfaces[t->BaseLevel];
 
 		if (t->MinFilter != GL_NEAREST &&
