@@ -1,5 +1,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_inlines.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "util/u_pack_color.h"
 
@@ -173,50 +174,30 @@ nvfx_render_destroy(struct draw_stage *draw)
 	FREE(draw);
 }
 
-static INLINE void
-emit_mov(struct nvfx_vertex_program *vp,
-	 unsigned dst, unsigned src, unsigned vor, unsigned mask)
-{
-	struct nvfx_vertex_program_exec *inst;
-
-	vp->insns = realloc(vp->insns,
-			    sizeof(struct nvfx_vertex_program_exec) *
-			    ++vp->nr_insns);
-	inst = &vp->insns[vp->nr_insns - 1];
-
-	inst->data[0] = 0x401f9c6c;
-	inst->data[1] = 0x0040000d | (src << 8);
-	inst->data[2] = 0x8106c083;
-	inst->data[3] = 0x6041ff80 | (dst << 2) | (mask << 13);
-	inst->const_index = -1;
-	inst->has_branch_offset = FALSE;
-
-	vp->ir |= (1 << src);
-	if (vor != ~0)
-		vp->or |= (1 << vor);
-}
-
 static struct nvfx_vertex_program *
-create_drawvp(struct nvfx_context *nvfx)
+nvfx_create_drawvp(struct nvfx_context *nvfx)
 {
-	struct nvfx_vertex_program *vp = CALLOC_STRUCT(nvfx_vertex_program);
-	unsigned i;
+	struct ureg_program *ureg;
+	uint i;
 
-	// nv30 support comes in a later patch
-	assert(nvfx->is_nv4x);
+	ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
+	if (ureg == NULL)
+		return NULL;
 
-	emit_mov(vp, NVFX_VP(INST_DEST_POS), 0, ~0, 0xf);
-	emit_mov(vp, NVFX_VP(INST_DEST_COL0), 3, 0, 0xf);
-	emit_mov(vp, NVFX_VP(INST_DEST_COL1), 4, 1, 0xf);
-	emit_mov(vp, NVFX_VP(INST_DEST_BFC0), 3, 2, 0xf);
-	emit_mov(vp, NVFX_VP(INST_DEST_BFC1), 4, 3, 0xf);
-	emit_mov(vp, NVFX_VP(INST_DEST_FOGC), 5, 4, 0x8);
-	for (i = 0; i < 8; i++)
-		emit_mov(vp, NVFX_VP(INST_DEST_TC(i)), 8 + i, 14 + i, 0xf);
+	ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0), ureg_DECL_vs_input(ureg, 0));
+	ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0), ureg_DECL_vs_input(ureg, 3));
+	ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 1), ureg_DECL_vs_input(ureg, 4));
+	ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_BCOLOR, 0), ureg_DECL_vs_input(ureg, 3));
+	ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_BCOLOR, 1), ureg_DECL_vs_input(ureg, 4));
+	ureg_MOV(ureg,
+		   ureg_writemask(ureg_DECL_output(ureg, TGSI_SEMANTIC_FOG, 1), TGSI_WRITEMASK_X),
+		   ureg_DECL_vs_input(ureg, 5));
+	for (i = 0; i < 8; ++i)
+		ureg_MOV(ureg, ureg_DECL_output(ureg, TGSI_SEMANTIC_GENERIC, i), ureg_DECL_vs_input(ureg, 8 + i));
 
-	vp->insns[vp->nr_insns - 1].data[3] |= 1;
-	vp->translated = TRUE;
-	return vp;
+	ureg_END( ureg );
+
+	return ureg_create_shader_and_destroy( ureg, &nvfx->pipe );
 }
 
 struct draw_stage *
@@ -225,7 +206,7 @@ nvfx_draw_render_stage(struct nvfx_context *nvfx)
 	struct nvfx_render_stage *render = CALLOC_STRUCT(nvfx_render_stage);
 
 	if (!nvfx->swtnl.vertprog)
-		nvfx->swtnl.vertprog = create_drawvp(nvfx);
+		nvfx->swtnl.vertprog = nvfx_create_drawvp(nvfx);
 
 	render->nvfx = nvfx;
 	render->stage.draw = nvfx->draw;
