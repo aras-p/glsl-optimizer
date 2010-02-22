@@ -1,0 +1,511 @@
+/*
+ * Copyright © 2009 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#ifndef AST_H
+#define AST_H
+
+#include "main/simple_list.h"
+#include "glsl_parser_extras.h"
+
+struct ir_instruction;
+struct _mesa_glsl_parse_state;
+
+struct YYLTYPE;
+
+#define _mesa_ast_print(n) \
+   ((ast_node *) n)->print()
+
+#define _mesa_ast_to_hir(n, instr, s)					\
+   ((struct ast_node *) n)->vtbl->to_hir((struct ast_node *) n, instr, s)
+
+#define _mesa_ast_function_call_to_hir(n, p, s)				\
+   ((struct ast_node *) n)->vtbl->function_call_to_hir(			\
+					(struct ast_node *) n, 		\
+					(struct ast_node *) p,		\
+					s)
+
+class ast_node : public simple_node {
+public:
+   virtual ~ast_node();
+   virtual void print(void) const;
+
+   /**
+    * Retrieve the source location of an AST node
+    *
+    * This function is primarily used to get the source position of an AST node
+    * into a form that can be passed to \c _mesa_glsl_error.
+    *
+    * \sa _mesa_glsl_error, ast_node::set_location
+    */
+   struct YYLTYPE get_location(void) const
+   {
+      struct YYLTYPE locp;
+
+      locp.source = this->location.source;
+      locp.first_line = this->location.line;
+      locp.first_column = this->location.column;
+      locp.last_line = locp.first_line;
+      locp.last_column = locp.first_column;
+
+      return locp;
+   }
+
+   /**
+    * Set the source location of an AST node from a parser location
+    *
+    * \sa ast_node::get_location
+    */
+   void set_location(const struct YYLTYPE *locp)
+   {
+      this->location.source = locp->source;
+      this->location.line = locp->first_line;
+      this->location.column = locp->first_column;
+   }
+
+
+   int  type;
+
+   struct {
+      unsigned source;
+      unsigned line;
+      unsigned column;
+   } location;
+
+protected:
+   ast_node(void);
+};
+
+
+enum ast_operators {
+   ast_assign,
+   ast_plus,        /**< Unary + operator. */
+   ast_neg,
+   ast_add,
+   ast_sub,
+   ast_mul,
+   ast_div,
+   ast_mod,
+   ast_lshift,
+   ast_rshift,
+   ast_less,
+   ast_greater,
+   ast_lequal,
+   ast_gequal,
+   ast_equal,
+   ast_nequal,
+   ast_bit_and,
+   ast_bit_xor,
+   ast_bit_or,
+   ast_bit_not,
+   ast_logic_and,
+   ast_logic_xor,
+   ast_logic_or,
+   ast_logic_not,
+
+   ast_mul_assign,
+   ast_div_assign,
+   ast_mod_assign,
+   ast_add_assign,
+   ast_sub_assign,
+   ast_ls_assign,
+   ast_rs_assign,
+   ast_and_assign,
+   ast_xor_assign,
+   ast_or_assign,
+
+   ast_conditional,
+
+   ast_pre_inc,
+   ast_pre_dec,
+   ast_post_inc,
+   ast_post_dec,
+   ast_field_selection,
+   ast_array_index,
+
+   ast_function_call,
+
+   ast_identifier,
+   ast_int_constant,
+   ast_uint_constant,
+   ast_float_constant,
+   ast_bool_constant,
+
+   ast_sequence
+};
+
+class ast_expression : public ast_node {
+public:
+   ast_expression(int oper, ast_expression *,
+		  ast_expression *, ast_expression *);
+
+   virtual void print(void) const;
+
+   enum ast_operators oper;
+
+   ast_expression *subexpressions[3];
+
+   union {
+      char *identifier;
+      int int_constant;
+      float float_constant;
+      unsigned uint_constant;
+      int bool_constant;
+   } primary_expression;
+
+
+   /**
+    * List of expressions for an \c ast_sequence.
+    */
+   struct simple_node expressions;
+};
+
+/**
+ * Number of possible operators for an ast_expression
+ *
+ * This is done as a define instead of as an additional value in the enum so
+ * that the compiler won't generate spurious messages like "warning:
+ * enumeration value ‘ast_num_operators’ not handled in switch"
+ */
+#define AST_NUM_OPERATORS (ast_sequence + 1)
+
+
+class ast_compound_statement : public ast_node {
+public:
+   ast_compound_statement(int new_scope, ast_node *statements);
+   virtual void print(void) const;
+
+   int new_scope;
+   struct simple_node statements;
+};
+
+class ast_declaration : public ast_node {
+public:
+   ast_declaration(char *identifier, int is_array, ast_expression *array_size,
+		   ast_expression *initializer);
+   virtual void print(void) const;
+
+   char *identifier;
+   
+   int is_array;
+   ast_expression *array_size;
+
+   ast_expression *initializer;
+};
+
+
+enum {
+   ast_precision_high = 0, /**< Default precision. */
+   ast_precision_medium,
+   ast_precision_low
+};
+
+struct ast_type_qualifier {
+   unsigned invariant:1;
+   unsigned constant:1;
+   unsigned attribute:1;
+   unsigned varying:1;
+   unsigned in:1;
+   unsigned out:1;
+   unsigned centroid:1;
+   unsigned uniform:1;
+   unsigned smooth:1;
+   unsigned flat:1;
+   unsigned noperspective:1;
+};
+
+class ast_struct_specifier : public ast_node {
+public:
+   ast_struct_specifier(char *identifier, ast_node *declarator_list);
+   virtual void print(void) const;
+
+   char *name;
+   struct simple_node declarations;
+};
+
+
+enum ast_types {
+   ast_void,
+   ast_float,
+   ast_int,
+   ast_uint,
+   ast_bool,
+   ast_vec2,
+   ast_vec3,
+   ast_vec4,
+   ast_bvec2,
+   ast_bvec3,
+   ast_bvec4,
+   ast_ivec2,
+   ast_ivec3,
+   ast_ivec4,
+   ast_uvec2,
+   ast_uvec3,
+   ast_uvec4,
+   ast_mat2,
+   ast_mat2x3,
+   ast_mat2x4,
+   ast_mat3x2,
+   ast_mat3,
+   ast_mat3x4,
+   ast_mat4x2,
+   ast_mat4x3,
+   ast_mat4,
+   ast_sampler1d,
+   ast_sampler2d,
+   ast_sampler3d,
+   ast_samplercube,
+   ast_sampler1dshadow,
+   ast_sampler2dshadow,
+   ast_samplercubeshadow,
+   ast_sampler1darray,
+   ast_sampler2darray,
+   ast_sampler1darrayshadow,
+   ast_sampler2darrayshadow,
+   ast_isampler1d,
+   ast_isampler2d,
+   ast_isampler3d,
+   ast_isamplercube,
+   ast_isampler1darray,
+   ast_isampler2darray,
+   ast_usampler1d,
+   ast_usampler2d,
+   ast_usampler3d,
+   ast_usamplercube,
+   ast_usampler1darray,
+   ast_usampler2darray,
+
+   ast_struct,
+   ast_type_name
+};
+
+
+class ast_type_specifier : public ast_node {
+public:
+   ast_type_specifier(int specifier);
+
+   virtual void print(void) const;
+
+   enum ast_types type_specifier;
+
+   char *type_name;
+   ast_struct_specifier *structure;
+
+   int is_array;
+   ast_expression *array_size;
+
+   unsigned precision:2;
+};
+
+
+class ast_fully_specified_type : public ast_node {
+public:
+   virtual void print(void) const;
+
+   ast_type_qualifier qualifier;
+   ast_type_specifier *specifier;
+};
+
+
+class ast_declarator_list : public ast_node {
+public:
+   ast_declarator_list(ast_fully_specified_type *);
+   virtual void print(void) const;
+
+   ast_fully_specified_type *type;
+   struct simple_node declarations;
+
+   /**
+    * Special flag for vertex shader "invariant" declarations.
+    *
+    * Vertex shaders can contain "invariant" variable redeclarations that do
+    * not include a type.  For example, "invariant gl_Position;".  This flag
+    * is used to note these cases when no type is specified.
+    */
+   int invariant;
+};
+
+
+class ast_parameter_declarator : public ast_node {
+public:
+   virtual void print(void) const;
+
+   ast_fully_specified_type *type;
+   char *identifier;
+   int is_array;
+   ast_expression *array_size;
+};
+
+
+class ast_function : public ast_node {
+public:
+   ast_function(void);
+
+   virtual void print(void) const;
+
+   ast_fully_specified_type *return_type;
+   char *identifier;
+
+   struct simple_node parameters;
+};
+
+
+class ast_declaration_statement : public ast_node {
+public:
+   ast_declaration_statement(void);
+
+   enum {
+      ast_function,
+      ast_declaration,
+      ast_precision
+   } mode;
+
+   union {
+      class ast_function *function;
+      ast_declarator_list *declarator;
+      ast_type_specifier *type;
+      ast_node *node;
+   } declaration;
+};
+
+
+class ast_expression_statement : public ast_node {
+public:
+   ast_expression_statement(ast_expression *);
+   virtual void print(void) const;
+
+   ast_expression *expression;
+};
+
+
+class ast_case_label : public ast_node {
+public:
+
+   /**
+    * An expression of NULL means 'default'.
+    */
+   ast_expression *expression;
+};
+
+class ast_selection_statement : public ast_node {
+public:
+   ast_selection_statement(ast_expression *condition,
+			   ast_node *then_statement,
+			   ast_node *else_statement);
+   virtual void print(void) const;
+
+   ast_expression *condition;
+   ast_node *then_statement;
+   ast_node *else_statement;
+};
+
+
+class ast_switch_statement : public ast_node {
+public:
+   ast_expression *expression;
+   struct simple_node statements;
+};
+
+class ast_iteration_statement : public ast_node {
+public:
+   ast_iteration_statement(int mode, ast_node *init, ast_node *condition,
+			   ast_expression *rest_expression, ast_node *body);
+
+   virtual void print(void) const;
+
+   enum ast_iteration_modes {
+      ast_for,
+      ast_while,
+      ast_do_while
+   } mode;
+   
+
+   ast_node *init_statement;
+   ast_node *condition;
+   ast_expression *rest_expression;
+
+   ast_node *body;
+};
+
+
+class ast_jump_statement : public ast_node {
+public:
+   ast_jump_statement(int mode, ast_expression *return_value);
+   virtual void print(void) const;
+
+   enum ast_jump_modes {
+      ast_continue,
+      ast_break,
+      ast_return,
+      ast_discard
+   } mode;
+
+   ast_expression *opt_return_value;
+};
+
+
+class ast_function_definition : public ast_node {
+public:
+   virtual void print(void) const;
+
+   ast_function *prototype;
+   ast_compound_statement *body;
+};
+
+
+extern struct ir_instruction *
+ast_expression_to_hir(const ast_node *ast,
+		      struct simple_node *instructions,
+		      struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+ast_expression_statement_to_hir(const struct ast_node *ast,
+				struct simple_node *instructions,
+				struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+ast_compound_statement_to_hir(const struct ast_node *ast,
+			      struct simple_node *instructions,
+			      struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+ast_function_definition_to_hir(const struct ast_node *ast,
+			       struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+ast_declarator_list_to_hir(const struct ast_node *ast,
+			   struct simple_node *instructions,
+			   struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+ast_parameter_declarator_to_hir(const struct ast_node *ast,
+				struct simple_node *instructions,
+				struct _mesa_glsl_parse_state *state);
+
+extern struct ir_instruction *
+_mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
+				 struct simple_node *instructions,
+				 struct _mesa_glsl_parse_state *state);
+
+#endif /* AST_H */

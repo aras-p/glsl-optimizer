@@ -1,0 +1,68 @@
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#ifndef GLSL_PARSER_EXTRAS_H
+#define GLSL_PARSER_EXTRAS_H
+
+#include "main/simple_list.h"
+
+enum _mesa_glsl_parser_targets {
+   vertex_shader,
+   geometry_shader,
+   fragment_shader
+};
+
+struct _mesa_glsl_parse_state {
+   void *scanner;
+   struct simple_node translation_unit;
+   struct _mesa_symbol_table *symbols;
+
+   unsigned language_version;
+   enum _mesa_glsl_parser_targets target;
+};
+
+typedef struct YYLTYPE {
+   int first_line;
+   int first_column;
+   int last_line;
+   int last_column;
+   unsigned source;
+} YYLTYPE;
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+
+extern void _mesa_glsl_error(YYLTYPE *locp, void *state, const char *fmt, ...);
+
+extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
+				  const char *string, size_t len);
+
+extern void _mesa_glsl_lexer_dtor(struct _mesa_glsl_parse_state *state);
+
+union YYSTYPE;
+extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc, 
+			  void *scanner);
+
+extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
+
+#endif /* GLSL_PARSER_EXTRAS_H */
