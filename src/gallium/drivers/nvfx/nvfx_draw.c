@@ -67,6 +67,13 @@ nvfx_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 			OUT_RING  (chan, fui(v->data[idx][2]));
 			OUT_RING  (chan, fui(v->data[idx][3]));
 			break;
+		case 0xff:
+			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_4F_X(hw), 4);
+			OUT_RING  (chan, fui(v->data[idx][0] / v->data[idx][3]));
+			OUT_RING  (chan, fui(v->data[idx][1] / v->data[idx][3]));
+			OUT_RING  (chan, fui(v->data[idx][2] / v->data[idx][3]));
+			OUT_RING  (chan, fui(1.0f / v->data[idx][3]));
+			break;
 		case EMIT_4UB:
 			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_4UB(hw), 1);
 			OUT_RING  (chan, pack_ub4(float_to_ubyte(v->data[idx][0]),
@@ -330,7 +337,7 @@ nvfx_state_vtxfmt_validate(struct nvfx_context *nvfx)
 		emit_attrib(nvfx, 5, EMIT_1F, TGSI_SEMANTIC_FOG, 0);
 	}
 
-	emit_attrib(nvfx, 0, EMIT_3F, TGSI_SEMANTIC_POSITION, 0);
+	emit_attrib(nvfx, 0, 0xff, TGSI_SEMANTIC_POSITION, 0);
 
 	return FALSE;
 }
