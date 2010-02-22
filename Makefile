@@ -314,9 +314,9 @@ MAIN_FILES = \
 ES_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
 	$(DIRECTORY)/include/GLES2/*.h					\
-	$(DIRECTORY)/src/mesa/glapi/*.xml				\
-	$(DIRECTORY)/src/mesa/glapi/*.py				\
-	$(DIRECTORY)/src/mesa/glapi/*.dtd				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.xml				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.py				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.dtd				\
 	$(DIRECTORY)/src/mesa/es/glapi/Makefile				\
 	$(DIRECTORY)/src/mesa/es/glapi/*.xml				\
 	$(DIRECTORY)/src/mesa/es/glapi/*.py				\

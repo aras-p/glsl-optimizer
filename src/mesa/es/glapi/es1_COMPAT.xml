@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gl_API.dtd">
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
 
 <OpenGLAPI>
 
