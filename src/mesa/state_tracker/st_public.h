@@ -39,7 +39,7 @@
 #define ST_SURFACE_BACK_LEFT    1
 #define ST_SURFACE_FRONT_RIGHT  2
 #define ST_SURFACE_BACK_RIGHT   3
-#define ST_SURFACE_DEPTH        8
+#define ST_SURFACE_DEPTH        4
 
 #define ST_TEXTURE_2D    0x2
 #define ST_TEXTURE_RECT  0x4
