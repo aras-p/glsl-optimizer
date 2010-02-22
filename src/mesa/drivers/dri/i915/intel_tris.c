@@ -98,8 +98,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
    /* Emit a slot which will be filled with the inline primitive
     * command later.
     */
-   BEGIN_BATCH(2);
-   OUT_BATCH(0);
+   BEGIN_BATCH(1);
 
    assert((intel->batch->dirty_state & (1<<1)) == 0);
 
