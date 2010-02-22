@@ -572,11 +572,11 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * w;
       vp.scale[1] = -0.5f * h;
-      vp.scale[2] = 1.0f;
+      vp.scale[2] = 0.5f;
       vp.scale[3] = 1.0f;
       vp.translate[0] = 0.5f * w;
       vp.translate[1] = 0.5f * h;
-      vp.translate[2] = 0.0f;
+      vp.translate[2] = 0.5f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
    }
@@ -600,6 +600,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
+
+   /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
+   z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
 	     (GLfloat) width / pt->width0,
