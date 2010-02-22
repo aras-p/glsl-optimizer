@@ -337,8 +337,6 @@ struct r300_context {
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
-    /* Whether the TCL engine should be in bypass mode. */
-    boolean tcl_bypass;
     /* Whether polygon offset is enabled. */
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */

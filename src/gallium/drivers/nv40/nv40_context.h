@@ -101,7 +101,6 @@ struct nv40_blend_state {
 struct nv40_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
-	unsigned viewport_bypass;
 	unsigned fp_samplers;
 
 	uint64_t dirty;

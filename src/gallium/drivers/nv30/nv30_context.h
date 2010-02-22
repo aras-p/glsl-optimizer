@@ -101,7 +101,6 @@ struct nv30_blend_state {
 struct nv30_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
-	unsigned viewport_bypass;
 	unsigned fp_samplers;
 
 	uint64_t dirty;

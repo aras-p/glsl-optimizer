@@ -160,7 +160,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.front_winding = PIPE_WINDING_CW;
    rs_state.cull_mode = PIPE_WINDING_NONE;
-   rs_state.bypass_vs_clip_and_viewport = 1;
    rs_state.gl_rasterization_rules = 1;
    rs_state.flatshade = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);

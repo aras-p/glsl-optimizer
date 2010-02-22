@@ -174,7 +174,6 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.line_stipple_factor = 0;
    rast.line_stipple_pattern = 0;
    rast.line_last_pixel = 0;
-   rast.bypass_vs_clip_and_viewport = 0;
    rast.line_width = 1;
    rast.point_smooth = 0;
    rast.point_quad_rasterization = 0;

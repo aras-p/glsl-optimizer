@@ -101,7 +101,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_vs_clip_and_viewport = 1;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* samplers */
@@ -113,7 +112,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.min_img_filter = 0; /* set later */
    ctx->sampler.mag_img_filter = 0; /* set later */
    ctx->sampler.normalized_coords = 1;
-
 
    /* vertex shader - still required to provide the linkage between
     * fragment shader input semantics and vertex_element/buffers.
@@ -407,6 +405,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_sampler_textures(ctx->cso);
+   cso_save_viewport(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
@@ -421,6 +420,17 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    ctx->sampler.mag_img_filter = filter;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
+
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * dst->width;
+   ctx->viewport.scale[1] = 0.5f * dst->height;
+   ctx->viewport.scale[2] = 1.0f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * dst->width;
+   ctx->viewport.translate[1] = 0.5f * dst->height;
+   ctx->viewport.translate[2] = 0.0f;
+   ctx->viewport.translate[3] = 0.0f;
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* texture */
    cso_set_sampler_textures(ctx->cso, 1, &tex);
@@ -461,6 +471,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_rasterizer(ctx->cso);
    cso_restore_samplers(ctx->cso);
    cso_restore_sampler_textures(ctx->cso);
+   cso_restore_viewport(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);

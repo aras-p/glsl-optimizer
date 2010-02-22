@@ -711,8 +711,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
      * Else, enable HW TCL and force Draw's TCL off. */
-    if (state->bypass_vs_clip_and_viewport ||
-            !r300screen->caps->has_tcl) {
+    if (!r300screen->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
@@ -824,10 +823,8 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     if (rs) {
-        r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
     } else {
-        r300->tcl_bypass = FALSE;
         r300->polygon_offset_enabled = FALSE;
     }
 

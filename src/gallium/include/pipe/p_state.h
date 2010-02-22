@@ -114,16 +114,6 @@ struct pipe_rasterizer_state
    unsigned line_last_pixel:1;
 
    /** 
-    * Vertex coordinates are pre-transformed to screen space.  Skip
-    * the vertex shader, clipping and viewport processing.  Note that
-    * a vertex shader is still needed though, to indicate the mapping
-    * from vertex elements to fragment shader input semantics.
-    *
-    * XXX: considered for removal.
-    */
-   unsigned bypass_vs_clip_and_viewport:1;
-
-   /** 
     * Use the first vertex of a primitive as the provoking vertex for
     * flat shading.
     */
