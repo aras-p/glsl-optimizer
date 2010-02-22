@@ -715,13 +715,13 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
          ret = SVGA3D_BufferDMA(svga->swc,
                                 hwbuf, sbuf->handle,
                                 SVGA3D_WRITE_HOST_VRAM,
-                                size, offset, sbuf->dma.flags);
+                                size, 0, offset, sbuf->dma.flags);
          if(ret != PIPE_OK) {
             svga_context_flush(svga, NULL);
             ret =  SVGA3D_BufferDMA(svga->swc,
                                     hwbuf, sbuf->handle,
                                     SVGA3D_WRITE_HOST_VRAM,
-                                    size, offset, sbuf->dma.flags);
+                                    size, 0, offset, sbuf->dma.flags);
             assert(ret == PIPE_OK);
          }
 
