@@ -111,8 +111,8 @@ nvfx_state_relocate(struct nvfx_context *nvfx)
 		samplers &= ~(1ULL << i);
 	}
 	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FRAGPROG]);
-	if (state->hw[NVFX_STATE_VTXBUF] && nvfx->render_mode == HW)
-		so_emit_reloc_markers(chan, state->hw[NVFX_STATE_VTXBUF]);
+	if (nvfx->render_mode == HW)
+		nvfx_vbo_relocate(nvfx);
 }
 
 boolean

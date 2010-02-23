@@ -246,7 +246,6 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 
 	if (!nvfx_state_validate_swtnl(nvfx))
 		return;
-	nvfx->state.dirty &= ~(1ULL << NVFX_STATE_VTXBUF);
 	nvfx_state_emit(nvfx);
 
 	for (i = 0; i < nvfx->vtxbuf_nr; i++) {

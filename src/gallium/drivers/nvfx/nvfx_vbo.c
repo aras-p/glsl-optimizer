@@ -113,64 +113,47 @@ nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 	return TRUE;
 }
 
-static boolean
-nvfx_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
+// type must be floating point
+static inline void
+nvfx_vbo_static_attrib(struct nvfx_context *nvfx,
 		       int attrib, struct pipe_vertex_element *ve,
-		       struct pipe_vertex_buffer *vb)
+		       struct pipe_vertex_buffer *vb, unsigned ncomp)
 {
-	struct pipe_context *pipe = &nvfx->pipe;
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_transfer *transfer;
-	unsigned type, ncomp;
-	uint8_t *map;
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	void *map;
 
-	if (nvfx_vbo_format_to_hw(ve->src_format, &type, &ncomp))
-		return FALSE;
-
-	map  = pipe_buffer_map(pipe, vb->buffer, PIPE_TRANSFER_READ, &transfer);
+	map  = pipe_buffer_map(&nvfx->pipe, vb->buffer, PIPE_TRANSFER_READ, &transfer);
 	map += vb->buffer_offset + ve->src_offset;
 
-	switch (type) {
-	case NV34TCL_VTXFMT_TYPE_FLOAT:
-	{
-		float *v = (float *)map;
+	float *v = map;
 
-		switch (ncomp) {
-		case 4:
-			so_method(so, eng3d, NV34TCL_VTX_ATTR_4F_X(attrib), 4);
-			so_data  (so, fui(v[0]));
-			so_data  (so, fui(v[1]));
-			so_data  (so, fui(v[2]));
-			so_data  (so, fui(v[3]));
-			break;
-		case 3:
-			so_method(so, eng3d, NV34TCL_VTX_ATTR_3F_X(attrib), 3);
-			so_data  (so, fui(v[0]));
-			so_data  (so, fui(v[1]));
-			so_data  (so, fui(v[2]));
-			break;
-		case 2:
-			so_method(so, eng3d, NV34TCL_VTX_ATTR_2F_X(attrib), 2);
-			so_data  (so, fui(v[0]));
-			so_data  (so, fui(v[1]));
-			break;
-		case 1:
-			so_method(so, eng3d, NV34TCL_VTX_ATTR_1F(attrib), 1);
-			so_data  (so, fui(v[0]));
-			break;
-		default:
-			pipe_buffer_unmap(pipe, vb->buffer, transfer);
-			return FALSE;
-		}
-	}
+	switch (ncomp) {
+	case 4:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_4F_X(attrib), 4));
+		OUT_RING(chan, fui(v[0]));
+		OUT_RING(chan, fui(v[1]));
+		OUT_RING(chan,  fui(v[2]));
+		OUT_RING(chan,  fui(v[3]));
 		break;
-	default:
-		pipe_buffer_unmap(pipe, vb->buffer, transfer);
-		return FALSE;
+	case 3:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_3F_X(attrib), 3));
+		OUT_RING(chan,  fui(v[0]));
+		OUT_RING(chan,  fui(v[1]));
+		OUT_RING(chan,  fui(v[2]));
+		break;
+	case 2:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_2F_X(attrib), 2));
+		OUT_RING(chan,  fui(v[0]));
+		OUT_RING(chan,  fui(v[1]));
+		break;
+	case 1:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_1F(attrib), 1));
+		OUT_RING(chan,  fui(v[0]));
+		break;
 	}
 
-	pipe_buffer_unmap(pipe, vb->buffer, transfer);
-	return TRUE;
+	pipe_buffer_unmap(&nvfx->pipe, vb->buffer, transfer);
 }
 
 void
@@ -180,7 +163,6 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart = 0;
 
 	nvfx_vbo_set_idxbuf(nvfx, NULL, 0);
@@ -205,12 +187,12 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 			continue;
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(chan, eng3d, NV34TCL_VB_VERTEX_BATCH, 1);
+			OUT_RING(chan, RING_3D(NV34TCL_VB_VERTEX_BATCH, 1));
 			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
@@ -221,14 +203,14 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_VERTEX_BATCH, push);
+			OUT_RING(chan, RING_3D_NI(NV34TCL_VB_VERTEX_BATCH, push));
 			while (push--) {
 				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, 0);
 
 		count -= vc;
@@ -244,7 +226,6 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -263,11 +244,11 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(chan, eng3d, NV34TCL_VB_ELEMENT_U32, 1);
+			OUT_RING(chan, RING_3D(NV34TCL_VB_ELEMENT_U32, 1));
 			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
@@ -277,7 +258,7 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U16, push >> 1);
+			OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U16, push >> 1));
 			for (i = 0; i < push; i+=2)
 				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
@@ -285,7 +266,7 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 			elts += push;
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -298,7 +279,6 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -317,11 +297,11 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		if (vc & 1) {
-			BEGIN_RING(chan, eng3d, NV34TCL_VB_ELEMENT_U32, 1);
+			OUT_RING(chan, RING_3D(NV34TCL_VB_ELEMENT_U32, 1));
 			OUT_RING  (chan, elts[0]);
 			elts++; vc--;
 		}
@@ -331,7 +311,7 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 
 			push = MIN2(vc, 2047 * 2);
 
-			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U16, push >> 1);
+			OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U16, push >> 1));
 			for (i = 0; i < push; i+=2)
 				OUT_RING(chan, (elts[i+1] << 16) | elts[i]);
 
@@ -339,7 +319,7 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 			elts += push;
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -352,7 +332,6 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -371,20 +350,20 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 		}
 		count -= vc;
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		while (vc) {
 			push = MIN2(vc, 2047);
 
-			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_ELEMENT_U32, push);
+			OUT_RING(chan, RING_3D_NI(NV34TCL_VB_ELEMENT_U32, push));
 			OUT_RINGp    (chan, elts, push);
 
 			vc -= push;
 			elts += push;
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, 0);
 
 		start = restart;
@@ -431,7 +410,6 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
 	unsigned restart = 0;
 
 	while (count) {
@@ -449,12 +427,12 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 			continue;
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, nvgl_primitive(mode));
 
 		nr = (vc & 0xff);
 		if (nr) {
-			BEGIN_RING(chan, eng3d, NV34TCL_VB_INDEX_BATCH, 1);
+			OUT_RING(chan, RING_3D(NV34TCL_VB_INDEX_BATCH, 1));
 			OUT_RING  (chan, ((nr - 1) << 24) | start);
 			start += nr;
 		}
@@ -465,14 +443,14 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 
 			nr -= push;
 
-			BEGIN_RING_NI(chan, eng3d, NV34TCL_VB_INDEX_BATCH, push);
+			OUT_RING(chan, RING_3D_NI(NV34TCL_VB_INDEX_BATCH, push));
 			while (push--) {
 				OUT_RING(chan, ((0x100 - 1) << 24) | start);
 				start += 0x100;
 			}
 		}
 
-		BEGIN_RING(chan, eng3d, NV34TCL_VERTEX_BEGIN_END, 1);
+		OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 		OUT_RING  (chan, 0);
 
 		count -= vc;
@@ -505,76 +483,98 @@ nvfx_draw_elements(struct pipe_context *pipe,
 	pipe->flush(pipe, 0, NULL);
 }
 
-static boolean
+boolean
 nvfx_vbo_validate(struct nvfx_context *nvfx)
 {
-	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct pipe_resource *ib = nvfx->idxbuf;
 	unsigned ib_format = nvfx->idxbuf_format;
+	int i;
+	int elements = MAX2(nvfx->vtxelt->num_elements, nvfx->hw_vtxelt_nr);
+	unsigned long vtxfmt[16];
 	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD;
-	int hw;
 
-	vtxbuf = so_new(3, 17, 18);
-	so_method(vtxbuf, eng3d, NV34TCL_VTXBUF_ADDRESS(0), nvfx->vtxelt->num_elements);
-	vtxfmt = so_new(1, 16, 0);
-	so_method(vtxfmt, eng3d, NV34TCL_VTXFMT(0), nvfx->vtxelt->num_elements);
+	if (!elements)
+		return TRUE;
 
-	for (hw = 0; hw < nvfx->vtxelt->num_elements; hw++) {
+	nvfx->vbo_bo = 0;
+
+	MARK_RING(chan, (5 + 2) * 16 + 2 + 11, 16 + 2);
+	for (i = 0; i < nvfx->vtxelt->num_elements; i++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 		unsigned type, ncomp;
 
-		ve = &nvfx->vtxelt->pipe[hw];
+		ve = &nvfx->vtxelt->pipe[i];
 		vb = &nvfx->vtxbuf[ve->vertex_buffer_index];
 
-		if (!vb->stride) {
-			if (!sattr)
-				sattr = so_new(16, 16 * 4, 0);
-
-			if (nvfx_vbo_static_attrib(nvfx, sattr, hw, ve, vb)) {
-				so_data(vtxbuf, 0);
-				so_data(vtxfmt, NV34TCL_VTXFMT_TYPE_FLOAT);
-				continue;
-			}
-		}
-
 		if (nvfx_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
+			MARK_UNDO(chan);
 			nvfx->fallback_swtnl |= NVFX_NEW_ARRAYS;
-			so_ref(NULL, &vtxbuf);
-			so_ref(NULL, &vtxfmt);
 			return FALSE;
 		}
 
-		so_reloc(vtxbuf, nvfx_resource(vb->buffer)->bo,
+		if (!vb->stride && type == NV34TCL_VTXFMT_TYPE_FLOAT) {
+			nvfx_vbo_static_attrib(nvfx, i, ve, vb, ncomp);
+			vtxfmt[i] = type;
+		} else {
+			vtxfmt[i] = ((vb->stride << NV34TCL_VTXFMT_STRIDE_SHIFT) |
+				(ncomp << NV34TCL_VTXFMT_SIZE_SHIFT) | type);
+			nvfx->vbo_bo |= (1 << i);
+		}
+	}
+
+	for(; i < elements; ++i)
+		vtxfmt[i] = NV34TCL_VTXFMT_TYPE_FLOAT;
+
+	OUT_RING(chan, RING_3D(NV34TCL_VTXFMT(0), elements));
+	OUT_RINGp(chan, vtxfmt, elements);
+
+	if(nvfx->is_nv4x) {
+		unsigned i;
+		/* seems to be some kind of cache flushing */
+		for(i = 0; i < 3; ++i) {
+			OUT_RING(chan, RING_3D(0x1718, 1));
+			OUT_RING(chan, 0);
+		}
+	}
+
+	OUT_RING(chan, RING_3D(NV34TCL_VTXBUF_ADDRESS(0), elements));
+	for (i = 0; i < nvfx->vtxelt->num_elements; i++) {
+		struct pipe_vertex_element *ve;
+		struct pipe_vertex_buffer *vb;
+
+		ve = &nvfx->vtxelt->pipe[i];
+		vb = &nvfx->vtxbuf[ve->vertex_buffer_index];
+
+		if (!(nvfx->vbo_bo & (1 << i)))
+			OUT_RING(chan, 0);
+		else
+		{
+			struct nouveau_bo* bo = nvfx_resource(vb->buffer)->bo;
+			OUT_RELOC(chan, bo,
 				 vb->buffer_offset + ve->src_offset,
 				 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 				 0, NV34TCL_VTXBUF_ADDRESS_DMA1);
-		so_data (vtxfmt, ((vb->stride << NV34TCL_VTXFMT_STRIDE_SHIFT) |
-				  (ncomp << NV34TCL_VTXFMT_SIZE_SHIFT) | type));
+		}
 	}
 
-	if (ib) {
-		struct nouveau_bo *bo = nvfx_resource(ib)->bo;
+        for (; i < elements; i++)
+		OUT_RING(chan, 0);
 
-		so_method(vtxbuf, eng3d, NV34TCL_IDXBUF_ADDRESS, 2);
-		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
-		so_reloc (vtxbuf, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
+	OUT_RING(chan, RING_3D(0x1710, 1));
+	OUT_RING(chan, 0);
+
+	if (ib) {
+		struct nouveau_bo* bo = nvfx_resource(ib)->bo;
+
+		OUT_RING(chan, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2));
+		OUT_RELOC(chan, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		OUT_RELOC(chan, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
 				  0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 
-	so_method(vtxbuf, eng3d, 0x1710, 1);
-	so_data  (vtxbuf, 0);
-
-	so_ref(vtxbuf, &nvfx->state.hw[NVFX_STATE_VTXBUF]);
-	so_ref(NULL, &vtxbuf);
-	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXBUF);
-	so_ref(vtxfmt, &nvfx->state.hw[NVFX_STATE_VTXFMT]);
-	so_ref(NULL, &vtxfmt);
-	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXFMT);
-	so_ref(sattr, &nvfx->state.hw[NVFX_STATE_VTXATTR]);
-	so_ref(NULL, &sattr);
-	nvfx->state.dirty |= (1ULL << NVFX_STATE_VTXATTR);
+	nvfx->hw_vtxelt_nr = nvfx->vtxelt->num_elements;
 	return FALSE;
 }
 
@@ -585,3 +585,38 @@ struct nvfx_state_entry nvfx_state_vbo = {
 		.hw = 0,
 	}
 };
+
+void
+nvfx_vbo_relocate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
+	int i;
+
+	MARK_RING(chan, 2 * 16 + 3, 2 * 16 + 3);
+	for(i = 0; i < nvfx->vtxelt->num_elements; ++i) {
+		if(nvfx->vbo_bo & (1 << i)) {
+			struct pipe_vertex_element *ve = &nvfx->vtxelt->pipe[i];
+			struct pipe_vertex_buffer *vb = &nvfx->vtxbuf[ve->vertex_buffer_index];
+			struct nouveau_bo* bo = nvfx_resource(vb->buffer)->bo;
+			OUT_RELOC(chan, bo, RING_3D(NV34TCL_VTXBUF_ADDRESS(i), 1),
+					vb_flags, 0, 0);
+			OUT_RELOC(chan, bo, vb->buffer_offset + ve->src_offset,
+					vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+					0, NV34TCL_VTXBUF_ADDRESS_DMA1);
+		}
+	}
+
+	if(nvfx->idxbuf)
+	{
+		struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf)->bo;
+
+		OUT_RELOC(chan, bo, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2),
+				vb_flags, 0, 0);
+		OUT_RELOC(chan, bo, 0,
+				vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		OUT_RELOC(chan, bo, nvfx->idxbuf_format,
+				vb_flags | NOUVEAU_BO_OR,
+				0, NV34TCL_IDXBUF_FORMAT_DMA1);
+	}
+}

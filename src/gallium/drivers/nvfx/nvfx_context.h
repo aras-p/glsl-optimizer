@@ -164,6 +164,9 @@ struct nvfx_context {
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
 	struct nvfx_vtxelt_state *vtxelt;
+
+	unsigned vbo_bo;
+	unsigned hw_vtxelt_nr;
 };
 
 static INLINE struct nvfx_context *
@@ -248,6 +251,8 @@ extern void nvfx_state_emit(struct nvfx_context *nvfx);
 extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
 
 /* nvfx_vbo.c */
+extern boolean nvfx_vbo_validate(struct nvfx_context *nvfx);
+extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
 extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
 extern void nvfx_draw_elements(struct pipe_context *pipe,
