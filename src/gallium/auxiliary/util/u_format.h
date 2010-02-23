@@ -56,11 +56,6 @@ extern "C" {
  */
 enum util_format_layout {
    /**
-    * Single scalar component.
-    */
-   UTIL_FORMAT_LAYOUT_SCALAR = 0,
-
-   /**
     * One or more components of mixed integer formats, arithmetically encoded
     * in a word up to 32bits.
     */
@@ -392,7 +387,6 @@ util_format_has_alpha(enum pipe_format format)
    }
 
    switch (desc->layout) {
-   case UTIL_FORMAT_LAYOUT_SCALAR:
    case UTIL_FORMAT_LAYOUT_ARITH:
    case UTIL_FORMAT_LAYOUT_ARRAY:
       /* FIXME: pf_get_component_bits( PIPE_FORMAT_A8L8_UNORM, PIPE_FORMAT_COMP_A ) should not return 0 right? */
