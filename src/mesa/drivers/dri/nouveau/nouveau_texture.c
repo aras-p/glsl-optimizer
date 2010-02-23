@@ -81,10 +81,12 @@ nouveau_teximage_map(GLcontext *ctx, struct gl_texture_image *ti)
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 	int ret;
 
-	ret = nouveau_bo_map(s->bo, NOUVEAU_BO_RDWR);
-	assert(!ret);
+	if (s->bo) {
+		ret = nouveau_bo_map(s->bo, NOUVEAU_BO_RDWR);
+		assert(!ret);
 
-	ti->Data = s->bo->map;
+		ti->Data = s->bo->map;
+	}
 }
 
 static void
@@ -92,7 +94,8 @@ nouveau_teximage_unmap(GLcontext *ctx, struct gl_texture_image *ti)
 {
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 
-	nouveau_bo_unmap(s->bo);
+	if (s->bo)
+		nouveau_bo_unmap(s->bo);
 	ti->Data = NULL;
 }
 
