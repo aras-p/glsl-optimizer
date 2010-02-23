@@ -49,9 +49,7 @@ nv40_sampler_state_init(struct pipe_context *pipe,
 }
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w,sx,sy,sz,sw)            \
-{                                                                              \
-  TRUE,                                                                        \
-  PIPE_FORMAT_##m,                                                             \
+[PIPE_FORMAT_##m] = {                                                                              \
   NV40TCL_TEX_FORMAT_FORMAT_##tf,                                              \
   (NV34TCL_TX_SWIZZLE_S0_X_##ts0x | NV34TCL_TX_SWIZZLE_S0_Y_##ts0y |         \
    NV34TCL_TX_SWIZZLE_S0_Z_##ts0z | NV34TCL_TX_SWIZZLE_S0_W_##ts0w |         \
@@ -62,15 +60,14 @@ nv40_sampler_state_init(struct pipe_context *pipe,
 }
 
 struct nv40_texture_format {
-	boolean defined;
-	uint	pipe;
 	int     format;
 	int     swizzle;
 	int     sign;
 };
 
 static struct nv40_texture_format
-nv40_texture_formats[] = {
+nv40_texture_formats[PIPE_FORMAT_COUNT] = {
+	[0 ... PIPE_FORMAT_COUNT - 1] = {-1, 0, 0},
 	_(B8G8R8X8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0, 0, 0, 0),
 	_(B8G8R8A8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
 	_(B5G5R5A1_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
@@ -90,22 +87,6 @@ nv40_texture_formats[] = {
 	{},
 };
 
-static struct nv40_texture_format *
-nv40_fragtex_format(uint pipe_format)
-{
-	struct nv40_texture_format *tf = nv40_texture_formats;
-
-	while (tf->defined) {
-		if (tf->pipe == pipe_format)
-			return tf;
-		tf++;
-	}
-
-	NOUVEAU_ERR("unknown texture format %s\n", util_format_name(pipe_format));
-	return NULL;
-}
-
-
 void
 nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 {
@@ -119,9 +100,8 @@ nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 	uint32_t txf, txs, txp;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
-	tf = nv40_fragtex_format(pt->format);
-	if (!tf)
-		assert(0);
+	tf = &nv40_texture_formats[pt->format];
+	assert(tf->format >= 0);
 
 	txf  = ps->fmt;
 	txf |= tf->format | 0x8000;

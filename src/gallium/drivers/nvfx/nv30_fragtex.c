@@ -35,9 +35,7 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 }
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
-{                                                                              \
-  TRUE,                                                                        \
-  PIPE_FORMAT_##m,                                                             \
+[PIPE_FORMAT_##m] = {                                                                              \
   NV34TCL_TX_FORMAT_FORMAT_##tf,                                               \
   (NV34TCL_TX_SWIZZLE_S0_X_##ts0x | NV34TCL_TX_SWIZZLE_S0_Y_##ts0y |           \
    NV34TCL_TX_SWIZZLE_S0_Z_##ts0z | NV34TCL_TX_SWIZZLE_S0_W_##ts0w |           \
@@ -46,14 +44,13 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 }
 
 struct nv30_texture_format {
-	boolean defined;
-	uint	pipe;
 	int     format;
 	int     swizzle;
 };
 
 static struct nv30_texture_format
-nv30_texture_formats[] = {
+nv30_texture_formats[PIPE_FORMAT_COUNT] = {
+	[0 ... PIPE_FORMAT_COUNT - 1] = {-1, 0},
 	_(B8G8R8X8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(B8G8R8A8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(B5G5R5A1_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
@@ -72,22 +69,6 @@ nv30_texture_formats[] = {
 	{},
 };
 
-static struct nv30_texture_format *
-nv30_fragtex_format(uint pipe_format)
-{
-	struct nv30_texture_format *tf = nv30_texture_formats;
-
-	while (tf->defined) {
-		if (tf->pipe == pipe_format)
-			return tf;
-		tf++;
-	}
-
-	NOUVEAU_ERR("unknown texture format %s\n", util_format_name(pipe_format));
-	return NULL;
-}
-
-
 void
 nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 {
@@ -100,9 +81,8 @@ nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 	uint32_t txf, txs;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
-	tf = nv30_fragtex_format(pt->format);
-	if (!tf)
-		return;
+	tf = &nv30_texture_formats[pt->format];
+	assert(tf->format >= 0);
 
 	txf  = tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
