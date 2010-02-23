@@ -119,6 +119,14 @@ nv10_emit_stencil_op(GLcontext *ctx, int emit);
 
 /* nv10_state_frag.c */
 void
+nv10_get_general_combiner(GLcontext *ctx, int i,
+			  uint32_t *a_in, uint32_t *a_out,
+			  uint32_t *c_in, uint32_t *c_out, uint32_t *k);
+
+void
+nv10_get_final_combiner(GLcontext *ctx, uint64_t *in, int *n);
+
+void
 nv10_emit_tex_env(GLcontext *ctx, int emit);
 
 void

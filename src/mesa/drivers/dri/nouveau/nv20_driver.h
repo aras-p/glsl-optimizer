@@ -59,6 +59,13 @@ nv20_emit_point_mode(GLcontext *ctx, int emit);
 void
 nv20_emit_logic_opcode(GLcontext *ctx, int emit);
 
+/* nv20_state_frag.c */
+void
+nv20_emit_tex_env(GLcontext *ctx, int emit);
+
+void
+nv20_emit_frag(GLcontext *ctx, int emit);
+
 /* nv20_state_tex.c */
 void
 nv20_emit_tex_obj(GLcontext *ctx, int emit);
