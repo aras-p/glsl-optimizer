@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
@@ -949,6 +950,62 @@ trace_context_set_viewport_state(struct pipe_context *_pipe,
 }
 
 
+static struct pipe_sampler_view *
+trace_create_sampler_view(struct pipe_context *_pipe,
+                          struct pipe_texture *_texture,
+                          const struct pipe_sampler_view *templ)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex = trace_texture(_texture);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_texture *texture = tr_tex->texture;
+   struct trace_sampler_view *result = CALLOC_STRUCT(trace_sampler_view);
+
+   trace_dump_call_begin("pipe_context", "create_sampler_view");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, texture);
+   trace_dump_arg(ptr, templ);
+
+   result->sampler_view = pipe->create_sampler_view(pipe, texture, templ);
+
+   result->base = *templ;
+   result->base.reference.count = 1;
+   result->base.texture = NULL;
+   pipe_texture_reference(&result->base.texture, _texture);
+   result->base.context = _pipe;
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   return &result->base;
+}
+
+
+static void
+trace_sampler_view_destroy(struct pipe_context *_pipe,
+                           struct pipe_sampler_view *_view)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_sampler_view *tr_view = trace_sampler_view(_view);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_sampler_view *view = tr_view->sampler_view;
+
+   trace_dump_call_begin("pipe_context", "sampler_view_destroy");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, view);
+
+   pipe->sampler_view_destroy(pipe, view);
+
+   trace_dump_call_end();
+
+   pipe_texture_reference(&_view->texture, NULL);
+   FREE(_view);
+}
+
+
 static INLINE void
 trace_context_set_fragment_sampler_views(struct pipe_context *_pipe,
                                          unsigned num,
@@ -1313,6 +1370,8 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.set_viewport_state = trace_context_set_viewport_state;
    tr_ctx->base.set_fragment_sampler_views = trace_context_set_fragment_sampler_views;
    tr_ctx->base.set_vertex_sampler_views = trace_context_set_vertex_sampler_views;
+   tr_ctx->base.create_sampler_view = trace_create_sampler_view;
+   tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_vertex_elements = trace_context_set_vertex_elements;
    if (pipe->surface_copy)

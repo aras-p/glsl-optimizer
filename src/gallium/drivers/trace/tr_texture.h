@@ -60,8 +60,6 @@ struct trace_sampler_view
    struct pipe_sampler_view base;
 
    struct pipe_sampler_view *sampler_view;
-
-   struct tr_list list;
 };
 
 
