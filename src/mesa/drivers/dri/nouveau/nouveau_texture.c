@@ -157,7 +157,7 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 	case GL_INTENSITY12:
 	case GL_INTENSITY16:
 	case GL_INTENSITY8:
-		return MESA_FORMAT_ARGB8888;
+		return MESA_FORMAT_I8;
 
 	case GL_COLOR_INDEX:
 	case GL_COLOR_INDEX1_EXT:

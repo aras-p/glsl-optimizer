@@ -49,6 +49,7 @@ get_tex_format_pot(struct gl_texture_image *ti)
 		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8:
+	case MESA_FORMAT_I8:
 		return NV20TCL_TX_FORMAT_FORMAT_A8;
 
 	case MESA_FORMAT_L8:
