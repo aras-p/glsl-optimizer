@@ -3,7 +3,8 @@
 static boolean
 nvfx_state_blend_validate(struct nvfx_context *nvfx)
 {
-	so_ref(nvfx->blend->so, &nvfx->state.hw[NVFX_STATE_BLEND]);
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	sb_emit(chan, nvfx->blend->sb, nvfx->blend->sb_len);
 	return TRUE;
 }
 
@@ -11,7 +12,6 @@ struct nvfx_state_entry nvfx_state_blend = {
 	.validate = nvfx_state_blend_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_BLEND,
-		.hw = NVFX_STATE_BLEND
 	}
 };
 

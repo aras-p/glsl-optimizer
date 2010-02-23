@@ -15,32 +15,31 @@ nvfx_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct nvfx_blend_state *bso = CALLOC(1, sizeof(*bso));
-	struct nouveau_stateobj *so = so_new(5, 8, 0);
+	struct nouveau_statebuf_builder sb = sb_init(bso->sb);
 
 	if (cso->rt[0].blend_enable) {
-		so_method(so, eng3d, NV34TCL_BLEND_FUNC_ENABLE, 3);
-		so_data  (so, 1);
-		so_data  (so, (nvgl_blend_func(cso->rt[0].alpha_src_factor) << 16) |
+		sb_method(sb, NV34TCL_BLEND_FUNC_ENABLE, 3);
+		sb_data(sb, 1);
+		sb_data(sb, (nvgl_blend_func(cso->rt[0].alpha_src_factor) << 16) |
 			       nvgl_blend_func(cso->rt[0].rgb_src_factor));
-		so_data  (so, nvgl_blend_func(cso->rt[0].alpha_dst_factor) << 16 |
+		sb_data(sb, nvgl_blend_func(cso->rt[0].alpha_dst_factor) << 16 |
 			      nvgl_blend_func(cso->rt[0].rgb_dst_factor));
 		if(nvfx->screen->base.device->chipset < 0x40) {
-			so_method(so, eng3d, NV34TCL_BLEND_EQUATION, 1);
-			so_data  (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
+			sb_method(sb, NV34TCL_BLEND_EQUATION, 1);
+			sb_data(sb, nvgl_blend_eqn(cso->rt[0].rgb_func));
 		} else {
-			so_method(so, eng3d, NV40TCL_BLEND_EQUATION, 1);
-			so_data  (so, nvgl_blend_eqn(cso->rt[0].alpha_func) << 16 |
+			sb_method(sb, NV40TCL_BLEND_EQUATION, 1);
+			sb_data(sb, nvgl_blend_eqn(cso->rt[0].alpha_func) << 16 |
 			      nvgl_blend_eqn(cso->rt[0].rgb_func));
 		}
 	} else {
-		so_method(so, eng3d, NV34TCL_BLEND_FUNC_ENABLE, 1);
-		so_data  (so, 0);
+		sb_method(sb, NV34TCL_BLEND_FUNC_ENABLE, 1);
+		sb_data(sb, 0);
 	}
 
-	so_method(so, eng3d, NV34TCL_COLOR_MASK, 1);
-	so_data  (so, (((cso->rt[0].colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
+	sb_method(sb, NV34TCL_COLOR_MASK, 1);
+	sb_data(sb, (((cso->rt[0].colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
 	       ((cso->rt[0].colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
 	       ((cso->rt[0].colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
 	       ((cso->rt[0].colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
@@ -48,19 +47,18 @@ nvfx_blend_state_create(struct pipe_context *pipe,
 	/* TODO: add NV40 MRT color mask */
 
 	if (cso->logicop_enable) {
-		so_method(so, eng3d, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
-		so_data  (so, 1);
-		so_data  (so, nvgl_logicop_func(cso->logicop_func));
+		sb_method(sb, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		sb_data(sb, 1);
+		sb_data(sb, nvgl_logicop_func(cso->logicop_func));
 	} else {
-		so_method(so, eng3d, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
-		so_data  (so, 0);
+		sb_method(sb, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		sb_data(sb, 0);
 	}
 
-	so_method(so, eng3d, NV34TCL_DITHER_ENABLE, 1);
-	so_data  (so, cso->dither ? 1 : 0);
+	sb_method(sb, NV34TCL_DITHER_ENABLE, 1);
+	sb_data(sb, cso->dither ? 1 : 0);
 
-	so_ref(so, &bso->so);
-	so_ref(NULL, &so);
+	bso->sb_len = sb_len(sb, bso->sb);
 	bso->pipe = *cso;
 	return (void *)bso;
 }
@@ -79,7 +77,6 @@ nvfx_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	struct nvfx_blend_state *bso = hwcso;
 
-	so_ref(NULL, &bso->so);
 	FREE(bso);
 }
 

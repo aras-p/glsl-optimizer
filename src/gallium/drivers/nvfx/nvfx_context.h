@@ -95,7 +95,8 @@ struct nvfx_zsa_state {
 
 struct nvfx_blend_state {
 	struct pipe_blend_state pipe;
-	struct nouveau_stateobj *so;
+	unsigned sb_len;
+	uint32_t sb[13];
 };
 
 
