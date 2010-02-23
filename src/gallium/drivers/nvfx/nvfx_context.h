@@ -16,7 +16,6 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-#include "nouveau/nouveau_stateobj.h"
 
 #include "nvfx_state.h"
 
