@@ -254,6 +254,8 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
    softpipe->pipe.set_fragment_sampler_views = softpipe_set_sampler_views;
    softpipe->pipe.set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
+   softpipe->pipe.create_sampler_view = softpipe_create_sampler_view;
+   softpipe->pipe.sampler_view_destroy = softpipe_sampler_view_destroy;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;

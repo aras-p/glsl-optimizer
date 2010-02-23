@@ -121,6 +121,35 @@ softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 }
 
 
+struct pipe_sampler_view *
+softpipe_create_sampler_view(struct pipe_context *pipe,
+                             struct pipe_texture *texture,
+                             const struct pipe_sampler_view *templ)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   *view = *templ;
+   view->reference.count = 1;
+   view->texture = NULL;
+   pipe_texture_reference(&view->texture, texture);
+   view->context = pipe;
+
+   return view;
+}
+
+
+void
+softpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   pipe_texture_reference(&view->texture, NULL);
+   FREE(view);
+}
+
+
 void
 softpipe_set_sampler_views(struct pipe_context *pipe,
                            unsigned num,
