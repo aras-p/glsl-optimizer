@@ -18,17 +18,15 @@ struct nvfx_state_entry nvfx_state_blend = {
 static boolean
 nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 {
-	struct nouveau_stateobj *so = so_new(1, 1, 0);
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct pipe_blend_color *bcol = &nvfx->blend_colour;
 
-	so_method(so, nvfx->screen->eng3d, NV34TCL_BLEND_COLOR, 1);
-	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
+	WAIT_RING(chan, 2);
+	OUT_RING(chan, RING_3D(NV34TCL_BLEND_COLOR, 1));
+	OUT_RING(chan, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
 		       (float_to_ubyte(bcol->color[2]) <<  0)));
-
-	so_ref(so, &nvfx->state.hw[NVFX_STATE_BCOL]);
-	so_ref(NULL, &so);
 	return TRUE;
 }
 
@@ -36,6 +34,5 @@ struct nvfx_state_entry nvfx_state_blend_colour = {
 	.validate = nvfx_state_blend_colour_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_BCOL,
-		.hw = NVFX_STATE_BCOL
 	}
 };
