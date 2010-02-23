@@ -395,15 +395,15 @@ multiplicative_expression:
 	unary_expression
 	| multiplicative_expression '*' unary_expression
 	{
-	   $$ = new ast_expression(ast_mul, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_mul, $1, $3);
 	}
 	| multiplicative_expression '/' unary_expression
 	{
-	   $$ = new ast_expression(ast_div, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_div, $1, $3);
 	}
 	| multiplicative_expression '%' unary_expression
 	{
-	   $$ = new ast_expression(ast_mod, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_mod, $1, $3);
 	}
 	;
 
@@ -411,11 +411,11 @@ additive_expression:
 	multiplicative_expression
 	| additive_expression '+' multiplicative_expression
 	{
-	   $$ = new ast_expression(ast_add, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_add, $1, $3);
 	}
 	| additive_expression '-' multiplicative_expression
 	{
-	   $$ = new ast_expression(ast_sub, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_sub, $1, $3);
 	}
 	;
 
@@ -423,11 +423,11 @@ shift_expression:
 	additive_expression
 	| shift_expression LEFT_OP additive_expression
 	{
-	   $$ = new ast_expression(ast_lshift, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_lshift, $1, $3);
 	}
 	| shift_expression RIGHT_OP additive_expression
 	{
-	   $$ = new ast_expression(ast_rshift, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_rshift, $1, $3);
 	}
 	;
 
@@ -435,19 +435,19 @@ relational_expression:
 	shift_expression
 	| relational_expression '<' shift_expression
 	{
-	   $$ = new ast_expression(ast_less, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_less, $1, $3);
 	}
 	| relational_expression '>' shift_expression
 	{
-	   $$ = new ast_expression(ast_greater, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_greater, $1, $3);
 	}
 	| relational_expression LE_OP shift_expression
 	{
-	   $$ = new ast_expression(ast_lequal, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_lequal, $1, $3);
 	}
 	| relational_expression GE_OP shift_expression
 	{
-	   $$ = new ast_expression(ast_gequal, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_gequal, $1, $3);
 	}
 	;
 
@@ -455,11 +455,11 @@ equality_expression:
 	relational_expression
 	| equality_expression EQ_OP relational_expression
 	{
-	   $$ = new ast_expression(ast_equal, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_equal, $1, $3);
 	}
 	| equality_expression NE_OP relational_expression
 	{
-	   $$ = new ast_expression(ast_nequal, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_nequal, $1, $3);
 	}
 	;
 
@@ -467,7 +467,7 @@ and_expression:
 	equality_expression
 	| and_expression '&' equality_expression
 	{
-	   $$ = new ast_expression(ast_bit_or, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_bit_or, $1, $3);
 	}
 	;
 
@@ -475,7 +475,7 @@ exclusive_or_expression:
 	and_expression
 	| exclusive_or_expression '^' and_expression
 	{
-	   $$ = new ast_expression(ast_bit_xor, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_bit_xor, $1, $3);
 	}
 	;
 
@@ -483,7 +483,7 @@ inclusive_or_expression:
 	exclusive_or_expression
 	| inclusive_or_expression '|' exclusive_or_expression
 	{
-	   $$ = new ast_expression(ast_bit_or, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_bit_or, $1, $3);
 	}
 	;
 
@@ -491,7 +491,7 @@ logical_and_expression:
 	inclusive_or_expression
 	| logical_and_expression AND_OP inclusive_or_expression
 	{
-	   $$ = new ast_expression(ast_logic_and, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_logic_and, $1, $3);
 	}
 	;
 
@@ -499,7 +499,7 @@ logical_xor_expression:
 	logical_and_expression
 	| logical_xor_expression XOR_OP logical_and_expression
 	{
-	   $$ = new ast_expression(ast_logic_xor, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_logic_xor, $1, $3);
 	}
 	;
 
@@ -507,7 +507,7 @@ logical_or_expression:
 	logical_xor_expression
 	| logical_or_expression OR_OP logical_xor_expression
 	{
-	   $$ = new ast_expression(ast_logic_or, $1, $3, NULL);
+	   $$ = new ast_expression_bin(ast_logic_or, $1, $3);
 	}
 	;
 

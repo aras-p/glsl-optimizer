@@ -159,6 +159,8 @@ public:
    ast_expression(int oper, ast_expression *,
 		  ast_expression *, ast_expression *);
 
+   static const char *operator_string(enum ast_operators op);
+
    virtual void print(void) const;
 
    enum ast_operators oper;
@@ -179,6 +181,14 @@ public:
     */
    struct simple_node expressions;
 };
+
+class ast_expression_bin : public ast_expression {
+public:
+   ast_expression_bin(int oper, ast_expression *, ast_expression *);
+
+   virtual void print(void) const;
+};
+
 
 /**
  * Number of possible operators for an ast_expression

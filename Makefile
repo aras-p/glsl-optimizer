@@ -1,5 +1,6 @@
 CSRCS = symbol_table.c hash_table.c glsl_types.c 
-CCSRCS = glsl_parser.tab.cpp glsl_lexer.cpp glsl_parser_extras.cpp
+CCSRCS = glsl_parser.tab.cpp glsl_lexer.cpp glsl_parser_extras.cpp \
+	ast_expr.cpp
 #	ast_to_hir.cpp ir.cpp hir_field_selection.cpp
 OBJS = $(CSRCS:.c=.o)  $(CCSRCS:.cpp=.o)
 

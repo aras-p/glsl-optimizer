@@ -239,72 +239,8 @@ ast_compound_statement::ast_compound_statement(int new_scope,
 void
 ast_expression::print(void) const
 {
-   static const char *const operators[] = {
-      "=",
-      "+",
-      "-",
-      "+",
-      "-",
-      "*",
-      "/",
-      "%",
-      "<<",
-      ">>",
-      "<",
-      ">",
-      "<=",
-      ">=",
-      "==",
-      "!=",
-      "&",
-      "^",
-      "|",
-      "~",
-      "&&",
-      "^^",
-      "!",
-
-      "*=",
-      "/=",
-      "%=",
-      "+=",
-      "-=",
-      "<<=",
-      ">>=",
-      "&=",
-      "^=",
-      "|=",
-
-      "?:",
-      "++",
-      "--",
-      "++",
-      "--",
-      ".",
-   };
-
-
    switch (oper) {
    case ast_assign:
-   case ast_add:
-   case ast_sub:
-   case ast_mul:
-   case ast_div:
-   case ast_mod:
-   case ast_lshift:
-   case ast_rshift:
-   case ast_less:
-   case ast_greater:
-   case ast_lequal:
-   case ast_gequal:
-   case ast_equal:
-   case ast_nequal:
-   case ast_bit_and:
-   case ast_bit_xor:
-   case ast_bit_or:
-   case ast_logic_and:
-   case ast_logic_xor:
-   case ast_logic_or:
    case ast_mul_assign:
    case ast_div_assign:
    case ast_mod_assign:
@@ -316,7 +252,7 @@ ast_expression::print(void) const
    case ast_xor_assign:
    case ast_or_assign:
       subexpressions[0]->print();
-      printf("%s ", operators[oper]);
+      printf("%s ", operator_string(oper));
       subexpressions[1]->print();
       break;
 
@@ -331,14 +267,14 @@ ast_expression::print(void) const
    case ast_logic_not:
    case ast_pre_inc:
    case ast_pre_dec:
-      printf("%s ", operators[oper]);
+      printf("%s ", operator_string(oper));
       subexpressions[0]->print();
       break;
 
    case ast_post_inc:
    case ast_post_dec:
       subexpressions[0]->print();
-      printf("%s ", operators[oper]);
+      printf("%s ", operator_string(oper));
       break;
 
    case ast_conditional:
@@ -412,6 +348,10 @@ ast_expression::print(void) const
       printf(") ");
       break;
    }
+
+   default:
+      assert(0);
+      break;
    }
 }
 
