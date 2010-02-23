@@ -176,6 +176,34 @@ static void svga_delete_sampler_state(struct pipe_context *pipe,
 }
 
 
+static struct pipe_sampler_view *
+svga_create_sampler_view(struct pipe_context *pipe,
+                         struct pipe_texture *texture,
+                         const struct pipe_sampler_view *templ)
+{
+   struct svga_context *softpipe = svga_context(pipe);
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   *view = *templ;
+   view->reference.count = 1;
+   view->texture = NULL;
+   pipe_texture_reference(&view->texture, texture);
+   view->context = pipe;
+
+   return view;
+}
+
+
+static void
+svga_sampler_view_destroy(struct pipe_context *pipe,
+                          struct pipe_sampler_view *view)
+{
+   struct svga_context *svga = svga_context(pipe);
+
+   pipe_texture_reference(&view->texture, NULL);
+   FREE(view);
+}
+
 static void svga_set_sampler_views(struct pipe_context *pipe,
                                    unsigned num,
                                    struct pipe_sampler_view **views)
@@ -232,6 +260,8 @@ void svga_init_sampler_functions( struct svga_context *svga )
    svga->pipe.bind_fragment_sampler_states = svga_bind_sampler_states;
    svga->pipe.delete_sampler_state = svga_delete_sampler_state;
    svga->pipe.set_fragment_sampler_views = svga_set_sampler_views;
+   svga->pipe.create_sampler_view = svga_create_sampler_view;
+   svga->pipe.sampler_view_destroy = svga_sampler_view_destroy;
 }
 
 
