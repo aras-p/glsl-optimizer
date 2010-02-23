@@ -3,6 +3,7 @@
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
+#include "nouveau/nouveau_statebuf.h"
 
 struct nvfx_vertex_program_exec {
 	uint32_t data[4];
