@@ -1039,6 +1039,6 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 struct nvfx_state_entry nvfx_state_vertprog = {
 	.validate = nvfx_vertprog_validate,
 	.dirty = {
-		.pipe = NVFX_NEW_VERTPROG | NVFX_NEW_UCP,
+		.pipe = NVFX_NEW_VERTPROG | NVFX_NEW_VERTCONST | NVFX_NEW_UCP,
 	}
 };

@@ -80,6 +80,8 @@ enum nvfx_state_index {
 #define NVFX_NEW_ARRAYS		(1 << 11)
 #define NVFX_NEW_UCP		(1 << 12)
 #define NVFX_NEW_SR		(1 << 13)
+#define NVFX_NEW_VERTCONST	(1 << 14)
+#define NVFX_NEW_FRAGCONST	(1 << 15)
 
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;

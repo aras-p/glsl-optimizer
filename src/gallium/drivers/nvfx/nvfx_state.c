@@ -496,10 +496,10 @@ nvfx_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	nvfx->constbuf_nr[shader] = buf->width0 / (4 * sizeof(float));
 
 	if (shader == PIPE_SHADER_VERTEX) {
-		nvfx->dirty |= NVFX_NEW_VERTPROG;
+		nvfx->dirty |= NVFX_NEW_VERTCONST;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		nvfx->dirty |= NVFX_NEW_FRAGPROG;
+		nvfx->dirty |= NVFX_NEW_FRAGCONST;
 	}
 }
 

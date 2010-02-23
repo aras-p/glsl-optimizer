@@ -980,7 +980,7 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 struct nvfx_state_entry nvfx_state_fragprog = {
 	.validate = nvfx_fragprog_validate,
 	.dirty = {
-		.pipe = NVFX_NEW_FRAGPROG,
+		.pipe = NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST,
 		.hw = 0
 	}
 };
