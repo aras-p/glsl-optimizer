@@ -483,11 +483,15 @@ pb_slab_range_manager_create_buffer(struct pb_manager *_mgr,
 {
    struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
    pb_size bufSize;
+   pb_size reqSize = size;
    unsigned i;
+
+   if(desc->alignment > reqSize)
+	   reqSize = desc->alignment;
 
    bufSize = mgr->minBufSize;
    for (i = 0; i < mgr->numBuckets; ++i) {
-      if(bufSize >= size)
+      if(bufSize >= reqSize)
 	 return mgr->buckets[i]->create_buffer(mgr->buckets[i], size, desc);
       bufSize *= 2;
    }
