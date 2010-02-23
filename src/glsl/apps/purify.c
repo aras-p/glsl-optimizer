@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,7 @@ main(int argc,
 
    fseek(in, 0, SEEK_END);
    size = ftell(in);
+   assert(size != -1);
    fseek(in, 0, SEEK_SET);
 
    out = fopen(argv[2], "wb");
