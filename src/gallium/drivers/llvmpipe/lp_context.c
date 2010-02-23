@@ -40,6 +40,7 @@
 #include "lp_context.h"
 #include "lp_flush.h"
 #include "lp_perf.h"
+#include "lp_screen.h"
 #include "lp_state.h"
 #include "lp_surface.h"
 #include "lp_query.h"
@@ -105,6 +106,7 @@ struct pipe_context *
 llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 {
    struct llvmpipe_context *llvmpipe;
+   struct llvmpipe_screen *llvmscreen = llvmpipe_screen(screen);
 
    llvmpipe = align_malloc(sizeof(struct llvmpipe_context), 16);
    if (!llvmpipe)
@@ -174,8 +176,8 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   llvmpipe->draw = draw_create();
-   if (!llvmpipe->draw) 
+   llvmpipe->draw = draw_create_with_llvm(llvmscreen->engine);
+   if (!llvmpipe->draw)
       goto fail;
 
    /* FIXME: devise alternative to draw_texture_samplers */

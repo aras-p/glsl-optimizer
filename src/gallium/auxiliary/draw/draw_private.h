@@ -46,6 +46,10 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#ifdef DRAW_LLVM
+#include <llvm-c/ExecutionEngine.h>
+#endif
+
 
 struct pipe_context;
 struct draw_vertex_shader;
@@ -237,9 +241,16 @@ struct draw_context
 
    unsigned instance_id;
 
+#ifdef DRAW_LLVM
+   LLVMExecutionEngineRef engine;
+#endif
    void *driver_private;
 };
 
+/*******************************************************************************
+ * Draw common initialization code
+ */
+boolean draw_init(struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex shader code:

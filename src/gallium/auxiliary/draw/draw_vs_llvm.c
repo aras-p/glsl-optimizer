@@ -40,7 +40,7 @@
 
 #include "tgsi/tgsi_parse.h"
 
-#ifdef MESA_LLVM
+#ifdef DRAW_LLVM
 
 struct draw_llvm_vertex_shader {
    struct draw_vertex_shader base;
@@ -64,11 +64,7 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 		   unsigned input_stride,
 		   unsigned output_stride )
 {
-   struct draw_llvm_vertex_shader *shader =
-      (struct draw_llvm_vertex_shader *)base;
 }
-
-
 
 static void
 vs_llvm_delete( struct draw_vertex_shader *base )
@@ -90,6 +86,7 @@ struct draw_vertex_shader *
 draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ)
 {
+#if 0
    struct draw_llvm_vertex_shader *vs;
 
    vs = CALLOC_STRUCT( draw_llvm_vertex_shader );
@@ -113,6 +110,8 @@ draw_create_vs_llvm(struct draw_context *draw,
    vs->machine = draw->vs.machine;
 
    return &vs->base;
+#endif
+   return NULL;
 }
 
 
