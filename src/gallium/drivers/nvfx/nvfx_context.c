@@ -83,5 +83,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	draw_enable_point_sprites(nvfx->draw, FALSE);
 	draw_set_rasterize_stage(nvfx->draw, nvfx_draw_render_stage(nvfx));
 
+	/* set these to that we init them on first validation */
+	nvfx->state.scissor_enabled = ~0;
 	return &nvfx->pipe;
 }
