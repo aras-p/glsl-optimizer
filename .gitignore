@@ -1,0 +1,9 @@
+*.o
+*~
+builtin_types.h
+glsl_lexer.cpp
+glsl_parser.output
+glsl_parser.tab.cpp
+glsl_parser.tab.h
+glsl_parser.tab.hpp
+glsl
