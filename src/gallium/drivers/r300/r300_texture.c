@@ -70,6 +70,19 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         R300_TX_FORMAT_B_SHIFT,
         R300_TX_FORMAT_A_SHIFT
     };
+    const uint32_t swizzle_arith[4] = {
+        R300_TX_FORMAT_X,
+        R300_TX_FORMAT_Y,
+        R300_TX_FORMAT_Z,
+        R300_TX_FORMAT_W
+    };
+    const uint32_t swizzle_array[4] = {
+        R300_TX_FORMAT_W,
+        R300_TX_FORMAT_Z,
+        R300_TX_FORMAT_Y,
+        R300_TX_FORMAT_X
+    };
+    const uint32_t *swizzle;
     const uint32_t sign_bit[4] = {
         R300_TX_FORMAT_SIGNED_X,
         R300_TX_FORMAT_SIGNED_Y,
@@ -115,20 +128,23 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     /* Add swizzle. */
+    swizzle = desc->layout == UTIL_FORMAT_LAYOUT_ARITH ?
+              swizzle_arith : swizzle_array;
+
     for (i = 0; i < 4; i++) {
         switch (desc->swizzle[i]) {
             case UTIL_FORMAT_SWIZZLE_X:
             case UTIL_FORMAT_SWIZZLE_NONE:
-                result |= R300_TX_FORMAT_X << swizzle_shift[i];
+                result |= swizzle[0] << swizzle_shift[i];
                 break;
             case UTIL_FORMAT_SWIZZLE_Y:
-                result |= R300_TX_FORMAT_Y << swizzle_shift[i];
+                result |= swizzle[1] << swizzle_shift[i];
                 break;
             case UTIL_FORMAT_SWIZZLE_Z:
-                result |= R300_TX_FORMAT_Z << swizzle_shift[i];
+                result |= swizzle[2] << swizzle_shift[i];
                 break;
             case UTIL_FORMAT_SWIZZLE_W:
-                result |= R300_TX_FORMAT_W << swizzle_shift[i];
+                result |= swizzle[3] << swizzle_shift[i];
                 break;
             case UTIL_FORMAT_SWIZZLE_0:
                 result |= R300_TX_FORMAT_ZERO << swizzle_shift[i];
