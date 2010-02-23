@@ -94,6 +94,9 @@ def write_format_table(formats):
     print "      \"PIPE_FORMAT_NONE\","
     print "      {0, 0, 0},"
     print "      0,"
+    print "      0,"
+    print "      0,"
+    print "      0,"
     print "      {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
     print "      {0, 0, 0, 0},"
     print "      0"
@@ -104,6 +107,9 @@ def write_format_table(formats):
         print "      \"%s\"," % (format.name,)
         print "      {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
         print "      %s," % (layout_map(format.layout),)
+        print "      %u,\t/* nr_channels */" % (format.nr_channels(),)
+        print "      %s,\t/* is_array */" % (bool_map(format.is_array()),)
+        print "      %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
         print "      {"
         for i in range(4):
             type = format.in_types[i]

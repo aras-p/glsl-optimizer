@@ -83,6 +83,30 @@ class Format:
             size += type.size
         return size
 
+    def nr_channels(self):
+        nr_channels = 0
+        for type in self.in_types:
+            if type.size:
+                nr_channels += 1
+        return nr_channels
+
+    def is_array(self):
+        ref_type = self.in_types[0]
+        for type in self.in_types[1:]:
+            if type.size and (type.size != ref_type.size or type.size % 8):
+                return False
+        return True
+
+    def is_mixed(self):
+        ref_type = self.in_types[0]
+        for type in self.in_types[1:]:
+            if type.kind != VOID:
+                if type.kind != ref_type.kind:
+                    return True
+                if type.norm != ref_type.norm:
+                    return True
+        return False
+
     def stride(self):
         return self.block_size()/8
 

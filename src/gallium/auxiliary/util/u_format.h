@@ -138,8 +138,26 @@ struct util_format_description
    const char *name;
    struct util_format_block block;
    enum util_format_layout layout;
+
+   /**
+    * The number of channels.
+    */
+   unsigned nr_channels:3;
+
+   /**
+    * Whether all channels have the same number of whole bytes.
+    */
+   unsigned is_array:1;
+
+   /**
+    * Whether channels have mixed types (ignoring UTIL_FORMAT_TYPE_VOID).
+    */
+   unsigned is_mixed:1;
+
    struct util_format_channel_description channel[4];
+
    unsigned char swizzle[4];
+
    enum util_format_colorspace colorspace;
 };
 
