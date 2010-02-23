@@ -271,7 +271,6 @@ so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 static INLINE void
 so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_grobj *gr = NULL;
 	unsigned i;
 	int ret = 0;
 
@@ -289,14 +288,11 @@ so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 		}
 #endif /* DEBUG_NOUVEAU_STATEOBJ */
 
-		/* The object needs to be bound and the system must know the
-		 * subchannel is being used. Otherwise it will discard it.
+		/* We don't need to autobind, since there are enough subchannels
+		 * for all objects we use. If this is changed, account for the extra
+		 * space in callers of this function.
 		 */
-		if (gr != r->gr) {
-			BEGIN_RING(chan, r->gr, 0x100, 1);
-			OUT_RING(chan, 0);
-			gr = r->gr;
-		}
+		assert(r->gr->bound != NOUVEAU_GROBJ_UNBOUND);
 
 		/* Some relocs really don't like to be hammered,
 		 * NOUVEAU_BO_DUMMY makes sure it only
