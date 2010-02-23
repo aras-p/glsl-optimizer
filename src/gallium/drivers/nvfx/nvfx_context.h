@@ -89,7 +89,8 @@ struct nvfx_rasterizer_state {
 
 struct nvfx_zsa_state {
 	struct pipe_depth_stencil_alpha_state pipe;
-	struct nouveau_stateobj *so;
+	unsigned sb_len;
+	uint32_t sb[26];
 };
 
 struct nvfx_blend_state {

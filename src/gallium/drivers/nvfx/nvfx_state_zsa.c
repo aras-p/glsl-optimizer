@@ -3,8 +3,8 @@
 static boolean
 nvfx_state_zsa_validate(struct nvfx_context *nvfx)
 {
-	so_ref(nvfx->zsa->so,
-	       &nvfx->state.hw[NVFX_STATE_ZSA]);
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	sb_emit(chan, nvfx->zsa->sb, nvfx->zsa->sb_len);
 	return TRUE;
 }
 
@@ -12,7 +12,6 @@ struct nvfx_state_entry nvfx_state_zsa = {
 	.validate = nvfx_state_zsa_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_ZSA,
-		.hw = NVFX_STATE_ZSA
 	}
 };
 

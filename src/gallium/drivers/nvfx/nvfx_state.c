@@ -323,54 +323,51 @@ static void *
 nvfx_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
-	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
-	struct nouveau_stateobj *so = so_new(6, 20, 0);
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct nouveau_statebuf_builder sb = sb_init(zsaso->sb);
 
-	so_method(so, eng3d, NV34TCL_DEPTH_FUNC, 3);
-	so_data  (so, nvgl_comparison_op(cso->depth.func));
-	so_data  (so, cso->depth.writemask ? 1 : 0);
-	so_data  (so, cso->depth.enabled ? 1 : 0);
+	sb_method(sb, NV34TCL_DEPTH_FUNC, 3);
+	sb_data  (sb, nvgl_comparison_op(cso->depth.func));
+	sb_data  (sb, cso->depth.writemask ? 1 : 0);
+	sb_data  (sb, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, eng3d, NV34TCL_ALPHA_FUNC_ENABLE, 3);
-	so_data  (so, cso->alpha.enabled ? 1 : 0);
-	so_data  (so, nvgl_comparison_op(cso->alpha.func));
-	so_data  (so, float_to_ubyte(cso->alpha.ref_value));
+	sb_method(sb, NV34TCL_ALPHA_FUNC_ENABLE, 3);
+	sb_data  (sb, cso->alpha.enabled ? 1 : 0);
+	sb_data  (sb, nvgl_comparison_op(cso->alpha.func));
+	sb_data  (sb, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_ENABLE, 3);
-		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
-		so_data  (so, cso->stencil[0].writemask);
-		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
-		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
-		so_data  (so, cso->stencil[0].valuemask);
-		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
-		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
-		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
+		sb_method(sb, NV34TCL_STENCIL_FRONT_ENABLE, 3);
+		sb_data  (sb, cso->stencil[0].enabled ? 1 : 0);
+		sb_data  (sb, cso->stencil[0].writemask);
+		sb_data  (sb, nvgl_comparison_op(cso->stencil[0].func));
+		sb_method(sb, NV34TCL_STENCIL_FRONT_FUNC_MASK, 4);
+		sb_data  (sb, cso->stencil[0].valuemask);
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].fail_op));
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].zfail_op));
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, eng3d, NV34TCL_STENCIL_FRONT_ENABLE, 1);
-		so_data  (so, 0);
+		sb_method(sb, NV34TCL_STENCIL_FRONT_ENABLE, 1);
+		sb_data  (sb, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, eng3d, NV34TCL_STENCIL_BACK_ENABLE, 3);
-		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
-		so_data  (so, cso->stencil[1].writemask);
-		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
-		so_method(so, eng3d, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
-		so_data  (so, cso->stencil[1].valuemask);
-		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
-		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
-		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
+		sb_method(sb, NV34TCL_STENCIL_BACK_ENABLE, 3);
+		sb_data  (sb, cso->stencil[1].enabled ? 1 : 0);
+		sb_data  (sb, cso->stencil[1].writemask);
+		sb_data  (sb, nvgl_comparison_op(cso->stencil[1].func));
+		sb_method(sb, NV34TCL_STENCIL_BACK_FUNC_MASK, 4);
+		sb_data  (sb, cso->stencil[1].valuemask);
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].fail_op));
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].zfail_op));
+		sb_data  (sb, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, eng3d, NV34TCL_STENCIL_BACK_ENABLE, 1);
-		so_data  (so, 0);
+		sb_method(sb, NV34TCL_STENCIL_BACK_ENABLE, 1);
+		sb_data  (sb, 0);
 	}
 
-	so_ref(so, &zsaso->so);
-	so_ref(NULL, &so);
 	zsaso->pipe = *cso;
+	zsaso->sb_len = sb_len(sb, zsaso->sb);
 	return (void *)zsaso;
 }
 
@@ -388,7 +385,6 @@ nvfx_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	struct nvfx_zsa_state *zsaso = hwcso;
 
-	so_ref(NULL, &zsaso->so);
 	FREE(zsaso);
 }
 
