@@ -528,6 +528,7 @@ fxt1_lloyd (GLfloat vec[][MAX_COMP], GLint nv,
 #else
          GLint best = fxt1_bestcol(vec, nv, input[k], nc, &err);
 #endif
+         assert(best >= 0);
          /* add in closest color */
          for (i = 0; i < nc; i++) {
             sum[best][i] += input[k][i];
