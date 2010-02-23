@@ -418,6 +418,8 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	BIND_RING(chan, screen->eng3d, 7);
+
 	/* Static eng3d initialisation */
 	/* make the so big and don't worry about exact values
 	   since we it will be thrown away immediately after use */

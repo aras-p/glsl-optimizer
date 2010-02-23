@@ -335,6 +335,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	/* this is necessary for the new RING_3D / statebuffer code */
+	BIND_RING(chan, screen->tesla, 7);
+
 	/* Sync notifier */
 	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
