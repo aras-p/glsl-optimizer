@@ -85,5 +85,6 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 
 	/* set these to that we init them on first validation */
 	nvfx->state.scissor_enabled = ~0;
+	nvfx->state.stipple_enabled = ~0;
 	return &nvfx->pipe;
 }
