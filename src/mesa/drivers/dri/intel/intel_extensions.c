@@ -151,6 +151,7 @@ static const struct dri_extension i915_extensions[] = {
 static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_depth_clamp",                NULL },
    { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_coord_conventions", NULL },
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
