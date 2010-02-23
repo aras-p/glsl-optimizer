@@ -194,8 +194,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
          format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
          return FALSE;
 
@@ -224,8 +223,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
          format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
          return FALSE;
 
