@@ -192,10 +192,8 @@ static void *
 nvfx_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
-	struct nouveau_stateobj *so = so_new(9, 19, 0);
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct nouveau_statebuf_builder sb = sb_init(rsso->sb);
 
 	/*XXX: ignored:
 	 * 	light_twoside
@@ -203,88 +201,88 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 */
 
-	so_method(so, eng3d, NV34TCL_SHADE_MODEL, 1);
-	so_data  (so, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
+	sb_method(sb, NV34TCL_SHADE_MODEL, 1);
+	sb_data(sb, cso->flatshade ? NV34TCL_SHADE_MODEL_FLAT :
 				       NV34TCL_SHADE_MODEL_SMOOTH);
 
-	so_method(so, eng3d, NV34TCL_LINE_WIDTH, 2);
-	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
-	so_data  (so, cso->line_smooth ? 1 : 0);
-	so_method(so, eng3d, NV34TCL_LINE_STIPPLE_ENABLE, 2);
-	so_data  (so, cso->line_stipple_enable ? 1 : 0);
-	so_data  (so, (cso->line_stipple_pattern << 16) |
+	sb_method(sb, NV34TCL_LINE_WIDTH, 2);
+	sb_data(sb, (unsigned char)(cso->line_width * 8.0) & 0xff);
+	sb_data(sb, cso->line_smooth ? 1 : 0);
+	sb_method(sb, NV34TCL_LINE_STIPPLE_ENABLE, 2);
+	sb_data(sb, cso->line_stipple_enable ? 1 : 0);
+	sb_data(sb, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	so_method(so, eng3d, NV34TCL_POINT_SIZE, 1);
-	so_data  (so, fui(cso->point_size));
+	sb_method(sb, NV34TCL_POINT_SIZE, 1);
+	sb_data(sb, fui(cso->point_size));
 
-	so_method(so, eng3d, NV34TCL_POLYGON_MODE_FRONT, 6);
+	sb_method(sb, NV34TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
+		sb_data(sb, nvgl_polygon_mode(cso->fill_ccw));
+		sb_data(sb, nvgl_polygon_mode(cso->fill_cw));
 		switch (cso->cull_mode) {
 		case PIPE_WINDING_CCW:
-			so_data(so, NV34TCL_CULL_FACE_FRONT);
+			sb_data(sb, NV34TCL_CULL_FACE_FRONT);
 			break;
 		case PIPE_WINDING_CW:
-			so_data(so, NV34TCL_CULL_FACE_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_BACK);
 			break;
 		case PIPE_WINDING_BOTH:
-			so_data(so, NV34TCL_CULL_FACE_FRONT_AND_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, NV34TCL_CULL_FACE_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_BACK);
 			break;
 		}
-		so_data(so, NV34TCL_FRONT_FACE_CCW);
+		sb_data(sb, NV34TCL_FRONT_FACE_CCW);
 	} else {
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
+		sb_data(sb, nvgl_polygon_mode(cso->fill_cw));
+		sb_data(sb, nvgl_polygon_mode(cso->fill_ccw));
 		switch (cso->cull_mode) {
 		case PIPE_WINDING_CCW:
-			so_data(so, NV34TCL_CULL_FACE_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_BACK);
 			break;
 		case PIPE_WINDING_CW:
-			so_data(so, NV34TCL_CULL_FACE_FRONT);
+			sb_data(sb, NV34TCL_CULL_FACE_FRONT);
 			break;
 		case PIPE_WINDING_BOTH:
-			so_data(so, NV34TCL_CULL_FACE_FRONT_AND_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, NV34TCL_CULL_FACE_BACK);
+			sb_data(sb, NV34TCL_CULL_FACE_BACK);
 			break;
 		}
-		so_data(so, NV34TCL_FRONT_FACE_CW);
+		sb_data(sb, NV34TCL_FRONT_FACE_CW);
 	}
-	so_data(so, cso->poly_smooth ? 1 : 0);
-	so_data(so, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
+	sb_data(sb, cso->poly_smooth ? 1 : 0);
+	sb_data(sb, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
 
-	so_method(so, eng3d, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
-	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
+	sb_method(sb, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
+	sb_data(sb, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, eng3d, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
+	sb_method(sb, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
-		so_data(so, 1);
+		sb_data(sb, 1);
 	else
-		so_data(so, 0);
+		sb_data(sb, 0);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
-		so_data(so, 1);
+		sb_data(sb, 1);
 	else
-		so_data(so, 0);
+		sb_data(sb, 0);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
-		so_data(so, 1);
+		sb_data(sb, 1);
 	else
-		so_data(so, 0);
+		sb_data(sb, 0);
 	if (cso->offset_cw || cso->offset_ccw) {
-		so_method(so, eng3d, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
-		so_data  (so, fui(cso->offset_scale));
-		so_data  (so, fui(cso->offset_units * 2));
+		sb_method(sb, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
+		sb_data(sb, fui(cso->offset_scale));
+		sb_data(sb, fui(cso->offset_units * 2));
 	}
 
-	so_method(so, eng3d, NV34TCL_POINT_SPRITE, 1);
+	sb_method(sb, NV34TCL_POINT_SPRITE, 1);
 	if (cso->point_quad_rasterization) {
 		unsigned psctl = (1 << 0), i;
 
@@ -293,14 +291,13 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 				psctl |= (1 << (8 + i));
 		}
 
-		so_data(so, psctl);
+		sb_data(sb, psctl);
 	} else {
-		so_data(so, 0);
+		sb_data(sb, 0);
 	}
 
-	so_ref(so, &rsso->so);
-	so_ref(NULL, &so);
 	rsso->pipe = *cso;
+	rsso->sb_len = sb_len(sb, rsso->sb);
 	return (void *)rsso;
 }
 
@@ -319,7 +316,6 @@ nvfx_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	struct nvfx_rasterizer_state *rsso = hwcso;
 
-	so_ref(NULL, &rsso->so);
 	FREE(rsso);
 }
 

@@ -83,7 +83,8 @@ enum nvfx_state_index {
 
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
-	struct nouveau_stateobj *so;
+	unsigned sb_len;
+	uint32_t sb[30];
 };
 
 struct nvfx_zsa_state {
