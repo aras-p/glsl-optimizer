@@ -102,10 +102,15 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
                                   PIPE_BUFFER_USAGE_GPU_WRITE |
                                   PIPE_BUFFER_USAGE_PIXEL);
 
+    /* XXX this flush prevents the following DRM error from occuring:
+     * [drm:radeon_cs_ioctl] *ERROR* Failed to parse relocation !
+     * Reproducible with perf/copytex. */
+    ctx->flush(ctx, 0, NULL);
+
     ctx->surface_copy(ctx, dst, r300transfer->x, r300transfer->y, src, 0, 0,
                       transfer->width, transfer->height);
 
-    /* XXX this flush fixes lots of regressions, not sure why */
+    /* XXX this flush fixes a few piglit tests (e.g. glean/pixelFormats). */
     ctx->flush(ctx, 0, NULL);
 
     pipe_surface_reference(&src, NULL);
