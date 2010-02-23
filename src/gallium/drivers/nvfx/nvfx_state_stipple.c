@@ -1,13 +1,13 @@
 #include "nvfx_context.h"
 
-static boolean
+void
 nvfx_state_stipple_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
 	struct pipe_rasterizer_state *rast = &nvfx->rasterizer->pipe;
 
 	if ((rast->poly_stipple_enable == 0 && nvfx->state.stipple_enabled == 0))
-		return FALSE;
+		return;
 
 	if (rast->poly_stipple_enable) {
 		unsigned i;
@@ -23,13 +23,4 @@ nvfx_state_stipple_validate(struct nvfx_context *nvfx)
 		OUT_RING(chan, RING_3D(NV34TCL_POLYGON_STIPPLE_ENABLE, 1));
 		OUT_RING(chan, 0);
 	}
-
-	return TRUE;
 }
-
-struct nvfx_state_entry nvfx_state_stipple = {
-	.validate = nvfx_state_stipple_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_STIPPLE | NVFX_NEW_RAST,
-	}
-};

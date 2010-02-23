@@ -830,7 +830,7 @@ out_err:
 	FREE(vpc);
 }
 
-static boolean
+boolean
 nvfx_vertprog_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_context *pipe = &nvfx->pipe;
@@ -1007,7 +1007,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		OUT_RING(chan, vp->clip_ctrl);
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 void
@@ -1035,10 +1035,3 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 
 	vp->ir = vp->or = vp->clip_ctrl = 0;
 }
-
-struct nvfx_state_entry nvfx_state_vertprog = {
-	.validate = nvfx_vertprog_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_VERTPROG | NVFX_NEW_VERTCONST | NVFX_NEW_UCP,
-	}
-};

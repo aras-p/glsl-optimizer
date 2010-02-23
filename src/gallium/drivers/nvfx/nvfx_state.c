@@ -303,6 +303,23 @@ nvfx_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
+	if(nvfx->rasterizer && hwcso)
+	{
+		if(!nvfx->rasterizer || ((struct nvfx_rasterizer_state*)hwcso)->pipe.scissor
+					!= nvfx->rasterizer->pipe.scissor)
+		{
+			nvfx->dirty |= NVFX_NEW_SCISSOR;
+			nvfx->draw_dirty |= NVFX_NEW_SCISSOR;
+		}
+
+		if(((struct nvfx_rasterizer_state*)hwcso)->pipe.poly_stipple_enable
+					!= nvfx->rasterizer->pipe.poly_stipple_enable)
+		{
+			nvfx->dirty |= NVFX_NEW_STIPPLE;
+			nvfx->draw_dirty |= NVFX_NEW_STIPPLE;
+		}
+	}
+
 	nvfx->rasterizer = hwcso;
 	nvfx->dirty |= NVFX_NEW_RAST;
 	nvfx->draw_dirty |= NVFX_NEW_RAST;

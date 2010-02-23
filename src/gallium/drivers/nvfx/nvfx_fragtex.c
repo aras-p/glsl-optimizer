@@ -1,7 +1,7 @@
 #include "nvfx_context.h"
 #include "nvfx_resource.h"
 
-static boolean
+void
 nvfx_fragtex_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
@@ -9,7 +9,7 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 
 	samplers = nvfx->dirty_samplers;
 	if(!samplers)
-		return FALSE;
+		return;
 
 	while (samplers) {
 		unit = ffs(samplers) - 1;
@@ -29,7 +29,6 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 		}
 	}
 	nvfx->dirty_samplers = 0;
-	return FALSE;
 }
 
 void
@@ -54,11 +53,3 @@ nvfx_fragtex_relocate(struct nvfx_context *nvfx)
 				NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
 	}
 }
-
-struct nvfx_state_entry nvfx_state_fragtex = {
-	.validate = nvfx_fragtex_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_SAMPLER | NVFX_NEW_FRAGPROG,
-		.hw = 0
-	}
-};

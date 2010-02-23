@@ -2,86 +2,92 @@
 #include "nvfx_state.h"
 #include "draw/draw_context.h"
 
-#define RENDER_STATES(name, vbo) \
-static struct nvfx_state_entry *name##render_states[] = { \
-	&nvfx_state_framebuffer, \
-	&nvfx_state_rasterizer, \
-	&nvfx_state_scissor, \
-	&nvfx_state_stipple, \
-	&nvfx_state_fragprog, \
-	&nvfx_state_fragtex, \
-	&nvfx_state_vertprog, \
-	&nvfx_state_blend, \
-	&nvfx_state_blend_colour, \
-	&nvfx_state_zsa, \
-	&nvfx_state_sr, \
-	&nvfx_state_viewport, \
-	&nvfx_state_##vbo, \
-	NULL \
-}
-
-RENDER_STATES(, vbo);
-RENDER_STATES(swtnl_, vtxfmt);
-
-static void
-nvfx_state_do_validate(struct nvfx_context *nvfx,
-		       struct nvfx_state_entry **states)
+static boolean
+nvfx_state_validate_common(struct nvfx_context *nvfx)
 {
-	while (*states) {
-		struct nvfx_state_entry *e = *states;
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	unsigned dirty = nvfx->dirty;
 
-		if (nvfx->dirty & e->dirty.pipe) {
-			if (e->validate(nvfx))
-				nvfx->state.dirty |= (1ULL << e->dirty.hw);
+	if(nvfx != nvfx->screen->cur_ctx)
+		dirty = ~0;
+
+	if(nvfx->render_mode == HW)
+	{
+		if(dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_VERTCONST | NVFX_NEW_UCP))
+		{
+			if(!nvfx_vertprog_validate(nvfx))
+				return FALSE;
 		}
 
-		states++;
+		if(dirty & (NVFX_NEW_ARRAYS))
+		{
+			if(!nvfx_vbo_validate(nvfx))
+				return FALSE;
+		}
+	}
+	else
+	{
+		/* TODO: this looks a bit misdesigned */
+		if(dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_UCP))
+			nvfx_vertprog_validate(nvfx);
+
+		if(dirty & (NVFX_NEW_ARRAYS | NVFX_NEW_FRAGPROG))
+			nvfx_vtxfmt_validate(nvfx);
+	}
+
+	if(dirty & NVFX_NEW_FB)
+		nvfx_state_framebuffer_validate(nvfx);
+
+	if(dirty & NVFX_NEW_RAST)
+		sb_emit(chan, nvfx->rasterizer->sb, nvfx->rasterizer->sb_len);
+
+	if(dirty & NVFX_NEW_SCISSOR)
+		nvfx_state_scissor_validate(nvfx);
+
+	if(dirty & NVFX_NEW_STIPPLE)
+		nvfx_state_stipple_validate(nvfx);
+
+	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST))
+		nvfx_fragprog_validate(nvfx);
+
+	if(dirty & NVFX_NEW_SAMPLER)
+		nvfx_fragtex_validate(nvfx);
+
+	if(dirty & NVFX_NEW_BLEND)
+		sb_emit(chan, nvfx->blend->sb, nvfx->blend->sb_len);
+
+	if(dirty & NVFX_NEW_BCOL)
+		nvfx_state_blend_colour_validate(nvfx);
+
+	if(dirty & NVFX_NEW_ZSA)
+		sb_emit(chan, nvfx->zsa->sb, nvfx->zsa->sb_len);
+
+	if(dirty & NVFX_NEW_SR)
+		nvfx_state_sr_validate(nvfx);
+
+/* Having this depend on FB looks wrong, but it seems
+   necessary to make this work on nv3x
+   TODO: find the right fix
+*/
+	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_FB))
+		nvfx_state_viewport_validate(nvfx);
+
+	/* TODO: could nv30 need this or something similar too? */
+	if((dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_SAMPLER)) && nvfx->is_nv4x) {
+		WAIT_RING(chan, 4);
+		OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+		OUT_RING(chan, 2);
+		OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+		OUT_RING(chan, 1);
 	}
 	nvfx->dirty = 0;
+	return TRUE;
 }
 
 void
 nvfx_state_emit(struct nvfx_context *nvfx)
 {
-	struct nvfx_state *state = &nvfx->state;
-	struct nvfx_screen *screen = nvfx->screen;
-	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
-	unsigned i;
-	uint64_t states;
-
-	/* XXX: race conditions
-	 */
-	if (nvfx != screen->cur_ctx) {
-		for (i = 0; i < NVFX_STATE_MAX; i++) {
-			if (state->hw[i] && screen->state[i] != state->hw[i])
-				state->dirty |= (1ULL << i);
-		}
-
-		screen->cur_ctx = nvfx;
-	}
-
-	for (i = 0, states = state->dirty; states; i++) {
-		if (!(states & (1ULL << i)))
-			continue;
-		so_ref (state->hw[i], &nvfx->screen->state[i]);
-		if (state->hw[i])
-			so_emit(chan, nvfx->screen->state[i]);
-		states &= ~(1ULL << i);
-	}
-
-	/* TODO: could nv30 need this or something similar too? */
-	if(nvfx->is_nv4x) {
-		if (state->dirty & ((1ULL << NVFX_STATE_FRAGPROG) |
-				    (1ULL << NVFX_STATE_FRAGTEX0))) {
-			BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
-			OUT_RING  (chan, 2);
-			BEGIN_RING(chan, eng3d, NV40TCL_TEX_CACHE_CTL, 1);
-			OUT_RING  (chan, 1);
-		}
-	}
-	state->dirty = 0;
-
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	/* we need to ensure there is enough space to output relocations in one go */
 	unsigned max_relocs = 0
 	      + 16 /* vertex buffers, incl. dma flag */
@@ -119,16 +125,13 @@ nvfx_state_validate(struct nvfx_context *nvfx)
 			return FALSE;
 
 		/* Attempt to go to hwtnl again */
-		nvfx->pipe.flush(&nvfx->pipe, 0, NULL);
 		nvfx->dirty |= (NVFX_NEW_VIEWPORT |
 				NVFX_NEW_VERTPROG |
 				NVFX_NEW_ARRAYS);
 		nvfx->render_mode = HW;
 	}
 
-	nvfx_state_do_validate(nvfx, render_states);
-
-	if (nvfx->fallback_swtnl || nvfx->fallback_swrast)
+	if(!nvfx_state_validate_common(nvfx))
 		return FALSE;
 
 	if (was_sw)
@@ -169,12 +172,7 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 		draw_set_vertex_elements(draw, nvfx->vtxelt->num_elements, nvfx->vtxelt->pipe);
 	}
 
-	nvfx_state_do_validate(nvfx, swtnl_render_states);
-
-	if (nvfx->fallback_swrast) {
-		NOUVEAU_ERR("swtnl->swrast 0x%08x\n", nvfx->fallback_swrast);
-		return FALSE;
-	}
+	nvfx_state_validate_common(nvfx);
 
 	nvfx->draw_dirty = 0;
 	return TRUE;

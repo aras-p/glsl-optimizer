@@ -25,45 +25,6 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-enum nvfx_state_index {
-	NVFX_STATE_FB = 0,
-	NVFX_STATE_VIEWPORT = 1,
-	NVFX_STATE_BLEND = 2,
-	NVFX_STATE_RAST = 3,
-	NVFX_STATE_ZSA = 4,
-	NVFX_STATE_BCOL = 5,
-	NVFX_STATE_CLIP = 6,
-	NVFX_STATE_SCISSOR = 7,
-	NVFX_STATE_STIPPLE = 8,
-	NVFX_STATE_FRAGPROG = 9,
-	NVFX_STATE_VERTPROG = 10,
-	NVFX_STATE_FRAGTEX0 = 11,
-	NVFX_STATE_FRAGTEX1 = 12,
-	NVFX_STATE_FRAGTEX2 = 13,
-	NVFX_STATE_FRAGTEX3 = 14,
-	NVFX_STATE_FRAGTEX4 = 15,
-	NVFX_STATE_FRAGTEX5 = 16,
-	NVFX_STATE_FRAGTEX6 = 17,
-	NVFX_STATE_FRAGTEX7 = 18,
-	NVFX_STATE_FRAGTEX8 = 19,
-	NVFX_STATE_FRAGTEX9 = 20,
-	NVFX_STATE_FRAGTEX10 = 21,
-	NVFX_STATE_FRAGTEX11 = 22,
-	NVFX_STATE_FRAGTEX12 = 23,
-	NVFX_STATE_FRAGTEX13 = 24,
-	NVFX_STATE_FRAGTEX14 = 25,
-	NVFX_STATE_FRAGTEX15 = 26,
-	NVFX_STATE_VERTTEX0 = 27,
-	NVFX_STATE_VERTTEX1 = 28,
-	NVFX_STATE_VERTTEX2 = 29,
-	NVFX_STATE_VERTTEX3 = 30,
-	NVFX_STATE_VTXBUF = 31,
-	NVFX_STATE_VTXFMT = 32,
-	NVFX_STATE_VTXATTR = 33,
-	NVFX_STATE_SR = 34,
-	NVFX_STATE_MAX = 35
-};
-
 #include "nvfx_screen.h"
 
 #define NVFX_NEW_BLEND		(1 <<  0)
@@ -106,9 +67,6 @@ struct nvfx_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
 	unsigned fp_samplers;
-
-	uint64_t dirty;
-	struct nouveau_stateobj *hw[NVFX_STATE_MAX];
 };
 
 struct nvfx_vtxelt_state {
@@ -147,7 +105,6 @@ struct nvfx_context {
 		HW, SWTNL, SWRAST
 	} render_mode;
 	unsigned fallback_swtnl;
-	unsigned fallback_swrast;
 
 	/* Context state */
 	unsigned dirty, draw_dirty;
@@ -190,14 +147,6 @@ nvfx_context(struct pipe_context *pipe)
 	return (struct nvfx_context *)pipe;
 }
 
-struct nvfx_state_entry {
-	boolean (*validate)(struct nvfx_context *nvfx);
-	struct {
-		unsigned pipe;
-		unsigned hw;
-	} dirty;
-};
-
 extern struct nvfx_state_entry nvfx_state_blend;
 extern struct nvfx_state_entry nvfx_state_blend_colour;
 extern struct nvfx_state_entry nvfx_state_fragprog;
@@ -230,18 +179,22 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 					struct pipe_resource *idxbuf,
 					unsigned ib_size, unsigned mode,
 					unsigned start, unsigned count);
+extern void nvfx_vtxfmt_validate(struct nvfx_context *nvfx);
 
 /* nvfx_fb.c */
+extern void nvfx_state_framebuffer_validate(struct nvfx_context *nvfx);
 void
 nvfx_framebuffer_relocate(struct nvfx_context *nvfx);
 
 /* nvfx_fragprog.c */
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
+extern void nvfx_fragprog_validate(struct nvfx_context *nvfx);
 extern void
 nvfx_fragprog_relocate(struct nvfx_context *nvfx);
 
 /* nvfx_fragtex.c */
+extern void nvfx_fragtex_validate(struct nvfx_context *nvfx);
 extern void
 nvfx_fragtex_relocate(struct nvfx_context *nvfx);
 
@@ -261,6 +214,14 @@ extern void nv40_fragtex_set(struct nvfx_context *nvfx, int unit);
 
 /* nvfx_state.c */
 extern void nvfx_init_state_functions(struct nvfx_context *nvfx);
+extern void nvfx_state_scissor_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_stipple_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_blend_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_blend_colour_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_viewport_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_rasterizer_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_sr_validate(struct nvfx_context *nvfx);
+extern void nvfx_state_zsa_validate(struct nvfx_context *nvfx);
 
 /* nvfx_state_emit.c */
 extern void nvfx_state_relocate(struct nvfx_context *nvfx);
@@ -283,6 +244,7 @@ extern void nvfx_draw_elements(struct pipe_context *pipe,
 				  unsigned count);
 
 /* nvfx_vertprog.c */
+extern boolean nvfx_vertprog_validate(struct nvfx_context *nvfx);
 extern void nvfx_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
 

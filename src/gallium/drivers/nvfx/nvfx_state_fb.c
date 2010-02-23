@@ -4,7 +4,7 @@
 
 
 
-static void
+void
 nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
@@ -248,11 +248,3 @@ nvfx_framebuffer_relocate(struct nvfx_context *nvfx)
 
 	DO_(nvfx->hw_zeta, NV34, ZETA);
 }
-
-struct nvfx_state_entry nvfx_state_framebuffer = {
-	.validate = nvfx_state_framebuffer_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_FB,
-		.hw = NVFX_STATE_FB
-	}
-};

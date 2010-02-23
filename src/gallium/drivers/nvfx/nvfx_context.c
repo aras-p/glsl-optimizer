@@ -30,12 +30,6 @@ static void
 nvfx_destroy(struct pipe_context *pipe)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	unsigned i;
-
-	for (i = 0; i < NVFX_STATE_MAX; i++) {
-		if (nvfx->state.hw[i])
-			so_ref(NULL, &nvfx->state.hw[i]);
-	}
 
 	if (nvfx->draw)
 		draw_destroy(nvfx->draw);

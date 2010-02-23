@@ -303,8 +303,8 @@ emit_attrib(struct nvfx_context *nvfx, unsigned hw, unsigned emit,
 	nvfx->swtnl.draw[a] = draw_out;
 }
 
-static boolean
-nvfx_state_vtxfmt_validate(struct nvfx_context *nvfx)
+void
+nvfx_vtxfmt_validate(struct nvfx_context *nvfx)
 {
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	unsigned colour = 0, texcoords = 0, fog = 0, i;
@@ -348,14 +348,4 @@ nvfx_state_vtxfmt_validate(struct nvfx_context *nvfx)
 	}
 
 	emit_attrib(nvfx, 0, 0xff, TGSI_SEMANTIC_POSITION, 0);
-
-	return FALSE;
 }
-
-struct nvfx_state_entry nvfx_state_vtxfmt = {
-	.validate = nvfx_state_vtxfmt_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_ARRAYS | NVFX_NEW_FRAGPROG,
-		.hw = 0
-	}
-};

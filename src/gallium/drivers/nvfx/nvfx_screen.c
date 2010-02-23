@@ -179,12 +179,6 @@ static void
 nvfx_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
-	unsigned i;
-
-	for (i = 0; i < NVFX_STATE_MAX; i++) {
-		if (screen->state[i])
-			so_ref(NULL, &screen->state[i]);
-	}
 
 	nouveau_resource_destroy(&screen->vp_exec_heap);
 	nouveau_resource_destroy(&screen->vp_data_heap);

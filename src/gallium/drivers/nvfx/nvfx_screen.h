@@ -27,9 +27,6 @@ struct nvfx_screen {
 	/* Vtxprog resources */
 	struct nouveau_resource *vp_exec_heap;
 	struct nouveau_resource *vp_data_heap;
-
-	/* Current 3D state of channel */
-	struct nouveau_stateobj *state[NVFX_STATE_MAX];
 };
 
 static INLINE struct nvfx_screen *

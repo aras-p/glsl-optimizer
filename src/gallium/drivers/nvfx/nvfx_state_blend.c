@@ -1,21 +1,13 @@
 #include "nvfx_context.h"
 
-static boolean
+void
 nvfx_state_blend_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	sb_emit(chan, nvfx->blend->sb, nvfx->blend->sb_len);
-	return TRUE;
 }
 
-struct nvfx_state_entry nvfx_state_blend = {
-	.validate = nvfx_state_blend_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_BLEND,
-	}
-};
-
-static boolean
+void
 nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
@@ -27,12 +19,4 @@ nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
 		       (float_to_ubyte(bcol->color[2]) <<  0)));
-	return TRUE;
 }
-
-struct nvfx_state_entry nvfx_state_blend_colour = {
-	.validate = nvfx_state_blend_colour_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_BCOL,
-	}
-};

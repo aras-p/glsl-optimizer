@@ -864,7 +864,7 @@ nvfx_fragprog_upload(struct nvfx_context *nvfx,
 	}
 }
 
-boolean
+void
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
@@ -878,7 +878,6 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	if (fp->translated)
 		goto update_constants;
 
-	nvfx->fallback_swrast &= ~NVFX_NEW_FRAGPROG;
 	nvfx_fragprog_translate(nvfx, fp);
 	if (!fp->translated) {
 		static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
@@ -894,7 +893,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		fp->insn = malloc(sizeof(dummy));
 		memcpy(fp->insn, dummy, sizeof(dummy));
 		fp->insn_len = sizeof(dummy) / sizeof(dummy[0]);
-		return FALSE;
+		return;
 	}
 
 	fp->buffer = pipe_buffer_create(pscreen,
@@ -948,7 +947,6 @@ update_constants:
 		OUT_RING(chan, RING_3D(NV34TCL_TX_UNITS_ENABLE, 1));
 		OUT_RING(chan, fp->samplers);
 	}
-	return TRUE;
 }
 
 void
@@ -977,10 +975,3 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 		FREE(fp->insn);
 }
 
-struct nvfx_state_entry nvfx_state_fragprog = {
-	.validate = nvfx_fragprog_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST,
-		.hw = 0
-	}
-};

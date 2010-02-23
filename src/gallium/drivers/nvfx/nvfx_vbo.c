@@ -575,16 +575,8 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	}
 
 	nvfx->hw_vtxelt_nr = nvfx->vtxelt->num_elements;
-	return FALSE;
+	return TRUE;
 }
-
-struct nvfx_state_entry nvfx_state_vbo = {
-	.validate = nvfx_vbo_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_ARRAYS,
-		.hw = 0,
-	}
-};
 
 void
 nvfx_vbo_relocate(struct nvfx_context *nvfx)

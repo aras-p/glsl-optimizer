@@ -1,6 +1,6 @@
 #include "nvfx_context.h"
 
-static boolean
+void
 nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
@@ -8,7 +8,7 @@ nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 	struct pipe_scissor_state *s = &nvfx->scissor;
 
 	if ((rast->scissor == 0 && nvfx->state.scissor_enabled == 0))
-		return FALSE;
+		return;
 	nvfx->state.scissor_enabled = rast->scissor;
 
 	WAIT_RING(chan, 3);
@@ -20,12 +20,4 @@ nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 		OUT_RING(chan, 4096 << 16);
 		OUT_RING(chan, 4096 << 16);
 	}
-	return TRUE;
 }
-
-struct nvfx_state_entry nvfx_state_scissor = {
-	.validate = nvfx_state_scissor_validate,
-	.dirty = {
-		.pipe = NVFX_NEW_SCISSOR | NVFX_NEW_RAST,
-	}
-};
