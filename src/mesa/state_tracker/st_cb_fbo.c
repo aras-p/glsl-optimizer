@@ -57,11 +57,11 @@
 /**
  * Compute the renderbuffer's Red/Green/EtcBit fields from the pipe format.
  */
-static int
+static void
 init_renderbuffer_bits(struct st_renderbuffer *strb,
                        enum pipe_format pipeFormat)
 {
-   struct pipe_format_info info;
+   struct st_format_info info;
 
    if (!st_get_format_info( pipeFormat, &info )) {
       assert( 0 );
@@ -69,9 +69,8 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
 
    strb->Base.Format = info.mesa_format;
    strb->Base.DataType = st_format_datatype(pipeFormat);
-
-   return info.size;
 }
+
 
 /**
  * gl_renderbuffer::AllocStorage()
@@ -99,7 +98,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 
-   if(strb->software) {
+   if (strb->software) {
       size_t size;
       
       free(strb->data);

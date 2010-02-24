@@ -59,23 +59,12 @@ format_max_bits(enum pipe_format format)
    return size;
 }
 
-static GLuint
-format_size(enum pipe_format format)
-{
-   return
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) +
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1) +
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2) +
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) +
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0) +
-      util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1);
-}
 
 /*
  * XXX temporary here
  */
 GLboolean
-st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
+st_get_format_info(enum pipe_format format, struct st_format_info *pinfo)
 {
    const struct util_format_description *desc;
 
@@ -118,43 +107,15 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
          }
       }
 
-      /* Component bits */
-      pinfo->red_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0);
-      pinfo->green_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1);
-      pinfo->blue_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2);
-      pinfo->alpha_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3);
-      pinfo->depth_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0);
-      pinfo->stencil_bits = util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1);
-      pinfo->luminance_bits = 0;
-      pinfo->intensity_bits = 0;
-
-      /* Format size */
-      pinfo->size = format_size(format) / 8;
-
-      /* Luminance & Intensity bits */
-      if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_X &&
-          desc->swizzle[1] == UTIL_FORMAT_SWIZZLE_X &&
-          desc->swizzle[2] == UTIL_FORMAT_SWIZZLE_X) {
-         if (desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_X) {
-            pinfo->intensity_bits = pinfo->red_bits;
-         }
-         else {
-            pinfo->luminance_bits = pinfo->red_bits;
-         }
-         pinfo->red_bits = 0;
-      }
-
       pinfo->mesa_format = st_pipe_format_to_mesa_format(format);
    }
    else if (format == PIPE_FORMAT_YCBCR) {
       pinfo->mesa_format = MESA_FORMAT_YCBCR;
       pinfo->datatype = GL_UNSIGNED_SHORT;
-      pinfo->size = 2; /* two bytes per "texel" */
    }
    else if (format == PIPE_FORMAT_YCBCR_REV) {
       pinfo->mesa_format = MESA_FORMAT_YCBCR_REV;
       pinfo->datatype = GL_UNSIGNED_SHORT;
-      pinfo->size = 2; /* two bytes per "texel" */
    }
    else {
       /* compressed format? */
@@ -179,27 +140,12 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 
 
 /**
- * Return bytes per pixel for the given format.
- */
-GLuint
-st_sizeof_format(enum pipe_format format)
-{
-   struct pipe_format_info info;
-   if (!st_get_format_info( format, &info )) {
-      assert( 0 );
-      return 0;
-   }
-   return info.size;
-}
-
-
-/**
- * Return bytes per pixel for the given format.
+ * Return basic GL datatype for the given format.
  */
 GLenum
 st_format_datatype(enum pipe_format format)
 {
-   struct pipe_format_info info;
+   struct st_format_info info;
    if (!st_get_format_info( format, &info )) {
       assert( 0 );
       return 0;

@@ -31,29 +31,20 @@
 
 #include "main/formats.h"
 
-struct pipe_format_info
+
+/**
+ * Information for mapping Mesa formats to Gallium formats.
+ */
+struct st_format_info
 {
    enum pipe_format format;
    gl_format mesa_format;
    GLenum datatype;
-   GLubyte red_bits;
-   GLubyte green_bits;
-   GLubyte blue_bits;
-   GLubyte alpha_bits;
-   GLubyte luminance_bits;
-   GLubyte intensity_bits;
-   GLubyte depth_bits;
-   GLubyte stencil_bits;
-   GLubyte size;           /**< in bytes */
 };
 
 
 GLboolean
-st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo);
-
-
-extern GLuint
-st_sizeof_format(enum pipe_format format);
+st_get_format_info(enum pipe_format format, struct st_format_info *pinfo);
 
 
 extern GLenum
