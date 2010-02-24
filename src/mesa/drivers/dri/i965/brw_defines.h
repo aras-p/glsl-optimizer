@@ -530,6 +530,7 @@
 #define BRW_OPCODE_POP        47
 #define BRW_OPCODE_WAIT       48
 #define BRW_OPCODE_SEND       49
+#define BRW_OPCODE_MATH       56
 #define BRW_OPCODE_ADD        64
 #define BRW_OPCODE_MUL        65
 #define BRW_OPCODE_AVG        66
@@ -727,7 +728,8 @@
 #define BRW_MATH_FUNCTION_SIN                              6 /* was 7 */
 #define BRW_MATH_FUNCTION_COS                              7 /* was 8 */
 #define BRW_MATH_FUNCTION_SINCOS                           8 /* was 6 */
-#define BRW_MATH_FUNCTION_TAN                              9
+#define BRW_MATH_FUNCTION_TAN                              9 /* gen4 */
+#define BRW_MATH_FUNCTION_FDIV                             9 /* gen6+ */
 #define BRW_MATH_FUNCTION_POW                              10
 #define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
 #define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT                 12

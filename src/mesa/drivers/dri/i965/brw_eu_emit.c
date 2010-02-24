@@ -917,26 +917,40 @@ void brw_math( struct brw_compile *p,
 	       GLuint data_type,
 	       GLuint precision )
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1; 
-   GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1; 
+   struct intel_context *intel = &p->brw->intel;
 
-   /* Example code doesn't set predicate_control for send
-    * instructions.
-    */
-   insn->header.predicate_control = 0; 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen >= 6) {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
-   brw_set_dest(insn, dest);
-   brw_set_src0(insn, src);
-   brw_set_math_message(p->brw,
-			insn, 
-			msg_length, response_length, 
-			function,
-			BRW_MATH_INTEGER_UNSIGNED,
-			precision,
-			saturate,
-			data_type);
+      /* Math is the same ISA format as other opcodes, except that CondModifier
+       * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
+       */
+      insn->header.destreg__conditionalmod = function;
+
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, src);
+      brw_set_src1(insn, brw_null_reg());
+   } else {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+      GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1;
+      GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1;
+      /* Example code doesn't set predicate_control for send
+       * instructions.
+       */
+      insn->header.predicate_control = 0;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
+
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, src);
+      brw_set_math_message(p->brw,
+			   insn,
+			   msg_length, response_length,
+			   function,
+			   BRW_MATH_INTEGER_UNSIGNED,
+			   precision,
+			   saturate,
+			   data_type);
+   }
 }
 
 /**
