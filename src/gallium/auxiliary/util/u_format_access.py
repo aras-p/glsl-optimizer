@@ -52,7 +52,7 @@ def is_format_supported(format):
     if format.colorspace not in ('rgb', 'zs'):
         return False
 
-    if format.layout not in (ARITH, ARRAY):
+    if format.layout != PLAIN:
         return False
 
     for i in range(4):
@@ -70,7 +70,7 @@ def is_format_supported(format):
 def native_type(format):
     '''Get the native appropriate for a format.'''
 
-    if format.layout in (ARITH, ARRAY):
+    if format.layout == PLAIN:
         if not format.is_array():
             # For arithmetic pixel formats return the integer type that matches the whole pixel
             return 'uint%u_t' % format.block_size()
@@ -299,7 +299,7 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     else:
         assert False
 
-    if format.layout in (ARITH, ARRAY):
+    if format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = *src_pixel++;' % src_native_type
             shift = 0;
@@ -374,7 +374,7 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
 
     inv_swizzle = compute_inverse_swizzle(format)
 
-    if format.layout in (ARITH, ARRAY):
+    if format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = 0;' % dst_native_type
             shift = 0;

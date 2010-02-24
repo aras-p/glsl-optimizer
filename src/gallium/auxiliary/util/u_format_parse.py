@@ -37,8 +37,7 @@ VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
 
 SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, = range(7)
 
-ARITH = 'arith'
-ARRAY = 'array'
+PLAIN = 'plain'
 
 
 class Type:
