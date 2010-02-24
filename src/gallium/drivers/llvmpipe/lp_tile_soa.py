@@ -48,7 +48,7 @@ from u_format_access import *
 def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     '''Generate the function to read pixels from a particular format'''
 
-    name = short_name(format)
+    name = format.short_name()
 
     src_native_type = native_type(format)
 
@@ -111,14 +111,14 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
             elif swizzle == SWIZZLE_0:
                 value = '0'
             elif swizzle == SWIZZLE_1:
-                value = '1'
+                value = get_one(dst_type)
             else:
                 assert False
         elif format.colorspace == 'zs':
             if i < 3:
                 value = 'z'
             else:
-                value = '1'
+                value = get_one(dst_type)
         else:
             assert False
         print '         TILE_PIXEL(dst, x, y, %u) = %s; /* %s */' % (i, value, 'rgba'[i])
@@ -130,21 +130,6 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     print
     
 
-def compute_inverse_swizzle(format):
-    '''Return an array[4] of inverse swizzle terms'''
-    inv_swizzle = [None]*4
-    if format.colorspace == 'rgb':
-        for i in range(4):
-            swizzle = format.out_swizzle[i]
-            if swizzle < 4:
-                inv_swizzle[swizzle] = i
-    elif format.colorspace == 'zs':
-        swizzle = format.out_swizzle[0]
-        if swizzle < 4:
-            inv_swizzle[swizzle] = 0
-    return inv_swizzle
-
-
 def pack_rgba(format, src_type, r, g, b, a):
     """Return an expression for packing r, g, b, a into a pixel of the
     given format.  Ex: '(b << 24) | (g << 16) | (r << 8) | (a << 0)'
@@ -154,7 +139,7 @@ def pack_rgba(format, src_type, r, g, b, a):
     shift = 0
     expr = None
     for i in range(4):
-		# choose r, g, b, or a depending on the inverse swizzle term
+        # choose r, g, b, or a depending on the inverse swizzle term
         if inv_swizzle[i] == 0:
             value = r
         elif inv_swizzle[i] == 1:
@@ -185,7 +170,7 @@ def emit_unrolled_write_code(format, src_type):
     '''Emit code for writing a block based on unrolled loops.
     This is considerably faster than the TILE_PIXEL-based code below.
     '''
-    dst_native_type = native_type(format)
+    dst_native_type = intermediate_native_type(format.block_size(), False)
     print '   const unsigned dstpix_stride = dst_stride / %d;' % format.stride()
     print '   %s *dstpix = (%s *) dst;' % (dst_native_type, dst_native_type)
     print '   unsigned int qx, qy, i;'
@@ -256,12 +241,16 @@ def emit_tile_pixel_write_code(format, src_type):
 def generate_format_write(format, src_type, src_native_type, src_suffix):
     '''Generate the function to write pixels to a particular format'''
 
-    name = short_name(format)
+    name = format.short_name()
 
     print 'static void'
     print 'lp_tile_%s_write_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
     print '{'
-    if format.layout == ARITH and format.colorspace == 'rgb':
+    if format.layout in (ARITH, ARRAY) \
+        and format.colorspace == 'rgb' \
+        and format.block_size() <= 32 \
+        and not format.is_mixed() \
+        and format.in_types[0].kind == UNSIGNED:
         emit_unrolled_write_code(format, src_type)
     else:
         emit_tile_pixel_write_code(format, src_type)
@@ -284,7 +273,7 @@ def generate_read(formats, dst_type, dst_native_type, dst_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_read_%s;' % (short_name(format), dst_suffix)
+            print '      func = &lp_tile_%s_read_%s;' % (format.short_name(), dst_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("unsupported format\\n");'
@@ -311,7 +300,7 @@ def generate_write(formats, src_type, src_native_type, src_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_write_%s;' % (short_name(format), src_suffix)
+            print '      func = &lp_tile_%s_write_%s;' % (format.short_name(), src_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("unsupported format\\n");'
