@@ -121,7 +121,9 @@ struct pipe_screen {
 
    void (*texture_destroy)(struct pipe_texture *pt);
 
-   /** Get a surface which is a "view" into a texture */
+   /** Get a 2D surface which is a "view" into a texture
+    * \param usage  bitmaks of PIPE_BUFFER_USAGE_* read/write flags
+    */
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
                                            struct pipe_texture *texture,
                                            unsigned face, unsigned level,
