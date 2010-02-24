@@ -59,10 +59,8 @@ struct LineInfo
 
    /* DO_Z */
    GLfloat zPlane[4];
-   /* DO_RGBA */
+   /* DO_RGBA - always enabled */
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
-   /* DO_INDEX */
-   GLfloat iPlane[4];
    /* DO_ATTRIBS */
    GLfloat wPlane[4];
    GLfloat attrPlane[FRAG_ATTRIB_MAX][4][4];
@@ -325,20 +323,6 @@ compute_coveragef(const struct LineInfo *info,
 }
 
 
-/**
- * Compute coverage value for color index mode.
- * XXX this may not be quite correct.
- * \return coverage in [0,15].
- */
-static GLfloat
-compute_coveragei(const struct LineInfo *info,
-                  GLint winx, GLint winy)
-{
-   return compute_coveragef(info, winx, winy) * 15.0F;
-}
-
-
-
 typedef void (*plot_func)(GLcontext *ctx, struct LineInfo *line,
                           int ix, int iy);
                          
@@ -475,22 +459,13 @@ segment(GLcontext *ctx,
 }
 
 
-#define NAME(x) aa_ci_##x
-#define DO_Z
-#define DO_ATTRIBS /* for fog */
-#define DO_INDEX
-#include "s_aalinetemp.h"
-
-
 #define NAME(x) aa_rgba_##x
 #define DO_Z
-#define DO_RGBA
 #include "s_aalinetemp.h"
 
 
 #define NAME(x)  aa_general_rgba_##x
 #define DO_Z
-#define DO_RGBA
 #define DO_ATTRIBS
 #include "s_aalinetemp.h"
 
@@ -503,22 +478,15 @@ _swrast_choose_aa_line_function(GLcontext *ctx)
 
    ASSERT(ctx->Line.SmoothFlag);
 
-   if (ctx->Visual.rgbMode) {
-      /* RGBA */
-      if (ctx->Texture._EnabledCoordUnits != 0
-          || ctx->FragmentProgram._Current
-          || (ctx->Light.Enabled &&
-              ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-          || ctx->Fog.ColorSumEnabled
-          || swrast->_FogEnabled) {
-         swrast->Line = aa_general_rgba_line;
-      }
-      else {
-         swrast->Line = aa_rgba_line;
-      }
+   if (ctx->Texture._EnabledCoordUnits != 0
+       || ctx->FragmentProgram._Current
+       || (ctx->Light.Enabled &&
+           ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+       || ctx->Fog.ColorSumEnabled
+       || swrast->_FogEnabled) {
+      swrast->Line = aa_general_rgba_line;
    }
    else {
-      /* Color Index */
-      swrast->Line = aa_ci_line;
+      swrast->Line = aa_rgba_line;
    }
 }

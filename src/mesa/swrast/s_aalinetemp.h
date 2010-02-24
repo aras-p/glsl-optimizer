@@ -39,11 +39,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLfloat fx = (GLfloat) ix;
    const GLfloat fy = (GLfloat) iy;
-#ifdef DO_INDEX
-   const GLfloat coverage = compute_coveragei(line, ix, iy);
-#else
    const GLfloat coverage = compute_coveragef(line, ix, iy);
-#endif
    const GLuint i = line->span.end;
 
    (void) swrast;
@@ -63,15 +59,10 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 #ifdef DO_Z
    line->span.array->z[i] = (GLuint) solve_plane(fx, fy, line->zPlane);
 #endif
-#ifdef DO_RGBA
    line->span.array->rgba[i][RCOMP] = solve_plane_chan(fx, fy, line->rPlane);
    line->span.array->rgba[i][GCOMP] = solve_plane_chan(fx, fy, line->gPlane);
    line->span.array->rgba[i][BCOMP] = solve_plane_chan(fx, fy, line->bPlane);
    line->span.array->rgba[i][ACOMP] = solve_plane_chan(fx, fy, line->aPlane);
-#endif
-#ifdef DO_INDEX
-   line->span.array->index[i] = (GLint) solve_plane(fx, fy, line->iPlane);
-#endif
 #if defined(DO_ATTRIBS)
    ATTRIB_LOOP_BEGIN
       GLfloat (*attribArray)[4] = line->span.array->attribs[attr];
@@ -101,11 +92,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 #endif
 
    if (line->span.end == MAX_WIDTH) {
-#if defined(DO_RGBA)
       _swrast_write_rgba_span(ctx, &(line->span));
-#else
-      _swrast_write_index_span(ctx, &(line->span));
-#endif
       line->span.end = 0; /* reset counter */
    }
 }
@@ -150,7 +137,6 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    compute_plane(line.x0, line.y0, line.x1, line.y1,
                  v0->attrib[FRAG_ATTRIB_WPOS][2], v1->attrib[FRAG_ATTRIB_WPOS][2], line.zPlane);
 #endif
-#ifdef DO_RGBA
    line.span.arrayMask |= SPAN_RGBA;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(line.x0, line.y0, line.x1, line.y1,
@@ -168,18 +154,6 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       constant_plane(v1->color[BCOMP], line.bPlane);
       constant_plane(v1->color[ACOMP], line.aPlane);
    }
-#endif
-#ifdef DO_INDEX
-   line.span.arrayMask |= SPAN_INDEX;
-   if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(line.x0, line.y0, line.x1, line.y1,
-                    v0->attrib[FRAG_ATTRIB_CI][0],
-                    v1->attrib[FRAG_ATTRIB_CI][0], line.iPlane);
-   }
-   else {
-      constant_plane(v1->attrib[FRAG_ATTRIB_CI][0], line.iPlane);
-   }
-#endif
 #if defined(DO_ATTRIBS)
    {
       const GLfloat invW0 = v0->attrib[FRAG_ATTRIB_WPOS][3];
@@ -257,18 +231,12 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       segment(ctx, &line, NAME(plot), 0.0, 1.0);
    }
 
-#if defined(DO_RGBA)
    _swrast_write_rgba_span(ctx, &(line.span));
-#else
-   _swrast_write_index_span(ctx, &(line.span));
-#endif
 }
 
 
 
 
 #undef DO_Z
-#undef DO_RGBA
-#undef DO_INDEX
 #undef DO_ATTRIBS
 #undef NAME
