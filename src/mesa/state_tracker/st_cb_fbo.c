@@ -55,24 +55,6 @@
 
 
 /**
- * Compute the renderbuffer's Red/Green/EtcBit fields from the pipe format.
- */
-static void
-init_renderbuffer_bits(struct st_renderbuffer *strb,
-                       enum pipe_format pipeFormat)
-{
-   struct st_format_info info;
-
-   if (!st_get_format_info( pipeFormat, &info )) {
-      assert( 0 );
-   }
-
-   strb->Base.Format = info.mesa_format;
-   strb->Base.DataType = st_format_datatype(pipeFormat);
-}
-
-
-/**
  * gl_renderbuffer::AllocStorage()
  * This is called to allocate the original drawing surface, and
  * during window resize.
@@ -94,7 +76,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    /* init renderbuffer fields */
    strb->Base.Width  = width;
    strb->Base.Height = height;
-   init_renderbuffer_bits(strb, format);
+   strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base.DataType = st_format_datatype(format);
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 
@@ -249,8 +232,9 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
+   strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base.DataType = st_format_datatype(format);
    strb->format = format;
-   init_renderbuffer_bits(strb, format);
    strb->software = sw;
    
    switch (format) {
@@ -395,7 +379,8 @@ st_render_texture(GLcontext *ctx,
                                            PIPE_BUFFER_USAGE_GPU_READ |
                                            PIPE_BUFFER_USAGE_GPU_WRITE);
 
-   init_renderbuffer_bits(strb, pt->format);
+   strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
+   strb->Base.DataType = st_format_datatype(pt->format);
 
    /*
    printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
