@@ -357,20 +357,6 @@ rgba_aa_tri(GLcontext *ctx,
 	    const SWvertex *v2)
 {
 #define DO_Z
-#define DO_RGBA
-#include "s_aatritemp.h"
-}
-
-
-static void
-index_aa_tri(GLcontext *ctx,
-	     const SWvertex *v0,
-	     const SWvertex *v1,
-	     const SWvertex *v2)
-{
-#define DO_Z
-#define DO_ATTRIBS
-#define DO_INDEX
 #include "s_aatritemp.h"
 }
 
@@ -382,7 +368,6 @@ general_aa_tri(GLcontext *ctx,
                const SWvertex *v2)
 {
 #define DO_Z
-#define DO_RGBA
 #define DO_ATTRIBS
 #include "s_aatritemp.h"
 }
@@ -406,11 +391,8 @@ _swrast_set_aa_triangle_function(GLcontext *ctx)
        || NEED_SECONDARY_COLOR(ctx)) {
       SWRAST_CONTEXT(ctx)->Triangle = general_aa_tri;
    }
-   else if (ctx->Visual.rgbMode) {
-      SWRAST_CONTEXT(ctx)->Triangle = rgba_aa_tri;
-   }
    else {
-      SWRAST_CONTEXT(ctx)->Triangle = index_aa_tri;
+      SWRAST_CONTEXT(ctx)->Triangle = rgba_aa_tri;
    }
 
    ASSERT(SWRAST_CONTEXT(ctx)->Triangle);
