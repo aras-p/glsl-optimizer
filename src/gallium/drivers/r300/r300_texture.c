@@ -70,19 +70,12 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         R300_TX_FORMAT_B_SHIFT,
         R300_TX_FORMAT_A_SHIFT
     };
-    const uint32_t swizzle_arith[4] = {
+    const uint32_t swizzle[4] = {
         R300_TX_FORMAT_X,
         R300_TX_FORMAT_Y,
         R300_TX_FORMAT_Z,
         R300_TX_FORMAT_W
     };
-    const uint32_t swizzle_array[4] = {
-        R300_TX_FORMAT_W,
-        R300_TX_FORMAT_Z,
-        R300_TX_FORMAT_Y,
-        R300_TX_FORMAT_X
-    };
-    const uint32_t *swizzle;
     const uint32_t sign_bit[4] = {
         R300_TX_FORMAT_SIGNED_X,
         R300_TX_FORMAT_SIGNED_Y,
@@ -128,9 +121,6 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     /* Add swizzle. */
-    swizzle = desc->layout == UTIL_FORMAT_LAYOUT_ARITH ?
-              swizzle_arith : swizzle_array;
-
     for (i = 0; i < 4; i++) {
         switch (desc->swizzle[i]) {
             case UTIL_FORMAT_SWIZZLE_X:
@@ -158,7 +148,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     /* Compressed formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_DXT) {
+    if (desc->layout == UTIL_FORMAT_LAYOUT_COMPRESSED) {
         switch (format) {
             case PIPE_FORMAT_DXT1_RGB:
             case PIPE_FORMAT_DXT1_RGBA:

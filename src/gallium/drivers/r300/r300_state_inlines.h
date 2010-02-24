@@ -384,8 +384,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 
     desc = util_format_description(format);
 
-    if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-        desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
+    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         debug_printf("r300: Bad format %s in %s:%d\n", util_format_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
@@ -458,8 +457,7 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
 
     assert(format);
 
-    if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-        desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
+    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         debug_printf("r300: Bad format %s in %s:%d\n",
             util_format_name(format), __FUNCTION__, __LINE__);
         return 0;
