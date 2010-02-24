@@ -712,7 +712,8 @@ usage(void)
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
    printf("  -pixmap                 use pixmap surface\n");
-   printf("  -pbuffer-copy           use pbuffer surface and eglCopyBuffers\n");
+   printf("  -pixmap-texture         use pixmap surface and texture using EGLImage\n");
+   printf("  -pbuffer                use pbuffer surface and eglCopyBuffers\n");
    printf("  -pbuffer-texture        use pbuffer surface and eglBindTexImage\n");
 }
  
