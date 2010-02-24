@@ -1012,9 +1012,9 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 void GLAPIENTRY
 _mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
 {
+   struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   struct gl_renderbuffer *rb;
 
    if (target != GL_RENDERBUFFER) {
       _mesa_error(ctx, GL_INVALID_ENUM, "EGLImageTargetRenderbufferStorageOES");
