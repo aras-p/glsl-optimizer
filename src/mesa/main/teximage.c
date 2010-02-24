@@ -2452,10 +2452,10 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
 void GLAPIENTRY
 _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_TEXTURE_2D) {
       _mesa_error(ctx, GL_INVALID_ENUM,
