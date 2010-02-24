@@ -62,7 +62,8 @@ st_init_clear(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-   memset(&st->clear.raster, 0, sizeof(st->clear.raster));
+   memset(&st->clear, 0, sizeof(st->clear));
+
    st->clear.raster.gl_rasterization_rules = 1;
 
    /* fragment shader state: color pass-through program */
@@ -209,6 +210,7 @@ clear_with_quad(GLcontext *ctx,
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_viewport(st->cso_context);
+   cso_save_clip(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
 
@@ -279,6 +281,7 @@ clear_with_quad(GLcontext *ctx,
       cso_set_viewport(st->cso_context, &vp);
    }
 
+   cso_set_clip(st->cso_context, &st->clear.clip);
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
@@ -291,6 +294,7 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_viewport(st->cso_context);
+   cso_restore_clip(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
 }

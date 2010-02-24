@@ -166,6 +166,7 @@ struct st_context
    struct {
       struct pipe_rasterizer_state raster;
       struct pipe_viewport_state viewport;
+      struct pipe_clip_state clip;
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
