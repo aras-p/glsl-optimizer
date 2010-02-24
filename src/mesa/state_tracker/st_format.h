@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -61,4 +62,4 @@ extern GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
 
 
-#endif /* ST_CB_TEXIMAGE_H */
+#endif /* ST_FORMAT_H */

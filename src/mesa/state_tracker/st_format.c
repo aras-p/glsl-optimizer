@@ -1,7 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
- * Copyright (c) 2008 VMware, Inc.
+ * Copyright (c) 2008-2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
 
 
 /**
- * Texture Image-related functions.
+ * Mesa / Gallium format conversion and format selection code.
  * \author Brian Paul
  */
 
