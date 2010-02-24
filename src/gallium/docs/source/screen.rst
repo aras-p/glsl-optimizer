@@ -147,15 +147,29 @@ These flags determine the possible roles a texture may be used for during its
 lifetime. Texture usage flags are cumulative and may be combined to create a
 texture that can be used as multiple things.
 
-* ``RENDER_TARGET``: A colorbuffer or pixelbuffer.
+* ``RENDER_TARGET``: A color buffer or pixel buffer which will be rendered to.
 * ``DISPLAY_TARGET``: A sharable buffer that can be given to another process.
-* ``PRIMARY``: A frontbuffer or scanout buffer.
-* ``DEPTH_STENCIL``: A depthbuffer, stencilbuffer, or Z buffer. Gallium does
-  not explicitly provide for stencil-only buffers, so any stencilbuffer
-  validated here is implicitly also a depthbuffer.
+* ``PRIMARY``: A front color buffer or scanout buffer.
+* ``DEPTH_STENCIL``: A depth (Z) buffer or stencil buffer.  Gallium does
+  not explicitly provide for stencil-only buffers, so any stencil buffer
+  validated here is implicitly also a depth buffer.
 * ``SAMPLER``: A texture that may be sampled from in a fragment or vertex
   shader.
 * ``DYNAMIC``: A texture that will be mapped frequently.
+
+
+PIPE_TEXTURE_GEOM
+^^^^^^^^^^^^^^^^^
+
+These flags are used when querying whether a particular pipe_format is
+supported by the driver (with the `is_format_supported` function).
+Some formats may only be supported for certain kinds of textures.
+For example, a compressed format might only be used for POT textures.
+
+* ``PIPE_TEXTURE_GEOM_NON_SQUARE``: The texture may not be square
+* ``PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO``: The texture dimensions may not be
+  powers of two.
+
 
 Methods
 -------
