@@ -248,6 +248,24 @@ def conversion_expr(src_type, dst_type, dst_native_type, value):
     assert False
 
 
+def compute_inverse_swizzle(format):
+    '''Return an array[4] of inverse swizzle terms'''
+    inv_swizzle = [None]*4
+    if format.colorspace == 'rgb':
+        for i in range(4):
+            swizzle = format.out_swizzle[i]
+            if swizzle < 4:
+                inv_swizzle[swizzle] = i
+    elif format.colorspace == 'zs':
+        swizzle = format.out_swizzle[0]
+        if swizzle < 4:
+            inv_swizzle[swizzle] = 0
+    else:
+        assert False
+
+    return inv_swizzle
+
+
 def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     '''Generate the function to read pixels from a particular format'''
 
@@ -330,7 +348,7 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
 
     print '      }'
     print '      src_row += src_stride;'
-    print '      dst_row += dst_stride/sizeof(%s);' % dst_native_type
+    print '      dst_row += dst_stride/sizeof(*dst_row);'
     print '   }'
     print '}'
     print
@@ -354,18 +372,7 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
     print '      const %s *src_pixel = src_row;' %src_native_type
     print '      for (x = 0; x < w; ++x) {'
 
-    inv_swizzle = [None]*4
-    if format.colorspace == 'rgb':
-        for i in range(4):
-            swizzle = format.out_swizzle[i]
-            if swizzle < 4:
-                inv_swizzle[swizzle] = i
-    elif format.colorspace == 'zs':
-        swizzle = format.out_swizzle[0]
-        if swizzle < 4:
-            inv_swizzle[swizzle] = 0
-    else:
-        assert False
+    inv_swizzle = compute_inverse_swizzle(format)
 
     if format.layout in (ARITH, ARRAY):
         if not format.is_array():
@@ -395,7 +402,7 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
 
     print '      }'
     print '      dst_row += dst_stride;'
-    print '      src_row += src_stride/sizeof(%s);' % src_native_type
+    print '      src_row += src_stride/sizeof(*src_row);'
     print '   }'
     print '}'
     print
