@@ -81,25 +81,26 @@ def is_format_supported(format):
 def native_type(format):
     '''Get the native appropriate for a format.'''
 
-    if format.layout == ARITH:
-        # For arithmetic pixel formats return the integer type that matches the whole pixel
-        return 'uint%u_t' % format.block_size()
-    elif format.layout == ARRAY:
-        # For array pixel formats return the integer type that matches the color channel
-        type = format.in_types[0]
-        if type.kind == UNSIGNED:
-            return 'uint%u_t' % type.size
-        elif type.kind == SIGNED:
-            return 'int%u_t' % type.size
-        elif type.kind == FLOAT:
-            if type.size == 32:
-                return 'float'
-            elif type.size == 64:
-                return 'double'
+    if format.layout in (ARITH, ARRAY):
+        if not format.is_array():
+            # For arithmetic pixel formats return the integer type that matches the whole pixel
+            return 'uint%u_t' % format.block_size()
+        else:
+            # For array pixel formats return the integer type that matches the color channel
+            type = format.in_types[0]
+            if type.kind == UNSIGNED:
+                return 'uint%u_t' % type.size
+            elif type.kind == SIGNED:
+                return 'int%u_t' % type.size
+            elif type.kind == FLOAT:
+                if type.size == 32:
+                    return 'float'
+                elif type.size == 64:
+                    return 'double'
+                else:
+                    assert False
             else:
                 assert False
-        else:
-            assert False
     else:
         assert False
 
@@ -291,29 +292,30 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     else:
         assert False
 
-    if format.layout == ARITH:
-        print '         %s pixel = *src_pixel++;' % src_native_type
-        shift = 0;
-        for i in range(4):
-            src_type = format.in_types[i]
-            width = src_type.size
-            if names[i]:
-                value = 'pixel'
-                mask = (1 << width) - 1
-                if shift:
-                    value = '(%s >> %u)' % (value, shift)
-                if shift + width < format.block_size():
-                    value = '(%s & 0x%x)' % (value, mask)
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         %s %s = %s;' % (dst_native_type, names[i], value)
-            shift += width
-    elif format.layout == ARRAY:
-        for i in range(4):
-            src_type = format.in_types[i]
-            if names[i]:
-                value = '(*src_pixel++)'
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         %s %s = %s;' % (dst_native_type, names[i], value)
+    if format.layout in (ARITH, ARRAY):
+        if not format.is_array():
+            print '         %s pixel = *src_pixel++;' % src_native_type
+            shift = 0;
+            for i in range(4):
+                src_type = format.in_types[i]
+                width = src_type.size
+                if names[i]:
+                    value = 'pixel'
+                    mask = (1 << width) - 1
+                    if shift:
+                        value = '(%s >> %u)' % (value, shift)
+                    if shift + width < format.block_size():
+                        value = '(%s & 0x%x)' % (value, mask)
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         %s %s = %s;' % (dst_native_type, names[i], value)
+                shift += width
+        else:
+            for i in range(4):
+                src_type = format.in_types[i]
+                if names[i]:
+                    value = '(*src_pixel++)'
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         %s %s = %s;' % (dst_native_type, names[i], value)
     else:
         assert False
 
@@ -376,27 +378,28 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
     else:
         assert False
 
-    if format.layout == ARITH:
-        print '         %s pixel = 0;' % dst_native_type
-        shift = 0;
-        for i in range(4):
-            dst_type = format.in_types[i]
-            width = dst_type.size
-            if inv_swizzle[i] is not None:
-                value = 'src_pixel[%u]' % inv_swizzle[i]
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                if shift:
-                    value = '(%s << %u)' % (value, shift)
-                print '         pixel |= %s;' % value
-            shift += width
-        print '         *dst_pixel++ = pixel;'
-    elif format.layout == ARRAY:
-        for i in range(4):
-            dst_type = format.in_types[i]
-            if inv_swizzle[i] is not None:
-                value = 'src_pixel[%u]' % inv_swizzle[i]
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         *dst_pixel++ = %s;' % value
+    if format.layout in (ARITH, ARRAY):
+        if not format.is_array():
+            print '         %s pixel = 0;' % dst_native_type
+            shift = 0;
+            for i in range(4):
+                dst_type = format.in_types[i]
+                width = dst_type.size
+                if inv_swizzle[i] is not None:
+                    value = 'src_pixel[%u]' % inv_swizzle[i]
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    if shift:
+                        value = '(%s << %u)' % (value, shift)
+                    print '         pixel |= %s;' % value
+                shift += width
+            print '         *dst_pixel++ = pixel;'
+        else:
+            for i in range(4):
+                dst_type = format.in_types[i]
+                if inv_swizzle[i] is not None:
+                    value = 'src_pixel[%u]' % inv_swizzle[i]
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         *dst_pixel++ = %s;' % value
     else:
         assert False
     print '         src_pixel += 4;'
