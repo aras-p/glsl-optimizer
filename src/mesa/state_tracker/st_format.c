@@ -82,8 +82,7 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
    desc = util_format_description(format);
    assert(desc);
 
-   if (desc->layout == UTIL_FORMAT_LAYOUT_ARITH ||
-       desc->layout == UTIL_FORMAT_LAYOUT_ARRAY) {
+   if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
 #if 0
       printf("%s\n", util_format_name( format ) );
 #endif
@@ -147,8 +146,13 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 
       pinfo->mesa_format = st_pipe_format_to_mesa_format(format);
    }
-   else if (desc->layout == UTIL_FORMAT_LAYOUT_YUV) {
+   else if (format == PIPE_FORMAT_YCBCR) {
       pinfo->mesa_format = MESA_FORMAT_YCBCR;
+      pinfo->datatype = GL_UNSIGNED_SHORT;
+      pinfo->size = 2; /* two bytes per "texel" */
+   }
+   else if (format == PIPE_FORMAT_YCBCR_REV) {
+      pinfo->mesa_format = MESA_FORMAT_YCBCR_REV;
       pinfo->datatype = GL_UNSIGNED_SHORT;
       pinfo->size = 2; /* two bytes per "texel" */
    }
