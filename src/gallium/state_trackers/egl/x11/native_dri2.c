@@ -98,6 +98,84 @@ dri2_config(const struct native_config *nconf)
 }
 
 /**
+ * Process the buffers returned by the server.
+ */
+static void
+dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
+                                      struct x11_drawable_buffer *xbufs,
+                                      int num_xbufs)
+{
+   struct dri2_surface *dri2surf = dri2_surface(nsurf);
+   struct dri2_display *dri2dpy = dri2surf->dri2dpy;
+   struct pipe_texture templ;
+   uint valid_mask;
+   int i;
+
+   /* free the old textures */
+   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
+      pipe_texture_reference(&dri2surf->textures[i], NULL);
+   dri2surf->valid_mask = 0x0;
+
+   dri2surf->have_back = FALSE;
+   dri2surf->have_fake = FALSE;
+
+   if (!xbufs)
+      return;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = dri2surf->width;
+   templ.height0 = dri2surf->height;
+   templ.depth0 = 1;
+   templ.format = dri2surf->color_format;
+   templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+   valid_mask = 0x0;
+   for (i = 0; i < num_xbufs; i++) {
+      struct x11_drawable_buffer *xbuf = &xbufs[i];
+      const char *desc;
+      enum native_attachment natt;
+
+      switch (xbuf->attachment) {
+      case DRI2BufferFrontLeft:
+         natt = NATIVE_ATTACHMENT_FRONT_LEFT;
+         desc = "DRI2 Front Buffer";
+         break;
+      case DRI2BufferFakeFrontLeft:
+         natt = NATIVE_ATTACHMENT_FRONT_LEFT;
+         desc = "DRI2 Fake Front Buffer";
+         dri2surf->have_fake = TRUE;
+         break;
+      case DRI2BufferBackLeft:
+         natt = NATIVE_ATTACHMENT_BACK_LEFT;
+         desc = "DRI2 Back Buffer";
+         dri2surf->have_back = TRUE;
+         break;
+      default:
+         desc = NULL;
+         break;
+      }
+
+      if (!desc || dri2surf->textures[natt]) {
+         if (!desc)
+            _eglLog(_EGL_WARNING, "unknown buffer %d", xbuf->attachment);
+         else
+            _eglLog(_EGL_WARNING, "both real and fake front buffers are listed");
+         continue;
+      }
+
+      dri2surf->textures[natt] =
+         dri2dpy->api->texture_from_shared_handle(dri2dpy->api,
+               dri2dpy->base.screen, &templ, desc, xbuf->pitch, xbuf->name);
+      if (dri2surf->textures[natt])
+         valid_mask |= 1 << natt;
+   }
+
+   dri2surf->valid_mask = valid_mask;
+}
+
+/**
  * Get the buffers from the server.
  */
 static void
@@ -106,10 +184,8 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
    unsigned int dri2atts[NUM_NATIVE_ATTACHMENTS];
-   int num_ins, num_outs, att, i;
+   int num_ins, num_outs, att;
    struct x11_drawable_buffer *xbufs;
-   struct pipe_texture templ;
-   uint valid_mask;
 
    /* prepare the attachments */
    num_ins = 0;
@@ -152,74 +228,14 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
       return;
    }
 
-   /* free the old buffers */
-   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
-      pipe_texture_reference(&dri2surf->textures[i], NULL);
-   dri2surf->valid_mask = 0x0;
+   dri2_surface_process_drawable_buffers(&dri2surf->base, xbufs, num_outs);
+
    dri2surf->sequence_number++;
-
-   dri2surf->have_back = FALSE;
-   dri2surf->have_fake = FALSE;
-
-   if (!xbufs)
-      return;
-
-   memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
-   templ.last_level = 0;
-   templ.width0 = dri2surf->width;
-   templ.height0 = dri2surf->height;
-   templ.depth0 = 1;
-   templ.format = dri2surf->color_format;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-
-   valid_mask = 0x0;
-   for (i = 0; i < num_outs; i++) {
-      struct x11_drawable_buffer *xbuf = &xbufs[i];
-      const char *desc;
-      enum native_attachment natt;
-
-      switch (xbuf->attachment) {
-      case DRI2BufferFrontLeft:
-         natt = NATIVE_ATTACHMENT_FRONT_LEFT;
-         desc = "DRI2 Front Buffer";
-         break;
-      case DRI2BufferFakeFrontLeft:
-         natt = NATIVE_ATTACHMENT_FRONT_LEFT;
-         desc = "DRI2 Fake Front Buffer";
-         dri2surf->have_fake = TRUE;
-         break;
-      case DRI2BufferBackLeft:
-         natt = NATIVE_ATTACHMENT_BACK_LEFT;
-         desc = "DRI2 Back Buffer";
-         dri2surf->have_back = TRUE;
-         break;
-      default:
-         desc = NULL;
-         break;
-      }
-
-      if (!desc || dri2surf->textures[natt]) {
-         if (!desc)
-            _eglLog(_EGL_WARNING, "unknown buffer %d", xbuf->attachment);
-         else
-            _eglLog(_EGL_WARNING, "both real and fake front buffers are listed");
-         continue;
-      }
-
-      dri2surf->textures[natt] =
-         dri2dpy->api->texture_from_shared_handle(dri2dpy->api,
-               dri2dpy->base.screen, &templ, desc, xbuf->pitch, xbuf->name);
-      if (dri2surf->textures[natt])
-         valid_mask |= 1 << natt;
-   }
 
    if (dri2surf->last_xbufs)
       free(dri2surf->last_xbufs);
    dri2surf->last_xbufs = xbufs;
    dri2surf->last_num_xbufs = num_outs;
-
-   dri2surf->valid_mask = valid_mask;
 }
 
 /**
