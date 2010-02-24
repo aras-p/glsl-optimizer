@@ -61,6 +61,7 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
+   struct pipe_clip_state clip;
 
    void *vs;
    void *fs2d, *fsCube;
@@ -1499,11 +1500,13 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
    cso_save_viewport(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    cso_set_fragment_shader_handle(ctx->cso, fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
@@ -1589,4 +1592,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
+   cso_restore_clip(ctx->cso);
 }

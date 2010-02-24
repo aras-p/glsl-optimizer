@@ -62,6 +62,7 @@ struct blit_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
+   struct pipe_clip_state clip;
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
@@ -264,7 +265,6 @@ regions_overlap(int srcX0, int srcY0,
  * \param writemask  controls which channels in the dest surface are sourced
  *                   from the src surface.  Disabled channels are sourced
  *                   from (0,0,0,1).
- * XXX what about clipping???
  * XXX need some control over blitting Z and/or stencil.
  */
 void
@@ -409,11 +409,13 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -475,6 +477,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_clip(ctx->cso);
 
    pipe_texture_reference(&tex, NULL);
 }
@@ -558,11 +561,13 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -607,4 +612,5 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_clip(ctx->cso);
 }
