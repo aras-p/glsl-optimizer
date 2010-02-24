@@ -267,7 +267,7 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
    if (format == GL_COLOR_INDEX && type == GL_UNSIGNED_BYTE) {
       const GLubyte *src = (const GLubyte *) pixels
          + unpack.SkipRows * unpack.RowLength + unpack.SkipPixels;
-      if (ctx->Visual.rgbMode && rbType == GL_UNSIGNED_BYTE) {
+      if (rbType == GL_UNSIGNED_BYTE) {
          /* convert ubyte/CI data to ubyte/RGBA */
          if (simpleZoom) {
             GLint row;
@@ -299,77 +299,10 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (!ctx->Visual.rgbMode && rbType == GL_UNSIGNED_INT) {
-         /* write CI data to CI frame buffer */
-         GLint row;
-         if (simpleZoom) {
-            for (row = 0; row < drawHeight; row++) {
-               GLuint index32[MAX_WIDTH];
-               GLint col;
-               for (col = 0; col < drawWidth; col++)
-                  index32[col] = src[col];
-               rb->PutRow(ctx, rb, drawWidth, destX, destY, index32, NULL);
-               src += unpack.RowLength;
-               destY += yStep;
-            }
-            return GL_TRUE;
-         }
-      }
    }
 
    /* can't handle this pixel format and/or data type */
    return GL_FALSE;
-}
-
-
-
-/*
- * Draw color index image.
- */
-static void
-draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
-                   GLsizei width, GLsizei height,
-                   GLenum type,
-                   const struct gl_pixelstore_attrib *unpack,
-                   const GLvoid *pixels )
-{
-   const GLint imgX = x, imgY = y;
-   const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
-   GLint row, skipPixels;
-   SWspan span;
-
-   INIT_SPAN(span, GL_BITMAP);
-   span.arrayMask = SPAN_INDEX;
-   _swrast_span_default_attribs(ctx, &span);
-
-   /*
-    * General solution
-    */
-   skipPixels = 0;
-   while (skipPixels < width) {
-      const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
-      ASSERT(spanWidth <= MAX_WIDTH);
-      for (row = 0; row < height; row++) {
-         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
-                                                      width, height,
-                                                      GL_COLOR_INDEX, type,
-                                                      row, skipPixels);
-         _mesa_unpack_index_span(ctx, spanWidth, GL_UNSIGNED_INT,
-                                 span.array->index, type, source, unpack,
-                                 ctx->_ImageTransferState);
-
-         /* These may get changed during writing/clipping */
-         span.x = x + skipPixels;
-         span.y = y + row;
-         span.end = spanWidth;
-         
-         if (zoom)
-            _swrast_write_zoomed_index_span(ctx, imgX, imgY, &span);
-         else
-            _swrast_write_index_span(ctx, &span);
-      }
-      skipPixels += spanWidth;
-   }
 }
 
 
@@ -441,7 +374,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
        && ctx->DrawBuffer->Visual.depthBits == 16
        && !scaleOrBias
        && !zoom
-       && ctx->Visual.rgbMode
        && width <= MAX_WIDTH
        && !unpack->SwapBytes) {
       /* Special case: directly write 16-bit depth values */
@@ -462,7 +394,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    else if (type == GL_UNSIGNED_INT
             && !scaleOrBias
             && !zoom
-            && ctx->Visual.rgbMode
             && width <= MAX_WIDTH
             && !unpack->SwapBytes) {
       /* Special case: shift 32-bit values down to Visual.depthBits */
@@ -515,11 +446,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             if (zoom) {
                _swrast_write_zoomed_depth_span(ctx, x, y, &span);
             }
-            else if (ctx->Visual.rgbMode) {
-               _swrast_write_rgba_span(ctx, &span);
-            }
             else {
-               _swrast_write_index_span(ctx, &span);
+               _swrast_write_rgba_span(ctx, &span);
             }
          }
          skipPixels += spanWidth;
@@ -867,11 +795,6 @@ _swrast_DrawPixels( GLcontext *ctx,
       draw_depth_pixels( ctx, x, y, width, height, type, unpack, pixels );
       break;
    case GL_COLOR_INDEX:
-      if (ctx->Visual.rgbMode)
-	 draw_rgba_pixels(ctx, x,y, width, height, format, type, unpack, pixels);
-      else
-	 draw_index_pixels(ctx, x, y, width, height, type, unpack, pixels);
-      break;
    case GL_RED:
    case GL_GREEN:
    case GL_BLUE:
