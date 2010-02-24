@@ -122,14 +122,14 @@ PIPE_FORMAT_R8G8B8A8_SSCALED      , array , 1, 1, s8  , s8  , s8  , s8  , xyzw, 
 
 # Ambiguous formats
 # FIXME: They are used with different meanings in different places!!!
-PIPE_FORMAT_R8G8B8_UNORM          , array , 1, 1, un8 , un8 , un8 ,     , zyx1, rgb
-PIPE_FORMAT_R8G8B8A8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
+PIPE_FORMAT_R8G8B8_UNORM          , arith , 1, 1, un8 , un8 , un8 ,     , zyx1, rgb
+PIPE_FORMAT_R8G8B8A8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
 
 # Unused formats
 # XXX: Couldn't find any state tracker using them!!
 PIPE_FORMAT_B6G5R5_SNORM          , arith , 1, 1, sn5 , sn5 , sn6 ,     , xyz1, rgb
-PIPE_FORMAT_R8G8B8X8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
-PIPE_FORMAT_R8G8B8X8_USCALED      , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, rgb
-PIPE_FORMAT_R8G8B8X8_SSCALED      , array , 1, 1, s8  , s8  , s8  , s8  , xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_SNORM        , arith , 1, 1, sn8 , sn8 , sn8 , sn8 , wzy1, rgb
+PIPE_FORMAT_R8G8B8X8_USCALED      , arith , 1, 1, u8  , u8  , u8  , u8  , wzy1, rgb
+PIPE_FORMAT_R8G8B8X8_SSCALED      , arith , 1, 1, s8  , s8  , s8  , s8  , wzy1, rgb
 # XXX: This one is mentioned in mesa and r300, but not anywhere else. Not sure it is actually needed
-PIPE_FORMAT_R8G8B8X8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
+PIPE_FORMAT_R8G8B8X8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
