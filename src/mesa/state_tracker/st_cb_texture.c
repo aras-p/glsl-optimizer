@@ -1717,18 +1717,15 @@ copy_image_data_to_texture(struct st_context *st,
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
                             stImage->pt, /* src texture */
-                            stImage->face
-                            );
+                            stImage->face);
 
       pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       /* More straightforward upload.  
        */
-
       st_teximage_flush_before_map(st, stObj->pt, stImage->face, dstLevel,
 				   PIPE_TRANSFER_WRITE);
-
 
       st_texture_image_data(st,
                             stObj->pt,
