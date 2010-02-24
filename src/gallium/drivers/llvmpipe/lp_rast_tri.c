@@ -130,6 +130,9 @@ do_block_4( struct lp_rasterizer_task *rast_task,
 	    int c2,
 	    int c3 )
 {
+   assert(x >= 0);
+   assert(y >= 0);
+
    lp_rast_shade_quads(rast_task->rast,
                        rast_task->thread_index,
                        &tri->inputs, 
@@ -155,6 +158,8 @@ do_block_16( struct lp_rasterizer_task *rast_task,
    int c[3];
    int i, j;
 
+   assert(x >= 0);
+   assert(y >= 0);
    assert(x % 16 == 0);
    assert(y % 16 == 0);
 
