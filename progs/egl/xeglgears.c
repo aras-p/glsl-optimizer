@@ -32,6 +32,9 @@
  */
 
 
+#define GL_GLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,7 +45,6 @@
 #include <GL/gl.h>
 #include <EGL/egl.h>
 
-#define EGL_EGLEXT_PROTOTYPES
 #include <EGL/eglext.h>
 
 
@@ -539,10 +541,6 @@ enum {
    GEARS_PBUFFER,
    GEARS_PBUFFER_TEXTURE
 };
-
-typedef void* GLeglImageOES;
-GLAPI void GLAPIENTRY glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image);
-GLAPI void GLAPIENTRY glEGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image);
 
 static void
 texture_gears(struct egl_manager *eman, int surface_type)
