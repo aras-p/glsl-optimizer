@@ -77,6 +77,16 @@ class Format:
     def __str__(self):
         return self.name
 
+    def short_name(self):
+        '''Make up a short norm for a format, suitable to be used as suffix in
+        function names.'''
+
+        name = self.name
+        if name.startswith('PIPE_FORMAT_'):
+            name = name[len('PIPE_FORMAT_'):]
+        name = name.lower()
+        return name
+
     def block_size(self):
         size = 0
         for type in self.in_types:

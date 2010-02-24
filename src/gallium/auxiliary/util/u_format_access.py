@@ -42,17 +42,6 @@ import sys
 from u_format_parse import *
 
 
-def short_name(format):
-    '''Make up a short norm for a format, suitable to be used as suffix in
-    function names.'''
-
-    name = format.name
-    if name.startswith('PIPE_FORMAT_'):
-        name = name[len('PIPE_FORMAT_'):]
-    name = name.lower()
-    return name
-
-
 def is_format_supported(format):
     '''Determines whether we actually have the plumbing necessary to generate the 
     to read/write to/from this format.'''
@@ -262,7 +251,7 @@ def conversion_expr(src_type, dst_type, dst_native_type, value):
 def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     '''Generate the function to read pixels from a particular format'''
 
-    name = short_name(format)
+    name = format.short_name()
 
     src_native_type = native_type(format)
 
@@ -350,7 +339,7 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
 def generate_format_write(format, src_type, src_native_type, src_suffix):
     '''Generate the function to write pixels to a particular format'''
 
-    name = short_name(format)
+    name = format.short_name()
 
     dst_native_type = native_type(format)
 
@@ -427,7 +416,7 @@ def generate_read(formats, dst_type, dst_native_type, dst_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &util_format_%s_read_%s;' % (short_name(format), dst_suffix)
+            print '      func = &util_format_%s_read_%s;' % (format.short_name(), dst_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("unsupported format\\n");'
@@ -454,7 +443,7 @@ def generate_write(formats, src_type, src_native_type, src_suffix):
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &util_format_%s_write_%s;' % (short_name(format), src_suffix)
+            print '      func = &util_format_%s_write_%s;' % (format.short_name(), src_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("unsupported format\\n");'
