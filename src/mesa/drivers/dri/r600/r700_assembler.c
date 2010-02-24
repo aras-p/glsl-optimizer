@@ -1250,6 +1250,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
 
     if(pAsm->aArgSubst[1+src] >= 0) 
     {
+        assert(fld >= 0);
         setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
         pAsm->S[fld].src.rtype = SRC_REG_TEMPORARY;
         pAsm->S[fld].src.reg   = pAsm->aArgSubst[1+src];
