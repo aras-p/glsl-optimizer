@@ -83,14 +83,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                               GLenum internalFormat,
                               GLuint width, GLuint height)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format format;
 
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(pipe->screen, internalFormat);
+      format = st_choose_renderbuffer_format(screen, internalFormat);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;
@@ -149,16 +149,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                        PIPE_BUFFER_USAGE_CPU_WRITE);
 #endif
 
-      strb->texture = pipe->screen->texture_create( pipe->screen,
-                                                    &template );
+      strb->texture = screen->texture_create(screen, &template);
 
       if (!strb->texture) 
          return FALSE;
 
-      strb->surface = pipe->screen->get_tex_surface( pipe->screen,
-                                                     strb->texture,
-                                                     0, 0, 0,
-                                                     surface_usage );
+      strb->surface = screen->get_tex_surface(screen,
+                                              strb->texture,
+                                              0, 0, 0,
+                                              surface_usage);
       if (strb->surface) {
          assert(strb->surface->texture);
          assert(strb->surface->format);
