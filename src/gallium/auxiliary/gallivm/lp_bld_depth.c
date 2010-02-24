@@ -171,7 +171,7 @@ lp_build_depth_test(LLVMBuilderRef builder,
       unsigned padding_right;
       unsigned chan;
 
-      assert(format_desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
+      assert(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
       assert(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED);
       assert(format_desc->channel[z_swizzle].size <= format_desc->block.bits);
       assert(format_desc->channel[z_swizzle].normalized);
