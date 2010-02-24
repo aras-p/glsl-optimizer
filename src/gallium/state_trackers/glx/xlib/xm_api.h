@@ -367,6 +367,9 @@ xmesa_buffer(GLframebuffer *fb)
 
 
 extern void
+xmesa_init(void);
+
+extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
 
 extern XMesaBuffer

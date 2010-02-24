@@ -689,6 +689,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    int desiredVisualID = -1;
    int numAux = 0;
 
+   xmesa_init();
+
    parselist = list;
 
    while (*parselist) {
@@ -941,9 +943,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          /* give the visual some useful GLX attributes */
          double_flag = GL_TRUE;
          rgb_flag = GL_TRUE;
-         depth_size = default_depth_bits();
-         stencil_size = STENCIL_BITS;
-         /* XXX accum??? */
       }
    }
    else if (level==0) {
