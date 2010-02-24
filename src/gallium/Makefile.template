@@ -21,9 +21,6 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(GALLIUM)/src/gallium/include \
-	-I$(GALLIUM)/src/gallium/auxiliary \
-	-I$(GALLIUM)/src/gallium/drivers \
 	$(LIBRARY_INCLUDES)
 
 
