@@ -156,14 +156,13 @@ lp_rast_end( struct lp_rasterizer *rast )
  * \param y  window Y position of the tile, in pixels
  */
 static void
-lp_rast_start_tile( struct lp_rasterizer *rast,
-                    unsigned thread_index,
-                    unsigned x, unsigned y )
+lp_rast_start_tile(struct lp_rasterizer_task *task,
+                   unsigned x, unsigned y)
 {
    LP_DBG(DEBUG_RAST, "%s %d,%d\n", __FUNCTION__, x, y);
 
-   rast->tasks[thread_index].x = x;
-   rast->tasks[thread_index].y = y;
+   task->x = x;
+   task->y = y;
 }
 
 
@@ -171,12 +170,13 @@ lp_rast_start_tile( struct lp_rasterizer *rast,
  * Clear the rasterizer's current color tile.
  * This is a bin command called during bin processing.
  */
-void lp_rast_clear_color( struct lp_rasterizer *rast,
-                          unsigned thread_index,
-                          const union lp_rast_cmd_arg arg )
+void
+lp_rast_clear_color(struct lp_rasterizer_task *task,
+                    const union lp_rast_cmd_arg arg)
 {
+   struct lp_rasterizer *rast = task->rast;
    const uint8_t *clear_color = arg.clear_color;
-   uint8_t **color_tile = rast->tasks[thread_index].tile.color;
+   uint8_t **color_tile = task->tile.color;
    unsigned i;
 
    LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
@@ -225,11 +225,11 @@ void lp_rast_clear_color( struct lp_rasterizer *rast,
  * Clear the rasterizer's current z/stencil tile.
  * This is a bin command called during bin processing.
  */
-void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
-                             unsigned thread_index,
-                             const union lp_rast_cmd_arg arg)
+void
+lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
+                       const union lp_rast_cmd_arg arg)
 {
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   struct lp_rasterizer *rast = task->rast;
    const unsigned tile_x = task->x;
    const unsigned tile_y = task->y;
    const unsigned height = TILE_SIZE/TILE_VECTOR_HEIGHT;
@@ -288,13 +288,12 @@ void lp_rast_clear_zstencil( struct lp_rasterizer *rast,
  * Load tile color from the framebuffer surface.
  * This is a bin command called during bin processing.
  */
-void lp_rast_load_color( struct lp_rasterizer *rast,
-                         unsigned thread_index,
-                         const union lp_rast_cmd_arg arg)
+void
+lp_rast_load_color(struct lp_rasterizer_task *task,
+                   const union lp_rast_cmd_arg arg)
 {
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
-   const unsigned x = task->x;
-   const unsigned y = task->y;
+   struct lp_rasterizer *rast = task->rast;
+   const unsigned x = task->x, y = task->y;
    unsigned i;
 
    LP_DBG(DEBUG_RAST, "%s at %u, %u\n", __FUNCTION__, x, y);
@@ -304,10 +303,7 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
       int w = TILE_SIZE;
       int h = TILE_SIZE;
 
-      if (x >= transfer->width)
-	 continue;
-
-      if (y >= transfer->height)
+      if (x >= transfer->width || y >= transfer->height)
 	 continue;
 
       assert(w >= 0);
@@ -327,16 +323,16 @@ void lp_rast_load_color( struct lp_rasterizer *rast,
 }
 
 
-void lp_rast_set_state( struct lp_rasterizer *rast,
-                        unsigned thread_index,
-                        const union lp_rast_cmd_arg arg )
+void
+lp_rast_set_state(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
 {
    const struct lp_rast_state *state = arg.set_state;
 
    LP_DBG(DEBUG_RAST, "%s %p\n", __FUNCTION__, (void *) state);
 
    /* just set the current state pointer for this rasterizer */
-   rast->tasks[thread_index].current_state = state;
+   task->current_state = state;
 }
 
 
@@ -346,16 +342,15 @@ void lp_rast_set_state( struct lp_rasterizer *rast,
  * completely contained inside a triangle.
  * This is a bin command called during bin processing.
  */
-void lp_rast_shade_tile( struct lp_rasterizer *rast,
-                         unsigned thread_index,
-                         const union lp_rast_cmd_arg arg )
+void
+lp_rast_shade_tile(struct lp_rasterizer_task *task,
+                   const union lp_rast_cmd_arg arg)
 {
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
+   struct lp_rasterizer *rast = task->rast;
    const struct lp_rast_state *state = task->current_state;
    struct lp_rast_tile *tile = &task->tile;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
-   const unsigned tile_x = task->x;
-   const unsigned tile_y = task->y;
+   const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
@@ -514,12 +509,11 @@ outline_subtiles(uint8_t *tile)
 /**
  * Write the rasterizer's color tile to the framebuffer.
  */
-static void lp_rast_store_color( struct lp_rasterizer *rast,
-                                 unsigned thread_index)
+static void
+lp_rast_store_color(struct lp_rasterizer_task *task)
 {
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
-   const unsigned x = task->x;
-   const unsigned y = task->y;
+   struct lp_rasterizer *rast = task->rast;
+   const unsigned x = task->x, y = task->y;
    unsigned i;
 
    for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
@@ -534,7 +528,7 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
 	 continue;
 
       LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
-	     thread_index, x, y, w, h);
+	     task->thread_index, x, y, w, h);
 
       if (LP_DEBUG & DEBUG_SHOW_SUBTILES)
          outline_subtiles(task->tile.color[i]);
@@ -557,13 +551,14 @@ static void lp_rast_store_color( struct lp_rasterizer *rast,
  * Write the rasterizer's tiles to the framebuffer.
  */
 static void
-lp_rast_end_tile( struct lp_rasterizer *rast,
-                  unsigned thread_index )
+lp_rast_end_tile(struct lp_rasterizer_task *task)
 {
+   struct lp_rasterizer *rast = task->rast;
+
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    if (rast->state.write_color)
-      lp_rast_store_color(rast, thread_index);
+      lp_rast_store_color(task);
 }
 
 
@@ -571,9 +566,9 @@ lp_rast_end_tile( struct lp_rasterizer *rast,
  * Signal on a fence.  This is called during bin execution/rasterization.
  * Called per thread.
  */
-void lp_rast_fence( struct lp_rasterizer *rast,
-                    unsigned thread_index,
-                    const union lp_rast_cmd_arg arg )
+void
+lp_rast_fence(struct lp_rasterizer_task *task,
+              const union lp_rast_cmd_arg arg)
 {
    struct lp_fence *fence = arg.fence;
 
@@ -617,25 +612,24 @@ release_scene( struct lp_rasterizer *rast,
  * Called per thread.
  */
 static void
-rasterize_bin( struct lp_rasterizer *rast,
-               unsigned thread_index,
-               const struct cmd_bin *bin,
-               int x, int y)
+rasterize_bin(struct lp_rasterizer_task *task,
+              const struct cmd_bin *bin,
+              int x, int y)
 {
    const struct cmd_block_list *commands = &bin->commands;
    struct cmd_block *block;
    unsigned k;
 
-   lp_rast_start_tile( rast, thread_index, x, y );
+   lp_rast_start_tile( task, x, y );
 
    /* simply execute each of the commands in the block list */
    for (block = commands->head; block; block = block->next) {
       for (k = 0; k < block->count; k++) {
-         block->cmd[k]( rast, thread_index, block->arg[k] );
+         block->cmd[k]( task, block->arg[k] );
       }
    }
 
-   lp_rast_end_tile( rast, thread_index );
+   lp_rast_end_tile( task );
 }
 
 
@@ -719,10 +713,9 @@ is_empty_bin( const struct cmd_bin *bin )
  * Called per thread.
  */
 static void
-rasterize_scene( struct lp_rasterizer *rast,
-                unsigned thread_index,
+rasterize_scene(struct lp_rasterizer_task *task,
                 struct lp_scene *scene,
-                bool write_depth )
+                bool write_depth)
 {
    /* loop over scene bins, rasterize each */
 #if 0
@@ -730,9 +723,8 @@ rasterize_scene( struct lp_rasterizer *rast,
       unsigned i, j;
       for (i = 0; i < scene->tiles_x; i++) {
          for (j = 0; j < scene->tiles_y; j++) {
-            struct cmd_bin *bin = lp_get_bin(scene, i, j);
-            rasterize_bin( rast, thread_index,
-                           bin, i * TILE_SIZE, j * TILE_SIZE );
+            struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
+            rasterize_bin(task, bin, i * TILE_SIZE, j * TILE_SIZE);
          }
       }
    }
@@ -744,7 +736,7 @@ rasterize_scene( struct lp_rasterizer *rast,
       assert(scene);
       while ((bin = lp_scene_bin_iter_next(scene, &x, &y))) {
          if (!is_empty_bin( bin ))
-            rasterize_bin( rast, thread_index, bin, x * TILE_SIZE, y * TILE_SIZE);
+            rasterize_bin(task, bin, x * TILE_SIZE, y * TILE_SIZE);
       }
    }
 #endif
@@ -788,7 +780,7 @@ lp_rasterize_scene( struct lp_rasterizer *rast,
                      fb->zsbuf != NULL && write_depth );
 
       lp_scene_bin_iter_begin( scene );
-      rasterize_scene( rast, 0, scene, write_depth );
+      rasterize_scene( &rast->tasks[0], scene, write_depth );
 
       release_scene( rast, scene );
 
@@ -862,10 +854,9 @@ static PIPE_THREAD_ROUTINE( thread_func, init_data )
       /* do work */
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
-      rasterize_scene(rast, 
-		     task->thread_index,
-                     rast->curr_scene, 
-		     rast->curr_scene->write_depth);
+      rasterize_scene(task,
+                      rast->curr_scene, 
+                      rast->curr_scene->write_depth);
       
       /* wait for all threads to finish with this scene */
       pipe_barrier_wait( &rast->barrier );

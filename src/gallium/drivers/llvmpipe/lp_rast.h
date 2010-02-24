@@ -53,6 +53,9 @@ struct pipe_screen;
 #define FIXED_ONE (1<<FIXED_ORDER)
 
 
+struct lp_rasterizer_task;
+
+
 /**
  * Rasterization state.
  * Objects of this type are put into the shared data bin and pointed
@@ -201,32 +204,25 @@ lp_rast_arg_null( void )
  * the bins are executed.
  */
 
-void lp_rast_clear_color( struct lp_rasterizer *, 
-                          unsigned thread_index,
+void lp_rast_clear_color( struct lp_rasterizer_task *, 
                           const union lp_rast_cmd_arg );
 
-void lp_rast_clear_zstencil( struct lp_rasterizer *, 
-                             unsigned thread_index,
+void lp_rast_clear_zstencil( struct lp_rasterizer_task *, 
                              const union lp_rast_cmd_arg );
 
-void lp_rast_load_color( struct lp_rasterizer *, 
-                         unsigned thread_index,
+void lp_rast_load_color( struct lp_rasterizer_task *, 
                          const union lp_rast_cmd_arg );
 
-void lp_rast_set_state( struct lp_rasterizer *, 
-                        unsigned thread_index,
+void lp_rast_set_state( struct lp_rasterizer_task *, 
                         const union lp_rast_cmd_arg );
 
-void lp_rast_triangle( struct lp_rasterizer *, 
-                       unsigned thread_index,
+void lp_rast_triangle( struct lp_rasterizer_task *, 
                        const union lp_rast_cmd_arg );
 
-void lp_rast_shade_tile( struct lp_rasterizer *,
-                         unsigned thread_index,
+void lp_rast_shade_tile( struct lp_rasterizer_task *,
                          const union lp_rast_cmd_arg );
 
-void lp_rast_fence( struct lp_rasterizer *,
-                    unsigned thread_index,
+void lp_rast_fence( struct lp_rasterizer_task *,
                     const union lp_rast_cmd_arg );
 
 #endif

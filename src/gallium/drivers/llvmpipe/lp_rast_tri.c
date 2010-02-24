@@ -89,11 +89,11 @@ static const int pos_table16[16][2] = {
  * Shade all pixels in a 4x4 block.
  */
 static void
-block_full_4( struct lp_rasterizer_task *rast_task,
-              const struct lp_rast_triangle *tri,
-              int x, int y )
+block_full_4(struct lp_rasterizer_task *task,
+             const struct lp_rast_triangle *tri,
+             int x, int y)
 {
-   lp_rast_shade_quads_all(rast_task, &tri->inputs, x, y);
+   lp_rast_shade_quads_all(task, &tri->inputs, x, y);
 }
 
 
@@ -101,16 +101,16 @@ block_full_4( struct lp_rasterizer_task *rast_task,
  * Shade all pixels in a 16x16 block.
  */
 static void
-block_full_16( struct lp_rasterizer_task *rast_task,
-               const struct lp_rast_triangle *tri,
-               int x, int y )
+block_full_16(struct lp_rasterizer_task *task,
+              const struct lp_rast_triangle *tri,
+              int x, int y)
 {
    unsigned ix, iy;
    assert(x % 16 == 0);
    assert(y % 16 == 0);
    for (iy = 0; iy < 16; iy += 4)
       for (ix = 0; ix < 16; ix += 4)
-	 block_full_4(rast_task, tri, x + ix, y + iy);
+	 block_full_4(task, tri, x + ix, y + iy);
 }
 
 
@@ -120,20 +120,15 @@ block_full_16( struct lp_rasterizer_task *rast_task,
  * will be done as part of the fragment shader.
  */
 static void
-do_block_4( struct lp_rasterizer_task *rast_task,
-	    const struct lp_rast_triangle *tri,
-	    int x, int y,
-	    int c1,
-	    int c2,
-	    int c3 )
+do_block_4(struct lp_rasterizer_task *task,
+           const struct lp_rast_triangle *tri,
+           int x, int y,
+           int c1, int c2, int c3)
 {
    assert(x >= 0);
    assert(y >= 0);
 
-   lp_rast_shade_quads(rast_task,
-                       &tri->inputs, 
-                       x, y,
-                       -c1, -c2, -c3);
+   lp_rast_shade_quads(task, &tri->inputs, x, y, -c1, -c2, -c3);
 }
 
 
@@ -142,12 +137,10 @@ do_block_4( struct lp_rasterizer_task *rast_task,
  * of the triangle's bounds.
  */
 static void
-do_block_16( struct lp_rasterizer_task *rast_task,
-             const struct lp_rast_triangle *tri,
-             int x, int y,
-             int c0,
-             int c1,
-             int c2 )
+do_block_16(struct lp_rasterizer_task *task,
+            const struct lp_rast_triangle *tri,
+            int x, int y,
+            int c0, int c1, int c2)
 {
    unsigned mask = 0;
    int eo[3];
@@ -194,7 +187,7 @@ do_block_16( struct lp_rasterizer_task *rast_task,
        * the triangle.  It's a little faster to do it in the jit code.
        */
       LP_COUNT(nr_non_empty_4);
-      do_block_4(rast_task, tri, px, py, cx1, cx2, cx3);
+      do_block_4(task, tri, px, py, cx1, cx2, cx3);
    }
 }
 
@@ -204,15 +197,11 @@ do_block_16( struct lp_rasterizer_task *rast_task,
  * for this triangle.
  */
 void
-lp_rast_triangle( struct lp_rasterizer *rast,
-                  unsigned thread_index,
-                  const union lp_rast_cmd_arg arg )
+lp_rast_triangle(struct lp_rasterizer_task *task,
+                 const union lp_rast_cmd_arg arg)
 {
-   struct lp_rasterizer_task *rast_task = &rast->tasks[thread_index];
    const struct lp_rast_triangle *tri = arg.triangle;
-
-   int x = rast_task->x;
-   int y = rast_task->y;
+   const int x = task->x, y = task->y;
    int ei[3], eo[3], c[3];
    unsigned outmask, inmask, partial_mask;
    unsigned i, j;
@@ -273,7 +262,7 @@ lp_rast_triangle( struct lp_rasterizer *rast,
       partial_mask &= ~(1 << i);
 
       LP_COUNT(nr_partially_covered_16);
-      do_block_16(rast_task, tri, px, py, cx1, cx2, cx3);
+      do_block_16(task, tri, px, py, cx1, cx2, cx3);
    }
 
    /* Iterate over fulls: 
@@ -286,6 +275,6 @@ lp_rast_triangle( struct lp_rasterizer *rast,
       inmask &= ~(1 << i);
 
       LP_COUNT(nr_fully_covered_16);
-      block_full_16(rast_task, tri, px, py);
+      block_full_16(task, tri, px, py);
    }
 }
