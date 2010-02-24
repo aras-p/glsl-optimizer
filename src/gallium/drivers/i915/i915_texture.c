@@ -223,7 +223,7 @@ i915_miptree_layout_2d(struct i915_texture *tex)
       if (i915_scanout_layout(tex))
          return;
 
-   /* for shared buffers we use some very like scanout */
+   /* for shared buffers we use something very like scanout */
    if (pt->tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
       if (i915_display_target_layout(tex))
          return;
