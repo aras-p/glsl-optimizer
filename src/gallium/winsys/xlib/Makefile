@@ -50,10 +50,10 @@ LIBS = \
 .SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(DEFINES) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
 
 
