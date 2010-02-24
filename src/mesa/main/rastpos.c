@@ -34,7 +34,7 @@
 #include "macros.h"
 #include "rastpos.h"
 #include "state.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_rastpos

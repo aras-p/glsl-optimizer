@@ -30,7 +30,7 @@
 #include "main/enums.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 #include "glapi/glapi.h"
 
 #include "vbo_context.h"

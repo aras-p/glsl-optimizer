@@ -25,7 +25,7 @@
  * SOFTWARE.
  */
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 struct gl_function_remap {
    GLint func_index;

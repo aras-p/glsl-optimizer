@@ -34,7 +34,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**

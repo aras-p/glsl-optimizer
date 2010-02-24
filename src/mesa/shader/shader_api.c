@@ -46,7 +46,7 @@
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**

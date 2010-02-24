@@ -32,7 +32,7 @@
 #include "framebuffer.h"
 #include "readpix.h"
 #include "state.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_drawpix

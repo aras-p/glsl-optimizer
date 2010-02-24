@@ -78,7 +78,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/api_validate.h"
 #include "main/api_arrayelt.h"
 #include "main/vtxfmt.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 #include "vbo_context.h"
 

@@ -37,7 +37,7 @@
 #include "main/texgen.h"
 #include "main/texstate.h"
 #include "math/m_matrix.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_texgen

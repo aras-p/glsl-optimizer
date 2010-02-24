@@ -29,7 +29,7 @@
 #include "imports.h"
 #include "queryobj.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_queryobj

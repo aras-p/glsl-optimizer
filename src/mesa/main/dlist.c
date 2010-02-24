@@ -66,7 +66,7 @@
 
 #include "math/m_matrix.h"
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 

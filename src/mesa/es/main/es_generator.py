@@ -207,7 +207,7 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #include "main/compiler.h"
 #include "main/api_exec.h"
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 typedef void (*_glapi_proc)(void); /* generic function pointer */
 """

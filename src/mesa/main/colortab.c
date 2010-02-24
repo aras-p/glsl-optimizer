@@ -32,7 +32,7 @@
 #include "state.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_colortable

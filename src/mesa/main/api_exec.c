@@ -104,7 +104,7 @@
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 
