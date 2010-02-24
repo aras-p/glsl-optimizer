@@ -194,8 +194,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
@@ -223,8 +222,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&

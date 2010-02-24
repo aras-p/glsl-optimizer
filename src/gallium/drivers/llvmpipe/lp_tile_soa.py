@@ -76,7 +76,7 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     else:
         assert False
 
-    if format.layout in (ARITH, ARRAY):
+    if format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = *src_pixel++;' % src_native_type
             shift = 0;
@@ -208,7 +208,7 @@ def emit_tile_pixel_write_code(format, src_type):
     print '      %s *dst_pixel = (%s *)(dst_row + x0*%u);' % (dst_native_type, dst_native_type, format.stride())
     print '      for (x = 0; x < w; ++x) {'
 
-    if format.layout in (ARITH, ARRAY):
+    if format.layout == PLAIN:
         if not format.is_array():
             print '         %s pixel = 0;' % dst_native_type
             shift = 0;
@@ -246,7 +246,7 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
     print 'static void'
     print 'lp_tile_%s_write_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
     print '{'
-    if format.layout in (ARITH, ARRAY) \
+    if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
         and format.block_size() <= 32 \
         and not format.is_mixed() \
