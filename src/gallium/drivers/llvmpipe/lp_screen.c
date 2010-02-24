@@ -226,7 +226,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
-         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB &&
          format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
 
