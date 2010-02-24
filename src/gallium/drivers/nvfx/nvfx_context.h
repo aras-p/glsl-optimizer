@@ -219,13 +219,19 @@ extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
 
 /* nv30_fragtex.c */
-extern void nv30_init_sampler_functions(struct nvfx_context *nvfx);
+extern void
+nv30_sampler_state_init(struct pipe_context *pipe,
+			  struct nvfx_sampler_state *ps,
+			  const struct pipe_sampler_state *cso);
 extern void nv30_fragtex_bind(struct nvfx_context *);
 extern struct nouveau_stateobj *
 nv30_fragtex_build(struct nvfx_context *nvfx, int unit);
 
 /* nv40_fragtex.c */
-extern void nv40_init_sampler_functions(struct nvfx_context *nvfx);
+extern void
+nv40_sampler_state_init(struct pipe_context *pipe,
+			  struct nvfx_sampler_state *ps,
+			  const struct pipe_sampler_state *cso);
 extern void nv40_fragtex_bind(struct nvfx_context *);
 extern struct nouveau_stateobj *
 nv40_fragtex_build(struct nvfx_context *nvfx, int unit);

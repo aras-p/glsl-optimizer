@@ -8,6 +8,7 @@
 
 #include "nvfx_context.h"
 #include "nvfx_state.h"
+#include "nvfx_tex.h"
 
 static void *
 nvfx_blend_state_create(struct pipe_context *pipe,
@@ -82,8 +83,35 @@ nvfx_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 	FREE(bso);
 }
 
+static void *
+nvfx_sampler_state_create(struct pipe_context *pipe,
+			  const struct pipe_sampler_state *cso)
+{
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_sampler_state *ps;
+
+	ps = MALLOC(sizeof(struct nvfx_sampler_state));
+
+	/* on nv30, we use this as an internal flag */
+	ps->fmt = cso->normalized_coords ? 0 : NV40TCL_TEX_FORMAT_RECT;
+	ps->en = 0;
+	ps->filt = nvfx_tex_filter(cso);
+	ps->wrap = (nvfx_tex_wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
+		    (nvfx_tex_wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
+		    (nvfx_tex_wrap_mode(cso->wrap_r) << NV34TCL_TX_WRAP_R_SHIFT) |
+		    nvfx_tex_wrap_compare_mode(cso);
+	ps->bcol = nvfx_tex_border_color(cso->border_color);
+
+	if(nvfx->is_nv4x)
+		nv40_sampler_state_init(pipe, ps, cso);
+	else
+		nv30_sampler_state_init(pipe, ps, cso);
+
+	return (void *)ps;
+}
+
 static void
-nv40_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
+nvfx_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	unsigned unit;
@@ -103,7 +131,7 @@ nv40_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 }
 
 static void
-nv40_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
+nvfx_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	FREE(hwcso);
 }
@@ -543,14 +571,6 @@ nvfx_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
 	/*nvfx->draw_dirty |= NVFX_NEW_ARRAYS;*/
 }
 
-void *
-nv30_sampler_state_create(struct pipe_context *pipe,
-			  const struct pipe_sampler_state *cso);
-
-void *
-nv40_sampler_state_create(struct pipe_context *pipe,
-			  const struct pipe_sampler_state *cso);
-
 void
 nvfx_init_state_functions(struct nvfx_context *nvfx)
 {
@@ -558,12 +578,9 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.bind_blend_state = nvfx_blend_state_bind;
 	nvfx->pipe.delete_blend_state = nvfx_blend_state_delete;
 
-	if(nvfx->is_nv4x)
-		nvfx->pipe.create_sampler_state = nv40_sampler_state_create;
-	else
-		nvfx->pipe.create_sampler_state = nv30_sampler_state_create;
-	nvfx->pipe.bind_fragment_sampler_states = nv40_sampler_state_bind;
-	nvfx->pipe.delete_sampler_state = nv40_sampler_state_delete;
+	nvfx->pipe.create_sampler_state = nvfx_sampler_state_create;
+	nvfx->pipe.bind_fragment_sampler_states = nvfx_sampler_state_bind;
+	nvfx->pipe.delete_sampler_state = nvfx_sampler_state_delete;
 	nvfx->pipe.set_fragment_sampler_textures = nvfx_set_sampler_texture;
 
 	nvfx->pipe.create_rasterizer_state = nvfx_rasterizer_state_create;

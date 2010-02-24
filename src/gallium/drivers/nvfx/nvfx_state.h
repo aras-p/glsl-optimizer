@@ -4,14 +4,6 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 
-struct nvfx_sampler_state {
-	uint32_t fmt;
-	uint32_t wrap;
-	uint32_t en;
-	uint32_t filt;
-	uint32_t bcol;
-};
-
 struct nvfx_vertex_program_exec {
 	uint32_t data[4];
 	boolean has_branch_offset;

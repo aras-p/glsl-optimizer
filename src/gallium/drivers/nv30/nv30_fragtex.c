@@ -2,6 +2,36 @@
 
 #include "nvfx_context.h"
 #include "nouveau/nouveau_util.h"
+#include "nvfx_tex.h"
+
+void
+nv30_sampler_state_init(struct pipe_context *pipe,
+			  struct nvfx_sampler_state *ps,
+			  const struct pipe_sampler_state *cso)
+{
+	if (cso->max_anisotropy >= 8) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_8X;
+	} else
+	if (cso->max_anisotropy >= 4) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_4X;
+	} else
+	if (cso->max_anisotropy >= 2) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
+	}
+
+	{
+		float limit;
+
+		limit = CLAMP(cso->lod_bias, -16.0, 15.0);
+		ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
+
+		limit = CLAMP(cso->max_lod, 0.0, 15.0);
+		ps->en |= (int)(limit) << 14 /*NV34TCL_TX_ENABLE_MIPMAP_MAX_LOD_SHIFT*/;
+
+		limit = CLAMP(cso->min_lod, 0.0, 15.0);
+		ps->en |= (int)(limit) << 26 /*NV34TCL_TX_ENABLE_MIPMAP_MIN_LOD_SHIFT*/;
+	}
+}
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
 {                                                                              \
