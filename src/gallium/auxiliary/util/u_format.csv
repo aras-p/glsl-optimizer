@@ -1,3 +1,4 @@
+# Typical rendertarget formats
 PIPE_FORMAT_A8R8G8B8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , zyxw, rgb
 PIPE_FORMAT_X8R8G8B8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
 PIPE_FORMAT_B8G8R8A8_UNORM        , arith , 1, 1, un8 , un8 , un8 , un8 , yzwx, rgb
@@ -6,13 +7,33 @@ PIPE_FORMAT_A1R5G5B5_UNORM        , arith , 1, 1, un5 , un5 , un5 , un1 , zyxw, 
 PIPE_FORMAT_A4R4G4B4_UNORM        , arith , 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_R5G6B5_UNORM          , arith , 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
 PIPE_FORMAT_A2B10G10R10_UNORM     , arith , 1, 1, un10, un10, un10, un2 , xyzw, rgb
+
+# Luminance/Intensity/Alpha formats
 PIPE_FORMAT_L8_UNORM              , arith , 1, 1, un8 ,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_A8_UNORM              , arith , 1, 1, un8 ,     ,     ,     , 000x, rgb
 PIPE_FORMAT_I8_UNORM              , arith , 1, 1, un8 ,     ,     ,     , xxxx, rgb
 PIPE_FORMAT_A8L8_UNORM            , arith , 1, 1, un8 , un8 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L16_UNORM             , arith , 1, 1, un16,     ,     ,     , xxx1, rgb
-PIPE_FORMAT_YCBCR                 , yuv   , 2, 1, x32 ,     ,     ,     , xyz1, yuv
-PIPE_FORMAT_YCBCR_REV             , yuv   , 2, 1, x32 ,     ,     ,     , xyz1, yuv
+
+# SRGB formats
+PIPE_FORMAT_L8_SRGB               , arith , 1, 1, u8  ,     ,     ,     , xxx1, srgb 
+PIPE_FORMAT_A8L8_SRGB             , arith , 1, 1, u8  , u8  ,     ,     , xxxy, srgb 
+PIPE_FORMAT_R8G8B8_SRGB           , array , 1, 1, u8  , u8  , u8  ,     , xyz1, srgb 
+PIPE_FORMAT_R8G8B8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyzw, srgb 
+PIPE_FORMAT_R8G8B8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, srgb 
+PIPE_FORMAT_A8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzwx, srgb 
+PIPE_FORMAT_X8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzw1, srgb 
+PIPE_FORMAT_B8G8R8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyxw, srgb 
+PIPE_FORMAT_B8G8R8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyx1, srgb 
+
+# Signed formats (typically used for bump map textures)
+PIPE_FORMAT_A8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
+PIPE_FORMAT_X8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzy1, rgb
+PIPE_FORMAT_X8UB8UG8SR8S_NORM     , arith , 1, 1, sn8 , sn8 , un8 , x8  , wzy1, rgb
+PIPE_FORMAT_B6UG5SR5S_NORM        , arith , 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
+
+# Depth-stencil formats
+PIPE_FORMAT_S8_UNORM              , array , 1, 1, un8 ,     ,     ,     , _x__, zs 
 PIPE_FORMAT_Z16_UNORM             , array , 1, 1, un16,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_UNORM             , array , 1, 1, un32,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_FLOAT             , array , 1, 1, f32 ,     ,     ,     , x___, zs 
@@ -20,7 +41,26 @@ PIPE_FORMAT_S8Z24_UNORM           , arith , 1, 1, un24, un8 ,     ,     , xy__, 
 PIPE_FORMAT_Z24S8_UNORM           , arith , 1, 1, un8 , un24,     ,     , yx__, zs 
 PIPE_FORMAT_X8Z24_UNORM           , arith , 1, 1, un24, un8 ,     ,     , x___, zs 
 PIPE_FORMAT_Z24X8_UNORM           , arith , 1, 1, un8 , un24,     ,     , y___, zs 
-PIPE_FORMAT_S8_UNORM              , array , 1, 1, un8 ,     ,     ,     , _x__, zs 
+
+# YUV formats
+PIPE_FORMAT_YCBCR                 , yuv   , 2, 1, x32 ,     ,     ,     , xyz1, yuv
+PIPE_FORMAT_YCBCR_REV             , yuv   , 2, 1, x32 ,     ,     ,     , xyz1, yuv
+
+# Compressed formats
+PIPE_FORMAT_DXT1_RGB              , dxt   , 4, 4, x64 ,     ,     ,     , xyz1, rgb
+PIPE_FORMAT_DXT1_RGBA             , dxt   , 4, 4, x64 ,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT3_RGBA             , dxt   , 4, 4, x128,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT5_RGBA             , dxt   , 4, 4, x128,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT1_SRGB             , dxt   , 4, 4, x64 ,     ,     ,     , xyz1, srgb
+PIPE_FORMAT_DXT1_SRGBA            , dxt   , 4, 4, x64 ,     ,     ,     , xyzw, srgb
+PIPE_FORMAT_DXT3_SRGBA            , dxt   , 4, 4, x128,     ,     ,     , xyzw, srgb
+PIPE_FORMAT_DXT5_SRGBA            , dxt   , 4, 4, x128,     ,     ,     , xyzw, srgb
+
+# Old vector formats
+# XXX: Swizzle notation is reversed for these!
+# See also:
+# - src/gallium/auxiliary/translate/translate_generic.c
+# - src/mesa/state_tracker/st_draw.c
 PIPE_FORMAT_R64_FLOAT             , array , 1, 1, f64 ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R64G64_FLOAT          , array , 1, 1, f64 , f64 ,     ,     , xy01, rgb
 PIPE_FORMAT_R64G64B64_FLOAT       , array , 1, 1, f64 , f64 , f64 ,     , xyz1, rgb
@@ -45,6 +85,10 @@ PIPE_FORMAT_R32_SSCALED           , array , 1, 1, s32 ,     ,     ,     , x001, 
 PIPE_FORMAT_R32G32_SSCALED        , array , 1, 1, s32 , s32 ,     ,     , xy01, rgb
 PIPE_FORMAT_R32G32B32_SSCALED     , array , 1, 1, s32 , s32 , s32 ,     , xyz1, rgb
 PIPE_FORMAT_R32G32B32A32_SSCALED  , array , 1, 1, s32 , s32 , s32 , s32 , xyzw, rgb
+PIPE_FORMAT_R32_FIXED             , array , 1, 1, h32 ,     ,     ,     , x001, rgb
+PIPE_FORMAT_R32G32_FIXED          , array , 1, 1, h32 , h32 ,     ,     , xy01, rgb
+PIPE_FORMAT_R32G32B32_FIXED       , array , 1, 1, h32 , h32 , h32 ,     , xyz1, rgb
+PIPE_FORMAT_R32G32B32A32_FIXED    , array , 1, 1, h32 , h32 , h32 , h32 , xyzw, rgb
 PIPE_FORMAT_R16_UNORM             , array , 1, 1, un16,     ,     ,     , x001, rgb
 PIPE_FORMAT_R16G16_UNORM          , array , 1, 1, un16, un16,     ,     , xy01, rgb
 PIPE_FORMAT_R16G16B16_UNORM       , array , 1, 1, un16, un16, un16,     , xyz1, rgb
@@ -62,48 +106,30 @@ PIPE_FORMAT_R16G16_SSCALED        , array , 1, 1, s16 , s16 ,     ,     , xy01, 
 PIPE_FORMAT_R16G16B16_SSCALED     , array , 1, 1, s16 , s16 , s16 ,     , xyz1, rgb
 PIPE_FORMAT_R16G16B16A16_SSCALED  , array , 1, 1, s16 , s16 , s16 , s16 , xyzw, rgb
 PIPE_FORMAT_R8_UNORM              , array , 1, 1, un8 ,     ,     ,     , x001, rgb
-PIPE_FORMAT_R8G8_UNORM            , array , 1, 1, un8 , un8 ,     ,     , yx01, rgb
-PIPE_FORMAT_R8G8B8_UNORM          , array , 1, 1, un8 , un8 , un8 ,     , zyx1, rgb
-PIPE_FORMAT_R8G8B8A8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
-PIPE_FORMAT_R8G8B8X8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
+PIPE_FORMAT_R8G8_UNORM            , array , 1, 1, un8 , un8 ,     ,     , xy01, rgb
 PIPE_FORMAT_R8_USCALED            , array , 1, 1, u8  ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R8G8_USCALED          , array , 1, 1, u8  , u8  ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_USCALED        , array , 1, 1, u8  , u8  , u8  ,     , xyz1, rgb
 PIPE_FORMAT_R8G8B8A8_USCALED      , array , 1, 1, u8  , u8  , u8  , u8  , xyzw, rgb
-PIPE_FORMAT_R8G8B8X8_USCALED      , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, rgb
 PIPE_FORMAT_R8_SNORM              , array , 1, 1, sn8 ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R8G8_SNORM            , array , 1, 1, sn8 , sn8 ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_SNORM          , array , 1, 1, sn8 , sn8 , sn8 ,     , xyz1, rgb
 PIPE_FORMAT_R8G8B8A8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , xyzw, rgb
-PIPE_FORMAT_R8G8B8X8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
-PIPE_FORMAT_B6G5R5_SNORM          , arith , 1, 1, sn5 , sn5 , sn6 ,     , xyz1, rgb
-PIPE_FORMAT_A8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
-PIPE_FORMAT_X8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzy1, rgb
 PIPE_FORMAT_R8_SSCALED            , array , 1, 1, s8  ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R8G8_SSCALED          , array , 1, 1, s8  , s8  ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_SSCALED        , array , 1, 1, s8  , s8  , s8  ,     , xyz1, rgb
 PIPE_FORMAT_R8G8B8A8_SSCALED      , array , 1, 1, s8  , s8  , s8  , s8  , xyzw, rgb
+
+# Ambiguous formats
+# FIXME: They are used with different meanings in different places!!!
+PIPE_FORMAT_R8G8B8_UNORM          , array , 1, 1, un8 , un8 , un8 ,     , zyx1, rgb
+PIPE_FORMAT_R8G8B8A8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
+
+# Unused formats
+# XXX: Couldn't find any state tracker using them!!
+PIPE_FORMAT_B6G5R5_SNORM          , arith , 1, 1, sn5 , sn5 , sn6 ,     , xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_USCALED      , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, rgb
 PIPE_FORMAT_R8G8B8X8_SSCALED      , array , 1, 1, s8  , s8  , s8  , s8  , xyz1, rgb
-PIPE_FORMAT_R32_FIXED             , array , 1, 1, h32 ,     ,     ,     , x001, rgb
-PIPE_FORMAT_R32G32_FIXED          , array , 1, 1, h32 , h32 ,     ,     , xy01, rgb
-PIPE_FORMAT_R32G32B32_FIXED       , array , 1, 1, h32 , h32 , h32 ,     , xyz1, rgb
-PIPE_FORMAT_R32G32B32A32_FIXED    , array , 1, 1, h32 , h32 , h32 , h32 , xyzw, rgb
-PIPE_FORMAT_L8_SRGB               , arith , 1, 1, u8  ,     ,     ,     , xxx1, srgb 
-PIPE_FORMAT_A8L8_SRGB             , arith , 1, 1, u8  , u8  ,     ,     , xxxy, srgb 
-PIPE_FORMAT_R8G8B8_SRGB           , array , 1, 1, u8  , u8  , u8  ,     , xyz1, srgb 
-PIPE_FORMAT_R8G8B8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyzw, srgb 
-PIPE_FORMAT_R8G8B8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, srgb 
-PIPE_FORMAT_A8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzwx, srgb 
-PIPE_FORMAT_X8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzw1, srgb 
-PIPE_FORMAT_B8G8R8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyxw, srgb 
-PIPE_FORMAT_B8G8R8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyx1, srgb 
-PIPE_FORMAT_X8UB8UG8SR8S_NORM     , array , 1, 1, sn8 , sn8 , un8 , x8  , wzy1, rgb
-PIPE_FORMAT_B6UG5SR5S_NORM        , arith , 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
-PIPE_FORMAT_DXT1_RGB              , dxt   , 4, 4, x64 ,     ,     ,     , xyz1, rgb
-PIPE_FORMAT_DXT1_RGBA             , dxt   , 4, 4, x64 ,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT3_RGBA             , dxt   , 4, 4, x128,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT5_RGBA             , dxt   , 4, 4, x128,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT1_SRGB             , dxt   , 4, 4, x64 ,     ,     ,     , xyz1, srgb
-PIPE_FORMAT_DXT1_SRGBA            , dxt   , 4, 4, x64 ,     ,     ,     , xyzw, srgb
-PIPE_FORMAT_DXT3_SRGBA            , dxt   , 4, 4, x128,     ,     ,     , xyzw, srgb
-PIPE_FORMAT_DXT5_SRGBA            , dxt   , 4, 4, x128,     ,     ,     , xyzw, srgb
+# XXX: This one is mentioned in mesa and r300, but not anywhere else. Not sure it is actually needed
+PIPE_FORMAT_R8G8B8X8_UNORM        , array , 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
