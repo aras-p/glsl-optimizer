@@ -90,6 +90,9 @@ struct cso_context {
    void *fragment_shader, *fragment_shader_saved, *geometry_shader;
    void *vertex_shader, *vertex_shader_saved, *geometry_shader_saved;
 
+   struct pipe_clip_state clip;
+   struct pipe_clip_state clip_saved;
+
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
@@ -1125,4 +1128,55 @@ void cso_restore_geometry_shader(struct cso_context *ctx)
       ctx->geometry_shader = ctx->geometry_shader_saved;
    }
    ctx->geometry_shader_saved = NULL;
+}
+
+
+/* clip state */
+
+static INLINE void
+clip_state_cpy(struct pipe_clip_state *dst,
+               const struct pipe_clip_state *src)
+{
+   dst->nr = src->nr;
+   if (src->nr) {
+      memcpy(dst->ucp, src->ucp, src->nr * sizeof(src->ucp[0]));
+   }
+}
+
+static INLINE int
+clip_state_cmp(const struct pipe_clip_state *a,
+               const struct pipe_clip_state *b)
+{
+   if (a->nr != b->nr) {
+      return 1;
+   }
+   if (a->nr) {
+      return memcmp(a->ucp, b->ucp, a->nr * sizeof(a->ucp[0]));
+   }
+   return 0;
+}
+
+void
+cso_set_clip(struct cso_context *ctx,
+             const struct pipe_clip_state *clip)
+{
+   if (clip_state_cmp(&ctx->clip, clip)) {
+      clip_state_cpy(&ctx->clip, clip);
+      ctx->pipe->set_clip_state(ctx->pipe, clip);
+   }
+}
+
+void
+cso_save_clip(struct cso_context *ctx)
+{
+   clip_state_cpy(&ctx->clip_saved, &ctx->clip);
+}
+
+void
+cso_restore_clip(struct cso_context *ctx)
+{
+   if (clip_state_cmp(&ctx->clip, &ctx->clip_saved)) {
+      clip_state_cpy(&ctx->clip, &ctx->clip_saved);
+      ctx->pipe->set_clip_state(ctx->pipe, &ctx->clip_saved);
+   }
 }
