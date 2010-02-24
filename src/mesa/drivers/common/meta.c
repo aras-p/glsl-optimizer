@@ -2131,12 +2131,15 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel);
    }
+#if 0
+   /* other work is needed to enable 3D mipmap generation */
    else if (target == GL_TEXTURE_3D) {
       GLint zoffset = 0;
       _mesa_FramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel, zoffset);
    }
+#endif
    else {
       /* 2D / cube */
       _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
