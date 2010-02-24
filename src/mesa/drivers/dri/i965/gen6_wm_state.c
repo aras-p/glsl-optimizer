@@ -47,6 +47,49 @@ upload_wm_state(struct brw_context *brw)
    int i;
    uint32_t dw2, dw4, dw5, dw6;
 
+   if (fp->use_const_buffer || nr_params == 0) {
+      /* Disable the push constant buffers. */
+      BEGIN_BATCH(5);
+      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 | (5 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      /* Updates the ParamaterValues[i] pointers for all parameters of the
+       * basic type of PROGRAM_STATE_VAR.
+       */
+      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
+
+      constant_bo = drm_intel_bo_alloc(intel->bufmgr, "WM constant_bo",
+				       nr_params * 4 * sizeof(float),
+				       4096);
+      intel_bo_map_gtt_preferred(intel, constant_bo, GL_TRUE);
+      for (i = 0; i < nr_params; i++) {
+	 memcpy((char *)constant_bo->virtual + i * 4 * sizeof(float),
+		fp->program.Base.Parameters->ParameterValues[i],
+		4 * sizeof(float));
+      }
+      intel_bo_unmap_gtt_preferred(intel, constant_bo);
+
+      BEGIN_BATCH(5);
+      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 |
+		GEN6_CONSTANT_BUFFER_0_ENABLE |
+		(5 - 2));
+      OUT_RELOC(constant_bo,
+		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
+		ALIGN(nr_params, 2) / 2 - 1);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+
+      drm_intel_bo_unreference(constant_bo);
+   }
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
    dw2 = dw4 = dw5 = dw6 = 0;
    dw4 |= GEN6_WM_STATISTICS_ENABLE;
    dw5 |= GEN6_WM_LINE_AA_WIDTH_1_0;
@@ -101,49 +144,6 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(0); /* kernel 1 pointer */
    OUT_BATCH(0); /* kernel 2 pointer */
    ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
-   if (fp->use_const_buffer || nr_params == 0) {
-      /* Disable the push constant buffers. */
-      BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 | (5 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   } else {
-      /* Updates the ParamaterValues[i] pointers for all parameters of the
-       * basic type of PROGRAM_STATE_VAR.
-       */
-      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
-
-      constant_bo = drm_intel_bo_alloc(intel->bufmgr, "WM constant_bo",
-				       nr_params * 4 * sizeof(float),
-				       4096);
-      intel_bo_map_gtt_preferred(intel, constant_bo, GL_TRUE);
-      for (i = 0; i < nr_params; i++) {
-	 memcpy((char *)constant_bo->virtual + i * 4 * sizeof(float),
-		fp->program.Base.Parameters->ParameterValues[i],
-		4 * sizeof(float));
-      }
-      intel_bo_unmap_gtt_preferred(intel, constant_bo);
-
-      BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 |
-		GEN6_CONSTANT_BUFFER_0_ENABLE |
-		(5 - 2));
-      OUT_RELOC(constant_bo,
-		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		ALIGN(nr_params, 2) / 2 - 1);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-
-      drm_intel_bo_unreference(constant_bo);
-   }
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
 }

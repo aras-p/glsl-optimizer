@@ -38,6 +38,17 @@ upload_gs_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
+   /* Disable all the constant buffers. */
+   BEGIN_BATCH(5);
+   OUT_BATCH(CMD_3D_CONSTANT_GS_STATE << 16 | (5 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
    if (brw->gs.prog_bo) {
       BEGIN_BATCH(7);
       OUT_BATCH(CMD_3D_GS_STATE << 16 | (7 - 2));
@@ -69,17 +80,6 @@ upload_gs_state(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
-
-   /* Disable all the constant buffers. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(CMD_3D_CONSTANT_GS_STATE << 16 | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 const struct brw_tracked_state gen6_gs_state = {
