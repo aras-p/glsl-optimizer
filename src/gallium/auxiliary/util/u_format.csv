@@ -18,18 +18,18 @@ PIPE_FORMAT_L16_UNORM             , arith , 1, 1, un16,     ,     ,     , xxx1, 
 # SRGB formats
 PIPE_FORMAT_L8_SRGB               , arith , 1, 1, u8  ,     ,     ,     , xxx1, srgb 
 PIPE_FORMAT_A8L8_SRGB             , arith , 1, 1, u8  , u8  ,     ,     , xxxy, srgb 
-PIPE_FORMAT_R8G8B8_SRGB           , array , 1, 1, u8  , u8  , u8  ,     , xyz1, srgb 
-PIPE_FORMAT_R8G8B8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyzw, srgb 
-PIPE_FORMAT_R8G8B8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , xyz1, srgb 
-PIPE_FORMAT_A8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzwx, srgb 
-PIPE_FORMAT_X8R8G8B8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , yzw1, srgb 
-PIPE_FORMAT_B8G8R8A8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyxw, srgb 
-PIPE_FORMAT_B8G8R8X8_SRGB         , array , 1, 1, u8  , u8  , u8  , u8  , zyx1, srgb 
+PIPE_FORMAT_R8G8B8_SRGB           , arith , 1, 1, u8  , u8  , u8  ,     , zyx1, srgb 
+PIPE_FORMAT_R8G8B8A8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , wzyx, srgb
+PIPE_FORMAT_R8G8B8X8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , wzy1, srgb
+PIPE_FORMAT_A8R8G8B8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , zyxw, srgb
+PIPE_FORMAT_X8R8G8B8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , zyx1, srgb
+PIPE_FORMAT_B8G8R8A8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , yzwx, srgb
+PIPE_FORMAT_B8G8R8X8_SRGB         , arith , 1, 1, u8  , u8  , u8  , u8  , yzw1, srgb
 
 # Signed formats (typically used for bump map textures)
-PIPE_FORMAT_A8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
-PIPE_FORMAT_X8B8G8R8_SNORM        , array , 1, 1, sn8 , sn8 , sn8 , sn8 , wzy1, rgb
-PIPE_FORMAT_X8UB8UG8SR8S_NORM     , arith , 1, 1, sn8 , sn8 , un8 , x8  , wzy1, rgb
+PIPE_FORMAT_A8B8G8R8_SNORM        , arith , 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
+PIPE_FORMAT_X8B8G8R8_SNORM        , arith , 1, 1, sn8 , sn8 , sn8 , sn8 , wzy1, rgb
+PIPE_FORMAT_X8UB8UG8SR8S_NORM     , arith , 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
 PIPE_FORMAT_B6UG5SR5S_NORM        , arith , 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
 
 # Depth-stencil formats
