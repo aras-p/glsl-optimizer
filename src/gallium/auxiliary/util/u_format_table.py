@@ -87,39 +87,39 @@ def write_format_table(formats):
     print '#include "u_format.h"'
     print
     print 'const struct util_format_description'
-    print 'util_format_description_table[] = '
-    print "{"
-    print "   {"
-    print "      PIPE_FORMAT_NONE,"
-    print "      \"PIPE_FORMAT_NONE\","
-    print "      {0, 0, 0},"
-    print "      0,"
-    print "      0,"
-    print "      0,"
-    print "      0,"
-    print "      {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
-    print "      {0, 0, 0, 0},"
-    print "      0"
-    print "   },"
+    print 'util_format_none_description = {'
+    print "   PIPE_FORMAT_NONE,"
+    print "   \"PIPE_FORMAT_NONE\","
+    print "   {0, 0, 0},"
+    print "   0,"
+    print "   0,"
+    print "   0,"
+    print "   0,"
+    print "   {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
+    print "   {0, 0, 0, 0},"
+    print "   0"
+    print "};"
+    print
     for format in formats:
+        print 'const struct util_format_description'
+        print 'util_format_%s_description = {' % (format.short_name(),)
+        print "   %s," % (format.name,)
+        print "   \"%s\"," % (format.name,)
+        print "   {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
+        print "   %s," % (layout_map(format.layout),)
+        print "   %u,\t/* nr_channels */" % (format.nr_channels(),)
+        print "   %s,\t/* is_array */" % (bool_map(format.is_array()),)
+        print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
         print "   {"
-        print "      %s," % (format.name,)
-        print "      \"%s\"," % (format.name,)
-        print "      {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
-        print "      %s," % (layout_map(format.layout),)
-        print "      %u,\t/* nr_channels */" % (format.nr_channels(),)
-        print "      %s,\t/* is_array */" % (bool_map(format.is_array()),)
-        print "      %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
-        print "      {"
         for i in range(4):
             type = format.in_types[i]
             if i < 3:
                 sep = ","
             else:
                 sep = ""
-            print "         {%s, %s, %u}%s\t/* %s */" % (kind_map[type.kind], bool_map(type.norm), type.size, sep, "xyzw"[i])
-        print "      },"
-        print "      {"
+            print "      {%s, %s, %u}%s\t/* %s */" % (kind_map[type.kind], bool_map(type.norm), type.size, sep, "xyzw"[i])
+        print "   },"
+        print "   {"
         for i in range(4):
             swizzle = format.out_swizzle[i]
             if i < 3:
@@ -130,11 +130,30 @@ def write_format_table(formats):
                 comment = colorspace_channels_map[format.colorspace][i]
             except (KeyError, IndexError):
                 comment = 'ignored'
-            print "         %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
-        print "      },"
-        print "      %s," % (colorspace_map(format.colorspace),)
+            print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
+        print "   %s," % (colorspace_map(format.colorspace),)
+        print "};"
+        print
+    print "const struct util_format_description *"
+    print "util_format_description(enum pipe_format format)"
+    print "{"
+    print "   if (format >= PIPE_FORMAT_COUNT) {"
+    print "      return NULL;"
+    print "   }"
+    print
+    print "   switch (format) {"
+    print "   case PIPE_FORMAT_NONE:"
+    print "      return &util_format_none_description;"
+    for format in formats:
+        print "   case %s:" % format.name
+        print "      return &util_format_%s_description;" % (format.short_name(),)
+    print "   default:"
+    print "      assert(0);"
+    print "      return NULL;"
+    print "   }"
     print "};"
+    print
 
 
 def main():
