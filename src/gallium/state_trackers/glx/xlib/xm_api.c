@@ -376,7 +376,8 @@ create_xmesa_buffer(Drawable d, BufferType type,
 #endif
 
    if (vis->mesa_visual.stencilBits == 8) {
-      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM)
+      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM ||
+          depthFormat == PIPE_FORMAT_Z24S8_UNORM)
          stencilFormat = depthFormat;
       else
          stencilFormat = PIPE_FORMAT_S8_UNORM;
@@ -387,6 +388,10 @@ create_xmesa_buffer(Drawable d, BufferType type,
       if (depthFormat == PIPE_FORMAT_S8Z24_UNORM) {
          /* use 24-bit Z, undefined stencil channel */
          depthFormat = PIPE_FORMAT_X8Z24_UNORM;
+      }
+      else if (depthFormat == PIPE_FORMAT_Z24S8_UNORM) {
+         /* use 24-bit Z, undefined stencil channel */
+         depthFormat = PIPE_FORMAT_Z24X8_UNORM;
       }
    }
 
