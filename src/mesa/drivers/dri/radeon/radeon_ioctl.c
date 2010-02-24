@@ -442,6 +442,8 @@ static void radeonKernelClear(GLcontext *ctx, GLuint flags)
    GLint ret, i;
    GLint cx, cy, cw, ch;
 
+   radeonEmitState(&rmesa->radeon);
+
    LOCK_HARDWARE( &rmesa->radeon );
 
    /* compute region after locking: */
@@ -481,7 +483,6 @@ static void radeonKernelClear(GLcontext *ctx, GLuint flags)
       }
    }
 
-   radeonEmitState(&rmesa->radeon);
    /* Send current state to the hardware */
    rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 

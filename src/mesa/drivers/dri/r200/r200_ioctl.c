@@ -61,6 +61,8 @@ static void r200KernelClear(GLcontext *ctx, GLuint flags)
    GLint cx, cy, cw, ch, ret;
    GLuint i;
 
+   radeonEmitState(&rmesa->radeon);
+
    LOCK_HARDWARE( &rmesa->radeon );
 
    /* Throttle the number of clear ioctls we do.
