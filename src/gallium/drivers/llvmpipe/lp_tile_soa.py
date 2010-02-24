@@ -76,29 +76,30 @@ def generate_format_read(format, dst_type, dst_native_type, dst_suffix):
     else:
         assert False
 
-    if format.layout == ARITH:
-        print '         %s pixel = *src_pixel++;' % src_native_type
-        shift = 0;
-        for i in range(4):
-            src_type = format.in_types[i]
-            width = src_type.size
-            if names[i]:
-                value = 'pixel'
-                mask = (1 << width) - 1
-                if shift:
-                    value = '(%s >> %u)' % (value, shift)
-                if shift + width < format.block_size():
-                    value = '(%s & 0x%x)' % (value, mask)
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         %s %s = %s;' % (dst_native_type, names[i], value)
-            shift += width
-    elif format.layout == ARRAY:
-        for i in range(4):
-            src_type = format.in_types[i]
-            if names[i]:
-                value = '(*src_pixel++)'
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         %s %s = %s;' % (dst_native_type, names[i], value)
+    if format.layout in (ARITH, ARRAY):
+        if not format.is_array():
+            print '         %s pixel = *src_pixel++;' % src_native_type
+            shift = 0;
+            for i in range(4):
+                src_type = format.in_types[i]
+                width = src_type.size
+                if names[i]:
+                    value = 'pixel'
+                    mask = (1 << width) - 1
+                    if shift:
+                        value = '(%s >> %u)' % (value, shift)
+                    if shift + width < format.block_size():
+                        value = '(%s & 0x%x)' % (value, mask)
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         %s %s = %s;' % (dst_native_type, names[i], value)
+                shift += width
+        else:
+            for i in range(4):
+                src_type = format.in_types[i]
+                if names[i]:
+                    value = '(*src_pixel++)'
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         %s %s = %s;' % (dst_native_type, names[i], value)
     else:
         assert False
 
@@ -222,27 +223,28 @@ def emit_tile_pixel_write_code(format, src_type):
     print '      %s *dst_pixel = (%s *)(dst_row + x0*%u);' % (dst_native_type, dst_native_type, format.stride())
     print '      for (x = 0; x < w; ++x) {'
 
-    if format.layout == ARITH:
-        print '         %s pixel = 0;' % dst_native_type
-        shift = 0;
-        for i in range(4):
-            dst_type = format.in_types[i]
-            width = dst_type.size
-            if inv_swizzle[i] is not None:
-                value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                if shift:
-                    value = '(%s << %u)' % (value, shift)
-                print '         pixel |= %s;' % value
-            shift += width
-        print '         *dst_pixel++ = pixel;'
-    elif format.layout == ARRAY:
-        for i in range(4):
-            dst_type = format.in_types[i]
-            if inv_swizzle[i] is not None:
-                value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
-                value = conversion_expr(src_type, dst_type, dst_native_type, value)
-                print '         *dst_pixel++ = %s;' % value
+    if format.layout in (ARITH, ARRAY):
+        if not format.is_array():
+            print '         %s pixel = 0;' % dst_native_type
+            shift = 0;
+            for i in range(4):
+                dst_type = format.in_types[i]
+                width = dst_type.size
+                if inv_swizzle[i] is not None:
+                    value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    if shift:
+                        value = '(%s << %u)' % (value, shift)
+                    print '         pixel |= %s;' % value
+                shift += width
+            print '         *dst_pixel++ = pixel;'
+        else:
+            for i in range(4):
+                dst_type = format.in_types[i]
+                if inv_swizzle[i] is not None:
+                    value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
+                    value = conversion_expr(src_type, dst_type, dst_native_type, value)
+                    print '         *dst_pixel++ = %s;' % value
     else:
         assert False
 
