@@ -32,21 +32,6 @@
 #include "main/formats.h"
 
 
-/**
- * Information for mapping Mesa formats to Gallium formats.
- */
-struct st_format_info
-{
-   enum pipe_format format;
-   gl_format mesa_format;
-   GLenum datatype;
-};
-
-
-GLboolean
-st_get_format_info(enum pipe_format format, struct st_format_info *pinfo);
-
-
 extern GLenum
 st_format_datatype(enum pipe_format format);
 

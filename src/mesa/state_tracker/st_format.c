@@ -60,11 +60,11 @@ format_max_bits(enum pipe_format format)
 }
 
 
-/*
- * XXX temporary here
+/**
+ * Return basic GL datatype for the given gallium format.
  */
-GLboolean
-st_get_format_info(enum pipe_format format, struct st_format_info *pinfo)
+GLenum
+st_format_datatype(enum pipe_format format)
 {
    const struct util_format_description *desc;
 
@@ -72,85 +72,50 @@ st_get_format_info(enum pipe_format format, struct st_format_info *pinfo)
    assert(desc);
 
    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
-#if 0
-      printf("%s\n", util_format_name( format ) );
-#endif
-
-      /* Data type */
-      if (format == PIPE_FORMAT_A1R5G5B5_UNORM || format == PIPE_FORMAT_R5G6B5_UNORM) {
-         pinfo->datatype = GL_UNSIGNED_SHORT;
+      if (format == PIPE_FORMAT_A1R5G5B5_UNORM ||
+          format == PIPE_FORMAT_R5G6B5_UNORM) {
+         return GL_UNSIGNED_SHORT;
       }
       else if (format == PIPE_FORMAT_S8Z24_UNORM ||
                format == PIPE_FORMAT_Z24S8_UNORM) {
-         pinfo->datatype = GL_UNSIGNED_INT_24_8;
+         return GL_UNSIGNED_INT_24_8;
       }
       else {
          const GLuint size = format_max_bits(format);
          if (size == 8) {
             if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
-               pinfo->datatype = GL_UNSIGNED_BYTE;
+               return GL_UNSIGNED_BYTE;
             else
-               pinfo->datatype = GL_BYTE;
+               return GL_BYTE;
          }
          else if (size == 16) {
             if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
-               pinfo->datatype = GL_UNSIGNED_SHORT;
+               return GL_UNSIGNED_SHORT;
             else
-               pinfo->datatype = GL_SHORT;
+               return GL_SHORT;
          }
          else {
             assert( size <= 32 );
             if (desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED)
-               pinfo->datatype = GL_UNSIGNED_INT;
+               return GL_UNSIGNED_INT;
             else
-               pinfo->datatype = GL_INT;
+               return GL_INT;
          }
       }
-
-      pinfo->mesa_format = st_pipe_format_to_mesa_format(format);
    }
    else if (format == PIPE_FORMAT_YCBCR) {
-      pinfo->mesa_format = MESA_FORMAT_YCBCR;
-      pinfo->datatype = GL_UNSIGNED_SHORT;
+      return GL_UNSIGNED_SHORT;
    }
    else if (format == PIPE_FORMAT_YCBCR_REV) {
-      pinfo->mesa_format = MESA_FORMAT_YCBCR_REV;
-      pinfo->datatype = GL_UNSIGNED_SHORT;
+      return GL_UNSIGNED_SHORT;
    }
    else {
       /* compressed format? */
       assert(0);
    }
 
-#if 0
-   printf(
-      "ST_FORMAT: R(%u), G(%u), B(%u), A(%u), Z(%u), S(%u)\n",
-      pinfo->red_bits,
-      pinfo->green_bits,
-      pinfo->blue_bits,
-      pinfo->alpha_bits,
-      pinfo->depth_bits,
-      pinfo->stencil_bits );
-#endif
-
-   pinfo->format = format;
-
-   return GL_TRUE;
-}
-
-
-/**
- * Return basic GL datatype for the given format.
- */
-GLenum
-st_format_datatype(enum pipe_format format)
-{
-   struct st_format_info info;
-   if (!st_get_format_info( format, &info )) {
-      assert( 0 );
-      return 0;
-   }
-   return info.datatype;
+   assert(0);
+   return GL_NONE;
 }
 
 
