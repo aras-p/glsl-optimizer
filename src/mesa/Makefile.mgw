@@ -200,7 +200,7 @@ ifeq (1,1)
 x86/glapi_x86.o: x86/glapi_x86.S
 	$(CC) -o $@ $(CFLAGS) -DSTDCALL_API -c $<
 else
-main/dispatch.o: main/dispatch.c
+glapi/glapi_dispatch.o: glapi/glapi_dispatch.c
 	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
 glapi/glapi.o: glapi/glapi.c
 	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<

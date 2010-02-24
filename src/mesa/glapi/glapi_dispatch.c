@@ -24,7 +24,7 @@
 
 
 /**
- * \file dispatch.c
+ * \file glapi_dispatch.c
  *
  * This file generates all the gl* function entrypoints.  This code is not
  * used if optimized assembly stubs are available (e.g., using x86/glapi_x86.S

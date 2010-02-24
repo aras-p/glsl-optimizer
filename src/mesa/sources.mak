@@ -86,8 +86,8 @@ MAIN_SOURCES = \
 	main/vtxfmt.c
 
 GLAPI_SOURCES = \
-	main/dispatch.c \
 	glapi/glapi.c \
+	glapi/glapi_dispatch.c \
 	glapi/glapi_getproc.c \
 	glapi/glapi_nop.c \
 	glapi/glthread.c
