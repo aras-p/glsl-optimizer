@@ -137,7 +137,15 @@ def parse(filename):
     stream = open(filename)
     formats = []
     for line in stream:
-        line = line.rstrip()
+        try:
+            comment = line.index('#')
+        except ValueError:
+            pass
+        else:
+            line = line[:comment]
+        line = line.strip()
+        if not line:
+            continue
         fields = [field.strip() for field in line.split(',')]
         name = fields[0]
         layout = fields[1]
