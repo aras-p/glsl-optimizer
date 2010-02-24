@@ -614,6 +614,22 @@ lp_build_max(struct lp_build_context *bld,
 
 
 /**
+ * Generate clamp(a, min, max)
+ * Do checks for special cases.
+ */
+LLVMValueRef
+lp_build_clamp(struct lp_build_context *bld,
+               LLVMValueRef a,
+               LLVMValueRef min,
+               LLVMValueRef max)
+{
+   a = lp_build_min(bld, a, max);
+   a = lp_build_max(bld, a, min);
+   return a;
+}
+
+
+/**
  * Generate abs(a)
  */
 LLVMValueRef
@@ -691,6 +707,29 @@ lp_build_sgn(struct lp_build_context *bld,
 
    return res;
 }
+
+
+/**
+ * Convert vector of int to vector of float.
+ */
+LLVMValueRef
+lp_build_int_to_float(struct lp_build_context *bld,
+                      LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+
+   assert(type.floating);
+   /*assert(lp_check_value(type, a));*/
+
+   {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      /*LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);*/
+      LLVMValueRef res;
+      res = LLVMBuildSIToFP(bld->builder, a, vec_type, "");
+      return res;
+   }
+}
+
 
 
 enum lp_build_round_sse41_mode
@@ -819,7 +858,7 @@ lp_build_ceil(struct lp_build_context *bld,
 
 /**
  * Convert to integer, through whichever rounding method that's fastest,
- * typically truncating to zero.
+ * typically truncating toward zero.
  */
 LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
