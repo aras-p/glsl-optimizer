@@ -396,14 +396,13 @@ void lp_rast_shade_tile( struct lp_rasterizer *rast,
  * Compute shading for a 4x4 block of pixels.
  * This is a bin command called during bin processing.
  */
-void lp_rast_shade_quads( struct lp_rasterizer *rast,
-                          unsigned thread_index,
+void lp_rast_shade_quads( struct lp_rasterizer_task *task,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
                           int32_t c1, int32_t c2, int32_t c3)
 {
-   struct lp_rasterizer_task *task = &rast->tasks[thread_index];
    const struct lp_rast_state *state = task->current_state;
+   struct lp_rasterizer *rast = task->rast;
    struct lp_rast_tile *tile = &task->tile;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;

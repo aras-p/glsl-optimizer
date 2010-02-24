@@ -121,8 +121,7 @@ struct lp_rasterizer
 };
 
 
-void lp_rast_shade_quads( struct lp_rasterizer *rast,
-                          unsigned thread_index,
+void lp_rast_shade_quads( struct lp_rasterizer_task *task,
                           const struct lp_rast_shader_inputs *inputs,
                           unsigned x, unsigned y,
                           int32_t c1, int32_t c2, int32_t c3);
@@ -159,13 +158,13 @@ lp_rast_depth_pointer( struct lp_rasterizer *rast,
  * \param x, y location of 4x4 block in window coords
  */
 static INLINE void
-lp_rast_shade_quads_all( struct lp_rasterizer *rast,
-                         unsigned thread_index,
+lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                          const struct lp_rast_shader_inputs *inputs,
                          unsigned x, unsigned y )
 {
-   const struct lp_rast_state *state = rast->tasks[thread_index].current_state;
-   struct lp_rast_tile *tile = &rast->tasks[thread_index].tile;
+   struct lp_rasterizer *rast = task->rast;
+   const struct lp_rast_state *state = task->current_state;
+   struct lp_rast_tile *tile = &task->tile;
    const unsigned ix = x % TILE_SIZE, iy = y % TILE_SIZE;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;

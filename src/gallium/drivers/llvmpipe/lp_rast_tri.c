@@ -93,10 +93,7 @@ block_full_4( struct lp_rasterizer_task *rast_task,
               const struct lp_rast_triangle *tri,
               int x, int y )
 {
-   lp_rast_shade_quads_all(rast_task->rast,
-                           rast_task->thread_index,
-                           &tri->inputs, 
-                           x, y);
+   lp_rast_shade_quads_all(rast_task, &tri->inputs, x, y);
 }
 
 
@@ -133,8 +130,7 @@ do_block_4( struct lp_rasterizer_task *rast_task,
    assert(x >= 0);
    assert(y >= 0);
 
-   lp_rast_shade_quads(rast_task->rast,
-                       rast_task->thread_index,
+   lp_rast_shade_quads(rast_task,
                        &tri->inputs, 
                        x, y,
                        -c1, -c2, -c3);
