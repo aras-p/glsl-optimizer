@@ -28,7 +28,7 @@ if NEED_GLUT
 sel_inc_glut = $(INC_GLUT)
 endif
 
-EXTRA_HEADERS = amesa.h dosmesa.h foomesa.h glut_h.dja mesa_wgl.h mglmesa.h \
+EXTRA_HEADERS = amesa.h foomesa.h glut_h.dja mesa_wgl.h mglmesa.h \
 	vms_x_fix.h wmesa.h \
 	$(INC_GGI) $(INC_OSMESA) $(INC_SVGA) $(INC_X11) $(INC_GLUT)
 
