@@ -931,25 +931,7 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    if (gctx)
       gctx->stapi->st_notify_swapbuffers(gctx->draw.st_fb);
 
-   /*
-    * We drew on the back buffer, unless there was no back buffer.
-    * In that case, we drew on the front buffer.  Either case, we call
-    * swap_buffers.
-    */
-   if (!gsurf->native->swap_buffers(gsurf->native))
-      return EGL_FALSE;
-
-   if (gctx) {
-      struct egl_g3d_config *gconf = egl_g3d_config(gsurf->base.Config);
-
-      /* force validation if the swap method is not copy */
-      if (gconf->native->mode.swapMethod != GLX_SWAP_COPY_OML) {
-         gctx->force_validate = EGL_TRUE;
-         egl_g3d_validate_context(dpy, &gctx->base);
-      }
-   }
-
-   return EGL_TRUE;
+   return gsurf->native->swap_buffers(gsurf->native);
 }
 
 /**

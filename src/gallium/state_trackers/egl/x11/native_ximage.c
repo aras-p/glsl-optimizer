@@ -81,7 +81,8 @@ struct ximage_surface {
 
    GC gc;
 
-   unsigned int sequence_number;
+   unsigned int server_stamp;
+   unsigned int client_stamp;
    int width, height;
    struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
    uint valid_mask;
@@ -216,18 +217,11 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
 
    ok = XGetGeometry(xsurf->xdpy->dpy, xsurf->drawable,
          &root, &x, &y, &w, &h, &border, &depth);
-   if (!ok) {
-      w = xsurf->width;
-      h = xsurf->height;
-   }
-
-   /* all buffers become invalid */
-   if (xsurf->width != w || xsurf->height != h) {
+   if (ok && (xsurf->width != w || xsurf->height != h)) {
       xsurf->width = w;
       xsurf->height = h;
-      xsurf->valid_mask = 0x0;
 
-      xsurf->sequence_number++;
+      xsurf->server_stamp++;
       updated = TRUE;
    }
 
@@ -247,10 +241,18 @@ ximage_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
    int att;
 
    updated = ximage_surface_update_geometry(&xsurf->base);
-   buffer_mask &= ~xsurf->valid_mask;
-   /* all requested buffers are valid */
-   if (!buffer_mask)
-      return TRUE;
+   if (updated) {
+      /* all buffers become invalid */
+      xsurf->valid_mask = 0x0;
+   }
+   else {
+      buffer_mask &= ~xsurf->valid_mask;
+      /* all requested buffers are valid */
+      if (!buffer_mask) {
+         xsurf->client_stamp = xsurf->server_stamp;
+         return TRUE;
+      }
+   }
 
    new_valid = 0x0;
    for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
@@ -273,11 +275,8 @@ ximage_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
       }
    }
 
-   if (new_valid) {
-      xsurf->valid_mask |= new_valid;
-      if (updated)
-         xsurf->sequence_number++;
-   }
+   xsurf->valid_mask |= new_valid;
+   xsurf->client_stamp = xsurf->server_stamp;
 
    return (new_valid == buffer_mask);
 }
@@ -333,7 +332,15 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
 static boolean
 ximage_surface_flush_frontbuffer(struct native_surface *nsurf)
 {
-   return ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   boolean ret;
+
+   ret = ximage_surface_draw_buffer(&xsurf->base,
+         NATIVE_ATTACHMENT_FRONT_LEFT);
+   /* force buffers to be updated in next validation call */
+   xsurf->server_stamp++;
+
+   return ret;
 }
 
 static boolean
@@ -345,6 +352,8 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
 
    /* display the back buffer first */
    ret = ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_BACK_LEFT);
+   /* force buffers to be updated in next validation call */
+   xsurf->server_stamp++;
 
    xfront = &xsurf->buffers[NATIVE_ATTACHMENT_FRONT_LEFT];
    xback = &xsurf->buffers[NATIVE_ATTACHMENT_BACK_LEFT];
@@ -356,7 +365,6 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
    xtmp = *xfront;
    *xfront = *xback;
    *xback = xtmp;
-   xsurf->sequence_number++;
 
    return ret;
 }
@@ -368,11 +376,14 @@ ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
 
-   if (!ximage_surface_update_buffers(&xsurf->base, attachment_mask))
-      return FALSE;
+   if (xsurf->client_stamp != xsurf->server_stamp ||
+       (xsurf->valid_mask & attachment_mask) != attachment_mask) {
+      if (!ximage_surface_update_buffers(&xsurf->base, attachment_mask))
+         return FALSE;
+   }
 
    if (seq_num)
-      *seq_num = xsurf->sequence_number;
+      *seq_num = xsurf->client_stamp;
 
    if (textures) {
       int att;
@@ -452,6 +463,9 @@ ximage_display_create_surface(struct native_display *ndpy,
          free(xsurf);
          return NULL;
       }
+
+      /* initialize the geometry */
+      ximage_surface_update_buffers(&xsurf->base, 0x0);
 
       for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
          struct ximage_buffer *xbuf = &xsurf->buffers[i];
