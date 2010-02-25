@@ -106,6 +106,8 @@
 #define FEATURE_OES_draw_texture 1
 #define FEATURE_OES_mapbuffer 1
 
+#define FEATURE_OES_EGL_image 1
+
 #define FEATURE_extra_context_init 1
 
 /*@}*/
