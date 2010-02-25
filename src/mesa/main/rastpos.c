@@ -556,7 +556,6 @@ void _mesa_init_rastpos( GLcontext * ctx )
    ctx->Current.RasterDistance = 0.0;
    ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.RasterSecondaryColor, 0.0, 0.0, 0.0, 1.0 );
-   ctx->Current.RasterIndex = 1.0;
    for (i = 0; i < Elements(ctx->Current.RasterTexCoords); i++)
       ASSIGN_4V( ctx->Current.RasterTexCoords[i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterPosValid = GL_TRUE;

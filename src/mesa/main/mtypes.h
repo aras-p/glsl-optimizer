@@ -630,7 +630,6 @@ struct gl_current_attrib
    GLfloat RasterDistance;
    GLfloat RasterColor[4];
    GLfloat RasterSecondaryColor[4];
-   GLfloat RasterIndex;
    GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
    GLboolean RasterPosValid;
    /*@}*/
