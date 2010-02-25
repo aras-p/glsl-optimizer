@@ -170,7 +170,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       brw->urb.size = 384;
       brw->vs_max_threads = 32;
       brw->wm_max_threads = 10 * 5;
-   } else {
+   } else if (intel->gen < 6) {
       brw->urb.size = 256;
       brw->vs_max_threads = 16;
       brw->wm_max_threads = 8 * 4;
