@@ -123,6 +123,7 @@ C_SOURCES = \
 	util/u_hash.c \
 	util/u_keymap.c \
 	util/u_linear.c \
+	util/u_linkage.c \
 	util/u_network.c \
 	util/u_math.c \
 	util/u_mempool.c \
