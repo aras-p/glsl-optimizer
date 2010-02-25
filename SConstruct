@@ -110,6 +110,10 @@ Export([
 #######################################################################
 # Environment setup
 
+# Always build trace driver
+if 'trace' not in env['drivers']:
+    env['drivers'].append('trace')
+
 # Includes
 env.Append(CPPPATH = [
 	'#/include',

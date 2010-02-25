@@ -14,11 +14,7 @@ if env['dri']:
     print 'warning: DRI enabled: skipping build of xlib libGL.so'
     Return()
 
-if 'trace' not in env['drivers']:
-    print 'warning: trace pipe driver disabled: skipping build of xlib libGL.so'
-    Return()
-
-if not set(('softpipe', 'llvmpipe', 'trace')).intersection(env['drivers']):
+if not set(('softpipe', 'llvmpipe', 'cell')).intersection(env['drivers']):
     print 'warning: no supported pipe driver: skipping build of xlib libGL.so'
     Return()
 
