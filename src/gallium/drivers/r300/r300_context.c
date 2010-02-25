@@ -128,7 +128,14 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(vertex_format, 26);
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
+    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
+    r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
+    r300->vertex_format_state.state = CALLOC_STRUCT(r300_vertex_info);
+    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
+    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -177,14 +184,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
     r300_setup_atoms(r300);
-
-    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
-    r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
-    r300->vertex_format_state.state = CALLOC_STRUCT(r300_vertex_info);
-    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
-    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
