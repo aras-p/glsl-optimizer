@@ -141,11 +141,6 @@ setup_vertex_format(GLcontext *ctx)
          EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F, attrib[FRAG_ATTRIB_COL1]);
       }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR_INDEX )) {
-         EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F,
-                    attrib[FRAG_ATTRIB_CI][0] );
-      }
-
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
          const GLint emit = ctx->FragmentProgram._Current ? EMIT_4F : EMIT_1F;
          EMIT_ATTR( _TNL_ATTRIB_FOG, emit, attrib[FRAG_ATTRIB_FOGC]);

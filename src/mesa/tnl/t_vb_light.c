@@ -64,7 +64,6 @@ struct light_stage_data {
    GLvector4f Input;
    GLvector4f LitColor[2];
    GLvector4f LitSecondary[2];
-   GLvector4f LitIndex[2];
    light_func *light_func_tab;
 
    struct material_cursor mat[MAT_ATTRIB_MAX];
@@ -161,7 +160,6 @@ static light_func _tnl_light_tab[MAX_LIGHT_FUNC];
 static light_func _tnl_light_fast_tab[MAX_LIGHT_FUNC];
 static light_func _tnl_light_fast_single_tab[MAX_LIGHT_FUNC];
 static light_func _tnl_light_spec_tab[MAX_LIGHT_FUNC];
-static light_func _tnl_light_ci_tab[MAX_LIGHT_FUNC];
 
 #define TAG(x)           x
 #define IDX              (0)
@@ -260,22 +258,18 @@ static void validate_lighting( GLcontext *ctx,
    if (!ctx->Light.Enabled || ctx->VertexProgram._Current)
       return;
 
-   if (ctx->Visual.rgbMode) {
-      if (ctx->Light._NeedVertices) {
-	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-	    tab = _tnl_light_spec_tab;
-	 else
-	    tab = _tnl_light_tab;
-      }
-      else {
-	 if (ctx->Light.EnabledList.next == ctx->Light.EnabledList.prev)
-	    tab = _tnl_light_fast_single_tab;
-	 else
-	    tab = _tnl_light_fast_tab;
-      }
+   if (ctx->Light._NeedVertices) {
+      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+	 tab = _tnl_light_spec_tab;
+      else
+	 tab = _tnl_light_tab;
    }
-   else
-      tab = _tnl_light_ci_tab;
+   else {
+      if (ctx->Light.EnabledList.next == ctx->Light.EnabledList.prev)
+	 tab = _tnl_light_fast_single_tab;
+      else
+	 tab = _tnl_light_fast_tab;
+   }
 
 
    LIGHT_STAGE_DATA(stage)->light_func_tab = tab;
@@ -311,18 +305,11 @@ static GLboolean init_lighting( GLcontext *ctx,
    _mesa_vector4f_alloc( &store->LitColor[1], 0, size, 32 );
    _mesa_vector4f_alloc( &store->LitSecondary[0], 0, size, 32 );
    _mesa_vector4f_alloc( &store->LitSecondary[1], 0, size, 32 );
-   _mesa_vector4f_alloc( &store->LitIndex[0], 0, size, 32 );
-   _mesa_vector4f_alloc( &store->LitIndex[1], 0, size, 32 );
 
    store->LitColor[0].size = 4;
    store->LitColor[1].size = 4;
    store->LitSecondary[0].size = 3;
    store->LitSecondary[1].size = 3;
-
-   store->LitIndex[0].size = 1;
-   store->LitIndex[0].stride = sizeof(GLfloat);
-   store->LitIndex[1].size = 1;
-   store->LitIndex[1].stride = sizeof(GLfloat);
 
    return GL_TRUE;
 }
@@ -340,8 +327,6 @@ static void dtr( struct tnl_pipeline_stage *stage )
       _mesa_vector4f_free( &store->LitColor[1] );
       _mesa_vector4f_free( &store->LitSecondary[0] );
       _mesa_vector4f_free( &store->LitSecondary[1] );
-      _mesa_vector4f_free( &store->LitIndex[0] );
-      _mesa_vector4f_free( &store->LitIndex[1] );
       FREE( store );
       stage->privatePtr = NULL;
    }
