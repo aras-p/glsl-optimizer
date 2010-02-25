@@ -515,6 +515,11 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_LOG:
 		arith(vpc, SCA, LOG, dst, mask, none, none, src[0]);
 		break;
+	case TGSI_OPCODE_LRP:
+		tmp = temp(vpc);
+		arith(vpc, VEC, MAD, tmp, mask, neg(src[0]), src[2], src[2]);
+		arith(vpc, VEC, MAD, dst, mask, src[0], src[1], tmp);
+		break;
 	case TGSI_OPCODE_MAD:
 		arith(vpc, VEC, MAD, dst, mask, src[0], src[1], src[2]);
 		break;
