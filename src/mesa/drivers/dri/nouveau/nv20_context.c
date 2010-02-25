@@ -31,6 +31,11 @@
 #include "nv10_driver.h"
 #include "nv20_driver.h"
 
+static const struct dri_extension nv20_extensions[] = {
+	{ "GL_EXT_texture_rectangle",	NULL },
+	{ NULL,				NULL }
+};
+
 static void
 nv20_hwctx_init(GLcontext *ctx)
 {
@@ -393,6 +398,8 @@ nv20_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 
 	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
 		goto fail;
+
+	driInitExtensions(ctx, nv20_extensions, GL_FALSE);
 
 	/* GL constants. */
 	ctx->Const.MaxTextureCoordUnits = NV20_TEXTURE_UNITS;

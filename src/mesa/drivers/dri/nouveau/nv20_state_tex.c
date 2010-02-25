@@ -33,7 +33,7 @@
 #include "nv20_driver.h"
 
 static uint32_t
-get_tex_format(struct gl_texture_image *ti)
+get_tex_format_pot(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
@@ -56,6 +56,34 @@ get_tex_format(struct gl_texture_image *ti)
 
 	case MESA_FORMAT_CI8:
 		return NV20TCL_TX_FORMAT_FORMAT_INDEX8;
+
+	default:
+		assert(0);
+	}
+}
+
+static uint32_t
+get_tex_format_rect(struct gl_texture_image *ti)
+{
+	switch (ti->TexFormat) {
+	case MESA_FORMAT_ARGB1555:
+		return NV20TCL_TX_FORMAT_FORMAT_A1R5G5B5_RECT;
+
+	case MESA_FORMAT_RGB565:
+		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
+
+	case MESA_FORMAT_ARGB8888:
+		return NV20TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
+
+	case MESA_FORMAT_L8:
+		return NV20TCL_TX_FORMAT_FORMAT_L8_RECT;
+
+	case MESA_FORMAT_A8:
+	case MESA_FORMAT_I8:
+		return NV20TCL_TX_FORMAT_FORMAT_A8_RECT;
+
+	case MESA_FORMAT_ARGB4444:
+		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4_RECT;
 
 	default:
 		assert(0);
@@ -94,7 +122,6 @@ nv20_emit_tex_obj(GLcontext *ctx, int emit)
 	tx_format = ti->DepthLog2 << 28
 		| ti->HeightLog2 << 24
 		| ti->WidthLog2 << 20
-		| get_tex_format(ti)
 		| NV20TCL_TX_FORMAT_DIMS_2D
 		| NV20TCL_TX_FORMAT_NO_BORDER
 		| 1 << 16;
@@ -108,6 +135,17 @@ nv20_emit_tex_obj(GLcontext *ctx, int emit)
 
 	tx_enable = NV20TCL_TX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
+
+	if (t->Target == GL_TEXTURE_RECTANGLE) {
+		BEGIN_RING(chan, kelvin, NV20TCL_TX_NPOT_PITCH(i), 1);
+		OUT_RING(chan, s->pitch << 16);
+		BEGIN_RING(chan, kelvin, NV20TCL_TX_NPOT_SIZE(i), 1);
+		OUT_RING(chan, s->width << 16 | s->height);
+
+		tx_format |= get_tex_format_rect(ti);
+	} else {
+		tx_format |= get_tex_format_pot(ti);
+	}
 
 	if (t->MinFilter != GL_NEAREST &&
 	    t->MinFilter != GL_LINEAR) {

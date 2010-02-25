@@ -118,9 +118,6 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 		return MESA_FORMAT_ARGB8888;
 	case GL_RGB5_A1:
 		return MESA_FORMAT_ARGB1555;
-	case GL_RGBA2:
-	case GL_RGBA4:
-		return MESA_FORMAT_ARGB4444;
 
 	case 3:
 	case GL_R3_G3_B2:
@@ -180,9 +177,10 @@ teximage_fits(struct gl_texture_object *t, int level,
 {
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
 
-	return s->bo && s->width == ti->Width &&
-		s->height == ti->Height &&
-		s->format == ti->TexFormat;
+	return t->Target == GL_TEXTURE_RECTANGLE ||
+		(s->bo && s->width == ti->Width &&
+		 s->height == ti->Height &&
+		 s->format == ti->TexFormat);
 }
 
 static GLboolean
@@ -196,9 +194,12 @@ validate_teximage(GLcontext *ctx, struct gl_texture_object *t,
 		struct nouveau_surface *ss = to_nouveau_texture(t)->surfaces;
 		struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 
-		context_drv(ctx)->surface_copy(ctx, &ss[level], s,
-					       x, y, x, y,
-					       width, height);
+		if (t->Target == GL_TEXTURE_RECTANGLE)
+			nouveau_surface_ref(s, &ss[level]);
+		else
+			context_drv(ctx)->surface_copy(ctx, &ss[level], s,
+						       x, y, x, y,
+						       width, height);
 
 		return GL_TRUE;
 	}
@@ -223,7 +224,7 @@ relayout_texture(GLcontext *ctx, struct gl_texture_object *t)
 {
 	struct gl_texture_image *base = t->Image[0][t->BaseLevel];
 
-	if (base) {
+	if (base && t->Target != GL_TEXTURE_RECTANGLE) {
 		struct nouveau_surface *ss = to_nouveau_texture(t)->surfaces;
 		struct nouveau_surface *s = &to_nouveau_teximage(base)->surface;
 		int i, ret, last = get_last_level(t);
