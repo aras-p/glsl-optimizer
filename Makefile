@@ -48,7 +48,7 @@ install:
 	done
 
 
-.PHONY: default doxygen clean realclean distclean install linux-directfb-install
+.PHONY: default doxygen clean realclean distclean install
 
 # If there's no current configuration file
 $(TOP)/configs/current:
@@ -109,7 +109,6 @@ linux-alpha-static \
 linux-cell \
 linux-cell-debug \
 linux-debug \
-linux-directfb \
 linux-dri \
 linux-dri-debug \
 linux-dri-x86 \
@@ -271,8 +270,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
-	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
@@ -483,9 +480,6 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
-	$(DIRECTORY)/src/glut/directfb/Makefile		\
-	$(DIRECTORY)/src/glut/directfb/NOTES		\
-	$(DIRECTORY)/src/glut/directfb/*[ch]
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\

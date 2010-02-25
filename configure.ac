@@ -395,7 +395,7 @@ fi
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
-dnl More later: directfb, fbdev, ...
+dnl More later: fbdev, ...
 dnl
 default_driver="xlib"
 
