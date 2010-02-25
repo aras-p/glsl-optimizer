@@ -169,22 +169,39 @@ struct st_context {
 
    void set_fragment_sampler_texture(unsigned index,
                                      struct pipe_texture *texture) {
+      struct pipe_sampler_view templ;
+
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->fragment_sampler_textures[index], texture);
-      $self->pipe->set_fragment_sampler_textures($self->pipe,
-                                                 PIPE_MAX_SAMPLERS,
-                                                 $self->fragment_sampler_textures);
+      pipe_sampler_view_reference(&$self->fragment_sampler_views[index], NULL);
+      u_sampler_view_default_template(&templ,
+                                      texture,
+                                      texture->format);
+      $self->fragment_sampler_views[index] = $self->pipe->create_sampler_view($self->pipe,
+                                                                              texture,
+                                                                              &templ);
+      $self->pipe->set_fragment_sampler_views($self->pipe,
+                                              PIPE_MAX_SAMPLERS,
+                                              $self->fragment_sampler_views);
    }
 
    void set_vertex_sampler_texture(unsigned index,
                                    struct pipe_texture *texture) {
+      struct pipe_sampler_view templ;
+
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->vertex_sampler_textures[index], texture);
-      $self->pipe->set_vertex_sampler_textures($self->pipe,
-                                               PIPE_MAX_VERTEX_SAMPLERS,
-                                               $self->vertex_sampler_textures);
+      pipe_sampler_view_reference(&$self->vertex_sampler_views[index], NULL);
+      u_sampler_view_default_template(&templ,
+                                      texture,
+                                      texture->format);
+      $self->vertex_sampler_views[index] = $self->pipe->create_sampler_view($self->pipe,
+                                                                            texture,
+                                                                            &templ);
+      
+      $self->pipe->set_vertex_sampler_views($self->pipe,
+                                            PIPE_MAX_VERTEX_SAMPLERS,
+                                            $self->vertex_sampler_views);
    }
 
    void set_vertex_buffer(unsigned index,

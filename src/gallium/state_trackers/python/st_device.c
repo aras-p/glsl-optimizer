@@ -33,6 +33,7 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
@@ -134,9 +135,9 @@ st_context_destroy(struct st_context *st_ctx)
          st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], NULL);
+         pipe_sampler_view_reference(&st_ctx->fragment_sampler_views[i], NULL);
       for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], NULL);
+         pipe_sampler_view_reference(&st_ctx->vertex_sampler_views[i], NULL);
       pipe_texture_reference(&st_ctx->default_texture, NULL);
 
       FREE(st_ctx);
@@ -240,6 +241,8 @@ st_context_create(struct st_device *st_dev)
       struct pipe_screen *screen = st_dev->screen;
       struct pipe_texture templat;
       struct pipe_transfer *transfer;
+      struct pipe_sampler_view view_templ;
+      struct pipe_sampler_view *view;
       unsigned i;
 
       memset( &templat, 0, sizeof( templat ) );
@@ -269,14 +272,27 @@ st_context_create(struct st_device *st_dev)
             screen->tex_transfer_destroy(transfer);
          }
       }
-   
+
+      u_sampler_view_default_template(&view_templ,
+                                      st_ctx->default_texture,
+                                      st_ctx->default_texture->format);
+      view = st_ctx->pipe->create_sampler_view(st_ctx->pipe,
+                                               st_ctx->default_texture,
+                                               &view_templ);
+
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], st_ctx->default_texture);
+         pipe_sampler_view_reference(&st_ctx->fragment_sampler_views[i], view);
       for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
-         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], st_ctx->default_texture);
-      
-      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->fragment_sampler_textures);
-      cso_set_vertex_sampler_textures(st_ctx->cso, PIPE_MAX_VERTEX_SAMPLERS, st_ctx->vertex_sampler_textures);
+         pipe_sampler_view_reference(&st_ctx->vertex_sampler_views[i], view);
+
+      st_ctx->pipe->set_fragment_sampler_views(st_ctx->pipe,
+                                               PIPE_MAX_SAMPLERS,
+                                               st_ctx->fragment_sampler_views);
+      st_ctx->pipe->set_vertex_sampler_views(st_ctx->pipe,
+                                             PIPE_MAX_VERTEX_SAMPLERS,
+                                             st_ctx->vertex_sampler_views);
+
+      pipe_sampler_view_reference(&view, NULL);
    }
    
    /* vertex shader */
