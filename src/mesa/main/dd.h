@@ -620,8 +620,6 @@ struct dd_function_table {
    void (*ClearColor)(GLcontext *ctx, const GLfloat color[4]);
    /** Specify the clear value for the depth buffer */
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
-   /** Specify the clear value for the color index buffers */
-   void (*ClearIndex)(GLcontext *ctx, GLuint index);
    /** Specify the clear value for the stencil buffer */
    void (*ClearStencil)(GLcontext *ctx, GLint s);
    /** Specify a plane against which all geometry is clipped */
@@ -653,8 +651,6 @@ struct dd_function_table {
    void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    /** Specify implementation-specific hints */
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
-   /** Control the writing of individual bits in the color index buffers */
-   void (*IndexMask)(GLcontext *ctx, GLuint mask);
    /** Set light source parameters.
     * Note: for GL_POSITION and GL_SPOT_DIRECTION, params will have already
     * been transformed to eye-space.

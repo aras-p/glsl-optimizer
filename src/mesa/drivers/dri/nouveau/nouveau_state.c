@@ -243,12 +243,6 @@ nouveau_fog(GLcontext *ctx, GLenum pname, const GLfloat *params)
 }
 
 static void
-nouveau_index_mask(GLcontext *ctx, GLuint mask)
-{
-	context_dirty(ctx, INDEX_MASK);
-}
-
-static void
 nouveau_light(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params)
 {
 	switch (pname) {
@@ -504,7 +498,6 @@ nouveau_state_init(GLcontext *ctx)
 	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
 	ctx->Driver.Enable = nouveau_enable;
 	ctx->Driver.Fogfv = nouveau_fog;
-	ctx->Driver.IndexMask = nouveau_index_mask;
 	ctx->Driver.Lightfv = nouveau_light;
 	ctx->Driver.LightModelfv = nouveau_light_model;
 	ctx->Driver.LineStipple = nouveau_line_stipple;

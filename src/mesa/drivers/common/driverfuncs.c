@@ -142,7 +142,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BlendFuncSeparate = NULL;
    driver->ClearColor = NULL;
    driver->ClearDepth = NULL;
-   driver->ClearIndex = NULL;
    driver->ClearStencil = NULL;
    driver->ClipPlane = NULL;
    driver->ColorMask = NULL;
@@ -157,7 +156,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->Enable = NULL;
    driver->Fogfv = NULL;
    driver->Hint = NULL;
-   driver->IndexMask = NULL;
    driver->Lightfv = NULL;
    driver->LightModelfv = NULL;
    driver->LineStipple = NULL;

@@ -2501,7 +2501,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
    functions->ClearDepth		= r200ClearDepth;
-   functions->ClearIndex		= NULL;
    functions->ClearStencil		= r200ClearStencil;
    functions->ClipPlane			= r200ClipPlane;
    functions->ColorMask			= r200ColorMask;
@@ -2513,7 +2512,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->Fogfv			= r200Fogfv;
    functions->FrontFace			= r200FrontFace;
    functions->Hint			= NULL;
-   functions->IndexMask			= NULL;
    functions->LightModelfv		= r200LightModelfv;
    functions->Lightfv			= r200Lightfv;
    functions->LineStipple		= r200LineStipple;
