@@ -80,41 +80,34 @@ _swrast_span_default_attribs(GLcontext *ctx, SWspan *span)
    span->attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0;
 
    /* primary color, or color index */
-   if (ctx->Visual.rgbMode) {
-      GLchan r, g, b, a;
-      UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterColor[0]);
-      UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterColor[1]);
-      UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterColor[2]);
-      UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterColor[3]);
+   GLchan r, g, b, a;
+   UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterColor[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterColor[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterColor[2]);
+   UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterColor[3]);
 #if CHAN_TYPE == GL_FLOAT
-      span->red = r;
-      span->green = g;
-      span->blue = b;
-      span->alpha = a;
+   span->red = r;
+   span->green = g;
+   span->blue = b;
+   span->alpha = a;
 #else
-      span->red   = IntToFixed(r);
-      span->green = IntToFixed(g);
-      span->blue  = IntToFixed(b);
-      span->alpha = IntToFixed(a);
+   span->red   = IntToFixed(r);
+   span->green = IntToFixed(g);
+   span->blue  = IntToFixed(b);
+   span->alpha = IntToFixed(a);
 #endif
-      span->redStep = 0;
-      span->greenStep = 0;
-      span->blueStep = 0;
-      span->alphaStep = 0;
-      span->interpMask |= SPAN_RGBA;
+   span->redStep = 0;
+   span->greenStep = 0;
+   span->blueStep = 0;
+   span->alphaStep = 0;
+   span->interpMask |= SPAN_RGBA;
 
-      COPY_4V(span->attrStart[FRAG_ATTRIB_COL0], ctx->Current.RasterColor);
-      ASSIGN_4V(span->attrStepX[FRAG_ATTRIB_COL0], 0.0, 0.0, 0.0, 0.0);
-      ASSIGN_4V(span->attrStepY[FRAG_ATTRIB_COL0], 0.0, 0.0, 0.0, 0.0);
-   }
-   else {
-      span->index = FloatToFixed(ctx->Current.RasterIndex);
-      span->indexStep = 0;
-      span->interpMask |= SPAN_INDEX;
-   }
+   COPY_4V(span->attrStart[FRAG_ATTRIB_COL0], ctx->Current.RasterColor);
+   ASSIGN_4V(span->attrStepX[FRAG_ATTRIB_COL0], 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(span->attrStepY[FRAG_ATTRIB_COL0], 0.0, 0.0, 0.0, 0.0);
 
    /* Secondary color */
-   if (ctx->Visual.rgbMode && (ctx->Light.Enabled || ctx->Fog.ColorSumEnabled))
+   if (ctx->Light.Enabled || ctx->Fog.ColorSumEnabled)
    {
       COPY_4V(span->attrStart[FRAG_ATTRIB_COL1], ctx->Current.RasterSecondaryColor);
       ASSIGN_4V(span->attrStepX[FRAG_ATTRIB_COL1], 0.0, 0.0, 0.0, 0.0);
