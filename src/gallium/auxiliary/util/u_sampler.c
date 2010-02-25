@@ -47,15 +47,18 @@ default_template(struct pipe_sampler_view *view,
    view->swizzle_b = PIPE_SWIZZLE_BLUE;
    view->swizzle_a = PIPE_SWIZZLE_ALPHA;
 
-   /* Override default green and blue component expansion to the requested one.
+   /* Override default green and blue component expansion to the requested
+    * one.
     *
-    * Gallium expands nonexistent components to (0,0,0,1), DX9 expands to (1,1,1,1).
-    * Since alpha is always expanded to 1, and red is always present, we only really
-    * care about green and blue components.
+    * Gallium expands nonexistent components to (0,0,0,1), DX9 expands
+    * to (1,1,1,1).  Since alpha is always expanded to 1, and red is
+    * always present, we only really care about green and blue
+    * components.
     *
-    * To make it look less hackish, one would have to add UTIL_FORMAT_SWIZZLE_EXPAND
-    * to indicate components for expansion and then override without exceptions or
-    * favoring one component over another.
+    * To make it look less hackish, one would have to add
+    * UTIL_FORMAT_SWIZZLE_EXPAND to indicate components for expansion
+    * and then override without exceptions or favoring one component
+    * over another.
     */
    if (format != PIPE_FORMAT_A8_UNORM) {
       const struct util_format_description *desc = util_format_description(format);
