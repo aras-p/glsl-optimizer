@@ -879,7 +879,8 @@
 # define GEN6_CLIP_STATISTICS_ENABLE			(1 << 10)
 /* DW2 */
 # define GEN6_CLIP_ENABLE				(1 << 31)
-# define GEN6_CLIP_API_OGL				(1 << 30)
+# define GEN6_CLIP_API_OGL				(0 << 30)
+# define GEN6_CLIP_API_D3D				(1 << 30)
 # define GEN6_CLIP_XY_TEST				(1 << 28)
 # define GEN6_CLIP_Z_TEST				(1 << 27)
 # define GEN6_CLIP_GB_TEST				(1 << 26)
