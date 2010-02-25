@@ -37,28 +37,26 @@ MESA_OUTPUTS = \
 ######################################################################
 
 XORG_GLX_DIR = $(XORG_BASE)/glx
+XORG_GLAPI_DIR = $(XORG_BASE)/glx/glapi
 
 XORG_GLAPI_FILES = \
-	$(XORG_GLX_DIR)/glapi.h \
-	$(XORG_GLX_DIR)/glapi.c \
-	$(XORG_GLX_DIR)/glapi_getproc.c \
-	$(XORG_GLX_DIR)/glapi_nop.c \
-	$(XORG_GLX_DIR)/glthread.c \
-	$(XORG_GLX_DIR)/glthread.h
+	$(XORG_GLAPI_DIR)/glapi.h \
+	$(XORG_GLAPI_DIR)/glapi.c \
+	$(XORG_GLAPI_DIR)/glapi_getproc.c \
+	$(XORG_GLAPI_DIR)/glapi_nop.c \
+	$(XORG_GLAPI_DIR)/glthread.c \
+	$(XORG_GLAPI_DIR)/glthread.h
 
 XORG_GLAPI_OUTPUTS = \
-	$(XORG_GLX_DIR)/glprocs.h \
-	$(XORG_GLX_DIR)/glapitemp.h \
-	$(XORG_GLX_DIR)/glapioffsets.h \
-	$(XORG_GLX_DIR)/glapitable.h \
-	$(XORG_GLX_DIR)/glapidispatch.h
-
-# XXX sync mesa and xorg glapi, generate in mesa only and just copy in glx/glapi
-#
-#	$(XORG_GLAPI_FILES) \
-#	$(XORG_GLAPI_OUTPUTS) \
+	$(XORG_GLAPI_DIR)/glprocs.h \
+	$(XORG_GLAPI_DIR)/glapitemp.h \
+	$(XORG_GLAPI_DIR)/glapioffsets.h \
+	$(XORG_GLAPI_DIR)/glapitable.h \
+	$(XORG_GLAPI_DIR)/glapidispatch.h
 
 XORG_OUTPUTS = \
+	$(XORG_GLAPI_FILES) \
+	$(XORG_GLAPI_OUTPUTS) \
 	$(XORG_GLX_DIR)/indirect_dispatch.c \
 	$(XORG_GLX_DIR)/indirect_dispatch_swap.c \
 	$(XORG_GLX_DIR)/indirect_dispatch.h \
@@ -114,27 +112,27 @@ clean:
 
 ######################################################################
 
-$(XORG_GLX_DIR)/%.c: %.c
+$(XORG_GLAPI_DIR)/%.c: $(MESA_GLAPI_DIR)/%.c
 	cp $< $@
 
-$(XORG_GLX_DIR)/%.h: %.h
+$(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
 	cp $< $@
 
 ######################################################################
 
-$(MESA_GLAPI_DIR)/glprocs.h $(XORG_GLX_DIR)/glprocs.h: gl_procs.py $(COMMON)
+$(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_GLAPI_DIR)/glapitemp.h $(XORG_GLX_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_GLAPI_DIR)/glapioffsets.h $(XORG_GLX_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_GLAPI_DIR)/glapitable.h $(XORG_GLX_DIR)/glapitable.h: gl_table.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_GLAPI_DIR)/glapidispatch.h $(XORG_GLX_DIR)/glapidispatch.h: gl_table.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapidispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 ######################################################################
