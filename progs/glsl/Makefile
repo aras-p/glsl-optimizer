@@ -16,7 +16,7 @@ LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) \
 # using : to avoid APP_CC pointing to CC loop
 CC := $(APP_CC)
 CFLAGS := -I$(INCDIR) $(CFLAGS)
-LDLIBS = $(LIBS)
+LDLIBS = $(LIBS) $(ARCH_FLAGS)
 
 PROG_SOURCES = \
 	array.c \
