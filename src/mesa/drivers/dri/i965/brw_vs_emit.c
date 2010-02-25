@@ -279,7 +279,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
-   if (intel->is_ironlake)
+   if (intel->is_ironlake || intel->gen >= 6)
        c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
        c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1273,7 +1273,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
 
-   if (intel->is_ironlake) {
+   if (intel->is_ironlake || intel->gen >= 6) {
        /* There are 20 DWs (D0-D19) in VUE vertex header on Ironlake */
        brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
        /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
