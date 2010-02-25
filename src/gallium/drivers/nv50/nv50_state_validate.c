@@ -436,8 +436,8 @@ viewport_uptodate:
 			    1 + 19 * PIPE_SHADER_TYPES + nr * 8,
 			    PIPE_SHADER_TYPES * 2);
 
-		nv50_validate_samplers(nv50, so, PIPE_SHADER_VERTEX);
-		nv50_validate_samplers(nv50, so, PIPE_SHADER_FRAGMENT);
+		nv50_validate_samplers(nv50, so, 0); /* VP samplers */
+		nv50_validate_samplers(nv50, so, 2); /* FP samplers */
 
 		so_method(so, tesla, 0x1334, 1); /* flush TSC */
 		so_data  (so, 0);

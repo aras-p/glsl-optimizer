@@ -72,6 +72,17 @@ struct nv50_sampler_stateobj {
 	unsigned tsc[8];
 };
 
+struct nv50_sampler_view {
+	struct pipe_sampler_view pipe;
+	uint32_t tic[8];
+};
+
+static INLINE struct nv50_sampler_view *
+nv50_sampler_view(struct pipe_sampler_view *view)
+{
+	return (struct nv50_sampler_view *)view;
+}
+
 static INLINE unsigned
 get_tile_height(uint32_t tile_mode)
 {
@@ -130,7 +141,7 @@ struct nv50_state {
 	unsigned viewport_bypass;
 	struct nouveau_stateobj *tsc_upload;
 	struct nouveau_stateobj *tic_upload;
-	unsigned miptree_nr[PIPE_SHADER_TYPES];
+	unsigned sampler_view_nr[3];
 	struct nouveau_stateobj *vertprog;
 	struct nouveau_stateobj *fragprog;
 	struct nouveau_stateobj *geomprog;
@@ -170,11 +181,10 @@ struct nv50_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	struct nv50_sampler_stateobj *sampler[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-	unsigned sampler_nr[PIPE_SHADER_TYPES];
-	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-	struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-	unsigned miptree_nr[PIPE_SHADER_TYPES];
+	struct nv50_sampler_stateobj *sampler[3][PIPE_MAX_SAMPLERS];
+	unsigned sampler_nr[3];
+	struct pipe_sampler_view *sampler_views[3][PIPE_MAX_SAMPLERS];
+	unsigned sampler_view_nr[3];
 
 	uint16_t vbo_fifo;
 };
@@ -244,6 +254,7 @@ extern void nv50_so_init_sifc(struct nv50_context *nv50,
 
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);
+extern boolean nv50_tex_construct(struct nv50_sampler_view *view);
 
 /* nv50_transfer.c */
 extern void
