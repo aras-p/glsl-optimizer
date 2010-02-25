@@ -30,9 +30,11 @@
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
+#include "glapi/mesa.h"
+#else
+#include "main/compiler.h"
 #endif
 
-#include "main/compiler.h"
 #include "glapi/glthread.h"
 
 

@@ -51,22 +51,11 @@
 
 
 #ifdef HAVE_DIX_CONFIG_H
-
 #include <dix-config.h>
-#define PUBLIC
-
+#include "glapi/mesa.h"
 #else
-
 #include "main/glheader.h"
-
-#endif
-
 #include "main/compiler.h"
-
-#include <stdlib.h>
-#include <string.h>
-#ifdef DEBUG
-#include <assert.h>
 #endif
 
 #include "glapi/glapi.h"
