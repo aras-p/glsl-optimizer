@@ -26,6 +26,7 @@
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "util/u_inlines.h"
+#include "util/u_hash_table.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -55,6 +56,8 @@ struct dri2_display {
 
    struct dri2_config *configs;
    int num_configs;
+
+   struct util_hash_table *surfaces;
 };
 
 struct dri2_surface {
@@ -64,7 +67,8 @@ struct dri2_surface {
    enum pipe_format color_format;
    struct dri2_display *dri2dpy;
 
-   unsigned int sequence_number;
+   unsigned int server_stamp;
+   unsigned int client_stamp;
    int width, height;
    struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
    uint valid_mask;
@@ -225,12 +229,14 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    if (xbufs && dri2surf->last_num_xbufs == num_outs &&
        memcmp(dri2surf->last_xbufs, xbufs, sizeof(*xbufs) * num_outs) == 0) {
       free(xbufs);
+      dri2surf->client_stamp = dri2surf->server_stamp;
       return;
    }
 
    dri2_surface_process_drawable_buffers(&dri2surf->base, xbufs, num_outs);
 
-   dri2surf->sequence_number++;
+   dri2surf->server_stamp++;
+   dri2surf->client_stamp = dri2surf->server_stamp;
 
    if (dri2surf->last_xbufs)
       free(dri2surf->last_xbufs);
@@ -282,13 +288,23 @@ dri2_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
          }
       }
       dri2surf->valid_mask |= new_valid;
-      /* no need to update sequence number */
+      /* no need to update the stamps */
    }
    else {
       dri2_surface_get_buffers(&dri2surf->base, buffer_mask);
    }
 
    return ((dri2surf->valid_mask & buffer_mask) == buffer_mask);
+}
+
+/**
+ * Return TRUE if the surface receives DRI2_InvalidateBuffers events.
+ */
+static INLINE boolean
+dri2_surface_receive_events(struct native_surface *nsurf)
+{
+   struct dri2_surface *dri2surf = dri2_surface(nsurf);
+   return (dri2surf->dri2dpy->dri_minor >= 3);
 }
 
 static boolean
@@ -306,6 +322,10 @@ dri2_surface_flush_frontbuffer(struct native_surface *nsurf)
       x11_drawable_copy_buffers(dri2dpy->xscr, dri2surf->drawable,
             0, 0, dri2surf->width, dri2surf->height,
             DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
+
+   /* force buffers to be updated in next validation call */
+   if (!dri2_surface_receive_events(&dri2surf->base))
+      dri2surf->server_stamp++;
 
    return TRUE;
 }
@@ -332,6 +352,10 @@ dri2_surface_swap_buffers(struct native_surface *nsurf)
             0, 0, dri2surf->width, dri2surf->height,
             DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
 
+   /* force buffers to be updated in next validation call */
+   if (!dri2_surface_receive_events(&dri2surf->base))
+      dri2surf->server_stamp++;
+
    return TRUE;
 }
 
@@ -342,11 +366,14 @@ dri2_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
 
-   if (!dri2_surface_update_buffers(&dri2surf->base, attachment_mask))
-      return FALSE;
+   if (dri2surf->server_stamp != dri2surf->client_stamp ||
+       (dri2surf->valid_mask & attachment_mask) != attachment_mask) {
+      if (!dri2_surface_update_buffers(&dri2surf->base, attachment_mask))
+         return FALSE;
+   }
 
    if (seq_num)
-      *seq_num = dri2surf->sequence_number;
+      *seq_num = dri2surf->client_stamp;
 
    if (textures) {
       int att;
@@ -395,9 +422,13 @@ dri2_surface_destroy(struct native_surface *nsurf)
       pipe_texture_reference(&ptex, NULL);
    }
 
-   if (dri2surf->drawable)
+   if (dri2surf->drawable) {
       x11_drawable_enable_dri2(dri2surf->dri2dpy->xscr,
             dri2surf->drawable, FALSE);
+
+      util_hash_table_remove(dri2surf->dri2dpy->surfaces,
+            (void *) dri2surf->drawable);
+   }
    free(dri2surf);
 }
 
@@ -426,8 +457,14 @@ dri2_display_create_surface(struct native_display *ndpy,
    dri2surf->base.validate = dri2_surface_validate;
    dri2surf->base.wait = dri2_surface_wait;
 
-   if (drawable)
+   if (drawable) {
       x11_drawable_enable_dri2(dri2dpy->xscr, drawable, TRUE);
+      /* initialize the geometry */
+      dri2_surface_update_buffers(&dri2surf->base, 0x0);
+
+      util_hash_table_set(dri2surf->dri2dpy->surfaces,
+            (void *) dri2surf->drawable, (void *) &dri2surf->base);
+   }
 
    return dri2surf;
 }
@@ -673,6 +710,9 @@ dri2_display_destroy(struct native_display *ndpy)
    if (dri2dpy->base.screen)
       dri2dpy->base.screen->destroy(dri2dpy->base.screen);
 
+   if (dri2dpy->surfaces)
+      util_hash_table_destroy(dri2dpy->surfaces);
+
    if (dri2dpy->xscr)
       x11_screen_destroy(dri2dpy->xscr);
    if (dri2dpy->own_dpy)
@@ -680,6 +720,24 @@ dri2_display_destroy(struct native_display *ndpy)
    if (dri2dpy->api && dri2dpy->api->destroy)
       dri2dpy->api->destroy(dri2dpy->api);
    free(dri2dpy);
+}
+
+static void
+dri2_display_invalidate_buffers(struct x11_screen *xscr, Drawable drawable,
+                                void *user_data)
+{
+   struct native_display *ndpy = (struct native_display* ) user_data;
+   struct dri2_display *dri2dpy = dri2_display(ndpy);
+   struct native_surface *nsurf;
+   struct dri2_surface *dri2surf;
+
+   nsurf = (struct native_surface *)
+      util_hash_table_get(dri2dpy->surfaces, (void *) drawable);
+   if (!nsurf)
+      return;
+
+   dri2surf = dri2_surface(nsurf);
+   dri2surf->server_stamp++;
 }
 
 /**
@@ -708,7 +766,8 @@ dri2_display_init_screen(struct native_display *ndpy)
       return FALSE;
    }
 
-   fd = x11_screen_enable_dri2(dri2dpy->xscr, NULL, NULL);
+   fd = x11_screen_enable_dri2(dri2dpy->xscr,
+         dri2_display_invalidate_buffers, &dri2dpy->base);
    if (fd < 0)
       return FALSE;
 
@@ -723,6 +782,19 @@ dri2_display_init_screen(struct native_display *ndpy)
    return TRUE;
 }
 
+static unsigned
+dri2_display_hash_table_hash(void *key)
+{
+   XID drawable = pointer_to_uintptr(key);
+   return (unsigned) drawable;
+}
+
+static int
+dri2_display_hash_table_compare(void *key1, void *key2)
+{
+   return (key1 - key2);
+}
+
 struct native_display *
 x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
 {
@@ -733,11 +805,6 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
       return NULL;
 
    dri2dpy->api = api;
-   if (!dri2dpy->api) {
-      _eglLog(_EGL_WARNING, "failed to create DRM API");
-      free(dri2dpy);
-      return NULL;
-   }
 
    dri2dpy->dpy = dpy;
    if (!dri2dpy->dpy) {
@@ -757,6 +824,13 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
    }
 
    if (!dri2_display_init_screen(&dri2dpy->base)) {
+      dri2_display_destroy(&dri2dpy->base);
+      return NULL;
+   }
+
+   dri2dpy->surfaces = util_hash_table_create(dri2_display_hash_table_hash,
+         dri2_display_hash_table_compare);
+   if (!dri2dpy->surfaces) {
       dri2_display_destroy(&dri2dpy->base);
       return NULL;
    }
