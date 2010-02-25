@@ -44,9 +44,8 @@
 
 #define FB_3D		0x01
 #define FB_4D		0x02
-#define FB_INDEX	0x04
-#define FB_COLOR	0x08
-#define FB_TEXTURE	0X10
+#define FB_COLOR	0x04
+#define FB_TEXTURE	0X08
 
 
 
@@ -120,7 +119,6 @@ void
 _mesa_feedback_vertex(GLcontext *ctx,
                       const GLfloat win[4],
                       const GLfloat color[4],
-                      GLfloat index,
                       const GLfloat texcoord[4])
 {
    _mesa_feedback_token( ctx, win[0] );
@@ -130,9 +128,6 @@ _mesa_feedback_vertex(GLcontext *ctx,
    }
    if (ctx->Feedback._Mask & FB_4D) {
       _mesa_feedback_token( ctx, win[3] );
-   }
-   if (ctx->Feedback._Mask & FB_INDEX) {
-      _mesa_feedback_token( ctx, (GLfloat) index );
    }
    if (ctx->Feedback._Mask & FB_COLOR) {
       _mesa_feedback_token( ctx, color[0] );

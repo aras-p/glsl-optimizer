@@ -127,7 +127,6 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
-                             ctx->Current.RasterIndex,
                              ctx->Current.RasterTexCoords[0] );
    }
    else {
@@ -213,7 +212,6 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       _mesa_feedback_vertex( ctx, 
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
-                             ctx->Current.RasterIndex,
                              ctx->Current.RasterTexCoords[0] );
    }
    else {
@@ -293,7 +291,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
-                             ctx->Current.RasterIndex, 
                              ctx->Current.RasterTexCoords[0] );
    }
    else {
