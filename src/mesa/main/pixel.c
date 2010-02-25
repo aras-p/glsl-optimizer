@@ -427,7 +427,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapusv(map)");
       return;
    }
-   mapsize = pm ? pm->Size : 0;
+   mapsize = pm->Size;
 
    if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
                             GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {
