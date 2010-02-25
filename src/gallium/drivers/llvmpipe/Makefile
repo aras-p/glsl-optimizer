@@ -42,6 +42,10 @@ C_SOURCES = \
 
 CPP_SOURCES = \
 
+PROGS := lp_test_format	\
+	 lp_test_blend	\
+	 lp_test_conv
+
 
 include ../../Makefile.template
 
@@ -49,13 +53,7 @@ lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxil
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
 
 
-testprogs := lp_test_format	\
-	     lp_test_blend	\
-	     lp_test_conv
+LIBS += $(GL_LIB_DEPS) -L../../auxiliary/ -lgallium
 
-LIBS += $(GL_LIB_DEPS) -L. -lllvmpipe -L../../auxiliary/ -lgallium
+$(PROGS): lp_test_main.o
 
-#$(testprogs): lp_test_% : lp_test_%.o lp_test_main.o libllvmpipe.a
-#	$(LD) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS) -Wl,--end-group
-
-#default: $(testprogs)
