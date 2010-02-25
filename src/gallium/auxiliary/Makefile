@@ -118,6 +118,7 @@ C_SOURCES = \
 	util/u_mm.c \
 	util/u_rect.c \
 	util/u_ringbuffer.c \
+	util/u_sampler.c \
 	util/u_simple_shaders.c \
 	util/u_snprintf.c \
 	util/u_surface.c \
