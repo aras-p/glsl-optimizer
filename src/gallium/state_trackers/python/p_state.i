@@ -69,7 +69,7 @@
    pipe_blend_state(const char *STRING, unsigned LENGTH)
    {
       struct pipe_blend_state *state;
-      state = CALLOC_STRUCT(pipe_framebuffer_state);
+      state = CALLOC_STRUCT(pipe_blend_state);
       if (state) {
          LENGTH = MIN2(sizeof *state, LENGTH);
          memcpy(state, STRING, LENGTH);
