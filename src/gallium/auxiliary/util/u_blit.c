@@ -426,11 +426,11 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    /* viewport */
    ctx->viewport.scale[0] = 0.5f * dst->width;
    ctx->viewport.scale[1] = 0.5f * dst->height;
-   ctx->viewport.scale[2] = 1.0f;
+   ctx->viewport.scale[2] = 0.5f;
    ctx->viewport.scale[3] = 1.0f;
    ctx->viewport.translate[0] = 0.5f * dst->width;
    ctx->viewport.translate[1] = 0.5f * dst->height;
-   ctx->viewport.translate[2] = 0.0f;
+   ctx->viewport.translate[2] = 0.5f;
    ctx->viewport.translate[3] = 0.0f;
    cso_set_viewport(ctx->cso, &ctx->viewport);
 
@@ -456,8 +456,10 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
-                                  (float) dstX0, (float) dstY0, 
-                                  (float) dstX1, (float) dstY1,
+                                  (float) dstX0 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY0 / dst->height * 2.0f - 1.0f,
+                                  (float) dstX1 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY1 / dst->height * 2.0f - 1.0f,
                                   s0, t0,
                                   s1, t1,
                                   z);
@@ -575,6 +577,17 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
 
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * dst->width;
+   ctx->viewport.scale[1] = 0.5f * dst->height;
+   ctx->viewport.scale[2] = 0.5f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * dst->width;
+   ctx->viewport.translate[1] = 0.5f * dst->height;
+   ctx->viewport.translate[2] = 0.5f;
+   ctx->viewport.translate[3] = 0.0f;
+   cso_set_viewport(ctx->cso, &ctx->viewport);
+
    /* texture */
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
@@ -592,8 +605,10 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
-                                  (float) dstX0, (float) dstY0,
-                                  (float) dstX1, (float) dstY1,
+                                  (float) dstX0 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY0 / dst->height * 2.0f - 1.0f,
+                                  (float) dstX1 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY1 / dst->height * 2.0f - 1.0f,
                                   s0, t0, s1, t1,
                                   z);
 
