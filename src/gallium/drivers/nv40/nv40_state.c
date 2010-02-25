@@ -282,19 +282,22 @@ nv40_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nv40_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
-			 struct pipe_texture **miptree)
+nv40_set_fragment_sampler_views(struct pipe_context *pipe,
+				unsigned nr,
+				struct pipe_sampler_view **views)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
+		pipe_sampler_view_reference(&nv40->fragment_sampler_views[unit], views[unit]);
 		pipe_texture_reference((struct pipe_texture **)
-				       &nv40->tex_miptree[unit], miptree[unit]);
+				       &nv40->tex_miptree[unit], views[unit]->texture);
 		nv40->dirty_samplers |= (1 << unit);
 	}
 
 	for (unit = nr; unit < nv40->nr_textures; unit++) {
+		pipe_sampler_view_reference(&nv40->fragment_sampler_views[unit], NULL);
 		pipe_texture_reference((struct pipe_texture **)
 				       &nv40->tex_miptree[unit], NULL);
 		nv40->dirty_samplers |= (1 << unit);
@@ -302,6 +305,31 @@ nv40_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 
 	nv40->nr_textures = nr;
 	nv40->dirty |= NV40_NEW_SAMPLER;
+}
+
+static struct pipe_sampler_view *
+nv40_create_sampler_view(struct pipe_context *pipe,
+			 struct pipe_texture *texture,
+			 const struct pipe_sampler_view *templ)
+{
+	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+	*view = *templ;
+	view->reference.count = 1;
+	view->texture = NULL;
+	pipe_texture_reference(&view->texture, texture);
+	view->context = pipe;
+
+	return view;
+}
+
+
+static void
+nv40_sampler_view_destroy(struct pipe_context *pipe,
+			  struct pipe_sampler_view *view)
+{
+	pipe_texture_reference(&view->texture, NULL);
+	FREE(view);
 }
 
 static void *
@@ -707,7 +735,9 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.create_sampler_state = nv40_sampler_state_create;
 	nv40->pipe.bind_fragment_sampler_states = nv40_sampler_state_bind;
 	nv40->pipe.delete_sampler_state = nv40_sampler_state_delete;
-	nv40->pipe.set_fragment_sampler_textures = nv40_set_sampler_texture;
+	nv40->pipe.set_fragment_sampler_views = nv40_set_fragment_sampler_views;
+	nv40->pipe.create_sampler_view = nv40_create_sampler_view;
+	nv40->pipe.sampler_view_destroy = nv40_sampler_view_destroy;
 
 	nv40->pipe.create_rasterizer_state = nv40_rasterizer_state_create;
 	nv40->pipe.bind_rasterizer_state = nv40_rasterizer_state_bind;
