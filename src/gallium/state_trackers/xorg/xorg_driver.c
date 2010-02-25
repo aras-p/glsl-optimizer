@@ -955,7 +955,7 @@ drv_destroy_front_buffer_ga3d(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
 
-    if (!ms->root_bo)
+    if (!ms->root_texture)
 	return TRUE;
 
     if (ms->fb_id != -1) {
