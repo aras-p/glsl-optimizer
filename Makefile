@@ -211,7 +211,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/*.spec					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/dmesa.h					\
-	$(DIRECTORY)/include/GL/ggimesa.h				\
 	$(DIRECTORY)/include/GL/gl.h					\
 	$(DIRECTORY)/include/GL/glext.h					\
 	$(DIRECTORY)/include/GL/gl_mangle.h				\
@@ -273,13 +272,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/ggimesa.conf.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/*.c			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/genkgi.conf.in	\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
@@ -458,7 +450,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
@@ -471,8 +462,6 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
 	$(DIRECTORY)/src/glut/beos/Makefile		\
-	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
-	$(DIRECTORY)/src/glut/ggi/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/*[ch]		\
