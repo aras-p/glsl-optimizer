@@ -64,9 +64,9 @@ upload_urb(struct brw_context *brw)
    BEGIN_BATCH(3);
    OUT_BATCH(CMD_URB << 16 | (3 - 2));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
-	     ((brw->urb.nr_vs_entries) << GEN6_URB_VS_SIZE_SHIFT));
+	     ((brw->urb.nr_vs_entries) << GEN6_URB_VS_ENTRIES_SHIFT));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
-	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_SIZE_SHIFT));
+	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_ENTRIES_SHIFT));
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
