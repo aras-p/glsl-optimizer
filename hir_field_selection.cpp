@@ -84,7 +84,7 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
     * index value as described above.
     */
    if ((str[0] < 'a') || (str[0] > 'z'))
-      return FALSE;
+      return false;
 
    base = base_idx[str[0] - 'a'];
 
@@ -96,11 +96,11 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
        * swizzle index.
        */
       if ((str[i] < 'a') || (str[i] > 'z'))
-	 return FALSE;
+	 return false;
 
       swiz_idx[i] = idx_map[str[0] - 'a'] - base;
       if ((swiz_idx[i] < 0) || (swiz_idx[i] >= (int) vector_length))
-	 return FALSE;
+	 return false;
 
 
       /* Track a bit-mask of the swizzle index values that have been seen.  If
@@ -112,7 +112,7 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
    }
 
    if (str[i] != '\0')
-	 return FALSE;
+	 return false;
 
    swiz->x = swiz_idx[0];
    swiz->y = swiz_idx[1];
@@ -121,7 +121,7 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
    swiz->num_components = i;
    swiz->has_duplicates = (dup_mask != 0);
 
-   return TRUE;
+   return true;
 }
 
 
@@ -155,7 +155,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
     * by the base type of the thing to which the field selection operator is
     * being applied.
     */
-   _mesa_ast_get_location(expr, & loc);
+   loc = expr->get_location();
    if (is_glsl_type_vector(op->type)) {
       if (generate_swizzle(expr->primary_expression.identifier, 
 			   & deref->selector.swizzle,
