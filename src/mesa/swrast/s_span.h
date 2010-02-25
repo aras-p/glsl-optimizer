@@ -197,10 +197,6 @@ _swrast_read_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                        GLuint n, GLint x, GLint y, GLenum type, GLvoid *rgba);
 
 extern void
-_swrast_read_index_span( GLcontext *ctx, struct gl_renderbuffer *rb,
-                         GLuint n, GLint x, GLint y, GLuint indx[] );
-
-extern void
 _swrast_get_values(GLcontext *ctx, struct gl_renderbuffer *rb,
                    GLuint count, const GLint x[], const GLint y[],
                    void *values, GLuint valueSize);
