@@ -42,7 +42,8 @@ static void r300_draw_emit_attrib(struct r300_context* r300,
                                   enum interp_mode interp,
                                   int index)
 {
-    struct tgsi_shader_info* info = &r300->vs->info;
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct tgsi_shader_info* info = &vs->info;
     int output;
 
     output = draw_find_shader_output(r300->draw,
@@ -55,7 +56,8 @@ static void r300_draw_emit_attrib(struct r300_context* r300,
 
 static void r300_draw_emit_all_attribs(struct r300_context* r300)
 {
-    struct r300_shader_semantics* vs_outputs = &r300->vs->outputs;
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct r300_shader_semantics* vs_outputs = &vs->outputs;
     int i, gen_count;
 
     /* Position. */
@@ -106,6 +108,7 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 /* Update the PSC tables. */
 static void r300_vertex_psc(struct r300_context* r300)
 {
+    struct r300_vertex_shader* vs = r300->vs_state.state;
     struct r300_vertex_info *vformat =
         (struct r300_vertex_info*)r300->vertex_format_state.state;
     uint16_t type, swizzle;
@@ -117,7 +120,7 @@ static void r300_vertex_psc(struct r300_context* r300)
     /* If TCL is bypassed, map vertex streams to equivalent VS output
      * locations. */
     if (r300->tcl_bypass) {
-        stream_tab = r300->vs->stream_loc_notcl;
+        stream_tab = vs->stream_loc_notcl;
     } else {
         stream_tab = identity;
     }
@@ -127,7 +130,7 @@ static void r300_vertex_psc(struct r300_context* r300)
      * and not on attrib information. */
     DBG(r300, DBG_DRAW, "r300: vs expects %d attribs, routing %d elements"
             " in psc\n",
-            r300->vs->info.num_inputs,
+            vs->info.num_inputs,
             r300->vertex_element_count);
 
     for (i = 0; i < r300->vertex_element_count; i++) {
@@ -159,13 +162,14 @@ static void r300_vertex_psc(struct r300_context* r300)
 /* Update the PSC tables for SW TCL, using Draw. */
 static void r300_swtcl_vertex_psc(struct r300_context* r300)
 {
+    struct r300_vertex_shader* vs = r300->vs_state.state;
     struct r300_vertex_info *vformat =
         (struct r300_vertex_info*)r300->vertex_format_state.state;
     struct vertex_info* vinfo = &vformat->vinfo;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
-    int* vs_output_tab = r300->vs->stream_loc_notcl;
+    int* vs_output_tab = vs->stream_loc_notcl;
 
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */
@@ -424,6 +428,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 /* Update the shader-dependant states. */
 static void r300_update_derived_shader_state(struct r300_context* r300)
 {
+    struct r300_vertex_shader* vs = r300->vs_state.state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_vertex_info *vformat =
         (struct r300_vertex_info*)r300->vertex_format_state.state;
@@ -431,9 +436,9 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
 
     /* Mmm, delicious hax */
     memset(r300->vertex_format_state.state, 0, sizeof(struct r300_vertex_info));
-    memcpy(vinfo->hwfmt, r300->vs->hwfmt, sizeof(uint)*4);
+    memcpy(vinfo->hwfmt, vs->hwfmt, sizeof(uint)*4);
 
-    r300_update_rs_block(r300, &r300->vs->outputs, &r300->fs->inputs);
+    r300_update_rs_block(r300, &vs->outputs, &r300->fs->inputs);
 
     if (r300screen->caps->has_tcl) {
         r300_vertex_psc(r300);
@@ -519,9 +524,9 @@ static void r300_update_ztop(struct r300_context* r300)
 void r300_update_derived_state(struct r300_context* r300)
 {
     /* XXX */
-    if (r300->dirty_state &
-        (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER) ||
-        r300->vertex_format_state.dirty || r300->rs_state.dirty) {
+    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER ||
+        r300->vs_state.dirty || r300->vertex_format_state.dirty ||
+        r300->rs_state.dirty) {
         r300_update_derived_shader_state(r300);
     }
 

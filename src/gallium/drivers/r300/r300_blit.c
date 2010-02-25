@@ -33,7 +33,7 @@ static void r300_blitter_save_states(struct r300_context* r300)
     util_blitter_save_stencil_ref(r300->blitter, &(r300->stencil_ref));
     util_blitter_save_rasterizer(r300->blitter, r300->rs_state.state);
     util_blitter_save_fragment_shader(r300->blitter, r300->fs);
-    util_blitter_save_vertex_shader(r300->blitter, r300->vs);
+    util_blitter_save_vertex_shader(r300->blitter, r300->vs_state.state);
 }
 
 /* Clear currently bound buffers. */

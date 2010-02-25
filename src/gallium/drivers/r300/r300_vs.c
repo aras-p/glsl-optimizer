@@ -368,8 +368,8 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
 boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
 {
-    struct r300_vertex_shader* vs = r300->vs;
-    int tex_output = r300->vs->wpos_tex_output;
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    int tex_output = vs->wpos_tex_output;
     uint32_t tex_fmt = R300_INPUT_CNTL_TC0 << tex_output;
     uint32_t* hwfmt = vs->hwfmt;
 

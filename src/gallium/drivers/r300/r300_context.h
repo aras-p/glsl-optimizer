@@ -155,7 +155,6 @@ struct r300_ztop_state {
 #define R300_ANY_NEW_SAMPLERS    0x0001fe00
 #define R300_NEW_TEXTURE         0x00040000
 #define R300_ANY_NEW_TEXTURES    0x03fc0000
-#define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
@@ -315,7 +314,7 @@ struct r300_context {
     struct r300_texture* textures[8];
     int texture_count;
     /* Vertex shader. */
-    struct r300_vertex_shader* vs;
+    struct r300_atom vs_state;
     /* Viewport state. */
     struct r300_atom viewport_state;
     /* ZTOP state. */

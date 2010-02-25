@@ -843,21 +843,31 @@ void r300_emit_vertex_format_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-
-void r300_emit_vertex_program_code(struct r300_context* r300,
-                                   struct r300_vertex_program_code* code)
+static void r300_flush_pvs(struct r300_context* r300)
 {
-    int i;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(2);
+    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
+    END_CS;
+}
+
+void r300_emit_vs_state(struct r300_context* r300, void* state)
+{
+    struct r300_vertex_shader* vs = (struct r300_vertex_shader*)state;
+    struct r300_vertex_program_code* code = &vs->code;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     unsigned instruction_count = code->length / 4;
+    unsigned i;
 
-    int vtx_mem_size = r300screen->caps->is_r500 ? 128 : 72;
-    int input_count = MAX2(util_bitcount(code->InputsRead), 1);
-    int output_count = MAX2(util_bitcount(code->OutputsWritten), 1);
-    int temp_count = MAX2(code->num_temporaries, 1);
-    int pvs_num_slots = MIN3(vtx_mem_size / input_count,
-                             vtx_mem_size / output_count, 10);
-    int pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
+    unsigned vtx_mem_size = r300screen->caps->is_r500 ? 128 : 72;
+    unsigned input_count = MAX2(util_bitcount(code->InputsRead), 1);
+    unsigned output_count = MAX2(util_bitcount(code->OutputsWritten), 1);
+    unsigned temp_count = MAX2(code->num_temporaries, 1);
+
+    unsigned pvs_num_slots = MIN3(vtx_mem_size / input_count,
+                                  vtx_mem_size / output_count, 10);
+    unsigned pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
 
     CS_LOCALS(r300);
 
@@ -866,6 +876,8 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
                 " but has_tcl is FALSE!\n");
         return;
     }
+
+    r300_flush_pvs(r300);
 
     BEGIN_CS(9 + code->length);
     /* R300_VAP_PVS_CODE_CNTL_0
@@ -881,8 +893,9 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->length);
-    for (i = 0; i < code->length; i++)
+    for (i = 0; i < code->length; i++) {
         OUT_CS(code->body.d[i]);
+    }
 
     OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(pvs_num_slots) |
             R300_PVS_NUM_CNTLRS(pvs_num_controllers) |
@@ -890,12 +903,6 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
             R300_PVS_VF_MAX_VTX_NUM(12) |
             (r300screen->caps->is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
     END_CS;
-}
-
-void r300_emit_vertex_shader(struct r300_context* r300,
-                             struct r300_vertex_shader* vs)
-{
-    r300_emit_vertex_program_code(r300, &vs->code);
 }
 
 void r300_emit_vs_constant_buffer(struct r300_context* r300,
@@ -994,15 +1001,6 @@ void r300_flush_textures(struct r300_context* r300)
     END_CS;
 }
 
-static void r300_flush_pvs(struct r300_context* r300)
-{
-    CS_LOCALS(r300);
-
-    BEGIN_CS(2);
-    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
-    END_CS;
-}
-
 void r300_emit_buffer_validate(struct r300_context *r300)
 {
     struct pipe_framebuffer_state* fb =
@@ -1088,7 +1086,7 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
     }
 
     /* XXX This is the compensation for the non-atomized states. */
-    dwords += 2048;
+    dwords += 1024;
 
     return dwords;
 }
@@ -1160,17 +1158,13 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300_flush_textures(r300);
     }
 
-    if (r300->dirty_state & (R300_NEW_VERTEX_SHADER | R300_NEW_VERTEX_SHADER_CONSTANTS)) {
+    if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS || r300->vs_state.dirty) {
         r300_flush_pvs(r300);
     }
 
-    if (r300->dirty_state & R300_NEW_VERTEX_SHADER) {
-        r300_emit_vertex_shader(r300, r300->vs);
-        r300->dirty_state &= ~R300_NEW_VERTEX_SHADER;
-    }
-
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {
-        r300_emit_vs_constant_buffer(r300, &r300->vs->code.constants);
+        struct r300_vertex_shader* vs = r300->vs_state.state;
+        r300_emit_vs_constant_buffer(r300, &vs->code.constants);
         r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
     }
 
