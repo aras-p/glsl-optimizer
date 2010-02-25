@@ -39,8 +39,10 @@ buffers, surfaces) are bound to the driver.
   are mostly restricted to the first one right now).
 
 * ``set_framebuffer_state``
-* ``set_fragment_sampler_textures``
-* ``set_vertex_sampler_textures``
+* ``set_fragment_sampler_views``
+* ``set_vertex_sampler_views``
+* ``create_sampler_view``
+* ``sampler_view_destroy``
 * ``set_vertex_buffers``
 
 
