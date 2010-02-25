@@ -187,9 +187,6 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
                        GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
                        GLfloat s, GLfloat t, GLfloat q, GLfloat invQ);
 
-extern void
-_swrast_write_index_span( GLcontext *ctx, SWspan *span);
-
 
 extern void
 _swrast_write_rgba_span( GLcontext *ctx, SWspan *span);
