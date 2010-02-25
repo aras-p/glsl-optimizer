@@ -490,7 +490,7 @@ _glapi_get_dispatch_table_size(void)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
-#ifdef EXTRA_DEBUG
+#if 0 /* Enable this for extra DEBUG */
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
