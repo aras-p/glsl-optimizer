@@ -1,6 +1,8 @@
 #ifndef __NVFX_SHADER_H__
 #define __NVFX_SHADER_H__
 
+#define NVFX_SWZ_IDENTITY ((3 << 6) | (2 << 4) | (1 << 2) | (0 << 0))
+
 /* this will resolve to either the NV30 or the NV40 version
  * depending on the current hardware */
 /* unusual, but very fast and compact method */
@@ -71,11 +73,58 @@
 /*
  * Each fragment program opcode appears to be comprised of 4 32-bit values.
  *
- *   0 - Opcode, output reg/mask, ATTRIB source
- *   1 - Source 0
- *   2 - Source 1
- *   3 - Source 2
+ * 0: OPDEST
+ * 	0: program end
+ * 	1-6: destination register
+ * 	7: destination register is fp16?? (use for outputs)
+ * 	8: set condition code
+ * 	9: writemask x
+ *  	10: writemask y
+ *  	11: writemask z
+ *  	12: writemask w
+ *  	13-16: source attribute register number (e.g. COL0)
+ *  	17-20: texture unit number
+ *  	21: expand value on texture operation (x -> 2x - 1)
+ *  	22-23: precision 0 = fp32, 1 = fp16, 2 = s1.10 fixed, 3 = s0.8 fixed (nv40-only))
+ * 	24-29: opcode
+ * 	30: no destination
+ * 	31: saturate
+ * 1 - SRC0
+ * 	0-17: see common source fields
+ * 	18: execute if condition code less
+ * 	19: execute if condition code equal
+ * 	20: execute if condition code greater
+ * 	21-22: condition code swizzle x source component
+ * 	23-24: condition code swizzle y source component
+ * 	25-26: condition code swizzle z source component
+ * 	27-28: condition code swizzle w source component
+ * 	29: source 0 absolute
+ * 	30: always 0 in renouveau tests
+ * 	31: always 0 in renouveau tests
+ * 2 - SRC1
+ * 	0-17: see common source fields
+ * 	18: source 1 absolute
+ * 	19-20: input precision 0 = fp32, 1 = fp16, 2 = s1.10 fixed, 3 = ???
+ * 	21-27: always 0 in renouveau tests
+ * 	28-30: scale (0 = 1x, 1 = 2x, 2 = 4x, 3 = 8x, 4 = ???, 5, = 1/2, 6 = 1/4, 7 = 1/8)
+ * 	31: opcode is branch
+ * 3 - SRC2
+ * 	0-17: see common source fields
+ * 	18: source 2 absolute
+ * 	19-29: address register displacement
+ * 	30: use index register
+ * 	31: disable perspective-correct interpolation?
  *
+* Common fields of 0, 1, 2 - SRC
+ * 	0-1: source register type (0 = temp, 1 = input, 2 = immediate, 3 = ???)
+ * 	2-7: source temp register index
+ * 	8: source register is fp16??
+ * 	9-10: source swizzle x source component
+ * 	11-12: source swizzle y source component
+ * 	13-14: source swizzle z source component
+ * 	15-16: source swizzle w source component
+ *	17: negate
+
  * There appears to be no special difference between result regs and temp regs.
  *     result.color == R0.xyzw
  *     result.depth == R1.z
@@ -210,6 +259,7 @@
 
 /* NV40 only fragment program opcodes */
 #define NVFX_FP_OP_OPCODE_TXL_NV40 0x2F
+
 /* The use of these instructions appears to be indicated by bit 31 of DWORD 2.*/
 #define NV40_FP_OP_BRA_OPCODE_BRK                                    0x0
 #define NV40_FP_OP_BRA_OPCODE_CAL                                    0x1
@@ -218,10 +268,11 @@
 #define NV40_FP_OP_BRA_OPCODE_REP                                    0x4
 #define NV40_FP_OP_BRA_OPCODE_RET                                    0x5
 
+#define NV40_FP_OP_OUT_NONE         (1 << 30)
 #define NVFX_FP_OP_OUT_SAT          (1 << 31)
 
 /* high order bits of SRC0 */
-#define NVFX_FP_OP_OUT_ABS          (1 << 29)
+#define NVFX_FP_OP_SRC0_ABS          (1 << 29)
 #define NVFX_FP_OP_COND_SWZ_W_SHIFT        27
 #define NVFX_FP_OP_COND_SWZ_W_MASK        (3 << 27)
 #define NVFX_FP_OP_COND_SWZ_Z_SHIFT        25
@@ -254,6 +305,7 @@
 #define NVFX_FP_OP_DST_SCALE_INV_2X                                            5
 #define NVFX_FP_OP_DST_SCALE_INV_4X                                            6
 #define NVFX_FP_OP_DST_SCALE_INV_8X                                            7
+#define NVFX_FP_OP_SRC1_ABS          (1 << 18)
 
 /* SRC1 LOOP */
 #define NV40_FP_OP_LOOP_INCR_SHIFT                                            19
@@ -263,13 +315,13 @@
 #define NV40_FP_OP_LOOP_COUNT_SHIFT                                            2
 #define NV40_FP_OP_LOOP_COUNT_MASK                                   (0xFF << 2)
 
-/* SRC1 IF */
-#define NV40_FP_OP_ELSE_ID_SHIFT                                               2
-#define NV40_FP_OP_ELSE_ID_MASK                                      (0xFF << 2)
+/* SRC1 IF: absolute offset in dwords */
+#define NV40_FP_OP_ELSE_OFFSET_SHIFT                                           0
+#define NV40_FP_OP_ELSE_OFFSET_MASK                             (0x7FFFFFFF << 0)
 
 /* SRC1 CAL */
-#define NV40_FP_OP_IADDR_SHIFT                                                 2
-#define NV40_FP_OP_IADDR_MASK                                        (0xFF << 2)
+#define NV40_FP_OP_SUB_OFFSET_SHIFT                                                 0
+#define NV40_FP_OP_SUB_OFFSET_MASK                                   (0x7FFFFFFF << 0)
 
 /* SRC1 REP
  *   I have no idea why there are 3 count values here..  but they
@@ -283,9 +335,9 @@
 #define NV40_FP_OP_REP_COUNT3_SHIFT                                           19
 #define NV40_FP_OP_REP_COUNT3_MASK                                  (0xFF << 19)
 
-/* SRC2 REP/IF */
-#define NV40_FP_OP_END_ID_SHIFT                                                2
-#define NV40_FP_OP_END_ID_MASK                                       (0xFF << 2)
+/* SRC2 REP/IF: absolute offset in dwords */
+#define NV40_FP_OP_END_OFFSET_SHIFT                                            0
+#define NV40_FP_OP_END_OFFSET_MASK                              (0x7FFFFFFF << 0)
 
 /* high order bits of SRC2 */
 #define NVFX_FP_OP_INDEX_INPUT          (1 << 30)
