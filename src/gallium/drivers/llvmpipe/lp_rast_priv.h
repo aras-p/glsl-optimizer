@@ -84,6 +84,7 @@ struct lp_rasterizer
 {
    boolean clipped_tile;
    boolean check_for_clipped_tiles;
+   boolean exit_flag;
 
    /* Framebuffer stuff
     */

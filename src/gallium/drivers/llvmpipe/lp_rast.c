@@ -826,6 +826,9 @@ static PIPE_THREAD_ROUTINE( thread_func, init_data )
          debug_printf("thread %d waiting for work\n", task->thread_index);
       pipe_semaphore_wait(&task->work_ready);
 
+      if (rast->exit_flag)
+         break;
+
       if (task->thread_index == 0) {
          /* thread[0]:
           *  - get next scene to rasterize
@@ -959,6 +962,20 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
    for (i = 0; i < Elements(rast->tasks); i++) {
       for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )
 	 align_free(rast->tasks[i].tile.color[cbuf]);
+   }
+
+   /* Set exit_flag and signal each thread's work_ready semaphore.
+    * Each thread will be woken up, notice that the exit_flag is set and
+    * break out of its main loop.  The thread will then exit.
+    */
+   rast->exit_flag = TRUE;
+   for (i = 0; i < rast->num_threads; i++) {
+      pipe_semaphore_signal(&rast->tasks[i].work_ready);
+   }
+
+   for (i = 0; i < rast->num_threads; i++) {
+      pipe_semaphore_destroy(&rast->tasks[i].work_ready);
+      pipe_semaphore_destroy(&rast->tasks[i].work_done);
    }
 
    /* for synchronizing rasterization threads */
