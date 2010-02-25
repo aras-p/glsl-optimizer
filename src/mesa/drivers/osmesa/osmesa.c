@@ -1116,14 +1116,12 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 
    osmesa = (OSMesaContext) CALLOC_STRUCT(osmesa_context);
    if (osmesa) {
-      osmesa->gl_visual = _mesa_create_visual( GL_TRUE,     /* rgbMode */
-                                               GL_FALSE,    /* double buffer */
+      osmesa->gl_visual = _mesa_create_visual( GL_FALSE,    /* double buffer */
                                                GL_FALSE,    /* stereo */
                                                redBits,
                                                greenBits,
                                                blueBits,
                                                alphaBits,
-                                               0,
                                                depthBits,
                                                stencilBits,
                                                accumBits,

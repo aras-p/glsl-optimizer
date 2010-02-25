@@ -327,7 +327,7 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
    const int *attrib;
    GLboolean dbFlag = GL_FALSE, stereoFlag = GL_FALSE;
    GLint redBits = 0, greenBits = 0, blueBits = 0, alphaBits = 0;
-   GLint indexBits = 0, depthBits = 0, stencilBits = 0;
+   GLint depthBits = 0, stencilBits = 0;
    GLint accumRedBits = 0, accumGreenBits = 0;
    GLint accumBlueBits = 0, accumAlphaBits = 0;
    GLint numSamples = 0;
@@ -414,9 +414,9 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       }
    }
 
-   if (!_mesa_initialize_visual(&vis->glvisual, GL_TRUE, dbFlag, stereoFlag,
+   if (!_mesa_initialize_visual(&vis->glvisual, dbFlag, stereoFlag,
                                 redBits, greenBits, blueBits, alphaBits,
-                                indexBits, depthBits, stencilBits,
+                                depthBits, stencilBits,
                                 accumRedBits, accumGreenBits,
                                 accumBlueBits, accumAlphaBits,
                                 numSamples)) {

@@ -184,7 +184,6 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
  * Allocates a GLvisual structure and initializes it via
  * _mesa_initialize_visual().
  * 
- * \param rgbFlag GL_TRUE for RGB(A) mode, GL_FALSE for Color Index mode.
  * \param dbFlag double buffering
  * \param stereoFlag stereo buffer
  * \param depthBits requested bits per depth buffer value. Any value in [0, 32]
@@ -206,14 +205,12 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
  * \note Need to add params for level and numAuxBuffers (at least)
  */
 GLvisual *
-_mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean dbFlag,
+_mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
                      GLint greenBits,
                      GLint blueBits,
                      GLint alphaBits,
-                     GLint indexBits,
                      GLint depthBits,
                      GLint stencilBits,
                      GLint accumRedBits,
@@ -224,9 +221,9 @@ _mesa_create_visual( GLboolean rgbFlag,
 {
    GLvisual *vis = (GLvisual *) calloc(1, sizeof(GLvisual));
    if (vis) {
-      if (!_mesa_initialize_visual(vis, rgbFlag, dbFlag, stereoFlag,
+      if (!_mesa_initialize_visual(vis, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
-                                   indexBits, depthBits, stencilBits,
+                                   depthBits, stencilBits,
                                    accumRedBits, accumGreenBits,
                                    accumBlueBits, accumAlphaBits,
                                    numSamples)) {
@@ -248,14 +245,12 @@ _mesa_create_visual( GLboolean rgbFlag,
  */
 GLboolean
 _mesa_initialize_visual( GLvisual *vis,
-                         GLboolean rgbFlag,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
                          GLint greenBits,
                          GLint blueBits,
                          GLint alphaBits,
-                         GLint indexBits,
                          GLint depthBits,
                          GLint stencilBits,
                          GLint accumRedBits,
@@ -277,7 +272,7 @@ _mesa_initialize_visual( GLvisual *vis,
    assert(accumBlueBits >= 0);
    assert(accumAlphaBits >= 0);
 
-   vis->rgbMode          = rgbFlag;
+   vis->rgbMode          = GL_TRUE;
    vis->doubleBufferMode = dbFlag;
    vis->stereoMode       = stereoFlag;
 
@@ -287,7 +282,7 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->alphaBits        = alphaBits;
    vis->rgbBits          = redBits + greenBits + blueBits;
 
-   vis->indexBits      = indexBits;
+   vis->indexBits      = 0;
    vis->depthBits      = depthBits;
    vis->stencilBits    = stencilBits;
 

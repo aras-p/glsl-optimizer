@@ -1461,12 +1461,10 @@ WMesaContext WMesaCreateContext(HDC hDC,
 	break;
     }
     /* Create visual based on flags */
-    visual = _mesa_create_visual(rgb_flag,
-                                 db_flag,    /* db_flag */
+    visual = _mesa_create_visual(db_flag,    /* db_flag */
                                  GL_FALSE,   /* stereo */
                                  red_bits, green_bits, blue_bits, /* color RGB */
                                  alpha_flag ? alpha_bits : 0, /* color A */
-                                 0,          /* index bits */
                                  DEFAULT_SOFTWARE_DEPTH_BITS, /* depth_bits */
                                  8,          /* stencil_bits */
                                  16,16,16,   /* accum RGB */

@@ -1443,10 +1443,9 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
    }
 
    _mesa_initialize_visual( &v->mesa_visual,
-                            GL_TRUE, db_flag, stereo_flag,
+                            db_flag, stereo_flag,
                             red_bits, green_bits,
                             blue_bits, alpha_bits,
-                            v->mesa_visual.indexBits,
                             depth_size,
                             stencil_size,
                             accum_red_size, accum_green_size,

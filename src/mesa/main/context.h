@@ -60,14 +60,12 @@ struct _glapi_table;
 /*@{*/
  
 extern GLvisual *
-_mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean dbFlag,
+_mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
                      GLint greenBits,
                      GLint blueBits,
                      GLint alphaBits,
-                     GLint indexBits,
                      GLint depthBits,
                      GLint stencilBits,
                      GLint accumRedBits,
@@ -78,14 +76,12 @@ _mesa_create_visual( GLboolean rgbFlag,
 
 extern GLboolean
 _mesa_initialize_visual( GLvisual *v,
-                         GLboolean rgbFlag,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
                          GLint greenBits,
                          GLint blueBits,
                          GLint alphaBits,
-                         GLint indexBits,
                          GLint depthBits,
                          GLint stencilBits,
                          GLint accumRedBits,
