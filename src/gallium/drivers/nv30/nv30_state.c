@@ -720,7 +720,7 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.create_sampler_state = nv30_sampler_state_create;
 	nv30->pipe.bind_fragment_sampler_states = nv30_sampler_state_bind;
 	nv30->pipe.delete_sampler_state = nv30_sampler_state_delete;
-	nv30->pipe.set_fragment_sampler_views = nv30_set_fragment_sampler_view;
+	nv30->pipe.set_fragment_sampler_views = nv30_set_fragment_sampler_views;
 	nv30->pipe.create_sampler_view = nv30_create_sampler_view;
 	nv30->pipe.sampler_view_destroy = nv30_sampler_view_destroy;
 
