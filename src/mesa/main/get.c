@@ -253,7 +253,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterIndex);
+         params[0] = FLOAT_TO_BOOLEAN(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterPos[0]);
@@ -2122,7 +2122,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Current.RasterDistance;
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = ctx->Current.RasterIndex;
+         params[0] = 1.0;
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = ctx->Current.RasterPos[0];
@@ -3991,7 +3991,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = IROUND(ctx->Current.RasterIndex);
+         params[0] = IROUND(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = IROUND(ctx->Current.RasterPos[0]);
@@ -5861,7 +5861,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = IROUND64(ctx->Current.RasterIndex);
+         params[0] = IROUND64(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = IROUND64(ctx->Current.RasterPos[0]);

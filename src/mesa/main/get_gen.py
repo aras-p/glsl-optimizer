@@ -155,7 +155,7 @@ StateVars = [
 	( "GL_CURRENT_RASTER_DISTANCE", GLfloat,
 	  ["ctx->Current.RasterDistance"], "", None ),
 	( "GL_CURRENT_RASTER_INDEX", GLfloat,
-	  ["ctx->Current.RasterIndex"], "", None ),
+	  ["1.0"], "", None ),
 	( "GL_CURRENT_RASTER_POSITION", GLfloat,
 	  ["ctx->Current.RasterPos[0]",
 	   "ctx->Current.RasterPos[1]",
