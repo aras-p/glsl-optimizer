@@ -152,7 +152,7 @@ def write_format_table(formats):
     print "      assert(0);"
     print "      return NULL;"
     print "   }"
-    print "};"
+    print "}"
     print
 
 
