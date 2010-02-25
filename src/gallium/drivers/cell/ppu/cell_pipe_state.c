@@ -257,8 +257,9 @@ cell_delete_sampler_state(struct pipe_context *pipe,
 
 
 static void
-cell_set_sampler_textures(struct pipe_context *pipe,
-                          unsigned num, struct pipe_texture **texture)
+cell_set_fragment_sampler_views(struct pipe_context *pipe,
+                                unsigned num,
+                                struct pipe_sampler_view **views)
 {
    struct cell_context *cell = cell_context(pipe);
    uint i, changed = 0x0;
@@ -266,10 +267,14 @@ cell_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= CELL_MAX_SAMPLERS);
 
    for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
-      struct cell_texture *new_tex = cell_texture(i < num ? texture[i] : NULL);
-      struct cell_texture *old_tex = cell->texture[i];
-      if (old_tex != new_tex) {
+      struct pipe_sampler_view *new_view = i < num ? views[i] : NULL;
+      struct pipe_sampler_view *old_view = cell->fragment_sampler_views[i];
 
+      if (old_view != new_view) {
+         struct pipe_texture *new_tex = new_view ? new_view->texture : NULL;
+
+         pipe_sampler_view_reference(&cell->fragment_sampler_views[i],
+                                     views[i]);
          pipe_texture_reference((struct pipe_texture **) &cell->texture[i],
                                 (struct pipe_texture *) new_tex);
 
@@ -283,6 +288,32 @@ cell_set_sampler_textures(struct pipe_context *pipe,
       cell->dirty |= CELL_NEW_TEXTURE;
       cell->dirty_textures |= changed;
    }
+}
+
+
+static struct pipe_sampler_view *
+cell_create_sampler_view(struct pipe_context *pipe,
+                         struct pipe_texture *texture,
+                         const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   *view = *templ;
+   view->reference.count = 1;
+   view->texture = NULL;
+   pipe_texture_reference(&view->texture, texture);
+   view->context = pipe;
+
+   return view;
+}
+
+
+static void
+cell_sampler_view_destroy(struct pipe_context *pipe,
+                          struct pipe_sampler_view *view)
+{
+   pipe_texture_reference(&view->texture, NULL);
+   FREE(view);
 }
 
 
@@ -399,7 +430,9 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.bind_fragment_sampler_states = cell_bind_sampler_states;
    cell->pipe.delete_sampler_state = cell_delete_sampler_state;
 
-   cell->pipe.set_fragment_sampler_textures = cell_set_sampler_textures;
+   cell->pipe.set_fragment_sampler_views = cell_set_fragment_sampler_views;
+   cell->pipe.create_sampler_view = cell_create_sampler_view;
+   cell->pipe.sampler_view_destroy = cell_sampler_view_destroy;
 
    cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
    cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;
