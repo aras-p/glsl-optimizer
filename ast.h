@@ -33,18 +33,6 @@ struct _mesa_glsl_parse_state;
 
 struct YYLTYPE;
 
-#define _mesa_ast_print(n) \
-   ((ast_node *) n)->print()
-
-#define _mesa_ast_to_hir(n, instr, s)					\
-   ((struct ast_node *) n)->vtbl->to_hir((struct ast_node *) n, instr, s)
-
-#define _mesa_ast_function_call_to_hir(n, p, s)				\
-   ((struct ast_node *) n)->vtbl->function_call_to_hir(			\
-					(struct ast_node *) n, 		\
-					(struct ast_node *) p,		\
-					s)
-
 class ast_node : public simple_node {
 public:
    virtual ~ast_node();

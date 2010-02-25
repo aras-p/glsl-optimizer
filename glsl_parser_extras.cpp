@@ -211,7 +211,7 @@ ast_compound_statement::print(void) const
    printf("{\n");
    
    foreach(ptr, & statements) {
-      _mesa_ast_print(ptr);
+      ((ast_node *)ptr)->print();
    }
 
    printf("}\n");
@@ -304,7 +304,7 @@ ast_expression::print(void) const
 	 parameters->print();
 	 foreach (ptr, (struct simple_node *) parameters) {
 	    printf(", ");
-	    _mesa_ast_print(ptr);
+	    ((ast_node *)ptr)->print();
 	 }
       }
 
@@ -343,7 +343,7 @@ ast_expression::print(void) const
 	 if (ptr != head)
 	    printf(", ");
 
-	 _mesa_ast_print(ptr);
+	 ((ast_node *)ptr)->print();
       }
       printf(") ");
       break;
@@ -394,7 +394,7 @@ ast_function::print(void) const
    printf(" %s (", identifier);
 
    foreach(ptr, & parameters) {
-      _mesa_ast_print(ptr);
+      ((ast_node *)ptr)->print();
    }
 
    printf(")");
@@ -475,7 +475,7 @@ ast_declarator_list::print(void) const
       if (ptr != head)
 	 printf(", ");
 
-      _mesa_ast_print(ptr);
+      ((ast_node *)ptr)->print();
    }
 
    printf("; ");
@@ -610,7 +610,7 @@ ast_struct_specifier::print(void) const
 
    printf("struct %s { ", name);
    foreach (ptr, & declarations) {
-      _mesa_ast_print(ptr);
+      ((ast_node *)ptr)->print();
    }
    printf("} ");
 }
@@ -695,7 +695,7 @@ main(int argc, char **argv)
    _mesa_glsl_lexer_dtor(& state);
 
    foreach (ptr, & state.translation_unit) {
-      _mesa_ast_print(ptr);
+      ((ast_node *)ptr)->print();
    }
 
 #if 0
