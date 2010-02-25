@@ -104,7 +104,8 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    batch->map = NULL;
    batch->ptr = NULL;
 
-   dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
+   if (!intel->no_hw)
+      dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
