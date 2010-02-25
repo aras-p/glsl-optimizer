@@ -118,7 +118,6 @@ linux-dri-xcb \
 linux-egl \
 linux-indirect \
 linux-fbdev \
-linux-glide \
 linux-ia64-icc \
 linux-ia64-icc-static \
 linux-icc \
@@ -149,7 +148,6 @@ linux-x86-64 \
 linux-x86-64-debug \
 linux-x86-64-profile \
 linux-x86-64-static \
-linux-x86-glide \
 linux-x86-profile \
 linux-x86-static \
 netbsd \
@@ -271,7 +269,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
-	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
