@@ -332,7 +332,6 @@ int __gl_meshSplice( GLUhalfEdge *eOrg, GLUhalfEdge *eDst )
     /* We are merging two disjoint vertices -- destroy eDst->Org */
     joiningVertices = TRUE;
     KillVertex( eDst->Org, eOrg->Org );
-    eDst->Org = NULL;
   }
   if( eDst->Lface != eOrg->Lface ) {
     /* We are connecting two disjoint loops -- destroy eDst->Lface */
