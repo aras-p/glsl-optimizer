@@ -720,10 +720,9 @@ if test "$mesa_driver" = dri; then
 
         case "$host_cpu" in
         x86_64)
-            # ffb, gamma, and sis are missing because they have not be
-            # converted to use the new interface.  i810 are missing
-            # because there is no x86-64 system where they could *ever*
-            # be used.
+            # sis is missing because they have not be converted to use
+            # the new interface.  i810 are missing because there is no
+            # x86-64 system where they could *ever* be used.
             if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 r600 radeon \
                     savage tdfx unichrome swrast"
@@ -739,7 +738,7 @@ if test "$mesa_driver" = dri; then
         sparc*)
             # Build only the drivers for cards that exist on sparc`
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="mach64 r128 r200 r300 r600 radeon ffb swrast"
+                DRI_DIRS="mach64 r128 r200 r300 r600 radeon swrast"
             fi
             ;;
         esac
@@ -755,8 +754,6 @@ if test "$mesa_driver" = dri; then
             CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
-        # ffb and gamma are missing because they have not been converted
-        # to use the new interface.
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon tdfx \
                 unichrome savage sis swrast"
@@ -778,7 +775,7 @@ if test "$mesa_driver" = dri; then
     # default drivers
     if test "x$DRI_DIRS" = "xyes"; then
         DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
-            savage sis tdfx unichrome ffb swrast"
+            savage sis tdfx unichrome swrast"
     fi
 
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
