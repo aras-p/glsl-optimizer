@@ -45,6 +45,9 @@ get_tex_format_pot(struct gl_texture_image *ti)
 	case MESA_FORMAT_ARGB4444:
 		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4;
 
+	case MESA_FORMAT_XRGB8888:
+		return NV20TCL_TX_FORMAT_FORMAT_X8R8G8B8;
+
 	case MESA_FORMAT_RGB565:
 		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5;
 
@@ -67,14 +70,20 @@ static uint32_t
 get_tex_format_rect(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
+	case MESA_FORMAT_ARGB8888:
+		return NV20TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
+
 	case MESA_FORMAT_ARGB1555:
 		return NV20TCL_TX_FORMAT_FORMAT_A1R5G5B5_RECT;
 
+	case MESA_FORMAT_ARGB4444:
+		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4_RECT;
+
+	case MESA_FORMAT_XRGB8888:
+		return NV20TCL_TX_FORMAT_FORMAT_R8G8B8_RECT;
+
 	case MESA_FORMAT_RGB565:
 		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
-
-	case MESA_FORMAT_ARGB8888:
-		return NV20TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
 	case MESA_FORMAT_L8:
 		return NV20TCL_TX_FORMAT_FORMAT_L8_RECT;
@@ -82,9 +91,6 @@ get_tex_format_rect(struct gl_texture_image *ti)
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_I8:
 		return NV20TCL_TX_FORMAT_FORMAT_A8_RECT;
-
-	case MESA_FORMAT_ARGB4444:
-		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4_RECT;
 
 	default:
 		assert(0);

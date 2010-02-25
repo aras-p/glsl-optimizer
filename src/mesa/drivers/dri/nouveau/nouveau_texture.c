@@ -108,39 +108,27 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 	switch (internalFormat) {
 	case 4:
 	case GL_RGBA:
-	case GL_RGB10_A2:
+	case GL_RGBA2:
+	case GL_RGBA4:
+	case GL_RGBA8:
 	case GL_RGBA12:
 	case GL_RGBA16:
-	case GL_RGBA8:
+	case GL_RGB10_A2:
+		return MESA_FORMAT_ARGB8888;
+	case GL_RGB5_A1:
+		return MESA_FORMAT_ARGB1555;
+
 	case GL_RGB:
 	case GL_RGB8:
 	case GL_RGB10:
 	case GL_RGB12:
 	case GL_RGB16:
-		return MESA_FORMAT_ARGB8888;
-	case GL_RGB5_A1:
-		return MESA_FORMAT_ARGB1555;
-
+		return MESA_FORMAT_XRGB8888;
 	case 3:
 	case GL_R3_G3_B2:
 	case GL_RGB4:
 	case GL_RGB5:
 		return MESA_FORMAT_RGB565;
-
-	case GL_ALPHA:
-	case GL_ALPHA4:
-	case GL_ALPHA12:
-	case GL_ALPHA16:
-	case GL_ALPHA8:
-		return MESA_FORMAT_A8;
-
-	case 1:
-	case GL_LUMINANCE:
-	case GL_LUMINANCE4:
-	case GL_LUMINANCE12:
-	case GL_LUMINANCE16:
-	case GL_LUMINANCE8:
-		return MESA_FORMAT_L8;
 
 	case 2:
 	case GL_LUMINANCE_ALPHA:
@@ -151,6 +139,21 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 	case GL_LUMINANCE16_ALPHA16:
 	case GL_LUMINANCE8_ALPHA8:
 		return MESA_FORMAT_ARGB8888;
+
+	case 1:
+	case GL_LUMINANCE:
+	case GL_LUMINANCE4:
+	case GL_LUMINANCE12:
+	case GL_LUMINANCE16:
+	case GL_LUMINANCE8:
+		return MESA_FORMAT_L8;
+
+	case GL_ALPHA:
+	case GL_ALPHA4:
+	case GL_ALPHA12:
+	case GL_ALPHA16:
+	case GL_ALPHA8:
+		return MESA_FORMAT_A8;
 
 	case GL_INTENSITY:
 	case GL_INTENSITY4:

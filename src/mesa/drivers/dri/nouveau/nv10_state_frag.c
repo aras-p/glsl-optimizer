@@ -179,6 +179,13 @@ get_input_arg(struct combiner_state *rc, int arg, int flags)
 				return RC_IN_SOURCE(ZERO) |
 					get_input_mapping(rc, operand,
 							  flags ^ INVERT);
+
+		} else if (format == MESA_FORMAT_XRGB8888) {
+			/* Sometimes emulated using ARGB8888. */
+			if (!is_color_operand(operand))
+				return RC_IN_SOURCE(ZERO) |
+					get_input_mapping(rc, operand,
+							  flags ^ INVERT);
 		}
 	}
 

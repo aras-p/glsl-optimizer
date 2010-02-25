@@ -44,6 +44,9 @@ get_tex_format_pot(struct gl_texture_image *ti)
 	case MESA_FORMAT_ARGB8888:
 		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8;
 
+	case MESA_FORMAT_XRGB8888:
+		return NV10TCL_TX_FORMAT_FORMAT_X8R8G8B8;
+
 	case MESA_FORMAT_ARGB1555:
 		return NV10TCL_TX_FORMAT_FORMAT_A1R5G5B5;
 
@@ -79,6 +82,7 @@ get_tex_format_rect(struct gl_texture_image *ti)
 		return NV10TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
 
 	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_XRGB8888:
 		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
 	case MESA_FORMAT_A8:
