@@ -51,11 +51,6 @@ _mesa_ClearIndex( GLfloat c )
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
-
-   if (!ctx->Visual.rgbMode && ctx->Driver.ClearIndex) {
-      /* it's OK to call glClearIndex in RGBA mode but it should be a NOP */
-      (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex );
-   }
 }
 #endif
 
@@ -92,7 +87,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4V(ctx->Color.ClearColor, tmp);
 
-   if (ctx->Visual.rgbMode && ctx->Driver.ClearColor) {
+   if (ctx->Driver.ClearColor) {
       /* it's OK to call glClearColor in CI mode but it should be a NOP */
       (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
    }
@@ -261,11 +256,6 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
 
    FLUSH_CURRENT(ctx, 0);
 
-   if (!ctx->DrawBuffer->Visual.rgbMode) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferiv()");
-      return;
-   }
-
    if (ctx->NewState) {
       _mesa_update_state( ctx );
    }
@@ -342,11 +332,6 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
 
    FLUSH_CURRENT(ctx, 0);
 
-   if (!ctx->DrawBuffer->Visual.rgbMode) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferuiv()");
-      return;
-   }
-
    if (ctx->NewState) {
       _mesa_update_state( ctx );
    }
@@ -400,11 +385,6 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    FLUSH_CURRENT(ctx, 0);
-
-   if (!ctx->DrawBuffer->Visual.rgbMode) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferfv()");
-      return;
-   }
 
    if (ctx->NewState) {
       _mesa_update_state( ctx );
@@ -479,11 +459,6 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    FLUSH_CURRENT(ctx, 0);
-
-   if (!ctx->DrawBuffer->Visual.rgbMode) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glClearBufferfi()");
-      return;
-   }
 
    if (buffer != GL_DEPTH_STENCIL) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glClearBufferfi(buffer=%s)",

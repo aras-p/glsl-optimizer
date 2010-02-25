@@ -78,18 +78,13 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 	 ctx->Feedback._Mask = FB_3D;
 	 break;
       case GL_3D_COLOR:
-	 ctx->Feedback._Mask = (FB_3D |
-				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX));
+	 ctx->Feedback._Mask = (FB_3D | FB_COLOR);
 	 break;
       case GL_3D_COLOR_TEXTURE:
-	 ctx->Feedback._Mask = (FB_3D |
-				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) |
-				FB_TEXTURE);
+	 ctx->Feedback._Mask = (FB_3D | FB_COLOR | FB_TEXTURE);
 	 break;
       case GL_4D_COLOR_TEXTURE:
-	 ctx->Feedback._Mask = (FB_3D | FB_4D |
-				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) |
-				FB_TEXTURE);
+	 ctx->Feedback._Mask = (FB_3D | FB_4D | FB_COLOR | FB_TEXTURE);
 	 break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glFeedbackBuffer" );

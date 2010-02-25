@@ -1907,21 +1907,13 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    GLboolean backRight = fb->Visual.stereoMode && fb->Visual.doubleBufferMode;
 
    if (color) {
-      if (fb->Visual.rgbMode) {
-         assert(fb->Visual.redBits == fb->Visual.greenBits);
-         assert(fb->Visual.redBits == fb->Visual.blueBits);
-         _mesa_add_color_renderbuffers(NULL, fb,
-                                       fb->Visual.redBits,
-                                       fb->Visual.alphaBits,
-                                       frontLeft, backLeft,
-                                       frontRight, backRight);
-      }
-      else {
-         _mesa_add_color_index_renderbuffers(NULL, fb,
-                                             fb->Visual.indexBits,
-                                             frontLeft, backLeft,
-                                             frontRight, backRight);
-      }
+      assert(fb->Visual.redBits == fb->Visual.greenBits);
+      assert(fb->Visual.redBits == fb->Visual.blueBits);
+      _mesa_add_color_renderbuffers(NULL, fb,
+				    fb->Visual.redBits,
+				    fb->Visual.alphaBits,
+				    frontLeft, backLeft,
+				    frontRight, backRight);
    }
 
    if (depth) {
@@ -1935,7 +1927,6 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    }
 
    if (accum) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.accumRedBits > 0);
       assert(fb->Visual.accumGreenBits > 0);
       assert(fb->Visual.accumBlueBits > 0);
@@ -1947,14 +1938,12 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    }
 
    if (aux) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.numAuxBuffers > 0);
       _mesa_add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
                                   fb->Visual.numAuxBuffers);
    }
 
    if (alpha) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.alphaBits > 0);
       _mesa_add_alpha_renderbuffers(NULL, fb, fb->Visual.alphaBits,
                                     frontLeft, backLeft,

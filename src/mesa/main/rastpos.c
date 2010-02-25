@@ -246,28 +246,22 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
       ctx->Current.RasterDistance = 0.0;
 
    /* raster color = current color or index */
-   if (ctx->Visual.rgbMode) {
-      ctx->Current.RasterColor[0]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0], 0.0F, 1.0F);
-      ctx->Current.RasterColor[1]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1], 0.0F, 1.0F);
-      ctx->Current.RasterColor[2]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2], 0.0F, 1.0F);
-      ctx->Current.RasterColor[3]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3], 0.0F, 1.0F);
-      ctx->Current.RasterSecondaryColor[0]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0], 0.0F, 1.0F);
-      ctx->Current.RasterSecondaryColor[1]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1], 0.0F, 1.0F);
-      ctx->Current.RasterSecondaryColor[2]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2], 0.0F, 1.0F);
-      ctx->Current.RasterSecondaryColor[3]
-         = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3], 0.0F, 1.0F);
-   }
-   else {
-      ctx->Current.RasterIndex
-         = ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0];
-   }
+   ctx->Current.RasterColor[0]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0], 0.0F, 1.0F);
+   ctx->Current.RasterColor[1]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1], 0.0F, 1.0F);
+   ctx->Current.RasterColor[2]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2], 0.0F, 1.0F);
+   ctx->Current.RasterColor[3]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3], 0.0F, 1.0F);
+   ctx->Current.RasterSecondaryColor[0]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0], 0.0F, 1.0F);
+   ctx->Current.RasterSecondaryColor[1]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1], 0.0F, 1.0F);
+   ctx->Current.RasterSecondaryColor[2]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2], 0.0F, 1.0F);
+   ctx->Current.RasterSecondaryColor[3]
+      = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3], 0.0F, 1.0F);
 
    /* raster texcoord = current texcoord */
    {

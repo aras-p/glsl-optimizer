@@ -1164,8 +1164,6 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
    if (ctxvis == bufvis)
       return GL_TRUE;
 
-   if (ctxvis->rgbMode != bufvis->rgbMode)
-      return GL_FALSE;
 #if 0
    /* disabling this fixes the fgl_glxgears pbuffer demo */
    if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)
