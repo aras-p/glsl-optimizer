@@ -509,7 +509,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
 				unsigned int unit)
 {
-   struct intel_context *intel = &brw->intel;;
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
    dri_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
@@ -576,18 +576,21 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.draw_x = 0;
       key.draw_y = 0;
    }
-   /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask[unit],
-	  sizeof(key.color_mask));
 
-   /* As mentioned above, disable writes to the alpha component when the
-    * renderbuffer is XRGB.
-    */
-   if (ctx->DrawBuffer->Visual.alphaBits == 0)
-     key.color_mask[3] = GL_FALSE;
+   if (intel->gen < 6) {
+      /* _NEW_COLOR */
+      memcpy(key.color_mask, ctx->Color.ColorMask[unit],
+	     sizeof(key.color_mask));
 
-   key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      (ctx->Color.BlendEnabled & (1 << unit)));
+      /* As mentioned above, disable writes to the alpha component when the
+       * renderbuffer is XRGB.
+       */
+      if (ctx->DrawBuffer->Visual.alphaBits == 0)
+	 key.color_mask[3] = GL_FALSE;
+
+      key.color_blend = (!ctx->Color._LogicOpEnabled &&
+			 (ctx->Color.BlendEnabled & (1 << unit)));
+   }
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
@@ -639,12 +642,14 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       brw_set_surface_tiling(&surf, key.tiling);
       surf.ss3.pitch = (key.pitch * key.cpp) - 1;
 
-      /* _NEW_COLOR */
-      surf.ss0.color_blend = key.color_blend;
-      surf.ss0.writedisable_red =   !key.color_mask[0];
-      surf.ss0.writedisable_green = !key.color_mask[1];
-      surf.ss0.writedisable_blue =  !key.color_mask[2];
-      surf.ss0.writedisable_alpha = !key.color_mask[3];
+      if (intel->gen < 6) {
+	 /* _NEW_COLOR */
+	 surf.ss0.color_blend = key.color_blend;
+	 surf.ss0.writedisable_red =   !key.color_mask[0];
+	 surf.ss0.writedisable_green = !key.color_mask[1];
+	 surf.ss0.writedisable_blue =  !key.color_mask[2];
+	 surf.ss0.writedisable_alpha = !key.color_mask[3];
+      }
 
       /* Key size will never match key size for textures, so we're safe. */
       brw->wm.surf_bo[unit] = brw_upload_cache(&brw->surface_cache,

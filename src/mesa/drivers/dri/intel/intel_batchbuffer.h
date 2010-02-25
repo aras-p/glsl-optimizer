@@ -96,6 +96,17 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
       intel_batchbuffer_flush(batch);
 }
 
+static INLINE uint32_t float_as_int(float f)
+{
+   union {
+      float f;
+      uint32_t d;
+   } fi;
+
+   fi.f = f;
+   return fi.d;
+}
+
 /* Here are the crusty old macros, to be removed:
  */
 #define BATCH_LOCALS
@@ -108,6 +119,8 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 } while (0)
 
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
+#define OUT_BATCH_F(f) intel_batchbuffer_emit_dword(intel->batch,	\
+						    float_as_int(f))
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((unsigned) (delta) < buf->size);				\

@@ -89,6 +89,10 @@ intelEmitCopyBlit(struct intel_context *intel,
    dri_bo *aper_array[3];
    BATCH_LOCALS;
 
+   /* Blits are in a different ringbuffer so we don't use them. */
+   if (intel->gen >= 6)
+      return GL_FALSE;
+
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
 	 return GL_FALSE;
@@ -217,6 +221,9 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    GLboolean all;
    GLint cx, cy, cw, ch;
    BATCH_LOCALS;
+
+   /* Blits are in a different ringbuffer so we don't use them. */
+   assert(intel->gen < 6);
 
    /*
     * Compute values for clearing the buffers.
@@ -388,6 +395,10 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    int dwords = ALIGN(src_size, 8) / 4;
    uint32_t opcode, br13, blit_cmd;
 
+   /* Blits are in a different ringbuffer so we don't use them. */
+   if (intel->gen >= 6)
+      return GL_FALSE;
+
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
 	 return GL_FALSE;
@@ -472,6 +483,9 @@ intel_emit_linear_blit(struct intel_context *intel,
 		       unsigned int size)
 {
    GLuint pitch, height;
+
+   /* Blits are in a different ringbuffer so we don't use them. */
+   assert(intel->gen < 6);
 
    /* The pitch is a signed value. */
    pitch = MIN2(size, (1 << 15) - 1);

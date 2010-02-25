@@ -479,9 +479,11 @@ static void emit_math1( struct brw_vs_compile *c,
     * whether that turns out to be a simulator bug or not:
     */
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (dst.dw1.bits.writemask != 0xf ||
-			 dst.file != BRW_GENERAL_REGISTER_FILE);
+   GLboolean need_tmp = (intel->gen < 6 &&
+			 (dst.dw1.bits.writemask != 0xf ||
+			  dst.file != BRW_GENERAL_REGISTER_FILE));
 
    if (need_tmp) 
       tmp = get_tmp(c);
@@ -510,9 +512,11 @@ static void emit_math2( struct brw_vs_compile *c,
 			GLuint precision)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
-   GLboolean need_tmp = (dst.dw1.bits.writemask != 0xf ||
-			 dst.file != BRW_GENERAL_REGISTER_FILE);
+   GLboolean need_tmp = (intel->gen < 6 &&
+			 (dst.dw1.bits.writemask != 0xf ||
+			  dst.file != BRW_GENERAL_REGISTER_FILE));
 
    if (need_tmp) 
       tmp = get_tmp(c);

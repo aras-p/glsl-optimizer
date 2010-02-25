@@ -136,6 +136,41 @@ const struct brw_tracked_state brw_binding_table_pointers = {
    .emit = upload_binding_table_pointers,
 };
 
+/**
+ * Upload the binding table pointers, which point each stage's array of surface
+ * state pointers.
+ *
+ * The binding table pointers are relative to the surface state base address,
+ * which is 0.
+ */
+static void upload_gen6_binding_table_pointers(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 |
+	     GEN6_BINDING_TABLE_MODIFY_VS |
+	     GEN6_BINDING_TABLE_MODIFY_GS |
+	     GEN6_BINDING_TABLE_MODIFY_PS |
+	     (4 - 2));
+   if (brw->vs.bind_bo != NULL)
+      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
+   else
+      OUT_BATCH(0);
+   OUT_BATCH(0); /* gs */
+   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* wm/ps */
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state gen6_binding_table_pointers = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH,
+      .cache = CACHE_NEW_SURF_BIND,
+   },
+   .prepare = prepare_binding_table_pointers,
+   .emit = upload_gen6_binding_table_pointers,
+};
 
 /**
  * Upload pointers to the per-stage state.
@@ -209,7 +244,14 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (intel->is_g4x || intel->is_ironlake) ? 6 : 5;
+   unsigned int len;
+
+   if (intel->gen >= 6)
+      len = 7;
+   else if (intel->is_g4x || intel->is_ironlake)
+      len = 6;
+   else
+      len = 5;
 
    if (region == NULL) {
       BEGIN_BATCH(len);
@@ -220,8 +262,11 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
          OUT_BATCH(0);
+
+      if (intel->gen >= 6)
+	 OUT_BATCH(0);
 
       ADVANCE_BATCH();
    } else {
@@ -243,6 +288,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       }
 
       assert(region->tiling != I915_TILING_X);
+      if (IS_GEN6(intel->intelScreen->deviceID))
+	 assert(region->tiling != I915_TILING_NONE);
 
       BEGIN_BATCH(len);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
@@ -259,9 +306,20 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake)
+      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
          OUT_BATCH(0);
 
+      if (intel->gen >= 6)
+	 OUT_BATCH(0);
+
+      ADVANCE_BATCH();
+   }
+
+   /* Initialize it for safety. */
+   if (intel->gen >= 6) {
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_3D_CLEAR_PARAMS << 16 | (2 - 2));
+      OUT_BATCH(0);
       ADVANCE_BATCH();
    }
 }
@@ -435,6 +493,8 @@ const struct brw_tracked_state brw_line_stipple = {
 
 static void upload_invarient_state( struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
+
    {
       /* 0x61040000  Pipeline Select */
       /*     PipelineSelect            : 0 */
@@ -446,7 +506,7 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &ps);
    }
 
-   {
+   if (intel->gen < 6) {
       struct brw_global_depth_offset_clamp gdo;
       memset(&gdo, 0, sizeof(gdo));
 
@@ -459,6 +519,32 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &gdo);
    }
 
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
+   if (intel->gen >= 6) {
+      int i;
+
+      BEGIN_BATCH(3);
+      OUT_BATCH(CMD_3D_MULTISAMPLE << 16 | (3 - 2));
+      OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
+		MS_NUMSAMPLES_1);
+      OUT_BATCH(0); /* positions for 4/8-sample */
+      ADVANCE_BATCH();
+
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_3D_SAMPLE_MASK << 16 | (2 - 2));
+      OUT_BATCH(1);
+      ADVANCE_BATCH();
+
+      for (i = 0; i < 4; i++) {
+	 BEGIN_BATCH(4);
+	 OUT_BATCH(CMD_GS_SVB_INDEX << 16 | (4 - 2));
+	 OUT_BATCH(i << SVB_INDEX_SHIFT);
+	 OUT_BATCH(0);
+	 OUT_BATCH(0xffffffff);
+	 ADVANCE_BATCH();
+      }
+   }
 
    /* 0x61020000  State Instruction Pointer */
    {
@@ -509,7 +595,20 @@ static void upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (intel->is_ironlake) {
+   if (intel->gen >= 6) {
+       BEGIN_BATCH(10);
+       OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
+       OUT_BATCH(1); /* General state base address */
+       OUT_BATCH(1); /* Surface state base address */
+       OUT_BATCH(1); /* Dynamic state base address */
+       OUT_BATCH(1); /* Indirect object base address */
+       OUT_BATCH(1); /* Instruction base address */
+       OUT_BATCH(1); /* General state upper bound */
+       OUT_BATCH(1); /* Dynamic state upper bound */
+       OUT_BATCH(1); /* Indirect object upper bound */
+       OUT_BATCH(1); /* Instruction access upper bound */
+       ADVANCE_BATCH();
+   } else if (intel->is_ironlake) {
        BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
