@@ -173,6 +173,7 @@ struct nv50_context {
 	struct nv50_sampler_stateobj *sampler[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
 	unsigned sampler_nr[PIPE_SHADER_TYPES];
 	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+	struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
 
 	uint16_t vbo_fifo;

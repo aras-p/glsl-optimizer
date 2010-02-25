@@ -269,33 +269,66 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static INLINE void
-nv50_set_sampler_texture(struct pipe_context *pipe, unsigned type,
-			 unsigned nr, struct pipe_texture **pt)
+nv50_set_sampler_views(struct pipe_context *pipe,
+		       unsigned type,
+		       unsigned nr,
+		       struct pipe_sampler_view **views)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	unsigned i;
 
-	for (i = 0; i < nr; i++)
-		pipe_texture_reference((void *)&nv50->miptree[type][i], pt[i]);
-	for (i = nr; i < nv50->miptree_nr[type]; i++)
+	for (i = 0; i < nr; i++) {
+		pipe_sampler_view_reference(&nv50->sampler_views[type][i], views[i]);
+		pipe_texture_reference((void *)&nv50->miptree[type][i], views[i]->texture);
+	}
+	for (i = nr; i < nv50->miptree_nr[type]; i++) {
+		pipe_sampler_view_reference(&nv50->sampler_views[type][i], NULL);
 		pipe_texture_reference((void *)&nv50->miptree[type][i], NULL);
+	}
 
 	nv50->miptree_nr[type] = nr;
 	nv50->dirty |= NV50_NEW_TEXTURE;
 }
 
 static void
-nv50_set_vp_sampler_textures(struct pipe_context *pipe,
-			     unsigned nr, struct pipe_texture **pt)
+nv50_set_vp_sampler_views(struct pipe_context *pipe,
+			  unsigned nr,
+			  struct pipe_sampler_view **views)
 {
-	nv50_set_sampler_texture(pipe, PIPE_SHADER_VERTEX, nr, pt);
+	nv50_set_sampler_views(pipe, PIPE_SHADER_VERTEX, nr, views);
 }
 
 static void
-nv50_set_fp_sampler_textures(struct pipe_context *pipe,
-			     unsigned nr, struct pipe_texture **pt)
+nv50_set_fp_sampler_views(struct pipe_context *pipe,
+			  unsigned nr,
+			  struct pipe_sampler_view **views)
 {
-	nv50_set_sampler_texture(pipe, PIPE_SHADER_FRAGMENT, nr, pt);
+	nv50_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, nr, views);
+}
+
+static struct pipe_sampler_view *
+nv50_create_sampler_view(struct pipe_context *pipe,
+			 struct pipe_texture *texture,
+			 const struct pipe_sampler_view *templ)
+{
+	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+	*view = *templ;
+	view->reference.count = 1;
+	view->texture = NULL;
+	pipe_texture_reference(&view->texture, texture);
+	view->context = pipe;
+
+	return view;
+}
+
+
+static void
+nv50_sampler_view_destroy(struct pipe_context *pipe,
+			  struct pipe_sampler_view *view)
+{
+	pipe_texture_reference(&view->texture, NULL);
+	FREE(view);
 }
 
 static void *
@@ -743,8 +776,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
 	nv50->pipe.bind_fragment_sampler_states = nv50_fp_sampler_state_bind;
 	nv50->pipe.bind_vertex_sampler_states   = nv50_vp_sampler_state_bind;
-	nv50->pipe.set_fragment_sampler_textures = nv50_set_fp_sampler_textures;
-	nv50->pipe.set_vertex_sampler_textures   = nv50_set_vp_sampler_textures;
+	nv50->pipe.set_fragment_sampler_views = nv50_set_fp_sampler_views;
+	nv50->pipe.set_vertex_sampler_views   = nv50_set_vp_sampler_views;
+	nv50->pipe.create_sampler_view = nv50_create_sampler_view;
+	nv50->pipe.sampler_view_destroy = nv50_sampler_view_destroy;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
