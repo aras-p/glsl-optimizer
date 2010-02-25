@@ -183,10 +183,12 @@ drv_probe_ddc(ScrnInfoPtr pScrn, int index)
 static Bool
 drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
+    xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
     modesettingPtr ms = modesettingPTR(pScrn);
     ScreenPtr pScreen = pScrn->pScreen;
     int old_width, old_height;
     PixmapPtr rootPixmap;
+    int i;
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;
@@ -204,13 +206,29 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 
     pScrn->displayWidth = rootPixmap->devKind / (rootPixmap->drawable.bitsPerPixel / 8);
 
-    if (ms->create_front_buffer(pScrn) && ms->bind_front_buffer(pScrn))
-	return TRUE;
+    if (!ms->create_front_buffer(pScrn) || !ms->bind_front_buffer(pScrn))
+	goto error_create;
+
+    /*
+     * create && bind will turn off all crtc(s) in the kernel so we need to
+     * re-enable all the crtcs again. For real HW we might want to do this
+     * before destroying the old framebuffer.
+     */
+    for (i = 0; i < xf86_config->num_crtc; i++) {
+	xf86CrtcPtr crtc = xf86_config->crtc[i];
+
+	if (!crtc->enabled)
+	    continue;
+
+	crtc->funcs->set_mode_major(crtc, &crtc->mode, crtc->rotation, crtc->x, crtc->y);
+    }
+
+    return TRUE;
 
     /*
      * This is the error recovery path.
      */
-
+error_create:
     if (!pScreen->ModifyPixmapHeader(rootPixmap, old_width, old_height, -1, -1, -1, NULL))
 	FatalError("failed to resize rootPixmap error path\n");
 
