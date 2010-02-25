@@ -721,6 +721,34 @@ st_manager_flush_frontbuffer(struct st_context *st)
 }
 
 /**
+ * Return the surface of an EGLImage.
+ */
+struct pipe_surface *
+st_manager_get_egl_image_surface(struct st_context *st,
+                                 void *eglimg, unsigned usage)
+{
+   struct st_manager *smapi =
+      (struct st_manager *) st->iface.st_context_private;
+   struct st_egl_image stimg;
+   struct pipe_surface *ps;
+
+   if (!smapi || !smapi->get_egl_image)
+      return NULL;
+
+   memset(&stimg, 0, sizeof(stimg));
+   stimg.stctxi = &st->iface;
+   stimg.egl_image = eglimg;
+   if (!smapi->get_egl_image(smapi, &stimg))
+      return NULL;
+
+   ps = smapi->screen->get_tex_surface(smapi->screen,
+         stimg.texture, stimg.face, stimg.level, stimg.zslice, usage);
+   pipe_texture_reference(&stimg.texture, NULL);
+
+   return ps;
+}
+
+/**
  * Re-validate the framebuffers.
  */
 void

@@ -25,27 +25,24 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#ifndef ST_MANAGER_H
-#define ST_MANAGER_H
+#ifndef ST_CB_EGLIMAGE_H
+#define ST_CB_EGLIMAGE_H
 
-#include "state_tracker/st_api.h"
-#include "st_context.h"
+#include "main/mtypes.h"
+#include "main/dd.h"
 
-struct pipe_surface *
-st_manager_get_egl_image_surface(struct st_context *st,
-                                 void *eglimg, unsigned usage);
+#if FEATURE_OES_EGL_image
 
-void
-st_manager_flush_frontbuffer(struct st_context *st);
+extern void
+st_init_eglimage_functions(struct dd_function_table *functions);
 
-void
-st_manager_validate_framebuffers(struct st_context *st);
+#else
 
-boolean
-st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
-                                  gl_buffer_index idx);
+static INLINE void
+st_init_eglimage_functions(struct dd_function_table *functions)
+{
+}
 
-struct st_api *
-st_manager_create_api(void);
+#endif
 
-#endif /* ST_MANAGER_H */
+#endif /* ST_CB_EGLIMAGE_H */

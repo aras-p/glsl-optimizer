@@ -46,6 +46,7 @@
 #if FEATURE_OES_draw_texture
 #include "st_cb_drawtex.h"
 #endif
+#include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
@@ -358,6 +359,8 @@ void st_init_driver_functions(struct dd_function_table *functions)
 #if FEATURE_OES_draw_texture
    st_init_drawtex_functions(functions);
 #endif
+
+   st_init_eglimage_functions(functions);
 
    st_init_fbo_functions(functions);
 #if FEATURE_feedback
