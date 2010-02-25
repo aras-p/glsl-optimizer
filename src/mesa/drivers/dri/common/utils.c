@@ -625,11 +625,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		    modes->bindToTextureRgb = GL_TRUE;
 		    modes->bindToTextureRgba = GL_TRUE;
 		    modes->bindToMipmapTexture = GL_FALSE;
-		    modes->bindToTextureTargets = modes->rgbMode ?
-		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    	0;
+		    modes->bindToTextureTargets =
+			__DRI_ATTRIB_TEXTURE_1D_BIT |
+			__DRI_ATTRIB_TEXTURE_2D_BIT |
+			__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT;
 		}
 	    }
 	}
@@ -726,11 +725,7 @@ driGetConfigAttribIndex(const __DRIconfig *config,
 {
     switch (attribMap[index].attrib) {
     case __DRI_ATTRIB_RENDER_TYPE:
-	if (config->modes.rgbMode)
-	    *value = __DRI_ATTRIB_RGBA_BIT;
-	else
-	    *value = __DRI_ATTRIB_COLOR_INDEX_BIT;
-	break;
+	*value = __DRI_ATTRIB_RGBA_BIT;
     case __DRI_ATTRIB_CONFIG_CAVEAT:
 	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)
 	    *value = __DRI_ATTRIB_NON_CONFORMANT_CONFIG;
