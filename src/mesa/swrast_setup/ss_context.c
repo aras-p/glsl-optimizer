@@ -294,18 +294,12 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
       _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_GENERIC0 + i,
                      dest->attrib[FRAG_ATTRIB_VAR0 + i] );
 
-   if (ctx->Visual.rgbMode) {
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
-                     dest->attrib[FRAG_ATTRIB_COL0] );
-      UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
+                  dest->attrib[FRAG_ATTRIB_COL0] );
+   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
-                     dest->attrib[FRAG_ATTRIB_COL1]);
-   }
-   else {
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
-      dest->attrib[FRAG_ATTRIB_CI][0] = tmp[0];
-   }
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
+                  dest->attrib[FRAG_ATTRIB_COL1]);
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->attrib[FRAG_ATTRIB_FOGC][0] = tmp[0];
