@@ -203,34 +203,28 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 static GLuint
 choose_pixel_format(const GLvisual *v)
 {
-    if (v->rgbMode) {
-	int depth = v->rgbBits;
+    int depth = v->rgbBits;
 
-	if (depth == 32
-	    && v->redMask   == 0xff0000
-	    && v->greenMask == 0x00ff00
-	    && v->blueMask  == 0x0000ff)
-	    return PF_A8R8G8B8;
-	else if (depth == 24
-	    && v->redMask   == 0xff0000
-	    && v->greenMask == 0x00ff00
-	    && v->blueMask  == 0x0000ff)
-	    return PF_X8R8G8B8;
-	else if (depth == 16
-	    && v->redMask   == 0xf800
-	    && v->greenMask == 0x07e0
-	    && v->blueMask  == 0x001f)
-	    return PF_R5G6B5;
-	else if (depth == 8
-	    && v->redMask   == 0x07
-	    && v->greenMask == 0x38
-	    && v->blueMask  == 0xc0)
-	    return PF_R3G3B2;
-    }
-    else {
-	if (v->indexBits == 8)
-	    return PF_CI8;
-    }
+    if (depth == 32
+	&& v->redMask   == 0xff0000
+	&& v->greenMask == 0x00ff00
+	&& v->blueMask  == 0x0000ff)
+	return PF_A8R8G8B8;
+    else if (depth == 24
+	     && v->redMask   == 0xff0000
+	     && v->greenMask == 0x00ff00
+	     && v->blueMask  == 0x0000ff)
+	return PF_X8R8G8B8;
+    else if (depth == 16
+	     && v->redMask   == 0xf800
+	     && v->greenMask == 0x07e0
+	     && v->blueMask  == 0x001f)
+	return PF_R5G6B5;
+    else if (depth == 8
+	     && v->redMask   == 0x07
+	     && v->greenMask == 0x38
+	     && v->blueMask  == 0xc0)
+	return PF_R3G3B2;
 
     _mesa_problem( NULL, "unexpected format in %s", __FUNCTION__ );
     return 0;
@@ -332,13 +326,6 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.Format = MESA_FORMAT_RGB332;
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->bpp = 8;
-	break;
-    case PF_CI8:
-	xrb->Base.Format = MESA_FORMAT_CI8;
-	xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
-	xrb->Base._BaseFormat = GL_COLOR_INDEX;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 8;
 	break;
