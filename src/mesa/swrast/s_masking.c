@@ -101,34 +101,3 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
       }
    }
 }
-
-
-/**
- * Apply the index mask to a span of color index values.
- */
-void
-_swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                     SWspan *span)
-{
-   const GLuint srcMask = ctx->Color.IndexMask;
-   const GLuint dstMask = ~srcMask;
-   GLuint *index = span->array->index;
-   GLuint dest[MAX_WIDTH];
-   GLuint i;
-
-   ASSERT(span->arrayMask & SPAN_INDEX);
-   ASSERT(span->end <= MAX_WIDTH);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
-
-   if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
-                         dest, sizeof(GLuint));
-   }
-   else {
-      _swrast_read_index_span(ctx, rb, span->end, span->x, span->y, dest);
-   }
-
-   for (i = 0; i < span->end; i++) {
-      index[i] = (index[i] & srcMask) | (dest[i] & dstMask);
-   }
-}
