@@ -337,18 +337,10 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
       else
          xrb->Base.AllocStorage = xmesa_alloc_front_storage;
 
-      if (visual->rgbMode) {
-         xrb->Base.InternalFormat = GL_RGBA;
-         xrb->Base.Format = MESA_FORMAT_RGBA8888;
-         xrb->Base._BaseFormat = GL_RGBA;
-         xrb->Base.DataType = GL_UNSIGNED_BYTE;
-      }
-      else {
-         xrb->Base.InternalFormat = GL_COLOR_INDEX;
-         xrb->Base.Format = MESA_FORMAT_CI8;
-         xrb->Base._BaseFormat = GL_COLOR_INDEX;
-         xrb->Base.DataType = GL_UNSIGNED_INT;
-      }
+      xrb->Base.InternalFormat = GL_RGBA;
+      xrb->Base.Format = MESA_FORMAT_RGBA8888;
+      xrb->Base._BaseFormat = GL_RGBA;
+      xrb->Base.DataType = GL_UNSIGNED_BYTE;
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }
    return xrb;
