@@ -272,19 +272,22 @@ nv30_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nv30_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
-			 struct pipe_texture **miptree)
+nv30_set_fragment_sampler_views(struct pipe_context *pipe,
+				unsigned nr,
+				struct pipe_sampler_view **views)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
+		pipe_sampler_view_reference(&nv30->fragment_sampler_views[unit], views[unit]);
 		pipe_texture_reference((struct pipe_texture **)
-				       &nv30->tex_miptree[unit], miptree[unit]);
+				       &nv30->tex_miptree[unit], views[unit]->texture);
 		nv30->dirty_samplers |= (1 << unit);
 	}
 
 	for (unit = nr; unit < nv30->nr_textures; unit++) {
+		pipe_sampler_view_reference(&nv30->fragment_sampler_views[unit], NULL);
 		pipe_texture_reference((struct pipe_texture **)
 				       &nv30->tex_miptree[unit], NULL);
 		nv30->dirty_samplers |= (1 << unit);
@@ -292,6 +295,31 @@ nv30_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 
 	nv30->nr_textures = nr;
 	nv30->dirty |= NV30_NEW_SAMPLER;
+}
+
+static struct pipe_sampler_view *
+nv30_create_sampler_view(struct pipe_context *pipe,
+			 struct pipe_texture *texture,
+			 const struct pipe_sampler_view *templ)
+{
+	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+	*view = *templ;
+	view->reference.count = 1;
+	view->texture = NULL;
+	pipe_texture_reference(&view->texture, texture);
+	view->context = pipe;
+
+	return view;
+}
+
+
+static void
+nv30_sampler_view_destroy(struct pipe_context *pipe,
+			  struct pipe_sampler_view *view)
+{
+	pipe_texture_reference(&view->texture, NULL);
+	FREE(view);
 }
 
 static void *
@@ -692,7 +720,9 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.create_sampler_state = nv30_sampler_state_create;
 	nv30->pipe.bind_fragment_sampler_states = nv30_sampler_state_bind;
 	nv30->pipe.delete_sampler_state = nv30_sampler_state_delete;
-	nv30->pipe.set_fragment_sampler_textures = nv30_set_sampler_texture;
+	nv30->pipe.set_fragment_sampler_views = nv30_set_fragment_sampler_view;
+	nv30->pipe.create_sampler_view = nv30_create_sampler_view;
+	nv30->pipe.sampler_view_destroy = nv30_sampler_view_destroy;
 
 	nv30->pipe.create_rasterizer_state = nv30_rasterizer_state_create;
 	nv30->pipe.bind_rasterizer_state = nv30_rasterizer_state_bind;
