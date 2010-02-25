@@ -39,10 +39,24 @@ buffers, surfaces) are bound to the driver.
   are mostly restricted to the first one right now).
 
 * ``set_framebuffer_state``
-* ``set_fragment_sampler_views``
-* ``set_vertex_sampler_views``
-* ``create_sampler_view``
-* ``sampler_view_destroy``
+
+* ``set_fragment_sampler_views`` binds an array of sampler views to
+  fragment shader stage. Every binding point acquires a reference
+  to a respective sampler view and releases a reference to the previous
+  sampler view.
+
+* ``set_vertex_sampler_views`` binds an array of sampler views to vertex
+  shader stage. Every binding point acquires a reference to a respective
+  sampler view and releases a reference to the previous sampler view.
+
+* ``create_sampler_view`` creates a new sampler view. texture is associated
+  with the sampler view which results in sampler view holding a reference
+  to the texture. Format specified in template must be compatible
+  with texture format.
+
+* ``sampler_view_destroy`` destroys a sampler view and releases its reference
+  to associated texture.
+
 * ``set_vertex_buffers``
 
 
