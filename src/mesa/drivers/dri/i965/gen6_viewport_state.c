@@ -28,10 +28,8 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_util.h"
 #include "intel_batchbuffer.h"
 #include "main/macros.h"
-#include "main/enums.h"
 
 /* The clip VP defines the guardband region where expensive clipping is skipped
  * and fragments are allowed to be generated and clipped out cheaply by the SF.

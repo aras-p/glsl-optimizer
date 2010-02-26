@@ -29,8 +29,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
-#include "main/macros.h"
-#include "main/enums.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"

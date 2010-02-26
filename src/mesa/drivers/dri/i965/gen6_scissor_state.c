@@ -28,10 +28,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_util.h"
 #include "intel_batchbuffer.h"
-#include "main/macros.h"
-#include "main/enums.h"
 
 static void
 prepare_scissor_state(struct brw_context *brw)

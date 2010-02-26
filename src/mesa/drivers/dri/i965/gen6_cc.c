@@ -30,8 +30,6 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "intel_batchbuffer.h"
-#include "main/macros.h"
-#include "main/enums.h"
 
 struct brw_blend_state_key {
    GLboolean color_blend, alpha_enabled;

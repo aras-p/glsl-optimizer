@@ -28,10 +28,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_util.h"
 #include "intel_batchbuffer.h"
-#include "main/macros.h"
-#include "main/enums.h"
 
 static void
 upload_sampler_state_pointers(struct brw_context *brw)
