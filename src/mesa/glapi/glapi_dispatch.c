@@ -46,8 +46,6 @@
 #endif
 
 #include "glapi/glapi.h"
-#include "glapi/glapitable.h"
-#include "glapi/glapidispatch.h"
 #include "glapi/glthread.h"
 
 
