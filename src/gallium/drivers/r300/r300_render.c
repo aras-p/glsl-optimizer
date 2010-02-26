@@ -123,7 +123,7 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
 static boolean r300_reserve_cs_space(struct r300_context *r300,
                                      unsigned dwords)
 {
-    while (!r300->winsys->check_cs(r300->winsys, dwords)) {
+    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
         return TRUE;
     }
