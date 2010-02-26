@@ -160,6 +160,13 @@ GALLIVM_SOURCES = \
 GALLIVM_CPP_SOURCES = \
         gallivm/lp_bld_misc.cpp
 
+GENERATED_SOURCES = \
+	indices/u_indices_gen.c \
+	indices/u_unfilled_gen.c \
+	util/u_format_access.c \
+	util/u_format_pack.h \
+	util/u_format_table.c
+
 
 ifeq ($(MESA_LLVM),1)
 C_SOURCES += \
@@ -190,4 +197,3 @@ util/u_format_pack.h: util/u_format_pack.py util/u_format_parse.py util/u_format
 util/u_format_access.c: util/u_format_access.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_access.py util/u_format.csv > $@
 
-default: util/u_format_pack.h
