@@ -41,36 +41,36 @@ def is_pot(x):
    return (x & (x - 1)) == 0;
 
 
-class Type:
-    '''Describe the type of a color channel.'''
+class Channel:
+    '''Describe the channel of a color channel.'''
     
-    def __init__(self, kind, norm, size):
-        self.kind = kind
+    def __init__(self, type, norm, size):
+        self.type = type
         self.norm = norm
         self.size = size
-        self.sign = kind in (SIGNED, FIXED, FLOAT)
+        self.sign = type in (SIGNED, FIXED, FLOAT)
 
     def __str__(self):
-        s = str(self.kind)
+        s = str(self.type)
         if self.norm:
             s += 'n'
         s += str(self.size)
         return s
 
     def __eq__(self, other):
-        return self.kind == other.kind and self.norm == other.norm and self.size == other.size
+        return self.type == other.type and self.norm == other.norm and self.size == other.size
 
 
 class Format:
     '''Describe a pixel format.'''
 
-    def __init__(self, name, layout, block_width, block_height, in_types, out_swizzle, colorspace):
+    def __init__(self, name, layout, block_width, block_height, channels, swizzles, colorspace):
         self.name = name
         self.layout = layout
         self.block_width = block_width
         self.block_height = block_height
-        self.in_types = in_types
-        self.out_swizzle = out_swizzle
+        self.channels = channels
+        self.swizzles = swizzles
         self.name = name
         self.colorspace = colorspace
 
@@ -89,42 +89,54 @@ class Format:
 
     def block_size(self):
         size = 0
-        for type in self.in_types:
-            size += type.size
+        for channel in self.channels:
+            size += channel.size
         return size
 
     def nr_channels(self):
         nr_channels = 0
-        for type in self.in_types:
-            if type.size:
+        for channel in self.channels:
+            if channel.size:
                 nr_channels += 1
         return nr_channels
 
     def is_array(self):
-        ref_type = self.in_types[0]
-        for type in self.in_types[1:]:
-            if type.size and (type.size != ref_type.size or type.size % 8):
+        ref_channel = self.channels[0]
+        for channel in self.channels[1:]:
+            if channel.size and (channel.size != ref_channel.size or channel.size % 8):
                 return False
         return True
 
     def is_mixed(self):
-        ref_type = self.in_types[0]
-        for type in self.in_types[1:]:
-            if type.kind != VOID:
-                if type.kind != ref_type.kind:
+        ref_channel = self.channels[0]
+        for channel in self.channels[1:]:
+            if channel.type != VOID:
+                if channel.type != ref_channel.type:
                     return True
-                if type.norm != ref_type.norm:
+                if channel.norm != ref_channel.norm:
                     return True
         return False
 
     def is_pot(self):
         return is_pot(self.block_size())
 
+    def is_int(self):
+        for channel in self.channels:
+            if channel.type not in (VOID, UNSIGNED, SIGNED):
+                return False
+        return True
+
+    def is_float(self):
+        for channel in self.channels:
+            if channel.type not in (VOID, FLOAT):
+                return False
+        return True
+
     def stride(self):
         return self.block_size()/8
 
 
-_kind_parse_map = {
+_type_parse_map = {
     '':  VOID,
     'x': VOID,
     'u': UNSIGNED,
@@ -145,7 +157,7 @@ _swizzle_parse_map = {
 
 def parse(filename):
     '''Parse the format descrition in CSV format in terms of the 
-    Type and Format classes above.'''
+    Channel and Format classes above.'''
 
     stream = open(filename)
     formats = []
@@ -163,10 +175,10 @@ def parse(filename):
         name = fields[0]
         layout = fields[1]
         block_width, block_height = map(int, fields[2:4])
-        in_types = []
+        channels = []
         for field in fields[4:8]:
             if field:
-                kind = _kind_parse_map[field[0]]
+                type = _type_parse_map[field[0]]
                 if field[1] == 'n':
                     norm = True
                     size = int(field[2:])
@@ -174,13 +186,13 @@ def parse(filename):
                     norm = False
                     size = int(field[1:])
             else:
-                kind = VOID
+                type = VOID
                 norm = False
                 size = 0
-            in_type = Type(kind, norm, size)
-            in_types.append(in_type)
-        out_swizzle = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
+            channel = Channel(type, norm, size)
+            channels.append(channel)
+        swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
         colorspace = fields[9]
-        formats.append(Format(name, layout, block_width, block_height, in_types, out_swizzle, colorspace))
+        formats.append(Format(name, layout, block_width, block_height, channels, swizzles, colorspace))
     return formats
 

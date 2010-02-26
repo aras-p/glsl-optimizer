@@ -51,7 +51,7 @@ colorspace_channels_map = {
 }
 
 
-kind_map = {
+type_map = {
     VOID:     "UTIL_FORMAT_TYPE_VOID",
     UNSIGNED: "UTIL_FORMAT_TYPE_UNSIGNED",
     SIGNED:   "UTIL_FORMAT_TYPE_SIGNED",
@@ -112,16 +112,16 @@ def write_format_table(formats):
         print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
         print "   {"
         for i in range(4):
-            type = format.in_types[i]
+            channel = format.channels[i]
             if i < 3:
                 sep = ","
             else:
                 sep = ""
-            print "      {%s, %s, %u}%s\t/* %s */" % (kind_map[type.kind], bool_map(type.norm), type.size, sep, "xyzw"[i])
+            print "      {%s, %s, %u}%s\t/* %s */" % (type_map[channel.type], bool_map(channel.norm), channel.size, sep, "xyzw"[i])
         print "   },"
         print "   {"
         for i in range(4):
-            swizzle = format.out_swizzle[i]
+            swizzle = format.swizzles[i]
             if i < 3:
                 sep = ","
             else:
