@@ -532,6 +532,17 @@ util_bswap32(uint32_t n)
 
 
 /**
+ * Reverse byte order of a 16 bit word.
+ */
+static INLINE uint16_t
+util_bswap16(uint16_t n)
+{
+   return (n >> 8) |
+          (n << 8);
+}
+
+
+/**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
  */
