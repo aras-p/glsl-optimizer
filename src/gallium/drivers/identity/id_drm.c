@@ -28,11 +28,11 @@
 #include "state_tracker/drm_api.h"
 
 #include "util/u_memory.h"
-#include "identity/id_drm.h"
-#include "identity/id_screen.h"
-#include "identity/id_public.h"
-#include "identity/id_screen.h"
-#include "identity/id_objects.h"
+#include "id_drm.h"
+#include "id_screen.h"
+#include "id_public.h"
+#include "id_screen.h"
+#include "id_objects.h"
 
 struct identity_drm_api
 {
