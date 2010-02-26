@@ -135,7 +135,7 @@ def pack_rgba(format, src_channel, r, g, b, a):
     given format.  Ex: '(b << 24) | (g << 16) | (r << 8) | (a << 0)'
     """
     assert format.colorspace == 'rgb'
-    inv_swizzle = compute_inverse_swizzle(format)
+    inv_swizzle = format.inv_swizzles()
     shift = 0
     expr = None
     for i in range(4):
@@ -200,7 +200,7 @@ def emit_tile_pixel_write_code(format, src_channel):
     '''Emit code for writing a block based on the TILE_PIXEL macro.'''
     dst_native_type = native_type(format)
 
-    inv_swizzle = compute_inverse_swizzle(format)
+    inv_swizzle = format.inv_swizzles()
 
     print '   unsigned x, y;'
     print '   uint8_t *dst_row = dst + y0*dst_stride;'

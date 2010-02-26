@@ -36,19 +36,28 @@ SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, 
 
 PLAIN = 'plain'
 
+RGB = 'rgb'
+SRGB = 'srgb'
+YUV = 'yuv'
+ZS = 'zs'
+
 
 def is_pot(x):
    return (x & (x - 1)) == 0;
 
 
+VERY_LARGE = 99999999999999999999999
+
+
 class Channel:
     '''Describe the channel of a color channel.'''
     
-    def __init__(self, type, norm, size):
+    def __init__(self, type, norm, size, name = ''):
         self.type = type
         self.norm = norm
         self.size = size
         self.sign = type in (SIGNED, FIXED, FLOAT)
+        self.name = name
 
     def __str__(self):
         s = str(self.type)
@@ -59,6 +68,30 @@ class Channel:
 
     def __eq__(self, other):
         return self.type == other.type and self.norm == other.norm and self.size == other.size
+
+    def max(self):
+        '''Maximum representable number.'''
+        if self.type == FLOAT:
+            return VERY_LARGE
+        if self.norm:
+            return 1
+        if self.type == UNSIGNED:
+            return (1 << self.size) - 1
+        if self.type == SIGNED:
+            return self.size - 1
+        assert False
+    
+    def min(self):
+        '''Minimum representable number.'''
+        if self.type == FLOAT:
+            return -VERY_LARGE
+        if self.type == UNSIGNED:
+            return 0
+        if self.norm:
+            return -1
+        if self.type == SIGNED:
+            return -(1 << (self.size - 1))
+        assert False
 
 
 class Format:
@@ -132,6 +165,29 @@ class Format:
                 return False
         return True
 
+    def is_bitmask(self):
+        if self.block_size() > 32:
+            return False
+        if not self.is_pot():
+            return False
+        for channel in self.channels:
+            if not is_pot(channel.size):
+                return True
+            if channel.type not in (VOID, UNSIGNED, SIGNED):
+                return False
+            if channel.size >= 32:
+                return False
+        return True
+
+    def inv_swizzles(self):
+        '''Return an array[4] of inverse swizzle terms'''
+        inv_swizzle = [None]*4
+        for i in range(4):
+            swizzle = self.swizzles[i]
+            if swizzle < 4:
+                inv_swizzle[swizzle] = i
+        return inv_swizzle
+
     def stride(self):
         return self.block_size()/8
 
@@ -171,12 +227,39 @@ def parse(filename):
         line = line.strip()
         if not line:
             continue
+
         fields = [field.strip() for field in line.split(',')]
+        
         name = fields[0]
         layout = fields[1]
         block_width, block_height = map(int, fields[2:4])
+
+        swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
+        colorspace = fields[9]
+        
+        if layout == PLAIN:
+            names = ['']*4
+            if colorspace in (RGB, SRGB):
+                for i in range(4):
+                    swizzle = swizzles[i]
+                    if swizzle < 4:
+                        names[swizzle] += 'rgba'[i]
+            elif colorspace == ZS:
+                for i in range(4):
+                    swizzle = swizzles[i]
+                    if swizzle < 4:
+                        names[swizzle] += 'zs'[i]
+            else:
+                assert False
+            for i in range(4):
+                if names[i] == '':
+                    names[i] = 'x'
+        else:
+            names = ['x', 'y', 'z', 'w']
+
         channels = []
-        for field in fields[4:8]:
+        for i in range(0, 4):
+            field = fields[4 + i]
             if field:
                 type = _type_parse_map[field[0]]
                 if field[1] == 'n':
@@ -189,10 +272,10 @@ def parse(filename):
                 type = VOID
                 norm = False
                 size = 0
-            channel = Channel(type, norm, size)
+            channel = Channel(type, norm, size, names[i])
             channels.append(channel)
-        swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        colorspace = fields[9]
-        formats.append(Format(name, layout, block_width, block_height, channels, swizzles, colorspace))
+
+        format = Format(name, layout, block_width, block_height, channels, swizzles, colorspace)
+        formats.append(format)
     return formats
 

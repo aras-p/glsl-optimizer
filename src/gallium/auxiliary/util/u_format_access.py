@@ -248,24 +248,6 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value):
     assert False
 
 
-def compute_inverse_swizzle(format):
-    '''Return an array[4] of inverse swizzle terms'''
-    inv_swizzle = [None]*4
-    if format.colorspace == 'rgb':
-        for i in range(4):
-            swizzle = format.swizzles[i]
-            if swizzle < 4:
-                inv_swizzle[swizzle] = i
-    elif format.colorspace == 'zs':
-        swizzle = format.swizzles[0]
-        if swizzle < 4:
-            inv_swizzle[swizzle] = 0
-    else:
-        assert False
-
-    return inv_swizzle
-
-
 def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     '''Generate the function to read pixels from a particular format'''
 
@@ -372,7 +354,7 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     print '      const %s *src_pixel = src_row;' %src_native_type
     print '      for (x = 0; x < w; ++x) {'
 
-    inv_swizzle = compute_inverse_swizzle(format)
+    inv_swizzle = format.inv_swizzles()
 
     if format.layout == PLAIN:
         if not format.is_array():

@@ -117,7 +117,10 @@ def write_format_table(formats):
                 sep = ","
             else:
                 sep = ""
-            print "      {%s, %s, %u}%s\t/* %s */" % (type_map[channel.type], bool_map(channel.norm), channel.size, sep, "xyzw"[i])
+            if channel.size:
+                print "      {%s, %s, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), channel.size, sep, "xyzw"[i], channel.name)
+            else:
+                print "      {0, 0, 0}%s" % (sep,)
         print "   },"
         print "   {"
         for i in range(4):
