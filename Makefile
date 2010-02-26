@@ -133,9 +133,6 @@ linux-osmesa32 \
 linux-ppc \
 linux-ppc-static \
 linux-profile \
-linux-solo \
-linux-solo-x86 \
-linux-solo-ia64 \
 linux-sparc \
 linux-sparc5 \
 linux-static \
