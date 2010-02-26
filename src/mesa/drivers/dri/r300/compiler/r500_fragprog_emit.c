@@ -469,6 +469,8 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	if (compiler->Base.Error)
 		return;
 
+	assert(code->inst_end >= 0);
+
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
 		/* This may happen when dead-code elimination is disabled or
 		 * when most of the fragment program logic is leading to a KIL */
