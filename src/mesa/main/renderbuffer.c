@@ -1142,7 +1142,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    rb->Width = width;
    rb->Height = height;
-   rb->_BaseFormat = _mesa_base_fbo_format(ctx, rb->InternalFormat);
+   rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    ASSERT(rb->_BaseFormat);
 
    return GL_TRUE;
