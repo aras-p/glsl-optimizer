@@ -33,7 +33,7 @@
 
 #include "ast.h"
 #include "glsl_parser_extras.h"
-#include "glsl_parser.tab.h"
+#include "glsl_parser.h"
 #include "symbol_table.h"
 
 void
