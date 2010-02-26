@@ -1026,10 +1026,17 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
+    unsigned i, max_index = ~0;
 
     memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
+
+    for (i = 0; i < count; i++) {
+        max_index = MIN2(buffers[i].max_index, max_index);
+    }
+
     r300->vertex_buffer_count = count;
+    r300->vertex_buffer_max_index = max_index;
 
     if (r300->draw) {
         draw_flush(r300->draw);

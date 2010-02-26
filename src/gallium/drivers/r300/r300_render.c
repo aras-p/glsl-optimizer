@@ -452,8 +452,11 @@ void r300_draw_elements(struct pipe_context* pipe,
                         unsigned indexSize, unsigned mode,
                         unsigned start, unsigned count)
 {
-   pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0, ~0,
-                             mode, start, count);
+    struct r300_context *r300 = r300_context(pipe);
+
+    pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0,
+                              r300->vertex_buffer_max_index,
+                              mode, start, count);
 }
 
 void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
