@@ -102,8 +102,6 @@ static void brw_set_dest( struct brw_instruction *insn,
 static void brw_set_src0( struct brw_instruction *insn,
                           struct brw_reg reg )
 {
-   assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
-
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
 
@@ -323,7 +321,7 @@ static void brw_set_urb_message( struct brw_context *brw,
     struct intel_context *intel = &brw->intel;
     brw_set_src1(insn, brw_imm_d(0));
 
-    if (intel->is_ironlake) {
+    if (intel->is_ironlake || intel->gen >= 6) {
         insn->bits3.urb_igdng.opcode = 0;	/* ? */
         insn->bits3.urb_igdng.offset = offset;
         insn->bits3.urb_igdng.swizzle_control = swizzle_control;
@@ -334,8 +332,16 @@ static void brw_set_urb_message( struct brw_context *brw,
         insn->bits3.urb_igdng.response_length = response_length;
         insn->bits3.urb_igdng.msg_length = msg_length;
         insn->bits3.urb_igdng.end_of_thread = end_of_thread;
-        insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
-        insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	if (intel->gen >= 6) {
+	   /* For SNB, the SFID bits moved to the condmod bits, and
+	    * EOT stayed in bits3 above.  Does the EOT bit setting
+	    * below on Ironlake even do anything?
+	    */
+	   insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+	} else {
+	   insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
+	   insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	}
     } else {
         insn->bits3.urb.opcode = 0;	/* ? */
         insn->bits3.urb.offset = offset;
@@ -1391,7 +1397,18 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   GLuint offset,
 		   GLuint swizzle)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn;
+
+   /* Sandybridge doesn't have the implied move for SENDs,
+    * and the first message register index comes from src0.
+    */
+   if (intel->gen >= 6) {
+      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      src0 = brw_message_reg(msg_reg_nr);
+   }
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
 
    assert(msg_length < BRW_MAX_MRF);
 
@@ -1399,7 +1416,8 @@ void brw_urb_WRITE(struct brw_compile *p,
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen < 6)
+      insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_urb_message(p->brw,
 		       insn,
