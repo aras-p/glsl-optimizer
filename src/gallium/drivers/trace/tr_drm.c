@@ -28,11 +28,11 @@
 #include "state_tracker/drm_api.h"
 
 #include "util/u_memory.h"
-#include "trace/tr_drm.h"
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#include "trace/tr_buffer.h"
-#include "trace/tr_texture.h"
+#include "tr_drm.h"
+#include "tr_screen.h"
+#include "tr_context.h"
+#include "tr_buffer.h"
+#include "tr_texture.h"
 
 struct trace_drm_api
 {
