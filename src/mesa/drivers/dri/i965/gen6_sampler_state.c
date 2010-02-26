@@ -47,7 +47,7 @@ upload_sampler_state_pointers(struct brw_context *brw)
    OUT_BATCH(0); /* VS */
    OUT_BATCH(0); /* GS */
    if (brw->wm.sampler_bo)
-      OUT_RELOC(brw->wm.sampler_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+      OUT_RELOC(brw->wm.sampler_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    else
       OUT_BATCH(0);
 
