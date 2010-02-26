@@ -103,12 +103,6 @@ struct dri2_egl_image
 {
    _EGLImage   base;
    __DRIimage *dri_image;
-   int         width;
-   int         height;
-   int         name;
-   int         pitch;
-   int         cpp;
-   int         format;
 };
 
 /* standard typecasts */
@@ -694,6 +688,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->ClientAPIsMask = EGL_OPENGL_BIT;
    disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
+   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
@@ -1107,9 +1102,8 @@ dri2_release_tex_image(_EGLDriver *drv,
 }
 
 static _EGLImage *
-dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
-		      _EGLContext *ctx, EGLenum target,
-		      EGLClientBuffer buffer, const EGLint *attr_list)
+dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
+			     EGLClientBuffer buffer, const EGLint *attr_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
@@ -1122,6 +1116,92 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    xcb_get_geometry_cookie_t geometry_cookie;
    xcb_get_geometry_reply_t *geometry_reply;
    xcb_generic_error_t *error;
+   int stride, format;
+
+   drawable = (xcb_drawable_t) buffer;
+   xcb_dri2_create_drawable (dri2_dpy->conn, drawable);
+   attachments[0] = XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT;
+   buffers_cookie =
+      xcb_dri2_get_buffers_unchecked (dri2_dpy->conn,
+				      drawable, 1, 1, attachments);
+   geometry_cookie = xcb_get_geometry (dri2_dpy->conn, drawable);
+   buffers_reply = xcb_dri2_get_buffers_reply (dri2_dpy->conn,
+					       buffers_cookie, NULL);
+   buffers = xcb_dri2_get_buffers_buffers (buffers_reply);
+   if (buffers == NULL) {
+      return NULL;
+   }
+
+   geometry_reply = xcb_get_geometry_reply (dri2_dpy->conn,
+					    geometry_cookie, &error);
+   if (geometry_reply == NULL || error != NULL) {
+      _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
+      free(error);
+      free(buffers_reply);
+   }
+
+   switch (geometry_reply->depth) {
+   case 16:
+      format = __DRI_IMAGE_FORMAT_RGB565;
+      break;
+   case 24:
+      format = __DRI_IMAGE_FORMAT_XRGB8888;
+      break;
+   case 32:
+      format = __DRI_IMAGE_FORMAT_ARGB8888;
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER,
+		"dri2_create_image_khr: unsupported pixmap depth");
+      free(buffers_reply);
+      free(geometry_reply);
+      return NULL;
+   }
+
+   dri2_img = malloc(sizeof *dri2_img);
+   if (!dri2_img) {
+      free(buffers_reply);
+      free(geometry_reply);
+      _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   if (!_eglInitImage(&dri2_img->base, disp, attr_list)) {
+      free(buffers_reply);
+      free(geometry_reply);
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   stride = buffers[0].pitch / buffers[0].cpp;
+   dri2_img->dri_image =
+      dri2_dpy->image->createImageFromName(dri2_ctx->dri_context,
+					   buffers_reply->width,
+					   buffers_reply->height,
+					   format,
+					   buffers[0].name,
+					   stride,
+					   dri2_img);
+
+   free(buffers_reply);
+   free(geometry_reply);
+
+   return &dri2_img->base;
+}
+
+static _EGLImage *
+dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
+				   EGLClientBuffer buffer,
+				   const EGLint *attr_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   struct dri2_egl_image *dri2_img;
+   GLuint renderbuffer = (GLuint) buffer;
+
+   if (renderbuffer == 0) {
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
 
    dri2_img = malloc(sizeof *dri2_img);
    if (!dri2_img) {
@@ -1132,68 +1212,28 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    if (!_eglInitImage(&dri2_img->base, disp, attr_list))
       return EGL_NO_IMAGE_KHR;
 
-   switch (target) {
-   case EGL_NATIVE_PIXMAP_KHR:
-      drawable = (xcb_drawable_t) buffer;
-      xcb_dri2_create_drawable (dri2_dpy->conn, drawable);
-      attachments[0] = XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT;
-      buffers_cookie =
-	 xcb_dri2_get_buffers_unchecked (dri2_dpy->conn,
-					 drawable, 1, 1, attachments);
-      geometry_cookie = xcb_get_geometry (dri2_dpy->conn, drawable);
-      buffers_reply = xcb_dri2_get_buffers_reply (dri2_dpy->conn,
-						  buffers_cookie, NULL);
-      buffers = xcb_dri2_get_buffers_buffers (buffers_reply);
-      if (buffers == NULL) {
-	 free(dri2_img);
-	 return NULL;
-      }
-
-      geometry_reply = xcb_get_geometry_reply (dri2_dpy->conn,
-					       geometry_cookie, &error);
-      if (geometry_reply == NULL || error != NULL) {
-	 _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
-	 free(error);
-	 free(dri2_img);
-	 free(buffers_reply);
-      }
-
-      dri2_img->width = buffers_reply->width;
-      dri2_img->height = buffers_reply->height;
-      dri2_img->name = buffers[0].name;
-      dri2_img->pitch = buffers[0].pitch / buffers[0].cpp;
-      dri2_img->cpp = buffers[0].cpp;
-      switch (geometry_reply->depth) {
-      case 16:
-	 dri2_img->format = __DRI_IMAGE_FORMAT_RGB565;
-	 break;
-      case 24:
-	 dri2_img->format = __DRI_IMAGE_FORMAT_XRGB8888;
-	 break;
-      case 32:
-	 dri2_img->format = __DRI_IMAGE_FORMAT_ARGB8888;
-	 break;
-      }
-      free(buffers_reply);
-      free(geometry_reply);
-      break;
-
-   default:
-      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
-      free(dri2_img);
-      return EGL_NO_IMAGE_KHR;
-   }
-
-   dri2_img->dri_image =
-      dri2_dpy->image->createImageFromName(dri2_ctx->dri_context,
-					   dri2_img->width,
-					   dri2_img->height,
-					   dri2_img->format,
-					   dri2_img->name,
-					   dri2_img->pitch,
-					   dri2_img);
+   dri2_img->dri_image = 
+      dri2_dpy->image->createImageFromRenderbuffer(dri2_ctx->dri_context,
+						   renderbuffer,
+						   dri2_img);
 
    return &dri2_img->base;
+}
+
+static _EGLImage *
+dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
+		      _EGLContext *ctx, EGLenum target,
+		      EGLClientBuffer buffer, const EGLint *attr_list)
+{
+   switch (target) {
+   case EGL_NATIVE_PIXMAP_KHR:
+      return dri2_create_image_khr_pixmap(disp, ctx, buffer, attr_list);
+   case EGL_GL_RENDERBUFFER_KHR:
+      return dri2_create_image_khr_renderbuffer(disp, ctx, buffer, attr_list);
+   default:
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
 }
 
 static EGLBoolean
