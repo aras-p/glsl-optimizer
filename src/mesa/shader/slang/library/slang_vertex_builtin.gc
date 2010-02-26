@@ -188,3 +188,23 @@ vec4 shadow2DProjLod(const sampler2DShadow sampler, const vec4 coord,
    __asm vec4_tex_2d_bias_shadow __retVal, sampler, pcoord;
 }
 
+
+//// GL_EXT_texture_array
+
+vec4 texture1DArrayLod(const sampler1DArray sampler, const vec2 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xy = coord;
+   coord4.w = lod;
+   __asm vec4_tex_1d_array_bias __retVal, sampler, coord4;
+}
+
+
+vec4 texture2DArrayLod(const sampler2DArray sampler, const vec3 coord, const float lod)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = lod;
+   __asm vec4_tex_2d_array_bias __retVal, sampler, coord4;
+}
+

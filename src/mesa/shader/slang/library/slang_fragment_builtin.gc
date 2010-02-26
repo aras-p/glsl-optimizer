@@ -165,6 +165,70 @@ vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord, const float b
 
 
 
+//// GL_EXT_texture_array
+
+vec4 texture1DArray(const sampler1DArray sampler, const vec2 coord)
+{
+   vec4 coord4;
+   coord4.xy = coord;
+   __asm vec4_tex_1d_array __retVal, sampler, coord4;
+}
+
+vec4 texture1DArray(const sampler1DArray sampler, const vec2 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xy = coord;
+   coord4.w = bias;
+   __asm vec4_tex_1d_array_bias __retVal, sampler, coord4;
+}
+
+vec4 texure2DArray(const sampler2DArray sampler, const vec3 coord)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   __asm vec4_tex_2d_array __retVal, sampler, coord4;
+}
+
+vec4 texture2DArray(const sampler2DArray sampler, const vec3 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = bias;
+   __asm vec4_tex_2d_array_bias __retVal, sampler, coord4;
+}
+
+vec4 shadow1DArray(const sampler1DArrayShadow sampler, const vec2 coord)
+{
+   vec4 coord4;
+   coord4.xy = coord;
+   __asm vec4_tex_1d_array_shadow __retVal, sampler, coord4;
+}
+
+vec4 shadow1DArray(const sampler1DArrayShadow sampler, const vec2 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xy = coord;
+   coord4.w = bias;
+   __asm vec4_tex_1d_array_bias_shadow __retVal, sampler, coord4;
+}
+
+vec4 shadow2DArray(const sampler2DArrayShadow sampler, const vec3 coord)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   __asm vec4_tex_2d_array_shadow __retVal, sampler, coord4;
+}
+
+vec4 shadow2DArray(const sampler2DArrayShadow sampler, const vec3 coord, const float bias)
+{
+   vec4 coord4;
+   coord4.xyz = coord;
+   coord4.w = bias;
+   __asm vec4_tex_2d_array_bias_shadow __retVal, sampler, coord4;
+}
+
+
+
 //
 // 8.8 Fragment Processing Functions
 //
