@@ -987,7 +987,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       assert(rb->Width == (GLuint) width);
       assert(rb->Height == (GLuint) height);
       rb->InternalFormat = internalFormat;
-      rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+      rb->_BaseFormat = baseFormat;
       assert(rb->_BaseFormat != 0);
    }
    else {
