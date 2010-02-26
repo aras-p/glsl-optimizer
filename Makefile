@@ -180,7 +180,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.7
+VERSION=7.8-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -220,10 +220,12 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/include/VG/*.h					\
+	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
+	$(DIRECTORY)/src/glsl/SConscript				\
 	$(DIRECTORY)/src/glsl/*/Makefile				\
-	$(DIRECTORY)/src/glsl/*/SConscript				\
 	$(DIRECTORY)/src/glsl/*/*.[ch]					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
@@ -244,7 +246,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/*.syn		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
@@ -311,6 +312,7 @@ EGL_FILES = \
 	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
+	$(DIRECTORY)/src/egl/*/Makefile.template			\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
 	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
@@ -437,10 +439,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/glsl/*.c			\
 	$(DIRECTORY)/progs/glsl/*.frag			\
 	$(DIRECTORY)/progs/glsl/*.vert			\
-	$(DIRECTORY)/progs/glsl/*.shtest		\
-	$(DIRECTORY)/progs/windml/Makefile.ugl		\
-	$(DIRECTORY)/progs/windml/*.c			\
-	$(DIRECTORY)/progs/windml/*.bmp			\
+	$(DIRECTORY)/progs/glsl/*.shtest
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
