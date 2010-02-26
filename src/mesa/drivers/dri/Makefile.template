@@ -14,27 +14,10 @@ COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
         ../common/drirenderbuffer.c \
 	../common/dri_metaops.c
 
-ifeq ($(WINDOW_SYSTEM),dri)
-WINOBJ=
-WINLIB=
 INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
-
-else
-# miniglx
-WINOBJ=
-WINLIB=-L$(MESA)/src/glx/mini
-MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
-INCLUDES = $(MINIGLX_INCLUDES) \
-	   $(SHARED_INCLUDES) \
-	   $(PCIACCESS_CFLAGS)
-
-OBJECTS = $(C_SOURCES:.c=.o) \
-	  $(MINIGLX_SOURCES:.c=.o) \
-	  $(ASM_SOURCES:.S=.o) 
-endif
 
 
 ### Include directories
@@ -55,7 +38,7 @@ SHARED_INCLUDES = \
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 
 ##### TARGETS #####
@@ -67,11 +50,10 @@ default: subdirs lib
 lib: symlinks subdirs depend
 	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) Makefile \
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) \
-		$(DRI_LIB_DEPS)
+		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
