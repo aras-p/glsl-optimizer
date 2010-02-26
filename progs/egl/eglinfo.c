@@ -156,7 +156,42 @@ PrintModes(EGLDisplay d)
 #endif
 }
 
+static void
+PrintExtensions(EGLDisplay d)
+{
+   const char *extensions, *p, *end, *next;
+   int column;
 
+   printf("EGL extensions string:\n");
+
+   extensions = eglQueryString(d, EGL_EXTENSIONS);
+
+   column = 0;
+   end = extensions + strlen(extensions);
+
+   for (p = extensions; p < end; p = next + 1) {
+      next = strchr(p, ' ');
+      if (next == NULL)
+         next = end;
+
+      if (column > 0 && column + next - p + 1 > 70) {
+	 printf("\n");
+	 column = 0;
+      }
+      if (column == 0)
+	 printf("    ");
+      else
+	 printf(" ");
+      column += next - p + 1;
+
+      printf("%.*s", (int) (next - p), p);
+
+      p = next + 1;
+   }
+
+   if (column > 0)
+      printf("\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -175,8 +210,8 @@ main(int argc, char *argv[])
 #ifdef EGL_VERSION_1_2
    printf("EGL client APIs: %s\n", eglQueryString(d, EGL_CLIENT_APIS));
 #endif
-   printf("EGL extensions string:\n");
-   printf("    %s\n", eglQueryString(d, EGL_EXTENSIONS));
+
+   PrintExtensions(d);
 
    PrintConfigs(d);
 
