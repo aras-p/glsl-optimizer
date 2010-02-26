@@ -64,21 +64,12 @@
 #define GLTHREAD_H
 
 
-#if defined(USE_MGL_NAMESPACE)
-#define _glapi_Dispatch _mglapi_Dispatch
+#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#ifndef THREADS
+#define THREADS
+#endif
 #endif
 
-
-
-#if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
-     defined(WIN32_THREADS) || defined(BEOS_THREADS)) \
-    && !defined(THREADS)
-# define THREADS
-#endif
-
-#ifdef VMS
-#include <GL/vms_x_fix.h>
-#endif
 
 /*
  * POSIX threads. This should be your choice in the Unix world
@@ -121,7 +112,7 @@ typedef pthread_cond_t _glthread_Cond;
 #define _glthread_DECLARE_STATIC_COND(name) \
    static _glthread_Cond name = PTHREAD_COND_INITIALIZER
 
-#define _glthread_INIT_COND(cond)			\
+#define _glthread_INIT_COND(cond) \
    pthread_cond_init(&(cond), NULL)
 
 #define _glthread_DESTROY_COND(name) \
@@ -143,7 +134,7 @@ typedef unsigned int _glthread_Cond;
 #define _glthread_DECLARE_STATIC_COND(name) \
 //  #warning Condition variables not implemented.
 
-#define _glthread_INIT_COND(cond)	    \
+#define _glthread_INIT_COND(cond) \
   ASSERT(0);
 
 #define _glthread_DESTROY_COND(name) \
@@ -209,11 +200,20 @@ typedef HANDLE _glthread_Thread;
 
 typedef CRITICAL_SECTION _glthread_Mutex;
 
-#define _glthread_DECLARE_STATIC_MUTEX(name)  /*static*/ _glthread_Mutex name = {0,0,0,0,0,0}
-#define _glthread_INIT_MUTEX(name)  InitializeCriticalSection(&name)
-#define _glthread_DESTROY_MUTEX(name)  DeleteCriticalSection(&name)
-#define _glthread_LOCK_MUTEX(name)  EnterCriticalSection(&name)
-#define _glthread_UNLOCK_MUTEX(name)  LeaveCriticalSection(&name)
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   /* static */ _glthread_Mutex name = { 0, 0, 0, 0, 0, 0 }
+
+#define _glthread_INIT_MUTEX(name) \
+   InitializeCriticalSection(&name)
+
+#define _glthread_DESTROY_MUTEX(name) \
+   DeleteCriticalSection(&name)
+
+#define _glthread_LOCK_MUTEX(name) \
+   EnterCriticalSection(&name)
+
+#define _glthread_UNLOCK_MUTEX(name) \
+   LeaveCriticalSection(&name)
 
 #endif /* WIN32_THREADS */
 
@@ -252,12 +252,26 @@ typedef struct {
 } benaphore;
 typedef benaphore _glthread_Mutex;
 
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = { 0, 0 }
-#define _glthread_INIT_MUTEX(name)    	name.sem = create_sem(0, #name"_benaphore"), name.lock = 0
-#define _glthread_DESTROY_MUTEX(name) 	delete_sem(name.sem), name.lock = 0
-#define _glthread_LOCK_MUTEX(name)    	if (name.sem == 0) _glthread_INIT_MUTEX(name); \
-									  	if (atomic_add(&(name.lock), 1) >= 1) acquire_sem(name.sem)
-#define _glthread_UNLOCK_MUTEX(name)  	if (atomic_add(&(name.lock), -1) > 1) release_sem(name.sem)
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   static _glthread_Mutex name = { 0, 0 }
+
+#define _glthread_INIT_MUTEX(name) \
+   name.sem = create_sem(0, #name"_benaphore"), \
+   name.lock = 0
+
+#define _glthread_DESTROY_MUTEX(name) \
+   delete_sem(name.sem), \
+   name.lock = 0
+
+#define _glthread_LOCK_MUTEX(name) \
+   if (name.sem == 0) \
+      _glthread_INIT_MUTEX(name); \
+   if (atomic_add(&(name.lock), 1) >= 1) \
+      acquire_sem(name.sem)
+
+#define _glthread_UNLOCK_MUTEX(name) \
+   if (atomic_add(&(name.lock), -1) > 1) \
+      release_sem(name.sem)
 
 #endif /* BEOS_THREADS */
 
@@ -307,27 +321,6 @@ _glthread_GetTSD(_glthread_TSD *);
 
 extern void
 _glthread_SetTSD(_glthread_TSD *, void *);
-
-#if !defined __GNUC__ || __GNUC__ < 3
-#  define __builtin_expect(x, y) x
-#endif
-
-#if defined(GLX_USE_TLS)
-
-extern __thread struct _glapi_table * _glapi_tls_Dispatch
-    __attribute__((tls_model("initial-exec")));
-
-#define GET_DISPATCH() _glapi_tls_Dispatch
-
-#elif !defined(GL_CALL)
-# if defined(THREADS)
-#  define GET_DISPATCH() \
-   ((__builtin_expect( _glapi_Dispatch != NULL, 1 )) \
-       ? _glapi_Dispatch : _glapi_get_dispatch())
-# else
-#  define GET_DISPATCH() _glapi_Dispatch
-# endif /* defined(THREADS) */
-#endif  /* ndef GL_CALL */
 
 
 #endif /* THREADS_H */
