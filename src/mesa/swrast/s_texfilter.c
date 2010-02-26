@@ -480,7 +480,7 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
 static INLINE GLint
 tex_array_slice(GLfloat coord, GLsizei size)
 {
-   GLint slice = IFLOOR(coord);
+   GLint slice = IFLOOR(coord + 0.5f);
    slice = CLAMP(slice, 0, size - 1);
    return slice;
 }
