@@ -205,14 +205,6 @@ default: $(UTIL_FILES) $(PROGS)
 clean:
 	-rm -f $(PROGS)
 	-rm -f *.o
-	-rm -f getproclist.h
-
-
-# auto code generation
-getprocaddress: getprocaddress.c getproclist.h
-
-getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
-	python getprocaddress.py > getproclist.h
 
 
 texrect: texrect.o readtex.o
