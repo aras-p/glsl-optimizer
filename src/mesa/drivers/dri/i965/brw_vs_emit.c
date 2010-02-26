@@ -180,10 +180,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_output = reg;
    c->first_overflow_output = 0;
 
-   if (intel->is_ironlake)
-       mrf = 8;
+   if (intel->gen >= 6)
+      mrf = 6;
+   else if (intel->is_ironlake)
+      mrf = 8;
    else
-       mrf = 4;
+      mrf = 4;
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
@@ -1195,7 +1197,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
    int eot;
-   GLuint len_vertext_header = 2;
+   GLuint len_vertex_header = 2;
 
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
@@ -1203,12 +1205,14 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 	      get_reg(c, PROGRAM_INPUT, VERT_ATTRIB_EDGEFLAG));
    }
 
-   /* Build ndc coords */
-   ndc = get_tmp(c);
-   /* ndc = 1.0 / pos.w */
-   emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
-   /* ndc.xyz = pos * ndc */
-   brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
+   if (intel->gen < 6) {
+      /* Build ndc coords */
+      ndc = get_tmp(c);
+      /* ndc = 1.0 / pos.w */
+      emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
+      /* ndc.xyz = pos * ndc */
+      brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
+   }
 
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
@@ -1271,21 +1275,41 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     * of zeros followed by two sets of NDC coordinates:
     */
    brw_set_access_mode(p, BRW_ALIGN_1);
-   brw_MOV(p, offset(m0, 2), ndc);
 
-   if (intel->is_ironlake || intel->gen >= 6) {
-       /* There are 20 DWs (D0-D19) in VUE vertex header on Ironlake */
-       brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
-       /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
-        * Seems it is useless for us.
-        * m6 is used for aligning, so that the remainder of vertex element is 
-        * reg-aligned.
-        */
-       brw_MOV(p, offset(m0, 7), pos); /* the remainder of vertex element */
-       len_vertext_header = 6;
+   if (intel->gen >= 6) {
+      /* There are 16 DWs (D0-D15) in VUE header on Sandybridge:
+       * dword 0-3 (m1) of the header is indices, point width, clip flags.
+       * dword 4-7 (m2) is the 4D space position
+       * dword 8-15 (m3,m4) of the vertex header is the user clip distance.
+       * m5 is the first vertex data we fill, which is the vertex position.
+       */
+      brw_MOV(p, offset(m0, 2), pos);
+      brw_MOV(p, offset(m0, 5), pos);
+      len_vertex_header = 4;
+   } else if (intel->is_ironlake) {
+      /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
+       * dword 0-3 (m1) of the header is indices, point width, clip flags.
+       * dword 4-7 (m2) is the ndc position (set above)
+       * dword 8-11 (m3) of the vertex header is the 4D space position
+       * dword 12-19 (m4,m5) of the vertex header is the user clip distance.
+       * m6 is a pad so that the vertex element data is aligned
+       * m7 is the first vertex data we fill, which is the vertex position.
+       */
+      brw_MOV(p, offset(m0, 2), ndc);
+      brw_MOV(p, offset(m0, 3), pos);
+      brw_MOV(p, offset(m0, 7), pos);
+      len_vertex_header = 6;
    } else {
-       brw_MOV(p, offset(m0, 3), pos);
-       len_vertext_header = 2;
+      /* There are 8 dwords in VUE header pre-Ironlake:
+       * dword 0-3 (m1) is indices, point width, clip flags.
+       * dword 4-7 (m2) is ndc position (set above)
+       *
+       * dword 8-11 (m3) is the first vertex data, which we always have be the
+       * vertex position.
+       */
+      brw_MOV(p, offset(m0, 2), ndc);
+      brw_MOV(p, offset(m0, 3), pos);
+      len_vertex_header = 2;
    }
 
    eot = (c->first_overflow_output == 0);
@@ -1296,7 +1320,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 c->r0,		/* src */
 		 0,		/* allocate */
 		 1,		/* used */
-		 MIN2(c->nr_outputs + 1 + len_vertext_header, (BRW_MAX_MRF-1)), /* msg len */
+		 MIN2(c->nr_outputs + 1 + len_vertex_header, (BRW_MAX_MRF-1)), /* msg len */
 		 0,		/* response len */
 		 eot, 		/* eot */
 		 eot, 		/* writes complete */
