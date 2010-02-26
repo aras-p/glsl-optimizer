@@ -344,6 +344,8 @@ struct egl_manager {
 
    EGLBoolean verbose;
    EGLint major, minor;
+
+   GC gc;
 };
 
 static struct egl_manager *
@@ -475,6 +477,8 @@ egl_manager_create_window(struct egl_manager *eman, const char *name,
       }
    }
 
+   eman->gc = XCreateGC(eman->xdpy, eman->xwin, 0, NULL);
+
    XMapWindow(eman->xdpy, eman->xwin);
 
    return EGL_TRUE;
@@ -531,6 +535,8 @@ egl_manager_destroy(struct egl_manager *eman)
    if (eman->xpix != None)
       XFreePixmap(eman->xdpy, eman->xpix);
 
+   XFreeGC(eman->xdpy, eman->gc);
+
    free(eman);
 }
 
@@ -581,10 +587,26 @@ texture_gears(struct egl_manager *eman, int surface_type)
 }
 
 static void
+copy_gears(struct egl_manager *eman,
+	   EGLint tile_w, EGLint tile_h, EGLint w, EGLint h)
+{
+   int x, y;
+
+   eglWaitClient();
+
+   for (x = 0; x < w; x += tile_w) {
+      for (y = 0; y < h; y += tile_h) {
+
+	 XCopyArea(eman->xdpy, eman->xpix, eman->xwin, eman->gc,
+		   0, 0, tile_w, tile_h, x, y);
+      }
+   }
+}
+
+static void
 event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
 {
-   GC gc = XCreateGC(eman->xdpy, eman->xwin, 0, NULL);
-   EGLint orig_w = w, orig_h = h;
+   int window_w = w, window_h = h;
 
    if (surface_type == EGL_PBUFFER_BIT)
       printf("there will be no screen update if "
@@ -599,10 +621,10 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
             /* we'll redraw below */
             break;
          case ConfigureNotify:
-            w = event.xconfigure.width;
-            h = event.xconfigure.height;
+            window_w = event.xconfigure.width;
+            window_h = event.xconfigure.height;
             if (surface_type == EGL_WINDOW_BIT)
-               reshape(w, h);
+               reshape(window_w, window_h);
             break;
          case KeyPress:
             {
@@ -637,7 +659,6 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          static int frames = 0;
          static double tRot0 = -1.0, tRate0 = -1.0;
          double dt, t = current_time();
-         int x, y;
          if (tRot0 < 0.0)
             tRot0 = t;
          dt = t - tRot0;
@@ -649,41 +670,35 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
              angle -= 3600.0;
 
          switch (surface_type) {
+         case GEARS_WINDOW:
+	    draw();
+            eglSwapBuffers(eman->dpy, eman->win);
+            break;
+
 	 case GEARS_PBUFFER:
+	    draw();
+	    if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
+	       break;
+	    copy_gears(eman, w, h, window_w, window_h);
+	    break;
+
 	 case GEARS_PBUFFER_TEXTURE:
             eglMakeCurrent(eman->dpy, eman->pbuf, eman->pbuf, eman->ctx);
+	    draw();
+	    texture_gears(eman, surface_type);
 	    break;
 
 	 case GEARS_PIXMAP:
+	    draw();
+	    copy_gears(eman, w, h, window_w, window_h);
+	    break;
+
 	 case GEARS_PIXMAP_TEXTURE:
             eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
-	    break;
-	 }
-
-         draw();
-         switch (surface_type) {
-         case GEARS_WINDOW:
-            eglSwapBuffers(eman->dpy, eman->win);
-            break;
-         case GEARS_PBUFFER_TEXTURE:
-	 case GEARS_PIXMAP_TEXTURE:
+	    draw();
 	    texture_gears(eman, surface_type);
 	    break;
-         case GEARS_PBUFFER:
-	    if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
-	       break;
-	    eglWaitClient();
-            /* fall through */
-         case GEARS_PIXMAP:
-            eglWaitClient();
-            for (x = 0; x < w; x += orig_w) {
-               for (y = 0; y < h; y += orig_h) {
-                  XCopyArea(eman->xdpy, eman->xpix, eman->xwin, gc,
-                            0, 0, orig_w, orig_h, x, y);
-               }
-            }
-            break;
-         }
+	 }
 
          frames++;
 
@@ -699,8 +714,6 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          }
       }
    }
-
-   XFreeGC(eman->xdpy, gc);
 }
 
 
