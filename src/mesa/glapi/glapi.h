@@ -145,10 +145,6 @@ extern unsigned int
 _glapi_get_dispatch_table_size(void);
 
 
-extern void
-_glapi_check_table(const struct _glapi_table *table);
-
-
 extern int
 _glapi_add_dispatch( const char * const * function_names,
 		     const char * parameter_signature );
@@ -159,6 +155,18 @@ _glapi_get_proc_offset(const char *funcName);
 
 extern _glapi_proc
 _glapi_get_proc_address(const char *funcName);
+
+
+/**
+ * GL API local functions and defines
+ */
+
+extern void
+_glapi_check_table_not_null(const struct _glapi_table *table);
+
+
+extern void
+_glapi_check_table(const struct _glapi_table *table);
 
 
 extern const char *

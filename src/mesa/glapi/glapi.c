@@ -423,8 +423,9 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
       /* use the no-op functions */
       dispatch = (struct _glapi_table *) __glapi_noop_table;
    }
-#ifdef DEBUG
+#if 0 /* enable this for extra DEBUG */
    else {
+      _glapi_check_table_not_null(dispatch);
       _glapi_check_table(dispatch);
    }
 #endif
@@ -488,19 +489,23 @@ _glapi_get_dispatch_table_size(void)
  * Intended for debugging purposes.
  */
 void
-_glapi_check_table(const struct _glapi_table *table)
+_glapi_check_table_not_null(const struct _glapi_table *table)
 {
-#if 0 /* Enable this for extra DEBUG */
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
    for (i = 1; i < entries; i++) {
       assert(tab[i]);
    }
+}
 
-   /* Do some spot checks to be sure that the dispatch table
-    * slots are assigned correctly.
-    */
+/**
+ * Do some spot checks to be sure that the dispatch table
+ * slots are assigned correctly.
+ */
+void
+_glapi_check_table(const struct _glapi_table *table)
+{
    {
       GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
       char *BeginFunc = (char*) &table->Begin;
@@ -557,7 +562,4 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(setFenceOffset == _gloffset_SetFenceNV);
       assert(setFenceOffset == offset);
    }
-#else
-   (void) table;
-#endif
 }
