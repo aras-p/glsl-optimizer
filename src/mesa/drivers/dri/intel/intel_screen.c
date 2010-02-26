@@ -30,6 +30,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/hash.h"
+#include "main/fbobject.h"
 
 #include "utils.h"
 #include "xmlpool.h"
@@ -194,7 +195,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    struct gl_renderbuffer *rb;
    struct intel_renderbuffer *irb;
 
-   rb = intel->ctx.CurrentRenderbuffer;
+   rb = _mesa_lookup_renderbuffer(&intel->ctx, renderbuffer);
    if (!rb) {
       _mesa_error(&intel->ctx,
 		  GL_INVALID_OPERATION, "glRenderbufferExternalMESA");
