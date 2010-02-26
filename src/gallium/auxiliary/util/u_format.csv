@@ -16,15 +16,15 @@ PIPE_FORMAT_A8L8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, r
 PIPE_FORMAT_L16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxx1, rgb
 
 # SRGB formats
-PIPE_FORMAT_L8_SRGB               , plain, 1, 1, u8  ,     ,     ,     , xxx1, srgb 
-PIPE_FORMAT_A8L8_SRGB             , plain, 1, 1, u8  , u8  ,     ,     , xxxy, srgb 
-PIPE_FORMAT_R8G8B8_SRGB           , plain, 1, 1, u8  , u8  , u8  ,     , zyx1, srgb 
-PIPE_FORMAT_R8G8B8A8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , wzyx, srgb
-PIPE_FORMAT_R8G8B8X8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , wzy1, srgb
-PIPE_FORMAT_A8R8G8B8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , zyxw, srgb
-PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , zyx1, srgb
-PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , yzwx, srgb
-PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, u8  , u8  , u8  , u8  , yzw1, srgb
+PIPE_FORMAT_L8_SRGB               , plain, 1, 1, un8 ,     ,     ,     , xxx1, srgb 
+PIPE_FORMAT_A8L8_SRGB             , plain, 1, 1, un8 , un8 ,     ,     , xxxy, srgb 
+PIPE_FORMAT_R8G8B8_SRGB           , plain, 1, 1, un8 , un8 , un8 ,     , zyx1, srgb 
+PIPE_FORMAT_R8G8B8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, srgb
+PIPE_FORMAT_R8G8B8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, srgb
+PIPE_FORMAT_A8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, srgb
+PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, srgb
+PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, srgb
+PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, srgb
 
 # Signed formats (typically used for bump map textures)
 PIPE_FORMAT_A8B8G8R8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , wzyx, rgb
