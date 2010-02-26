@@ -162,6 +162,9 @@ _glapi_get_proc_address(const char *funcName);
  */
 
 extern void
+init_glapi_relocs_once(void);
+
+extern void
 _glapi_check_table_not_null(const struct _glapi_table *table);
 
 
