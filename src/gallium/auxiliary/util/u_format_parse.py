@@ -37,6 +37,10 @@ SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, 
 PLAIN = 'plain'
 
 
+def is_pot(x):
+   return (x & (x - 1)) == 0;
+
+
 class Type:
     '''Describe the type of a color channel.'''
     
@@ -112,6 +116,9 @@ class Format:
                 if type.norm != ref_type.norm:
                     return True
         return False
+
+    def is_pot(self):
+        return is_pot(self.block_size())
 
     def stride(self):
         return self.block_size()/8
