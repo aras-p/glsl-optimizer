@@ -90,7 +90,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
                         value = '(%s >> %u)' % (value, shift)
                     if shift + width < format.block_size():
                         value = '(%s & 0x%x)' % (value, mask)
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     print '         %s %s = %s;' % (dst_native_type, names[i], value)
                 shift += width
         else:
@@ -98,7 +98,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
                 src_channel = format.channels[i]
                 if names[i]:
                     value = '(*src_pixel++)'
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     print '         %s %s = %s;' % (dst_native_type, names[i], value)
     else:
         assert False
@@ -154,7 +154,7 @@ def pack_rgba(format, src_channel, r, g, b, a):
         if value:
             dst_channel = format.channels[i]
             dst_native_type = native_type(format)
-            value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+            value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
             term = "((%s) << %d)" % (value, shift)
             if expr:
                 expr = expr + " | " + term
@@ -217,7 +217,7 @@ def emit_tile_pixel_write_code(format, src_channel):
                 width = dst_channel.size
                 if inv_swizzle[i] is not None:
                     value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     if shift:
                         value = '(%s << %u)' % (value, shift)
                     print '         pixel |= %s;' % value
@@ -228,7 +228,7 @@ def emit_tile_pixel_write_code(format, src_channel):
                 dst_channel = format.channels[i]
                 if inv_swizzle[i] is not None:
                     value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     print '         *dst_pixel++ = %s;' % value
     else:
         assert False

@@ -39,7 +39,7 @@
 
 import sys
 
-from u_format_parse import *
+from u_format_pack import *
 
 
 def is_format_supported(format):
@@ -92,160 +92,6 @@ def native_type(format):
                 assert False
     else:
         assert False
-
-
-def intermediate_native_type(bits, sign):
-    '''Find a native type adequate to hold intermediate results of the request bit size.'''
-
-    bytes = 4 # don't use anything smaller than 32bits
-    while bytes * 8 < bits:
-        bytes *= 2
-    bits = bytes*8
-
-    if sign:
-        return 'int%u_t' % bits
-    else:
-        return 'uint%u_t' % bits
-
-
-def get_one_shift(channel):
-    '''Get the number of the bit that matches unity for this channel.'''
-    if channel.type == 'FLOAT':
-        assert False
-    if not channel.norm:
-        return 0
-    if channel.type == UNSIGNED:
-        return channel.size
-    if channel.type == SIGNED:
-        return channel.size - 1
-    if channel.type == FIXED:
-        return channel.size / 2
-    assert False
-
-
-def get_one(channel):
-    '''Get the value of unity for this channel.'''
-    if channel.type == 'FLOAT' or not channel.norm:
-        return 1
-    else:
-        return (1 << get_one_shift(channel)) - 1
-
-
-def generate_clamp():
-    '''Code generate the clamping functions for each type.
-
-    We don't use a macro so that arguments with side effects, 
-    like *src_pixel++ are correctly handled.
-    '''
-
-    for suffix, native_type in [
-        ('', 'double'),
-        ('f', 'float'),
-        ('ui', 'unsigned int'),
-        ('si', 'int'),
-    ]:
-        print 'static INLINE %s' % native_type
-        print 'clamp%s(%s value, %s lbound, %s ubound)' % (suffix, native_type, native_type, native_type)
-        print '{'
-        print '   if(value < lbound)'
-        print '      return lbound;'
-        print '   if(value > ubound)'
-        print '      return ubound;'
-        print '   return value;'
-        print '}'
-        print
-
-
-def clamp_expr(src_channel, dst_channel, dst_native_type, value):
-    '''Generate the expression to clamp the value in the source type to the
-    destination type range.'''
-
-    if src_channel == dst_channel:
-        return value
-
-    # Pick the approriate clamp function
-    if src_channel.type == FLOAT:
-        if src_channel.size == 32:
-            func = 'clampf'
-        elif src_channel.size == 64:
-            func = 'clamp'
-        else:
-            assert False
-    elif src_channel.type == UNSIGNED:
-        func = 'clampui'
-    elif src_channel.type == SIGNED:
-        func = 'clampsi'
-    else:
-        assert False
-
-    # Clamp floats to [-1, 1] or [0, 1] range
-    if src_channel.type == FLOAT and dst_channel.norm:
-        max = 1
-        if src_channel.sign and dst_channel.sign:
-            min = -1
-        else:
-            min = 0
-        return '%s(%s, %s, %s)' % (func, value, min, max)
-                
-    # FIXME: Also clamp scaled values
-
-    return value
-
-
-def conversion_expr(src_channel, dst_channel, dst_native_type, value):
-    '''Generate the expression to convert a value between two types.'''
-
-    if src_channel == dst_channel:
-        return value
-
-    if src_channel.type == FLOAT and dst_channel.type == FLOAT:
-        return '(%s)%s' % (dst_native_type, value)
-    
-    if not src_channel.norm and not dst_channel.norm:
-        return '(%s)%s' % (dst_native_type, value)
-
-    value = clamp_expr(src_channel, dst_channel, dst_native_type, value)
-
-    if dst_channel.type == FLOAT:
-        if src_channel.norm:
-            one = get_one(src_channel)
-            if src_channel.size <= 23:
-                scale = '(1.0f/0x%x)' % one
-            else:
-                # bigger than single precision mantissa, use double
-                scale = '(1.0/0x%x)' % one
-            value = '(%s * %s)' % (value, scale)
-        return '(%s)%s' % (dst_native_type, value)
-
-    if src_channel.type == FLOAT:
-        if dst_channel.norm:
-            dst_one = get_one(dst_channel)
-            if dst_channel.size <= 23:
-                scale = '0x%x' % dst_one
-            else:
-                # bigger than single precision mantissa, use double
-                scale = '(double)0x%x' % dst_one
-            value = '(%s * %s)' % (value, scale)
-        return '(%s)%s' % (dst_native_type, value)
-
-    if src_channel.type == dst_channel.type:
-        src_one = get_one(src_channel)
-        dst_one = get_one(dst_channel)
-
-        if src_one > dst_one and src_channel.norm and dst_channel.norm:
-            # We can just bitshift
-            src_shift = get_one_shift(src_channel)
-            dst_shift = get_one_shift(dst_channel)
-            value = '(%s >> %s)' % (value, src_shift - dst_shift)
-        else:
-            # We need to rescale using an intermediate type big enough to hold the multiplication of both
-            tmp_native_type = intermediate_native_type(src_channel.size + dst_channel.size, src_channel.sign and dst_channel.sign)
-            value = '(%s)%s' % (tmp_native_type, value)
-            value = '%s * 0x%x / 0x%x' % (value, dst_one, src_one)
-        value = '(%s)%s' % (dst_native_type, value)
-        return value
-
-    assert False
 
 
 def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
@@ -302,9 +148,10 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
             for i in range(4):
                 src_channel = format.channels[i]
                 if names[i]:
-                    value = '(*src_pixel++)'
+                    value = 'src_pixel[%u]' % i
                     value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
                     print '         %s %s = %s;' % (dst_native_type, names[i], value)
+            print '         src_pixel += %u;' % (format.nr_channels())
     else:
         assert False
 
@@ -454,11 +301,9 @@ def main():
     print __doc__.strip()
     print
     print '#include "pipe/p_compiler.h"'
-    print '#include "u_format.h"'
     print '#include "u_math.h"'
+    print '#include "u_format_pack.h"'
     print
-
-    generate_clamp()
 
     type = Channel(FLOAT, False, 32)
     native_type = 'float'

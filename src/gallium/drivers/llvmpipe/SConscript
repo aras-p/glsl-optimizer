@@ -21,6 +21,7 @@ env.CodeGenerate(
 # XXX: Our dependency scanner only finds depended modules in relative dirs.
 env.Depends('lp_tile_soa.c', [
     '#src/gallium/auxiliary/util/u_format_parse.py', 
+    '#src/gallium/auxiliary/util/u_format_pack.py', 
     '#src/gallium/auxiliary/util/u_format_access.py',
 ])
 

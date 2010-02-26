@@ -29,6 +29,13 @@ env.CodeGenerate(
 )
 
 env.CodeGenerate(
+    target = File('util/u_format_pack.h').srcnode(),
+    script = 'util/u_format_pack.py',
+    source = ['util/u_format.csv'],
+    command = 'python $SCRIPT $SOURCE > $TARGET'
+)
+
+env.CodeGenerate(
     target = 'util/u_format_access.c',
     script = 'util/u_format_access.py',
     source = ['util/u_format.csv'],
