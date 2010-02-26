@@ -37,13 +37,13 @@
 
 
 #include "util/u_simple_screen.h"/* port to just p_screen */
-#include "pipe/p_format.h"
-#include "pipe/p_context.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "softpipe/sp_winsys.h"
+#include "pipe/p_format.h"
+#include "pipe/p_context.h"
+#include "sp_winsys.h"
 
 
 struct st_softpipe_buffer

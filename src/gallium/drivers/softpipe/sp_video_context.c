@@ -25,10 +25,12 @@
  * 
  **************************************************************************/
 
+#include "util/u_inlines.h"
+#include "util/u_memory.h"
+
 #include "sp_video_context.h"
-#include <util/u_inlines.h>
-#include <util/u_memory.h>
-#include "softpipe/sp_texture.h"
+#include "sp_texture.h"
+
 
 static void
 sp_mpeg12_destroy(struct pipe_video_context *vpipe)
