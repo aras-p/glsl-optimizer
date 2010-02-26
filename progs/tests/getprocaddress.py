@@ -74,7 +74,7 @@ static struct name_test_pair functions[] = {"""
 
 
 if __name__ == '__main__':
-	file_name = "../../src/mesa/glapi/gl_API.xml"
+	file_name = "../../src/mesa/glapi/gen/gl_API.xml"
     
 	try:
 		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
