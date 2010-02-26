@@ -170,7 +170,7 @@ def emit_unrolled_write_code(format, src_type):
     '''Emit code for writing a block based on unrolled loops.
     This is considerably faster than the TILE_PIXEL-based code below.
     '''
-    dst_native_type = intermediate_native_type(format.block_size(), False)
+    dst_native_type = 'uint%u_t' % format.block_size()
     print '   const unsigned dstpix_stride = dst_stride / %d;' % format.stride()
     print '   %s *dstpix = (%s *) dst;' % (dst_native_type, dst_native_type)
     print '   unsigned int qx, qy, i;'
@@ -249,6 +249,7 @@ def generate_format_write(format, src_type, src_native_type, src_suffix):
     if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
         and format.block_size() <= 32 \
+        and format.is_pot() \
         and not format.is_mixed() \
         and format.in_types[0].kind == UNSIGNED:
         emit_unrolled_write_code(format, src_type)
