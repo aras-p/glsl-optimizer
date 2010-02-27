@@ -30,20 +30,10 @@
 #ifndef RADEON_BUFFER_H
 #define RADEON_BUFFER_H
 
-#include <stdio.h>
-
-#include "util/u_simple_screen.h"
-#include "pipe/p_defines.h"
-#include "util/u_inlines.h"
-
 #include "pipebuffer/pb_buffer.h"
-
-#include "util/u_memory.h"
 
 #include "radeon_bo.h"
 #include "radeon_cs.h"
-
-#include "radeon_drm.h"
 
 #include "radeon_winsys.h"
 

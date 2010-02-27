@@ -30,6 +30,16 @@
  */
 
 #include "radeon_drm.h"
+#include "radeon_r300.h"
+#include "radeon_buffer.h"
+
+#include "r300_winsys.h"
+#include "trace/tr_drm.h"
+
+#include "util/u_memory.h"
+
+#include "xf86drm.h"
+#include <sys/ioctl.h>
 
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(int fd, struct radeon_winsys* winsys)
