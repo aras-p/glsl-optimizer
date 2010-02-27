@@ -79,6 +79,7 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 			break;
 		}
 
+		assert(src);
 		dst[4*i] = src[0];
 		dst[4*i + 1] = src[1];
 		dst[4*i + 2] = src[2];
@@ -311,6 +312,7 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 		r300SelectAndTranslateFragmentShader(ctx);
 	}
 
+	assert(r300->selected_fp);
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
