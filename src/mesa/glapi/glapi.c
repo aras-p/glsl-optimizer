@@ -105,24 +105,17 @@ PUBLIC __thread void * _glapi_tls_Context
     __attribute__((tls_model("initial-exec")));
 
 PUBLIC const struct _glapi_table *_glapi_Dispatch = NULL;
+
 PUBLIC const void *_glapi_Context = NULL;
 
 #else
 
 #if defined(THREADS)
 
-#ifdef WIN32_THREADS
-/* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
-#define CHECK_MULTITHREAD_LOCK()
-#define CHECK_MULTITHREAD_UNLOCK()
-#else
-_glthread_DECLARE_STATIC_MUTEX(ThreadCheckMutex);
-#define CHECK_MULTITHREAD_LOCK() _glthread_LOCK_MUTEX(ThreadCheckMutex)
-#define CHECK_MULTITHREAD_UNLOCK() _glthread_UNLOCK_MUTEX(ThreadCheckMutex)
-#endif
-
 static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
+
 _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
+
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 
 #if defined(WIN32_THREADS)
@@ -136,8 +129,8 @@ void FreeAllTSD(void)
 
 #endif /* defined(THREADS) */
 
-PUBLIC struct _glapi_table *_glapi_Dispatch = 
-  (struct _glapi_table *) __glapi_noop_table;
+PUBLIC struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
+
 PUBLIC void *_glapi_Context = NULL;
 
 #endif /* defined(GLX_USE_TLS) */
@@ -145,6 +138,20 @@ PUBLIC void *_glapi_Context = NULL;
 
 
 
+#if defined(THREADS) && !defined(GLX_USE_TLS)
+
+/**
+ * Mutex for multithread check.
+ */
+#ifdef WIN32_THREADS
+/* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
+#define CHECK_MULTITHREAD_LOCK()
+#define CHECK_MULTITHREAD_UNLOCK()
+#else
+_glthread_DECLARE_STATIC_MUTEX(ThreadCheckMutex);
+#define CHECK_MULTITHREAD_LOCK() _glthread_LOCK_MUTEX(ThreadCheckMutex)
+#define CHECK_MULTITHREAD_UNLOCK() _glthread_UNLOCK_MUTEX(ThreadCheckMutex)
+#endif
 
 /**
  * We should call this periodically from a function such as glXMakeCurrent
@@ -153,7 +160,6 @@ PUBLIC void *_glapi_Context = NULL;
 PUBLIC void
 _glapi_check_multithread(void)
 {
-#if defined(THREADS) && !defined(GLX_USE_TLS)
    static unsigned long knownID;
    static GLboolean firstCall = GL_TRUE;
 
@@ -175,8 +181,14 @@ _glapi_check_multithread(void)
       _glapi_set_context(NULL);
    }
    CHECK_MULTITHREAD_UNLOCK();
-#endif
 }
+
+#else
+
+PUBLIC void
+_glapi_check_multithread(void) { }
+
+#endif
 
 
 
@@ -211,12 +223,7 @@ _glapi_get_context(void)
 #if defined(GLX_USE_TLS)
    return _glapi_tls_Context;
 #elif defined(THREADS)
-   if (ThreadSafe) {
-      return _glthread_GetTSD(&ContextTSD);
-   }
-   else {
-      return _glapi_Context;
-   }
+   return (ThreadSafe) ? _glthread_GetTSD(&ContextTSD) : _glapi_Context;
 #else
    return _glapi_Context;
 #endif
@@ -234,7 +241,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
    init_glapi_relocs_once();
 
-   if (!dispatch) {
+   if (dispatch == NULL) {
       /* use the no-op functions */
       dispatch = (struct _glapi_table *) __glapi_noop_table;
    }
@@ -250,9 +257,9 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #elif defined(THREADS)
    _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
    _glapi_Dispatch = (ThreadSafe) ? NULL : dispatch;
-#else /*THREADS*/
+#else
    _glapi_Dispatch = dispatch;
-#endif /*THREADS*/
+#endif
 }
 
 
@@ -263,17 +270,15 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 PUBLIC struct _glapi_table *
 _glapi_get_dispatch(void)
 {
-   struct _glapi_table * api;
 #if defined(GLX_USE_TLS)
-   api = _glapi_tls_Dispatch;
+   return _glapi_tls_Dispatch;
 #elif defined(THREADS)
-   api = (ThreadSafe)
+   return (ThreadSafe)
      ? (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD)
      : _glapi_Dispatch;
 #else
-   api = _glapi_Dispatch;
+   return _glapi_Dispatch;
 #endif
-   return api;
 }
 
 
