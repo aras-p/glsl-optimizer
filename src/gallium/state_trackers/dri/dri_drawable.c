@@ -134,12 +134,13 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
    if ((dri_screen->dri2.loader
         && (dri_screen->dri2.loader->base.version > 2)
-        && (dri_screen->dri2.loader->getBuffersWithFormat != NULL)))
+        && (dri_screen->dri2.loader->getBuffersWithFormat != NULL))) {
       buffers = (*dri_screen->dri2.loader->getBuffersWithFormat)
                 (dri_drawable, &dri_drawable->w, &dri_drawable->h,
                  drawable->attachments, drawable->num_attachments,
                  &count, dri_drawable->loaderPrivate);
-   else
+   } else {
+      assert(dri_screen->dri2.loader);
       buffers = (*dri_screen->dri2.loader->getBuffers) (dri_drawable,
                                                         &dri_drawable->w,
                                                         &dri_drawable->h,
@@ -148,6 +149,7 @@ dri_get_buffers(__DRIdrawable * dPriv)
                                                         num_attachments, &count,
                                                         dri_drawable->
                                                         loaderPrivate);
+   }
 
    if (buffers == NULL) {
       return;
