@@ -599,7 +599,7 @@ static void
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size = (10 * state->nr_cbufs) + (2 * (4 - state->nr_cbufs)) +
-                          (state->zsbuf ? 10 : 0) + 6;
+                          (state->zsbuf ? 10 : 0) + 8;
 
     r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
 
@@ -718,22 +718,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->point_size = pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
-        /* Point minimum and maximum sizes. This register has to be emitted,
-         * and it'd be a step backwards to put it in invariant state. */
-        if (r300screen->caps->is_r500) {
-            rs->point_minmax =
-            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
-            ((int)(4096.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
-        } else if (r300screen->caps->is_r400) {
-            rs->point_minmax =
-            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
-            ((int)(4021.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
-        } else {
-            rs->point_minmax =
-            ((int)(0.0 * 6.0) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
-            ((int)(2560.0 * 6.0) << R300_GA_POINT_MINMAX_MAX_SHIFT);
-        }
-
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
@@ -832,6 +816,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     r300->rs_state.state = rs;
+    r300->rs_state.size = 17 + (r300->polygon_offset_enabled ? 5 : 0);
     /* XXX Why is this still needed, dammit!? */
     r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;

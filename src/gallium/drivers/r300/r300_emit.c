@@ -388,7 +388,7 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
     CS_LOCALS(r300);
 
     BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
-             (fb->zsbuf ? 10 : 0) + 6);
+             (fb->zsbuf ? 10 : 0) + 8);
 
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -447,6 +447,8 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
+    OUT_CS_REG(R300_GA_POINT_MINMAX,
+        (MAX2(fb->width, fb->height) * 6) << R300_GA_POINT_MINMAX_MAX_SHIFT);
     END_CS;
 }
 
@@ -582,15 +584,13 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     float scale, offset;
     CS_LOCALS(r300);
 
-    BEGIN_CS(18 + (rs->polygon_offset_enable ? 5 : 0));
+    BEGIN_CS(17 + (rs->polygon_offset_enable ? 5 : 0));
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
 
     OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
 
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
-    OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
-    OUT_CS(rs->point_minmax);
-    OUT_CS(rs->line_control);
+    OUT_CS_REG(R300_GA_LINE_CNTL, rs->line_control);
 
     if (rs->polygon_offset_enable) {
         scale = rs->depth_scale * 12;
