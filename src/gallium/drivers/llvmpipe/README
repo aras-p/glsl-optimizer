@@ -86,7 +86,7 @@ Building
 
 To build everything on Linux invoke scons as:
 
-  scons debug=yes statetrackers=mesa drivers=trace,llvmpipe winsys=xlib dri=false
+  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=xlib dri=false
 
 Alternatively, you can build it with GNU make, if you prefer, by invoking it as
 
@@ -96,7 +96,7 @@ but the rest of these instructions assume that scons is used.
 
 For windows is everything the except except the winsys:
 
-  scons debug=yes statetrackers=mesa drivers=trace,llvmpipe winsys=gdi dri=false
+  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=gdi dri=false
 
 Using
 =====
