@@ -44,8 +44,6 @@
 #ifndef _GLAPI_H
 #define _GLAPI_H
 
-#define GL_GLEXT_PROTOTYPES
-
 #include "glthread.h"
 
 
@@ -59,8 +57,8 @@ typedef void (*_glapi_proc)(void); /* generic function pointer */
 #define _glapi_get_dispatch _mglapi_get_dispatch
 #define _glapi_set_context _mglapi_set_context
 #define _glapi_get_context _mglapi_get_context
-#define _glapi_Context _mglapi_Context
 #define _glapi_Dispatch _mglapi_Dispatch
+#define _glapi_Context _mglapi_Context
 #endif
 
 
@@ -73,12 +71,6 @@ typedef void (*_glapi_proc)(void); /* generic function pointer */
 #endif
 
 
-/*
- * Number of extension functions which we can dynamically add at runtime.
- */
-#define MAX_EXTENSION_FUNCS 300
-
-
 /**
  ** Define the GET_DISPATCH() and GET_CURRENT_CONTEXT() macros.
  **
@@ -86,8 +78,9 @@ typedef void (*_glapi_proc)(void); /* generic function pointer */
  **/
 #if defined (GLX_USE_TLS)
 
-extern const void *_glapi_Context;
 extern const struct _glapi_table *_glapi_Dispatch;
+
+extern const void *_glapi_Context;
 
 extern __thread struct _glapi_table * _glapi_tls_Dispatch
     __attribute__((tls_model("initial-exec")));
@@ -101,8 +94,9 @@ extern __thread void * _glapi_tls_Context
 
 #else
 
-extern void *_glapi_Context;
 extern struct _glapi_table *_glapi_Dispatch;
+
+extern void *_glapi_Context;
 
 # ifdef THREADS
 
@@ -181,6 +175,12 @@ _glapi_get_proc_address(const char *funcName);
 
 extern const char *
 _glapi_get_proc_name(unsigned int offset);
+
+
+/*
+ * Number of extension functions which we can dynamically add at runtime.
+ */
+#define MAX_EXTENSION_FUNCS 300
 
 
 #endif
