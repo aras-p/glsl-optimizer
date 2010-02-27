@@ -155,69 +155,68 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    }
 	 }
 
-	 if (DO_TWOSIDE && facing == 1)
-	 {
-	       if (HAVE_BACK_COLORS) {
+	 if (DO_TWOSIDE && facing == 1) {
+	    if (HAVE_BACK_COLORS) {
+	       if (!DO_FLAT) {
+		  VERT_SAVE_RGBA( 0 );
+		  VERT_SAVE_RGBA( 1 );
+		  VERT_COPY_RGBA1( v[0] );
+		  VERT_COPY_RGBA1( v[1] );
+	       }
+	       VERT_SAVE_RGBA( 2 );
+	       VERT_COPY_RGBA1( v[2] );
+	       if (HAVE_SPEC) {
 		  if (!DO_FLAT) {
-		     VERT_SAVE_RGBA( 0 );
-		     VERT_SAVE_RGBA( 1 );
-		     VERT_COPY_RGBA1( v[0] );
-		     VERT_COPY_RGBA1( v[1] );
+		     VERT_SAVE_SPEC( 0 );
+		     VERT_SAVE_SPEC( 1 );
+		     VERT_COPY_SPEC1( v[0] );
+		     VERT_COPY_SPEC1( v[1] );
 		  }
-		  VERT_SAVE_RGBA( 2 );
-		  VERT_COPY_RGBA1( v[2] );
-		  if (HAVE_SPEC) {
-		     if (!DO_FLAT) {
-			VERT_SAVE_SPEC( 0 );
-			VERT_SAVE_SPEC( 1 );
-			VERT_COPY_SPEC1( v[0] );
-			VERT_COPY_SPEC1( v[1] );
-		     }
-		     VERT_SAVE_SPEC( 2 );
-		     VERT_COPY_SPEC1( v[2] );
+		  VERT_SAVE_SPEC( 2 );
+		  VERT_COPY_SPEC1( v[2] );
+	       }
+	    }
+	    else {
+	       GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
+	       (void) vbcolor;
+
+	       if (!DO_FLAT) {
+		  VERT_SAVE_RGBA( 0 );
+		  VERT_SAVE_RGBA( 1 );
+	       }
+	       VERT_SAVE_RGBA( 2 );
+
+	       if (VB->BackfaceColorPtr->stride) {
+		  ASSERT(VB->BackfaceColorPtr->stride == 4*sizeof(GLfloat));
+
+		  if (!DO_FLAT) {
+		     VERT_SET_RGBA( v[0], vbcolor[e0] );
+		     VERT_SET_RGBA( v[1], vbcolor[e1] );
 		  }
+		  VERT_SET_RGBA( v[2], vbcolor[e2] );
 	       }
 	       else {
-		  GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
-		  (void) vbcolor;
+		  if (!DO_FLAT) {
+		     VERT_SET_RGBA( v[0], vbcolor[0] );
+		     VERT_SET_RGBA( v[1], vbcolor[0] );
+		  }
+		  VERT_SET_RGBA( v[2], vbcolor[0] );
+	       }
+
+	       if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
+		  GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
+		  ASSERT(VB->BackfaceSecondaryColorPtr->stride == 4*sizeof(GLfloat));
 
 		  if (!DO_FLAT) {
-		     VERT_SAVE_RGBA( 0 );
-		     VERT_SAVE_RGBA( 1 );
+		     VERT_SAVE_SPEC( 0 );
+		     VERT_SAVE_SPEC( 1 );
+		     VERT_SET_SPEC( v[0], vbspec[e0] );
+		     VERT_SET_SPEC( v[1], vbspec[e1] );
 		  }
-		  VERT_SAVE_RGBA( 2 );
-
-		  if (VB->BackfaceColorPtr->stride) {
-		     ASSERT(VB->BackfaceColorPtr->stride == 4*sizeof(GLfloat));
-
-		     if (!DO_FLAT) {		  
-			VERT_SET_RGBA( v[0], vbcolor[e0] );
-			VERT_SET_RGBA( v[1], vbcolor[e1] );
-		     }
-		     VERT_SET_RGBA( v[2], vbcolor[e2] );
-		  }
-		  else {
-		     if (!DO_FLAT) {		  
-			VERT_SET_RGBA( v[0], vbcolor[0] );
-			VERT_SET_RGBA( v[1], vbcolor[0] );
-		     }
-		     VERT_SET_RGBA( v[2], vbcolor[0] );
-		  }
-
-		  if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
-		     GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
-		     ASSERT(VB->BackfaceSecondaryColorPtr->stride == 4*sizeof(GLfloat));
-
-		     if (!DO_FLAT) {
-			VERT_SAVE_SPEC( 0 );
-			VERT_SAVE_SPEC( 1 );
-			VERT_SET_SPEC( v[0], vbspec[e0] );
-			VERT_SET_SPEC( v[1], vbspec[e1] );
-		     }
-		     VERT_SAVE_SPEC( 2 );
-		     VERT_SET_SPEC( v[2], vbspec[e2] );
-		  }
+		  VERT_SAVE_SPEC( 2 );
+		  VERT_SET_SPEC( v[2], vbspec[e2] );
 	       }
+	    }
 	 }
       }
 
@@ -245,16 +244,16 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    }
 
    if (DO_FLAT) {
-	 VERT_SAVE_RGBA( 0 );
-	 VERT_SAVE_RGBA( 1 );
-	 VERT_COPY_RGBA( v[0], v[2] );
-	 VERT_COPY_RGBA( v[1], v[2] );
-	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
-	    VERT_SAVE_SPEC( 0 );
-	    VERT_SAVE_SPEC( 1 );
-	    VERT_COPY_SPEC( v[0], v[2] );
-	    VERT_COPY_SPEC( v[1], v[2] );
-	 }
+      VERT_SAVE_RGBA( 0 );
+      VERT_SAVE_RGBA( 1 );
+      VERT_COPY_RGBA( v[0], v[2] );
+      VERT_COPY_RGBA( v[1], v[2] );
+      if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
+	 VERT_SAVE_SPEC( 0 );
+	 VERT_SAVE_SPEC( 1 );
+	 VERT_COPY_SPEC( v[0], v[2] );
+	 VERT_COPY_SPEC( v[1], v[2] );
+      }
    }
 
    if (mode == GL_POINT) {
@@ -307,20 +306,19 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       VERT_SET_Z(v[2], z[2]);
    }
 
-   if (DO_TWOSIDE && facing == 1)
-   {
+   if (DO_TWOSIDE && facing == 1) {
+      if (!DO_FLAT) {
+	 VERT_RESTORE_RGBA( 0 );
+	 VERT_RESTORE_RGBA( 1 );
+      }
+      VERT_RESTORE_RGBA( 2 );
+      if (HAVE_SPEC) {
 	 if (!DO_FLAT) {
-	    VERT_RESTORE_RGBA( 0 );
-	    VERT_RESTORE_RGBA( 1 );
+	    VERT_RESTORE_SPEC( 0 );
+	    VERT_RESTORE_SPEC( 1 );
 	 }
-	 VERT_RESTORE_RGBA( 2 );
-	 if (HAVE_SPEC) {
-	    if (!DO_FLAT) {
-	       VERT_RESTORE_SPEC( 0 );
-	       VERT_RESTORE_SPEC( 1 );
-	    }
-	    VERT_RESTORE_SPEC( 2 );
-	 }
+	 VERT_RESTORE_SPEC( 2 );
+      }
    }
 
 
@@ -381,76 +379,75 @@ static void TAG(quadr)( GLcontext *ctx,
 	    }
 	 }
 
-	 if (DO_TWOSIDE && facing == 1)
-	 {
-	       GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
-	       (void)vbcolor;
+	 if (DO_TWOSIDE && facing == 1) {
+	    GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
+	    (void)vbcolor;
 
-	       if (HAVE_BACK_COLORS) {
-                  if (!DO_FLAT) {
-                     VERT_SAVE_RGBA( 0 );
-                     VERT_SAVE_RGBA( 1 );
-                     VERT_SAVE_RGBA( 2 );
-		     VERT_COPY_RGBA1( v[0] );
-		     VERT_COPY_RGBA1( v[1] );
-		     VERT_COPY_RGBA1( v[2] );
+	    if (HAVE_BACK_COLORS) {
+	       if (!DO_FLAT) {
+		  VERT_SAVE_RGBA( 0 );
+		  VERT_SAVE_RGBA( 1 );
+		  VERT_SAVE_RGBA( 2 );
+		  VERT_COPY_RGBA1( v[0] );
+		  VERT_COPY_RGBA1( v[1] );
+		  VERT_COPY_RGBA1( v[2] );
+	       }
+	       VERT_SAVE_RGBA( 3 );
+	       VERT_COPY_RGBA1( v[3] );
+	       if (HAVE_SPEC) {
+		  if (!DO_FLAT) {
+		     VERT_SAVE_SPEC( 0 );
+		     VERT_SAVE_SPEC( 1 );
+		     VERT_SAVE_SPEC( 2 );
+		     VERT_COPY_SPEC1( v[0] );
+		     VERT_COPY_SPEC1( v[1] );
+		     VERT_COPY_SPEC1( v[2] );
 		  }
-		  VERT_SAVE_RGBA( 3 );
-		  VERT_COPY_RGBA1( v[3] );
-		  if (HAVE_SPEC) {
-                     if (!DO_FLAT) {
-                        VERT_SAVE_SPEC( 0 );
-                        VERT_SAVE_SPEC( 1 );
-                        VERT_SAVE_SPEC( 2 );
-			VERT_COPY_SPEC1( v[0] );
-			VERT_COPY_SPEC1( v[1] );
-			VERT_COPY_SPEC1( v[2] );
-		     }
-		     VERT_SAVE_SPEC( 3 );
-		     VERT_COPY_SPEC1( v[3] );
+		  VERT_SAVE_SPEC( 3 );
+		  VERT_COPY_SPEC1( v[3] );
+	       }
+	    }
+	    else {
+	       if (!DO_FLAT) {
+		  VERT_SAVE_RGBA( 0 );
+		  VERT_SAVE_RGBA( 1 );
+		  VERT_SAVE_RGBA( 2 );
+	       }
+	       VERT_SAVE_RGBA( 3 );
+
+	       if (VB->BackfaceColorPtr->stride) {
+		  if (!DO_FLAT) {
+		     VERT_SET_RGBA( v[0], vbcolor[e0] );
+		     VERT_SET_RGBA( v[1], vbcolor[e1] );
+		     VERT_SET_RGBA( v[2], vbcolor[e2] );
 		  }
+		  VERT_SET_RGBA( v[3], vbcolor[e3] );
 	       }
 	       else {
-	          if (!DO_FLAT) {
-		     VERT_SAVE_RGBA( 0 );
-		     VERT_SAVE_RGBA( 1 );
-		     VERT_SAVE_RGBA( 2 );
+		  if (!DO_FLAT) {
+		     VERT_SET_RGBA( v[0], vbcolor[0] );
+		     VERT_SET_RGBA( v[1], vbcolor[0] );
+		     VERT_SET_RGBA( v[2], vbcolor[0] );
 		  }
-	          VERT_SAVE_RGBA( 3 );
-
-		  if (VB->BackfaceColorPtr->stride) {
-		     if (!DO_FLAT) {
-			VERT_SET_RGBA( v[0], vbcolor[e0] );
-			VERT_SET_RGBA( v[1], vbcolor[e1] );
-			VERT_SET_RGBA( v[2], vbcolor[e2] );
-		     }
-		     VERT_SET_RGBA( v[3], vbcolor[e3] );
-		  }
-		  else {
-		     if (!DO_FLAT) {
-			VERT_SET_RGBA( v[0], vbcolor[0] );
-			VERT_SET_RGBA( v[1], vbcolor[0] );
-			VERT_SET_RGBA( v[2], vbcolor[0] );
-		     }
-		     VERT_SET_RGBA( v[3], vbcolor[0] );
-		  }
-
-	          if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
-		     GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
-		     ASSERT(VB->BackfaceSecondaryColorPtr->stride==4*sizeof(GLfloat));
-
-		     if (!DO_FLAT) {
-		        VERT_SAVE_SPEC( 0 );
-		        VERT_SAVE_SPEC( 1 );
-		        VERT_SAVE_SPEC( 2 );
-		        VERT_SET_SPEC( v[0], vbspec[e0] );
-		        VERT_SET_SPEC( v[1], vbspec[e1] );
-		        VERT_SET_SPEC( v[2], vbspec[e2] );
-		     }
-		     VERT_SAVE_SPEC( 3 );
-		     VERT_SET_SPEC( v[3], vbspec[e3] );
-	          }
+		  VERT_SET_RGBA( v[3], vbcolor[0] );
 	       }
+
+	       if (HAVE_SPEC && VB->BackfaceSecondaryColorPtr) {
+		  GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
+		  ASSERT(VB->BackfaceSecondaryColorPtr->stride==4*sizeof(GLfloat));
+
+		  if (!DO_FLAT) {
+		     VERT_SAVE_SPEC( 0 );
+		     VERT_SAVE_SPEC( 1 );
+		     VERT_SAVE_SPEC( 2 );
+		     VERT_SET_SPEC( v[0], vbspec[e0] );
+		     VERT_SET_SPEC( v[1], vbspec[e1] );
+		     VERT_SET_SPEC( v[2], vbspec[e2] );
+		  }
+		  VERT_SAVE_SPEC( 3 );
+		  VERT_SET_SPEC( v[3], vbspec[e3] );
+	       }
+	    }
 	 }
       }
 
@@ -548,22 +545,21 @@ static void TAG(quadr)( GLcontext *ctx,
       VERT_SET_Z(v[3], z[3]);
    }
 
-   if (DO_TWOSIDE && facing == 1)
-   {
+   if (DO_TWOSIDE && facing == 1) {
+      if (!DO_FLAT) {
+	 VERT_RESTORE_RGBA( 0 );
+	 VERT_RESTORE_RGBA( 1 );
+	 VERT_RESTORE_RGBA( 2 );
+      }
+      VERT_RESTORE_RGBA( 3 );
+      if (HAVE_SPEC) {
 	 if (!DO_FLAT) {
-	    VERT_RESTORE_RGBA( 0 );
-	    VERT_RESTORE_RGBA( 1 );
-	    VERT_RESTORE_RGBA( 2 );
+	    VERT_RESTORE_SPEC( 0 );
+	    VERT_RESTORE_SPEC( 1 );
+	    VERT_RESTORE_SPEC( 2 );
 	 }
-	 VERT_RESTORE_RGBA( 3 );
-	 if (HAVE_SPEC) {
-	    if (!DO_FLAT) {
-	       VERT_RESTORE_SPEC( 0 );
-	       VERT_RESTORE_SPEC( 1 );
-	       VERT_RESTORE_SPEC( 2 );
-	    }
-	    VERT_RESTORE_SPEC( 3 );
-	 }
+	 VERT_RESTORE_SPEC( 3 );
+      }
    }
 
 
