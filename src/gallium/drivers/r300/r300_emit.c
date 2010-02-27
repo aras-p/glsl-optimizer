@@ -853,7 +853,7 @@ void r300_emit_vertex_format_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_flush_pvs(struct r300_context* r300)
+void r300_emit_pvs_flush(struct r300_context* r300, unsigned size, void* state)
 {
     CS_LOCALS(r300);
 
@@ -886,8 +886,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
                 " but has_tcl is FALSE!\n");
         return;
     }
-
-    r300_flush_pvs(r300);
 
     BEGIN_CS(9 + code->length);
     /* R300_VAP_PVS_CODE_CNTL_0
@@ -1168,10 +1166,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
 
     if (dirty_tex) {
         r300_flush_textures(r300);
-    }
-
-    if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS || r300->vs_state.dirty) {
-        r300_flush_pvs(r300);
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {

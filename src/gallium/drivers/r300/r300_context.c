@@ -96,12 +96,12 @@ static void r300_flush_cb(void *data)
 }
 
 #define R300_INIT_ATOM(atomname, atomsize) \
-    r300->atomname##_state.name = #atomname; \
-    r300->atomname##_state.state = NULL; \
-    r300->atomname##_state.size = atomsize; \
-    r300->atomname##_state.emit = r300_emit_##atomname##_state; \
-    r300->atomname##_state.dirty = FALSE; \
-    insert_at_tail(&r300->atom_list, &r300->atomname##_state);
+    r300->atomname.name = #atomname; \
+    r300->atomname.state = NULL; \
+    r300->atomname.size = atomsize; \
+    r300->atomname.emit = r300_emit_##atomname; \
+    r300->atomname.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->atomname);
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
@@ -114,19 +114,20 @@ static void r300_setup_atoms(struct r300_context* r300)
      * an upper bound on each atom, to keep the emission machinery from
      * underallocating space. */
     make_empty_list(&r300->atom_list);
-    R300_INIT_ATOM(invariant, 71);
-    R300_INIT_ATOM(ztop, 2);
-    R300_INIT_ATOM(blend, 8);
-    R300_INIT_ATOM(blend_color, 3);
-    R300_INIT_ATOM(clip, 29);
-    R300_INIT_ATOM(dsa, 8);
-    R300_INIT_ATOM(fb, 56);
-    R300_INIT_ATOM(rs, 25);
-    R300_INIT_ATOM(scissor, 3);
-    R300_INIT_ATOM(viewport, 9);
-    R300_INIT_ATOM(rs_block, 21);
-    R300_INIT_ATOM(vertex_format, 26);
-    R300_INIT_ATOM(vs, 1031);
+    R300_INIT_ATOM(invariant_state, 71);
+    R300_INIT_ATOM(ztop_state, 2);
+    R300_INIT_ATOM(blend_state, 8);
+    R300_INIT_ATOM(blend_color_state, 3);
+    R300_INIT_ATOM(clip_state, 29);
+    R300_INIT_ATOM(dsa_state, 8);
+    R300_INIT_ATOM(fb_state, 56);
+    R300_INIT_ATOM(rs_state, 25);
+    R300_INIT_ATOM(scissor_state, 3);
+    R300_INIT_ATOM(viewport_state, 9);
+    R300_INIT_ATOM(rs_block_state, 21);
+    R300_INIT_ATOM(vertex_format_state, 26);
+    R300_INIT_ATOM(pvs_flush, 2);
+    R300_INIT_ATOM(vs_state, 1031);
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);

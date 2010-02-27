@@ -1109,6 +1109,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         r300->vs_state.dirty = TRUE;
 
         r300->vertex_format_state.dirty = TRUE;
+        r300->pvs_flush.dirty = TRUE;
 
         if (r300->fs) {
             r300_vertex_shader_setup_wpos(r300);
@@ -1186,8 +1187,10 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     r300->shader_constants[shader].count = buf->size / (4 * sizeof(float));
     pipe_buffer_unmap(pipe->screen, buf);
 
-    if (shader == PIPE_SHADER_VERTEX)
+    if (shader == PIPE_SHADER_VERTEX) {
         r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+        r300->pvs_flush.dirty = TRUE;
+    }
     else if (shader == PIPE_SHADER_FRAGMENT)
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }

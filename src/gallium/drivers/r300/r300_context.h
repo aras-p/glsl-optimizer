@@ -318,6 +318,8 @@ struct r300_context {
     struct r300_atom viewport_state;
     /* ZTOP state. */
     struct r300_atom ztop_state;
+    /* PVS flush. */
+    struct r300_atom pvs_flush;
 
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;
