@@ -189,6 +189,7 @@ static int driBindContext(__DRIcontext *pcp,
     ** initialize the drawable information if has not been done before.
     */
 
+    assert(psp);
     if (!psp->dri2.enabled) {
 	if (pdp && !pdp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
