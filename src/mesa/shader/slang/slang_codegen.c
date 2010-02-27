@@ -3184,6 +3184,7 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
       varId = oper->children[0].children[0].a_id;
       var = _slang_variable_locate(oper->children[0].children[0].locals,
                                    varId, GL_TRUE);
+      assert(var);
       start = (GLint) var->initializer->literal[0];
    }
    else {
