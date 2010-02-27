@@ -98,7 +98,7 @@ void r300_emit_ztop_state(struct r300_context* r300,
 
 void r300_emit_pvs_flush(struct r300_context* r300, unsigned size, void* state);
 
-void r300_flush_textures(struct r300_context* r300);
+void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, void* state);
 
 unsigned r300_get_num_dirty_dwords(struct r300_context *r300);
 

@@ -128,6 +128,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(vertex_format_state, 26);
     R300_INIT_ATOM(pvs_flush, 2);
     R300_INIT_ATOM(vs_state, 1031);
+    R300_INIT_ATOM(texture_cache_inval, 2);
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);

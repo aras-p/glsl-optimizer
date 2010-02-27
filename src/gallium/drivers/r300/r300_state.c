@@ -922,6 +922,7 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    boolean dirty_tex = FALSE;
     int i;
 
     /* XXX magic num */
@@ -934,6 +935,7 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
                 texture[i]);
             r300->dirty_state |= (R300_NEW_TEXTURE << i);
+            dirty_tex = TRUE;
 
             /* R300-specific - set the texrect factor in a fragment shader */
             if (!is_r500 && r300->textures[i]->is_npot) {
@@ -953,6 +955,10 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
     }
 
     r300->texture_count = count;
+
+    if (dirty_tex) {
+        r300->texture_cache_inval.dirty = TRUE;
+    }
 }
 
 static void r300_set_scissor_state(struct pipe_context* pipe,

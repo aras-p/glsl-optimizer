@@ -1002,7 +1002,7 @@ void r300_emit_ztop_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_flush_textures(struct r300_context* r300)
+void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, void* state)
 {
     CS_LOCALS(r300);
 
@@ -1107,7 +1107,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_atom* atom;
     unsigned i;
-    int dirty_tex = 0;
 
     if (r300->dirty_state & R300_NEW_QUERY) {
         r300_emit_query_start(r300);
@@ -1155,17 +1154,12 @@ void r300_emit_dirty_state(struct r300_context* r300)
 				      r300->sampler_states[i],
 				      r300->textures[i],
 				      i);
-                    dirty_tex |= r300->dirty_state & (R300_NEW_TEXTURE << i);
                 }
                 r300->dirty_state &=
                     ~((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i));
             }
         }
         r300->dirty_state &= ~(R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES);
-    }
-
-    if (dirty_tex) {
-        r300_flush_textures(r300);
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {
