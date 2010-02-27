@@ -743,12 +743,20 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making Darwin static library: " ${LIBNAME}
-            LINK="ar"
             OPTS="-ruvs"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            # make static lib
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
+
             FINAL_LIBS=${LIBNAME}
         else
             # On Darwin a .bundle is used for a library that you want to dlopen
