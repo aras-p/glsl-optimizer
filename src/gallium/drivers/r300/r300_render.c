@@ -186,6 +186,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     dwords = 10 + count * vertex_size;
 
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
+    r300_emit_buffer_validate(r300, FALSE, 0);
     r300_emit_dirty_state(r300);
 
     BEGIN_CS(dwords);
@@ -313,31 +314,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     END_CS;
 }
 
-static boolean r300_setup_vertex_buffers(struct r300_context *r300)
-{
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
-    struct pipe_buffer *pbuf;
-
-validate:
-    for (int i = 0; i < r300->vertex_element_count; i++) {
-        pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
-
-        if (!r300->winsys->add_buffer(r300->winsys, pbuf,
-                                      RADEON_GEM_DOMAIN_GTT, 0)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
-    }
-
-    if (!r300->winsys->validate(r300->winsys)) {
-        r300->context.flush(&r300->context, 0, NULL);
-        return r300->winsys->validate(r300->winsys);
-    }
-
-    return TRUE;
-}
-
 static void r300_shorten_ubyte_elts(struct r300_context* r300,
                                     struct pipe_buffer** elts,
                                     unsigned count)
@@ -393,30 +369,16 @@ void r300_draw_range_elements(struct pipe_context* pipe,
         return;
     }
 
-    r300_update_derived_state(r300);
-
-    r300_emit_buffer_validate(r300);
-
-    if (!r300_setup_vertex_buffers(r300)) {
-        return;
-    }
-
     if (indexSize == 1) {
         r300_shorten_ubyte_elts(r300, &indexBuffer, count);
         indexSize = 2;
     }
 
-    if (!r300->winsys->add_buffer(r300->winsys, indexBuffer,
-                                  RADEON_GEM_DOMAIN_GTT, 0)) {
-        goto cleanup;
-    }
-
-    if (!r300->winsys->validate(r300->winsys)) {
-        goto cleanup;
-    }
+    r300_update_derived_state(r300);
 
     /* 128 dwords for emit_aos and emit_draw_elements */
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
+    r300_emit_buffer_validate(r300, TRUE, indexBuffer);
     r300_emit_dirty_state(r300);
     r300_emit_aos(r300, 0);
 
@@ -434,13 +396,13 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
             /* 16 spare dwords are enough for emit_draw_elements. */
             if (count && r300_reserve_cs_space(r300, 16)) {
+                r300_emit_buffer_validate(r300, TRUE, indexBuffer);
                 r300_emit_dirty_state(r300);
                 r300_emit_aos(r300, 0);
             }
         } while (count);
     }
 
-cleanup:
     if (indexBuffer != orgIndexBuffer) {
         pipe->screen->buffer_destroy(indexBuffer);
     }
@@ -477,18 +439,13 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 
     r300_update_derived_state(r300);
 
-    r300_emit_buffer_validate(r300);
-
     if (immd_is_good_idea(r300, count)) {
         r300_emit_draw_arrays_immediate(r300, mode, start, count);
     } else {
-        if (!r300_setup_vertex_buffers(r300)) {
-            return;
-        }
-
         /* Make sure there are at least 128 spare dwords in the command buffer.
          * (most of it being consumed by emit_aos) */
         r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
+        r300_emit_buffer_validate(r300, TRUE, 0);
         r300_emit_dirty_state(r300);
 
         if (alt_num_verts || count <= 65535) {
@@ -506,6 +463,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 /* Again, we emit both AOS and draw_arrays so there should be
                  * at least 128 spare dwords. */
                 if (count && r300_reserve_cs_space(r300, 128)) {
+                    r300_emit_buffer_validate(r300, TRUE, 0);
                     r300_emit_dirty_state(r300);
                 }
             } while (count);

@@ -105,6 +105,8 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300);
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300);
 
-void r300_emit_buffer_validate(struct r300_context *r300);
+void r300_emit_buffer_validate(struct r300_context *r300,
+                               boolean do_validate_vertex_buffers,
+                               struct pipe_buffer *index_buffer);
 
 #endif /* R300_EMIT_H */

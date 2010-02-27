@@ -1010,11 +1010,16 @@ void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, voi
     END_CS;
 }
 
-void r300_emit_buffer_validate(struct r300_context *r300)
+void r300_emit_buffer_validate(struct r300_context *r300,
+                               boolean do_validate_vertex_buffers,
+                               struct pipe_buffer *index_buffer)
 {
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_texture* tex;
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_buffer *pbuf;
     unsigned i;
     boolean invalid = FALSE;
 
@@ -1061,16 +1066,35 @@ validate:
             goto validate;
         }
     }
-    /* ...and vertex buffer. */
+    /* ...vertex buffer for SWTCL path... */
     if (r300->vbo) {
         if (!r300->winsys->add_buffer(r300->winsys, r300->vbo,
                     RADEON_GEM_DOMAIN_GTT, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
-    } else {
-        /* debug_printf("No VBO while emitting dirty state!\n"); */
     }
+    /* ...vertex buffers for HWTCL path... */
+    if (do_validate_vertex_buffers) {
+        for (i = 0; i < r300->vertex_element_count; i++) {
+            pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
+
+            if (!r300->winsys->add_buffer(r300->winsys, pbuf,
+                                          RADEON_GEM_DOMAIN_GTT, 0)) {
+                r300->context.flush(&r300->context, 0, NULL);
+                goto validate;
+            }
+        }
+    }
+    /* ...and index buffer for HWTCL path. */
+    if (index_buffer) {
+        if (!r300->winsys->add_buffer(r300->winsys, index_buffer,
+                                      RADEON_GEM_DOMAIN_GTT, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
+    }
+
     if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
