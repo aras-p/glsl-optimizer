@@ -1,7 +1,6 @@
 
 #include "context.h"
 #include "colormac.h"
-#include "fbobject.h"
 #include "texfetch.h"
 #include "texrender.h"
 #include "renderbuffer.h"
