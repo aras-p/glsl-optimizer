@@ -58,6 +58,7 @@ do_copy_texsubimage(GLcontext *ctx,
     }
 
     assert(rrb && rrb->bo);
+    assert(timg->mt);
     assert(timg->mt->bo);
     assert(timg->base.Width >= dstx + width);
     assert(timg->base.Height >= dsty + height);
