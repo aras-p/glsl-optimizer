@@ -420,7 +420,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     /* Now, after all that, see if we actually need to update the state. */
     if (memcmp(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block))) {
         memcpy(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block));
-        r300->rs_block_state.size = 5 + count;
+        r300->rs_block_state.size = 5 + count*2;
         r300->rs_block_state.dirty = TRUE;
     }
 }

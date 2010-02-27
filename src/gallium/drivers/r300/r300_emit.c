@@ -42,7 +42,7 @@ void r300_emit_blend_state(struct r300_context* r300,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
-    BEGIN_CS(8);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
     if (fb->nr_cbufs) {
@@ -67,13 +67,13 @@ void r300_emit_blend_color_state(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (r300screen->caps->is_r500) {
-        BEGIN_CS(3);
+        BEGIN_CS(size);
         OUT_CS_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
         OUT_CS(bc->blend_color_red_alpha);
         OUT_CS(bc->blend_color_green_blue);
         END_CS;
     } else {
-        BEGIN_CS(2);
+        BEGIN_CS(size);
         OUT_CS_REG(R300_RB3D_BLEND_COLOR, bc->blend_color);
         END_CS;
     }
@@ -88,7 +88,7 @@ void r300_emit_clip_state(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (r300screen->caps->has_tcl) {
-        BEGIN_CS(5 + (6 * 4));
+        BEGIN_CS(size);
         OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                 (r300screen->caps->is_r500 ?
                  R500_PVS_UCP_START : R300_PVS_UCP_START));
@@ -103,7 +103,7 @@ void r300_emit_clip_state(struct r300_context* r300,
                 R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
         END_CS;
     } else {
-        BEGIN_CS(2);
+        BEGIN_CS(size);
         OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
         END_CS;
     }
@@ -119,7 +119,7 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     struct pipe_stencil_ref stencil_ref = r300->stencil_ref;
     CS_LOCALS(r300);
 
-    BEGIN_CS(r300screen->caps->is_r500 ? 8 : 6);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
 
@@ -390,8 +390,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
-             (fb->zsbuf ? 10 : 0) + 8);
+    BEGIN_CS(size);
 
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -587,7 +586,7 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
     float scale, offset;
     CS_LOCALS(r300);
 
-    BEGIN_CS(17 + (rs->polygon_offset_enable ? 5 : 0));
+    BEGIN_CS(size);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
 
     OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
@@ -636,7 +635,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
 
     DBG(r300, DBG_DRAW, "r300: RS emit:\n");
 
-    BEGIN_CS(5 + count*2);
+    BEGIN_CS(size);
     if (r300screen->caps->is_r500) {
         OUT_CS_REG_SEQ(R500_RS_IP_0, count);
     } else {
@@ -722,7 +721,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
             (((maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
     }
 
-    BEGIN_CS(3);
+    BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS(top_left);
     OUT_CS(bottom_right);
@@ -824,7 +823,7 @@ void r300_emit_vertex_format_state(struct r300_context* r300,
 
     DBG(r300, DBG_DRAW, "r300: VAP/PSC emit:\n");
 
-    BEGIN_CS(26);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_info->vinfo.size);
 
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
@@ -857,7 +856,7 @@ void r300_emit_pvs_flush(struct r300_context* r300, unsigned size, void* state)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(2);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
 }
@@ -887,7 +886,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
         return;
     }
 
-    BEGIN_CS(9 + code->length);
+    BEGIN_CS(size);
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1
@@ -953,11 +952,11 @@ void r300_emit_viewport_state(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (r300->tcl_bypass) {
-        BEGIN_CS(2);
+        BEGIN_CS(2); /* XXX tcl_bypass will be removed in gallium anyway */
         OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
         END_CS;
     } else {
-        BEGIN_CS(9);
+        BEGIN_CS(size);
         OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
         OUT_CS_32F(viewport->xscale);
         OUT_CS_32F(viewport->xoffset);
@@ -997,7 +996,7 @@ void r300_emit_ztop_state(struct r300_context* r300,
     struct r300_ztop_state* ztop = (struct r300_ztop_state*)state;
     CS_LOCALS(r300);
 
-    BEGIN_CS(2);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_ZB_ZTOP, ztop->z_buffer_top);
     END_CS;
 }
@@ -1006,7 +1005,7 @@ void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, voi
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(2);
+    BEGIN_CS(size);
     OUT_CS_REG(R300_TX_INVALTAGS, 0);
     END_CS;
 }

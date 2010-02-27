@@ -105,29 +105,31 @@ static void r300_flush_cb(void *data)
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
+    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    boolean has_tcl = r300_screen(r300->context.screen)->caps->has_tcl;
+
     /* Create the actual atom list.
      *
      * Each atom is examined and emitted in the order it appears here, which
      * can affect performance and conformance if not handled with care.
      *
-     * Some atoms never change size, others change every emit. This is just
-     * an upper bound on each atom, to keep the emission machinery from
-     * underallocating space. */
+     * Some atoms never change size, others change every emit - those have
+     * the size of 0 here. */
     make_empty_list(&r300->atom_list);
     R300_INIT_ATOM(invariant_state, 71);
     R300_INIT_ATOM(ztop_state, 2);
     R300_INIT_ATOM(blend_state, 8);
-    R300_INIT_ATOM(blend_color_state, 3);
-    R300_INIT_ATOM(clip_state, 29);
-    R300_INIT_ATOM(dsa_state, 8);
-    R300_INIT_ATOM(fb_state, 56);
-    R300_INIT_ATOM(rs_state, 25);
+    R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
+    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
+    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
+    R300_INIT_ATOM(fb_state, 0);
+    R300_INIT_ATOM(rs_state, 0);
     R300_INIT_ATOM(scissor_state, 3);
     R300_INIT_ATOM(viewport_state, 9);
-    R300_INIT_ATOM(rs_block_state, 21);
+    R300_INIT_ATOM(rs_block_state, 0);
     R300_INIT_ATOM(vertex_format_state, 26);
     R300_INIT_ATOM(pvs_flush, 2);
-    R300_INIT_ATOM(vs_state, 1031);
+    R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(texture_cache_inval, 2);
 
     /* Some non-CSO atoms need explicit space to store the state locally. */

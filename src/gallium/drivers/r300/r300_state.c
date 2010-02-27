@@ -1111,7 +1111,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         }
 
         r300->vs_state.state = vs;
-        r300->vs_state.size = vs->code.length + 11;
+        r300->vs_state.size = vs->code.length + 9;
         r300->vs_state.dirty = TRUE;
 
         r300->vertex_format_state.dirty = TRUE;
