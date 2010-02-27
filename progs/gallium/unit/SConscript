@@ -1,0 +1,15 @@
+Import('*')
+
+env = env.Clone()
+
+env.Prepend(LIBS = [gallium])
+
+progs = [
+    'u_format_test'
+]
+
+for prog in progs:
+    prog = env.Program(
+        target = prog,
+        source = prog + '.c',
+    )
