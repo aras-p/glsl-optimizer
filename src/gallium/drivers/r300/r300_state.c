@@ -824,13 +824,13 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     if (rs) {
         r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
+        r300->rs_state.dirty = TRUE;
     } else {
         r300->tcl_bypass = FALSE;
         r300->polygon_offset_enabled = FALSE;
     }
 
     r300->rs_state.state = rs;
-    r300->rs_state.dirty = TRUE;
     /* XXX Why is this still needed, dammit!? */
     r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
