@@ -42,7 +42,6 @@
  * DO_UNFILLED:  Decompose triangles to lines and points where appropriate.
  * DO_TWOSTENCIL:Gross hack for two-sided stencil.
  *
- * HAVE_RGBA: Vertices have rgba values (otherwise index values).
  * HAVE_SPEC: Vertices have secondary rgba values.
  *
  * VERT_X(v): Alias for vertex x value.
@@ -59,28 +58,14 @@
  * VERT_COPY_RGBA: Copy vertex rgba another vertex.
  * VERT_SAVE_RGBA: Save vertex rgba to a local variable.
  * VERT_RESTORE_RGBA: Restore vertex rgba from a local variable.
- *   --> Similar for IND and SPEC.
+ *   --> Similar for SPEC.
  *
  * LOCAL_VARS(n): (At least) define local vars for save/restore rgba.
  *
  */
 
-#if HAVE_RGBA
-#define VERT_SET_IND( v, c ) (void) c
-#define VERT_COPY_IND( v0, v1 )
-#define VERT_SAVE_IND( idx )
-#define VERT_RESTORE_IND( idx )
 #if HAVE_BACK_COLORS
 #define VERT_SET_RGBA( v, c )
-#endif
-#else
-#define VERT_SET_RGBA( v, c ) (void) c
-#define VERT_COPY_RGBA( v0, v1 )
-#define VERT_SAVE_RGBA( idx )
-#define VERT_RESTORE_RGBA( idx )
-#if HAVE_BACK_COLORS
-#define VERT_SET_IND( v, c )
-#endif
 #endif
 
 #if !HAVE_SPEC
@@ -99,7 +84,6 @@
 
 #if !HAVE_BACK_COLORS
 #define VERT_COPY_SPEC1( v )
-#define VERT_COPY_IND1( v )
 #define VERT_COPY_RGBA1( v )
 #endif
 
@@ -173,7 +157,6 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
 	 if (DO_TWOSIDE && facing == 1)
 	 {
-	    if (HAVE_RGBA) {
 	       if (HAVE_BACK_COLORS) {
 		  if (!DO_FLAT) {
 		     VERT_SAVE_RGBA( 0 );
@@ -235,18 +218,6 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		     VERT_SET_SPEC( v[2], vbspec[e2] );
 		  }
 	       }
-	    }
-	    else {
-	       GLfloat (*vbindex) = (GLfloat *)VB->BackfaceIndexPtr->data;
-	       if (!DO_FLAT) {
-		  VERT_SAVE_IND( 0 );
-		  VERT_SAVE_IND( 1 );
-		  VERT_SET_IND( v[0], vbindex[e0] );
-		  VERT_SET_IND( v[1], vbindex[e1] );
-	       }
-	       VERT_SAVE_IND( 2 );
-	       VERT_SET_IND( v[2], vbindex[e2] );
-	    }
 	 }
       }
 
@@ -274,7 +245,6 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    }
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_SAVE_RGBA( 0 );
 	 VERT_SAVE_RGBA( 1 );
 	 VERT_COPY_RGBA( v[0], v[2] );
@@ -285,13 +255,6 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    VERT_COPY_SPEC( v[0], v[2] );
 	    VERT_COPY_SPEC( v[1], v[2] );
 	 }
-      }
-      else {
-	 VERT_SAVE_IND( 0 );
-	 VERT_SAVE_IND( 1 );
-	 VERT_COPY_IND( v[0], v[2] );
-	 VERT_COPY_IND( v[1], v[2] );
-      }
    }
 
    if (mode == GL_POINT) {
@@ -346,7 +309,6 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
    if (DO_TWOSIDE && facing == 1)
    {
-      if (HAVE_RGBA) {
 	 if (!DO_FLAT) {
 	    VERT_RESTORE_RGBA( 0 );
 	    VERT_RESTORE_RGBA( 1 );
@@ -359,30 +321,16 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    }
 	    VERT_RESTORE_SPEC( 2 );
 	 }
-      }
-      else {
-	 if (!DO_FLAT) {
-	    VERT_RESTORE_IND( 0 );
-	    VERT_RESTORE_IND( 1 );
-	 }
-	 VERT_RESTORE_IND( 2 );
-      }
    }
 
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA( 0 );
 	 VERT_RESTORE_RGBA( 1 );
 	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_RESTORE_SPEC( 0 );
 	    VERT_RESTORE_SPEC( 1 );
 	 }
-      }
-      else {
-	 VERT_RESTORE_IND( 0 );
-	 VERT_RESTORE_IND( 1 );
-      }
    }
 }
 #endif
@@ -435,7 +383,6 @@ static void TAG(quadr)( GLcontext *ctx,
 
 	 if (DO_TWOSIDE && facing == 1)
 	 {
-	    if (HAVE_RGBA) {
 	       GLfloat (*vbcolor)[4] = VB->BackfaceColorPtr->data;
 	       (void)vbcolor;
 
@@ -504,20 +451,6 @@ static void TAG(quadr)( GLcontext *ctx,
 		     VERT_SET_SPEC( v[3], vbspec[e3] );
 	          }
 	       }
-	    }
-	    else {
-	       GLfloat *vbindex = (GLfloat *)VB->BackfaceIndexPtr->data;
-	       if (!DO_FLAT) {
-		  VERT_SAVE_IND( 0 );
-		  VERT_SAVE_IND( 1 );
-		  VERT_SAVE_IND( 2 );
-		  VERT_SET_IND( v[0], vbindex[e0] );
-		  VERT_SET_IND( v[1], vbindex[e1] );
-		  VERT_SET_IND( v[2], vbindex[e2] );
-	       }
-	       VERT_SAVE_IND( 3 );
-	       VERT_SET_IND( v[3], vbindex[e3] );
-	    }
 	 }
       }
 
@@ -546,7 +479,6 @@ static void TAG(quadr)( GLcontext *ctx,
    }
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_SAVE_RGBA( 0 );
 	 VERT_SAVE_RGBA( 1 );
 	 VERT_SAVE_RGBA( 2 );
@@ -561,15 +493,6 @@ static void TAG(quadr)( GLcontext *ctx,
 	    VERT_COPY_SPEC( v[1], v[3] );
 	    VERT_COPY_SPEC( v[2], v[3] );
 	 }
-      }
-      else {
-	 VERT_SAVE_IND( 0 );
-	 VERT_SAVE_IND( 1 );
-	 VERT_SAVE_IND( 2 );
-	 VERT_COPY_IND( v[0], v[3] );
-	 VERT_COPY_IND( v[1], v[3] );
-	 VERT_COPY_IND( v[2], v[3] );
-      }
    }
 
    if (mode == GL_POINT) {
@@ -627,7 +550,6 @@ static void TAG(quadr)( GLcontext *ctx,
 
    if (DO_TWOSIDE && facing == 1)
    {
-      if (HAVE_RGBA) {
 	 if (!DO_FLAT) {
 	    VERT_RESTORE_RGBA( 0 );
 	    VERT_RESTORE_RGBA( 1 );
@@ -642,20 +564,10 @@ static void TAG(quadr)( GLcontext *ctx,
 	    }
 	    VERT_RESTORE_SPEC( 3 );
 	 }
-      }
-      else {
-	 if (!DO_FLAT) {
-	    VERT_RESTORE_IND( 0 );
-	    VERT_RESTORE_IND( 1 );
-	    VERT_RESTORE_IND( 2 );
-	 }
-	 VERT_RESTORE_IND( 3 );
-      }
    }
 
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA( 0 );
 	 VERT_RESTORE_RGBA( 1 );
 	 VERT_RESTORE_RGBA( 2 );
@@ -664,12 +576,6 @@ static void TAG(quadr)( GLcontext *ctx,
 	    VERT_RESTORE_SPEC( 1 );
 	    VERT_RESTORE_SPEC( 2 );
 	 }
-      }
-      else {
-	 VERT_RESTORE_IND( 0 );
-	 VERT_RESTORE_IND( 1 );
-	 VERT_RESTORE_IND( 2 );
-      }
    }
 }
 #else
@@ -705,33 +611,22 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
    v[1] = (VERTEX *)GET_VERTEX(e1);
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_SAVE_RGBA( 0 );
 	 VERT_COPY_RGBA( v[0], v[1] );
 	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_SAVE_SPEC( 0 );
 	    VERT_COPY_SPEC( v[0], v[1] );
 	 }
-      }
-      else {
-	 VERT_SAVE_IND( 0 );
-	 VERT_COPY_IND( v[0], v[1] );
-      }
    }
 
    LINE( v[0], v[1] );
 
    if (DO_FLAT) {
-      if (HAVE_RGBA) {
 	 VERT_RESTORE_RGBA( 0 );
 
 	 if (HAVE_SPEC && VB->AttribPtr[_TNL_ATTRIB_COLOR1]) {
 	    VERT_RESTORE_SPEC( 0 );
 	 }
-      }
-      else {
-	 VERT_RESTORE_IND( 0 );
-      }
    }
 }
 #endif
@@ -781,22 +676,8 @@ static void TAG(init)( void )
 #undef IND
 #undef TAG
 
-#if HAVE_RGBA
-#undef VERT_SET_IND
-#undef VERT_COPY_IND
-#undef VERT_SAVE_IND
-#undef VERT_RESTORE_IND
 #if HAVE_BACK_COLORS
 #undef VERT_SET_RGBA
-#endif
-#else
-#undef VERT_SET_RGBA
-#undef VERT_COPY_RGBA
-#undef VERT_SAVE_RGBA
-#undef VERT_RESTORE_RGBA
-#if HAVE_BACK_COLORS
-#undef VERT_SET_IND
-#endif
 #endif
 
 #if !HAVE_SPEC
@@ -815,7 +696,6 @@ static void TAG(init)( void )
 
 #if !HAVE_BACK_COLORS
 #undef VERT_COPY_SPEC1
-#undef VERT_COPY_IND1
 #undef VERT_COPY_RGBA1
 #endif
 
