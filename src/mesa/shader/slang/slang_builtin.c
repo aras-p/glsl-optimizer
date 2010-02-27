@@ -121,6 +121,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {
       tokens[0] = STATE_DEPTH_RANGE;
+      assert(field);
       if (strcmp(field, "near") == 0) {
          *swizzleOut = SWIZZLE_XXXX;
       }
