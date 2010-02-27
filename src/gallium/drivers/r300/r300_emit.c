@@ -387,7 +387,8 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
     int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((10 * fb->nr_cbufs) + (fb->zsbuf ? 10 : 0) + 6);
+    BEGIN_CS((10 * fb->nr_cbufs) + (2 * (4 - fb->nr_cbufs)) +
+             (fb->zsbuf ? 10 : 0) + 6);
 
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -425,6 +426,9 @@ void r300_emit_fb_state(struct r300_context* r300, void* state)
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), tex->fb_state.us_out_fmt);
+    }
+    for (; i < 4; i++) {
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
     }
 
     /* Set up a zbuffer. */
