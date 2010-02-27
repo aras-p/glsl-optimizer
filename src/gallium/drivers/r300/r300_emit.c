@@ -34,7 +34,8 @@
 #include "r300_screen.h"
 #include "r300_vs.h"
 
-void r300_emit_blend_state(struct r300_context* r300, void* state)
+void r300_emit_blend_state(struct r300_context* r300,
+                           unsigned size, void* state)
 {
     struct r300_blend_state* blend = (struct r300_blend_state*)state;
     struct pipe_framebuffer_state* fb =
@@ -58,7 +59,8 @@ void r300_emit_blend_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-void r300_emit_blend_color_state(struct r300_context* r300, void* state)
+void r300_emit_blend_color_state(struct r300_context* r300,
+                                 unsigned size, void* state)
 {
     struct r300_blend_color_state* bc = (struct r300_blend_color_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
@@ -77,7 +79,8 @@ void r300_emit_blend_color_state(struct r300_context* r300, void* state)
     }
 }
 
-void r300_emit_clip_state(struct r300_context* r300, void* state)
+void r300_emit_clip_state(struct r300_context* r300,
+                          unsigned size, void* state)
 {
     struct pipe_clip_state* clip = (struct pipe_clip_state*)state;
     int i;
@@ -107,7 +110,7 @@ void r300_emit_clip_state(struct r300_context* r300, void* state)
 
 }
 
-void r300_emit_dsa_state(struct r300_context* r300, void* state)
+void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
@@ -378,7 +381,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_fb_state(struct r300_context* r300, void* state)
+void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
@@ -578,7 +581,7 @@ void r300_emit_query_end(struct r300_context* r300)
         r300_emit_query_finish(r300, query);
 }
 
-void r300_emit_rs_state(struct r300_context* r300, void* state)
+void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
     float scale, offset;
@@ -621,7 +624,8 @@ void r300_emit_rs_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-void r300_emit_rs_block_state(struct r300_context* r300, void* state)
+void r300_emit_rs_block_state(struct r300_context* r300,
+                              unsigned size, void* state)
 {
     struct r300_rs_block* rs = (struct r300_rs_block*)state;
     unsigned i;
@@ -663,7 +667,8 @@ void r300_emit_rs_block_state(struct r300_context* r300, void* state)
     END_CS;
 }
 
-void r300_emit_scissor_state(struct r300_context* r300, void* state)
+void r300_emit_scissor_state(struct r300_context* r300,
+                             unsigned size, void* state)
 {
     unsigned minx, miny, maxx, maxy;
     uint32_t top_left, bottom_right;
@@ -810,7 +815,8 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     END_CS;
 }
 
-void r300_emit_vertex_format_state(struct r300_context* r300, void* state)
+void r300_emit_vertex_format_state(struct r300_context* r300,
+                                   unsigned size, void* state)
 {
     struct r300_vertex_info* vertex_info = (struct r300_vertex_info*)state;
     unsigned i;
@@ -856,7 +862,7 @@ static void r300_flush_pvs(struct r300_context* r300)
     END_CS;
 }
 
-void r300_emit_vs_state(struct r300_context* r300, void* state)
+void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_vertex_shader* vs = (struct r300_vertex_shader*)state;
     struct r300_vertex_program_code* code = &vs->code;
@@ -942,7 +948,8 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_viewport_state(struct r300_context* r300, void* state)
+void r300_emit_viewport_state(struct r300_context* r300,
+                              unsigned size, void* state)
 {
     struct r300_viewport_state* viewport = (struct r300_viewport_state*)state;
     CS_LOCALS(r300);
@@ -986,7 +993,8 @@ void r300_emit_texture_count(struct r300_context* r300)
 
 }
 
-void r300_emit_ztop_state(struct r300_context* r300, void* state)
+void r300_emit_ztop_state(struct r300_context* r300,
+                          unsigned size, void* state)
 {
     struct r300_ztop_state* ztop = (struct r300_ztop_state*)state;
     CS_LOCALS(r300);
@@ -1110,7 +1118,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
 
     foreach(atom, &r300->atom_list) {
         if (atom->dirty || atom->always_dirty) {
-            atom->emit(r300, atom->state);
+            atom->emit(r300, atom->size, atom->state);
             atom->dirty = FALSE;
         }
     }

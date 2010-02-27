@@ -45,7 +45,7 @@ struct r300_atom {
     /* Opaque state. */
     void* state;
     /* Emit the state to the context. */
-    void (*emit)(struct r300_context*, void*);
+    void (*emit)(struct r300_context*, unsigned, void*);
     /* Upper bound on number of dwords to emit. */
     unsigned size;
     /* Whether this atom should be emitted. */

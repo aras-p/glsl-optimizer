@@ -31,13 +31,17 @@ struct r300_vertex_program_code;
 
 void r300_emit_aos(struct r300_context* r300, unsigned offset);
 
-void r300_emit_blend_state(struct r300_context* r300, void* state);
+void r300_emit_blend_state(struct r300_context* r300,
+                           unsigned size, void* state);
 
-void r300_emit_blend_color_state(struct r300_context* r300, void* state);
+void r300_emit_blend_color_state(struct r300_context* r300,
+                                 unsigned size, void* state);
 
-void r300_emit_clip_state(struct r300_context* r300, void* state);
+void r300_emit_clip_state(struct r300_context* r300,
+                          unsigned size, void* state);
 
-void r300_emit_dsa_state(struct r300_context* r300, void* state);
+void r300_emit_dsa_state(struct r300_context* r300,
+                         unsigned size, void* state);
 
 void r300_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code);
@@ -51,18 +55,20 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
-void r300_emit_fb_state(struct r300_context* r300, void* state);
+void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 
 void r300_emit_query_begin(struct r300_context* r300,
                            struct r300_query* query);
 
 void r300_emit_query_end(struct r300_context* r300);
 
-void r300_emit_rs_state(struct r300_context* r300, void* state);
+void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state);
 
-void r300_emit_rs_block_state(struct r300_context* r300, void* state);
+void r300_emit_rs_block_state(struct r300_context* r300,
+                              unsigned size, void* state);
 
-void r300_emit_scissor_state(struct r300_context* r300, void* state);
+void r300_emit_scissor_state(struct r300_context* r300,
+                             unsigned size, void* state);
 
 void r300_emit_texture(struct r300_context* r300,
                        struct r300_sampler_state* sampler,
@@ -71,7 +77,8 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_buffer(struct r300_context* r300);
 
-void r300_emit_vertex_format_state(struct r300_context* r300, void* state);
+void r300_emit_vertex_format_state(struct r300_context* r300,
+                                   unsigned size, void* state);
 
 void r300_emit_vertex_program_code(struct r300_context* r300,
                                    struct r300_vertex_program_code* code);
@@ -79,13 +86,15 @@ void r300_emit_vertex_program_code(struct r300_context* r300,
 void r300_emit_vs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
-void r300_emit_vs_state(struct r300_context* r300, void* state);
+void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state);
 
-void r300_emit_viewport_state(struct r300_context* r300, void* state);
+void r300_emit_viewport_state(struct r300_context* r300,
+                              unsigned size, void* state);
 
 void r300_emit_texture_count(struct r300_context* r300);
 
-void r300_emit_ztop_state(struct r300_context* r300, void* state);
+void r300_emit_ztop_state(struct r300_context* r300,
+                          unsigned size, void* state);
 
 void r300_flush_textures(struct r300_context* r300);
 
