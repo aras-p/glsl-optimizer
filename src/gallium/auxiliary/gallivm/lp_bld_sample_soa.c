@@ -70,8 +70,8 @@ struct lp_build_sample_context
    struct lp_build_context coord_bld;
 
    /** Integer coordinates */
-   struct lp_type int_coord_type;
-   struct lp_build_context int_coord_bld;
+   struct lp_type uint_coord_type;
+   struct lp_build_context uint_coord_bld;
 
    /** Output texels type and build context */
    struct lp_type texel_type;
@@ -90,7 +90,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    LLVMValueRef offset;
    LLVMValueRef packed;
 
-   offset = lp_build_sample_offset(&bld->int_coord_bld,
+   offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
                                    x, y, y_stride,
                                    data_ptr);
@@ -121,7 +121,7 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
 {
    LLVMValueRef offset;
 
-   offset = lp_build_sample_offset(&bld->int_coord_bld,
+   offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
                                    x, y, y_stride,
                                    data_ptr);
@@ -145,10 +145,10 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
                      boolean is_pot,
                      unsigned wrap_mode)
 {
-   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    LLVMValueRef length_minus_one;
 
-   length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
+   length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
 
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
@@ -161,8 +161,8 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP:
-      coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
-      coord = lp_build_min(int_coord_bld, coord, length_minus_one);
+      coord = lp_build_max(uint_coord_bld, coord, uint_coord_bld->zero);
+      coord = lp_build_min(uint_coord_bld, coord, length_minus_one);
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
@@ -174,8 +174,8 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
       /* FIXME */
       _debug_printf("llvmpipe: failed to translate texture wrap mode %s\n",
                     util_dump_tex_wrap(wrap_mode, TRUE));
-      coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
-      coord = lp_build_min(int_coord_bld, coord, length_minus_one);
+      coord = lp_build_max(uint_coord_bld, coord, uint_coord_bld->zero);
+      coord = lp_build_min(uint_coord_bld, coord, length_minus_one);
       break;
 
    default:
@@ -249,8 +249,8 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
 
-   x1 = lp_build_add(&bld->int_coord_bld, x0, bld->int_coord_bld.one);
-   y1 = lp_build_add(&bld->int_coord_bld, y0, bld->int_coord_bld.one);
+   x1 = lp_build_add(&bld->uint_coord_bld, x0, bld->uint_coord_bld.one);
+   y1 = lp_build_add(&bld->uint_coord_bld, y0, bld->uint_coord_bld.one);
 
    x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
@@ -358,8 +358,8 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
 
-   x1 = lp_build_add(&bld->int_coord_bld, x0, bld->int_coord_bld.one);
-   y1 = lp_build_add(&bld->int_coord_bld, y0, bld->int_coord_bld.one);
+   x1 = lp_build_add(&bld->uint_coord_bld, x0, bld->uint_coord_bld.one);
+   y1 = lp_build_add(&bld->uint_coord_bld, y0, bld->uint_coord_bld.one);
 
    x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
    y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
@@ -545,10 +545,10 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.dynamic_state = dynamic_state;
    bld.format_desc = util_format_description(static_state->format);
    bld.coord_type = type;
-   bld.int_coord_type = lp_int_type(type);
+   bld.uint_coord_type = lp_uint_type(type);
    bld.texel_type = type;
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
-   lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
+   lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.texel_bld, builder, bld.texel_type);
 
    /* Get the dynamic state */
@@ -561,9 +561,9 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    t = coords[1];
    p = coords[2];
 
-   width = lp_build_broadcast_scalar(&bld.int_coord_bld, width);
-   height = lp_build_broadcast_scalar(&bld.int_coord_bld, height);
-   stride = lp_build_broadcast_scalar(&bld.int_coord_bld, stride);
+   width = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);
+   height = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
+   stride = lp_build_broadcast_scalar(&bld.uint_coord_bld, stride);
 
    if(static_state->target == PIPE_TEXTURE_1D)
       t = bld.coord_bld.zero;
