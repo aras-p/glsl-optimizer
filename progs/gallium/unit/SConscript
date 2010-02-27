@@ -13,3 +13,8 @@ for prog in progs:
         target = prog,
         source = prog + '.c',
     )
+
+    # http://www.scons.org/wiki/UnitTests
+    test_alias = env.Alias('unit', [prog], prog[0].abspath)
+    AlwaysBuild(test_alias)
+
