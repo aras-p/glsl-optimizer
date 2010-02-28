@@ -250,7 +250,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
 
-   format = translate_tex_target(tex->base.format);
+   format = translate_tex_format(tex->base.format);
    assert(format != BRW_SURFACEFORMAT_INVALID);
    tex->ss.ss0.surface_format = format;
 
