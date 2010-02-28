@@ -98,6 +98,8 @@ static void r300_hw_copy(struct pipe_context* pipe,
                          unsigned width, unsigned height)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_textures_state* state =
+        (struct r300_textures_state*)r300->textures_state.state;
 
     /* Yeah we have to save all those states to ensure this blitter operation
      * is really transparent. The states will be restored by the blitter once
@@ -106,11 +108,11 @@ static void r300_hw_copy(struct pipe_context* pipe,
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
     util_blitter_save_fragment_sampler_states(
-        r300->blitter, r300->sampler_count, (void**)r300->sampler_states);
+        r300->blitter, state->sampler_count, (void**)state->sampler_states);
 
     util_blitter_save_fragment_sampler_textures(
-        r300->blitter, r300->texture_count,
-        (struct pipe_texture**)r300->textures);
+        r300->blitter, state->texture_count,
+        (struct pipe_texture**)state->textures);
 
     /* Do a copy */
     util_blitter_copy(r300->blitter,

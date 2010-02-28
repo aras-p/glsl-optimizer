@@ -59,6 +59,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->fb_state.state);
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
+    FREE(r300->textures_state.state);
     FREE(r300->vertex_stream_state.state);
     FREE(r300->vap_output_state.state);
     FREE(r300->viewport_state.state);
@@ -133,6 +134,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(pvs_flush, 2);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(texture_cache_inval, 2);
+    R300_INIT_ATOM(textures_state, 0);
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
@@ -140,6 +142,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
+    r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
     r300->vertex_stream_state.state = CALLOC_STRUCT(r300_vertex_stream_state);
     r300->vap_output_state.state = CALLOC_STRUCT(r300_vap_output_state);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);

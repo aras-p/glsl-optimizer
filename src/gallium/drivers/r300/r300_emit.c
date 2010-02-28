@@ -146,6 +146,8 @@ static const float * get_shader_constant(
 {
     struct r300_viewport_state* viewport =
         (struct r300_viewport_state*)r300->viewport_state.state;
+    struct r300_textures_state* texstate =
+        (struct r300_textures_state*)r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
 
@@ -161,7 +163,7 @@ static const float * get_shader_constant(
                 /* Factor for converting rectangle coords to
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = &r300->textures[constant->u.State[1]]->tex;
+                    tex = &texstate->textures[constant->u.State[1]]->tex;
                     vec[0] = 1.0 / tex->width0;
                     vec[1] = 1.0 / tex->height0;
                     break;
@@ -728,49 +730,35 @@ void r300_emit_scissor_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_texture(struct r300_context* r300,
-                       struct r300_sampler_state* sampler,
-                       struct r300_texture* tex,
-                       unsigned offset)
+void r300_emit_textures_state(struct r300_context *r300,
+                              unsigned size, void *state)
 {
-    uint32_t filter0 = sampler->filter0;
-    uint32_t format0 = tex->state.format0;
-    unsigned min_level, max_level;
+    struct r300_textures_state *allstate = (struct r300_textures_state*)state;
+    struct r300_texture_sampler_state *texstate;
+    unsigned i;
     CS_LOCALS(r300);
 
-    /* to emulate 1D textures through 2D ones correctly */
-    if (tex->tex.target == PIPE_TEXTURE_1D) {
-        filter0 &= ~R300_TX_WRAP_T_MASK;
-        filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+    BEGIN_CS(size);
+    OUT_CS_REG(R300_TX_ENABLE, allstate->tx_enable);
+
+    for (i = 0; i < allstate->count; i++) {
+        if ((1 << i) & allstate->tx_enable) {
+            texstate = &allstate->regs[i];
+
+            OUT_CS_REG(R300_TX_FILTER0_0 + (i * 4), texstate->filter[0]);
+            OUT_CS_REG(R300_TX_FILTER1_0 + (i * 4), texstate->filter[1]);
+            OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (i * 4),
+                       texstate->border_color);
+
+            OUT_CS_REG(R300_TX_FORMAT0_0 + (i * 4), texstate->format[0]);
+            OUT_CS_REG(R300_TX_FORMAT1_0 + (i * 4), texstate->format[1]);
+            OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format[2]);
+
+            OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+            OUT_CS_RELOC(allstate->textures[i]->buffer, texstate->tile_config,
+                         RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
+        }
     }
-
-    if (tex->is_npot) {
-        /* NPOT textures don't support mip filter, unfortunately.
-         * This prevents incorrect rendering. */
-        filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
-    } else {
-        /* determine min/max levels */
-        /* the MAX_MIP level is the largest (finest) one */
-        max_level = MIN2(sampler->max_lod, tex->tex.last_level);
-        min_level = MIN2(sampler->min_lod, max_level);
-        format0 |= R300_TX_NUM_LEVELS(max_level);
-        filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
-    }
-
-    BEGIN_CS(16);
-    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), filter0 |
-        (offset << 28));
-    OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
-    OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
-
-    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), format0);
-    OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
-    OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
-    OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);
-    OUT_CS_RELOC(tex->buffer,
-                 R300_TXO_MACRO_TILE(tex->macrotile) |
-                 R300_TXO_MICRO_TILE(tex->microtile),
-                 RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
     END_CS;
 }
 
@@ -976,27 +964,6 @@ void r300_emit_viewport_state(struct r300_context* r300,
     }
 }
 
-void r300_emit_texture_count(struct r300_context* r300)
-{
-    uint32_t tx_enable = 0;
-    int i;
-    CS_LOCALS(r300);
-
-    /* Notice that texture_count and sampler_count are just sizes
-     * of the respective arrays. We still have to check for the individual
-     * elements. */
-    for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
-        if (r300->textures[i]) {
-            tx_enable |= 1 << i;
-        }
-    }
-
-    BEGIN_CS(2);
-    OUT_CS_REG(R300_TX_ENABLE, tx_enable);
-    END_CS;
-
-}
-
 void r300_emit_ztop_state(struct r300_context* r300,
                           unsigned size, void* state)
 {
@@ -1023,6 +990,8 @@ void r300_emit_buffer_validate(struct r300_context *r300,
 {
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_textures_state *texstate =
+        (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture* tex;
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->vertex_element;
@@ -1055,9 +1024,9 @@ validate:
         }
     }
     /* ...textures... */
-    for (i = 0; i < r300->texture_count; i++) {
-        tex = r300->textures[i];
-        if (!tex)
+    for (i = 0; i < texstate->count; i++) {
+        tex = texstate->textures[i];
+        if (!tex || !texstate->sampler_states[i])
             continue;
         if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
                     RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
@@ -1136,7 +1105,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_atom* atom;
-    unsigned i;
 
     if (r300->dirty_state & R300_NEW_QUERY) {
         r300_emit_query_start(r300);
@@ -1169,27 +1137,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
                                          &r300->fs->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
-    }
-
-    /* Samplers and textures are tracked separately but emitted together. */
-    if (r300->dirty_state &
-            (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
-        r300_emit_texture_count(r300);
-
-        for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
-  	    if (r300->dirty_state &
-		((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
-		if (r300->textures[i]) {
-		    r300_emit_texture(r300,
-				      r300->sampler_states[i],
-				      r300->textures[i],
-				      i);
-                }
-                r300->dirty_state &=
-                    ~((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i));
-            }
-        }
-        r300->dirty_state &= ~(R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES);
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {

@@ -859,7 +859,7 @@ static void*
                                                    state->max_anisotropy > 0);
 
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
-    /* We must pass these to the emit function to clamp them properly. */
+    /* We must pass these to the merge function to clamp them properly. */
     sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
     sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
 
@@ -885,23 +885,20 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
                                      void** states)
 {
     struct r300_context* r300 = r300_context(pipe);
-    int i;
+    struct r300_textures_state* state =
+        (struct r300_textures_state*)r300->textures_state.state;
 
     if (count > 8) {
         return;
     }
 
-    for (i = 0; i < count; i++) {
-        if (r300->sampler_states[i] != states[i]) {
-            r300->sampler_states[i] = (struct r300_sampler_state*)states[i];
-            r300->dirty_state |= (R300_NEW_SAMPLER << i);
-        }
-    }
+    memcpy(state->sampler_states, states, sizeof(void*) * count);
+    state->sampler_count = count;
 
-    r300->sampler_count = count;
+    r300->textures_state.dirty = TRUE;
 
     /* Pick a fragment shader based on the texture compare state. */
-    if (r300->fs && (r300->dirty_state & R300_ANY_NEW_SAMPLERS)) {
+    if (r300->fs && count) {
         if (r300_pick_fragment_shader(r300)) {
             r300->dirty_state |= R300_NEW_FRAGMENT_SHADER |
                                  R300_NEW_FRAGMENT_SHADER_CONSTANTS;
@@ -925,24 +922,25 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
                                       struct pipe_texture** texture)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_textures_state* state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    unsigned i;
     boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     boolean dirty_tex = FALSE;
-    int i;
 
     /* XXX magic num */
     if (count > 8) {
         return;
     }
-    
+
     for (i = 0; i < count; i++) {
-        if (r300->textures[i] != (struct r300_texture*)texture[i]) {
-            pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
-                texture[i]);
-            r300->dirty_state |= (R300_NEW_TEXTURE << i);
+        if (state->textures[i] != (struct r300_texture*)texture[i]) {
+            pipe_texture_reference((struct pipe_texture**)&state->textures[i],
+                                   texture[i]);
             dirty_tex = TRUE;
 
-            /* R300-specific - set the texrect factor in a fragment shader */
-            if (!is_r500 && r300->textures[i]->is_npot) {
+            /* R300-specific - set the texrect factor in the fragment shader */
+            if (!is_r500 && state->textures[i]->is_npot) {
                 /* XXX It would be nice to re-emit just 1 constant,
                  * XXX not all of them */
                 r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
@@ -951,14 +949,15 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
     }
 
     for (i = count; i < 8; i++) {
-        if (r300->textures[i]) {
-            pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
+        if (state->textures[i]) {
+            pipe_texture_reference((struct pipe_texture**)&state->textures[i],
                 NULL);
-            r300->dirty_state |= (R300_NEW_TEXTURE << i);
         }
     }
 
-    r300->texture_count = count;
+    state->texture_count = count;
+
+    r300->textures_state.dirty = TRUE;
 
     if (dirty_tex) {
         r300->texture_cache_inval.dirty = TRUE;

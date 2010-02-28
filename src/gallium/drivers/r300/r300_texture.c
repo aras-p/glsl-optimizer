@@ -505,7 +505,7 @@ boolean r300_is_sampler_format_supported(enum pipe_format format)
 
 static void r300_setup_texture_state(struct r300_screen* screen, struct r300_texture* tex)
 {
-    struct r300_texture_state* state = &tex->state;
+    struct r300_texture_format_state* state = &tex->state;
     struct pipe_texture *pt = &tex->tex;
     unsigned i;
     boolean is_r500 = screen->caps->is_r500;

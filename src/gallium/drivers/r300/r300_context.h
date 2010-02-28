@@ -118,7 +118,7 @@ struct r300_sampler_state {
     unsigned min_lod, max_lod;
 };
 
-struct r300_texture_state {
+struct r300_texture_format_state {
     uint32_t format0; /* R300_TX_FORMAT0: 0x4480 */
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
@@ -132,6 +132,25 @@ struct r300_texture_fb_state {
     /* Zbuffer. */
     uint32_t depthpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
     uint32_t zb_format; /* R300_ZB_FORMAT */
+};
+
+struct r300_textures_state {
+    /* Textures. */
+    struct r300_texture *textures[8];
+    int texture_count;
+    /* Sampler states. */
+    struct r300_sampler_state *sampler_states[8];
+    int sampler_count;
+
+    /* These is the merge of the texture and sampler states. */
+    unsigned count;
+    uint32_t tx_enable;         /* R300_TX_ENABLE: 0x4101 */
+    struct r300_texture_sampler_state {
+        uint32_t format[3];     /* R300_TX_FORMAT[0-2] */
+        uint32_t filter[2];     /* R300_TX_FILTER[0-1] */
+        uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+        uint32_t tile_config;   /* R300_TX_OFFSET (subset thereof) */
+    } regs[8];
 };
 
 struct r300_vertex_stream_state {
@@ -165,10 +184,6 @@ struct r300_ztop_state {
 
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_SAMPLER         0x00000200
-#define R300_ANY_NEW_SAMPLERS    0x0001fe00
-#define R300_NEW_TEXTURE         0x00040000
-#define R300_ANY_NEW_TEXTURES    0x03fc0000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
@@ -254,7 +269,7 @@ struct r300_texture {
     struct pipe_buffer* buffer;
 
     /* Registers carrying texture format data. */
-    struct r300_texture_state state;
+    struct r300_texture_format_state state;
     struct r300_texture_fb_state fb_state;
 
     /* Buffer tiling */
@@ -306,14 +321,10 @@ struct r300_context {
     struct r300_atom rs_state;
     /* RS block state. */
     struct r300_atom rs_block_state;
-    /* Sampler states. */
-    struct r300_sampler_state* sampler_states[8];
-    int sampler_count;
     /* Scissor state. */
     struct r300_atom scissor_state;
-    /* Texture states. */
-    struct r300_texture* textures[8];
-    int texture_count;
+    /* Textures state. */
+    struct r300_atom textures_state;
     /* Vertex stream formatting state. */
     struct r300_atom vertex_stream_state;
     /* VAP (vertex shader) output mapping state. */

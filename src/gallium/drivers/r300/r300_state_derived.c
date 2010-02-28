@@ -431,7 +431,6 @@ static void r300_update_rs_block(struct r300_context* r300,
     if (memcmp(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block))) {
         memcpy(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block));
         r300->rs_block_state.size = 5 + count*2;
-        r300->rs_block_state.dirty = TRUE;
     }
 }
 
@@ -529,12 +528,73 @@ static void r300_update_ztop(struct r300_context* r300)
     r300->ztop_state.dirty = TRUE;
 }
 
+static void r300_merge_textures_and_samplers(struct r300_context* r300)
+{
+    struct r300_textures_state *state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    struct r300_texture_sampler_state *texstate;
+    struct r300_sampler_state *sampler;
+    struct r300_texture *tex;
+    unsigned min_level, max_level, i, size;
+    unsigned count = MIN2(state->texture_count, state->sampler_count);
+
+    state->tx_enable = 0;
+    size = 2;
+
+    for (i = 0; i < count; i++) {
+        if (state->textures[i] && state->sampler_states[i]) {
+            state->tx_enable |= 1 << i;
+
+            tex = state->textures[i];
+            sampler = state->sampler_states[i];
+
+            texstate = &state->regs[i];
+            memcpy(texstate->format, &tex->state, sizeof(uint32_t)*3);
+            texstate->filter[0] = sampler->filter0;
+            texstate->filter[1] = sampler->filter1;
+            texstate->border_color = sampler->border_color;
+            texstate->tile_config = R300_TXO_MACRO_TILE(tex->macrotile) |
+                                    R300_TXO_MICRO_TILE(tex->microtile);
+
+            /* to emulate 1D textures through 2D ones correctly */
+            if (tex->tex.target == PIPE_TEXTURE_1D) {
+                texstate->filter[0] &= ~R300_TX_WRAP_T_MASK;
+                texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+            }
+
+            if (tex->is_npot) {
+                /* NPOT textures don't support mip filter, unfortunately.
+                 * This prevents incorrect rendering. */
+                texstate->filter[0] &= ~R300_TX_MIN_FILTER_MIP_MASK;
+            } else {
+                /* determine min/max levels */
+                /* the MAX_MIP level is the largest (finest) one */
+                max_level = MIN2(sampler->max_lod, tex->tex.last_level);
+                min_level = MIN2(sampler->min_lod, max_level);
+                texstate->format[0] |= R300_TX_NUM_LEVELS(max_level);
+                texstate->filter[0] |= R300_TX_MAX_MIP_LEVEL(min_level);
+            }
+
+            texstate->filter[0] |= i << 28;
+
+            size += 16;
+            state->count = i+1;
+        }
+    }
+
+    r300->textures_state.size = size;
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->rs_block_state.dirty ||
         r300->vertex_stream_state.dirty || /* XXX put updating this state out of this file */
         r300->rs_state.dirty) {  /* XXX and remove this one (tcl_bypass dependency) */
         r300_update_derived_shader_state(r300);
+    }
+
+    if (r300->textures_state.dirty) {
+        r300_merge_textures_and_samplers(r300);
     }
 
     r300_update_ztop(r300);
