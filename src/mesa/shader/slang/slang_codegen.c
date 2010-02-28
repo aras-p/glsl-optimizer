@@ -4223,6 +4223,7 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
       n->Store = _slang_new_ir_storage_relative(0,
                                                 swizzle_size(swizzle),
                                                 child->Store);
+      assert(n->Store);
       n->Store->Swizzle = swizzle;
    }
    return n;
@@ -4524,7 +4525,6 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
                                         SWIZZLE_NIL);
          n = _slang_gen_swizzle(n, swizzle);
       }
-      assert(n->Store);
       return n;
    }
    else {
