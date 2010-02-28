@@ -659,7 +659,11 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300->fs = fs;
     r300_pick_fragment_shader(r300);
 
-    r300->vertex_format_state.dirty = TRUE;
+    r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
+
+    if (r300->vs_state.state && r300_vertex_shader_setup_wpos(r300)) {
+        r300->vap_output_state.dirty = TRUE;
+    }
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
@@ -1033,9 +1037,9 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
+    } else {
+        r300->vertex_stream_state.dirty = TRUE;
     }
-
-    r300->vertex_format_state.dirty = TRUE;
 }
 
 static boolean r300_validate_aos(struct r300_context *r300)
@@ -1114,7 +1118,9 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         r300->vs_state.size = vs->code.length + 9;
         r300->vs_state.dirty = TRUE;
 
-        r300->vertex_format_state.dirty = TRUE;
+        r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
+        r300->vap_output_state.dirty = TRUE;
+        r300->vertex_stream_state.dirty = TRUE; /* XXX needed for TCL bypass */
         r300->pvs_flush.dirty = TRUE;
 
         if (r300->fs) {

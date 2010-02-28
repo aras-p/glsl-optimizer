@@ -814,41 +814,48 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     END_CS;
 }
 
-void r300_emit_vertex_format_state(struct r300_context* r300,
+void r300_emit_vertex_stream_state(struct r300_context* r300,
                                    unsigned size, void* state)
 {
-    struct r300_vertex_info* vertex_info = (struct r300_vertex_info*)state;
+    struct r300_vertex_stream_state *streams =
+        (struct r300_vertex_stream_state*)state;
     unsigned i;
     CS_LOCALS(r300);
 
-    DBG(r300, DBG_DRAW, "r300: VAP/PSC emit:\n");
+    DBG(r300, DBG_DRAW, "r300: PSC emit:\n");
 
     BEGIN_CS(size);
-    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_info->vinfo.size);
-
-    OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
-    OUT_CS(vertex_info->vinfo.hwfmt[0]);
-    OUT_CS(vertex_info->vinfo.hwfmt[1]);
-    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(vertex_info->vinfo.hwfmt[2]);
-    OUT_CS(vertex_info->vinfo.hwfmt[3]);
-    for (i = 0; i < 4; i++) {
-       DBG(r300, DBG_DRAW, "    : hwfmt%d: 0x%08x\n", i,
-               vertex_info->vinfo.hwfmt[i]);
-    }
-
-    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
-    for (i = 0; i < 8; i++) {
-        OUT_CS(vertex_info->vap_prog_stream_cntl[i]);
+    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, streams->count);
+    for (i = 0; i < streams->count; i++) {
+        OUT_CS(streams->vap_prog_stream_cntl[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl%d: 0x%08x\n", i,
-               vertex_info->vap_prog_stream_cntl[i]);
+               streams->vap_prog_stream_cntl[i]);
     }
-    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
-    for (i = 0; i < 8; i++) {
-        OUT_CS(vertex_info->vap_prog_stream_cntl_ext[i]);
+    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, streams->count);
+    for (i = 0; i < streams->count; i++) {
+        OUT_CS(streams->vap_prog_stream_cntl_ext[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
-               vertex_info->vap_prog_stream_cntl_ext[i]);
+               streams->vap_prog_stream_cntl_ext[i]);
     }
+    END_CS;
+}
+
+void r300_emit_vap_output_state(struct r300_context* r300,
+                               unsigned size, void* state)
+{
+    struct r300_vap_output_state *vap_out_state =
+        (struct r300_vap_output_state*)state;
+    CS_LOCALS(r300);
+
+    DBG(r300, DBG_DRAW, "r300: VAP emit:\n");
+
+    BEGIN_CS(size);
+    OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
+    OUT_CS(vap_out_state->vap_vtx_state_cntl);
+    OUT_CS(vap_out_state->vap_vsm_vtx_assm);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(vap_out_state->vap_out_vtx_fmt[0]);
+    OUT_CS(vap_out_state->vap_out_vtx_fmt[1]);
     END_CS;
 }
 

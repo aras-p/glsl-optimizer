@@ -134,6 +134,21 @@ struct r300_texture_fb_state {
     uint32_t zb_format; /* R300_ZB_FORMAT */
 };
 
+struct r300_vertex_stream_state {
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
+
+    unsigned count;
+};
+
+struct r300_vap_output_state {
+    uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
+    uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
+    uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
+};
+
 struct r300_viewport_state {
     float xscale;         /* R300_VAP_VPORT_XSCALE:  0x2098 */
     float xoffset;        /* R300_VAP_VPORT_XOFFSET: 0x209c */
@@ -246,16 +261,6 @@ struct r300_texture {
     enum r300_buffer_tiling microtile, macrotile;
 };
 
-struct r300_vertex_info {
-    /* Parent class */
-    struct vertex_info vinfo;
-
-    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
-    uint32_t vap_prog_stream_cntl[8];
-    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
-    uint32_t vap_prog_stream_cntl_ext[8];
-};
-
 extern struct pipe_viewport_state r300_viewport_identity;
 
 struct r300_context {
@@ -279,9 +284,6 @@ struct r300_context {
     /* Query list. */
     struct r300_query *query_current;
     struct r300_query query_list;
-
-    /* Vertex formatting information. */
-    struct r300_atom vertex_format_state;
 
     /* Various CSO state objects. */
     /* Beginning of atom list. */
@@ -312,6 +314,10 @@ struct r300_context {
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;
+    /* Vertex stream formatting state. */
+    struct r300_atom vertex_stream_state;
+    /* VAP (vertex shader) output mapping state. */
+    struct r300_atom vap_output_state;
     /* Vertex shader. */
     struct r300_atom vs_state;
     /* Viewport state. */
@@ -333,6 +339,9 @@ struct r300_context {
     /* Vertex elements for Gallium. */
     struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
     int vertex_element_count;
+
+    /* Vertex info for Draw. */
+    struct vertex_info vertex_info;
 
     struct pipe_stencil_ref stencil_ref;
 

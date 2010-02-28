@@ -49,9 +49,7 @@ static void r300_draw_emit_attrib(struct r300_context* r300,
     output = draw_find_shader_output(r300->draw,
                                      info->output_semantic_name[index],
                                      info->output_semantic_index[index]);
-    draw_emit_vertex_attr(
-        (struct vertex_info*)r300->vertex_format_state.state,
-        emit, interp, output);
+    draw_emit_vertex_attr(&r300->vertex_info, emit, interp, output);
 }
 
 static void r300_draw_emit_all_attribs(struct r300_context* r300)
@@ -106,16 +104,20 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 }
 
 /* Update the PSC tables. */
+/* XXX move this function into r300_state.c after TCL-bypass gets removed
+ * XXX because this one is dependent only on vertex elements. */
 static void r300_vertex_psc(struct r300_context* r300)
 {
     struct r300_vertex_shader* vs = r300->vs_state.state;
-    struct r300_vertex_info *vformat =
-        (struct r300_vertex_info*)r300->vertex_format_state.state;
+    struct r300_vertex_stream_state *vformat =
+        (struct r300_vertex_stream_state*)r300->vertex_stream_state.state;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i;
     int identity[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     int* stream_tab;
+
+    memset(vformat, 0, sizeof(struct r300_vertex_stream_state));
 
     /* If TCL is bypassed, map vertex streams to equivalent VS output
      * locations. */
@@ -157,19 +159,24 @@ static void r300_vertex_psc(struct r300_context* r300)
     }
     vformat->vap_prog_stream_cntl[i >> 1] |=
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
+
+    vformat->count = (i >> 1) + 1;
+    r300->vertex_stream_state.size = (1 + vformat->count) * 2;
 }
 
 /* Update the PSC tables for SW TCL, using Draw. */
 static void r300_swtcl_vertex_psc(struct r300_context* r300)
 {
     struct r300_vertex_shader* vs = r300->vs_state.state;
-    struct r300_vertex_info *vformat =
-        (struct r300_vertex_info*)r300->vertex_format_state.state;
-    struct vertex_info* vinfo = &vformat->vinfo;
+    struct r300_vertex_stream_state *vformat =
+        (struct r300_vertex_stream_state*)r300->vertex_stream_state.state;
+    struct vertex_info* vinfo = &r300->vertex_info;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
     int* vs_output_tab = vs->stream_loc_notcl;
+
+    memset(vformat, 0, sizeof(struct r300_vertex_stream_state));
 
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */
@@ -212,6 +219,9 @@ static void r300_swtcl_vertex_psc(struct r300_context* r300)
     }
     vformat->vap_prog_stream_cntl[i >> 1] |=
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
+
+    vformat->count = (i >> 1) + 1;
+    r300->vertex_stream_state.size = (1 + vformat->count) * 2;
 }
 
 static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
@@ -430,13 +440,12 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_vertex_shader* vs = r300->vs_state.state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct r300_vertex_info *vformat =
-        (struct r300_vertex_info*)r300->vertex_format_state.state;
-    struct vertex_info* vinfo = &vformat->vinfo;
+    struct r300_vap_output_state *vap_out =
+        (struct r300_vap_output_state*)r300->vap_output_state.state;
 
-    /* Mmm, delicious hax */
-    memset(r300->vertex_format_state.state, 0, sizeof(struct r300_vertex_info));
-    memcpy(vinfo->hwfmt, vs->hwfmt, sizeof(uint)*4);
+    /* XXX Mmm, delicious hax */
+    memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
+    memcpy(vap_out, vs->hwfmt, sizeof(uint)*4);
 
     r300_update_rs_block(r300, &vs->outputs, &r300->fs->inputs);
 
@@ -444,8 +453,7 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
         r300_vertex_psc(r300);
     } else {
         r300_draw_emit_all_attribs(r300);
-        draw_compute_vertex_size(
-            (struct vertex_info*)r300->vertex_format_state.state);
+        draw_compute_vertex_size(&r300->vertex_info);
         r300_swtcl_vertex_psc(r300);
     }
 }
@@ -523,10 +531,9 @@ static void r300_update_ztop(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    /* XXX */
-    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER ||
-        r300->vs_state.dirty || r300->vertex_format_state.dirty ||
-        r300->rs_state.dirty) {
+    if (r300->rs_block_state.dirty ||
+        r300->vertex_stream_state.dirty || /* XXX put updating this state out of this file */
+        r300->rs_state.dirty) {  /* XXX and remove this one (tcl_bypass dependency) */
         r300_update_derived_shader_state(r300);
     }
 

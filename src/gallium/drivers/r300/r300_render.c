@@ -597,7 +597,7 @@ r300_render_get_vertex_info(struct vbuf_render* render)
 
     r300_update_derived_state(r300);
 
-    return (struct vertex_info*)r300->vertex_format_state.state;
+    return &r300->vertex_info;
 }
 
 static boolean r300_render_allocate_vertices(struct vbuf_render* render,
