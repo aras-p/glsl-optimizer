@@ -979,6 +979,7 @@ make_1d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
    if (border) {
       /* copy left-most pixel from source */
+      assert(dstPtr);
       assert(srcPtr);
       memcpy(dstPtr, srcPtr, bpt);
       /* copy right-most pixel from source */
@@ -1026,6 +1027,8 @@ make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
    if (border > 0) {
       /* fill in dest border */
       /* lower-left border pixel */
+      assert(dstPtr);
+      assert(srcPtr);
       memcpy(dstPtr, srcPtr, bpt);
       /* lower-right border pixel */
       memcpy(dstPtr + (dstWidth - 1) * bpt,
