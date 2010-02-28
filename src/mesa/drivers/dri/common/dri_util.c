@@ -127,6 +127,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     /* Let driver unbind drawable from context */
     (*psp->DriverAPI.UnbindContext)(pcp);
 
+    assert(pdp);
     if (pdp->refcount == 0) {
 	/* ERROR!!! */
 	return GL_FALSE;
