@@ -305,6 +305,7 @@ void mach64UploadTexImages( mach64ContextPtr mmesa, mach64TexObjPtr t )
       t->heap = heap;
 
       /* Set the base offset of the texture image */
+      assert(t->base.memBlock);
       t->bufAddr = mmesa->mach64Screen->texOffset[heap] + t->base.memBlock->ofs;
 
       /* Force loading the new state into the hardware */
@@ -457,7 +458,9 @@ void mach64UploadMultiTexImages( mach64ContextPtr mmesa,
       }
 
       /* Set the base offset of the texture image */
+      assert(t0->base.memBlock);
       t0->bufAddr = mmesa->mach64Screen->texOffset[heap] + t0->base.memBlock->ofs;
+      assert(t1->base.memBlock);
       t1->bufAddr = mmesa->mach64Screen->texOffset[heap] + t1->base.memBlock->ofs;
 
       /* Force loading the new state into the hardware */
