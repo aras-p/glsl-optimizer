@@ -54,9 +54,9 @@ util_create_rgba_surface(struct pipe_screen *screen,
                          struct pipe_surface **surfaceOut)
 {
    static const enum pipe_format rgbaFormats[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM_REV,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
       PIPE_FORMAT_NONE
    };
    const uint target = PIPE_TEXTURE_2D;

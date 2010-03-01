@@ -57,57 +57,57 @@
 # resolutions for each sized internal format."
 
 # Typical rendertarget formats
-PIPE_FORMAT_A8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, rgb
-PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
-PIPE_FORMAT_B8G8R8A8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, rgb
-PIPE_FORMAT_B8G8R8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
-PIPE_FORMAT_R8G8B8A8_UNORM_REV    , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
-PIPE_FORMAT_R8G8B8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
-PIPE_FORMAT_A1R5G5B5_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
-PIPE_FORMAT_A4R4G4B4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
-PIPE_FORMAT_R5G6B5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
-PIPE_FORMAT_A2B10G10R10_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb
+PIPE_FORMAT_B8G8R8A8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, rgb
+PIPE_FORMAT_B8G8R8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
+PIPE_FORMAT_A8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, rgb
+PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
+PIPE_FORMAT_A8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
+PIPE_FORMAT_X8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
+PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
+PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
+PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
+PIPE_FORMAT_R10G10B10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb
 
 # Luminance/Intensity/Alpha formats
 PIPE_FORMAT_L8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_A8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , 000x, rgb
 PIPE_FORMAT_I8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxxx, rgb
-PIPE_FORMAT_A8L8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, rgb
+PIPE_FORMAT_L8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxx1, rgb
 
 # SRGB formats
 PIPE_FORMAT_L8_SRGB               , plain, 1, 1, un8 ,     ,     ,     , xxx1, srgb 
-PIPE_FORMAT_A8L8_SRGB             , plain, 1, 1, un8 , un8 ,     ,     , xxxy, srgb 
+PIPE_FORMAT_L8A8_SRGB             , plain, 1, 1, un8 , un8 ,     ,     , xxxy, srgb 
 PIPE_FORMAT_R8G8B8_SRGB           , plain, 1, 1, un8 , un8 , un8 ,     , xyz1, srgb 
-PIPE_FORMAT_R8G8B8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, srgb
-PIPE_FORMAT_R8G8B8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, srgb
-PIPE_FORMAT_A8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, srgb
-PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, srgb
-PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, srgb
-PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, srgb
+PIPE_FORMAT_A8B8G8R8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, srgb
+PIPE_FORMAT_X8B8G8R8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, srgb
+PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, srgb
+PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, srgb
+PIPE_FORMAT_A8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, srgb
+PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, srgb
 
 # Signed formats (typically used for bump map textures)
-PIPE_FORMAT_X8B8G8R8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
-PIPE_FORMAT_X8UB8UG8SR8S_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
-PIPE_FORMAT_B6UG5SR5S_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
+PIPE_FORMAT_R8SG8SB8UX8U_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
+PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
 
 # Depth-stencil formats
 PIPE_FORMAT_S8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , _x__, zs 
 PIPE_FORMAT_Z16_UNORM             , plain, 1, 1, un16,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_UNORM             , plain, 1, 1, un32,     ,     ,     , x___, zs 
 PIPE_FORMAT_Z32_FLOAT             , plain, 1, 1, f32 ,     ,     ,     , x___, zs 
-PIPE_FORMAT_S8Z24_UNORM           , plain, 1, 1, un24, un8 ,     ,     , xy__, zs 
-PIPE_FORMAT_Z24S8_UNORM           , plain, 1, 1, un8 , un24,     ,     , yx__, zs 
-PIPE_FORMAT_X8Z24_UNORM           , plain, 1, 1, un24, un8 ,     ,     , x___, zs 
-PIPE_FORMAT_Z24X8_UNORM           , plain, 1, 1, un8 , un24,     ,     , y___, zs 
+PIPE_FORMAT_Z24S8_UNORM           , plain, 1, 1, un24, un8 ,     ,     , xy__, zs 
+PIPE_FORMAT_S8Z24_UNORM           , plain, 1, 1, un8 , un24,     ,     , yx__, zs 
+PIPE_FORMAT_Z24X8_UNORM           , plain, 1, 1, un24, un8 ,     ,     , x___, zs 
+PIPE_FORMAT_X8Z24_UNORM           , plain, 1, 1, un8 , un24,     ,     , y___, zs 
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY
-PIPE_FORMAT_YCBCR                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
+PIPE_FORMAT_UYVY                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
 # http://www.fourcc.org/yuv.php#YUYV (a.k.a http://www.fourcc.org/yuv.php#YUY2)
 # XXX: u_tile.c's ycbcr_get_tile_rgba actually interprets it as VYUY but the 
 # intent should be to match D3DFMT_YUY2
-PIPE_FORMAT_YCBCR_REV             , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
+PIPE_FORMAT_YUYV                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
 
 # Compressed formats
 PIPE_FORMAT_DXT1_RGB              , compressed, 4, 4, x64 ,     ,     ,     , xyz1, rgb
@@ -120,7 +120,6 @@ PIPE_FORMAT_DXT3_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xy
 PIPE_FORMAT_DXT5_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xyzw, srgb
 
 # Old vector formats
-# XXX: Swizzle notation is reversed for these!
 # See also:
 # - src/gallium/auxiliary/translate/translate_generic.c
 # - src/mesa/state_tracker/st_draw.c
