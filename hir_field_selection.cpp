@@ -135,7 +135,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
    YYLTYPE loc;
 
 
-   op = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
+   op = expr->subexpressions[0]->hir(instructions, state);
    deref = new ir_dereference(op);
 
    /* Initially assume that the resulting type of the field selection is an

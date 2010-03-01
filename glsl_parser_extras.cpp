@@ -698,12 +698,10 @@ main(int argc, char **argv)
       ((ast_node *)ptr)->print();
    }
 
-#if 0
    make_empty_list(& instructions);
    foreach (ptr, & state.translation_unit) {
-      _mesa_ast_to_hir(ptr, &instructions, &state);
+      ((ast_node *)ptr)->hir(&instructions, &state);
    }
-#endif
 
    _mesa_symbol_table_dtor(state.symbols);
 

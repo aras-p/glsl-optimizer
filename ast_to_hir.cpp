@@ -207,7 +207,8 @@ arithmetic_result_type(const struct glsl_type *type_a,
 	       type_name[6] = '\0';
 	    }
 
-	    t = _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
+	    t = (glsl_type *)
+	       _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
 	    return (t != NULL) ? t : glsl_error_type;
 	 }
       } else if (is_glsl_type_matrix(type_a)) {
@@ -328,13 +329,21 @@ relational_result_type(const struct glsl_type *type_a,
 }
 
 
-struct ir_instruction *
-ast_expression_to_hir(const struct ast_node *ast,
-		      struct simple_node *instructions,
-		      struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_node::hir(struct simple_node *instructions,
+	      struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_expression *expr =
-      (struct ast_expression *) ast;
+   (void) instructions;
+   (void) state;
+
+   return NULL;
+}
+
+
+ir_instruction *
+ast_expression::hir(struct simple_node *instructions,
+		    struct _mesa_glsl_parse_state *state)
+{
    static const int operations[AST_NUM_OPERATORS] = {
       -1,               /* ast_assign doesn't convert to ir_expression. */
       -1,               /* ast_plus doesn't convert to ir_expression. */
@@ -390,20 +399,20 @@ ast_expression_to_hir(const struct ast_node *ast,
       -1,               /* ast_bool_constant doesn't conv to ir_expression. */
       -1,               /* ast_sequence doesn't convert to ir_expression. */
    };
-   struct ir_instruction *result = NULL;
-   struct ir_instruction *op[2];
+   ir_instruction *result = NULL;
+   ir_instruction *op[2];
    struct simple_node op_list;
    const struct glsl_type *type = glsl_error_type;
    bool error_emitted = false;
    YYLTYPE loc;
 
-   loc = ast->get_location();
+   loc = this->get_location();
    make_empty_list(& op_list);
 
-   switch (expr->oper) {
+   switch (this->oper) {
    case ast_assign:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
-      op[1] = _mesa_ast_to_hir(expr->subexpressions[1], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       error_emitted = ((op[0]->type == glsl_error_type)
 		       || (op[1]->type == glsl_error_type));
@@ -413,7 +422,7 @@ ast_expression_to_hir(const struct ast_node *ast,
 	 YYLTYPE loc;
 
 	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
-	 loc = expr->subexpressions[0]->get_location();
+	 loc = this->subexpressions[0]->get_location();
 	 if (op[0]->mode != ir_op_dereference) {
 	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
 	    error_emitted = true;
@@ -444,7 +453,7 @@ ast_expression_to_hir(const struct ast_node *ast,
       break;
 
    case ast_plus:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
 
       error_emitted = (op[0]->type == glsl_error_type);
       if (type == glsl_error_type)
@@ -454,13 +463,13 @@ ast_expression_to_hir(const struct ast_node *ast,
       break;
 
    case ast_neg:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
 
       type = unary_arithmetic_result_type(op[0]->type);
 
       error_emitted = (op[0]->type == glsl_error_type);
 
-      result = new ir_expression(operations[expr->oper], type,
+      result = new ir_expression(operations[this->oper], type,
 				 op[0], NULL);
       break;
 
@@ -468,29 +477,29 @@ ast_expression_to_hir(const struct ast_node *ast,
    case ast_sub:
    case ast_mul:
    case ast_div:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
-      op[1] = _mesa_ast_to_hir(expr->subexpressions[1], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       type = arithmetic_result_type(op[0]->type, op[1]->type,
-				    (expr->operr == ast_mul),
+				    (this->oper == ast_mul),
 				    state);
 
-      result = new ir_expression(operations[expr->oper], type,
+      result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
       break;
 
    case ast_mod:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
-      op[1] = _mesa_ast_to_hir(expr->subexpressions[1], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       error_emitted = ((op[0]->type == glsl_error_type)
 		       || (op[1]->type == glsl_error_type));
 
       type = modulus_result_type(op[0]->type, op[1]->type);
 
-      assert(operations[expr->oper] == ir_binop_mod);
+      assert(operations[this->oper] == ir_binop_mod);
 
-      result = new ir_expression(operations[expr->oper], type,
+      result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
       break;
 
@@ -503,8 +512,8 @@ ast_expression_to_hir(const struct ast_node *ast,
    case ast_greater:
    case ast_lequal:
    case ast_gequal:
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
-      op[1] = _mesa_ast_to_hir(expr->subexpressions[1], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       error_emitted = ((op[0]->type == glsl_error_type)
 		       || (op[1]->type == glsl_error_type));
@@ -518,7 +527,7 @@ ast_expression_to_hir(const struct ast_node *ast,
 	     || ((type->base_type == GLSL_TYPE_BOOL)
 		 && is_glsl_type_scalar(type)));
 
-      result = new ir_expression(operations[expr->oper], type,
+      result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
       break;
 
@@ -547,17 +556,17 @@ ast_expression_to_hir(const struct ast_node *ast,
    case ast_sub_assign: {
       struct ir_instruction *temp_rhs;
 
-      op[0] = _mesa_ast_to_hir(expr->subexpressions[0], instructions, state);
-      op[1] = _mesa_ast_to_hir(expr->subexpressions[1], instructions, state);
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       error_emitted = ((op[0]->type == glsl_error_type)
 		       || (op[1]->type == glsl_error_type));
 
       type = arithmetic_result_type(op[0]->type, op[1]->type,
-				    (expr->oper == ast_mul_assign),
+				    (this->oper == ast_mul_assign),
 				    state);
 
-      temp_rhs = new ir_expression(operations[expr->oper], type,
+      temp_rhs = new ir_expression(operations[this->oper], type,
 				   op[0], op[1]);
 
       /* FINISHME: Check that the LHS is assignable. */
@@ -608,7 +617,7 @@ ast_expression_to_hir(const struct ast_node *ast,
       break;
 
    case ast_field_selection:
-      result = _mesa_ast_field_selection_to_hir(expr, instructions, state);
+      result = _mesa_ast_field_selection_to_hir(this, instructions, state);
       type = result->type;
       break;
 
@@ -625,10 +634,12 @@ ast_expression_to_hir(const struct ast_node *ast,
        * Method calls are actually detected when the ast_field_selection
        * expression is handled.
        */
-      result = _mesa_ast_function_call_to_hir(expr->subexpressions[0],
-					      expr->subexpressions[1],
+#if 0
+      result = _mesa_ast_function_call_to_hir(this->subexpressions[0],
+					      this->subexpressions[1],
 					      state);
       type = result->type;
+#endif
       break;
 
    case ast_identifier: {
@@ -636,9 +647,9 @@ ast_expression_to_hir(const struct ast_node *ast,
        * tree.  This particular use must be at location specified in the grammar
        * as 'variable_identifier'.
        */
-      struct ir_variable *var =
+      ir_variable *var = (ir_variable *)
 	 _mesa_symbol_table_find_symbol(state->symbols, 0,
-					expr->primary_expression.identifier);
+					this->primary_expression.identifier);
 
       result = new ir_dereference(var);
 
@@ -646,7 +657,7 @@ ast_expression_to_hir(const struct ast_node *ast,
 	 type = result->type;
       } else {
 	 _mesa_glsl_error(& loc, NULL, "`%s' undeclared",
-			  expr->primary_expression.identifier);
+			  this->primary_expression.identifier);
 
 	 error_emitted = true;
       }
@@ -655,22 +666,22 @@ ast_expression_to_hir(const struct ast_node *ast,
 
    case ast_int_constant:
       type = glsl_int_type;
-      result = new ir_constant(type, & expr->primary_expression);
+      result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_uint_constant:
       type = glsl_uint_type;
-      result = new ir_constant(type, & expr->primary_expression);
+      result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_float_constant:
       type = glsl_float_type;
-      result = new ir_constant(type, & expr->primary_expression);
+      result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_bool_constant:
       type = glsl_bool_type;
-      result = new ir_constant(type, & expr->primary_expression);
+      result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_sequence: {
@@ -679,15 +690,15 @@ ast_expression_to_hir(const struct ast_node *ast,
       /* It should not be possible to generate a sequence in the AST without
        * any expressions in it.
        */
-      assert(!is_empty_list(&expr->expressions));
+      assert(!is_empty_list(&this->expressions));
 
       /* The r-value of a sequence is the last expression in the sequence.  If
        * the other expressions in the sequence do not have side-effects (and
        * therefore add instructions to the instruction list), they get dropped
        * on the floor.
        */
-      foreach (ptr, &expr->expressions)
-	 result = _mesa_ast_to_hir(ptr, instructions, state);
+      foreach (ptr, &this->expressions)
+	 result = ((ast_node *)ptr)->hir(instructions, state);
 
       type = result->type;
 
@@ -705,14 +716,10 @@ ast_expression_to_hir(const struct ast_node *ast,
 }
 
 
-struct ir_instruction *
-ast_expression_statement_to_hir(const struct ast_node *ast,
-				struct simple_node *instructions,
-				struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_expression_statement::hir(struct simple_node *instructions,
+			      struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_expression_statement *stmt =
-      (struct ast_expression_statement *) ast;
-
    /* It is possible to have expression statements that don't have an
     * expression.  This is the solitary semicolon:
     *
@@ -722,8 +729,8 @@ ast_expression_statement_to_hir(const struct ast_node *ast,
     * In this case the expression will be NULL.  Test for NULL and don't do
     * anything in that case.
     */
-   if (stmt->expression != NULL)
-      _mesa_ast_to_hir(stmt->expression, instructions, state);
+   if (expression != NULL)
+      expression->hir(instructions, state);
 
    /* Statements do not have r-values.
     */
@@ -731,23 +738,20 @@ ast_expression_statement_to_hir(const struct ast_node *ast,
 }
 
 
-struct ir_instruction *
-ast_compound_statement_to_hir(const struct ast_node *ast,
-			      struct simple_node *instructions,
-			      struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_compound_statement::hir(struct simple_node *instructions,
+			    struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_compound_statement *stmt =
-      (struct ast_compound_statement *) ast;
    struct simple_node *ptr;
 
 
-   if (stmt->new_scope)
+   if (new_scope)
       _mesa_symbol_table_push_scope(state->symbols);
 
-   foreach (ptr, &stmt->statements)
-      _mesa_ast_to_hir(ptr, instructions, state);
+   foreach (ptr, &statements)
+      ((ast_node *)ptr)->hir(instructions, state);
 
-   if (stmt->new_scope)
+   if (new_scope)
       _mesa_symbol_table_pop_scope(state->symbols);
 
    /* Compound statements do not have r-values.
@@ -825,7 +829,8 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
       type_name = (spec->type_specifier == ast_type_name)
 	 ? spec->type_name : type_names[spec->type_specifier];
 
-      type = _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
+      type = (glsl_type *)
+	 _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
       *name = type_name;
 
       /* FINISHME: Handle array declarations.  Note that this requires complete
@@ -874,12 +879,10 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 }
 
 
-struct ir_instruction *
-ast_declarator_list_to_hir(const struct ast_node *ast,
-			   struct simple_node *instructions,
-			   struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_declarator_list::hir(struct simple_node *instructions,
+			 struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_declarator_list *dlist = (struct ast_declarator_list *) ast;
    struct simple_node *ptr;
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
@@ -890,10 +893,10 @@ ast_declarator_list_to_hir(const struct ast_node *ast,
     * FINISHME: invariant.
     */
 
-   decl_type = type_specifier_to_glsl_type(dlist->type->specifier,
+   decl_type = type_specifier_to_glsl_type(this->type->specifier,
 					   & type_name, state);
 
-   foreach (ptr, &dlist->declarations) {
+   foreach (ptr, &this->declarations) {
       struct ast_declaration *const decl = (struct ast_declaration * )ptr;
       const struct glsl_type *var_type;
       struct ir_variable *var;
@@ -906,7 +909,7 @@ ast_declarator_list_to_hir(const struct ast_node *ast,
       if (decl_type == NULL) {
 	 YYLTYPE loc;
 
-	 loc = ast->get_location();
+	 loc = this->get_location();
 	 if (type_name != NULL) {
 	    _mesa_glsl_error(& loc, state,
 			     "invalid type `%s' in declaration of `%s'",
@@ -936,14 +939,14 @@ ast_declarator_list_to_hir(const struct ast_node *ast,
        * FINISHME: in a parameter list (in and out only).
        */
 
-      apply_type_qualifier_to_variable(& dlist->type->qualifier, var, state);
+      apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
 
       /* Attempt to add the variable to the symbol table.  If this fails, it
        * means the variable has already been declared at this scope.
        */
       if (_mesa_symbol_table_add_symbol(state->symbols, 0, decl->identifier,
 					var) != 0) {
-	 YYLTYPE loc = ast->get_location();
+	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state, "`%s' redeclared",
 			  decl->identifier);
@@ -961,42 +964,38 @@ ast_declarator_list_to_hir(const struct ast_node *ast,
 }
 
 
-struct ir_instruction *
-ast_parameter_declarator_to_hir(const struct ast_node *ast,
-				struct simple_node *instructions,
-				struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_parameter_declarator::hir(struct simple_node *instructions,
+			      struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_parameter_declarator *decl =
-      (struct ast_parameter_declarator *) ast;
-   struct ir_variable *var;
    const struct glsl_type *type;
    const char *name = NULL;
 
 
-   type = type_specifier_to_glsl_type(decl->type->specifier, & name, state);
+   type = type_specifier_to_glsl_type(this->type->specifier, & name, state);
 
    if (type == NULL) {
-      YYLTYPE loc = ast->get_location();
+      YYLTYPE loc = this->get_location();
       if (name != NULL) {
 	 _mesa_glsl_error(& loc, state,
 			  "invalid type `%s' in declaration of `%s'",
-			  name, decl->identifier);
+			  name, this->identifier);
       } else {
 	 _mesa_glsl_error(& loc, state,
 			  "invalid type in declaration of `%s'",
-			  decl->identifier);
+			  this->identifier);
       }
 
       type = glsl_error_type;
    }
 
-   var = new ir_variable(type, decl->identifier);
+   ir_variable *var = new ir_variable(type, this->identifier);
 
    /* FINISHME: Handle array declarations.  Note that this requires
     * FINISHME: complete handling of constant expressions.
     */
 
-   apply_type_qualifier_to_variable(& decl->type->qualifier, var, state);
+   apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
 
    insert_at_tail(instructions, var);
 
@@ -1014,7 +1013,7 @@ ast_function_parameters_to_hir(struct simple_node *ast_parameters,
    struct simple_node *ptr;
 
    foreach (ptr, ast_parameters) {
-      _mesa_ast_to_hir(ptr, ir_parameters, state);
+      ((ast_node *)ptr)->hir(ir_parameters, state);
    }
 }
 
@@ -1047,18 +1046,15 @@ parameter_lists_match(struct simple_node *list_a, struct simple_node *list_b)
 }
 
 
-struct ir_instruction *
-ast_function_definition_to_hir(const struct ast_node *ast,
-			       struct simple_node *instructions,
-			       struct _mesa_glsl_parse_state *state)
+ir_instruction *
+ast_function_definition::hir(struct simple_node *instructions,
+			     struct _mesa_glsl_parse_state *state)
 {
-   const struct ast_function_definition *func =
-      (struct ast_function_definition *) ast;
-   struct ir_label *label;
+   ir_label *label;
    struct simple_node *ptr;
    struct simple_node *tmp;
-   struct ir_function_signature *signature = NULL;
-   struct ir_function *f = NULL;
+   ir_function_signature *signature = NULL;
+   ir_function *f = NULL;
    struct simple_node parameters;
 
 
@@ -1067,7 +1063,7 @@ ast_function_definition_to_hir(const struct ast_node *ast,
     * signatures for functions with the same name.
     */
    make_empty_list(& parameters);
-   ast_function_parameters_to_hir(& func->prototype->parameters, & parameters,
+   ast_function_parameters_to_hir(& this->prototype->parameters, & parameters,
 				  state);
 
 
@@ -1075,8 +1071,9 @@ ast_function_definition_to_hir(const struct ast_node *ast,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   f = _mesa_symbol_table_find_symbol(state->symbols, 0,
-				      func->prototype->identifier);
+   f = (ir_function *)
+      _mesa_symbol_table_find_symbol(state->symbols, 0,
+				     this->prototype->identifier);
    if (f != NULL) {
       foreach (ptr, & f->signatures) {
 	 signature = (struct ir_function_signature *) ptr;
@@ -1090,10 +1087,10 @@ ast_function_definition_to_hir(const struct ast_node *ast,
 	    /* FINISHME: Compare return types. */
 
 	    if (signature->definition != NULL) {
-	       YYLTYPE loc = ast->get_location();
+	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "function `%s' redefined",
-				func->prototype->identifier);
+				this->prototype->identifier);
 	       signature = NULL;
 	       break;
 	    }
@@ -1104,7 +1101,7 @@ ast_function_definition_to_hir(const struct ast_node *ast,
 
    } else {
       f = new ir_function();
-      f->name = func->prototype->identifier;
+      f->name = this->prototype->identifier;
 
       _mesa_symbol_table_add_symbol(state->symbols, 0, f->name, f);
    }
@@ -1129,12 +1126,12 @@ ast_function_definition_to_hir(const struct ast_node *ast,
    }
 
 
-   ast_function_parameters_to_hir(& func->prototype->parameters,
+   ast_function_parameters_to_hir(& this->prototype->parameters,
 				  & signature->parameters,
 				  state);
    /* FINISHME: Set signature->return_type */
 
-   label = new ir_label(func->prototype->identifier);
+   label = new ir_label(this->prototype->identifier);
    if (signature->definition == NULL) {
       signature->definition = label;
    }
@@ -1161,7 +1158,7 @@ ast_function_definition_to_hir(const struct ast_node *ast,
     * instructions to the list that currently consists of the function label
     * and the function parameters.
     */
-   _mesa_ast_to_hir(func->body, instructions, state);
+   this->body->hir(instructions, state);
 
    _mesa_symbol_table_pop_scope(state->symbols);
 

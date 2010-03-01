@@ -37,6 +37,8 @@ class ast_node : public simple_node {
 public:
    virtual ~ast_node();
    virtual void print(void) const;
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
 
    /**
     * Retrieve the source location of an AST node
@@ -149,6 +151,9 @@ public:
 
    static const char *operator_string(enum ast_operators op);
 
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
+
    virtual void print(void) const;
 
    enum ast_operators oper;
@@ -192,6 +197,9 @@ class ast_compound_statement : public ast_node {
 public:
    ast_compound_statement(int new_scope, ast_node *statements);
    virtual void print(void) const;
+
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
 
    int new_scope;
    struct simple_node statements;
@@ -330,6 +338,9 @@ public:
    ast_declarator_list(ast_fully_specified_type *);
    virtual void print(void) const;
 
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
+
    ast_fully_specified_type *type;
    struct simple_node declarations;
 
@@ -347,6 +358,9 @@ public:
 class ast_parameter_declarator : public ast_node {
 public:
    virtual void print(void) const;
+
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
    char *identifier;
@@ -391,6 +405,9 @@ class ast_expression_statement : public ast_node {
 public:
    ast_expression_statement(ast_expression *);
    virtual void print(void) const;
+
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
 
    ast_expression *expression;
 };
@@ -465,6 +482,9 @@ public:
 class ast_function_definition : public ast_node {
 public:
    virtual void print(void) const;
+
+   virtual ir_instruction *hir(struct simple_node *instructions,
+			       struct _mesa_glsl_parse_state *state);
 
    ast_function *prototype;
    ast_compound_statement *body;
