@@ -32,27 +32,44 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
+#include "util/u_memory.h"
 #include "draw/draw_context.h"
 
 
+void *
+softpipe_create_vertex_elements_state(struct pipe_context *pipe,
+                                      unsigned count,
+                                      const struct pipe_vertex_element *attribs)
+{
+   struct sp_velems_state *velems;
+   assert(count <= PIPE_MAX_ATTRIBS);
+   velems = (struct sp_velems_state *) MALLOC(sizeof(struct sp_velems_state) + count * sizeof(*attribs));
+   if (velems) {
+      velems->count = count;
+      memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+   }
+   return velems;
+}
+
 void
-softpipe_set_vertex_elements(struct pipe_context *pipe,
-                             unsigned count,
-                             const struct pipe_vertex_element *attribs)
+softpipe_bind_vertex_elements_state(struct pipe_context *pipe,
+                                    void *velems)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct sp_velems_state *sp_velems = (struct sp_velems_state *) velems;
 
-   assert(count <= PIPE_MAX_ATTRIBS);
-
-   memcpy(softpipe->vertex_element, attribs,
-          count * sizeof(struct pipe_vertex_element));
-   softpipe->num_vertex_elements = count;
+   softpipe->velems = sp_velems;
 
    softpipe->dirty |= SP_NEW_VERTEX;
 
-   draw_set_vertex_elements(softpipe->draw, count, attribs);
+   draw_set_vertex_elements(softpipe->draw, sp_velems->count, sp_velems->velem);
 }
 
+void
+softpipe_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
+{
+   FREE( velems );
+}
 
 void
 softpipe_set_vertex_buffers(struct pipe_context *pipe,
