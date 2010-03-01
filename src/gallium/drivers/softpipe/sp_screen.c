@@ -162,7 +162,7 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_R8G8_SNORM:
    case PIPE_FORMAT_B6UG5SR5S_NORM:
    case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
-   case PIPE_FORMAT_A8B8G8R8_SNORM:
+   case PIPE_FORMAT_R8G8B8A8_SNORM:
    case PIPE_FORMAT_NONE:
       return FALSE;
    default:
