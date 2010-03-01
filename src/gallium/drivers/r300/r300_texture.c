@@ -329,7 +329,6 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_R8G8B8X8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_SNORM:
         case PIPE_FORMAT_A8B8G8R8_SNORM:
         case PIPE_FORMAT_X8B8G8R8_SNORM:
         case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
@@ -463,7 +462,6 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_R8G8B8X8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_SNORM:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
