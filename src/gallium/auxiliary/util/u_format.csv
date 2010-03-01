@@ -62,6 +62,7 @@ PIPE_FORMAT_B8G8R8A8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, r
 PIPE_FORMAT_B8G8R8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
 PIPE_FORMAT_R8G8B8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
 # XXX: insert PIPE_FORMAT_R8G8B8A8_UNORM here later
+# XXX: insert PIPE_FORMAT_R8G8B8_UNORM here later
 PIPE_FORMAT_A1R5G5B5_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
 PIPE_FORMAT_A4R4G4B4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_R5G6B5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
@@ -170,6 +171,8 @@ PIPE_FORMAT_R16G16B16_SSCALED     , plain, 1, 1, s16 , s16 , s16 ,     , xyz1, r
 PIPE_FORMAT_R16G16B16A16_SSCALED  , plain, 1, 1, s16 , s16 , s16 , s16 , xyzw, rgb
 PIPE_FORMAT_R8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R8G8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xy01, rgb
+# XXX: insert PIPE_FORMAT_R8G8B8_UNORM here later
+# XXX: insert PIPE_FORMAT_R8G8B8A8_UNORM here later
 PIPE_FORMAT_R8_USCALED            , plain, 1, 1, u8  ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R8G8_USCALED          , plain, 1, 1, u8  , u8  ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_USCALED        , plain, 1, 1, u8  , u8  , u8  ,     , xyz1, rgb
