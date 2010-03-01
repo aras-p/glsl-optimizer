@@ -43,6 +43,7 @@ struct blitter_context
    /* Private members, really. */
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
+   void *saved_velem_state;   /**< vertex elements state */
    void *saved_rs_state;      /**< rasterizer state */
    void *saved_fs, *saved_vs; /**< fragment shader, vertex shader */
 
@@ -168,6 +169,13 @@ void util_blitter_save_depth_stencil_alpha(struct blitter_context *blitter,
                                            void *state)
 {
    blitter->saved_dsa_state = state;
+}
+
+static INLINE
+void util_blitter_save_vertex_elements(struct blitter_context *blitter,
+                                       void *state)
+{
+   blitter->saved_velem_state = state;
 }
 
 static INLINE

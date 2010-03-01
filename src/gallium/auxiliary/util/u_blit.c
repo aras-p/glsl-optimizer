@@ -62,6 +62,7 @@ struct blit_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
+   struct pipe_vertex_element velem[2];
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
@@ -114,6 +115,15 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.mag_img_filter = 0; /* set later */
    ctx->sampler.normalized_coords = 1;
 
+
+   /* vertex elements state */
+   memset(&ctx->velem[0], 0, sizeof(ctx->velem[0]) * 2);
+   for (i = 0; i < 2; i++) {
+      ctx->velem[i].src_offset = i * 4 * sizeof(float);
+      ctx->velem[i].instance_divisor = 0;
+      ctx->velem[i].vertex_buffer_index = 0;
+      ctx->velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
 
    /* vertex shader - still required to provide the linkage between
     * fragment shader input semantics and vertex_element/buffers.
@@ -410,11 +420,13 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_vertex_elements(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -464,6 +476,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_vertex_elements(ctx->cso);
 
    pipe_texture_reference(&tex, NULL);
 }
@@ -547,11 +560,13 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_vertex_elements(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -596,4 +611,5 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_vertex_elements(ctx->cso);
 }
