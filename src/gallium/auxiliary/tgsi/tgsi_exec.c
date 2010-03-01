@@ -110,6 +110,42 @@ micro_ceil(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_clamp(union tgsi_exec_channel *dst,
+            const union tgsi_exec_channel *src0,
+            const union tgsi_exec_channel *src1,
+            const union tgsi_exec_channel *src2)
+{
+   dst->f[0] = src0->f[0] < src1->f[0] ? src1->f[0] : src0->f[0] > src2->f[0] ? src2->f[0] : src0->f[0];
+   dst->f[1] = src0->f[1] < src1->f[1] ? src1->f[1] : src0->f[1] > src2->f[1] ? src2->f[1] : src0->f[1];
+   dst->f[2] = src0->f[2] < src1->f[2] ? src1->f[2] : src0->f[2] > src2->f[2] ? src2->f[2] : src0->f[2];
+   dst->f[3] = src0->f[3] < src1->f[3] ? src1->f[3] : src0->f[3] > src2->f[3] ? src2->f[3] : src0->f[3];
+}
+
+static void
+micro_cmp(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src0,
+          const union tgsi_exec_channel *src1,
+          const union tgsi_exec_channel *src2)
+{
+   dst->f[0] = src0->f[0] < 0.0f ? src1->f[0] : src2->f[0];
+   dst->f[1] = src0->f[1] < 0.0f ? src1->f[1] : src2->f[1];
+   dst->f[2] = src0->f[2] < 0.0f ? src1->f[2] : src2->f[2];
+   dst->f[3] = src0->f[3] < 0.0f ? src1->f[3] : src2->f[3];
+}
+
+static void
+micro_cnd(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src0,
+          const union tgsi_exec_channel *src1,
+          const union tgsi_exec_channel *src2)
+{
+   dst->f[0] = src2->f[0] > 0.5f ? src0->f[0] : src1->f[0];
+   dst->f[1] = src2->f[1] > 0.5f ? src0->f[1] : src1->f[1];
+   dst->f[2] = src2->f[2] > 0.5f ? src0->f[2] : src1->f[2];
+   dst->f[3] = src2->f[3] > 0.5f ? src0->f[3] : src1->f[3];
+}
+
+static void
 micro_cos(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src)
 {
@@ -2653,15 +2689,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CND:
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         FETCH(&r[0], 0, chan_index);
-         FETCH(&r[1], 1, chan_index);
-         FETCH(&r[2], 2, chan_index);
-         micro_lt(&d[chan_index], &mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C], &r[2], &r[0], &r[1]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_trinary(mach, inst, micro_cnd, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DP2A:
@@ -2673,16 +2701,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CLAMP:
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         FETCH(&r[0], 0, chan_index);
-         FETCH(&r[1], 1, chan_index);
-         micro_max(&r[0], &r[0], &r[1]);
-         FETCH(&r[1], 2, chan_index);
-         micro_min(&d[chan_index], &r[0], &r[1]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_trinary(mach, inst, micro_clamp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_FLR:
@@ -3076,15 +3095,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CMP:
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH(&r[0], 0, chan_index);
-         FETCH(&r[1], 1, chan_index);
-         FETCH(&r[2], 2, chan_index);
-         micro_lt(&d[chan_index], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2]);
-      }
-      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
-         STORE(&d[chan_index], 0, chan_index);
-      }
+      exec_vector_trinary(mach, inst, micro_cmp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_SCS:
