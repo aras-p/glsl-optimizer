@@ -274,10 +274,10 @@ choose_pixel_format(XMesaVisual v)
        && v->BitsPerPixel == 32) {
       if (native_byte_order) {
          /* no byteswapping needed */
-         return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
       }
       else {
-         return PIPE_FORMAT_R8G8B8A8_UNORM;
+         return PIPE_FORMAT_R8G8B8A8_UNORM_REV;
       }
    }
    else if (   GET_REDMASK(v)   == 0xff0000
