@@ -165,7 +165,7 @@ i915_is_format_supported(struct pipe_screen *screen,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM_REV,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_L8_UNORM,
