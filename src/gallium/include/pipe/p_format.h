@@ -158,6 +158,8 @@ enum pipe_format {
    PIPE_FORMAT_DXT3_SRGBA            = 108,
    PIPE_FORMAT_DXT5_SRGBA            = 109,
 
+   PIPE_FORMAT_R8G8B8A8_UNORM_REV    = 110,
+
    PIPE_FORMAT_COUNT
 };
 
