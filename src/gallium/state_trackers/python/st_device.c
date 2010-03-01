@@ -244,7 +244,7 @@ st_context_create(struct st_device *st_dev)
 
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
-      templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      templat.format = PIPE_FORMAT_B8G8R8A8_UNORM;
       templat.width0 = 1;
       templat.height0 = 1;
       templat.depth0 = 1;
