@@ -175,7 +175,7 @@ _glapi_check_multithread(void)
 
    CHECK_MULTITHREAD_LOCK();
    if (firstCall) {
-      _glapi_init_multithread(void)
+      _glapi_init_multithread();
 
       knownID = _glthread_GetID();
       firstCall = GL_FALSE;
