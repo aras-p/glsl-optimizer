@@ -609,9 +609,9 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       /* always double-buffered */
       nconf->mode.doubleBufferMode = TRUE;
 
-      format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      format = PIPE_FORMAT_B8G8R8A8_UNORM;
       if (!kms_display_is_format_supported(&kdpy->base, format, TRUE)) {
-         format = PIPE_FORMAT_B8G8R8A8_UNORM;
+         format = PIPE_FORMAT_A8R8G8B8_UNORM;
          if (!kms_display_is_format_supported(&kdpy->base, format, TRUE))
             format = PIPE_FORMAT_NONE;
       }
@@ -625,9 +625,9 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       nconf->mode.alphaBits = 8;
       nconf->mode.rgbBits = 32;
 
-      format = PIPE_FORMAT_S8Z24_UNORM;
+      format = PIPE_FORMAT_Z24S8_UNORM;
       if (!kms_display_is_format_supported(&kdpy->base, format, FALSE)) {
-         format = PIPE_FORMAT_Z24S8_UNORM;
+         format = PIPE_FORMAT_S8Z24_UNORM;
          if (!kms_display_is_format_supported(&kdpy->base, format, FALSE))
             format = PIPE_FORMAT_NONE;
       }

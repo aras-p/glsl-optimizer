@@ -1097,7 +1097,7 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
       target_format = PIPE_FORMAT_R8G8B8_UNORM;
       break;
    case EGL_TEXTURE_RGBA:
-      target_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      target_format = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
    default:
       return _eglError(EGL_BAD_MATCH, "eglBindTexImage");

@@ -516,17 +516,17 @@ choose_color_format(const __GLcontextModes *mode, enum pipe_format formats[32])
 
    switch (mode->rgbBits) {
    case 32:
-      formats[count++] = PIPE_FORMAT_A8R8G8B8_UNORM;
       formats[count++] = PIPE_FORMAT_B8G8R8A8_UNORM;
+      formats[count++] = PIPE_FORMAT_A8R8G8B8_UNORM;
       break;
    case 24:
-      formats[count++] = PIPE_FORMAT_X8R8G8B8_UNORM;
       formats[count++] = PIPE_FORMAT_B8G8R8X8_UNORM;
-      formats[count++] = PIPE_FORMAT_A8R8G8B8_UNORM;
+      formats[count++] = PIPE_FORMAT_X8R8G8B8_UNORM;
       formats[count++] = PIPE_FORMAT_B8G8R8A8_UNORM;
+      formats[count++] = PIPE_FORMAT_A8R8G8B8_UNORM;
       break;
    case 16:
-      formats[count++] = PIPE_FORMAT_R5G6B5_UNORM;
+      formats[count++] = PIPE_FORMAT_B5G6R5_UNORM;
       break;
    default:
       break;
@@ -547,12 +547,12 @@ choose_depth_stencil_format(const __GLcontextModes *mode,
       break;
    case 24:
       if (mode->stencilBits) {
-         formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
          formats[count++] = PIPE_FORMAT_Z24S8_UNORM;
+         formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
       }
       else {
-         formats[count++] = PIPE_FORMAT_X8Z24_UNORM;
          formats[count++] = PIPE_FORMAT_Z24X8_UNORM;
+         formats[count++] = PIPE_FORMAT_X8Z24_UNORM;
       }
       break;
    case 16:

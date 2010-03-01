@@ -561,13 +561,13 @@ choose_format(const XVisualInfo *vinfo)
    /* TODO elaborate the formats */
    switch (vinfo->depth) {
    case 32:
-      fmt = PIPE_FORMAT_A8R8G8B8_UNORM;
+      fmt = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
    case 24:
-      fmt = PIPE_FORMAT_X8R8G8B8_UNORM;
+      fmt = PIPE_FORMAT_B8G8R8X8_UNORM;
       break;
    case 16:
-      fmt = PIPE_FORMAT_R5G6B5_UNORM;
+      fmt = PIPE_FORMAT_B5G6R5_UNORM;
       break;
    default:
       fmt = PIPE_FORMAT_NONE;
@@ -620,8 +620,8 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
             xconf->base.stencil_format = PIPE_FORMAT_NONE;
             /* create the second config with depth/stencil buffer */
             if (j == 1) {
-               xconf->base.depth_format = PIPE_FORMAT_S8Z24_UNORM;
-               xconf->base.stencil_format = PIPE_FORMAT_S8Z24_UNORM;
+               xconf->base.depth_format = PIPE_FORMAT_Z24S8_UNORM;
+               xconf->base.stencil_format = PIPE_FORMAT_Z24S8_UNORM;
                mode->depthBits = 24;
                mode->stencilBits = 8;
                mode->haveDepthBuffer = TRUE;
@@ -669,13 +669,13 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
    depth = x11_drawable_get_depth(xdpy->xscr, (Drawable) pix);
    switch (depth) {
    case 32:
-      fmt = PIPE_FORMAT_A8R8G8B8_UNORM;
+      fmt = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
    case 24:
-      fmt = PIPE_FORMAT_X8R8G8B8_UNORM;
+      fmt = PIPE_FORMAT_B8G8R8X8_UNORM;
       break;
    case 16:
-      fmt = PIPE_FORMAT_R5G6B5_UNORM;
+      fmt = PIPE_FORMAT_B5G6R5_UNORM;
       break;
    default:
       fmt = PIPE_FORMAT_NONE;
