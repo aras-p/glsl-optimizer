@@ -238,13 +238,13 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->software = sw;
    
    switch (format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       strb->Base.InternalFormat = GL_RGBA;
       break;
    case PIPE_FORMAT_Z16_UNORM:
@@ -253,10 +253,10 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_Z32_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
       break;
    case PIPE_FORMAT_S8_UNORM:
