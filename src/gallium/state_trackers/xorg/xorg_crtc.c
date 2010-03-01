@@ -205,7 +205,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
-	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	templat.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	templat.width0 = 64;
 	templat.height0 = 64;
 
