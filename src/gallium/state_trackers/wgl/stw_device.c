@@ -47,7 +47,6 @@
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
-extern void FreeAllTSD(void);
 #endif
 
 
@@ -183,7 +182,8 @@ stw_cleanup(void)
 
 #ifdef WIN32_THREADS
    _glthread_DESTROY_MUTEX(OneTimeLock);
-   FreeAllTSD();
+
+   _glapi_destroy_multithread();
 #endif
 
 #ifdef DEBUG

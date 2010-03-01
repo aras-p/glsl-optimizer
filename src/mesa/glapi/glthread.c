@@ -190,17 +190,9 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  */
 #ifdef WIN32_THREADS
 
-void FreeTSD(_glthread_TSD *p)
+static void InsteadOf_exit(int nCode)
 {
-   if (p->initMagic==INIT_MAGIC) {
-      TlsFree(p->key);
-      p->initMagic=0;
-   }
-}
-
-void InsteadOf_exit(int nCode)
-{
-   DWORD dwErr=GetLastError();
+   DWORD dwErr = GetLastError();
 }
 
 PUBLIC unsigned long
@@ -219,6 +211,17 @@ _glthread_InitTSD(_glthread_TSD *tsd)
       InsteadOf_exit(-1);
    }
    tsd->initMagic = INIT_MAGIC;
+}
+
+
+void
+_glthread_DestroyTSD(_glthread_TSD *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      return;
+   }
+   TlsFree(tsd->key);
+   tsd->initMagic = 0x0;
 }
 
 

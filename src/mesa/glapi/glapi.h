@@ -122,6 +122,14 @@ extern void *_glapi_Context;
  **/
 
 extern void
+_glapi_init_multithread(void);
+
+
+extern void
+_glapi_destroy_multithread(void);
+
+
+extern void
 _glapi_check_multithread(void);
 
 

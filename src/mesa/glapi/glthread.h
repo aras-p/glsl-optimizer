@@ -315,6 +315,10 @@ extern void
 _glthread_InitTSD(_glthread_TSD *);
 
 
+extern void
+_glthread_DestroyTSD(_glthread_TSD *); /* WIN32 only */
+
+
 extern void *
 _glthread_GetTSD(_glthread_TSD *);
 

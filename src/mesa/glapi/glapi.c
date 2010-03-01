@@ -118,15 +118,6 @@ _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
 
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 
-#if defined(WIN32_THREADS)
-void FreeTSD(_glthread_TSD *p);
-void FreeAllTSD(void)
-{
-   FreeTSD(&_gl_DispatchTSD);
-   FreeTSD(&ContextTSD);
-}
-#endif /* defined(WIN32_THREADS) */
-
 #endif /* defined(THREADS) */
 
 PUBLIC struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
@@ -139,6 +130,22 @@ PUBLIC void *_glapi_Context = NULL;
 
 
 #if defined(THREADS) && !defined(GLX_USE_TLS)
+
+void
+_glapi_init_multithread(void)
+{
+   _glthread_InitTSD(&_gl_DispatchTSD);
+   _glthread_InitTSD(&ContextTSD);
+}
+
+void
+_glapi_destroy_multithread(void)
+{
+#ifdef WIN32_THREADS
+   _glthread_DestroyTSD(&_gl_DispatchTSD);
+   _glthread_DestroyTSD(&ContextTSD);
+#endif
+}
 
 /**
  * Mutex for multithread check.
@@ -168,9 +175,7 @@ _glapi_check_multithread(void)
 
    CHECK_MULTITHREAD_LOCK();
    if (firstCall) {
-      /* initialize TSDs */
-      (void) _glthread_GetTSD(&ContextTSD);
-      (void) _glthread_GetTSD(&_gl_DispatchTSD);
+      _glapi_init_multithread(void)
 
       knownID = _glthread_GetID();
       firstCall = GL_FALSE;
@@ -184,6 +189,12 @@ _glapi_check_multithread(void)
 }
 
 #else
+
+void
+_glapi_init_multithread(void) { }
+
+void
+_glapi_destroy_multithread(void) { }
 
 PUBLIC void
 _glapi_check_multithread(void) { }
