@@ -35,24 +35,40 @@
 #include "draw/draw_context.h"
 
 
+void *
+llvmpipe_create_vertex_elements_state(struct pipe_context *pipe,
+                                      unsigned count,
+                                      const struct pipe_vertex_element *attribs)
+{
+   struct lp_velems_state *velems;
+   assert(count <= PIPE_MAX_ATTRIBS);
+   velems = (struct lp_velems_state *) MALLOC(sizeof(struct lp_velems_state) + count * sizeof(*attribs));
+   if (velems) {
+      velems->count = count;
+      memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+   }
+   return velems;
+}
+
 void
-llvmpipe_set_vertex_elements(struct pipe_context *pipe,
-                             unsigned count,
-                             const struct pipe_vertex_element *attribs)
+llvmpipe_bind_vertex_elements_state(struct pipe_context *pipe,
+                                    void *velems)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   struct lp_velems_state *lp_velems = (struct lp_velems_state *) velems;
 
-   assert(count <= PIPE_MAX_ATTRIBS);
-
-   memcpy(llvmpipe->vertex_element, attribs,
-          count * sizeof(struct pipe_vertex_element));
-   llvmpipe->num_vertex_elements = count;
+   llvmpipe->velems = lp_velems;
 
    llvmpipe->dirty |= LP_NEW_VERTEX;
 
-   draw_set_vertex_elements(llvmpipe->draw, count, attribs);
+   draw_set_vertex_elements(llvmpipe->draw, lp_velems->count, lp_velems->velem);
 }
 
+void
+llvmpipe_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
+{
+   FREE( velems );
+}
 
 void
 llvmpipe_set_vertex_buffers(struct pipe_context *pipe,
