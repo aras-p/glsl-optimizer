@@ -300,7 +300,7 @@ default_rgba_format(struct pipe_screen *screen,
    static const enum pipe_format colorFormats[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM_REV,
       PIPE_FORMAT_R5G6B5_UNORM
    };
    uint i;
@@ -327,7 +327,7 @@ default_rgb_format(struct pipe_screen *screen,
       PIPE_FORMAT_R8G8B8X8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM_REV,
       PIPE_FORMAT_R5G6B5_UNORM
    };
    uint i;
@@ -680,7 +680,7 @@ GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type)
 {
    switch (pFormat) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       return format == GL_RGBA && type == GL_UNSIGNED_BYTE;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return format == GL_BGRA && type == GL_UNSIGNED_BYTE;
