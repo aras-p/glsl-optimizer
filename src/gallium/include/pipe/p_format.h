@@ -45,28 +45,28 @@ extern "C" {
 
 enum pipe_format {
    PIPE_FORMAT_NONE                  = 0,
-   PIPE_FORMAT_A8R8G8B8_UNORM        = 1,
-   PIPE_FORMAT_X8R8G8B8_UNORM        = 2,
-   PIPE_FORMAT_B8G8R8A8_UNORM        = 3,
-   PIPE_FORMAT_B8G8R8X8_UNORM        = 4,
-   PIPE_FORMAT_A1R5G5B5_UNORM        = 5,
-   PIPE_FORMAT_A4R4G4B4_UNORM        = 6,
-   PIPE_FORMAT_R5G6B5_UNORM          = 7,
-   PIPE_FORMAT_A2B10G10R10_UNORM     = 8,
+   PIPE_FORMAT_B8G8R8A8_UNORM        = 1,
+   PIPE_FORMAT_B8G8R8X8_UNORM        = 2,
+   PIPE_FORMAT_A8R8G8B8_UNORM        = 3,
+   PIPE_FORMAT_X8R8G8B8_UNORM        = 4,
+   PIPE_FORMAT_B5G5R5A1_UNORM        = 5,
+   PIPE_FORMAT_B4G4R4A4_UNORM        = 6,
+   PIPE_FORMAT_B5G6R5_UNORM          = 7,
+   PIPE_FORMAT_R10G10B10A2_UNORM     = 8,
    PIPE_FORMAT_L8_UNORM              = 9,    /**< ubyte luminance */
    PIPE_FORMAT_A8_UNORM              = 10,   /**< ubyte alpha */
    PIPE_FORMAT_I8_UNORM              = 11,   /**< ubyte intensity */
-   PIPE_FORMAT_A8L8_UNORM            = 12,   /**< ubyte alpha, luminance */
+   PIPE_FORMAT_L8A8_UNORM            = 12,   /**< ubyte alpha, luminance */
    PIPE_FORMAT_L16_UNORM             = 13,   /**< ushort luminance */
-   PIPE_FORMAT_YCBCR                 = 14,
-   PIPE_FORMAT_YCBCR_REV             = 15,
+   PIPE_FORMAT_UYVY                  = 14,
+   PIPE_FORMAT_YUYV                  = 15,
    PIPE_FORMAT_Z16_UNORM             = 16,
    PIPE_FORMAT_Z32_UNORM             = 17,
    PIPE_FORMAT_Z32_FLOAT             = 18,
-   PIPE_FORMAT_S8Z24_UNORM           = 19,
-   PIPE_FORMAT_Z24S8_UNORM           = 20,
-   PIPE_FORMAT_X8Z24_UNORM           = 21,
-   PIPE_FORMAT_Z24X8_UNORM           = 22,
+   PIPE_FORMAT_Z24S8_UNORM           = 19,
+   PIPE_FORMAT_S8Z24_UNORM           = 20,
+   PIPE_FORMAT_Z24X8_UNORM           = 21,
+   PIPE_FORMAT_X8Z24_UNORM           = 22,
    PIPE_FORMAT_S8_UNORM              = 23,   /**< ubyte stencil */
    PIPE_FORMAT_R64_FLOAT             = 24,
    PIPE_FORMAT_R64G64_FLOAT          = 25,
@@ -112,7 +112,7 @@ enum pipe_format {
    PIPE_FORMAT_R8G8_UNORM            = 65,
    PIPE_FORMAT_R8G8B8_UNORM          = 66,
    PIPE_FORMAT_R8G8B8A8_UNORM        = 67,
-   PIPE_FORMAT_R8G8B8X8_UNORM        = 68,
+   PIPE_FORMAT_X8B8G8R8_UNORM        = 68,
    PIPE_FORMAT_R8_USCALED            = 69,
    PIPE_FORMAT_R8G8_USCALED          = 70,
    PIPE_FORMAT_R8G8B8_USCALED        = 71,
@@ -121,7 +121,7 @@ enum pipe_format {
    PIPE_FORMAT_R8G8_SNORM            = 75,
    PIPE_FORMAT_R8G8B8_SNORM          = 76,
    PIPE_FORMAT_R8G8B8A8_SNORM        = 77,
-   PIPE_FORMAT_X8B8G8R8_SNORM        = 81,
+   PIPE_FORMAT_R8G8B8X8_SNORM        = 81,
    PIPE_FORMAT_R8_SSCALED            = 82,
    PIPE_FORMAT_R8G8_SSCALED          = 83,
    PIPE_FORMAT_R8G8B8_SSCALED        = 84,
@@ -132,18 +132,18 @@ enum pipe_format {
    PIPE_FORMAT_R32G32B32A32_FIXED    = 90,
    /* sRGB formats */
    PIPE_FORMAT_L8_SRGB               = 91,
-   PIPE_FORMAT_A8L8_SRGB             = 92,
+   PIPE_FORMAT_L8A8_SRGB             = 92,
    PIPE_FORMAT_R8G8B8_SRGB           = 93,
-   PIPE_FORMAT_R8G8B8A8_SRGB         = 94,
-   PIPE_FORMAT_R8G8B8X8_SRGB         = 95,
-   PIPE_FORMAT_A8R8G8B8_SRGB         = 96,
-   PIPE_FORMAT_X8R8G8B8_SRGB         = 97,
-   PIPE_FORMAT_B8G8R8A8_SRGB         = 98,
-   PIPE_FORMAT_B8G8R8X8_SRGB         = 99,
+   PIPE_FORMAT_A8B8G8R8_SRGB         = 94,
+   PIPE_FORMAT_X8B8G8R8_SRGB         = 95,
+   PIPE_FORMAT_B8G8R8A8_SRGB         = 96,
+   PIPE_FORMAT_B8G8R8X8_SRGB         = 97,
+   PIPE_FORMAT_A8R8G8B8_SRGB         = 98,
+   PIPE_FORMAT_X8R8G8B8_SRGB         = 99,
 
    /* mixed formats */
-   PIPE_FORMAT_X8UB8UG8SR8S_NORM     = 100,
-   PIPE_FORMAT_B6UG5SR5S_NORM        = 101,
+   PIPE_FORMAT_R8SG8SB8UX8U_NORM     = 100,
+   PIPE_FORMAT_R5SG5SB6U_NORM        = 101,
 
    /* compressed formats */
    PIPE_FORMAT_DXT1_RGB              = 102,
@@ -157,7 +157,7 @@ enum pipe_format {
    PIPE_FORMAT_DXT3_SRGBA            = 108,
    PIPE_FORMAT_DXT5_SRGBA            = 109,
 
-   PIPE_FORMAT_R8G8B8A8_UNORM_REV    = 110,
+   PIPE_FORMAT_A8B8G8R8_UNORM        = 110,
 
    PIPE_FORMAT_COUNT
 };
