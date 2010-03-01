@@ -57,7 +57,7 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
                    enum pipe_format format, union util_color *uc)
 {
    switch (format) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }
@@ -153,7 +153,7 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
                      ubyte *r, ubyte *g, ubyte *b, ubyte *a)
 {
    switch (format) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       {
          uint p = uc->ui;
          *r = (ubyte) ((p >> 24) & 0xff);
@@ -326,7 +326,7 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
    }
 
    switch (format) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       {
          uc->ui = (r << 24) | (g << 16) | (b << 8) | a;
       }

@@ -248,7 +248,7 @@ b8g8r8a8_put_tile_rgba(unsigned *dst,
 }
 
 
-/*** PIPE_FORMAT_R8G8B8A8_UNORM ***/
+/*** PIPE_FORMAT_R8G8B8A8_UNORM_REV ***/
 
 static void
 r8g8b8a8_get_tile_rgba(const unsigned *src,
@@ -1171,7 +1171,7 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       r8g8b8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
@@ -1300,7 +1300,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM_REV:
       r8g8b8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
