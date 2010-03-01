@@ -121,7 +121,6 @@ enum pipe_format {
    PIPE_FORMAT_R8G8_SNORM            = 75,
    PIPE_FORMAT_R8G8B8_SNORM          = 76,
    PIPE_FORMAT_R8G8B8A8_SNORM        = 77,
-   PIPE_FORMAT_A8B8G8R8_SNORM        = 80,
    PIPE_FORMAT_X8B8G8R8_SNORM        = 81,
    PIPE_FORMAT_R8_SSCALED            = 82,
    PIPE_FORMAT_R8G8_SSCALED          = 83,
