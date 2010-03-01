@@ -119,9 +119,9 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 		enum pipe_format format;
 
 		if (nvdri->bpp == 16)
-			format = PIPE_FORMAT_R5G6B5_UNORM;
+			format = PIPE_FORMAT_B5G6R5_UNORM;
 		else
-			format = PIPE_FORMAT_A8R8G8B8_UNORM;
+			format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
 		nvws->front = dri_surface_from_handle(api, nvws->pscreen,
 						      nvdri->front_offset,
