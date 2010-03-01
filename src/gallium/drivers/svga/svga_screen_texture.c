@@ -59,21 +59,21 @@ svga_translate_format(enum pipe_format format)
 {
    switch(format) {
    
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return SVGA3D_A8R8G8B8;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
       return SVGA3D_X8R8G8B8;
 
       /* Required for GL2.1:
        */
-   case PIPE_FORMAT_A8R8G8B8_SRGB:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
       return SVGA3D_A8R8G8B8;
 
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return SVGA3D_R5G6B5;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       return SVGA3D_A1R5G5B5;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       return SVGA3D_A4R4G4B4;
 
       
@@ -83,9 +83,9 @@ svga_translate_format(enum pipe_format format)
     */
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_Z_D16;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return SVGA3D_Z_D24S8;
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_Z_D24X8;
 
    case PIPE_FORMAT_A8_UNORM:
@@ -111,13 +111,13 @@ SVGA3dSurfaceFormat
 svga_translate_format_render(enum pipe_format format)
 {
    switch(format) { 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
-   case PIPE_FORMAT_R5G6B5_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z32_UNORM:
    case PIPE_FORMAT_Z16_UNORM:
    case PIPE_FORMAT_L8_UNORM:
@@ -403,9 +403,9 @@ svga_texture_blanket(struct pipe_screen * screen,
    
 
    if (sbuf->key.format == 1)
-      tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    else if (sbuf->key.format == 2)
-      tex->base.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
@@ -462,9 +462,9 @@ svga_screen_texture_wrap_surface(struct pipe_screen *screen,
    
 
    if (format == 1)
-      tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    else if (format == 2)
-      tex->base.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;

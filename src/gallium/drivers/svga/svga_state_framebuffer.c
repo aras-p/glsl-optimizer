@@ -70,7 +70,7 @@ static int emit_framebuffer( struct svga_context *svga,
          return ret;
 
       if (curr->zsbuf &&
-          curr->zsbuf->format == PIPE_FORMAT_Z24S8_UNORM) {
+          curr->zsbuf->format == PIPE_FORMAT_S8Z24_UNORM) {
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, curr->zsbuf);
          if (ret != PIPE_OK)
             return ret;

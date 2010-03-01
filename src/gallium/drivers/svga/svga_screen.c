@@ -196,23 +196,23 @@ svga_translate_format_cap(enum pipe_format format)
 {
    switch(format) {
    
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_A8R8G8B8;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_X8R8G8B8;
 
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_R5G6B5;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_A1R5G5B5;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_A4R4G4B4;
 
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D16;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24S8;
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24X8;
 
    case PIPE_FORMAT_A8_UNORM:
@@ -254,8 +254,8 @@ svga_is_format_supported( struct pipe_screen *screen,
       /* Often unsupported/problematic. This means we end up with the same
        * visuals for all virtual hardware implementations.
        */
-      case PIPE_FORMAT_A4R4G4B4_UNORM:
-      case PIPE_FORMAT_A1R5G5B5_UNORM:
+      case PIPE_FORMAT_B4G4R4A4_UNORM:
+      case PIPE_FORMAT_B5G5R5A1_UNORM:
          return FALSE;
          
       /* Simulate ability to render into compressed textures */

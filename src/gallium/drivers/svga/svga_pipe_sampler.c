@@ -201,7 +201,7 @@ static void svga_set_sampler_textures(struct pipe_context *pipe,
       if (!texture[i])
          continue;
 
-      if (texture[i]->format == PIPE_FORMAT_A8R8G8B8_SRGB)
+      if (texture[i]->format == PIPE_FORMAT_B8G8R8A8_SRGB)
          flag_srgb |= 1 << i;
 
       if (texture[i]->target == PIPE_TEXTURE_1D)

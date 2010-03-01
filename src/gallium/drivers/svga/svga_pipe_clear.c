@@ -54,7 +54,7 @@ try_clear(struct svga_context *svga,
 
    if ((buffers & PIPE_CLEAR_COLOR) && fb->cbufs[0]) {
       flags |= SVGA3D_CLEAR_COLOR;
-      util_pack_color(rgba, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
+      util_pack_color(rgba, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
       rect.w = fb->cbufs[0]->width;
       rect.h = fb->cbufs[0]->height;
@@ -63,7 +63,7 @@ try_clear(struct svga_context *svga,
    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && fb->zsbuf) {
       flags |= SVGA3D_CLEAR_DEPTH;
 
-      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_Z24S8_UNORM)
+      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8Z24_UNORM)
          flags |= SVGA3D_CLEAR_STENCIL;
 
       rect.w = MAX2(rect.w, fb->zsbuf->width);
