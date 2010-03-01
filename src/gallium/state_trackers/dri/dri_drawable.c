@@ -349,11 +349,11 @@ dri_create_buffer(__DRIscreen * sPriv,
 
    if (visual->redBits == 8) {
       if (visual->alphaBits == 8)
-         drawable->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+         drawable->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
       else
-         drawable->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+         drawable->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
    } else {
-      drawable->color_format = PIPE_FORMAT_R5G6B5_UNORM;
+      drawable->color_format = PIPE_FORMAT_B5G6R5_UNORM;
    }
 
    switch(visual->depthBits) {
@@ -367,12 +367,12 @@ dri_create_buffer(__DRIscreen * sPriv,
    case 24:
       if (visual->stencilBits == 0) {
 	 drawable->depth_stencil_format = (screen->d_depth_bits_last) ?
-                                          PIPE_FORMAT_X8Z24_UNORM:
-                                          PIPE_FORMAT_Z24X8_UNORM;
+                                          PIPE_FORMAT_Z24X8_UNORM:
+                                          PIPE_FORMAT_X8Z24_UNORM;
       } else {
 	 drawable->depth_stencil_format = (screen->sd_depth_bits_last) ?
-                                          PIPE_FORMAT_S8Z24_UNORM:
-                                          PIPE_FORMAT_Z24S8_UNORM;
+                                          PIPE_FORMAT_Z24S8_UNORM:
+                                          PIPE_FORMAT_S8Z24_UNORM;
       }
       break;
    case 32:
