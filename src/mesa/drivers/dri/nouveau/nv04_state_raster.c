@@ -71,6 +71,10 @@ get_stencil_op(unsigned op)
 		return 0x5;
 	case GL_INVERT:
 		return 0x6;
+	case GL_INCR_WRAP:
+		return 0x7;
+	case GL_DECR_WRAP:
+		return 0x8;
 	default:
 		assert(0);
 	}
