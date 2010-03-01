@@ -43,7 +43,11 @@ PIPE_FORMAT_X8Z24_UNORM           , plain, 1, 1, un24, un8 ,     ,     , x___, z
 PIPE_FORMAT_Z24X8_UNORM           , plain, 1, 1, un8 , un24,     ,     , y___, zs 
 
 # YUV formats
+# http://www.fourcc.org/yuv.php#UYVY
 PIPE_FORMAT_YCBCR                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
+# http://www.fourcc.org/yuv.php#YUYV (a.k.a http://www.fourcc.org/yuv.php#YUY2)
+# XXX: u_tile.c's ycbcr_get_tile_rgba actually interprets it as VYUY but the 
+# intent should be to match D3DFMT_YUY2
 PIPE_FORMAT_YCBCR_REV             , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
 
 # Compressed formats
