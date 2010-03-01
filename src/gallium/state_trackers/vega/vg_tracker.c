@@ -51,7 +51,7 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
       templ.format = format;
    }
    else {
-      templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 
    templ.target = PIPE_TEXTURE_2D;
@@ -186,7 +186,7 @@ struct st_framebuffer * st_create_framebuffer(const void *visual,
       if (stencilFormat == depthFormat)
          stfb->dsrb = st_new_renderbuffer_fb(stencilFormat);
       else
-         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_S8Z24_UNORM);
+         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_Z24S8_UNORM);
 
       /*### currently we always allocate it but it's possible it's
         not necessary if EGL_ALPHA_MASK_SIZE was 0
@@ -209,12 +209,12 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
    struct pipe_texture *old_texture = stfb->alpha_mask;
 
    /*
-     we use PIPE_FORMAT_A8R8G8B8_UNORM because we want to render to
+     we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
      this texture and use it as a sampler, so while this wastes some
      space it makes both of those a lot simpler
    */
    stfb->alpha_mask =
-      create_texture(pipe, PIPE_FORMAT_A8R8G8B8_UNORM, width, height);
+      create_texture(pipe, PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
 
    if (!stfb->alpha_mask) {
       if (old_texture)
@@ -327,7 +327,7 @@ void st_resize_framebuffer(struct st_framebuffer *stfb,
    setup_new_alpha_mask(ctx, stfb, width, height);
 
    pipe_texture_reference( &stfb->blend_texture, NULL );
-   stfb->blend_texture = create_texture(ctx->pipe, PIPE_FORMAT_A8R8G8B8_UNORM,
+   stfb->blend_texture = create_texture(ctx->pipe, PIPE_FORMAT_B8G8R8A8_UNORM,
                                         width, height);
 }
 
