@@ -776,9 +776,9 @@ void r300_emit_texture(struct r300_context* r300,
 void r300_emit_aos(struct r300_context* r300, unsigned offset)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_vertex_element *velem = r300->velems->velem;
     int i;
-    unsigned size1, size2, aos_count = r300->vertex_element_count;
+    unsigned size1, size2, aos_count = r300->velems->count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
 

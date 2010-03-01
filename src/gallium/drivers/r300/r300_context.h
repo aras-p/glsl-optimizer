@@ -247,6 +247,11 @@ struct r300_vertex_info {
     uint32_t vap_prog_stream_cntl_ext[8];
 };
 
+struct r300_velems_state {
+    unsigned count;
+    struct pipe_vertex_element velem[];
+};
+
 extern struct pipe_viewport_state r300_viewport_identity;
 
 struct r300_context {
@@ -317,8 +322,7 @@ struct r300_context {
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     /* Vertex elements for Gallium. */
-    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-    int vertex_element_count;
+    struct r300_velems_state *velems;
 
     struct pipe_stencil_ref stencil_ref;
 
