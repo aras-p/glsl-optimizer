@@ -292,11 +292,12 @@ static void draw_polygon(struct vg_context *ctx,
    pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
    /* tell pipe about the vertex attributes */
+   memset(&velement, 0, sizeof(velement));
    velement.src_offset = 0;
    velement.instance_divisor = 0;
    velement.vertex_buffer_index = 0;
    velement.src_format = PIPE_FORMAT_R32G32_FLOAT;
-   pipe->set_vertex_elements(pipe, 1, &velement);
+   cso_set_vertex_elements(ctx->cso_context, 1, &velement);
 
    /* draw */
    pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_FAN, 
