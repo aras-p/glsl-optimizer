@@ -90,8 +90,8 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
 		{
 			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
