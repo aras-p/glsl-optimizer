@@ -426,7 +426,7 @@ softpipe_video_surface_create(struct pipe_screen *screen,
 
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    template.last_level = 0;
    /* vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true */
    template.width0 = util_next_power_of_two(width);
