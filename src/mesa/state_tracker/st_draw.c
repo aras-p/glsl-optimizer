@@ -57,6 +57,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "cso_cache/cso_context.h"
 
 
 static GLuint double_types[4] = {
@@ -600,7 +601,7 @@ st_draw_vbo(GLcontext *ctx,
 #endif
 
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
-   pipe->set_vertex_elements(pipe, num_velements, velements);
+   cso_set_vertex_elements(ctx->st->cso_context, num_velements, velements);
 
    if (num_vbuffers == 0 || num_velements == 0)
       return;
