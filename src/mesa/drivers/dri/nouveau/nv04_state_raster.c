@@ -61,6 +61,10 @@ get_stencil_op(unsigned op)
 	switch (op) {
 	case GL_KEEP:
 		return 0x1;
+	case GL_ZERO:
+		return 0x2;
+	case GL_REPLACE:
+		return 0x3;
 	case GL_INCR:
 		return 0x4;
 	case GL_DECR:
