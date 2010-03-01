@@ -333,6 +333,10 @@ struct r300_context {
 
     struct pipe_stencil_ref stencil_ref;
 
+    struct pipe_clip_state clip;
+
+    struct pipe_viewport_state viewport;
+
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
