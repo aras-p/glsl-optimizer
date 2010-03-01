@@ -669,15 +669,34 @@ nv30_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
 
+static void *
+nv30_vtxelts_state_create(struct pipe_context *pipe,
+			  unsigned num_elements,
+			  const struct pipe_vertex_element *elements)
+{
+	struct nv30_vtxelt_state *cso = CALLOC_STRUCT(nv30_vtxelt_state);
+
+	assert(num_elements < 16); /* not doing fallbacks yet */
+	cso->num_elements = num_elements;
+	memcpy(cso->pipe, elements, num_elements * sizeof(*elements));
+
+/*	nv30_vtxelt_construct(cso);*/
+
+	return (void *)cso;
+}
+
 static void
-nv30_set_vertex_elements(struct pipe_context *pipe, unsigned count,
-			 const struct pipe_vertex_element *ve)
+nv30_vtxelts_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+	FREE(hwcso);
+}
+
+static void
+nv30_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	memcpy(nv30->vtxelt, ve, sizeof(*ve) * count);
-	nv30->vtxelt_nr = count;
-
+	nv30->vtxelt = hwcso;
 	nv30->dirty |= NV30_NEW_ARRAYS;
 	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
@@ -722,7 +741,10 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.set_scissor_state = nv30_set_scissor_state;
 	nv30->pipe.set_viewport_state = nv30_set_viewport_state;
 
+	nv30->pipe.create_vertex_elements_state = nv30_vtxelts_state_create;
+	nv30->pipe.delete_vertex_elements_state = nv30_vtxelts_state_delete;
+	nv30->pipe.bind_vertex_elements_state = nv30_vtxelts_state_bind;
+
 	nv30->pipe.set_vertex_buffers = nv30_set_vertex_buffers;
-	nv30->pipe.set_vertex_elements = nv30_set_vertex_elements;
 }
 
