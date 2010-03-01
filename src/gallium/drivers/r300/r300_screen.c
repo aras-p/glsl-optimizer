@@ -210,9 +210,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 {
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
-    boolean is_z24 = format == PIPE_FORMAT_Z24X8_UNORM ||
-                     format == PIPE_FORMAT_Z24S8_UNORM;
-    boolean is_color2101010 = format == PIPE_FORMAT_A2B10G10R10_UNORM;
+    boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
+                     format == PIPE_FORMAT_S8Z24_UNORM;
+    boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
         debug_printf("r300: Implementation error: Received bogus texture "
