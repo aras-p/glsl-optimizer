@@ -215,6 +215,8 @@ get_tex_format(struct gl_texture_image *ti)
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
 		return GL_RGBA8;
+	case MESA_FORMAT_XRGB8888:
+		return GL_RGB8;
 	case MESA_FORMAT_RGB565:
 		return GL_RGB5;
 	default:
