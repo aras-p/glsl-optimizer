@@ -76,8 +76,8 @@ static int update_need_swvfetch( struct svga_context *svga,
    unsigned i;
    boolean need_swvfetch = FALSE;
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
-      svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.ve[i].src_format);
+   for (i = 0; i < svga->curr.velems->count; i++) {
+      svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.velems->velem[i].src_format);
       if (svga->state.sw.ve_format[i] == SVGA3D_DECLTYPE_MAX) {
          need_swvfetch = TRUE;
          break;
