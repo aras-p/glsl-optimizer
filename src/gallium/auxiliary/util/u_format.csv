@@ -47,8 +47,9 @@
 # - color space: rgb, yub, sz
 #
 # See also:
-# - http://msdn.microsoft.com/en-us/library/ee416489.aspx
-# - http://msdn.microsoft.com/en-us/library/ee415668.aspx
+# - http://msdn.microsoft.com/en-us/library/ee416489.aspx (D3D9)
+# - http://msdn.microsoft.com/en-us/library/ee415668.aspx (D3D9 -> D3D10)
+# - http://msdn.microsoft.com/en-us/library/ee418116.aspx (D3D10)
 #
 # Note that GL doesn't really specify the layout of internal formats. See
 # OpenGL 2.1 specification, Table 3.16, on the "Correspondence of sized
