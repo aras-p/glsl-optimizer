@@ -45,7 +45,7 @@
 #  define GL_PREFIX(n) GLNAME(CONCAT(gl,n))
 # endif
 
-#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
 #  define THREADS
 #endif
 

@@ -64,7 +64,7 @@
 #define GLTHREAD_H
 
 
-#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
 #ifndef THREADS
 #define THREADS
 #endif
@@ -149,38 +149,7 @@ typedef unsigned int _glthread_Cond;
 #define _glthread_COND_BROADCAST(cond) \
   ASSERT(0);
 
-#endif
-
-
-/*
- * Solaris threads. Use only up to Solaris 2.4.
- * Solaris 2.5 and higher provide POSIX threads.
- * Be sure to compile with -mt on the Solaris compilers, or
- * use -D_REENTRANT if using gcc.
- */
-#ifdef SOLARIS_THREADS
-#include <thread.h>
-
-typedef struct {
-   thread_key_t key;
-   mutex_t      keylock;
-   int          initMagic;
-} _glthread_TSD;
-
-typedef thread_t _glthread_Thread;
-
-typedef mutex_t _glthread_Mutex;
-
-/* XXX need to really implement mutex-related macros */
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
-#define _glthread_INIT_MUTEX(name)  (void) name
-#define _glthread_DESTROY_MUTEX(name) (void) name
-#define _glthread_LOCK_MUTEX(name)  (void) name
-#define _glthread_UNLOCK_MUTEX(name)  (void) name
-
-#endif /* SOLARIS_THREADS */
-
-
+#endif /* PTHREADS */
 
 
 /*
