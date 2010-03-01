@@ -300,7 +300,10 @@ nv04_emit_blend(GLcontext *ctx, int emit)
 			blend |= NV04_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_FLAT;
 
 		/* Texture environment. */
-		blend |= get_texenv_mode(ctx->Texture.Unit[0].EnvMode);
+		if (ctx->Texture._EnabledUnits)
+			blend |= get_texenv_mode(ctx->Texture.Unit[0].EnvMode);
+		else
+			blend |= get_texenv_mode(GL_MODULATE);
 
 		/* Fog. */
 		if (ctx->Fog.Enabled)
