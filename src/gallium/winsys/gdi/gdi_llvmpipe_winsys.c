@@ -75,8 +75,8 @@ gdi_llvmpipe_is_displaytarget_format_supported( struct llvmpipe_winsys *ws,
                                                 enum pipe_format format )
 {
    switch(format) {
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return TRUE;
 
    /* TODO: Support other formats possible with BMPs, as described in 
