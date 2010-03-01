@@ -1,3 +1,60 @@
+###########################################################################
+# 
+# Copyright 2009-2010 VMware, Inc.
+# All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sub license, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice (including the
+# next paragraph) shall be included in all copies or substantial portions
+# of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+###########################################################################
+
+# This CSV file has the input data for u_format.h's struct
+# util_format_description.
+#
+# Each format entry contains:
+# - name, per enum pipe_format
+# - layout, per enum util_format_layout, in shortened lower caps
+# - pixel block's width
+# - pixel block's height
+# - channel encoding (only meaningful for plain layout), containing for each
+#   channel the following information:
+#   - type, one of
+#     - 'x': void
+#     - 'u': unsigned
+#     - 's': signed
+#     - 'h': fixed
+#     - 'f': FLOAT
+#   - optionally followed by 'n' if it is normalized
+#   - number of bits
+# - channel swizzle 
+# - color space: rgb, yub, sz
+#
+# See also:
+# - http://msdn.microsoft.com/en-us/library/ee416489.aspx
+# - http://msdn.microsoft.com/en-us/library/ee415668.aspx
+#
+# Note that GL doesn't really specify the layout of internal formats. See
+# OpenGL 2.1 specification, Table 3.16, on the "Correspondence of sized
+# internal formats to base in- ternal formats, and desired component
+# resolutions for each sized internal format."
+
 # Typical rendertarget formats
 PIPE_FORMAT_A8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, rgb
 PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
