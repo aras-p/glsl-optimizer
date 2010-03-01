@@ -87,7 +87,6 @@ PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, s
 PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, srgb
 
 # Signed formats (typically used for bump map textures)
-PIPE_FORMAT_A8B8G8R8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , xyzw, rgb
 PIPE_FORMAT_X8B8G8R8_SNORM        , plain, 1, 1, sn8 , sn8 , sn8 , sn8 , xyz1, rgb
 PIPE_FORMAT_X8UB8UG8SR8S_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
 PIPE_FORMAT_B6UG5SR5S_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
