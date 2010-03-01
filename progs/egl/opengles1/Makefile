@@ -35,6 +35,7 @@ PROGRAMS = \
 	msaa \
 	pbuffer \
 	render_tex \
+	texture_from_pixmap \
 	torus \
 	two_win
 
@@ -71,6 +72,9 @@ pbuffer: pbuffer.o $(ES1_LIB_DEPS)
 render_tex: render_tex.o $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) render_tex.o $(ES1_LIBS) -o $@
 
+
+texture_from_pixmap: texture_from_pixmap.o $(ES1_LIB_DEPS)
+	$(CC) $(CFLAGS) texture_from_pixmap.o $(ES1_LIBS) -o $@
 
 torus: torus.o $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) torus.o $(ES1_LIBS) -o $@
