@@ -82,8 +82,6 @@ get_texenv_mode(unsigned mode)
 	switch (mode) {
 	case GL_REPLACE:
 		return 0x1;
-	case GL_ADD:
-		return 0x2;
 	case GL_DECAL:
 		return 0x3;
 	case GL_MODULATE:
