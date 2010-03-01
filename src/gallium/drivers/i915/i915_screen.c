@@ -165,22 +165,22 @@ i915_is_format_supported(struct pipe_screen *screen,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM_REV,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_L8_UNORM,
       PIPE_FORMAT_A8_UNORM,
       PIPE_FORMAT_I8_UNORM,
-      PIPE_FORMAT_A8L8_UNORM,
-      PIPE_FORMAT_YCBCR,
-      PIPE_FORMAT_YCBCR_REV,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_L8A8_UNORM,
+      PIPE_FORMAT_UYVY,
+      PIPE_FORMAT_YUYV,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format surface_supported[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
