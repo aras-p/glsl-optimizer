@@ -93,6 +93,12 @@ struct blitter_context_priv
 
    /* Rasterizer state. */
    void *rs_state;
+
+   /* Viewport state. */
+   struct pipe_viewport_state viewport;
+
+   /* Clip state. */
+   struct pipe_clip_state clip;
 };
 
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
@@ -262,6 +268,9 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
 
    pipe->set_stencil_ref(pipe, &ctx->blitter.saved_stencil_ref);
 
+   pipe->set_viewport_state(pipe, &ctx->blitter.saved_viewport);
+   pipe->set_clip_state(pipe, &ctx->blitter.saved_clip);
+
    /* restore the state objects which are required to be saved before copy/fill
     */
    if (ctx->blitter.saved_fb_state.nr_cbufs != ~0) {
@@ -287,25 +296,40 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
 static void blitter_set_rectangle(struct blitter_context_priv *ctx,
                                   unsigned x1, unsigned y1,
                                   unsigned x2, unsigned y2,
+                                  unsigned width, unsigned height,
                                   float depth)
 {
    int i;
 
    /* set vertex positions */
-   ctx->vertices[0][0][0] = x1; /*v0.x*/
-   ctx->vertices[0][0][1] = y1; /*v0.y*/
+   ctx->vertices[0][0][0] = (float)x1 / width * 2.0f - 1.0f; /*v0.x*/
+   ctx->vertices[0][0][1] = (float)y1 / height * 2.0f - 1.0f; /*v0.y*/
 
-   ctx->vertices[1][0][0] = x2; /*v1.x*/
-   ctx->vertices[1][0][1] = y1; /*v1.y*/
+   ctx->vertices[1][0][0] = (float)x2 / width * 2.0f - 1.0f; /*v1.x*/
+   ctx->vertices[1][0][1] = (float)y1 / height * 2.0f - 1.0f; /*v1.y*/
 
-   ctx->vertices[2][0][0] = x2; /*v2.x*/
-   ctx->vertices[2][0][1] = y2; /*v2.y*/
+   ctx->vertices[2][0][0] = (float)x2 / width * 2.0f - 1.0f; /*v2.x*/
+   ctx->vertices[2][0][1] = (float)y2 / height * 2.0f - 1.0f; /*v2.y*/
 
-   ctx->vertices[3][0][0] = x1; /*v3.x*/
-   ctx->vertices[3][0][1] = y2; /*v3.y*/
+   ctx->vertices[3][0][0] = (float)x1 / width * 2.0f - 1.0f; /*v3.x*/
+   ctx->vertices[3][0][1] = (float)y2 / height * 2.0f - 1.0f; /*v3.y*/
 
    for (i = 0; i < 4; i++)
       ctx->vertices[i][0][2] = depth; /*z*/
+
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * width;
+   ctx->viewport.scale[1] = 0.5f * height;
+   ctx->viewport.scale[2] = 0.5f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * width;
+   ctx->viewport.translate[1] = 0.5f * height;
+   ctx->viewport.translate[2] = 0.5f;
+   ctx->viewport.translate[3] = 0.0f;
+   ctx->pipe->set_viewport_state(ctx->pipe, &ctx->viewport);
+
+   /* clip */
+   ctx->pipe->set_clip_state(ctx->pipe, &ctx->clip);
 }
 
 static void blitter_set_clear_color(struct blitter_context_priv *ctx,
@@ -549,7 +573,7 @@ void util_blitter_clear(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
    blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, depth);
+   blitter_set_rectangle(ctx, 0, 0, width, height, width, height, depth);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
 }
@@ -632,7 +656,7 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
          assert(0);
    }
 
-   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
+   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, dst->width, dst->height, 0);
    blitter_draw_quad(ctx);
 
 }
@@ -793,7 +817,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, 0);
+   blitter_set_rectangle(ctx, 0, 0, width, height, dst->width, dst->height, 0);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
 }
