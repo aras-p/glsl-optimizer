@@ -193,7 +193,7 @@ class TextureColorSampleTest(TestCase):
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
-            PIPE_FORMAT_A8R8G8B8_UNORM, 
+            PIPE_FORMAT_B8G8R8A8_UNORM, 
             width, 
             height,
             tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
@@ -383,14 +383,14 @@ class TextureDepthSampleTest(TestCase):
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
-            PIPE_FORMAT_A8R8G8B8_UNORM, 
+            PIPE_FORMAT_B8G8R8A8_UNORM, 
             width, 
             height,
             tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
         )
 
         zsbuf_tex = dev.texture_create(
-            PIPE_FORMAT_Z24X8_UNORM, 
+            PIPE_FORMAT_X8Z24_UNORM, 
             width, 
             height,
             tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
@@ -498,15 +498,15 @@ def main():
     ]
     
     color_formats = [
-        PIPE_FORMAT_A8R8G8B8_UNORM,
-        PIPE_FORMAT_X8R8G8B8_UNORM,
-        #PIPE_FORMAT_A8R8G8B8_SRGB,
-        PIPE_FORMAT_R5G6B5_UNORM,
-        PIPE_FORMAT_A1R5G5B5_UNORM,
-        PIPE_FORMAT_A4R4G4B4_UNORM,
+        PIPE_FORMAT_B8G8R8A8_UNORM,
+        PIPE_FORMAT_B8G8R8X8_UNORM,
+        #PIPE_FORMAT_B8G8R8A8_SRGB,
+        PIPE_FORMAT_B5G6R5_UNORM,
+        PIPE_FORMAT_B5G5R5A1_UNORM,
+        PIPE_FORMAT_B4G4R4A4_UNORM,
         PIPE_FORMAT_A8_UNORM,
         PIPE_FORMAT_L8_UNORM,
-        PIPE_FORMAT_YCBCR,
+        PIPE_FORMAT_UYVY,
         PIPE_FORMAT_DXT1_RGB,
         #PIPE_FORMAT_DXT1_RGBA,
         #PIPE_FORMAT_DXT3_RGBA,
@@ -515,8 +515,8 @@ def main():
     
     depth_formats = [
         PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_Z24S8_UNORM,
-        PIPE_FORMAT_Z24X8_UNORM,
+        PIPE_FORMAT_S8Z24_UNORM,
+        PIPE_FORMAT_X8Z24_UNORM,
         PIPE_FORMAT_Z16_UNORM,
     ]
     

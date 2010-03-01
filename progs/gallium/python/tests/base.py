@@ -50,8 +50,8 @@ def is_depth_stencil_format(format):
     # FIXME: make and use binding to util_format_is_depth_or_stencil
     return format in (
         PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_Z24S8_UNORM,
-        PIPE_FORMAT_Z24X8_UNORM,
+        PIPE_FORMAT_S8Z24_UNORM,
+        PIPE_FORMAT_X8Z24_UNORM,
         PIPE_FORMAT_Z16_UNORM,
     )
 
