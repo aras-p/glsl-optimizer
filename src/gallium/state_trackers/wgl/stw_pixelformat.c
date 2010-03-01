@@ -74,17 +74,17 @@ struct stw_pf_depth_info
 static const struct stw_pf_color_info
 stw_pf_color[] = {
    /* no-alpha */
-   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
-   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
-   { PIPE_FORMAT_R5G6B5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
+   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
+   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
+   { PIPE_FORMAT_B5G6R5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
    /* alpha */
-   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
-   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} },
+   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
+   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} },
 #if 0
-   { PIPE_FORMAT_A2B10G10R10_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} },
+   { PIPE_FORMAT_R10G10B10A2_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} },
 #endif
-   { PIPE_FORMAT_A1R5G5B5_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
-   { PIPE_FORMAT_A4R4G4B4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
+   { PIPE_FORMAT_B5G5R5A1_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
+   { PIPE_FORMAT_B4G4R4A4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
 };
 
 
@@ -92,12 +92,12 @@ static const struct stw_pf_depth_info
 stw_pf_depth_stencil[] = {
    /* pure depth */
    { PIPE_FORMAT_Z32_UNORM,   {32, 0} },
-   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
+   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
    /* combined depth-stencil */
-   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
-   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
+   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} },
+   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} }
 };
 
 
