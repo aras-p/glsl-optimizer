@@ -148,7 +148,7 @@ struct i915_state
 
    /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
-   
+
    unsigned id;			/* track lost context events */
 };
 
@@ -185,6 +185,11 @@ struct i915_sampler_state {
    const struct pipe_sampler_state *templ;
    unsigned minlod;
    unsigned maxlod;
+};
+
+struct i915_velems_state {
+   unsigned count;
+   struct pipe_vertex_element velem[];
 };
 
 struct i915_texture {
@@ -247,7 +252,6 @@ struct i915_context
 
    unsigned num_samplers;
    unsigned num_textures;
-   unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
    struct intel_batchbuffer *batch;
