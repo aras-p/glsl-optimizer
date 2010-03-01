@@ -37,6 +37,7 @@
 '''
 
 
+import math
 import sys
 
 from u_format_pack import *
@@ -92,6 +93,20 @@ def native_type(format):
                 assert False
     else:
         assert False
+
+
+def generate_srgb_tables():
+    print 'static ubyte srgb_to_linear[256] = {'
+    for i in range(256):
+        print '   %s,' % (int(math.pow((i / 255.0 + 0.055) / 1.055, 2.4) * 255))
+    print '};'
+    print
+    print 'static ubyte linear_to_srgb[256] = {'
+    print '   0,'
+    for i in range(1, 256):
+        print '   %s,' % (int((1.055 * math.pow(i / 255.0, 0.41666) - 0.055) * 255))
+    print '};'
+    print
 
 
 def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
@@ -304,6 +319,8 @@ def main():
     print '#include "u_math.h"'
     print '#include "u_format_pack.h"'
     print
+
+    generate_srgb_tables()
 
     type = Channel(FLOAT, False, 32)
     native_type = 'float'
