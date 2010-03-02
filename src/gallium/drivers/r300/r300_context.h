@@ -356,12 +356,14 @@ struct r300_context {
 
     struct pipe_stencil_ref stencil_ref;
 
+    struct pipe_clip_state clip;
+
+    struct pipe_viewport_state viewport;
+
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
-    /* Whether the TCL engine should be in bypass mode. */
-    boolean tcl_bypass;
     /* Whether polygon offset is enabled. */
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */

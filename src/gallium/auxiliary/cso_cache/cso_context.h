@@ -180,6 +180,19 @@ void cso_save_stencil_ref(struct cso_context *cso);
 void cso_restore_stencil_ref(struct cso_context *cso);
 
 
+/* clip state */
+
+void
+cso_set_clip(struct cso_context *cso,
+             const struct pipe_clip_state *clip);
+
+void
+cso_save_clip(struct cso_context *cso);
+
+void
+cso_restore_clip(struct cso_context *cso);
+
+
 #ifdef	__cplusplus
 }
 #endif

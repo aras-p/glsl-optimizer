@@ -119,13 +119,7 @@ static void r300_vertex_psc(struct r300_context* r300)
 
     memset(vformat, 0, sizeof(struct r300_vertex_stream_state));
 
-    /* If TCL is bypassed, map vertex streams to equivalent VS output
-     * locations. */
-    if (r300->tcl_bypass) {
-        stream_tab = vs->stream_loc_notcl;
-    } else {
-        stream_tab = identity;
-    }
+    stream_tab = identity;
 
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on the vertex elements,

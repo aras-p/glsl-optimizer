@@ -61,6 +61,7 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
+   struct pipe_clip_state clip;
 
    void *vs;
    void *fs2d, *fsCube;
@@ -1296,7 +1297,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_vs_clip_and_viewport = 1;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* sampler state */
@@ -1361,25 +1361,25 @@ get_next_slot(struct gen_mipmap_state *ctx)
 static unsigned
 set_vertex_data(struct gen_mipmap_state *ctx,
                 enum pipe_texture_target tex_target,
-                uint face, float width, float height)
+                uint face)
 {
    unsigned offset;
 
    /* vert[0].position */
-   ctx->vertices[0][0][0] = 0.0f; /*x*/
-   ctx->vertices[0][0][1] = 0.0f; /*y*/
+   ctx->vertices[0][0][0] = -1.0f; /*x*/
+   ctx->vertices[0][0][1] = -1.0f; /*y*/
 
    /* vert[1].position */
-   ctx->vertices[1][0][0] = width;
-   ctx->vertices[1][0][1] = 0.0f;
+   ctx->vertices[1][0][0] = 1.0f;
+   ctx->vertices[1][0][1] = -1.0f;
 
    /* vert[2].position */
-   ctx->vertices[2][0][0] = width;
-   ctx->vertices[2][0][1] = height;
+   ctx->vertices[2][0][0] = 1.0f;
+   ctx->vertices[2][0][1] = 1.0f;
 
    /* vert[3].position */
-   ctx->vertices[3][0][0] = 0.0f;
-   ctx->vertices[3][0][1] = height;
+   ctx->vertices[3][0][0] = -1.0f;
+   ctx->vertices[3][0][1] = 1.0f;
 
    /* Setup vertex texcoords.  This is a little tricky for cube maps. */
    if (tex_target == PIPE_TEXTURE_CUBE) {
@@ -1499,11 +1499,14 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_viewport(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    cso_set_fragment_shader_handle(ctx->cso, fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
@@ -1522,6 +1525,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
     */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
+      struct pipe_viewport_state vp;
 
       struct pipe_surface *surf = 
          screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
@@ -1534,6 +1538,17 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       fb.width = u_minify(pt->width0, dstLevel);
       fb.height = u_minify(pt->height0, dstLevel);
       cso_set_framebuffer(ctx->cso, &fb);
+
+      /* viewport */
+      vp.scale[0] = 0.5f * fb.width;
+      vp.scale[1] = 0.5f * fb.height;
+      vp.scale[2] = 1.0f;
+      vp.scale[3] = 1.0f;
+      vp.translate[0] = 0.5f * fb.width;
+      vp.translate[1] = 0.5f * fb.height;
+      vp.translate[2] = 0.0f;
+      vp.translate[3] = 0.0f;
+      cso_set_viewport(ctx->cso, &vp);
 
       /*
        * Setup sampler state
@@ -1549,12 +1564,10 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       cso_set_sampler_textures(ctx->cso, 1, &pt);
 
-      /* quad coords in window coords (bypassing vs, clip and viewport) */
+      /* quad coords in clip coords */
       offset = set_vertex_data(ctx,
                                pt->target,
-                               face,
-                               (float) u_minify(pt->width0, dstLevel),
-                               (float) u_minify(pt->height0, dstLevel));
+                               face);
 
       util_draw_vertex_buffer(ctx->pipe, 
                               ctx->vbuf,
@@ -1578,4 +1591,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_viewport(ctx->cso);
+   cso_restore_clip(ctx->cso);
 }

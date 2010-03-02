@@ -129,8 +129,7 @@ static int update_need_pipeline( struct svga_context *svga,
 
    /* SVGA_NEW_CLIP 
     */
-   if (!svga->curr.rast->templ.bypass_vs_clip_and_viewport &&
-       svga->curr.clip.nr) {
+   if (svga->curr.clip.nr) {
       SVGA_DBG(DEBUG_SWTNL, "%s: userclip\n", __FUNCTION__);
       need_pipeline = TRUE;
    }

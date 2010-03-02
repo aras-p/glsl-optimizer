@@ -62,6 +62,7 @@ struct blit_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
+   struct pipe_clip_state clip;
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
@@ -101,7 +102,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_vs_clip_and_viewport = 1;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* samplers */
@@ -113,7 +113,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.min_img_filter = 0; /* set later */
    ctx->sampler.mag_img_filter = 0; /* set later */
    ctx->sampler.normalized_coords = 1;
-
 
    /* vertex shader - still required to provide the linkage between
     * fragment shader input semantics and vertex_element/buffers.
@@ -266,7 +265,6 @@ regions_overlap(int srcX0, int srcY0,
  * \param writemask  controls which channels in the dest surface are sourced
  *                   from the src surface.  Disabled channels are sourced
  *                   from (0,0,0,1).
- * XXX what about clipping???
  * XXX need some control over blitting Z and/or stencil.
  */
 void
@@ -407,20 +405,34 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_sampler_textures(ctx->cso);
+   cso_save_viewport(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
+
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * dst->width;
+   ctx->viewport.scale[1] = 0.5f * dst->height;
+   ctx->viewport.scale[2] = 0.5f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * dst->width;
+   ctx->viewport.translate[1] = 0.5f * dst->height;
+   ctx->viewport.translate[2] = 0.5f;
+   ctx->viewport.translate[3] = 0.0f;
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* texture */
    cso_set_sampler_textures(ctx->cso, 1, &tex);
@@ -444,8 +456,10 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
-                                  (float) dstX0, (float) dstY0, 
-                                  (float) dstX1, (float) dstY1,
+                                  (float) dstX0 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY0 / dst->height * 2.0f - 1.0f,
+                                  (float) dstX1 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY1 / dst->height * 2.0f - 1.0f,
                                   s0, t0,
                                   s1, t1,
                                   z);
@@ -461,9 +475,11 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_rasterizer(ctx->cso);
    cso_restore_samplers(ctx->cso);
    cso_restore_sampler_textures(ctx->cso);
+   cso_restore_viewport(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_clip(ctx->cso);
 
    pipe_texture_reference(&tex, NULL);
 }
@@ -547,17 +563,30 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_clip(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_clip(ctx->cso, &ctx->clip);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
+
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * dst->width;
+   ctx->viewport.scale[1] = 0.5f * dst->height;
+   ctx->viewport.scale[2] = 0.5f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * dst->width;
+   ctx->viewport.translate[1] = 0.5f * dst->height;
+   ctx->viewport.translate[2] = 0.5f;
+   ctx->viewport.translate[3] = 0.0f;
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* texture */
    cso_set_sampler_textures(ctx->cso, 1, &tex);
@@ -576,8 +605,10 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
-                                  (float) dstX0, (float) dstY0,
-                                  (float) dstX1, (float) dstY1,
+                                  (float) dstX0 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY0 / dst->height * 2.0f - 1.0f,
+                                  (float) dstX1 / dst->width * 2.0f - 1.0f,
+                                  (float) dstY1 / dst->height * 2.0f - 1.0f,
                                   s0, t0, s1, t1,
                                   z);
 
@@ -596,4 +627,5 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_clip(ctx->cso);
 }

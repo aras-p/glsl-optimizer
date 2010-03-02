@@ -175,23 +175,15 @@ static const float * get_shader_constant(
                     break;
 
                 case RC_STATE_R300_VIEWPORT_SCALE:
-                    if (r300->tcl_bypass) {
-                        vec[0] = 1;
-                        vec[1] = 1;
-                        vec[2] = 1;
-                    } else {
-                        vec[0] = viewport->xscale;
-                        vec[1] = viewport->yscale;
-                        vec[2] = viewport->zscale;
-                    }
+                    vec[0] = viewport->xscale;
+                    vec[1] = viewport->yscale;
+                    vec[2] = viewport->zscale;
                     break;
 
                 case RC_STATE_R300_VIEWPORT_OFFSET:
-                    if (!r300->tcl_bypass) {
-                        vec[0] = viewport->xoffset;
-                        vec[1] = viewport->yoffset;
-                        vec[2] = viewport->zoffset;
-                    }
+                    vec[0] = viewport->xoffset;
+                    vec[1] = viewport->yoffset;
+                    vec[2] = viewport->zoffset;
                     break;
 
                 default:
@@ -946,22 +938,16 @@ void r300_emit_viewport_state(struct r300_context* r300,
     struct r300_viewport_state* viewport = (struct r300_viewport_state*)state;
     CS_LOCALS(r300);
 
-    if (r300->tcl_bypass) {
-        BEGIN_CS(2); /* XXX tcl_bypass will be removed in gallium anyway */
-        OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
-        END_CS;
-    } else {
-        BEGIN_CS(size);
-        OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
-        OUT_CS_32F(viewport->xscale);
-        OUT_CS_32F(viewport->xoffset);
-        OUT_CS_32F(viewport->yscale);
-        OUT_CS_32F(viewport->yoffset);
-        OUT_CS_32F(viewport->zscale);
-        OUT_CS_32F(viewport->zoffset);
-        OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
-        END_CS;
-    }
+     BEGIN_CS(size);
+     OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
+     OUT_CS_32F(viewport->xscale);
+     OUT_CS_32F(viewport->xoffset);
+     OUT_CS_32F(viewport->yscale);
+     OUT_CS_32F(viewport->yoffset);
+     OUT_CS_32F(viewport->zscale);
+     OUT_CS_32F(viewport->zoffset);
+     OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+     END_CS;
 }
 
 void r300_emit_ztop_state(struct r300_context* r300,

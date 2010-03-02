@@ -48,6 +48,8 @@ struct blitter_context
 
    struct pipe_framebuffer_state saved_fb_state;  /**< framebuffer state */
    struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
+   struct pipe_viewport_state saved_viewport;
+   struct pipe_clip_state saved_clip;
 
    int saved_num_sampler_states;
    void *saved_sampler_states[32];
@@ -203,6 +205,20 @@ void util_blitter_save_framebuffer(struct blitter_context *blitter,
                                    struct pipe_framebuffer_state *state)
 {
    blitter->saved_fb_state = *state;
+}
+
+static INLINE
+void util_blitter_save_viewport(struct blitter_context *blitter,
+                                struct pipe_viewport_state *state)
+{
+   blitter->saved_viewport = *state;
+}
+
+static INLINE
+void util_blitter_save_clip(struct blitter_context *blitter,
+                            struct pipe_clip_state *state)
+{
+   blitter->saved_clip = *state;
 }
 
 static INLINE

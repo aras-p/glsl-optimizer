@@ -318,7 +318,6 @@ util_dump_rasterizer_state(struct os_stream *stream, const struct pipe_rasterize
    util_dump_member(stream, uint, state, line_stipple_factor);
    util_dump_member(stream, uint, state, line_stipple_pattern);
    util_dump_member(stream, bool, state, line_last_pixel);
-   util_dump_member(stream, bool, state, bypass_vs_clip_and_viewport);
    util_dump_member(stream, bool, state, flatshade_first);
    util_dump_member(stream, bool, state, gl_rasterization_rules);
 

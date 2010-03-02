@@ -376,6 +376,8 @@ static void r300_set_clip_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
+    r300->clip = *state;
+
     if (r300_screen(pipe->screen)->caps->has_tcl) {
         memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
         r300->clip_state.size = 29;
@@ -714,8 +716,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
      * Else, enable HW TCL and force Draw's TCL off. */
-    if (state->bypass_vs_clip_and_viewport ||
-            !r300screen->caps->has_tcl) {
+    if (!r300screen->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
@@ -811,11 +812,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     if (rs) {
-        r300->tcl_bypass = rs->rs.bypass_vs_clip_and_viewport;
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
         r300->rs_state.dirty = TRUE;
     } else {
-        r300->tcl_bypass = FALSE;
         r300->polygon_offset_enabled = FALSE;
     }
 
@@ -981,6 +980,8 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_viewport_state* viewport =
         (struct r300_viewport_state*)r300->viewport_state.state;
+
+    r300->viewport = *state;
 
     /* Do the transform in HW. */
     viewport->vte_control = R300_VTX_W0_FMT;
