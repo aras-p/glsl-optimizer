@@ -62,6 +62,7 @@ struct dri2_egl_display
    int                       dri2_major;
    int                       dri2_minor;
    __DRIscreen              *dri_screen;
+   const __DRIconfig       **driver_configs;
    void                     *driver;
    __DRIcoreExtension       *core;
    __DRIdri2Extension       *dri2;
@@ -69,6 +70,9 @@ struct dri2_egl_display
    __DRItexBufferExtension  *tex_buffer;
    __DRIimageExtension      *image;
    int                       fd;
+
+   char                     *device_name;
+   char                     *driver_name;
 
    __DRIdri2LoaderExtension  loader_extension;
    __DRIimageLookupExtension image_lookup_extension;
@@ -411,9 +415,9 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 }
 
 #ifdef GLX_USE_TLS
-static const char dri_driver_format[] = "%.*s/tls/%.*s_dri.so";
+static const char dri_driver_format[] = "%.*s/tls/%s_dri.so";
 #else
-static const char dri_driver_format[] = "%.*s/%.*s_dri.so";
+static const char dri_driver_format[] = "%.*s/%s_dri.so";
 #endif
 
 static const char dri_driver_path[] = DEFAULT_DRIVER_DIR;
@@ -470,45 +474,32 @@ dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
    return ret;
 }
 
-/**
- * Called via eglInitialize(), GLX_drv->API.Initialize().
- */
-static EGLBoolean
-dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
-		EGLint *major, EGLint *minor)
+static char *
+dri2_strndup(const char *s, int length)
 {
-   const __DRIextension **extensions;
-   const __DRIconfig **driver_configs;
-   struct dri2_egl_display *dri2_dpy;
-   char path[PATH_MAX], *search_paths, *p, *next, *end;
+   char *d;
+
+   d = malloc(length + 1);
+   if (d == NULL)
+      return NULL;
+
+   memcpy(d, s, length);
+   d[length] = '\0';
+
+   return d;
+}
+
+static EGLBoolean
+dri2_connect(struct dri2_egl_display *dri2_dpy)
+{
    xcb_xfixes_query_version_reply_t *xfixes_query;
    xcb_xfixes_query_version_cookie_t xfixes_query_cookie;
    xcb_dri2_query_version_reply_t *dri2_query;
    xcb_dri2_query_version_cookie_t dri2_query_cookie;
    xcb_dri2_connect_reply_t *connect;
    xcb_dri2_connect_cookie_t connect_cookie;
-   xcb_dri2_authenticate_reply_t *authenticate;
-   xcb_dri2_authenticate_cookie_t authenticate_cookie;
    xcb_generic_error_t *error;
-   drm_magic_t magic;
    xcb_screen_iterator_t s;
-   xcb_depth_iterator_t d;
-   xcb_visualtype_t *visuals;
-   int i, j, id;
-
-   dri2_dpy = malloc(sizeof *dri2_dpy);
-   if (!dri2_dpy)
-      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   disp->DriverData = (void *) dri2_dpy;
-   if (disp->NativeDisplay != NULL)
-      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
-   else
-      dri2_dpy->conn = xcb_connect(0, 0);
-   if (!dri2_dpy->conn) {
-      _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
-      goto cleanup_dpy;
-   }
 
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_xfixes_id);
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_dri2_id);
@@ -533,7 +524,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
        error != NULL || xfixes_query->major_version < 2) {
       _eglLog(_EGL_FATAL, "DRI2: failed to query xfixes version");
       free(error);
-      goto cleanup_conn;
+      return EGL_FALSE;
    }
    free(xfixes_query);
 
@@ -542,7 +533,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (dri2_query == NULL || error != NULL) {
       _eglLog(_EGL_FATAL, "DRI2: failed to query version");
       free(error);
-      goto cleanup_conn;
+      return EGL_FALSE;
    }
    dri2_dpy->dri2_major = dri2_query->major_version;
    dri2_dpy->dri2_minor = dri2_query->minor_version;
@@ -552,7 +543,126 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (connect == NULL ||
        connect->driver_name_length + connect->device_name_length == 0) {
       _eglLog(_EGL_FATAL, "DRI2: failed to authenticate");
-      goto cleanup_connect;
+      return EGL_FALSE;
+   }
+
+   dri2_dpy->device_name =
+      dri2_strndup(xcb_dri2_connect_device_name (connect),
+		   xcb_dri2_connect_device_name_length (connect));
+		   
+   dri2_dpy->driver_name =
+      dri2_strndup(xcb_dri2_connect_driver_name (connect),
+		   xcb_dri2_connect_driver_name_length (connect));
+
+   if (dri2_dpy->device_name == NULL || dri2_dpy->driver_name == NULL) {
+      free(dri2_dpy->device_name);
+      free(dri2_dpy->driver_name);
+      free(connect);
+      return EGL_FALSE;
+   }
+   free(connect);
+
+   return EGL_TRUE;
+}
+
+static EGLBoolean
+dri2_authenticate(struct dri2_egl_display *dri2_dpy)
+{
+   xcb_dri2_authenticate_reply_t *authenticate;
+   xcb_dri2_authenticate_cookie_t authenticate_cookie;
+   xcb_screen_iterator_t s;
+   drm_magic_t magic;
+
+   if (drmGetMagic(dri2_dpy->fd, &magic)) {
+      _eglLog(_EGL_FATAL, "DRI2: failed to get drm magic");
+      return EGL_FALSE;
+   }
+
+   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
+   authenticate_cookie =
+      xcb_dri2_authenticate_unchecked(dri2_dpy->conn, s.data->root, magic);
+   authenticate =
+      xcb_dri2_authenticate_reply(dri2_dpy->conn, authenticate_cookie, NULL);
+   if (authenticate == NULL || !authenticate->authenticated) {
+      _eglLog(_EGL_FATAL, "DRI2: failed to authenticate");
+      free(authenticate);
+      return EGL_FALSE;
+   }
+
+   free(authenticate);
+
+   return EGL_TRUE;
+}
+
+static EGLBoolean
+dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
+			     _EGLDisplay *disp)
+{
+   xcb_screen_iterator_t s;
+   xcb_depth_iterator_t d;
+   xcb_visualtype_t *visuals;
+   int i, j, id;
+
+   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
+   d = xcb_screen_allowed_depths_iterator(s.data);
+   id = 1;
+   while (d.rem > 0) {
+      EGLBoolean class_added[6] = { 0, };
+
+      visuals = xcb_depth_visuals(d.data);
+      for (i = 0; i < xcb_depth_visuals_length(d.data); i++) {
+	 if (class_added[visuals[i]._class])
+	    continue;
+
+	 class_added[visuals[i]._class] = EGL_TRUE;
+	 for (j = 0; dri2_dpy->driver_configs[j]; j++)
+	    dri2_add_config(disp, dri2_dpy->driver_configs[j],
+			    id++, d.data->depth, &visuals[i]);
+      }
+
+      xcb_depth_next(&d);      
+   }
+
+   if (!disp->NumConfigs) {
+      _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
+      return EGL_FALSE;
+   }
+
+   return EGL_TRUE;
+}
+
+/**
+ * Called via eglInitialize(), GLX_drv->API.Initialize().
+ */
+static EGLBoolean
+dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
+		EGLint *major, EGLint *minor)
+{
+   const __DRIextension **extensions;
+   struct dri2_egl_display *dri2_dpy;
+   char path[PATH_MAX], *search_paths, *p, *next, *end;
+
+   dri2_dpy = malloc(sizeof *dri2_dpy);
+   if (!dri2_dpy)
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+
+   disp->DriverData = (void *) dri2_dpy;
+   if (disp->NativeDisplay == NULL) {
+      dri2_dpy->conn = xcb_connect(0, 0);
+      if (!dri2_dpy->conn) {
+	 _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
+	 goto cleanup_dpy;
+      }
+   } else {
+      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
+   }
+
+   if (dri2_dpy->conn == NULL)
+      goto cleanup_conn;
+
+   if (dri2_dpy->conn) {
+      if (!dri2_connect(dri2_dpy))
+	 goto cleanup_conn;
    }
 
    search_paths = NULL;
@@ -571,11 +681,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
          next = end;
 
       snprintf(path, sizeof path,
-	       dri_driver_format,
-	       (int) (next - p), p,
-	       xcb_dri2_connect_driver_name_length (connect),
-	       xcb_dri2_connect_driver_name (connect));
-
+	       dri_driver_format, (int) (next - p), p, dri2_dpy->driver_name);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
    }
 
@@ -583,7 +689,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       _eglLog(_EGL_FATAL,
 	      "DRI2: failed to open any driver (search paths %s)",
 	      search_paths);
-      goto cleanup_connect;
+      goto cleanup_conn;
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
@@ -597,32 +703,18 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions))
       goto cleanup_driver;
 
-   snprintf(path, sizeof path, "%.*s",
-	    xcb_dri2_connect_device_name_length (connect),
-	    xcb_dri2_connect_device_name (connect));
-   dri2_dpy->fd = open (path, O_RDWR);
+   dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
    if (dri2_dpy->fd == -1) {
       _eglLog(_EGL_FATAL,
 	      "DRI2: could not open %s (%s)", path, strerror(errno));
       goto cleanup_driver;
    }
 
-   if (drmGetMagic(dri2_dpy->fd, &magic)) {
-      _eglLog(_EGL_FATAL, "DRI2: failed to get drm magic");
-      goto cleanup_fd;
+   if (dri2_dpy->conn) {
+      if (!dri2_authenticate(dri2_dpy))
+	 goto cleanup_fd;
    }
 
-   authenticate_cookie = xcb_dri2_authenticate_unchecked (dri2_dpy->conn,
-							  s.data->root, magic);
-   authenticate = xcb_dri2_authenticate_reply (dri2_dpy->conn,
-					       authenticate_cookie, NULL);
-   if (authenticate == NULL || !authenticate->authenticated) {
-      _eglLog(_EGL_FATAL, "DRI2: failed to authenticate");
-      free(authenticate);
-      goto cleanup_fd;
-   }
-
-   free(authenticate);
    if (dri2_dpy->dri2_minor >= 1) {
       dri2_dpy->loader_extension.base.name = __DRI_DRI2_LOADER;
       dri2_dpy->loader_extension.base.version = 3;
@@ -648,7 +740,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    dri2_dpy->dri_screen =
       dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				      &driver_configs, dri2_dpy);
+				      &dri2_dpy->driver_configs, dri2_dpy);
 
    if (dri2_dpy->dri_screen == NULL) {
       _eglLog(_EGL_FATAL, "DRI2: failed to create dri screen");
@@ -659,30 +751,9 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
       goto cleanup_dri_screen;
 
-   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
-   d = xcb_screen_allowed_depths_iterator(s.data);
-   id = 1;
-   while (d.rem > 0) {
-      EGLBoolean class_added[6] = { 0, };
-
-      visuals = xcb_depth_visuals(d.data);
-      for (i = 0; i < xcb_depth_visuals_length(d.data); i++) {
-	 if (class_added[visuals[i]._class])
-	    continue;
-
-	 class_added[visuals[i]._class] = EGL_TRUE;
-	 for (j = 0; driver_configs[j]; j++)
-	    dri2_add_config(disp, driver_configs[j],
-			    id++, d.data->depth, &visuals[i]);
-
-      }
-
-      xcb_depth_next(&d);      
-   }
-
-   if (!disp->NumConfigs) {
-      _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
-      goto cleanup_configs;
+   if (dri2_dpy->conn) {
+      if (!dri2_add_configs_for_visuals(dri2_dpy, disp))
+	 goto cleanup_configs;
    }
 
    disp->ClientAPIsMask = EGL_OPENGL_BIT;
@@ -693,7 +764,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    /* we're supporting EGL 1.4 */
    *major = 1;
    *minor = 4;
-   free (connect);
+
    return EGL_TRUE;
 
  cleanup_configs:
@@ -704,8 +775,6 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    close(dri2_dpy->fd);
  cleanup_driver:
    dlclose(dri2_dpy->driver);
- cleanup_connect:
-   free(connect);
  cleanup_conn:
    if (disp->NativeDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
