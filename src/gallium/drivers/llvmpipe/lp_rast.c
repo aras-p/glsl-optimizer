@@ -42,113 +42,59 @@
 #include "lp_scene.h"
 
 
-/**
- * Begin the rasterization phase.
- * Map the framebuffer surfaces.  Initialize the 'rast' state.
+/* Begin rasterizing a scene:
  */
 static boolean
 lp_rast_begin( struct lp_rasterizer *rast,
-               const struct pipe_framebuffer_state *fb,
-               boolean write_color,
-               boolean write_zstencil )
+               struct lp_scene *scene )
 {
-   struct pipe_screen *screen = rast->screen;
-   struct pipe_surface *cbuf, *zsbuf;
+   const struct pipe_framebuffer_state *fb = &scene->fb;
+   boolean write_color = fb->nr_cbufs != 0;
+   boolean write_zstencil = fb->zsbuf != NULL;
    int i;
+
+   rast->curr_scene = scene;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
-   util_copy_framebuffer_state(&rast->state.fb, fb);
-
+   rast->state.nr_cbufs = scene->fb.nr_cbufs;
    rast->state.write_zstencil = write_zstencil;
    rast->state.write_color = write_color;
-
-   rast->check_for_clipped_tiles = (fb->width % TILE_SIZE != 0 ||
-                                    fb->height % TILE_SIZE != 0);
-
    
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
-      cbuf = rast->state.fb.cbufs[i];
-      if (cbuf) {
-	 rast->cbuf_transfer[i] = screen->get_tex_transfer(rast->screen,
-							   cbuf->texture,
-							   cbuf->face,
-							   cbuf->level,
-							   cbuf->zslice,
-							   PIPE_TRANSFER_READ_WRITE,
-							   0, 0,
-							   cbuf->width, 
-							   cbuf->height);
-	 if (!rast->cbuf_transfer[i])
-	    goto fail;
-
-	 rast->cbuf_map[i] = screen->transfer_map(rast->screen, 
-						  rast->cbuf_transfer[i]);
-	 if (!rast->cbuf_map[i])
-	    goto fail;
-      }
+   for (i = 0; i < rast->state.nr_cbufs; i++) {
+      rast->cbuf[i].map = scene->cbuf_map[i];
+      rast->cbuf[i].format = scene->cbuf_transfer[i]->texture->format;
+      rast->cbuf[i].width = scene->cbuf_transfer[i]->width;
+      rast->cbuf[i].height = scene->cbuf_transfer[i]->height;
+      rast->cbuf[i].stride = scene->cbuf_transfer[i]->stride;
    }
 
-   zsbuf = rast->state.fb.zsbuf;
-   if (zsbuf) {
-      rast->zsbuf_transfer = screen->get_tex_transfer(rast->screen,
-                                                      zsbuf->texture,
-                                                      zsbuf->face,
-                                                      zsbuf->level,
-                                                      zsbuf->zslice,
-                                                      PIPE_TRANSFER_READ_WRITE,
-                                                      0, 0,
-                                                      zsbuf->width,
-						      zsbuf->height);
-      if (!rast->zsbuf_transfer)
-         goto fail;
-
-      rast->zsbuf_map = screen->transfer_map(rast->screen, 
-                                            rast->zsbuf_transfer);
-      if (!rast->zsbuf_map)
-	 goto fail;
+   if (write_zstencil) {
+      rast->zsbuf.map = scene->zsbuf_map;
+      rast->zsbuf.stride = scene->zsbuf_transfer->stride;
+      rast->zsbuf.blocksize = 
+         util_format_get_blocksize(scene->zsbuf_transfer->texture->format);
    }
 
+   lp_scene_bin_iter_begin( scene );
+   
    return TRUE;
-
-fail:
-   /* Unmap and release transfers?
-    */
-   return FALSE;
 }
 
 
-/**
- * Finish the rasterization phase.
- * Unmap framebuffer surfaces.
- */
 static void
 lp_rast_end( struct lp_rasterizer *rast )
 {
-   struct pipe_screen *screen = rast->screen;
-   unsigned i;
+   int i;
 
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
-      if (rast->cbuf_map[i]) 
-	 screen->transfer_unmap(screen, rast->cbuf_transfer[i]);
+   lp_scene_reset( rast->curr_scene );
 
-      if (rast->cbuf_transfer[i])
-	 screen->tex_transfer_destroy(rast->cbuf_transfer[i]);
+   for (i = 0; i < rast->state.nr_cbufs; i++)
+      rast->cbuf[i].map = NULL;
 
-      rast->cbuf_transfer[i] = NULL;
-      rast->cbuf_map[i] = NULL;
-   }
-
-   if (rast->zsbuf_map) 
-      screen->transfer_unmap(screen, rast->zsbuf_transfer);
-
-   if (rast->zsbuf_transfer)
-      screen->tex_transfer_destroy(rast->zsbuf_transfer);
-
-   rast->zsbuf_transfer = NULL;
-   rast->zsbuf_map = NULL;
+   rast->zsbuf.map = NULL;
+   rast->curr_scene = NULL;
 }
-
 
 /**
  * Begining rasterization of a tile.
@@ -189,7 +135,7 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
        clear_color[1] == clear_color[2] &&
        clear_color[2] == clear_color[3]) {
       /* clear to grayscale value {x, x, x, x} */
-      for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      for (i = 0; i < rast->state.nr_cbufs; i++) {
 	 memset(color_tile[i], clear_color[0], TILE_SIZE * TILE_SIZE * 4);
       }
    }
@@ -200,7 +146,7 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
        * works.
        */
       const unsigned chunk = TILE_SIZE / 4;
-      for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
+      for (i = 0; i < rast->state.nr_cbufs; i++) {
          uint8_t *c = color_tile[i];
          unsigned j;
          for (j = 0; j < 4 * TILE_SIZE; j++) {
@@ -232,17 +178,17 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
    struct lp_rasterizer *rast = task->rast;
    const unsigned tile_x = task->x;
    const unsigned tile_y = task->y;
-   const unsigned height = TILE_SIZE/TILE_VECTOR_HEIGHT;
-   const unsigned width = TILE_SIZE*TILE_VECTOR_HEIGHT;
-   unsigned block_size = util_format_get_blocksize(rast->zsbuf_transfer->texture->format);
+   const unsigned height = TILE_SIZE / TILE_VECTOR_HEIGHT;
+   const unsigned width = TILE_SIZE * TILE_VECTOR_HEIGHT;
+   unsigned block_size = rast->zsbuf.blocksize;
    uint8_t *dst;
-   unsigned dst_stride = rast->zsbuf_transfer->stride*TILE_VECTOR_HEIGHT;
+   unsigned dst_stride = rast->zsbuf.stride * TILE_VECTOR_HEIGHT;
    unsigned i, j;
 
    LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
-   assert(rast->zsbuf_map);
-   if (!rast->zsbuf_map)
+   assert(rast->zsbuf.map);
+   if (!rast->zsbuf.map)
       return;
 
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
@@ -278,8 +224,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
       }
       break;
    default:
-         assert(0);
-         break;
+      assert(0);
+      break;
    }
 }
 
@@ -298,25 +244,16 @@ lp_rast_load_color(struct lp_rasterizer_task *task,
 
    LP_DBG(DEBUG_RAST, "%s at %u, %u\n", __FUNCTION__, x, y);
 
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
-      struct pipe_transfer *transfer = rast->cbuf_transfer[i];
-      int w = TILE_SIZE;
-      int h = TILE_SIZE;
-
-      if (x >= transfer->width || y >= transfer->height)
+   for (i = 0; i < rast->state.nr_cbufs; i++) {
+      if (x >= rast->cbuf[i].width || y >= rast->cbuf[i].height)
 	 continue;
 
-      assert(w >= 0);
-      assert(h >= 0);
-      assert(w <= TILE_SIZE);
-      assert(h <= TILE_SIZE);
-
-      lp_tile_read_4ub(transfer->texture->format,
+      lp_tile_read_4ub(rast->cbuf[i].format,
 		       task->tile.color[i],
-		       rast->cbuf_map[i], 
-		       transfer->stride,
+		       rast->cbuf[i].map, 
+		       rast->cbuf[i].stride,
 		       x, y,
-		       w, h);
+		       TILE_SIZE, TILE_SIZE);
 
       LP_COUNT(nr_color_tile_load);
    }
@@ -366,7 +303,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          block_offset = ((y / 4) * (16 * 16) + (x / 4) * 16);
 
          /* color buffer */
-         for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+         for (i = 0; i < rast->state.nr_cbufs; i++)
             color[i] = tile->color[i] + 4 * block_offset;
 
          /* depth buffer */
@@ -423,7 +360,7 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    block_offset = ((iy / 4) * (16 * 16) + (ix / 4) * 16);
 
    /* color buffer */
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+   for (i = 0; i < rast->state.nr_cbufs; i++)
       color[i] = tile->color[i] + 4 * block_offset;
 
    /* depth buffer */
@@ -516,50 +453,32 @@ lp_rast_store_color(struct lp_rasterizer_task *task)
    const unsigned x = task->x, y = task->y;
    unsigned i;
 
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++) {
-      struct pipe_transfer *transfer = rast->cbuf_transfer[i];
-      int w = TILE_SIZE;
-      int h = TILE_SIZE;
-
-      if (x >= transfer->width)
+   for (i = 0; i < rast->state.nr_cbufs; i++) {
+      if (x >= rast->cbuf[i].width)
 	 continue;
 
-      if (y >= transfer->height)
+      if (y >= rast->cbuf[i].height)
 	 continue;
 
-      LP_DBG(DEBUG_RAST, "%s [%u] %d,%d %dx%d\n", __FUNCTION__,
-	     task->thread_index, x, y, w, h);
+      LP_DBG(DEBUG_RAST, "%s [%u] %d,%d\n", __FUNCTION__,
+	     task->thread_index, x, y);
 
       if (LP_DEBUG & DEBUG_SHOW_SUBTILES)
          outline_subtiles(task->tile.color[i]);
       else if (LP_DEBUG & DEBUG_SHOW_TILES)
          outline_tile(task->tile.color[i]);
 
-      lp_tile_write_4ub(transfer->texture->format,
+      lp_tile_write_4ub(rast->cbuf[i].format,
 			task->tile.color[i],
-			rast->cbuf_map[i], 
-			transfer->stride,
+			rast->cbuf[i].map, 
+			rast->cbuf[i].stride,
 			x, y,
-			w, h);
+			TILE_SIZE, TILE_SIZE);
 
       LP_COUNT(nr_color_tile_store);
    }
 }
 
-
-/**
- * Write the rasterizer's tiles to the framebuffer.
- */
-static void
-lp_rast_end_tile(struct lp_rasterizer_task *task)
-{
-   struct lp_rasterizer *rast = task->rast;
-
-   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
-
-   if (rast->state.write_color)
-      lp_rast_store_color(task);
-}
 
 
 /**
@@ -586,23 +505,6 @@ lp_rast_fence(struct lp_rasterizer_task *task,
 }
 
 
-/**
- * When all the threads are done rasterizing a scene, one thread will
- * call this function to reset the scene and put it onto the empty queue.
- */
-static void
-release_scene( struct lp_rasterizer *rast,
-	       struct lp_scene *scene )
-{
-   util_unreference_framebuffer_state( &scene->fb );
-
-   lp_scene_reset( scene );
-
-   assert(lp_scene_is_empty(scene));
-
-   lp_scene_enqueue( rast->empty_scenes, scene );
-   rast->curr_scene = NULL;
-}
 
 
 /**
@@ -620,7 +522,7 @@ rasterize_bin(struct lp_rasterizer_task *task,
    struct cmd_block *block;
    unsigned k;
 
-   lp_rast_start_tile( task, x, y );
+   lp_rast_start_tile( task, x * TILE_SIZE, y * TILE_SIZE );
 
    /* simply execute each of the commands in the block list */
    for (block = commands->head; block; block = block->next) {
@@ -629,7 +531,14 @@ rasterize_bin(struct lp_rasterizer_task *task,
       }
    }
 
-   lp_rast_end_tile( task );
+   /* Write the rasterizer's tiles to the framebuffer.
+    */
+   if (task->rast->state.write_color)
+      lp_rast_store_color(task);
+
+   /* Free data for this bin.
+    */
+   lp_scene_bin_reset( task->rast->curr_scene, x, y);
 }
 
 
@@ -714,8 +623,7 @@ is_empty_bin( const struct cmd_bin *bin )
  */
 static void
 rasterize_scene(struct lp_rasterizer_task *task,
-                struct lp_scene *scene,
-                bool write_depth)
+                struct lp_scene *scene)
 {
    /* loop over scene bins, rasterize each */
 #if 0
@@ -724,7 +632,7 @@ rasterize_scene(struct lp_rasterizer_task *task,
       for (i = 0; i < scene->tiles_x; i++) {
          for (j = 0; j < scene->tiles_y; j++) {
             struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-            rasterize_bin(task, bin, i * TILE_SIZE, j * TILE_SIZE);
+            rasterize_bin(task, bin, i, j);
          }
       }
    }
@@ -736,7 +644,7 @@ rasterize_scene(struct lp_rasterizer_task *task,
       assert(scene);
       while ((bin = lp_scene_bin_iter_next(scene, &x, &y))) {
          if (!is_empty_bin( bin ))
-            rasterize_bin(task, bin, x * TILE_SIZE, y * TILE_SIZE);
+            rasterize_bin(task, bin, x, y);
       }
    }
 #endif
@@ -747,44 +655,20 @@ rasterize_scene(struct lp_rasterizer_task *task,
  * Called by setup module when it has something for us to render.
  */
 void
-lp_rasterize_scene( struct lp_rasterizer *rast,
-                   struct lp_scene *scene,
-                   const struct pipe_framebuffer_state *fb,
-                   bool write_depth )
+lp_rast_queue_scene( struct lp_rasterizer *rast,
+                     struct lp_scene *scene)
 {
-   boolean debug = false;
-
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-
-   if (debug) {
-      unsigned x, y;
-      debug_printf("rasterize scene:\n");
-      debug_printf("  data size: %u\n", lp_scene_data_size(scene));
-      for (y = 0; y < scene->tiles_y; y++) {
-         for (x = 0; x < scene->tiles_x; x++) {
-            debug_printf("  bin %u, %u size: %u\n", x, y,
-                         lp_scene_bin_size(scene, x, y));
-         }
-      }
-   }
-
-   /* save framebuffer state in the bin */
-   util_copy_framebuffer_state(&scene->fb, fb);
-   scene->write_depth = write_depth;
 
    if (rast->num_threads == 0) {
       /* no threading */
 
-      lp_rast_begin( rast, fb,
-                     fb->nr_cbufs != 0, /* always write color if cbufs present */
-                     fb->zsbuf != NULL && write_depth );
+      lp_rast_begin( rast, scene );
 
-      lp_scene_bin_iter_begin( scene );
-      rasterize_scene( &rast->tasks[0], scene, write_depth );
+      rasterize_scene( &rast->tasks[0], scene );
 
-      release_scene( rast, scene );
-
-      lp_rast_end( rast );
+      lp_scene_reset( scene );
+      rast->curr_scene = NULL;
    }
    else {
       /* threaded rendering! */
@@ -796,14 +680,26 @@ lp_rasterize_scene( struct lp_rasterizer *rast,
       for (i = 0; i < rast->num_threads; i++) {
          pipe_semaphore_signal(&rast->tasks[i].work_ready);
       }
+   }
+
+   LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
+}
+
+
+void
+lp_rast_finish( struct lp_rasterizer *rast )
+{
+   if (rast->num_threads == 0) {
+      /* nothing to do */
+   }
+   else {
+      int i;
 
       /* wait for work to complete */
       for (i = 0; i < rast->num_threads; i++) {
          pipe_semaphore_wait(&rast->tasks[i].work_done);
       }
    }
-
-   LP_DBG(DEBUG_SETUP, "%s done \n", __FUNCTION__);
 }
 
 
@@ -834,19 +730,8 @@ static PIPE_THREAD_ROUTINE( thread_func, init_data )
           *  - get next scene to rasterize
           *  - map the framebuffer surfaces
           */
-         const struct pipe_framebuffer_state *fb;
-         boolean write_depth;
-
-         rast->curr_scene = lp_scene_dequeue( rast->full_scenes, TRUE );
-
-         lp_scene_bin_iter_begin( rast->curr_scene );
-
-         fb = &rast->curr_scene->fb;
-         write_depth = rast->curr_scene->write_depth;
-
-         lp_rast_begin( rast, fb,
-                        fb->nr_cbufs != 0,
-                        fb->zsbuf != NULL && write_depth );
+         lp_rast_begin( rast, 
+                        lp_scene_dequeue( rast->full_scenes, TRUE ) );
       }
 
       /* Wait for all threads to get here so that threads[1+] don't
@@ -857,25 +742,23 @@ static PIPE_THREAD_ROUTINE( thread_func, init_data )
       /* do work */
       if (debug)
          debug_printf("thread %d doing work\n", task->thread_index);
+
       rasterize_scene(task,
-                      rast->curr_scene, 
-                      rast->curr_scene->write_depth);
+                      rast->curr_scene);
       
       /* wait for all threads to finish with this scene */
       pipe_barrier_wait( &rast->barrier );
 
+      /* XXX: shouldn't be necessary:
+       */
       if (task->thread_index == 0) {
-         /* thread[0]:
-          * - release the scene object
-          * - unmap the framebuffer surfaces
-          */
-         release_scene( rast, rast->curr_scene );
          lp_rast_end( rast );
       }
 
       /* signal done with work */
       if (debug)
          debug_printf("thread %d done working\n", task->thread_index);
+
       pipe_semaphore_signal(&task->work_done);
    }
 
@@ -918,7 +801,7 @@ create_rast_threads(struct lp_rasterizer *rast)
  *               processing them.
  */
 struct lp_rasterizer *
-lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
+lp_rast_create( void )
 {
    struct lp_rasterizer *rast;
    unsigned i, cbuf;
@@ -927,9 +810,6 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
    if(!rast)
       return NULL;
 
-   rast->screen = screen;
-
-   rast->empty_scenes = empty;
    rast->full_scenes = lp_scene_queue_create();
 
    for (i = 0; i < Elements(rast->tasks); i++) {
@@ -956,8 +836,6 @@ lp_rast_create( struct pipe_screen *screen, struct lp_scene_queue *empty )
 void lp_rast_destroy( struct lp_rasterizer *rast )
 {
    unsigned i, cbuf;
-
-   util_unreference_framebuffer_state(&rast->state.fb);
 
    for (i = 0; i < Elements(rast->tasks); i++) {
       for (cbuf = 0; cbuf < PIPE_MAX_COLOR_BUFS; cbuf++ )

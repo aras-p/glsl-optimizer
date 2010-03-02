@@ -62,7 +62,7 @@ struct lp_fragment_shader;
 struct lp_jit_context;
 
 struct setup_context *
-lp_setup_create( struct pipe_screen *screen,
+lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw );
 
 void

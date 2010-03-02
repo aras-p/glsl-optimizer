@@ -38,8 +38,6 @@
 #define MAX_THREADS 8  /* XXX probably temporary here */
 
 
-struct pipe_transfer;
-struct pipe_screen;
 struct lp_rasterizer;
 
 
@@ -82,20 +80,26 @@ struct lp_rasterizer_task
  */
 struct lp_rasterizer
 {
-   boolean clipped_tile;
-   boolean check_for_clipped_tiles;
    boolean exit_flag;
 
    /* Framebuffer stuff
     */
-   struct pipe_screen *screen;
-   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
-   struct pipe_transfer *zsbuf_transfer;
-   void *cbuf_map[PIPE_MAX_COLOR_BUFS];
-   uint8_t *zsbuf_map;
+   struct {
+      void *map;
+      unsigned stride;
+      unsigned width;
+      unsigned height;
+      enum pipe_format format;
+   } cbuf[PIPE_MAX_COLOR_BUFS];
 
    struct {
-      struct pipe_framebuffer_state fb;
+      uint8_t *map;
+      unsigned stride;
+      unsigned blocksize;
+   } zsbuf;
+
+   struct {
+      unsigned nr_cbufs;
       boolean write_color;
       boolean write_zstencil;
       unsigned clear_color;
@@ -105,7 +109,14 @@ struct lp_rasterizer
 
    /** The incoming queue of scenes ready to rasterize */
    struct lp_scene_queue *full_scenes;
-   /** The outgoing queue of processed scenes to return to setup modulee */
+
+   /**
+    * The outgoing queue of processed scenes to return to setup module
+    *
+    * XXX: while scenes are per-context but the rasterizer is
+    * (potentially) shared, these empty scenes should be returned to
+    * the context which created them rather than retained here.
+    */
    struct lp_scene_queue *empty_scenes;
 
    /** The scene currently being rasterized by the threads */
@@ -137,17 +148,18 @@ lp_rast_depth_pointer( struct lp_rasterizer *rast,
                        unsigned x, unsigned y )
 {
    void * depth;
+
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
-   if(!rast->zsbuf_map)
+
+   if (!rast->zsbuf.map)
       return NULL;
-   assert(rast->zsbuf_transfer);
-   depth = rast->zsbuf_map +
-           y*rast->zsbuf_transfer->stride +
-           TILE_VECTOR_HEIGHT*x*util_format_get_blocksize(rast->zsbuf_transfer->texture->format);
-#ifdef DEBUG
+
+   depth = (rast->zsbuf.map +
+            rast->zsbuf.stride * y +
+            rast->zsbuf.blocksize * x * TILE_VECTOR_HEIGHT);
+
    assert(lp_check_alignment(depth, 16));
-#endif
    return depth;
 }
 
@@ -175,7 +187,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    block_offset = (iy / 4) * (16 * 16) + (ix / 4) * 16;
 
    /* color buffer */
-   for (i = 0; i < rast->state.fb.nr_cbufs; i++)
+   for (i = 0; i < rast->state.nr_cbufs; i++)
       color[i] = tile->color[i] + 4 * block_offset;
 
    depth = lp_rast_depth_pointer(rast, x, y);
