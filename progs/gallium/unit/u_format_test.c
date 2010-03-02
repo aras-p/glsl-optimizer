@@ -233,7 +233,7 @@ test_cases[] =
     */
 
    /*
-    * Standard 8-bit formats
+    * Standard 8-bit integer formats
     */
 
    {PIPE_FORMAT_R8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0x00), {0.0, 0.0, 0.0, 1.0}},
@@ -335,7 +335,7 @@ test_cases[] =
    {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x80), {   0.0,    0.0,    0.0, -128.0}},
 
    /*
-    * Standard 16-bit formats
+    * Standard 16-bit integer formats
     */
 
    {PIPE_FORMAT_R16_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 1.0}},
@@ -437,7 +437,7 @@ test_cases[] =
    {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x8000), {     0.0,      0.0,      0.0, -32768.0}},
 
    /*
-    * Standard 32-bit formats
+    * Standard 32-bit integer formats
     *
     * NOTE: We can't accurately represent integers larger than +/-0x1000000
     * with single precision floats, so that's as far as we test.
@@ -540,6 +540,41 @@ test_cases[] =
    {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0xff000000, 0x00000000), {        0.0,         0.0, -16777216.0,         0.0}},
    {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x01000000), {        0.0,         0.0,         0.0,  16777216.0}},
    {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0xff000000), {        0.0,         0.0,         0.0, -16777216.0}},
+
+   /*
+    * Standard 32-bit float formats
+    */
+
+   {PIPE_FORMAT_R32_FLOAT, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {  0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32_FLOAT, PACKED_1x32(0xffffffff), PACKED_1x32(0x3f800000), {  1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32_FLOAT, PACKED_1x32(0xffffffff), PACKED_1x32(0xbf800000), { -1.0, 0.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x00000000), { 0.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x3f800000, 0x00000000), { 1.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0xbf800000, 0x00000000), {-1.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x3f800000), { 0.0,  1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0xbf800000), { 0.0, -1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_FLOAT, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x3f800000, 0x3f800000), { 1.0,  1.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x00000000), { 0.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x3f800000, 0x00000000, 0x00000000), { 1.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0xbf800000, 0x00000000, 0x00000000), {-1.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x3f800000, 0x00000000), { 0.0,  1.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0xbf800000, 0x00000000), { 0.0, -1.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x3f800000), { 0.0,  0.0,  1.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0xbf800000), { 0.0,  0.0, -1.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_FLOAT, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x3f800000, 0x3f800000, 0x3f800000), { 1.0,  1.0,  1.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x00000000), { 0.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x3f800000, 0x00000000, 0x00000000, 0x00000000), { 1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0xbf800000, 0x00000000, 0x00000000, 0x00000000), {-1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x3f800000, 0x00000000, 0x00000000), { 0.0,  1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0xbf800000, 0x00000000, 0x00000000), { 0.0, -1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x3f800000, 0x00000000), { 0.0,  0.0,  1.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0xbf800000, 0x00000000), { 0.0,  0.0, -1.0,  0.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x3f800000), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0xbf800000), { 0.0,  0.0,  0.0, -1.0}},
+   {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000), { 1.0,  1.0,  1.0,  1.0}},
 };
 
 
