@@ -891,7 +891,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       intel->driDrawable = driDrawPriv;
       driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
       driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
-      intel_prepare_render(&intel->ctx);
+      intel_prepare_render(intel);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
