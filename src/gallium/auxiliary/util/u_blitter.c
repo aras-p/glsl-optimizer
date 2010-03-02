@@ -320,11 +320,11 @@ static void blitter_set_rectangle(struct blitter_context_priv *ctx,
    /* viewport */
    ctx->viewport.scale[0] = 0.5f * width;
    ctx->viewport.scale[1] = 0.5f * height;
-   ctx->viewport.scale[2] = 0.5f;
+   ctx->viewport.scale[2] = 1.0f;
    ctx->viewport.scale[3] = 1.0f;
    ctx->viewport.translate[0] = 0.5f * width;
    ctx->viewport.translate[1] = 0.5f * height;
-   ctx->viewport.translate[2] = 0.5f;
+   ctx->viewport.translate[2] = 0.0f;
    ctx->viewport.translate[3] = 0.0f;
    ctx->pipe->set_viewport_state(ctx->pipe, &ctx->viewport);
 
