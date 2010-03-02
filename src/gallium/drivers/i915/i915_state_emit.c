@@ -244,6 +244,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
+         assert(tex);
          OUT_BATCH(BUF_3D_ID_DEPTH |
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                    ztile);
