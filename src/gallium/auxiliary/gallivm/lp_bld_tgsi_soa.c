@@ -96,8 +96,6 @@ struct lp_exec_mask {
    LLVMValueRef cond_mask;
 
    LLVMValueRef exec_mask;
-
-   LLVMValueRef inv_mask;
 };
 
 struct lp_build_tgsi_soa_context
@@ -149,9 +147,6 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->cond_stack_size = 0;
 
    mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
-   mask->inv_mask =
-      LLVMConstSub(LLVMConstNull(mask->int_vec_type),
-                   LLVMConstAllOnes(mask->int_vec_type));
 }
 
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
@@ -174,9 +169,15 @@ static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
 static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
 {
    LLVMValueRef prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
-   LLVMValueRef inv_mask = LLVMBuildXor(mask->bld->builder,
-                                        mask->cond_mask,
-                                        mask->inv_mask, "");
+   LLVMValueRef inv_mask = LLVMBuildNot(mask->bld->builder,
+                                        mask->cond_mask, "");
+
+   /* means that we didn't have any mask before and that
+    * we were fully enabled */
+   if (mask->cond_stack_size <= 1) {
+      prev_mask = LLVMConstAllOnes(mask->int_vec_type);
+   }
+
    mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
                                   inv_mask,
                                   prev_mask, "");
