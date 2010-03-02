@@ -804,7 +804,7 @@ AC_SUBST([DRI_LIB_DEPS])
 
 case $DRI_DIRS in
 *i915*|*i965*)
-    PKG_CHECK_MODULES([INTEL], [libdrm_intel])
+    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= 2.4.19])
     ;;
 esac
 
