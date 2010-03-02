@@ -56,6 +56,7 @@ static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
 	{ "GL_EXT_stencil_wrap",	NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
+	{ "GL_NV_blend_square",         NULL },
 	{ "GL_SGIS_generate_mipmap",	NULL },
 	{ NULL,				NULL }
 };
