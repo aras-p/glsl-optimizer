@@ -274,10 +274,10 @@ choose_pixel_format(XMesaVisual v)
        && v->BitsPerPixel == 32) {
       if (native_byte_order) {
          /* no byteswapping needed */
-         return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
       }
       else {
-         return PIPE_FORMAT_R8G8B8A8_UNORM;
+         return PIPE_FORMAT_A8B8G8R8_UNORM;
       }
    }
    else if (   GET_REDMASK(v)   == 0xff0000
@@ -286,10 +286,10 @@ choose_pixel_format(XMesaVisual v)
             && v->BitsPerPixel == 32) {
       if (native_byte_order) {
          /* no byteswapping needed */
-         return PIPE_FORMAT_A8R8G8B8_UNORM;
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
       }
       else {
-         return PIPE_FORMAT_B8G8R8A8_UNORM;
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
       }
    }
    else if (   GET_REDMASK(v)   == 0x0000ff00
@@ -298,10 +298,10 @@ choose_pixel_format(XMesaVisual v)
             && v->BitsPerPixel == 32) {
       if (native_byte_order) {
          /* no byteswapping needed */
-         return PIPE_FORMAT_B8G8R8A8_UNORM;
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
       }
       else {
-         return PIPE_FORMAT_A8R8G8B8_UNORM;
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
       }
    }
    else if (   GET_REDMASK(v)   == 0xf800
@@ -310,7 +310,7 @@ choose_pixel_format(XMesaVisual v)
             && native_byte_order
             && v->BitsPerPixel == 16) {
       /* 5-6-5 RGB */
-      return PIPE_FORMAT_R5G6B5_UNORM;
+      return PIPE_FORMAT_B5G6R5_UNORM;
    }
 
    assert(0);
@@ -333,8 +333,8 @@ xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
    const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
    static enum pipe_format formats[] = {
-      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_Z32_UNORM
    };

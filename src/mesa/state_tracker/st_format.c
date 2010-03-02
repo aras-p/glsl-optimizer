@@ -72,12 +72,12 @@ st_format_datatype(enum pipe_format format)
    assert(desc);
 
    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
-      if (format == PIPE_FORMAT_A1R5G5B5_UNORM ||
-          format == PIPE_FORMAT_R5G6B5_UNORM) {
+      if (format == PIPE_FORMAT_B5G5R5A1_UNORM ||
+          format == PIPE_FORMAT_B5G6R5_UNORM) {
          return GL_UNSIGNED_SHORT;
       }
-      else if (format == PIPE_FORMAT_S8Z24_UNORM ||
-               format == PIPE_FORMAT_Z24S8_UNORM) {
+      else if (format == PIPE_FORMAT_Z24S8_UNORM ||
+               format == PIPE_FORMAT_S8Z24_UNORM) {
          return GL_UNSIGNED_INT_24_8;
       }
       else {
@@ -103,10 +103,10 @@ st_format_datatype(enum pipe_format format)
          }
       }
    }
-   else if (format == PIPE_FORMAT_YCBCR) {
+   else if (format == PIPE_FORMAT_UYVY) {
       return GL_UNSIGNED_SHORT;
    }
-   else if (format == PIPE_FORMAT_YCBCR_REV) {
+   else if (format == PIPE_FORMAT_YUYV) {
       return GL_UNSIGNED_SHORT;
    }
    else {
@@ -129,17 +129,17 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       /* fix this */
    case MESA_FORMAT_ARGB8888_REV:
    case MESA_FORMAT_ARGB8888:
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    case MESA_FORMAT_XRGB8888:
-      return PIPE_FORMAT_X8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8X8_UNORM;
    case MESA_FORMAT_ARGB1555:
-      return PIPE_FORMAT_A1R5G5B5_UNORM;
+      return PIPE_FORMAT_B5G5R5A1_UNORM;
    case MESA_FORMAT_ARGB4444:
-      return PIPE_FORMAT_A4R4G4B4_UNORM;
+      return PIPE_FORMAT_B4G4R4A4_UNORM;
    case MESA_FORMAT_RGB565:
-      return PIPE_FORMAT_R5G6B5_UNORM;
+      return PIPE_FORMAT_B5G6R5_UNORM;
    case MESA_FORMAT_AL88:
-      return PIPE_FORMAT_A8L8_UNORM;
+      return PIPE_FORMAT_L8A8_UNORM;
    case MESA_FORMAT_A8:
       return PIPE_FORMAT_A8_UNORM;
    case MESA_FORMAT_L8:
@@ -151,11 +151,11 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_Z32:
       return PIPE_FORMAT_Z32_UNORM;
    case MESA_FORMAT_Z24_S8:
-      return PIPE_FORMAT_Z24S8_UNORM;
-   case MESA_FORMAT_S8_Z24:
       return PIPE_FORMAT_S8Z24_UNORM;
+   case MESA_FORMAT_S8_Z24:
+      return PIPE_FORMAT_Z24S8_UNORM;
    case MESA_FORMAT_YCBCR:
-      return PIPE_FORMAT_YCBCR;
+      return PIPE_FORMAT_UYVY;
 #if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
       return PIPE_FORMAT_DXT1_RGB;
@@ -178,15 +178,15 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
 #endif
 #if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SLA8:
-      return PIPE_FORMAT_A8L8_SRGB;
+      return PIPE_FORMAT_L8A8_SRGB;
    case MESA_FORMAT_SL8:
       return PIPE_FORMAT_L8_SRGB;
    case MESA_FORMAT_SRGB8:
       return PIPE_FORMAT_R8G8B8_SRGB;
    case MESA_FORMAT_SRGBA8:
-      return PIPE_FORMAT_R8G8B8A8_SRGB;
+      return PIPE_FORMAT_A8B8G8R8_SRGB;
    case MESA_FORMAT_SARGB8:
-      return PIPE_FORMAT_A8R8G8B8_SRGB;
+      return PIPE_FORMAT_B8G8R8A8_SRGB;
 #endif
    default:
       assert(0);
@@ -202,21 +202,21 @@ gl_format
 st_pipe_format_to_mesa_format(enum pipe_format format)
 {
    switch (format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return MESA_FORMAT_ARGB8888;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-      return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return MESA_FORMAT_ARGB8888_REV;
+      return MESA_FORMAT_ARGB8888;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return MESA_FORMAT_XRGB8888;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return MESA_FORMAT_ARGB8888_REV;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
       return MESA_FORMAT_XRGB8888_REV;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       return MESA_FORMAT_ARGB1555;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       return MESA_FORMAT_ARGB4444;
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return MESA_FORMAT_RGB565;
-   case PIPE_FORMAT_A8L8_UNORM:
+   case PIPE_FORMAT_L8A8_UNORM:
       return MESA_FORMAT_AL88;
    case PIPE_FORMAT_A8_UNORM:
       return MESA_FORMAT_A8;
@@ -234,18 +234,18 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_Z16;
    case PIPE_FORMAT_Z32_UNORM:
       return MESA_FORMAT_Z32;
-   case PIPE_FORMAT_Z24S8_UNORM:
-      return MESA_FORMAT_Z24_S8;
-   case PIPE_FORMAT_Z24X8_UNORM:
-      return MESA_FORMAT_Z24_X8;
-   case PIPE_FORMAT_X8Z24_UNORM:
-      return MESA_FORMAT_X8_Z24;
    case PIPE_FORMAT_S8Z24_UNORM:
+      return MESA_FORMAT_Z24_S8;
+   case PIPE_FORMAT_X8Z24_UNORM:
+      return MESA_FORMAT_Z24_X8;
+   case PIPE_FORMAT_Z24X8_UNORM:
+      return MESA_FORMAT_X8_Z24;
+   case PIPE_FORMAT_Z24S8_UNORM:
       return MESA_FORMAT_S8_Z24;
 
-   case PIPE_FORMAT_YCBCR:
+   case PIPE_FORMAT_UYVY:
       return MESA_FORMAT_YCBCR;
-   case PIPE_FORMAT_YCBCR_REV:
+   case PIPE_FORMAT_YUYV:
       return MESA_FORMAT_YCBCR_REV;
 
 #if FEATURE_texture_s3tc
@@ -270,15 +270,15 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
 #endif
 
 #if FEATURE_EXT_texture_sRGB
-   case PIPE_FORMAT_A8L8_SRGB:
+   case PIPE_FORMAT_L8A8_SRGB:
       return MESA_FORMAT_SLA8;
    case PIPE_FORMAT_L8_SRGB:
       return MESA_FORMAT_SL8;
    case PIPE_FORMAT_R8G8B8_SRGB:
       return MESA_FORMAT_SRGB8;
-   case PIPE_FORMAT_R8G8B8A8_SRGB:
+   case PIPE_FORMAT_A8B8G8R8_SRGB:
       return MESA_FORMAT_SRGBA8;
-   case PIPE_FORMAT_A8R8G8B8_SRGB:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MESA_FORMAT_SARGB8;
 #endif
    default:
@@ -298,10 +298,10 @@ default_rgba_format(struct pipe_screen *screen,
                     unsigned geom_flags)
 {
    static const enum pipe_format colorFormats[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
@@ -322,13 +322,13 @@ default_rgb_format(struct pipe_screen *screen,
                    unsigned geom_flags)
 {
    static const enum pipe_format colorFormats[] = {
-      PIPE_FORMAT_X8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8X8_UNORM,
-      PIPE_FORMAT_R8G8B8X8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_X8R8G8B8_UNORM,
+      PIPE_FORMAT_X8B8G8R8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
@@ -349,9 +349,9 @@ default_srgba_format(struct pipe_screen *screen,
                     unsigned geom_flags)
 {
    static const enum pipe_format colorFormats[] = {
-      PIPE_FORMAT_A8R8G8B8_SRGB,
       PIPE_FORMAT_B8G8R8A8_SRGB,
-      PIPE_FORMAT_R8G8B8A8_SRGB,
+      PIPE_FORMAT_A8R8G8B8_SRGB,
+      PIPE_FORMAT_A8B8G8R8_SRGB,
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
@@ -393,8 +393,8 @@ default_depth_format(struct pipe_screen *screen,
    static const enum pipe_format zFormats[] = {
       PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_Z32_UNORM,
-      PIPE_FORMAT_S8Z24_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM
+      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_S8Z24_UNORM
    };
    uint i;
    for (i = 0; i < Elements(zFormats); i++) {
@@ -439,13 +439,13 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    case GL_RGBA4:
    case GL_RGBA2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A4R4G4B4_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A4R4G4B4_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B4G4R4A4_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_B4G4R4A4_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB5_A1:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A1R5G5B5_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_B5G5R5A1_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB8:
@@ -457,10 +457,10 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_R5G6B5_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_R5G6B5_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A1R5G5B5_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G6R5_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_B5G6R5_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_B5G5R5A1_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_ALPHA:
@@ -493,8 +493,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A8L8_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_L8A8_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_INTENSITY:
@@ -508,13 +508,13 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_YCBCR_MESA:
-      if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR,
+      if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY,
                                       target, tex_usage, geom_flags)) {
-         return PIPE_FORMAT_YCBCR;
+         return PIPE_FORMAT_UYVY;
       }
-      if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV,
+      if (screen->is_format_supported(screen, PIPE_FORMAT_YUYV,
                                       target, tex_usage, geom_flags)) {
-         return PIPE_FORMAT_YCBCR_REV;
+         return PIPE_FORMAT_YUYV;
       }
       return PIPE_FORMAT_NONE;
 
@@ -546,10 +546,10 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return PIPE_FORMAT_Z16_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT24:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8Z24_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_S8Z24_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
       if (screen->is_format_supported( screen, PIPE_FORMAT_Z32_UNORM, target, tex_usage, geom_flags ))
@@ -565,18 +565,18 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_STENCIL_INDEX16_EXT:
       if (screen->is_format_supported( screen, PIPE_FORMAT_S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_S8_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8Z24_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_S8Z24_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8Z24_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_S8Z24_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_SRGB_EXT:
@@ -599,8 +599,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_SLUMINANCE8_ALPHA8_EXT:
    case GL_COMPRESSED_SLUMINANCE_EXT:
    case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_SRGB, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A8L8_SRGB;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_SRGB, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_L8A8_SRGB;
       return default_srgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_SLUMINANCE_EXT:
@@ -680,11 +680,11 @@ GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type)
 {
    switch (pFormat) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_A8B8G8R8_UNORM:
       return format == GL_RGBA && type == GL_UNSIGNED_BYTE;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return format == GL_BGRA && type == GL_UNSIGNED_BYTE;
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5;
    /* XXX more combos... */
    default:

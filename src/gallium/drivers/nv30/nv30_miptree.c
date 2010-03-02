@@ -88,11 +88,11 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM:
-		case PIPE_FORMAT_A8L8_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM:
+		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:

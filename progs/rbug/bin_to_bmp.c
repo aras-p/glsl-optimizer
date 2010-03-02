@@ -48,7 +48,7 @@ int main(int argc, char** argv)
    unsigned stride = width * 4;
    unsigned size = stride * height;
    const char *filename = "mybin.bin";
-   enum pipe_format format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   enum pipe_format format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    dump(width, height, stride, format, rbug_read(filename, size), size);
 

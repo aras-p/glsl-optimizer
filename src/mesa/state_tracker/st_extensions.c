@@ -270,28 +270,28 @@ void st_init_extensions(struct st_context *st)
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+       screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+            screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
 
    /* sRGB support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-      screen->is_format_supported(screen, PIPE_FORMAT_A8R8G8B8_SRGB,
+      screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
@@ -310,10 +310,10 @@ void st_init_extensions(struct st_context *st)
    }
 
    /* ycbcr support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, 
+       screen->is_format_supported(screen, PIPE_FORMAT_YUYV, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;

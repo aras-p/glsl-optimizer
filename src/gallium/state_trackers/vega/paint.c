@@ -151,7 +151,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
-   templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    templ.last_level = 0;
    templ.width0 = 1024;
    templ.height0 = 1;

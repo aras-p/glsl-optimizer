@@ -118,10 +118,10 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       case PIPE_FORMAT_Z16_UNORM:
          svga->curr.depthscale = 1.0f / DEPTH_BIAS_SCALE_FACTOR_D16;
          break;
-      case PIPE_FORMAT_S8Z24_UNORM:
-      case PIPE_FORMAT_X8Z24_UNORM:
       case PIPE_FORMAT_Z24S8_UNORM:
       case PIPE_FORMAT_Z24X8_UNORM:
+      case PIPE_FORMAT_S8Z24_UNORM:
+      case PIPE_FORMAT_X8Z24_UNORM:
          svga->curr.depthscale = 1.0f / DEPTH_BIAS_SCALE_FACTOR_D24S8;
          break;
       case PIPE_FORMAT_Z32_UNORM:

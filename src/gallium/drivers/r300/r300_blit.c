@@ -143,10 +143,10 @@ void r300_surface_copy(struct pipe_context* pipe,
                 new_format = PIPE_FORMAT_I8_UNORM;
                 break;
             case 2:
-                new_format = PIPE_FORMAT_A4R4G4B4_UNORM;
+                new_format = PIPE_FORMAT_B4G4R4A4_UNORM;
                 break;
             case 4:
-                new_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+                new_format = PIPE_FORMAT_B8G8R8A8_UNORM;
                 break;
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"

@@ -923,29 +923,29 @@ format_to_type_comps(enum pipe_format pformat,
 {
    /* XXX I think this could be implemented in terms of the pf_*() functions */
    switch (pformat) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-   case PIPE_FORMAT_R8G8B8A8_SRGB:
-   case PIPE_FORMAT_R8G8B8X8_SRGB:
-   case PIPE_FORMAT_A8R8G8B8_SRGB:
-   case PIPE_FORMAT_X8R8G8B8_SRGB:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_A8B8G8R8_SRGB:
+   case PIPE_FORMAT_X8B8G8R8_SRGB:
    case PIPE_FORMAT_B8G8R8A8_SRGB:
    case PIPE_FORMAT_B8G8R8X8_SRGB:
+   case PIPE_FORMAT_A8R8G8B8_SRGB:
+   case PIPE_FORMAT_X8R8G8B8_SRGB:
    case PIPE_FORMAT_R8G8B8_SRGB:
       *datatype = DTYPE_UBYTE;
       *comps = 4;
       return;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       *datatype = DTYPE_USHORT_1_5_5_5_REV;
       *comps = 4;
       return;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       *datatype = DTYPE_USHORT_4_4_4_4;
       *comps = 4;
       return;
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       *datatype = DTYPE_USHORT_5_6_5;
       *comps = 3;
       return;
@@ -956,8 +956,8 @@ format_to_type_comps(enum pipe_format pformat,
       *datatype = DTYPE_UBYTE;
       *comps = 1;
       return;
-   case PIPE_FORMAT_A8L8_UNORM:
-   case PIPE_FORMAT_A8L8_SRGB:
+   case PIPE_FORMAT_L8A8_UNORM:
+   case PIPE_FORMAT_L8A8_SRGB:
       *datatype = DTYPE_UBYTE;
       *comps = 2;
       return;

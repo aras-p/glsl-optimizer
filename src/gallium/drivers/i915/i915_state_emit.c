@@ -37,9 +37,9 @@
 static unsigned translate_format( enum pipe_format format )
 {
    switch (format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return COLOR_BUF_ARGB8888;
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return COLOR_BUF_RGB565;
    default:
       assert(0);
@@ -50,7 +50,7 @@ static unsigned translate_format( enum pipe_format format )
 static unsigned translate_depth_format( enum pipe_format zformat )
 {
    switch (zformat) {
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       return DEPTH_FRMT_24_FIXED_8_OTHER;
    case PIPE_FORMAT_Z16_UNORM:
       return DEPTH_FRMT_16_FIXED;
@@ -260,7 +260,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
          if (cbuf_surface)
             cformat = cbuf_surface->format;
          else
-            cformat = PIPE_FORMAT_A8R8G8B8_UNORM; /* arbitrary */
+            cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
          cformat = translate_format(cformat);
 
          if (depth_surface) 

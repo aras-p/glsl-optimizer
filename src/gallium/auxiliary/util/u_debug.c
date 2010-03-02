@@ -387,7 +387,7 @@ void debug_dump_image(const char *prefix,
 
       /* XXX this is a hack */
       switch (format) {
-      case PIPE_FORMAT_A8R8G8B8_UNORM:
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
          r = 2;
          g = 1;
          b = 0;

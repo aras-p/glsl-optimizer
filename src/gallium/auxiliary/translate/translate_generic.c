@@ -392,10 +392,10 @@ static fetch_func get_fetch_func( enum pipe_format format )
    case PIPE_FORMAT_R8G8B8A8_SSCALED:
       return &fetch_R8G8B8A8_SSCALED;
 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return &fetch_A8R8G8B8_UNORM;
 
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return &fetch_B8G8R8A8_UNORM;
 
    case PIPE_FORMAT_R32_FIXED:
@@ -551,10 +551,10 @@ static emit_func get_emit_func( enum pipe_format format )
    case PIPE_FORMAT_R8G8B8A8_SSCALED:
       return &emit_R8G8B8A8_SSCALED;
 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return &emit_A8R8G8B8_UNORM;
 
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return &emit_B8G8R8A8_UNORM;
 
    default:

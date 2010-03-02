@@ -101,7 +101,7 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
    /* XXX: Needs to match the drawable's format? */
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    template.last_level = 0;
    template.width0 = width;
    template.height0 = height;

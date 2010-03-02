@@ -98,8 +98,8 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 {
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM: 
 			return TRUE;
 		default:
 			break;
@@ -107,8 +107,8 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 	} else
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
-		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z24X8_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_X8Z24_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
 		default:
@@ -116,17 +116,17 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 		}
 	} else {
 		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_A1R5G5B5_UNORM:
-		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B5G5R5A1_UNORM:
+		case PIPE_FORMAT_B4G4R4A4_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
-		case PIPE_FORMAT_A8L8_UNORM:
+		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:

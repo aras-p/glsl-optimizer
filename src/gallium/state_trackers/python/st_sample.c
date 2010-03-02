@@ -485,7 +485,7 @@ st_sample_generic_pixel_block(enum pipe_format format,
                          w, h,
                          rgba, rgba_stride);
  
-   if(format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV) {
+   if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
       for(y = 0; y < h; ++y) {
          for(x = 0; x < w; ++x) {
             for(ch = 0; ch < 4; ++ch) {

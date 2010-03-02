@@ -92,8 +92,8 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
             switch (format) {
                 case PIPE_FORMAT_Z16_UNORM:
                     return R300_EASY_TX_FORMAT(X, X, X, X, X16);
-                case PIPE_FORMAT_Z24X8_UNORM:
-                case PIPE_FORMAT_Z24S8_UNORM:
+                case PIPE_FORMAT_X8Z24_UNORM:
+                case PIPE_FORMAT_S8Z24_UNORM:
                     return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
                 default:
                     return ~0; /* Unsupported. */
@@ -104,9 +104,9 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
             result |= R300_TX_FORMAT_YUV_TO_RGB;
 
             switch (format) {
-                case PIPE_FORMAT_YCBCR:
+                case PIPE_FORMAT_UYVY:
                     return R300_EASY_TX_FORMAT(X, Y, Z, ONE, YVYU422) | result;
-                case PIPE_FORMAT_YCBCR_REV:
+                case PIPE_FORMAT_YUYV:
                     return R300_EASY_TX_FORMAT(X, Y, Z, ONE, VYUY422) | result;
                 default:
                     return ~0; /* Unsupported/unknown. */
@@ -308,33 +308,31 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
             return R300_COLOR_FORMAT_I8;
 
         /* 16-bit buffers. */
-        case PIPE_FORMAT_R5G6B5_UNORM:
+        case PIPE_FORMAT_B5G6R5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
+        case PIPE_FORMAT_B5G5R5A1_UNORM:
             return R300_COLOR_FORMAT_ARGB1555;
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
+        case PIPE_FORMAT_B4G4R4A4_UNORM:
             return R300_COLOR_FORMAT_ARGB4444;
 
         /* 32-bit buffers. */
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-        case PIPE_FORMAT_X8R8G8B8_SRGB:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
         case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
         case PIPE_FORMAT_B8G8R8X8_SRGB:
-        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+        case PIPE_FORMAT_A8B8G8R8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_R8G8B8A8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_UNORM:
-        case PIPE_FORMAT_R8G8B8X8_SRGB:
+        case PIPE_FORMAT_A8B8G8R8_SRGB:
+        case PIPE_FORMAT_X8B8G8R8_UNORM:
+        case PIPE_FORMAT_X8B8G8R8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_SNORM:
-        case PIPE_FORMAT_A8B8G8R8_SNORM:
-        case PIPE_FORMAT_X8B8G8R8_SNORM:
-        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
+        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
-        case PIPE_FORMAT_A2B10G10R10_UNORM:
+        case PIPE_FORMAT_R10G10B10A2_UNORM:
             return R500_COLOR_FORMAT_ARGB2101010;  /* R5xx-only? */
 
         /* 64-bit buffers. */
@@ -351,9 +349,9 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
 #endif
 
         /* YUV buffers. */
-        case PIPE_FORMAT_YCBCR:
+        case PIPE_FORMAT_UYVY:
             return R300_COLOR_FORMAT_YVYU;
-        case PIPE_FORMAT_YCBCR_REV:
+        case PIPE_FORMAT_YUYV:
             return R300_COLOR_FORMAT_VYUY;
         default:
             return ~0; /* Unsupported. */
@@ -368,9 +366,9 @@ static uint32_t r300_translate_zsformat(enum pipe_format format)
         case PIPE_FORMAT_Z16_UNORM:
             return R300_DEPTHFORMAT_16BIT_INT_Z;
         /* 24-bit depth, ignored stencil */
-        case PIPE_FORMAT_Z24X8_UNORM:
+        case PIPE_FORMAT_X8Z24_UNORM:
         /* 24-bit depth, 8-bit stencil */
-        case PIPE_FORMAT_Z24S8_UNORM:
+        case PIPE_FORMAT_S8Z24_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
             return ~0; /* Unsupported. */
@@ -437,42 +435,40 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
             return modifier | R300_C2_SEL_R;
 
         /* ARGB 32-bit outputs. */
-        case PIPE_FORMAT_R5G6B5_UNORM:
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
-        case PIPE_FORMAT_X8R8G8B8_UNORM:
-        case PIPE_FORMAT_X8R8G8B8_SRGB:
-            return modifier |
-                R300_C0_SEL_B | R300_C1_SEL_G |
-                R300_C2_SEL_R | R300_C3_SEL_A;
-
-        /* BGRA 32-bit outputs. */
+        case PIPE_FORMAT_B5G6R5_UNORM:
+        case PIPE_FORMAT_B5G5R5A1_UNORM:
+        case PIPE_FORMAT_B4G4R4A4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
         case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
         case PIPE_FORMAT_B8G8R8X8_SRGB:
             return modifier |
+                R300_C0_SEL_B | R300_C1_SEL_G |
+                R300_C2_SEL_R | R300_C3_SEL_A;
+
+        /* BGRA 32-bit outputs. */
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
+            return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
 
         /* RGBA 32-bit outputs. */
-        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_A8B8G8R8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_R8G8B8A8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_UNORM:
-        case PIPE_FORMAT_R8G8B8X8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_SNORM:
+        case PIPE_FORMAT_A8B8G8R8_SRGB:
+        case PIPE_FORMAT_X8B8G8R8_UNORM:
+        case PIPE_FORMAT_X8B8G8R8_SRGB:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* ABGR 32-bit outputs. */
-        case PIPE_FORMAT_A8B8G8R8_SNORM:
-        case PIPE_FORMAT_X8B8G8R8_SNORM:
-        case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
-        case PIPE_FORMAT_A2B10G10R10_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_SNORM:
+        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+        case PIPE_FORMAT_R10G10B10A2_UNORM:
         /* RGBA high precision outputs (same swizzles as ABGR low precision) */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -871,7 +867,7 @@ r300_video_surface_create(struct pipe_screen *screen,
 
     memset(&template, 0, sizeof(struct pipe_texture));
     template.target = PIPE_TEXTURE_2D;
-    template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+    template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
     template.last_level = 0;
     template.width0 = util_next_power_of_two(width);
     template.height0 = util_next_power_of_two(height);

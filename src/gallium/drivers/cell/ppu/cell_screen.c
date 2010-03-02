@@ -136,7 +136,7 @@ cell_is_format_supported( struct pipe_screen *screen,
 {
    /* cell supports most formats, XXX for now anyway */
    if (format == PIPE_FORMAT_DXT5_RGBA ||
-       format == PIPE_FORMAT_R8G8B8A8_SRGB)
+       format == PIPE_FORMAT_A8B8G8R8_SRGB)
       return FALSE;
    else
       return TRUE;
