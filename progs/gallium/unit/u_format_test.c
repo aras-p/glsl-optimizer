@@ -63,6 +63,8 @@ struct util_format_test_case
  */
 
 #define PACKED_1x8(x) {x, 0, 0, 0}
+#define PACKED_2x8(x, y) {x, y, 0, 0}
+#define PACKED_3x8(x, y, z) {x, y, z, 0}
 #define PACKED_4x8(x, y, z, w) {x, y, z, w}
 #define PACKED_1x32(x) {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, ((x) >> 24) & 0xff}
 #define PACKED_1x16(x) {(x) & 0xff, ((x) >> 8) & 0xff, 0, 0}
@@ -80,32 +82,10 @@ struct util_format_test_case
 static const struct util_format_test_case
 test_cases[] =
 {
-   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x001f), {0.0, 0.0, 1.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x07e0), {0.0, 1.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xf800), {1.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
 
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x001f), {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x03e0), {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x8000), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
-
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x000f), {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x00f0), {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0f00), {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xf000), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
-
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000003ff), {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000ffc00), {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x3ff00000), {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xc0000000), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+   /*
+    * 32-bit rendertarget formats
+    */
 
    {PIPE_FORMAT_B8G8R8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
    {PIPE_FORMAT_B8G8R8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000000ff), {0.0, 0.0, 1.0, 0.0}},
@@ -135,21 +115,54 @@ test_cases[] =
    {PIPE_FORMAT_X8R8G8B8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0xff000000), {0.0, 0.0, 1.0, 1.0}},
    {PIPE_FORMAT_X8R8G8B8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
 
-#if 0
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000000ff), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x0000ff00), {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00ff0000), {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xff000000), {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
-#endif
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000000ff), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x0000ff00), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00ff0000), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xff000000), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8B8G8R8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
 
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000000ff), {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x0000ff00), {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00ff0000), {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xff000000), {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0x000000ff), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0x0000ff00), {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0x00ff0000), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0xff000000), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_X8B8G8R8_UNORM, PACKED_1x32(0xffffff00), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000003ff), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x000ffc00), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x3ff00000), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xc0000000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R10G10B10A2_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+
+   /*
+    * 16-bit rendertarget formats
+    */
+
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x001f), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x03e0), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x8000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x000f), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x00f0), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0f00), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xf000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B4G4R4A4_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x001f), {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x07e0), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xf800), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
+
+   /*
+    * Luminance/intensity/alpha formats
+    */
 
    {PIPE_FORMAT_L8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0x00), {0.0, 0.0, 0.0, 1.0}},
    {PIPE_FORMAT_L8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0xff), {1.0, 1.0, 1.0, 1.0}},
@@ -168,15 +181,21 @@ test_cases[] =
    {PIPE_FORMAT_L16_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 1.0}},
    {PIPE_FORMAT_L16_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 1.0, 1.0, 1.0}},
 
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), { 0.0,  0.0,  0.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x0000007f), { 1.0,  0.0,  0.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000081), {-1.0,  0.0,  0.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00007f00), { 0.0,  1.0,  0.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00008100), { 0.0, -1.0,  0.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x007f0000), { 0.0,  0.0,  1.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00810000), { 0.0,  0.0, -1.0,  0.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x7f000000), { 0.0,  0.0,  0.0,  1.0}},
-   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x81000000), { 0.0,  0.0,  0.0, -1.0}},
+   /*
+    * TODO: SRGB formats
+    */
+
+   /*
+    * Signed (bump map) formats
+    */
+
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00000000), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x0000007f), { 1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00000081), {-1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00007f00), { 0.0,  1.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00008100), { 0.0, -1.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x007f0000), { 0.0,  0.0,  1.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8X8_SNORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00810000), { 0.0,  0.0, -1.0,  1.0}},
 
    {PIPE_FORMAT_R8SG8SB8UX8U_NORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x00000000), { 0.0,  0.0, 0.0, 1.0}},
    {PIPE_FORMAT_R8SG8SB8UX8U_NORM, PACKED_1x32(0x00ffffff), PACKED_1x32(0x0000007f), { 1.0,  0.0, 0.0, 1.0}},
@@ -192,6 +211,120 @@ test_cases[] =
    {PIPE_FORMAT_R5SG5SB6U_NORM, PACKED_1x16(0xffff), PACKED_1x16(0x01e0), { 0.0,  1.0, 0.0, 1.0}},
    {PIPE_FORMAT_R5SG5SB6U_NORM, PACKED_1x16(0xffff), PACKED_1x16(0x0220), { 0.0, -1.0, 0.0, 1.0}},
    {PIPE_FORMAT_R5SG5SB6U_NORM, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), { 0.0,  0.0, 1.0, 1.0}},
+
+   /*
+    * TODO: Depth-stencil formats
+    */
+
+   /*
+    * TODO: YUV formats
+    */
+
+   /*
+    * TODO: Compressed formats
+    */
+
+   /*
+    * D3D10-like formats
+    */
+
+   {PIPE_FORMAT_R8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0x00), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0xff), {1.0, 0.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8_UNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x00), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_UNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0xff, 0x00), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_UNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0xff), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_UNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0xff, 0xff), {1.0, 1.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8_UNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x00), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_UNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0xff, 0x00, 0x00), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_UNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0xff, 0x00), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_UNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0xff), {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_UNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0xff, 0xff, 0xff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x00), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0xff, 0x00, 0x00, 0x00), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0xff, 0x00, 0x00), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0xff, 0x00), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0xff), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8A8_UNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0xff, 0xff, 0xff, 0xff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R8_USCALED, PACKED_1x8(0xff), PACKED_1x8(0x00), {  0.0,   0.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8_USCALED, PACKED_1x8(0xff), PACKED_1x8(0xff), {255.0,   0.0,   0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8_USCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x00), {  0.0,   0.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_USCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0xff, 0x00), {255.0,   0.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_USCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0xff), {  0.0, 255.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_USCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0xff, 0xff), {255.0, 255.0,   0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8_USCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x00), {  0.0,   0.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_USCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0xff, 0x00, 0x00), {255.0,   0.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_USCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0xff, 0x00), {  0.0, 255.0,   0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_USCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0xff), {  0.0,   0.0, 255.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_USCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0xff, 0xff, 0xff), {255.0, 255.0, 255.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x00), {  0.0,   0.0,   0.0,   0.0}},
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0xff, 0x00, 0x00, 0x00), {255.0,   0.0,   0.0,   0.0}},
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0xff, 0x00, 0x00), {  0.0, 255.0,   0.0,   0.0}},
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0xff, 0x00), {  0.0,   0.0, 255.0,   0.0}},
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0xff), {  0.0,   0.0,   0.0, 255.0}},
+   {PIPE_FORMAT_R8G8B8A8_USCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0xff, 0xff, 0xff, 0xff), {255.0, 255.0, 255.0, 255.0}},
+
+   {PIPE_FORMAT_R8_SNORM, PACKED_1x8(0xff), PACKED_1x8(0x00), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8_SNORM, PACKED_1x8(0xff), PACKED_1x8(0x7f), { 1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8_SNORM, PACKED_1x8(0xff), PACKED_1x8(0x81), {-1.0,  0.0,  0.0,  1.0}},
+
+   {PIPE_FORMAT_R8G8_SNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x00), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8_SNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x7f, 0x00), { 1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8_SNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x81, 0x00), {-1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8_SNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x7f), { 0.0,  1.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8_SNORM, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x81), { 0.0, -1.0,  0.0,  1.0}},
+
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x00), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x7f, 0x00, 0x00), { 1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x81, 0x00, 0x00), {-1.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x7f, 0x00), { 0.0,  1.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x81, 0x00), { 0.0, -1.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x7f), { 0.0,  0.0,  1.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8_SNORM, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x81), { 0.0,  0.0, -1.0,  1.0}},
+
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x00), { 0.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x7f, 0x00, 0x00, 0x00), { 1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x81, 0x00, 0x00, 0x00), {-1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x7f, 0x00, 0x00), { 0.0,  1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x81, 0x00, 0x00), { 0.0, -1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x7f, 0x00), { 0.0,  0.0,  1.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x81, 0x00), { 0.0,  0.0, -1.0,  0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x7f), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R8G8B8A8_SNORM, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x81), { 0.0,  0.0,  0.0, -1.0}},
+
+   {PIPE_FORMAT_R8_SSCALED, PACKED_1x8(0xff), PACKED_1x8(0x00), {   0.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8_SSCALED, PACKED_1x8(0xff), PACKED_1x8(0x7f), { 127.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8_SSCALED, PACKED_1x8(0xff), PACKED_1x8(0x80), {-128.0,    0.0,    0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8_SSCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x00), {   0.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_SSCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x7f, 0x00), { 127.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_SSCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x80, 0x00), {-128.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_SSCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x7f), {   0.0,  127.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8_SSCALED, PACKED_2x8(0xff, 0xff), PACKED_2x8(0x00, 0x80), {   0.0, -128.0,    0.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x00), {   0.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x7f, 0x00, 0x00), { 127.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x80, 0x00, 0x00), {-128.0,    0.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x7f, 0x00), {   0.0,  127.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x80, 0x00), {   0.0, -128.0,    0.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x7f), {   0.0,    0.0,  127.0, 1.0}},
+   {PIPE_FORMAT_R8G8B8_SSCALED, PACKED_3x8(0xff, 0xff, 0xff), PACKED_3x8(0x00, 0x00, 0x80), {   0.0,    0.0, -128.0, 1.0}},
+
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x00), {   0.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x7f, 0x00, 0x00, 0x00), { 127.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x80, 0x00, 0x00, 0x00), {-128.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x7f, 0x00, 0x00), {   0.0,  127.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x80, 0x00, 0x00), {   0.0, -128.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x7f, 0x00), {   0.0,    0.0,  127.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x80, 0x00), {   0.0,    0.0, -128.0,    0.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x7f), {   0.0,    0.0,    0.0,  127.0}},
+   {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x80), {   0.0,    0.0,    0.0, -128.0}},
 };
 
 
