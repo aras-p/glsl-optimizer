@@ -119,7 +119,9 @@ PIPE_FORMAT_DXT1_SRGBA            , compressed, 4, 4, x64 ,     ,     ,     , xy
 PIPE_FORMAT_DXT3_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xyzw, srgb
 PIPE_FORMAT_DXT5_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xyzw, srgb
 
-# Old vector formats
+# Straightforward D3D10-like formats (also used for 
+# vertex buffer element description)
+# 
 # See also:
 # - src/gallium/auxiliary/translate/translate_generic.c
 # - src/mesa/state_tracker/st_draw.c
