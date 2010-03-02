@@ -342,7 +342,6 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    unsigned ix, iy;
    int block_offset;
 
-#ifdef DEBUG
    assert(state);
 
    /* Sanity checks */
@@ -351,7 +350,6 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
 
    assert((x % 4) == 0);
    assert((y % 4) == 0);
-#endif
 
    ix = x % TILE_SIZE;
    iy = y % TILE_SIZE;
@@ -367,15 +365,12 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    depth = lp_rast_depth_pointer(rast, x, y);
 
 
-
-#ifdef DEBUG
    assert(lp_check_alignment(tile->color[0], 16));
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
    assert(lp_check_alignment(inputs->step[0], 16));
    assert(lp_check_alignment(inputs->step[1], 16));
    assert(lp_check_alignment(inputs->step[2], 16));
-#endif
 
    /* run shader */
    state->jit_function[1]( &state->jit_context,
