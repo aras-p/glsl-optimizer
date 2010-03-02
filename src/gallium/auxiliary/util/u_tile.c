@@ -1274,6 +1274,48 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
 
 
 void
+pipe_get_tile_swizzle(struct pipe_transfer *pt,
+                      uint x,
+                      uint y,
+                      uint w,
+                      uint h,
+                      uint swizzle_r,
+                      uint swizzle_g,
+                      uint swizzle_b,
+                      uint swizzle_a,
+                      float *p)
+{
+   uint i;
+   float rgba01[6];
+
+   pipe_get_tile_rgba(pt, x, y, w, h, p);
+
+   if (swizzle_r == PIPE_SWIZZLE_RED &&
+       swizzle_g == PIPE_SWIZZLE_GREEN &&
+       swizzle_b == PIPE_SWIZZLE_BLUE &&
+       swizzle_a == PIPE_SWIZZLE_ALPHA) {
+      /* no-op, skip */
+      return;
+   }
+
+   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
+   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
+
+   for (i = 0; i < w * h; i++) {
+      rgba01[PIPE_SWIZZLE_RED] = p[0];
+      rgba01[PIPE_SWIZZLE_GREEN] = p[1];
+      rgba01[PIPE_SWIZZLE_BLUE] = p[2];
+      rgba01[PIPE_SWIZZLE_ALPHA] = p[3];
+
+      *p++ = rgba01[swizzle_r];
+      *p++ = rgba01[swizzle_g];
+      *p++ = rgba01[swizzle_b];
+      *p++ = rgba01[swizzle_a];
+   }
+}
+
+
+void
 pipe_put_tile_rgba(struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p)
