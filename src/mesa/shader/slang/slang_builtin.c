@@ -142,6 +142,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[1] = index1;
    }
    else if (strcmp(var, "gl_Point") == 0) {
+      assert(field);
       if (strcmp(field, "size") == 0) {
          tokens[0] = STATE_POINT_SIZE;
          *swizzleOut = SWIZZLE_XXXX;
