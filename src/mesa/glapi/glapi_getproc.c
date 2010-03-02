@@ -773,6 +773,7 @@ _glapi_get_proc_name(GLuint offset)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
+#if 0 /* enable this for extra DEBUG */
    {
       GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
       char *BeginFunc = (char*) &table->Begin;
@@ -829,4 +830,7 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(setFenceOffset == _gloffset_SetFenceNV);
       assert(setFenceOffset == offset);
    }
+#else
+   (void) table;
+#endif
 }

@@ -256,7 +256,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
       /* use the no-op functions */
       dispatch = (struct _glapi_table *) __glapi_noop_table;
    }
-#if 0 /* enable this for extra DEBUG */
+#ifdef DEBUG
    else {
       _glapi_check_table_not_null(dispatch);
       _glapi_check_table(dispatch);
@@ -322,10 +322,14 @@ _glapi_get_dispatch_table_size(void)
 void
 _glapi_check_table_not_null(const struct _glapi_table *table)
 {
+#if 0 /* enable this for extra DEBUG */
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
    for (i = 1; i < entries; i++) {
       assert(tab[i]);
    }
+#else
+   (void) table;
+#endif
 }
