@@ -122,21 +122,20 @@ intelEmitCopyBlit(struct intel_context *intel,
    intel_prepare_render(intel);
 
    if (pass >= 2) {
-       dri_bo_map(dst_buffer, GL_TRUE);
-       dri_bo_map(src_buffer, GL_FALSE);
-       _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
-                       cpp,
-                       dst_pitch,
-                       dst_x, dst_y, 
-                       w, h, 
-                       (GLubyte *)src_buffer->virtual + src_offset, 
-                       src_pitch,
-                       src_x, src_y);
-       
-       dri_bo_unmap(src_buffer);
-       dri_bo_unmap(dst_buffer);
+      intel_bo_map_gtt_preferred(intel, dst_buffer, GL_TRUE);
+      intel_bo_map_gtt_preferred(intel, src_buffer, GL_FALSE);
+      _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
+		      cpp,
+		      dst_pitch,
+		      dst_x, dst_y,
+		      w, h,
+		      (GLubyte *)src_buffer->virtual + src_offset,
+		      src_pitch,
+		      src_x, src_y);
+      intel_bo_unmap_gtt_preferred(intel, src_buffer);
+      intel_bo_unmap_gtt_preferred(intel, dst_buffer);
 
-       return GL_TRUE;
+      return GL_TRUE;
    }
 
    intel_batchbuffer_require_space(intel->batch, 8 * 4);
