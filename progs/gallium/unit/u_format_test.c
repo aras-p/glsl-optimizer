@@ -33,7 +33,7 @@
 #include "util/u_format_pack.h"
 
 
-#define MAX_PACKED_BYTES 4
+#define MAX_PACKED_BYTES 16
 
 
 /**
@@ -62,12 +62,20 @@ struct util_format_test_case
  * Helper macros to create the packed bytes for longer words.
  */
 
-#define PACKED_1x8(x) {x, 0, 0, 0}
-#define PACKED_2x8(x, y) {x, y, 0, 0}
-#define PACKED_3x8(x, y, z) {x, y, z, 0}
-#define PACKED_4x8(x, y, z, w) {x, y, z, w}
-#define PACKED_1x32(x) {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, ((x) >> 24) & 0xff}
-#define PACKED_1x16(x) {(x) & 0xff, ((x) >> 8) & 0xff, 0, 0}
+#define PACKED_1x8(x)          {x, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_2x8(x, y)       {x, y, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_3x8(x, y, z)    {x, y, z, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_4x8(x, y, z, w) {x, y, z, w, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+#define PACKED_1x16(x)          {(x) & 0xff, (x) >> 8,          0,        0,          0,        0,          0,        0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_2x16(x, y)       {(x) & 0xff, (x) >> 8, (y) & 0xff, (y) >> 8,          0,        0,          0,        0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_3x16(x, y, z)    {(x) & 0xff, (x) >> 8, (y) & 0xff, (y) >> 8, (z) & 0xff, (z) >> 8,          0,        0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define PACKED_4x16(x, y, z, w) {(x) & 0xff, (x) >> 8, (y) & 0xff, (y) >> 8, (z) & 0xff, (z) >> 8, (w) & 0xff, (w) >> 8, 0, 0, 0, 0, 0, 0, 0, 0}
+
+#define PACKED_1x32(x)          {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, (x) >> 24,          0,                 0,                  0,         0,          0,                 0,                  0,         0,          0,                 0,                  0,         0}
+#define PACKED_2x32(x, y)       {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, (x) >> 24, (y) & 0xff, ((y) >> 8) & 0xff, ((y) >> 16) & 0xff, (y) >> 24,          0,                 0,                  0,         0,          0,                 0,                  0,         0}
+#define PACKED_3x32(x, y, z)    {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, (x) >> 24, (y) & 0xff, ((y) >> 8) & 0xff, ((y) >> 16) & 0xff, (y) >> 24, (z) & 0xff, ((z) >> 8) & 0xff, ((z) >> 16) & 0xff, (z) >> 24,          0,                 0,                  0,         0}
+#define PACKED_4x32(x, y, z, w) {(x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, (x) >> 24, (y) & 0xff, ((y) >> 8) & 0xff, ((y) >> 16) & 0xff, (y) >> 24, (z) & 0xff, ((z) >> 8) & 0xff, ((z) >> 16) & 0xff, (z) >> 24, (w) & 0xff, ((w) >> 8) & 0xff, ((w) >> 16) & 0xff, (w) >> 24}
 
 
 /**
@@ -225,7 +233,7 @@ test_cases[] =
     */
 
    /*
-    * D3D10-like formats
+    * Standard 8-bit formats
     */
 
    {PIPE_FORMAT_R8_UNORM, PACKED_1x8(0xff), PACKED_1x8(0x00), {0.0, 0.0, 0.0, 1.0}},
@@ -325,6 +333,213 @@ test_cases[] =
    {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x80, 0x00), {   0.0,    0.0, -128.0,    0.0}},
    {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x7f), {   0.0,    0.0,    0.0,  127.0}},
    {PIPE_FORMAT_R8G8B8A8_SSCALED, PACKED_4x8(0xff, 0xff, 0xff, 0xff), PACKED_4x8(0x00, 0x00, 0x00, 0x80), {   0.0,    0.0,    0.0, -128.0}},
+
+   /*
+    * Standard 16-bit formats
+    */
+
+   {PIPE_FORMAT_R16_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16_UNORM, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {1.0, 0.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16_UNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x0000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_UNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0xffff, 0x0000), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_UNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0xffff), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_UNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0xffff, 0xffff), {1.0, 1.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16B16_UNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x0000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_UNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0xffff, 0x0000, 0x0000), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_UNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0xffff, 0x0000), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_UNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0xffff), {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_UNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0xffff, 0xffff, 0xffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x0000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0xffff, 0x0000, 0x0000, 0x0000), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0xffff, 0x0000, 0x0000), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0xffff, 0x0000), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0xffff), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16A16_UNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R16_USCALED, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {    0.0,     0.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16_USCALED, PACKED_1x16(0xffff), PACKED_1x16(0xffff), {65535.0,     0.0,     0.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16_USCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x0000), {    0.0,     0.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_USCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0xffff, 0x0000), {65535.0,     0.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_USCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0xffff), {    0.0, 65535.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_USCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0xffff, 0xffff), {65535.0, 65535.0,     0.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16B16_USCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x0000), {    0.0,     0.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_USCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0xffff, 0x0000, 0x0000), {65535.0,     0.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_USCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0xffff, 0x0000), {    0.0, 65535.0,     0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_USCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0xffff), {    0.0,     0.0, 65535.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_USCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0xffff, 0xffff, 0xffff), {65535.0, 65535.0, 65535.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x0000), {    0.0,     0.0,     0.0,     0.0}},
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0xffff, 0x0000, 0x0000, 0x0000), {65535.0,     0.0,     0.0,     0.0}},
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0xffff, 0x0000, 0x0000), {    0.0, 65535.0,     0.0,     0.0}},
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0xffff, 0x0000), {    0.0,     0.0, 65535.0,     0.0}},
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0xffff), {    0.0,     0.0,     0.0, 65535.0}},
+   {PIPE_FORMAT_R16G16B16A16_USCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), {65535.0, 65535.0, 65535.0, 65535.0}},
+
+   {PIPE_FORMAT_R16_SNORM, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16_SNORM, PACKED_1x16(0xffff), PACKED_1x16(0x7fff), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16_SNORM, PACKED_1x16(0xffff), PACKED_1x16(0x8001), {  -1.0,    0.0,    0.0,    1.0}},
+
+   {PIPE_FORMAT_R16G16_SNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x0000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16_SNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x7fff, 0x0000), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16_SNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x8001, 0x0000), {  -1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16_SNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x7fff), {   0.0,    1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16_SNORM, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x8001), {   0.0,   -1.0,    0.0,    1.0}},
+
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x0000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x7fff, 0x0000, 0x0000), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x8001, 0x0000, 0x0000), {  -1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x7fff, 0x0000), {   0.0,    1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x8001, 0x0000), {   0.0,   -1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x7fff), {   0.0,    0.0,    1.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16_SNORM, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x8001), {   0.0,    0.0,   -1.0,    1.0}},
+
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x0000), {   0.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x7fff, 0x0000, 0x0000, 0x0000), {   1.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x8001, 0x0000, 0x0000, 0x0000), {  -1.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x7fff, 0x0000, 0x0000), {   0.0,    1.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x8001, 0x0000, 0x0000), {   0.0,   -1.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x7fff, 0x0000), {   0.0,    0.0,    1.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x8001, 0x0000), {   0.0,    0.0,   -1.0,    0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x7fff), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R16G16B16A16_SNORM, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x8001), {   0.0,    0.0,    0.0,   -1.0}},
+
+   {PIPE_FORMAT_R16_SSCALED, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {     0.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16_SSCALED, PACKED_1x16(0xffff), PACKED_1x16(0x7fff), { 32767.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16_SSCALED, PACKED_1x16(0xffff), PACKED_1x16(0x8000), {-32768.0,      0.0,      0.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16_SSCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x0000), {     0.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_SSCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x7fff, 0x0000), { 32767.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_SSCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x8000, 0x0000), {-32768.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_SSCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x7fff), {     0.0,  32767.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16_SSCALED, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x8000), {     0.0, -32768.0,      0.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x0000), {     0.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x7fff, 0x0000, 0x0000), { 32767.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x8000, 0x0000, 0x0000), {-32768.0,      0.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x7fff, 0x0000), {     0.0,  32767.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x8000, 0x0000), {     0.0, -32768.0,      0.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x7fff), {     0.0,      0.0,  32767.0,   1.0}},
+   {PIPE_FORMAT_R16G16B16_SSCALED, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x8000), {     0.0,      0.0, -32768.0,   1.0}},
+
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x0000), {     0.0,      0.0,      0.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x7fff, 0x0000, 0x0000, 0x0000), { 32767.0,      0.0,      0.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x8000, 0x0000, 0x0000, 0x0000), {-32768.0,      0.0,      0.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x7fff, 0x0000, 0x0000), {     0.0,  32767.0,      0.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x8000, 0x0000, 0x0000), {     0.0, -32768.0,      0.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x7fff, 0x0000), {     0.0,      0.0,  32767.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x8000, 0x0000), {     0.0,      0.0, -32768.0,      0.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x7fff), {     0.0,      0.0,      0.0,  32767.0}},
+   {PIPE_FORMAT_R16G16B16A16_SSCALED, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x8000), {     0.0,      0.0,      0.0, -32768.0}},
+
+   /*
+    * Standard 32-bit formats
+    *
+    * NOTE: We can't accurately represent integers larger than +/-0x1000000
+    * with single precision floats, so that's as far as we test.
+    */
+
+   {PIPE_FORMAT_R32_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32_UNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0xffffffff), {1.0, 0.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32_UNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x00000000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_UNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0xffffffff, 0x00000000), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_UNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0xffffffff), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32_UNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0xffffffff, 0xffffffff), {1.0, 1.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32B32_UNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x00000000), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_UNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0xffffffff, 0x00000000, 0x00000000), {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_UNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0xffffffff, 0x00000000), {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_UNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0xffffffff), {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32_UNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x00000000), {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0xffffffff, 0x00000000, 0x00000000, 0x00000000), {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0xffffffff, 0x00000000, 0x00000000), {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0xffffffff, 0x00000000), {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0xffffffff), {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R32G32B32A32_UNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), {1.0, 1.0, 1.0, 1.0}},
+
+   {PIPE_FORMAT_R32_USCALED, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {       0.0,        0.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32_USCALED, PACKED_1x32(0xffffffff), PACKED_1x32(0x01000000), {16777216.0,        0.0,        0.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32_USCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x00000000), {       0.0,        0.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_USCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x01000000, 0x00000000), {16777216.0,        0.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_USCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x01000000), {       0.0, 16777216.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_USCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x01000000, 0x01000000), {16777216.0, 16777216.0,        0.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32B32_USCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x00000000), {       0.0,        0.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_USCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x01000000, 0x00000000, 0x00000000), {16777216.0,        0.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_USCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x01000000, 0x00000000), {       0.0, 16777216.0,        0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_USCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x01000000), {       0.0,        0.0, 16777216.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_USCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x01000000, 0x01000000, 0x01000000), {16777216.0, 16777216.0, 16777216.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x00000000), {       0.0,        0.0,        0.0,        0.0}},
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x01000000, 0x00000000, 0x00000000, 0x00000000), {16777216.0,        0.0,        0.0,        0.0}},
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x01000000, 0x00000000, 0x00000000), {       0.0, 16777216.0,        0.0,        0.0}},
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x01000000, 0x00000000), {       0.0,        0.0, 16777216.0,        0.0}},
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x01000000), {       0.0,        0.0,        0.0, 16777216.0}},
+   {PIPE_FORMAT_R32G32B32A32_USCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x01000000, 0x01000000, 0x01000000, 0x01000000), {16777216.0, 16777216.0, 16777216.0, 16777216.0}},
+
+   {PIPE_FORMAT_R32_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x7fffffff), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32_SNORM, PACKED_1x32(0xffffffff), PACKED_1x32(0x80000001), {  -1.0,    0.0,    0.0,    1.0}},
+
+   {PIPE_FORMAT_R32G32_SNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x00000000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32_SNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x7fffffff, 0x00000000), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32_SNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x80000001, 0x00000000), {  -1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32_SNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x7fffffff), {   0.0,    1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32_SNORM, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x80000001), {   0.0,   -1.0,    0.0,    1.0}},
+
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x00000000), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x7fffffff, 0x00000000, 0x00000000), {   1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x80000001, 0x00000000, 0x00000000), {  -1.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x7fffffff, 0x00000000), {   0.0,    1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x80000001, 0x00000000), {   0.0,   -1.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x7fffffff), {   0.0,    0.0,    1.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32_SNORM, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x80000001), {   0.0,    0.0,   -1.0,    1.0}},
+
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x00000000), {   0.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x7fffffff, 0x00000000, 0x00000000, 0x00000000), {   1.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x80000001, 0x00000000, 0x00000000, 0x00000000), {  -1.0,    0.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x7fffffff, 0x00000000, 0x00000000), {   0.0,    1.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x80000001, 0x00000000, 0x00000000), {   0.0,   -1.0,    0.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x7fffffff, 0x00000000), {   0.0,    0.0,    1.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x80000001, 0x00000000), {   0.0,    0.0,   -1.0,    0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x7fffffff), {   0.0,    0.0,    0.0,    1.0}},
+   {PIPE_FORMAT_R32G32B32A32_SNORM, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x80000001), {   0.0,    0.0,    0.0,   -1.0}},
+
+   {PIPE_FORMAT_R32_SSCALED, PACKED_1x32(0xffffffff), PACKED_1x32(0x00000000), {        0.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32_SSCALED, PACKED_1x32(0xffffffff), PACKED_1x32(0x01000000), { 16777216.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32_SSCALED, PACKED_1x32(0xffffffff), PACKED_1x32(0xff000000), {-16777216.0,         0.0,         0.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32_SSCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x00000000), {        0.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_SSCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x01000000, 0x00000000), { 16777216.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_SSCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0xff000000, 0x00000000), {-16777216.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_SSCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0x01000000), {        0.0,  16777216.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32_SSCALED, PACKED_2x32(0xffffffff, 0xffffffff), PACKED_2x32(0x00000000, 0xff000000), {        0.0, -16777216.0,         0.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x00000000), {        0.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x01000000, 0x00000000, 0x00000000), { 16777216.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0xff000000, 0x00000000, 0x00000000), {-16777216.0,         0.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x01000000, 0x00000000), {        0.0,  16777216.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0xff000000, 0x00000000), {        0.0, -16777216.0,         0.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0x01000000), {        0.0,         0.0,  16777216.0,   1.0}},
+   {PIPE_FORMAT_R32G32B32_SSCALED, PACKED_3x32(0xffffffff, 0xffffffff, 0xffffffff), PACKED_3x32(0x00000000, 0x00000000, 0xff000000), {        0.0,         0.0, -16777216.0,   1.0}},
+
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x00000000), {        0.0,         0.0,         0.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x01000000, 0x00000000, 0x00000000, 0x00000000), { 16777216.0,         0.0,         0.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0xff000000, 0x00000000, 0x00000000, 0x00000000), {-16777216.0,         0.0,         0.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x01000000, 0x00000000, 0x00000000), {        0.0,  16777216.0,         0.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0xff000000, 0x00000000, 0x00000000), {        0.0, -16777216.0,         0.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x01000000, 0x00000000), {        0.0,         0.0,  16777216.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0xff000000, 0x00000000), {        0.0,         0.0, -16777216.0,         0.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x01000000), {        0.0,         0.0,         0.0,  16777216.0}},
+   {PIPE_FORMAT_R32G32B32A32_SSCALED, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0xff000000), {        0.0,         0.0,         0.0, -16777216.0}},
 };
 
 
@@ -368,8 +583,17 @@ test_format_pack(const struct util_format_test_case *test)
          success = FALSE;
 
    if (!success) {
-      printf("FAILED: (%02x %02x %02x %02x) obtained\n", packed[0], packed[1], packed[2], packed[3]);
-      printf("        (%02x %02x %02x %02x) expected\n", test->packed[0], test->packed[1], test->packed[2], test->packed[3]);
+      /* TODO: print more than 4 bytes */
+      printf("FAILED: (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) obtained\n",
+             packed[0], packed[1], packed[2], packed[3],
+             packed[4], packed[5], packed[6], packed[7],
+             packed[8], packed[9], packed[10], packed[11],
+             packed[12], packed[13], packed[14], packed[15]);
+      printf("        (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) expected\n",
+             test->packed[0], test->packed[1], test->packed[2], test->packed[3],
+             test->packed[4], test->packed[5], test->packed[6], test->packed[7],
+             test->packed[8], test->packed[9], test->packed[10], test->packed[11],
+             test->packed[12], test->packed[13], test->packed[14], test->packed[15]);
    }
 
    return success;
