@@ -281,10 +281,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
-   if (intel->is_ironlake || intel->gen >= 6)
-       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
+   if (intel->gen >= 6)
+      c->prog_data.urb_entry_size = (attributes_in_vue + 4 + 7) / 8;
+   else if (intel->is_ironlake)
+      c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
-       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
+      c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
 
    c->prog_data.total_grf = reg;
 
