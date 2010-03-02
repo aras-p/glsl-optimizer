@@ -119,12 +119,13 @@ sp_tex_tile_cache_validate_texture(struct softpipe_tex_tile_cache *tc)
 }
 
 /**
- * Specify the texture to cache.
+ * Specify the sampler view to cache.
  */
 void
-sp_tex_tile_cache_set_texture(struct softpipe_tex_tile_cache *tc,
-                          struct pipe_texture *texture)
+sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
+                                   struct pipe_sampler_view *view)
 {
+   struct pipe_texture *texture = view ? view->texture : NULL;
    uint i;
 
    assert(!tc->transfer);
@@ -142,6 +143,13 @@ sp_tex_tile_cache_set_texture(struct softpipe_tex_tile_cache *tc,
 
          screen->tex_transfer_destroy(tc->tex_trans);
          tc->tex_trans = NULL;
+      }
+
+      if (view) {
+         tc->swizzle_r = view->swizzle_r;
+         tc->swizzle_g = view->swizzle_g;
+         tc->swizzle_b = view->swizzle_b;
+         tc->swizzle_a = view->swizzle_a;
       }
 
       /* mark as entries as invalid/empty */
@@ -257,11 +265,16 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
       }
 
       /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->tex_trans,
-                         addr.bits.x * TILE_SIZE, 
-                         addr.bits.y * TILE_SIZE,
-                         TILE_SIZE, TILE_SIZE,
-                         (float *) tile->data.color);
+      pipe_get_tile_swizzle(tc->tex_trans,
+                            addr.bits.x * TILE_SIZE, 
+                            addr.bits.y * TILE_SIZE,
+                            TILE_SIZE,
+                            TILE_SIZE,
+                            tc->swizzle_r,
+                            tc->swizzle_g,
+                            tc->swizzle_b,
+                            tc->swizzle_a,
+                            (float *) tile->data.color);
       tile->addr = addr;
    }
 

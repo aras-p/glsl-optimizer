@@ -166,10 +166,9 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
-      struct pipe_texture *texture = view ? view->texture : NULL;
 
       pipe_sampler_view_reference(&softpipe->sampler_views[i], view);
-      sp_tex_tile_cache_set_texture(softpipe->tex_cache[i], texture);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[i], view);
    }
 
    softpipe->num_sampler_views = num;
@@ -198,10 +197,9 @@ softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
-      struct pipe_texture *texture = view ? view->texture : NULL;
 
       pipe_sampler_view_reference(&softpipe->vertex_sampler_views[i], view);
-      sp_tex_tile_cache_set_texture(softpipe->vertex_tex_cache[i], texture);
+      sp_tex_tile_cache_set_sampler_view(softpipe->vertex_tex_cache[i], view);
    }
 
    softpipe->num_vertex_sampler_views = num;
