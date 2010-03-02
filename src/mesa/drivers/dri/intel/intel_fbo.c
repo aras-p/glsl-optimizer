@@ -222,6 +222,7 @@ intel_image_target_renderbuffer_storage(GLcontext *ctx,
       intel_region_release(&irb->region);
    intel_region_reference(&irb->region, image->region);
 
+   rb->InternalFormat = image->internal_format;
    rb->Width = image->region->width;
    rb->Height = image->region->height;
    rb->Format = image->format;
