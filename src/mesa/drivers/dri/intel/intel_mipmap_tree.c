@@ -238,11 +238,11 @@ int intel_miptree_pitch_align (struct intel_context *intel,
       pitch = ALIGN(pitch * mt->cpp, pitch_align);
 
 #ifdef I915
-      /* XXX: At least the i915 seems very upset when the pitch is a multiple
-       * of 1024 and sometimes 512 bytes - performance can drop by several
-       * times. Go to the next multiple of the required alignment for now.
+      /* Do a little adjustment to linear allocations so that we avoid
+       * hitting the same channel of memory for 2 different pages when
+       * reading a 2x2 subspan or doing bilinear filtering.
        */
-      if (!(pitch & 511) && 
+      if (tiling == I915_TILING_NONE && !(pitch & 511) &&
 	 (pitch + pitch_align) < (1 << ctx->Const.MaxTextureLevels))
 	 pitch += pitch_align;
 #endif
