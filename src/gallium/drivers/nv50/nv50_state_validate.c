@@ -25,12 +25,6 @@
 #include "nv50_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
-#define NV50_CBUF_FORMAT_CASE(n) \
-	case PIPE_FORMAT_##n: so_data(so, NV50TCL_RT_FORMAT_##n); break
-
-#define NV50_ZETA_FORMAT_CASE(n) \
-	case PIPE_FORMAT_##n: so_data(so, NV50TCL_ZETA_FORMAT_##n); break
-
 static void
 nv50_state_validate_fb(struct nv50_context *nv50)
 {
@@ -71,14 +65,30 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_reloc (so, bo, fb->cbufs[i]->offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->cbufs[i]->format) {
-		NV50_CBUF_FORMAT_CASE(B8G8R8A8_UNORM);
-		NV50_CBUF_FORMAT_CASE(B8G8R8X8_UNORM);
-		NV50_CBUF_FORMAT_CASE(B5G6R5_UNORM);
-		NV50_CBUF_FORMAT_CASE(R16G16B16A16_SNORM);
-		NV50_CBUF_FORMAT_CASE(R16G16B16A16_UNORM);
-		NV50_CBUF_FORMAT_CASE(R32G32B32A32_FLOAT);
-		NV50_CBUF_FORMAT_CASE(R16G16_SNORM);
-		NV50_CBUF_FORMAT_CASE(R16G16_UNORM);
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_A8R8G8B8_UNORM);
+			break;
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_X8R8G8B8_UNORM);
+			break;
+		case PIPE_FORMAT_B5G6R5_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_R5G6B5_UNORM);
+			break;
+		case PIPE_FORMAT_R16G16B16A16_SNORM:
+			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_SNORM);
+			break;
+		case PIPE_FORMAT_R16G16B16A16_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_UNORM);
+			break;
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+			so_data(so, NV50TCL_RT_FORMAT_R32G32B32A32_FLOAT);
+			break;
+		case PIPE_FORMAT_R16G16_SNORM:
+			so_data(so, NV50TCL_RT_FORMAT_R16G16_SNORM);
+			break;
+		case PIPE_FORMAT_R16G16_UNORM:
+			so_data(so, NV50TCL_RT_FORMAT_R16G16_UNORM);
+			break;
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
 			            util_format_name(fb->cbufs[i]->format));
@@ -112,10 +122,18 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		so_reloc (so, bo, fb->zsbuf->offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->zsbuf->format) {
-		NV50_ZETA_FORMAT_CASE(Z24S8_UNORM);
-		NV50_ZETA_FORMAT_CASE(Z24X8_UNORM);
-		NV50_ZETA_FORMAT_CASE(S8Z24_UNORM);
-		NV50_ZETA_FORMAT_CASE(Z32_FLOAT);
+		case PIPE_FORMAT_Z24S8_UNORM:
+			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
+			break;
+		case PIPE_FORMAT_Z24X8_UNORM:
+			so_data(so, NV50TCL_ZETA_FORMAT_X8Z24_UNORM);
+			break;
+		case PIPE_FORMAT_S8Z24_UNORM:
+			so_data(so, NV50TCL_ZETA_FORMAT_Z24S8_UNORM);
+			break;
+		case PIPE_FORMAT_Z32_FLOAT:
+			so_data(so, NV50TCL_ZETA_FORMAT_Z32_FLOAT);
+			break;
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",
 			            util_format_name(fb->zsbuf->format));
