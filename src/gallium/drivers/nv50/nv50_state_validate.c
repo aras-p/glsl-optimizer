@@ -405,10 +405,10 @@ nv50_state_flush_notify(struct nouveau_channel *chan)
 }
 
 boolean
-nv50_state_validate(struct nv50_context *nv50, unsigned nr_dwords)
+nv50_state_validate(struct nv50_context *nv50, unsigned wait_dwords)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
-	unsigned nr_relocs = 0;
+	unsigned nr_relocs = 128, nr_dwords = wait_dwords + 128;
 	int ret, i;
 
 	for (i = 0; i < validate_list_len; i++) {
@@ -460,6 +460,12 @@ nv50_state_validate(struct nv50_context *nv50, unsigned nr_dwords)
 		so_emit(chan, nv50->state.hw[i]);
 	}
 
+	/* Yes, really, we need to do this.  If a buffer that is referenced
+	 * on the hardware isn't part of changed state above, without doing
+	 * this the kernel is given no clue that the buffer is being used
+	 * still.  This can cause all sorts of fun issues.
+	 */
+	nv50_state_flush_notify(chan);
 	return TRUE;
 }
 
