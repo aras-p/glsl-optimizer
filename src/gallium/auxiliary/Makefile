@@ -158,7 +158,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_type.c
 
 GALLIVM_CPP_SOURCES = \
-        gallivm/lp_bld_misc.cpp
+        gallivm/lp_bld_init.cpp
 
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \

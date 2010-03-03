@@ -26,8 +26,8 @@
  **************************************************************************/
 
 
-#ifndef LP_BLD_MISC_H
-#define LP_BLD_MISC_H
+#ifndef LP_BLD_INIT_H
+#define LP_BLD_INIT_H
 
 
 #include "llvm/Config/config.h"
@@ -53,4 +53,4 @@ LLVMInitializeNativeTarget(void);
 #endif
 
 
-#endif /* !LP_BLD_MISC_H */
+#endif /* !LP_BLD_INIT_H */

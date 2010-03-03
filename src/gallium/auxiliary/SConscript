@@ -192,7 +192,7 @@ if drawllvm:
     'gallivm/lp_bld_interp.c',
     'gallivm/lp_bld_intr.c',
     'gallivm/lp_bld_logic.c',
-    'gallivm/lp_bld_misc.cpp',
+    'gallivm/lp_bld_init.cpp',
     'gallivm/lp_bld_pack.c',
     'gallivm/lp_bld_sample.c',
     'gallivm/lp_bld_sample_soa.c',

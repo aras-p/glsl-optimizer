@@ -28,7 +28,7 @@
 
 #include "pipe/p_config.h"
 
-#include "lp_bld_misc.h"
+#include "lp_bld_init.h"
 
 
 #ifndef LLVM_NATIVE_ARCH
