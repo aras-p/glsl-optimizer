@@ -290,8 +290,7 @@ nv50_state_flush_notify(struct nouveau_channel *chan)
 {
 	struct nv50_context *nv50 = chan->user_private;
 
-	if (nv50->state.tic_upload && !(nv50->dirty & NV50_NEW_TEXTURE))
-		so_emit(chan, nv50->state.tic_upload);
+	nv50_tex_relocs(nv50);
 
 	so_emit_reloc_markers(chan, nv50->state.fb);
 	so_emit_reloc_markers(chan, nv50->state.vertprog);

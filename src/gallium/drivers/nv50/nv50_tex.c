@@ -24,6 +24,7 @@
 #include "nv50_texture.h"
 
 #include "nouveau/nouveau_stateobj.h"
+#include "nouveau/nouveau_reloc.h"
 
 #include "util/u_format.h"
 
@@ -192,6 +193,35 @@ nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
 
 	nv50->state.miptree_nr[p] = nv50->miptree_nr[p];
 	return TRUE;
+}
+
+void
+nv50_tex_relocs(struct nv50_context *nv50)
+{
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
+	int p, unit;
+
+	p = PIPE_SHADER_FRAGMENT;
+	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
+		if (!nv50->miptree[p][unit])
+			continue;
+		nouveau_reloc_emit(chan, nv50->screen->tic,
+				   ((p * 32) + unit) * 32, NULL,
+				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+				   NOUVEAU_BO_RD, 0, 0);
+	}
+
+	p = PIPE_SHADER_VERTEX;
+	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
+		if (!nv50->miptree[p][unit])
+			continue;
+		nouveau_reloc_emit(chan, nv50->screen->tic,
+				   ((p * 32) + unit) * 32, NULL,
+				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+				   NOUVEAU_BO_RD, 0, 0);
+	}
 }
 
 void

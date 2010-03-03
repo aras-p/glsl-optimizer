@@ -249,6 +249,7 @@ extern void nv50_so_init_sifc(struct nv50_context *nv50,
 			      unsigned offset, unsigned size);
 
 /* nv50_tex.c */
+extern void nv50_tex_relocs(struct nv50_context *);
 extern void nv50_tex_validate(struct nv50_context *);
 
 /* nv50_transfer.c */
