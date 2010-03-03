@@ -226,6 +226,31 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    return GL_TRUE;
 }
 
+GLboolean
+intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
+				    drm_intel_bo *buffer,
+				    uint32_t read_domains, uint32_t write_domain,
+				    uint32_t delta)
+{
+   int ret;
+
+   if (batch->ptr - batch->map > batch->buf->size)
+    printf ("bad relocation ptr %p map %p offset %d size %lu\n",
+	    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
+   ret = drm_intel_bo_emit_reloc_fence(batch->buf, batch->ptr - batch->map,
+				       buffer, delta,
+				       read_domains, write_domain);
+
+   /*
+    * Using the old buffer offset, write in what the right data would
+    * be, in case the buffer doesn't move and we can short-circuit the
+    * relocation processing in the kernel
+    */
+   intel_batchbuffer_emit_dword (batch, buffer->offset + delta);
+
+   return GL_TRUE;
+}
+
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
                        const void *data, GLuint bytes)

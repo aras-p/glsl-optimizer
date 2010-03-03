@@ -64,6 +64,11 @@ GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
+GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
+					      drm_intel_bo *buffer,
+					      uint32_t read_domains,
+					      uint32_t write_domain,
+					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch);
 
 /* Inline functions - might actually be better off with these
@@ -126,6 +131,11 @@ static INLINE uint32_t float_as_int(float f)
    assert((unsigned) (delta) < buf->size);				\
    intel_batchbuffer_emit_reloc(intel->batch, buf,			\
 				read_domains, write_domain, delta);	\
+} while (0)
+#define OUT_RELOC_FENCED(buf, read_domains, write_domain, delta) do {	\
+   assert((unsigned) (delta) < buf->size);				\
+   intel_batchbuffer_emit_reloc_fenced(intel->batch, buf,		\
+				       read_domains, write_domain, delta); \
 } while (0)
 
 #define ADVANCE_BATCH() do {						\

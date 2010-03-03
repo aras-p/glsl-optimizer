@@ -426,6 +426,8 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    else
       intelScreen->kernel_exec_fencing = GL_FALSE;
 
+   drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
+
    intelScreen->named_regions = _mesa_NewHashTable();
 
    return GL_TRUE;
