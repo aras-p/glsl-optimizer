@@ -139,7 +139,7 @@ _glthread_InitTSD(_glthread_TSD *tsd)
 {
    tsd->key = TlsAlloc();
    if (tsd->key == TLS_OUT_OF_INDEXES) {
-      perror("Mesa:_glthread_InitTSD");
+      perror(INIT_TSD_ERROR);
       InsteadOf_exit(-1);
    }
    tsd->initMagic = INIT_MAGIC;
@@ -176,8 +176,8 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
       _glthread_InitTSD(tsd);
    }
    if (TlsSetValue(tsd->key, ptr) == 0) {
-	  perror("Mesa:_glthread_SetTSD");
-	  InsteadOf_exit(-1);
+      perror(SET_TSD_ERROR);
+      InsteadOf_exit(-1);
    }
 }
 
