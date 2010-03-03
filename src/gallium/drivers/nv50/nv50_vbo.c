@@ -425,7 +425,8 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 	if (!NV50_USING_LOATHED_EDGEFLAG(nv50))
 		nv50_upload_user_vbufs(nv50);
 
-	nv50_state_validate(nv50);
+	if (!nv50_state_validate(nv50, 0))
+		return;
 
 	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
 
@@ -477,7 +478,8 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	boolean ret;
 
-	nv50_state_validate(nv50);
+	if (!nv50_state_validate(nv50, 11))
+		return;
 
 	BEGIN_RING(chan, tesla, 0x142c, 1);
 	OUT_RING  (chan, 0);
@@ -633,7 +635,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	if (!NV50_USING_LOATHED_EDGEFLAG(nv50))
 		nv50_upload_user_vbufs(nv50);
 
-	nv50_state_validate(nv50);
+	if (!nv50_state_validate(nv50, 0))
+		return;
 
 	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
 
@@ -677,7 +680,8 @@ nv50_draw_elements(struct pipe_context *pipe,
 	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 	
-	nv50_state_validate(nv50);
+	if (!nv50_state_validate(nv50, 14))
+		return;
 
 	BEGIN_RING(chan, tesla, 0x142c, 1);
 	OUT_RING  (chan, 0);

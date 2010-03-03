@@ -405,19 +405,11 @@ nv50_state_flush_notify(struct nouveau_channel *chan)
 }
 
 boolean
-nv50_state_validate(struct nv50_context *nv50)
+nv50_state_validate(struct nv50_context *nv50, unsigned nr_dwords)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
-	int i;
-
-	if (nv50->screen->cur_ctx != nv50) {
-		for (i = 0; i < validate_list_len; i++) {
-			if (nv50->state.hw[i])
-				nv50->state.hw_dirty |= (1 << i);
-		}
-
-		nv50->screen->cur_ctx = nv50;
-	}
+	unsigned nr_relocs = 0;
+	int ret, i;
 
 	for (i = 0; i < validate_list_len; i++) {
 		struct state_validate *validate = &validate_list[i];
@@ -430,11 +422,36 @@ nv50_state_validate(struct nv50_context *nv50)
 		if (!so)
 			continue;
 
+		nr_dwords += (so->total + so->cur);
+		nr_relocs += so->cur_reloc;
+
 		so_ref(so, &nv50->state.hw[i]);
 		so_ref(NULL, &so);
 		nv50->state.hw_dirty |= (1 << i);
 	}
 	nv50->dirty = 0;
+
+	if (nv50->screen->cur_ctx != nv50) {
+		for (i = 0; i < validate_list_len; i++) {
+			if (!nv50->state.hw[i] ||
+			    (nv50->state.hw_dirty & (1 << i)))
+				continue;
+
+			nr_dwords += (nv50->state.hw[i]->total +
+				      nv50->state.hw[i]->cur);
+			nr_relocs += nv50->state.hw[i]->cur_reloc;
+			nv50->state.hw_dirty |= (1 << i);
+		}
+
+		nv50->screen->cur_ctx = nv50;
+	}
+
+	ret = MARK_RING(chan, nr_dwords, nr_relocs);
+	if (ret) {
+		debug_printf("MARK_RING(%d, %d) failed: %d\n",
+			     nr_dwords, nr_relocs, ret);
+		return FALSE;
+	}
 
 	while (nv50->state.hw_dirty) {
 		i = ffs(nv50->state.hw_dirty) - 1;
