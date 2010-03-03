@@ -329,7 +329,6 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_A8B8G8R8_SRGB:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
         case PIPE_FORMAT_X8B8G8R8_SRGB:
-        case PIPE_FORMAT_R8G8B8X8_SNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
         case PIPE_FORMAT_R10G10B10A2_UNORM:
@@ -466,7 +465,6 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* ABGR 32-bit outputs. */
-        case PIPE_FORMAT_R8G8B8X8_SNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
         /* RGBA high precision outputs (same swizzles as ABGR low precision) */
