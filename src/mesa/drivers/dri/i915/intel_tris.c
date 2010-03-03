@@ -1177,6 +1177,8 @@ static char *fallbackStrings[] = {
    [17] = "Logic op",
    [18] = "Smooth polygon",
    [19] = "Smooth point",
+   [20] = "point sprite coord origin",
+   [21] = "depth/color drawing offset",
 };
 
 
