@@ -47,9 +47,6 @@
 #include "i915_drm.h"
 
 #define DRI_CONF_TEXTURE_TILING(def) \
-	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\
-		DRI_CONF_DESC(en, "Enable texture tiling")	\
-	DRI_CONF_OPT_END					\
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -65,11 +62,9 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
 
-#ifdef I915
-     DRI_CONF_TEXTURE_TILING(false)
-#else
-     DRI_CONF_TEXTURE_TILING(true)
-#endif
+      DRI_CONF_OPT_BEGIN(texture_tiling, bool, true)
+	 DRI_CONF_DESC(en, "Enable texture tiling")
+      DRI_CONF_OPT_END
 
       DRI_CONF_OPT_BEGIN(early_z, bool, false)
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
