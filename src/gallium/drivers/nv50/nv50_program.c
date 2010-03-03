@@ -4286,6 +4286,9 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
+	if (!(nv50->dirty & NV50_NEW_VERTPROG))
+		return NULL;
+
 	so = so_new(5, 7, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
@@ -4319,6 +4322,9 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
+
+	if (!(nv50->dirty & NV50_NEW_FRAGPROG))
+		return NULL;
 
 	so = so_new(6, 7, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
@@ -4354,6 +4360,9 @@ nv50_geomprog_validate(struct nv50_context *nv50)
 
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
+
+	if (!(nv50->dirty & NV50_NEW_GEOMPROG))
+		return NULL;
 
 	so = so_new(6, 7, 2);
 	so_method(so, tesla, NV50TCL_GP_ADDRESS_HIGH, 2);
