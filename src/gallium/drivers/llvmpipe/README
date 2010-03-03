@@ -49,8 +49,6 @@ To do (probably by this order):
 Requirements
 ============
 
- - Linux
- 
  - A x86 or amd64 processor.  64bit mode is preferred.
  
    Support for sse2 is strongly encouraged.  Support for ssse3, and sse4.1 will
