@@ -98,6 +98,10 @@ struct lp_rast_shader_inputs {
  * Objects of this type are put into the setup_context::data buffer.
  */
 struct lp_rast_triangle {
+#ifdef DEBUG
+   float v[3][2];
+#endif
+
    /* one-pixel sized trivial accept offsets for each plane */
    int ei1;                   
    int ei2;
