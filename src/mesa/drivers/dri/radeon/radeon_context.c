@@ -198,6 +198,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.fallback = radeonFallback;
    radeon->vtbl.free_context = r100_vtbl_free_context;
    radeon->vtbl.emit_query_finish = r100_emit_query_finish;
+   radeon->vtbl.check_blit = r100_check_blit;
    radeon->vtbl.blit = r100_blit;
 }
 

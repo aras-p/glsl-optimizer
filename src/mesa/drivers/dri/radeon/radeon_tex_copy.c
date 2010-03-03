@@ -46,6 +46,12 @@ do_copy_texsubimage(GLcontext *ctx,
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     struct radeon_renderbuffer *rrb;
+    unsigned src_bpp;
+    unsigned dst_bpp;
+    gl_format src_mesaformat;
+    gl_format dst_mesaformat;
+    unsigned src_width;
+    unsigned dst_width;
 
     if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
         rrb = radeon_get_depthbuffer(radeon);
@@ -76,12 +82,40 @@ do_copy_texsubimage(GLcontext *ctx,
 
     }
 
+    src_mesaformat = rrb->base.Format;
+    dst_mesaformat = timg->base.TexFormat;
+    src_width = rrb->base.Width;
+    dst_width = timg->base.Width;
+    src_bpp = _mesa_get_format_bytes(src_mesaformat);
+    dst_bpp = _mesa_get_format_bytes(dst_mesaformat);
+    if (!radeon->vtbl.check_blit(dst_mesaformat)) {
+	    if (src_bpp != dst_bpp)
+		    return GL_FALSE;
+
+	    switch (dst_bpp) {
+	    case 2:
+		    src_mesaformat = MESA_FORMAT_RGB565;
+		    dst_mesaformat = MESA_FORMAT_RGB565;
+		    break;
+	    case 4:
+		    src_mesaformat = MESA_FORMAT_ARGB8888;
+		    dst_mesaformat = MESA_FORMAT_ARGB8888;
+		    break;
+	    case 1:
+		    src_mesaformat = MESA_FORMAT_A8;
+		    dst_mesaformat = MESA_FORMAT_A8;
+		    break;
+	    default:
+		    return GL_FALSE;
+	    }
+    }
+
     /* blit from src buffer to texture */
-    return radeon->vtbl.blit(ctx, rrb->bo, src_offset, rrb->base.Format, rrb->pitch/rrb->cpp,
-                             rrb->base.Width, rrb->base.Height, x, y,
-                             timg->mt->bo, dst_offset, timg->base.TexFormat,
-                             timg->mt->levels[level].rowstride / _mesa_get_format_bytes(timg->base.TexFormat),
-                             timg->base.Width, timg->base.Height,
+    return radeon->vtbl.blit(ctx, rrb->bo, src_offset, src_mesaformat, rrb->pitch/rrb->cpp,
+                             src_width, rrb->base.Height, x, y,
+                             timg->mt->bo, dst_offset, dst_mesaformat,
+                             timg->mt->levels[level].rowstride / dst_bpp,
+                             dst_width, timg->base.Height,
                              dstx, dsty, width, height, 1);
 }
 

@@ -33,7 +33,7 @@
 #include "r600_cmdbuf.h"
 
 /* common formats supported as both textures and render targets */
-static unsigned is_blit_supported(gl_format mesa_format)
+unsigned r600_check_blit(gl_format mesa_format)
 {
     switch (mesa_format) {
     case MESA_FORMAT_RGBA8888:
@@ -1582,7 +1582,7 @@ unsigned r600_blit(GLcontext *ctx,
     context_t *context = R700_CONTEXT(ctx);
     int id = 0;
 
-    if (!is_blit_supported(dst_mesaformat))
+    if (!r600_check_blit(dst_mesaformat))
         return GL_FALSE;
 
     if (src_bo == dst_bo) {

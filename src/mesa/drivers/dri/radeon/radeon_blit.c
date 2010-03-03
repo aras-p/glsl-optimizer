@@ -38,7 +38,7 @@ static inline uint32_t cmdpacket0(struct radeon_screen *rscrn,
 }
 
 /* common formats supported as both textures and render targets */
-static unsigned is_blit_supported(gl_format mesa_format)
+unsigned r100_check_blit(gl_format mesa_format)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
@@ -333,7 +333,7 @@ unsigned r100_blit(GLcontext *ctx,
 {
     struct r100_context *r100 = R100_CONTEXT(ctx);
 
-    if (!is_blit_supported(dst_mesaformat))
+    if (!r100_check_blit(dst_mesaformat))
         return GL_FALSE;
 
     /* Make sure that colorbuffer has even width - hw limitation */

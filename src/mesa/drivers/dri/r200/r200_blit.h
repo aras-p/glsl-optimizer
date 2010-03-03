@@ -30,6 +30,8 @@
 
 void r200_blit_init(struct r200_context *r200);
 
+unsigned r200_check_blit(gl_format mesa_format);
+
 unsigned r200_blit(GLcontext *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,

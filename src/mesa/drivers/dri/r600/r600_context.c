@@ -236,6 +236,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
+	radeon->vtbl.check_blit = r600_check_blit;
 	radeon->vtbl.blit = r600_blit;
 }
 

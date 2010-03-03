@@ -498,7 +498,7 @@ static void emit_cb_setup(struct r300_context *r300,
     END_BATCH();
 }
 
-static unsigned is_blit_supported(gl_format dst_format)
+unsigned r300_check_blit(gl_format dst_format)
 {
     switch (dst_format) {
         case MESA_FORMAT_RGB565:
@@ -566,7 +566,7 @@ unsigned r300_blit(GLcontext *ctx,
 {
     r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-    if (!is_blit_supported(dst_mesaformat))
+    if (!r300_check_blit(dst_mesaformat))
         return 0;
 
     /* Make sure that colorbuffer has even width - hw limitation */
