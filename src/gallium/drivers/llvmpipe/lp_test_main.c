@@ -380,8 +380,7 @@ int main(int argc, char **argv)
          n = atoi(argv[i]);
    }
 
-   LLVMLinkInJIT();
-   LLVMInitializeNativeTarget();
+   lp_build_init();
 
    util_cpu_detect();
 
