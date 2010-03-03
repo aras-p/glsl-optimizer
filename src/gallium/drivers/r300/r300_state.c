@@ -43,6 +43,12 @@
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
 
+#define UPDATE_STATE(cso, atom) \
+    if (cso != atom.state) { \
+        atom.state = cso;    \
+        atom.dirty = TRUE;   \
+    }
+
 static boolean blend_discard_if_src_alpha_0(unsigned srcRGB, unsigned srcA,
                                             unsigned dstRGB, unsigned dstA)
 {
@@ -328,8 +334,7 @@ static void r300_bind_blend_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    r300->blend_state.state = state;
-    r300->blend_state.dirty = TRUE;
+    UPDATE_STATE(state, r300->blend_state);
 }
 
 /* Free blend state. */
@@ -478,11 +483,8 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
                                 void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen* r300screen = r300_screen(pipe->screen);
 
-    r300->dsa_state.state = state;
-    r300->dsa_state.size = r300screen->caps->is_r500 ? 8 : 6;
-    r300->dsa_state.dirty = TRUE;
+    UPDATE_STATE(state, r300->dsa_state);
 }
 
 /* Free DSA state. */
@@ -813,13 +815,13 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (rs) {
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
-        r300->rs_state.dirty = TRUE;
     } else {
         r300->polygon_offset_enabled = FALSE;
     }
 
-    r300->rs_state.state = rs;
+    UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = 17 + (r300->polygon_offset_enabled ? 5 : 0);
+
     /* XXX Why is this still needed, dammit!? */
     r300->scissor_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
@@ -1114,9 +1116,8 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
             r300_translate_vertex_shader(r300, vs);
         }
 
-        r300->vs_state.state = vs;
+        UPDATE_STATE(shader, r300->vs_state);
         r300->vs_state.size = vs->code.length + 9;
-        r300->vs_state.dirty = TRUE;
 
         r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
         r300->vap_output_state.dirty = TRUE;
