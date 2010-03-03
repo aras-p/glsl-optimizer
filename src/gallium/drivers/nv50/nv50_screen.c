@@ -202,28 +202,6 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	FREE(screen);
 }
 
-static int
-nv50_pre_pipebuffer_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
-	unsigned usage)
-{
-	struct nv50_screen *screen = nv50_screen(pscreen);
-	struct nv50_context *ctx = screen->cur_ctx;
-
-	if (!(pb->usage & PIPE_BUFFER_USAGE_VERTEX))
-		return 0;
-
-	/* Our vtxbuf got mapped, it can no longer be considered part of current
-	 * state, remove it to avoid emitting reloc markers.
-	 */
-	if (ctx && ctx->state.hw[17] && so_bo_is_reloc(ctx->state.hw[17],
-			nouveau_bo(pb))) {
-		so_ref(NULL, &ctx->state.hw[17]);
-		ctx->dirty |= NV50_NEW_ARRAYS;
-	}
-
-	return 0;
-}
-
 struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
@@ -252,7 +230,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_paramf = nv50_screen_get_paramf;
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
 	pscreen->context_create = nv50_create;
-	screen->base.pre_pipebuffer_map_callback = nv50_pre_pipebuffer_map;
 
 	nv50_screen_init_miptree_functions(pscreen);
 	nv50_transfer_init_screen_functions(pscreen);
