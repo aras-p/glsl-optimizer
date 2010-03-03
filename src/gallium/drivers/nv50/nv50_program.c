@@ -4270,7 +4270,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	FREE(up);
 }
 
-void
+struct nouveau_stateobj *
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4301,11 +4301,10 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_VP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
-	so_ref(so, &nv50->state.vertprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
-void
+struct nouveau_stateobj *
 nv50_fragprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4337,11 +4336,10 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.regs[3]);
 	so_method(so, tesla, NV50TCL_FP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
-	so_ref(so, &nv50->state.fragprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
-void
+struct nouveau_stateobj *
 nv50_geomprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4373,8 +4371,7 @@ nv50_geomprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.vert_count);
 	so_method(so, tesla, NV50TCL_GP_START_ID, 1);
 	so_data  (so, 0);
-	so_ref(so, &nv50->state.geomprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
 static uint32_t
@@ -4454,7 +4451,7 @@ nv50_vec4_map(uint32_t *map32, int mid, uint8_t zval, uint32_t lin[4],
 	return mid;
 }
 
-void
+struct nouveau_stateobj *
 nv50_fp_linkage_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4580,8 +4577,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_GP_ENABLE, 1);
 	so_data  (so, (vp->type == PIPE_SHADER_GEOMETRY) ? 1 : 0);
 
-	so_ref(so, &nv50->state.fp_linkage);
-	so_ref(NULL, &so);
+	return so;
 }
 
 static int
@@ -4615,7 +4611,7 @@ construct_vp_gp_mapping(uint32_t *map32, int m,
 	return m;
 }
 
-void
+struct nouveau_stateobj *
 nv50_gp_linkage_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4625,10 +4621,8 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 	uint32_t map[16];
 	int m = 0;
 
-	if (!gp) {
-		so_ref(NULL, &nv50->state.gp_linkage);
-		return;
-	}
+	if (!gp)
+		return NULL;
 	memset(map, 0, sizeof(map));
 
 	m = construct_vp_gp_mapping(map, m, vp, gp);
@@ -4646,8 +4640,7 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), m);
 	so_datap (so, map, m);
 
-	so_ref(so, &nv50->state.gp_linkage);
-	so_ref(NULL, &so);
+	return so;
 }
 
 void

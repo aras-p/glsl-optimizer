@@ -123,27 +123,11 @@ nv50_surface(struct pipe_surface *pt)
 }
 
 struct nv50_state {
-	unsigned dirty;
+	struct nouveau_stateobj *hw[64];
+	uint64_t hw_dirty;
 
-	struct nouveau_stateobj *fb;
-	struct nouveau_stateobj *blend;
-	struct nouveau_stateobj *blend_colour;
-	struct nouveau_stateobj *zsa;
-	struct nouveau_stateobj *stencil_ref;
-	struct nouveau_stateobj *rast;
-	struct nouveau_stateobj *stipple;
-	struct nouveau_stateobj *scissor;
 	unsigned scissor_enabled;
-	struct nouveau_stateobj *viewport;
-	struct nouveau_stateobj *tsc_upload;
-	struct nouveau_stateobj *tic_upload;
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
-	struct nouveau_stateobj *vertprog;
-	struct nouveau_stateobj *fragprog;
-	struct nouveau_stateobj *geomprog;
-	struct nouveau_stateobj *fp_linkage;
-	struct nouveau_stateobj *gp_linkage;
-	struct nouveau_stateobj *vtxfmt;
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
 	struct nouveau_stateobj *instbuf;
@@ -224,18 +208,23 @@ extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
 					 unsigned startInstance,
 					 unsigned instanceCount);
 extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
-extern void nv50_vbo_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_clear.c */
 extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil);
 
 /* nv50_program.c */
-extern void nv50_vertprog_validate(struct nv50_context *nv50);
-extern void nv50_fragprog_validate(struct nv50_context *nv50);
-extern void nv50_geomprog_validate(struct nv50_context *nv50);
-extern void nv50_fp_linkage_validate(struct nv50_context *nv50);
-extern void nv50_gp_linkage_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *
+nv50_vertprog_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *
+nv50_fragprog_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *
+nv50_geomprog_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *
+nv50_fp_linkage_validate(struct nv50_context *nv50);
+extern struct nouveau_stateobj *
+nv50_gp_linkage_validate(struct nv50_context *nv50);
 extern void nv50_program_destroy(struct nv50_context *nv50,
 				 struct nv50_program *p);
 
@@ -250,7 +239,7 @@ extern void nv50_so_init_sifc(struct nv50_context *nv50,
 
 /* nv50_tex.c */
 extern void nv50_tex_relocs(struct nv50_context *);
-extern void nv50_tex_validate(struct nv50_context *);
+extern struct nouveau_stateobj *nv50_tex_validate(struct nv50_context *);
 
 /* nv50_transfer.c */
 extern void

@@ -224,7 +224,7 @@ nv50_tex_relocs(struct nv50_context *nv50)
 	}
 }
 
-void
+struct nouveau_stateobj *
 nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_stateobj *so;
@@ -247,12 +247,11 @@ nv50_tex_validate(struct nv50_context *nv50)
 		so_ref(NULL, &so);
 
 		NOUVEAU_ERR("failed tex validate\n");
-		return;
+		return NULL;
 	}
 
 	so_method(so, tesla, 0x1330, 1); /* flush TIC */
 	so_data  (so, 0);
 
-	so_ref(so, &nv50->state.tic_upload);
-	so_ref(NULL, &so);
+	return so;
 }

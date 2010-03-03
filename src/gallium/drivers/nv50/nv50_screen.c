@@ -215,9 +215,9 @@ nv50_pre_pipebuffer_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 	/* Our vtxbuf got mapped, it can no longer be considered part of current
 	 * state, remove it to avoid emitting reloc markers.
 	 */
-	if (ctx && ctx->state.vtxbuf && so_bo_is_reloc(ctx->state.vtxbuf,
+	if (ctx && ctx->state.hw[17] && so_bo_is_reloc(ctx->state.hw[17],
 			nouveau_bo(pb))) {
-		so_ref(NULL, &ctx->state.vtxbuf);
+		so_ref(NULL, &ctx->state.hw[17]);
 		ctx->dirty |= NV50_NEW_ARRAYS;
 	}
 

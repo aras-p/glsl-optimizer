@@ -792,7 +792,7 @@ nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso)
 	}
 }
 
-void
+struct nouveau_stateobj *
 nv50_vbo_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -801,7 +801,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	/* don't validate if Gallium took away our buffers */
 	if (nv50->vtxbuf_nr == 0)
-		return;
+		return NULL;
 	nv50->vbo_fifo = 0;
 
 	for (i = 0; i < nv50->vtxbuf_nr; ++i)
@@ -875,12 +875,11 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	}
 	nv50->state.vtxelt_nr = nv50->vtxelt->num_elements;
 
-	so_ref (vtxfmt, &nv50->state.vtxfmt);
 	so_ref (vtxbuf, &nv50->state.vtxbuf);
 	so_ref (vtxattr, &nv50->state.vtxattr);
 	so_ref (NULL, &vtxbuf);
-	so_ref (NULL, &vtxfmt);
 	so_ref (NULL, &vtxattr);
+	return vtxfmt;
 }
 
 typedef void (*pfn_push)(struct nouveau_channel *, void *);
