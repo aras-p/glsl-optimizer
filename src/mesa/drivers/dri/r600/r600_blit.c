@@ -1532,14 +1532,16 @@ static GLboolean validate_buffers(context_t *rmesa,
                                   struct radeon_bo *dst_bo)
 {
     int ret;
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
 
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
+    ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
+					src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
+    if (ret)
+        return GL_FALSE;
 
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      rmesa->blit_bo, RADEON_GEM_DOMAIN_GTT, 0);
+    ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
+    if (ret)
+        return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
 					rmesa->blit_bo,
