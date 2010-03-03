@@ -639,9 +639,6 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
    }
       break;
    default:
-      samplers[0] = &paint->pattern.sampler; /* dummy */
-      textures[0] = 0;
-      return 0;
       break;
    }
    return 0;
