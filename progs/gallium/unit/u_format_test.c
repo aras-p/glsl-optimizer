@@ -571,7 +571,7 @@ test_cases[] =
 
 
 static boolean
-test_format_unpack(const struct util_format_test_case *test)
+test_format_unpack_4f(const struct util_format_test_case *test)
 {
    float unpacked[4];
    unsigned i;
@@ -594,7 +594,7 @@ test_format_unpack(const struct util_format_test_case *test)
 
 
 static boolean
-test_format_pack(const struct util_format_test_case *test)
+test_format_pack_4f(const struct util_format_test_case *test)
 {
    uint8_t packed[MAX_PACKED_BYTES];
    unsigned i;
@@ -627,8 +627,85 @@ test_format_pack(const struct util_format_test_case *test)
 }
 
 
+static void
+convert_4f_to_4ub(uint8_t *dst, const double *src)
+{
+   unsigned i;
+
+   for (i = 0; i < 4; ++i)
+      dst[i] = CLAMP(src[i], 0.0, 1.0) * 255.0;
+}
+
+
 static boolean
-test_all(void)
+test_format_unpack_4ub(const struct util_format_test_case *test)
+{
+   uint8_t unpacked[4];
+   uint8_t expected[4];
+   unsigned i;
+   boolean success;
+
+   util_format_unpack_4ub(test->format, unpacked, test->packed);
+
+   convert_4f_to_4ub(expected, test->unpacked);
+
+   success = TRUE;
+   for (i = 0; i < 4; ++i)
+      if (expected[i] != unpacked[i])
+         success = FALSE;
+
+   if (!success) {
+      printf("FAILED: (0x%02x 0x%02x 0x%02x 0x%02x) obtained\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+      printf("        (0x%02x 0x%02x 0x%02x 0x%02x) expected\n", expected[0], expected[1], expected[2], expected[3]);
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_pack_4ub(const struct util_format_test_case *test)
+{
+   uint8_t unpacked[4];
+   uint8_t packed[MAX_PACKED_BYTES];
+   unsigned i;
+   boolean success;
+
+   convert_4f_to_4ub(unpacked, test->unpacked);
+
+   memset(packed, 0, sizeof packed);
+
+   util_format_pack_4ub(test->format, packed, unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+
+   success = TRUE;
+   for (i = 0; i < MAX_PACKED_BYTES; ++i)
+      if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
+         success = FALSE;
+
+   if (!success) {
+      /* TODO: print more than 4 bytes */
+      printf("FAILED: (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) obtained\n",
+             packed[0], packed[1], packed[2], packed[3],
+             packed[4], packed[5], packed[6], packed[7],
+             packed[8], packed[9], packed[10], packed[11],
+             packed[12], packed[13], packed[14], packed[15]);
+      printf("        (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) expected\n",
+             test->packed[0], test->packed[1], test->packed[2], test->packed[3],
+             test->packed[4], test->packed[5], test->packed[6], test->packed[7],
+             test->packed[8], test->packed[9], test->packed[10], test->packed[11],
+             test->packed[12], test->packed[13], test->packed[14], test->packed[15]);
+   }
+
+   return success;
+}
+
+
+typedef boolean
+(*test_func_t)(const struct util_format_test_case *test);
+
+
+static boolean
+test_one(test_func_t func, const char *suffix)
 {
    enum pipe_format last_format = PIPE_FORMAT_NONE;
    unsigned i;
@@ -638,16 +715,34 @@ test_all(void)
       if (test_cases[i].format != last_format) {
          const struct util_format_description *format_desc;
          format_desc = util_format_description(test_cases[i].format);
-         fprintf(stderr, "Testing %s ...\n", format_desc->name);
+         printf("Testing %s.%s ...\n", format_desc->name, suffix);
          last_format = test_cases[i].format;
       }
 
-      if (!test_format_pack(&test_cases[i]))
-        success = FALSE;
-
-      if (!test_format_unpack(&test_cases[i]))
+      if (!func(&test_cases[i]))
         success = FALSE;
    }
+
+   return success;
+}
+
+
+static boolean
+test_all(void)
+{
+   bool success = TRUE;
+
+   if (!test_one(&test_format_pack_4f, "pack_4f"))
+     success = FALSE;
+
+   if (!test_one(&test_format_unpack_4f, "unpack_4f"))
+     success = FALSE;
+
+   if (!test_one(&test_format_pack_4ub, "pack_4ub"))
+     success = FALSE;
+
+   if (!test_one(&test_format_unpack_4ub, "unpack_4ub"))
+     success = FALSE;
 
    return success;
 }
