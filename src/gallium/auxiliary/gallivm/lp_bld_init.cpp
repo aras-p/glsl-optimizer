@@ -26,39 +26,34 @@
  **************************************************************************/
 
 
+#include <llvm/Config/config.h>
+#include <llvm/Target/TargetSelect.h>
+#include <llvm/Target/TargetOptions.h>
+
 #include "pipe/p_config.h"
 
 #include "lp_bld_init.h"
 
 
-#ifndef LLVM_NATIVE_ARCH
-
-namespace llvm {
-   extern void LinkInJIT();
-}
+extern "C" void LLVMLinkInJIT();
 
 
-void
-LLVMLinkInJIT(void)
+extern "C" void
+lp_build_init(void)
 {
-   llvm::LinkInJIT();
-}
-
-
-extern "C" int X86TargetMachineModule;
-
-
-int
-LLVMInitializeNativeTarget(void)
-{
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   X86TargetMachineModule = 1;
+#if defined(PIPE_OS_WINDOWS) && defined(PIPE_ARCH_X86)
+   /*
+    * This is mis-detected on some hardware / software combinations.
+    */
+   llvm::StackAlignment = 4;
+   llvm::RealignStack = true;
 #endif
-   return 0;
+
+   /* Same as LLVMInitializeNativeTarget(); */
+   llvm::InitializeNativeTarget();
+
+   LLVMLinkInJIT();
 }
-
-
-#endif
 
 
 /* 
@@ -69,7 +64,6 @@ LLVMInitializeNativeTarget(void)
  */
 #if defined(_MSC_VER) && defined(_DEBUG)
 #include <crtdefs.h>
-extern "C" {
-   _CRTIMP void __cdecl _invalid_parameter_noinfo(void) {}
-}
+extern "C" _CRTIMP void __cdecl
+_invalid_parameter_noinfo(void) {}
 #endif
