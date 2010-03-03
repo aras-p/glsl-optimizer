@@ -826,6 +826,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RS880_9712:
    case PCI_CHIP_RS880_9713:
    case PCI_CHIP_RS880_9714:
+   case PCI_CHIP_RS880_9715:
       screen->chip_family = CHIP_FAMILY_RS880;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
