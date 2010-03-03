@@ -249,7 +249,7 @@ struct r300_vertex_info {
 
 struct r300_velems_state {
     unsigned count;
-    struct pipe_vertex_element velem[];
+    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 extern struct pipe_viewport_state r300_viewport_identity;

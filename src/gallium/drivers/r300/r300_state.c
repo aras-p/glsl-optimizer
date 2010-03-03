@@ -1061,13 +1061,14 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
-   /*XXX could precalculate state here instead of later */
     struct r300_velems_state *velems;
+
+    /*XXX should precalculate state here instead of later */
     assert(count <= PIPE_MAX_ATTRIBS);
-    velems = (struct r300_velems_state *) MALLOC(sizeof(struct r300_velems_state) + count * sizeof(*attribs));
+    velems = CALLOC_STRUCT(r300_velems_state);
     if (velems) {
-       velems->count = count;
-       memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+        velems->count = count;
+        memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
     }
     return velems;
 }
@@ -1077,6 +1078,10 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_velems_state *r300_velems = (struct r300_velems_state *) velems;
+
+    if (velems == NULL) {
+        return;
+    }
 
     r300->velems = r300_velems;
 
@@ -1094,7 +1099,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
 static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
 {
-   FREE( velems );
+   FREE(velems);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
