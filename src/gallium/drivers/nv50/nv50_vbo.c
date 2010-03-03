@@ -427,6 +427,7 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 	if (!nv50_state_validate(nv50, 0))
 		return;
+	chan->flush_notify = nv50_state_flush_notify;
 
 	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
 
@@ -464,6 +465,8 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 		OUT_RING  (chan, 0);
 	}
+
+	chan->flush_notify = NULL;
 	nv50_unmap_vbufs(nv50);
 
 	so_ref(NULL, &nv50->state.instbuf);
@@ -480,6 +483,7 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 
 	if (!nv50_state_validate(nv50, 11))
 		return;
+	chan->flush_notify = nv50_state_flush_notify;
 
 	BEGIN_RING(chan, tesla, 0x142c, 1);
 	OUT_RING  (chan, 0);
@@ -500,6 +504,7 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
+	chan->flush_notify = NULL;
 	nv50_unmap_vbufs(nv50);
 
         /* XXX: not sure what to do if ret != TRUE: flush and retry?
@@ -637,6 +642,7 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 
 	if (!nv50_state_validate(nv50, 0))
 		return;
+	chan->flush_notify = nv50_state_flush_notify;
 
 	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
 
@@ -664,6 +670,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 		OUT_RING  (chan, 0);
 	}
+
+	chan->flush_notify = NULL;
 	nv50_unmap_vbufs(nv50);
 
 	so_ref(NULL, &nv50->state.instbuf);
@@ -682,6 +690,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 	
 	if (!nv50_state_validate(nv50, 14))
 		return;
+	chan->flush_notify = nv50_state_flush_notify;
 
 	BEGIN_RING(chan, tesla, 0x142c, 1);
 	OUT_RING  (chan, 0);
@@ -720,6 +729,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
+	chan->flush_notify = NULL;
 }
 
 static INLINE boolean

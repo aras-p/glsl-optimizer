@@ -93,7 +93,6 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 	nv50->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
 
 	screen->base.channel->user_private = nv50;
-	screen->base.channel->flush_notify = nv50_state_flush_notify;
 
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);
