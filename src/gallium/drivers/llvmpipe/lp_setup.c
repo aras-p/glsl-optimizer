@@ -46,7 +46,7 @@
 #include "lp_rast.h"
 #include "lp_setup_context.h"
 #include "lp_screen.h"
-#include "lp_winsys.h"
+#include "state_tracker/sw_winsys.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"

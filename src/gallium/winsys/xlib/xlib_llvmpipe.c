@@ -41,13 +41,14 @@
 #if defined(GALLIUM_LLVMPIPE)
 
 #include "llvmpipe/lp_texture.h"
-#include "llvmpipe/lp_winsys.h"
+#include "llvmpipe/lp_screen.h"
 #include "state_tracker/sw_winsys.h"
+#include "util/u_debug.h"
 
 static struct pipe_screen *
 xlib_create_llvmpipe_screen( void )
 {
-   struct llvmpipe_winsys *winsys;
+   struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
    winsys = xlib_create_sw_winsys();

@@ -34,11 +34,12 @@
 #include "lp_texture.h"
 #include "lp_buffer.h"
 #include "lp_fence.h"
-#include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_debug.h"
+
+#include "state_tracker/sw_winsys.h"
 
 #ifdef DEBUG
 int LP_DEBUG = 0;

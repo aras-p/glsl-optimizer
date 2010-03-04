@@ -76,4 +76,7 @@ llvmpipe_screen( struct pipe_screen *pipe )
 }
 
 
+struct pipe_screen *
+llvmpipe_create_screen(struct sw_winsys *winsys);
+
 #endif /* LP_SCREEN_H */

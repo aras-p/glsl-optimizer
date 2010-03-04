@@ -31,6 +31,7 @@
 #include "softpipe/sp_texture.h"
 #include "softpipe/sp_screen.h"
 #include "state_tracker/sw_winsys.h"
+#include "util/u_debug.h"
 
 static struct pipe_screen *
 xlib_create_softpipe_screen( void )

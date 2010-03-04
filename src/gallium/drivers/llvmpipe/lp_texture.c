@@ -42,7 +42,7 @@
 #include "lp_screen.h"
 #include "lp_texture.h"
 #include "lp_tile_size.h"
-#include "lp_winsys.h"
+#include "state_tracker/sw_winsys.h"
 
 
 /**

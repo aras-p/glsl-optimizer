@@ -30,10 +30,10 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-#include "lp_winsys.h"
 #include "lp_screen.h"
 #include "lp_buffer.h"
 
+#include "state_tracker/sw_winsys.h"
 
 static void *
 llvmpipe_buffer_map(struct pipe_screen *screen,
