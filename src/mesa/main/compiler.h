@@ -173,7 +173,7 @@ extern "C" {
  * We also need to define a USED attribute, so the optimizer doesn't 
  * inline a static function that we later use in an alias. - ajax
  */
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #  define PUBLIC __attribute__((visibility("default")))
 #  define USED __attribute__((used))
 #else
