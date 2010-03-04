@@ -285,7 +285,7 @@ intel_bufferobj_map(GLcontext * ctx,
       return NULL;
    }
 
-   if (write_only && intel->intelScreen->kernel_exec_fencing) {
+   if (write_only) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
       intel_obj->mapped_gtt = GL_TRUE;
    } else {
@@ -379,8 +379,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
 	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
 						      "range map",
 						      length, 64);
-	 if (!(access & GL_MAP_READ_BIT) &&
-	     intel->intelScreen->kernel_exec_fencing) {
+	 if (!(access & GL_MAP_READ_BIT)) {
 	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
 	    intel_obj->mapped_gtt = GL_TRUE;
 	 } else {
@@ -393,8 +392,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
       return obj->Pointer;
    }
 
-   if (!(access & GL_MAP_READ_BIT) &&
-       intel->intelScreen->kernel_exec_fencing) {
+   if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
       intel_obj->mapped_gtt = GL_TRUE;
    } else {

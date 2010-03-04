@@ -416,10 +416,11 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
       return GL_FALSE;
    }
 
-   if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))
-      intelScreen->kernel_exec_fencing = !!num_fences;
-   else
-      intelScreen->kernel_exec_fencing = GL_FALSE;
+   if (!intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences) ||
+       num_fences == 0) {
+      fprintf(stderr, "[%s: %u] Kernel 2.6.29 required.\n", __func__, __LINE__);
+      return GL_FALSE;
+   }
 
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
 

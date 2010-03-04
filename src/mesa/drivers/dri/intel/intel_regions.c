@@ -118,8 +118,7 @@ intel_region_map(struct intel_context *intel, struct intel_region *region)
       if (region->pbo)
          intel_region_cow(intel, region);
 
-      if (region->tiling != I915_TILING_NONE &&
-	  intel->intelScreen->kernel_exec_fencing)
+      if (region->tiling != I915_TILING_NONE)
 	 drm_intel_gem_bo_map_gtt(region->buffer);
       else
 	 dri_bo_map(region->buffer, GL_TRUE);
@@ -134,8 +133,7 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 {
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!--region->map_refcount) {
-      if (region->tiling != I915_TILING_NONE &&
-	  intel->intelScreen->kernel_exec_fencing)
+      if (region->tiling != I915_TILING_NONE)
 	 drm_intel_gem_bo_unmap_gtt(region->buffer);
       else
 	 dri_bo_unmap(region->buffer);

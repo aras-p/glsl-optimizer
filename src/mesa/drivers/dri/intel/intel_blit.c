@@ -122,8 +122,8 @@ intelEmitCopyBlit(struct intel_context *intel,
    intel_prepare_render(intel);
 
    if (pass >= 2) {
-      intel_bo_map_gtt_preferred(intel, dst_buffer, GL_TRUE);
-      intel_bo_map_gtt_preferred(intel, src_buffer, GL_FALSE);
+      drm_intel_gem_bo_map_gtt(dst_buffer);
+      drm_intel_gem_bo_map_gtt(src_buffer);
       _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
 		      cpp,
 		      dst_pitch,
@@ -132,8 +132,8 @@ intelEmitCopyBlit(struct intel_context *intel,
 		      (GLubyte *)src_buffer->virtual + src_offset,
 		      src_pitch,
 		      src_x, src_y);
-      intel_bo_unmap_gtt_preferred(intel, src_buffer);
-      intel_bo_unmap_gtt_preferred(intel, dst_buffer);
+      drm_intel_gem_bo_unmap_gtt(src_buffer);
+      drm_intel_gem_bo_unmap_gtt(dst_buffer);
 
       return GL_TRUE;
    }

@@ -67,13 +67,13 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
     */
    _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
 
-   intel_bo_map_gtt_preferred(intel, const_buffer, GL_TRUE);
+   drm_intel_gem_bo_map_gtt(const_buffer);
    for (i = 0; i < params->NumParameters; i++) {
       memcpy(const_buffer->virtual + i * 4 * sizeof(float),
 	     params->ParameterValues[i],
 	     4 * sizeof(float));
    }
-   intel_bo_unmap_gtt_preferred(intel, const_buffer);
+   drm_intel_gem_bo_unmap_gtt(const_buffer);
 
    return const_buffer;
 }

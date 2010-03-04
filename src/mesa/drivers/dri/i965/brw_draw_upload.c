@@ -276,7 +276,6 @@ copy_array_to_vbo_array( struct brw_context *brw,
 			 struct brw_vertex_element *element,
 			 GLuint dst_stride)
 {
-   struct intel_context *intel = &brw->intel;
    GLuint size = element->count * dst_stride;
 
    get_space(brw, size, &element->bo, &element->offset);
@@ -289,52 +288,26 @@ copy_array_to_vbo_array( struct brw_context *brw,
    }
 
    if (dst_stride == element->glarray->StrideB) {
-      if (intel->intelScreen->kernel_exec_fencing) {
-	 drm_intel_gem_bo_map_gtt(element->bo);
-	 memcpy((char *)element->bo->virtual + element->offset,
-		element->glarray->Ptr, size);
-	 drm_intel_gem_bo_unmap_gtt(element->bo);
-      } else {
-	 dri_bo_subdata(element->bo,
-			element->offset,
-			size,
-			element->glarray->Ptr);
-      }
+      drm_intel_gem_bo_map_gtt(element->bo);
+      memcpy((char *)element->bo->virtual + element->offset,
+	     element->glarray->Ptr, size);
+      drm_intel_gem_bo_unmap_gtt(element->bo);
    } else {
       char *dest;
       const unsigned char *src = element->glarray->Ptr;
       int i;
 
-      if (intel->intelScreen->kernel_exec_fencing) {
-	 drm_intel_gem_bo_map_gtt(element->bo);
-	 dest = element->bo->virtual;
-	 dest += element->offset;
+      drm_intel_gem_bo_map_gtt(element->bo);
+      dest = element->bo->virtual;
+      dest += element->offset;
 
-	 for (i = 0; i < element->count; i++) {
-	    memcpy(dest, src, dst_stride);
-	    src += element->glarray->StrideB;
-	    dest += dst_stride;
-	 }
-
-	 drm_intel_gem_bo_unmap_gtt(element->bo);
-      } else {
-	 void *data;
-
-	 data = malloc(dst_stride * element->count);
-	 dest = data;
-	 for (i = 0; i < element->count; i++) {
-	    memcpy(dest, src, dst_stride);
-	    src += element->glarray->StrideB;
-	    dest += dst_stride;
-	 }
-
-	 dri_bo_subdata(element->bo,
-			element->offset,
-			size,
-			data);
-
-	 free(data);
+      for (i = 0; i < element->count; i++) {
+	 memcpy(dest, src, dst_stride);
+	 src += element->glarray->StrideB;
+	 dest += dst_stride;
       }
+
+      drm_intel_gem_bo_unmap_gtt(element->bo);
    }
 }
 
@@ -646,13 +619,9 @@ static void brw_prepare_indices(struct brw_context *brw)
 
       /* Straight upload
        */
-      if (intel->intelScreen->kernel_exec_fencing) {
-	 drm_intel_gem_bo_map_gtt(bo);
-	 memcpy((char *)bo->virtual + offset, index_buffer->ptr, ib_size);
-	 drm_intel_gem_bo_unmap_gtt(bo);
-      } else {
-	 dri_bo_subdata(bo, offset, ib_size, index_buffer->ptr);
-      }
+      drm_intel_gem_bo_map_gtt(bo);
+      memcpy((char *)bo->virtual + offset, index_buffer->ptr, ib_size);
+      drm_intel_gem_bo_unmap_gtt(bo);
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
       brw->ib.start_vertex_offset = 0;
