@@ -24,8 +24,11 @@
  *
  */
 
-#include "main/bufferobj.h"
 #include "nouveau_bufferobj.h"
+#include "nouveau_util.h"
+
+#include "main/bufferobj.h"
+#include "main/image.h"
 
 /* Arbitrary pushbuf length we can assume we can get with a single
  * WAIT_RING. */
@@ -58,7 +61,11 @@ vbo_init_array(struct nouveau_array_state *a, int attr, int stride,
 	} else {
 		nouveau_bo_ref(NULL, &a->bo);
 		a->offset = 0;
-		a->buf = ptr;
+
+		if (map)
+			a->buf = ptr;
+		else
+			a->buf = NULL;
 	}
 
 	if (a->buf)
@@ -94,11 +101,20 @@ vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 
 		if (attr >= 0) {
 			const struct gl_client_array *array = arrays[attr];
+			int stride;
+
+			if (render->mode == VBO &&
+			    !_mesa_is_bufferobj(array->BufferObj))
+				/* Pack client buffers. */
+				stride = align(_mesa_sizeof_type(array->Type)
+					       * array->Size, 4);
+			else
+				stride = array->StrideB;
 
 			vbo_init_array(&render->attrs[attr], attr,
-				       array->StrideB, array->Size,
-				       array->Type, array->BufferObj,
-				       array->Ptr, render->mode == IMM);
+				       stride, array->Size, array->Type,
+				       array->BufferObj, array->Ptr,
+				       render->mode == IMM);
 		}
 	}
 }
@@ -276,17 +292,21 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 		if (attr >= 0) {
 			const struct gl_client_array *array = arrays[attr];
 			struct nouveau_array_state *a = &render->attrs[attr];
-			unsigned delta = (basevertex + min_index) * a->stride,
-				size = (max_index - min_index + 1) * a->stride;
+			unsigned delta = (basevertex + min_index)
+				* array->StrideB;
 
 			if (a->bo) {
 				a->offset = (intptr_t)array->Ptr + delta;
 			} else {
-				void *scratch = get_scratch_vbo(ctx, size,
-								&a->bo,
-								&a->offset);
+				int j, n = max_index - min_index + 1;
+				char *sp = (char *)array->Ptr + delta;
+				char *dp = get_scratch_vbo(ctx, n * a->stride,
+							   &a->bo, &a->offset);
 
-				memcpy(scratch, a->buf + delta, size);
+				for (j = 0; j < n; j++)
+					memcpy(dp + j * a->stride,
+					       sp + j * array->StrideB,
+					       a->stride);
 			}
 		}
 	}
