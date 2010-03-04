@@ -1754,7 +1754,7 @@ swizzle_to_writemask(slang_assemble_ctx *A, GLuint swizzle,
          /* end */
          break;
       }
-      assert(swz >= 0 && swz <= 3);
+      assert(swz <= 3);
 
       if (swizzle != SWIZZLE_XXXX &&
           swizzle != SWIZZLE_YYYY &&
