@@ -273,9 +273,14 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     CS_LOCALS(r300);
 
     assert((start * indexSize)  % 4 == 0);
+    assert(count < (1 << 24));
+
+    DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
+        count, minIndex, maxIndex);
+
+    maxIndex = MIN2(maxIndex, ((1 << 24) - 1));
 
     if (alt_num_verts) {
-        assert(count < (1 << 24));
         BEGIN_CS(16);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     } else {
