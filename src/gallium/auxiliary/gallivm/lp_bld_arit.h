@@ -125,6 +125,10 @@ lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_set_sign(struct lp_build_context *bld,
+                  LLVMValueRef a, LLVMValueRef sign);
+
+LLVMValueRef
 lp_build_int_to_float(struct lp_build_context *bld,
                       LLVMValueRef a);
 

@@ -718,6 +718,41 @@ lp_build_sgn(struct lp_build_context *bld,
 
 
 /**
+ * Set the sign of float vector 'a' according to 'sign'.
+ * If sign==0, return abs(a).
+ * If sign==1, return -abs(a);
+ * Other values for sign produce undefined results.
+ */
+LLVMValueRef
+lp_build_set_sign(struct lp_build_context *bld,
+                  LLVMValueRef a, LLVMValueRef sign)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMValueRef shift = lp_build_int_const_scalar(type, type.width - 1);
+   LLVMValueRef mask = lp_build_int_const_scalar(type,
+                             ~((unsigned long long) 1 << (type.width - 1)));
+   LLVMValueRef val, res;
+
+   assert(type.floating);
+
+   /* val = reinterpret_cast<int>(a) */
+   val = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+   /* val = val & mask */
+   val = LLVMBuildAnd(bld->builder, val, mask, "");
+   /* sign = sign << shift */
+   sign = LLVMBuildShl(bld->builder, sign, shift, "");
+   /* res = val | sign */
+   res = LLVMBuildOr(bld->builder, val, sign, "");
+   /* res = reinterpret_cast<float>(res) */
+   res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+
+   return res;
+}
+
+
+/**
  * Convert vector of int to vector of float.
  */
 LLVMValueRef
