@@ -27,18 +27,6 @@
 
 #include "nv50_context.h"
 
-static boolean
-nv50_push_elements_u08(struct nv50_context *, uint8_t *, unsigned);
-
-static boolean
-nv50_push_elements_u16(struct nv50_context *, uint16_t *, unsigned);
-
-static boolean
-nv50_push_elements_u32(struct nv50_context *, uint32_t *, unsigned);
-
-static boolean
-nv50_push_arrays(struct nv50_context *, unsigned, unsigned);
-
 #define NV50_USING_LOATHED_EDGEFLAG(ctx) ((ctx)->vertprog->cfg.edgeflag_in < 16)
 
 static INLINE unsigned
@@ -162,61 +150,6 @@ nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
 	return (hw_type | hw_size);
 }
 
-/* For instanced drawing from user buffers, hitting the FIFO repeatedly
- * with the same vertex data is probably worse than uploading all data.
- */
-static boolean
-nv50_upload_vtxbuf(struct nv50_context *nv50, unsigned i)
-{
-	struct nv50_screen *nscreen = nv50->screen;
-	struct pipe_screen *pscreen = &nscreen->base.base;
-	struct pipe_buffer *buf = nscreen->strm_vbuf[i];
-	struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
-	uint8_t *src;
-	unsigned size = align(vb->buffer->size, 4096);
-
-	if (buf && buf->size < size)
-		pipe_buffer_reference(&nscreen->strm_vbuf[i], NULL);
-
-	if (!nscreen->strm_vbuf[i]) {
-		nscreen->strm_vbuf[i] = pipe_buffer_create(
-			pscreen, 0, PIPE_BUFFER_USAGE_VERTEX, size);
-		buf = nscreen->strm_vbuf[i];
-	}
-
-	src = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-	if (!src)
-		return FALSE;
-	src += vb->buffer_offset;
-
-	size = (vb->max_index + 1) * vb->stride + 16; /* + 16 is for stride 0 */
-	if (vb->buffer_offset + size > vb->buffer->size)
-		size = vb->buffer->size - vb->buffer_offset;
-
-	pipe_buffer_write(pscreen, buf, vb->buffer_offset, size, src);
-	pipe_buffer_unmap(pscreen, vb->buffer);
-
-	vb->buffer = buf; /* don't pipe_reference, this is a private copy */
-	return TRUE;
-}
-
-static void
-nv50_upload_user_vbufs(struct nv50_context *nv50)
-{
-	unsigned i;
-
-	if (nv50->vbo_fifo)
-		nv50->dirty |= NV50_NEW_ARRAYS;
-	if (!(nv50->dirty & NV50_NEW_ARRAYS))
-		return;
-
-	for (i = 0; i < nv50->vtxbuf_nr; ++i) {
-		if (nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX)
-			continue;
-		nv50_upload_vtxbuf(nv50, i);
-	}
-}
-
 static void
 nv50_set_static_vtxattr(struct nv50_context *nv50, unsigned i, void *data)
 {
@@ -258,36 +191,6 @@ nv50_set_static_vtxattr(struct nv50_context *nv50, unsigned i, void *data)
 }
 
 static unsigned
-init_per_instance_arrays_immd(struct nv50_context *nv50,
-			      unsigned startInstance,
-			      unsigned pos[16], unsigned step[16])
-{
-	struct nouveau_bo *bo;
-	unsigned i, b, count = 0;
-
-	for (i = 0; i < nv50->vtxelt->num_elements; ++i) {
-		if (!nv50->vtxelt->pipe[i].instance_divisor)
-			continue;
-		++count;
-		b = nv50->vtxelt->pipe[i].vertex_buffer_index;
-
-		pos[i] = nv50->vtxelt->pipe[i].src_offset +
-			nv50->vtxbuf[b].buffer_offset +
-			startInstance * nv50->vtxbuf[b].stride;
-		step[i] = startInstance %
-			nv50->vtxelt->pipe[i].instance_divisor;
-
-		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
-		if (!bo->map)
-			nouveau_bo_map(bo, NOUVEAU_BO_RD);
-
-		nv50_set_static_vtxattr(nv50, i, (uint8_t *)bo->map + pos[i]);
-	}
-
-	return count;
-}
-
-static unsigned
 init_per_instance_arrays(struct nv50_context *nv50,
 			 unsigned startInstance,
 			 unsigned pos[16], unsigned step[16])
@@ -298,10 +201,6 @@ init_per_instance_arrays(struct nv50_context *nv50,
 	struct nouveau_stateobj *so;
 	unsigned i, b, count = 0, num_elements = nv50->vtxelt->num_elements;
 	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
-
-	if (nv50->vbo_fifo)
-		return init_per_instance_arrays_immd(nv50, startInstance,
-						     pos, step);
 
 	so = so_new(num_elements, num_elements * 2, num_elements * 2);
 
@@ -339,28 +238,6 @@ init_per_instance_arrays(struct nv50_context *nv50,
 }
 
 static void
-step_per_instance_arrays_immd(struct nv50_context *nv50,
-			      unsigned pos[16], unsigned step[16])
-{
-	struct nouveau_bo *bo;
-	unsigned i, b;
-
-	for (i = 0; i < nv50->vtxelt->num_elements; ++i) {
-		if (!nv50->vtxelt->pipe[i].instance_divisor)
-			continue;
-		if (++step[i] != nv50->vtxelt->pipe[i].instance_divisor)
-			continue;
-		b = nv50->vtxelt->pipe[i].vertex_buffer_index;
-		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
-
-		step[i] = 0;
-		pos[i] += nv50->vtxbuf[b].stride;
-
-		nv50_set_static_vtxattr(nv50, i, (uint8_t *)bo->map + pos[i]);
-	}
-}
-
-static void
 step_per_instance_arrays(struct nv50_context *nv50,
 			 unsigned pos[16], unsigned step[16])
 {
@@ -370,11 +247,6 @@ step_per_instance_arrays(struct nv50_context *nv50,
 	struct nouveau_stateobj *so;
 	unsigned i, b, num_elements = nv50->vtxelt->num_elements;
 	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
-
-	if (nv50->vbo_fifo) {
-		step_per_instance_arrays_immd(nv50, pos, step);
-		return;
-	}
 
 	so = so_new(num_elements, num_elements * 2, num_elements * 2);
 
@@ -401,16 +273,6 @@ step_per_instance_arrays(struct nv50_context *nv50,
 	so_emit(chan, nv50->state.instbuf);
 }
 
-static INLINE void
-nv50_unmap_vbufs(struct nv50_context *nv50)
-{
-        unsigned i;
-
-        for (i = 0; i < nv50->vtxbuf_nr; ++i)
-                if (nouveau_bo(nv50->vtxbuf[i].buffer)->map)
-                        nouveau_bo_unmap(nouveau_bo(nv50->vtxbuf[i].buffer));
-}
-
 void
 nv50_draw_arrays_instanced(struct pipe_context *pipe,
 			   unsigned mode, unsigned start, unsigned count,
@@ -421,9 +283,6 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	unsigned i, nz_divisors;
 	unsigned step[16], pos[16];
-
-	if (!NV50_USING_LOATHED_EDGEFLAG(nv50))
-		nv50_upload_user_vbufs(nv50);
 
 	if (!nv50_state_validate(nv50, 0))
 		return;
@@ -437,14 +296,9 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
-
-	if (nv50->vbo_fifo)
-		nv50_push_arrays(nv50, start, count);
-	else {
-		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
-		OUT_RING  (chan, start);
-		OUT_RING  (chan, count);
-	}
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
+	OUT_RING  (chan, start);
+	OUT_RING  (chan, count);
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
@@ -454,20 +308,14 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 		OUT_RING  (chan, nv50_prim(mode) | (1 << 28));
-
-		if (nv50->vbo_fifo)
-			nv50_push_arrays(nv50, start, count);
-		else {
-			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
-			OUT_RING  (chan, start);
-			OUT_RING  (chan, count);
-		}
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
+		OUT_RING  (chan, start);
+		OUT_RING  (chan, count);
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 		OUT_RING  (chan, 0);
 	}
 
 	chan->flush_notify = NULL;
-	nv50_unmap_vbufs(nv50);
 
 	so_ref(NULL, &nv50->state.instbuf);
 }
@@ -479,7 +327,6 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	boolean ret;
 
 	if (!nv50_state_validate(nv50, 11))
 		return;
@@ -487,24 +334,13 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
-
-	if (nv50->vbo_fifo)
-		ret = nv50_push_arrays(nv50, start, count);
-	else {
-		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
-		OUT_RING  (chan, start);
-		OUT_RING  (chan, count);
-		ret = TRUE;
-	}
+	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BUFFER_FIRST, 2);
+	OUT_RING  (chan, start);
+	OUT_RING  (chan, count);
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
 	chan->flush_notify = NULL;
-	nv50_unmap_vbufs(nv50);
-
-        /* XXX: not sure what to do if ret != TRUE: flush and retry?
-         */
-        assert(ret);
 }
 
 static INLINE boolean
@@ -515,9 +351,6 @@ nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
-
-	if (nv50->vbo_fifo)
-		return nv50_push_elements_u08(nv50, map, count);
 
 	if (count & 1) {
 		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
@@ -549,9 +382,6 @@ nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 
 	map += start;
 
-	if (nv50->vbo_fifo)
-		return nv50_push_elements_u16(nv50, map, count);
-
 	if (count & 1) {
 		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (chan, map[0]);
@@ -581,9 +411,6 @@ nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
-
-	if (nv50->vbo_fifo)
-		return nv50_push_elements_u32(nv50, map, count);
 
 	while (count) {
 		unsigned nr = count > 2047 ? 2047 : count;
@@ -632,9 +459,6 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 
 	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
 
-	if (!NV50_USING_LOATHED_EDGEFLAG(nv50))
-		nv50_upload_user_vbufs(nv50);
-
 	if (!nv50_state_validate(nv50, 0))
 		return;
 	chan->flush_notify = nv50_state_flush_notify;
@@ -667,7 +491,6 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	}
 
 	chan->flush_notify = NULL;
-	nv50_unmap_vbufs(nv50);
 
 	so_ref(NULL, &nv50->state.instbuf);
 }
@@ -690,13 +513,13 @@ nv50_draw_elements(struct pipe_context *pipe,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
 
-	if (!nv50->vbo_fifo && indexSize == 4) {
+	if (indexSize == 4) {
 		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x30000, 0);
 		OUT_RING  (chan, count);
 		nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
 				       start << 2, count << 2);
 	} else
-	if (!nv50->vbo_fifo && indexSize == 2) {
+	if (indexSize == 2) {
 		unsigned vb_start = (start & ~1);
 		unsigned vb_end = (start + count + 1) & ~1;
 		unsigned dwords = (vb_end - vb_start) >> 1;
@@ -713,7 +536,6 @@ nv50_draw_elements(struct pipe_context *pipe,
 		map = pipe_buffer_map(pscreen, indexBuffer,
 				      PIPE_BUFFER_USAGE_CPU_READ);
 		nv50_draw_elements_inline(nv50, map, indexSize, start, count);
-		nv50_unmap_vbufs(nv50);
 		pipe_buffer_unmap(pscreen, indexBuffer);
 	}
 
@@ -806,15 +628,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	/* don't validate if Gallium took away our buffers */
 	if (nv50->vtxbuf_nr == 0)
 		return NULL;
-	nv50->vbo_fifo = 0;
 
-	for (i = 0; i < nv50->vtxbuf_nr; ++i)
-		if (nv50->vtxbuf[i].stride &&
-		    !(nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX))
-			nv50->vbo_fifo = 0xffff;
-
-	if (NV50_USING_LOATHED_EDGEFLAG(nv50))
-		nv50->vbo_fifo = 0xffff; /* vertprog can't set edgeflag */
+	assert(!NV50_USING_LOATHED_EDGEFLAG(nv50));
 
 	n_ve = MAX2(nv50->vtxelt->num_elements, nv50->state.vtxelt_nr);
 
@@ -837,19 +652,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			so_method(vtxbuf, tesla,
 				  NV50TCL_VERTEX_ARRAY_FORMAT(i), 1);
 			so_data  (vtxbuf, 0);
-
-			nv50->vbo_fifo &= ~(1 << i);
 			continue;
 		}
 
-		if (nv50->vbo_fifo) {
-			so_data  (vtxfmt, hw |
-				  (ve->instance_divisor ? (1 << 4) : i));
-			so_method(vtxbuf, tesla,
-				  NV50TCL_VERTEX_ARRAY_FORMAT(i), 1);
-			so_data  (vtxbuf, 0);
-			continue;
-		}
 		so_data(vtxfmt, hw | i);
 
 		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_FORMAT(i), 3);
@@ -886,346 +691,4 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	return vtxfmt;
 }
 
-typedef void (*pfn_push)(struct nouveau_channel *, void *);
 
-struct nv50_vbo_emitctx
-{
-	pfn_push push[16];
-	uint8_t *map[16];
-	unsigned stride[16];
-	unsigned nr_ve;
-	unsigned vtx_dwords;
-	unsigned vtx_max;
-
-	float edgeflag;
-	unsigned ve_edgeflag;
-};
-
-static INLINE void
-emit_vtx_next(struct nouveau_channel *chan, struct nv50_vbo_emitctx *emit)
-{
-	unsigned i;
-
-	for (i = 0; i < emit->nr_ve; ++i) {
-		emit->push[i](chan, emit->map[i]);
-		emit->map[i] += emit->stride[i];
-	}
-}
-
-static INLINE void
-emit_vtx(struct nouveau_channel *chan, struct nv50_vbo_emitctx *emit,
-	 uint32_t vi)
-{
-	unsigned i;
-
-	for (i = 0; i < emit->nr_ve; ++i)
-		emit->push[i](chan, emit->map[i] + emit->stride[i] * vi);
-}
-
-static INLINE boolean
-nv50_map_vbufs(struct nv50_context *nv50)
-{
-	int i;
-
-	for (i = 0; i < nv50->vtxbuf_nr; ++i) {
-		struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
-		unsigned size = vb->stride * (vb->max_index + 1) + 16;
-
-		if (nouveau_bo(vb->buffer)->map)
-			continue;
-
-		size = vb->stride * (vb->max_index + 1) + 16;
-		size = MIN2(size, vb->buffer->size);
-		if (!size)
-			size = vb->buffer->size;
-
-		if (nouveau_bo_map_range(nouveau_bo(vb->buffer),
-					 0, size, NOUVEAU_BO_RD))
-			break;
-	}
-
-	if (i == nv50->vtxbuf_nr)
-		return TRUE;
-	for (; i >= 0; --i)
-		nouveau_bo_unmap(nouveau_bo(nv50->vtxbuf[i].buffer));
-	return FALSE;
-}
-
-static void
-emit_b32_1(struct nouveau_channel *chan, void *data)
-{
-	uint32_t *v = data;
-
-	OUT_RING(chan, v[0]);
-}
-
-static void
-emit_b32_2(struct nouveau_channel *chan, void *data)
-{
-	uint32_t *v = data;
-
-	OUT_RING(chan, v[0]);
-	OUT_RING(chan, v[1]);
-}
-
-static void
-emit_b32_3(struct nouveau_channel *chan, void *data)
-{
-	uint32_t *v = data;
-
-	OUT_RING(chan, v[0]);
-	OUT_RING(chan, v[1]);
-	OUT_RING(chan, v[2]);
-}
-
-static void
-emit_b32_4(struct nouveau_channel *chan, void *data)
-{
-	uint32_t *v = data;
-
-	OUT_RING(chan, v[0]);
-	OUT_RING(chan, v[1]);
-	OUT_RING(chan, v[2]);
-	OUT_RING(chan, v[3]);
-}
-
-static void
-emit_b16_1(struct nouveau_channel *chan, void *data)
-{
-	uint16_t *v = data;
-
-	OUT_RING(chan, v[0]);
-}
-
-static void
-emit_b16_3(struct nouveau_channel *chan, void *data)
-{
-	uint16_t *v = data;
-
-	OUT_RING(chan, (v[1] << 16) | v[0]);
-	OUT_RING(chan, v[2]);
-}
-
-static void
-emit_b08_1(struct nouveau_channel *chan, void *data)
-{
-	uint8_t *v = data;
-
-	OUT_RING(chan, v[0]);
-}
-
-static void
-emit_b08_3(struct nouveau_channel *chan, void *data)
-{
-	uint8_t *v = data;
-
-	OUT_RING(chan, (v[2] << 16) | (v[1] << 8) | v[0]);
-}
-
-static boolean
-emit_prepare(struct nv50_context *nv50, struct nv50_vbo_emitctx *emit,
-	     unsigned start)
-{
-	unsigned i;
-
-	if (nv50_map_vbufs(nv50) == FALSE)
-		return FALSE;
-
-	emit->ve_edgeflag = nv50->vertprog->cfg.edgeflag_in;
-
-	emit->edgeflag = 0.5f;
-	emit->nr_ve = 0;
-	emit->vtx_dwords = 0;
-
-	for (i = 0; i < nv50->vtxelt->num_elements; ++i) {
-		struct pipe_vertex_element *ve;
-		struct pipe_vertex_buffer *vb;
-		unsigned n, size, nr_components;
-		const struct util_format_description *desc;
-
-		ve = &nv50->vtxelt->pipe[i];
-		vb = &nv50->vtxbuf[ve->vertex_buffer_index];
-		if (!(nv50->vbo_fifo & (1 << i)) || ve->instance_divisor)
-			continue;
-		n = emit->nr_ve++;
-
-		emit->stride[n] = vb->stride;
-		emit->map[n] = (uint8_t *)nouveau_bo(vb->buffer)->map +
-			vb->buffer_offset +
-			(start * vb->stride + ve->src_offset);
-
-		desc = util_format_description(ve->src_format);
-		assert(desc);
-
-		size = util_format_get_component_bits(
-			ve->src_format, UTIL_FORMAT_COLORSPACE_RGB, 0);
-		nr_components = util_format_get_nr_components(ve->src_format);
-
-		assert(nr_components > 0 && nr_components <= 4);
-
-		/* It shouldn't be necessary to push the implicit 1s
-		 * for case 3 and size 8 cases 1, 2, 3.
-		 */
-		switch (size) {
-		default:
-			NOUVEAU_ERR("unsupported vtxelt size: %u\n", size);
-			return FALSE;
-		case 32:
-			switch (nr_components) {
-			case 1: emit->push[n] = emit_b32_1; break;
-			case 2: emit->push[n] = emit_b32_2; break;
-			case 3: emit->push[n] = emit_b32_3; break;
-			case 4: emit->push[n] = emit_b32_4; break;
-			}
-			emit->vtx_dwords += nr_components;
-			break;
-		case 16:
-			switch (nr_components) {
-			case 1: emit->push[n] = emit_b16_1; break;
-			case 2: emit->push[n] = emit_b32_1; break;
-			case 3: emit->push[n] = emit_b16_3; break;
-			case 4: emit->push[n] = emit_b32_2; break;
-			}
-			emit->vtx_dwords += (nr_components + 1) >> 1;
-			break;
-		case 8:
-			switch (nr_components) {
-			case 1: emit->push[n] = emit_b08_1; break;
-			case 2: emit->push[n] = emit_b16_1; break;
-			case 3: emit->push[n] = emit_b08_3; break;
-			case 4: emit->push[n] = emit_b32_1; break;
-			}
-			emit->vtx_dwords += 1;
-			break;
-		}
-	}
-
-	emit->vtx_max = 512 / emit->vtx_dwords;
-	if (emit->ve_edgeflag < 16)
-		emit->vtx_max = 1;
-
-	return TRUE;
-}
-
-static INLINE void
-set_edgeflag(struct nouveau_channel *chan,
-	     struct nouveau_grobj *tesla,
-	     struct nv50_vbo_emitctx *emit, uint32_t index)
-{
-	unsigned i = emit->ve_edgeflag;
-
-	if (i < 16) {
-		float f = *((float *)(emit->map[i] + index * emit->stride[i]));
-
-		if (emit->edgeflag != f) {
-			emit->edgeflag = f;
-
-			BEGIN_RING(chan, tesla, 0x15e4, 1);
-			OUT_RING  (chan, f ? 1 : 0);
-		}
-	}
-}
-
-static boolean
-nv50_push_arrays(struct nv50_context *nv50, unsigned start, unsigned count)
-{
-	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nv50_vbo_emitctx emit;
-
-	if (emit_prepare(nv50, &emit, start) == FALSE)
-		return FALSE;
-
-	while (count) {
-		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
-	        dw = nr * emit.vtx_dwords;
-
-		set_edgeflag(chan, tesla, &emit, 0); /* nr will be 1 */
-
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, dw);
-		for (i = 0; i < nr; ++i)
-			emit_vtx_next(chan, &emit);
-
-		count -= nr;
-	}
-
-	return TRUE;
-}
-
-static boolean
-nv50_push_elements_u32(struct nv50_context *nv50, uint32_t *map, unsigned count)
-{
-	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nv50_vbo_emitctx emit;
-
-	if (emit_prepare(nv50, &emit, 0) == FALSE)
-		return FALSE;
-
-	while (count) {
-		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
-	        dw = nr * emit.vtx_dwords;
-
-		set_edgeflag(chan, tesla, &emit, *map);
-
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, dw);
-		for (i = 0; i < nr; ++i)
-			emit_vtx(chan, &emit, *map++);
-
-		count -= nr;
-	}
-
-	return TRUE;
-}
-
-static boolean
-nv50_push_elements_u16(struct nv50_context *nv50, uint16_t *map, unsigned count)
-{
-	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nv50_vbo_emitctx emit;
-
-	if (emit_prepare(nv50, &emit, 0) == FALSE)
-		return FALSE;
-
-	while (count) {
-		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
-	        dw = nr * emit.vtx_dwords;
-
-		set_edgeflag(chan, tesla, &emit, *map);
-
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, dw);
-		for (i = 0; i < nr; ++i)
-			emit_vtx(chan, &emit, *map++);
-
-		count -= nr;
-	}
-
-	return TRUE;
-}
-
-static boolean
-nv50_push_elements_u08(struct nv50_context *nv50, uint8_t *map, unsigned count)
-{
-	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nv50_vbo_emitctx emit;
-
-	if (emit_prepare(nv50, &emit, 0) == FALSE)
-		return FALSE;
-
-	while (count) {
-		unsigned i, dw, nr = MIN2(count, emit.vtx_max);
-	        dw = nr * emit.vtx_dwords;
-
-		set_edgeflag(chan, tesla, &emit, *map);
-
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, dw);
-		for (i = 0; i < nr; ++i)
-			emit_vtx(chan, &emit, *map++);
-
-		count -= nr;
-	}
-
-	return TRUE;
-}

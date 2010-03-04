@@ -163,8 +163,6 @@ struct nv50_context {
 	unsigned sampler_nr[PIPE_SHADER_TYPES];
 	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
-
-	uint16_t vbo_fifo;
 };
 
 static INLINE struct nv50_context *
