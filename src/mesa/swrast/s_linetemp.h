@@ -84,7 +84,6 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    DEPTH_TYPE *zPtr;
 #elif defined(INTERP_Z)
    const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
-/*ctx->Visual.depthBits;*/
 #endif
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
