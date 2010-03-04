@@ -240,9 +240,7 @@ static INLINE int GET_FLOAT_BITS( float x )
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
-			(!(defined(__BEOS__) || defined(__HAIKU__))  || \
-			(__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
 static INLINE int iround(float f)
 {
    int r;

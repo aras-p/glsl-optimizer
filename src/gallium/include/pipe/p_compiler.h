@@ -106,8 +106,7 @@ typedef unsigned char boolean;
 
 /* Function visibility */
 #ifndef PUBLIC
-#  if (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303) \
-	|| (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PUBLIC __attribute__((visibility("default")))
 #  else
 #    define PUBLIC
@@ -119,7 +118,7 @@ typedef unsigned char boolean;
  * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
  */
 #ifndef __FUNCTION__
-# if (!defined(__GNUC__) || (__GNUC__ < 2))
+# if !defined(__GNUC__)
 #  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
     (defined(__SUNPRO_C) && defined(__C99FEATURES__))
 #   define __FUNCTION__ __func__
@@ -145,7 +144,7 @@ typedef unsigned char boolean;
 
 
 
-#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#if defined(__GNUC__)
 #define PIPE_DEPRECATED  __attribute__((__deprecated__))
 #else
 #define PIPE_DEPRECATED

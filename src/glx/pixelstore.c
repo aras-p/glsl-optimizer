@@ -31,7 +31,7 @@
 #include "glxclient.h"
 #include "indirect.h"
 
-#if !defined __GNUC__ || __GNUC__ < 3
+#if !defined(__GNUC__)
 #  define __builtin_expect(x, y) x
 #endif
 

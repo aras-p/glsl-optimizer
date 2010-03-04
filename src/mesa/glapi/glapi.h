@@ -62,7 +62,7 @@ typedef void (*_glapi_proc)(void); /* generic function pointer */
 #endif
 
 
-#if defined(__GNUC__) && (__GNUC__ >= 3)
+#if defined(__GNUC__)
 #  define likely(x)   __builtin_expect(!!(x), 1)
 #  define unlikely(x) __builtin_expect(!!(x), 0)
 #else
