@@ -145,6 +145,10 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
 }
 
 
+/**
+ * Fetch filtered values from texture.
+ * The 'texel' parameter returns four vectors corresponding to R, G, B, A.
+ */
 static void
 lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,
