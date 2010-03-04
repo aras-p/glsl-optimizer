@@ -182,6 +182,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
          tokens[1] = 0;
       else
          tokens[1] = 1;
+      assert(field);
       if (strcmp(field, "emission") == 0) {
          tokens[2] = STATE_EMISSION;
       }
