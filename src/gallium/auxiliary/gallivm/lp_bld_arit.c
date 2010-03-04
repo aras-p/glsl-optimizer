@@ -900,6 +900,19 @@ lp_build_ceil(struct lp_build_context *bld,
 
 
 /**
+ * Return fractional part of 'a' computed as a - floor(f)
+ * Typically used in texture coord arithmetic.
+ */
+LLVMValueRef
+lp_build_fract(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   assert(bld->type.floating);
+   return lp_build_sub(bld, a, lp_build_floor(bld, a));
+}
+
+
+/**
  * Convert to integer, through whichever rounding method that's fastest,
  * typically truncating toward zero.
  */

@@ -149,6 +149,10 @@ lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef
+lp_build_fract(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
 lp_build_ifloor(struct lp_build_context *bld,
                 LLVMValueRef a);
 LLVMValueRef
