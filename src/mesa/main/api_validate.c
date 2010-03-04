@@ -147,7 +147,7 @@ check_index_bounds(GLcontext *ctx, GLsizei count, GLenum type,
 
    vbo_get_minmax_index(ctx, &prim, &ib, &min, &max);
 
-   if (min + basevertex < 0 ||
+   if (min < basevertex ||
        max + basevertex > ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       _mesa_warning(ctx, "glDrawElements() index=%u is "
