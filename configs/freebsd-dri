@@ -48,8 +48,6 @@ WINDOW_SYSTEM=dri
 
 DRM_SOURCE_PATH=$(TOP)/../drm
 
-# ffb and gamma are missing because they have not been converted to use the new
-# interface.
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
 	   unichrome savage sis
 

@@ -16,7 +16,7 @@ LIB_DIR = lib64
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib64
 
-# ffb, gamma, and sis are missing because they have not be converted to use
+# sis is missing because it has not been converted to use
 # the new interface.  i810 are missing because there is no x86-64
 # system where they could *ever* be used.
 #
