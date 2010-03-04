@@ -243,6 +243,23 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 	vbo_emit_attr(ctx, arrays, VERT_ATTRIB_POS);
 }
 
+static unsigned
+get_max_client_stride(GLcontext *ctx)
+{
+	struct nouveau_render_state *render = to_render_state(ctx);
+	int i, s = 0;
+
+	for (i = 0; i < render->attr_count; i++) {
+		int attr = render->map[i];
+		struct nouveau_array_state *a = &render->attrs[attr];
+
+		if (attr >= 0 && !a->bo)
+			s = MAX2(a->stride, s);
+	}
+
+	return s;
+}
+
 static void
 TAG(vbo_render_prims)(GLcontext *ctx, const struct gl_client_array **arrays,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
@@ -257,9 +274,18 @@ vbo_maybe_split(GLcontext *ctx, const struct gl_client_array **arrays,
 	    GLuint min_index, GLuint max_index)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_render_state *render = to_render_state(ctx);
 	unsigned pushbuf_avail = PUSHBUF_DWORDS - 2 * nctx->bo.count,
 		vert_avail = get_max_vertices(ctx, NULL, pushbuf_avail),
 		idx_avail = get_max_vertices(ctx, ib, pushbuf_avail);
+	int stride;
+
+	/* Try to keep client buffers smaller than the scratch BOs. */
+	if (!ib && render->mode == VBO &&
+	    (stride = get_max_client_stride(ctx)))
+		    vert_avail = MIN2(vert_avail,
+				      RENDER_SCRATCH_SIZE / stride);
+
 
 	if ((ib && ib->count > idx_avail) ||
 	    (!ib && max_index - min_index > vert_avail)) {
