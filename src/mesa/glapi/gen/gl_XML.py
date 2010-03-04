@@ -184,7 +184,7 @@ class gl_print_base:
 		The name is also added to the file's undef_list.
 		"""
 		self.undef_list.append("PURE")
-		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+		print """#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PURE __attribute__((pure))
 #  else
 #    define PURE
@@ -224,7 +224,7 @@ class gl_print_base:
 		"""
 
 		self.undef_list.append(S)
-		print """#  if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))) && defined(__ELF__)
+		print """#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))) && defined(__ELF__)
 #    define %s  __attribute__((visibility("%s")))
 #  else
 #    define %s

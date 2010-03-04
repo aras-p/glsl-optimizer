@@ -124,7 +124,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print ''
 		print '#include "x86/assyntax.h"'
 		print ''
-		print '#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303'
+		print '#ifdef __GNUC__'
 		print '#  pragma GCC visibility push(default)'
 		print '#  define HIDDEN(x) .hidden x'
 		print '#else'

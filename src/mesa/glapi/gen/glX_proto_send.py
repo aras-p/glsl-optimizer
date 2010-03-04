@@ -182,7 +182,7 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		self.printFastcall()
 		self.printNoinline()
 		print ''
-		print '#if !defined __GNUC__ || __GNUC__ < 3'
+		print '#ifndef __GNUC__'
 		print '#  define __builtin_expect(x, y) x'
 		print '#endif'
 		print ''
