@@ -117,6 +117,10 @@ lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_negate(struct lp_build_context *bld,
+                LLVMValueRef a);
+
+LLVMValueRef
 lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a);
 
