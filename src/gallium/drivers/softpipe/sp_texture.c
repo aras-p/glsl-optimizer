@@ -475,24 +475,4 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 }
 
 
-/**
- * Return pipe_buffer handle and stride for given texture object.
- * XXX used for???
- */
-boolean
-softpipe_get_texture_buffer( struct pipe_texture *texture,
-                             struct pipe_buffer **buf,
-                             unsigned *stride )
-{
-   struct softpipe_texture *tex = (struct softpipe_texture *) texture;
 
-   if (!tex)
-      return FALSE;
-
-   pipe_buffer_reference(buf, tex->buffer);
-
-   if (stride)
-      *stride = tex->stride[0];
-
-   return TRUE;
-}
