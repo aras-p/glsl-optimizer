@@ -485,11 +485,6 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		return;
 	chan->flush_notify = nv50_state_flush_notify;
 
-	BEGIN_RING(chan, tesla, 0x142c, 1);
-	OUT_RING  (chan, 0);
-	BEGIN_RING(chan, tesla, 0x142c, 1);
-	OUT_RING  (chan, 0);
-
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
 
@@ -691,11 +686,6 @@ nv50_draw_elements(struct pipe_context *pipe,
 	if (!nv50_state_validate(nv50, 14))
 		return;
 	chan->flush_notify = nv50_state_flush_notify;
-
-	BEGIN_RING(chan, tesla, 0x142c, 1);
-	OUT_RING  (chan, 0);
-	BEGIN_RING(chan, tesla, 0x142c, 1);
-	OUT_RING  (chan, 0);
 
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (chan, nv50_prim(mode));
