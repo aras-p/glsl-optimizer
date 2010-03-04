@@ -55,7 +55,7 @@
 static INLINE float
 frac(float f)
 {
-   return f - util_ifloor(f);
+   return f - floorf(f);
 }
 
 
@@ -201,11 +201,9 @@ wrap_nearest_mirror_repeat(const float s[4], unsigned size, int icoord[4])
    const float max = 1.0F - min;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       if (u < min)
          icoord[ch] = 0;
       else if (u > max)
@@ -358,11 +356,9 @@ wrap_linear_mirror_repeat(const float s[4], unsigned size,
    uint ch;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       u = u * size - 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
