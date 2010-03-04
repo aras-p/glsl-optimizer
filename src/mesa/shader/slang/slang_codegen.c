@@ -1894,6 +1894,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       _mesa_problem(NULL, "undefined __asm function %s\n",
                     (char *) oper->a_id);
       assert(info);
+      return NULL;
    }
    assert(info->NumParams <= 3);
 
