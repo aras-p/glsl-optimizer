@@ -18,7 +18,7 @@ if env['platform'] == 'windows':
         'ws2_32',
     ])
 
-    sources = []
+    sources = ['gdi_sw_winsys.c']
     drivers = []
 
     if 'softpipe' in env['drivers']:

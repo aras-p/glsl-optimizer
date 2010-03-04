@@ -27,12 +27,12 @@
 
 /**
  * @file
- * llvmpipe public interface.
+ * Software rasterizer winsys.
  */
 
 
-#ifndef LP_WINSYS_H
-#define LP_WINSYS_H
+#ifndef SW_WINSYS_H
+#define SW_WINSYS_H
 
 
 #include "pipe/p_compiler.h" /* for boolean */
@@ -51,23 +51,23 @@ struct pipe_context;
 /**
  * Opaque pointer.
  */
-struct llvmpipe_displaytarget;
+struct sw_displaytarget;
 
 
 /**
- * This is the interface that llvmpipe expects any window system
+ * This is the interface that sw expects any window system
  * hosting it to implement.
  * 
- * llvmpipe is for the most part a self sufficient driver. The only thing it
+ * sw is for the most part a self sufficient driver. The only thing it
  * does not know is how to display a surface.
  */
-struct llvmpipe_winsys
+struct sw_winsys
 {
    void 
-   (*destroy)( struct llvmpipe_winsys *ws );
+   (*destroy)( struct sw_winsys *ws );
 
    boolean
-   (*is_displaytarget_format_supported)( struct llvmpipe_winsys *ws,
+   (*is_displaytarget_format_supported)( struct sw_winsys *ws,
                                          enum pipe_format format );
    
    /**
@@ -81,21 +81,21 @@ struct llvmpipe_winsys
     * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag to get the underlying 
     * storage.
     */
-   struct llvmpipe_displaytarget *
-   (*displaytarget_create)( struct llvmpipe_winsys *ws,
+   struct sw_displaytarget *
+   (*displaytarget_create)( struct sw_winsys *ws,
                             enum pipe_format format,
                             unsigned width, unsigned height,
                             unsigned alignment,
                             unsigned *stride );
 
    void *
-   (*displaytarget_map)( struct llvmpipe_winsys *ws, 
-                         struct llvmpipe_displaytarget *dt,
+   (*displaytarget_map)( struct sw_winsys *ws, 
+                         struct sw_displaytarget *dt,
                          unsigned flags );
 
    void
-   (*displaytarget_unmap)( struct llvmpipe_winsys *ws,
-                           struct llvmpipe_displaytarget *dt );
+   (*displaytarget_unmap)( struct sw_winsys *ws,
+                           struct sw_displaytarget *dt );
 
    /**
     * @sa pipe_screen:flush_frontbuffer.
@@ -103,23 +103,19 @@ struct llvmpipe_winsys
     * This call will likely become asynchronous eventually.
     */
    void
-   (*displaytarget_display)( struct llvmpipe_winsys *ws, 
-                             struct llvmpipe_displaytarget *dt,
+   (*displaytarget_display)( struct sw_winsys *ws, 
+                             struct sw_displaytarget *dt,
                              void *context_private );
 
    void 
-   (*displaytarget_destroy)( struct llvmpipe_winsys *ws, 
-                             struct llvmpipe_displaytarget *dt );
+   (*displaytarget_destroy)( struct sw_winsys *ws, 
+                             struct sw_displaytarget *dt );
 };
 
-
-
-struct pipe_screen *
-llvmpipe_create_screen( struct llvmpipe_winsys * );
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LP_WINSYS_H */
+#endif /* SW_WINSYS_H */

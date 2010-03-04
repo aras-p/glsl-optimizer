@@ -479,7 +479,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
              */
 
             struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
-            struct llvmpipe_winsys *winsys = screen->winsys;
+            struct sw_winsys *winsys = screen->winsys;
             jit_tex->data = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                       PIPE_BUFFER_USAGE_CPU_READ);
             assert(jit_tex->data);

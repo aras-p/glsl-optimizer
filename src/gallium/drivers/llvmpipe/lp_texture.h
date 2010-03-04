@@ -35,7 +35,8 @@
 struct pipe_context;
 struct pipe_screen;
 struct llvmpipe_context;
-struct llvmpipe_displaytarget;
+
+struct sw_displaytarget;
 
 
 struct llvmpipe_texture
@@ -49,7 +50,7 @@ struct llvmpipe_texture
     * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
     * usage.
     */
-   struct llvmpipe_displaytarget *dt;
+   struct sw_displaytarget *dt;
 
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.

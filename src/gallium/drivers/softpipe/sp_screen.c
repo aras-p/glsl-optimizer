@@ -32,10 +32,12 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "state_tracker/sw_winsys.h"
+
 #include "sp_texture.h"
-#include "sp_winsys.h"
 #include "sp_screen.h"
 #include "sp_context.h"
+#include "sp_buffer.h"
 
 
 static const char *
@@ -145,6 +147,8 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               unsigned tex_usage, 
                               unsigned geom_flags )
 {
+   struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+
    assert(target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
@@ -166,15 +170,25 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_NONE:
       return FALSE;
    default:
-      return TRUE;
+      break;
    }
+
+   if(tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if(!winsys->is_displaytarget_format_supported(winsys, format))
+         return FALSE;
+   }
+
+   /* XXX: this is often a lie.  Pull in logic from llvmpipe to fix.
+    */
+   return TRUE;
 }
 
 
 static void
 softpipe_destroy_screen( struct pipe_screen *screen )
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct softpipe_screen *sp_screen = softpipe_screen(screen);
+   struct sw_winsys *winsys = sp_screen->winsys;
 
    if(winsys->destroy)
       winsys->destroy(winsys);
@@ -183,21 +197,37 @@ softpipe_destroy_screen( struct pipe_screen *screen )
 }
 
 
+/* This is often overriden by the co-state tracker.
+ */
+static void
+softpipe_flush_frontbuffer(struct pipe_screen *_screen,
+                           struct pipe_surface *surface,
+                           void *context_private)
+{
+   struct softpipe_screen *screen = softpipe_screen(_screen);
+   struct sw_winsys *winsys = screen->winsys;
+   struct softpipe_texture *texture = softpipe_texture(surface->texture);
+
+   assert(texture->dt);
+   if (texture->dt)
+      winsys->displaytarget_display(winsys, texture->dt, context_private);
+}
 
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no softpipe_screen).
  */
 struct pipe_screen *
-softpipe_create_screen(struct pipe_winsys *winsys)
+softpipe_create_screen(struct sw_winsys *winsys)
 {
    struct softpipe_screen *screen = CALLOC_STRUCT(softpipe_screen);
 
    if (!screen)
       return NULL;
 
-   screen->base.winsys = winsys;
+   screen->winsys = winsys;
 
+   screen->base.winsys = NULL;
    screen->base.destroy = softpipe_destroy_screen;
 
    screen->base.get_name = softpipe_get_name;
@@ -206,9 +236,10 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->base.get_paramf = softpipe_get_paramf;
    screen->base.is_format_supported = softpipe_is_format_supported;
    screen->base.context_create = softpipe_create_context;
+   screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 
    softpipe_init_screen_texture_funcs(&screen->base);
-   u_simple_screen_init(&screen->base);
+   softpipe_init_screen_buffer_funcs(&screen->base);
 
    return &screen->base;
 }

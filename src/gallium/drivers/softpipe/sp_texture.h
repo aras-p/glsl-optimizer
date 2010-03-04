@@ -45,9 +45,16 @@ struct softpipe_texture
    unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
    unsigned stride[PIPE_MAX_TEXTURE_LEVELS];
 
-   /* The data is held here:
+   /**
+    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * usage.
     */
-   struct pipe_buffer *buffer;
+   struct sw_displaytarget *dt;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
 
    /* True if texture images are power-of-two in all dimensions:
     */

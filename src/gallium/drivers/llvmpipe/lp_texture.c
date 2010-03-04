@@ -93,7 +93,7 @@ static boolean
 llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                               struct llvmpipe_texture *lpt)
 {
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
 
    /* Round up the surface size to a multiple of the tile size to
     * avoid tile clipping.
@@ -187,7 +187,7 @@ llvmpipe_texture_destroy(struct pipe_texture *pt)
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = screen->winsys;
+      struct sw_winsys *winsys = screen->winsys;
       winsys->displaytarget_destroy(winsys, lpt->dt);
    }
    else {
@@ -357,7 +357,7 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = screen->winsys;
+      struct sw_winsys *winsys = screen->winsys;
 
       map = winsys->displaytarget_map(winsys, lpt->dt,
                                       pipe_transfer_buffer_flags(transfer));
@@ -398,7 +398,7 @@ llvmpipe_transfer_unmap(struct pipe_screen *screen,
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = lp_screen->winsys;
+      struct sw_winsys *winsys = lp_screen->winsys;
       winsys->displaytarget_unmap(winsys, lpt->dt);
    }
 }

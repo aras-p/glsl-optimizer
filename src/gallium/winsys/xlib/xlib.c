@@ -33,9 +33,7 @@
 
 #include "xlib.h"
 #include "xm_winsys.h"
-
-#include <stdlib.h>
-#include <assert.h>
+#include "util/u_debug.h"
 
 /* Todo, replace all this with callback-structs provided by the
  * individual implementations.

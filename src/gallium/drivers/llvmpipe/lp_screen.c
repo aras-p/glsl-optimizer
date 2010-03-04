@@ -167,7 +167,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               unsigned geom_flags )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
    const struct util_format_description *format_desc;
 
    format_desc = util_format_description(format);
@@ -258,7 +258,7 @@ llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
                            void *context_private)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
    struct llvmpipe_texture *texture = llvmpipe_texture(surface->texture);
 
    assert(texture->dt);
@@ -271,7 +271,7 @@ static void
 llvmpipe_destroy_screen( struct pipe_screen *_screen )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
 
    lp_jit_screen_cleanup(screen);
 
@@ -288,7 +288,7 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
  * Note: we're not presently subclassing pipe_screen (no llvmpipe_screen).
  */
 struct pipe_screen *
-llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
+llvmpipe_create_screen(struct sw_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
 

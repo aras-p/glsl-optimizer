@@ -6,6 +6,7 @@ LIBNAME = softpipe
 C_SOURCES = \
 	sp_fs_exec.c \
 	sp_fs_sse.c \
+	sp_buffer.c \
 	sp_clear.c \
 	sp_flush.c \
 	sp_query.c \
@@ -32,7 +33,6 @@ C_SOURCES = \
 	sp_tex_tile_cache.c \
 	sp_tile_cache.c \
 	sp_surface.c \
-	sp_video_context.c \
-	sp_winsys.c
+	sp_video_context.c
 
 include ../../Makefile.template

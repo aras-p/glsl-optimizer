@@ -36,7 +36,7 @@ drivers = [trace]
     
 if 'softpipe' in env['drivers']:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    sources += ['xlib_softpipe.c']
+    sources += ['xlib_softpipe.c', 'xlib_sw_winsys.c']
     drivers += [softpipe]
 
 if 'llvmpipe' in env['drivers']:
@@ -44,7 +44,7 @@ if 'llvmpipe' in env['drivers']:
     if 'LLVM_VERSION' in env:
         env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
         env.Tool('udis86')
-        sources += ['xlib_llvmpipe.c']
+        sources += ['xlib_llvmpipe.c', 'xlib_sw_winsys.c']
         drivers += [llvmpipe]
     
 if 'cell' in env['drivers']:

@@ -29,6 +29,7 @@ DEFINES += \
 XLIB_WINSYS_SOURCES = \
 	xlib.c \
 	xlib_cell.c \
+	xlib_sw_winsys.c \
 	xlib_llvmpipe.c \
 	xlib_softpipe.c
 
