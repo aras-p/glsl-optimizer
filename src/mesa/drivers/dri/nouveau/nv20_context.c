@@ -459,7 +459,6 @@ const struct nouveau_driver nv20_driver = {
 		nv20_emit_frag,
 		nv20_emit_framebuffer,
 		nv20_emit_fog,
-		nv10_emit_index_mask,
 		nv10_emit_light_enable,
 		nv20_emit_light_model,
 		nv20_emit_light_source,
