@@ -1126,6 +1126,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
+      /* XXX what about dst0 writemask? */
       emit_tex( bld, inst, FALSE, FALSE, dst0 );
       break;
 
