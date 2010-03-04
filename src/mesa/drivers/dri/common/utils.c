@@ -726,6 +726,7 @@ driGetConfigAttribIndex(const __DRIconfig *config,
     switch (attribMap[index].attrib) {
     case __DRI_ATTRIB_RENDER_TYPE:
 	*value = __DRI_ATTRIB_RGBA_BIT;
+	break;
     case __DRI_ATTRIB_CONFIG_CAVEAT:
 	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)
 	    *value = __DRI_ATTRIB_NON_CONFORMANT_CONFIG;
