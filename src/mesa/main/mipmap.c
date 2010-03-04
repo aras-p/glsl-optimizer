@@ -1325,6 +1325,8 @@ make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
       if (border > 0) {
          /* fill in dest border */
          /* lower-left border pixel */
+         assert(dstPtr);
+         assert(srcPtr);
          memcpy(dstPtr, srcPtr, bpt);
          /* lower-right border pixel */
          memcpy(dstPtr + (dstWidth - 1) * bpt,
