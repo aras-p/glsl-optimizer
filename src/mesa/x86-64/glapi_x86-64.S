@@ -31,7 +31,7 @@
 
 #include "x86/assyntax.h"
 
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#ifdef __GNUC__
 #  pragma GCC visibility push(default)
 #  define HIDDEN(x) .hidden x
 #else

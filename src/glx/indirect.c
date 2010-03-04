@@ -53,7 +53,7 @@
 #    define NOINLINE
 #  endif
 
-#if !defined __GNUC__ || __GNUC__ < 3
+#ifndef __GNUC__
 #  define __builtin_expect(x, y) x
 #endif
 
