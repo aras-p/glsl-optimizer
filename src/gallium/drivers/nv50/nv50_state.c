@@ -302,7 +302,7 @@ static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nouveau_stateobj *so = so_new(15, 21, 0);
+	struct nouveau_stateobj *so = so_new(16, 22, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_rasterizer_stateobj *rso =
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
@@ -313,6 +313,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	- multisample
 	 * 	- point_sprite / sprite_coord_mode
 	 */
+
+	so_method(so, tesla, NV50TCL_SCISSOR_ENABLE(0), 1);
+	so_data  (so, cso->scissor);
 
 	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :

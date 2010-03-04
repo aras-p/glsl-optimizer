@@ -485,10 +485,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, NV50TCL_LINKED_TSC, 1);
 	so_data  (so, 1);
 
-	/* activate first scissor rectangle */
-	so_method(so, screen->tesla, NV50TCL_SCISSOR_ENABLE(0), 1);
-	so_data  (so, 1);
-
 	so_method(so, screen->tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
 	so_data  (so, 1); /* default edgeflag to TRUE */
 

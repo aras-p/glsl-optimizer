@@ -126,7 +126,6 @@ struct nv50_state {
 	struct nouveau_stateobj *hw[64];
 	uint64_t hw_dirty;
 
-	unsigned scissor_enabled;
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;

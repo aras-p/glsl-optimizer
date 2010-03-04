@@ -167,9 +167,6 @@ validate_fb(struct nv50_context *nv50)
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
 
-	/* we set scissors to framebuffer size when they're 'turned off' */
-	nv50->dirty |= NV50_NEW_SCISSOR;
-	so_ref(NULL, &nv50->state.hw[12]);
 	return so;
 }
 
@@ -264,26 +261,14 @@ validate_stipple(struct nv50_context *nv50)
 static struct nouveau_stateobj *
 validate_scissor(struct nv50_context *nv50)
 {
-	struct pipe_rasterizer_state *rast = &nv50->rasterizer->pipe;
-	struct pipe_scissor_state *s = &nv50->scissor;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
+        struct pipe_scissor_state *s = &nv50->scissor;
 	struct nouveau_stateobj *so;
-
-	if (nv50->state.hw[12] &&
-	    (rast->scissor == 0 && nv50->state.scissor_enabled == 0))
-		return NULL;
-	nv50->state.scissor_enabled = rast->scissor;
 
 	so = so_new(1, 2, 0);
 	so_method(so, tesla, NV50TCL_SCISSOR_HORIZ(0), 2);
-	if (nv50->state.scissor_enabled) {
-		so_data(so, (s->maxx << 16) | s->minx);
-		so_data(so, (s->maxy << 16) | s->miny);
-	} else {
-		so_data(so, (nv50->framebuffer.width << 16));
-		so_data(so, (nv50->framebuffer.height << 16));
-	}
-
+	so_data  (so, (s->maxx << 16) | s->minx);
+	so_data  (so, (s->maxy << 16) | s->miny);
 	return so;
 }
 
@@ -374,7 +359,7 @@ struct state_validate {
 	{ validate_blend_colour   , NV50_NEW_BLEND_COLOUR                     },
 	{ validate_stencil_ref    , NV50_NEW_STENCIL_REF                      },
 	{ validate_stipple        , NV50_NEW_STIPPLE                          },
-	{ validate_scissor        , NV50_NEW_SCISSOR | NV50_NEW_RASTERIZER    },
+	{ validate_scissor        , NV50_NEW_SCISSOR                          },
 	{ validate_viewport       , NV50_NEW_VIEWPORT                         },
 	{ validate_sampler        , NV50_NEW_SAMPLER                          },
 	{ nv50_tex_validate       , NV50_NEW_TEXTURE | NV50_NEW_SAMPLER       },
