@@ -97,6 +97,7 @@ static void create_fragment_program(struct r300_context *r300)
     struct r300_fragment_program_compiler compiler;
     struct rc_instruction *inst;
 
+    memset(&compiler, 0, sizeof(struct r300_fragment_program_compiler));
     rc_init(&compiler.Base);
 
     inst = rc_insert_new_instruction(&compiler.Base, compiler.Base.Program.Instructions.Prev);
