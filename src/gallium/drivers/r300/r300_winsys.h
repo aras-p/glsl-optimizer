@@ -40,11 +40,6 @@ struct radeon_winsys;
 struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 
 
-boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
-                                unsigned* stride);
-
 #ifdef __cplusplus
 }
 #endif

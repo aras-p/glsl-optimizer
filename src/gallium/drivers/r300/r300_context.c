@@ -72,11 +72,8 @@ r300_is_texture_referenced(struct pipe_context *pipe,
                            struct pipe_texture *texture,
                            unsigned face, unsigned level)
 {
-    struct pipe_buffer* buf = 0;
-
-    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
-
-    return pipe->is_buffer_referenced(pipe, buf);
+    return pipe->is_buffer_referenced(pipe,
+                                      ((struct r300_texture *)texture)->buffer);
 }
 
 static unsigned int
@@ -86,7 +83,14 @@ r300_is_buffer_referenced(struct pipe_context *pipe,
     /* This only checks to see whether actual hardware buffers are
      * referenced. Since we use managed BOs and transfers, it's actually not
      * possible for pipe_buffers to ever reference the actual hardware, so
-     * buffers are never referenced. */
+     * buffers are never referenced. 
+     */
+
+    /* XXX: that doesn't make sense given that
+     * r300_is_texture_referenced is implemented on top of this
+     * function and hardware can certainly refer to textures
+     * directly...
+     */
     return 0;
 }
 

@@ -974,21 +974,3 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen)
     screen->video_surface_destroy= r300_video_surface_destroy;
 }
 
-boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
-                                unsigned* stride)
-{
-    struct r300_texture* tex = (struct r300_texture*)texture;
-    if (!tex) {
-        return FALSE;
-    }
-
-    pipe_buffer_reference(buffer, tex->buffer);
-
-    if (stride) {
-        *stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
-    }
-
-    return TRUE;
-}
