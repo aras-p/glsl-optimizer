@@ -126,7 +126,8 @@ static void create_fragment_program(struct r300_context *r300)
 
 void r300_blit_init(struct r300_context *r300)
 {
-    create_vertex_program(r300);
+    if (r300->options.hw_tcl_enabled)
+	create_vertex_program(r300);
     create_fragment_program(r300);
 }
 
@@ -341,7 +342,13 @@ static void emit_pvs_setup(struct r300_context *r300,
 
 static void emit_vap_setup(struct r300_context *r300)
 {
+    int tex_offset;
     BATCH_LOCALS(&r300->radeon);
+
+    if (r300->options.hw_tcl_enabled)
+	tex_offset = 1;
+    else
+	tex_offset = 6;
 
     BEGIN_BATCH(12);
     OUT_BATCH_REGSEQ(R300_SE_VTE_CNTL, 2);
@@ -351,7 +358,7 @@ static void emit_vap_setup(struct r300_context *r300)
     OUT_BATCH_REGVAL(R300_VAP_PSC_SGN_NORM_CNTL, 0xaaaaaaaa);
     OUT_BATCH_REGVAL(R300_VAP_PROG_STREAM_CNTL_0,
                      ((R300_DATA_TYPE_FLOAT_2 | (0 << R300_DST_VEC_LOC_SHIFT)) << 0) |
-                     (((1 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_2 | R300_LAST_VEC) << 16));
+                     (((tex_offset << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_2 | R300_LAST_VEC) << 16));
     OUT_BATCH_REGVAL(R300_VAP_PROG_STREAM_CNTL_EXT_0,
                     ((((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) |
                        (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) |
@@ -450,7 +457,7 @@ static void other_stuff(struct r300_context *r300)
 {
     BATCH_LOCALS(&r300->radeon);
 
-    BEGIN_BATCH(15);
+    BEGIN_BATCH(13);
     OUT_BATCH_REGVAL(R300_GA_POLY_MODE,
                      R300_GA_POLY_MODE_FRONT_PTYPE_TRI | R300_GA_POLY_MODE_BACK_PTYPE_TRI);
     OUT_BATCH_REGVAL(R300_SU_CULL_MODE, R300_FRONT_FACE_CCW);
@@ -459,9 +466,13 @@ static void other_stuff(struct r300_context *r300)
     OUT_BATCH_REGSEQ(R300_RB3D_CBLEND, 2);
     OUT_BATCH(0x0);
     OUT_BATCH(0x0);
-    OUT_BATCH_REGVAL(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
     OUT_BATCH_REGVAL(R300_ZB_CNTL, 0);
     END_BATCH();
+    if (r300->options.hw_tcl_enabled) {
+        BEGIN_BATCH(2);
+        OUT_BATCH_REGVAL(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+        END_BATCH();
+    }
 }
 
 static void emit_cb_setup(struct r300_context *r300,
@@ -634,7 +645,9 @@ unsigned r300_blit(GLcontext *ctx,
         r300_emit_rs_setup(r300);
     }
 
-    emit_pvs_setup(r300, r300->blit.vp_code.body.d, 2);
+    if (r300->options.hw_tcl_enabled)
+	emit_pvs_setup(r300, r300->blit.vp_code.body.d, 2);
+
     emit_vap_setup(r300);
 
     emit_cb_setup(r300, dst_bo, dst_offset, dst_mesaformat, dst_pitch, dst_width, dst_height);
