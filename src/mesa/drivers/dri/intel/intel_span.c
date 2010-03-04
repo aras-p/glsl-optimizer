@@ -352,40 +352,6 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define INTEL_TAG(name) name##_z24_x8
 #include "intel_depthtmp.h"
 
-
-/**
- ** 8-bit stencil function (XXX FBO: This is obsolete)
- **/
-/* XXX */
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, NO_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, NO_TILE(_x, _y) + 3);
-#define TAG(x) intel_gttmap_##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, NO_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, NO_TILE(_x, _y) + 3);
-#define TAG(x) intel##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit x-tile stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, X_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, X_TILE(_x, _y) + 3);
-#define TAG(x) intel_XTile_##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit y-tile stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, Y_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, Y_TILE(_x, _y) + 3)
-#define TAG(x) intel_YTile_##x##_z24_s8
-#include "stenciltmp.h"
-
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
@@ -615,19 +581,8 @@ intel_set_span_functions(struct intel_context *intel,
 	 intel_gttmap_InitDepthPointers_z16(rb);
 	 break;
       case MESA_FORMAT_X8_Z24:
-	 intel_gttmap_InitDepthPointers_z24_x8(rb);
-	 break;
       case MESA_FORMAT_S8_Z24:
-	 /* There are a few different ways SW asks us to access the S8Z24 data:
-	  * Z24 depth-only depth reads
-	  * S8Z24 depth reads
-	  * S8Z24 stencil reads.
-	  */
-	 if (rb->Format == MESA_FORMAT_S8_Z24) {
-	    intel_gttmap_InitDepthPointers_z24_x8(rb);
-	 } else if (rb->Format == MESA_FORMAT_S8) {
-	    intel_gttmap_InitStencilPointers_z24_s8(rb);
-	 }
+	 intel_gttmap_InitDepthPointers_z24_x8(rb);
 	 break;
       default:
 	 _mesa_problem(NULL,
@@ -745,19 +700,6 @@ intel_set_span_functions(struct intel_context *intel,
 	    break;
 	 case I915_TILING_Y:
 	    intel_YTile_InitDepthPointers_z24_x8(rb);
-	    break;
-	 }
-      } else if (rb->Format == MESA_FORMAT_S8) {
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitStencilPointers_z24_s8(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitStencilPointers_z24_s8(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitStencilPointers_z24_s8(rb);
 	    break;
 	 }
       } else {
