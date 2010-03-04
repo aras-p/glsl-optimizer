@@ -83,17 +83,92 @@ struct lp_build_sample_context
 };
 
 
+/**
+ * Does the given texture wrap mode allow sampling the texture border color?
+ * XXX maybe move this into gallium util code.
+ */
+static boolean
+wrap_mode_uses_border_color(unsigned mode)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      return FALSE;
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      return TRUE;
+   default:
+      assert(0 && "unexpected wrap mode");
+      return FALSE;
+   }
+}
+
+
+
+/**
+ * Gen code to fetch a texel from a texture at int coords (x, y).
+ * The result, texel, will be:
+ *   texel[0] = red values
+ *   texel[1] = green values
+ *   texel[2] = blue values
+ *   texel[3] = alpha values
+ */
 static void
 lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
+                          LLVMValueRef width,
+                          LLVMValueRef height,
                           LLVMValueRef x,
                           LLVMValueRef y,
                           LLVMValueRef y_stride,
                           LLVMValueRef data_ptr,
                           LLVMValueRef *texel)
 {
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
    LLVMValueRef packed;
+   LLVMValueRef use_border = NULL;
 
+   /* use_border = x < 0 || x >= width || y < 0 || y >= height */
+   if (wrap_mode_uses_border_color(bld->static_state->wrap_s)) {
+      LLVMValueRef b1, b2;
+      b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
+      b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
+      use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
+   }
+
+   if (wrap_mode_uses_border_color(bld->static_state->wrap_t)) {
+      LLVMValueRef b1, b2;
+      b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, y, int_coord_bld->zero);
+      b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, y, height);
+      if (use_border) {
+         use_border = LLVMBuildOr(bld->builder, use_border, b1, "ub_or_b1");
+         use_border = LLVMBuildOr(bld->builder, use_border, b2, "ub_or_b2");
+      }
+      else {
+         use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
+      }
+   }
+
+   /*
+    * Note: if we find an app which frequently samples the texture border
+    * we might want to implement a true conditional here to avoid sampling
+    * the texture whenever possible (since that's quite a bit of code).
+    * Ex:
+    *   if (use_border) {
+    *      texel = border_color;
+    *   }
+    *   else {
+    *      texel = sample_texture(coord);
+    *   }
+    * As it is now, we always sample the texture, then selectively replace
+    * the texel color results with the border color.
+    */
+
+   /* convert x,y coords to linear offset from start of texture, in bytes */
    offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
                                    x, y, y_stride,
@@ -103,16 +178,30 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    assert(bld->format_desc->block.height == 1);
    assert(bld->format_desc->block.bits <= bld->texel_type.width);
 
+   /* gather the texels from the texture */
    packed = lp_build_gather(bld->builder,
                             bld->texel_type.length,
                             bld->format_desc->block.bits,
                             bld->texel_type.width,
                             data_ptr, offset);
 
+   /* convert texels to float rgba */
    lp_build_unpack_rgba_soa(bld->builder,
                             bld->format_desc,
                             bld->texel_type,
                             packed, texel);
+
+   if (use_border) {
+      /* select texel color or border color depending on use_border */
+      int chan;
+      for (chan = 0; chan < 4; chan++) {
+         LLVMValueRef border_chan =
+            lp_build_const_scalar(bld->texel_type,
+                                  bld->static_state->border_color[chan]);
+         texel[chan] = lp_build_select(&bld->texel_bld, use_border,
+                                       border_chan, texel[chan]);
+      }
+   }
 }
 
 
@@ -180,14 +269,14 @@ lp_build_coord_mirror(struct lp_build_sample_context *bld,
  * Return whether the given mode is supported by that function.
  */
 static boolean
-is_simple_wrap_mode(int mode)
+is_simple_wrap_mode(unsigned mode)
 {
    switch (mode) {
    case PIPE_TEX_WRAP_REPEAT:
    case PIPE_TEX_WRAP_CLAMP:
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return TRUE;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
    default:
       return FALSE;
    }
@@ -339,14 +428,15 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          /* min = -1.0 / (2 * length) */
          min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
          min = lp_build_negate(coord_bld, min);
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
-         /* scale coord to length (and sub 0.5?) */
-         coord = lp_build_mul(coord_bld, coord, length_f);
-         /* compute lerp weight */
-         weight = lp_build_fract(coord_bld, coord);
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
          /* coord = clamp(coord, min, max) */
          coord = lp_build_clamp(coord_bld, coord, min, max);
+         /* scale coord to length (and sub 0.5?) */
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+         /* compute lerp weight */
+         weight = lp_build_fract(coord_bld, coord);
          /* convert to int */
          coord0 = lp_build_ifloor(coord_bld, coord);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
@@ -375,12 +465,21 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      coord = lp_build_abs(coord_bld, coord);
-      coord = lp_build_mul(coord_bld, coord, length_f);
-      weight = lp_build_fract(coord_bld, coord);
-      coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, length_f_minus_one);
-      coord0 = lp_build_ifloor(coord_bld, coord);
-      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         if(0)coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
+         coord0 = lp_build_ifloor(coord_bld, coord);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      }
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
@@ -388,13 +487,14 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          LLVMValueRef min, max;
          /* min = 1.0 / (2 * length) */
          min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
 
          coord = lp_build_abs(coord_bld, coord);
-         coord = lp_build_mul(coord_bld, coord, length_f);
-         weight = lp_build_fract(coord_bld, coord);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
          coord0 = lp_build_ifloor(coord_bld, coord);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
@@ -406,13 +506,14 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          /* min = -1.0 / (2 * length) */
          min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
          min = lp_build_negate(coord_bld, min);
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
 
          coord = lp_build_abs(coord_bld, coord);
-         coord = lp_build_mul(coord_bld, coord, length_f);
-         weight = lp_build_fract(coord_bld, coord);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
          coord0 = lp_build_ifloor(coord_bld, coord);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
@@ -598,7 +699,7 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
    lp_build_name(x, "tex.x.wrapped");
    lp_build_name(y, "tex.y.wrapped");
 
-   lp_build_sample_texel_soa(bld, x, y, stride, data_ptr, texel);
+   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_ptr, texel);
 }
 
 
@@ -627,10 +728,10 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    lp_build_sample_wrap_linear(bld, t, height, bld->static_state->pot_height,
                                bld->static_state->wrap_t, &y0, &y1, &t_fpart);
 
-   lp_build_sample_texel_soa(bld, x0, y0, stride, data_ptr, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, x1, y0, stride, data_ptr, neighbors[0][1]);
-   lp_build_sample_texel_soa(bld, x0, y1, stride, data_ptr, neighbors[1][0]);
-   lp_build_sample_texel_soa(bld, x1, y1, stride, data_ptr, neighbors[1][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_ptr, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_ptr, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_ptr, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_ptr, neighbors[1][1]);
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
@@ -907,6 +1008,11 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Build texture sampling code.
+ * 'texel' will return a vector of four LLVMValueRefs corresponding to
+ * R, G, B, A.
+ */
 void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,
