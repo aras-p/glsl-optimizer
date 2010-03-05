@@ -96,11 +96,6 @@ const GLuint __driNConfigOptions = 11;
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
-static const __DRItexOffsetExtension intelTexOffsetExtension = {
-   { __DRI_TEX_OFFSET },
-   intelSetTexOffset,
-};
-
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    intelSetTexBuffer,
@@ -227,7 +222,6 @@ static struct __DRIimageExtensionRec intelImageExtension = {
 
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
-    &intelTexOffsetExtension.base,
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
