@@ -469,6 +469,8 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          jit_tex = &setup->fs.current.jit_context.textures[i];
          jit_tex->width = tex->width0;
          jit_tex->height = tex->height0;
+         jit_tex->depth = tex->depth0;
+         jit_tex->last_level = tex->last_level;
          jit_tex->stride = lp_tex->stride[0];
          if(!lp_tex->dt) {
             jit_tex->data = lp_tex->data;

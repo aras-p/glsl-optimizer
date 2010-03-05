@@ -48,6 +48,8 @@ struct lp_jit_texture
 {
    uint32_t width;
    uint32_t height;
+   uint32_t depth;
+   uint32_t last_level;
    uint32_t stride;
    const void *data;
 };
@@ -56,6 +58,8 @@ struct lp_jit_texture
 enum {
    LP_JIT_TEXTURE_WIDTH = 0,
    LP_JIT_TEXTURE_HEIGHT,
+   LP_JIT_TEXTURE_DEPTH,
+   LP_JIT_TEXTURE_LAST_LEVEL,
    LP_JIT_TEXTURE_STRIDE,
    LP_JIT_TEXTURE_DATA
 };
