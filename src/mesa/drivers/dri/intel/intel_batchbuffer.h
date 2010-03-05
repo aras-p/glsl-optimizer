@@ -24,11 +24,13 @@ struct intel_batchbuffer
 
    GLuint size;
 
+#ifdef DEBUG
    /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
    struct {
       GLuint total;
       GLubyte *start_ptr;
    } emit;
+#endif
 
    GLuint dirty_state;
    GLuint reserved_space;
@@ -97,7 +99,9 @@ intel_batchbuffer_space(struct intel_batchbuffer *batch)
 static INLINE void
 intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 {
+#ifdef DEBUG
    assert(intel_batchbuffer_space(batch) >= 4);
+#endif
    *(GLuint *) (batch->ptr) = dword;
    batch->ptr += 4;
 }
@@ -112,7 +116,9 @@ static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
                                 GLuint sz)
 {
+#ifdef DEBUG
    assert(sz < batch->size - 8);
+#endif
    if (intel_batchbuffer_space(batch) < sz)
       intel_batchbuffer_flush(batch);
 }
@@ -121,15 +127,18 @@ static INLINE void
 intel_batchbuffer_begin(struct intel_batchbuffer *batch, int n)
 {
    intel_batchbuffer_require_space(batch, n * 4);
+#ifdef DEBUG
    assert(batch->map);
    assert(batch->emit.start_ptr == NULL);
    batch->emit.total = n * 4;
    batch->emit.start_ptr = batch->ptr;
+#endif
 }
 
 static INLINE void
 intel_batchbuffer_advance(struct intel_batchbuffer *batch)
 {
+#ifdef DEBUG
    unsigned int _n = batch->ptr - batch->emit.start_ptr;
    assert(batch->emit.start_ptr != NULL);
    if (_n != batch->emit.total) {
@@ -138,6 +147,7 @@ intel_batchbuffer_advance(struct intel_batchbuffer *batch)
       abort();
    }
    batch->emit.start_ptr = NULL;
+#endif
 }
 
 /* Here are the crusty old macros, to be removed:
