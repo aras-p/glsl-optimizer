@@ -614,6 +614,9 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
 #endif
+#if defined(X_DRI2GetMSC) && defined(X_DRI2WaitMSC) && defined(X_DRI2SwapInterval)
+      __glXEnableDirectExtension(psc, "GLX_OML_sync_control");
+#endif
    }
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
