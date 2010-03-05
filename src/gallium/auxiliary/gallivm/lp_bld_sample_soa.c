@@ -1159,6 +1159,69 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
+ * mipmap level index.
+ * \param lod  scalar float texture level of detail
+ * \param level_out  returns integer 
+ */
+static void
+lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level_out)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMValueRef last_level, level;
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_iround(coord_bld, lod);
+
+   /* clamp level to legal range of levels */
+   *level_out = lp_build_clamp(int_coord_bld, level,
+                               int_coord_bld->zero,
+                               last_level);
+}
+
+
+/**
+ * For PIPE_TEX_MIPFILTER_LINEAR, convert float LOD to integer to
+ * two (adjacent) mipmap level indexes.  Later, we'll sample from those
+ * two mipmap levels and interpolate between them.
+ */
+static void
+lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level0_out,
+                           LLVMValueRef *level1_out,
+                           LLVMValueRef *weight_out)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMValueRef last_level, level;
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_ifloor(coord_bld, lod);
+
+   /* compute level 0 and clamp to legal range of levels */
+   *level0_out = lp_build_clamp(int_coord_bld, level,
+                                int_coord_bld->zero,
+                                last_level);
+   /* compute level 1 and clamp to legal range of levels */
+   *level1_out = lp_build_add(int_coord_bld, *level0_out, int_coord_bld->one);
+   *level1_out = lp_build_min(int_coord_bld, *level1_out, int_coord_bld->zero);
+
+   *weight_out = lp_build_fract(coord_bld, lod);
+}
+
 
 
 /**
@@ -1187,6 +1250,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef r;
 
    (void) lp_build_lod_selector;   /* temporary to silence warning */
+   (void) lp_build_nearest_mip_level;
+   (void) lp_build_linear_mip_levels;
 
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
