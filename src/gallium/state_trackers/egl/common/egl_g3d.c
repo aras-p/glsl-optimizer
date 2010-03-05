@@ -36,6 +36,7 @@
 
 #include "native.h"
 #include "egl_g3d.h"
+#include "egl_g3d_image.h"
 #include "egl_st.h"
 
 /**
@@ -615,6 +616,10 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 #endif
 
+   dpy->Extensions.KHR_image_base = EGL_TRUE;
+   if (gdpy->native->get_param(gdpy->native, NATIVE_PARAM_USE_NATIVE_BUFFER))
+      dpy->Extensions.KHR_image_pixmap = EGL_TRUE;
+
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;
@@ -958,8 +963,8 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 /**
  * Find a config that supports the pixmap.
  */
-static _EGLConfig *
-find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
+_EGLConfig *
+egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_config *gconf;
@@ -1011,7 +1016,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    if (!gsurf->render_surface)
       return EGL_TRUE;
 
-   gconf = egl_g3d_config(find_pixmap_config(dpy, target));
+   gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, target));
    if (!gconf)
       return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
 
@@ -1321,6 +1326,9 @@ _eglMain(const char *args)
 
    gdrv->base.API.BindTexImage = egl_g3d_bind_tex_image;
    gdrv->base.API.ReleaseTexImage = egl_g3d_release_tex_image;
+
+   gdrv->base.API.CreateImageKHR = egl_g3d_create_image;
+   gdrv->base.API.DestroyImageKHR = egl_g3d_destroy_image;
 
 #ifdef EGL_MESA_screen_surface
    gdrv->base.API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;
