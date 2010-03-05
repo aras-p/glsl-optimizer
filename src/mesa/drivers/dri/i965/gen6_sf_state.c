@@ -48,7 +48,7 @@ upload_sf_state(struct brw_context *brw)
 
    dw1 =
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
-      num_inputs << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
+      (num_inputs + 1) / 2 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
       3 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
    dw2 = GEN6_SF_VIEWPORT_TRANSFORM_ENABLE |
       GEN6_SF_STATISTICS_ENABLE;
