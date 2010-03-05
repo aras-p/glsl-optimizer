@@ -75,14 +75,15 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
    state->compare_mode      = sampler->compare_mode;
+   state->compare_func      = sampler->compare_func;
+   state->normalized_coords = sampler->normalized_coords;
+   state->lod_bias          = sampler->lod_bias;
+   state->min_lod           = sampler->min_lod;
+   state->max_lod           = sampler->max_lod;
    state->border_color[0]   = sampler->border_color[0];
    state->border_color[1]   = sampler->border_color[1];
    state->border_color[2]   = sampler->border_color[2];
    state->border_color[3]   = sampler->border_color[3];
-   if(sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
-      state->compare_func      = sampler->compare_func;
-   }
-   state->normalized_coords = sampler->normalized_coords;
 }
 
 

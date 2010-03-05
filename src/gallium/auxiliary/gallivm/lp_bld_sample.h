@@ -70,6 +70,7 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
+   float lod_bias, min_lod, max_lod;
    float border_color[4];
 };
 
