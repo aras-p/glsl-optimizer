@@ -89,7 +89,6 @@ struct wm_sampler_key {
       float max_aniso;
       GLenum minfilter, magfilter;
       GLenum comparemode, comparefunc;
-      dri_bo *sdc_bo;
 
       /** If target is cubemap, take context setting.
        */
