@@ -123,6 +123,12 @@ check_valid_to_render(GLcontext *ctx, const char *function)
    return GL_TRUE;
 }
 
+
+/**
+ * Do bounds checking on array element indexes.  Check that the vertices
+ * pointed to by the indices don't lie outside buffer object bounds.
+ * \return GL_TRUE if OK, GL_FALSE if any indexed vertex goes is out of bounds
+ */
 static GLboolean
 check_index_bounds(GLcontext *ctx, GLsizei count, GLenum type,
 		   const GLvoid *indices, GLint basevertex)
@@ -150,13 +156,14 @@ check_index_bounds(GLcontext *ctx, GLsizei count, GLenum type,
    if ((int)(min + basevertex) < 0 ||
        max + basevertex > ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
-      _mesa_warning(ctx, "glDrawElements() index=%u is "
-		    "out of bounds (max=%u)", max, ctx->Array.ArrayObj->_MaxElement);
+      _mesa_warning(ctx, "glDrawElements() index=%u is out of bounds (max=%u)",
+                    max, ctx->Array.ArrayObj->_MaxElement);
       return GL_FALSE;
    }
 
    return GL_TRUE;
 }
+
 
 /**
  * Error checking for glDrawElements().  Includes parameter checking
