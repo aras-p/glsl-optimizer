@@ -1809,6 +1809,8 @@ _mesa_TextureObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
 GLenum GLAPIENTRY
 _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
 {
+   GLenum retval;
+
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
@@ -1832,17 +1834,27 @@ _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
 
    switch (objectType) {
    case GL_TEXTURE:
-      return _mesa_TextureObjectPurgeable (ctx, name, option);
+      retval = _mesa_TextureObjectPurgeable (ctx, name, option);
+      break;
    case GL_RENDERBUFFER_EXT:
-      return _mesa_RenderObjectPurgeable (ctx, name, option);
+      retval = _mesa_RenderObjectPurgeable (ctx, name, option);
+      break;
    case GL_BUFFER_OBJECT_APPLE:
-      return _mesa_BufferObjectPurgeable (ctx, name, option);
+      retval = _mesa_BufferObjectPurgeable (ctx, name, option);
+      break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glObjectPurgeable(name = 0x%x) invalid type: %d",
                   name, objectType);
       return 0;
    }
+
+   /* In strict conformance to the spec, we must only return VOLATILE when
+    * when passed the VOLATILE option. Madness.
+    *
+    * XXX First fix the spec, then fix me.
+    */
+   return option == GL_VOLATILE_APPLE ? GL_VOLATILE_APPLE : retval;
 }
 
 
@@ -1902,7 +1914,7 @@ _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
    if (ctx->Driver.RenderObjectUnpurgeable)
       retval = ctx->Driver.RenderObjectUnpurgeable(ctx, bufObj, option);
 
-   return retval;
+   return option;
 }
 
 
