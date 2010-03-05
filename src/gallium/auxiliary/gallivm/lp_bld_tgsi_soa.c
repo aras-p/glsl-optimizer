@@ -384,6 +384,11 @@ emit_store(
       assert(0);
       break;
 
+   case TGSI_FILE_PREDICATE:
+      /* FIXME */
+      assert(0);
+      break;
+
    default:
       assert( 0 );
    }
