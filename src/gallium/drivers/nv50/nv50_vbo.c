@@ -332,104 +332,65 @@ nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
 	return TRUE;
 }
 
-static INLINE void
-nv50_draw_elements_inline(struct nv50_context *nv50,
-			  void *map, unsigned indexSize,
-			  unsigned start, unsigned count)
-{
-	switch (indexSize) {
-	case 1:
-		nv50_draw_elements_inline_u08(nv50, map, start, count);
-		break;
-	case 2:
-		nv50_draw_elements_inline_u16(nv50, map, start, count);
-		break;
-	case 4:
-		nv50_draw_elements_inline_u32(nv50, map, start, count);
-		break;
-	}
-}
-
-static unsigned
-init_per_instance_arrays(struct nv50_context *nv50,
-			 unsigned startInstance,
-			 unsigned pos[16], unsigned step[16])
-{
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_channel *chan = tesla->channel;
-	struct nouveau_bo *bo;
-	struct nouveau_stateobj *so;
-	unsigned i, b, count = 0;
-	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
-
-	so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 2, nv50->vtxelt_nr * 2);
-
-	for (i = 0; i < nv50->vtxelt_nr; ++i) {
-		if (!nv50->vtxelt[i].instance_divisor)
-			continue;
-		++count;
-		b = nv50->vtxelt[i].vertex_buffer_index;
-
-		pos[i] = nv50->vtxelt[i].src_offset +
-			nv50->vtxbuf[b].buffer_offset +
-			startInstance * nv50->vtxbuf[b].stride;
-
-		if (!startInstance) {
-			step[i] = 0;
-			continue;
-		}
-		step[i] = startInstance % nv50->vtxelt[i].instance_divisor;
-
-		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
-
-		so_method(so, tesla, NV50TCL_VERTEX_ARRAY_START_HIGH(i), 2);
-		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_HIGH, 0, 0);
-		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_LOW, 0, 0);
-	}
-
-	if (count && startInstance) {
-		so_ref (so, &nv50->state.instbuf); /* for flush notify */
-		so_emit(chan, nv50->state.instbuf);
-	}
-	so_ref (NULL, &so);
-
-	return count;
-}
-
 static void
-step_per_instance_arrays(struct nv50_context *nv50,
-			 unsigned pos[16], unsigned step[16])
+nv50_draw_elements_inline(struct pipe_context *pipe,
+			  struct pipe_buffer *indexBuffer, unsigned indexSize,
+			  unsigned mode, unsigned start, unsigned count,
+			  unsigned startInstance, unsigned instanceCount)
 {
+	struct pipe_screen *pscreen = pipe->screen;
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_channel *chan = tesla->channel;
-	struct nouveau_bo *bo;
-	struct nouveau_stateobj *so;
-	unsigned i, b;
-	const uint32_t rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+	struct instance a[16];
+	unsigned prim = nv50_prim(mode);
+	void *map;
 
-	so = so_new(nv50->vtxelt_nr, nv50->vtxelt_nr * 2, nv50->vtxelt_nr * 2);
+	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	assert(map);
+	if (!map)
+		return;
 
-	for (i = 0; i < nv50->vtxelt_nr; ++i) {
-		if (!nv50->vtxelt[i].instance_divisor)
-			continue;
-		b = nv50->vtxelt[i].vertex_buffer_index;
+	instance_init(nv50, a, startInstance);
+	if (!nv50_state_validate(nv50, 0))
+		return;
 
-		if (++step[i] == nv50->vtxelt[i].instance_divisor) {
-			step[i] = 0;
-			pos[i] += nv50->vtxbuf[b].stride;
+	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
+	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
+	OUT_RING  (chan, startInstance);
+	while (instanceCount--) {
+		if (AVAIL_RING(chan) < (7 + 16*3)) {
+			FIRE_RING(chan);
+			if (!nv50_state_validate(nv50, 0)) {
+				assert(0);
+				return;
+			}
 		}
+		instance_step(nv50, a);
 
-		bo = nouveau_bo(nv50->vtxbuf[b].buffer);
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+		OUT_RING  (chan, prim);
+		switch (indexSize) {
+		case 1:
+			nv50_draw_elements_inline_u08(nv50, map, start, count);
+			break;
+		case 2:
+			nv50_draw_elements_inline_u16(nv50, map, start, count);
+			break;
+		case 4:
+			nv50_draw_elements_inline_u32(nv50, map, start, count);
+			break;
+		default:
+			assert(0);
+			break;
+		}
+		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+		OUT_RING  (chan, 0);
 
-		so_method(so, tesla, NV50TCL_VERTEX_ARRAY_START_HIGH(i), 2);
-		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_HIGH, 0, 0);
-		so_reloc (so, bo, pos[i], rl | NOUVEAU_BO_LOW, 0, 0);
+		prim |= (1 << 28);
 	}
 
-	so_ref (so, &nv50->state.instbuf); /* for flush notify */
-	so_ref (NULL, &so);
-
-	so_emit(chan, nv50->state.instbuf);
+	pipe_buffer_unmap(pscreen, indexBuffer);
 }
 
 void
@@ -440,49 +401,62 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 			     unsigned startInstance, unsigned instanceCount)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_channel *chan = tesla->channel;
-	struct pipe_screen *pscreen = pipe->screen;
-	void *map;
-	unsigned i, nz_divisors;
-	unsigned step[16], pos[16];
+	struct instance a[16];
+	unsigned prim = nv50_prim(mode);
 
-	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
-
-	if (!nv50_state_validate(nv50, 0))
+	if (indexSize == 1) {
+		nv50_draw_elements_inline(pipe, indexBuffer, indexSize,
+					  mode, start, count, startInstance,
+					  instanceCount);
 		return;
-	chan->flush_notify = nv50_state_flush_notify;
+	}
 
-	nz_divisors = init_per_instance_arrays(nv50, startInstance, pos, step);
+	instance_init(nv50, a, startInstance);
+	if (!nv50_state_validate(nv50, 13 + 16*3))
+		return;
 
 	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
 	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
 	OUT_RING  (chan, startInstance);
-
-	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
-	OUT_RING  (chan, nv50_prim(mode));
-
-	nv50_draw_elements_inline(nv50, map, indexSize, start, count);
-
-	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
-	OUT_RING  (chan, 0);
-
-	for (i = 1; i < instanceCount; ++i) {
-		if (nz_divisors) /* any non-zero array divisors ? */
-			step_per_instance_arrays(nv50, pos, step);
+	while (instanceCount--) {
+		if (AVAIL_RING(chan) < (7 + 16*3)) {
+			FIRE_RING(chan);
+			if (!nv50_state_validate(nv50, 10 + 16*3)) {
+				assert(0);
+				return;
+			}
+		}
+		instance_step(nv50, a);
 
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
-		OUT_RING  (chan, nv50_prim(mode) | (1 << 28));
+		OUT_RING  (chan, prim);
+		if (indexSize == 4) {
+			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x30000, 0);
+			OUT_RING  (chan, count);
+			nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+					       start << 2, count << 2);
+		} else
+		if (indexSize == 2) {
+			unsigned vb_start = (start & ~1);
+			unsigned vb_end = (start + count + 1) & ~1;
+			unsigned dwords = (vb_end - vb_start) >> 1;
 
-		nv50_draw_elements_inline(nv50, map, indexSize, start, count);
-
+			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
+			OUT_RING  (chan, ((start & 1) << 31) | count);
+			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x30000, 0);
+			OUT_RING  (chan, dwords);
+			nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+					       vb_start << 1, dwords << 2);
+			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
+			OUT_RING  (chan, 0);
+		}
 		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 		OUT_RING  (chan, 0);
+
+		prim |= (1 << 28);
 	}
-
-	chan->flush_notify = NULL;
-
-	so_ref(NULL, &nv50->state.instbuf);
 }
 
 void
@@ -490,48 +464,8 @@ nv50_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
-	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->tesla->channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct pipe_screen *pscreen = pipe->screen;
-	void *map;
-	
-	if (!nv50_state_validate(nv50, 14))
-		return;
-	chan->flush_notify = nv50_state_flush_notify;
-
-	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
-	OUT_RING  (chan, nv50_prim(mode));
-
-	if (indexSize == 4) {
-		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x30000, 0);
-		OUT_RING  (chan, count);
-		nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
-				       start << 2, count << 2);
-	} else
-	if (indexSize == 2) {
-		unsigned vb_start = (start & ~1);
-		unsigned vb_end = (start + count + 1) & ~1;
-		unsigned dwords = (vb_end - vb_start) >> 1;
-
-		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
-		OUT_RING  (chan, ((start & 1) << 31) | count);
-		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x30000, 0);
-		OUT_RING  (chan, dwords);
-		nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
-				       vb_start << 1, dwords << 2);
-		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
-		OUT_RING  (chan, 0);
-	} else {
-		map = pipe_buffer_map(pscreen, indexBuffer,
-				      PIPE_BUFFER_USAGE_CPU_READ);
-		nv50_draw_elements_inline(nv50, map, indexSize, start, count);
-		pipe_buffer_unmap(pscreen, indexBuffer);
-	}
-
-	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
-	OUT_RING  (chan, 0);
-	chan->flush_notify = NULL;
+	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize,
+				     mode, start, count, 0, 1);
 }
 
 static INLINE boolean
