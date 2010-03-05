@@ -34,6 +34,7 @@
 
 struct brw_blend_state_key {
    GLboolean color_blend, alpha_enabled;
+   GLboolean dither;
 
    GLenum logic_op;
 
@@ -42,8 +43,6 @@ struct brw_blend_state_key {
    GLenum blend_dst_rgb, blend_dst_a;
 
    GLenum alpha_func;
-
-   GLboolean dither;
 };
 
 static void
