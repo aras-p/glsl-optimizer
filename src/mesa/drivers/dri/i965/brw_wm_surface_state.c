@@ -336,10 +336,7 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
    assert(key->bo);
-   if (key->bo)
-      surf.ss1.base_addr = key->bo->offset; /* reloc */
-   else
-      surf.ss1.base_addr = key->offset;
+   surf.ss1.base_addr = key->bo->offset; /* reloc */
 
    surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
@@ -349,20 +346,16 @@ brw_create_constant_surface( struct brw_context *brw,
  
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
-			 &key->bo, key->bo ? 1 : 0,
+			 &key->bo, 1,
 			 &surf, sizeof(surf));
 
-   if (key->bo) {
-      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-       * bspec ("Data Cache") says that the data cache does not exist as
-       * a separate cache and is just the sampler cache.
-       */
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_SAMPLER, 0,
-			0,
-			offsetof(struct brw_surface_state, ss1),
-			key->bo);
-   }
+   /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
+    * bspec ("Data Cache") says that the data cache does not exist as
+    * a separate cache and is just the sampler cache.
+    */
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_surface_state, ss1),
+			   key->bo, 0,
+			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    return bo;
 }
@@ -420,7 +413,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (fp->const_buffer == 0) {
+   if (fp->const_buffer == NULL) {
       drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
       brw->wm.surf_bo[surf] = NULL;
       return;
@@ -448,7 +441,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
+                                            &key.bo, 1,
                                             NULL);
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
