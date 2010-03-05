@@ -5577,37 +5577,52 @@ KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_797)(GLenum target, GLsizei lengt
    DISPATCH(TextureRangeAPPLE, (target, length, pointer), (F, "glTextureRangeAPPLE(0x%x, %d, %p);\n", target, length, (const void *) pointer));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_798)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+KEYWORD1 void KEYWORD2 NAME(GetObjectParameterivAPPLE)(GLenum objectType, GLuint name, GLenum pname, GLint * value)
+{
+   DISPATCH(GetObjectParameterivAPPLE, (objectType, name, pname, value), (F, "glGetObjectParameterivAPPLE(0x%x, %d, 0x%x, %p);\n", objectType, name, pname, (const void *) value));
+}
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_798)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
+KEYWORD1 GLenum KEYWORD2 NAME(ObjectPurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option)
+{
+   RETURN_DISPATCH(ObjectPurgeableAPPLE, (objectType, name, option), (F, "glObjectPurgeableAPPLE(0x%x, %d, 0x%x);\n", objectType, name, option));
+}
+
+KEYWORD1 GLenum KEYWORD2 NAME(ObjectUnpurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option)
+{
+   RETURN_DISPATCH(ObjectUnpurgeableAPPLE, (objectType, name, option), (F, "glObjectUnpurgeableAPPLE(0x%x, %d, 0x%x);\n", objectType, name, option));
+}
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask)
 {
    DISPATCH(StencilFuncSeparateATI, (frontfunc, backfunc, ref, mask), (F, "glStencilFuncSeparateATI(0x%x, 0x%x, %d, %d);\n", frontfunc, backfunc, ref, mask));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_799)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_799)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_800)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_803)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_800)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_803)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLuint id, GLenum pname, GLint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_804)(GLuint id, GLenum pname, GLint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_801)(GLuint id, GLenum pname, GLint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_804)(GLuint id, GLenum pname, GLint64EXT * params)
 {
    DISPATCH(GetQueryObjecti64vEXT, (id, pname, params), (F, "glGetQueryObjecti64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLuint id, GLenum pname, GLuint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_805)(GLuint id, GLenum pname, GLuint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_802)(GLuint id, GLenum pname, GLuint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_805)(GLuint id, GLenum pname, GLuint64EXT * params)
 {
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
@@ -6573,11 +6588,14 @@ _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(ProvokingVertexEXT),
    TABLE_ENTRY(_dispatch_stub_796),
    TABLE_ENTRY(_dispatch_stub_797),
-   TABLE_ENTRY(_dispatch_stub_798),
-   TABLE_ENTRY(_dispatch_stub_799),
-   TABLE_ENTRY(_dispatch_stub_800),
+   TABLE_ENTRY(GetObjectParameterivAPPLE),
+   TABLE_ENTRY(ObjectPurgeableAPPLE),
+   TABLE_ENTRY(ObjectUnpurgeableAPPLE),
    TABLE_ENTRY(_dispatch_stub_801),
    TABLE_ENTRY(_dispatch_stub_802),
+   TABLE_ENTRY(_dispatch_stub_803),
+   TABLE_ENTRY(_dispatch_stub_804),
+   TABLE_ENTRY(_dispatch_stub_805),
    TABLE_ENTRY(EGLImageTargetRenderbufferStorageOES),
    TABLE_ENTRY(EGLImageTargetTexture2DOES),
    /* A whole bunch of no-op functions.  These might be called

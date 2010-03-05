@@ -9285,6 +9285,12 @@ _mesa_init_save_table(struct _glapi_table *table)
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 
+   /* 371. GL_APPLE_object_purgeable */
+#if FEATURE_APPLE_object_purgeable
+   SET_ObjectPurgeableAPPLE(table, _mesa_ObjectPurgeableAPPLE);
+   SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
+#endif
+
    /* GL 3.0 */
 #if 0
    SET_ClearBufferiv(table, save_ClearBufferiv);

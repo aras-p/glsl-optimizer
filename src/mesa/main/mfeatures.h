@@ -116,6 +116,7 @@
 #define FEATURE_EXT_framebuffer_blit _HAVE_FULL_GL
 #define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
 #define FEATURE_EXT_pixel_buffer_object  _HAVE_FULL_GL
+#define FEATURE_APPLE_object_purgeable _HAVE_FULL_GL
 #define FEATURE_EXT_texture_sRGB _HAVE_FULL_GL
 #define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
 #define FEATURE_NV_fence  _HAVE_FULL_GL

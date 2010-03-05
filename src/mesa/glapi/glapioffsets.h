@@ -832,14 +832,17 @@
 #define _gloffset_ProvokingVertexEXT 795
 #define _gloffset_GetTexParameterPointervAPPLE 796
 #define _gloffset_TextureRangeAPPLE 797
-#define _gloffset_StencilFuncSeparateATI 798
-#define _gloffset_ProgramEnvParameters4fvEXT 799
-#define _gloffset_ProgramLocalParameters4fvEXT 800
-#define _gloffset_GetQueryObjecti64vEXT 801
-#define _gloffset_GetQueryObjectui64vEXT 802
-#define _gloffset_EGLImageTargetRenderbufferStorageOES 803
-#define _gloffset_EGLImageTargetTexture2DOES 804
-#define _gloffset_FIRST_DYNAMIC 805
+#define _gloffset_GetObjectParameterivAPPLE 798
+#define _gloffset_ObjectPurgeableAPPLE 799
+#define _gloffset_ObjectUnpurgeableAPPLE 800
+#define _gloffset_StencilFuncSeparateATI 801
+#define _gloffset_ProgramEnvParameters4fvEXT 802
+#define _gloffset_ProgramLocalParameters4fvEXT 803
+#define _gloffset_GetQueryObjecti64vEXT 804
+#define _gloffset_GetQueryObjectui64vEXT 805
+#define _gloffset_EGLImageTargetRenderbufferStorageOES 806
+#define _gloffset_EGLImageTargetTexture2DOES 807
+#define _gloffset_FIRST_DYNAMIC 808
 
 #else
 
@@ -1233,6 +1236,9 @@
 #define _gloffset_ProvokingVertexEXT driDispatchRemapTable[ProvokingVertexEXT_remap_index]
 #define _gloffset_GetTexParameterPointervAPPLE driDispatchRemapTable[GetTexParameterPointervAPPLE_remap_index]
 #define _gloffset_TextureRangeAPPLE driDispatchRemapTable[TextureRangeAPPLE_remap_index]
+#define _gloffset_GetObjectParameterivAPPLE driDispatchRemapTable[GetObjectParameterivAPPLE_remap_index]
+#define _gloffset_ObjectPurgeableAPPLE driDispatchRemapTable[ObjectPurgeableAPPLE_remap_index]
+#define _gloffset_ObjectUnpurgeableAPPLE driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index]
 #define _gloffset_StencilFuncSeparateATI driDispatchRemapTable[StencilFuncSeparateATI_remap_index]
 #define _gloffset_ProgramEnvParameters4fvEXT driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index]
 #define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]

@@ -153,6 +153,7 @@ static const struct {
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
    { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
+   { OFF, "GL_APPLE_object_purgeable",         F(APPLE_object_purgeable) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_envmap_bumpmap",             F(ATI_envmap_bumpmap) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
@@ -265,6 +266,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+#if FEATURE_APPLE_object_purgeable
+   ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
+#endif
    ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
