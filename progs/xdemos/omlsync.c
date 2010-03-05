@@ -69,6 +69,7 @@ Bool (*glXWaitForMscOML)(Display *dpy, GLXDrawable drawable, int64_t target_msc,
 			 int64_t *msc, int64_t *sbc);
 Bool (*glXWaitForSbcOML)(Display *dpy, GLXDrawable drawable, int64_t target_sbc,
 			 int64_t *ust, int64_t *msc, int64_t *sbc);
+int (*glXSwapInterval)(int interval);
 
 static int GLXExtensionSupported(Display *dpy, const char *extension)
 {
@@ -94,14 +95,15 @@ static int GLXExtensionSupported(Display *dpy, const char *extension)
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-static char optstr[] = "w:h:vd:r:n:";
+static char optstr[] = "w:h:vd:r:n:i:";
 
 static void usage(char *name)
 {
-	printf("usage: %s [-w <width>] [-h <height>] [-i<swap interval>] "
-	       "[-n<wait interval>] [-v]\n", name);
+	printf("usage: %s [-w <width>] [-h <height>] ...\n", name);
+	printf("\t-d<divisor> - divisor for OML swap\n");
+	printf("\t-r<remainder> - remainder for OML swap\n");
+	printf("\t-n<interval> - wait interval for OML WaitMSC\n");
 	printf("\t-i<swap interval> - swap at most once every n frames\n");
-	printf("\t-n<wait interval> - wait n frames between swaps\n");
 	printf("\t-v: verbose (print count)\n");
 	exit(-1);
 }
@@ -115,8 +117,9 @@ int main(int argc, char *argv[])
 	GLXContext context;
 	int dummy;
 	Atom wmDelete;
+	int64_t ust, msc, sbc;
 	int width = 500, height = 500, verbose = 0, divisor = 0, remainder = 0,
-	   wait_interval = 0;
+		wait_interval = 0, swap_interval = 1;
 	int c, i = 1;
 	int ret;
 	int db_attribs[] = { GLX_RGBA,
@@ -149,6 +152,9 @@ int main(int argc, char *argv[])
 		case 'n':
 			wait_interval = atoi(optarg);
 			break;
+		case 'i':
+			swap_interval = atoi(optarg);
+			break;
 		default:
 			usage(argv[0]);
 			break;
@@ -168,6 +174,11 @@ int main(int argc, char *argv[])
 
 	if (!GLXExtensionSupported(disp, "GLX_OML_sync_control")) {
 		fprintf(stderr, "GLX_OML_sync_control not supported\n");
+		return -1;
+	}
+
+	if (!GLXExtensionSupported(disp, "GLX_MESA_swap_control")) {
+		fprintf(stderr, "GLX_MESA_swap_control not supported\n");
 		return -1;
 	}
 
@@ -224,8 +235,14 @@ int main(int argc, char *argv[])
 	glXSwapBuffersMscOML = (void *)glXGetProcAddress((unsigned char *)"glXSwapBuffersMscOML");
 	glXWaitForMscOML = (void *)glXGetProcAddress((unsigned char *)"glXWaitForMscOML");
 	glXWaitForSbcOML = (void *)glXGetProcAddress((unsigned char *)"glXWaitForSbcOML");
+	glXSwapInterval = (void *)glXGetProcAddress((unsigned char *)"glXSwapIntervalMESA");
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glXSwapInterval(swap_interval);
+	fprintf(stderr, "set swap interval to %d\n", swap_interval);
+
+	glXGetSyncValuesOML(disp, winGL, &ust, &msc, &sbc);
 	while (i++) {
 		/* Alternate colors to make tearing obvious */
 		if (i & 1) {
@@ -240,6 +257,11 @@ int main(int argc, char *argv[])
 		glRectf(0, 0, width, height);
 
 		glXSwapBuffersMscOML(disp, winGL, 0, divisor, remainder);
+
+		if (wait_interval) {
+			glXWaitForMscOML(disp, winGL, msc + wait_interval,
+					 0, 0, &ust, &msc, &sbc);
+		}
 	}
 
 	XDestroyWindow(disp, winGL);
