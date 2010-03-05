@@ -71,6 +71,17 @@ GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
 					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch);
 
+static INLINE uint32_t float_as_int(float f)
+{
+   union {
+      float f;
+      uint32_t d;
+   } fi;
+
+   fi.f = f;
+   return fi.d;
+}
+
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
  * be passed as structs rather than dwords, but that's a little bit of
@@ -92,6 +103,12 @@ intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 }
 
 static INLINE void
+intel_batchbuffer_emit_float(struct intel_batchbuffer *batch, float f)
+{
+   intel_batchbuffer_emit_dword(batch, float_as_int(f));
+}
+
+static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
                                 GLuint sz)
 {
@@ -100,33 +117,36 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
       intel_batchbuffer_flush(batch);
 }
 
-static INLINE uint32_t float_as_int(float f)
+static INLINE void
+intel_batchbuffer_begin(struct intel_batchbuffer *batch, int n)
 {
-   union {
-      float f;
-      uint32_t d;
-   } fi;
+   intel_batchbuffer_require_space(batch, n * 4);
+   assert(batch->map);
+   assert(batch->emit.start_ptr == NULL);
+   batch->emit.total = n * 4;
+   batch->emit.start_ptr = batch->ptr;
+}
 
-   fi.f = f;
-   return fi.d;
+static INLINE void
+intel_batchbuffer_advance(struct intel_batchbuffer *batch)
+{
+   unsigned int _n = batch->ptr - batch->emit.start_ptr;
+   assert(batch->emit.start_ptr != NULL);
+   if (_n != batch->emit.total) {
+      fprintf(stderr, "ADVANCE_BATCH: %d of %d dwords emitted\n",
+	      _n, batch->emit.total);
+      abort();
+   }
+   batch->emit.start_ptr = NULL;
 }
 
 /* Here are the crusty old macros, to be removed:
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n) do {				\
-   intel_batchbuffer_require_space(intel->batch, (n)*4); \
-   assert(intel->batch->map);						\
-   assert(intel->batch->emit.start_ptr == NULL);			\
-   intel->batch->emit.total = (n) * 4;					\
-   intel->batch->emit.start_ptr = intel->batch->ptr;			\
-} while (0)
-
+#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel->batch, n)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
-#define OUT_BATCH_F(f) intel_batchbuffer_emit_dword(intel->batch,	\
-						    float_as_int(f))
-
+#define OUT_BATCH_F(f) intel_batchbuffer_emit_float(intel->batch,f)
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    intel_batchbuffer_emit_reloc(intel->batch, buf,			\
 				read_domains, write_domain, delta);	\
@@ -136,15 +156,6 @@ static INLINE uint32_t float_as_int(float f)
 				       read_domains, write_domain, delta); \
 } while (0)
 
-#define ADVANCE_BATCH() do {						\
-   unsigned int _n = intel->batch->ptr - intel->batch->emit.start_ptr;	\
-   assert(intel->batch->emit.start_ptr != NULL);			\
-   if (_n != intel->batch->emit.total) {				\
-      fprintf(stderr, "ADVANCE_BATCH: %d of %d dwords emitted\n",	\
-	      _n, intel->batch->emit.total);				\
-      abort();								\
-   }									\
-   intel->batch->emit.start_ptr = NULL;					\
-} while(0)
+#define ADVANCE_BATCH() intel_batchbuffer_advance(intel->batch);
 
 #endif
