@@ -432,9 +432,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       {
          LLVMValueRef min, max;
          if (bld->static_state->normalized_coords) {
-            /* min = -1.0 / (2 * length) */
-            min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-            min = lp_build_negate(coord_bld, min);
+            /* min = -1.0 / (2 * length) = -0.5 / length */
+            min = lp_build_mul(coord_bld,
+                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_rcp(coord_bld, length_f));
             /* max = 1.0 - min */
             max = lp_build_sub(coord_bld, coord_bld->one, min);
             /* coord = clamp(coord, min, max) */
@@ -518,9 +519,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
          LLVMValueRef min, max;
-         /* min = -1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         min = lp_build_negate(coord_bld, min);
+         /* min = -1.0 / (2 * length) = -0.5 / length */
+         min = lp_build_mul(coord_bld,
+                            lp_build_const_scalar(coord_bld->type, -0.5F),
+                            lp_build_rcp(coord_bld, length_f));
          /* max = 1.0 - min */
          max = lp_build_sub(coord_bld, coord_bld->one, min);
 
@@ -618,9 +620,10 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       {
          LLVMValueRef min, max;
          if (bld->static_state->normalized_coords) {
-            /* min = -1.0 / (2 * length) */
-            min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-            min = lp_build_negate(coord_bld, min);
+            /* min = -1.0 / (2 * length) = -0.5 / length */
+            min = lp_build_mul(coord_bld,
+                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_rcp(coord_bld, length_f));
             /* max = length - min */
             max = lp_build_sub(coord_bld, length_f, min);
             /* scale coord to length */
