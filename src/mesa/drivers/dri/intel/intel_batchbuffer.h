@@ -86,7 +86,6 @@ intel_batchbuffer_space(struct intel_batchbuffer *batch)
 static INLINE void
 intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 {
-   assert(batch->map);
    assert(intel_batchbuffer_space(batch) >= 4);
    *(GLuint *) (batch->ptr) = dword;
    batch->ptr += 4;
@@ -118,6 +117,7 @@ static INLINE uint32_t float_as_int(float f)
 
 #define BEGIN_BATCH(n) do {				\
    intel_batchbuffer_require_space(intel->batch, (n)*4); \
+   assert(intel->batch->map);						\
    assert(intel->batch->emit.start_ptr == NULL);			\
    intel->batch->emit.total = (n) * 4;					\
    intel->batch->emit.start_ptr = intel->batch->ptr;			\
