@@ -128,12 +128,10 @@ static INLINE uint32_t float_as_int(float f)
 						    float_as_int(f))
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
-   assert((unsigned) (delta) < buf->size);				\
    intel_batchbuffer_emit_reloc(intel->batch, buf,			\
 				read_domains, write_domain, delta);	\
 } while (0)
 #define OUT_RELOC_FENCED(buf, read_domains, write_domain, delta) do {	\
-   assert((unsigned) (delta) < buf->size);				\
    intel_batchbuffer_emit_reloc_fenced(intel->batch, buf,		\
 				       read_domains, write_domain, delta); \
 } while (0)
